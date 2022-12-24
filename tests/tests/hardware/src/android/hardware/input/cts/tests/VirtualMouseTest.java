@@ -17,6 +17,7 @@
 package android.hardware.input.cts.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import android.graphics.PointF;
 import android.hardware.input.VirtualMouse;
@@ -168,6 +169,45 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
                         startPosition.y, /* relativeX= */ 0f, /* relativeY= */ 0f,
                         /* vScroll= */ 1f, /* hScroll= */ 0f, /* buttonState= */ 0,
                         /* pressure= */ 0f)));
+    }
+
+    @Test
+    public void sendButtonEvent_withoutCreateVirtualDevicePermission_throwsException() {
+        try (DropShellPermissionsTemporarily drop = new DropShellPermissionsTemporarily()) {
+            assertThrows(SecurityException.class,
+                    () -> mVirtualMouse.sendButtonEvent(new VirtualMouseButtonEvent.Builder()
+                            .setAction(VirtualMouseButtonEvent.ACTION_BUTTON_PRESS)
+                            .setButtonCode(VirtualMouseButtonEvent.BUTTON_PRIMARY)
+                            .build()));
+        }
+    }
+
+    @Test
+    public void sendRelativeEvent_withoutCreateVirtualDevicePermission_throwsException() {
+        final float relativeChangeX = 25f;
+        final float relativeChangeY = 35f;
+
+        try (DropShellPermissionsTemporarily drop = new DropShellPermissionsTemporarily()) {
+            assertThrows(SecurityException.class,
+                    () -> mVirtualMouse.sendRelativeEvent(new VirtualMouseRelativeEvent.Builder()
+                            .setRelativeY(relativeChangeY)
+                            .setRelativeX(relativeChangeX)
+                            .build()));
+        }
+    }
+
+    @Test
+    public void sendScrollEvent_withoutCreateVirtualDevicePermission_throwsException() {
+        final float moveX = 0f;
+        final float moveY = 1f;
+
+        try (DropShellPermissionsTemporarily drop = new DropShellPermissionsTemporarily()) {
+            assertThrows(SecurityException.class,
+                    () -> mVirtualMouse.sendScrollEvent(new VirtualMouseScrollEvent.Builder()
+                            .setYAxisMovement(moveY)
+                            .setXAxisMovement(moveX)
+                            .build()));
+        }
     }
 
     @Test

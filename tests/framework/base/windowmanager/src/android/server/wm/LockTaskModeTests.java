@@ -21,12 +21,12 @@ import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
 import static android.app.ActivityManager.LOCK_TASK_MODE_PINNED;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.UserHandle;
@@ -43,7 +43,6 @@ import org.junit.Test;
  */
 @Presubmit
 public class LockTaskModeTests extends ActivityManagerTestBase {
-
     private static final String[] LOCK_TASK_PACKAGES_ALLOWLIST =
         new String[] {"android.server.wm.app"};
 
@@ -59,11 +58,11 @@ public class LockTaskModeTests extends ActivityManagerTestBase {
                 new String[0]));
         assertThat(mAm.getLockTaskModeState()).isEqualTo(LOCK_TASK_MODE_NONE);
 
-        try {
+        try (TestActivitySession<TestActivity> session = createManagedTestActivitySession()) {
             // pin app
-            ComponentName testActivity = new ComponentName(mContext, TestActivity.class);
-            launchActivity(testActivity);
-            Task task = mWmState.getRootTaskByActivity(testActivity);
+            session.mFinishAfterClose = true;
+            session.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
+            Task task = mWmState.getRootTaskByActivity(session.getActivity().getComponentName());
             runWithShellPermission(() -> mAtm.startSystemLockTaskMode(task.mTaskId));
             waitForOrFail("Task in app pinning mode", () -> {
                 return mAm.getLockTaskModeState() == LOCK_TASK_MODE_PINNED;
@@ -84,8 +83,13 @@ public class LockTaskModeTests extends ActivityManagerTestBase {
             });
         } finally {
             // cleanup
-            runWithShellPermission(() -> mAtm.updateLockTaskPackages(systemUserContext,
-                    new String[0]));
+            runWithShellPermission(() -> {
+                mAtm.stopSystemLockTaskMode();
+                mAtm.updateLockTaskPackages(systemUserContext, new String[0]);
+            });
+            waitForOrFail("Task should not in app pinning mode", () -> {
+                return mAm.getLockTaskModeState() == LOCK_TASK_MODE_NONE;
+            });
         }
     }
 

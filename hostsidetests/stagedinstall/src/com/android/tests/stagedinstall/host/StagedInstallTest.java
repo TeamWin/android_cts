@@ -970,6 +970,11 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testCheckInstallConstraints_UsesLibrary() throws Exception {
+        runPhase("testCheckInstallConstraints_UsesLibrary");
+    }
+
+    @Test
     public void testWaitForInstallConstraints_AppIsForeground() throws Exception {
         runPhase("testWaitForInstallConstraints_AppIsForeground");
     }

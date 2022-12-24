@@ -99,6 +99,18 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void sendKeyEvent_withoutCreateVirtualDevicePermission_throwsException() {
+        try (DropShellPermissionsTemporarily drop = new DropShellPermissionsTemporarily()) {
+            assertThrows(SecurityException.class,
+                    () -> mVirtualKeyboard.sendKeyEvent(
+                            new VirtualKeyEvent.Builder()
+                                    .setKeyCode(KeyEvent.KEYCODE_A)
+                                    .setAction(VirtualKeyEvent.ACTION_DOWN)
+                                    .build()));
+        }
+    }
+
+    @Test
     public void rejectsUnsupportedKeyCodes() {
         assertThrows(
                 IllegalArgumentException.class,

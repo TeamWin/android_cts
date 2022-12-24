@@ -44,8 +44,13 @@ public class PerformanceClassEvaluator {
 
     public PerformanceClassEvaluator(TestName testName) {
         Preconditions.checkNotNull(testName);
-        this.mTestName = testName.getMethodName().replace("{", "(").replace("}", ")");
+        String baseTestName = testName.getMethodName() != null ? testName.getMethodName() : "";
+        this.mTestName = baseTestName.replace("{", "(").replace("}", ")");
         this.mRequirements = new HashSet<Requirement>();
+    }
+
+    String getTestName() {
+        return mTestName;
     }
 
     // used for requirements [7.1.1.1/H-1-1], [7.1.1.1/H-2-1]

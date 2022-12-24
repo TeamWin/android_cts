@@ -20,6 +20,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.By;
 
@@ -33,6 +34,7 @@ import com.android.cts.install.lib.Uninstall;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -68,6 +70,9 @@ public class InstallSessionCleanupTest {
         } catch (InterruptedException ignored) {
         }
     });
+
+    @Rule
+    public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
     @After
     public void tearDown() throws InterruptedException {

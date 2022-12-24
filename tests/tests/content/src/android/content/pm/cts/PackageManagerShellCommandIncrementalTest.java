@@ -29,6 +29,7 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
@@ -62,6 +63,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -129,6 +131,9 @@ public class PackageManagerShellCommandIncrementalTest {
     private static final boolean CHECK_BASE_APK_DIGESTION = false;
 
     private static final long EXPECTED_READ_TIME = 1000L;
+
+    @Rule
+    public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
     private IncrementalInstallSession mSession = null;
     private String mPackageVerifier = null;

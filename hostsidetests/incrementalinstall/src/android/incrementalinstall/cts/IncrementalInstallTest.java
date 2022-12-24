@@ -32,6 +32,7 @@ import android.platform.test.annotations.LargeTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
+import com.android.tradefed.device.TestDeviceOptions;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -95,12 +96,18 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
     private static final String INSTALL_SUCCESS_OUTPUT = "Success";
     private static final long DEFAULT_TEST_TIMEOUT_MS = 60 * 1000L;
     private static final long DEFAULT_MAX_TIMEOUT_TO_OUTPUT_MS = 60 * 1000L; // 1min
+    private static final long DEFAULT_ADB_TIMEOUT_MS = 5 * 60 * 1000L; // 5mins
     private final int TEST_APP_V1_VERSION = 1;
     private final int TEST_APP_V2_VERSION = 2;
     private CompatibilityBuildHelper mBuildHelper;
 
     @Before
     public void setup() throws Exception {
+        // Increase default timeout to 5 mins to accommodate for slow restarting devices.
+        TestDeviceOptions options = new TestDeviceOptions();
+        options.setAdbCommandTimeout(DEFAULT_ADB_TIMEOUT_MS);
+        getDevice().setOptions(options);
+
         assumeTrue(hasIncrementalFeature());
         mBuildHelper = new CompatibilityBuildHelper(getBuild());
         assumeTrue(adbBinarySupportsIncremental());

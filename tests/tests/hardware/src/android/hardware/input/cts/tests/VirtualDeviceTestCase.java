@@ -94,6 +94,20 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     VirtualDeviceManager.VirtualDevice mVirtualDevice;
     VirtualDisplay mVirtualDisplay;
 
+    /** Helper class to drop permissions temporarily and restore them at the end of a test. */
+    static final class DropShellPermissionsTemporarily implements AutoCloseable {
+        DropShellPermissionsTemporarily() {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+
+        @Override
+        public void close() {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity();
+        }
+    }
+
     @Override
     void onBeforeLaunchActivity() {
         final Context context = InstrumentationRegistry.getTargetContext();

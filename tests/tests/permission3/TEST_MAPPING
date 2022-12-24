@@ -1,7 +1,12 @@
 {
-  "presubmit": [
+  "presubmit-large": [
     {
-      "name": "CtsPermission3TestCases"
+      "name": "CtsPermission3TestCases",
+      "options": [
+        {
+          "exclude-annotation": "android.platform.test.annotations.FlakyTest"
+        }
+      ]
     }
   ]
 }

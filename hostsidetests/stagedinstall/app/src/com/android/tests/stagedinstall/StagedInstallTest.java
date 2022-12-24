@@ -16,6 +16,8 @@
 
 package com.android.tests.stagedinstall;
 
+import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
+
 import static com.android.cts.install.lib.InstallUtils.assertStatusFailure;
 import static com.android.cts.install.lib.InstallUtils.assertStatusSuccess;
 import static com.android.cts.install.lib.InstallUtils.getPackageInstaller;
@@ -76,6 +78,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -112,6 +115,8 @@ import java.util.stream.Collectors;
 public class StagedInstallTest {
 
     private static final String TAG = "StagedInstallTest";
+
+    private static final int MATCH_STATIC_SHARED_AND_SDK_LIBRARIES = 0x04000000;
 
     private File mTestStateFile = new File(
             InstrumentationRegistry.getInstrumentation().getContext().getFilesDir(),
@@ -181,6 +186,10 @@ public class StagedInstallTest {
             /*isApex*/true, "com.android.apex.cts.shim.v3_rebootless.apex");
     private static final TestApp Apex2AsApk = new TestApp("Apex2", SHIM_APEX_PACKAGE_NAME, 2,
             /*isApex*/false, "com.android.apex.cts.shim.v2.apex");
+    private static final TestApp HelloWorldSdk1 = new TestApp("HelloWorldSdk1", "com.test.sdk1_1",
+            1, false, "HelloWorldSdk1.apk");
+    private static final TestApp HelloWorldUsingSdk1 = new TestApp("HelloWorldUsingSdk1",
+            "com.test.sdk.user", 1, false, "HelloWorldUsingSdk1.apk");
 
     @Before
     public void adoptShellPermissions() {
@@ -1614,6 +1623,50 @@ public class StagedInstallTest {
     }
 
     @Test
+    public void testCheckInstallConstraints_UsesLibrary() throws Exception {
+        final String propKey = "debug.pm.uses_sdk_library_default_cert_digest";
+
+        try {
+            Install.single(TestApp.B1).commit();
+            Install.single(HelloWorldSdk1).commit();
+            // Override the certificate digest so HelloWorldUsingSdk1 can be installed
+            SystemUtil.runShellCommand("setprop " + propKey + " "
+                    + getPackageCertDigest(HelloWorldSdk1.getPackageName()));
+            Install.single(HelloWorldUsingSdk1).commit();
+
+            // HelloWorldSdk1 will be considered foreground as HelloWorldUsingSdk1 is foreground
+            startActivity(HelloWorldUsingSdk1.getPackageName(),
+                    "com.example.helloworld.MainActivityNoExit");
+
+            var pi = InstallUtils.getPackageInstaller();
+            var f1 = new CompletableFuture<InstallConstraintsResult>();
+            var constraints = new InstallConstraints.Builder().requireAppNotForeground().build();
+            pi.checkInstallConstraints(
+                    Arrays.asList(HelloWorldSdk1.getPackageName()),
+                    constraints,
+                    r -> r.run(),
+                    result -> f1.complete(result));
+            assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
+
+            // HelloWorldUsingSdk1 is no longer foreground. So is HelloWorldSdk1.
+            startActivity(TestApp.B);
+            PollingCheck.waitFor(() -> {
+                var importance = getPackageImportance(HelloWorldUsingSdk1.getPackageName());
+                return importance > ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
+            });
+            var f2 = new CompletableFuture<InstallConstraintsResult>();
+            pi.checkInstallConstraints(
+                    Arrays.asList(HelloWorldSdk1.getPackageName()),
+                    constraints,
+                    r -> r.run(),
+                    result -> f2.complete(result));
+            assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
+        } finally {
+            SystemUtil.runShellCommand("setprop " + propKey + " invalid");
+        }
+    }
+
+    @Test
     public void testWaitForInstallConstraints_AppIsForeground() throws Exception {
         Install.single(TestApp.A1).commit();
         Install.single(TestApp.B1).commit();
@@ -1656,6 +1709,40 @@ public class StagedInstallTest {
         assertThat(packageNames).asList().containsExactly(TestApp.A);
         assertThat(receivedConstraints).isEqualTo(inputConstraints);
         assertThat(result.isAllConstraintsSatisfied()).isTrue();
+    }
+
+    private static byte[] computeSha256DigestBytes(byte[] data) {
+        try {
+            var messageDigest = MessageDigest.getInstance("SHA256");
+            messageDigest.update(data);
+            return messageDigest.digest();
+        } catch (Exception ignore) {
+            /* can't happen */
+            return null;
+        }
+    }
+
+    private static String encodeHex(byte[] data) {
+        final var hexDigits = "0123456789abcdef".toCharArray();
+        int len = data.length;
+        StringBuilder result = new StringBuilder(len * 2);
+        for (int i = 0; i < len; i++) {
+            byte b = data[i];
+            result.append(hexDigits[(b >>> 4) & 0x0f]);
+            result.append(hexDigits[b & 0x0f]);
+        }
+        return result.toString();
+    }
+
+    private String getPackageCertDigest(String packageName) throws Exception {
+        final var pm = InstrumentationRegistry.getInstrumentation()
+                .getContext().getPackageManager();
+        var packageInfo = pm.getPackageInfo(packageName,
+                PackageManager.PackageInfoFlags.of(
+                        GET_SIGNING_CERTIFICATES | MATCH_STATIC_SHARED_AND_SDK_LIBRARIES));
+        var signatures = packageInfo.signingInfo.getSigningCertificateHistory();
+        var digest = computeSha256DigestBytes(signatures[0].toByteArray());
+        return encodeHex(digest);
     }
 
     private static void startActivity(String packageName) {

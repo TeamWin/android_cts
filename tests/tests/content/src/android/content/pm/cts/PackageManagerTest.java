@@ -95,12 +95,14 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.pm.SharedLibraryInfo;
 import android.content.pm.Signature;
+import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.SystemClock;
@@ -119,6 +121,7 @@ import androidx.test.rule.ServiceTestRule;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
+import com.android.internal.security.VerityUtils;
 
 import com.google.common.truth.Expect;
 
@@ -254,6 +257,9 @@ public class PackageManagerTest {
             ComponentName.createRelative(MOCK_LAUNCHER_PACKAGE_NAME, ".MockProvider");
 
     private final ServiceTestRule mServiceTestRule = new ServiceTestRule();
+
+    @Rule
+    public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
     @Rule public final Expect expect = Expect.create();
 
@@ -2497,6 +2503,24 @@ public class PackageManagerTest {
     public void testDeleteDexopt_withoutShellIdentity() throws Exception {
         assertThat(runCommand("pm delete-dexopt " + PACKAGE_NAME))
                 .contains(SecurityException.class.getName());
+    }
+
+    @Test
+    public void testSettingAndReserveCopyVerityProtected() throws Exception {
+        File systemDir = new File(Environment.getDataDirectory(), "system");
+        File settings = new File(systemDir, "packages.xml");
+        File settingsReserveCopy = new File(systemDir, "packages.xml.reservecopy");
+
+        // Primary.
+        assertTrue(settings.exists());
+        // Reserve copy.
+        assertTrue(settingsReserveCopy.exists());
+        // Temporary backup.
+        assertFalse(new File(systemDir, "packages-backup.xml").exists());
+
+        assumeTrue(VerityUtils.isFsVeritySupported());
+        assertTrue(VerityUtils.hasFsverity(settings.getAbsolutePath()));
+        assertTrue(VerityUtils.hasFsverity(settingsReserveCopy.getAbsolutePath()));
     }
 
     private static String runCommand(String cmd) throws Exception {

@@ -2040,7 +2040,7 @@ public class PackageManagerShellCommandTest {
                 "pm uninstall " + packageName + " " + String.join(" ", splitNames)));
     }
 
-    private void setSystemProperty(String name, String value) throws Exception {
+    public static void setSystemProperty(String name, String value) throws Exception {
         assertEquals("", executeShellCommand("setprop " + name + " " + value));
     }
 

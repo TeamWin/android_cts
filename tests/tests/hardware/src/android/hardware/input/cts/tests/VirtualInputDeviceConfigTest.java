@@ -23,6 +23,7 @@ import static org.junit.Assert.assertThrows;
 import android.hardware.input.VirtualDpadConfig;
 import android.hardware.input.VirtualKeyboardConfig;
 import android.hardware.input.VirtualMouseConfig;
+import android.hardware.input.VirtualNavigationTouchpadConfig;
 import android.hardware.input.VirtualTouchscreenConfig;
 import android.os.Parcel;
 
@@ -78,13 +79,20 @@ public class VirtualInputDeviceConfigTest {
     }
 
     private VirtualTouchscreenConfig createVirtualTouchscreenConfig() {
-        return new VirtualTouchscreenConfig.Builder()
+        return new VirtualTouchscreenConfig.Builder(WIDTH, HEIGHT)
                 .setInputDeviceName(DEVICE_NAME)
                 .setVendorId(VENDOR_ID)
                 .setProductId(PRODUCT_ID)
                 .setAssociatedDisplayId(DISPLAY_ID)
-                .setWidthInPixels(WIDTH)
-                .setHeightInPixels(HEIGHT)
+                .build();
+    }
+
+    private VirtualNavigationTouchpadConfig createVirtualNavigationTouchpadConfig() {
+        return new VirtualNavigationTouchpadConfig.Builder(WIDTH, HEIGHT)
+                .setInputDeviceName(DEVICE_NAME)
+                .setVendorId(VENDOR_ID)
+                .setProductId(PRODUCT_ID)
+                .setAssociatedDisplayId(DISPLAY_ID)
                 .build();
     }
 
@@ -200,8 +208,9 @@ public class VirtualInputDeviceConfigTest {
         assertThat(config.getVendorId()).isEqualTo(VENDOR_ID);
         assertThat(config.getProductId()).isEqualTo(PRODUCT_ID);
         assertThat(config.getAssociatedDisplayId()).isEqualTo(DISPLAY_ID);
-        assertThat(config.getWidthInPixels()).isEqualTo(WIDTH);
-        assertThat(config.getHeightInPixels()).isEqualTo(HEIGHT);
+        assertThat(config.getWidth()).isEqualTo(WIDTH);
+        assertThat(config.getHeight()).isEqualTo(HEIGHT);
+
     }
 
     @Test
@@ -218,9 +227,38 @@ public class VirtualInputDeviceConfigTest {
         assertThat(configFromParcel.getProductId()).isEqualTo(config.getProductId());
         assertThat(configFromParcel.getAssociatedDisplayId()).isEqualTo(
                 config.getAssociatedDisplayId());
-        assertThat(configFromParcel.getWidthInPixels()).isEqualTo(
-                config.getWidthInPixels());
-        assertThat(configFromParcel.getHeightInPixels()).isEqualTo(
-                config.getHeightInPixels());
+        assertThat(configFromParcel.getWidth()).isEqualTo(config.getWidth());
+        assertThat(configFromParcel.getHeight()).isEqualTo(config.getHeight());
+    }
+
+
+    @Test
+    public void testConstructorAndGetters_virtualNavigationTouchpadConfig() {
+        VirtualNavigationTouchpadConfig config = createVirtualNavigationTouchpadConfig();
+        assertThat(config.getInputDeviceName()).isEqualTo(DEVICE_NAME);
+        assertThat(config.getVendorId()).isEqualTo(VENDOR_ID);
+        assertThat(config.getProductId()).isEqualTo(PRODUCT_ID);
+        assertThat(config.getAssociatedDisplayId()).isEqualTo(DISPLAY_ID);
+        assertThat(config.getWidth()).isEqualTo(WIDTH);
+        assertThat(config.getHeight()).isEqualTo(HEIGHT);
+
+    }
+
+    @Test
+    public void testParcel_virtualNavigationTouchpadConfig() {
+        VirtualNavigationTouchpadConfig config = createVirtualNavigationTouchpadConfig();
+        Parcel parcel = Parcel.obtain();
+        config.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+
+        VirtualNavigationTouchpadConfig configFromParcel =
+                VirtualNavigationTouchpadConfig.CREATOR.createFromParcel(parcel);
+        assertThat(configFromParcel.getInputDeviceName()).isEqualTo(config.getInputDeviceName());
+        assertThat(configFromParcel.getVendorId()).isEqualTo(config.getVendorId());
+        assertThat(configFromParcel.getProductId()).isEqualTo(config.getProductId());
+        assertThat(configFromParcel.getAssociatedDisplayId()).isEqualTo(
+                config.getAssociatedDisplayId());
+        assertThat(configFromParcel.getWidth()).isEqualTo(config.getWidth());
+        assertThat(configFromParcel.getHeight()).isEqualTo(config.getHeight());
     }
 }

@@ -67,6 +67,8 @@ public class MediaRouter2DeviceTest {
      */
     private static final int ROUTE_UPDATE_MAX_WAIT_MS = 10_000;
 
+    private static final int SAMPLE_SESSION_PARTICIPANT_COUNT = 3;
+
     private MediaRouter2 mRouter2;
     private MediaRouter2Manager mRouter2Manager;
     private PowerManager.WakeLock mWakeLock;
@@ -148,6 +150,7 @@ public class MediaRouter2DeviceTest {
                         new RouteListingPreference.Item.Builder(ROUTE_ID_APP_2_ROUTE_2)
                                 .setFlags(0)
                                 .setDisableReason(RouteListingPreference.Item.DISABLE_REASON_NONE)
+                                .setSessionParticipantCount(SAMPLE_SESSION_PARTICIPANT_COUNT)
                                 .build(),
                         new RouteListingPreference.Item.Builder(ROUTE_ID_APP_3_ROUTE_3)
                                 .setFlags(0)
@@ -173,8 +176,11 @@ public class MediaRouter2DeviceTest {
         Truth.assertThat(receivedRouteListingPreference.getUseSystemOrdering()).isTrue();
         Truth.assertThat(receivedRouteListingPreference.getItems().get(0).getFlags())
                 .isEqualTo(RouteListingPreference.Item.FLAG_ONGOING_SESSION);
-        Truth.assertThat(receivedRouteListingPreference.getItems().get(1).getDisableReason())
+        RouteListingPreference.Item secondItem = receivedRouteListingPreference.getItems().get(1);
+        Truth.assertThat(secondItem.getDisableReason())
                 .isEqualTo(RouteListingPreference.Item.DISABLE_REASON_NONE);
+        Truth.assertThat(secondItem.getSessionParticipantCount())
+                .isEqualTo(SAMPLE_SESSION_PARTICIPANT_COUNT);
         Truth.assertThat(receivedRouteListingPreference.getItems().get(2).getDisableReason())
                 .isEqualTo(RouteListingPreference.Item.DISABLE_REASON_SUBSCRIPTION_REQUIRED);
     }
