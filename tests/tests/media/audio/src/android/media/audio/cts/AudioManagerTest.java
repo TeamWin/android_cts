@@ -1951,8 +1951,13 @@ public class AudioManagerTest extends InstrumentationTestCase {
             fail("addOnPreferredDevicesForStrategyChangedListener must fail due to no permission");
         } catch (SecurityException e) {
         }
-        // There is not listener added at server side. Nothing to remove.
-        mAudioManager.removeOnPreferredDevicesForStrategyChangedListener(listener);
+        try {
+            // removeOnPreferredDevicesForStrategyChangedListener should throw on non-registered
+            // listener.
+            mAudioManager.removeOnPreferredDevicesForStrategyChangedListener(listener);
+            fail("removeOnPreferredDevicesForStrategyChangedListener must fail on bad listener");
+        } catch (IllegalArgumentException e) {
+        }
     }
 
     static class MyPrevDevicesForCapturePresetChangedListener implements

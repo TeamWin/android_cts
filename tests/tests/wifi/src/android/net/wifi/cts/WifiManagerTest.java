@@ -30,6 +30,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
@@ -78,6 +79,7 @@ import android.net.wifi.hotspot2.ProvisioningCallback;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerExecutor;
 import android.os.HandlerThread;
@@ -5648,6 +5650,54 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             //expected if the device does not support this API
         } catch (Exception ex) {
             fail("getUsableChannels unexpected Exception " + ex);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests {@link WifiManager#getChannelData(Executor, Consumer<List<Bundle>>)}
+     * does not crash.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testGetChannelData() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        List<Bundle> dataList = new ArrayList<>();
+        Consumer<List<Bundle>> listener = new Consumer<List<Bundle>>() {
+            @Override
+            public void accept(List<Bundle> value) {
+                synchronized (mLock) {
+                    dataList.addAll(value);
+                    mLock.notify();
+                }
+            }
+        };
+        // Test invalid inputs trigger IllegalArgumentException
+        assertThrows("null executor should trigger exception", NullPointerException.class,
+                () -> mWifiManager.getChannelData(null, listener));
+        assertThrows("null listener should trigger exception", NullPointerException.class,
+                () -> mWifiManager.getChannelData(mExecutor, null));
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Start scan and wait for scan results
+            startScan();
+            mWifiManager.getChannelData(mExecutor, listener);
+            synchronized (mLock) {
+                mLock.wait(TEST_WAIT_DURATION_MS);
+            }
+            if (mWifiManager.isScanAlwaysAvailable() && isScanCurrentlyAvailable()) {
+                assertFalse(dataList.isEmpty());
+            }
+        } catch (UnsupportedOperationException ex) {
+            //expected if the device does not support this API
+        } catch (Exception ex) {
+            fail("getChannelData unexpected Exception " + ex);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
