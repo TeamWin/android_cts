@@ -16,15 +16,13 @@
 
 package com.android.cts.localeconfig;
 
-import static android.server.wm.CliIntentExtra.extraString;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import android.app.LocaleConfig;
-import android.content.ComponentName;
+import android.app.LocaleManager;
 import android.content.Context;
 import android.os.LocaleList;
 import android.server.wm.ActivityManagerTestBase;
@@ -32,7 +30,6 @@ import android.server.wm.ActivityManagerTestBase;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellUtils;
 
 import org.junit.After;
@@ -43,7 +40,6 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -55,17 +51,19 @@ import java.util.stream.Collectors;
 @RunWith(AndroidJUnit4.class)
 public class LocaleConfigTest extends ActivityManagerTestBase {
     private static final String APK_PATH = "/data/local/tmp/cts/localeconfig/";
-    private static final String APK_WITH_LOCALECONFIG = APK_PATH + "ApkWithLocaleConfig.apk";
     private static final String APK_WITHOUT_LOCALECONFIG = APK_PATH + "ApkWithoutLocaleConfig.apk";
-    private static final String TEST_PACKAGE = "com.android.cts.localeconfiginorout";
+    private static final String TEST_PACKAGE = "com.android.cts.localeconfig";
+    private static final String TEST_PACKAGE_WITHOUT_LOCALECONFIG =
+            "com.android.cts.localeconfiginorout";
     private static final String EXTRA_SET_LOCALECONFIG = "set_localeconfig";
     private static final List<String> RESOURCE_LOCALES = Arrays.asList(
             new String[]{"en-US", "zh-Hant-TW", "pt-PT", "fr-FR", "zh-Hans-SG"});
     public static final LocaleList OVERRIDE_LOCALES =
             LocaleList.forLanguageTags("en-US,fr-FR,zh-Hant-TW");
-    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(10);
 
     private Context mContext;
+    private boolean mInstalled = false;
+    private boolean mOverrided = false;
 
     @Before
     public void setUp() throws Exception {
@@ -74,7 +72,8 @@ public class LocaleConfigTest extends ActivityManagerTestBase {
 
     @After
     public void tearDown() throws Exception {
-        uninstall(TEST_PACKAGE);
+        cleanOverrideLocaleConfig();
+        uninstall(TEST_PACKAGE_WITHOUT_LOCALECONFIG);
     }
 
     /**
@@ -82,7 +81,6 @@ public class LocaleConfigTest extends ActivityManagerTestBase {
      */
     @Test
     public void testGetLocaleList() throws Exception {
-        install(APK_WITH_LOCALECONFIG);
         Context appContext = mContext.createPackageContext(TEST_PACKAGE, 0);
         LocaleConfig localeConfig = new LocaleConfig(appContext);
 
@@ -101,7 +99,8 @@ public class LocaleConfigTest extends ActivityManagerTestBase {
     @Test
     public void testNoLocaleConfigTag() throws Exception {
         install(APK_WITHOUT_LOCALECONFIG);
-        Context appContext = mContext.createPackageContext(TEST_PACKAGE, 0);
+        mInstalled = true;
+        Context appContext = mContext.createPackageContext(TEST_PACKAGE_WITHOUT_LOCALECONFIG, 0);
         LocaleConfig localeConfig = new LocaleConfig(appContext);
         LocaleList localeList = localeConfig.getSupportedLocales();
 
@@ -116,20 +115,16 @@ public class LocaleConfigTest extends ActivityManagerTestBase {
      */
     @Test
     public void testGetOverrideLocaleConfig() throws Exception {
-        install(APK_WITH_LOCALECONFIG);
-
-        // Tell the app to override its app-specific LocaleConfig
-        launchActivity(new ComponentName(TEST_PACKAGE, TEST_PACKAGE + ".MainActivity"),
-                extraString(EXTRA_SET_LOCALECONFIG, OVERRIDE_LOCALES.toLanguageTags()));
-        // Verify where an override LocaleConfig of the test app can be read successfully
+        // Override app-specific LocaleConfig
+        LocaleManager localeManager = mContext.getSystemService(LocaleManager.class);
+        localeManager.setOverrideLocaleConfig(new LocaleConfig(OVERRIDE_LOCALES));
+        mOverrided = true;
+        // Verify whether an override LocaleConfig can be read successfully
         Context appContext = mContext.createPackageContext(TEST_PACKAGE, 0);
+        LocaleConfig override = new LocaleConfig(appContext);
 
-        PollingCheck.check("Make sure that the override LocaleConfig is read correctly", TIMEOUT,
-                () -> {
-                    LocaleConfig override = new LocaleConfig(appContext);
-                    return override.describeContents() == 0 && OVERRIDE_LOCALES.equals(
-                            override.getSupportedLocales());
-                });
+        assertEquals(0, override.describeContents());
+        assertEquals(OVERRIDE_LOCALES, override.getSupportedLocales());
     }
 
     /**
@@ -138,32 +133,39 @@ public class LocaleConfigTest extends ActivityManagerTestBase {
      */
     @Test
     public void testGetOriginalLocaleConfig() throws Exception {
-        install(APK_WITH_LOCALECONFIG);
-
-        // Tell the app to override its app-specific LocaleConfig
-        launchActivity(new ComponentName(TEST_PACKAGE, TEST_PACKAGE + ".MainActivity"),
-                extraString(EXTRA_SET_LOCALECONFIG, OVERRIDE_LOCALES.toLanguageTags()));
-        // Verify where an original LocaleConfig of the test app can be read successfully
+        // Override app-specific LocaleConfig
+        LocaleManager localeManager = mContext.getSystemService(LocaleManager.class);
+        localeManager.setOverrideLocaleConfig(new LocaleConfig(OVERRIDE_LOCALES));
+        mOverrided = true;
+        // Verify whether an original LocaleConfig can be read successfully
         Context appContext = mContext.createPackageContext(TEST_PACKAGE, 0);
 
-        PollingCheck.check("Make sure that the original LocaleConfig is read correctly", TIMEOUT,
-                () -> RESOURCE_LOCALES.stream().sorted().collect(Collectors.toList()).equals(
-                        new ArrayList<String>(Arrays.asList(
-                                LocaleConfig.fromResources(
-                                        appContext).getSupportedLocales().toLanguageTags().split(
-                                        ","))).stream().sorted().collect(Collectors.toList())));
+        assertEquals(RESOURCE_LOCALES.stream().sorted().collect(Collectors.toList()),
+                new ArrayList<String>(Arrays.asList(
+                        LocaleConfig.fromResources(
+                                appContext).getSupportedLocales().toLanguageTags().split(
+                                ","))).stream().sorted().collect(Collectors.toList()));
     }
 
     private void install(String apk) throws InterruptedException {
-        String installResult = ShellUtils.runShellCommand("pm install " + apk);
-        Thread.sleep(3000);
+        String installResult = ShellUtils.runShellCommand("pm install -r " + apk);
         assertThat(installResult.trim()).isEqualTo("Success");
     }
 
     private void uninstall(String packageName) throws InterruptedException {
-        String uninstallResult = ShellUtils.runShellCommand("pm uninstall " + packageName);
-        Thread.sleep(3000);
-        assertThat(uninstallResult.trim()).isEqualTo("Success");
+        if (mInstalled) {
+            mInstalled = false;
+            String uninstallResult = ShellUtils.runShellCommand("pm uninstall " + packageName);
+            assertThat(uninstallResult.trim()).isEqualTo("Success");
+        }
+    }
+
+    private void cleanOverrideLocaleConfig() {
+        if (mOverrided) {
+            mOverrided = false;
+            LocaleManager localeManager = mContext.getSystemService(LocaleManager.class);
+            localeManager.setOverrideLocaleConfig(null);
+        }
     }
 }
 

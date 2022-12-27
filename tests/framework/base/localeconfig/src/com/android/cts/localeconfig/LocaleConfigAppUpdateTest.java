@@ -216,14 +216,12 @@ public class LocaleConfigAppUpdateTest extends ActivityManagerTestBase {
     }
 
     private void install(String apk) throws InterruptedException {
-        String installResult = ShellUtils.runShellCommand("pm install " + apk);
-        Thread.sleep(3000);
+        String installResult = ShellUtils.runShellCommand("pm install -r " + apk);
         assertThat(installResult.trim()).isEqualTo("Success");
     }
 
     private void uninstall(String packageName) throws InterruptedException {
         String uninstallResult = ShellUtils.runShellCommand("pm uninstall " + packageName);
-        Thread.sleep(3000);
         assertThat(uninstallResult.trim()).isEqualTo("Success");
     }
 

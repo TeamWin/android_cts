@@ -39,6 +39,8 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
@@ -1081,6 +1083,74 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
         });
 
         assertTrue(getOnMainSync(() -> imm.get().isActive(secondEditorRef.get())));
+    }
+
+    /**
+     * A regression test for Bug 260682160.
+     *
+     * Ensure the input connection will be started eventually when temporary add & remove
+     * ALT_FOCUSABLE_IM flag during the editor focus-out and focus-in stage.
+     */
+    @Test
+    public void testInputConnectionWhenAddAndRemoveAltFocusableImFlagInFocus() throws Exception {
+        try (MockImeSession imeSession = createTestImeSession()) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String marker1 = getTestMarker();
+            final String marker2 = getTestMarker();
+
+            final AtomicReference<EditText> firstEditorRef = new AtomicReference<>();
+            final AtomicReference<EditText> secondEditorRef = new AtomicReference<>();
+            final int iterations = 10;
+
+            for (int i = 0; i < iterations; i++) {
+                final TestActivity testActivity = TestActivity.startSync(activity -> {
+                    final LinearLayout layout = new LinearLayout(activity);
+                    layout.setOrientation(LinearLayout.VERTICAL);
+                    final EditText firstEditor = new EditText(activity);
+                    firstEditor.setPrivateImeOptions(marker1);
+                    firstEditor.setOnFocusChangeListener((v, hasFocus) -> {
+                        if (!hasFocus) {
+                            // Test Scenario 1: add ALT_FOCUSABLE_IM flag when the first editor
+                            // lost the focus to disable the input and focusing the second editor.
+                            activity.getWindow().addFlags(FLAG_ALT_FOCUSABLE_IM);
+                            secondEditorRef.get().requestFocus();
+                        }
+                    });
+                    firstEditor.requestFocus();
+
+                    final EditText secondEditor = new EditText(activity);
+                    secondEditor.setPrivateImeOptions(marker2);
+                    firstEditorRef.set(firstEditor);
+                    secondEditorRef.set(secondEditor);
+                    layout.addView(firstEditor);
+                    layout.addView(secondEditor);
+                    activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_VISIBLE);
+                    return layout;
+                });
+                expectEvent(stream, editorMatcher("onStartInput", marker1), TIMEOUT);
+
+                testActivity.runOnUiThread(() -> firstEditorRef.get().clearFocus());
+                TestUtils.waitOnMainUntil(() -> secondEditorRef.get().hasFocus(), TIMEOUT);
+
+                testActivity.runOnUiThread(() -> {
+                    // Test Scenario 2: remove ALT_FOCUSABLE_IM flag & call showSoftInput after
+                    // the second editor focused.
+                    final InputMethodManager im = testActivity.getSystemService(
+                            InputMethodManager.class);
+                    testActivity.getWindow().clearFlags(FLAG_ALT_FOCUSABLE_IM);
+                    im.showSoftInput(secondEditorRef.get(), 0);
+                });
+
+                // Expect the input connection can started and commit the text to the second editor.
+                expectEvent(stream, editorMatcher("onStartInput", marker2), TIMEOUT);
+                expectImeVisible(TIMEOUT);
+
+                final String testInput = "Test";
+                final ImeCommand commitText = imeSession.callCommitText(testInput, 0);
+                expectCommand(stream, commitText, EXPECT_TIMEOUT);
+                assertThat(secondEditorRef.get().getText().toString()).isEqualTo(testInput);
+            }
+        }
     }
 
     private static void expectImeHidden(@NonNull ImeEventStream stream) throws TimeoutException {

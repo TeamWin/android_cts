@@ -1229,13 +1229,24 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                                         if (imeInsetsHiddenLatchRef.get() != null) {
                                             imeInsetsHiddenLatchRef.get().countDown();
                                         }
-                                        editText.getWindowInsetsController().hide(ime());
-                                        editText.clearFocus();
-                                    } else if (insets.isVisible(WindowInsets.Type.ime())) {
-                                        editText.getWindowInsetsController().show(ime());
                                     }
                                     return v.onApplyWindowInsets(insets);
                                 });
+                        editText.getViewTreeObserver().addOnWindowFocusChangeListener(hasFocus -> {
+                            // Test scenario: emulate the issue app implements to show IME when
+                            // focusing back if the last requested IME insets visibility is true.
+                            // And hides IME with clearing the editor focus when the app focus-out.
+                            if (hasFocus) {
+                                final boolean hasImeShown =
+                                        editText.getRootWindowInsets().isVisible(ime());
+                                if (hasImeShown) {
+                                    editText.getWindowInsetsController().show(ime());
+                                }
+                            } else {
+                                editText.getWindowInsetsController().hide(ime());
+                                editText.clearFocus();
+                            }
+                        });
                         editText.getWindowInsetsController().show(ime());
                     }
             );
@@ -1258,8 +1269,8 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             runOnMainSync(secondActivity::onBackPressed);
 
             // Verify the visibility of IME insets should be hidden in onApplyWindowInsets and
-            // expect the first activity will hide the IME according to the received IME insets
-            // visibility when backing to the first activity.
+            // expect the first activity hides the IME according to the received IME insets
+            // visibility when backing from the second activity.
             imeInsetsHiddenLatchRef.get().await(5, TimeUnit.SECONDS);
             notExpectEvent(stream, editorMatcher("onStartInputView", marker), NOT_EXPECT_TIMEOUT);
             expectImeInvisible(TIMEOUT);
