@@ -117,7 +117,7 @@ class AppOpsLoggingTest {
                             FLAG_ACTIVITY_CLEAR_TASK or FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(activityIntent)
                 }
-            }, IntentFilter(installAction))
+            }, IntentFilter(installAction), Context.RECEIVER_EXPORTED)
 
             // Commit session (should trigger installAction receiver)
             session.commit(PendingIntent.getBroadcast(context, 0,

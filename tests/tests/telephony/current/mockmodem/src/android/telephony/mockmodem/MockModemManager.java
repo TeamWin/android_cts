@@ -380,6 +380,23 @@ public class MockModemManager {
     }
 
     /**
+     * register callback for monitoring broadcast activation
+     *
+     * @param callback callback to register
+     */
+    public void registerBroadcastCallback(
+            IRadioMessagingImpl.CallBackWithExecutor callback) {
+        mMockModemService.getIRadioMessaging().registerBroadcastCallback(callback);
+    }
+
+    /**
+     * unregister callback for monitoring broadcast activation
+     */
+    public void unregisterBroadcastCallback(IRadioMessagingImpl.CallBackWithExecutor callback) {
+        mMockModemService.getIRadioMessaging().unregisterBroadcastCallback(callback);
+    }
+
+    /**
      * Indicates when Single Radio Voice Call Continuity (SRVCC) progress state has changed.
      *
      * @param slotId which slot would insert.

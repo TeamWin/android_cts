@@ -17,14 +17,11 @@
 package android.permission.cts;
 
 import static android.Manifest.permission.WRITE_DEVICE_CONFIG;
-import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.os.Process.myUserHandle;
-import static android.permission.cts.PermissionUtils.clearAppState;
 import static android.permission.cts.TestUtils.eventually;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-import static com.android.compatibility.common.util.SystemUtil.waitForBroadcasts;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -37,9 +34,7 @@ import android.app.NotificationManager;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.provider.DeviceConfig;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -288,44 +283,9 @@ public class BaseNotificationListenerCheckTest {
      * Reset the permission controllers state.
      */
     private static void resetPermissionController() throws Throwable {
-        clearAppState(PERMISSION_CONTROLLER_PKG);
-
-        // Wait until jobs are cleared
-        TestUtils.awaitJobUntilRequestedState(
-                PERMISSION_CONTROLLER_PKG,
-                NOTIFICATION_LISTENER_CHECK_JOB_ID,
-                UNEXPECTED_TIMEOUT_MILLIS,
-                sUiAutomation,
-                "unknown"
-        );
-
-        // Setup up permission controller again (simulate a reboot)
-        Intent permissionControllerSetupIntent = new Intent(
-                ACTION_SET_UP_NOTIFICATION_LISTENER_CHECK).setPackage(
-                PERMISSION_CONTROLLER_PKG).setFlags(FLAG_RECEIVER_FOREGROUND);
-
-        // Query for the setup broadcast receiver
-        List<ResolveInfo> resolveInfos = sContext.getPackageManager().queryBroadcastReceivers(
-                permissionControllerSetupIntent, 0);
-
-        if (resolveInfos.size() > 0) {
-            sContext.sendBroadcast(permissionControllerSetupIntent);
-        } else {
-            sContext.sendBroadcast(new Intent()
-                    .setClassName(PERMISSION_CONTROLLER_PKG, NotificationListenerOnBootReceiver)
-                    .setFlags(FLAG_RECEIVER_FOREGROUND)
-                    .setPackage(PERMISSION_CONTROLLER_PKG));
-        }
-        waitForBroadcasts();
-
-        // Wait until jobs are set up
-        TestUtils.awaitJobUntilRequestedState(
-                PERMISSION_CONTROLLER_PKG,
-                NOTIFICATION_LISTENER_CHECK_JOB_ID,
-                UNEXPECTED_TIMEOUT_MILLIS,
-                sUiAutomation,
-                "waiting"
-        );
+        PermissionUtils.resetPermissionControllerJob(sUiAutomation, PERMISSION_CONTROLLER_PKG,
+                NOTIFICATION_LISTENER_CHECK_JOB_ID, UNEXPECTED_TIMEOUT_MILLIS,
+                ACTION_SET_UP_NOTIFICATION_LISTENER_CHECK, NotificationListenerOnBootReceiver);
     }
 
     /**

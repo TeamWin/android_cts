@@ -1841,7 +1841,9 @@ public class ActivityManagerProcessStateTest {
             // Start a FGSL
             Bundle bundle = new Bundle();
             bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                    | ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+                    | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,
                     mAppInfo[0].packageName, mAppInfo[0].packageName, 0, bundle);

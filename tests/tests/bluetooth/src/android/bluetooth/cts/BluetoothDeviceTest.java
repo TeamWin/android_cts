@@ -31,6 +31,7 @@ import static org.junit.Assert.assertThrows;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothAudioPolicy;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothStatusCodes;
@@ -447,6 +448,26 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         assertEquals(ACCESS_ALLOWED, mFakeDevice.getSimAccessPermission());
         assertTrue(mFakeDevice.setSimAccessPermission(ACCESS_REJECTED));
         assertEquals(ACCESS_REJECTED, mFakeDevice.getSimAccessPermission());
+    }
+
+
+    public void test_setGetAudioPolicy() {
+        if (!mHasBluetooth || !mHasCompanionDevice) {
+            // Skip the test if bluetooth or companion device are not present.
+            return;
+        }
+
+        BluetoothAudioPolicy demoAudioPolicy = new BluetoothAudioPolicy.Builder().build();
+
+        // This should throw a SecurityException because no BLUETOOTH_PRIVILEGED permission
+        assertThrows(SecurityException.class, () -> mFakeDevice.setAudioPolicy(demoAudioPolicy));
+        assertThrows(SecurityException.class, () -> mFakeDevice.getAudioPolicy());
+
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+
+        assertEquals(BluetoothStatusCodes.ERROR_DEVICE_NOT_BONDED,
+                mFakeDevice.setAudioPolicy(demoAudioPolicy));
+        assertNull(mFakeDevice.getAudioPolicy());
     }
 
     private byte[] convertPinToBytes(String pin) {

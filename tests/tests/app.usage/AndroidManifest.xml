@@ -18,6 +18,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.app.usage.cts" android:targetSandboxVersion="2">
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
 
     <!-- We can't have the test framework turn off the keyguard, because that will
          prevent us from testing interactions with it.
@@ -65,7 +66,10 @@
             android:taskAffinity="android.app.usage.cts.other_task"/>
         <activity android:name=".FragmentTestActivity" />
         <activity android:name=".TaskRootActivity" />
-        <service android:name=".TestService" />
+        <service android:name=".TestService"
+                 android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="cts" />
+        </service>
         <service android:name=".TestJob"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE"

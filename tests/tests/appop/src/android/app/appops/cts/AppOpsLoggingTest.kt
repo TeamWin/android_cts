@@ -938,7 +938,8 @@ class AppOpsLoggingTest {
         }
 
         val testContext = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
-        testContext.registerReceiver(receiver, IntentFilter(PRIVATE_ACTION))
+        testContext.registerReceiver(receiver, IntentFilter(PRIVATE_ACTION),
+                Context.RECEIVER_EXPORTED)
 
         try {
             context.sendOrderedBroadcast(Intent(PRIVATE_ACTION), READ_CONTACTS, OPSTR_READ_CONTACTS,

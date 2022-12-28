@@ -35,16 +35,20 @@ import static android.content.pm.PackageManager.FLAG_PERMISSION_USER_SET;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.content.pm.PermissionInfo.PROTECTION_DANGEROUS;
+import static android.permission.cts.TestUtils.awaitJobUntilRequestedState;
 
 import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+import static com.android.compatibility.common.util.SystemUtil.waitForBroadcasts;
 
 import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PermissionInfo;
+import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.Process;
 import android.os.UserHandle;
@@ -324,4 +328,60 @@ public class PermissionUtils {
         return runtimePermissions;
     }
 
+    /**
+     * Reset permission controller state & re-schedule the job.
+     */
+    public static void resetPermissionControllerJob(@NonNull UiAutomation automation,
+            @NonNull String packageName, int jobId, long timeout, @NonNull String intentAction,
+            @NonNull String onBootReceiver) throws Exception {
+        clearAppState(packageName);
+
+        awaitJobUntilRequestedState(packageName, jobId, timeout, automation, "unknown");
+        scheduleJob(automation, packageName, jobId, timeout, intentAction, onBootReceiver);
+
+        runShellCommand("cmd jobscheduler reset-execution-quota -u "
+                + Process.myUserHandle().getIdentifier() + " " + packageName);
+        runShellCommand("cmd jobscheduler reset-schedule-quota");
+    }
+
+    /**
+     * schedules a job for the privacy signal in Permission Controller
+     */
+    public static void scheduleJob(@NonNull UiAutomation automation,
+            @NonNull String packageName, int jobId, long timeout, @NonNull String intentAction,
+            @NonNull String onBootReceiver) throws Exception {
+        long startTime = System.currentTimeMillis();
+        String jobStatus = "";
+
+        while ((System.currentTimeMillis() - startTime) < timeout
+                && !jobStatus.contains("waiting")) {
+            simulateReboot(packageName, intentAction, onBootReceiver);
+            String cmd =
+                    "cmd jobscheduler get-job-state -u " + Process.myUserHandle().getIdentifier()
+                            + " " + packageName + " " + jobId;
+            jobStatus = runShellCommand(automation, cmd).trim();
+        }
+    }
+
+    private static void simulateReboot(@NonNull String packageName, @NonNull String intentAction,
+            @NonNull String onBootReceiver) {
+        Intent jobSetupReceiverIntent = new Intent(intentAction);
+        jobSetupReceiverIntent.setPackage(packageName);
+        jobSetupReceiverIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+
+        // Query for the setup broadcast receiver
+        List<ResolveInfo> resolveInfos =
+                sContext.getPackageManager().queryBroadcastReceivers(jobSetupReceiverIntent, 0);
+
+        if (resolveInfos.size() > 0) {
+            sContext.sendBroadcast(jobSetupReceiverIntent);
+        } else {
+            Intent intent = new Intent();
+            intent.setClassName(packageName, onBootReceiver);
+            intent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+            intent.setPackage(packageName);
+            sContext.sendBroadcast(intent);
+        }
+        waitForBroadcasts();
+    }
 }

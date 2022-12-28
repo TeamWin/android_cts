@@ -414,7 +414,7 @@ public class MifareClassicTest {
     }
 
     @Test
-    public void testGetMaxTransceieveLength() throws RemoteException, IOException {
+    public void testGetMaxTransceiveLength() throws RemoteException, IOException {
         MifareClassic classic = createMifareClassic1K();
 
         when(mNfcTagMock.isTagUpToDate(anyLong())).thenReturn(true);

@@ -190,7 +190,9 @@ public class ActivityManagerFgsBgStartTest {
             // APP1 is in BG state, Start FGSL in APP1, it won't get location capability.
             Bundle bundle = new Bundle();
             bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                    | ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+                    | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
             // start FGSL.
             enableFgsRestriction(false, true, null);
             CommandReceiver.sendCommand(mContext,
@@ -291,7 +293,9 @@ public class ActivityManagerFgsBgStartTest {
             // APP1 is in BG state, start FGSL in APP2.
             Bundle bundle = new Bundle();
             bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                    | ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+                    | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
             WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
             waiter.prepare(ACTION_START_FGSL_RESULT);
             enableFgsRestriction(false, true, null);
@@ -496,7 +500,9 @@ public class ActivityManagerFgsBgStartTest {
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
             Bundle bundle = new Bundle();
             bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                    | ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+                    | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
             // Then start FGSL in APP1, it won't get location capability.
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,

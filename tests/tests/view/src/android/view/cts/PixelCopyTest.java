@@ -45,6 +45,7 @@ import android.media.ImageReader;
 import android.media.ImageWriter;
 import android.os.Debug;
 import android.server.wm.IgnoreOrientationRequestSession;
+import android.server.wm.SetRequestedOrientationRule;
 import android.util.Half;
 import android.util.Log;
 import android.view.PixelCopy;
@@ -53,7 +54,6 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.cts.util.BitmapDumper;
-import android.view.cts.util.DisableFixedToUserRotationRule;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
@@ -85,9 +85,11 @@ import java.util.function.Function;
 public class PixelCopyTest {
     private static final String TAG = "PixelCopyTests";
 
+    // TODO: Use SetRequestedOrientationRule instead.
     @Rule
-    public DisableFixedToUserRotationRule mDisableFixedToUserRotationRule =
-            new DisableFixedToUserRotationRule();
+    public SetRequestedOrientationRule.DisableFixedToUserRotationRule
+            mDisableFixedToUserRotationRule =
+            new SetRequestedOrientationRule.DisableFixedToUserRotationRule();
 
     @Rule
     public ActivityTestRule<PixelCopyGLProducerCtsActivity> mGLSurfaceViewActivityRule =

@@ -28,6 +28,8 @@ import android.util.ArraySet;
 import android.util.Log;
 
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
 
 public class IRadioMessagingImpl extends IRadioMessaging.Stub {
     private static final String TAG = "MRMSG";
@@ -42,9 +44,27 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
     @GuardedBy("mCdmaBroadcastConfigSet")
     private final Set<Integer> mCdmaBroadcastConfigSet = new ArraySet<Integer>();
 
+    private CopyOnWriteArrayList<CallBackWithExecutor> mBroadcastCallbacks =
+            new CopyOnWriteArrayList<>();
+
     private MockModemConfigInterface mMockModemConfigInterface;
     private int mSubId;
     private String mTag;
+
+    public interface BroadcastCallback {
+        void onGsmBroadcastActivated();
+        void onCdmaBroadcastActivated();
+    }
+
+    public static class CallBackWithExecutor {
+        public Executor mExecutor;
+        public BroadcastCallback mCallback;
+
+        public CallBackWithExecutor(Executor executor, BroadcastCallback callback) {
+            mExecutor = executor;
+            mCallback = callback;
+        }
+    }
 
     public IRadioMessagingImpl(
             MockModemService service, MockModemConfigInterface configInterface, int instanceId) {
@@ -247,13 +267,19 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
 
     @Override
     public void setCdmaBroadcastActivation(int serial, boolean activate) {
-        Log.d(mTag, "setCdmaBroadcastActivation");
+        Log.d(mTag, "setCdmaBroadcastActivation, activate = " + activate);
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.NONE);
         try {
             mRadioMessagingResponse.setCdmaBroadcastActivationResponse(rsp);
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to setCdmaBroadcastActivation from AIDL. Exception" + ex);
+        }
+        if (activate) {
+            for (CallBackWithExecutor callbackWithExecutor : mBroadcastCallbacks) {
+                callbackWithExecutor.mExecutor.execute(
+                        () -> callbackWithExecutor.mCallback.onCdmaBroadcastActivated());
+            }
         }
     }
 
@@ -263,7 +289,7 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
         Log.d(mTag, "setCdmaBroadcastConfig");
 
         int error = RadioError.NONE;
-        if (configInfo == null || configInfo.length == 0) {
+        if (configInfo == null) {
             error = RadioError.INVALID_ARGUMENTS;
         } else {
             synchronized (mCdmaBroadcastConfigSet) {
@@ -284,13 +310,19 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
 
     @Override
     public void setGsmBroadcastActivation(int serial, boolean activate) {
-        Log.d(mTag, "setGsmBroadcastActivation");
+        Log.d(mTag, "setGsmBroadcastActivation, activate = " + activate);
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.NONE);
         try {
             mRadioMessagingResponse.setGsmBroadcastActivationResponse(rsp);
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to setGsmBroadcastActivation from AIDL. Exception" + ex);
+        }
+        if (activate) {
+            for (CallBackWithExecutor callbackWithExecutor : mBroadcastCallbacks) {
+                callbackWithExecutor.mExecutor.execute(
+                        () -> callbackWithExecutor.mCallback.onGsmBroadcastActivated());
+            }
         }
     }
 
@@ -300,7 +332,7 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
         Log.d(mTag, "setGsmBroadcastConfig");
 
         int error = RadioError.NONE;
-        if (configInfo == null || configInfo.length == 0) {
+        if (configInfo == null) {
             error = RadioError.INVALID_ARGUMENTS;
         } else {
             synchronized (mGsmBroadcastConfigSet) {
@@ -496,5 +528,12 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
             Log.d(mTag, "getBroadcastConfigSet. " + mCdmaBroadcastConfigSet);
             return mCdmaBroadcastConfigSet;
         }
+    }
+
+    public void registerBroadcastCallback(CallBackWithExecutor callback) {
+        mBroadcastCallbacks.add(callback);
+    }
+    public void unregisterBroadcastCallback(CallBackWithExecutor callback) {
+        mBroadcastCallbacks.remove(callback);
     }
 }

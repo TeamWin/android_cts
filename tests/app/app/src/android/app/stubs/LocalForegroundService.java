@@ -23,6 +23,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -99,7 +100,8 @@ public class LocalForegroundService extends LocalService {
                             Notification.FOREGROUND_SERVICE_IMMEDIATE);
                 }
                 try {
-                    startForeground(mNotificationId, builder.build());
+                    startForeground(mNotificationId, builder.build(),
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST);
                 } catch (ForegroundServiceStartNotAllowedException e) {
                     Log.d(TAG, "startForeground gets an "
                             + " ForegroundServiceStartNotAllowedException", e);

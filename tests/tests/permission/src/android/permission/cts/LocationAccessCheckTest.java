@@ -23,7 +23,6 @@ import static android.app.AppOpsManager.OPSTR_FINE_LOCATION;
 import static android.app.AppOpsManager.OP_FLAGS_ALL_TRUSTED;
 import static android.content.Context.BIND_AUTO_CREATE;
 import static android.content.Context.BIND_NOT_FOREGROUND;
-import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.location.Criteria.ACCURACY_FINE;
 import static android.os.Process.myUserHandle;
 import static android.provider.Settings.Secure.LOCATION_ACCESS_CHECK_DELAY_MILLIS;
@@ -51,7 +50,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -348,7 +346,9 @@ public class LocationAccessCheckTest {
      */
     private static void runLocationCheck() throws Throwable {
         if (!isJobReady()) {
-            setupLocationAccessCheckJob();
+            PermissionUtils.scheduleJob(sUiAutomation, PERMISSION_CONTROLLER_PKG,
+                    LOCATION_ACCESS_CHECK_JOB_ID, EXPECTED_TIMEOUT_MILLIS,
+                    ACTION_SET_UP_LOCATION_ACCESS_CHECK, LocationAccessCheckOnBootReceiver);
         }
 
         TestUtils.awaitJobUntilRequestedState(
@@ -496,7 +496,6 @@ public class LocationAccessCheckTest {
      * Reset the permission controllers state before each test
      */
     public void resetPermissionControllerBeforeEachTest() throws Throwable {
-        //setupLocationAccessCheckJob();
         // Has to be before resetPermissionController to make sure enablement time is the reset time
         // of permission controller
         enableLocationAccessCheck();
@@ -581,44 +580,10 @@ public class LocationAccessCheckTest {
      * Reset the permission controllers state.
      */
     private static void resetPermissionController() throws Throwable {
-        clearPackageData(PERMISSION_CONTROLLER_PKG);
-        TestUtils.awaitJobUntilRequestedState(
-                PERMISSION_CONTROLLER_PKG,
-                LOCATION_ACCESS_CHECK_JOB_ID,
-                UNEXPECTED_TIMEOUT_MILLIS,
-                sUiAutomation,
-                "unknown"
-        );
-
-        setupLocationAccessCheckJob();
-        TestUtils.awaitJobUntilRequestedState(
-                PERMISSION_CONTROLLER_PKG,
-                LOCATION_ACCESS_CHECK_JOB_ID,
-                UNEXPECTED_TIMEOUT_MILLIS,
-                sUiAutomation,
-                "waiting"
-        );
-    }
-
-    private static void setupLocationAccessCheckJob() {
-        // Setup location access check
-        Intent permissionControllerSetupIntent = new Intent(
-                ACTION_SET_UP_LOCATION_ACCESS_CHECK).setPackage(
-                PERMISSION_CONTROLLER_PKG).setFlags(FLAG_RECEIVER_FOREGROUND);
-
-        // Query for the setup broadcast receiver
-        List<ResolveInfo> resolveInfos = sContext.getPackageManager().queryBroadcastReceivers(
-                permissionControllerSetupIntent, 0);
-
-        if (resolveInfos.size() > 0) {
-            sContext.sendBroadcast(permissionControllerSetupIntent);
-        } else {
-            sContext.sendBroadcast(new Intent()
-                    .setClassName(PERMISSION_CONTROLLER_PKG, LocationAccessCheckOnBootReceiver)
-                    .setFlags(FLAG_RECEIVER_FOREGROUND)
-                    .setPackage(PERMISSION_CONTROLLER_PKG));
-        }
-        waitForBroadcasts();
+        unbindService();
+        PermissionUtils.resetPermissionControllerJob(sUiAutomation, PERMISSION_CONTROLLER_PKG,
+                LOCATION_ACCESS_CHECK_JOB_ID, UNEXPECTED_TIMEOUT_MILLIS,
+                ACTION_SET_UP_LOCATION_ACCESS_CHECK, LocationAccessCheckOnBootReceiver);
     }
 
     /**

@@ -22,7 +22,6 @@ import android.app.Instrumentation
 import android.app.UiAutomation
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.os.Process
 import android.permission.cts.NotificationListenerUtils.assertEmptyNotification
@@ -255,49 +254,9 @@ class AccessibilityPrivacySourceTest {
     /** Reset the permission controllers state. */
     @Throws(Throwable::class)
     private fun resetPermissionController() {
-        PermissionUtils.clearAppState(permissionControllerPackage)
-        TestUtils.awaitJobUntilRequestedState(
-            permissionControllerPackage,
-            ACCESSIBILITY_JOB_ID,
-            TIMEOUT_MILLIS,
-            getAutomation(),
-            "unknown"
-        )
-
-        runShellCommand(
-            "cmd jobscheduler reset-execution-quota -u " +
-                "${Process.myUserHandle().identifier} $permissionControllerPackage")
-        runShellCommand("cmd jobscheduler reset-schedule-quota")
-
-        // Setup up permission controller again (simulate a reboot)
-        val permissionControllerSetupIntent =
-            Intent(ACTION_SET_UP_ACCESSIBILITY_CHECK).apply {
-                setPackage(permissionControllerPackage)
-                setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-            }
-
-        // Query for the setup broadcast receiver
-        val resolveInfos =
-            context.packageManager.queryBroadcastReceivers(permissionControllerSetupIntent, 0)
-
-        if (resolveInfos.size > 0) {
-            context.sendBroadcast(permissionControllerSetupIntent)
-        } else {
-            context.sendBroadcast(
-                Intent().apply {
-                    setClassName(permissionControllerPackage, AccessibilityOnBootReceiver)
-                    setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-                    setPackage(permissionControllerPackage)
-                })
-        }
-
-        TestUtils.awaitJobUntilRequestedState(
-            permissionControllerPackage,
-            ACCESSIBILITY_JOB_ID,
-            TIMEOUT_MILLIS,
-            getAutomation(),
-            "waiting"
-        )
+        PermissionUtils.resetPermissionControllerJob(getAutomation(), permissionControllerPackage,
+            ACCESSIBILITY_JOB_ID, TIMEOUT_MILLIS, ACTION_SET_UP_ACCESSIBILITY_CHECK,
+            AccessibilityOnBootReceiver)
     }
 
     companion object {
