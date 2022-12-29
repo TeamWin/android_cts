@@ -2472,7 +2472,16 @@ public class StaticMetadata {
      * @return {@code true} if noise reduction mode control is supported
      */
     public boolean isNoiseReductionModeControlSupported() {
-        return areKeysAvailable(CaptureRequest.NOISE_REDUCTION_MODE);
+        if (!areKeysAvailable(CaptureRequest.NOISE_REDUCTION_MODE)) {
+            return false;
+        }
+        int[] availableModes = getAvailableNoiseReductionModesChecked();
+        // Let's consider noise reduction is not supported if only "OFF" is reported.
+        if (availableModes.length == 1
+                && availableModes[0] == CaptureRequest.NOISE_REDUCTION_MODE_OFF) {
+            return false;
+        }
+        return true;
     }
 
     /**

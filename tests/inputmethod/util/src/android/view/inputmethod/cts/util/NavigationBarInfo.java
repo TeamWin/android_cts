@@ -94,7 +94,7 @@ public class NavigationBarInfo {
                                 ViewGroup.LayoutParams.MATCH_PARENT));
                         viewRef.set(view);
                         return view;
-                    });
+                    }, TestActivity.class);
 
             final View view = viewRef.get();
 

@@ -142,7 +142,7 @@ public class InputMethodPickerTest extends MultiDisplayTestBase {
                         view.setLayoutParams(
                                 new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
                         return view;
-                    });
+                    }, TestActivity.class);
             waitAndAssertActivityStateOnDisplay(testActivity.getComponentName(),
                     STATE_RESUMED, dc.mId, "Activity launched on external display must be resumed");
 

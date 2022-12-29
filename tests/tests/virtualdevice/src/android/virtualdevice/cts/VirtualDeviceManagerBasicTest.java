@@ -291,12 +291,13 @@ public class VirtualDeviceManagerBasicTest {
                                 .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
                                 .build());
         mVirtualDevice.close();
-        mVirtualDevice = null;
 
         assertThat(
                 mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
                         POLICY_TYPE_SENSORS))
                 .isEqualTo(DEVICE_POLICY_DEFAULT);
+
+        mVirtualDevice = null;
     }
 
     @Test

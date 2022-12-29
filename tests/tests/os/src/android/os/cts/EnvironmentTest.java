@@ -165,7 +165,7 @@ public class EnvironmentTest extends TestCase {
             Function<ApplicationInfo, String> publicProperty) {
         var appInfo = sContext.getApplicationInfo();
         // Check that public API is consistent with the public property
-        assertThat(publicApi.apply(appInfo.storageUuid, UserHandle.of(0)).getAbsolutePath())
+        assertThat(publicApi.apply(appInfo.storageUuid, sContext.getUser()).getAbsolutePath())
                 .isEqualTo(publicProperty.apply(appInfo));
     }
 }

@@ -25,12 +25,14 @@ import its_base_test
 import camera_properties_utils
 import image_processing_utils
 import its_session_utils
+import opencv_processing_utils
 import sensor_fusion_utils
 import video_processing_utils
 
 _ARDUINO_ANGLES = (10, 25)  # degrees
 _ARDUINO_MOVE_TIME = 0.30  # seconds
 _ARDUINO_SERVO_SPEED = 10
+_ASPECT_RATIO_16_9 = 16/9  # determine if video fmt > 16:9
 _IMG_FORMAT = 'png'
 _MIN_PHONE_MOVEMENT_ANGLE = 5  # degrees
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -44,6 +46,8 @@ _VIDEO_QUALITIES_TESTED = ('CIF:3', '480P:4', '720P:5', '1080P:6', 'QVGA:7',
                            'VGA:9')
 _VIDEO_STABILIZATION_FACTOR = 0.6  # 60% of gyro movement allowed
 _VIDEO_STABILIZATION_MODE = 1
+_SIZE_TO_PROFILE = {'176x144': 'QCIF:2', '352x288': 'CIF:3',
+                    '320x240': 'QVGA:7'}
 
 
 def _collect_data(cam, video_profile, video_quality, rot_rig):
@@ -119,7 +123,10 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
           vendor_api_level >= its_session_utils.ANDROID13_API_LEVEL and
           _VIDEO_STABILIZATION_MODE in supported_stabilization_modes)
 
-      # Get ffmpeg version being used.
+      # Calculate camera FoV and convert from string to float
+      camera_fov = float(cam.calc_camera_fov(props))
+
+      # Get ffmpeg version being used
       ffmpeg_version = video_processing_utils.get_ffmpeg_version()
       logging.debug('ffmpeg_version: %s', ffmpeg_version)
 
@@ -135,12 +142,21 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
       if rot_rig['cntl'].lower() != 'arduino':
         raise AssertionError(f'You must use an arduino controller for {_NAME}.')
 
+      if camera_fov > opencv_processing_utils.FOV_THRESH_WFOV:
+        excluded_sizes = video_processing_utils.LOW_RESOLUTION_SIZES['UW']
+      else:
+        excluded_sizes = video_processing_utils.LOW_RESOLUTION_SIZES['W']
+      excluded_qualities = [
+          _SIZE_TO_PROFILE[s] for s in excluded_sizes if s in _SIZE_TO_PROFILE
+      ]
+
       # Create list of video qualities to test
       supported_video_qualities = cam.get_supported_video_qualities(
           self.camera_id)
       logging.debug('Supported video qualities: %s', supported_video_qualities)
       tested_video_qualities = list(set(_VIDEO_QUALITIES_TESTED) &
-                                    set(supported_video_qualities))
+                                    set(supported_video_qualities) -
+                                    set(excluded_qualities))
 
       # Raise error if no video qualities to test
       if not tested_video_qualities:
@@ -149,8 +165,8 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
       else:
         logging.debug('video qualities tested: %s', str(tested_video_qualities))
 
-      max_gyro_angles = []
-      max_camera_angles = []
+      max_cam_gyro_angles = {}
+
       for video_tested in tested_video_qualities:
         video_profile = video_tested.split(':')[1]
         video_quality = video_tested.split(':')[0]
@@ -189,37 +205,46 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
             file_name_stem, _START_FRAME, stabilized_video=True)
         sensor_fusion_utils.plot_camera_rotations(
             cam_rots, _START_FRAME, video_quality, file_name_stem)
-        max_camera_angles.append(sensor_fusion_utils.calc_max_rotation_angle(
-            cam_rots, 'Camera'))
+        max_camera_angle = sensor_fusion_utils.calc_max_rotation_angle(
+            cam_rots, 'Camera')
 
         # Extract gyro rotations
         sensor_fusion_utils.plot_gyro_events(
             gyro_events, f'{_NAME}_{video_quality}', log_path)
         gyro_rots = sensor_fusion_utils.conv_acceleration_to_movement(
             gyro_events, _VIDEO_DELAY_TIME)
-        max_gyro_angles.append(sensor_fusion_utils.calc_max_rotation_angle(
-            gyro_rots, 'Gyro'))
+        max_gyro_angle = sensor_fusion_utils.calc_max_rotation_angle(
+            gyro_rots, 'Gyro')
         logging.debug(
             'Max deflection (degrees) %s: video: %.3f, gyro: %.3f, ratio: %.4f',
-            video_quality, max_camera_angles[-1], max_gyro_angles[-1],
-            max_camera_angles[-1] / max_gyro_angles[-1])
+            video_quality, max_camera_angle, max_gyro_angle,
+            max_camera_angle / max_gyro_angle)
+        max_cam_gyro_angles[video_quality] = {'gyro': max_gyro_angle,
+                                              'cam': max_camera_angle,
+                                              'frame_shape': frame_shape}
 
         # Assert phone is moved enough during test
-        if max_gyro_angles[-1] < _MIN_PHONE_MOVEMENT_ANGLE:
+        if max_gyro_angle < _MIN_PHONE_MOVEMENT_ANGLE:
           raise AssertionError(
-              f'Phone not moved enough! Movement: {max_gyro_angles[-1]}, '
+              f'Phone not moved enough! Movement: {max_gyro_angle}, '
               f'THRESH: {_MIN_PHONE_MOVEMENT_ANGLE} degrees')
 
       # Assert PASS/FAIL criteria
       test_failures = []
-      for i, max_camera_angle in enumerate(max_camera_angles):
-        if max_camera_angle >= max_gyro_angles[i] * _VIDEO_STABILIZATION_FACTOR:
+      for video_quality, max_angles in max_cam_gyro_angles.items():
+        aspect_ratio = (max_angles['frame_shape'][1] /
+                        max_angles['frame_shape'][0])
+        if aspect_ratio > _ASPECT_RATIO_16_9:
+          video_stabilization_factor = _VIDEO_STABILIZATION_FACTOR * 1.1
+        else:
+          video_stabilization_factor = _VIDEO_STABILIZATION_FACTOR
+        if max_angles['cam'] >= max_angles['gyro']*video_stabilization_factor:
           test_failures.append(
-              f'{tested_video_qualities[i]} video not stabilized enough! '
-              f'Max video angle: {max_camera_angle:.3f}, '
-              f'Max gyro angle: {max_gyro_angles[i]:.3f}, '
-              f'ratio: {max_camera_angle/max_gyro_angles[i]:.3f} '
-              f'THRESH: {_VIDEO_STABILIZATION_FACTOR}.')
+              f'{video_quality} video not stabilized enough! '
+              f"Max video angle:  {max_angles['cam']:.3f}, "
+              f"Max gyro angle: {max_angles['gyro']:.3f}, "
+              f"ratio: {max_angles['cam']/max_angles['gyro']:.3f} "
+              f'THRESH: {video_stabilization_factor}.')
       if test_failures:
         raise AssertionError(test_failures)
 

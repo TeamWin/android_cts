@@ -38,7 +38,7 @@ import org.junit.Test;
  */
 @Presubmit
 public class BackNavigationLegacyGestureTest extends ActivityManagerTestBase {
-
+    private static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
     @Before
     public void setup() throws Exception {
         super.setUp();
@@ -51,6 +51,7 @@ public class BackNavigationLegacyGestureTest extends ActivityManagerTestBase {
         launchActivity(BACK_LEGACY);
         mWmState.assertActivityDisplayed(BACK_LEGACY);
         waitAndAssertActivityState(BACK_LEGACY, STATE_RESUMED, "Activity should be resumed");
+        waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, BACK_LEGACY);
         triggerBackEventByGesture(DEFAULT_DISPLAY);
         waitAndAssertActivityState(BACK_LEGACY, STATE_STOPPED, "Activity should be stopped");
         assertTrue("OnBackPressed should have been called",

@@ -184,7 +184,7 @@ public class TestActivity extends Activity {
      */
     public static TestActivity startSync(
             @NonNull Function<TestActivity, View> activityInitializer) {
-        return DEFAULT_STARTER.startSync(activityInitializer);
+        return DEFAULT_STARTER.startSync(activityInitializer, TestActivity.class);
     }
 
     /**
@@ -290,9 +290,11 @@ public class TestActivity extends Activity {
          *
          * @param activityInitializer initializer to supply {@link View} to be passed to
          *                            {@link Activity#setContentView(View)}
+         * @param activityClass the target class to start, which extends {@link TestActivity}
          * @return {@link TestActivity} launched
          */
-        public TestActivity startSync(@NonNull Function<TestActivity, View> activityInitializer) {
+        public TestActivity startSync(@NonNull Function<TestActivity, View> activityInitializer,
+                Class<? extends TestActivity> activityClass) {
             final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
             sInitializer.set(activityInitializer);
 
@@ -301,7 +303,7 @@ public class TestActivity extends Activity {
             }
             final Intent intent = new Intent()
                     .setAction(Intent.ACTION_MAIN)
-                    .setClass(instrumentation.getContext(), TestActivity.class)
+                    .setClass(instrumentation.getContext(), activityClass)
                     .addFlags(mFlags | mAdditionalFlags);
             final Callable<TestActivity> launcher =
                     () -> (TestActivity) instrumentation.startActivitySync(

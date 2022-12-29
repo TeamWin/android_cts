@@ -380,14 +380,15 @@ public class DeviceAssociationTest {
     @Test
     public void activityContext_activityMovesDisplay_returnsDeviceIdAssociatedWithDisplay() {
         Activity activity = startActivity(mVirtualDisplay);
-        VirtualDevice mVirtualDevice2 = createVirtualDevice();
-        VirtualDisplay virtualDisplay2 = createVirtualDisplay(mVirtualDevice2);
+        try (VirtualDevice virtualDevice2 = createVirtualDevice()) {
+            VirtualDisplay virtualDisplay2 = createVirtualDisplay(virtualDevice2);
 
-        assertThat(activity.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
+            assertThat(activity.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
 
-        activity.updateDisplay(virtualDisplay2.getDisplay().getDisplayId());
+            activity.updateDisplay(virtualDisplay2.getDisplay().getDisplayId());
 
-        assertThat(activity.getDeviceId()).isEqualTo(mVirtualDevice2.getDeviceId());
+            assertThat(activity.getDeviceId()).isEqualTo(virtualDevice2.getDeviceId());
+        }
     }
 
     @Test
@@ -409,18 +410,20 @@ public class DeviceAssociationTest {
     @Test
     public void applicationContext_twoVirtualDevices_returnsIdOfLatest() {
         startActivity(mVirtualDisplay);
-        VirtualDevice mVirtualDevice2 = createVirtualDevice();
-        VirtualDisplay virtualDisplay2 = createVirtualDisplay(mVirtualDevice2);
+        Context context = getApplicationContext();
+        try (VirtualDevice virtualDevice2 = createVirtualDevice()) {
+            VirtualDisplay virtualDisplay2 = createVirtualDisplay(virtualDevice2);
 
-        assertThat(getApplicationContext().getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
+            assertThat(context.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
 
-        startActivity(virtualDisplay2);
+            startActivity(virtualDisplay2);
 
-        assertThat(getApplicationContext().getDeviceId()).isEqualTo(mVirtualDevice2.getDeviceId());
+            assertThat(context.getDeviceId()).isEqualTo(virtualDevice2.getDeviceId());
 
-        startActivity(DEFAULT_DISPLAY);
+            startActivity(DEFAULT_DISPLAY);
 
-        assertThat(getApplicationContext().getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
+            assertThat(context.getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
+        }
     }
 
     @Test

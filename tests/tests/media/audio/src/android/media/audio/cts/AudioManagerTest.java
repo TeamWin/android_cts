@@ -44,7 +44,7 @@ import static android.provider.Settings.Global.APPLY_RAMPING_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
 import static org.junit.Assert.assertNotEquals;
-import static org.testng.Assert.assertThrows;
+import static org.junit.Assert.assertThrows;
 
 import android.Manifest;
 import android.app.NotificationChannel;
@@ -1792,6 +1792,23 @@ public class AudioManagerTest extends InstrumentationTestCase {
             fail("isUltrasoundSupported must fail due to no permission");
         } catch (SecurityException e) {
         }
+    }
+
+    public void testIsHotwordStreamSupported() {
+        // Validate API requires permission
+        assertThrows(SecurityException.class, () -> mAudioManager.isHotwordStreamSupported(false));
+        assertThrows(SecurityException.class, () -> mAudioManager.isHotwordStreamSupported(true));
+        // Validate functionality when caller holds appropriate permissions
+        InstrumentationRegistry.getInstrumentation()
+                               .getUiAutomation()
+                               .adoptShellPermissionIdentity(
+                                Manifest.permission.CAPTURE_AUDIO_HOTWORD);
+        boolean result1 = mAudioManager.isHotwordStreamSupported(false);
+        boolean result2 = mAudioManager.isHotwordStreamSupported(true);
+
+        InstrumentationRegistry.getInstrumentation()
+                               .getUiAutomation()
+                               .dropShellPermissionIdentity();
     }
 
     public void testGetAudioHwSyncForSession() {

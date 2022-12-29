@@ -3551,9 +3551,15 @@ public class TelephonyManagerTest {
                                 TelephonyManager.NETWORK_TYPE_BITMASK_NR);
                     }
             );
-
+        } catch (SecurityException se) {
+            fail("setAllowedNetworkTypesForReason: SecurityException not expected: "
+                    + se.getMessage());
         } catch (Exception e) {
-            fail("setAllowedNetworkTypesForReason: SecurityException not expected");
+            // withCarrierPrivileges declares a checked Exception, so we must handle it. We don't
+            // expect any exceptions so this is still a failure.
+            Log.e(TAG, "Exception not expected. failing test.", e);
+            fail("CarrierPrivilegeUtils.withCarrierPrivileges: Exception not expected. "
+                    + "See error log.");
         }
 
         assertThrows(SecurityException.class, () -> {

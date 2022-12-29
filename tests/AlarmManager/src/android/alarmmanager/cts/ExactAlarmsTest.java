@@ -16,10 +16,6 @@
 
 package android.alarmmanager.cts;
 
-import static android.alarmmanager.cts.AppStandbyTests.setTestAppStandbyBucket;
-import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_ACTIVE;
-import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_WORKING_SET;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -56,7 +52,6 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppOpsUtils;
-import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.ShellUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -275,25 +270,7 @@ public class ExactAlarmsTest {
     }
 
     @Test
-    // TODO (b/185181884): Remove once standby buckets can be reliably manipulated from tests.
-    @Ignore("Cannot reliably test bucket manipulation yet")
-    public void exactAlarmPermissionElevatesBucket() throws Exception {
-        mDeviceConfigHelper.without("exact_alarm_deny_list").commitAndAwaitPropagation();
-
-        setTestAppStandbyBucket("active");
-        assertEquals(STANDBY_BUCKET_ACTIVE, AppStandbyUtils.getAppStandbyBucket(TEST_APP_PACKAGE));
-
-        setTestAppStandbyBucket("frequent");
-        assertEquals(STANDBY_BUCKET_WORKING_SET,
-                AppStandbyUtils.getAppStandbyBucket(TEST_APP_PACKAGE));
-
-        setTestAppStandbyBucket("rare");
-        assertEquals(STANDBY_BUCKET_WORKING_SET,
-                AppStandbyUtils.getAppStandbyBucket(TEST_APP_PACKAGE));
-    }
-
-    @Test
-    public void canScheduleExactAlarmWithPolicyPermission() throws Exception {
+    public void canScheduleExactAlarmWithPolicyPermission() {
         assertTrue(mAlarmManager.canScheduleExactAlarms());
 
         // The deny list shouldn't do anything.

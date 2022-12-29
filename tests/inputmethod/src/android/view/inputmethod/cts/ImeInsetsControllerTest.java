@@ -86,7 +86,7 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
 
                     layout.addView(editText);
                     return layout;
-                });
+                }, TestActivity.class);
         return new Pair<>(editTextRef.get(), windowRef.get());
     }
 
