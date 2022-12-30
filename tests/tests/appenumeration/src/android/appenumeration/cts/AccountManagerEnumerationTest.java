@@ -22,8 +22,10 @@ import static android.appenumeration.cts.Constants.ACTION_ACCOUNT_MANAGER_GET_AU
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING;
 import static android.appenumeration.cts.Constants.QUERIES_PACKAGE;
 import static android.appenumeration.cts.Constants.TARGET_STUB;
+import static android.appenumeration.cts.Constants.TARGET_STUB_APK;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER;
 import static android.appenumeration.cts.Constants.TARGET_WEB;
+import static android.appenumeration.cts.Utils.ensurePackageIsInstalled;
 import static android.content.Intent.EXTRA_RETURN_RESULT;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -42,6 +44,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -57,6 +60,11 @@ public class AccountManagerEnumerationTest extends AppEnumerationTestsBase {
     private static final String TARGET_NOT_VISIBLE = TARGET_WEB;
 
     private AccountManager mAccountManager;
+
+    @BeforeClass
+    public static void prepareApps() {
+        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
+    }
 
     @Before
     public void onBefore() throws Exception {

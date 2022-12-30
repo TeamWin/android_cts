@@ -72,4 +72,13 @@ public class MediaRouter2HostSideTest extends BaseMediaHostSideTest {
                 DEVICE_SIDE_TEST_CLASS,
                 "setRouteListingPreference_propagatesToManager");
     }
+
+    @AppModeFull
+    @RequiresDevice
+    public void testSetInstance_findsExternalPackage() throws Exception {
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS,
+                "getInstance_findsExternalPackage");
+    }
 }

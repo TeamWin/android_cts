@@ -16,27 +16,26 @@
 
 package android.os.lib.app;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static android.Manifest.permission.INSTALL_PACKAGES;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.lib.app.StaticSharedLibsTests.InstallUninstallBroadcastReceiver;
-
-import androidx.test.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -49,142 +48,114 @@ import org.junit.runner.RunWith;
 @RunWith(BedsteadJUnit4.class)
 public class StaticSharedLibsMultiUserTests {
 
-    private static final String STATIC_LIB_PROVIDER_RECURSIVE_APK =
-            "CtsStaticSharedLibProviderRecursive.apk";
-
     private static final String APK_BASE_PATH = "/data/local/tmp/cts/hostside/os/";
-    private static final String STATIC_LIB_PROVIDER1_APK = APK_BASE_PATH
-            + "CtsStaticSharedLibProviderApp1.apk";
-    private static final String STATIC_LIB_PROVIDER1_PKG = "android.os.lib.provider";
+    private static final String STATIC_LIB_PROVIDER3_APK = APK_BASE_PATH
+            + "CtsStaticSharedLibProviderApp3.apk";
+    private static final String STATIC_LIB_PROVIDER3_PKG = "android.os.lib.provider";
 
-    private UserReference mPrimaryUser;
-    private UserReference mSecondaryUser;
+    private static final long TIMEOUT_MS = 10000L;
+
+    private UserReference mInitialUser;
+    private UserReference mAdditionalUser;
+
+    Context mContextInitial;
+    Context mContextAdditional;
 
     @Rule
     @ClassRule
     public static final DeviceState sDeviceState = new DeviceState();
-    private final Context mContext = InstrumentationRegistry.getTargetContext();
-
-    @Before
-    public void cacheUsers() {
-        mPrimaryUser = sDeviceState.primaryUser();
-        mSecondaryUser = sDeviceState.secondaryUser();
-    }
-
-    @Before
-    public void installLibraryDependency() {
-        installPackageAsUser(STATIC_LIB_PROVIDER_RECURSIVE_APK, null /* installerName */,
-                mSecondaryUser);
-    }
 
     @Before
     public void setUp() throws Exception {
-        InstrumentationRegistry
-                .getInstrumentation()
-                .getUiAutomation()
-                .adoptShellPermissionIdentity(
-                        Manifest.permission.INSTALL_PACKAGES);
-    }
+        mInitialUser = sDeviceState.initialUser();
+        mAdditionalUser = sDeviceState.additionalUser();
 
-    @After
-    public void tearDown() throws Exception {
-        InstrumentationRegistry
-                .getInstrumentation()
-                .getUiAutomation()
-                .dropShellPermissionIdentity();
+        mContextInitial = TestApis.context().androidContextAsUser(mInitialUser);
+        mContextAdditional = TestApis.context().androidContextAsUser(mAdditionalUser);
     }
 
     private boolean installPackageAsUser(String apkPath, String installerName, UserReference user) {
-        StringBuilder builder = new StringBuilder("pm install");
+        ShellCommand.Builder cmd = ShellCommand.builderForUser(user, "pm install");
         if (installerName != null) {
-            builder.append(" -i ").append(installerName);
+            cmd.addOption("i", installerName);
         }
-        if (user != null) {
-            builder.append(" --user ").append(user.id());
+        cmd.addOperand(apkPath);
+        try {
+            return ShellCommandUtils.startsWithSuccess(cmd.execute());
+        } catch (AdbException e) {
+            return false;
         }
-        builder.append(" ").append(apkPath);
-        return runShellCommand(builder.toString()).equals("Success\n");
     }
 
     private boolean uninstallPackage(String packageName) {
-        return runShellCommand("pm uninstall " + packageName).equals("Success\n");
-    }
-
-    private Context createContextAsUser(UserReference user) {
-        return mContext.createContextAsUser(user.userHandle(), 0);
+        ShellCommand.Builder cmd = ShellCommand.builder("pm uninstall");
+        cmd.addOperand(packageName);
+        try {
+            return ShellCommandUtils.startsWithSuccess(cmd.execute());
+        } catch (AdbException e) {
+            return false;
+        }
     }
 
     @Test
-    @RequireRunOnSecondaryUser
+    @RequireRunOnAdditionalUser
+    @EnsureHasPermission(INSTALL_PACKAGES)
     public void testStaticSharedLibInstallOnSecondaryUser_broadcastReceivedByAllUsers() {
-        Context contextPrimary = createContextAsUser(mPrimaryUser);
-        Context contextSecondary = createContextAsUser(mSecondaryUser);
-
-
         IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
         filter.addDataScheme("package");
-        InstallUninstallBroadcastReceiver receiverPrimary = new InstallUninstallBroadcastReceiver();
-        InstallUninstallBroadcastReceiver receiverSecondary =
-                new InstallUninstallBroadcastReceiver();
+        BlockingBroadcastReceiver initialReceiver =
+                sDeviceState.registerBroadcastReceiverForUser(mInitialUser, filter);
+        BlockingBroadcastReceiver additionalReceiver =
+                sDeviceState.registerBroadcastReceiverForUser(mAdditionalUser, filter);
 
-        contextPrimary.registerReceiver(receiverPrimary, filter);
-        contextSecondary.registerReceiver(receiverSecondary, filter);
-        try {
-            assertThat(installPackageAsUser(STATIC_LIB_PROVIDER1_APK,
-                    contextSecondary.getPackageName(), mSecondaryUser), is(true));
+        assertThat(installPackageAsUser(STATIC_LIB_PROVIDER3_APK,
+                mContextAdditional.getPackageName(), mAdditionalUser)).isTrue();
 
-            Intent intent = receiverPrimary.getResult();
-            assertThat("Primary user should get the broadcast.", intent, is(notNullValue()));
-            assertThat("Incorrect broadcast action in primary user", intent.getAction(),
-                    is(Intent.ACTION_PACKAGE_ADDED));
+        Intent intent = initialReceiver.awaitForBroadcast(TIMEOUT_MS);
+        assertWithMessage("Initial user should get the broadcast.")
+                .that(intent).isNotNull();
+        assertWithMessage("Incorrect broadcast action in initial user")
+                .that(intent.getAction()).isEqualTo(Intent.ACTION_PACKAGE_ADDED);
 
-            intent = receiverSecondary.getResult();
-            assertThat("Secondary user should get the broadcast.", intent, is(notNullValue()));
-            assertThat("Incorrect broadcast action in secondary user", intent.getAction(),
-                    is(Intent.ACTION_PACKAGE_ADDED));
-        } catch (InterruptedException e) {
-            fail(e.getMessage());
-        } finally {
-            contextPrimary.unregisterReceiver(receiverPrimary);
-            contextSecondary.unregisterReceiver(receiverSecondary);
-            uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
-        }
+        intent = additionalReceiver.awaitForBroadcast(TIMEOUT_MS);
+        assertWithMessage("Additional user should get the broadcast.")
+                .that(intent).isNotNull();
+        assertWithMessage("Incorrect broadcast action in additional user")
+                .that(intent.getAction()).isEqualTo(Intent.ACTION_PACKAGE_ADDED);
+
+        initialReceiver.unregisterQuietly();
+        additionalReceiver.unregisterQuietly();
+        uninstallPackage(STATIC_LIB_PROVIDER3_PKG);
     }
 
     @Test
-    @RequireRunOnSecondaryUser
+    @RequireRunOnAdditionalUser
+    @EnsureHasPermission(INSTALL_PACKAGES)
     public void testStaticSharedLibUninstallOnAllUsers_broadcastReceivedByAllUsers() {
-        Context contextPrimary = createContextAsUser(mPrimaryUser);
-        Context contextSecondary = createContextAsUser(mSecondaryUser);
-
-
         IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_REMOVED);
         filter.addDataScheme("package");
-        InstallUninstallBroadcastReceiver receiverPrimary = new InstallUninstallBroadcastReceiver();
-        InstallUninstallBroadcastReceiver receiverSecondary =
-                new InstallUninstallBroadcastReceiver();
+        BlockingBroadcastReceiver initialReceiver =
+                sDeviceState.registerBroadcastReceiverForUser(mInitialUser, filter);
+        BlockingBroadcastReceiver additionalReceiver =
+                sDeviceState.registerBroadcastReceiverForUser(mAdditionalUser, filter);
 
-        contextPrimary.registerReceiver(receiverPrimary, filter);
-        contextSecondary.registerReceiver(receiverSecondary, filter);
-        try {
-            assertThat(installPackageAsUser(STATIC_LIB_PROVIDER1_APK,
-                    contextSecondary.getPackageName(), mSecondaryUser), is(true));
-            assertThat(uninstallPackage(STATIC_LIB_PROVIDER1_PKG), is(true));
+        assertThat(installPackageAsUser(STATIC_LIB_PROVIDER3_APK,
+                mContextAdditional.getPackageName(), mAdditionalUser)).isTrue();
+        assertThat(uninstallPackage(STATIC_LIB_PROVIDER3_PKG)).isTrue();
 
-            Intent intent = receiverPrimary.getResult();
-            assertThat("Primary user should get the broadcast", intent, is(notNullValue()));
-            assertThat("Incorrect broadcast action in primary user", intent.getAction(),
-                    is(Intent.ACTION_PACKAGE_REMOVED));
+        Intent intent = initialReceiver.awaitForBroadcast(TIMEOUT_MS);
+        assertWithMessage("Initial user should get the broadcast")
+                .that(intent).isNotNull();
+        assertWithMessage("Incorrect broadcast action in initial user")
+                .that(intent.getAction()).isEqualTo(Intent.ACTION_PACKAGE_REMOVED);
 
-            intent = receiverSecondary.getResult();
-            assertThat("Secondary user should get the broadcast", intent, is(notNullValue()));
-            assertThat("Incorrect broadcast action in secondary user", intent.getAction(),
-                    is(Intent.ACTION_PACKAGE_REMOVED));
-        } catch (InterruptedException e) {
-            fail(e.getMessage());
-        } finally {
-            contextPrimary.unregisterReceiver(receiverPrimary);
-            contextSecondary.unregisterReceiver(receiverSecondary);
-        }
+        intent = additionalReceiver.awaitForBroadcast(TIMEOUT_MS);
+        assertWithMessage("Additional user should get the broadcast")
+                .that(intent).isNotNull();
+        assertWithMessage("Incorrect broadcast action in additional user")
+                .that(intent.getAction()).isEqualTo(Intent.ACTION_PACKAGE_REMOVED);
+
+        initialReceiver.unregisterQuietly();
+        additionalReceiver.unregisterQuietly();
     }
 }

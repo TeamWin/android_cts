@@ -422,34 +422,40 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
         try {
             cleanup();
-
-            registerAndEnableSimPhoneAccount();
+            // conditionally register
+            registerSimAccountIfNeeded();
+            // start a sim call and set it active
             MockConnection simConnection = placeSimCallAndSetActive();
-            assertNumCalls(getInCallService(), 1);
-
-
+            // start a Transactional SM call
             startCallWithAttributesAndVerify(mIncomingCallAttributes, mCall2);
+            // set the Transactional call to active
             callControlAction(SET_ACTIVE, mCall2);
-            assertNumCalls(getInCallService(), 2);
-
-
+            // check call states
             assertConnectionState(simConnection, Connection.STATE_HOLDING);
-            assertEquals(Call.STATE_ACTIVE, getCallWithId(mCall2.getTelecomCallId()).getState());
-
+            assertCallState(getCallWithId(mCall2.getTelecomCallId()), Call.STATE_ACTIVE);
+            // disconnect the Transactional call
             callControlAction(DISCONNECT, mCall2);
-            assertNumCalls(getInCallService(), 1);
-
+            // check the call states
             assertConnectionState(simConnection, Connection.STATE_HOLDING);
-
+            // disconnect the sim call
             simConnection.onDisconnect();
-            assertNumCalls(getInCallService(), 0);
-
         } finally {
             runWithShellPermissionIdentity(() -> {
                 mTelecomManager.unregisterPhoneAccount(
                         TestUtils.TEST_SIM_PHONE_ACCOUNT.getAccountHandle());
             });
             cleanup();
+        }
+    }
+
+    private void registerSimAccountIfNeeded() {
+        // if the account is not present
+        if (mTelecomManager.getPhoneAccount(TestUtils.TEST_SIM_PHONE_ACCOUNT.getAccountHandle())
+                == null) {
+            // register
+            runWithShellPermissionIdentity(() -> {
+                mTelecomManager.registerPhoneAccount(TestUtils.TEST_SIM_PHONE_ACCOUNT);
+            });
         }
     }
 
@@ -542,20 +548,11 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         return call;
     }
 
-    private void registerAndEnableSimPhoneAccount() throws Exception {
-        runWithShellPermissionIdentity(() -> {
-            mTelecomManager.registerPhoneAccount(TestUtils.TEST_SIM_PHONE_ACCOUNT);
-        });
-
-        TestUtils.enablePhoneAccount(
-                getInstrumentation(), TestUtils.TEST_SIM_PHONE_ACCOUNT_HANDLE);
-    }
-
     private MockConnection placeSimCallAndSetActive() {
         Bundle extras = new Bundle();
         extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
                 TestUtils.TEST_SIM_PHONE_ACCOUNT_HANDLE);
-        placeAndVerifyCall();
+        placeAndVerifyCall(extras);
         MockConnection conn = verifyConnectionForOutgoingCall();
         conn.setActive();
         assertConnectionState(conn, Connection.STATE_ACTIVE);
@@ -563,6 +560,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     }
 
     private void cleanup() {
+        Log.i(TAG, "cleanup: method running");
         try {
             if (mInCallCallbacks.getService() != null) {
                 mInCallCallbacks.getService().disconnectAllCalls();

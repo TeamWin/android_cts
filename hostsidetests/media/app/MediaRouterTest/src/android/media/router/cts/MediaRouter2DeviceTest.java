@@ -17,6 +17,7 @@
 package android.media.router.cts;
 
 import static android.media.cts.MediaRouterTestConstants.FEATURE_SAMPLE;
+import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_1_PACKAGE;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_DEDUPLICATION_ID_1;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_DEDUPLICATION_ID_2;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_DEDUPLICATION_ID_3;
@@ -186,6 +187,13 @@ public class MediaRouter2DeviceTest {
                 .isEqualTo(SAMPLE_SESSION_PARTICIPANT_COUNT);
         Truth.assertThat(receivedRouteListingPreference.getItems().get(2).getDisableReason())
                 .isEqualTo(RouteListingPreference.Item.DISABLE_REASON_SUBSCRIPTION_REQUIRED);
+    }
+
+    @Test
+    public void getInstance_findsExternalPackage() {
+        MediaRouter2 systemRouter =
+                MediaRouter2.getInstance(mContext, MEDIA_ROUTER_PROVIDER_1_PACKAGE);
+        Truth.assertThat(systemRouter).isNotNull();
     }
 
     /**

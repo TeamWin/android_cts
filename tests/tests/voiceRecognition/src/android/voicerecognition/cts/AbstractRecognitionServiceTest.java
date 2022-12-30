@@ -236,10 +236,7 @@ abstract class AbstractRecognitionServiceTest {
                 SequenceExecutionInfo.Scenario.START_START,
                 SequenceExecutionInfo.Scenario.START_STOP_CANCEL,
                 SequenceExecutionInfo.Scenario.START_ERROR_CANCEL,
-                SequenceExecutionInfo.Scenario.START_STOP_DESTROY,
-                SequenceExecutionInfo.Scenario.START_ERROR_DESTROY,
-                SequenceExecutionInfo.Scenario.START_DESTROY_DESTROY,
-        };
+                SequenceExecutionInfo.Scenario.START_ERROR_DESTROY};
     }
 
     @Test
@@ -263,9 +260,7 @@ abstract class AbstractRecognitionServiceTest {
                 SequenceExecutionInfo.Scenario.START_SEGMENT_ENDOFSESSION,
                 SequenceExecutionInfo.Scenario.START_CANCEL,
                 SequenceExecutionInfo.Scenario.START_START,
-                SequenceExecutionInfo.Scenario.START_STOP_CANCEL,
-                SequenceExecutionInfo.Scenario.START_STOP_DESTROY,
-                SequenceExecutionInfo.Scenario.START_DESTROY_DESTROY);
+                SequenceExecutionInfo.Scenario.START_STOP_CANCEL);
 
         List<Object[]> scenarios = new ArrayList<>();
         for (int i = 0; i < concurrencyObservableScenarios.size(); i++) {
@@ -280,8 +275,10 @@ abstract class AbstractRecognitionServiceTest {
 
     @Test
     public void testRecognitionServiceConcurrencyLimitValidity() {
-        // Necessary to do before creating a RecognitionService object.
-        Looper.prepare();
+        // Prepare the looper before creating a RecognitionService object.
+        if (Looper.myLooper() == null) {
+            Looper.prepare();
+        }
 
         RecognitionService defaultService = new RecognitionService() {
             @Override
@@ -520,8 +517,10 @@ abstract class AbstractRecognitionServiceTest {
             START_START,
             START_STOP_CANCEL,
             START_ERROR_CANCEL,
-            START_STOP_DESTROY,
             START_ERROR_DESTROY,
+
+            // TODO(kiridza): Investigate why these scenarios are flaky (5-10% failure).
+            START_STOP_DESTROY,
             START_DESTROY_DESTROY,
 
             // Sad scenarios.

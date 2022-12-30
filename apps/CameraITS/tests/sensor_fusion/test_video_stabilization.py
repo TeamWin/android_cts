@@ -44,7 +44,7 @@ _VIDEO_DELAY_TIME = 5.5  # seconds
 _VIDEO_DURATION = 5.5  # seconds
 _VIDEO_QUALITIES_TESTED = ('CIF:3', '480P:4', '720P:5', '1080P:6', 'QVGA:7',
                            'VGA:9')
-_VIDEO_STABILIZATION_FACTOR = 0.6  # 60% of gyro movement allowed
+_VIDEO_STABILIZATION_FACTOR = 0.7  # 70% of gyro movement allowed
 _VIDEO_STABILIZATION_MODE = 1
 _SIZE_TO_PROFILE = {'176x144': 'QCIF:2', '352x288': 'CIF:3',
                     '320x240': 'QVGA:7'}

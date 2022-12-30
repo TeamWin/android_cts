@@ -33,12 +33,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.concurrent.thread
 
 private const val OVERLAY_ACTIVITY_FOCUSED = "android.input.cts.action.OVERLAY_ACTIVITY_FOCUSED"
 
@@ -115,7 +115,8 @@ class IncompleteMotionTest {
                 val handler = Handler(looper)
                 val receiver = OverlayFocusedBroadcastReceiver()
                 val intentFilter = IntentFilter(OVERLAY_ACTIVITY_FOCUSED)
-                activity.registerReceiver(receiver, intentFilter, null, handler)
+                activity.registerReceiver(receiver, intentFilter, null, handler,
+                                          Context.RECEIVER_EXPORTED)
 
                 // Now send hasFocus=false event to the app by launching a new focusable window
                 startOverlayActivity()

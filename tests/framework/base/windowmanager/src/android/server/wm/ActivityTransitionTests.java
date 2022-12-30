@@ -433,6 +433,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         bounds.excluded = activity.getRoundedCornersRegions();
         launchHomeActivityNoWait();
         removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         return bounds;
     }
 
