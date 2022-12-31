@@ -6014,4 +6014,27 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
         assertTrue(mWifiManager.getMaxNumberOfChannelsPerNetworkSpecifierRequest() > 0);
     }
+
+    /**
+     * Tests {@link WifiManager#isTlsV13Supported)} does not crash.
+     */
+    public void testIsTlsV13Supported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        mWifiManager.isTlsV13Supported();
+    }
+
+    /**
+     * Tests {@link WifiManager#isTlsMinimumVersionSupported)} does not crash.
+     */
+    public void testIsTlsMinimumVersionSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        mWifiManager.isTlsMinimumVersionSupported();
+    }
+
 }

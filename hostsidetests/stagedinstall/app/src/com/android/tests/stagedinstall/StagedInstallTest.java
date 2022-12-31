@@ -31,6 +31,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.Manifest;
 import android.app.ActivityManager;
@@ -1434,6 +1435,9 @@ public class StagedInstallTest {
 
     @Test
     public void testCheckInstallConstraints_AppIsInteracting() throws Exception {
+        // Skip this test as the current audio focus detection doesn't work on Auto
+        assumeFalse(isAuto());
+
         Install.single(TestApp.A1).commit();
         // The app will have audio focus and be considered interactive with the user
         InstallUtils.requestAudioFocus(TestApp.A);
@@ -1963,5 +1967,10 @@ public class StagedInstallTest {
 
     private static PackageInstaller.SessionInfo getSessionInfo(int sessionId) {
         return getPackageInstaller().getSessionInfo(sessionId);
+    }
+
+    private static boolean isAuto() {
+        var pm = InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 }

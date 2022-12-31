@@ -253,7 +253,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
 
         if (options != null) {
             if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
-                    == Utils.HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH) {
+                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH) {
                 Log.d(TAG, "Crash itself. Pid: " + Process.myPid());
                 Process.killProcess(Process.myPid());
                 return;

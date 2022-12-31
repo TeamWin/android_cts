@@ -264,6 +264,9 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                     Helper.createFakeSharedMemoryData(), callback);
         } catch (Exception e) {
             Log.w(mTag, "callCreateSoftwareHotwordDetector() exception: " + e);
+            if (mServiceTriggerLatch != null) {
+                mServiceTriggerLatch.countDown();
+            }
             if (e instanceof IllegalStateException) {
                 mIsCreateDetectorIllegalStateExceptionThrow = true;
             }

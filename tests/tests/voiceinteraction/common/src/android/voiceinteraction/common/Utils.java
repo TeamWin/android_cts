@@ -111,7 +111,7 @@ public class Utils {
     public static final int DSP_DETECTOR_START_RECOGNITION_RESULT_UNSUPPORTED_EXCEPTION = 3;
 
     /** Indicate which test scenario for testing. */
-    public static final int HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH = 1;
+    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH = 1;
 
     /** Indicate to start a new activity for testing. */
     public static final int ACTIVITY_NEW = 0;

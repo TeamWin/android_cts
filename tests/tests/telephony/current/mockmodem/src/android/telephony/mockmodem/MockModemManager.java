@@ -355,45 +355,53 @@ public class MockModemManager {
     /**
      * get GSM CellBroadcastConfig outputs from IRadioMessagingImpl
      *
+     * @param slotId which slot would insert
      * @return Set of broadcast configs
      */
-    public Set<Integer> getGsmBroadcastConfig() {
-        return mMockModemService.getIRadioMessaging().getGsmBroadcastConfigSet();
+    public Set<Integer> getGsmBroadcastConfig(int slotId) {
+        return mMockModemService.getIRadioMessaging((byte) slotId).getGsmBroadcastConfigSet();
     }
 
     /**
      * get CDMA CellBroadcastConfig outputs from IRadioMessagingImpl
      *
+     * @param slotId which slot would insert
      * @return Set of broadcast configs
      */
-    public Set<Integer> getCdmaBroadcastConfig() {
-        return mMockModemService.getIRadioMessaging().getCdmaBroadcastConfigSet();
+    public Set<Integer> getCdmaBroadcastConfig(int slotId) {
+        return mMockModemService.getIRadioMessaging((byte) slotId).getCdmaBroadcastConfigSet();
     }
 
     /**
      * receive new broadcast sms message
      *
+     * @param slotId which slot would insert
      * @param data data of broadcast messages to be received
      */
-    public void newBroadcastSms(byte[] data) {
-        mMockModemService.getIRadioMessaging().newBroadcastSms(data);
+    public void newBroadcastSms(int slotId, byte[] data) {
+        mMockModemService.getIRadioMessaging((byte) slotId).newBroadcastSms(data);
     }
 
     /**
      * register callback for monitoring broadcast activation
      *
+     * @param slotId which slot would insert
      * @param callback callback to register
      */
-    public void registerBroadcastCallback(
+    public void registerBroadcastCallback(int slotId,
             IRadioMessagingImpl.CallBackWithExecutor callback) {
-        mMockModemService.getIRadioMessaging().registerBroadcastCallback(callback);
+        mMockModemService.getIRadioMessaging((byte) slotId).registerBroadcastCallback(callback);
     }
 
     /**
      * unregister callback for monitoring broadcast activation
+     *
+     * @param slotId which slot would insert
+     * @param callback callback to unregister
      */
-    public void unregisterBroadcastCallback(IRadioMessagingImpl.CallBackWithExecutor callback) {
-        mMockModemService.getIRadioMessaging().unregisterBroadcastCallback(callback);
+    public void unregisterBroadcastCallback(int slotId,
+            IRadioMessagingImpl.CallBackWithExecutor callback) {
+        mMockModemService.getIRadioMessaging((byte) slotId).unregisterBroadcastCallback(callback);
     }
 
     /**

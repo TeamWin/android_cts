@@ -160,7 +160,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                     if (mAlwaysOnHotwordDetector != null) {
                         PersistableBundle persistableBundle = new PersistableBundle();
                         persistableBundle.putInt(Utils.KEY_TEST_SCENARIO,
-                                Utils.HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH);
+                                Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH);
                         mAlwaysOnHotwordDetector.updateState(
                                 persistableBundle,
                                 createFakeSharedMemoryData());

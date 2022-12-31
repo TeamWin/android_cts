@@ -281,6 +281,11 @@ public class TelephonyManagerTestOnMockModem {
     public void testRadioPowerToggle() throws Throwable {
         Log.d(TAG, "TelephonyManagerTestOnMockModem#testRadioPowerToggle");
 
+        // Insert a SIM
+        int slotId = 0;
+        assertTrue(sMockModemManager.insertSimCard(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT));
+        TimeUnit.SECONDS.sleep(1);
+
         int radioState = sTelephonyManager.getRadioPowerState();
         Log.d(TAG, "Radio state: " + radioState);
 
@@ -318,6 +323,9 @@ public class TelephonyManagerTestOnMockModem {
         TimeUnit.SECONDS.sleep(2);
         assertEquals(sTelephonyManager.getRadioPowerState(), radioState);
 
+        // Remove the SIM
+        assertTrue(sMockModemManager.removeSimCard(slotId));
+
         Log.d(TAG, "Test Done ");
     }
 
@@ -325,10 +333,14 @@ public class TelephonyManagerTestOnMockModem {
     public void testRadioPowerWithFailureResults() throws Throwable {
         Log.d(TAG, "TelephonyManagerTestOnMockModem#testRadioPowerWithFailureResults");
 
+        // Insert a SIM
+        int slotId = 0;
+        assertTrue(sMockModemManager.insertSimCard(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT));
+        TimeUnit.SECONDS.sleep(1);
+
         int radioState = sTelephonyManager.getRadioPowerState();
         Log.d(TAG, "Radio state: " + radioState);
 
-        int slotId = 0;
         int toggleRadioState =
                 radioState == TelephonyManager.RADIO_POWER_ON
                         ? TelephonyManager.RADIO_POWER_OFF
@@ -373,6 +385,9 @@ public class TelephonyManagerTestOnMockModem {
         TimeUnit.SECONDS.sleep(1);
         assertTrue(result);
         assertEquals(sTelephonyManager.getRadioPowerState(), radioState);
+
+        // Remove the SIM
+        assertTrue(sMockModemManager.removeSimCard(slotId));
     }
 
     @Test

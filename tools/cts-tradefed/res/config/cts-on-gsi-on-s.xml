@@ -29,10 +29,14 @@
 
     <!-- Excluded test cases start-->
 
-    <!-- b/252207438 -->
+    <!-- CtsMediaV2TestCases: b/252207438, b/258877705, b/258904052, b/252207634 -->
+    <option name="compatibility:exclude-filter" value="CtsMediaV2TestCases android.mediav2.cts.CodecDecoderSurfaceTest#testFlush" />
+    <option name="compatibility:exclude-filter" value="CtsMediaV2TestCases android.mediav2.cts.CodecDecoderSurfaceTest#testSimpleDecodeToSurfaceNative" />
     <option name="compatibility:exclude-filter" value="CtsMediaV2TestCases android.mediav2.cts.CodecDecoderTest#testFlushNative" />
-    <!-- b/258878398 -->
+    <option name="compatibility:exclude-filter" value="CtsMediaV2TestCases android.mediav2.cts.CodecDecoderTest#testSimpleDecode" />
+    <!-- CtsOsTestCases: b/258878398 -->
     <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.VibratorManagerTest#testCombinedVibrationWaveformWithFrequencyStartsAndFinishesVibration" />
-
+    <!-- CtsVideoCodecTestCases: b/260170023 -->
+    <option name="compatibility:exclude-filter" value="CtsVideoCodecTestCases android.videocodec.cts.VideoDecoderValidationTest#testDecodeAndValidate" />
 
 </configuration>
