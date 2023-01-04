@@ -17,12 +17,13 @@ package android.media.bettertogether.cts;
 
 import android.media.MediaDescription;
 import android.media.browse.MediaBrowser.MediaItem;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.Parcel;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +31,7 @@ import org.junit.runner.RunWith;
 /**
  * Test {@link android.media.browse.MediaBrowser.MediaItem}.
  */
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class MediaItemTest {
     private static final String DESCRIPTION = "test_description";

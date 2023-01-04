@@ -68,47 +68,12 @@ public class Utils {
      */
     public static final int LIMIT_AUDIO_CHANNEL_MAX_VALUE = 63;
 
-    /** Decide which VoiceInteractionService should be started for testing. */
-    public static final int HOTWORD_DETECTION_SERVICE_NONE = 0;
-    public static final int HOTWORD_DETECTION_SERVICE_BASIC = 1;
-    public static final int HOTWORD_DETECTION_SERVICE_INVALIDATION = 2;
-    public static final int HOTWORD_DETECTION_SERVICE_WITHOUT_ISOLATED_PROCESS = 3;
-    public static final int HOTWORD_DETECTION_SERVICE_WITHIN_ISOLATED_PROCESS = 4;
-    public static final int HOTWORD_DETECTION_SERVICE_PERMISSION = 5;
-
     /**
      * Indicate which test event for testing.
      *
      * Note: The VIS is the abbreviation of VoiceInteractionService
      */
     public static final int VIS_NORMAL_TEST = 0;
-    public static final int VIS_WITHOUT_MANAGE_HOTWORD_DETECTION_PERMISSION_TEST = 1;
-    public static final int VIS_HOLD_BIND_HOTWORD_DETECTION_PERMISSION_TEST = 2;
-
-    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_TEST = 100;
-    public static final int HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST = 101;
-    public static final int HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST = 102;
-    public static final int HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST = 103;
-    public static final int HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST = 104;
-    public static final int HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST = 105;
-    public static final int HOTWORD_DETECTION_SERVICE_PROCESS_DIED_TEST = 106;
-    public static final int HOTWORD_DETECTION_SERVICE_CALL_STOP_RECOGNITION = 107;
-    public static final int HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR = 108;
-    public static final int HOTWORD_DETECTION_SERVICE_SOFTWARE_DESTROY_DETECTOR = 109;
-    public static final int DSP_DETECTOR_START_RECOGNITION_WITH_DATA_TEST = 110;
-    public static final int DSP_DETECTOR_ENROLL_FAKE_DSP_MODEL = 111;
-    public static final int HOTWORD_DETECTION_SERVICE_ADD_DETECTION_DELAY = 112;
-
-    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS = 1;
-    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION = 2;
-    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION = 3;
-    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SHARED_MEMORY_NOT_READ_ONLY = 4;
-    public static final int HOTWORD_DETECTION_SERVICE_GET_ERROR = 5;
-    public static final int HOTWORD_DETECTION_SERVICE_DETECTOR_ILLEGAL_STATE_EXCEPTION = 6;
-
-    public static final int DSP_DETECTOR_START_RECOGNITION_RESULT_SUCCESS = 1;
-    public static final int DSP_DETECTOR_START_RECOGNITION_RESULT_ILLEGAL_STATE_EXCEPTION = 2;
-    public static final int DSP_DETECTOR_START_RECOGNITION_RESULT_UNSUPPORTED_EXCEPTION = 3;
 
     /** Indicate which test scenario for testing. */
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH = 1;
@@ -192,23 +157,10 @@ public class Utils {
     public static final String SERVICE_NAME =
             "android.voiceinteraction.service/.MainInteractionService";
 
-    public static final String HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT =
-            "android.intent.action.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT";
-    public static final String HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT =
-            "android.intent.action.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT";
-    public static final String HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT =
-            "android.intent.action.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT";
-    public static final String DSP_DETECTOR_START_RECOGNITION_RESULT_INTENT =
-            "android.intent.action.DSP_DETECTOR_START_RECOGNITION_RESULT_INTENT";
-    public static final String DSP_DETECTOR_AVAILABILITY_RESULT_INTENT =
-            "android.intent.action.DSP_DETECTOR_AVAILABILITY_RESULT_INTENT";
-    public static final String KEY_SERVICE_TYPE = "serviceType";
     public static final String KEY_TEST_EVENT = "testEvent";
     public static final String KEY_TEST_RESULT = "testResult";
     public static final String KEY_TEST_SCENARIO = "testScenario";
     public static final String KEY_DETECTION_DELAY_MS = "detectionDelayMs";
-    public static final String KEY_EXTRA_BUNDLE_DATA = "extraBundleData";
-    public static final String KEY_KEEP_DETECTOR = "keepDetector";
 
     public static final String VOICE_INTERACTION_KEY_CALLBACK = "callback";
     public static final String VOICE_INTERACTION_KEY_CONTROL = "control";

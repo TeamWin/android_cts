@@ -41,7 +41,6 @@ import android.media.MediaRouter2.TransferCallback;
 import android.media.RouteDiscoveryPreference;
 import android.media.RoutingSessionInfo;
 import android.media.bettertogether.cts.StubMediaRoute2ProviderService.Proxy;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
@@ -50,6 +49,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
@@ -70,7 +70,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "The system should be able to bind to StubMediaRoute2ProviderService")
 @LargeTest
-@NonMediaMainlineTest
+@NonMainlineTest
 public class MediaRoute2ProviderServiceTest {
     private static final String TAG = "MR2ProviderServiceTest";
     Context mContext;

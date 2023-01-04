@@ -175,8 +175,19 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         }
     }
 
+    /** Returns the current storage-low state, as believed by JobScheduler. */
+    private boolean isJsStorageStateLow() throws Exception {
+        return !Boolean.parseBoolean(
+                SystemUtil.runShellCommand(getInstrumentation(),
+                        "cmd jobscheduler get-storage-not-low").trim());
+    }
+
     // Note we are just using storage state as a way to control when the job gets executed.
     void setStorageStateLow(boolean low) throws Exception {
+        if (isJsStorageStateLow() == low) {
+            // Nothing to do here
+            return;
+        }
         mStorageStateChanged = true;
         String res;
         if (low) {
@@ -197,7 +208,7 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
             if (curSeq == seq) {
                 return;
             }
-        } while ((SystemClock.elapsedRealtime()-startTime) < 1000);
+        } while ((SystemClock.elapsedRealtime() - startTime) < 10_000);
 
         fail("Timed out waiting for job scheduler: expected seq=" + seq + ", cur=" + curSeq);
     }

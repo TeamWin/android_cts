@@ -16,24 +16,29 @@
 
 package android.voiceinteraction.cts;
 
+import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
+import static android.Manifest.permission.RECORD_AUDIO;
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
-import static android.voiceinteraction.cts.testcore.VoiceInteractionDetectionHelper.performAndGetDetectionResult;
-import static android.voiceinteraction.cts.testcore.VoiceInteractionDetectionHelper.testHotwordDetection;
+import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.Manifest;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.media.AudioManager;
-import android.os.ParcelFileDescriptor;
-import android.os.Parcelable;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.service.voice.HotwordDetectedResult;
+import android.service.voice.AlwaysOnHotwordDetector;
+import android.service.voice.HotwordDetectionService;
 import android.util.Log;
-import android.voiceinteraction.common.Utils;
-import android.voiceinteraction.service.EventPayloadParcelable;
-import android.voiceinteraction.service.MainHotwordDetectionService;
+import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
+import android.voiceinteraction.cts.services.TestPermissionVoiceInteractionService;
+import android.voiceinteraction.cts.testcore.Helper;
+import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.RequiresDevice;
@@ -42,19 +47,31 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Objects;
+
 
 /**
  * Tests for testing the permissions in the HotwordDetectionService.
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "No real use case for instant mode hotword detection service")
-public final class HotwordDetectionServicePermissionTest
-        extends AbstractVoiceInteractionBasicTestCase {
-    static final String TAG = "HotwordDetectionServicePermissionTest";
+public class HotwordDetectionServicePermissionTest {
+
+    private static final String TAG = "HotwordDetectionServicePermissionTest";
+    // The VoiceInteractionService used by this test
+    private static final String SERVICE_COMPONENT =
+            "android.voiceinteraction.cts.services.TestPermissionVoiceInteractionService";
+
+    private TestPermissionVoiceInteractionService mService;
+
+    @Rule
+    public VoiceInteractionServiceConnectedRule mConnectedRule =
+            new VoiceInteractionServiceConnectedRule(
+                    getInstrumentation().getTargetContext(), getTestVoiceInteractionService());
 
     @Rule
     public RequiredFeatureRule REQUIRES_MIC_RULE = new RequiredFeatureRule(FEATURE_MICROPHONE);
@@ -64,8 +81,13 @@ public final class HotwordDetectionServicePermissionTest
 
     private AudioManager mAudioManager;
 
-    @Before
-    public void setUp() throws Exception {
+    public void setup() {
+        // VoiceInteractionServiceConnectedRule handles the service connected,
+        // the test should be able to get service
+        mService = (TestPermissionVoiceInteractionService) BaseVoiceInteractionService.getService();
+        // Check the test can get the service
+        Objects.requireNonNull(mService);
+
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         mAudioManager = context.getSystemService(AudioManager.class);
@@ -73,10 +95,15 @@ public final class HotwordDetectionServicePermissionTest
         InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.CALL_AUDIO_INTERCEPTION);
+
+        // Wait the original HotwordDetectionService finish clean up to avoid flaky
+        // This also waits for mic indicator disappear
+        SystemClock.sleep(10_000);
     }
 
     @After
     public void tearDown() {
+        mService = null;
         InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation()
                 .dropShellPermissionIdentity();
@@ -89,52 +116,48 @@ public final class HotwordDetectionServicePermissionTest
             Log.d(TAG, "Ignore testHotwordDetectionService_hasCaptureAudioOutputPermission");
             return;
         }
-
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_PERMISSION);
+        mService.createAlwaysOnHotwordDetector();
 
-        verifyDetectedResult(
-                performAndGetDetectionResult(
-                        mActivityTestRule, mContext,
-                        Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST,
-                        Utils.HOTWORD_DETECTION_SERVICE_PERMISSION),
-                MainHotwordDetectionService.DETECTED_RESULT);
+        mService.waitHotwordDetectionServiceInitializedCalledOrException();
 
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_PERMISSION);
+        // verify callback result
+        assertThat(mService.getHotwordDetectionServiceInitializedResult()).isEqualTo(
+                HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
+
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector = mService.getAlwaysOnHotwordDetector();
+        Objects.requireNonNull(alwaysOnHotwordDetector);
+
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            mService.initDetectRejectLatch();
+            alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(/* status */ 0,
+                    /* soundModelHandle */ 100, /* captureAvailable */ true,
+                    /* captureSession */ 101, /* captureDelayMs */ 1000,
+                    /* capturePreambleMs */ 1001, /* triggerInData */ true,
+                    Helper.createFakeAudioFormat(), /* data */ null,
+                    Helper.createFakeKeyphraseRecognitionExtraList());
+            // wait onDetected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+
+            Helper.verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
+        } finally {
+            alwaysOnHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
     }
 
-    // TODO: Implement HotwordDetectedResult#equals to override the Bundle equality check; then
-    // simply check that the HotwordDetectedResults are equal.
-    private void verifyDetectedResult(Parcelable result, HotwordDetectedResult expected) {
-        assertThat(result).isInstanceOf(EventPayloadParcelable.class);
-        HotwordDetectedResult hotwordDetectedResult =
-                ((EventPayloadParcelable) result).mHotwordDetectedResult;
-        ParcelFileDescriptor audioStream = ((EventPayloadParcelable) result).mAudioStream;
-        assertThat(hotwordDetectedResult).isNotNull();
-        assertThat(hotwordDetectedResult.getAudioChannel()).isEqualTo(
-                expected.getAudioChannel());
-        assertThat(hotwordDetectedResult.getConfidenceLevel()).isEqualTo(
-                expected.getConfidenceLevel());
-        assertThat(hotwordDetectedResult.isHotwordDetectionPersonalized()).isEqualTo(
-                expected.isHotwordDetectionPersonalized());
-        assertThat(hotwordDetectedResult.getHotwordDurationMillis()).isEqualTo(
-                expected.getHotwordDurationMillis());
-        assertThat(hotwordDetectedResult.getHotwordOffsetMillis()).isEqualTo(
-                expected.getHotwordOffsetMillis());
-        assertThat(hotwordDetectedResult.getHotwordPhraseId()).isEqualTo(
-                expected.getHotwordPhraseId());
-        assertThat(hotwordDetectedResult.getPersonalizedScore()).isEqualTo(
-                expected.getPersonalizedScore());
-        assertThat(hotwordDetectedResult.getScore()).isEqualTo(expected.getScore());
-        assertThat(audioStream).isNull();
+    private void adoptShellPermissionIdentityForHotword() {
+        // Drop any identity adopted earlier.
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.dropShellPermissionIdentity();
+        // need to retain the identity until the callback is triggered
+        uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
     }
 
     private boolean isPstnCallAudioInterceptable() {
@@ -149,9 +172,8 @@ public final class HotwordDetectionServicePermissionTest
         return result;
     }
 
-    @Override
-    public String getVoiceInteractionService() {
-        return "android.voiceinteraction.cts/"
-                + "android.voiceinteraction.service.TestPermissionVoiceInteractionService";
+    public String getTestVoiceInteractionService() {
+        Log.d(TAG, "getTestVoiceInteractionService()");
+        return CTS_SERVICE_PACKAGE + "/" + SERVICE_COMPONENT;
     }
 }

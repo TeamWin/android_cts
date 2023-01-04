@@ -30,7 +30,6 @@ import android.media.AudioManager;
 import android.media.MediaSession2;
 import android.media.Session2CommandGroup;
 import android.media.Session2Token;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Utils;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
@@ -52,6 +51,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -611,7 +611,7 @@ public class MediaSessionManagerTest {
     }
 
     @Test
-    @NonMediaMainlineTest
+    @NonMainlineTest
     public void testIsTrustedForMediaControl_withInvalidUid() throws Exception {
         List<String> packageNames = getEnabledNotificationListenerPackages();
         for (String packageName : packageNames) {

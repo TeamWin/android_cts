@@ -21,11 +21,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import android.media.RouteDiscoveryPreference;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,7 +36,7 @@ import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-@NonMediaMainlineTest
+@NonMainlineTest
 public class RouteDiscoveryPreferenceTest {
 
     private static final String TEST_FEATURE_1 = "TEST_FEATURE_1";

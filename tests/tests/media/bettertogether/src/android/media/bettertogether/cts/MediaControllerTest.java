@@ -28,7 +28,6 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.media.Rating;
 import android.media.VolumeProvider;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager.RemoteUserInfo;
@@ -46,6 +45,8 @@ import android.view.KeyEvent;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.NonMainlineTest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,7 +55,7 @@ import org.junit.runner.RunWith;
 /**
  * Test {@link android.media.session.MediaController}.
  */
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class MediaControllerTest {
     // The maximum time to wait for an operation.

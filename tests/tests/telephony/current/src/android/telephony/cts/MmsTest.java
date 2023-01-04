@@ -266,12 +266,12 @@ public class MmsTest {
         // Register sent receiver
         mSentReceiver = new SentReceiver(expectedErrorResultCode, ACTION_MMS_SENT);
         context.registerReceiver(mSentReceiver, new IntentFilter(ACTION_MMS_SENT),
-                Context.RECEIVER_EXPORTED_UNAUDITED);
+                Context.RECEIVER_EXPORTED);
 
         mDeliveryReceiver = new SentReceiver(expectedErrorResultCode,
                 ACTION_WAP_PUSH_DELIVER_DEFAULT_APP);
         context.registerReceiver(mDeliveryReceiver,
-                new IntentFilter(ACTION_WAP_PUSH_DELIVER_DEFAULT_APP));
+                new IntentFilter(ACTION_WAP_PUSH_DELIVER_DEFAULT_APP), Context.RECEIVER_EXPORTED);
 
         // Create local provider file for sending PDU
         final String fileName = "send." + String.valueOf(Math.abs(mRandom.nextLong())) + ".dat";

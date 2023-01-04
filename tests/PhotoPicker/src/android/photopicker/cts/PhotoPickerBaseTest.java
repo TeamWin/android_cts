@@ -24,7 +24,6 @@ import android.content.pm.PackageManager;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
 
-import com.android.bedstead.harrier.annotations.BeforeClass;
 
 import org.junit.Assume;
 import org.junit.Before;
@@ -42,13 +41,10 @@ public class PhotoPickerBaseTest {
     protected GetResultActivity mActivity;
     protected Context mContext;
 
-    @BeforeClass
-    public static void setUpClass() {
-        Assume.assumeTrue(isHardwareSupported());
-    }
-
     @Before
     public void setUp() throws Exception {
+        Assume.assumeTrue(isHardwareSupported());
+
         final String setSyncDelayCommand =
                 "device_config put storage pickerdb.default_sync_delay_ms 0";
         sDevice.executeShellCommand(setSyncDelayCommand);

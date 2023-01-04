@@ -425,6 +425,18 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }
     }
 
+    protected fun clickAllowForegroundInSettings() {
+        click(By.res(ALLOW_FOREGROUND_RADIO_BUTTON))
+    }
+
+    protected fun clicksDenyInSettings() {
+        if (isAutomotive || isWatch) {
+            click(By.text(getPermissionControllerString("app_permission_button_deny")))
+        } else {
+            click(By.res("com.android.permissioncontroller:id/deny_radio_button"))
+        }
+    }
+
     protected fun clickPermissionRequestAllowForegroundButton(timeoutMillis: Long = 10_000) {
         if (isAutomotive) {
             click(By.text(
@@ -444,11 +456,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected fun clickPermissionRequestSettingsLinkAndDeny() {
         clickPermissionRequestSettingsLink()
-        if (isAutomotive || isWatch) {
-            click(By.text(getPermissionControllerString("app_permission_button_deny")))
-        } else {
-            click(By.res("com.android.permissioncontroller:id/deny_radio_button"))
-        }
+        eventually({
+            clicksDenyInSettings()
+        }, TIMEOUT_MILLIS * 2)
         waitForIdle()
         pressBack()
     }

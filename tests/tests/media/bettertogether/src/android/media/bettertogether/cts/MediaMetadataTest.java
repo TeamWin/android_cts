@@ -23,12 +23,13 @@ import android.graphics.Bitmap;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
 import android.media.Rating;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.Parcel;
 import android.text.TextUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +41,7 @@ import java.util.Set;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-@NonMediaMainlineTest
+@NonMainlineTest
 public class MediaMetadataTest {
 
     @Test

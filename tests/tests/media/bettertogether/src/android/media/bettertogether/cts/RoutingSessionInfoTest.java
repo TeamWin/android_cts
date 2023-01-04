@@ -27,12 +27,13 @@ import static org.junit.Assert.assertThrows;
 
 import android.content.res.Resources;
 import android.media.RoutingSessionInfo;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.Bundle;
 import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,7 +43,7 @@ import org.junit.runner.RunWith;
  */
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-@NonMediaMainlineTest
+@NonMainlineTest
 public class RoutingSessionInfoTest {
     public static final String TEST_ID = "test_id";
     public static final String TEST_CLIENT_PACKAGE_NAME = "com.test.client.package.name";

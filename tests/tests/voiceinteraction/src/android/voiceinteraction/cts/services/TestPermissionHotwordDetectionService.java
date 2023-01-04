@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.voiceinteraction.service;
+package android.voiceinteraction.cts.services;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -25,6 +25,7 @@ import android.os.SharedMemory;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
 import android.util.Log;
+import android.voiceinteraction.cts.testcore.Helper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -60,10 +61,10 @@ public class TestPermissionHotwordDetectionService extends HotwordDetectionServi
                     .setBufferSizeInBytes(recFormat.getSampleRate() * 2)
                     .build();
             Log.d(TAG, "Create VOICE_DOWNLINK AudioRecord Successfully");
-            callback.onDetected(MainHotwordDetectionService.DETECTED_RESULT);
+            callback.onDetected(Helper.DETECTED_RESULT);
         } catch (Exception e) {
             Log.d(TAG, "Create VOICE_DOWNLINK AudioRecord Exception = " + e);
-            callback.onDetected(MainHotwordDetectionService.DETECTED_RESULT_FOR_MIC_FAILURE);
+            callback.onDetected(Helper.DETECTED_RESULT_FOR_MIC_FAILURE);
         } finally {
             if (audioRecord != null) {
                 audioRecord.release();

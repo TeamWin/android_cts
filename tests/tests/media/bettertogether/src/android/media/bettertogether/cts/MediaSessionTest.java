@@ -41,7 +41,6 @@ import android.media.MediaMetadata;
 import android.media.MediaSession2;
 import android.media.Rating;
 import android.media.VolumeProvider;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Utils;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
@@ -61,6 +60,8 @@ import android.view.KeyEvent;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.NonMainlineTest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -72,7 +73,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @RunWith(AndroidJUnit4.class)
 public class MediaSessionTest {

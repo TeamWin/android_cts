@@ -23,13 +23,14 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import android.media.MediaRoute2Info;
-import android.media.cts.NonMediaMainlineTest;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,7 +42,7 @@ import java.util.Set;
 /** Tests {@link MediaRoute2Info} and its {@link MediaRoute2Info.Builder builder}. */
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-@NonMediaMainlineTest
+@NonMainlineTest
 public class MediaRoute2InfoTest {
 
     public static final String TEST_ID = "test_id";

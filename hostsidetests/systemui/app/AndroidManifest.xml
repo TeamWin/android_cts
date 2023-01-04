@@ -32,6 +32,9 @@
             </intent-filter>
         </service>
 
+        <activity android:name=".TestTileService$TestActivity"
+                  android:exported="false" />
+
         <service android:name=".TestActiveTileService"
              android:icon="@android:drawable/ic_delete"
              android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"

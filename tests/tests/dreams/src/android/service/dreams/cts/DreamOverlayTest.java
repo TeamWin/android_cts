@@ -93,7 +93,8 @@ public class DreamOverlayTest extends ActivityManagerTestBase {
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         mContext.registerReceiver(
                 new OverlayVisibilityReceiver(countDownLatch),
-                new IntentFilter(ACTION_DREAM_OVERLAY_SHOWN));
+                new IntentFilter(ACTION_DREAM_OVERLAY_SHOWN),
+                Context.RECEIVER_EXPORTED);
 
         final ComponentName dreamService =
                 ComponentName.unflattenFromString(DREAM_SERVICE_COMPONENT);

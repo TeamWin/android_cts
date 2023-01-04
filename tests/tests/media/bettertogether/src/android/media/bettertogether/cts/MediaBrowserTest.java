@@ -24,12 +24,12 @@ import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.media.browse.MediaBrowser;
 import android.media.browse.MediaBrowser.MediaItem;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.Bundle;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import com.google.common.truth.Correspondence;
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Test {@link android.media.browse.MediaBrowser}.
  */
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class MediaBrowserTest {
     // The maximum time to wait for an operation.

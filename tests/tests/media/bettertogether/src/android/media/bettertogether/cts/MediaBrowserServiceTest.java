@@ -34,7 +34,6 @@ import android.content.ComponentName;
 import android.media.MediaDescription;
 import android.media.browse.MediaBrowser;
 import android.media.browse.MediaBrowser.MediaItem;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.session.MediaSessionManager.RemoteUserInfo;
 import android.os.Bundle;
 import android.os.Process;
@@ -44,6 +43,8 @@ import android.service.media.MediaBrowserService.BrowserRoot;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -58,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test {@link android.service.media.MediaBrowserService}.
  */
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class MediaBrowserServiceTest {
     // The maximum time to wait for an operation.

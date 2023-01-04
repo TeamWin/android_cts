@@ -95,6 +95,7 @@ public class EncoderColorAspectsTest extends EncoderTestBase {
             EncoderConfigParams encCfgParams, @SuppressWarnings("unused") String testLabel,
             String allTestParams) {
         super(encoder, mediaType, new EncoderConfigParams[]{encCfgParams}, allTestParams);
+        mLatency = encCfgParams.mMaxBFrames;
     }
 
     private static void prepareArgsList(List<Object[]> exhaustiveArgsList, String[] mediaTypes,

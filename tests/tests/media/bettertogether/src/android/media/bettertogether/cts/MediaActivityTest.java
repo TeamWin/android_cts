@@ -27,7 +27,6 @@ import android.content.Intent;
 import android.hardware.hdmi.HdmiControlManager;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.session.MediaSession;
 import android.os.ConditionVariable;
 import android.os.Handler;
@@ -40,6 +39,8 @@ import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -57,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test {@link MediaSessionTestActivity} which has called {@link Activity#setMediaController}.
  */
-@NonMediaMainlineTest
+@NonMainlineTest
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class MediaActivityTest {

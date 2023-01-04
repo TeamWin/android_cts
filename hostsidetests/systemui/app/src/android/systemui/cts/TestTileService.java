@@ -14,12 +14,15 @@
 
 package android.systemui.cts;
 
+import android.app.Activity;
 import android.app.Dialog;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Icon;
+import android.os.Bundle;
 import android.provider.Settings;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
@@ -36,8 +39,16 @@ public class TestTileService extends TileService {
 
     public static final String SHOW_DIALOG = "android.sysui.testtile.action.SHOW_DIALOG";
     public static final String START_ACTIVITY = "android.sysui.testtile.action.START_ACTIVITY";
+    public static final String START_ACTIVITY_WITH_PENDING_INTENT =
+            "android.sysui.testtile.action.START_ACTIVITY_WITH_PENDING_INTENT";
+    public static final String SET_PENDING_INTENT =
+            "android.sysui.testtile.action.SET_PENDING_INTENT";
+    public static final String SET_NULL_PENDING_INTENT =
+            "android.sysui.testtile.action.SET_NULL_PENDING_INTENT";
 
     public static final String TEST_PREFIX = "TileTest_";
+
+    private PendingIntent mPendingIntent;
 
     @Override
     public void onCreate() {
@@ -70,6 +81,9 @@ public class TestTileService extends TileService {
         Log.i(TAG, TEST_PREFIX + "onStartListening");
         IntentFilter filter = new IntentFilter(SHOW_DIALOG);
         filter.addAction(START_ACTIVITY);
+        filter.addAction(START_ACTIVITY_WITH_PENDING_INTENT);
+        filter.addAction(SET_PENDING_INTENT);
+        filter.addAction(SET_NULL_PENDING_INTENT);
         registerReceiver(mReceiver, filter);
 
         // Set up some initial good state.
@@ -107,6 +121,25 @@ public class TestTileService extends TileService {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
     }
 
+    private void handleStartActivityWithPendingIntent() {
+        Log.i(TAG, TEST_PREFIX + "handleStartActivityWithPendingIntent");
+        super.startActivityAndCollapse(getValidPendingIntent());
+    }
+
+    private void handleSetPendingIntent(boolean isValid) {
+        Log.i(TAG, TEST_PREFIX + "handleSetPendingIntent");
+        super.getQsTile().setActivityLaunchForClick(isValid ? getValidPendingIntent() : null);
+        super.getQsTile().updateTile();
+    }
+
+    private PendingIntent getValidPendingIntent() {
+        if (mPendingIntent == null) {
+            mPendingIntent = PendingIntent.getActivity(this, 0,
+                    new Intent(this, TestActivity.class), PendingIntent.FLAG_IMMUTABLE);
+        }
+        return mPendingIntent;
+    }
+
     private void handleShowDialog() {
         Log.i(TAG, TEST_PREFIX + "handleShowDialog");
         final Dialog dialog = new Dialog(this);
@@ -115,6 +148,21 @@ public class TestTileService extends TileService {
             super.showDialog(dialog);
         } catch (Exception e) {
             Log.i(TAG, TEST_PREFIX + "onWindowAddFailed", e);
+        }
+    }
+
+    public static class TestActivity extends Activity {
+        private static final String TAG = "TestTileService";
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            Log.i(TAG, TEST_PREFIX + "TestActivity#onResume");
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+            }
+            finish();
         }
     }
 
@@ -146,8 +194,14 @@ public class TestTileService extends TileService {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(SHOW_DIALOG)) {
                 handleShowDialog();
-            } else {
+            } else if (intent.getAction().equals(START_ACTIVITY)) {
                 handleStartActivity();
+            } else if (intent.getAction().equals(START_ACTIVITY_WITH_PENDING_INTENT)) {
+                handleStartActivityWithPendingIntent();
+            } else if (intent.getAction().equals(SET_PENDING_INTENT)) {
+                handleSetPendingIntent(true);
+            } else if (intent.getAction().equals(SET_NULL_PENDING_INTENT)) {
+                handleSetPendingIntent(false);
             }
         }
     };

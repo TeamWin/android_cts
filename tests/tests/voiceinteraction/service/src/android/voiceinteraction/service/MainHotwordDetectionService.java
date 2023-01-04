@@ -49,6 +49,10 @@ import javax.annotation.concurrent.GuardedBy;
 public class MainHotwordDetectionService extends HotwordDetectionService {
     static final String TAG = "MainHotwordDetectionService";
 
+    public static byte[] FAKE_HOTWORD_AUDIO_DATA =
+            new byte[]{'h', 'o', 't', 'w', 'o', 'r', 'd', '!'};
+    public static String KEY_FAKE_DATA = "fakeData";
+    public static String VALUE_FAKE_DATA = "fakeData";
     public static final int DEFAULT_PHRASE_ID = 5;
     public static final HotwordDetectedResult DETECTED_RESULT =
             new HotwordDetectedResult.Builder()
@@ -177,7 +181,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             Log.d(TAG, "fis.available() = " + fis.available());
             byte[] buffer = new byte[8];
             fis.read(buffer, 0, 8);
-            if (isSame(buffer, BasicVoiceInteractionService.FAKE_HOTWORD_AUDIO_DATA,
+            if (isSame(buffer, FAKE_HOTWORD_AUDIO_DATA,
                     buffer.length)) {
                 Log.d(TAG, "call callback.onDetected");
                 callback.onDetected(DETECTED_RESULT);
@@ -258,8 +262,8 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 Process.killProcess(Process.myPid());
                 return;
             }
-            String fakeData = options.getString(BasicVoiceInteractionService.KEY_FAKE_DATA);
-            if (!TextUtils.equals(fakeData, BasicVoiceInteractionService.VALUE_FAKE_DATA)) {
+            String fakeData = options.getString(KEY_FAKE_DATA);
+            if (!TextUtils.equals(fakeData, VALUE_FAKE_DATA)) {
                 Log.d(TAG, "options : data is not the same");
                 return;
             }

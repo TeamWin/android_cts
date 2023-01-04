@@ -24,13 +24,14 @@ import static org.junit.Assert.assertThrows;
 import android.content.Context;
 import android.media.RemoteController;
 import android.media.RemoteController.OnClientUpdateListener;
-import android.media.cts.NonMediaMainlineTest;
 import android.platform.test.annotations.AppModeFull;
 import android.view.KeyEvent;
 
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +49,7 @@ import java.util.Set;
 /**
  * Tests for {@link RemoteController}.
  */
-@NonMediaMainlineTest
+@NonMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @RunWith(AndroidJUnit4.class)
 public class RemoteControllerTest {

@@ -102,6 +102,11 @@ public final class Helper {
                     .setHotwordPhraseId(DEFAULT_PHRASE_ID)
                     .setScore(57)
                     .build();
+    public static final HotwordDetectedResult DETECTED_RESULT_FOR_MIC_FAILURE =
+            new HotwordDetectedResult.Builder()
+                    .setHotwordPhraseId(DEFAULT_PHRASE_ID)
+                    .setScore(58)
+                    .build();
     public static final HotwordRejectedResult REJECTED_RESULT =
             new HotwordRejectedResult.Builder()
                     .setConfidenceLevel(HotwordRejectedResult.CONFIDENCE_LEVEL_MEDIUM)

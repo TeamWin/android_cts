@@ -47,7 +47,6 @@ import android.media.MediaRouter2.RouteCallback;
 import android.media.MediaRouter2.RoutingController;
 import android.media.MediaRouter2.TransferCallback;
 import android.media.RouteDiscoveryPreference;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
@@ -60,6 +59,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.UserTest;
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
@@ -82,7 +82,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(BedsteadJUnit4.class)
 @AppModeFull(reason = "The system should be able to bind to StubMediaRoute2ProviderService")
 @LargeTest
-@NonMediaMainlineTest
+@NonMainlineTest
 public class MediaRouter2Test {
     private static final String TAG = "MR2Test";
 
