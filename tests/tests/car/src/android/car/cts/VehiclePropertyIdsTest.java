@@ -278,6 +278,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("SEAT_HEADREST_HEIGHT_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_HEADREST_HEIGHT_POS))
                 .isEqualTo("SEAT_HEADREST_HEIGHT_POS");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_HEADREST_HEIGHT_POS_V2))
+                .isEqualTo("SEAT_HEADREST_HEIGHT_POS_V2");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_HEIGHT_MOVE))
                 .isEqualTo("SEAT_HEIGHT_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_HEIGHT_POS))
@@ -300,6 +302,10 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("SEAT_TILT_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_TILT_POS))
                 .isEqualTo("SEAT_TILT_POS");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_FOOTWELL_LIGHTS_STATE))
+                .isEqualTo("SEAT_FOOTWELL_LIGHTS_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_FOOTWELL_LIGHTS_SWITCH))
+                .isEqualTo("SEAT_FOOTWELL_LIGHTS_SWITCH");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_EASY_ACCESS_ENABLED))
                 .isEqualTo("SEAT_EASY_ACCESS_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_AIRBAG_ENABLED))
@@ -378,9 +384,22 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("READING_LIGHTS_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.READING_LIGHTS_SWITCH))
                 .isEqualTo("READING_LIGHTS_SWITCH");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.STEERING_WHEEL_LIGHTS_STATE))
+                .isEqualTo("STEERING_WHEEL_LIGHTS_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.STEERING_WHEEL_LIGHTS_SWITCH))
+                .isEqualTo("STEERING_WHEEL_LIGHTS_SWITCH");
         assertThat(
                 VehiclePropertyIds.toString(VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_ENABLED))
                 .isEqualTo("AUTOMATIC_EMERGENCY_BRAKING_ENABLED");
+        assertThat(
+                VehiclePropertyIds.toString(VehiclePropertyIds.FORWARD_COLLISION_WARNING_ENABLED))
+                .isEqualTo("FORWARD_COLLISION_WARNING_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.BLIND_SPOT_WARNING_ENABLED))
+                .isEqualTo("BLIND_SPOT_WARNING_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_DEPARTURE_WARNING_ENABLED))
+                .isEqualTo("LANE_DEPARTURE_WARNING_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED))
+                .isEqualTo("LANE_CENTERING_ASSIST_ENABLED");
         assertThat(VehiclePropertyIds.toString(3)).isEqualTo("0x3");
         assertThat(VehiclePropertyIds.toString(12)).isEqualTo("0xc");
     }

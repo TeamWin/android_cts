@@ -50,6 +50,7 @@ open class PackageSchemeTestBase {
     val POSITIVE_BTN_ID = "button1"
     val NEGATIVE_BTN_ID = "button2"
     val SYSTEM_PACKAGE_NAME = "android"
+    val PACKAGE_INSTALLER_PACKAGE_NAME = "com.android.packageinstaller"
     val DEFAULT_TIMEOUT = 5000L
 
     var mScenario: ActivityScenario<TestActivity>? = null
@@ -107,7 +108,8 @@ open class PackageSchemeTestBase {
     @Before
     fun setup() {
         receiver.clear()
-        mContext.registerReceiver(receiver, IntentFilter(RECEIVER_ACTION), Context.RECEIVER_EXPORTED);
+        mContext.registerReceiver(receiver, IntentFilter(RECEIVER_ACTION),
+            Context.RECEIVER_EXPORTED)
     }
 
     @Before
@@ -143,12 +145,16 @@ open class PackageSchemeTestBase {
         mScenario = ActivityScenario.launchActivityForResult(intent)
         mScenario!!.onActivity {
             try {
+                // When the installed package is found, the dialog box shown is owned by
+                // com.android.packageinstaller (ag/19602120). On the other hand, when an error
+                // dialog box is shown due to app not being present or due to
+                // visibility constraints, the dialog box is owned by the system
                 if (packageHasVisibility && needTargetApp) {
-                    mUiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, NEGATIVE_BTN_ID)),
-                            DEFAULT_TIMEOUT).click()
+                    mUiDevice.wait(Until.findObject(By.res(PACKAGE_INSTALLER_PACKAGE_NAME,
+                        NEGATIVE_BTN_ID)), DEFAULT_TIMEOUT).click()
                 } else {
-                    mUiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, POSITIVE_BTN_ID)),
-                            DEFAULT_TIMEOUT).click()
+                    mUiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME,
+                        POSITIVE_BTN_ID)), DEFAULT_TIMEOUT).click()
                 }
             } catch (e: NullPointerException) {
                 fail("Button not found.: " + e.message)

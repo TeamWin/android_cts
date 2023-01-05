@@ -235,8 +235,6 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
       raw_avlb = camera_properties_utils.raw16(props)
       debug = self.debug_mode
 
-      # Converge 3A.
-      cam.do_3a()
       req = capture_request_utils.auto_capture_request()
 
       # If raw available, use as ground truth.
@@ -273,7 +271,7 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
                           'format': fmt_iter}]
           out_surface.append({'width': w_cmpr, 'height': h_cmpr,
                               'format': fmt_cmpr})
-
+          cam.do_3a()
           cap = cam.do_capture(req, out_surface)[0]
           _check_basic_correctness(cap, fmt_iter, w_iter, h_iter)
           logging.debug('Captured %s with %s %dx%d. Compared size: %dx%d',

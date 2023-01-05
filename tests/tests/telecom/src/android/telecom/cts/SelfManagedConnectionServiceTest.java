@@ -112,6 +112,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
             mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_1);
             mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_2);
             mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_3);
+            mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_4);
         }
     }
 
@@ -1352,6 +1353,13 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         appServiceController.initiateIncomingCall(
                 TestUtils.TEST_SELF_MANAGED_CS_1_HANDLE_3, TEST_ADDRESS_2.toString());
 
+        // Wait for Telecom to finish creating the new connection.
+        try {
+            TestUtils.waitOnAllHandlers(getInstrumentation());
+        } catch (Exception e) {
+            fail("Failed to wait on handlers");
+        }
+
         assertTrue(appServiceController.waitForBinding());
 
         appServiceController.setConnectionCapabilityNoHold();
@@ -1374,6 +1382,8 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         call.answer(VideoProfile.STATE_AUDIO_ONLY);
 
         assertConnectionState(connection, Connection.STATE_ACTIVE);
+
+        assertTrue(appServiceController.waitOnDisconnect());
         assertEquals(Connection.STATE_DISCONNECTED, appServiceController.getConnectionState());
 
         // unregister a self-managed phone account
@@ -1548,6 +1558,13 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
             PhoneAccountHandle handle, Uri address) throws Exception {
         // place a self-managed call
         assertTrue(serviceControl.placeOutgoingCall(handle, address.toString()));
+
+        // Wait for Telecom to finish creating the new connection.
+        try {
+            TestUtils.waitOnAllHandlers(getInstrumentation());
+        } catch (Exception e) {
+            fail("Failed to wait on handlers");
+        }
 
         // Ensure Telecom bound to the self managed CS
         if (!serviceControl.waitForBinding()) {

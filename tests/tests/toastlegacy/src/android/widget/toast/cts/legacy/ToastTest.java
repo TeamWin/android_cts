@@ -16,6 +16,7 @@
 
 package android.widget.toast.cts.legacy;
 
+import android.content.Intent;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.toast.cts.BaseToastTest;
@@ -126,6 +127,8 @@ public class ToastTest extends BaseToastTest {
 
     @Test
     public void testAddTwoToastsViaAddingWindowApisWhenUidFocusedQuickly() throws Exception {
+        // dismiss deprecated app warnings dialog
+        mContext.sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
         showToastsViaAddingWindow(2, false);
 
         // Wait for the toast to timeout

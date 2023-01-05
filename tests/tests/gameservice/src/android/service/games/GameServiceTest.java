@@ -61,6 +61,7 @@ import android.view.WindowManager;
 import android.view.WindowMetrics;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
@@ -89,6 +90,7 @@ import java.util.regex.Pattern;
 /**
  * CTS tests for {@link android.service.games.GameService}.
  */
+@FlakyTest(bugId = 263181277)
 @RunWith(AndroidJUnit4.class)
 public final class GameServiceTest {
     static final String TAG = "GameServiceTest";

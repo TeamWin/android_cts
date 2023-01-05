@@ -42,6 +42,7 @@ public class SelfManagedConnection extends Connection {
             new InvokeCounter("onAvailableCallEndpointsChanged");
     CountDownLatch mOnHoldLatch = new CountDownLatch(1);
     CountDownLatch mOnUnHoldLatch = new CountDownLatch(1);
+    CountDownLatch mOnDisconnectLatch = new CountDownLatch(1);
     CountDownLatch mInCallServiceTrackingLatch = new CountDownLatch(1);
     boolean mIsTracked = false;
     boolean mIsAlternativeUiShowing = false;
@@ -101,6 +102,7 @@ public class SelfManagedConnection extends Connection {
     public void onDisconnect() {
         super.onDisconnect();
         disconnectAndDestroy();
+        mOnDisconnectLatch.countDown();
     }
 
     @Override
@@ -169,6 +171,11 @@ public class SelfManagedConnection extends Connection {
     public boolean waitOnUnHold() {
         mOnUnHoldLatch = TestUtils.waitForLock(mOnUnHoldLatch);
         return mOnUnHoldLatch != null;
+    }
+
+    public boolean waitOnDisconnect() {
+        mOnDisconnectLatch = TestUtils.waitForLock(mOnDisconnectLatch);
+        return mOnDisconnectLatch != null;
     }
 
     public boolean waitOnInCallServiceTrackingChanged() {

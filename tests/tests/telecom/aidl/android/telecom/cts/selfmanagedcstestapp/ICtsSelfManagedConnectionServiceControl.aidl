@@ -29,6 +29,7 @@ interface ICtsSelfManagedConnectionServiceControl {
     boolean isConnectionAvailable();
     boolean waitOnHold();
     boolean waitOnUnHold();
+    boolean waitOnDisconnect();
     boolean initiateIncomingCall(in PhoneAccountHandle handle, in String uri);
     boolean placeOutgoingCall(in PhoneAccountHandle handle, in String uri);
     boolean placeIncomingCall(in PhoneAccountHandle handle,

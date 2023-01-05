@@ -68,6 +68,10 @@ public class ConnectionServiceCallController {
         return mConnection.waitOnUnHold();
     }
 
+    public boolean waitOnDisconnect() {
+        return mConnection.waitOnDisconnect();
+    }
+
     public boolean initiateIncomingCall(TelecomManager telecomManager,
             PhoneAccountHandle handle, String uri) {
         Bundle extras = new Bundle();

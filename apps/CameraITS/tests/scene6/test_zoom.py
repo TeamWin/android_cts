@@ -245,11 +245,11 @@ class ZoomTest(its_base_test.ItsBaseTest):
       logging.debug('test TOLs: %s', str(test_tols))
 
       # do captures over zoom range and find circles with cv2
-      cam.do_3a()
       req = capture_request_utils.auto_capture_request()
       for i, z in enumerate(z_list):
         logging.debug('zoom ratio: %.2f', z)
         req['android.control.zoomRatio'] = z
+        cam.do_3a()
         cap = cam.do_capture(
             req, {'format': 'yuv', 'width': size[0], 'height': size[1]})
         img = image_processing_utils.convert_capture_to_rgb_image(

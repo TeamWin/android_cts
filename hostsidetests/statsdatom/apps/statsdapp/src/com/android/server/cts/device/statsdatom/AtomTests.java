@@ -21,6 +21,7 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeNotNull;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -61,6 +62,7 @@ import android.net.NetworkRequest;
 import android.net.cts.util.CtsNetUtils;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -70,6 +72,7 @@ import android.os.PowerManager;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
@@ -1253,6 +1256,8 @@ public class AtomTests {
     @Test
     public void testCreateHintSession() throws Exception {
         final long targetNs = 16666666L;
+        final int androidTApiLevel = Build.VERSION_CODES.TIRAMISU;
+        final int apiLevel = SystemProperties.getInt("ro.vendor.api_level", -1);
         Context context = InstrumentationRegistry.getContext();
         PerformanceHintManager phm = context.getSystemService(PerformanceHintManager.class);
 
@@ -1261,6 +1266,10 @@ public class AtomTests {
         PerformanceHintManager.Session session =
                 phm.createHintSession(new int[]{Process.myPid()}, targetNs);
 
-        assertNotNull(session);
+        if (apiLevel < androidTApiLevel) {
+            assumeNotNull(session);
+        } else {
+            assertNotNull(session);
+        }
     }
 }

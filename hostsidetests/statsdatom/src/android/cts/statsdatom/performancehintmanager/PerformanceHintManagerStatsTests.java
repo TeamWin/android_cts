@@ -17,6 +17,7 @@
 package android.cts.statsdatom.performancehintmanager;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.TruthJUnit.assume;
 
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
@@ -67,13 +68,22 @@ public class PerformanceHintManagerStatsTests extends DeviceTestCase implements 
     }
 
     public void testCreateHintSessionStatsd() throws Exception {
+        final int androidTApiLevel = 33; // android.os.Build.VERSION_CODES.TIRAMISU
+        final int apiLevel = Integer.parseInt(
+                DeviceUtils.getProperty(getDevice(), "ro.vendor.api_level"));
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.PERFORMANCE_HINT_SESSION_REPORTED_FIELD_NUMBER);
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(),
                 ".AtomTests", "testCreateHintSession");
+
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+
+        if (apiLevel < androidTApiLevel) {
+            assume().that(data.size()).isEqualTo(0);
+        }
+
         assertThat(data.size()).isAtLeast(1);
         PerformanceHintSessionReported a0 =
                 data.get(0).getAtom().getPerformanceHintSessionReported();

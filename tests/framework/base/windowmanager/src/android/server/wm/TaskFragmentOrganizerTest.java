@@ -19,7 +19,6 @@ package android.server.wm;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
-import static android.view.Display.DEFAULT_DISPLAY;
 import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_CHANGE;
 import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_CLOSE;
 import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_OPEN;
@@ -28,7 +27,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
@@ -253,14 +251,15 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
     public void testFinishActivity() {
         final Activity activity = startNewActivity(
                 WindowMetricsActivityTests.MetricsActivity.class);
+        // Make sure mLaunchingActivity is mapping to the correct component that is started.
+        mWmState.waitAndAssertActivityState(mLaunchingActivity, STATE_RESUMED);
+
         final WindowContainerTransaction wct = new WindowContainerTransaction()
                 .finishActivity(getActivityToken(activity));
         mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CLOSE,
                 false /* shouldApplyIndependently */);
 
-        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-
-        assertTrue(activity.isDestroyed());
+        mWmState.waitAndAssertActivityRemoved(mLaunchingActivity);
     }
 
     /**

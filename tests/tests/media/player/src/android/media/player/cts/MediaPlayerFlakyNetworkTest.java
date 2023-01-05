@@ -21,7 +21,6 @@ import static org.junit.Assert.fail;
 
 import android.media.MediaPlayer;
 import android.media.cts.MediaPlayerTestBase;
-import android.media.cts.Preconditions;
 import android.media.cts.TestUtils.Monitor;
 import android.platform.test.annotations.AppModeFull;
 import android.webkit.cts.CtsTestServer;
@@ -30,6 +29,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.compatibility.common.util.Preconditions;
 
 import org.apache.http.impl.DefaultHttpServerConnection;
 import org.apache.http.impl.io.SocketOutputBuffer;

@@ -70,7 +70,11 @@ class PermissionReviewTapjackingTest : BaseUsePermissionTest() {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
 
-        waitFindObject(By.res("com.android.permissioncontroller:id/permissions_message"))
+        if (isWatch) {
+            waitFindObject(By.text(getPermissionControllerString("review_button_cancel")))
+        } else {
+            waitFindObject(By.res("com.android.permissioncontroller:id/permissions_message"))
+        }
 
         try {
             findOverlay()

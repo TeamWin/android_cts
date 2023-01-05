@@ -446,9 +446,9 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         });
 
         mMediaPlayer.prepare();
-        mMediaPlayer.start();
-        assertTrue("MediaPlayer not playing", mMediaPlayer.isPlaying());
 
+        // Select the ID3 track before calling start() to ensure all the timed
+        // ID3s are received.
         int i = -1;
         TrackInfo[] trackInfos = mMediaPlayer.getTrackInfo();
         for (i = 0; i < trackInfos.length; i++) {
@@ -459,6 +459,9 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         }
         assertTrue("Stream has no timed ID3 track", i >= 0);
         mMediaPlayer.selectTrack(i);
+
+        mMediaPlayer.start();
+        assertTrue("MediaPlayer not playing", mMediaPlayer.isPlaying());
 
         synchronized (completion) {
             completion.wait();

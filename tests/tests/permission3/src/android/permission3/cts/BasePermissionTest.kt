@@ -41,6 +41,7 @@ import com.android.compatibility.common.util.UiAutomatorUtils
 import java.util.concurrent.CompletableFuture
 import java.util.regex.Pattern
 import org.junit.After
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
@@ -232,6 +233,22 @@ abstract class BasePermissionTest {
     protected fun click(selector: BySelector, timeoutMillis: Long = 20_000) {
         waitFindObject(selector, timeoutMillis).click()
         waitForIdle()
+    }
+
+    protected fun findView(selector: BySelector, expected: Boolean) {
+        val timeoutMs = if (expected) {
+            10000L
+        } else {
+            1000L
+        }
+
+        val exception = try {
+            waitFindObject(selector, timeoutMs)
+            null
+        } catch (e: Exception) {
+            e
+        }
+        Assert.assertTrue("Expected to find view: $expected", (exception == null) == expected)
     }
 
     protected fun clickPermissionControllerUi(selector: BySelector, timeoutMillis: Long = 20_000) {

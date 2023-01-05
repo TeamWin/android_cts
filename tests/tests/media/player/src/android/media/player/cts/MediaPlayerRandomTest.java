@@ -22,7 +22,6 @@ import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
-import android.media.cts.Preconditions;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -31,6 +30,7 @@ import android.view.SurfaceHolder;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.compatibility.common.util.Preconditions;
 import com.android.compatibility.common.util.WatchDog;
 
 import org.junit.After;

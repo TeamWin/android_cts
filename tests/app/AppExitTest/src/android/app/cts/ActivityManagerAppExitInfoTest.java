@@ -1397,7 +1397,7 @@ public final class ActivityManagerAppExitInfoTest {
                 android.Manifest.permission.DUMP);
 
         assertNotNull(list);
-        assertEquals(list.size(), 1);
+        assertEquals(1, list.size());
         verify(list.get(0), mStubPackagePid, uid, HEARTBEAT_PROCESS,
                 reason, null, null, now, now2);
     }

@@ -162,6 +162,19 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     private static final ImmutableSet<Integer> VEHICLE_SEAT_OCCUPANCY_STATES = ImmutableSet.of(
             /*VehicleSeatOccupancyState.UNKNOWN=*/0, /*VehicleSeatOccupancyState.VACANT=*/1,
             /*VehicleSeatOccupancyState.OCCUPIED=*/2);
+    private static final ImmutableList<Integer>
+            PERMISSION_READ_DRIVER_MONITORING_SETTINGS_PROPERTIES = ImmutableList.<Integer>builder()
+                    .add()
+                    .build();
+    private static final ImmutableList<Integer>
+            PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add()
+                    .build();
+    private static final ImmutableList<Integer>
+            PERMISSION_READ_DRIVER_MONITORING_STATES_PROPERTIES = ImmutableList.<Integer>builder()
+                    .add()
+                    .build();
     private static final ImmutableList<Integer> PERMISSION_CAR_ENERGY_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
@@ -254,12 +267,20 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     private static final ImmutableList<Integer> PERMISSION_READ_ADAS_SETTINGS_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
-                            VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_ENABLED)
+                            VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_ENABLED,
+                            VehiclePropertyIds.FORWARD_COLLISION_WARNING_ENABLED,
+                            VehiclePropertyIds.BLIND_SPOT_WARNING_ENABLED,
+                            VehiclePropertyIds.LANE_DEPARTURE_WARNING_ENABLED,
+                            VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_SETTINGS_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
-                            VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_ENABLED)
+                            VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_ENABLED,
+                            VehiclePropertyIds.FORWARD_COLLISION_WARNING_ENABLED,
+                            VehiclePropertyIds.BLIND_SPOT_WARNING_ENABLED,
+                            VehiclePropertyIds.LANE_DEPARTURE_WARNING_ENABLED,
+                            VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_READ_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -2372,6 +2393,20 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testSteeringWheelLightsStateIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.STEERING_WHEEL_LIGHTS_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                .addReadPermission(Car.PERMISSION_READ_INTERIOR_LIGHTS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
     @ApiTest(
             apis = {
                 "android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
@@ -2607,6 +2642,21 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehiclePropertyIds.READING_LIGHTS_SWITCH,
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                .addReadPermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
+                .addWritePermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testSteeringWheelLightsSwitchIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.STEERING_WHEEL_LIGHTS_SWITCH,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
                 .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
@@ -3136,6 +3186,36 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testSeatHeadrestHeightPosMustNotBeImplemented() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    assertWithMessage(
+                                "SEAT_HEADREST_HEIGHT_POS has been deprecated and should not be"
+                                + " implemented. Use SEAT_HEADREST_HEIGHT_POS_V2 instead.")
+                        .that(
+                                mCarPropertyManager.getCarPropertyConfig(
+                                        VehiclePropertyIds.SEAT_HEADREST_HEIGHT_POS))
+                        .isNull();
+                },
+                Car.PERMISSION_CONTROL_CAR_SEATS);
+    }
+
+    @Test
+    public void testSeatHeadrestHeightPosV2IfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.SEAT_HEADREST_HEIGHT_POS_V2,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .requireMinMaxValues()
+                .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
+                .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
     @ApiTest(
             apis = {
                 "android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
@@ -3254,6 +3334,35 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testSeatFootwellLightsStateIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.SEAT_FOOTWELL_LIGHTS_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                .addReadPermission(Car.PERMISSION_READ_INTERIOR_LIGHTS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testSeatFootwellLightsSwitchIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.SEAT_FOOTWELL_LIGHTS_SWITCH,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                .addReadPermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
+                .addWritePermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .build()
                 .verify(mCarPropertyManager);
     }
@@ -4194,6 +4303,62 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .verify(mCarPropertyManager);
     }
 
+    @Test
+    public void testForwardCollisionWarningEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.FORWARD_COLLISION_WARNING_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testBlindSpotWarningEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.BLIND_SPOT_WARNING_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testLaneDepartureWarningEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.LANE_DEPARTURE_WARNING_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testLaneCenteringAssistEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getPropertyList(ArraySet)",
@@ -4634,6 +4799,57 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         assertWithMessage("CarPropertyManager.getPropertyList()")
                 .that(mCarPropertyManager.getPropertyList())
                 .isEmpty();
+    }
+
+    @Test
+    public void testPermissionReadDriverMonitoringSettingsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_READ_DRIVER_MONITORING_SETTINGS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_READ_DRIVER_MONITORING_SETTINGS);
+    }
+
+    @Test
+    public void testPermissionControlDriverMonitoringSettingsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS);
+    }
+
+    @Test
+    public void testPermissionReadDriverMonitoringStatesGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_READ_DRIVER_MONITORING_STATES_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_READ_DRIVER_MONITORING_STATES);
     }
 
     @Test

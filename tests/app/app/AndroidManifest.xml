@@ -546,6 +546,15 @@
             </intent-filter>
         </activity>
 
+        <receiver android:name="android.app.stubs.HeartbeatReceiver"
+            android:enabled="true"
+            android:process=":hbact"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.stubs.HEARTBEAT_DONE"/>
+            </intent-filter>
+        </receiver>
+
         <service android:name=".HeartbeatService"
             android:process=":hbsvc"
             android:exported="true">

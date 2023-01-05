@@ -89,6 +89,11 @@ public class CtsSelfManagedConnectionServiceControl extends Service {
         }
 
         @Override
+        public boolean waitOnDisconnect() {
+            return mConnServiceCallController.waitOnDisconnect();
+        }
+
+        @Override
         public boolean initiateIncomingCall(PhoneAccountHandle handle, String uri) {
             return mConnServiceCallController.initiateIncomingCall(
                     mTelecomManager, handle, uri);

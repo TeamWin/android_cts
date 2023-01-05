@@ -65,6 +65,17 @@ public class IsoDepTest {
     }
 
     @Test
+    public void testGetTag() {
+        Bundle extras = new Bundle();
+        extras.putByteArray(IsoDep.EXTRA_HI_LAYER_RESP, new byte[]{0x00});
+        extras.putByteArray(IsoDep.EXTRA_HIST_BYTES, new byte[]{0x00});
+        Tag tag = new Tag(new byte[]{0x00}, new int[]{TagTechnology.ISO_DEP},
+            new Bundle[]{extras}, 0, 0L, mINfcTag);
+        IsoDep id = IsoDep.get(tag);
+        Assert.assertEquals(tag, id.getTag());
+    }
+
+    @Test
     public void testIsConnected_isConnected() throws RemoteException, IOException {
         IsoDep id = createConnectedIsoDepInstance();
         when(mINfcTag.isPresent(anyInt())).thenReturn(true);

@@ -36,7 +36,6 @@ import android.media.SyncParams;
 import android.media.TimedText;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
-import android.media.cts.Preconditions;
 import android.media.cts.Utils;
 import android.net.Uri;
 import android.os.Environment;
@@ -48,6 +47,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.Preconditions;
 
 import java.io.BufferedReader;
 import java.io.File;

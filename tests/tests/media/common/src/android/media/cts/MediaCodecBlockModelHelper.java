@@ -47,7 +47,6 @@ import java.util.function.Supplier;
  * MediaCodecBlockModelHelper class
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
-@NonMediaMainlineTest
 @AppModeFull(reason = "Instant apps cannot access the SD card")
 public class MediaCodecBlockModelHelper extends AndroidTestCase {
     private static final String TAG = "MediaCodecBlockModelHelper";

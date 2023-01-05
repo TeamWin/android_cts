@@ -187,6 +187,9 @@ public class WindowFocusTests extends WindowManagerTestBase {
     @Test
     public void testKeyReceivingWithDisplayWithOwnFocus() {
         assumeTrue(supportsMultiDisplay());
+        // This test specifically tests the behavior if a single display manages its own focus.
+        // Key receiving with perDisplayFocusEnabled is handled in #testKeyReceiving()
+        assumeFalse(perDisplayFocusEnabled());
 
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);

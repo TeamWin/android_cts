@@ -5506,7 +5506,9 @@ public class ImsServiceTest {
                 .waitForOnReadyLatch());
         // Set Registered and SMS capable
         sServiceConnector.getCarrierService().getMmTelFeature().setCapabilities(capabilities);
-        sServiceConnector.getCarrierService().getImsService().getRegistration(0).onRegistered(1);
+        sServiceConnector.getCarrierService().getImsService()
+                .getRegistrationForSubscription(sTestSlot, sTestSub)
+                .onRegistered(IMS_REGI_TECH_IWLAN);
         sServiceConnector.getCarrierService().getMmTelFeature()
                 .notifyCapabilitiesStatusChanged(capabilities);
 
