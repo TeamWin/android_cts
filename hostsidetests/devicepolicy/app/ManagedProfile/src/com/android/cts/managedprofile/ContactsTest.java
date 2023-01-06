@@ -169,6 +169,14 @@ public class ContactsTest extends AndroidTestCase {
         AccountManager.get(getContext()).addAccountExplicitly(account, null, null);
     }
 
+    public void testRemoveAllUserContacts() throws RemoteException {
+        for (ContactInfo contact : getContactInfoFromListContacts(false)) {
+            mResolver.delete(
+                    Contacts.CONTENT_URI.buildUpon().appendPath(contact.contactId).build(), null);
+        }
+        assertEquals(0, getContactInfoFromListContacts(false).size());
+    }
+
     public void testPrimaryProfilePhoneAndEmailLookup_insertedAndfound() throws RemoteException,
             OperationApplicationException, NotFoundException, IOException {
         assertFalse(isManagedProfile());

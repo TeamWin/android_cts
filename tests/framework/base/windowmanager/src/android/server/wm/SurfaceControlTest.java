@@ -162,7 +162,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new RectChecker(DEFAULT_RECT, PixelColor.RED), 1);
+                new RectChecker(DEFAULT_RECT, Color.RED), 1);
     }
 
     /**
@@ -181,7 +181,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new RectChecker(DEFAULT_RECT, PixelColor.BLACK), 1);
+                new RectChecker(DEFAULT_RECT, Color.BLACK), 1);
     }
 
     /**
@@ -198,7 +198,7 @@ public class SurfaceControlTest {
                         makeTransactionWithListener().reparent(sc, null).apply();
                     }
                 },
-                new RectChecker(DEFAULT_RECT, PixelColor.BLACK), 2);
+                new RectChecker(DEFAULT_RECT, Color.BLACK), 2);
       // Since the SurfaceControl is parented off-screen, if we release our reference
       // it may completely die. If this occurs while the render thread is still rendering
       // the RED background we could trigger a crash. For this test defer destroying the
@@ -226,7 +226,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new RectChecker(DEFAULT_RECT, PixelColor.RED), 1);
+                new RectChecker(DEFAULT_RECT, Color.RED), 1);
     }
 
     /**
@@ -250,7 +250,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new RectChecker(DEFAULT_RECT, PixelColor.GREEN), 1);
+                new RectChecker(DEFAULT_RECT, Color.GREEN), 1);
     }
 
     /**
@@ -272,14 +272,14 @@ public class SurfaceControlTest {
 
                 // The rect should be offset by -50 pixels
                 new MultiRectChecker(DEFAULT_RECT) {
-                    final PixelColor red = new PixelColor(PixelColor.RED);
-                    final PixelColor black = new PixelColor(PixelColor.BLACK);
+                    final PixelColor mRed = new PixelColor(Color.RED);
+                    final PixelColor mBlack = new PixelColor(Color.BLACK);
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x < 50 && y < 50) {
-                            return red;
+                            return mRed;
                         } else {
-                            return black;
+                            return mBlack;
                         }
                     }
                 }, 1);
@@ -305,14 +305,14 @@ public class SurfaceControlTest {
 
                 // The rect should be offset by 50 pixels
                 new MultiRectChecker(DEFAULT_RECT) {
-                    final PixelColor red = new PixelColor(PixelColor.RED);
-                    final PixelColor black = new PixelColor(PixelColor.BLACK);
+                    final PixelColor mRed = new PixelColor(Color.RED);
+                    final PixelColor mBlack = new PixelColor(Color.BLACK);
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x >= 50 && y >= 50) {
-                            return red;
+                            return mRed;
                         } else {
-                            return black;
+                            return mBlack;
                         }
                     }
                 }, 1);
@@ -337,7 +337,7 @@ public class SurfaceControlTest {
                     }
                 },
 
-                new RectChecker(DEFAULT_RECT, PixelColor.RED), 1);
+                new RectChecker(DEFAULT_RECT, Color.RED), 1);
     }
 
     private SurfaceControl.Transaction makeTransactionWithListener() {

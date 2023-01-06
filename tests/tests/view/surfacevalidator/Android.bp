@@ -30,4 +30,8 @@ java_test_helper_library {
         "ub-uiautomator",
     ],
 
+    libs: [
+        "framework-annotations-lib",
+    ],
+
 }

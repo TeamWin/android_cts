@@ -40,7 +40,6 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.cts.surfacevalidator.CapturedActivity;
 import android.view.cts.surfacevalidator.MultiFramePixelChecker;
-import android.view.cts.surfacevalidator.PixelColor;
 import android.view.cts.surfacevalidator.SurfaceControlTestCase;
 
 import androidx.test.rule.ActivityTestRule;
@@ -223,7 +222,7 @@ public class ASurfaceControlBackPressureTest {
 
     @Test
     public void testSurfaceTransaction_setEnableBackPressure() throws Throwable {
-        int[] colors = new int[]{PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE};
+        int[] colors = new int[]{Color.RED, Color.GREEN, Color.BLUE};
         BasicSurfaceHolderCallback callback = new BasicSurfaceHolderCallback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
@@ -255,7 +254,7 @@ public class ASurfaceControlBackPressureTest {
 
     @Test
     public void testSurfaceTransaction_defaultBackPressureDisabled() throws Throwable {
-        int[] colors = new int[]{PixelColor.RED, PixelColor.GREEN, PixelColor.BLUE};
+        int[] colors = new int[]{Color.RED, Color.GREEN, Color.BLUE};
         BasicSurfaceHolderCallback callback = new BasicSurfaceHolderCallback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {

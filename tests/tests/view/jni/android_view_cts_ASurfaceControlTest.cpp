@@ -70,6 +70,7 @@ static void fillRegion(void* data, int32_t left, int32_t top, int32_t right,
 
     ptr += stride * top;
 
+    // Convert color from incoming ARGB format to ABGR
     uint32_t alpha = (color >> 24);
     uint32_t red = (color >> 16) & 0xff;
     uint32_t green = (color >> 8) & 0xff;

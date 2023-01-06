@@ -484,7 +484,7 @@ public class GameManagerTest {
                 mGameManager,
                 (gameManager) -> gameManager.getGameModeInfo(packageName),
                 "android.permission.MANAGE_GAME_MODE");
-        assertEquals(gameModeConfiguration,
+        assertEquals(new GameModeConfiguration.Builder(gameModeConfiguration).build(),
                 gameModeInfo.getGameModeConfiguration(GameManager.GAME_MODE_CUSTOM));
     }
 }

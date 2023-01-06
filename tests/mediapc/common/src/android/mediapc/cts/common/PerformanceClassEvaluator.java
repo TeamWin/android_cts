@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeTrue;
 import android.hardware.camera2.CameraMetadata;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.util.Log;
 
 import com.google.common.base.Preconditions;
 
@@ -1494,6 +1495,46 @@ public class PerformanceClassEvaluator {
         }
     }
 
+    public static class AudioTap2ToneLatencyRequirement extends Requirement {
+        private static final String TAG = AudioTap2ToneLatencyRequirement.class.getSimpleName();
+
+        private AudioTap2ToneLatencyRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setNativeLatency(double latency) {
+            this.setMeasuredValue(RequirementConstants.API_NATIVE_LATENCY, latency);
+        }
+
+        public void setJavaLatency(double latency) {
+            this.setMeasuredValue(RequirementConstants.API_JAVA_LATENCY, latency);
+        }
+
+        public static AudioTap2ToneLatencyRequirement createR5_6__H_1_1() {
+            RequiredMeasurement<Double> apiNativeLatency = RequiredMeasurement
+                .<Double>builder()
+                .setId(RequirementConstants.API_NATIVE_LATENCY)
+                .setPredicate(RequirementConstants.DOUBLE_LTE)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 80.0)
+                .addRequiredValue(Build.VERSION_CODES.S, 100.0)
+                .addRequiredValue(Build.VERSION_CODES.R, 100.0)
+                .build();
+            RequiredMeasurement<Double> apiJavaLatency = RequiredMeasurement
+                .<Double>builder()
+                .setId(RequirementConstants.API_JAVA_LATENCY)
+                .setPredicate(RequirementConstants.DOUBLE_LTE)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 80.0)
+                .addRequiredValue(Build.VERSION_CODES.S, 100.0)
+                .addRequiredValue(Build.VERSION_CODES.R, 100.0)
+                .build();
+
+            return new AudioTap2ToneLatencyRequirement(
+                    RequirementConstants.R5_6__H_1_1,
+                    apiNativeLatency,
+                    apiJavaLatency);
+        }
+    }
+
     public <R extends Requirement> R addRequirement(R req) {
         if (!this.mRequirements.add(req)) {
             throw new IllegalStateException("Requirement " + req.id() + " already added");
@@ -1725,12 +1766,24 @@ public class PerformanceClassEvaluator {
         return this.addRequirement(StreamUseCaseRequirement.createStreamUseCaseReq());
     }
 
+    public AudioTap2ToneLatencyRequirement addR5_6__H_1_1() {
+        return this.addRequirement(AudioTap2ToneLatencyRequirement.createR5_6__H_1_1());
+    }
+
     public void submitAndCheck() {
         boolean perfClassMet = submit();
 
         // check performance class
         assumeTrue("Build.VERSION.MEDIA_PERFORMANCE_CLASS is not declared", Utils.isPerfClass());
         assertThat(perfClassMet).isTrue();
+    }
+
+    public void submitAndVerify() {
+        boolean perfClassMet = submit();
+
+        if (!perfClassMet && Utils.isPerfClass()) {
+            Log.w(TAG, "Device did not meet specified performance class: " + Utils.getPerfClass());
+        }
     }
 
     public boolean submit() {

@@ -324,8 +324,11 @@ public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCt
         String deviceTypeNibble = hdmiCecClient.getSelfDevice() == LogicalAddress.TV
                 ? "80" : "08";
         String featureSupportNibble = setAudioVolumeLevelSupport ? "01" : "00";
-        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.REPORT_FEATURES,
-                "06:" + deviceTypeNibble + ":00:" + featureSupportNibble);
+        hdmiCecClient.sendCecMessage(
+                hdmiCecClient.getSelfDevice(),
+                LogicalAddress.BROADCAST,
+                CecOperand.REPORT_FEATURES,
+                CecMessage.formatParams("06" + deviceTypeNibble + "00" + featureSupportNibble));
     }
 
     /**

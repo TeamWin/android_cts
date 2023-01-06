@@ -15,19 +15,11 @@
  */
 package android.view.cts.surfacevalidator;
 
+import android.annotation.ColorInt;
 import android.graphics.Color;
 
 public class PixelColor {
-    public static final int BLACK = Color.BLACK;
-    public static final int RED = Color.RED;
-    public static final int GREEN = Color.GREEN;
-    public static final int BLUE = Color.BLUE;
-    public static final int YELLOW = Color.YELLOW;
-    public static final int MAGENTA = Color.MAGENTA;
-    public static final int WHITE = Color.MAGENTA;
-
     public static final int TRANSLUCENT_RED = 0x7FFF0000;
-    public static final int TRANSPARENT = 0x00000000;
 
     // Default to black
     public short mMinAlpha;
@@ -44,7 +36,7 @@ public class PixelColor {
     public short mGreen;
     public short mBlue;
 
-    public PixelColor(int color) {
+    public PixelColor(@ColorInt int color) {
         mAlpha = (short) ((color >> 24) & 0xFF);
         mRed = (short) ((color >> 16) & 0xFF);
         mGreen = (short) ((color >> 8) & 0xFF);
@@ -61,7 +53,7 @@ public class PixelColor {
     }
 
     public PixelColor() {
-        this(BLACK);
+        this(Color.BLACK);
     }
 
     private int getMinValue(short color) {

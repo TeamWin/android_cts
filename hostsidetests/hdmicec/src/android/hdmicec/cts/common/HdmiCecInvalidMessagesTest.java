@@ -244,9 +244,8 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
                     HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
             // Make the new Playback the active source.
             hdmiCecClient.broadcastActiveSource(mNonLocalPlaybackAddress, playbackPhysicalAddress);
-            // Wait until the <Active Source> message to be processed by the DUT.
-            hdmiCecClient.checkExpectedOutput(
-                    LogicalAddress.BROADCAST, CecOperand.ACTIVE_SOURCE);
+            // Wait for the <Active Source> message to be processed by the DUT.
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
 
             // Press Home key and the DUT shall broadcast an <Active Source> message.
             ITestDevice device = getDevice();

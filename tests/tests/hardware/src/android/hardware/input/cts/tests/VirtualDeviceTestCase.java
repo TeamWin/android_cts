@@ -165,11 +165,6 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         }
         // Tap to gain window focus on the activity
         tapActivityToFocus();
-
-        // TODO(b/230009847): Debug extraneous hover events and remove sleep.
-        // Wait for everything to settle. Adding a bit of slack here decreases the chance of
-        // extraneous hover events being generated that result in flaky failures.
-        SystemClock.sleep(1000L);
     }
 
     abstract void onSetUpVirtualInputDevice();

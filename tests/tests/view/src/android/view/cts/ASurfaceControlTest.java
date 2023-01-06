@@ -104,11 +104,11 @@ public class ASurfaceControlTest {
     private static final Rect DEFAULT_RECT = new Rect(1, 1, DEFAULT_LAYOUT_WIDTH - 1,
             DEFAULT_LAYOUT_HEIGHT - 1);
 
-    private static final PixelColor RED = new PixelColor(PixelColor.RED);
-    private static final PixelColor BLUE = new PixelColor(PixelColor.BLUE);
-    private static final PixelColor MAGENTA = new PixelColor(PixelColor.MAGENTA);
-    private static final PixelColor GREEN = new PixelColor(PixelColor.GREEN);
-    private static final PixelColor YELLOW = new PixelColor(PixelColor.YELLOW);
+    private static final PixelColor RED = new PixelColor(Color.RED);
+    private static final PixelColor BLUE = new PixelColor(Color.BLUE);
+    private static final PixelColor MAGENTA = new PixelColor(Color.MAGENTA);
+    private static final PixelColor GREEN = new PixelColor(Color.GREEN);
+    private static final PixelColor YELLOW = new PixelColor(Color.YELLOW);
 
     @Rule
     public ActivityScenarioRule<ASurfaceControlTestActivity> mActivityRule =
@@ -296,7 +296,7 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
                     }
                 },
-                new PixelChecker(PixelColor.YELLOW) { //10000
+                new PixelChecker(Color.YELLOW) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -314,7 +314,7 @@ public class ASurfaceControlTest {
                         long childSurfaceControl = create(parentSurfaceControl);
                     }
                 },
-                new PixelChecker(PixelColor.YELLOW) { //10000
+                new PixelChecker(Color.YELLOW) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -336,11 +336,11 @@ public class ASurfaceControlTest {
                         long parentSurfaceControl = createFromWindow(holder.getSurface());
                         setVisibility(childSurfaceControl, true);
                         setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         reparent(childSurfaceControl, parentSurfaceControl);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -359,11 +359,11 @@ public class ASurfaceControlTest {
                     public void surfaceCreated(SurfaceHolder holder) {
                         long surfaceControl = createFromWindow(holder.getSurface());
                         setSolidBuffer(surfaceControl, transaction, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         nSurfaceTransaction_apply(transaction);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -384,10 +384,10 @@ public class ASurfaceControlTest {
                         // decrement one refcount incremented from create call
                         nSurfaceControl_release(surfaceControl);
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -403,10 +403,10 @@ public class ASurfaceControlTest {
                     public void surfaceCreated(SurfaceHolder holder) {
                         long surfaceControl = createFromWindow(holder.getSurface());
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -424,12 +424,12 @@ public class ASurfaceControlTest {
                         long childSurfaceControl = create(parentSurfaceControl);
 
                         setSolidBuffer(parentSurfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.BLUE);
+                                DEFAULT_LAYOUT_HEIGHT, Color.BLUE);
                         setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -447,10 +447,10 @@ public class ASurfaceControlTest {
                         long childSurfaceControl = create(parentSurfaceControl);
 
                         setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -467,11 +467,11 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setVisibility(surfaceControl, true);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -488,11 +488,11 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setVisibility(surfaceControl, false);
                     }
                 },
-                new PixelChecker(PixelColor.YELLOW) { //10000
+                new PixelChecker(Color.YELLOW) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -513,7 +513,7 @@ public class ASurfaceControlTest {
                         setBufferOpaque(surfaceControl, true);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -542,7 +542,7 @@ public class ASurfaceControlTest {
                 // we don't know what variation the GPU/DPU/blitter might have. Although
                 // we don't know what shade of red might be present, we can at least check
                 // that the optimization doesn't cause the framework to drop the buffer entirely.
-                new PixelChecker(PixelColor.YELLOW, false /* logWhenNoMatch */) {
+                new PixelChecker(Color.YELLOW, false /* logWhenNoMatch */) {
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount == 0;
@@ -559,10 +559,10 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -579,7 +579,7 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setGeometry(surfaceControl, 0, 0, 100, 100, 10, 10, 50, 50, 0);
                     }
                 },
@@ -605,7 +605,7 @@ public class ASurfaceControlTest {
                         long childSurfaceControl = create(parentSurfaceControl);
 
                         setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         setGeometry(childSurfaceControl, 0, 0, 100, 100, 10, 10, 50, 50, 0);
                     }
                 },
@@ -630,11 +630,11 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setGeometry(surfaceControl, 0, 0, 100, 100, -100, -100, 200, 200, 0);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -652,11 +652,11 @@ public class ASurfaceControlTest {
                         long childSurfaceControl = create(parentSurfaceControl);
 
                         setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         setGeometry(childSurfaceControl, 0, 0, 100, 100, -100, -100, 200, 200, 0);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -673,7 +673,7 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setGeometry(surfaceControl, 0, 0, 100, 100, -30, -20, 50, 50, 0);
                     }
                 },
@@ -698,7 +698,7 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setGeometry(surfaceControl, 0, 0, 100, 100, 50, 50, 110, 105, 0);
                     }
                 },
@@ -724,9 +724,9 @@ public class ASurfaceControlTest {
                         long surfaceControl2 = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl1, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setSolidBuffer(surfaceControl2, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.BLUE);
+                                Color.BLUE);
                         setGeometry(surfaceControl1, 0, 0, 100, 100, 10, 10, 30, 40, 0);
                         setGeometry(surfaceControl2, 0, 0, 100, 100, 70, 20, 90, 50, 0);
                     }
@@ -754,8 +754,8 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
                     }
                 },
                 new MultiRectChecker(DEFAULT_RECT) {
@@ -785,8 +785,8 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
                         setGeometry(surfaceControl, 10, 10, 90, 90, 0, 0, 100, 100, 0);
                     }
                 },
@@ -818,8 +818,8 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
                         setGeometry(surfaceControl, 60, 10, 90, 90, 0, 0, 100, 100, 0);
                     }
                 },
@@ -845,8 +845,8 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
                         setGeometry(surfaceControl, -50, -50, 150, 150, 0, 0, 100, 100, 0);
                     }
                 },
@@ -878,12 +878,12 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
                         setGeometry(surfaceControl, -50, -50, 50, 50, 0, 0, 100, 100, 0);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -900,8 +900,8 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
                         setGeometry(surfaceControl, 60, 10, 90, 90, 0, 0, 100, 100,
                                 /*NATIVE_WINDOW_TRANSFORM_FLIP_H*/ 1);
                     }
@@ -927,8 +927,8 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
                         setGeometry(surfaceControl, 60, 10, 90, 90, 0, 0, 100, 100,
                                 /*NATIVE_WINDOW_TRANSFORM_ROT_180*/ 3);
                     }
@@ -954,17 +954,17 @@ public class ASurfaceControlTest {
                     public void surfaceCreated(SurfaceHolder holder) {
                         long surfaceControl = createFromWindow(holder.getSurface());
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
 
                         long surfaceTransaction = createSurfaceTransaction();
                         setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.BLUE);
+                                DEFAULT_LAYOUT_HEIGHT, Color.BLUE);
                         nSurfaceTransaction_setDamageRegion(surfaceControl, surfaceTransaction, 0,
                                 0, 100, 100);
                         applyAndDeleteSurfaceTransaction(surfaceTransaction);
                     }
                 },
-                new PixelChecker(PixelColor.BLUE) { //10000
+                new PixelChecker(Color.BLUE) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -981,9 +981,9 @@ public class ASurfaceControlTest {
                         long surfaceControl1 = createFromWindow(holder.getSurface());
                         long surfaceControl2 = createFromWindow(holder.getSurface());
                         setSolidBuffer(surfaceControl1, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setSolidBuffer(surfaceControl2, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.MAGENTA);
+                                Color.MAGENTA);
 
                         setZOrder(surfaceControl1, 1);
                         setZOrder(surfaceControl2, 0);
@@ -1006,9 +1006,9 @@ public class ASurfaceControlTest {
                         long surfaceControl1 = createFromWindow(holder.getSurface());
                         long surfaceControl2 = createFromWindow(holder.getSurface());
                         setSolidBuffer(surfaceControl1, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setSolidBuffer(surfaceControl2, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.MAGENTA);
+                                Color.MAGENTA);
 
                         setZOrder(surfaceControl1, 1);
                         setZOrder(surfaceControl2, 5);
@@ -1031,9 +1031,9 @@ public class ASurfaceControlTest {
                         long surfaceControl1 = createFromWindow(holder.getSurface());
                         long surfaceControl2 = createFromWindow(holder.getSurface());
                         setSolidBuffer(surfaceControl1, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setSolidBuffer(surfaceControl2, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.MAGENTA);
+                                Color.MAGENTA);
 
                         setZOrder(surfaceControl1, 1);
                         setZOrder(surfaceControl2, -15);
@@ -1056,9 +1056,9 @@ public class ASurfaceControlTest {
                         long surfaceControl1 = createFromWindow(holder.getSurface());
                         long surfaceControl2 = createFromWindow(holder.getSurface());
                         setSolidBuffer(surfaceControl1, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setSolidBuffer(surfaceControl2, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.MAGENTA);
+                                Color.MAGENTA);
 
                         setZOrder(surfaceControl1, 1);
                         setZOrder(surfaceControl2, Integer.MAX_VALUE);
@@ -1081,9 +1081,9 @@ public class ASurfaceControlTest {
                         long surfaceControl1 = createFromWindow(holder.getSurface());
                         long surfaceControl2 = createFromWindow(holder.getSurface());
                         setSolidBuffer(surfaceControl1, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setSolidBuffer(surfaceControl2, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.MAGENTA);
+                                Color.MAGENTA);
 
                         setZOrder(surfaceControl1, 1);
                         setZOrder(surfaceControl2, Integer.MIN_VALUE);
@@ -1108,7 +1108,7 @@ public class ASurfaceControlTest {
 
                         long surfaceTransaction = createSurfaceTransaction();
                         setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         nSurfaceTransaction_setOnCompleteCallback(surfaceTransaction,
                                 false /* waitForFence */, onCompleteCallback);
                         applyAndDeleteSurfaceTransaction(surfaceTransaction);
@@ -1123,7 +1123,7 @@ public class ASurfaceControlTest {
                         }
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1147,7 +1147,7 @@ public class ASurfaceControlTest {
 
                         long surfaceTransaction = createSurfaceTransaction();
                         setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         mDesiredPresentTime = nSurfaceTransaction_setDesiredPresentTime(
                                 surfaceTransaction, 0);
                         nSurfaceTransaction_setOnCompleteCallback(surfaceTransaction,
@@ -1163,7 +1163,7 @@ public class ASurfaceControlTest {
                         }
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1191,7 +1191,7 @@ public class ASurfaceControlTest {
 
                         long surfaceTransaction = createSurfaceTransaction();
                         setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         mDesiredPresentTime = nSurfaceTransaction_setDesiredPresentTime(
                                 surfaceTransaction, 30000000);
                         nSurfaceTransaction_setOnCompleteCallback(surfaceTransaction,
@@ -1207,7 +1207,7 @@ public class ASurfaceControlTest {
                         }
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1235,7 +1235,7 @@ public class ASurfaceControlTest {
 
                         long surfaceTransaction = createSurfaceTransaction();
                         setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         mDesiredPresentTime = nSurfaceTransaction_setDesiredPresentTime(
                                 surfaceTransaction, 100000000);
                         nSurfaceTransaction_setOnCompleteCallback(surfaceTransaction,
@@ -1251,7 +1251,7 @@ public class ASurfaceControlTest {
                         }
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1277,11 +1277,11 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setBufferAlpha(surfaceControl, 1.0);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1297,19 +1297,19 @@ public class ASurfaceControlTest {
                 long surfaceControl = createFromWindow(holder.getSurface());
 
                 setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                        PixelColor.RED);
+                        Color.RED);
                 setBufferAlpha(surfaceControl, 0.5);
             }
         };
         verifyTest(callback,
-                new PixelChecker(PixelColor.YELLOW, false /* logWhenNoMatch */) {
+                new PixelChecker(Color.YELLOW, false /* logWhenNoMatch */) {
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount == 0;
                     }
                 });
         verifyTest(callback,
-                new PixelChecker(PixelColor.RED, false /* logWhenNoMatch */) {
+                new PixelChecker(Color.RED, false /* logWhenNoMatch */) {
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount == 0;
@@ -1326,11 +1326,11 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setBufferAlpha(surfaceControl, 0.0);
                     }
                 },
-                new PixelChecker(PixelColor.YELLOW) { //10000
+                new PixelChecker(Color.YELLOW) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1352,7 +1352,7 @@ public class ASurfaceControlTest {
                         setGeometry(parentSurfaceControl2, 0, 0, 100, 100, 25, 0, 100, 100, 0);
 
                         setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
 
                         reparent(childSurfaceControl, parentSurfaceControl2);
                     }
@@ -1379,12 +1379,12 @@ public class ASurfaceControlTest {
                         long childSurfaceControl = create(parentSurfaceControl);
 
                         setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
 
                         reparent(childSurfaceControl, 0);
                     }
                 },
-                new PixelChecker(PixelColor.YELLOW) { //10000
+                new PixelChecker(Color.YELLOW) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1403,7 +1403,7 @@ public class ASurfaceControlTest {
                         setColor(surfaceControl, 0, 1.0f, 0, 1.0f);
                     }
                 },
-                new PixelChecker(PixelColor.GREEN) { // 10000
+                new PixelChecker(Color.GREEN) { // 10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1423,7 +1423,7 @@ public class ASurfaceControlTest {
                         setColor(parentSurfaceControl, 0, 1.0f, 0, 1.0f);
                     }
                 },
-                new PixelChecker(PixelColor.GREEN) { // 10000
+                new PixelChecker(Color.GREEN) { // 10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1441,7 +1441,7 @@ public class ASurfaceControlTest {
                         setColor(parentSurfaceControl, 0, 0, 1.0f, 0);
                     }
                 },
-                new PixelChecker(PixelColor.YELLOW) { // 10000
+                new PixelChecker(Color.YELLOW) { // 10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1459,11 +1459,11 @@ public class ASurfaceControlTest {
 
                         setSolidBuffer(
                                 surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         setColor(surfaceControl, 0, 1.0f, 0, 1.0f);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { // 10000
+                new PixelChecker(Color.RED) { // 10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1481,12 +1481,12 @@ public class ASurfaceControlTest {
 
                         setSolidBuffer(
                                 surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setBufferAlpha(surfaceControl, 0.5);
                         setColor(surfaceControl, 0, 0, 1.0f, 1.0f);
                     }
                 },
-                new PixelChecker(PixelColor.RED, false /* logWhenNoMatch */) {
+                new PixelChecker(Color.RED, false /* logWhenNoMatch */) {
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount == 0;
@@ -1505,13 +1505,13 @@ public class ASurfaceControlTest {
 
                         setColor(surfaceControlA, 1.0f, 0, 0, 1.0f);
                         setSolidBuffer(surfaceControlB, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.TRANSPARENT);
+                                Color.TRANSPARENT);
 
                         setZOrder(surfaceControlA, 1);
                         setZOrder(surfaceControlB, 2);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { // 10000
+                new PixelChecker(Color.RED) { // 10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1532,12 +1532,12 @@ public class ASurfaceControlTest {
 
                         setSolidBuffer(
                                 childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         setColor(childSurfaceControl, 0, 0, 1.0f, 1.0f);
                         setVisibility(childSurfaceControl, false);
                     }
                 },
-                new PixelChecker(PixelColor.GREEN) { // 10000
+                new PixelChecker(Color.GREEN) { // 10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1559,13 +1559,13 @@ public class ASurfaceControlTest {
                         setColor(surfaceControlA, 0, 0, 1.0f, 1.0f);
                         setSolidBuffer(
                                 surfaceControlB, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.GREEN);
                         setColor(surfaceControlB, 1.0f, 0, 0, 1.0f);
                         setZOrder(surfaceControlA, 5);
                         setZOrder(surfaceControlB, 4);
                     }
                 },
-                new PixelChecker(PixelColor.BLUE) { // 10000
+                new PixelChecker(Color.BLUE) { // 10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1586,13 +1586,13 @@ public class ASurfaceControlTest {
                         setColor(surfaceControlA, 0, 1.0f, 0, 1.0f);
                         setSolidBuffer(
                                 surfaceControlA, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.GREEN);
                         setColor(surfaceControlB, 1.0f, 0, 0, 1.0f);
                         setZOrder(surfaceControlA, 3);
                         setZOrder(surfaceControlB, 4);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { // 10000
+                new PixelChecker(Color.RED) { // 10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1609,7 +1609,7 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setPosition(surfaceControl, 20, 10);
                     }
                 },
@@ -1634,7 +1634,7 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         // Offset -20, -10
                         setPosition(surfaceControl, -20, -10);
                     }
@@ -1660,7 +1660,7 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                Color.RED);
                         setScale(surfaceControl, .5f, .5f);
                     }
                 },
@@ -1688,13 +1688,13 @@ public class ASurfaceControlTest {
                         long childSurfaceControl = create(parentSurfaceControl);
 
                         setSolidBuffer(parentSurfaceControl,
-                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.YELLOW);
+                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, Color.YELLOW);
                         setSolidBuffer(childSurfaceControl,
-                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         setScale(childSurfaceControl, 0f, 0f);
                     }
                 },
-                new PixelChecker(PixelColor.YELLOW) {
+                new PixelChecker(Color.YELLOW) {
                     @Override
                     public boolean checkPixels(int matchingPixelCount, int width, int height) {
                         return matchingPixelCount > 9000 & matchingPixelCount < 11000;
@@ -1711,8 +1711,8 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
 
                         // Set the position to -50, -50 in parent space then scale 2x in each
                         // direction relative to 0,0. The end result should be a -50,-50,150,150
@@ -1755,8 +1755,8 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
                         setPosition(surfaceControl, -50, -50);
                         setBufferTransform(surfaceControl, /* NATIVE_WINDOW_TRANSFORM_ROT_90 */ 4);
                     }
@@ -1784,8 +1784,8 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
                         setCrop(surfaceControl, new Rect(0, 0, 50, 50));
                     }
                 },
@@ -1813,8 +1813,8 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
                         setCrop(surfaceControl, new Rect(0, 0, 150, 150));
                     }
                 },
@@ -1846,8 +1846,8 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
                         setCrop(surfaceControl, new Rect(50, 50, 100, 100));
                     }
                 }, new MultiRectChecker(DEFAULT_RECT) {
@@ -1874,8 +1874,8 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                                PixelColor.MAGENTA, PixelColor.GREEN);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED, Color.BLUE,
+                                Color.MAGENTA, Color.GREEN);
                         setCrop(surfaceControl, new Rect(-50, -50, 50, 50));
                     }
                 }, new MultiRectChecker(DEFAULT_RECT) {
@@ -1898,7 +1898,7 @@ public class ASurfaceControlTest {
         assertTrue("failed to create surface control", surfaceControl != 0);
         long surfaceTransaction = createSurfaceTransaction();
         long buffer = nSurfaceTransaction_setSolidBuffer(surfaceControl, surfaceTransaction,
-                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, Color.RED);
         assertTrue("failed to set buffer", buffer != 0);
 
         // Get choreographer frame timelines.
@@ -1989,7 +1989,7 @@ public class ASurfaceControlTest {
         }
         verifySetFrameTimeline(true, mActivity.getSurfaceView().getHolder());
         mActivity.verifyScreenshot(
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -2024,7 +2024,7 @@ public class ASurfaceControlTest {
         }
         verifySetFrameTimeline(false, mActivity.getSurfaceView().getHolder());
         mActivity.verifyScreenshot(
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -2090,7 +2090,7 @@ public class ASurfaceControlTest {
                         long surfaceTransaction = nSurfaceTransaction_create();
                         long surfaceControl = createFromWindow(holder.getSurface());
                         setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         nSurfaceTransaction_setOnCompleteCallback(
                                 surfaceTransaction /* waitForFence */, false,
                                 onCompleteCallback);
@@ -2109,7 +2109,7 @@ public class ASurfaceControlTest {
                         }
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new PixelChecker(Color.RED) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -2146,7 +2146,7 @@ public class ASurfaceControlTest {
                         long surfaceTransaction = nSurfaceTransaction_create();
                         long surfaceControl = createFromWindow(holder.getSurface());
                         setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
                         nSurfaceTransaction_apply(surfaceTransaction);
                         nSurfaceTransaction_delete(surfaceTransaction);
                         surfaceTransaction = nSurfaceTransaction_create();

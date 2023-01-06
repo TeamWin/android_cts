@@ -128,6 +128,8 @@ public class RequirementConstants {
             "rear_camera_stream_usecase_supported";
     public static final String FRONT_CAMERA_STREAM_USECASE_SUPPORTED =
             "front_camera_stream_usecase_supported";
+    public static final String API_NATIVE_LATENCY = "native_latency_ms";
+    public static final String API_JAVA_LATENCY = "java_latency_ms";
 
     public enum Result {
         NA, MET, UNMET
@@ -140,6 +142,7 @@ public class RequirementConstants {
     public static final BiPredicate<Integer, Integer> INTEGER_LTE = RequirementConstants.lte();
     public static final BiPredicate<Integer, Integer> INTEGER_EQ = RequirementConstants.eq();
     public static final BiPredicate<Double, Double> DOUBLE_GTE = RequirementConstants.gte();
+    public static final BiPredicate<Double, Double> DOUBLE_LTE = RequirementConstants.lte();
     public static final BiPredicate<Double, Double> DOUBLE_EQ = RequirementConstants.eq();
     public static final BiPredicate<Boolean, Boolean> BOOLEAN_EQ = RequirementConstants.eq();
 

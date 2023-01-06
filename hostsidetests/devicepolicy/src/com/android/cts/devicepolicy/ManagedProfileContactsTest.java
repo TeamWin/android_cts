@@ -164,6 +164,9 @@ public class ManagedProfileContactsTest extends BaseManagedProfileTest {
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testGetDirectoryListInPrimaryProfile", mParentUserId);
 
+            // Remove parent user's contacts to make sure the test starts from a clean state
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testRemoveAllUserContacts", mParentUserId);
             // Insert Primary profile Contacts
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testPrimaryProfilePhoneAndEmailLookup_insertedAndfound", mParentUserId);

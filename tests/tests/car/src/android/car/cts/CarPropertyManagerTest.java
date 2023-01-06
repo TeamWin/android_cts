@@ -43,6 +43,7 @@ import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback;
 import android.car.hardware.property.EvChargeState;
 import android.car.hardware.property.EvRegenerativeBrakingState;
+import android.car.hardware.property.EvStoppingMode;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
 import android.car.hardware.property.VehicleLightState;
@@ -151,6 +152,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             ImmutableSet.<Integer>builder().add(VehicleLightSwitch.STATE_OFF,
                     VehicleLightSwitch.STATE_ON, VehicleLightSwitch.STATE_DAYTIME_RUNNING,
                     VehicleLightSwitch.STATE_AUTOMATIC).build();
+    private static final ImmutableSet<Integer> EV_STOPPING_MODES =
+            ImmutableSet.<Integer>builder().add(EvStoppingMode.STATE_OTHER,
+                    EvStoppingMode.STATE_CREEP, EvStoppingMode.STATE_ROLL,
+                    EvStoppingMode.STATE_HOLD).build();
     private static final ImmutableSet<Integer> HVAC_TEMPERATURE_DISPLAY_UNITS =
             ImmutableSet.<Integer>builder().add(VehicleUnit.CELSIUS,
                     VehicleUnit.FAHRENHEIT).build();
@@ -164,12 +169,16 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             /*VehicleSeatOccupancyState.OCCUPIED=*/2);
     private static final ImmutableList<Integer>
             PERMISSION_READ_DRIVER_MONITORING_SETTINGS_PROPERTIES = ImmutableList.<Integer>builder()
-                    .add()
+                    .add(
+                            VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED,
+                            VehiclePropertyIds.DRIVER_ATTENTION_MONITORING_ENABLED)
                     .build();
     private static final ImmutableList<Integer>
             PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS_PROPERTIES =
             ImmutableList.<Integer>builder()
-                    .add()
+                    .add(
+                            VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED,
+                            VehiclePropertyIds.DRIVER_ATTENTION_MONITORING_ENABLED)
                     .build();
     private static final ImmutableList<Integer>
             PERMISSION_READ_DRIVER_MONITORING_STATES_PROPERTIES = ImmutableList.<Integer>builder()
@@ -229,12 +238,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.PARKING_BRAKE_ON,
                             VehiclePropertyIds.PARKING_BRAKE_AUTO_APPLY,
                             VehiclePropertyIds.IGNITION_STATE,
-                            VehiclePropertyIds.EV_BRAKE_REGENERATION_LEVEL)
+                            VehiclePropertyIds.EV_BRAKE_REGENERATION_LEVEL,
+                            VehiclePropertyIds.EV_STOPPING_MODE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_POWERTRAIN_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
-                            VehiclePropertyIds.EV_BRAKE_REGENERATION_LEVEL)
+                            VehiclePropertyIds.EV_BRAKE_REGENERATION_LEVEL,
+                            VehiclePropertyIds.EV_STOPPING_MODE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CAR_SPEED_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -271,7 +282,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.FORWARD_COLLISION_WARNING_ENABLED,
                             VehiclePropertyIds.BLIND_SPOT_WARNING_ENABLED,
                             VehiclePropertyIds.LANE_DEPARTURE_WARNING_ENABLED,
-                            VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED)
+                            VehiclePropertyIds.LANE_KEEP_ASSIST_ENABLED,
+                            VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED,
+                            VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_ENABLED,
+                            VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_ENABLED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_SETTINGS_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -280,7 +294,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.FORWARD_COLLISION_WARNING_ENABLED,
                             VehiclePropertyIds.BLIND_SPOT_WARNING_ENABLED,
                             VehiclePropertyIds.LANE_DEPARTURE_WARNING_ENABLED,
-                            VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED)
+                            VehiclePropertyIds.LANE_KEEP_ASSIST_ENABLED,
+                            VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED,
+                            VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_ENABLED,
+                            VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_ENABLED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_READ_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -544,6 +561,62 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Boolean.class)
                 .requireProperty()
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testEmergencyLaneKeepAssistEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testAdaptiveCruiseControlEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testHandsOnDetectionEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_SETTINGS)
+                .addWritePermission(Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testDriverAttentionMonitoringEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.DRIVER_ATTENTION_MONITORING_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_SETTINGS)
+                .addWritePermission(Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS)
                 .build()
                 .verify(mCarPropertyManager);
     }
@@ -1086,6 +1159,21 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class)
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
+                .addReadPermission(Car.PERMISSION_POWERTRAIN)
+                .addWritePermission(Car.PERMISSION_CONTROL_POWERTRAIN)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testEvStoppingModeIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.EV_STOPPING_MODE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setPossibleCarPropertyValues(EV_STOPPING_MODES)
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
                 .addWritePermission(Car.PERMISSION_CONTROL_POWERTRAIN)
                 .build()
@@ -3933,6 +4021,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                     (configArray.get(4) - configArray.get(3))
                                                             % configArray.get(5))
                                             .isEqualTo(0);
+                                    assertWithMessage(
+                                            "HVAC_TEMPERATURE_SET number of supported values for "
+                                                    + "Celsius and Fahrenheit must be equal.").that(
+                                            (configArray.get(1) - configArray.get(0))
+                                                    / configArray.get(2)).isEqualTo(
+                                            (configArray.get(4) - configArray.get(3))
+                                                    / configArray.get(5));
 
                                     int[] supportedAreaIds = carPropertyConfig.getAreaIds();
                                     int configMinValue = configArray.get(0);
@@ -4335,6 +4430,20 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     public void testLaneDepartureWarningEnabledIfSupported() {
         VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.LANE_DEPARTURE_WARNING_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testLaneKeepAssistEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.LANE_KEEP_ASSIST_ENABLED,
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,

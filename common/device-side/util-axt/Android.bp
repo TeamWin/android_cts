@@ -33,6 +33,7 @@ java_library_static {
         "ub-uiautomator",
         "mockito-target-minus-junit4",
         "androidx.annotation_annotation",
+        "androidx.test.uiautomator_uiautomator",
         "truth-prebuilt",
         "modules-utils-build_system",
     ],

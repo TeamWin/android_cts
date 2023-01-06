@@ -25,6 +25,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanResult
 import android.companion.AssociationRequest
+import android.companion.AssociationRequest.DEVICE_PROFILE_GLASSES
 import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
 import android.companion.BluetoothDeviceFilter
 import android.companion.CompanionDeviceManager
@@ -61,6 +62,7 @@ class CompanionDeviceTestAppActivity : Activity() {
     } }
     val singleCheckbox by lazy { CheckBox(this).apply { text = "Single Device" } }
     val watchCheckbox by lazy { CheckBox(this).apply { text = "Watch" } }
+    val glassesCheckbox by lazy { CheckBox(this).apply { text = "Glasses" } }
 
     val cdm: CompanionDeviceManager by lazy { val java = CompanionDeviceManager::class.java
         getSystemService(java)!! }
@@ -90,6 +92,7 @@ class CompanionDeviceTestAppActivity : Activity() {
             addView(nameFilter)
             addView(singleCheckbox)
             addView(watchCheckbox)
+            addView(glassesCheckbox)
 
             addView(cdmButton("Associate") {
                 if (singleCheckbox.isChecked) {
@@ -97,6 +100,9 @@ class CompanionDeviceTestAppActivity : Activity() {
                 }
                 if (watchCheckbox.isChecked) {
                     setDeviceProfile(DEVICE_PROFILE_WATCH)
+                }
+                if (glassesCheckbox.isChecked) {
+                    setDeviceProfile(DEVICE_PROFILE_GLASSES)
                 }
                 addDeviceFilter(BluetoothDeviceFilter.Builder().apply {
                     if (!nameFilter.text.isEmpty()) {

@@ -15,6 +15,7 @@
  */
 package android.view.cts.surfacevalidator;
 
+import android.annotation.ColorInt;
 import android.graphics.Rect;
 import android.media.Image;
 import android.os.Trace;
@@ -32,7 +33,7 @@ public abstract class PixelChecker {
         mPixelColor = new PixelColor();
     }
 
-    public PixelChecker(int color) {
+    public PixelChecker(@ColorInt int color) {
         mPixelColor = new PixelColor(color);
     }
 

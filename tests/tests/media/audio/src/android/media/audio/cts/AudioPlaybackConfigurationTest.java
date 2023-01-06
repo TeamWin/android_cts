@@ -577,6 +577,11 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         AudioManager am = new AudioManager(getContext());
         assertNotNull("Could not create AudioManager", am);
 
+        if (am.isVolumeFixed()) {
+            Log.w(TAG, "Skipping testMuteFromStreamVolumeNotification, device has volume fixed.");
+            return;
+        }
+
         verifyMuteUnmuteNotifications(/*start=*/player.mPlay,
                 /*mute=*/
                 () -> am.adjustStreamVolume(STREAM_NOTIFICATION, ADJUST_MUTE, /* flags= */0),
@@ -684,8 +689,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
             start.run();
 
             if (muteChangesActiveState) {
-                assertTrue("onPlaybackConfigChanged new player, device expected",
-                        callback.waitForCallbacks(2,
+                assertTrue("onPlaybackConfigChanged play, format and device expected",
+                        callback.waitForCallbacks(3,
                                 TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS));
             } else {
                 Thread.sleep(TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS);
@@ -880,8 +885,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
             int activePlayerCount, AudioAttributes aa) throws Exception{
         mp.start();
 
-        assertTrue("onPlaybackConfigChanged play and device called expected "
-                , callback.waitForCallbacks(2,
+        assertTrue("onPlaybackConfigChanged play, format and device events expected ",
+                callback.waitForCallbacks(3,
                         TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS));
         assertEquals("number of active players not expected",
                 // one more player active

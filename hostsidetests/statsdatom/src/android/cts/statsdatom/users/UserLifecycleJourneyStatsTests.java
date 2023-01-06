@@ -38,17 +38,21 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
     }
 
     public void testCreateGuestUser()  throws Exception {
-        String userName = "TestUser_" + System.currentTimeMillis();
-        int userId = userCreate(userName, true);
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertExpectedEvents(data, -1, userId, "USER_CREATE_FULL_GUEST");
+        if (getDevice().isMultiUserSupported()) {
+            String userName = "TestUser_" + System.currentTimeMillis();
+            int userId = userCreate(userName, true);
+            List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+            assertExpectedEvents(data, -1, userId, "USER_CREATE_FULL_GUEST");
+        }
     }
 
     public void testRemoveGuestUser() throws Exception {
-        String userName = "TestUser_" + System.currentTimeMillis();
-        int userId = removeGuestUser(userName, true);
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertExpectedEvents(data, -1, userId, "USER_REMOVE_FULL_GUEST");
+        if (getDevice().isMultiUserSupported()) {
+            String userName = "TestUser_" + System.currentTimeMillis();
+            int userId = removeGuestUser(userName, true);
+            List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+            assertExpectedEvents(data, -1, userId, "USER_REMOVE_FULL_GUEST");
+        }
     }
 
     // Failing due to issue b/246283671
@@ -60,17 +64,21 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
 //    }
 
     public void testCreateFullUser() throws Exception {
-        String userName = "FullUser_" + System.currentTimeMillis();
-        int userId = userCreate(userName, false);
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertExpectedEvents(data, -1, userId, "USER_CREATE_FULL_SECONDARY");
+        if (getDevice().isMultiUserSupported()) {
+            String userName = "FullUser_" + System.currentTimeMillis();
+            int userId = userCreate(userName, false);
+            List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+            assertExpectedEvents(data, -1, userId, "USER_CREATE_FULL_SECONDARY");
+        }
     }
 
     public void testRemoveFullUser() throws Exception {
-        String userName = "FullUser_" + System.currentTimeMillis();
-        int userId = removeGuestUser(userName, false);
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertExpectedEvents(data, -1, userId, "USER_REMOVE_FULL_SECONDARY");
+        if (getDevice().isMultiUserSupported()) {
+            String userName = "FullUser_" + System.currentTimeMillis();
+            int userId = removeGuestUser(userName, false);
+            List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+            assertExpectedEvents(data, -1, userId, "USER_REMOVE_FULL_SECONDARY");
+        }
     }
 
     // Failing due to issue b/246283671

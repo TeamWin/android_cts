@@ -1629,19 +1629,26 @@ public class StagedInstallTest {
     @Test
     public void testCheckInstallConstraints_UsesLibrary() throws Exception {
         final String propKey = "debug.pm.uses_sdk_library_default_cert_digest";
+        // Disable package verifier to prevent pop-up during installation
+        final String oldVal = SystemUtil.runShellCommand(
+                "settings get global package_verifier_enable");
+        SystemUtil.runShellCommand("settings put global package_verifier_enable 0");
 
         try {
             Install.single(TestApp.B1).commit();
+            Log.d(TAG, "Install HelloWorldSdk1");
             Install.single(HelloWorldSdk1).commit();
             // Override the certificate digest so HelloWorldUsingSdk1 can be installed
             SystemUtil.runShellCommand("setprop " + propKey + " "
                     + getPackageCertDigest(HelloWorldSdk1.getPackageName()));
+            Log.d(TAG, "Install HelloWorldUsingSdk1");
             Install.single(HelloWorldUsingSdk1).commit();
 
             // HelloWorldSdk1 will be considered foreground as HelloWorldUsingSdk1 is foreground
             startActivity(HelloWorldUsingSdk1.getPackageName(),
                     "com.example.helloworld.MainActivityNoExit");
 
+            Log.d(TAG, "checkInstallConstraints");
             var pi = InstallUtils.getPackageInstaller();
             var f1 = new CompletableFuture<InstallConstraintsResult>();
             var constraints = new InstallConstraints.Builder().requireAppNotForeground().build();
@@ -1652,12 +1659,15 @@ public class StagedInstallTest {
                     result -> f1.complete(result));
             assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
 
+            Log.d(TAG, "Start activity B");
             // HelloWorldUsingSdk1 is no longer foreground. So is HelloWorldSdk1.
             startActivity(TestApp.B);
             PollingCheck.waitFor(() -> {
                 var importance = getPackageImportance(HelloWorldUsingSdk1.getPackageName());
                 return importance > ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
             });
+
+            Log.d(TAG, "checkInstallConstraints");
             var f2 = new CompletableFuture<InstallConstraintsResult>();
             pi.checkInstallConstraints(
                     Arrays.asList(HelloWorldSdk1.getPackageName()),
@@ -1666,7 +1676,9 @@ public class StagedInstallTest {
                     result -> f2.complete(result));
             assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
         } finally {
+            Log.d(TAG, "finally restore settings");
             SystemUtil.runShellCommand("setprop " + propKey + " invalid");
+            SystemUtil.runShellCommand("settings put global package_verifier_enable " + oldVal);
         }
     }
 

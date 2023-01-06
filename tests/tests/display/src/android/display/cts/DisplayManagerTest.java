@@ -119,7 +119,7 @@ public class DisplayManagerTest {
                 return;
             }
             int size = boundsToCheck.width() * boundsToCheck.height();
-            int matchingPixels = PixelChecker.getNumMatchingPixels(new PixelColor(PixelColor.RED),
+            int matchingPixels = PixelChecker.getNumMatchingPixels(new PixelColor(Color.RED),
                     image.getPlanes()[0], boundsToCheck);
             boolean success = matchingPixels >= size - 100 && matchingPixels <= size + 100;
             if (!success) {

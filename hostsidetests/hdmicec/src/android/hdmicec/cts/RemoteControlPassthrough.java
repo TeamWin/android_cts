@@ -267,7 +267,7 @@ public final class RemoteControlPassthrough {
         userControlPressKeys.put(HdmiCecConstants.CEC_KEYCODE_DOWN,"DPAD_DOWN");
         userControlPressKeys.put(HdmiCecConstants.CEC_KEYCODE_LEFT,"DPAD_LEFT");
         userControlPressKeys.put(HdmiCecConstants.CEC_KEYCODE_RIGHT,"DPAD_RIGHT");
-        userControlPressKeys.put(HdmiCecConstants.CEC_KEYCODE_ROOT_MENU,"MENU");
+        userControlPressKeys.put(HdmiCecConstants.CEC_KEYCODE_ROOT_MENU,"HOME");
         userControlPressKeys.put(HdmiCecConstants.CEC_KEYCODE_SETUP_MENU,"SETTINGS");
         userControlPressKeys.put(HdmiCecConstants.CEC_KEYCODE_CONTENTS_MENU,"TV_CONTENTS_MENU");
         userControlPressKeys.put(HdmiCecConstants.CEC_KEYCODE_BACK,"BACK");

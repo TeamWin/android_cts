@@ -102,6 +102,7 @@ import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -817,6 +818,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
      * Here we use {@link WindowLayoutInfoParcelable} to pass {@link WindowLayoutInfo} values
      * between this test process and the MockIME process.
      */
+    @Ignore("b/264026686")
     @Test
     @ApiTest(apis = {
             "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener"})

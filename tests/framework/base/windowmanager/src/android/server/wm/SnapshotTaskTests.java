@@ -38,7 +38,6 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.view.cts.surfacevalidator.BitmapPixelChecker;
-import android.view.cts.surfacevalidator.PixelColor;
 import android.window.SplashScreen;
 
 import androidx.annotation.Nullable;
@@ -85,7 +84,7 @@ public class SnapshotTaskTests extends ActivityManagerTestBase {
 
     @Test
     public void testSetDisablePreviewScreenshots() throws Exception {
-        BitmapPixelChecker pixelChecker = new BitmapPixelChecker(PixelColor.RED);
+        BitmapPixelChecker pixelChecker = new BitmapPixelChecker(Color.RED);
 
         int retries = 0;
         boolean matchesPixels = false;

@@ -50,6 +50,16 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
 
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.INVALID))
                 .isEqualTo("INVALID");
+        assertThat(VehiclePropertyIds.toString(
+                VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_ENABLED))
+                .isEqualTo("EMERGENCY_LANE_KEEP_ASSIST_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_ENABLED))
+                .isEqualTo("ADAPTIVE_CRUISE_CONTROL_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED))
+                .isEqualTo("HANDS_ON_DETECTION_ENABLED");
+        assertThat(
+                VehiclePropertyIds.toString(VehiclePropertyIds.DRIVER_ATTENTION_MONITORING_ENABLED))
+                .isEqualTo("DRIVER_ATTENTION_MONITORING_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.IGNITION_STATE))
                 .isEqualTo("IGNITION_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.INFO_DRIVER_SEAT))
@@ -156,6 +166,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("PARKING_BRAKE_AUTO_APPLY");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_BRAKE_REGENERATION_LEVEL))
                 .isEqualTo("EV_BRAKE_REGENERATION_LEVEL");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_STOPPING_MODE))
+                .isEqualTo("EV_STOPPING_MODE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.NIGHT_MODE))
                 .isEqualTo("NIGHT_MODE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.TURN_SIGNAL_STATE))
@@ -398,6 +410,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("BLIND_SPOT_WARNING_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_DEPARTURE_WARNING_ENABLED))
                 .isEqualTo("LANE_DEPARTURE_WARNING_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_KEEP_ASSIST_ENABLED))
+                .isEqualTo("LANE_KEEP_ASSIST_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED))
                 .isEqualTo("LANE_CENTERING_ASSIST_ENABLED");
         assertThat(VehiclePropertyIds.toString(3)).isEqualTo("0x3");

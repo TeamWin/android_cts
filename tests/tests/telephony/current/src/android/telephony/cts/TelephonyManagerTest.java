@@ -5888,11 +5888,11 @@ public class TelephonyManagerTest {
                         AsyncTask.SERIAL_EXECUTOR, (result) -> {}));
 
         final List<Integer> resultsExpected = new ArrayList<>();
-        resultsExpected.add(TelephonyManager.CELLBROADCAST_RESULT_UNKNOWN);
-        resultsExpected.add(TelephonyManager.CELLBROADCAST_RESULT_SUCCESS);
-        resultsExpected.add(TelephonyManager.CELLBROADCAST_RESULT_UNSUPPORTED);
-        resultsExpected.add(TelephonyManager.CELLBROADCAST_RESULT_FAIL_CONFIG);
-        resultsExpected.add(TelephonyManager.CELLBROADCAST_RESULT_FAIL_ACTIVATION);
+        resultsExpected.add(TelephonyManager.CELL_BROADCAST_RESULT_UNKNOWN);
+        resultsExpected.add(TelephonyManager.CELL_BROADCAST_RESULT_SUCCESS);
+        resultsExpected.add(TelephonyManager.CELL_BROADCAST_RESULT_UNSUPPORTED);
+        resultsExpected.add(TelephonyManager.CELL_BROADCAST_RESULT_FAIL_CONFIG);
+        resultsExpected.add(TelephonyManager.CELL_BROADCAST_RESULT_FAIL_ACTIVATION);
 
         final List<CellBroadcastIdRange> rangesExpected = ShellIdentityUtils
                 .invokeMethodWithShellPermissions(
@@ -5907,7 +5907,7 @@ public class TelephonyManagerTest {
                             assertTrue("Got " + result + " not in expected set",
                                     resultsExpected.contains(result));
                             // The range will be updated when result is success
-                            if (result == TelephonyManager.CELLBROADCAST_RESULT_SUCCESS) {
+                            if (result == TelephonyManager.CELL_BROADCAST_RESULT_SUCCESS) {
                                 rangesExpected.clear();
                                 rangesExpected.addAll(ranges);
                             }

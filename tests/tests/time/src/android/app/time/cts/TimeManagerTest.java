@@ -547,7 +547,7 @@ public class TimeManagerTest {
         TimeZoneCapabilities capabilities = timeZoneCapabilitiesAndConfig.getCapabilities();
 
         TimeZoneState initialTimeZoneState = mTimeManager.getTimeZoneState();
-        String testTimeZone1 = "Europe/London";
+        String testTimeZone1 = "America/New_York";
 
         // Try to get the device into a known state: we want auto detection disabled in order to set
         // a manual time zone.
@@ -596,6 +596,9 @@ public class TimeManagerTest {
                 boolean success = setAutoTimeZoneDetectionEnabledAndSleep(true);
                 assertTrue("Test requires being able to turn on auto detection", success);
 
+                // Sample the time zone now that auto-detection is on (it may have changed).
+                TimeZoneState originalTimeZoneState = mTimeManager.getTimeZoneState();
+
                 // Try to set the time zone again.
                 String testTimeZone2 = "Europe/Paris";
                 assertFalse(mTimeManager.setManualTimeZone(testTimeZone2));
@@ -603,8 +606,9 @@ public class TimeManagerTest {
                 // Confirm the call failed completely and time zone state has stayed the same.
                 {
                     TimeZoneState timeZoneState = mTimeManager.getTimeZoneState();
-                    assertEquals(testTimeZone1, timeZoneState.getId());
-                    assertFalse(timeZoneState.getUserShouldConfirmId());
+                    assertEquals(originalTimeZoneState.getId(), timeZoneState.getId());
+                    assertEquals(originalTimeZoneState.getUserShouldConfirmId(),
+                            timeZoneState.getUserShouldConfirmId());
                 }
             }
         } finally {

@@ -16,6 +16,7 @@
 
 package android.content.cts;
 
+import static android.Manifest.permission.READ_WALLPAPER_INTERNAL;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
@@ -152,8 +153,9 @@ public class ContextTest extends AndroidTestCase {
         mLockObj = new Object();
 
         mRegisteredReceiverList = new ArrayList<BroadcastReceiver>();
-
-        mOriginalWallpaper = (BitmapDrawable) mContext.getWallpaper();
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mOriginalWallpaper = (BitmapDrawable) mContext.getWallpaper(),
+                READ_WALLPAPER_INTERNAL);
     }
 
     @Override
@@ -898,34 +900,38 @@ public class ContextTest extends AndroidTestCase {
 
         // set Wallpaper by context#setWallpaper(Bitmap)
         Bitmap bitmap = Bitmap.createBitmap(20, 30, Bitmap.Config.RGB_565);
-        // Test getWallpaper
-        Drawable testDrawable = mContext.getWallpaper();
-        // Test peekWallpaper
-        Drawable testDrawable2 = mContext.peekWallpaper();
 
-        mContext.setWallpaper(bitmap);
-        mWallpaperChanged = true;
-        synchronized(this) {
-            wait(500);
-        }
+        // grant permission READ_WALLPAPER_INTERNAL for the whole test
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            // Test getWallpaper
+            Drawable testDrawable = mContext.getWallpaper();
+            // Test peekWallpaper
+            Drawable testDrawable2 = mContext.peekWallpaper();
 
-        assertNotSame(testDrawable, mContext.peekWallpaper());
-        assertNotNull(mContext.getWallpaper());
-        assertNotSame(testDrawable2, mContext.peekWallpaper());
-        assertNotNull(mContext.peekWallpaper());
+            mContext.setWallpaper(bitmap);
+            mWallpaperChanged = true;
+            synchronized (this) {
+                wait(500);
+            }
 
-        // set Wallpaper by context#setWallpaper(InputStream)
-        mContext.clearWallpaper();
+            assertNotSame(testDrawable, mContext.peekWallpaper());
+            assertNotNull(mContext.getWallpaper());
+            assertNotSame(testDrawable2, mContext.peekWallpaper());
+            assertNotNull(mContext.peekWallpaper());
 
-        testDrawable = mContext.getWallpaper();
-        InputStream stream = mContext.getResources().openRawResource(R.drawable.scenery);
+            // set Wallpaper by context#setWallpaper(InputStream)
+            mContext.clearWallpaper();
 
-        mContext.setWallpaper(stream);
-        synchronized (this) {
-            wait(1000);
-        }
+            testDrawable = mContext.getWallpaper();
+            InputStream stream = mContext.getResources().openRawResource(R.drawable.scenery);
 
-        assertNotSame(testDrawable, mContext.peekWallpaper());
+            mContext.setWallpaper(stream);
+            synchronized (this) {
+                wait(1000);
+            }
+
+            assertNotSame(testDrawable, mContext.peekWallpaper());
+        }, READ_WALLPAPER_INTERNAL);
     }
 
     public void testAccessDatabase() {

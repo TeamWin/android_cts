@@ -15,9 +15,6 @@
  */
 package android.server.wm;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
 import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 
@@ -25,15 +22,14 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.view.cts.surfacevalidator.AnimationFactory;
-import android.view.cts.surfacevalidator.CapturedActivity;
-import android.view.cts.surfacevalidator.PixelChecker;
-import android.view.cts.surfacevalidator.PixelColor;
-import android.view.cts.surfacevalidator.SurfaceControlTestCase;
 import android.view.Gravity;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.cts.surfacevalidator.AnimationFactory;
+import android.view.cts.surfacevalidator.CapturedActivity;
+import android.view.cts.surfacevalidator.PixelChecker;
+import android.view.cts.surfacevalidator.SurfaceControlTestCase;
 import android.widget.FrameLayout;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
@@ -106,7 +102,7 @@ public class SurfaceViewSurfaceValidatorTest {
                     public void addChildren(SurfaceControl parent) {
                     }
             };
-        PixelChecker pixelChecker = new PixelChecker(PixelColor.BLACK) {
+        PixelChecker pixelChecker = new PixelChecker(Color.BLACK) {
                 @Override
                 public boolean checkPixels(int pixelCount, int width, int height) {
                     return pixelCount == 0;
@@ -144,7 +140,7 @@ public class SurfaceViewSurfaceValidatorTest {
                     public void addChildren(SurfaceControl parent) {
                     }
             };
-        PixelChecker pixelChecker = new PixelChecker(PixelColor.BLACK) {
+        PixelChecker pixelChecker = new PixelChecker(Color.BLACK) {
                 @Override
                 public boolean checkPixels(int pixelCount, int width, int height) {
                     return pixelCount == 0;

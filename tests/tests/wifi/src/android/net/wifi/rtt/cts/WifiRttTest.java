@@ -16,6 +16,8 @@
 
 package android.net.wifi.rtt.cts;
 
+import static android.net.wifi.rtt.ResponderConfig.RESPONDER_AP;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -147,16 +149,18 @@ public class WifiRttTest extends TestBase {
                 .setCenterFreq0Mhz(testAp.centerFreq0)
                 .setCenterFreq1Mhz(testAp.centerFreq1)
                 .setPreamble(preamble)
+                .setResponderType(RESPONDER_AP)
                 .build();
 
         // Validate ResponderConfig.Builder set method arguments match getter methods.
         assertTrue(responder.getMacAddress().toString().equalsIgnoreCase(testAp.BSSID)
-                        && responder.is80211mcSupported() == testAp.is80211mcResponder()
-                        && responder.getChannelWidth() == testAp.channelWidth
-                        && responder.getFrequencyMhz() == testAp.frequency
-                        && responder.getCenterFreq0Mhz() == testAp.centerFreq0
-                        && responder.getCenterFreq1Mhz() == testAp.centerFreq1
-                        && responder.getPreamble() == preamble);
+                && responder.is80211mcSupported() == testAp.is80211mcResponder()
+                && responder.getChannelWidth() == testAp.channelWidth
+                && responder.getFrequencyMhz() == testAp.frequency
+                && responder.getCenterFreq0Mhz() == testAp.centerFreq0
+                && responder.getCenterFreq1Mhz() == testAp.centerFreq1
+                && responder.getPreamble() == preamble
+                && responder.getResponderType() == RESPONDER_AP);
 
         // Perform RTT operations
         RangingRequest.Builder builder = new RangingRequest.Builder();
