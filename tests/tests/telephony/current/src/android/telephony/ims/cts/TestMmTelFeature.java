@@ -56,6 +56,9 @@ public class TestMmTelFeature extends MmTelFeature {
     private CountDownLatch mOfferedRtpHeaderExtensionLatch = new CountDownLatch(1);
     private MediaThreshold mSetMediaThreshold;
     private CountDownLatch mSetMediaThresholdLatch = new CountDownLatch(1);
+    private int mTestPacketLossRateValue;
+    private int mTestJitterValue;
+    private long mTestInactivityTime;
     private TestImsCallSessionImpl mCallSession;
     private CountDownLatch mTerminalBasedCallWaitingLatch = new CountDownLatch(1);
     private boolean mIsTerminalBasedCallWaitingNotified = false;
@@ -146,8 +149,18 @@ public class TestMmTelFeature extends MmTelFeature {
     @Override
     public void setMediaThreshold(int sessionType, MediaThreshold threshold) {
         Log.d(TAG, "setMediaThreshold" + threshold);
-        mSetMediaThreshold = threshold;
-        mSetMediaThresholdLatch.countDown();
+        int[] packetLossThreshold = threshold.getThresholdsRtpPacketLossRate();
+        int[] jitterThreshold = threshold.getThresholdsRtpJitterMillis();
+        long[] inactivityTimeThreshold = threshold.getThresholdsRtpInactivityTimeMillis();
+        if (packetLossThreshold != null && packetLossThreshold.length == 1
+                && packetLossThreshold[0] == mTestPacketLossRateValue
+                && jitterThreshold[0] == mTestJitterValue
+                && inactivityTimeThreshold[0] == mTestInactivityTime) {
+            mSetMediaThreshold = threshold;
+            mSetMediaThresholdLatch.countDown();
+        } else {
+            Log.d(TAG, "setMediaThreshold, this is not config update for test" + threshold);
+        }
     }
 
     @Override
@@ -238,7 +251,11 @@ public class TestMmTelFeature extends MmTelFeature {
         return mSetMediaThreshold;
     }
 
-    public CountDownLatch getSetMediaThresholdLatch() {
+    public CountDownLatch getSetMediaThresholdLatch(int testPacketLossRate, int testJitter,
+            long testInactivityMillis) {
+        mTestPacketLossRateValue = testPacketLossRate;
+        mTestJitterValue = testJitter;
+        mTestInactivityTime = testInactivityMillis;
         return mSetMediaThresholdLatch;
     }
 

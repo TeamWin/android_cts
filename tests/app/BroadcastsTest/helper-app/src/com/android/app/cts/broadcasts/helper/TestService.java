@@ -65,7 +65,7 @@ public class TestService extends Service {
                         receivedBroadcasts.add(intent);
                     }
                 }
-            }, filter);
+            }, filter, Context.RECEIVER_EXPORTED);
         }
 
         @Override

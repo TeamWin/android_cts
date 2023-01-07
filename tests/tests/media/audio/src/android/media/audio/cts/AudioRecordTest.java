@@ -549,6 +549,9 @@ public class AudioRecordTest {
     // Test AudioRecord.Builder.setRequestHotwordStream, and hotword capture
     @Test
     public void testAudioRecordBuilderHotword() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
         // Verify typical behavior continues to work, and clearing works
         AudioRecord regularRecord = new AudioRecord.Builder()
                                     .setRequestHotwordStream(true)

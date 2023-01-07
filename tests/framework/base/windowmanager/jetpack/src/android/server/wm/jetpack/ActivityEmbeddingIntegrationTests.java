@@ -18,6 +18,8 @@ package android.server.wm.jetpack;
 
 import static android.server.wm.jetpack.signed.Components.SIGNED_EMBEDDING_ACTIVITY;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EMBEDDED_ACTIVITY_ID;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilderWithJava8Predicate;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifyNoCallback;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
@@ -83,7 +85,7 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
 
         // Launch a second activity in a split. Use a very small split ratio, so that the secondary
         // activity occupies most of the screen.
-        SplitPairRule splitPairRule = new SplitPairRule.Builder(
+        SplitPairRule splitPairRule = createSplitPairRuleBuilderWithJava8Predicate(
                 activityActivityPair -> true,
                 activityIntentPair -> true,
                 windowMetrics -> true
@@ -129,7 +131,7 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
 
         // Launch a second activity in a split. Use a very small split ratio, so that the secondary
         // activity occupies most of the screen.
-        SplitPairRule splitPairRule = new SplitPairRule.Builder(
+        SplitPairRule splitPairRule = createSplitPairRuleBuilder(
                 activityActivityPair -> true,
                 activityIntentPair -> true,
                 windowMetrics -> true

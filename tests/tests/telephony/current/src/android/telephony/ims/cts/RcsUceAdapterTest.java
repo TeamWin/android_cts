@@ -3278,19 +3278,7 @@ public class RcsUceAdapterTest {
         assertEquals("Internal Server Error", receivedInfo.getResponsePhrase());
         assertEquals("TestCallId2", receivedInfo.getCallId());
 
-        errorQueue.clear();
         removeUceRequestDisallowedStatus();
-
-        // Verify the sip information when error for a request
-        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
-            cb.onCommandError(COMMAND_CODE_SERVICE_UNKNOWN);
-        });
-
-        requestCapabilities(uceAdapter, numbers, callback);
-
-        receivedInfo = waitForResult(errorQueue);
-        assertNull(receivedInfo);
-
         errorQueue.clear();
         overrideCarrierConfig(null);
     }

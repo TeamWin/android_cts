@@ -18,6 +18,7 @@ package android.server.wm.jetpack.signed;
 
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_RATIO;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EMBEDDED_ACTIVITY_ID;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilderWithJava8Predicate;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityCrossUidInSplit;
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
@@ -85,7 +86,7 @@ public class SignedEmbeddingActivity extends Activity {
         TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer = new TestValueCountConsumer<>();
         embeddingComponent.setSplitInfoCallback(splitInfoConsumer);
 
-        SplitPairRule splitPairRule = new SplitPairRule.Builder(
+        SplitPairRule splitPairRule = createSplitPairRuleBuilderWithJava8Predicate(
                 activityActivityPair -> true /* activityActivityPredicate */,
                 activityIntentPair -> true /* activityIntentPredicate */,
                 parentWindowMetrics -> true /* parentWindowMetricsPredicate */)

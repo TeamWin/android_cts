@@ -148,7 +148,9 @@ public final class MockIme extends InputMethodService {
     private final WindowLayoutComponent mWindowLayoutComponent =
             mWindowExtensions != null ? mWindowExtensions.getWindowLayoutComponent() : null;
 
-    private Consumer<WindowLayoutInfo> mWindowLayoutInfoConsumer;
+    /** The extensions core Consumer to receive {@link WindowLayoutInfo} updates. */
+    private androidx.window.extensions.core.util.function.Consumer<WindowLayoutInfo>
+            mWindowLayoutInfoConsumer;
 
     private final HandlerThread mHandlerThread = new HandlerThread("CommandReceiver");
 

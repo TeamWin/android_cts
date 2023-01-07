@@ -252,6 +252,9 @@ public class ImsServiceTest {
             "org.openmobilealliance:File-Transfer-HTTP";
 
     private static final int FEATURE_STATE_READY = 0;
+    private static final int TEST_PACKET_LOSS_RATE_THRESHOLD = 17;
+    private static final int TEST_JITTER_THRESHOLD = 74;
+    private static final long TEST_INACTIVITY_MILLIS = 4779;
 
     private static CarrierConfigReceiver sReceiver;
     private static SingleRegistrationCapabilityReceiver sSrcReceiver;
@@ -5014,27 +5017,34 @@ public class ImsServiceTest {
             PersistableBundle bundle = new PersistableBundle();
             bundle.putInt(
                     CarrierConfigManager.ImsVoice.KEY_VOICE_RTP_PACKET_LOSS_RATE_THRESHOLD_INT,
-                    10);
+                    TEST_PACKET_LOSS_RATE_THRESHOLD);
             bundle.putLong(
                     CarrierConfigManager
                             .ImsVoice
-                            .KEY_VOICE_RTP_INACTIVITY_TIME_THRESHOLD_MILLIS_LONG, 5000);
+                            .KEY_VOICE_RTP_INACTIVITY_TIME_THRESHOLD_MILLIS_LONG,
+                    TEST_INACTIVITY_MILLIS);
             bundle.putInt(
                     CarrierConfigManager
-                            .ImsVoice.KEY_VOICE_RTP_JITTER_THRESHOLD_MILLIS_INT, 70);
+                            .ImsVoice.KEY_VOICE_RTP_JITTER_THRESHOLD_MILLIS_INT,
+                    TEST_JITTER_THRESHOLD);
             overrideCarrierConfig(bundle);
 
             triggerFrameworkConnectToCarrierImsService();
 
             sServiceConnector.getCarrierService().getMmTelFeature()
-                    .getSetMediaThresholdLatch().await(5000, TimeUnit.MILLISECONDS);
+                    .getSetMediaThresholdLatch(TEST_PACKET_LOSS_RATE_THRESHOLD,
+                            TEST_JITTER_THRESHOLD, TEST_INACTIVITY_MILLIS)
+                    .await(10000, TimeUnit.MILLISECONDS);
             MediaThreshold threshold =
                     sServiceConnector.getCarrierService().getMmTelFeature().getSetMediaThreshold();
 
             assertNotNull(threshold);
-            assertArrayEquals(new int[]{10}, threshold.getThresholdsRtpPacketLossRate());
-            assertArrayEquals(new int[]{70}, threshold.getThresholdsRtpJitterMillis());
-            assertArrayEquals(new long[]{5000}, threshold.getThresholdsRtpInactivityTimeMillis());
+            assertArrayEquals(new int[]{TEST_PACKET_LOSS_RATE_THRESHOLD},
+                    threshold.getThresholdsRtpPacketLossRate());
+            assertArrayEquals(new int[]{TEST_JITTER_THRESHOLD},
+                    threshold.getThresholdsRtpJitterMillis());
+            assertArrayEquals(new long[]{TEST_INACTIVITY_MILLIS},
+                    threshold.getThresholdsRtpInactivityTimeMillis());
         } finally {
             sServiceConnector.setDeviceToDeviceCommunicationEnabled(false);
             overrideCarrierConfig(null);

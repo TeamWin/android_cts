@@ -327,12 +327,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         if (!mShouldTestTelecom) {
             return;
         }
-
-        mTelephonyManager.unregisterTelephonyCallback(mTestCallStateListener);
-
-        mTelephonyManager.unregisterTelephonyCallback(mTelephonyCallback);
-        mTelephonyCallbackThread.quit();
-
+        unregisterTelephonyCallbacks();
         cleanupCalls();
         if (!TextUtils.isEmpty(mPreviousDefaultDialer)) {
             TestUtils.setDefaultDialer(getInstrumentation(), mPreviousDefaultDialer);
@@ -354,40 +349,60 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 UserHandle.CURRENT);
     }
 
+    public void unregisterTelephonyCallbacks() {
+        if (mTestCallStateListener != null) {
+            mTelephonyManager.unregisterTelephonyCallback(mTestCallStateListener);
+        }
+        if (mTelephonyCallback != null) {
+            mTelephonyManager.unregisterTelephonyCallback(mTelephonyCallback);
+        }
+        if (mTelephonyCallbackThread != null) {
+            mTelephonyCallbackThread.quit();
+        }
+    }
+
     protected PhoneAccount setupConnectionService(MockConnectionService connectionService,
             int flags) throws Exception {
         Log.i(TAG, "Setting up mock connection service");
-        if (connectionService != null) {
-            this.connectionService = connectionService;
-        } else {
-            // Generate a vanilla mock connection service, if not provided.
-            this.connectionService = new MockConnectionService();
-        }
-        CtsConnectionService.setUp(this.connectionService);
-
-        if ((flags & FLAG_REGISTER) != 0) {
-            if ((flags & FLAG_PHONE_ACCOUNT_HANDLES_CONTENT_SCHEME) != 0) {
-                mTelecomManager.registerPhoneAccount(
-                        TestUtils.TEST_PHONE_ACCOUNT_THAT_HANDLES_CONTENT_SCHEME);
+        try {
+            if (connectionService != null) {
+                this.connectionService = connectionService;
             } else {
-                mTelecomManager.registerPhoneAccount(TestUtils.TEST_PHONE_ACCOUNT);
+                // Generate a vanilla mock connection service, if not provided.
+                this.connectionService = new MockConnectionService();
             }
-        }
-        if ((flags & FLAG_ENABLE) != 0) {
-            TestUtils.enablePhoneAccount(getInstrumentation(), TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
-            // Wait till the adb commands have executed and account is enabled in Telecom database.
-            assertPhoneAccountEnabled(TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
-        }
+            CtsConnectionService.setUp(this.connectionService);
 
-        if ((flags & FLAG_SET_DEFAULT) != 0) {
-            mPreviousDefaultOutgoingAccount = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
-            mShouldRestoreDefaultOutgoingAccount = true;
-            TestUtils.setDefaultOutgoingPhoneAccount(getInstrumentation(),
-                    TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
-            // Wait till the adb commands have executed and the default has changed.
-            assertPhoneAccountIsDefault(TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
-        }
+            if ((flags & FLAG_REGISTER) != 0) {
+                if ((flags & FLAG_PHONE_ACCOUNT_HANDLES_CONTENT_SCHEME) != 0) {
+                    mTelecomManager.registerPhoneAccount(
+                            TestUtils.TEST_PHONE_ACCOUNT_THAT_HANDLES_CONTENT_SCHEME);
+                } else {
+                    mTelecomManager.registerPhoneAccount(TestUtils.TEST_PHONE_ACCOUNT);
+                }
+            }
+            if ((flags & FLAG_ENABLE) != 0) {
+                TestUtils.enablePhoneAccount(getInstrumentation(),
+                        TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+                // Wait till the adb commands have executed and account is enabled in Telecom
+                // database.
+                assertPhoneAccountEnabled(TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+            }
 
+            if ((flags & FLAG_SET_DEFAULT) != 0) {
+                mPreviousDefaultOutgoingAccount =
+                        mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+                mShouldRestoreDefaultOutgoingAccount = true;
+                TestUtils.setDefaultOutgoingPhoneAccount(getInstrumentation(),
+                        TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+                // Wait till the adb commands have executed and the default has changed.
+                assertPhoneAccountIsDefault(TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+            }
+
+        } catch (Exception e) {
+            unregisterTelephonyCallbacks();
+            throw e;
+        }
         return TestUtils.TEST_PHONE_ACCOUNT;
     }
 

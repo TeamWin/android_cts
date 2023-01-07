@@ -34,10 +34,12 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothAudioPolicy;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothStatusCodes;
 import android.bluetooth.OobData;
 import android.content.AttributionSource;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.test.AndroidTestCase;
 
 import androidx.test.InstrumentationRegistry;
@@ -481,5 +483,40 @@ public class BluetoothDeviceTest extends AndroidTestCase {
             return null;
         }
         return pinBytes;
+    }
+
+    public void test_setPreferredAudioProfiles_getPreferredAudioProfiles() {
+        if (!mHasBluetooth || !mHasCompanionDevice) {
+            // Skip the test if bluetooth or companion device are not present.
+            return;
+        }
+        String deviceAddress = "00:11:22:AA:BB:CC";
+        BluetoothDevice device = mAdapter.getRemoteDevice(deviceAddress);
+
+        Bundle preferences = new Bundle();
+        preferences.putInt(BluetoothDevice.AUDIO_MODE_OUTPUT_ONLY, BluetoothProfile.HEADSET);
+
+        // Test invalid input
+        assertThrows(NullPointerException.class, () -> device.setPreferredAudioProfiles(null));
+        assertThrows(IllegalArgumentException.class,
+                () -> device.setPreferredAudioProfiles(preferences));
+
+        preferences.putInt(BluetoothDevice.AUDIO_MODE_OUTPUT_ONLY, BluetoothProfile.LE_AUDIO);
+        preferences.putInt(BluetoothDevice.AUDIO_MODE_DUPLEX, BluetoothProfile.A2DP);
+        assertThrows(IllegalArgumentException.class,
+                () -> device.setPreferredAudioProfiles(preferences));
+
+        preferences.putInt(BluetoothDevice.AUDIO_MODE_DUPLEX, BluetoothProfile.HEADSET);
+
+        // This should throw a SecurityException because no BLUETOOTH_PRIVILEGED permission
+        assertThrows(SecurityException.class, () -> device.setPreferredAudioProfiles(preferences));
+        assertThrows(SecurityException.class, () -> device.getPreferredAudioProfiles());
+
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+
+        // Verify that the default is an empty bundle for an unknown device
+        assertTrue(device.getPreferredAudioProfiles().isEmpty());
+        assertEquals(BluetoothStatusCodes.ERROR_DEVICE_NOT_BONDED,
+                device.setPreferredAudioProfiles(preferences));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,19 @@
 package android.server.wm.jetpack.utils;
 
 import androidx.annotation.Nullable;
-import androidx.window.extensions.core.util.function.Consumer;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Consumer that provides a simple way to wait for a specific count of values to be received within
  * a timeout and then return the last value.
- *
- * It requires the vendor API version at least {@link ExtensionUtil#EXTENSION_VERSION_2} because
- * it uses extensions core version of {@link Consumer} instead of
- * {@link java.util.function.Consumer Java 8 version Consumer}.
+ * <p>
+ * Note that this class should only be used if {@link TestValueCountConsumer} can not be used prior
+ * to {@link ExtensionUtil#EXTENSION_VERSION_2}.
  */
-public class TestValueCountConsumer<T> implements Consumer<T> {
+public class TestValueCountJavaConsumer<T> implements Consumer<T> {
 
     private static final long TIMEOUT_MS = 3000;
     private static final int DEFAULT_COUNT = 1;
@@ -38,7 +37,7 @@ public class TestValueCountConsumer<T> implements Consumer<T> {
     private LinkedBlockingQueue<T> mLinkedBlockingQueue;
     private T mLastReportedValue;
 
-    public TestValueCountConsumer() {
+    public TestValueCountJavaConsumer() {
         mLinkedBlockingQueue = new LinkedBlockingQueue<>();
     }
 

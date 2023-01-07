@@ -40,6 +40,9 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.content.pm.ServiceInfo;
+import android.location.LocationManager;
+import android.os.Process;
+import android.os.UserHandle;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.uiautomator.UiDevice;
 import android.util.ArrayMap;
@@ -178,7 +181,19 @@ public final class ActivityManagerForegroundServiceTypeTest {
 
     @Test
     public void testForegroundServiceTypeLocationPermission() throws Exception {
-        testPermissionEnforcementCommon(ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+        final LocationManager lm = mContext.getSystemService(LocationManager.class);
+        final UserHandle user = Process.myUserHandle();
+        final boolean wasEnabled = lm.isLocationEnabledForUser(user);
+        try {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                lm.setLocationEnabledForUser(true, user);
+            });
+            testPermissionEnforcementCommon(ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+        } finally {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                lm.setLocationEnabledForUser(wasEnabled, user);
+            });
+        }
     }
 
     @Test

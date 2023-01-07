@@ -32,6 +32,21 @@ java_library {
 }
 
 android_library_import {
+    name: "cts_window-extensions-core_nodeps",
+    aars: ["window-extensions-core-release.aar"],
+    sdk_version: "current",
+}
+
+java_library {
+    name: "cts_window-extensions-core",
+    sdk_version: "current",
+    static_libs: [
+        "cts_window-extensions-core_nodeps",
+    ],
+    installable: false,
+}
+
+android_library_import {
     name: "cts_window-sidecar_nodeps",
     aars: ["window-sidecar-release.aar"],
     sdk_version: "current",
@@ -54,6 +69,7 @@ java_library {
     static_libs: [
         "compatibility-device-util-axt",
         "cts_window-extensions",
+        "cts_window-extensions-core",
         "cts_window-sidecar",
     ],
     sdk_version: "test_current",
@@ -71,6 +87,7 @@ android_test {
         "cts-wm-util",
         "cts_window-sidecar",
         "cts_window-extensions",
+        "cts_window-extensions-core",
     ],
     libs: [
         "android.test.base",

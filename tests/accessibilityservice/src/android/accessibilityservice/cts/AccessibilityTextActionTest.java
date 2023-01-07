@@ -41,6 +41,7 @@ import android.graphics.RectF;
 import android.os.Bundle;
 import android.os.Message;
 import android.os.Parcelable;
+import android.platform.test.annotations.Presubmit;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -85,6 +86,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityTextActionTest {
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
@@ -579,6 +581,11 @@ public class AccessibilityTextActionTest {
         assertEquals(info.getText().length(), locations.length);
         // The text should all be on one line, running left to right
         for (int i = 0; i < locations.length; i++) {
+            if (i != 0 && locations[i] == null) {
+                // If we run into an off-screen character after at least one on-screen character
+                // then stop checking the rest of the character locations.
+                break;
+            }
             assertEquals(locations[0].top, locations[i].top, 0.01);
             assertEquals(locations[0].bottom, locations[i].bottom, 0.01);
             assertTrue(locations[i].right > locations[i].left);
