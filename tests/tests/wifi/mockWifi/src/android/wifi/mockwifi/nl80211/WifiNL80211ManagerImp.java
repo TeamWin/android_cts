@@ -24,6 +24,7 @@ import android.net.wifi.nl80211.IInterfaceEventCallback;
 import android.net.wifi.nl80211.IWificond;
 import android.net.wifi.nl80211.IWificondEventCallback;
 import android.os.IBinder;
+import android.wifi.mockwifi.MockWifiModemService;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -146,15 +147,24 @@ public class WifiNL80211ManagerImp extends IWificond.Stub {
     }
     // CHECKSTYLE:ON Generated code
 
-
     public boolean configureSignalPoll(String ifaceName, int currentRssiDbm, int txBitrateMbps,
             int rxBitrateMbps, int associationFrequencyMHz) {
         IClientInterfaceImp clientInterface = mMockIClientInterfaces.get(ifaceName);
         if (clientInterface == null) return false;
+        mConfiguredMethodSet.add("signalPoll");
         clientInterface.setRxBitrateMbps(rxBitrateMbps);
         clientInterface.setTxBitrateMbps(txBitrateMbps);
         clientInterface.setCurrentRssiDbm(currentRssiDbm);
         clientInterface.setAssociationFrequencyMHz(associationFrequencyMHz);
         return true;
+    }
+
+    public String getConfiguredMethods() {
+        StringBuilder sbuf = new StringBuilder();
+        for (String methodName : mConfiguredMethodSet) {
+            sbuf.append(TAG + MockWifiModemService.CLASS_IDENTIFIER + methodName
+                    + MockWifiModemService.METHOD_IDENTIFIER);
+        }
+        return sbuf.toString();
     }
 }

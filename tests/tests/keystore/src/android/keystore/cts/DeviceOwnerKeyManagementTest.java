@@ -315,7 +315,6 @@ public class DeviceOwnerKeyManagementTest {
             imei = telephonyService.getImei(0);
             secondImei = telephonyService.getImei(1);
             meid = telephonyService.getMeid(0);
-            assertThat(imei).isNotNull();
             // If the device has a valid IMEI it must support attestation for it.
             if (imei != null) {
                 modesToTest.add(ID_TYPE_IMEI);

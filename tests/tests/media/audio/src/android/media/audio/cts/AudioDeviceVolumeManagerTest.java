@@ -25,13 +25,13 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioDeviceVolumeManager;
 import android.media.AudioManager;
 import android.media.VolumeInfo;
-import android.media.cts.NonMediaMainlineTest;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 
-@NonMediaMainlineTest
+@NonMainlineTest
 public class AudioDeviceVolumeManagerTest extends CtsAndroidTestCase {
 
     private static final String TAG = "AudioDeviceVolumeManagerTest";

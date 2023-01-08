@@ -30,7 +30,6 @@ import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.media.audio.cts.R;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.TestUtils;
 import android.os.Build;
 import android.os.Handler;
@@ -39,11 +38,12 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 public class AudioFocusTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioFocusTest";
 

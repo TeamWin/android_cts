@@ -234,7 +234,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
       test_failures = []
       for preview_size, max_angles in max_cam_gyro_angles.items():
         w_x_h = preview_size.split('x')
-        if int(w_x_h[1])/int(w_x_h[0]) > _ASPECT_RATIO_16_9:
+        if int(w_x_h[0])/int(w_x_h[1]) > _ASPECT_RATIO_16_9:
           preview_stabilization_factor = _PREVIEW_STABILIZATION_FACTOR * 1.1
         else:
           preview_stabilization_factor = _PREVIEW_STABILIZATION_FACTOR

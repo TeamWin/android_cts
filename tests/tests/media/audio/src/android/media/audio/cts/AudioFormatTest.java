@@ -19,12 +19,12 @@ package android.media.audio.cts;
 import static org.testng.Assert.assertThrows;
 
 import android.media.AudioFormat;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.Parcel;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+import com.android.compatibility.common.util.NonMainlineTest;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 public class AudioFormatTest extends CtsAndroidTestCase {
 
     // -----------------------------------------------------------------

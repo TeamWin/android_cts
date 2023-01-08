@@ -25,10 +25,10 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.Spatializer;
-import android.media.cts.NonMediaMainlineTest;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Assert;
 
@@ -38,7 +38,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 public class SpatializerTest extends CtsAndroidTestCase {
 
     private AudioManager mAudioManager;

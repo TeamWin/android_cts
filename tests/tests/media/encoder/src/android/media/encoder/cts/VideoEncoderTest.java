@@ -1278,6 +1278,7 @@ public class VideoEncoderTest extends MediaTestBase {
                 MediaFormat.MIMETYPE_VIDEO_MPEG4,
                 MediaFormat.MIMETYPE_VIDEO_VP8,
                 MediaFormat.MIMETYPE_VIDEO_VP9,
+                MediaFormat.MIMETYPE_VIDEO_AV1,
         };
         final List<Object[]> argsList = new ArrayList<>();
         for (String mediaType : mediaTypesList) {

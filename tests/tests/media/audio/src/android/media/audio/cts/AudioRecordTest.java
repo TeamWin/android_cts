@@ -43,7 +43,6 @@ import android.media.MediaSyncEvent;
 import android.media.MicrophoneDirection;
 import android.media.MicrophoneInfo;
 import android.media.cts.AudioHelper;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.StreamUtils;
 import android.media.metrics.LogSessionId;
 import android.media.metrics.MediaMetricsManager;
@@ -62,6 +61,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.SystemUtil;
@@ -79,7 +79,7 @@ import java.util.concurrent.Executor;
 import java.util.List;
 import java.util.function.BiFunction;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class AudioRecordTest {
     private final static String TAG = "AudioRecordTest";

@@ -28,11 +28,12 @@ import android.media.AudioRecord;
 import android.media.audiopolicy.AudioMix;
 import android.media.audiopolicy.AudioMixingRule;
 import android.media.audiopolicy.AudioPolicy;
-import android.media.cts.NonMediaMainlineTest;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -48,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test suite derived from GTS DevicesForAttributesTest.java
  */
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class DevicesForAttributesTest {
     private static final String TAG = DevicesForAttributesTest.class.getSimpleName();

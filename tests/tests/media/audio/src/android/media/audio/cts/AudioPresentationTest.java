@@ -20,16 +20,16 @@ import static org.junit.Assert.assertNotEquals;
 
 import android.icu.util.ULocale;
 import android.media.AudioPresentation;
-import android.media.cts.NonMediaMainlineTest;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 public class AudioPresentationTest extends CtsAndroidTestCase {
     private String TAG = "AudioPresentationTest";
     private static final String REPORT_LOG_NAME = "CtsMediaAudioTestCases";

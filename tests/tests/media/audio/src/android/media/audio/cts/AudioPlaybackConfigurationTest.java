@@ -50,7 +50,6 @@ import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.media.VolumeShaper;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.TestUtils;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -61,6 +60,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.internal.annotations.GuardedBy;
 
 import java.io.IOException;
@@ -71,7 +71,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioPlaybackConfigurationTest";
 

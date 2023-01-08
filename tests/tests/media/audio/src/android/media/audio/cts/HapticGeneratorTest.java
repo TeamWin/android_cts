@@ -18,10 +18,11 @@ package android.media.audio.cts;
 
 import android.media.AudioManager;
 import android.media.audiofx.HapticGenerator;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.PostProcTestBase;
 
-@NonMediaMainlineTest
+import com.android.compatibility.common.util.NonMainlineTest;
+
+@NonMainlineTest
 public class HapticGeneratorTest extends PostProcTestBase {
 
     private String TAG = "HapticGeneratorTest";

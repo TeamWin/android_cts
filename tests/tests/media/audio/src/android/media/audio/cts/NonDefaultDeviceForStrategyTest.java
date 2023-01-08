@@ -29,10 +29,11 @@ import android.media.AudioDeviceAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.audiopolicy.AudioProductStrategy;
-import android.media.cts.NonMediaMainlineTest;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -44,7 +45,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class NonDefaultDeviceForStrategyTest {
     private static final String TAG = NonDefaultDeviceForStrategyTest.class.getSimpleName();

@@ -23,7 +23,6 @@ import android.content.pm.PackageManager;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.AudioRouting;
-import android.media.cts.NonMediaMainlineTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 

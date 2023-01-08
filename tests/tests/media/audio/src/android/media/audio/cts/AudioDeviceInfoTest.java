@@ -17,9 +17,10 @@
 package android.media.audio.cts;
 
 import android.media.AudioDeviceInfo;
-import android.media.cts.NonMediaMainlineTest;
 
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,7 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class AudioDeviceInfoTest {
     private static final Set<Integer> INPUT_TYPES = Stream.of(

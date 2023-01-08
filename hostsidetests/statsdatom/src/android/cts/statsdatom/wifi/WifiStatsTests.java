@@ -25,6 +25,7 @@ import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 import android.net.wifi.WifiModeEnum;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
 import com.android.tradefed.build.IBuildInfo;
@@ -96,8 +97,14 @@ public class WifiStatsTests extends DeviceTestCase implements IBuildReceiver {
                 atom -> atom.getWifiLockStateChanged().getState().getNumber());
 
         for (StatsLog.EventMetricData event : data) {
+            // High perf lock is deprecated from Android U onwards. Acquisition of high perf lock is
+            // treated as low latency lock.
             assertThat(event.getAtom().getWifiLockStateChanged().getMode())
-                    .isEqualTo(WifiModeEnum.WIFI_MODE_FULL_HIGH_PERF);
+                    .isEqualTo(
+                            (ApiLevelUtil.isAfter(getDevice(), "TIRAMISU")
+                                    || ApiLevelUtil.codenameStartsWith(getDevice(), "U"))
+                                    ? WifiModeEnum.WIFI_MODE_FULL_LOW_LATENCY
+                                    : WifiModeEnum.WIFI_MODE_FULL_HIGH_PERF);
         }
     }
 

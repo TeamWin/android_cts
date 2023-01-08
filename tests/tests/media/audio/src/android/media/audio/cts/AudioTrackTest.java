@@ -36,7 +36,6 @@ import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
 import android.media.cts.AudioHelper;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.metrics.LogSessionId;
 import android.media.metrics.MediaMetricsManager;
 import android.media.metrics.PlaybackSession;
@@ -49,6 +48,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.NonMainlineTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -57,7 +58,7 @@ import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.concurrent.Executor;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class AudioTrackTest {
     private String TAG = "AudioTrackTest";

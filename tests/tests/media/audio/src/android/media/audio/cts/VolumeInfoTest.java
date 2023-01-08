@@ -20,17 +20,17 @@ import android.Manifest;
 import android.media.AudioManager;
 import android.media.VolumeInfo;
 import android.media.audiopolicy.AudioVolumeGroup;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.Parcel;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import java.util.List;
 
 
-@NonMediaMainlineTest
+@NonMainlineTest
 public class VolumeInfoTest extends CtsAndroidTestCase {
 
     private static final String TAG = "VolumeInfoTest";

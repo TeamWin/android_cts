@@ -70,6 +70,11 @@ public class VideoEncoderCapabilitiesTest {
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 1920, 1080, 30, 5000000, true},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 3840, 2160, 30, 20000000, true},
 
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 320, 180, 30, 800000, true},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 640, 360, 30, 2000000, true},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 720, 480, 30, 1600000, true},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 1280, 720, 30, 4000000, true},
+
         });
         return exhaustiveArgsList;
     }

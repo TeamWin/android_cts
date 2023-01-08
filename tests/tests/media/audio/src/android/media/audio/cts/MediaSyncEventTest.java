@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.cts.AudioHelper;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -35,10 +34,12 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.NonMainlineTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class MediaSyncEventTest {
     private final static String TAG = "MediaSyncEventTest";

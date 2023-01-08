@@ -532,7 +532,8 @@ public class VisualVoicemailServiceTest {
             for (SmsMessage message : messages) {
                 String body = message.getMessageBody();
 
-                if ((body == null || message.getReceivedEncodingType() == ENCODING_8BIT)
+                if ((body == null || (message.is3gpp()
+                        && message.getReceivedEncodingType() == ENCODING_8BIT))
                         && message.getUserData() != null) {
                     Log.d(TAG, "onReceive decode using UTF-8");
                     // Attempt to interpret the user data as UTF-8. UTF-8 string over data SMS using

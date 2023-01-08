@@ -19,10 +19,11 @@ package android.media.audio.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.media.AudioTimestamp;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +31,7 @@ import org.junit.runner.RunWith;
 /**
  * The unit tests for {@link AudioTimestamp} APIs.
  */
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class AudioTimestampTest {
     private static final long FRAME_POSITION = 1;

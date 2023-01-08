@@ -27,12 +27,12 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.SystemClock;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,7 +44,7 @@ import java.util.stream.IntStream;
 
 import javax.annotation.concurrent.GuardedBy;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioTrackOffloadTest";
 

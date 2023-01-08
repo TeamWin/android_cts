@@ -25,16 +25,18 @@ import android.media.AudioMetadata;
 import android.media.AudioMetadataMap;
 import android.media.AudioMetadataReadMap;
 import android.media.AudioPresentation;
-import android.media.cts.NonMediaMainlineTest;
 import android.util.Log;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.NonMainlineTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class AudioMetadataTest {
 

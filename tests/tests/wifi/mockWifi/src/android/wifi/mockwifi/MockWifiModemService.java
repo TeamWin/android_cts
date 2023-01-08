@@ -38,6 +38,8 @@ public class MockWifiModemService extends Service {
     public static final int LATCH_WIFI_INTERFACES_READY = 1;
     public static final int LATCH_MAX = 2;
 
+    public static final String METHOD_IDENTIFIER = ",";
+    public static final String CLASS_IDENTIFIER = "-";
     private static final int NUM_MOCKED_INTERFACES = 1; // The number of HAL, now only support
                                                         // nl80211 HAL
 
@@ -128,5 +130,13 @@ public class MockWifiModemService extends Service {
         if (sWifiNL80211ManagerImp == null) return false;
         return sWifiNL80211ManagerImp.configureSignalPoll(ifaceName, currentRssiDbm, txBitrateMbps,
                 rxBitrateMbps, associationFrequencyMHz);
+    }
+
+    /**
+     * Gets all configured methods from all mocked HALs.
+     */
+    public String getAllConfiguredMethods() {
+        // Get configured methods from all mocked HALs. (Now only supports WifiNL80211ManagerImp).
+        return sWifiNL80211ManagerImp.getConfiguredMethods();
     }
 }

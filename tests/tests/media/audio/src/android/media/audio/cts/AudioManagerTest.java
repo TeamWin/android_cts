@@ -69,7 +69,6 @@ import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.MicrophoneInfo;
 import android.media.audiopolicy.AudioProductStrategy;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Utils;
 import android.os.Build;
 import android.os.SystemClock;
@@ -87,6 +86,7 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.SettingsStateKeeperRule;
 import com.android.internal.annotations.GuardedBy;
 
@@ -105,7 +105,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 public class AudioManagerTest extends InstrumentationTestCase {
     private static final String TAG = "AudioManagerTest";
 

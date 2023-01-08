@@ -20,7 +20,6 @@ import android.content.Context;
 import android.media.audiofx.AudioEffect;
 import android.media.AudioFormat;
 import android.media.audiofx.Virtualizer;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.PostProcTestBase;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
@@ -29,9 +28,11 @@ import android.util.Log;
 
 import android.media.audio.cts.R;
 
+import com.android.compatibility.common.util.NonMainlineTest;
+
 import java.util.Arrays;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class VirtualizerTest extends PostProcTestBase {
 

@@ -36,6 +36,7 @@ public class MockWifiModemServiceConnector {
     private static final String TAG = "MockWifiModemServiceConnector";
 
     private static final String COMMAND_BASE = "cmd wifi ";
+    private static final String COMMAND_SET_MOCK_METHOD = "set-mock-wifimodem-methods ";
     private static final String COMMAND_SET_MODEM_SERVICE = "set-mock-wifimodem-service ";
     private static final String COMMAND_GET_MODEM_SERVICE = "get-mock-wifimodem-service ";
     private static final String COMMAND_SERVICE_IDENTIFIER = "-s ";
@@ -114,6 +115,12 @@ public class MockWifiModemServiceConnector {
                 + COMMAND_SET_MODEM_SERVICE
                 + COMMAND_SERVICE_IDENTIFIER
                 + mModemServiceName;
+    }
+
+    private String constructSetConfiguredMockMethodCommand(String mockedMethods) {
+        return COMMAND_BASE
+                + COMMAND_SET_MOCK_METHOD
+                + mockedMethods;
     }
 
     private boolean setMockWifiModemService() throws Exception {
@@ -237,6 +244,16 @@ public class MockWifiModemServiceConnector {
         return isReturnResultTrue(result);
     }
 
+    public boolean updateConfiguredMockedMethods() throws Exception {
+        String mockedMethods =  mMockWifiModemService.getAllConfiguredMethods();
+        Log.i(TAG, "updateConfiguredMockedMethods with " + mockedMethods);
+        if (TextUtils.isEmpty(mockedMethods)) {
+            return false;
+        }
+        String configuredMethodResult = SystemUtil.runShellCommand(mInstrumentation,
+                constructSetConfiguredMockMethodCommand(mockedMethods));
+        return isReturnResultTrue(configuredMethodResult);
+    }
 
     public MockWifiModemService getMockWifiModemService() {
         return mMockWifiModemService;

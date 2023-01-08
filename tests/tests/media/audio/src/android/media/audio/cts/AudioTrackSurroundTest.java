@@ -29,10 +29,10 @@ import android.media.AudioManager;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.audio.cts.R;
-import android.media.cts.NonMediaMainlineTest;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,7 +48,7 @@ import java.util.Random;
 // a few seconds of audio. The playback is verified by measuring the output
 // sample rate based on the AudioTimestamps.
 
-@NonMediaMainlineTest
+@NonMainlineTest
 public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioTrackSurroundTest";
 

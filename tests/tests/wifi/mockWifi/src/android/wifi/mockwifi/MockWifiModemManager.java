@@ -97,6 +97,17 @@ public class MockWifiModemManager {
     }
 
     /**
+     * Update list of mocked methods in the framework.
+     */
+    public boolean updateConfiguredMockedMethods() throws Exception {
+        if (sServiceConnector == null) {
+            Log.e(TAG, "No MockWifiModemServiceConnector exists!");
+            return false;
+        }
+        return sServiceConnector.updateConfiguredMockedMethods();
+    }
+
+    /**
      * Configures the return result for signalPoll API for the target iface name.
      *
      */
