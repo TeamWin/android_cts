@@ -235,22 +235,45 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     }
 
     private class IdentityChangedListenerTest extends IdentityChangedListener {
-        private CountDownLatch mBlocker = new CountDownLatch(1);
+        private final CountDownLatch mBlockerIdentityCallback = new CountDownLatch(1);
+        private final CountDownLatch mBlockerClusterIdCallback = new CountDownLatch(1);
         private byte[] mMac = null;
+        private MacAddress mClusterId = null;
+        private int mClusterEventType = -1;
 
         @Override
         public void onIdentityChanged(byte[] mac) {
             mMac = mac;
-            mBlocker.countDown();
+            mBlockerIdentityCallback.countDown();
+        }
+
+        @Override
+        public void onClusterIdChanged(int clusterEventType, MacAddress clusterId) {
+            mClusterId = clusterId;
+            mClusterEventType = clusterEventType;
+            mBlockerClusterIdCallback.countDown();
         }
 
         /**
          * Waits for the listener callback to be called - or an error (timeout, interruption).
          * Returns true on callback called, false on error (timeout, interruption).
          */
-        boolean waitForListener() {
+        boolean waitForIdentityListener() {
             try {
-                return mBlocker.await(WAIT_FOR_AWARE_CHANGE_SECS, TimeUnit.SECONDS);
+                return mBlockerIdentityCallback.await(WAIT_FOR_AWARE_CHANGE_SECS, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                return false;
+            }
+        }
+
+        /**
+         * Waits for the listener callback to be called - or an error (timeout, interruption).
+         * Returns true on callback called, false on error (timeout, interruption).
+         */
+        boolean waitForClusterIdListener() {
+            try {
+                return mBlockerClusterIdCallback.await(WAIT_FOR_AWARE_CHANGE_SECS,
+                        TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 return false;
             }
@@ -261,6 +284,20 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
          */
         byte[] getMac() {
             return mMac;
+        }
+
+        /**
+         * Returns the clusterId of the cluster changes supplied to the triggered callback.
+         */
+        MacAddress getClusterId() {
+            return mClusterId;
+        }
+
+        /**
+         * Returns the clusterEventType of the cluster changes supplied to the triggered callback.
+         */
+        int getClusterEventType() {
+            return mClusterEventType;
         }
     }
 
@@ -645,11 +682,17 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             mWifiAwareManager.attach(attachCb, identityL, mHandler);
             assertEquals("Wi-Fi Aware attach: iteration " + i, AttachCallbackTest.ATTACHED,
                     attachCb.waitForAnyCallback());
-            assertTrue("Wi-Fi Aware attach: iteration " + i, identityL.waitForListener());
+            assertTrue("Wi-Fi Aware attach: iteration " + i, identityL.waitForClusterIdListener());
+            assertTrue("Wi-Fi Aware attach: iteration " + i, identityL.waitForIdentityListener());
 
             WifiAwareSession session = attachCb.getSession();
             assertNotNull("Wi-Fi Aware session: iteration " + i, session);
 
+            MacAddress clusterId = identityL.getClusterId();
+            assertNotNull("Wi-Fi Aware cluster ID: iteration " + i, clusterId);
+            int clusterEventType = identityL.getClusterEventType();
+            assertTrue("Wi-Fi Aware cluster event type: iteration " + i,
+                       clusterEventType == IdentityChangedListener.CLUSTER_CHANGE_EVENT_STARTED);
             byte[] mac = identityL.getMac();
             assertNotNull("Wi-Fi Aware discovery MAC: iteration " + i, mac);
 

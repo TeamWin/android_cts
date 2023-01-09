@@ -126,7 +126,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val NO_UPGRADE_AND_DONT_ASK_AGAIN_BUTTON_TEXT = "grant_dialog_button_no_upgrade"
         const val ALERT_DIALOG_MESSAGE = "android:id/message"
         const val ALERT_DIALOG_OK_BUTTON = "android:id/button1"
-
+        const val APP_PERMISSION_RATIONALE_CONTAINER_VIEW =
+            "com.android.permissioncontroller:id/app_permission_rationale_container"
+        const val APP_PERMISSION_RATIONALE_CONTENT_VIEW =
+            "com.android.permissioncontroller:id/app_permission_rationale_content"
         const val GRANT_DIALOG_PERMISSION_RATIONALE_CONTAINER_VIEW =
             "com.android.permissioncontroller:id/permission_rationale_container"
         const val PERMISSION_RATIONALE_ACTIVITY_TITLE_VIEW =
@@ -513,6 +516,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         } else {
             click(By.res(NO_UPGRADE_AND_DONT_ASK_AGAIN_BUTTON))
         }
+    }
+
+    protected fun clickPermissionRationaleContentInAppPermission() {
+        waitForIdle()
+        click(By.res(APP_PERMISSION_RATIONALE_CONTENT_VIEW))
     }
 
     protected fun clickPermissionRationaleViewInGrantDialog() {

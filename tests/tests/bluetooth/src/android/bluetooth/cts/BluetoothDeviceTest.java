@@ -452,6 +452,19 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         assertEquals(ACCESS_REJECTED, mFakeDevice.getSimAccessPermission());
     }
 
+    public void test_getAudioPolicyRemoteSupported() {
+        if (!mHasBluetooth || !mHasCompanionDevice) {
+            // Skip the test if bluetooth or companion device are not present.
+            return;
+        }
+
+        assertThrows(SecurityException.class, () -> mFakeDevice.getAudioPolicyRemoteSupported());
+
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+
+        assertEquals(BluetoothAudioPolicy.FEATURE_UNCONFIGURED_BY_REMOTE,
+                mFakeDevice.getAudioPolicyRemoteSupported());
+    }
 
     public void test_setGetAudioPolicy() {
         if (!mHasBluetooth || !mHasCompanionDevice) {
@@ -470,6 +483,20 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         assertEquals(BluetoothStatusCodes.ERROR_DEVICE_NOT_BONDED,
                 mFakeDevice.setAudioPolicy(demoAudioPolicy));
         assertNull(mFakeDevice.getAudioPolicy());
+
+        BluetoothAudioPolicy newPolicy = new BluetoothAudioPolicy.Builder(demoAudioPolicy)
+                .setCallEstablishPolicy(BluetoothAudioPolicy.POLICY_ALLOWED)
+                .setConnectingTimePolicy(BluetoothAudioPolicy.POLICY_NOT_ALLOWED)
+                .setInBandRingtonePolicy(BluetoothAudioPolicy.POLICY_ALLOWED)
+                .build();
+
+        assertEquals(BluetoothStatusCodes.ERROR_DEVICE_NOT_BONDED,
+                mFakeDevice.setAudioPolicy(newPolicy));
+        assertNull(mFakeDevice.getAudioPolicy());
+
+        assertEquals(BluetoothAudioPolicy.POLICY_ALLOWED, newPolicy.getCallEstablishPolicy());
+        assertEquals(BluetoothAudioPolicy.POLICY_NOT_ALLOWED, newPolicy.getConnectingTimePolicy());
+        assertEquals(BluetoothAudioPolicy.POLICY_ALLOWED, newPolicy.getInBandRingtonePolicy());
     }
 
     private byte[] convertPinToBytes(String pin) {

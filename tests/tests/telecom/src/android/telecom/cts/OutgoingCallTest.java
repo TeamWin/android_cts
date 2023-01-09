@@ -18,15 +18,13 @@ package android.telecom.cts;
 
 import static android.telecom.Call.STATE_SELECT_PHONE_ACCOUNT;
 
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.ContentProviderOperation;
-import android.content.ContentResolver;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Contacts;
-import android.provider.ContactsContract;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.Connection;
@@ -38,7 +36,6 @@ import android.telephony.emergency.EmergencyNumber;
 
 import com.android.compatibility.common.util.SystemUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -304,10 +301,14 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
         }
 
         CountDownLatch latch = new CountDownLatch(1);
+        final Call[] ongoingCall = {null};
         mInCallCallbacks = new MockInCallService.InCallServiceCallbacks() {
             @Override
             public void onCallAdded(Call call, int numCalls) {
                 if (call.getState() == STATE_SELECT_PHONE_ACCOUNT) {
+                    call.phoneAccountSelected(mTelecomManager.getUserSelectedOutgoingPhoneAccount(),
+                            true);
+                    ongoingCall[0] = call;
                     latch.countDown();
                 }
             }
@@ -330,9 +331,7 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
 
             assertTrue(latch.await(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S, TimeUnit.SECONDS));
         } finally {
-            SystemUtil.runWithShellPermissionIdentity(() -> {
-                mTelecomManager.setUserSelectedOutgoingPhoneAccount(cachedHandle);
-            });
+            assertEquals(cachedHandle, ongoingCall[0].getDetails().getAccountHandle());
         }
     }
 }
