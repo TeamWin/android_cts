@@ -53,6 +53,7 @@ import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.getEventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.ThrowingSupplier
 import com.android.compatibility.common.util.UI_ROOT
 import com.android.compatibility.common.util.click
 import com.android.compatibility.common.util.depthFirstSearch
@@ -329,24 +330,22 @@ class AutoRevokeTest {
 
     @AppModeFull(reason = "Uses separate apps for testing")
     @Test
-    @Ignore("b/201545116")
     fun testPreMinAutoRevokeVersionUnusedApp_doesntGetPermissionRevoked() {
+        assumeFalse(isHibernationEnabledForPreSApps())
         withUnusedThresholdMs(3L) {
             withDummyApp(preMinVersionApkPath, preMinVersionAppPackageName) {
-                withDummyApp {
-                    grantPermission(preMinVersionAppPackageName)
-                    assertPermission(PERMISSION_GRANTED, preMinVersionAppPackageName)
-                    startApp(preMinVersionAppPackageName)
-                    killDummyApp(preMinVersionAppPackageName)
-                    Thread.sleep(20)
+                grantPermission(preMinVersionAppPackageName)
+                assertPermission(PERMISSION_GRANTED, preMinVersionAppPackageName)
+                startApp(preMinVersionAppPackageName)
+                killDummyApp(preMinVersionAppPackageName)
+                Thread.sleep(20)
 
-                    // Run
-                    runAppHibernationJob(context, LOG_TAG)
-                    Thread.sleep(500)
+                // Run
+                runAppHibernationJob(context, LOG_TAG)
+                Thread.sleep(500)
 
-                    // Verify
-                    assertPermission(PERMISSION_GRANTED, preMinVersionAppPackageName)
-                }
+                // Verify
+                assertPermission(PERMISSION_GRANTED, preMinVersionAppPackageName)
             }
         }
     }
@@ -518,6 +517,18 @@ class AutoRevokeTest {
                 }
             }
         }
+    }
+
+    private fun isHibernationEnabledForPreSApps(): Boolean {
+        return runWithShellPermissionIdentity(
+            ThrowingSupplier {
+                DeviceConfig.getBoolean(
+                    DeviceConfig.NAMESPACE_APP_HIBERNATION,
+                    "app_hibernation_targets_pre_s_apps",
+                    false
+                )
+            }
+        )
     }
 
     private fun isAutomotiveDevice(): Boolean {

@@ -73,6 +73,16 @@ public class MediaRouter2HostSideTest extends BaseMediaHostSideTest {
                 "setRouteListingPreference_propagatesToManager");
     }
 
+    @ApiTest(apis = {"android.media.RouteListingPreference, android.media.MediaRouter2"})
+    @AppModeFull
+    @RequiresDevice
+    public void testSetRouteListingPreference_withIllegalComponentName_throws() throws Exception {
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS,
+                "setRouteListingPreference_withIllegalComponentName_throws");
+    }
+
     @AppModeFull
     @RequiresDevice
     public void testSetInstance_findsExternalPackage() throws Exception {
@@ -80,5 +90,15 @@ public class MediaRouter2HostSideTest extends BaseMediaHostSideTest {
                 MEDIA_ROUTER_TEST_PACKAGE,
                 DEVICE_SIDE_TEST_CLASS,
                 "getInstance_findsExternalPackage");
+    }
+
+    @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
+    @AppModeFull
+    @RequiresDevice
+    public void testVisibilityAndAllowedPackages_propagateAcrossApps() throws Exception {
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS,
+                "visibilityAndAllowedPackages_propagateAcrossApps");
     }
 }

@@ -5439,6 +5439,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_pass">PASS</string>
     <string name="audio_general_fail">FAIL</string>
     <string name="audio_general_not_tested">Not Tested</string>
+    <string name="audio_general_not_required">Please Test If Supported</string>
+    <string name="audio_general_required">Required</string>
 
     <string name="audio_general_Input">Input</string>
     <string name="audio_general_Output">Output</string>

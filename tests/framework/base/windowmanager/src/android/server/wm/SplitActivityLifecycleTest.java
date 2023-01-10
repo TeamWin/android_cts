@@ -19,7 +19,8 @@ package android.server.wm;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.wm.SplitActivityLifecycleTest.ActivityB.EXTRA_SHOW_WHEN_LOCKED;
+import static android.server.wm.SplitActivityLifecycleTest.SplitTestActivity.EXTRA_SET_RESULT_AND_FINISH;
+import static android.server.wm.SplitActivityLifecycleTest.SplitTestActivity.EXTRA_SHOW_WHEN_LOCKED;
 import static android.server.wm.WindowManagerState.STATE_STARTED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.view.Display.DEFAULT_DISPLAY;
@@ -565,6 +566,25 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
                 "Activity A is not fully occluded and must be visible and started");
     }
 
+    /**
+     * Verifies starting an Activity on the adjacent TaskFragment and able to get the result.
+     */
+    @Test
+    public void testStartActivityForResultInAdjacentTaskFragment() {
+        // Initialize test environment by launching Activity A and B side-by-side.
+        initializeSplitActivities();
+
+        // Start an Activity on the adjacent TaskFragment for result.
+        final Intent intent = new Intent();
+        intent.setComponent(mActivityC);
+        intent.putExtra(EXTRA_SET_RESULT_AND_FINISH, true);
+        mOwnerActivity.startActivityForResult(intent, 1 /* requestCode */);
+
+        // Waits for the result
+        waitForOrFail("Wait for the result",
+                () -> ((SplitTestActivity) mOwnerActivity).getResultCode() == 100);
+    }
+
     private TaskFragmentCreationParams generatePrimaryTaskFragParams() {
         return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken, mPrimaryBounds,
                 WINDOWING_MODE_MULTI_WINDOW);
@@ -605,12 +625,34 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     public static class TranslucentActivity extends SplitTestActivity {}
     public static class SplitTestActivity extends FocusableActivity {
         public static final String EXTRA_SHOW_WHEN_LOCKED = "showWhenLocked";
+        public static final String EXTRA_SET_RESULT_AND_FINISH = "setResultAndFinish";
+
+        private int mResultCode = -1;
         @Override
         protected void onCreate(Bundle icicle) {
             super.onCreate(icicle);
             if (getIntent().getBooleanExtra(EXTRA_SHOW_WHEN_LOCKED, false)) {
                 setShowWhenLocked(true);
             }
+        }
+
+        @Override
+        protected void onResume() {
+            super.onResume();
+            if (getIntent().getBooleanExtra(EXTRA_SET_RESULT_AND_FINISH, false)) {
+                setResult(100);
+                finish();
+            }
+        }
+
+        @Override
+        protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+            mResultCode = resultCode;
+        }
+
+        public int getResultCode() {
+            return mResultCode;
         }
     }
 }

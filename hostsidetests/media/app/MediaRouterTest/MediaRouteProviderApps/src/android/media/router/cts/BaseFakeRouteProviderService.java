@@ -37,11 +37,30 @@ public abstract class BaseFakeRouteProviderService extends MediaRoute2ProviderSe
         mRoutes = List.of(routes);
     }
 
-    protected static MediaRoute2Info createRoute(
+    protected static MediaRoute2Info createPublicRoute(
             String id, String name, String... deduplicationIds) {
         return new MediaRoute2Info.Builder(id, name)
                 .addFeature(FEATURE_SAMPLE)
                 .setDeduplicationIds(Set.of(deduplicationIds))
+                .setVisibilityPublic()
+                .build();
+    }
+
+    protected static MediaRoute2Info createRestrictedRoute(
+            String id, String name, Set<String> allowedPackages, String... deduplicationIds) {
+        return new MediaRoute2Info.Builder(id, name)
+                .addFeature(FEATURE_SAMPLE)
+                .setDeduplicationIds(Set.of(deduplicationIds))
+                .setVisibilityRestricted(allowedPackages)
+                .build();
+    }
+
+    protected static MediaRoute2Info createPrivateRoute(
+            String id, String name, String... deduplicationIds) {
+        return new MediaRoute2Info.Builder(id, name)
+                .addFeature(FEATURE_SAMPLE)
+                .setDeduplicationIds(Set.of(deduplicationIds))
+                .setVisibilityRestricted(Set.of())
                 .build();
     }
 

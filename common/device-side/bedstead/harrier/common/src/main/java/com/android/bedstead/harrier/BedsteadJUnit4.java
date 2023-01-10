@@ -21,6 +21,7 @@ import com.android.bedstead.harrier.annotations.CrossUserTest;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
+import com.android.bedstead.harrier.annotations.EnsureHasCloneProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
@@ -31,6 +32,7 @@ import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.PermissionTest;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnCloneProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
@@ -144,6 +146,11 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
     }
 
     @AutoAnnotation
+    private static RequireRunOnCloneProfile requireRunOnCloneProfile() {
+        return new AutoAnnotation_BedsteadJUnit4_requireRunOnCloneProfile();
+    }
+
+    @AutoAnnotation
     static RequireRunOnInitialUser requireRunOnInitialUser(OptionalBoolean switchedToUser) {
         return new AutoAnnotation_BedsteadJUnit4_requireRunOnInitialUser(switchedToUser);
     }
@@ -170,6 +177,11 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
     @AutoAnnotation
     private static EnsureHasTvProfile ensureHasTvProfile() {
         return new AutoAnnotation_BedsteadJUnit4_ensureHasTvProfile();
+    }
+
+    @AutoAnnotation
+    private static EnsureHasCloneProfile ensureHasCloneProfile() {
+        return new AutoAnnotation_BedsteadJUnit4_ensureHasCloneProfile();
     }
 
     @AutoAnnotation
@@ -909,6 +921,8 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                 return requireRunOnWorkProfile();
             case TV_PROFILE:
                 return requireRunOnTvProfile();
+            case CLONE_PROFILE:
+                return requireRunOnCloneProfile();
             default:
                 throw new IllegalStateException(
                         "UserType " + userType + " is not compatible with " + annotationName);
@@ -934,6 +948,8 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                 return ensureHasWorkProfile();
             case TV_PROFILE:
                 return ensureHasTvProfile();
+            case CLONE_PROFILE:
+                return ensureHasCloneProfile();
             default:
                 throw new IllegalStateException(
                         "UserType " + userType + " is not compatible with " + annotationName);

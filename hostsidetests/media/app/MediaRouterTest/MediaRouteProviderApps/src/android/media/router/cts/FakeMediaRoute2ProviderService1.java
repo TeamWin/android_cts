@@ -21,23 +21,26 @@ import static android.media.cts.MediaRouterTestConstants.ROUTE_DEDUPLICATION_ID_
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_1_ROUTE_1;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_1_ROUTE_2;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_1_ROUTE_3;
+import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_1_ROUTE_4;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_1;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_2;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_3;
+import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_4;
 
 /** Provides fake routes for testing route deduplication. */
 public final class FakeMediaRoute2ProviderService1 extends BaseFakeRouteProviderService {
 
     public FakeMediaRoute2ProviderService1() {
         super(
-                createRoute(ROUTE_ID_APP_1_ROUTE_1, ROUTE_NAME_1),
-                createRoute(
+                createPublicRoute(ROUTE_ID_APP_1_ROUTE_1, ROUTE_NAME_1),
+                createPublicRoute(
                         ROUTE_ID_APP_1_ROUTE_2,
                         ROUTE_NAME_2,
                         /* deduplicationIds...= */ ROUTE_DEDUPLICATION_ID_1),
-                createRoute(
+                createPublicRoute(
                         ROUTE_ID_APP_1_ROUTE_3,
                         ROUTE_NAME_3,
-                        /* deduplicationIds...= */ ROUTE_DEDUPLICATION_ID_2));
+                        /* deduplicationIds...= */ ROUTE_DEDUPLICATION_ID_2),
+                createPublicRoute(ROUTE_ID_APP_1_ROUTE_4, ROUTE_NAME_4));
     }
 }

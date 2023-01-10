@@ -122,6 +122,7 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         assertNotInvoked(mTracker.mInvokeLatch);
         assertNotInvoked(mTracker.mCancelLatch);
         List<BackEvent> events = mTracker.mProgressEvents;
+        assertTrue(events.size() > 0);
         for (int i = 0; i < events.size() - 1; i++) {
             // Check that progress events report increasing progress values.
             // TODO(b/258817762): Verify more once the progress clamping behavior is implemented.
@@ -145,9 +146,21 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         TouchHelper.injectMotion(startDownTime, startDownTime, MotionEvent.ACTION_MOVE, 0,
                 midHeight, DEFAULT_DISPLAY, false, false);
         touchSession.continueSwipe(midWidth, midHeight, PROGRESS_SWIPE_STEPS);
+        assertInvoked(mTracker.mProgressLatch);
+
+        mTracker.reset();
+        mTracker.mIsCancelRequested = true;
         touchSession.cancelSwipe();
         assertInvoked(mTracker.mCancelLatch);
         assertNotInvoked(mTracker.mInvokeLatch);
+        assertInvoked(mTracker.mCancelProgressLatch);
+        List<BackEvent> events = mTracker.mProgressEvents;
+        assertTrue(events.size() > 0);
+        for (int i = 0; i < events.size() - 1; i++) {
+            // Check that progress events report decreasing progress values.
+            assertTrue(events.get(i).getProgress() >= events.get(i + 1).getProgress());
+        }
+        assertTrue(events.get(events.size() - 1).getProgress() == 0);
     }
 
     private void assertInvoked(CountDownLatch latch) throws InterruptedException {
@@ -179,6 +192,8 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         private CountDownLatch mInvokeLatch;
         private CountDownLatch mProgressLatch;
         private CountDownLatch mCancelLatch;
+        private CountDownLatch mCancelProgressLatch;
+        private boolean mIsCancelRequested = false;
         private final ArrayList<BackEvent> mProgressEvents = new ArrayList<>();
 
         private void reset() {
@@ -186,6 +201,8 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
             mInvokeLatch = new CountDownLatch(1);
             mProgressLatch = new CountDownLatch(PROGRESS_SWIPE_STEPS);
             mCancelLatch = new CountDownLatch(1);
+            mCancelProgressLatch = new CountDownLatch(1);
+            mIsCancelRequested = false;
             mProgressEvents.clear();
         }
 
@@ -195,7 +212,12 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
 
         private void trackBackProgressed(BackEvent e) {
             mProgressEvents.add(e);
-            mProgressLatch.countDown();
+            if (mIsCancelRequested && 0 == e.getProgress()) {
+                // Ensure the progress could reach to 0 for cancel animation.
+                mCancelProgressLatch.countDown();
+            } else {
+                mProgressLatch.countDown();
+            }
         }
 
         private void trackBackCancelled() {

@@ -163,6 +163,21 @@ public class NetworkRegistrationInfoTest {
     }
 
     @Test
+    public void testIsNetworkRoaming() {
+        NetworkRegistrationInfo nriNetworkRoaming = new NetworkRegistrationInfo.Builder()
+                .setRegistrationState(NetworkRegistrationInfo.REGISTRATION_STATE_ROAMING)
+                .build();
+        nriNetworkRoaming.setRoamingType(NetworkRegistrationInfo.REGISTRATION_STATE_HOME);
+        assertTrue(nriNetworkRoaming.isNetworkRoaming());
+
+        NetworkRegistrationInfo nriNetworkHome = new NetworkRegistrationInfo.Builder()
+                .setRegistrationState(NetworkRegistrationInfo.REGISTRATION_STATE_HOME)
+                .build();
+        nriNetworkHome.setRoamingType(NetworkRegistrationInfo.REGISTRATION_STATE_ROAMING);
+        assertFalse(nriNetworkHome.isNetworkRoaming());
+    }
+
+    @Test
     public void testGetTransportType() {
         NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
                 .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)

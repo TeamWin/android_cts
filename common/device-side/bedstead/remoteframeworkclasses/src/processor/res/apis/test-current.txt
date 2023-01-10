@@ -38,6 +38,7 @@ package android {
     field public static final String READ_CELL_BROADCASTS = "android.permission.READ_CELL_BROADCASTS";
     field public static final String READ_PRIVILEGED_PHONE_STATE = "android.permission.READ_PRIVILEGED_PHONE_STATE";
     field public static final String RECORD_BACKGROUND_AUDIO = "android.permission.RECORD_BACKGROUND_AUDIO";
+    field public static final String REMAP_MODIFIER_KEYS = "android.permission.REMAP_MODIFIER_KEYS";
     field public static final String REMOVE_TASKS = "android.permission.REMOVE_TASKS";
     field public static final String REQUEST_UNIQUE_ID_ATTESTATION = "android.permission.REQUEST_UNIQUE_ID_ATTESTATION";
     field public static final String RESET_APP_ERRORS = "android.permission.RESET_APP_ERRORS";
@@ -440,6 +441,7 @@ package android.app {
     method @NonNull public java.util.Set<java.lang.String> getAdoptedShellPermissions();
     method @Deprecated public boolean grantRuntimePermission(String, String, android.os.UserHandle);
     method public boolean injectInputEvent(@NonNull android.view.InputEvent, boolean, boolean);
+    method public void injectInputEventToInputFilter(@NonNull android.view.InputEvent);
     method @Deprecated public boolean revokeRuntimePermission(String, String, android.os.UserHandle);
     method public void syncInputTransactions();
     method public void syncInputTransactions(boolean);
@@ -511,7 +513,7 @@ package android.app.admin {
     method @RequiresPermission(android.Manifest.permission.FORCE_DEVICE_POLICY_MANAGER_LOGS) public long forceSecurityLogs();
     method public void forceUpdateUserSetupComplete(int);
     method @NonNull public java.util.Set<java.lang.String> getDefaultCrossProfilePackages();
-    method public int getDeviceOwnerType(@NonNull android.content.ComponentName);
+    method @Deprecated public int getDeviceOwnerType(@NonNull android.content.ComponentName);
     method @Nullable public String getDevicePolicyManagementRoleHolderUpdaterPackage();
     method @NonNull public java.util.Set<java.lang.String> getDisallowedSystemApps(@NonNull android.content.ComponentName, int, @NonNull String);
     method public long getLastBugReportRequestTime();
@@ -1156,6 +1158,7 @@ package android.hardware.camera2 {
   public final class CameraManager {
     method public String[] getCameraIdListNoLazy() throws android.hardware.camera2.CameraAccessException;
     method @RequiresPermission(allOf={android.Manifest.permission.SYSTEM_CAMERA, android.Manifest.permission.CAMERA}) public void openCamera(@NonNull String, int, @NonNull java.util.concurrent.Executor, @NonNull android.hardware.camera2.CameraDevice.StateCallback) throws android.hardware.camera2.CameraAccessException;
+    field public static final long OVERRIDE_FRONT_CAMERA_APP_COMPAT = 250678880L; // 0xef10e60L
   }
 
   public abstract static class CameraManager.AvailabilityCallback {
@@ -1293,8 +1296,11 @@ package android.hardware.input {
 
   public final class InputManager {
     method public void addUniqueIdAssociation(@NonNull String, @NonNull String);
+    method @RequiresPermission(android.Manifest.permission.REMAP_MODIFIER_KEYS) public void clearAllModifierKeyRemappings();
     method @Nullable public String getCurrentKeyboardLayoutForInputDevice(@NonNull android.hardware.input.InputDeviceIdentifier);
     method @NonNull public java.util.List<java.lang.String> getKeyboardLayoutDescriptorsForInputDevice(@NonNull android.view.InputDevice);
+    method @NonNull @RequiresPermission(android.Manifest.permission.REMAP_MODIFIER_KEYS) public java.util.Map<java.lang.Integer,java.lang.Integer> getModifierKeyRemapping();
+    method @RequiresPermission(android.Manifest.permission.REMAP_MODIFIER_KEYS) public void remapModifierKey(int, int);
     method @RequiresPermission(android.Manifest.permission.SET_KEYBOARD_LAYOUT) public void removeKeyboardLayoutForInputDevice(@NonNull android.hardware.input.InputDeviceIdentifier, @NonNull String);
     method public void removeUniqueIdAssociation(@NonNull String);
     method @RequiresPermission(android.Manifest.permission.SET_KEYBOARD_LAYOUT) public void setCurrentKeyboardLayoutForInputDevice(@NonNull android.hardware.input.InputDeviceIdentifier, @NonNull String);
@@ -1312,6 +1318,14 @@ package android.hardware.lights {
 
   public abstract class LightsManager {
     method @NonNull public abstract android.hardware.lights.LightsManager.LightsSession openSession(int);
+  }
+
+}
+
+package android.hardware.location {
+
+  public final class ContextHubManager {
+    method @NonNull @RequiresPermission(android.Manifest.permission.ACCESS_CONTEXT_HUB) public long[] getPreloadedNanoAppIds(@NonNull android.hardware.location.ContextHubInfo);
   }
 
 }
@@ -1502,13 +1516,33 @@ package android.media {
     method public static boolean isEncodingLinearPcm(int);
   }
 
+  public final class AudioHalVersionInfo implements java.lang.Comparable<android.media.AudioHalVersionInfo> android.os.Parcelable {
+    method public int compareTo(@NonNull android.media.AudioHalVersionInfo);
+    method public int describeContents();
+    method public int getHalType();
+    method public int getMajorVersion();
+    method public int getMinorVersion();
+    method public void writeToParcel(@NonNull android.os.Parcel, int);
+    field @NonNull public static final android.media.AudioHalVersionInfo AIDL_1_0;
+    field public static final int AUDIO_HAL_TYPE_AIDL = 1; // 0x1
+    field public static final int AUDIO_HAL_TYPE_HIDL = 0; // 0x0
+    field @NonNull public static final android.os.Parcelable.Creator<android.media.AudioHalVersionInfo> CREATOR;
+    field @NonNull public static final android.media.AudioHalVersionInfo HIDL_2_0;
+    field @NonNull public static final android.media.AudioHalVersionInfo HIDL_4_0;
+    field @NonNull public static final android.media.AudioHalVersionInfo HIDL_5_0;
+    field @NonNull public static final android.media.AudioHalVersionInfo HIDL_6_0;
+    field @NonNull public static final android.media.AudioHalVersionInfo HIDL_7_0;
+    field @NonNull public static final android.media.AudioHalVersionInfo HIDL_7_1;
+    field @NonNull public static final java.util.List<android.media.AudioHalVersionInfo> VERSIONS;
+  }
+
   public class AudioManager {
     method @RequiresPermission("android.permission.QUERY_AUDIO_STATE") public int abandonAudioFocusForTest(@NonNull android.media.AudioFocusRequest, @NonNull String);
     method @NonNull @RequiresPermission(android.Manifest.permission.CALL_AUDIO_INTERCEPTION) public android.media.AudioRecord getCallDownlinkExtractionAudioRecord(@NonNull android.media.AudioFormat);
     method @NonNull @RequiresPermission(android.Manifest.permission.CALL_AUDIO_INTERCEPTION) public android.media.AudioTrack getCallUplinkInjectionAudioTrack(@NonNull android.media.AudioFormat);
     method @Nullable public static android.media.AudioDeviceInfo getDeviceInfoFromType(int);
     method @IntRange(from=0) @RequiresPermission("android.permission.QUERY_AUDIO_STATE") public long getFadeOutDurationOnFocusLossMillis(@NonNull android.media.AudioAttributes);
-    method @Nullable public static String getHalVersion();
+    method @Nullable public static android.media.AudioHalVersionInfo getHalVersion();
     method public static final int[] getPublicStreamTypes();
     method @NonNull public java.util.List<java.lang.Integer> getReportedSurroundFormats();
     method public int getStreamMinVolumeInt(int);
@@ -1710,7 +1744,6 @@ package android.os {
   public class Build {
     method public static boolean is64BitAbi(String);
     method public static boolean isDebuggable();
-    method public static boolean isSecure();
     field public static final boolean IS_EMULATOR;
   }
 
@@ -2038,7 +2071,7 @@ package android.os.storage {
 
   public class StorageManager {
     method public long computeStorageCacheBytes(@NonNull java.io.File);
-    method @NonNull public static java.util.UUID convert(@NonNull String);
+    method @NonNull public static java.util.UUID convert(@Nullable String);
     method @NonNull public static String convert(@NonNull java.util.UUID);
     method @Nullable public String getCloudMediaProvider();
     method public boolean isAppIoBlocked(@NonNull java.util.UUID, int, int, int);
@@ -2180,17 +2213,6 @@ package android.provider {
 
   public static final class ContactsContract.RawContactsEntity implements android.provider.BaseColumns android.provider.ContactsContract.DataColumns android.provider.ContactsContract.RawContactsColumns {
     field public static final android.net.Uri CORP_CONTENT_URI;
-  }
-
-  public final class DeviceConfig {
-    field public static final String NAMESPACE_ALARM_MANAGER = "alarm_manager";
-    field public static final String NAMESPACE_ANDROID = "android";
-    field public static final String NAMESPACE_APP_COMPAT_OVERRIDES = "app_compat_overrides";
-    field public static final String NAMESPACE_CONSTRAIN_DISPLAY_APIS = "constrain_display_apis";
-    field public static final String NAMESPACE_DEVICE_IDLE = "device_idle";
-    field public static final String NAMESPACE_INPUT_METHOD_MANAGER = "input_method_manager";
-    field public static final String NAMESPACE_JOB_SCHEDULER = "jobscheduler";
-    field public static final String NAMESPACE_SELECTION_TOOLBAR = "selection_toolbar";
   }
 
   public interface InputMethodManagerDeviceConfig {
@@ -2616,6 +2638,8 @@ package android.telephony {
 
   public final class SmsManager {
     method @RequiresPermission(android.Manifest.permission.READ_PHONE_STATE) public int checkSmsShortCodeDestination(String, String);
+    method @RequiresPermission(android.Manifest.permission.MODIFY_PHONE_STATE) public void clearStorageMonitorMemoryStatusOverride();
+    method @RequiresPermission(android.Manifest.permission.MODIFY_PHONE_STATE) public void setStorageMonitorMemoryStatusOverride(boolean);
     field public static final int SMS_CATEGORY_FREE_SHORT_CODE = 1; // 0x1
     field public static final int SMS_CATEGORY_NOT_SHORT_CODE = 0; // 0x0
     field public static final int SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE = 3; // 0x3
@@ -2906,7 +2930,7 @@ package android.view {
     method public static String actionToString(int);
     method public final void setDisplayId(int);
     field public static final int FLAG_IS_ACCESSIBILITY_EVENT = 2048; // 0x800
-    field public static final int LAST_KEYCODE = 311; // 0x137
+    field public static final int LAST_KEYCODE = 312; // 0x138
   }
 
   public final class KeyboardShortcutGroup implements android.os.Parcelable {
@@ -3274,6 +3298,7 @@ package android.widget {
 
   public class Spinner extends android.widget.AbsSpinner implements android.content.DialogInterface.OnClickListener {
     method public boolean isPopupShowing();
+    method public void onClick(int);
   }
 
   @android.widget.RemoteViews.RemoteView public class TextClock extends android.widget.TextView {
@@ -3411,14 +3436,20 @@ package android.window {
 
   public class TaskFragmentOrganizer extends android.window.WindowOrganizer {
     ctor public TaskFragmentOrganizer(@NonNull java.util.concurrent.Executor);
+    method public void applyTransaction(@NonNull android.window.WindowContainerTransaction, int, boolean);
     method @NonNull public java.util.concurrent.Executor getExecutor();
     method @NonNull public android.window.TaskFragmentOrganizerToken getOrganizerToken();
+    method public void onTransactionHandled(@NonNull android.os.IBinder, @NonNull android.window.WindowContainerTransaction, int, boolean);
     method public void onTransactionReady(@NonNull android.window.TaskFragmentTransaction);
     method @CallSuper public void registerOrganizer();
     method @CallSuper public void unregisterOrganizer();
     field public static final String KEY_ERROR_CALLBACK_OP_TYPE = "operation_type";
     field public static final String KEY_ERROR_CALLBACK_TASK_FRAGMENT_INFO = "task_fragment_info";
     field public static final String KEY_ERROR_CALLBACK_THROWABLE = "fragment_throwable";
+    field public static final int TASK_FRAGMENT_TRANSIT_CHANGE = 6; // 0x6
+    field public static final int TASK_FRAGMENT_TRANSIT_CLOSE = 2; // 0x2
+    field public static final int TASK_FRAGMENT_TRANSIT_NONE = 0; // 0x0
+    field public static final int TASK_FRAGMENT_TRANSIT_OPEN = 1; // 0x1
   }
 
   public final class TaskFragmentOrganizerToken implements android.os.Parcelable {
@@ -3540,8 +3571,8 @@ package android.window {
 
   public class WindowOrganizer {
     ctor public WindowOrganizer();
-    method @RequiresPermission(value=android.Manifest.permission.MANAGE_ACTIVITY_TASKS, conditional=true) public int applySyncTransaction(@NonNull android.window.WindowContainerTransaction, @NonNull android.window.WindowContainerTransactionCallback);
-    method @RequiresPermission(value=android.Manifest.permission.MANAGE_ACTIVITY_TASKS, conditional=true) public void applyTransaction(@NonNull android.window.WindowContainerTransaction);
+    method @RequiresPermission(android.Manifest.permission.MANAGE_ACTIVITY_TASKS) public int applySyncTransaction(@NonNull android.window.WindowContainerTransaction, @NonNull android.window.WindowContainerTransactionCallback);
+    method @RequiresPermission(android.Manifest.permission.MANAGE_ACTIVITY_TASKS) public void applyTransaction(@NonNull android.window.WindowContainerTransaction);
   }
 
   @UiContext public abstract class WindowProviderService extends android.app.Service {

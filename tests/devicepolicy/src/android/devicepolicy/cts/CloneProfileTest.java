@@ -26,11 +26,12 @@ import android.os.UserManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasNoCloneProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireMultiUserSupport;
+import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
-import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.nene.TestApis;
@@ -42,8 +43,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+@RequireNotHeadlessSystemUserMode(reason = "Requires full system user")
 @RunWith(BedsteadJUnit4.class)
-public class CloneProfileDeviceOwnerTest {
+public class CloneProfileTest {
     @ClassRule
     @Rule
     public static DeviceState sDeviceState = new DeviceState();
@@ -56,12 +58,9 @@ public class CloneProfileDeviceOwnerTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @RequireRunOnInitialUser
     @RequireMultiUserSupport
+    @EnsureHasNoCloneProfile
     public void createCloneProfile_hasDeviceOwner_fails() {
-        assertThrows(NeneException.class,
-                () -> TestApis.users().createUser()
-                        .parent(TestApis.users().instrumented())
-                        .type(TestApis.users().supportedType(UserManager.USER_TYPE_PROFILE_CLONE))
-                        .create());
+        assertThrows(NeneException.class, () -> createCloneProfile());
     }
 
     /**
@@ -70,15 +69,43 @@ public class CloneProfileDeviceOwnerTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasNoCloneProfile
     @RequireRunOnInitialUser
     @RequireMultiUserSupport
     public void createCloneProfile_noDeviceOwner_succeeds() {
-        try (UserReference cloneUser = TestApis.users().createUser()
-                .parent(TestApis.users().instrumented())
-                .type(TestApis.users().supportedType(UserManager.USER_TYPE_PROFILE_CLONE))
-                .create()) {
-
+        try (UserReference cloneUser = createCloneProfile()) {
             assertThat(cloneUser.exists()).isTrue();
         }
+    }
+
+    @Test
+    @EnsureHasWorkProfile
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasNoCloneProfile
+    @RequireRunOnInitialUser
+    @RequireMultiUserSupport
+    public void createCloneProfile_deviceHasWorkProfile_succeeds() {
+        try (UserReference cloneProfile = createCloneProfile()) {
+            assertThat(cloneProfile.exists()).isTrue();
+        }
+    }
+
+    @Test
+    @EnsureHasWorkProfile(isOrganizationOwned = true)
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasNoCloneProfile
+    @RequireRunOnInitialUser
+    @RequireMultiUserSupport
+    public void createCloneProfile_deviceHasOrganizationOwnedWorkProfile_succeeds() {
+        try (UserReference cloneProfile = createCloneProfile()) {
+            assertThat(cloneProfile.exists()).isTrue();
+        }
+    }
+
+    private UserReference createCloneProfile() {
+        return TestApis.users().createUser()
+                .parent(TestApis.users().instrumented())
+                .type(TestApis.users().supportedType(UserManager.USER_TYPE_PROFILE_CLONE))
+                .create();
     }
 }

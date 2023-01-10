@@ -41,18 +41,24 @@ public final class MediaRouterTestConstants {
     public static final String ROUTE_ID_APP_1_ROUTE_1 = "route_1-1";
     public static final String ROUTE_ID_APP_1_ROUTE_2 = "route_1-2";
     public static final String ROUTE_ID_APP_1_ROUTE_3 = "route_1-3";
+    public static final String ROUTE_ID_APP_1_ROUTE_4 = "route_1-4";
 
     public static final String ROUTE_ID_APP_2_ROUTE_1 = "route_2-1";
     public static final String ROUTE_ID_APP_2_ROUTE_2 = "route_2-2";
     public static final String ROUTE_ID_APP_2_ROUTE_3 = "route_2-3";
+    public static final String ROUTE_ID_APP_2_ROUTE_4 = "route_2-4";
 
     public static final String ROUTE_ID_APP_3_ROUTE_1 = "route_3-1";
     public static final String ROUTE_ID_APP_3_ROUTE_2 = "route_3-2";
     public static final String ROUTE_ID_APP_3_ROUTE_3 = "route_3-3";
+    public static final String ROUTE_ID_APP_3_ROUTE_4 = "route_3-4";
+    public static final String ROUTE_ID_APP_3_ROUTE_5 = "route_3-5";
 
     public static final String ROUTE_NAME_1 = "route 1";
     public static final String ROUTE_NAME_2 = "route 2";
     public static final String ROUTE_NAME_3 = "route 3";
+    public static final String ROUTE_NAME_4 = "route 4";
+    public static final String ROUTE_NAME_5 = "route 5";
 
     public static final String ROUTE_DEDUPLICATION_ID_1 = "dedup_id_1";
     public static final String ROUTE_DEDUPLICATION_ID_2 = "dedup_id_2";

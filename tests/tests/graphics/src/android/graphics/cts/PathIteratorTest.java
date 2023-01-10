@@ -25,6 +25,7 @@ import static android.graphics.PathIterator.VERB_MOVE;
 import static android.graphics.PathIterator.VERB_QUAD;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -42,7 +43,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ConcurrentModificationException;
-import java.util.NoSuchElementException;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -64,14 +64,17 @@ public class PathIteratorTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next"})
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
+            "android.graphics.PathIterator#hasNext"})
     public void testEmptyPath() {
         PathIterator iterator = mPath.getPathIterator();
+        assertFalse(iterator.hasNext());
         assertEquals("Empty path should have no verbs",
                 PathIterator.VERB_DONE, iterator.next(mPoints, 0));
 
         // Now with next()
         iterator = mPath.getPathIterator();
+        assertFalse(iterator.hasNext());
         assertEquals("Empty path should have no verbs",
                 PathIterator.VERB_DONE, iterator.next().getVerb());
     }
@@ -111,20 +114,18 @@ public class PathIteratorTest {
                 case 1:
                     assertEquals(PathIterator.VERB_LINE, verb);
                     break;
-                case 2:
-                    assertEquals(PathIterator.VERB_DONE, verb);
-                    break;
             }
             verbIndex++;
-            assertTrue(verbIndex < 5);
         }
+        assertTrue(verbIndex < 3);
 
         // Now with next(float[], int)
         PathIterator iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next(mPoints, 0));
         assertEquals(PathIterator.VERB_LINE, iterator.next(mPoints, 0));
         assertEquals(PathIterator.VERB_DONE, iterator.next(mPoints, 0));
-        assertThrows(NoSuchElementException.class, () -> iterator.next(mPoints, 0));
+        // An iterator with no more elements simply returns DONE on all subsequent next calls
+        assertEquals(PathIterator.VERB_DONE, iterator.next(mPoints, 0));
     }
 
     @Test

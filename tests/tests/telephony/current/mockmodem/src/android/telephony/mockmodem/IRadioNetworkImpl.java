@@ -64,6 +64,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     private int mNetworkTypeBitmap;
     private int mReasonForDenial;
     private boolean mNetworkSelectionMode;
+    private boolean mNullCipherAndIntegrityEnabled;
 
     private int mRadioState;
     private boolean mSimReady;
@@ -92,6 +93,9 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
                         | MockNetworkService.LTE
                         | MockNetworkService.NR;
         mServiceState.updateHighestRegisteredRat(mNetworkTypeBitmap);
+
+        // Null security algorithms are allowed by default
+        mNullCipherAndIntegrityEnabled = true;
 
         mMockModemConfigInterface.registerForRadioStateChanged(
                 mSubId, mHandler, EVENT_RADIO_STATE_CHANGED, null);
@@ -949,8 +953,10 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     }
 
     @Override
-    public void setNullCipherAndIntegrityEnabled(int serial, boolean enabled) {
+    public void setNullCipherAndIntegrityEnabled(int serial, boolean isEnabled) {
         Log.d(TAG, "setNullCipherAndIntegrityEnabled");
+
+        mNullCipherAndIntegrityEnabled = isEnabled;
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.NONE);
         try {
@@ -964,9 +970,10 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     public void isNullCipherAndIntegrityEnabled(int serial) {
         Log.d(TAG, "isNullCipherAndIntegrityEnabled");
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.NONE);
         try {
-            mRadioNetworkResponse.isNullCipherAndIntegrityEnabledResponse(rsp, true);
+            mRadioNetworkResponse.isNullCipherAndIntegrityEnabledResponse(rsp,
+                    mNullCipherAndIntegrityEnabled);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to call isNullCipherAndIntegrityEnabled from AIDL. Exception " + ex);
         }

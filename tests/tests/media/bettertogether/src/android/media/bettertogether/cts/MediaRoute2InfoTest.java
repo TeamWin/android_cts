@@ -27,6 +27,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
@@ -57,6 +58,8 @@ public class MediaRoute2InfoTest {
     public static final int TEST_VOLUME_HANDLING = MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
     public static final int TEST_VOLUME_MAX = 100;
     public static final int TEST_VOLUME = 65;
+    public static final Set<String> TEST_ALLOWED_PACKAGES =
+            Set.of("com.android.systemui", "com.android.settings");
 
     public static final String TEST_KEY = "test_key";
     public static final String TEST_VALUE = "test_value";
@@ -183,6 +186,40 @@ public class MediaRoute2InfoTest {
     }
 
     @Test
+    public void testBuilderCreatePublicRouteInfoByDefault() {
+        MediaRoute2Info routeInfo =
+                new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
+                        .addFeature(TEST_ROUTE_TYPE_0)
+                        .build();
+        assertThat(routeInfo.isVisibleTo("com.android.example.app")).isEqualTo(true);
+    }
+
+    @Test
+    public void testRouteInfoSeenByItsCreatorPackage() {
+        String creatorPackageName = ApplicationProvider.getApplicationContext().getPackageName();
+        MediaRoute2Info routeInfo =
+                new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
+                        .addFeature(TEST_ROUTE_TYPE_0)
+                        .setPackageName(creatorPackageName)
+                        .setVisibilityRestricted(Set.of())
+                        .build();
+        assertThat(routeInfo.isVisibleTo(creatorPackageName)).isEqualTo(true);
+    }
+
+    @Test
+    public void testRouteInfoSeenOnlyByItsAllowedPackages() {
+        String creatorPackageName = ApplicationProvider.getApplicationContext().getPackageName();
+        MediaRoute2Info routeInfo =
+                new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
+                        .addFeature(TEST_ROUTE_TYPE_0)
+                        .setPackageName(creatorPackageName)
+                        .setVisibilityRestricted(TEST_ALLOWED_PACKAGES)
+                        .build();
+        assertThat(routeInfo.isVisibleTo("com.android.settings")).isEqualTo(true);
+        assertThat(routeInfo.isVisibleTo("com.android.example.app")).isEqualTo(false);
+    }
+
+    @Test
     public void testEqualsCreatedWithSameArguments() {
         Bundle extras = new Bundle();
         extras.putString(TEST_KEY, TEST_VALUE);
@@ -200,6 +237,7 @@ public class MediaRoute2InfoTest {
                         .setVolume(TEST_VOLUME)
                         .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
                         .setExtras(extras)
+                        .setVisibilityRestricted(TEST_ALLOWED_PACKAGES)
                         .build();
 
         MediaRoute2Info routeInfo2 =
@@ -215,6 +253,7 @@ public class MediaRoute2InfoTest {
                         .setVolume(TEST_VOLUME)
                         .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
                         .setExtras(extras)
+                        .setVisibilityRestricted(TEST_ALLOWED_PACKAGES)
                         .build();
 
         assertThat(routeInfo1).isEqualTo(routeInfo2);

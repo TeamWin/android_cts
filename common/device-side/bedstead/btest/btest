@@ -204,18 +204,75 @@ class WorkProfileState:
     def all_supported_annotations(self, args):
         return self.include_annotations(args)
 
+class CloneProfileState:
+    def __init__(self, args):
+        self.args = args
+
+    def name(self):
+        return "RUN_ON_CLONE_PROFILE"
+
+    def is_active(self, device_state):
+        if not is_clone_user(device_state["users"][device_state["current_user"]]):
+            return False
+        if self.args.headless:
+            return False
+        return self._has_clone_profile(device_state["users"][device_state["current_user"]])
+
+    def include_annotations(self, args):
+        return ["com.android.bedstead.harrier.annotations.RequireRunOnCloneProfile"]
+
+    def initialise(self, device_state):
+        self.user_id = device_state["users"][device_state["current_user"]]["clone_profile_id"]
+
+    def enter(self):
+        debug(self.args, "[Test] Entering state " + self.name())
+        user = self._get_or_create_clone_profile()
+        self.user_id = user["id"]
+        execute_shell_command("Test", self.args, ["adb", "shell", "am", "switch-user", str(user["parent"])])
+        execute_shell_command("Test", self.args, ["adb", "shell", "am", "start-user ", str(self.user_id)])
+        execute_shell_command("Test", self.args, ["adb", "shell", "pm", "install-existing", "--user", str(self.user_id), supported_modules[self.args.module][PACKAGE_NAME]])
+
+        for additional_app in supported_modules[self.args.module].get(ADDITIONAL_APPS, []):
+            command = ["adb", "install-existing", "--user", str(self.user_id), additional_app[PACKAGE_NAME]]
+            execute_shell_command("Test", self.args, command, shell=True, executable="/bin/bash")
+
+    def _get_or_create_clone_profile(self):
+        users = get_users(self.args)
+        for user in users.values():
+            if self._is_clone_profile(user):
+                return user
+
+        parent_id = 0 # Clone user only supported on system user only as of now.
+
+        clone_profile_id = create_clone_profile(self.args, parent_id)
+        return {"id": clone_profile_id, "type": "profile.CLONE", "flags": None, "parent": str(parent_id)}
+
+    def get_user(self):
+        return self.user_id
+
+    def _has_clone_profile(self, user):
+        return "clone_profile_id" in user
+
+    def _is_clone_profile(self, user):
+        return user["type"] == "profile.CLONE"
+
+    def all_supported_annotations(self, args):
+        return self.include_annotations(args)
+
 RUN_ON_CURRENT_USER = CurrentUserState
 RUN_ON_SYSTEM_USER = SystemUserState
 RUN_ON_SECONDARY_USER = SecondaryUserState
 RUN_ON_WORK_PROFILE = WorkProfileState
 RUN_ON_ADDITIONAL_USER = AdditionalUserState
+RUN_ON_CLONE_PROFILE = CloneProfileState
 
 STATE_CODES = {
     "c": RUN_ON_CURRENT_USER,
     "s": RUN_ON_SYSTEM_USER,
     "y": RUN_ON_SECONDARY_USER,
     "w": RUN_ON_WORK_PROFILE,
-    "a": RUN_ON_ADDITIONAL_USER
+    "a": RUN_ON_ADDITIONAL_USER,
+    "l": RUN_ON_CLONE_PROFILE
 }
 
 SHORT_PACKAGE_PREFIXES = {
@@ -233,49 +290,49 @@ supported_modules = {
     "CtsDevicePolicyTestCases": {
         "package": "android.devicepolicy.cts",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE]
     },
     "GtsDevicePolicyTestCases": {
         "package": "android.devicepolicy.gts",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE]
     },
     "CtsMultiUserTestCases": {
         "package": "android.multiuser.cts",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE]
     },
 
     # Bedstead
     "ActivityContextTest": {
         "package": "com.android.activitycontext.test",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE]
     },
 
     "DeviceAdminAppTest": {
         "package": "com.android.bedstead.deviceadminapp.test",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE]
     },
     "EventLibTest": {
         "package": "com.android.eventlib.test",
         "path": "com.android.eventlib",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER],
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE],
         "additional_apps": [{"target": "EventLibTestApp", "package": "com.android.eventlib.tests.testapp"}]
     },
     "HarrierTest": {
         "package": "com.android.bedstead.harrier.test",
         "path": "com.android.bedstead.harrier",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE]
     },
     "NeneTest": {
         "package": "com.android.bedstead.nene.test",
         "path": "com.android.bedstead.nene",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER],
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE],
         "additional_targets": ["NeneTestApp1"],
         "files": [{"from": "NeneTestApp1.apk", "to": "/data/local/tmp/NeneTestApp1.apk"}]
     },
@@ -283,19 +340,19 @@ supported_modules = {
         "package": "com.android.queryable.test",
         "path": "com.android.queryable",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE]
     },
     "RemoteDPCTest": {
         "package": "com.android.bedstead.remotedpc.test",
         "path": "com.android.bedstead.remotedpc",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE]
     },
     "TestAppTest": {
         "package": "com.android.bedstead.testapp.test",
         "path": "com.android.bedstead.testapp",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE]
     },
 }
 
@@ -354,7 +411,7 @@ def get_args():
     parser.add_argument("-i", "--install", action='store_true', help="Builds test targets. (default)")
     parser.add_argument("-t", "--test", action='store_true', help="Builds test targets. (default)")
     parser.add_argument("-d", "--debug", action="store_true", help="Include debug output.")
-    parser.add_argument("-s", "--states", help="Specify states which should be included. Options are (c)urrent (s)ystem secondar(y), (w)ork profile, (a)dditional. Defaults to all states.")
+    parser.add_argument("-s", "--states", help="Specify states which should be included. Options are (c)urrent (s)ystem secondar(y), (w)ork profile, (a)dditional, c(l)one. Defaults to all states.")
     parser.add_argument("-n", "--interactive", action='store', nargs='?', default="disabled", help="Run interactive tests. This will exclude non-interactive tests and will enable manual testing. Pass 'bi' to build and install automations, 't' to use automations (default) and m to enable manual interaction (default)")
     args = parser.parse_args()
     if not args.build and not args.install and not args.test:
@@ -363,9 +420,9 @@ def get_args():
         args.test = True
 
     if not args.states:
-        args.states = "csywa"
+        args.states = "csywal"
     args.states = set(args.states)
-    valid_states = ["c", "s", "y", "w", "a"]
+    valid_states = ["c", "s", "y", "w", "a", "l"]
     for state in args.states:
         if not state in valid_states:
             print("State " + state + " is invalid, must be one of " + str(valid_states))
@@ -735,6 +792,9 @@ def is_additional_user(device_state, user):
 def is_secondary_user(user):
     return user["type"] == "full.SECONDARY"
 
+def is_clone_user(user):
+    return user["type"] == "profile.CLONE"
+
 def create_user(args):
     output, err = execute_shell_command("Test", args, ["adb", "shell", "pm", "create-user", "user"])
     id = int(output.rsplit(" ", 1)[1].strip())
@@ -743,6 +803,15 @@ def create_user(args):
 
 def create_work_profile(args, parent_id):
     output, err = execute_shell_command("Test", args, ["adb", "shell", "pm", "create-user", "--managed", "--profileOf", str(parent_id), "user"])
+    try:
+        id = int(output.rsplit(" ", 1)[1].strip())
+    except IndexError:
+        print("Error parsing profile id. Output: " + output + ", err: " + err)
+        sys.exit(1)
+    return id
+
+def create_clone_profile(args, parent_id):
+    output, err = execute_shell_command("Test", args, ["adb", "shell", "pm", "create-user", "--profileOf", str(parent_id), "--user-type android.os.usertype.profile.CLONE", "user"])
     try:
         id = int(output.rsplit(" ", 1)[1].strip())
     except IndexError:

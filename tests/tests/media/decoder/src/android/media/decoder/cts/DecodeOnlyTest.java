@@ -31,12 +31,14 @@ import android.media.MediaFormat;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
 import android.media.cts.Preconditions;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SdkSuppress;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -55,6 +57,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "There should be no instant apps specific behavior related to decoders")
+// BUFFER_FLAG_DECODE_ONLY was added in Android U.
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 @RunWith(AndroidJUnit4.class)
 public class DecodeOnlyTest extends MediaTestBase {
     private static final String MEDIA_DIR_STRING = WorkDir.getMediaDirString();

@@ -168,6 +168,9 @@ public @interface EnterprisePolicy {
     /** A policy that has not yet been migrated to allow for DPM Role holder access. */
     int CANNOT_BE_APPLIED_BY_ROLE_HOLDER = 1 << 21;
 
+    /** A policy that is inherited by child profiles if applied on parent. */
+    int INHERITABLE = 1 << 22;
+
     /** Flags indicating DPC states which can set the policy. */
     int[] dpc() default {};
 

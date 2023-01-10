@@ -39,6 +39,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.INHERITABLE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.NO;
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_APP_RESTRICTIONS;
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_BLOCK_UNINSTALL;
@@ -65,6 +66,8 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnAffiliatedDeviceOwnerSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnAffiliatedProfileOwnerSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnFinancedDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnOrganizationOwnedProfileOwner;
@@ -161,6 +164,14 @@ public final class Policy {
 
                     .put(APPLIED_BY_FINANCED_DEVICE_OWNER | APPLIES_TO_OWN_USER, generateDevicePolicyManagerRoleHolderAnnotation(includeRunOnFinancedDeviceOwnerUser(), /* roleHolderUser= */ SYSTEM_USER))
 
+                    .put(APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER
+                            | INHERITABLE, generateDevicePolicyManagerRoleHolderAnnotation(
+                            includeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance(),
+                            /* roleHolderUser= */ WORK_PROFILE))
+                    .put(APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER
+                            | INHERITABLE, generateDevicePolicyManagerRoleHolderAnnotation(
+                            includeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance(),
+                            /* roleHolderUser= */ WORK_PROFILE))
                     .build();
     // This must contain one key for every APPLIED_BY that is being used, and maps to the
     // "default" for testing that DPC type
@@ -311,6 +322,16 @@ public final class Policy {
     @AutoAnnotation
     private static IncludeRunOnFinancedDeviceOwnerUser includeRunOnFinancedDeviceOwnerUser() {
         return new AutoAnnotation_Policy_includeRunOnFinancedDeviceOwnerUser();
+    }
+
+    @AutoAnnotation
+    private static IncludeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance includeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance() {
+        return new AutoAnnotation_Policy_includeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance();
+    }
+
+    @AutoAnnotation
+    private static IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance includeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance() {
+        return new AutoAnnotation_Policy_includeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance();
     }
 
     private static Function<EnterprisePolicy, Set<Annotation>> singleAnnotation(

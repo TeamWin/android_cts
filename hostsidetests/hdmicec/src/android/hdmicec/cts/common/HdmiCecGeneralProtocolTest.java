@@ -27,6 +27,7 @@ import android.hdmicec.cts.RemoteControlPassthrough;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -105,6 +106,16 @@ public final class HdmiCecGeneralProtocolTest extends BaseHdmiCecCtsTest {
      * ignore the last byte of the parameter and treat it as {@code <UCP>[KEYCODE_DPAD_UP]}
      */
     @Test
+    @Ignore("b/259002142, b/264510905")
+    /**
+     * TODO: b/259002142, b/264510905
+     *
+     * 1. implement the behavior that the current test is testing
+     * (i.e. ignore additional parameters in <User Control Pressed> messages)
+     *
+     * 2. implement the tests as they are proposed by the HDMI forum and validate that they are
+     * passing with the current implementation of the behavior
+     */
     public void cect_hf_ignoreAdditionalParams() throws Exception {
         setCec20();
         RemoteControlPassthrough.checkUserControlPressAndReleaseWithAdditionalParams(

@@ -66,6 +66,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -95,6 +96,10 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
 
     // We need to allow for some variation stemming from color conversions
     private static final float COLOR_VALUE_VARIANCE_TOLERANCE = 0.03f;
+
+    @ClassRule
+    public static DisableImmersiveModeConfirmationRule mDisableImmersiveModeConfirmationRule =
+            new DisableImmersiveModeConfirmationRule();
 
     @Before
     public void setUp() throws Exception {

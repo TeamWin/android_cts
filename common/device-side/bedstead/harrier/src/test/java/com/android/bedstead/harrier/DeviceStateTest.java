@@ -64,7 +64,9 @@ import com.android.bedstead.harrier.annotations.EnsureFeatureFlagValue;
 import com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
+import com.android.bedstead.harrier.annotations.EnsureHasCloneProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
+import com.android.bedstead.harrier.annotations.EnsureHasNoCloneProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
@@ -100,6 +102,7 @@ import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipl
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnCloneProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
@@ -117,6 +120,8 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnFinancedDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnOrganizationOwnedProfileOwner;
@@ -181,6 +186,7 @@ public class DeviceStateTest {
             .wherePackageName().isEqualTo(TEST_APP_USED_IN_FIELD_NAME).get();
 
     private static final long TIMEOUT = 4000000;
+    private static final String CLONE_PROFILE_TYPE_NAME = "android.os.usertype.profile.CLONE";
 
     @Test
     @EnsureHasWorkProfile
@@ -289,6 +295,68 @@ public class DeviceStateTest {
                 TestApis.users().supportedType(TV_PROFILE_TYPE_NAME),
                 TestApis.users().instrumented())
         ).isNull();
+    }
+
+    @Test
+    @EnsureHasCloneProfile
+    public void cloneProfile_cloneProfileProvided_returnsCloneProfile() {
+        assertThat(sDeviceState.cloneProfile()).isNotNull();
+    }
+
+    @Test
+    @EnsureHasCloneProfile
+    public void ensureHasCloneProfileAnnotation_cloneProfileExists() {
+        assertThat(TestApis.users().findProfileOfType(
+                TestApis.users().supportedType(CLONE_PROFILE_TYPE_NAME),
+                TestApis.users().instrumented())
+        ).isNotNull();
+    }
+
+    @Test
+    @EnsureHasNoCloneProfile
+    public void ensureHasNoCloneProfileAnnotation_cloneProfileDoesNotExists() {
+        assertThat(TestApis.users().findProfileOfType(
+                TestApis.users().supportedType(CLONE_PROFILE_TYPE_NAME),
+                TestApis.users().instrumented())
+        ).isNull();
+    }
+
+    @Test
+    @RequireRunOnCloneProfile
+    public void cloneProfile_runningOnCloneProfile_returnsCurrentProfile() {
+        assertThat(sDeviceState.cloneProfile()).isEqualTo(TestApis.users().instrumented());
+    }
+
+    @Test
+    @RequireRunOnCloneProfile
+    public void requireRunOnCloneProfileAnnotation_isRunningOnCloneProfile() {
+        assertThat(TestApis.users().instrumented().type().name())
+                .isEqualTo(CLONE_PROFILE_TYPE_NAME);
+    }
+
+    @Test
+    @IncludeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance
+    public void includeRunOnCloneProfileAlongsideProfileOwnerUsingParentInstance_runsOnCloneProfile() {
+        assertThat(TestApis.users().instrumented().type().name())
+                .isEqualTo(CLONE_PROFILE_TYPE_NAME);
+
+        UserReference dpcUser = sDeviceState.dpc().user();
+        assertThat(dpcUser.type().name()).isEqualTo(MANAGED_PROFILE_TYPE_NAME);
+        assertThat(TestApis.devicePolicy().getProfileOwner(dpcUser).isOrganizationOwned())
+                .isFalse();
+        assertThat(sDeviceState.dpc().isParentInstance()).isTrue();
+    }
+
+    @Test
+    @IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance
+    public void includeRunOnCloneProfileAlongsideOrgOwnedProfileOwnerUsingParentInstance_runsOnCloneProfile() {
+        assertThat(TestApis.users().instrumented().type().name())
+                .isEqualTo(CLONE_PROFILE_TYPE_NAME);
+
+        UserReference dpcUser = sDeviceState.dpc().user();
+        assertThat(dpcUser.type().name()).isEqualTo(MANAGED_PROFILE_TYPE_NAME);
+        assertThat(TestApis.devicePolicy().getProfileOwner(dpcUser).isOrganizationOwned()).isTrue();
+        assertThat(sDeviceState.dpc().isParentInstance()).isTrue();
     }
 
     @Test

@@ -50,6 +50,7 @@ import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.UserHandle.USER_ALL;
 import static android.os.UserHandle.USER_SYSTEM;
+import static android.provider.Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS;
 import static android.server.wm.ActivityLauncher.KEY_ACTIVITY_TYPE;
 import static android.server.wm.ActivityLauncher.KEY_DISPLAY_ID;
 import static android.server.wm.ActivityLauncher.KEY_INTENT_EXTRAS;
@@ -1514,6 +1515,27 @@ public abstract class ActivityManagerTestBase {
     /** Allows requesting orientation in case ignore_orientation_request is set to true. */
     protected void disableIgnoreOrientationRequest() {
         mObjectTracker.manage(new IgnoreOrientationRequestSession(false /* enable */));
+    }
+
+    /**
+     * Test @Rule class that disables Immersive mode confirmation dialog.
+     */
+    protected static class DisableImmersiveModeConfirmationRule implements TestRule {
+        @Override
+        public Statement apply(Statement base, Description description) {
+            return new Statement() {
+                @Override
+                public void evaluate() throws Throwable {
+                    try (SettingsSession<String> immersiveModeConfirmationSetting =
+                                 new SettingsSession<>(
+                            Settings.Secure.getUriFor(IMMERSIVE_MODE_CONFIRMATIONS),
+                            Settings.Secure::getString, Settings.Secure::putString)) {
+                        immersiveModeConfirmationSetting.set("confirmed");
+                        base.evaluate();
+                    }
+                }
+            };
+        }
     }
 
     /**

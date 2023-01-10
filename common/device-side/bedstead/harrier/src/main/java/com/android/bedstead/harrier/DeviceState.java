@@ -220,6 +220,8 @@ public final class DeviceState extends HarrierRule {
     private boolean mHasRequirePermissionInstrumentation = false;
 
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
+    private static final String CLONE_PROFILE_TYPE_NAME = "android.os.usertype.profile.CLONE";
+
 
     // We timeout 10 seconds before the infra would timeout
     private static final Duration MAX_TEST_DURATION =
@@ -508,9 +510,11 @@ public final class DeviceState extends HarrierRule {
                         dpcIsPrimary, /* useParentInstance= */ false,
                         switchedToParentUser, affiliationIds);
 
-                ((ProfileOwner) profileOwner(
-                        workProfile()).devicePolicyController()).setIsOrganizationOwned(
-                        isOrganizationOwned(annotation));
+                if (requireRunOnProfileAnnotation.hasProfileOwner()) {
+                    ((ProfileOwner) profileOwner(
+                            workProfile()).devicePolicyController()).setIsOrganizationOwned(
+                            isOrganizationOwned(annotation));
+                }
 
                 continue;
             }
@@ -1556,6 +1560,42 @@ public final class DeviceState extends HarrierRule {
     }
 
     /**
+     * Get the {@link UserReference} of the clone profile for the current user
+     *
+     * <p>This should only be used to get clone profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed clone profile
+     */
+    public UserReference cloneProfile() {
+        return cloneProfile(/* forUser= */ UserType.INITIAL_USER);
+    }
+
+    /**
+     * Get the {@link UserReference} of the clone profile.
+     *
+     * <p>This should only be used to get clone profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed clone profile
+     */
+    public UserReference cloneProfile(UserType forUser) {
+        return cloneProfile(resolveUserTypeToUser(forUser));
+    }
+
+    /**
+     * Get the {@link UserReference} of the clone profile.
+     *
+     * <p>This should only be used to get clone profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed clone profile
+     */
+    public UserReference cloneProfile(UserReference forUser) {
+        return profile(CLONE_PROFILE_TYPE_NAME, forUser);
+    }
+
+    /**
      * Gets the user ID of the initial user.
      */
     // TODO(b/249047658): cache the initial user at the start of the run.
@@ -2036,6 +2076,8 @@ public final class DeviceState extends HarrierRule {
                 return TestApis.users().initial();
             case ADDITIONAL_USER:
                 return additionalUser();
+            case CLONE_PROFILE:
+                return cloneProfile();
             case ANY:
                 throw new IllegalStateException("ANY UserType can not be used here");
             default:

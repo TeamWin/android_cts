@@ -24,14 +24,21 @@ import static android.media.cts.MediaRouterTestConstants.ROUTE_DEDUPLICATION_ID_
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_1_ROUTE_1;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_1_ROUTE_2;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_1_ROUTE_3;
+import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_1_ROUTE_4;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_2_ROUTE_1;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_2_ROUTE_2;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_2_ROUTE_3;
+import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_2_ROUTE_4;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_3_ROUTE_1;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_3_ROUTE_2;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_3_ROUTE_3;
+import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_3_ROUTE_4;
+import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_3_ROUTE_5;
+import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_4;
+import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_5;
 
 import android.Manifest;
+import android.content.ComponentName;
 import android.content.Context;
 import android.media.MediaRoute2Info;
 import android.media.MediaRouter2;
@@ -49,8 +56,10 @@ import com.android.compatibility.common.util.ApiTest;
 import com.google.common.truth.Truth;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 
 import java.util.List;
 import java.util.Map;
@@ -163,6 +172,7 @@ public class MediaRouter2DeviceTest {
                 new RouteListingPreference.Builder()
                         .setItems(items)
                         .setUseSystemOrdering(false)
+                        .setInAppOnlyItemRoutingReceiver(new ComponentName(mContext, getClass()))
                         .build();
         MediaRouter2ManagerCallbackImpl mediaRouter2ManagerCallback =
                 new MediaRouter2ManagerCallbackImpl();
@@ -187,6 +197,22 @@ public class MediaRouter2DeviceTest {
                 .isEqualTo(SAMPLE_SESSION_PARTICIPANT_COUNT);
         Truth.assertThat(receivedRouteListingPreference.getItems().get(2).getDisableReason())
                 .isEqualTo(RouteListingPreference.Item.DISABLE_REASON_SUBSCRIPTION_REQUIRED);
+        Truth.assertThat(receivedRouteListingPreference.getInAppOnlyItemRoutingReceiver())
+                .isEqualTo(new ComponentName(mContext, getClass()));
+    }
+
+    @Test
+    public void setRouteListingPreference_withIllegalComponentName_throws() {
+        ThrowingRunnable setRlpRunnable =
+                () ->
+                        mRouter2.setRouteListingPreference(
+                                new RouteListingPreference.Builder()
+                                        .setInAppOnlyItemRoutingReceiver(
+                                                new ComponentName(
+                                                        /* package= */ "android",
+                                                        /* class= */ getClass().getCanonicalName()))
+                                        .build());
+        Assert.assertThrows(IllegalArgumentException.class, setRlpRunnable);
     }
 
     @Test
@@ -194,6 +220,36 @@ public class MediaRouter2DeviceTest {
         MediaRouter2 systemRouter =
                 MediaRouter2.getInstance(mContext, MEDIA_ROUTER_PROVIDER_1_PACKAGE);
         Truth.assertThat(systemRouter).isNotNull();
+    }
+
+    @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
+    @Test
+    public void visibilityAndAllowedPackages_propagateAcrossApps() {
+        RouteDiscoveryPreference preference =
+                new RouteDiscoveryPreference.Builder(
+                                List.of(FEATURE_SAMPLE), /* activeScan= */ true)
+                        .build();
+        // Each app exposes all its routes in a single operation, so if we find one route per app,
+        // we know the update should contain all the routes from each helper app.
+        Map<String, MediaRoute2Info> routes =
+                waitForAndGetRoutes(
+                        preference,
+                        Set.of(
+                                ROUTE_ID_APP_1_ROUTE_1,
+                                ROUTE_ID_APP_2_ROUTE_1,
+                                ROUTE_ID_APP_3_ROUTE_1));
+
+        // public route
+        Truth.assertThat(routes.get(ROUTE_ID_APP_1_ROUTE_4).getName()).isEqualTo(ROUTE_NAME_4);
+
+        // private route
+        Truth.assertThat(routes.get(ROUTE_ID_APP_2_ROUTE_4)).isNull();
+
+        // restricted route with allowed packages not containing app's package
+        Truth.assertThat(routes.get(ROUTE_ID_APP_3_ROUTE_4)).isNull();
+
+        // restricted route with allowed packages containing app's package
+        Truth.assertThat(routes.get(ROUTE_ID_APP_3_ROUTE_5).getName()).isEqualTo(ROUTE_NAME_5);
     }
 
     /**

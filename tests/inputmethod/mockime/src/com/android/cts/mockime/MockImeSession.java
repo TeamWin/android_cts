@@ -247,6 +247,9 @@ public class MockImeSession implements AutoCloseable {
     }
 
     private void initialize(@Nullable ImeSettings.Builder imeSettings) throws Exception {
+        PollingCheck.check("MockIME was not in getInputMethodList() after timeout.", TIMEOUT,
+                () -> getInputMethodInfo() != null);
+
         // Make sure that MockIME is not selected.
         if (mContext.getSystemService(InputMethodManager.class)
                 .getInputMethodList()
@@ -271,7 +274,7 @@ public class MockImeSession implements AutoCloseable {
         } else {
             final InputMethodInfo imi = getInputMethodInfo();
             if (imi == null) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("MockIME was not in getInputMethodList().");
             }
             if (imi.getSubtypeCount() != 0) {
                 // Somehow the previous run failed to remove additional subtypes. Clean them up.
@@ -281,10 +284,10 @@ public class MockImeSession implements AutoCloseable {
         {
             final InputMethodInfo imi = getInputMethodInfo();
             if (imi == null) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("MockIME not found while checking subtypes.");
             }
             if (imi.getSubtypeCount() != additionalSubtypes.length) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("MockIME subtypes were not correctly set.");
             }
         }
 

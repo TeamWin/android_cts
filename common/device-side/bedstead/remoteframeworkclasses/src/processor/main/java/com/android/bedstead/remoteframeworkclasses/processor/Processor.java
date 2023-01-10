@@ -721,6 +721,7 @@ public final class Processor extends AbstractProcessor {
             "@NonNull @UiContext public android.content.Context createWindowContext(@NonNull "
                     + "android.view.Display, int, @Nullable android.os.Bundle)",
             "public abstract android.content.Context getApplicationContext()",
+            "@NonNull public android.content.Context createDeviceContext(int)",
 
             // Uses android.content.res.AssetManager
             "public abstract android.content.res.AssetManager getAssets()",

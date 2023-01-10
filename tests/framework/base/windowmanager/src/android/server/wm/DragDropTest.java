@@ -40,6 +40,8 @@ import android.os.Parcelable;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.cts.R;
+import android.util.Size;
+import android.view.Display;
 import android.view.DragEvent;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -50,7 +52,9 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -78,6 +82,9 @@ public class DragDropTest extends WindowManagerTestBase {
     private CountDownLatch mEndReceived;
 
     private AssertionError mMainThreadAssertionError;
+
+    private static final ReportedDisplayMetrics sReportedDisplayMetrics =
+            ReportedDisplayMetrics.getDisplayMetrics(Display.DEFAULT_DISPLAY);
 
     /**
      * Check whether two objects have the same binary data when dumped into Parcels
@@ -337,6 +344,26 @@ public class DragDropTest extends WindowManagerTestBase {
     public void tearDown() throws Exception {
         mActual.clear();
         mExpected.clear();
+    }
+
+    @BeforeClass
+    public static void resetToPhysicalDisplayMetrics() {
+        if (sReportedDisplayMetrics.overrideSize != null) {
+            final Size realSize = new Size(
+                    sReportedDisplayMetrics.physicalSize.getWidth(),
+                    sReportedDisplayMetrics.physicalSize.getHeight());
+            sReportedDisplayMetrics.setSize(realSize);
+        }
+
+        if (sReportedDisplayMetrics.overrideDensity != null) {
+            final Integer realDensity = sReportedDisplayMetrics.physicalDensity;
+            sReportedDisplayMetrics.setDensity(realDensity);
+        }
+    }
+
+    @AfterClass
+    public static void restoreDisplayMetrics() {
+        sReportedDisplayMetrics.restoreDisplayMetrics();
     }
 
     // Sets handlers on all views in a tree, which log the event and return false.

@@ -1817,9 +1817,20 @@ public final class DevicePolicyManagerTest {
     @EnsureHasDeviceOwner
     @EnsureHasAdditionalUser
     @RequireRunOnSystemUser
-    @RequireHeadlessSystemUserMode(reason = "tests headless user behaviour")
-    public void wipeData_systemUser_throwsException() {
+    public void wipeData_systemUser_throwsSecurityException() {
         assertThrows("System user should not be removed",
+                SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().wipeData(/* flags= */ 0));
+    }
+
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureHasProfileOwner(onUser = INITIAL_USER)
+    @EnsureHasNoAdditionalUser
+    @RequireRunOnInitialUser
+    @RequireHeadlessSystemUserMode(reason = "tests headless user behaviour")
+    public void wipeData_headless_lastUser_throwsIllegalStateException() {
+        assertThrows("Last full user should not be removed",
                 IllegalStateException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().wipeData(/* flags= */ 0));
     }

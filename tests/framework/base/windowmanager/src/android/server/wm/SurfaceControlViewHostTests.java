@@ -41,8 +41,10 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.FeatureInfo;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.graphics.Region;
 import android.os.Binder;
 import android.os.SystemClock;
@@ -53,6 +55,7 @@ import android.server.wm.shared.ICrossProcessSurfaceControlViewHostTestService;
 import android.util.ArrayMap;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.SurfaceControl;
 import android.view.SurfaceControlViewHost;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -60,6 +63,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.view.cts.surfacevalidator.BitmapPixelChecker;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -79,6 +83,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -93,8 +98,11 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @Presubmit
 public class SurfaceControlViewHostTests extends ActivityManagerTestBase implements SurfaceHolder.Callback {
-    private final ActivityTestRule<ConfigChangeHandlingActivity> mActivityRule =
-        new ActivityTestRule<>(ConfigChangeHandlingActivity.class);
+
+    public static class TestActivity extends Activity {}
+
+    private final ActivityTestRule<TestActivity> mActivityRule = new ActivityTestRule<>(
+            TestActivity.class);
 
     private Instrumentation mInstrumentation;
     private Activity mActivity;
@@ -249,7 +257,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         final String output = runCommandAndPrintOutput("dumpsys window windows");
         boolean foundWindow = false;
         for (String line : output.split("\\n")) {
-            if (line.contains("ConfigChangeHandlingActivity")) {
+            if (line.contains("SurfaceControlViewHostTests$TestActivity")) {
                 foundWindow = true;
             }
             if (foundWindow && line.contains("touchable region")) {
@@ -1046,5 +1054,173 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         mInstrumentation.waitForIdleSync();
         assertTrue(mClicked);
+    }
+
+    private void waitForViewsDrawn(List<View> views) throws Throwable {
+        CountDownLatch attached = new CountDownLatch(views.size());
+        mActivityRule.runOnUiThread(() -> {
+            for (View view : views) {
+                if (view.isAttachedToWindow()) {
+                    attached.countDown();
+                    continue;
+                }
+                view.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                    @Override
+                    public void onViewAttachedToWindow(View v) {
+                        attached.countDown();
+                    }
+
+                    @Override
+                    public void onViewDetachedFromWindow(View v) {
+                    }
+                });
+            }
+        });
+        assertTrue("Timed out waiting for views to be attached",
+                attached.await(1, TimeUnit.SECONDS));
+
+        CountDownLatch drawn = new CountDownLatch(views.size());
+        for (View view : views) {
+            SurfaceControl.Transaction transaction =
+                    new SurfaceControl.Transaction().addTransactionCommittedListener(Runnable::run,
+                            drawn::countDown);
+            view.getRootSurfaceControl().applyTransactionOnDraw(transaction);
+            mActivityRule.runOnUiThread(view::invalidate);
+        }
+        assertTrue("Timed out waiting for views to be drawn",
+                drawn.await(1, TimeUnit.SECONDS));
+    }
+
+    private static void assertPixelColorInBounds(Bitmap bitmap, int color, Rect bounds) {
+        BitmapPixelChecker pixelChecker = new BitmapPixelChecker(color);
+        long expectedNumPixels = (long) bounds.width() * (long) bounds.height();
+        // Allow pixels to not match for up to a one pixel wide line along horizontal or vertical
+        // edge
+        long minimumMatch = expectedNumPixels - bounds.height() - bounds.width();
+        long matchingPixels = pixelChecker.getNumMatchingPixels(bitmap, bounds);
+        assertTrue(minimumMatch <= matchingPixels && matchingPixels <= expectedNumPixels);
+    }
+
+    @Test
+    public void testPopupWindowPosition() throws Throwable {
+        mEmbeddedView = new View(mActivity);
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        mActivityRule.runOnUiThread(() -> {
+            View popupContent = new View(mActivity);
+            popupContent.setBackgroundColor(Color.BLUE);
+
+            mPopupWindow = new PopupWindow();
+            mPopupWindow.setWidth(50);
+            mPopupWindow.setHeight(50);
+            mPopupWindow.setContentView(popupContent);
+            mPopupWindow.showAtLocation(mEmbeddedView, Gravity.BOTTOM | Gravity.RIGHT, 0, 0);
+        });
+
+        waitForViewsDrawn(
+                Arrays.asList(mSurfaceView, mEmbeddedView, mPopupWindow.getContentView()));
+
+        Bitmap screenshot = mInstrumentation.getUiAutomation().takeScreenshot(
+                mActivity.getWindow());
+        assertPixelColorInBounds(screenshot, Color.BLUE, new Rect(50, 50, 100, 100));
+    }
+
+    @Test
+    public void testFloatingWindowWrapContent() throws Throwable {
+        mEmbeddedView = new View(mActivity);
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        View popupContent = new View(mActivity);
+        popupContent.setBackgroundColor(Color.BLUE);
+        popupContent.setLayoutParams(new ViewGroup.LayoutParams(50, 50));
+
+        FrameLayout popupView = new FrameLayout(mActivity);
+        // This background color should not appear as the popupView should be the same size as its
+        // child view.
+        popupView.setBackgroundColor(Color.RED);
+        popupView.addView(popupContent);
+
+        WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
+        layoutParams.setTitle("FloatingWindow");
+        layoutParams.gravity = Gravity.TOP | Gravity.LEFT;
+        layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+        layoutParams.token = mEmbeddedView.getWindowToken();
+
+        mActivityRule.runOnUiThread(() -> {
+            WindowManager windowManager = mActivity.getSystemService(WindowManager.class);
+            windowManager.addView(popupView, layoutParams);
+        });
+
+        waitForViewsDrawn(Arrays.asList(mSurfaceView, mEmbeddedView, popupView));
+
+        Bitmap screenshot = mInstrumentation.getUiAutomation().takeScreenshot(
+                mActivity.getWindow());
+        assertPixelColorInBounds(screenshot, Color.BLUE, new Rect(0, 0, 50, 50));
+        assertPixelColorInBounds(screenshot, Color.BLACK, new Rect(50, 50, 100, 100));
+    }
+
+    @Test
+    public void testFloatingWindowMatchParent() throws Throwable {
+        mEmbeddedView = new View(mActivity);
+        mEmbeddedViewWidth = 50;
+        mEmbeddedViewHeight = 50;
+        addSurfaceView(100, 100);
+        mInstrumentation.waitForIdleSync();
+
+        View popupView = new FrameLayout(mActivity);
+        popupView.setBackgroundColor(Color.BLUE);
+
+        WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
+        layoutParams.setTitle("FloatingWindow");
+        layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
+        layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
+        layoutParams.token = mEmbeddedView.getWindowToken();
+
+        mActivityRule.runOnUiThread(() -> {
+            WindowManager windowManager = mActivity.getSystemService(WindowManager.class);
+            windowManager.addView(popupView, layoutParams);
+        });
+
+        waitForViewsDrawn(Arrays.asList(mSurfaceView, mEmbeddedView, popupView));
+
+        Bitmap screenshot = mInstrumentation.getUiAutomation().takeScreenshot(
+                mActivity.getWindow());
+        assertPixelColorInBounds(screenshot, Color.BLUE, new Rect(0, 0, 50, 50));
+        assertPixelColorInBounds(screenshot, Color.BLACK, new Rect(50, 50, 100, 100));
+    }
+
+    @Test
+    public void testFloatingWindowCroppedByParent() throws Throwable {
+        mEmbeddedView = new View(mActivity);
+        mEmbeddedViewWidth = 50;
+        mEmbeddedViewHeight = 50;
+        addSurfaceView(100, 100);
+        mInstrumentation.waitForIdleSync();
+
+        View popupView = new FrameLayout(mActivity);
+        popupView.setBackgroundColor(Color.BLUE);
+
+        WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
+        layoutParams.setTitle("FloatingWindow");
+        layoutParams.height = 100;
+        layoutParams.width = 100;
+        layoutParams.token = mEmbeddedView.getWindowToken();
+
+        mActivityRule.runOnUiThread(() -> {
+            WindowManager windowManager = mActivity.getSystemService(WindowManager.class);
+            windowManager.addView(popupView, layoutParams);
+        });
+
+        waitForViewsDrawn(Arrays.asList(mSurfaceView, mEmbeddedView, popupView));
+
+        Bitmap screenshot = mInstrumentation.getUiAutomation().takeScreenshot(
+                mActivity.getWindow());
+        assertPixelColorInBounds(screenshot, Color.BLUE, new Rect(0, 0, 50, 50));
+        assertPixelColorInBounds(screenshot, Color.BLACK, new Rect(50, 50, 100, 100));
     }
 }
