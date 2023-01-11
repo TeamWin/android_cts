@@ -159,7 +159,7 @@ public class ActivityInterceptionTest {
 
         IntentFilter intentFilter = new IntentFilter(ACTION_INTERCEPTED_RECEIVER);
 
-        mVirtualDevice.registerIntentInterceptor(Executors.newSingleThreadExecutor(), intentFilter,
+        mVirtualDevice.registerIntentInterceptor(intentFilter, Executors.newSingleThreadExecutor(),
                 mInterceptor);
 
         // Starting test on EmptyActivity
@@ -204,9 +204,9 @@ public class ActivityInterceptionTest {
 
         IntentFilter intentFilter = new IntentFilter(ACTION_INTERCEPTED_RECEIVER);
 
-        mVirtualDevice.registerIntentInterceptor(Executors.newSingleThreadExecutor(), intentFilter,
+        mVirtualDevice.registerIntentInterceptor(intentFilter, Executors.newSingleThreadExecutor(),
                 mInterceptor);
-        mVirtualDevice.registerIntentInterceptor(Executors.newSingleThreadExecutor(), intentFilter,
+        mVirtualDevice.registerIntentInterceptor(intentFilter, Executors.newSingleThreadExecutor(),
                 interceptorOther);
 
         // Starting test on EmptyActivity
@@ -254,7 +254,7 @@ public class ActivityInterceptionTest {
         mInterceptor = mock(IntentInterceptorCallback.class);
 
         IntentFilter intentFilter = new IntentFilter("ACTION_OTHER");
-        mVirtualDevice.registerIntentInterceptor(Executors.newSingleThreadExecutor(), intentFilter,
+        mVirtualDevice.registerIntentInterceptor(intentFilter, Executors.newSingleThreadExecutor(),
                 mInterceptor);
 
         // Starting test on EmptyActivity
@@ -288,15 +288,15 @@ public class ActivityInterceptionTest {
         // setup expected intent interceptor
         mInterceptor = mock(IntentInterceptorCallback.class);
         IntentFilter intentFilter = new IntentFilter(ACTION_INTERCEPTED_RECEIVER);
-        mVirtualDevice.registerIntentInterceptor(Executors.newSingleThreadExecutor(), intentFilter,
+        mVirtualDevice.registerIntentInterceptor(intentFilter, Executors.newSingleThreadExecutor(),
                 mInterceptor);
 
         // setup other intent interceptor
         IntentInterceptorCallback interceptorOther = mock(
                 IntentInterceptorCallback.class);
         IntentFilter intentFilterOther = new IntentFilter("ACTION_OTHER");
-        mVirtualDevice.registerIntentInterceptor(Executors.newSingleThreadExecutor(),
-                intentFilterOther, interceptorOther);
+        mVirtualDevice.registerIntentInterceptor(intentFilterOther,
+                Executors.newSingleThreadExecutor(), interceptorOther);
 
         // Starting test on EmptyActivity
         Intent startIntent = new Intent(mContext, EmptyActivity.class)

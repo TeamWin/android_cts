@@ -92,6 +92,8 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         Settings.Global.putString(getContext().getContentResolver(),
                 Settings.Global.LOW_POWER_MODE_TRIGGER_LEVEL, mPreviousLowPowerTriggerLevel);
 
+        mNetworkingHelper.tearDown();
+
         super.tearDown();
     }
 

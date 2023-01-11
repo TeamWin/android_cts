@@ -87,6 +87,7 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
             mActivity.startActivityForResult(Intent.createChooser(intent, TAG), REQUEST_CODE);
 
             UiAssertionUtils.assertThatShowsPickerUi();
+            sDevice.pressBack();
         }
     }
 

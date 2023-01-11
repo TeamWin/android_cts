@@ -18,6 +18,8 @@ package android.usb.cts;
 
 import static android.Manifest.permission.MANAGE_USB;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -34,6 +36,7 @@ import android.hardware.usb.IUsbOperationInternal;
 import android.hardware.usb.UsbManager;
 import android.hardware.usb.UsbPort;
 import android.hardware.usb.UsbPortStatus;
+import android.hardware.usb.DisplayPortAltModeInfo;
 import android.util.Log;
 
 import android.os.Build;
@@ -46,6 +49,9 @@ import java.util.concurrent.Executor;
 import java.util.List;
 
 import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -72,6 +78,7 @@ public class UsbPortStatusApiTest {
     private UsbPort mUsbPort;
     private UsbPort mMockUsbPort;
     private UsbPortStatus mUsbPortStatus;
+    private DisplayPortAltModeInfo mDisplayPortAltModeInfo;
 
     private UiAutomation mUiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -90,8 +97,11 @@ public class UsbPortStatusApiTest {
         Assert.assertNotNull(mUsbManagerMock =
                 new UsbManager(mContext, mMockUsbService));
 
-        mUsbPort = new UsbPort(mUsbManagerSys, "1", 0, 0, true, true, true);
+        mUsbPort = new UsbPort(mUsbManagerSys, "1", 0, 0, true, true, true,
+                UsbPort.FLAG_ALT_MODE_TYPE_DISPLAYPORT);
         mUsbPortStatus = new UsbPortStatus(0, 0, 0, 0, 0, 0);
+
+        mDisplayPortAltModeInfo = new DisplayPortAltModeInfo();
     }
 
     /**
@@ -153,5 +163,76 @@ public class UsbPortStatusApiTest {
             DATA_STATUS_DISABLED_DOCK, false, 0);
         Assert.assertTrue((portStatus.getUsbDataStatus() & DATA_STATUS_DISABLED_DOCK)
                  != DATA_STATUS_DISABLED_DOCK);
+    }
+
+    /**
+     * Verify that getPlugState is initialized to default value.
+     */
+    @Test
+    public void test_UsbApiForGetPlugState() throws Exception {
+        // Adopt MANAGE_USB permission to access UsbPort and UsbPortStatus
+        mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
+
+        // Simulate UsbPort
+        final String portIdTestString = "ctstest-plugState";
+        UsbPort port = null;
+
+        SystemUtil.runShellCommand("dumpsys usb add-port " + portIdTestString + " dual");
+
+        for (UsbPort p : mUsbManagerSys.getPorts()) {
+            if (p.getId().equals(portIdTestString)) {
+                port = p;
+                break;
+            }
+        }
+        assertNotNull(port);
+        UsbPortStatus portStatus = port.getStatus();
+
+        assertEquals(UsbPortStatus.PLUG_STATE_UNKNOWN,
+                portStatus.getPlugState());
+
+        SystemUtil.runShellCommand("dumpsys usb remove-port " + portIdTestString);
+
+        // Drop MANAGE_USB permission.
+        mUiAutomation.dropShellPermissionIdentity();
+    }
+
+    /**
+     * Verify that getDpAltModeCableStatus(), getDpAltModePartnerStatus(),
+     * and getDpAltModePinConfig() are initialized to default values.
+     */
+    @Test
+    public void test_UsbApiForDisplayPortAltMode() throws Exception {
+        // Adopt MANAGE_USB permission to access UsbPort and UsbPortStatus
+        mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
+
+        // Simulate UsbPort
+        final String portIdTestString = "ctstest-displayPortAltMode";
+        UsbPort port = null;
+
+        SystemUtil.runShellCommand("dumpsys usb add-port " + portIdTestString
+                + " dual --displayport", null);
+
+        for (UsbPort p : mUsbManagerSys.getPorts()) {
+            if (p.getId().equals(portIdTestString)) {
+                port = p;
+                break;
+            }
+        }
+        assertNotNull(port);
+        UsbPortStatus portStatus = port.getStatus();
+        DisplayPortAltModeInfo displayPortAltModeInfo = portStatus.getDisplayPortAltModeInfo();
+
+        assertNotNull(displayPortAltModeInfo);
+        assertEquals(DisplayPortAltModeInfo.DISPLAYPORT_ALT_MODE_STATUS_UNKNOWN,
+                displayPortAltModeInfo.getPartnerSinkStatus());
+        assertEquals(DisplayPortAltModeInfo.DISPLAYPORT_ALT_MODE_STATUS_UNKNOWN,
+                displayPortAltModeInfo.getCableStatus());
+        assertEquals(0, displayPortAltModeInfo.getNumberOfLanes());
+
+        SystemUtil.runShellCommand("dumpsys usb remove-port " + portIdTestString, null);
+
+        // Drop MANAGE_USB permission.
+        mUiAutomation.dropShellPermissionIdentity();
     }
 }

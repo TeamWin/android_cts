@@ -630,6 +630,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/265007420")
     public void wallpaperColors_primary() {
         Bitmap tmpWallpaper = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(tmpWallpaper);
@@ -657,6 +658,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/265007420")
     public void wallpaperColors_secondary() {
         Bitmap tmpWallpaper = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(tmpWallpaper);

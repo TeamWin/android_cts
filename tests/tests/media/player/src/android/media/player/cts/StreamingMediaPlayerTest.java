@@ -24,7 +24,6 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.TrackInfo;
 import android.media.TimedMetaData;
 import android.media.cts.MediaPlayerTestBase;
-import android.media.cts.Preconditions;
 import android.net.Uri;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -37,6 +36,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.After;
 import org.junit.Before;

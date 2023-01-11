@@ -22,7 +22,6 @@ android_test_helper_app {
     name: "CtsStaticSharedLibTestApp",
     defaults: ["cts_support_defaults"],
     sdk_version: "system_current",
-    platform_apis: true,
     srcs: ["src/**/*.java"],
     static_libs: [
         "cts-install-lib",

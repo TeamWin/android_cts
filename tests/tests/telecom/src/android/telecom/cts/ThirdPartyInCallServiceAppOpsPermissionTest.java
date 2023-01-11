@@ -27,13 +27,17 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.telecom.Call;
 import android.telecom.TelecomManager;
 import android.telecom.cts.thirdptyincallservice.CtsThirdPartyInCallService;
 import android.telecom.cts.thirdptyincallservice.CtsThirdPartyInCallServiceControl;
 import android.telecom.cts.thirdptyincallservice.ICtsThirdPartyInCallServiceControl;
 import android.util.Log;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +49,8 @@ public class ThirdPartyInCallServiceAppOpsPermissionTest extends BaseTelecomTest
     private static final String THIRD_PARITY_PACKAGE_NAME = CtsThirdPartyInCallService
             .class.getPackage().getName();
     private static final Uri TEST_URI = Uri.parse("tel:555-TEST");
+    private static final String TEST_KEY = "woowoo";
+    private static final String TEST_VALUE = "yay";
     private Context mContext;
     private AppOpsManager mAppOpsManager;
     private PackageManager mPackageManager;
@@ -108,6 +114,50 @@ public class ThirdPartyInCallServiceAppOpsPermissionTest extends BaseTelecomTest
 
         // Revoke App Ops Permission
         setInCallServiceAppOpsPermission(false);
+    }
+
+    /**
+     * Verifies that {@link android.telecom.Call#putExtras(Bundle)} changes made in one
+     * {@link android.telecom.InCallService} instance will be seen in other running
+     * {@link android.telecom.InCallService} instances.
+     * @throws Exception
+     */
+    @ApiTest(apis = {"android.telecom.Call#putExtras",
+            "android.telecom.Call.Callback#onDetailsChanged"})
+    public void testExtrasPropagation() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        // Grant App Ops Permission
+        setInCallServiceAppOpsPermission(true);
+        try {
+            // Make a new call.
+            int previousCallCount = mICtsThirdPartyInCallServiceControl.getLocalCallCount();
+            addAndVerifyNewIncomingCall(TEST_URI, null);
+            assertBindStatus(/* true: bind, false: unbind */true, /* expected result */true);
+            assertCallCount(previousCallCount + 1);
+            android.telecom.Call call = mInCallCallbacks.getService().getLastCall();
+
+            // Make it active
+            final MockConnection connection = verifyConnectionForIncomingCall();
+            connection.setActive();
+            assertCallState(call, Call.STATE_ACTIVE);
+
+            // Prime the controlled other ICS to expect some known extras.
+            mICtsThirdPartyInCallServiceControl.setExpectedExtra(TEST_KEY, TEST_VALUE);
+
+            // From the main ICS in the CTS test runner, we'll add an extra.
+            Bundle newExtras = new Bundle();
+            newExtras.putString(TEST_KEY, TEST_VALUE);
+            call.putExtras(newExtras);
+
+            // Now wait for the other ICS to have received that extra.
+            assertTrue(mICtsThirdPartyInCallServiceControl.waitUntilExpectedExtrasReceived());
+        } finally {
+            mICtsThirdPartyInCallServiceControl.resetLatchForServiceBound(true);
+            // Revoke App Ops Permission
+            setInCallServiceAppOpsPermission(false);
+        }
     }
 
     /**

@@ -22,8 +22,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Icon;
-import android.os.Bundle;
-import android.provider.Settings;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 import android.util.Log;
@@ -117,8 +115,13 @@ public class TestTileService extends TileService {
     }
 
     private void handleStartActivity() {
-        super.startActivityAndCollapse(new Intent(Settings.ACTION_SETTINGS)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        Log.i(TAG, TEST_PREFIX + "handleStartActivity");
+        try {
+            super.startActivityAndCollapse(new Intent(this, TestActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (UnsupportedOperationException e) {
+            Log.i(TAG, TEST_PREFIX + "UnsupportedOperationException");
+        }
     }
 
     private void handleStartActivityWithPendingIntent() {

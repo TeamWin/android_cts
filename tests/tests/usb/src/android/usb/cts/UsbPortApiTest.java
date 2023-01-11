@@ -93,7 +93,7 @@ public class UsbPortApiTest {
         // Adopt MANAGE_USB permission.
         mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
 
-        mMockUsbPort = new UsbPort(mUsbManagerMock, "1", 0, 0, true, true, true);
+        mMockUsbPort = new UsbPort(mUsbManagerMock, "1", 0, 0, true, true);
         boolean result = true;
 
         mConsumer = new Consumer<Integer>(){
@@ -254,4 +254,15 @@ public class UsbPortApiTest {
         // Drop MANAGE_USB permission.
         mUiAutomation.dropShellPermissionIdentity();
     }
+
+    /**
+     * Verify that getSupportedAltModesMask is defaulted to 0 on older version of UsbPort
+     * constructors and uses isAltModeSupported as a consistency check.
+     */
+    @Test
+    public void test_UsbApiForSupportedAltModes() throws Exception {
+        Assert.assertTrue(mUsbPort.getSupportedAltModesMask() == 0);
+        Assert.assertFalse(mUsbPort.isAltModeSupported(UsbPort.FLAG_ALT_MODE_TYPE_DISPLAYPORT));
+    }
+
 }

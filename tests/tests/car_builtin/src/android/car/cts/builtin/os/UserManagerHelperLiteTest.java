@@ -217,6 +217,13 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
                 UserManagerHelper.isVisibleBackgroundUsersSupported(mUserManager)).isFalse();
     }
 
+    @Test
+    @ApiTest(apis = {"android.car.builtin.os.UserManagerHelper#getMaxSupportedUsers(Context)"})
+    public void testGetMaxSupportedUsers() {
+        expectWithMessage("Max supported users").that(
+                UserManagerHelper.getMaxSupportedUsers(mContext)).isGreaterThan(0);
+    }
+
     private void expectGetUserHandlesHasUser(UserHandle user) {
         List<UserHandle> allUsersHandles = UserManagerHelper.getUserHandles(mUserManager,
                 /* excludePartial= */ false, /* excludeDying= */ false,

@@ -44,6 +44,11 @@ LOW_RESOLUTION_SIZES = {
     'UW': ('176x144', '192x144', '352x288', '384x288', '320x240'),
 }
 
+LOWEST_RES_TESTED_AREA = {
+  'W': 320*180,
+  'UW': 640*360,
+}
+
 def get_ffmpeg_version():
   """Returns the ffmpeg version being used."""
 

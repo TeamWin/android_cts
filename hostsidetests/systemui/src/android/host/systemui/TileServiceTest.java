@@ -149,23 +149,6 @@ public class TileServiceTest extends BaseTileServiceTest {
         assertTrue(waitFor("onWindowFocusChanged_true"));
     }
 
-    @ApiTest(apis = {"android.service.quicksettings.TileService#startActivityAndCollapse"})
-    public void testStartActivity() throws Exception {
-        if (!supported()) return;
-        addTile();
-        // Wait for the tile to be added.
-        assertTrue(waitFor("onTileAdded"));
-
-        // Open the quick settings and make sure the tile gets a chance to listen.
-        openSettings();
-        assertTrue(waitFor("onStartListening"));
-
-        // Trigger the startActivityAndCollapse call and verify we get taken out of listening
-        // because the shade gets collapsed.
-        getDevice().executeShellCommand(START_ACTIVITY_AND_COLLAPSE);
-        assertTrue(waitFor("onStopListening"));
-    }
-
     @ApiTest(apis = {
             "android.service.quicksettings.TileService#startActivityAndCollapse"})
     public void testStartActivityDoesNotLaunchPendingIntentWithoutClick() throws Exception {

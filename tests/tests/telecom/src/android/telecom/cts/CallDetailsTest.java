@@ -50,6 +50,7 @@ import android.telecom.StatusHints;
 import android.telecom.TelecomManager;
 import android.telephony.TelephonyManager;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.FileUtils;
 
 import java.io.InputStream;
@@ -787,6 +788,8 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
      * Tests that {@link Call} extras changes made via {@link Call#putExtras(Bundle)} are propagated
      * to {@link Connection#onExtrasChanged(Bundle)}.
      */
+    @ApiTest(apis = {"android.telecom.Call#putExtras", "android.telecom.Connection#getExtras",
+            "android.telecom.Connection#onExtrasChanged"})
     public void testCallPutExtras() {
         if (!mShouldTestTelecom) {
             return;

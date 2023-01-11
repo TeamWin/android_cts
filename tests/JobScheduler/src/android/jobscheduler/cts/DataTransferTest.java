@@ -38,6 +38,8 @@ public class DataTransferTest extends BaseJobSchedulerTest {
     public void tearDown() throws Exception {
         mJobScheduler.cancel(JOB_ID);
 
+        mNetworkingHelper.tearDown();
+
         // The super method should be called at the end.
         super.tearDown();
     }

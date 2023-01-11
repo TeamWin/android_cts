@@ -152,13 +152,13 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
 
       # List of video resolutions to test
       if camera_fov > opencv_processing_utils.FOV_THRESH_WFOV:
-        low_resolution_sizes = video_processing_utils.LOW_RESOLUTION_SIZES['UW']
+        lowest_res_tested = video_processing_utils.LOWEST_RES_TESTED_AREA['UW']
       else:
-        low_resolution_sizes = video_processing_utils.LOW_RESOLUTION_SIZES['W']
+        lowest_res_tested = video_processing_utils.LOWEST_RES_TESTED_AREA['W']
       supported_preview_sizes = cam.get_supported_preview_sizes(self.camera_id)
-      for size in low_resolution_sizes:
-        if size in supported_preview_sizes:
-          supported_preview_sizes.remove(size)
+      supported_preview_sizes = [size for size in supported_preview_sizes
+                                 if int(size.split('x')[0])*int(size.split('x')[1])
+                                 >= lowest_res_tested]
       logging.debug('Supported preview resolutions: %s',
                     supported_preview_sizes)
 

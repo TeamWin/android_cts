@@ -702,7 +702,7 @@ class MeshTest : ActivityTestBase() {
             Rect(20, 20, 80, 80)
         )
 
-        mesh.setIntUniform("test", 1, 2, 3, 4)
+        mesh.setIntUniform("test", intArrayOf(1, 2, 3, 4))
         createTest().addCanvasClient({ canvas: Canvas, width: Int, height: Int ->
             canvas.drawMesh(mesh, BlendMode.SRC, paint)
         }, true).runWithVerifier(RectVerifier(Color.WHITE, paint.color, rect))

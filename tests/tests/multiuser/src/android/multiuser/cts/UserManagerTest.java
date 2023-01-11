@@ -50,6 +50,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
 import android.content.pm.UserProperties;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.NewUserRequest;
 import android.os.NewUserResponse;
@@ -478,6 +479,27 @@ public final class UserManagerTest {
     }
 
     @Test
+    @RequireHeadlessSystemUserMode(reason = "only headless can have main user as permanent admin.")
+    @ApiTest(apis = {"android.os.UserManager#removeUserWhenPossible"})
+    @EnsureHasAdditionalUser
+    @EnsureHasPermission({CREATE_USERS})
+    public void testRemoveMainUser_shouldNotRemoveMainUser() {
+        assumeTrue("Main user is not permanent admin.", isMainUserPermanentAdmin());
+        UserReference initialUser = sDeviceState.initialUser();
+        UserReference additionalUser = sDeviceState.additionalUser();
+        if (TestApis.users().current() != additionalUser) {
+            additionalUser.switchTo();
+        }
+
+        synchronized (mUserRemoveLock) {
+            assertThat(mUserManager.removeUserWhenPossible(initialUser.userHandle(), false))
+                    .isEqualTo(UserManager.REMOVE_RESULT_ERROR_MAIN_USER_PERMANENT_ADMIN);
+        }
+        // Initial/main user should not be removed.
+        assertThat(hasUser(initialUser.id())).isTrue();
+    }
+
+    @Test
     @EnsureHasPermission({QUERY_USERS})
     @ApiTest(apis = {
             "android.os.UserManager#isSystemUser",
@@ -872,5 +894,16 @@ public final class UserManagerTest {
 
     private boolean hasUser(int id) {
         return getUser(id) != null;
+    }
+
+    private boolean isMainUserPermanentAdmin() {
+        try {
+            return sContext.getResources().getBoolean(
+                    Resources.getSystem().getIdentifier("config_isMainUserPermanentAdmin",
+                            "bool", "android"));
+        } catch (Resources.NotFoundException e) {
+            // Assume the main user is not permanent admin.
+            return false;
+        }
     }
 }

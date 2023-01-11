@@ -35,7 +35,9 @@ import org.junit.Test
 
 /** Tests the UI that displays information about apps' updates to their data sharing policies. */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
-class AppDataSharingUpdatesTest : BasePermissionTest() {
+class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
+    // TODO(b/263838456): Add tests for personal and work profile.
+    // TODO(b/261660881): Add tests involving installing an app with test app metadata.
 
     @get:Rule
     val deviceConfigSafetyLabelChangeNotificationsEnabled =
@@ -51,7 +53,7 @@ class AppDataSharingUpdatesTest : BasePermissionTest() {
             context,
             DeviceConfig.NAMESPACE_PRIVACY,
             PLACEHOLDER_SAFETY_LABEL_UPDATES_FLAG,
-            true.toString())
+            false.toString())
 
     @get:Rule
     val deviceConfigPermissionRationaleEnabled =
@@ -68,7 +70,28 @@ class AppDataSharingUpdatesTest : BasePermissionTest() {
     }
 
     @Test
+    fun startActivityWithIntent_featuresEnabled_whenAppHasLocationGranted_showUpdates() {
+        installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
+        grantLocationPermission(APP_PACKAGE_NAME)
+
+        startAppDataSharingUpdatesActivity()
+
+        try {
+            findView(By.descContains(DATA_SHARING_UPDATES), true)
+            findView(By.textContains(DATA_SHARING_UPDATES_SUBTITLE), true)
+            findView(By.textContains(UPDATES_IN_LAST_30_DAYS), true)
+            findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), true)
+            findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
+            findView(By.textContains(LEARN_MORE_ABOUT_DATA_SHARING), true)
+        } finally {
+            pressBack()
+        }
+    }
+
+    @Test
     fun startActivityWithIntent_featuresEnabled_withPlaceholderData_showUpdates() {
+        setDeviceConfigPrivacyProperty(PLACEHOLDER_SAFETY_LABEL_UPDATES_FLAG, true.toString())
+
         startAppDataSharingUpdatesActivity()
 
         try {
@@ -85,11 +108,14 @@ class AppDataSharingUpdatesTest : BasePermissionTest() {
     // TODO(b/263838996): Check that Safety Label Help Center is opened.
     @Test
     fun clickLearnMore_opensPermissionManager() {
+        installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
+        grantLocationPermission(APP_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
         try {
             findView(By.descContains(DATA_SHARING_UPDATES), true)
             findView(By.textContains(LEARN_MORE_ABOUT_DATA_SHARING), true)
+            findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), true)
             waitForIdle()
 
             click(By.textContains(LEARN_MORE_ABOUT_DATA_SHARING))
@@ -101,20 +127,22 @@ class AppDataSharingUpdatesTest : BasePermissionTest() {
         }
     }
 
-    // TODO(b/261665490): Update this test to check app name in update and app permissions page
-    //  once we no longer use placeholder data.
     @Test
     fun clickSettingsGearInUpdate_opensAppPermissionsPage() {
+        installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
+        grantLocationPermission(APP_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
         try {
             findView(By.descContains(DATA_SHARING_UPDATES), true)
             findView(By.textContains(UPDATES_IN_LAST_30_DAYS), true)
+            findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), true)
             waitForIdle()
 
             click(By.res(SETTINGS_BUTTON_RES_ID))
 
             findView(By.descContains(APP_PERMISSIONS), true)
+            findView(By.textContains(APP_PACKAGE_NAME), true)
         } finally {
             pressBack()
             pressBack()
@@ -122,15 +150,15 @@ class AppDataSharingUpdatesTest : BasePermissionTest() {
     }
 
     @Test
-    fun startActivityWithIntent_featuresEnabled_withoutPlaceholderData_showsNoUpdates() {
-        setDeviceConfigPrivacyProperty(PLACEHOLDER_SAFETY_LABEL_UPDATES_FLAG, false.toString())
-
+    fun startActivityWithIntent_featuresEnabled_whenAppDoesntHaveLocationGranted_showsNoUpdates() {
+        installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
         try {
             findView(By.descContains(DATA_SHARING_UPDATES), true)
             findView(By.textContains(DATA_SHARING_NO_UPDATES_SUBTITLE), true)
             findView(By.textContains(DATA_SHARING_UPDATES_SUBTITLE), false)
+            findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), false)
             findView(By.textContains(UPDATES_IN_LAST_30_DAYS), false)
             findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), false)
             findView(By.textContains(LEARN_MORE_ABOUT_DATA_SHARING), false)
@@ -177,6 +205,11 @@ class AppDataSharingUpdatesTest : BasePermissionTest() {
         }
     }
 
+    private fun grantLocationPermission(packageName: String) {
+        uiAutomation.grantRuntimePermission(
+            packageName, android.Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+
     /** Companion object for [AppDataSharingUpdatesTest]. */
     companion object {
         private const val DATA_SHARING_UPDATES = "Data sharing updates"
@@ -192,6 +225,7 @@ class AppDataSharingUpdatesTest : BasePermissionTest() {
         private const val LEARN_MORE_ABOUT_DATA_SHARING = "Learn more about data sharing"
         private const val APP_PERMISSIONS = "App permissions"
         private const val PERMISSION_MANAGER = "Permission manager"
+        private const val APP_PACKAGE_NAME_SUBSTRING = "android.permission3"
         private const val SETTINGS_BUTTON_RES_ID =
             "com.android.permissioncontroller:id/settings_button"
         private const val PLACEHOLDER_SAFETY_LABEL_UPDATES_FLAG =

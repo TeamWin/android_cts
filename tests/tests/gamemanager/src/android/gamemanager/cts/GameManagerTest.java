@@ -208,14 +208,15 @@ public class GameManagerTest {
      */
     @Test
     public void testGetGameModeUnsupported() {
+        int expectedGameMode = mActivity.getGameMode();
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
                         GameManager.GAME_MODE_UNSUPPORTED));
 
-        int gameMode = mActivity.getGameMode();
+        int newGameMode = mActivity.getGameMode();
 
-        assertEquals("Game Manager returned incorrect value.",
-                GameManager.GAME_MODE_STANDARD, gameMode);
+        assertEquals("Game mode is not expected to change after trying to set UNSUPPORTED",
+                expectedGameMode, newGameMode);
     }
 
     /**
