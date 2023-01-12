@@ -1787,7 +1787,11 @@ public class StagedInstallTest {
         LocalIntentSender sender = new LocalIntentSender();
         InstallUtils.openPackageInstallerSession(sessionId)
                 .commit(sender.getIntentSender());
-        return sender.getResult();
+        var result = sender.pollResult(5, TimeUnit.MINUTES);
+        if (result == null) {
+            throw new AssertionError("Install timeout, sessionId=" + sessionId);
+        }
+        return result;
     }
 
     private static StageSessionResult stageDowngradeSingleApk(TestApp testApp) throws Exception {

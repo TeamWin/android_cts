@@ -18,9 +18,7 @@ package android.packageinstaller.install.cts
 
 import android.content.pm.PackageInstaller
 import android.platform.test.annotations.AppModeFull
-import android.provider.DeviceConfig
 import androidx.test.runner.AndroidJUnit4
-import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
@@ -294,19 +292,6 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
             assertInstalled()
         } finally {
             setDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE, config)
-        }
-    }
-
-    private fun getDeviceProperty(name: String): String? {
-        return SystemUtil.callWithShellPermissionIdentity {
-            DeviceConfig.getProperty(DeviceConfig.NAMESPACE_PACKAGE_MANAGER_SERVICE, name)
-        }
-    }
-
-    private fun setDeviceProperty(name: String, value: String?) {
-        SystemUtil.callWithShellPermissionIdentity {
-            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PACKAGE_MANAGER_SERVICE, name, value,
-                    false /* makeDefault */)
         }
     }
 }

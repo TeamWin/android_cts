@@ -49,6 +49,8 @@ public class WifiStatsTests extends DeviceTestCase implements IBuildReceiver {
     private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
     private static final String FEATURE_PC = "android.hardware.type.pc";
     private static final String FEATURE_WIFI = "android.hardware.wifi";
+    private static final String FEATURE_NAMESPACE = "wifi";
+    private String mDefaultValue;
 
     @Override
     protected void setUp() throws Exception {
@@ -57,11 +59,13 @@ public class WifiStatsTests extends DeviceTestCase implements IBuildReceiver {
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
+        saveFeature("high_perf_lock_deprecated");
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
     @Override
     protected void tearDown() throws Exception {
+        restoreFeature("high_perf_lock_deprecated");
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.uninstallStatsdTestApp(getDevice());
@@ -73,10 +77,64 @@ public class WifiStatsTests extends DeviceTestCase implements IBuildReceiver {
         mCtsBuild = buildInfo;
     }
 
+    private void saveFeature(final String feature) throws Exception {
+        mDefaultValue = DeviceUtils.getDeviceConfigFeature(getDevice(), FEATURE_NAMESPACE,
+                feature);
+    }
+
+    private void setFeature(final String feature, final String enable) throws Exception {
+        DeviceUtils.putDeviceConfigFeature(getDevice(), FEATURE_NAMESPACE, feature, enable);
+    }
+
+    private void restoreFeature(String feature) throws Exception {
+        if (mDefaultValue == null || mDefaultValue.equals("null")) {
+            DeviceUtils.deleteDeviceConfigFeature(getDevice(), FEATURE_NAMESPACE, feature);
+        } else {
+            DeviceUtils.putDeviceConfigFeature(getDevice(), FEATURE_NAMESPACE, feature,
+                    mDefaultValue);
+        }
+    }
+    /**
+     * Test High Perf lock with the wifi:high_perf_lock_deprecated = false.
+     */
     public void testWifiLockHighPerf() throws Exception {
         if (!DeviceUtils.hasFeature(getDevice(), FEATURE_WIFI)) return;
         if (DeviceUtils.hasFeature(getDevice(), FEATURE_PC)) return;
 
+        setFeature("high_perf_lock_deprecated", "false");
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.WIFI_LOCK_STATE_CHANGED_FIELD_NUMBER, true);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWifiLockHighPerf");
+
+        // Sorted list of events in order in which they occurred.
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+
+        Set<Integer> lockOn = new HashSet<>(
+                Collections.singletonList(AtomsProto.WifiLockStateChanged.State.ON_VALUE));
+        Set<Integer> lockOff = new HashSet<>(
+                Collections.singletonList(AtomsProto.WifiLockStateChanged.State.OFF_VALUE));
+
+        // Add state sets to the list in order.
+        List<Set<Integer>> stateSet = Arrays.asList(lockOn, lockOff);
+
+        // Assert that the events happened in the expected order.
+        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
+                atom -> atom.getWifiLockStateChanged().getState().getNumber());
+
+        for (StatsLog.EventMetricData event : data) {
+            assertThat(event.getAtom().getWifiLockStateChanged().getMode())
+                    .isEqualTo(WifiModeEnum.WIFI_MODE_FULL_HIGH_PERF);
+        }
+    }
+
+    /**
+     * Test High Perf lock with the wifi:high_perf_lock_deprecated = true.
+     */
+    public void testWifiLockHighPerfDeprecated() throws Exception {
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_WIFI)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_PC)) return;
+
+        setFeature("high_perf_lock_deprecated", "true");
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.WIFI_LOCK_STATE_CHANGED_FIELD_NUMBER, true);
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWifiLockHighPerf");

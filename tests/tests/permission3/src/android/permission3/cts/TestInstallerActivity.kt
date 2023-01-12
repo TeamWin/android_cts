@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package android.permission3.cts.testappstoreapp
+package android.permission3.cts
 
 import android.app.Activity
 
-class EmptyActivity : Activity()
+class TestInstallerActivity : Activity()

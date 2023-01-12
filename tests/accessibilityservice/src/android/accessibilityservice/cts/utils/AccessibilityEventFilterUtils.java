@@ -27,6 +27,8 @@ import androidx.annotation.NonNull;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiPredicate;
 
@@ -77,6 +79,25 @@ public class AccessibilityEventFilterUtils {
         return allOf(new AccessibilityEventTypeMatcher(AccessibilityEvent.TYPE_WINDOWS_CHANGED),
                 new WindowChangesMatcher(changeTypes),
                 new WindowIdMatcher(windowId))::matches;
+    }
+
+    /**
+     * Creates an {@link AccessibilityEventFilter} that returns {@code true} once all the given
+     * filters return {@code true} for any event.
+     * Each given filters are invoked on every AccessibilityEvent until it returns {@code true}.
+     * After all filters return {@code true} once, the created filter returns {@code true} forever.
+     */
+    public static AccessibilityEventFilter filterWaitForAll(AccessibilityEventFilter... filters) {
+        return new AccessibilityEventFilter() {
+            private final List<AccessibilityEventFilter> mUnresolved =
+                    new LinkedList<>(Arrays.asList(filters));
+
+            @Override
+            public boolean accept(AccessibilityEvent event) {
+                mUnresolved.removeIf(filter -> filter.accept(event));
+                return mUnresolved.isEmpty();
+            }
+        };
     }
 
     public static class AccessibilityEventTypeMatcher extends TypeSafeMatcher<AccessibilityEvent> {

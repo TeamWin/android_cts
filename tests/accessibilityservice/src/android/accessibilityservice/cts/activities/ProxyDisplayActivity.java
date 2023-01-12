@@ -20,7 +20,7 @@ import android.accessibilityservice.cts.R;
 import android.os.Bundle;
 
 /**
- * Activity used by AccessibilityProxyTest
+ * Activity launched on a virtual display that is used by AccessibilityProxyTest.
  */
 public class ProxyDisplayActivity extends AccessibilityTestActivity {
     @Override

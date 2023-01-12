@@ -16,6 +16,7 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWaitForAll;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangeTypesAndWindowTitle;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
@@ -51,20 +52,17 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityWindowReportingActivity;
 import android.accessibilityservice.cts.activities.NonDefaultDisplayActivity;
 import android.accessibilityservice.cts.activities.NotTouchableWindowTestActivity;
+import android.accessibilityservice.cts.utils.DisplayUtils;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Rect;
-import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.view.Gravity;
-import android.view.InputDevice;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -293,27 +291,7 @@ public class AccessibilityWindowReportingTest {
             // touch event on the activity window of the virtual display to pass this test case.
             sUiAutomation.executeAndWaitForEvent(
                     () -> {
-                        final Rect areaOfActivityWindowOnVirtualDisplay = new Rect();
-                        findWindowByTitleAndDisplay(sUiAutomation, activityTitle, virtualDisplayId)
-                                .getBoundsInScreen(areaOfActivityWindowOnVirtualDisplay);
-
-                        final int xOnScreen =
-                            areaOfActivityWindowOnVirtualDisplay.centerX();
-                        final int yOnScreen =
-                            areaOfActivityWindowOnVirtualDisplay.centerY();
-                        final long downEventTime = SystemClock.uptimeMillis();
-                        final MotionEvent downEvent = MotionEvent.obtain(downEventTime,
-                                downEventTime, MotionEvent.ACTION_DOWN, xOnScreen, yOnScreen, 0);
-                        downEvent.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-                        downEvent.setDisplayId(virtualDisplayId);
-                        sUiAutomation.injectInputEvent(downEvent, true);
-
-                        final long upEventTime = downEventTime + 10;
-                        final MotionEvent upEvent = MotionEvent.obtain(downEventTime, upEventTime,
-                                MotionEvent.ACTION_UP, xOnScreen, yOnScreen, 0);
-                        upEvent.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-                        upEvent.setDisplayId(virtualDisplayId);
-                        sUiAutomation.injectInputEvent(upEvent, true);
+                        DisplayUtils.touchDisplay(sUiAutomation, virtualDisplayId, activityTitle);
                     },
                     filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_FOCUSED |
                             WINDOWS_CHANGE_ACTIVE),
@@ -441,15 +419,21 @@ public class AccessibilityWindowReportingTest {
             intent.setPackage(sInstrumentation.getContext().getPackageName());
 
             try {
-                // Waits for the not-touchable activity is covered by the untrusted window.
-                sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
-                        () -> sInstrumentation.getContext().sendBroadcast(intent)),
-                        (event) -> {
-                            final AccessibilityWindowInfo notTouchableWindow =
-                                    findWindowByTitle(sUiAutomation,
-                                            NotTouchableWindowTestActivity.TITLE);
-                            return notTouchableWindow == null;
-                        }, TIMEOUT_ASYNC_PROCESSING);
+                // Waits for two events, whose order is nondeterministic:
+                //  (1) the test activity is covered by the untrusted non-touchable window.
+                //  (2) the untrusted non-touchable window is added.
+                sendIntentAndWaitForEvent(intent,
+                        filterWaitForAll(
+                                event -> {
+                                    final AccessibilityWindowInfo coveredWindow =
+                                            findWindowByTitle(sUiAutomation,
+                                                    NotTouchableWindowTestActivity.TITLE);
+                                    return coveredWindow == null;
+                                },
+                                filterWindowsChangeTypesAndWindowTitle(sUiAutomation,
+                                        WINDOWS_CHANGE_ADDED,
+                                        NotTouchableWindowTestActivity.NON_TOUCHABLE_WINDOW_TITLE)
+                        ));
             } finally {
                 intent.setAction(NotTouchableWindowTestActivity.REMOVE_WINDOW);
                 sendIntentAndWaitForEvent(intent,
@@ -480,7 +464,7 @@ public class AccessibilityWindowReportingTest {
                     sendIntentAndWaitForEvent(intent,
                             filterWindowsChangeTypesAndWindowTitle(sUiAutomation,
                                     WINDOWS_CHANGE_ADDED,
-                                    NotTouchableWindowTestActivity.NON_TOUCHABLE_WINDOW_TITLE.toString())
+                                    NotTouchableWindowTestActivity.NON_TOUCHABLE_WINDOW_TITLE)
                     );
                 }, Manifest.permission.INTERNAL_SYSTEM_WINDOW);
 

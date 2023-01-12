@@ -24,7 +24,6 @@ import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.modules.utils.build.SdkLevel
-import org.junit.After
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
@@ -54,16 +53,6 @@ class AppPermissionTest : BaseUsePermissionTest() {
     Assume.assumeFalse(isAutomotive)
     Assume.assumeFalse(isTv)
     Assume.assumeFalse(isWatch)
-  }
-
-  @Before
-  fun installTestAppStore() {
-    installPackage(APP_APK_PATH_TEST_STORE_APP)
-  }
-
-  @After
-  fun uninstallTestAppStore() {
-    uninstallPackage(TEST_STORE_PACKAGE_NAME, requireSuccess = false)
   }
 
   @Test
@@ -114,7 +103,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
 
   private fun installPackageWithInstallSource() {
     // TODO(b/257293222): Update/remove when hooking up PackageManager APIs
-    installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
+    installPackage(APP_APK_PATH_31, installSource = TEST_INSTALLER_PACKAGE_NAME)
   }
 
   private fun installPackageWithoutInstallSource() {

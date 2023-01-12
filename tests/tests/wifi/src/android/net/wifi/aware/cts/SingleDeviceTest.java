@@ -16,6 +16,8 @@
 
 package android.net.wifi.aware.cts;
 
+import static android.net.wifi.aware.AwarePairingConfig.PAIRING_BOOTSTRAPPING_OPPORTUNISTIC;
+
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.mock;
@@ -33,6 +35,7 @@ import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiScanner;
 import android.net.wifi.aware.AttachCallback;
+import android.net.wifi.aware.AwarePairingConfig;
 import android.net.wifi.aware.AwareParams;
 import android.net.wifi.aware.AwareResources;
 import android.net.wifi.aware.Characteristics;
@@ -1290,6 +1293,61 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> mWifiAwareManager.setAwareParams(null)
             );
+        }
+    }
+
+    /**
+     * Verify Aware pairing config class.
+     */
+    public void testAwarePairingConfig() {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+        boolean pairingSupported = mWifiAwareManager.getCharacteristics().isAwarePairingSupported();
+        AwarePairingConfig config = new AwarePairingConfig.Builder()
+                .setPairingCacheEnabled(true)
+                .setPairingSetupEnabled(true)
+                .setPairingVerificationEnabled(true)
+                .setBootstrappingMethods(PAIRING_BOOTSTRAPPING_OPPORTUNISTIC)
+                .build();
+        assertTrue(config.isPairingCacheEnabled());
+        assertTrue(config.isPairingSetupEnabled());
+        assertTrue(config.isPairingVerificationEnabled());
+        assertEquals(PAIRING_BOOTSTRAPPING_OPPORTUNISTIC, config.getBootstrappingMethods());
+
+        if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+                && !ApiLevelUtil.codenameStartsWith("U")) {
+            return;
+        }
+
+        WifiAwareSession session = attachAndGetSession();
+
+        PublishConfig publishConfig = new PublishConfig.Builder().setServiceName(
+                "ValidName").setPairingConfig(config).build();
+        assertEquals(config, publishConfig.getPairingConfig());
+        DiscoverySessionCallbackTest discoveryCb1 = new DiscoverySessionCallbackTest();
+        // Should send exception when pairing is not supported
+        if (!pairingSupported) {
+            assertThrows(IllegalArgumentException.class, () ->
+                    session.publish(publishConfig, discoveryCb1, mHandler));
+        } else {
+            session.publish(publishConfig, discoveryCb1, mHandler);
+            assertTrue("Publish started", discoveryCb1
+                    .waitForCallback(DiscoverySessionCallbackTest.ON_PUBLISH_STARTED));
+        }
+
+        DiscoverySessionCallbackTest discoveryCb2 = new DiscoverySessionCallbackTest();
+        SubscribeConfig subscribeConfig = new SubscribeConfig.Builder().setServiceName(
+                "ValidName").setPairingConfig(config).build();
+        assertEquals(config, subscribeConfig.getPairingConfig());
+        // Should send exception when pairing is not supported
+        if (!pairingSupported) {
+            assertThrows(IllegalArgumentException.class, () ->
+                    session.subscribe(subscribeConfig, discoveryCb2, mHandler));
+        } else {
+            session.subscribe(subscribeConfig, discoveryCb2, mHandler);
+            assertTrue("Subscribe started", discoveryCb2
+                    .waitForCallback(DiscoverySessionCallbackTest.ON_SUBSCRIBE_STARTED));
         }
     }
 

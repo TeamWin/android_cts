@@ -37,7 +37,6 @@ import android.content.Context;
 import android.graphics.Region;
 import android.hardware.display.DisplayManager;
 import android.os.Binder;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
 import android.util.SparseArray;
@@ -52,7 +51,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
-import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -117,7 +115,6 @@ public class AccessibilityOverlayTest {
     }
 
     @Test
-    @FlakyTest
     public void testA11yServiceShowsOverlayOnVirtualDisplay_shouldAppear() throws Exception {
         try (final DisplayUtils.VirtualDisplaySession displaySession =
                      new DisplayUtils.VirtualDisplaySession()) {
@@ -125,20 +122,16 @@ public class AccessibilityOverlayTest {
                     mService, false);
             final int displayId = newDisplay.getDisplayId();
             final String overlayTitle = "Overlay title on virtualDisplay";
-            // Make sure the onDisplayAdded callback of a11y framework handled by checking if the
-            // accessibilityWindowInfo list of the virtual display has been added.
-            // And the a11y default token is available after the onDisplayAdded callback handled.
-            TestUtils.waitUntil("AccessibilityWindowInfo list of the virtual display are not ready",
-                    () -> {
-                        final SparseArray<List<AccessibilityWindowInfo>> allWindows =
-                                sUiAutomation.getWindowsOnAllDisplays();
-                        return allWindows.get(displayId) != null;
-                    }
-            );
-            final Context newDisplayContext = mService.createDisplayContext(newDisplay);
+
+            // Create an initial activity window on the virtual display to ensure that
+            // AccessibilityWindowManager is tracking windows for the display.
+            launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(sInstrumentation,
+                    sUiAutomation,
+                    AccessibilityWindowQueryActivity.class,
+                    displayId);
 
             sUiAutomation.executeAndWaitForEvent(() -> mService.runOnServiceSync(() -> {
-                addOverlayWindow(newDisplayContext, overlayTitle);
+                addOverlayWindow(mService.createDisplayContext(newDisplay), overlayTitle);
             }), (event) -> findOverlayWindow(displayId) != null, AsyncUtils.DEFAULT_TIMEOUT_MS);
 
             assertTrue(TextUtils.equals(findOverlayWindow(displayId).getTitle(), overlayTitle));

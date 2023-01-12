@@ -19,6 +19,7 @@ package android.packageinstaller.install.cts
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageInstaller
+import android.platform.test.annotations.AppModeFull
 import androidx.test.InstrumentationRegistry
 import java.io.File
 import kotlin.random.Random
@@ -28,6 +29,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
+@AppModeFull(reason = "Instant apps cannot access device storage")
 class InstallInfoTest : PackageInstallerTestBase() {
     private val NOT_AN_APK = "NotAnApk.txt"
     // corruptedapk.apk in /install/assets dir was copied over from
@@ -43,7 +45,7 @@ class InstallInfoTest : PackageInstallerTestBase() {
 
     @Test
     fun testInstallInfoOfMonolithicPackage() {
-        val apk = File("$TEST_APK_LOCATION/$TEST_APK_NAME")
+        val apk = File(context.filesDir.canonicalPath + "/$TEST_APK_NAME")
         val installInfo = pi.getInstallInfo(apk, 0)
 
         assertEquals(PackageInfo.INSTALL_LOCATION_PREFER_EXTERNAL, installInfo.installLocation)
@@ -53,7 +55,7 @@ class InstallInfoTest : PackageInstallerTestBase() {
 
     @Test
     fun testInstallInfoOfClusterPackage() {
-        val apk = File(TEST_APK_LOCATION)
+        val apk = File(context.filesDir.canonicalPath)
         val installInfo = pi.getInstallInfo(apk, 0)
 
         // The test APKs do not include native binaries or dex metadata. Thus, the total size of

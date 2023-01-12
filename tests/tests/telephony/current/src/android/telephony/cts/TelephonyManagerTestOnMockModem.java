@@ -606,4 +606,65 @@ public class TelephonyManagerTestOnMockModem {
         // Remove the SIM
         sMockModemManager.removeSimCard(slotId);
     }
+
+    @Test
+    public void testDsdsServiceStateChange() throws Throwable {
+        Log.d(TAG, "TelephonyManagerTestOnMockModem#testDsdsServiceStateChange");
+        assumeTrue("Skip test: Not test on single SIM device", sIsMultiSimDevice);
+
+        int slotId_0 = 0;
+        int slotId_1 = 1;
+        int subId_0;
+        int subId_1;
+
+        // Insert a SIM
+        sMockModemManager.insertSimCard(slotId_0, MOCK_SIM_PROFILE_ID_TWN_CHT);
+        sMockModemManager.insertSimCard(slotId_1, MOCK_SIM_PROFILE_ID_TWN_FET);
+
+        // Expect: Seaching State
+        TimeUnit.SECONDS.sleep(2);
+        subId_0 = getActiveSubId(slotId_0);
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId_0),
+                NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING);
+
+        subId_1 = getActiveSubId(slotId_1);
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId_1),
+                NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING);
+
+        // Enter Service
+        Log.d(TAG, "testDsdsServiceStateChange: Enter Service");
+        sMockModemManager.changeNetworkService(slotId_0, MOCK_SIM_PROFILE_ID_TWN_CHT, true);
+        sMockModemManager.changeNetworkService(slotId_1, MOCK_SIM_PROFILE_ID_TWN_FET, true);
+
+        // Expect: Home State
+        TimeUnit.SECONDS.sleep(2);
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId_0),
+                NetworkRegistrationInfo.REGISTRATION_STATE_HOME);
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId_1),
+                NetworkRegistrationInfo.REGISTRATION_STATE_HOME);
+
+        TimeUnit.SECONDS.sleep(2);
+
+        // Leave Service
+        Log.d(TAG, "testDsdsServiceStateChange: Leave Service");
+        sMockModemManager.changeNetworkService(slotId_0, MOCK_SIM_PROFILE_ID_TWN_CHT, false);
+        sMockModemManager.changeNetworkService(slotId_1, MOCK_SIM_PROFILE_ID_TWN_FET, false);
+
+        // Expect: Seaching State
+        TimeUnit.SECONDS.sleep(2);
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId_0),
+                NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING);
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId_1),
+                NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING);
+
+        // Remove the SIM
+        sMockModemManager.removeSimCard(slotId_0);
+        sMockModemManager.removeSimCard(slotId_1);
+    }
 }

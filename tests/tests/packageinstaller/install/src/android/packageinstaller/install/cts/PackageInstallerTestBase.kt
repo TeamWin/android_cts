@@ -38,6 +38,7 @@ import android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
 import android.content.pm.PackageManager
 import android.icu.util.ULocale
 import android.os.PersistableBundle
+import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
@@ -46,6 +47,7 @@ import androidx.core.content.FileProvider
 import androidx.test.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.android.compatibility.common.util.FutureResultActivity
+import com.android.compatibility.common.util.SystemUtil
 import java.io.File
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.LinkedBlockingQueue
@@ -77,12 +79,16 @@ open class PackageInstallerTestBase {
 
         const val PACKAGE_INSTALLER_PACKAGE_NAME = "com.android.packageinstaller"
         const val SYSTEM_PACKAGE_NAME = "android"
+        const val SHELL_PACKAGE_NAME = "com.android.shell"
         const val APP_OP_STR = "REQUEST_INSTALL_PACKAGES"
 
         const val PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE = "is_preapproval_available"
+        const val PROPERTY_IS_UPDATE_OWNERSHIP_ENFORCEMENT_AVAILABLE =
+                "is_update_ownership_enforcement_available"
 
         const val TIMEOUT = 60000L
         const val INSTALL_INSTANT_APP = 0x00000800
+        const val INSTALL_REQUEST_UPDATE_OWNERSHIP = 0x02000000
     }
 
     @get:Rule
@@ -174,6 +180,15 @@ open class PackageInstallerTestBase {
         return startInstallationViaSession(0 /* installFlags */, TEST_APK_NAME, null, appMetadata)
     }
 
+    protected fun startInstallationViaSessionNoPrompt(): CompletableFuture<Int> {
+        return startInstallationViaSession(
+                0 /* installFlags */,
+                TEST_APK_NAME,
+                null /* packageSource */,
+                false /* expectedPrompt */
+        )
+    }
+
     protected fun startInstallationViaSessionWithPackageSource(packageSource: Int?):
             CompletableFuture<Int> {
         return startInstallationViaSession(0 /* installFlags */, TEST_APK_NAME, packageSource)
@@ -189,6 +204,9 @@ open class PackageInstallerTestBase {
         // Handle additional install flags
         if (installFlags and INSTALL_INSTANT_APP != 0) {
             sessionParam.setInstallAsInstantApp(true)
+        }
+        if (installFlags and INSTALL_REQUEST_UPDATE_OWNERSHIP != 0) {
+            sessionParam.setRequestUpdateOwnership(true)
         }
         if (isMultiPackage) {
             sessionParam.setMultiPackage()
@@ -213,12 +231,21 @@ open class PackageInstallerTestBase {
         }
     }
 
-    protected fun commitSession(session: Session): CompletableFuture<Int> {
+    protected fun commitSession(
+            session: Session,
+            expectedPrompt: Boolean = true
+    ): CompletableFuture<Int> {
+        val pendingIntent = PendingIntent.getBroadcast(
+                context, 0 /* requestCode */, Intent(INSTALL_ACTION_CB),
+                FLAG_UPDATE_CURRENT or FLAG_MUTABLE)
+
+        if (!expectedPrompt) {
+            session.commit(pendingIntent.intentSender)
+            return CompletableFuture<Int>()
+        }
+
         // Commit session
         val dialog = FutureResultActivity.doAndAwaitStart {
-            val pendingIntent = PendingIntent.getBroadcast(
-                    context, 0, Intent(INSTALL_ACTION_CB).setPackage(context.packageName),
-                    FLAG_UPDATE_CURRENT or FLAG_MUTABLE)
             session.commit(pendingIntent.intentSender)
         }
 
@@ -266,11 +293,12 @@ open class PackageInstallerTestBase {
     protected fun startInstallationViaSession(
         installFlags: Int,
         apkName: String,
-        packageSource: Int?
+        packageSource: Int?,
+        expectedPrompt: Boolean = true
     ): CompletableFuture<Int> {
         val (sessionId, session) = createSession(installFlags, false, packageSource)
         writeSession(session, apkName)
-        return commitSession(session)
+        return commitSession(session, expectedPrompt)
     }
 
     protected fun startInstallationViaSession(
@@ -288,6 +316,15 @@ open class PackageInstallerTestBase {
             session.abandon()
             throw e
         }
+    }
+
+    protected fun writeAndCommitSession(
+            apkName: String,
+            session: Session,
+            expectedPrompt: Boolean = true
+    ): CompletableFuture<Int> {
+        writeSession(session, apkName)
+        return commitSession(session, expectedPrompt)
     }
 
     protected fun startInstallationViaMultiPackageSession(
@@ -381,12 +418,33 @@ open class PackageInstallerTestBase {
 
     @After
     fun uninstallTestPackage() {
-        uiDevice.executeShellCommand("pm uninstall $TEST_APK_PACKAGE_NAME")
+        uninstallPackage(TEST_APK_PACKAGE_NAME)
     }
 
-    fun installTestPackage() {
-        uiDevice.executeShellCommand("pm install " +
-                File(TEST_APK_LOCATION, TEST_APK_NAME).canonicalPath)
+    fun uninstallPackage(packageName: String) {
+        uiDevice.executeShellCommand("pm uninstall $packageName")
+    }
+
+    fun installTestPackage(extraArgs: String = "") {
+        installPackage(TEST_APK_NAME, extraArgs)
+    }
+
+    fun installPackage(apkName: String, extraArgs: String = "") {
+        uiDevice.executeShellCommand("pm install $extraArgs " +
+                File(TEST_APK_LOCATION, apkName).canonicalPath)
+    }
+
+    fun getDeviceProperty(name: String): String? {
+        return SystemUtil.callWithShellPermissionIdentity {
+            DeviceConfig.getProperty(DeviceConfig.NAMESPACE_PACKAGE_MANAGER_SERVICE, name)
+        }
+    }
+
+    fun setDeviceProperty(name: String, value: String?) {
+        SystemUtil.callWithShellPermissionIdentity {
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PACKAGE_MANAGER_SERVICE, name, value,
+                    false /* makeDefault */)
+        }
     }
 
     protected fun preparePreapprovalDetails(): PreapprovalDetails {

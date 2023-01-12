@@ -552,7 +552,8 @@ class ItsSession(object):
     return data['objValue']
 
   def do_preview_recording(self, video_size, duration, stabilize,
-                           zoom_ratio=None):
+                           zoom_ratio=None, ae_target_fps_min=None,
+                           ae_target_fps_max=None):
     """Issue a preview request and read back the preview recording object.
 
     The resolution of the preview and its recording will be determined by
@@ -565,6 +566,8 @@ class ItsSession(object):
       duration: int; The time in seconds for which the video will be recorded.
       stabilize: boolean; Whether the preview should be stabilized or not
       zoom_ratio: float; zoom ratio. None if default zoom
+      ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
+      ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
     Returns:
       video_recorded_object: The recorded object returned from ItsService which
       contains path at which the recording is saved on the device, quality of
@@ -595,6 +598,9 @@ class ItsSession(object):
         cmd['zoomRatio'] = zoom_ratio
       else:
         raise AssertionError(f'Zoom ratio {zoom_ratio} out of range')
+    if ae_target_fps_min and ae_target_fps_max:
+      cmd['aeTargetFpsMin'] = ae_target_fps_min
+      cmd['aeTargetFpsMax'] = ae_target_fps_max
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
     self.sock.settimeout(timeout)

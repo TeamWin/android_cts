@@ -18,4 +18,7 @@
 
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
                        android:description="@string/stub_proxy_concurrent_service_description"
-/>
+                       android:accessibilityEventTypes="typeAllMask"
+                       android:accessibilityFlags="flagDefault|flagRequestTouchExplorationMode|flagRetrieveInteractiveWindows"
+                       android:canRetrieveWindowContent="true"
+                       android:canRequestTouchExplorationMode="true"/>

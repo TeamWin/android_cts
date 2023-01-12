@@ -80,10 +80,14 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.AmMonitor;
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -185,6 +189,22 @@ public class ActivityManagerProcessStateTest {
         final ActivityManager am = mContext.getSystemService(ActivityManager.class);
         for (int i = 0; i < PACKAGE_NAMES.length; i++) {
             final String pkgName = PACKAGE_NAMES[i];
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                am.forceStopPackage(pkgName);
+            });
+        }
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        // Stop all the packages
+        final List<String> allPackageNames = new ArrayList<>();
+        allPackageNames.addAll(Arrays.asList(PACKAGE_NAMES));
+        allPackageNames.add(SIMPLE_PACKAGE_NAME);
+        allPackageNames.add(CANT_SAVE_STATE_1_PACKAGE_NAME);
+        allPackageNames.add(CANT_SAVE_STATE_2_PACKAGE_NAME);
+        final ActivityManager am = mContext.getSystemService(ActivityManager.class);
+        for (final String pkgName : allPackageNames) {
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 am.forceStopPackage(pkgName);
             });

@@ -73,6 +73,10 @@
                   android:name=".activities.ProxyDisplayActivity"
                   android:screenOrientation="locked"/>
 
+        <activity android:label="@string/proxy_concurrent_activity"
+                  android:name=".activities.ProxyConcurrentActivity"
+                  android:screenOrientation="locked"/>
+
         <activity android:label="Full screen activity for gesture dispatch testing"
              android:name=".AccessibilityGestureDispatchTest$GestureDispatchActivity"
              android:theme="@style/Theme_NoSwipeDismiss"

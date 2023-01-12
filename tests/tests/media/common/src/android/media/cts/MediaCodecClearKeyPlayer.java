@@ -15,6 +15,8 @@
  */
 package android.media.cts;
 
+import static org.junit.Assume.assumeFalse;
+
 import android.content.Context;
 import android.content.res.Resources;
 import android.media.AudioManager;
@@ -325,6 +327,8 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                     }
 
                     mMediaCas.provision(sProvisionStr);
+                    // If AIDL CAS service is being used, then setMediaCas will not work.
+                    assumeFalse(mMediaCas.isAidlHal());
                     extractor.setMediaCas(mMediaCas);
                     break;
                 }

@@ -457,6 +457,17 @@ public class DeviceAssociationTest {
     }
 
     @Test
+    public void serviceContext_startServiceAfterActivityDeviceIsClosed_returnsDefault()
+            throws TimeoutException {
+        startActivity(DEFAULT_DISPLAY);
+        startActivity(mVirtualDisplay);
+        mVirtualDevice.close();
+        Service service = createTestService();
+
+        assertThat(service.getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
+    }
+
+    @Test
     public void serviceContext_noActivities_hasDefaultId()
             throws TimeoutException {
         Service service = createTestService();

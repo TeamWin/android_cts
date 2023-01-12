@@ -47,7 +47,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
     private static final int MIN_SCHEDULE_QUOTA = 250;
     private static final int JOB_ID = JobSchedulingTest.class.hashCode();
     // The maximum number of jobs that can run concurrently.
-    private static final int MAX_JOB_CONTEXTS_COUNT = 16;
+    private static final int MAX_JOB_CONTEXTS_COUNT = 64;
 
     @Override
     public void tearDown() throws Exception {
@@ -366,6 +366,11 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
     }
 
     public void testPendingJobReason_batteryNotLow() throws Exception {
+        if (!BatteryUtils.hasBattery()) {
+            // Can't test while the device doesn't have battery
+            return;
+        }
+
         setBatteryState(false, 5);
 
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
@@ -379,6 +384,11 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
     }
 
     public void testPendingJobReason_charging() throws Exception {
+        if (!BatteryUtils.hasBattery()) {
+            // Can't test while the device doesn't have battery
+            return;
+        }
+
         setBatteryState(false, 100);
 
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)

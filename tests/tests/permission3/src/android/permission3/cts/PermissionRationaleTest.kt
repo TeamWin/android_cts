@@ -55,15 +55,6 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
             PERMISSION_RATIONALE_ENABLED,
             true.toString())
 
-    // TODO(b/257293222): Remove when hooking up PackageManager APIs
-    @get:Rule
-    val deviceConfigTestSafetyLabelDataEnabled =
-        DeviceConfigStateChangerRule(
-            context,
-            DeviceConfig.NAMESPACE_PRIVACY,
-            PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED,
-            true.toString())
-
     @Before
     fun setup() {
         Assume.assumeTrue("Permission rationale is only available on U+", SdkLevel.isAtLeastU())
@@ -73,18 +64,18 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
 
         activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
 
-        installPackage(APP_APK_PATH_TEST_STORE_APP)
+        enableComponent(TEST_INSTALLER_ACTIVITY_COMPONENT_NAME)
 
-        // TODO(b/257293222): Update/remove when hooking up PackageManager APIs
-        installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
+        installPackageViaSession(
+            apkName = APP_APK_NAME_31,
+            appMetadata = AppMetadata.createDefaultAppMetadata())
 
         assertAppHasPermission(Manifest.permission.ACCESS_FINE_LOCATION, false)
     }
 
     @After
-    fun uninstallApps() {
-        // APP_PACKAGE_NAME in uninstalled in BaseUsePermissionTest which this class extends
-        uninstallPackage(TEST_STORE_PACKAGE_NAME, requireSuccess = false)
+    fun disableTestInstallerActivity() {
+        disableComponent(TEST_INSTALLER_ACTIVITY_COMPONENT_NAME)
     }
 
     @Test
@@ -102,7 +93,7 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
         clickInstallSourceLink()
 
         eventually {
-            assertStoreLinkClickSuccessful(installerPackageName = TEST_STORE_PACKAGE_NAME)
+            assertStoreLinkClickSuccessful(installerPackageName = TEST_INSTALLER_PACKAGE_NAME)
         }
     }
 
@@ -255,7 +246,6 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
     }
 
     companion object {
-        // TODO(b/257293222): Remove when hooking up PackageManager APIs
         private const val PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED =
             "privacy_placeholder_safety_label_data_enabled"
 

@@ -412,14 +412,12 @@ public class TouchInteractionControllerTest {
     public void testRebuildInputFilter_shouldRetainState() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         assertBasicConsistency();
-        // Set up a touch interaction controller that delegates everything.
+        // Set up a touch interaction controller that records incoming motion events.
         mController.registerCallback(
                 Executors.newSingleThreadExecutor(),
                 new BaseCallback() {
                     public void onMotionEvent(MotionEvent event) {
-                        if (event.getActionMasked() == ACTION_DOWN) {
-                            mController.requestDelegating();
-                        }
+                        mTouchListener.onTouch(null, event);
                     }
                 });
         dispatch(click(mTapLocation));
@@ -430,7 +428,7 @@ public class TouchInteractionControllerTest {
                 InstrumentedAccessibilityService.enableService(
                         StubMagnificationAccessibilityService.class);
         try {
-            // Service gesture detection should still work.
+            // We should still be recording incoming motion events.
             dispatch(click(mTapLocation));
             mHoverListener.assertNonePropagated();
             mTouchListener.assertPropagated(ACTION_DOWN, ACTION_UP);

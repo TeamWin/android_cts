@@ -959,6 +959,35 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
         assertNotNull(callSession);
     }
 
+    @Test
+    public void testDefaultCsThenPs() throws Exception {
+        // Setup pre-condition
+        unsolBarringInfoChanged(true);
+
+        PersistableBundle bundle = getDefaultPersistableBundle();
+        overrideCarrierConfig(bundle);
+
+        MockEmergencyRegResult regResult = getEmergencyRegResult(EUTRAN, REGISTRATION_STATE_HOME,
+                NetworkRegistrationInfo.DOMAIN_CS | NetworkRegistrationInfo.DOMAIN_PS,
+                true, true, 0, 0, "", "");
+        sMockModemManager.setEmergencyRegResult(sTestSlot, regResult);
+
+        bindImsService();
+
+        placeOutgoingCall(TEST_EMERGENCY_NUMBER);
+
+        assertTrue(waitForVoiceLatchCountdown(LATCH_EMERGENCY_DIAL));
+
+        sMockModemManager.clearAllCalls(sTestSlot, DisconnectCause.CONGESTION);
+        unsolBarringInfoChanged(false, true);
+        waitForVoiceLatchCountdown(LATCH_GET_LAST_CALL_FAIL_CAUSE);
+
+        TimeUnit.MILLISECONDS.sleep(WAIT_REQUEST_TIMEOUT_MS);
+
+        assertTrue(sMockModemManager.isEmergencyNetworkScanTriggered(sTestSlot));
+
+        unsolEmergencyNetworkScanResult(EUTRAN);
+    }
 
     private void verifyCsDialed() throws Exception {
         placeOutgoingCall(TEST_EMERGENCY_NUMBER);

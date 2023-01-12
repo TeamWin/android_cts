@@ -2154,7 +2154,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_hardware" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.nfc" />
+            <meta-data android:name="test_applicable_features" android:value="android.hardware.nfc:android.hardware.nfc.hce" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
             <meta-data android:name="NonApiTest" android:value="Helper class. List test activities" />

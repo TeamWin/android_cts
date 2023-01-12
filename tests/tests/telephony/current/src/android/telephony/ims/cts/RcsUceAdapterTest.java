@@ -94,6 +94,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -3159,8 +3160,8 @@ public class RcsUceAdapterTest {
         Collection<Uri> numbers = new ArrayList<>(1);
         numbers.add(sTestNumberUri);
 
-        BlockingQueue<SipDetails> completeQueue = new LinkedBlockingQueue<>();
-        BlockingQueue<SipDetails> errorQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Optional<SipDetails>> completeQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Optional<SipDetails>> errorQueue = new LinkedBlockingQueue<>();
         RcsUceAdapter.CapabilitiesCallback callback = new RcsUceAdapter.CapabilitiesCallback() {
             // ignore this calling
             @Override
@@ -3173,11 +3174,11 @@ public class RcsUceAdapterTest {
             public void onError(int errorCode, long retryAfterMilliseconds) {}
             @Override
             public void onComplete(SipDetails details) {
-                completeQueue.offer(details);
+                completeQueue.offer(Optional.ofNullable(details));
             }
             @Override
             public void onError(int errorCode, long retryAfterMilliseconds, SipDetails details) {
-                errorQueue.offer(details);
+                errorQueue.offer(Optional.ofNullable(details));
             }
         };
         // Connect to the ImsService
@@ -3204,7 +3205,9 @@ public class RcsUceAdapterTest {
 
         requestCapabilities(uceAdapter, numbers, callback);
 
-        SipDetails receivedInfo = waitForResult(completeQueue);
+        Optional<SipDetails> receivedDetails = waitForResult(completeQueue);
+        SipDetails receivedInfo = receivedDetails.orElse(null);
+
         assertNotNull(receivedInfo);
         assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
         assertEquals(1, receivedInfo.getCSeq());
@@ -3217,7 +3220,8 @@ public class RcsUceAdapterTest {
 
         requestAvailability(uceAdapter, sTestNumberUri, callback);
 
-        receivedInfo = waitForResult(completeQueue);
+        receivedDetails = waitForResult(completeQueue);
+        receivedInfo = receivedDetails.orElse(null);
         assertNotNull(receivedInfo);
         assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
         assertEquals(1, receivedInfo.getCSeq());
@@ -3237,7 +3241,9 @@ public class RcsUceAdapterTest {
 
         requestCapabilities(uceAdapter, numbers, callback);
 
-        receivedInfo = waitForResult(completeQueue);
+        receivedDetails = waitForResult(completeQueue);
+        receivedInfo = receivedDetails.orElse(null);
+
         assertNotNull(receivedInfo);
         assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
         assertEquals(2, receivedInfo.getCSeq());
@@ -3250,7 +3256,9 @@ public class RcsUceAdapterTest {
 
         requestAvailability(uceAdapter, sTestNumberUri, callback);
 
-        receivedInfo = waitForResult(completeQueue);
+        receivedDetails = waitForResult(completeQueue);
+        receivedInfo = receivedDetails.orElse(null);
+
         assertNotNull(receivedInfo);
         assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
         assertEquals(2, receivedInfo.getCSeq());
@@ -3270,7 +3278,9 @@ public class RcsUceAdapterTest {
 
         requestCapabilities(uceAdapter, numbers, callback);
 
-        receivedInfo = waitForResult(errorQueue);
+        receivedDetails = waitForResult(errorQueue);
+        receivedInfo = receivedDetails.orElse(null);
+
         assertNotNull(receivedInfo);
         assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
         assertEquals(3, receivedInfo.getCSeq());
@@ -3280,6 +3290,20 @@ public class RcsUceAdapterTest {
 
         removeUceRequestDisallowedStatus();
         errorQueue.clear();
+
+        // Verify the sip information when error for a request
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onCommandError(COMMAND_CODE_SERVICE_UNKNOWN);
+        });
+
+        requestCapabilities(uceAdapter, numbers, callback);
+
+        receivedDetails = waitForResult(errorQueue);
+        receivedInfo = receivedDetails.orElse(null);
+
+        assertNull(receivedInfo);
+        errorQueue.clear();
+        removeUceRequestDisallowedStatus();
         overrideCarrierConfig(null);
     }
 

@@ -86,8 +86,8 @@ public class ExpeditedJobTest {
     /** Test that EJs for the TOP app start immediately and there is no limit on the number. */
     @Test
     public void testTopEJUnlimited() throws Exception {
-        final int standardConcurrency = 16;
-        final int numEjs = 2 * standardConcurrency;
+        final int standardConcurrency = 64;
+        final int numEjs = standardConcurrency + 1;
         mTestAppInterface.startAndKeepTestActivity(true);
         for (int i = 0; i < numEjs; ++i) {
             mTestAppInterface.scheduleJob(

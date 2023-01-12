@@ -155,7 +155,7 @@ public class BluetoothDeviceTest extends AndroidTestCase {
             return;
         }
 
-        assertEquals(mFakeDevice.getAnonymizedAddress(), "XX:XX:XX:AA:BB:CC");
+        assertEquals("XX:XX:XX:XX:BB:CC", mFakeDevice.getAnonymizedAddress());
     }
 
     public void test_getBatteryLevel() {

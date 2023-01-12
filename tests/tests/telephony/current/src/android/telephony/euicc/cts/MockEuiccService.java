@@ -90,6 +90,15 @@ public class MockEuiccService extends EuiccService {
     }
 
     @Override
+    public GetDownloadableSubscriptionMetadataResult onGetDownloadableSubscriptionMetadata(
+            int slotId, int portIndex, DownloadableSubscription subscription,
+            boolean forceDeactivateSim) {
+        sMockEuiccServiceCallback.setMethodCalled();
+
+        return onGetDownloadableSubscriptionMetadata(slotId, subscription, forceDeactivateSim);
+    }
+
+    @Override
     public GetDefaultDownloadableSubscriptionListResult onGetDefaultDownloadableSubscriptionList(
             int slotId, boolean forceDeactivateSim) {
         sMockEuiccServiceCallback.setMethodCalled();

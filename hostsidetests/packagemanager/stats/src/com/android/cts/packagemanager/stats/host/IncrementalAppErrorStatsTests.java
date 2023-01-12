@@ -121,8 +121,6 @@ public final class IncrementalAppErrorStatsTests extends DeviceTestCase implemen
         }
         getDevice().uninstallPackage(DeviceUtils.STATSD_ATOM_TEST_PKG);
         assertFalse(getDevice().isPackageInstalled(DeviceUtils.STATSD_ATOM_TEST_PKG));
-        getDevice().uninstallPackage(HELPER_PACKAGE);
-        assertFalse(getDevice().isPackageInstalled(HELPER_PACKAGE));
         super.tearDown();
     }
 

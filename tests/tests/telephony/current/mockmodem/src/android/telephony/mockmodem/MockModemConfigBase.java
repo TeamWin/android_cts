@@ -46,6 +46,7 @@ import java.util.Random;
 public class MockModemConfigBase implements MockModemConfigInterface {
     // ***** Instance Variables
     private static final int DEFAULT_SLOT_ID = 0;
+    private static final int ESIM_SLOT_ID = 1;
     private final String mTAG = "MockModemConfigBase";
     private final Handler[] mHandler;
     private Context mContext;
@@ -1070,12 +1071,18 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         Log.d(mTAG, "isSimCardPresent[" + logicalSlotId + "] from: " + client);
 
         int physicalSlotId = getSimPhysicalSlotId(logicalSlotId);
-        boolean isPresent;
-        synchronized (mConfigAccess[physicalSlotId]) {
-            isPresent =
-                    (mCardStatus[physicalSlotId].cardState == CardStatus.STATE_PRESENT)
-                            ? true
-                            : false;
+        boolean isPresent = false;
+        if (physicalSlotId == DEFAULT_SLOT_ID) {
+            synchronized (mConfigAccess[physicalSlotId]) {
+                isPresent =
+                        (mCardStatus[physicalSlotId].cardState == CardStatus.STATE_PRESENT)
+                                ? true
+                                : false;
+            }
+        } else if (physicalSlotId == ESIM_SLOT_ID) {
+            synchronized (mConfigAccess[physicalSlotId]) {
+                isPresent = (mCardStatus[physicalSlotId].iccid.trim().length() > 0) ? true : false;
+            }
         }
         return isPresent;
     }

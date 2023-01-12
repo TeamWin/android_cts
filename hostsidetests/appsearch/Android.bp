@@ -64,6 +64,7 @@ android_test_helper_app {
     manifest: "test-apps/AppSearchHostTestHelperA/AndroidManifest.xml",
     certificate: ":cts-appsearch-hosttest-helper-cert-a",
     sdk_version: "test_current",
+    min_sdk_version: "31",
 }
 
 android_test_helper_app {
@@ -87,4 +88,5 @@ android_test_helper_app {
     manifest: "test-apps/AppSearchHostTestHelperB/AndroidManifest.xml",
     certificate: ":cts-appsearch-hosttest-helper-cert-b",
     sdk_version: "test_current",
+    min_sdk_version: "31",
 }

@@ -278,10 +278,11 @@ public class MockModemManager {
                 "forceErrorResponse[" + slotId + "] for request:" + requestId + " ,error:" + error);
         boolean result = true;
 
-        // TODO: support DSDS
         switch (requestId) {
             case RIL_REQUEST_RADIO_POWER:
-                mMockModemService.getIRadioModem().forceErrorResponse(requestId, error);
+                mMockModemService
+                        .getIRadioModem((byte) slotId)
+                        .forceErrorResponse(requestId, error);
                 break;
             default:
                 Log.e(TAG, "request:" + requestId + " not support to change the response error");

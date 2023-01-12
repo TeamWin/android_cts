@@ -50,8 +50,11 @@ public class RequirementConstants {
     public static final String R7_5__H_1_2 = "r7_5__h_1_2"; // 7.5/H-1-2
     public static final String R7_5__H_1_3 = "r7_5__h_1_3"; // 7.5/H-1-3
     public static final String R7_5__H_1_4 = "r7_5__h_1_4"; // 7.5/H-1-4
-    public static final String R7_5__H_1_5 = "r7_5__h_1_5"; // 7.5/H-1-5
-    public static final String R7_5__H_1_6 = "r7_5__h_1_6"; // 7.5/H-1-6
+
+    // these includes "its" because the proto in google3 was originally implemented incorrectly
+    public static final String R7_5__H_1_5 = "r7_5__h_1_5__its"; // 7.5/H-1-5
+    public static final String R7_5__H_1_6 = "r7_5__h_1_6__its"; // 7.5/H-1-6
+
     public static final String R7_5__H_1_8 = "r7_5__h_1_8"; // 7.5/H-1-8
     public static final String R7_5__H_1_9 = "r7_5__h_1_9"; // 7.5/H-1-9
     public static final String R7_5__H_1_10 = "r7_5__h_1_10"; // 7.5/H-1-10

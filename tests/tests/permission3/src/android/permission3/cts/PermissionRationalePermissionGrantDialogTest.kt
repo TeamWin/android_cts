@@ -26,7 +26,6 @@ import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.modules.utils.build.SdkLevel
-import org.junit.After
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
@@ -47,14 +46,13 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
             PERMISSION_RATIONALE_ENABLED,
             true.toString())
 
-    // TODO(b/257293222): Remove when hooking up PackageManager APIs
     @get:Rule
     val deviceConfigTestSafetyLabelDataEnabled =
         DeviceConfigStateChangerRule(
             context,
             DeviceConfig.NAMESPACE_PRIVACY,
             PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED,
-            true.toString())
+            false.toString())
 
     @Before
     fun setup() {
@@ -64,35 +62,10 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         Assume.assumeFalse(isWatch)
     }
 
-    @Before
-    fun installTestAppStore() {
-        installPackage(APP_APK_PATH_TEST_STORE_APP)
-    }
-
-    @After
-    fun uninstallTestAppStore() {
-        uninstallPackage(TEST_STORE_PACKAGE_NAME, requireSuccess = false)
-    }
-
     @Test
-    fun noPermissionRationaleWhenFlagDisabled() {
+    fun requestLocationPerm_flagDisabled_noPermissionRationale() {
         setDeviceConfigPrivacyProperty(PERMISSION_RATIONALE_ENABLED, false.toString())
-        installPackageWithInstallSource()
-
-        assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
-        assertAppHasPermission(ACCESS_FINE_LOCATION, false)
-
-        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
-        }
-    }
-
-    // TODO(b/257293222): Remove when hooking up PackageManager APIs
-    @Test
-    fun noPermissionRationaleWhenPlaceholderDataFlagDisabled() {
-        setDeviceConfigPrivacyProperty(
-            PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED, false.toString())
-        installPackageWithInstallSource()
+        installPackageWithInstallSourceAndMetadata()
 
         assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
@@ -103,7 +76,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun noPermissionRationaleWhenApkHasNoInstallSource() {
+    fun requestLocationPerm_apkHasNoInstallSource_noPermissionRationale() {
         installPackageWithoutInstallSource()
 
         assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
@@ -115,8 +88,32 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun noPermissionRationaleForNonLocationPermission() {
-        installPackageWithInstallSource()
+    fun requestLocationPerm_noAppMetadata_noPermissionRationale() {
+        installPackageWithInstallSourceAndNoMetadata()
+
+        assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
+        assertAppHasPermission(ACCESS_FINE_LOCATION, false)
+
+        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
+            assertPermissionRationaleOnGrantDialogIsVisible(false)
+        }
+    }
+
+    @Test
+    fun requestLocationPerm_invalidAppMetadata_noPermissionRationale() {
+        installPackageWithInstallSourceAndInvalidMetadata()
+
+        assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
+        assertAppHasPermission(ACCESS_FINE_LOCATION, false)
+
+        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
+            assertPermissionRationaleOnGrantDialogIsVisible(false)
+        }
+    }
+
+    @Test
+    fun requestCameraPerm_noPermissionRationale() {
+        installPackageWithInstallSourceAndMetadata()
 
         assertAppHasPermission(CAMERA, false)
 
@@ -126,8 +123,22 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun hasPermissionRationaleForCoarseLocationPermission() {
-        installPackageWithInstallSource()
+    fun requestLocationPerm_noAppMetadata_placeholderDataFlagEnabled_hasPermissionRationale() {
+        setDeviceConfigPrivacyProperty(
+            PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED, true.toString())
+        installPackageWithInstallSourceAndNoMetadata()
+
+        assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
+        assertAppHasPermission(ACCESS_FINE_LOCATION, false)
+
+        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
+            assertPermissionRationaleOnGrantDialogIsVisible(true)
+        }
+    }
+
+    @Test
+    fun requestCoarseLocationPerm_hasPermissionRationale() {
+        installPackageWithInstallSourceAndMetadata()
 
         assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
 
@@ -137,8 +148,8 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun hasPermissionRationaleForFineLocationPermission() {
-        installPackageWithInstallSource()
+    fun requestFineLocationPerm_hasPermissionRationale() {
+        installPackageWithInstallSourceAndMetadata()
 
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
@@ -148,8 +159,8 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun startsPermissionRationaleActivity() {
-        installPackageWithInstallSource()
+    fun requestLocationPerm_clicksPermissionRationale_startsPermissionRationaleActivity() {
+        installPackageWithInstallSourceAndMetadata()
 
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
@@ -161,8 +172,9 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun startsPermissionRationaleActivityAndComesBack() {
-        installPackageWithInstallSource()
+    fun requestLocationPerm_clicksPermissionRationale_startsPermissionRationaleActivity_comesBack(
+    ) {
+        installPackageWithInstallSourceAndMetadata()
 
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
@@ -177,9 +189,20 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         }
     }
 
-    private fun installPackageWithInstallSource() {
-        // TODO(b/257293222): Update/remove when hooking up PackageManager APIs
-        installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
+    private fun installPackageWithInstallSourceAndMetadata() {
+        installPackageViaSession(
+            apkName = APP_APK_NAME_31,
+            appMetadata = AppMetadata.createDefaultAppMetadata())
+    }
+
+    private fun installPackageWithInstallSourceAndNoMetadata() {
+        installPackageViaSession(apkName = APP_APK_NAME_31)
+    }
+
+    private fun installPackageWithInstallSourceAndInvalidMetadata() {
+        installPackageViaSession(
+            apkName = APP_APK_NAME_31,
+            appMetadata = AppMetadata.createInvalidAppMetadata())
     }
 
     private fun installPackageWithoutInstallSource() {

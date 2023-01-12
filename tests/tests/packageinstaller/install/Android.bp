@@ -42,6 +42,8 @@ android_test {
     ],
     data: [
         ":CtsEmptyTestApp",
+        ":CtsEmptyInstallerApp",
+        ":CtsEmptyTestApp_NotAllowUpdateOwnership",
     ],
     per_testcase_directory: true,
 }

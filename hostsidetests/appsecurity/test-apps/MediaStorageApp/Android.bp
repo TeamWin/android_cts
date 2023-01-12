@@ -19,6 +19,7 @@ package {
 android_test_helper_app {
     name: "CtsMediaStorageApp",
     defaults: ["cts_support_defaults"],
+    min_sdk_version: "29",
     sdk_version: "test_current",
     static_libs: [
         "compatibility-device-util-axt",
@@ -37,6 +38,7 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsMediaStorageApp28",
     defaults: ["cts_support_defaults"],
+    min_sdk_version: "28",
     sdk_version: "test_current",
     static_libs: [
         "compatibility-device-util-axt",
@@ -56,6 +58,7 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsMediaStorageApp29",
     defaults: ["cts_support_defaults"],
+    min_sdk_version: "29",
     sdk_version: "test_current",
     static_libs: [
         "compatibility-device-util-axt",

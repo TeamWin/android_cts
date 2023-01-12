@@ -28,6 +28,8 @@ import error_util
 import image_processing_utils
 import its_session_utils
 
+_CV2_FACE_SCALE_FACTOR = 1.1  # found empirically
+_CV2_FACE_MIN_NEIGHBORS = 4  # recommended 3-6: lower for less faces
 _CV2_GREEN = (0, 1, 0)
 _CV2_RED = (1, 0, 0)
 _FD_MODE_OFF, _FD_MODE_SIMPLE, _FD_MODE_FULL = 0, 1, 2
@@ -86,7 +88,8 @@ def find_opencv_faces(img):
   gray = cv2.cvtColor(img_255.astype(np.uint8), cv2.COLOR_RGB2GRAY)
 
   # find face rectangles with opencv
-  faces_opencv = face_cascade.detectMultiScale(gray, 1.1, 4)
+  faces_opencv = face_cascade.detectMultiScale(
+      gray, _CV2_FACE_SCALE_FACTOR, _CV2_FACE_MIN_NEIGHBORS)
   logging.debug('%s', str(faces_opencv))
   return faces_opencv
 

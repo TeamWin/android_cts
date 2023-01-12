@@ -63,8 +63,10 @@ import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActiv
 import android.accessibilityservice.cts.activities.NonDefaultDisplayActivity;
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.app.LocaleManager;
 import android.app.UiAutomation;
 import android.graphics.Rect;
+import android.os.LocaleList;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
@@ -103,6 +105,7 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -741,6 +744,45 @@ public class AccessibilityWindowQueryTest {
         } finally {
             wm.removeView(viewRoot);
         }
+    }
+
+    @Test
+    public void testWindowLocale_setGet() throws Exception {
+        final LocaleManager manager = mActivity.getSystemService(LocaleManager.class);
+        final LocaleList systemLocales = manager.getSystemLocales();
+        final Locale testLocaleEn = Locale.ENGLISH;
+        final Locale testLocaleDe = Locale.GERMAN;
+        AccessibilityWindowInfo window;
+
+        try {
+            window = sUiAutomation.getRootInActiveWindow().getWindow();
+            assertEquals(systemLocales, window.getLocales());
+
+            // First returned locale should be the app locale.
+            setActivityLocale(manager, new LocaleList(testLocaleEn));
+            window = sUiAutomation.getRootInActiveWindow().getWindow();
+            assertEquals(testLocaleEn, window.getLocales().get(0));
+
+            // System locale is appended to the end, but order should be the same.
+            setActivityLocale(manager, new LocaleList(testLocaleEn, testLocaleDe));
+            window = sUiAutomation.getRootInActiveWindow().getWindow();
+            LocaleList locales = window.getLocales();
+            assertEquals(testLocaleEn, locales.get(0));
+            assertEquals(testLocaleDe, locales.get(1));
+        } finally {
+            setActivityLocale(manager, LocaleList.getEmptyLocaleList());
+        }
+    }
+
+    private void setActivityLocale(LocaleManager localeManager, LocaleList localeList)
+            throws TimeoutException {
+        sUiAutomation.executeAndWaitForEvent(
+                () -> sInstrumentation.runOnMainSync(
+                        () -> localeManager.setApplicationLocales(localeList)),
+                event -> {
+                    AccessibilityNodeInfo root = sUiAutomation.getRootInActiveWindow();
+                    return root != null && root.getWindow() != null;
+                }, DEFAULT_TIMEOUT_MS);
     }
 
     private AccessibilityWindowInfo findWindow(List<AccessibilityWindowInfo> windows,

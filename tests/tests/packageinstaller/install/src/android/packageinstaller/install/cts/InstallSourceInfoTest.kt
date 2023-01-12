@@ -47,6 +47,7 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
         assertThat(info.installingPackageName).isEqualTo(packageInstallerPackageName)
         assertThat(info.initiatingPackageName).isEqualTo(packageInstallerPackageName)
         assertThat(info.originatingPackageName).isNull()
+        assertThat(info.updateOwnerPackageName).isNull()
     }
 
     @Test
@@ -57,6 +58,7 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
         assertThat(info.installingPackageName).isNull()
         assertThat(info.initiatingPackageName).isNull()
         assertThat(info.originatingPackageName).isNull()
+        assertThat(info.updateOwnerPackageName).isNull()
         assertThat(info.packageSource).isEqualTo(PackageInstaller.PACKAGE_SOURCE_OTHER)
     }
 
@@ -70,6 +72,7 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
         assertThat(info.installingPackageName).isEqualTo(packageInstallerPackageName)
         assertThat(info.initiatingPackageName).isNull()
         assertThat(info.originatingPackageName).isNull()
+        assertThat(info.updateOwnerPackageName).isNull()
     }
 
     @Test
@@ -83,6 +86,7 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
         assertThat(info.installingPackageName).isNull()
         assertThat(info.initiatingPackageName).isNull()
         assertThat(info.originatingPackageName).isNull()
+        assertThat(info.updateOwnerPackageName).isNull()
     }
 
     @Test
@@ -113,6 +117,7 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
         assertThat(info.installingPackageName).isEqualTo(ourPackageName)
         assertThat(info.initiatingPackageName).isEqualTo(ourPackageName)
         assertThat(info.originatingPackageName).isNull()
+        assertThat(info.updateOwnerPackageName).isNull()
         if (packageSource != null) {
             assertThat(info.packageSource).isEqualTo(packageSource)
         } else {

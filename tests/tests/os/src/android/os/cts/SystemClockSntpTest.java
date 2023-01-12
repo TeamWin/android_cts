@@ -16,6 +16,7 @@
 
 package android.os.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -23,6 +24,8 @@ import static org.junit.Assume.assumeFalse;
 
 import android.app.time.cts.shell.DeviceShellCommandExecutor;
 import android.app.time.cts.shell.NetworkTimeUpdateServiceShellHelper;
+import android.app.time.cts.shell.TimeDetectorShellHelper;
+import android.app.time.cts.shell.TimeDetectorShellHelper.TestNetworkTime;
 import android.app.time.cts.shell.device.InstrumentationShellCommandExecutor;
 import android.content.pm.PackageManager;
 import android.os.SystemClock;
@@ -65,6 +68,7 @@ public class SystemClockSntpTest {
 
     private DeviceShellCommandExecutor mShellCommandExecutor;
     private NetworkTimeUpdateServiceShellHelper mNetworkTimeUpdateServiceShellHelper;
+    private TimeDetectorShellHelper mTimeDetectorShellHelper;
     private Instant mSetupInstant;
     private long mSetupElapsedRealtimeMillis;
 
@@ -76,6 +80,8 @@ public class SystemClockSntpTest {
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
         mNetworkTimeUpdateServiceShellHelper =
                 new NetworkTimeUpdateServiceShellHelper(mShellCommandExecutor);
+        mTimeDetectorShellHelper =
+                new TimeDetectorShellHelper(mShellCommandExecutor);
     }
 
     @After
@@ -149,8 +155,7 @@ public class SystemClockSntpTest {
         assertTrue(mNetworkTimeUpdateServiceShellHelper.forceRefresh());
         final long afterRefreshElapsedMillis = SystemClock.elapsedRealtime();
 
-        // Request the current Unix epoch time. Assert value of SystemClock#currentNetworkTimeClock.
-        assertCurrentNetworkTimeClockInBounds(MOCKED_NTP_TIMESTAMP, beforeRefreshElapsedMillis,
+        assertNetworkTimeIsUsed(MOCKED_NTP_TIMESTAMP, beforeRefreshElapsedMillis,
                 afterRefreshElapsedMillis);
 
         // Simulate some time passing and verify that SystemClock returns an updated time
@@ -158,9 +163,8 @@ public class SystemClockSntpTest {
         final long PASSED_DURATION_MS = 100L;
         Thread.sleep(PASSED_DURATION_MS);
 
-        // Request the current Unix epoch time again. Verify that SystemClock returns an
-        // updated time using the same network time value.
-        assertCurrentNetworkTimeClockInBounds(MOCKED_NTP_TIMESTAMP, beforeRefreshElapsedMillis,
+        // Verify the same network time value is being used.
+        assertNetworkTimeIsUsed(MOCKED_NTP_TIMESTAMP, beforeRefreshElapsedMillis,
                 afterRefreshElapsedMillis);
 
         // Remove fake server response and trigger a network time refresh to simulate a failed
@@ -168,8 +172,8 @@ public class SystemClockSntpTest {
         server.setServerReply(null);
         assertFalse(mNetworkTimeUpdateServiceShellHelper.forceRefresh());
 
-        // Verify that SystemClock still returns an updated time using the same network time value.
-        assertCurrentNetworkTimeClockInBounds(MOCKED_NTP_TIMESTAMP, beforeRefreshElapsedMillis,
+        // Verify the same network time value is being used.
+        assertNetworkTimeIsUsed(MOCKED_NTP_TIMESTAMP, beforeRefreshElapsedMillis,
                 afterRefreshElapsedMillis);
     }
 
@@ -187,12 +191,38 @@ public class SystemClockSntpTest {
 
     /** Verify the given value is in range [lower, upper] */
     private static void assertInRange(String tag, long value, long lower, long upper) {
-        final Range range = new Range(lower, upper);
+        final Range<Long> range = new Range<>(lower, upper);
         assertTrue(tag + ": " + value + " is not within range [" + lower + ", " + upper + "]",
                 range.contains(value));
     }
 
-    private static void assertCurrentNetworkTimeClockInBounds(long expectedTimestamp,
+    /**
+     * Asserts that a time of {@code unixEpochMillis} received between {@code
+     * beforeRefreshElapsedMillis} and {@code afterRefreshElapsedMillis} is being used by the
+     * platform for various operations.
+     */
+    private void assertNetworkTimeIsUsed(long unixEpochMillis,
+            long beforeRefreshElapsedMillis, long afterRefreshElapsedMillis) throws Exception {
+        assertTimeDetectorLatestNetworkTimeInBounds(
+                unixEpochMillis, beforeRefreshElapsedMillis, afterRefreshElapsedMillis);
+
+        assertCurrentNetworkTimeClockInBounds(
+                unixEpochMillis, beforeRefreshElapsedMillis, afterRefreshElapsedMillis);
+    }
+
+    /** Asserts the latest network time held by the time detector is as expected. */
+    private void assertTimeDetectorLatestNetworkTimeInBounds(
+            long expectedUnixEpochMillis, long beforeRefreshElapsedMillis,
+            long afterRefreshElapsedMillis) throws Exception {
+        TestNetworkTime networkTime = mTimeDetectorShellHelper.getNetworkTime();
+        assertEquals(expectedUnixEpochMillis, networkTime.unixEpochTime.unixEpochTimeMillis);
+        assertInRange("Latest network time elapsed realtime",
+                networkTime.unixEpochTime.elapsedRealtimeMillis,
+                beforeRefreshElapsedMillis, afterRefreshElapsedMillis);
+    }
+
+    /** Asserts SystemClock.currentNetworkTimeClock() returns the expected value. */
+    private static void assertCurrentNetworkTimeClockInBounds(long expectedUnixEpochMillis,
             long beforeRefreshElapsedMillis, long afterRefreshElapsedMillis) {
         final long beforeQueryElapsedMillis = SystemClock.elapsedRealtime();
         final long networkEpochMillis = SystemClock.currentNetworkTimeClock().millis();
@@ -200,10 +230,10 @@ public class SystemClockSntpTest {
 
         // Calculate the lower/upper bound base on the elapsed time of refreshing.
         final long lowerBoundNetworkEpochMillis =
-                expectedTimestamp + (beforeQueryElapsedMillis - afterRefreshElapsedMillis);
+                expectedUnixEpochMillis + (beforeQueryElapsedMillis - afterRefreshElapsedMillis);
         final long upperBoundNetworkEpochMillis =
-                expectedTimestamp + (afterQueryElapsedMillis - beforeRefreshElapsedMillis);
-        assertInRange("Network time", networkEpochMillis, lowerBoundNetworkEpochMillis,
+                expectedUnixEpochMillis + (afterQueryElapsedMillis - beforeRefreshElapsedMillis);
+        assertInRange("Current network time", networkEpochMillis, lowerBoundNetworkEpochMillis,
                 upperBoundNetworkEpochMillis);
     }
 

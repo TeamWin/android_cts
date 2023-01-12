@@ -34,6 +34,7 @@ SKIP_RET_MSG = 'Test skipped'
 SOLID_COLOR_TEST_PATTERN = 1
 COLOR_BARS_TEST_PATTERN = 2
 USE_CASE_STILL_CAPTURE = 2
+DEFAULT_AE_TARGET_FPS_RANGE = (15, 30)
 
 
 def legacy(props):
@@ -444,6 +445,25 @@ def get_ae_target_fps_ranges(props):
   if 'android.control.aeAvailableTargetFpsRanges' in props:
     ranges = props['android.control.aeAvailableTargetFpsRanges']
   return ranges
+
+
+def get_fps_range_to_test(fps_ranges):
+  """Returns an AE target FPS range to test based on camera device properties.
+
+  Args:
+    fps_ranges: list of AE target FPS ranges supported by camera.
+      e.g. [[7, 30], [24, 30], [30, 30]]
+  Returns:
+    An AE target FPS range for testing.
+  """
+  accepted_range = list(DEFAULT_AE_TARGET_FPS_RANGE)
+  logging.debug('AE target FPS ranges: %s', fps_ranges)
+  for (fps_range_min, fps_range_max) in fps_ranges:
+    if (fps_range_max == accepted_range[1] and
+        fps_range_min < accepted_range[0]):
+      accepted_range[0] = fps_range_min
+  logging.debug('Accepted AE target FPS range: %s', accepted_range)
+  return accepted_range
 
 
 def ae_lock(props):

@@ -43,6 +43,7 @@ java_test_host {
         ":CtsHostProcfsTestApp",
         ":CtsInattentiveSleepTestApp",
         ":CtsStaticSharedLibConsumerApp1",
+        ":CtsStaticSharedLibConsumerApp1BadCertDigest",
         ":CtsStaticSharedLibConsumerApp2",
         ":CtsStaticSharedLibConsumerApp3",
         ":CtsStaticSharedLibProviderApp1",

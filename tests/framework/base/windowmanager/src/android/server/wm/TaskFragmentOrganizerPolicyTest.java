@@ -135,23 +135,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
 
     /**
      * Verifies that performing {@link WindowContainerTransaction#deleteTaskFragment} on
-     * non-TaskFragment window will throw {@link SecurityException}.
-     */
-    @Test
-    @ApiTest(apis = {
-            "android.window.TaskFragmentOrganizer#applyTransaction",
-            "android.window.WindowContainerTransaction#deleteTaskFragment"})
-    public void testDeleteTaskFragment_nonTaskFragmentWindow_throwException() {
-        final WindowContainerToken taskToken = getFirstTaskToken();
-        final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .deleteTaskFragment(taskToken);
-
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct,
-                TASK_FRAGMENT_TRANSIT_CLOSE, false /* shouldApplyIndependently */));
-    }
-
-    /**
-     * Verifies that performing {@link WindowContainerTransaction#deleteTaskFragment} on
      * non-organized TaskFragment will throw {@link SecurityException}.
      */
     @Test
@@ -162,12 +145,11 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
         final Activity activity = startNewActivity();
         final TaskFragmentInfo taskFragmentInfo = createOrganizedTaskFragment(
                 mTaskFragmentOrganizer, activity);
-        final WindowContainerToken taskFragmentToken = taskFragmentInfo.getToken();
 
         // Create another TaskFragmentOrganizer to request operation.
         final TaskFragmentOrganizer anotherOrganizer = registerNewOrganizer();
         final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .deleteTaskFragment(taskFragmentToken);
+                .deleteTaskFragment(taskFragmentInfo.getFragmentToken());
 
         assertThrows(SecurityException.class, () -> anotherOrganizer.applyTransaction(wct,
                 TASK_FRAGMENT_TRANSIT_CLOSE, false /* shouldApplyIndependently */));
@@ -185,140 +167,11 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
         final Activity activity = startNewActivity();
         final TaskFragmentInfo taskFragmentInfo = createOrganizedTaskFragment(
                 mTaskFragmentOrganizer, activity);
-        final WindowContainerToken taskFragmentToken = taskFragmentInfo.getToken();
 
         final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .deleteTaskFragment(taskFragmentToken);
+                .deleteTaskFragment(taskFragmentInfo.getFragmentToken());
 
         mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CLOSE,
-                false /* shouldApplyIndependently */);
-    }
-
-    /**
-     * Verifies that performing {@link WindowContainerTransaction#setAdjacentRoots} on
-     * non-TaskFragment window will throw {@link SecurityException}.
-     */
-    @Test
-    @ApiTest(apis = {
-            "android.window.TaskFragmentOrganizer#applyTransaction",
-            "android.window.WindowContainerTransaction#setAdjacentRoots"})
-    public void testSetAdjacentRoots_nonTaskFragmentWindow_throwException() {
-        final WindowContainerToken taskToken = getFirstTaskToken();
-        final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .setAdjacentRoots(taskToken, taskToken);
-
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
-    }
-
-    /**
-     * Verifies that performing {@link WindowContainerTransaction#setAdjacentRoots} on
-     * non-organized TaskFragment will throw {@link SecurityException}.
-     */
-    @Test
-    @ApiTest(apis = {
-            "android.window.TaskFragmentOrganizer#applyTransaction",
-            "android.window.WindowContainerTransaction#setAdjacentRoots"})
-    public void testSetAdjacentRoots_nonOrganizedTaskFragment_throwException() {
-        final Activity activity = startNewActivity();
-        final TaskFragmentInfo taskFragmentInfo0 = createOrganizedTaskFragment(
-                mTaskFragmentOrganizer, activity);
-        final TaskFragmentInfo taskFragmentInfo1 = createOrganizedTaskFragment(
-                mTaskFragmentOrganizer, activity);
-        final WindowContainerToken taskFragmentToken0 = taskFragmentInfo0.getToken();
-        final WindowContainerToken taskFragmentToken1 = taskFragmentInfo1.getToken();
-
-        // Create another TaskFragmentOrganizer to request operation.
-        final TaskFragmentOrganizer anotherOrganizer = registerNewOrganizer();
-        final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .setAdjacentRoots(taskFragmentToken0, taskFragmentToken1);
-
-        assertThrows(SecurityException.class, () -> anotherOrganizer.applyTransaction(wct,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
-    }
-
-    /**
-     * Verifies that performing {@link WindowContainerTransaction#setAdjacentRoots} on organized
-     * TaskFragment is allowed.
-     */
-    @Test
-    @ApiTest(apis = {
-            "android.window.TaskFragmentOrganizer#applyTransaction",
-            "android.window.WindowContainerTransaction#setAdjacentRoots"})
-    public void testSetAdjacentRoots_organizedTaskFragment() {
-        final Activity activity = startNewActivity();
-        final TaskFragmentInfo taskFragmentInfo0 = createOrganizedTaskFragment(
-                mTaskFragmentOrganizer, activity);
-        final TaskFragmentInfo taskFragmentInfo1 = createOrganizedTaskFragment(
-                mTaskFragmentOrganizer, activity);
-        final WindowContainerToken taskFragmentToken0 = taskFragmentInfo0.getToken();
-        final WindowContainerToken taskFragmentToken1 = taskFragmentInfo1.getToken();
-
-        final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .setAdjacentRoots(taskFragmentToken0, taskFragmentToken1);
-
-        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CHANGE,
-                false /* shouldApplyIndependently */);
-    }
-
-    /**
-     * Verifies that performing {@link WindowContainerTransaction#reparentChildren} on
-     * non-TaskFragment window will throw {@link SecurityException}.
-     */
-    @Test
-    @ApiTest(apis = {
-            "android.window.TaskFragmentOrganizer#applyTransaction",
-            "android.window.WindowContainerTransaction#reparentChildren"})
-    public void testReparentChildren_nonTaskFragmentWindow_throwException() {
-        final WindowContainerToken taskToken = getFirstTaskToken();
-        final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .reparentChildren(taskToken, null /* newParent */);
-
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
-    }
-
-    /**
-     * Verifies that performing {@link WindowContainerTransaction#reparentChildren} on
-     * non-organized TaskFragment will throw {@link SecurityException}.
-     */
-    @Test
-    @ApiTest(apis = {
-            "android.window.TaskFragmentOrganizer#applyTransaction",
-            "android.window.WindowContainerTransaction#reparentChildren"})
-    public void testReparentChildren_nonOrganizedTaskFragment_throwException() {
-        final Activity activity = startNewActivity();
-        final TaskFragmentInfo taskFragmentInfo = createOrganizedTaskFragment(
-                mTaskFragmentOrganizer, activity);
-        final WindowContainerToken taskFragmentToken = taskFragmentInfo.getToken();
-
-        // Create another TaskFragmentOrganizer to request operation.
-        final TaskFragmentOrganizer anotherOrganizer = registerNewOrganizer();
-        final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .reparentChildren(taskFragmentToken, null /* newParent */);
-
-        assertThrows(SecurityException.class, () -> anotherOrganizer.applyTransaction(wct,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
-    }
-
-    /**
-     * Verifies that performing {@link WindowContainerTransaction#reparentChildren} on organized
-     * TaskFragment is allowed.
-     */
-    @Test
-    @ApiTest(apis = {
-            "android.window.TaskFragmentOrganizer#applyTransaction",
-            "android.window.WindowContainerTransaction#reparentChildren"})
-    public void testReparent_organizedTaskFragment() {
-        final Activity activity = startNewActivity();
-        final TaskFragmentInfo taskFragmentInfo = createOrganizedTaskFragment(
-                mTaskFragmentOrganizer, activity);
-        final WindowContainerToken taskFragmentToken = taskFragmentInfo.getToken();
-
-        final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .reparentChildren(taskFragmentToken, null /* newParent */);
-
-        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CHANGE,
                 false /* shouldApplyIndependently */);
     }
 
@@ -842,8 +695,7 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             assertEquals(1, info.getActivities().size());
 
             // Delete the TaskFragment
-            wct = new WindowContainerTransaction().deleteTaskFragment(
-                    mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken).getToken());
+            wct = new WindowContainerTransaction().deleteTaskFragment(taskFragToken);
             mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CLOSE,
                     false /* shouldApplyIndependently */);
 

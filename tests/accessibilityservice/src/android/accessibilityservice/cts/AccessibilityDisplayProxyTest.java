@@ -18,12 +18,20 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_AUDIBLE;
 import static android.accessibilityservice.AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitleWithList;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActivityTitle;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.supportsMultiDisplay;
+import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
 import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
+import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
+import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ACTIVE;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_FOCUSED;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.TestUtils.waitOn;
@@ -36,7 +44,9 @@ import static org.junit.Assume.assumeTrue;
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.activities.ProxyConcurrentActivity;
 import android.accessibilityservice.cts.activities.ProxyDisplayActivity;
+import android.accessibilityservice.cts.utils.DisplayUtils;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -44,14 +54,18 @@ import android.content.Context;
 import android.platform.test.annotations.Presubmit;
 import android.util.SparseArray;
 import android.view.Display;
+import android.view.View;
 import android.view.accessibility.AccessibilityDisplayProxy;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
+import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -104,12 +118,18 @@ public class AccessibilityDisplayProxyTest {
             mProxyConcurrentServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
             StubProxyConcurrentAccessibilityService.class, false);
 
+    private final ActivityTestRule<ProxyConcurrentActivity>
+            mConcurrentAccessibilityServiceActivityRule =
+            new ActivityTestRule<>(ProxyConcurrentActivity.class, false, false);
+
+
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
     @Rule
     public final RuleChain mRuleChain = RuleChain
             .outerRule(mProxyConcurrentServiceRule)
+            .around(mConcurrentAccessibilityServiceActivityRule)
             .around(mDumpOnFailureRule);
 
     @BeforeClass
@@ -140,6 +160,11 @@ public class AccessibilityDisplayProxyTest {
         info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK;
         infos.add(info);
         mA11yProxy = new MyA11yProxy(mDisplayId, Executors.newSingleThreadExecutor(), infos);
+
+        final AccessibilityServiceInfo automationInfo = sUiAutomation.getServiceInfo();
+        assert automationInfo != null;
+        automationInfo.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        sUiAutomation.setServiceInfo(automationInfo);
     }
 
     @After
@@ -300,6 +325,102 @@ public class AccessibilityDisplayProxyTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#findFocus(int)"})
+    public void testGetFocus_proxyGetsAccessibilityFocus() throws TimeoutException {
+        registerProxyAndWaitForConnection();
+        final List<AccessibilityWindowInfo> windows = mA11yProxy.getWindows();
+        // Validity check: activity window exists.
+        assertThat(findWindowByTitleWithList(
+                getActivityTitle(sInstrumentation, mActivity), windows)).isNotNull();
+
+        final EditText editText = mActivity.findViewById(R.id.edit_text);
+        setAccessibilityFocus(editText);
+
+        final AccessibilityNodeInfo a11yFocusedNode = mA11yProxy.findFocus(
+                AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
+        assertThat(a11yFocusedNode).isEqualTo(editText.createAccessibilityNodeInfo());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#findFocus(int)"})
+    public void testGetFocus_proxyDoesNotGetServiceAccessibilityFocus() throws Exception {
+        final StubProxyConcurrentAccessibilityService service =
+                mProxyConcurrentServiceRule.enableService();
+        try {
+            registerProxyAndWaitForConnection();
+            // Launch an activity on the default display.
+            final ProxyConcurrentActivity concurrentToProxyActivity =
+                    launchActivityAndWaitForItToBeOnscreen(
+                    sInstrumentation, sUiAutomation, mConcurrentAccessibilityServiceActivityRule);
+
+            final List<AccessibilityWindowInfo> windows = service.getWindows();
+            // Validity check: activity window exists.
+            assertThat(findWindowByTitleWithList(getActivityTitle(sInstrumentation,
+                    concurrentToProxyActivity), windows)).isNotNull();
+
+            final EditText editText = concurrentToProxyActivity.findViewById(R.id.editText);
+            setAccessibilityFocus(editText);
+
+            final AccessibilityNodeInfo a11yFocusedNode = service.findFocus(
+                    AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
+            assertThat(a11yFocusedNode).isEqualTo(editText.createAccessibilityNodeInfo());
+            assertThat(mA11yProxy.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)).isNull();
+        } finally {
+            service.disableSelfAndRemove();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#findFocus(int)"})
+    public void testGetFocus_proxyGetsInputFocus() throws TimeoutException {
+        registerProxyAndWaitForConnection();
+        final List<AccessibilityWindowInfo> windows = mA11yProxy.getWindows();
+        // Validity check: activity window exists.
+        assertThat(findWindowByTitleWithList(
+                getActivityTitle(sInstrumentation, mActivity), windows)).isNotNull();
+        // Make sure that the proxy display is the top-focused display.
+        setTopFocusedDisplayIfNeeded(mDisplayId, mActivity, windows);
+
+        final EditText editText = mActivity.findViewById(R.id.edit_text);
+        setInputFocusIfNeeded(editText);
+
+        final AccessibilityNodeInfo inputFocus = mA11yProxy.findFocus(
+                AccessibilityNodeInfo.FOCUS_INPUT);
+        assertThat(inputFocus).isEqualTo(editText.createAccessibilityNodeInfo());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#findFocus(int)"})
+    public void testGetFocus_proxyDoesNotGetServiceInputFocus() throws Exception {
+        final StubProxyConcurrentAccessibilityService service =
+                mProxyConcurrentServiceRule.enableService();
+        try {
+            registerProxyAndWaitForConnection();
+            // Launch an activity on the default display.
+            final ProxyConcurrentActivity concurrentToProxyActivity =
+                    launchActivityAndWaitForItToBeOnscreen(
+                    sInstrumentation, sUiAutomation, mConcurrentAccessibilityServiceActivityRule);
+            final List<AccessibilityWindowInfo> windows = service.getWindows();
+            // Validity check: activity window exists.
+            assertThat(findWindowByTitleWithList(getActivityTitle(sInstrumentation,
+                    concurrentToProxyActivity), windows)).isNotNull();
+            // Make sure that the default display is the top-focused display.
+            setTopFocusedDisplayIfNeeded(Display.DEFAULT_DISPLAY, concurrentToProxyActivity,
+                    windows);
+
+            final EditText editText = concurrentToProxyActivity.findViewById(R.id.editText);
+            setInputFocusIfNeeded(editText);
+
+            final AccessibilityNodeInfo inputFocus = service.findFocus(
+                    AccessibilityNodeInfo.FOCUS_INPUT);
+            assertThat(inputFocus).isEqualTo(editText.createAccessibilityNodeInfo());
+            assertThat(mA11yProxy.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)).isNull();
+        } finally {
+            service.disableSelfAndRemove();
+        }
+    }
+
+    @Test
     @ApiTest(apis = {
             "android.view.accessibility.AccessibilityDisplayProxy#setInstalledAndEnabledServices",
             "android.view.accessibility.AccessibilityDisplayProxy#getInstalledAndEnabledServices"})
@@ -391,6 +512,40 @@ public class AccessibilityDisplayProxyTest {
         assertThat(retrievedInfo.eventTypes).isEqualTo(AccessibilityEvent.TYPE_VIEW_CLICKED);
         assertThat(retrievedInfo.feedbackType).isEqualTo(FEEDBACK_AUDIBLE);
         assertThat(retrievedInfo.flags).isEqualTo(FLAG_INCLUDE_NOT_IMPORTANT_VIEWS);
+    }
+
+    private void setAccessibilityFocus(View view) throws TimeoutException {
+        sUiAutomation.executeAndWaitForEvent(
+                () -> mActivity.runOnUiThread(() -> view.performAccessibilityAction(
+                        AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null)),
+                filterForEventType(TYPE_VIEW_ACCESSIBILITY_FOCUSED), DEFAULT_TIMEOUT_MS);
+    }
+
+    private void setInputFocusIfNeeded(View view) throws TimeoutException {
+        if (!view.isFocused()) {
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> mActivity.runOnUiThread(() -> view.performAccessibilityAction(
+                            AccessibilityNodeInfo.ACTION_FOCUS, null)),
+                    filterForEventType(TYPE_VIEW_FOCUSED), DEFAULT_TIMEOUT_MS);
+        }
+    }
+
+    private void setTopFocusedDisplayIfNeeded(int displayId, Activity activity,
+            List<AccessibilityWindowInfo> windows) throws TimeoutException {
+        boolean isTopFocusedDisplay = false;
+        for (AccessibilityWindowInfo window : windows) {
+            // A focused window of the display means this display is the top-focused display.
+            if (window.isFocused()) {
+                isTopFocusedDisplay = true;
+                break;
+            }
+        }
+        if (!isTopFocusedDisplay) {
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> DisplayUtils.touchDisplay(sUiAutomation, displayId, activity.getTitle()),
+                    filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_FOCUSED
+                            | WINDOWS_CHANGE_ACTIVE), DEFAULT_TIMEOUT_MS);
+        }
     }
 
     /**

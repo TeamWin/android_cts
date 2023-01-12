@@ -39,9 +39,9 @@ class AspectRatioTestsBase extends ActivityManagerTestBase {
         void assertAspectRatio(float actual, int displayId, Point activitySize, Point displaySize);
     }
 
-    void runAspectRatioTest(final ComponentName componentName,
+    void runAspectRatioTest(final ComponentName componentName, int windowingMode,
             final AssertAspectRatioCallback callback) {
-        launchActivity(componentName);
+        launchActivity(componentName, windowingMode);
         mWmState.computeState();
 
         final int displayId = mWmState.getDisplayByActivity(componentName);

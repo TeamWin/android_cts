@@ -34,19 +34,19 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import java.io.InputStream
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 import org.junit.After
-import org.junit.Assert.fail
 import org.junit.Before
 
 open class PackageSchemeTestBase {
     val TARGET_APP_PKG_NAME = "android.packageinstaller.emptytestapp.cts"
     val TARGET_APP_APK = "CtsEmptyTestApp.apk"
     val RECEIVER_ACTION = "android.packageinstaller.emptytestapp.cts.action"
-    val REQUEST_CODE = 1
     val POSITIVE_BTN_ID = "button1"
     val NEGATIVE_BTN_ID = "button2"
     val SYSTEM_PACKAGE_NAME = "android"
@@ -61,22 +61,20 @@ open class PackageSchemeTestBase {
     val mInstaller: PackageInstaller = mContext.packageManager.packageInstaller
 
     class TestActivity : Activity() {
+        val mLatch: CountDownLatch = CountDownLatch(1)
+        var mResultCode = RESULT_OK
+
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
 
             val appInstallIntent: Intent? = intent.getExtra(Intent.EXTRA_INTENT) as Intent?
-            val requestCode: Int = intent.getIntExtra("requestCode", Integer.MIN_VALUE)
-            startActivityForResult(appInstallIntent, requestCode)
+            startActivityForResult(appInstallIntent, 1)
         }
 
         override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
             super.onActivityResult(requestCode, resultCode, data)
-            var intent = Intent()
-            if (data != null) {
-                intent = Intent(data)
-            }
-            intent.putExtra("requestCodeVerify", requestCode)
-            setResult(resultCode, intent)
+            mResultCode = resultCode
+            mLatch.countDown()
             finish()
         }
     }
@@ -140,40 +138,38 @@ open class PackageSchemeTestBase {
 
         val intent = Intent(ApplicationProvider.getApplicationContext(), TestActivity::class.java)
         intent.putExtra(Intent.EXTRA_INTENT, getAppInstallIntent())
-        intent.putExtra("requestCode", REQUEST_CODE)
 
-        mScenario = ActivityScenario.launchActivityForResult(intent)
+        var latch: CountDownLatch? = null
+        mScenario = ActivityScenario.launch(intent)
         mScenario!!.onActivity {
-            try {
-                // When the installed package is found, the dialog box shown is owned by
-                // com.android.packageinstaller (ag/19602120). On the other hand, when an error
-                // dialog box is shown due to app not being present or due to
-                // visibility constraints, the dialog box is owned by the system
-                if (packageHasVisibility && needTargetApp) {
-                    mUiDevice.wait(Until.findObject(By.res(PACKAGE_INSTALLER_PACKAGE_NAME,
-                        NEGATIVE_BTN_ID)), DEFAULT_TIMEOUT).click()
-                } else {
-                    mUiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME,
-                        POSITIVE_BTN_ID)), DEFAULT_TIMEOUT).click()
-                }
-            } catch (e: NullPointerException) {
-                fail("Button not found.: " + e.message)
+            val button: UiObject2?
+            val btnName: String
+            // When the installed package is found, the dialog box shown is owned by
+            // com.android.packageinstaller (ag/19602120). On the other hand, when an error
+            // dialog box is shown due to app not being present or due to
+            // visibility constraints, the dialog box is owned by the system
+            if (packageHasVisibility && needTargetApp) {
+                button = mUiDevice.wait(Until.findObject(By.res(PACKAGE_INSTALLER_PACKAGE_NAME,
+                        NEGATIVE_BTN_ID)), DEFAULT_TIMEOUT)
+                btnName = "Cancel"
+            } else {
+                button = mUiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME,
+                        POSITIVE_BTN_ID)), DEFAULT_TIMEOUT)
+                btnName = "OK"
+            }
+            assertWithMessage("$btnName not found").that(button).isNotNull()
+            button.click()
+            latch = it.mLatch
+        }
+        latch!!.await()
+        mScenario!!.onActivity {
+            val resultCode: Int = it.mResultCode
+            if (packageHasVisibility && needTargetApp) {
+                assertThat(resultCode).isNotEqualTo(Activity.RESULT_FIRST_USER)
+            } else {
+                assertThat(resultCode).isEqualTo(Activity.RESULT_FIRST_USER)
             }
         }
-
-        if (packageHasVisibility && needTargetApp) {
-            assertThat(mScenario!!.result.resultCode)
-                .isNotEqualTo(Activity.RESULT_FIRST_USER)
-        } else {
-            assertThat(mScenario!!.result.resultCode)
-                .isEqualTo(Activity.RESULT_FIRST_USER)
-        }
-
-        assertThat(
-            mScenario!!.result.resultData
-                .getIntExtra("requestCodeVerify", Int.MIN_VALUE)
-        )
-            .isEqualTo(REQUEST_CODE)
         mScenario!!.close()
     }
 

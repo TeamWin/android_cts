@@ -356,7 +356,7 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
         private void removeAllTaskFragments() {
             final WindowContainerTransaction wct = new WindowContainerTransaction();
             for (TaskFragmentInfo info : mInfos.values()) {
-                wct.deleteTaskFragment(info.getToken());
+                wct.deleteTaskFragment(info.getFragmentToken());
             }
             applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CLOSE,
                     false /* shouldApplyIndependently */);

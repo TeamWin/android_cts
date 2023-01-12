@@ -62,7 +62,6 @@ android_test {
         ":CtsCreateNotificationChannelsApp33",
         ":CtsMediaPermissionApp33WithStorage",
         ":CtsDifferentPkgNameApp",
-        ":CtsTestAppStoreApp",
         ":CtsUsePermissionAppImplicitUserSelectStorage",
     ],
     test_suites: [

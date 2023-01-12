@@ -24,7 +24,6 @@ import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_OPEN;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -37,7 +36,6 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.Task;
-import android.window.TaskFragmentCreationParams;
 import android.window.TaskFragmentInfo;
 import android.window.WindowContainerTransaction;
 
@@ -274,53 +272,6 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
         // It is disallowed to start activity to TaskFragment with bounds outside of its parent
         // in untrusted mode.
         assertTaskFragmentError(errorCallbackToken, SecurityException.class);
-    }
-
-    /**
-     * Verifies that when the TaskFragment bounds is outside of its parent bounds, it is disallowed
-     * to reparent children of a TaskFragment to another in untrusted mode.
-     */
-    @Test
-    public void testUntrustedModeTaskFragment_reparentChildrenOutsideOfParentBounds() {
-        // Create a TaskFragment with activity in trusted mode with bounds outside of its parent.
-        final Task parentTask = mWmState.getRootTask(mOwnerTaskId);
-        final Rect parentBounds = new Rect(parentTask.getBounds());
-        final Rect taskFragBounds = new Rect(parentBounds);
-        taskFragBounds.right++;
-        final TaskFragmentCreationParams params1 = generateTaskFragCreationParams(
-                taskFragBounds);
-        final IBinder taskFragToken = params1.getFragmentToken();
-        final WindowContainerTransaction wct1 = new WindowContainerTransaction()
-                .createTaskFragment(params1)
-                .reparentActivityToTaskFragment(taskFragToken, mOwnerToken);
-        mTaskFragmentOrganizer.applyTransaction(wct1, TASK_FRAGMENT_TRANSIT_CHANGE,
-                false /* shouldApplyIndependently */);
-        mTaskFragmentOrganizer.waitForTaskFragmentCreated();
-        final TaskFragmentInfo info1 = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
-
-        // Create a TaskFragment with activity in untrusted mode.
-        mTaskFragmentOrganizer.resetLatch();
-        final TaskFragmentInfo info2 = createTaskFragment(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
-        waitAndAssertResumedActivity(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY,
-                "Untrusted embedding activity must be resumed.");
-        final Rect activityBounds = new Rect(mWmState
-                .getActivity(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY).getBounds());
-
-        // Reparent children of the untrusted TaskFragment to the TaskFragment with larger bounds.
-        mTaskFragmentOrganizer.resetLatch();
-        final IBinder errorCallbackToken = new Binder();
-        final WindowContainerTransaction wct2 = new WindowContainerTransaction()
-                .setErrorCallbackToken(errorCallbackToken)
-                .reparentChildren(info2.getToken(), info1.getToken());
-        mTaskFragmentOrganizer.applyTransaction(wct2, TASK_FRAGMENT_TRANSIT_CHANGE,
-                false /* shouldApplyIndependently */);
-
-        // It is disallowed to reparent children to TaskFragment with bounds outside of its parent
-        // in untrusted mode.
-        assertTaskFragmentError(errorCallbackToken, SecurityException.class);
-        mWmState.waitForAppTransitionIdleOnDisplay(mOwnerActivity.getDisplayId());
-        assertEquals(activityBounds,
-                mWmState.getActivity(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY).getBounds());
     }
 
     /**

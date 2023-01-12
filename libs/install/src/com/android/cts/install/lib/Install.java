@@ -27,6 +27,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Builder class for installing test apps and creating install sessions.
@@ -48,6 +49,7 @@ public class Install {
     private int mInstallFlags = 0;
     private boolean mBypassAllowedApexUpdateCheck = true;
     private boolean mBypassStagedInstallerCheck = true;
+    private long mTimeoutMillis = TimeUnit.MINUTES.toMillis(5);
 
     private Install(boolean isMultiPackage, TestApp... testApps) {
         mIsMultiPackage = isMultiPackage;
@@ -175,6 +177,15 @@ public class Install {
     }
 
     /**
+     * Sets the installation timeout. {@link #commit()} will fail if install doesn't
+     * complete within the timeout. The default is 5 minutes.
+     */
+    public Install setTimeout(long timeoutMillis) {
+        mTimeoutMillis = timeoutMillis;
+        return this;
+    }
+
+    /**
      * Commits the install.
      *
      * @return the session id of the install session, if the session is successful.
@@ -186,7 +197,10 @@ public class Install {
                      InstallUtils.openPackageInstallerSession(sessionId)) {
             LocalIntentSender sender = new LocalIntentSender();
             session.commit(sender.getIntentSender());
-            Intent result = sender.getResult();
+            Intent result = sender.pollResult(mTimeoutMillis, TimeUnit.MILLISECONDS);
+            if (result == null) {
+                throw new AssertionError("Install timeout, sessionId=" + sessionId);
+            }
             InstallUtils.assertStatusSuccess(result);
             return sessionId;
         }

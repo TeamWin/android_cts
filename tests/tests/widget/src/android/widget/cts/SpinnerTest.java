@@ -270,7 +270,8 @@ public class SpinnerTest {
 
     @Test
     public void testOnClickAccessibility() throws Throwable {
-        assertTrue(AccessibilityManager.getInstance(mActivity).isEnabled());
+        AccessibilityManager accessibilityManager = AccessibilityManager.getInstance(mActivity);
+        PollingCheck.waitFor(DEFAULT_TIMEOUT_MILLIS, () -> accessibilityManager.isEnabled());
         verifyOnClickAccessibility(mSpinnerDropdownMode);
         verifyOnClickAccessibility(mSpinnerDialogMode);
     }

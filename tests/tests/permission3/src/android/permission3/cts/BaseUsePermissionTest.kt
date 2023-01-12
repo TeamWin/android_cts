@@ -48,6 +48,8 @@ import org.junit.Before
 
 abstract class BaseUsePermissionTest : BasePermissionTest() {
     companion object {
+        const val APP_APK_NAME_31 = "CtsUsePermissionApp31.apk"
+
         const val APP_APK_PATH_22 = "$APK_DIRECTORY/CtsUsePermissionApp22.apk"
         const val APP_APK_PATH_22_CALENDAR_ONLY =
             "$APK_DIRECTORY/CtsUsePermissionApp22CalendarOnly.apk"
@@ -58,7 +60,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val APP_APK_PATH_28 = "$APK_DIRECTORY/CtsUsePermissionApp28.apk"
         const val APP_APK_PATH_29 = "$APK_DIRECTORY/CtsUsePermissionApp29.apk"
         const val APP_APK_PATH_30 = "$APK_DIRECTORY/CtsUsePermissionApp30.apk"
-        const val APP_APK_PATH_31 = "$APK_DIRECTORY/CtsUsePermissionApp31.apk"
+        const val APP_APK_PATH_31 = "$APK_DIRECTORY/$APP_APK_NAME_31"
         const val APP_APK_PATH_32 = "$APK_DIRECTORY/CtsUsePermissionApp32.apk"
 
         const val APP_APK_PATH_30_WITH_BACKGROUND =
@@ -80,8 +82,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "$APK_DIRECTORY/CtsDifferentPkgNameApp.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
         const val OTHER_APP_PACKAGE_NAME = "android.permission3.cts.usepermissionother"
-        const val APP_APK_PATH_TEST_STORE_APP = "$APK_DIRECTORY/CtsTestAppStoreApp.apk"
-        const val TEST_STORE_PACKAGE_NAME = "android.permission3.cts.testappstoreapp"
+        const val TEST_INSTALLER_PACKAGE_NAME = "android.permission3.cts"
 
         const val ALLOW_ALL_PHOTOS_BUTTON =
             "com.android.permissioncontroller:id/permission_allow_all_photos_button"
@@ -136,6 +137,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "com.android.permissioncontroller:id/permission_rationale_title"
 
         const val REQUEST_LOCATION_MESSAGE = "permgrouprequest_location"
+
+        val TEST_INSTALLER_ACTIVITY_COMPONENT_NAME =
+            ComponentName(context, TestInstallerActivity::class.java)
 
         val MEDIA_PERMISSIONS: Set<String> = mutableSetOf(
             Manifest.permission.ACCESS_MEDIA_LOCATION,

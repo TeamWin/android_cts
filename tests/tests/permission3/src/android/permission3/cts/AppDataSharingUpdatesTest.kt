@@ -71,7 +71,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     @Test
     fun startActivityWithIntent_featuresEnabled_whenAppHasLocationGranted_showUpdates() {
-        installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
+        installPackage(APP_APK_PATH_31, installSource = TEST_INSTALLER_PACKAGE_NAME)
         grantLocationPermission(APP_PACKAGE_NAME)
 
         startAppDataSharingUpdatesActivity()
@@ -108,7 +108,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     // TODO(b/263838996): Check that Safety Label Help Center is opened.
     @Test
     fun clickLearnMore_opensPermissionManager() {
-        installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
+        installPackage(APP_APK_PATH_31, installSource = TEST_INSTALLER_PACKAGE_NAME)
         grantLocationPermission(APP_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
@@ -129,7 +129,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     @Test
     fun clickSettingsGearInUpdate_opensAppPermissionsPage() {
-        installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
+        installPackage(APP_APK_PATH_31, installSource = TEST_INSTALLER_PACKAGE_NAME)
         grantLocationPermission(APP_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
@@ -151,7 +151,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     @Test
     fun startActivityWithIntent_featuresEnabled_whenAppDoesntHaveLocationGranted_showsNoUpdates() {
-        installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
+        installPackage(APP_APK_PATH_31, installSource = TEST_INSTALLER_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
         try {

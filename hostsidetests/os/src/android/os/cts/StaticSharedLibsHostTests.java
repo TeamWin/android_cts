@@ -90,6 +90,8 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             "android.os.lib.provider";
 
     private static final String STATIC_LIB_CONSUMER1_APK = "CtsStaticSharedLibConsumerApp1.apk";
+    private static final String STATIC_LIB_CONSUMER1_BAD_CERT_DIGEST_APK =
+            "CtsStaticSharedLibConsumerApp1BadCertDigest.apk";
     private static final String STATIC_LIB_CONSUMER1_PKG = "android.os.lib.consumer1";
 
     private static final String STATIC_LIB_CONSUMER2_APK = "CtsStaticSharedLibConsumerApp2.apk";
@@ -911,6 +913,26 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
 
         runDeviceTests(STATIC_LIB_TEST_APP_PKG, STATIC_LIB_MULTI_USER_TEST_APP_CLASS_NAME,
                 "testStaticSharedLibUninstallOnAllUsers_broadcastReceivedByAllUsers");
+    }
+
+    @AppModeFull
+    public void testCannotInstallAppWithBadCertDigestDeclared() throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        try {
+            // Install library dependency
+            assertNull(install(STATIC_LIB_PROVIDER_RECURSIVE_APK));
+            // Install the first library
+            assertNull(install(STATIC_LIB_PROVIDER1_APK));
+            // Failed to install app with bad certificate digest
+            assertThat(install(STATIC_LIB_CONSUMER1_BAD_CERT_DIGEST_APK))
+                    .contains("INSTALL_FAILED_SHARED_LIBRARY_BAD_CERTIFICATE_DIGEST");
+        } finally {
+            getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        }
     }
 
     private String install(String apk) throws DeviceNotAvailableException, FileNotFoundException {
