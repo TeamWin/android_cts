@@ -20,11 +20,13 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.webkit.PacProcessor;
+import com.android.compatibility.common.util.NullWebViewUtils;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -79,6 +81,7 @@ public final class PacProcessorTest {
      */
     @Test
     public void testCreatePacProcessor() throws Throwable {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
         mProcess.run(TestCreatePacProcessor.class);
     }
 
@@ -97,6 +100,7 @@ public final class PacProcessorTest {
      */
     @Test
     public void testDefaultNetworkIsNull() throws Throwable {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
         mProcess.run(TestDefaultNetworkIsNull.class);
     }
 
@@ -131,6 +135,7 @@ public final class PacProcessorTest {
      */
     @Test
     public void testSetNetwork() throws Throwable {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
         mProcess.run(TestSetNetwork.class);
     }
 }

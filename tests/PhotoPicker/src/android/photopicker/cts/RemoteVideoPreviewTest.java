@@ -107,8 +107,12 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
             deleteMedia(uri, mContext);
         }
         mUriList.clear();
-        mActivity.finish();
-        setCloudProvider(mContext, null);
+        if (mActivity != null) {
+            mActivity.finish();
+        }
+        if (mCloudPrimaryMediaGenerator != null) {
+            setCloudProvider(mContext, null);
+        }
     }
 
     @Test

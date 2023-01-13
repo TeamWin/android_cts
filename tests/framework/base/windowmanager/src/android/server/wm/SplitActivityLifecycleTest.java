@@ -514,7 +514,7 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
         wct = new WindowContainerTransaction()
                 .setBounds(mTaskFragB.getToken(), new Rect())
                 .setWindowingMode(mTaskFragB.getToken(), WINDOWING_MODE_UNDEFINED)
-                .setAdjacentTaskFragments(mTaskFragA.getTaskFragToken(), null, null);
+                .clearAdjacentTaskFragments(mTaskFragA.getTaskFragToken());
         mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CHANGE,
                 false /* shouldApplyIndependently */);
 

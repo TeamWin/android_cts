@@ -39,8 +39,8 @@ java_library_static {
     ],
 
     libs: [
-        "android.test.runner",
-        "android.test.base",
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
     ],
 
     jarjar_rules: "protobuf-jarjar-rules.txt",
@@ -49,6 +49,6 @@ java_library_static {
 filegroup {
     name: "compatibility-device-util-nodeps",
     srcs: [
-         "src/com/android/compatibility/common/util/IBinderParcelable.java",
+        "src/com/android/compatibility/common/util/IBinderParcelable.java",
     ],
 }

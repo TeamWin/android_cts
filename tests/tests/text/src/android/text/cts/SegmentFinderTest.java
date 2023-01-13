@@ -39,7 +39,7 @@ public class SegmentFinderTest {
 
     @Test
     public void testDefaultSegmentFinder_previousStartBoundary() {
-        final SegmentFinder segmentFinder = new SegmentFinder.DefaultSegmentFinder(SEGMENTS);
+        final SegmentFinder segmentFinder = new SegmentFinder.PrescribedSegmentFinder(SEGMENTS);
 
         assertThat(segmentFinder.previousStartBoundary(SegmentFinder.DONE))
                 .isEqualTo(SegmentFinder.DONE);
@@ -75,7 +75,7 @@ public class SegmentFinderTest {
 
     @Test
     public void testDefaultSegmentFinder_previousEndBoundary() {
-        final SegmentFinder segmentFinder = new SegmentFinder.DefaultSegmentFinder(SEGMENTS);
+        final SegmentFinder segmentFinder = new SegmentFinder.PrescribedSegmentFinder(SEGMENTS);
 
         assertThat(segmentFinder.previousEndBoundary(SegmentFinder.DONE))
                 .isEqualTo(SegmentFinder.DONE);
@@ -106,7 +106,7 @@ public class SegmentFinderTest {
 
     @Test
     public void testDefaultSegmentFinder_nextEndBoundary() {
-        final SegmentFinder segmentFinder = new SegmentFinder.DefaultSegmentFinder(SEGMENTS);
+        final SegmentFinder segmentFinder = new SegmentFinder.PrescribedSegmentFinder(SEGMENTS);
 
         assertThat(segmentFinder.nextEndBoundary(SegmentFinder.DONE))
                 .isEqualTo(SegmentFinder.DONE);
@@ -140,7 +140,7 @@ public class SegmentFinderTest {
 
     @Test
     public void testDefaultSegmentFinder_nextStartBoundary() {
-        final SegmentFinder segmentFinder = new SegmentFinder.DefaultSegmentFinder(SEGMENTS);
+        final SegmentFinder segmentFinder = new SegmentFinder.PrescribedSegmentFinder(SEGMENTS);
 
         assertThat(segmentFinder.nextStartBoundary(SegmentFinder.DONE))
                 .isEqualTo(SegmentFinder.DONE);
@@ -169,18 +169,18 @@ public class SegmentFinderTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDefaultSegmentFinder_segmentsArrayMustBeEven() {
-        new SegmentFinder.DefaultSegmentFinder(new int[1]);
+        new SegmentFinder.PrescribedSegmentFinder(new int[1]);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testDefaultSegmentFinder_segmentsArrayMustBeSorted() {
         // The segment 3, 4 can't be placed after segment 1, 2.
-        new SegmentFinder.DefaultSegmentFinder(new int[] { 3, 4, 1, 2 });
+        new SegmentFinder.PrescribedSegmentFinder(new int[] { 3, 4, 1, 2 });
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testDefaultSegmentFinder_segmentsArrayNoEmptySegment() {
         // The segment 3, 3 is empty, which is not allowed.
-        new SegmentFinder.DefaultSegmentFinder(new int[] { 1, 2, 3, 3 });
+        new SegmentFinder.PrescribedSegmentFinder(new int[] { 1, 2, 3, 3 });
     }
 }

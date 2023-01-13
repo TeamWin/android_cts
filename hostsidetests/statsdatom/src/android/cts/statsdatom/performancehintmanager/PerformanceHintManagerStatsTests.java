@@ -68,7 +68,7 @@ public class PerformanceHintManagerStatsTests extends DeviceTestCase implements 
     }
 
     public void testCreateHintSessionStatsd() throws Exception {
-        final int androidTApiLevel = 33; // android.os.Build.VERSION_CODES.TIRAMISU
+        final int androidTApiLevel = 31; // android.os.Build.VERSION_CODES.S
         final int apiLevel = Integer.parseInt(
                 DeviceUtils.getProperty(getDevice(), "ro.vendor.api_level"));
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,

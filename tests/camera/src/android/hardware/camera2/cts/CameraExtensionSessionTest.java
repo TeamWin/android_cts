@@ -61,7 +61,6 @@ import android.media.ExifInterface;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.SystemClock;
-import android.util.Pair;
 import android.util.Range;
 import android.util.Size;
 
@@ -1155,7 +1154,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     CameraExtensionSession.ExtensionCaptureCallback captureCallback =
                             mock(CameraExtensionSession.ExtensionCaptureCallback.class);
 
-                    Pair<Long, Long> stillCaptureLatency =
+                    CameraExtensionSession.StillCaptureLatency stillCaptureLatency =
                             extensionSession.getRealtimeStillCaptureLatency();
                     CaptureRequest captureRequest = captureBuilder.build();
                     long startTimeMs = SystemClock.elapsedRealtime();
@@ -1172,11 +1171,11 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
 
                     if (stillCaptureLatency != null) {
                         assertTrue("Still capture frame latency must be positive!",
-                                stillCaptureLatency.first > 0);
+                                stillCaptureLatency.getCaptureLatency() > 0);
                         assertTrue("Processing capture latency must be non-negative!",
-                                stillCaptureLatency.second >= 0);
-                        long estimatedTotalLatency = stillCaptureLatency.first +
-                                stillCaptureLatency.second;
+                                stillCaptureLatency.getProcessingLatency() >= 0);
+                        long estimatedTotalLatency = stillCaptureLatency.getCaptureLatency() +
+                                stillCaptureLatency.getProcessingLatency();
                         long estimatedTotalLatencyMin =
                                 (long) (estimatedTotalLatency * (1.f - LATENCY_MARGIN));
                         long estimatedTotalLatencyMax =

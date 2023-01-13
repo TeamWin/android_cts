@@ -815,39 +815,6 @@ public class ImsServiceTest {
 
     @Test
     @ApiTest(apis = "android.telephony.SmsManager#sendTextMessage")
-    public void testMmTelSendSmsForExecutor() throws Exception {
-        if (!ImsUtils.shouldRunSmsImsTests(sTestSub)) {
-            return;
-        }
-
-        sServiceConnector.setExecutorTestType(true);
-        setupImsServiceForSms();
-
-        // Send Message with sent PendingIntent requested
-        SmsManager.getSmsManagerForSubscriptionId(sTestSub).sendTextMessage(SRC_NUMBER,
-                DEST_NUMBER, MSG_CONTENTS, SmsReceiverHelper.getMessageSentPendingIntent(
-                        InstrumentationRegistry.getInstrumentation().getTargetContext()), null);
-        assertTrue(sServiceConnector.getCarrierService().getMmTelFeature()
-                .getSmsImplementation().waitForMessageSentLatch());
-
-        // Wait for send PendingIntent
-        Intent intent = AsyncSmsMessageListener.getInstance().waitForMessageSentIntent(
-                ImsUtils.TEST_TIMEOUT_MS);
-        assertNotNull("SMS send PendingIntent never received", intent);
-        assertEquals("SMS send PendingIntent should have result RESULT_OK",
-                Activity.RESULT_OK, intent.getIntExtra(SmsReceiverHelper.EXTRA_RESULT_CODE,
-                        Activity.RESULT_CANCELED));
-
-        // Ensure we receive correct PDU on the other side.
-        byte[] pduWithStatusReport = EXPECTED_PDU.clone();
-        pduWithStatusReport[1] = sServiceConnector.getCarrierService()
-                .getMmTelFeature().getSmsImplementation().sentPdu[1];
-        Assert.assertArrayEquals(pduWithStatusReport, sServiceConnector.getCarrierService()
-                .getMmTelFeature().getSmsImplementation().sentPdu);
-    }
-
-    @Test
-    @ApiTest(apis = "android.telephony.SmsManager#sendTextMessage")
     public void testMmTelSendSmsDeliveryReportQCompat() throws Exception {
         if (!ImsUtils.shouldRunSmsImsTests(sTestSub)) {
             return;

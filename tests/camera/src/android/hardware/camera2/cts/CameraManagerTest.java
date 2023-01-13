@@ -669,18 +669,23 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
     }
 
     private <T> void verifyAvailabilityCbsReceived(HashSet<T> expectedCameras,
-            LinkedBlockingQueue<T> queue, LinkedBlockingQueue<T> otherQueue,
+            LinkedBlockingQueue<T> expectedEventQueue, LinkedBlockingQueue<T> unExpectedEventQueue,
             boolean available) throws Exception {
         while (expectedCameras.size() > 0) {
-            T id = queue.poll(AVAILABILITY_TIMEOUT_MS,
+            T id = expectedEventQueue.poll(AVAILABILITY_TIMEOUT_MS,
                     java.util.concurrent.TimeUnit.MILLISECONDS);
             assertTrue("Did not receive initial " + (available ? "available" : "unavailable")
                     + " notices for some cameras", id != null);
+            assertTrue("Received initial " + (available ? "available" : "unavailable")
+                    + " notice for wrong camera " + id, expectedCameras.contains(id));
             expectedCameras.remove(id);
         }
-        // Verify no unavailable/available cameras were reported
-        assertTrue("Some camera devices are initially " + (available ? "unavailable" : "available"),
-                otherQueue.size() == 0);
+        // Verify no unexpected unavailable/available cameras were reported
+        if (unExpectedEventQueue != null) {
+            assertTrue("Received unexpected initial "
+                    + (available ? "unavailable" : "available"),
+                    unExpectedEventQueue.size() == 0);
+        }
     }
 
     private void verifySingleAvailabilityCbsReceived(LinkedBlockingQueue<String> expectedEventQueue,
@@ -781,14 +786,14 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
         verifyAvailabilityCbsReceived(expectedAvailableCameras, availableEventQueue,
                 unavailableEventQueue, true /*available*/);
 
+        // Clear physical camera callback queue in case the initial state of certain physical
+        // cameras are unavailable.
+        unavailablePhysicalCamEventQueue.clear();
+
         // Verify transitions for individual cameras
         for (String id : cameras) {
             MockStateCallback mockListener = MockStateCallback.mock();
             mCameraListener = new BlockingStateCallback(mockListener);
-
-            // Clear logical camera callback queue in case the initial state of certain physical
-            // cameras are unavailable.
-            unavailablePhysicalCamEventQueue.clear();
 
             if (useExecutor) {
                 mCameraManager.openCamera(id, executor, mCameraListener);
@@ -843,8 +848,13 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
 
             expectedLogicalCameras = new HashSet<Pair<String, String>>(relatedLogicalCameras);
             verifyAvailabilityCbsReceived(expectedLogicalCameras,
-                    availablePhysicalCamEventQueue, unavailablePhysicalCamEventQueue,
+                    availablePhysicalCamEventQueue,
+                    null /*unExpectedEventQueue*/,
                     true /*available*/);
+
+            // Clear physical camera callback queue in case the initial state of certain physical
+            // cameras are unavailable.
+            unavailablePhysicalCamEventQueue.clear();
         }
 
         // Verify that we can unregister the listener and see no more events
@@ -938,6 +948,8 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
 
             verifySingleAvailabilityCbsReceived(onCameraClosedEventQueue,
                     onCameraOpenedEventQueue, cameras[0], "onCameraClosed", "onCameraOpened");
+
+            mCameraManager.unregisterAvailabilityCallback(ac);
         }
     } // testCameraManagerListenerCallbacks
 

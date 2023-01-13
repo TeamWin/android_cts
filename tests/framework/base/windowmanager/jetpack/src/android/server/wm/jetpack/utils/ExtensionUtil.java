@@ -75,6 +75,10 @@ public class ExtensionUtil {
         return version.compareTo(targetVersion) >= 0;
     }
 
+    public static boolean isExtensionVersionLatest() {
+        return isExtensionVersionAtLeast(EXTENSION_VERSION_2);
+    }
+
     /**
      * If called on a device with the vendor api level less than the bound then the test will be
      * ignored.

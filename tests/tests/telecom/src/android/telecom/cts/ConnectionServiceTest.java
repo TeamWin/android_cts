@@ -29,6 +29,7 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
+import android.provider.BlockedNumberContract;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.CallScreeningService;
@@ -428,6 +429,11 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
     @CddTest(requirement = "7.4.1.1/C-1-4")
     public void testCallLogForBlockedNumberIncomingCall() throws Exception {
         if (!mShouldTestTelecom) {
+            return;
+        }
+
+        //Check if blocking numbers is supported for the current user
+        if (!BlockedNumberContract.canCurrentUserBlockNumbers(mContext)) {
             return;
         }
 

@@ -143,28 +143,37 @@ public final class FrameRateOverrideTest {
         }
 
         Display.Mode[] modes = mActivityRule.getActivity().getDisplay().getSupportedModes();
+        List<Display.Mode> modesWithSameResolution = new ArrayList<>();
+        Display.Mode currentMode = mActivityRule.getActivity().getDisplay().getMode();
+        final long currentDisplayHeight = currentMode.getPhysicalHeight();
+        final long currentDisplayWidth = currentMode.getPhysicalWidth();
+
         for (Display.Mode mode : modes) {
-            for (Display.Mode otherMode : modes) {
-                if (mode.getModeId() == otherMode.getModeId()) {
-                    continue;
-                }
+            if (mode.getPhysicalHeight() == currentDisplayHeight
+                    && mode.getPhysicalWidth() == currentDisplayWidth) {
+                modesWithSameResolution.add(mode);
+            }
+        }
 
-                if (mode.getPhysicalHeight() != otherMode.getPhysicalHeight()
-                        || mode.getPhysicalWidth() != otherMode.getPhysicalWidth()) {
-                    continue;
-                }
-
-                boolean overrideForNativeRates = SurfaceFlingerProperties
+        final boolean overrideForNativeRates = SurfaceFlingerProperties
                         .frame_rate_override_for_native_rates().orElse(false);
-                if (overrideForNativeRates) {
+        if (overrideForNativeRates) {
+            for (Display.Mode mode : modesWithSameResolution) {
+                for (Display.Mode otherMode : modesWithSameResolution) {
+                    if (mode.getModeId() == otherMode.getModeId()) {
+                        continue;
+                    }
+
                     // only add if this refresh rate is a multiple of the other
                     if (areEqual(mode.getRefreshRate(), 2 * otherMode.getRefreshRate())) {
                         modesToTest.add(mode);
+                        continue;
                     }
-                } else {
-                    modesToTest.add(mode);
                 }
             }
+        }
+        else {
+            modesToTest = modesWithSameResolution;
         }
 
         return modesToTest;

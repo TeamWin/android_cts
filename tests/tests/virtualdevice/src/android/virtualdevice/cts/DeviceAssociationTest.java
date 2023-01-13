@@ -364,6 +364,19 @@ public class DeviceAssociationTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.content.Context#updateDeviceId"})
+    public void updateDeviceId_sameId_DoesNotNotifyListeners() {
+        Context context = getApplicationContext();
+        context.registerDeviceIdChangeListener(mTestExecutor, mDeviceChangeListener);
+
+        context.updateDeviceId(mVirtualDevice.getDeviceId());
+        verify(mDeviceChangeListener, timeout(3000)).accept(mVirtualDevice.getDeviceId());
+
+        context.updateDeviceId(mVirtualDevice.getDeviceId());
+        verifyNoMoreInteractions(mDeviceChangeListener);
+    }
+
+    @Test
     public void activityContext_startActivityOnVirtualDevice_returnsVirtualDeviceId() {
         Activity activityContext = startActivity(mVirtualDisplay);
 

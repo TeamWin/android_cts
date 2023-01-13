@@ -113,7 +113,6 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.waitForIdle();
 
         // Set a PIN for this user
-        mDevice.executeShellCommand("settings put global require_password_to_decrypt 0");
         mDevice.executeShellCommand("locksettings set-disabled false");
         String output = mDevice.executeShellCommand("locksettings set-pin 1234");
         assertTrue("set-pin failed. Output: " + output, output.contains("1234"));
@@ -130,7 +129,6 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         // Clear PIN for this user
         mDevice.executeShellCommand("locksettings clear --old 1234");
         mDevice.executeShellCommand("locksettings set-disabled true");
-        mDevice.executeShellCommand("settings delete global require_password_to_decrypt");
     }
 
     public void testLockScreen() throws Exception {

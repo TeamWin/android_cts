@@ -235,8 +235,8 @@ public class TextViewTextBoundsInfoTest {
 
         final Matrix expectMatrix = new Matrix();
         expectMatrix.setTranslate(mLocationOnScreen[0], mLocationOnScreen[1]);
-        assertThat(textBoundsInfo.getStart()).isEqualTo(0);
-        assertThat(textBoundsInfo.getEnd()).isEqualTo(8);
+        assertThat(textBoundsInfo.getStartIndex()).isEqualTo(0);
+        assertThat(textBoundsInfo.getEndIndex()).isEqualTo(8);
         assertSegments(DEFAULT_GRAPHEME_BREAKS, textBoundsInfo.getGraphemeSegmentFinder(), 0, 8);
         assertSegments(DEFAULT_WORD_SEGMENTS, textBoundsInfo.getWordSegmentFinder(), 0, 8);
         assertSegments(DEFAULT_LINE_SEGMENTS, textBoundsInfo.getLineSegmentFinder(), 0, 8);
@@ -260,8 +260,8 @@ public class TextViewTextBoundsInfoTest {
 
         final Matrix expectMatrix = new Matrix();
         expectMatrix.setTranslate(mLocationOnScreen[0], mLocationOnScreen[1]);
-        assertThat(textBoundsInfo.getStart()).isEqualTo(8);
-        assertThat(textBoundsInfo.getEnd()).isEqualTo(10);
+        assertThat(textBoundsInfo.getStartIndex()).isEqualTo(8);
+        assertThat(textBoundsInfo.getEndIndex()).isEqualTo(10);
         assertSegments(DEFAULT_GRAPHEME_BREAKS, textBoundsInfo.getGraphemeSegmentFinder(), 8, 10);
         assertSegments(DEFAULT_WORD_SEGMENTS, textBoundsInfo.getWordSegmentFinder(), 8, 10);
         assertSegments(DEFAULT_LINE_SEGMENTS, textBoundsInfo.getLineSegmentFinder(), 8, 10);
@@ -284,8 +284,8 @@ public class TextViewTextBoundsInfoTest {
 
         final Matrix expectMatrix = new Matrix();
         expectMatrix.setTranslate(mLocationOnScreen[0], mLocationOnScreen[1]);
-        assertThat(textBoundsInfo.getStart()).isEqualTo(0);
-        assertThat(textBoundsInfo.getEnd()).isEqualTo(10);
+        assertThat(textBoundsInfo.getStartIndex()).isEqualTo(0);
+        assertThat(textBoundsInfo.getEndIndex()).isEqualTo(10);
         assertSegments(DEFAULT_GRAPHEME_BREAKS, textBoundsInfo.getGraphemeSegmentFinder(), 0, 10);
         assertSegments(DEFAULT_WORD_SEGMENTS, textBoundsInfo.getWordSegmentFinder(), 0, 10);
         assertSegments(DEFAULT_LINE_SEGMENTS, textBoundsInfo.getLineSegmentFinder(), 0, 10);
@@ -308,9 +308,11 @@ public class TextViewTextBoundsInfoTest {
 
         final Matrix expectMatrix = new Matrix();
         expectMatrix.setTranslate(mLocationOnScreen[0], mLocationOnScreen[1]);
-        assertThat(textBoundsInfo.getMatrix()).isEqualTo(expectMatrix);
-        assertThat(textBoundsInfo.getStart()).isEqualTo(0);
-        assertThat(textBoundsInfo.getEnd()).isEqualTo(8);
+        final Matrix actualMatrix = new Matrix();
+        textBoundsInfo.getMatrix(actualMatrix);
+        assertThat(actualMatrix).isEqualTo(expectMatrix);
+        assertThat(textBoundsInfo.getStartIndex()).isEqualTo(0);
+        assertThat(textBoundsInfo.getEndIndex()).isEqualTo(8);
         assertSegments(DEFAULT_GRAPHEME_BREAKS, textBoundsInfo.getGraphemeSegmentFinder(), 0, 8);
         assertSegments(DEFAULT_WORD_SEGMENTS, textBoundsInfo.getWordSegmentFinder(), 0, 8);
         assertSegments(DEFAULT_LINE_SEGMENTS, textBoundsInfo.getLineSegmentFinder(), 0, 8);
@@ -321,22 +323,23 @@ public class TextViewTextBoundsInfoTest {
     }
 
     private static void assertCharacterBounds(RectF[] expectBounds, TextBoundsInfo textBoundsInfo) {
-        final int start = textBoundsInfo.getStart();
-        final int end = textBoundsInfo.getEnd();
+        final int start = textBoundsInfo.getStartIndex();
+        final int end = textBoundsInfo.getEndIndex();
 
         for (int index = start; index < end; ++index) {
-            final RectF actual = textBoundsInfo.getCharacterBounds(index);
+            final RectF actualBounds = new RectF();
+            textBoundsInfo.getCharacterBounds(index, actualBounds);
             final RectF expectedBounds = new RectF(expectBounds[index]);
             // The returned text bounds is in the view's coordinates.
             expectedBounds.offset(TEXT_LAYOUT_LEFT, TEXT_LAYOUT_TOP);
 
-            assertThat(actual).isEqualTo(expectedBounds);
+            assertThat(actualBounds).isEqualTo(expectedBounds);
         }
     }
 
     private static void assertCharacterFlags(int[] expectFlags, TextBoundsInfo textBoundsInfo) {
-        final int start = textBoundsInfo.getStart();
-        final int end = textBoundsInfo.getEnd();
+        final int start = textBoundsInfo.getStartIndex();
+        final int end = textBoundsInfo.getEndIndex();
 
         for (int index = start; index < end; ++index) {
             assertThat(textBoundsInfo.getCharacterFlags(index)).isEqualTo(expectFlags[index]);
@@ -345,8 +348,8 @@ public class TextViewTextBoundsInfoTest {
 
     private static void assertCharacterBidiLevels(int[] expectBidiLevels,
             TextBoundsInfo textBoundsInfo) {
-        final int start = textBoundsInfo.getStart();
-        final int end = textBoundsInfo.getEnd();
+        final int start = textBoundsInfo.getStartIndex();
+        final int end = textBoundsInfo.getEndIndex();
 
         for (int index = start; index < end; ++index) {
             assertThat(textBoundsInfo.getCharacterBidiLevel(index))
@@ -391,9 +394,11 @@ public class TextViewTextBoundsInfoTest {
     }
 
     private static void assertEmptyTextBoundsInfo(TextBoundsInfo textBoundsInfo, Matrix matrix) {
-        assertThat(textBoundsInfo.getMatrix()).isEqualTo(matrix);
-        assertThat(textBoundsInfo.getStart()).isEqualTo(0);
-        assertThat(textBoundsInfo.getEnd()).isEqualTo(0);
+        final Matrix actualMatrix = new Matrix();
+        textBoundsInfo.getMatrix(actualMatrix);
+        assertThat(actualMatrix).isEqualTo(matrix);
+        assertThat(textBoundsInfo.getStartIndex()).isEqualTo(0);
+        assertThat(textBoundsInfo.getEndIndex()).isEqualTo(0);
         assertSegmentFinderIsEmpty(textBoundsInfo.getGraphemeSegmentFinder());
         assertSegmentFinderIsEmpty(textBoundsInfo.getWordSegmentFinder());
         assertSegmentFinderIsEmpty(textBoundsInfo.getLineSegmentFinder());

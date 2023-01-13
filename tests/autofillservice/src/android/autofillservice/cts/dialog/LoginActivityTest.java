@@ -29,19 +29,25 @@ import static android.autofillservice.cts.testcore.Helper.assertHasFlags;
 import static android.autofillservice.cts.testcore.Helper.assertMockImeStatus;
 import static android.autofillservice.cts.testcore.Helper.assertNoDeprecatedClientState;
 import static android.autofillservice.cts.testcore.Helper.assertNoFlags;
+import static android.autofillservice.cts.testcore.Helper.enableCredentialManagerFeature;
 import static android.autofillservice.cts.testcore.Helper.enableFillDialogFeature;
+import static android.autofillservice.cts.testcore.Helper.ignoreCredentialManagerViews;
 import static android.autofillservice.cts.testcore.Helper.isImeShowing;
+import static android.autofillservice.cts.testcore.Helper.setCredentialManagerFeature;
 import static android.autofillservice.cts.testcore.Helper.setFillDialogHints;
 import static android.service.autofill.FillEventHistory.Event.UI_TYPE_DIALOG;
 import static android.service.autofill.FillRequest.FLAG_SUPPORTS_FILL_DIALOG;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.autofillservice.cts.R;
 import android.autofillservice.cts.activities.FieldsNoPasswordActivity;
 import android.autofillservice.cts.activities.LoginActivity;
+import android.autofillservice.cts.activities.LoginImportantForCredentialManagerActivity;
 import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.content.Intent;
@@ -683,11 +689,137 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
         assertMockImeStatus(activity, true);
     }
 
+    @Test
+    public void testCredentialManagerIntegration() throws Exception {
+        enableFillDialogFeature(sContext);
+        enableCredentialManagerFeature(sContext);
+        ignoreCredentialManagerViews(sContext);
+        enableService();
+
+        // Start activity
+        final LoginImportantForCredentialManagerActivity activity =
+                startLoginImportantForCredentialManagerActivity();
+        mUiBot.waitForIdleSync();
+
+        // Check autofill is not triggered
+        // ImportantForCredential fields shouldn't trigger Fill Dialog requests.
+        sReplier.assertNoUnhandledFillRequests();
+        mUiBot.waitForIdleSync();
+
+        // This behavior may change later. Currently, clicking on a field wouldn't trigger any
+        // fill request.
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+        sReplier.assertNoUnhandledFillRequests();
+        mUiBot.waitForIdleSync();
+
+        // Set response with a dataset > fill dialog should have two buttons
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("Dropdown Presentation"))
+                        .setDialogPresentation(createPresentation("Dialog Presentation"))
+                        .build())
+                .setDialogHeader(createPresentation("Dialog Header"))
+                .setDialogTriggerIds(ID_PASSWORD);
+        sReplier.addResponse(builder.build());
+
+        // Force autofill on username field
+        activity.forceAutofillOnUsername();
+        mUiBot.waitForIdleSync();
+
+        // Check onFillRequest is called now, and the fill dialog is not shown
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        assertNoFlags(fillRequest.flags, FLAG_SUPPORTS_FILL_DIALOG);
+        mUiBot.assertNoFillDialog();
+
+        // Verify dropdown UI is shown and works
+        mUiBot.selectDataset("Dropdown Presentation");
+    }
+
+    @Test
+    public void testCredentialManagerIntegration_featureOff() throws Exception {
+        // When the feature is off, we shouldn't affect regular autofill flows.
+        enableFillDialogFeature(sContext);
+        setCredentialManagerFeature(sContext, false);
+        enableService();
+
+        // Set response with a dataset > fill dialog should have two buttons
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("Dropdown Presentation"))
+                        .setDialogPresentation(createPresentation("Dialog Presentation"))
+                        .build())
+                .setDialogHeader(createPresentation("Dialog Header"))
+                .setDialogTriggerIds(ID_PASSWORD);
+        sReplier.addResponse(builder.build());
+
+        // Start activity
+        final LoginImportantForCredentialManagerActivity activity =
+                startLoginImportantForCredentialManagerActivity();
+        mUiBot.waitForIdleSync();
+
+        // Check onFillRequest has the flag: FLAG_SUPPORTS_FILL_DIALOG
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        assertHasFlags(fillRequest.flags, FLAG_SUPPORTS_FILL_DIALOG);
+        mUiBot.waitForIdleSync();
+
+        // Click on password field to trigger fill dialog
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        // Verify IME is not shown
+        assertThat(isImeShowing(activity.getRootWindowInsets())).isFalse();
+
+        // Verify the content of fill dialog, and then select dataset in fill dialog
+        mUiBot.assertFillDialogHeader("Dialog Header");
+        mUiBot.assertFillDialogRejectButton();
+        mUiBot.assertFillDialogAcceptButton();
+        final UiObject2 picker = mUiBot.assertFillDialogDatasets("Dialog Presentation");
+
+        // Set expected value, then select dataset
+        activity.expectAutoFill("dude", "sweet");
+        mUiBot.selectDataset(picker, "Dialog Presentation");
+
+        // Check the results.
+        activity.assertAutoFilled();
+    }
+
+    @Test
+    public void testIsCredential() throws Exception {
+        // Start activity
+        final LoginImportantForCredentialManagerActivity activity =
+                startLoginImportantForCredentialManagerActivity();
+        mUiBot.waitForIdleSync();
+
+        // Click on password field to trigger fill dialog
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        View v = activity.findViewById(R.id.password);
+        assertThat(v.isCredential()).isTrue();
+
+        v.setIsCredential(false);
+        assertThat(v.isCredential()).isFalse();
+    }
+
     private FieldsNoPasswordActivity startNoPasswordActivity() throws Exception {
         final Intent intent = new Intent(mContext, FieldsNoPasswordActivity.class)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
         mUiBot.assertShownByRelativeId(ID_USERNAME_LABEL);
         return FieldsNoPasswordActivity.getCurrentActivity();
+    }
+
+    private LoginImportantForCredentialManagerActivity
+            startLoginImportantForCredentialManagerActivity() throws Exception {
+        final Intent intent = new Intent(mContext, LoginImportantForCredentialManagerActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        mUiBot.assertShownByRelativeId(Helper.ID_USERNAME_LABEL);
+        return LoginImportantForCredentialManagerActivity.getCurrentActivity();
     }
 }

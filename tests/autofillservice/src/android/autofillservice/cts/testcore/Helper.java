@@ -66,6 +66,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStructure.HtmlInfo;
 import android.view.WindowInsets;
+import android.view.autofill.AutofillFeatureFlags;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillManager.AutofillCallback;
@@ -1641,12 +1642,46 @@ public final class Helper {
     }
 
     /**
+     * Enable the main credential manager feature.
+     * If this is off, any underlying changes for autofill-credentialManager integrations are off.
+     */
+    public static void enableCredentialManagerFeature(@NonNull Context context) {
+        setCredentialManagerFeature(context, true);
+    }
+
+    /**
+     * Enable ignoring credential manager important views for autofill feature
+     */
+    public static void ignoreCredentialManagerViews(@NonNull Context context) {
+        setDeviceConfig(context,
+                AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_CREDENTIAL_MANAGER_IGNORE_VIEWS, true);
+    }
+
+    /**
+     * Enable Credential Manager related autofill changes
+     */
+    public static void setCredentialManagerFeature(@NonNull Context context, boolean enabled) {
+        setDeviceConfig(context,
+                AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_CREDENTIAL_MANAGER_ENABLED, enabled);
+    }
+
+    /**
+     * Set device config to set flag values.
+     */
+    public static void setDeviceConfig(
+            @NonNull Context context, @NonNull String feature, boolean value) {
+        DeviceConfigStateManager deviceConfigStateManager =
+                new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_AUTOFILL, feature);
+        setDeviceConfig(deviceConfigStateManager, String.valueOf(value));
+    }
+
+    /**
      * Enable fill dialog feature
      */
     public static void enableFillDialogFeature(@NonNull Context context) {
         DeviceConfigStateManager deviceConfigStateManager =
                 new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_AUTOFILL,
-                        AutofillManager.DEVICE_CONFIG_AUTOFILL_DIALOG_ENABLED);
+                        AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_DIALOG_ENABLED);
         setDeviceConfig(deviceConfigStateManager, "true");
     }
 

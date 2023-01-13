@@ -143,7 +143,9 @@ public class IRadioImsImpl extends IRadioIms.Stub {
     public void sendAnbrQuery(int serial, int qosSessionId, int direction, int bitsPerSecond) {
         Log.d(mTag, "sendAnbrQuery");
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        mImsState.sendAnbrQuery(qosSessionId, direction, bitsPerSecond);
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioImsResponse.sendAnbrQueryResponse(rsp);
         } catch (RemoteException ex) {
@@ -321,6 +323,22 @@ public class IRadioImsImpl extends IRadioIms.Stub {
      */
     public void resetEpsFallbackReason() {
         mImsState.resetEpsFallbackReason();
+    }
+
+    /**
+     * Returns the Anbr values triggered by Anbr Query.
+     *
+     * @return the Anbr values triggered by Anbr Query.
+     */
+    public int[] getAnbrValues() {
+        return mImsState.getAnbrValues();
+    }
+
+    /**
+     * Clears the Anbr values.
+     */
+    public void resetAnbrValues() {
+        mImsState.resetAnbrValues();
     }
 
     /**

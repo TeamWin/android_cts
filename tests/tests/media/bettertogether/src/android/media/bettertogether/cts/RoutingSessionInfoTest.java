@@ -26,6 +26,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import android.content.res.Resources;
+import android.media.MediaRoute2Info;
 import android.media.RoutingSessionInfo;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -618,5 +619,64 @@ public class RoutingSessionInfoTest {
                 .build();
 
         assertThat(sessionInfo.getVolumeHandling()).isEqualTo(PLAYBACK_VOLUME_VARIABLE);
+    }
+
+    @Test
+    public void selectedRoutesListIsImmutable() {
+        RoutingSessionInfo.Builder builder = new RoutingSessionInfo.Builder(
+                TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                .setName(TEST_NAME)
+                .addSelectedRoute(TEST_ROUTE_ID_0)
+                .setVolumeHandling(MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE);
+
+        RoutingSessionInfo sessionInfo = builder.build();
+        assertThat(sessionInfo.getSelectedRoutes()).containsExactly(TEST_ROUTE_ID_0);
+        builder.clearSelectedRoutes();
+        assertThat(sessionInfo.getSelectedRoutes()).containsExactly(TEST_ROUTE_ID_0);
+    }
+
+    @Test
+    public void selectableRoutesListIsImmutable() {
+        RoutingSessionInfo.Builder builder = new RoutingSessionInfo.Builder(
+                TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                .setName(TEST_NAME)
+                .addSelectedRoute(TEST_ROUTE_ID_0)
+                .addSelectableRoute(TEST_ROUTE_ID_2)
+                .setVolumeHandling(MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE);
+
+        RoutingSessionInfo sessionInfo = builder.build();
+        assertThat(sessionInfo.getSelectableRoutes()).containsExactly(TEST_ROUTE_ID_2);
+        builder.clearSelectableRoutes();
+        assertThat(sessionInfo.getSelectableRoutes()).containsExactly(TEST_ROUTE_ID_2);
+    }
+
+    @Test
+    public void deselectableRoutesListIsImmutable() {
+        RoutingSessionInfo.Builder builder = new RoutingSessionInfo.Builder(
+                TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                .setName(TEST_NAME)
+                .addSelectedRoute(TEST_ROUTE_ID_0)
+                .addDeselectableRoute(TEST_ROUTE_ID_2)
+                .setVolumeHandling(MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE);
+
+        RoutingSessionInfo sessionInfo = builder.build();
+        assertThat(sessionInfo.getDeselectableRoutes()).containsExactly(TEST_ROUTE_ID_2);
+        builder.clearDeselectableRoutes();
+        assertThat(sessionInfo.getDeselectableRoutes()).containsExactly(TEST_ROUTE_ID_2);
+    }
+
+    @Test
+    public void transferableRoutesListIsImmutable() {
+        RoutingSessionInfo.Builder builder = new RoutingSessionInfo.Builder(
+                TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                .setName(TEST_NAME)
+                .addSelectedRoute(TEST_ROUTE_ID_0)
+                .addTransferableRoute(TEST_ROUTE_ID_2)
+                .setVolumeHandling(MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE);
+
+        RoutingSessionInfo sessionInfo = builder.build();
+        assertThat(sessionInfo.getTransferableRoutes()).containsExactly(TEST_ROUTE_ID_2);
+        builder.clearTransferableRoutes();
+        assertThat(sessionInfo.getTransferableRoutes()).containsExactly(TEST_ROUTE_ID_2);
     }
 }

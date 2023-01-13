@@ -48,6 +48,7 @@ public class MockImsService {
     private final int[] mStartImsTrafficSerial = new int[IMS_TRAFFIC_TYPE_UT_XCAP + 1];
     private final boolean[] mImsTrafficState = new boolean[IMS_TRAFFIC_TYPE_UT_XCAP + 1];
     private final int[] mImsTrafficToken = new int[IMS_TRAFFIC_TYPE_UT_XCAP + 1];
+    private int[] mAnbrValues = new int[3];
 
     public MockImsService() {
         for (int i = 0; i < LATCH_MAX; i++) {
@@ -177,6 +178,48 @@ public class MockImsService {
             mImsTrafficState[i] = false;
             mImsTrafficToken[i] = INVALID;
         }
+    }
+
+    /**
+     * Access Network Bitrate Recommendation Query (ANBRQ), see 3GPP TS 26.114.
+     * This API triggers radio to send ANBRQ message to the access network to query the
+     * desired bitrate.
+     *
+     * @param mediaType MediaType is used to identify media stream such as audio or video.
+     * @param direction Direction of this packet stream (e.g. uplink or downlink).
+     * @param bitsPerSecond This value is the bitrate requested by the other party UE through
+     *        RTP CMR, RTCPAPP or TMMBR, and ImsStack converts this value to the MAC bitrate
+     *        (defined in TS36.321, range: 0 ~ 8000 kbit/s).
+     */
+    public void sendAnbrQuery(int mediaType, int direction, int bitsPerSecond) {
+        Log.d(TAG, "mockImsService - sendAnbrQuery mediaType=" + mediaType + ", direction="
+                + direction + ", bitsPerSecond" + bitsPerSecond);
+
+        try {
+            mAnbrValues[0] = mediaType;
+            mAnbrValues[1] = direction;
+            mAnbrValues[2] = bitsPerSecond;
+        } catch (Exception e) {
+            Log.e(TAG, "SendAnbrQuery is not called");
+        }
+    }
+
+    /**
+     * Clears the Anbr values.
+     */
+    public void resetAnbrValues() {
+        mAnbrValues[0] = INVALID;
+        mAnbrValues[1] = INVALID;
+        mAnbrValues[2] = INVALID;
+    }
+
+    /**
+     * Returns the Anbr values triggered by Anbr Query.
+     *
+     * @return the Anbr values triggered by Anbr Query.
+     */
+    public int[] getAnbrValues() {
+        return mAnbrValues;
     }
 
     private void countDownLatch(int latchIndex) {

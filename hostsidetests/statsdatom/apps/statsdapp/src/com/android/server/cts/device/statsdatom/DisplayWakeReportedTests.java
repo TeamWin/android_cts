@@ -19,12 +19,12 @@ package com.android.server.cts.device.statsdatom;
 import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
 
 import android.app.AppOpsManager;
-import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
 import android.os.PowerManager;
 import android.os.Process;
 import android.os.SystemClock;
+import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -36,6 +36,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * These tests are run by DisplayWakeReportedStatsTests to generate some stats by exercising
  * wake APIs.
@@ -45,9 +49,12 @@ import org.junit.Test;
 @NonApiTest(exemptionReasons = {}, justification = "METRIC")
 public class DisplayWakeReportedTests {
     private static final String TAG = "DisplayWakeReportedTests";
+    private static final String WAKEFULNESS_ASLEEP = "Asleep";
+    private static final int WAKEFULNESS_TIMEOUT = 10000;
+
     private PowerManager mPowerManager;
     private PowerManager.WakeLock mSystemWakeLock;
-    private UiAutomation mUiAutomation;
+    private UiDevice mUiDevice;
 
     @Before
     public void setUp() throws Exception {
@@ -55,20 +62,23 @@ public class DisplayWakeReportedTests {
         mSystemWakeLock = mPowerManager.newWakeLock(PARTIAL_WAKE_LOCK, TAG);
         mSystemWakeLock.acquire();
 
-        mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        mUiAutomation.executeShellCommand("input keyevent SLEEP");
-        PollingCheck.check("Device failed to sleep", 10000, () -> !mPowerManager.isInteractive());
+        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        mUiDevice.executeShellCommand("input keyevent SLEEP");
+        PollingCheck.check("Device failed to sleep", WAKEFULNESS_TIMEOUT,
+                () -> !mPowerManager.isInteractive()
+                        && Objects.equals(getWakefulness(mUiDevice), WAKEFULNESS_ASLEEP));
     }
 
     @After
     public void tearDown() throws Exception {
-        PollingCheck.check("Device failed to wake up", 10000, () -> mPowerManager.isInteractive());
+        PollingCheck.check("Device failed to wake up", WAKEFULNESS_TIMEOUT,
+                () -> mPowerManager.isInteractive());
         mSystemWakeLock.release();
     }
 
     @Test
     public void testWakeWithWakeKey() throws Exception {
-        mUiAutomation.executeShellCommand("input keyevent WAKEUP").close();
+        mUiDevice.executeShellCommand("input keyevent WAKEUP");
     }
 
     @Test
@@ -100,5 +110,15 @@ public class DisplayWakeReportedTests {
         Intent intent = new Intent(context, TurnScreenOnActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
+    }
+
+    private static String getWakefulness(UiDevice uiDevice) throws Exception {
+        Pattern pattern = Pattern.compile("mWakefulness=(.*)\\n");
+        String dump = uiDevice.executeShellCommand("dumpsys power");
+        Matcher matcher = pattern.matcher(dump);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
     }
 }

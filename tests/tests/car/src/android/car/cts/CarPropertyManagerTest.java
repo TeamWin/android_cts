@@ -277,6 +277,206 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.STEERING_WHEEL_LOCKED,
                             VehiclePropertyIds.STEERING_WHEEL_EASY_ACCESS_ENABLED)
                     .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_AIRBAGS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.SEAT_AIRBAG_ENABLED)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_SEATS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.SEAT_MEMORY_SELECT,
+                            VehiclePropertyIds.SEAT_MEMORY_SET,
+                            VehiclePropertyIds.SEAT_BELT_BUCKLED,
+                            VehiclePropertyIds.SEAT_BELT_HEIGHT_POS,
+                            VehiclePropertyIds.SEAT_BELT_HEIGHT_MOVE,
+                            VehiclePropertyIds.SEAT_FORE_AFT_POS,
+                            VehiclePropertyIds.SEAT_FORE_AFT_MOVE,
+                            VehiclePropertyIds.SEAT_BACKREST_ANGLE_1_POS,
+                            VehiclePropertyIds.SEAT_BACKREST_ANGLE_1_MOVE,
+                            VehiclePropertyIds.SEAT_BACKREST_ANGLE_2_POS,
+                            VehiclePropertyIds.SEAT_BACKREST_ANGLE_2_MOVE,
+                            VehiclePropertyIds.SEAT_HEIGHT_POS,
+                            VehiclePropertyIds.SEAT_HEIGHT_MOVE,
+                            VehiclePropertyIds.SEAT_DEPTH_POS,
+                            VehiclePropertyIds.SEAT_DEPTH_MOVE,
+                            VehiclePropertyIds.SEAT_TILT_POS,
+                            VehiclePropertyIds.SEAT_TILT_MOVE,
+                            VehiclePropertyIds.SEAT_LUMBAR_FORE_AFT_POS,
+                            VehiclePropertyIds.SEAT_LUMBAR_FORE_AFT_MOVE,
+                            VehiclePropertyIds.SEAT_LUMBAR_SIDE_SUPPORT_POS,
+                            VehiclePropertyIds.SEAT_LUMBAR_SIDE_SUPPORT_MOVE,
+                            VehiclePropertyIds.SEAT_HEADREST_HEIGHT_POS,
+                            VehiclePropertyIds.SEAT_HEADREST_HEIGHT_POS_V2,
+                            VehiclePropertyIds.SEAT_HEADREST_HEIGHT_MOVE,
+                            VehiclePropertyIds.SEAT_HEADREST_ANGLE_POS,
+                            VehiclePropertyIds.SEAT_HEADREST_ANGLE_MOVE,
+                            VehiclePropertyIds.SEAT_HEADREST_FORE_AFT_POS,
+                            VehiclePropertyIds.SEAT_HEADREST_FORE_AFT_MOVE,
+                            VehiclePropertyIds.SEAT_EASY_ACCESS_ENABLED,
+                            VehiclePropertyIds.SEAT_CUSHION_SIDE_SUPPORT_POS,
+                            VehiclePropertyIds.SEAT_CUSHION_SIDE_SUPPORT_MOVE,
+                            VehiclePropertyIds.SEAT_LUMBAR_VERTICAL_POS,
+                            VehiclePropertyIds.SEAT_LUMBAR_VERTICAL_MOVE,
+                            VehiclePropertyIds.SEAT_WALK_IN_POS,
+                            VehiclePropertyIds.SEAT_OCCUPANCY)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_IDENTIFICATION_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.INFO_VIN)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_MILEAGE_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.PERF_ODOMETER)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_READ_STEERING_STATE_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.PERF_STEERING_ANGLE,
+                            VehiclePropertyIds.PERF_REAR_STEERING_ANGLE)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CAR_ENGINE_DETAILED_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.ENGINE_COOLANT_TEMP,
+                            VehiclePropertyIds.ENGINE_OIL_LEVEL,
+                            VehiclePropertyIds.ENGINE_OIL_TEMP,
+                            VehiclePropertyIds.ENGINE_RPM,
+                            VehiclePropertyIds.ENGINE_IDLE_AUTO_STOP_ENABLED)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_ENERGY_PORTS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.FUEL_DOOR_OPEN,
+                            VehiclePropertyIds.EV_CHARGE_PORT_OPEN)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_ADJUST_RANGE_REMAINING_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.RANGE_REMAINING)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_TIRES_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.TIRE_PRESSURE,
+                            VehiclePropertyIds.CRITICALLY_LOW_TIRE_PRESSURE)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_EXTERIOR_LIGHTS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.TURN_SIGNAL_STATE,
+                            VehiclePropertyIds.HEADLIGHTS_STATE,
+                            VehiclePropertyIds.HIGH_BEAM_LIGHTS_STATE,
+                            VehiclePropertyIds.FOG_LIGHTS_STATE,
+                            VehiclePropertyIds.HAZARD_LIGHTS_STATE,
+                            VehiclePropertyIds.FRONT_FOG_LIGHTS_STATE,
+                            VehiclePropertyIds.REAR_FOG_LIGHTS_STATE)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CAR_DYNAMICS_STATE_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.ABS_ACTIVE,
+                            VehiclePropertyIds.TRACTION_CONTROL_ACTIVE)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_CLIMATE_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.HVAC_FAN_SPEED,
+                            VehiclePropertyIds.HVAC_FAN_DIRECTION,
+                            VehiclePropertyIds.HVAC_TEMPERATURE_CURRENT,
+                            VehiclePropertyIds.HVAC_TEMPERATURE_SET,
+                            VehiclePropertyIds.HVAC_TEMPERATURE_VALUE_SUGGESTION,
+                            VehiclePropertyIds.HVAC_DEFROSTER,
+                            VehiclePropertyIds.HVAC_AC_ON,
+                            VehiclePropertyIds.HVAC_MAX_AC_ON,
+                            VehiclePropertyIds.HVAC_MAX_DEFROST_ON,
+                            VehiclePropertyIds.HVAC_RECIRC_ON,
+                            VehiclePropertyIds.HVAC_DUAL_ON,
+                            VehiclePropertyIds.HVAC_AUTO_ON,
+                            VehiclePropertyIds.HVAC_SEAT_TEMPERATURE,
+                            VehiclePropertyIds.HVAC_SIDE_MIRROR_HEAT,
+                            VehiclePropertyIds.HVAC_STEERING_WHEEL_HEAT,
+                            VehiclePropertyIds.HVAC_TEMPERATURE_DISPLAY_UNITS,
+                            VehiclePropertyIds.HVAC_ACTUAL_FAN_SPEED_RPM,
+                            VehiclePropertyIds.HVAC_POWER_ON,
+                            VehiclePropertyIds.HVAC_FAN_DIRECTION_AVAILABLE,
+                            VehiclePropertyIds.HVAC_AUTO_RECIRC_ON,
+                            VehiclePropertyIds.HVAC_SEAT_VENTILATION,
+                            VehiclePropertyIds.HVAC_ELECTRIC_DEFROSTER_ON)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_DOORS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.DOOR_POS,
+                            VehiclePropertyIds.DOOR_MOVE,
+                            VehiclePropertyIds.DOOR_LOCK,
+                            VehiclePropertyIds.DOOR_CHILD_LOCK_ENABLED)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_MIRRORS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.MIRROR_Z_POS,
+                            VehiclePropertyIds.MIRROR_Z_MOVE,
+                            VehiclePropertyIds.MIRROR_Y_POS,
+                            VehiclePropertyIds.MIRROR_Y_MOVE,
+                            VehiclePropertyIds.MIRROR_LOCK,
+                            VehiclePropertyIds.MIRROR_FOLD,
+                            VehiclePropertyIds.MIRROR_AUTO_FOLD_ENABLED,
+                            VehiclePropertyIds.MIRROR_AUTO_TILT_ENABLED)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_WINDOWS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.WINDOW_POS,
+                            VehiclePropertyIds.WINDOW_MOVE,
+                            VehiclePropertyIds.WINDOW_LOCK)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_EXTERIOR_LIGHTS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.HEADLIGHTS_SWITCH,
+                            VehiclePropertyIds.HIGH_BEAM_LIGHTS_SWITCH,
+                            VehiclePropertyIds.FOG_LIGHTS_SWITCH,
+                            VehiclePropertyIds.HAZARD_LIGHTS_SWITCH,
+                            VehiclePropertyIds.FRONT_FOG_LIGHTS_SWITCH,
+                            VehiclePropertyIds.REAR_FOG_LIGHTS_SWITCH)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_READ_INTERIOR_LIGHTS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.SEAT_FOOTWELL_LIGHTS_STATE,
+                            VehiclePropertyIds.CABIN_LIGHTS_STATE,
+                            VehiclePropertyIds.READING_LIGHTS_STATE,
+                            VehiclePropertyIds.STEERING_WHEEL_LIGHTS_STATE)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_INTERIOR_LIGHTS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.SEAT_FOOTWELL_LIGHTS_SWITCH,
+                            VehiclePropertyIds.CABIN_LIGHTS_SWITCH,
+                            VehiclePropertyIds.READING_LIGHTS_SWITCH,
+                            VehiclePropertyIds.STEERING_WHEEL_LIGHTS_SWITCH)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CAR_EPOCH_TIME_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.EPOCH_TIME)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_ENERGY_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.EV_CHARGE_CURRENT_DRAW_LIMIT,
+                            VehiclePropertyIds.EV_CHARGE_PERCENT_LIMIT,
+                            VehiclePropertyIds.EV_CHARGE_SWITCH)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_PRIVILEGED_CAR_INFO_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.VEHICLE_CURB_WEIGHT,
+                            VehiclePropertyIds.TRAILER_PRESENT)
+                    .build();
     private static final ImmutableList<Integer> PERMISSION_READ_ADAS_SETTINGS_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
@@ -5207,6 +5407,363 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     }
                 },
                 Car.PERMISSION_CONTROL_STEERING_WHEEL);
+    }
+
+    @Test
+    public void testPermissionControlCarAirbagsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_CAR_AIRBAGS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_CAR_AIRBAGS);
+    }
+
+    @Test
+    public void testPermissionControlCarSeatsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_CAR_SEATS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_CAR_SEATS);
+    }
+
+    @Test
+    public void testPermissionIdentificationGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_IDENTIFICATION_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_IDENTIFICATION);
+    }
+
+    @Test
+    public void testPermissionMileageGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_MILEAGE_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_MILEAGE);
+    }
+
+    @Test
+    public void testPermissionReadSteeringStateGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_READ_STEERING_STATE_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_READ_STEERING_STATE);
+    }
+
+    @Test
+    public void testPermissionCarEngineDetailedGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CAR_ENGINE_DETAILED_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CAR_ENGINE_DETAILED);
+    }
+
+    @Test
+    public void testPermissionControlEnergyPortsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_ENERGY_PORTS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_ENERGY_PORTS);
+    }
+
+    @Test
+    public void testPermissionAdjustRangeRemainingGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_ADJUST_RANGE_REMAINING_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_ADJUST_RANGE_REMAINING);
+    }
+
+    @Test
+    public void testPermissionTiresGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_TIRES_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_TIRES);
+    }
+
+    @Test
+    public void testPermissionExteriorLightsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_EXTERIOR_LIGHTS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_EXTERIOR_LIGHTS);
+    }
+
+    @Test
+    public void testPermissionCarDynamicsStateGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CAR_DYNAMICS_STATE_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CAR_DYNAMICS_STATE);
+    }
+
+    @Test
+    public void testPermissionControlCarClimateGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_CAR_CLIMATE_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_CAR_CLIMATE);
+    }
+
+    @Test
+    public void testPermissionControlCarDoorsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_CAR_DOORS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_CAR_DOORS);
+    }
+
+    @Test
+    public void testPermissionControlCarMirrorsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_CAR_MIRRORS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_CAR_MIRRORS);
+    }
+
+    @Test
+    public void testPermissionControlCarWindowsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_CAR_WINDOWS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_CAR_WINDOWS);
+    }
+
+    @Test
+    public void testPermissionControlExteriorLightsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_EXTERIOR_LIGHTS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS);
+    }
+
+    @Test
+    public void testPermissionReadInteriorLightsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_READ_INTERIOR_LIGHTS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_READ_INTERIOR_LIGHTS);
+    }
+
+    @Test
+    public void testPermissionControlInteriorLightsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_INTERIOR_LIGHTS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_INTERIOR_LIGHTS);
+    }
+
+    @Test
+    public void testPermissionCarEpochTimeGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CAR_EPOCH_TIME_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CAR_EPOCH_TIME);
+    }
+
+    @Test
+    public void testPermissionControlCarEnergyGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_CAR_ENERGY_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_CAR_ENERGY);
+    }
+
+    @Test
+    public void testPermissionPrivilegedCarInfoGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_PRIVILEGED_CAR_INFO_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_PRIVILEGED_CAR_INFO);
     }
 
     @Test

@@ -979,6 +979,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testWaitForInstallConstraints_AppIsForeground");
     }
 
+    @Test
+    public void testCommitAfterInstallConstraintsMet_NoTimeout() throws Exception {
+        runPhase("testCommitAfterInstallConstraintsMet_NoTimeout");
+    }
+
+    @Test
+    public void testCommitAfterInstallConstraintsMet_RetryOnTimeout() throws Exception {
+        runPhase("testCommitAfterInstallConstraintsMet_RetryOnTimeout");
+    }
+
     private List<ApexInfo> readApexInfoList() throws Exception {
         File file = getDevice().pullFile("/apex/apex-info-list.xml");
         try (FileInputStream stream = new FileInputStream(file)) {

@@ -466,6 +466,67 @@ public class MockModemManager {
     }
 
     /**
+     * Clears the Anbr values.
+     *
+     * @param slotId for which slot to get the reason.
+     */
+    public void resetAnbrValues(int slotId) {
+        Log.d(TAG, "resetAnbrValues[" + slotId + "]");
+
+        try {
+            IRadioImsImpl radioIms = mMockModemService.getIRadioIms((byte) slotId);
+            if (radioIms == null) return;
+            radioIms.resetAnbrValues();
+        } catch (Exception e) {
+            Log.e(TAG, "resetAnbrValues - failed");
+        }
+    }
+
+    /**
+     * Returns the Anbr values.
+     *
+     * @param slotId for which slot to get the reason.
+     * @return the Anbr values triggered by Anbr Query.
+     */
+    public int[] getAnbrValues(int slotId) {
+        Log.d(TAG, "getAnbrValues[" + slotId + "]");
+
+        IRadioImsImpl radioIms = mMockModemService.getIRadioIms((byte) slotId);
+        if (radioIms == null) return null;
+        return radioIms.getAnbrValues();
+    }
+
+    /**
+     * Triggers NotifyAnbr.
+     *
+     * @param slotId which slot would insert.
+     * @param qosSessionId is used to identify media stream such as audio or video.
+     * @param direction Direction of this packet stream (e.g. uplink or downlink).
+     * @param bitsPerSecond is the bitrate received from the NW through the Recommended
+     *        bitrate MAC Control Element message and ImsStack converts this value from MAC bitrate
+     *        to audio/video codec bitrate (defined in TS26.114).
+     * @return {@code true} if the operation is successful, otherwise {@code false}.
+     */
+    public boolean notifyAnbr(int slotId, int qosSessionId, int direction, int bitsPerSecond) {
+        Log.d(TAG, "mockmodem - notifyAnbr[" + slotId + "] qosSessionId=" + qosSessionId
+                + ", direction=" + direction + ", bitsPerSecond" + bitsPerSecond);
+
+        boolean result = false;
+        try {
+
+            IRadioImsImpl radioIms = mMockModemService.getIRadioIms((byte) slotId);
+            if (radioIms == null) return false;
+            radioIms.notifyAnbr(qosSessionId, direction, bitsPerSecond);
+
+            waitForTelephonyFrameworkDone(1);
+            result = true;
+        } catch (Exception e) {
+            Log.e(TAG, "Create notifyAnbr - failed");
+        }
+        return result;
+    }
+
+    /**
      * Returns the reason that caused EPS fallback.
      *
      * @param slotId for which slot to get the reason

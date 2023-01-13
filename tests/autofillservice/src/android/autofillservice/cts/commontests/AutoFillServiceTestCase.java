@@ -49,6 +49,7 @@ import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.service.autofill.InlinePresentation;
 import android.util.Log;
+import android.view.autofill.AutofillFeatureFlags;
 import android.view.autofill.AutofillManager;
 import android.widget.RemoteViews;
 
@@ -302,18 +303,28 @@ public final class AutoFillServiceTestCase {
                 //
                 // Augmented Autofill should be disabled by default
                 .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
-                        AutofillManager.DEVICE_CONFIG_AUTOFILL_SMART_SUGGESTION_SUPPORTED_MODES,
+                        AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_SMART_SUGGESTION_SUPPORTED_MODES,
                         Integer.toString(getSmartSuggestionMode())))
                 //
                 // Fill Dialog should be disabled by default
                 .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
-                        AutofillManager.DEVICE_CONFIG_AUTOFILL_DIALOG_ENABLED,
+                        AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_DIALOG_ENABLED,
                         Boolean.toString(false)))
                 //
                 // Hints list of Fill Dialog should be empty by default
                 .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
                         DEVICE_CONFIG_AUTOFILL_DIALOG_HINTS,
                         ""))
+
+                //
+                // CredentialManager-Autofill integration enabled by default
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                        AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_CREDENTIAL_MANAGER_ENABLED,
+                        Boolean.toString(true)))
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                        AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_CREDENTIAL_MANAGER_IGNORE_VIEWS,
+                        Boolean.toString(true)))
+
                 //
                 // Finally, let subclasses add their own rules (like ActivityTestRule)
                 .around(getMainTestRule());

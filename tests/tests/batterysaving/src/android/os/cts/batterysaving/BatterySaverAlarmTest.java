@@ -114,7 +114,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
 
         final IntentFilter filter = new IntentFilter(ACTION);
         getContext().registerReceiver(mAlarmReceiver, filter, null,
-                new Handler(Looper.getMainLooper()));
+                new Handler(Looper.getMainLooper()), Context.RECEIVER_EXPORTED);
     }
 
     @After

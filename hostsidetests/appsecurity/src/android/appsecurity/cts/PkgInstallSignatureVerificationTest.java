@@ -625,9 +625,9 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         // If two apps are installed as part of a sharedUid, one granting access to the sharedUid
         // to the previous key and the other revoking access to the sharedUid, then when an app
         // signed with the old key attempts to join the sharedUid the installation should be blocked
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
         assertInstallFromBuildSucceeds(
                 "v3-ec-p256-with-por_1_2-default-caps-sharedUid-companion.apk");
-        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
         assertInstallFromBuildFails("v3-ec-p256-1-sharedUid-companion2.apk");
     }
 
@@ -635,13 +635,35 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         // Similar to the test above if two apps are installed as part of a sharedUid with both
         // granting access to the sharedUid to the previous key then an app signed with the previous
         // key should be allowed to install and join the sharedUid. If one of the first two apps
-        // is then updated with a lineage that denies access to the sharedUid for the old key the
-        // installation of this updated app should be blocked.
+        // is then updated with a lineage that denies access to the sharedUid for the old key, all
+        // subsequent installs / updates with that old key should be blocked.
         assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-default-caps-sharedUid.apk");
         assertInstallFromBuildSucceeds(
                 "v3-ec-p256-with-por_1_2-default-caps-sharedUid-companion.apk");
         assertInstallFromBuildSucceeds("v3-ec-p256-1-sharedUid-companion2.apk");
-        assertInstallFromBuildFails("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
+        assertInstallFromBuildFails("v3-ec-p256-1-sharedUid-companion2.apk");
+    }
+
+    public void testInstallV3SharedUidDeniedOnlyRotatedUpdateAllowed() throws Exception {
+        // To allow rotation after a signing key compromise, an APK that is already part of a
+        // shareddUserId can rotate to a new key with the old key being denied the SHARED_USER_ID
+        // capability and still be updated in the sharedUserId. Another app signed with this same
+        // lineage and capabilities that is not currently part of the sharedUserId will not be
+        // allowed to join as long as any apps signed with the untrusted key are still part of
+        // the sharedUserId.
+        assertInstallFromBuildSucceeds("v3-ec-p256-1-sharedUid.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-1-sharedUid-companion2.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
+        // An app signed with the untrusted key is still part of the sharedUserId, so a new app
+        // that does not trust this key is not allowed to join the sharedUserId.
+        assertInstallFromBuildFails("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid-companion.apk");
+        assertInstallFromBuildSucceeds(
+                "v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid-companion2.apk");
+        // Once all apps have rotated away from the untrusted key, a new app that also does not
+        // trust the previous key can now join the sharedUserId.
+        assertInstallFromBuildSucceeds(
+                "v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid-companion.apk");
     }
 
     public void testInstallV3FirstAppOnlySignedByNewKeyLastAppOldKey() throws Exception {

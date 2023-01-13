@@ -209,11 +209,15 @@ public class PackageManagerTest {
             + "CtsContentMaxSharedUserIdTestApp.apk";
     private static final String LONG_LABEL_NAME_APK = SAMPLE_APK_BASE
             + "CtsContentLongLabelNameTestApp.apk";
+    private static final String LONG_USES_PERMISSION_NAME_APK = SAMPLE_APK_BASE
+            + "CtsContentLongUsesPermissionNameTestApp.apk";
     private static final String EMPTY_APP_PACKAGE_NAME = "android.content.cts.emptytestapp";
     private static final String EMPTY_APP_MAX_PACKAGE_NAME = "android.content.cts.emptytestapp27j"
             + "EBRNRG3ozwBsGr1sVIM9U0bVTI2TdyIyeRkZgW4JrJefwNIBAmCg4AzqXiCvG6JjqA0uTCWSFu2YqAVxVd"
             + "iRKAay19k5VFlSaM7QW9uhvlrLQqsTW01ofFzxNDbp2QfIFHZR6rebKzKBz6byQFM0DYQnYMwFWXjWkMPN"
             + "dqkRLykoFLyBup53G68k2n8w";
+    private static final String EMPTY_APP_LONG_USES_PERMISSION_PACKAGE_NAME =
+            EMPTY_APP_PACKAGE_NAME + ".longusespermission";
     private static final String SHELL_PACKAGE_NAME = "com.android.shell";
     private static final String HELLO_WORLD_PACKAGE_NAME = "com.example.helloworld";
     private static final String HELLO_WORLD_APK = SAMPLE_APK_BASE + "HelloWorld5.apk";
@@ -276,6 +280,7 @@ public class PackageManagerTest {
         uninstallPackage(EMPTY_APP_MAX_PACKAGE_NAME);
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
         uninstallPackage(MOCK_LAUNCHER_PACKAGE_NAME);
+        uninstallPackage(EMPTY_APP_LONG_USES_PERMISSION_PACKAGE_NAME);
     }
 
     @Test
@@ -2018,6 +2023,11 @@ public class PackageManagerTest {
     @Test
     public void testInstall_withMaxSharedUserId_success() {
         assertThat(installPackage(MAX_SHARED_USER_ID_APK)).isTrue();
+    }
+
+    @Test
+    public void testInstall_withLongUsesPermissionName_fail() {
+        assertThat(installPackage(LONG_USES_PERMISSION_NAME_APK)).isFalse();
     }
 
     private boolean installPackage(String apkPath) {

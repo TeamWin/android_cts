@@ -628,6 +628,9 @@ public abstract class TestListAdapter extends BaseAdapter {
 
     @Override
     public boolean isEnabled(int position) {
+        if (getItem(position) == null) {
+            return false;
+        }
         return getItem(position).isTest();
     }
 
@@ -685,6 +688,9 @@ public abstract class TestListAdapter extends BaseAdapter {
      */
     public TestResultHistoryCollection getHistoryCollection(int position) {
         TestListItem item = getItem(position);
+        if (item == null) {
+            return null;
+        }
         return mHistories.containsKey(item.testName) ? mHistories.get(item.testName) : null;
     }
 
@@ -775,7 +781,7 @@ public abstract class TestListAdapter extends BaseAdapter {
 
     public boolean allTestsPassed() {
         for (TestListItem item : mRows) {
-            if (item.isTest()
+            if (item != null && item.isTest()
                     && (!mTestResults.containsKey(item.testName)
                             || (mTestResults.get(item.testName)
                                     != TestResult.TEST_RESULT_PASSED))) {

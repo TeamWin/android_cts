@@ -86,22 +86,22 @@ public class TextBoundsInfoMethodTest {
 
     /** Test grapheme segment finder for the LTR text. */
     private static final SegmentFinder GRAPHEME_SEGMENTS_FINDER_LTR =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 7,
-                    7, 8, 8, 9 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5,
+                    5, 7, 7, 8, 8, 9 });
 
     /** Test word segment finder for the LTR text. */
     private static final SegmentFinder WORD_SEGMENT_FINDER_LTR =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 1, 2, 4, 5, 7, 8, 9 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 1, 2, 4, 5, 7, 8, 9 });
 
     /** Test grapheme segment finder for the LTR text. */
     private static final SegmentFinder LINE_SEGMENTS_FINDER_LTR =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 5, 5, 9 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 5, 5, 9 });
 
     private static final int START_LTR = 0;
     private static final int END_LTR = 9;
 
-    private static final TextBoundsInfo TEXT_BOUNDS_INFO_LTR = new TextBoundsInfo.Builder()
-            .setStartAndEnd(START_LTR, END_LTR)
+    private static final TextBoundsInfo TEXT_BOUNDS_INFO_LTR = new TextBoundsInfo
+            .Builder(START_LTR, END_LTR)
             .setMatrix(Matrix.IDENTITY_MATRIX)
             .setCharacterBounds(CHARACTER_BOUNDS_LTR)
             .setCharacterFlags(CHARACTER_FLAGS_LTR)
@@ -156,22 +156,22 @@ public class TextBoundsInfoMethodTest {
 
     /** Test grapheme segment finder for the RTL text. */
     private static final SegmentFinder GRAPHEME_SEGMENTS_FINDER_RTL =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 7,
-                    7, 8, 8, 9 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5,
+                    5, 7, 7, 8, 8, 9 });
 
     /** Test word segment finder for the RTL text. */
     private static final SegmentFinder WORD_SEGMENT_FINDER_RTL =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 1, 2, 4, 5, 7, 8, 9 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 1, 2, 4, 5, 7, 8, 9 });
 
     /** Test grapheme segment finder for the RTL text. */
     private static final SegmentFinder LINE_SEGMENTS_FINDER_RTL =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 5, 5, 9 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 5, 5, 9 });
 
     private static final int START_RTL = 0;
     private static final int END_RTL = 9;
 
-    private static final TextBoundsInfo TEXT_BOUNDS_INFO_RTL = new TextBoundsInfo.Builder()
-            .setStartAndEnd(START_RTL, END_RTL)
+    private static final TextBoundsInfo TEXT_BOUNDS_INFO_RTL = new TextBoundsInfo
+            .Builder(START_RTL, END_RTL)
             .setMatrix(Matrix.IDENTITY_MATRIX)
             .setCharacterBounds(CHARACTER_BOUNDS_RTL)
             .setCharacterFlags(CHARACTER_FLAGS_RTL)
@@ -231,22 +231,22 @@ public class TextBoundsInfoMethodTest {
 
     /** Test grapheme segment finder for the BiDi text. */
     private static final SegmentFinder GRAPHEME_SEGMENTS_FINDER_BIDI =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6,
-                    6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5,
+                    5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13 });
 
     /** Test word segment finder for the BiDi text. */
     private static final SegmentFinder WORD_SEGMENT_FINDER_BIDI =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 2, 2, 4, 4, 6, 7, 13 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 2, 2, 4, 4, 6, 7, 13 });
 
     /** Test grapheme segment finder for the BiDi text. */
     private static final SegmentFinder LINE_SEGMENTS_FINDER_BIDI =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 7, 7, 13 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 7, 7, 13 });
 
     private static final int START_BIDI = 0;
     private static final int END_BIDI = 13;
 
-    private static final TextBoundsInfo TEXT_BOUNDS_INFO_BIDI = new TextBoundsInfo.Builder()
-            .setStartAndEnd(START_BIDI, END_BIDI)
+    private static final TextBoundsInfo TEXT_BOUNDS_INFO_BIDI = new TextBoundsInfo
+            .Builder(START_BIDI, END_BIDI)
             .setMatrix(Matrix.IDENTITY_MATRIX)
             .setCharacterBounds(CHARACTER_BOUNDS_BIDI)
             .setCharacterFlags(CHARACTER_FLAGS_BIDI)
@@ -271,7 +271,8 @@ public class TextBoundsInfoMethodTest {
         final int[] expectedIndex = { 0, 1, 2, 3, 4, 5, 7, 7, 8 };
         assertGetOffsetForCharacterLeft(expectedIndex, textBoundsInfo, start, end);
 
-        final RectF lastCharRect = textBoundsInfo.getCharacterBounds(end - 1);
+        final RectF lastCharRect = new RectF();
+        textBoundsInfo.getCharacterBounds(end - 1, lastCharRect);
         final float lastCharRight = lastCharRect.right;
         final float lastCharCenterY = lastCharRect.centerY();
         assertThat(textBoundsInfo.getOffsetForPosition(lastCharRight, lastCharCenterY))
@@ -293,7 +294,8 @@ public class TextBoundsInfoMethodTest {
         final int[] expectedIndex = { 0, 1, 2, 3, 4, 5, 7, 7, 8 };
         assertGetOffsetForCharacterRight(expectedIndex, textBoundsInfo, start, end);
 
-        final RectF lastCharRect = textBoundsInfo.getCharacterBounds(end - 1);
+        final RectF lastCharRect = new RectF();
+        textBoundsInfo.getCharacterBounds(end - 1, lastCharRect);
         final float lastCharLeft = lastCharRect.left;
         final float lastCharCenterY = lastCharRect.centerY();
         assertThat(textBoundsInfo.getOffsetForPosition(lastCharLeft, lastCharCenterY))
@@ -337,9 +339,9 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_LTR;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1CenterY = textBoundsInfo.getCharacterBounds(0).centerY();
-        final float char1CenterX = textBoundsInfo.getCharacterBounds(1).centerX();
-        final float char2CenterX = textBoundsInfo.getCharacterBounds(2).centerX();
+        final float line1CenterY = getCharacterCenterY(textBoundsInfo, 0);
+        final float char1CenterX = getCharacterCenterX(textBoundsInfo, 1);
+        final float char2CenterX = getCharacterCenterX(textBoundsInfo, 2);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getGraphemeSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_CONTAINS_CENTER;
@@ -355,8 +357,8 @@ public class TextBoundsInfoMethodTest {
         assertGetRangeForRectIsNull(textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
         // In the test data, all characters in the second line have the same top and bottom.
-        final float line2CenterY = textBoundsInfo.getCharacterBounds(5).centerY();
-        final float char5CenterX = textBoundsInfo.getCharacterBounds(5).centerX();
+        final float line2CenterY = getCharacterCenterY(textBoundsInfo, 5);
+        final float char5CenterX = getCharacterCenterX(textBoundsInfo, 5);
 
         // The character at index 5 and 6 forms a grapheme cluster, and all width is assigned to
         // character 5. The center of the grapheme is included in the area; it should return [5, 7).
@@ -365,7 +367,7 @@ public class TextBoundsInfoMethodTest {
         assertGetRangeForRect(5, 7, textBoundsInfo, area3, segmentFinder, inclusionStrategy);
 
         // The area covers 2 lines from the character 1 to 7; it should return [1, 8).
-        final float char7CenterX = textBoundsInfo.getCharacterBounds(7).centerX();
+        final float char7CenterX = getCharacterCenterX(textBoundsInfo, 7);
         final RectF area4 = new RectF(char1CenterX - 1f, line1CenterY - 1f,
                 char7CenterX + 1f, line2CenterY + 1f);
         assertGetRangeForRect(1, 8, textBoundsInfo, area4, segmentFinder, inclusionStrategy);
@@ -377,10 +379,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_LTR;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1Top = textBoundsInfo.getCharacterBounds(0).top;
-        final float line1Bottom = textBoundsInfo.getCharacterBounds(0).bottom;
-        final float char1Left = textBoundsInfo.getCharacterBounds(1).left;
-        final float char2Right = textBoundsInfo.getCharacterBounds(2).right;
+        final float line1Top = getCharacterTop(textBoundsInfo, 0);
+        final float line1Bottom = getCharacterBottom(textBoundsInfo, 0);
+        final float char1Left = getCharacterLeft(textBoundsInfo, 1);
+        final float char2Right = getCharacterRight(textBoundsInfo, 2);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getGraphemeSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_ANY_OVERLAP;
@@ -394,7 +396,7 @@ public class TextBoundsInfoMethodTest {
         assertGetRangeForRect(1, 3, textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
 
-        final float char7Right = textBoundsInfo.getCharacterBounds(7).right;
+        final float char7Right = getCharacterRight(textBoundsInfo, 7);
         // The area overlaps with 2 lines of text from character 1 to character 7; the range should
         // be [1, 8)
         final RectF area3 = new RectF(char1Left, line1Top, char7Right, line1Bottom + 1f);
@@ -408,10 +410,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_LTR;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1Top = textBoundsInfo.getCharacterBounds(0).top;
-        final float line1Bottom = textBoundsInfo.getCharacterBounds(0).bottom;
-        final float char1Left = textBoundsInfo.getCharacterBounds(1).left;
-        final float char2Right = textBoundsInfo.getCharacterBounds(2).right;
+        final float line1Top = getCharacterTop(textBoundsInfo, 0);
+        final float line1Bottom = getCharacterBottom(textBoundsInfo, 0);
+        final float char1Left = getCharacterLeft(textBoundsInfo, 1);
+        final float char2Right = getCharacterRight(textBoundsInfo, 2);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getGraphemeSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_CONTAINS_ALL;
@@ -427,8 +429,8 @@ public class TextBoundsInfoMethodTest {
 
 
         // In the test data, all characters in the second line have the same top and bottom.
-        final float line2Bottom = textBoundsInfo.getCharacterBounds(5).bottom;
-        final float char7Right = textBoundsInfo.getCharacterBounds(7).right;
+        final float line2Bottom = getCharacterBottom(textBoundsInfo, 5);
+        final float char7Right = getCharacterRight(textBoundsInfo, 7);
 
         // The area contains character 1, 2, 5, 6 and 7; The range should be [1, 8)
         final RectF area3 = new RectF(char1Left, line1Top, char7Right, line2Bottom);
@@ -441,9 +443,9 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_RTL;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1CenterY = textBoundsInfo.getCharacterBounds(0).centerY();
-        final float char1CenterX = textBoundsInfo.getCharacterBounds(1).centerX();
-        final float char2CenterX = textBoundsInfo.getCharacterBounds(2).centerX();
+        final float line1CenterY = getCharacterCenterY(textBoundsInfo, 0);
+        final float char1CenterX = getCharacterCenterX(textBoundsInfo, 1);
+        final float char2CenterX = getCharacterCenterX(textBoundsInfo, 2);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getGraphemeSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_CONTAINS_CENTER;
@@ -459,8 +461,8 @@ public class TextBoundsInfoMethodTest {
         assertGetRangeForRectIsNull(textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
         // In the test data, all characters in the second line have the same top and bottom.
-        final float line2CenterY = textBoundsInfo.getCharacterBounds(5).centerY();
-        final float char5CenterX = textBoundsInfo.getCharacterBounds(5).centerX();
+        final float line2CenterY = getCharacterCenterY(textBoundsInfo, 5);
+        final float char5CenterX = getCharacterCenterX(textBoundsInfo, 5);
 
         // The character at index 5 and 6 forms a grapheme cluster, and all width is assigned to
         // character 5. The center of the grapheme is included in the area, it should return [5, 7).
@@ -469,7 +471,7 @@ public class TextBoundsInfoMethodTest {
         assertGetRangeForRect(5, 7, textBoundsInfo, area3, segmentFinder, inclusionStrategy);
 
         // The area covers 2 lines from the character 1 to 7; it should return [1, 8).
-        final float char7CenterX = textBoundsInfo.getCharacterBounds(7).centerX();
+        final float char7CenterX = getCharacterCenterX(textBoundsInfo, 7);
         final RectF area4 = new RectF(char7CenterX - 1f, line1CenterY - 1f,
                 char1CenterX + 1f, line2CenterY + 1f);
         assertGetRangeForRect(1, 8, textBoundsInfo, area4, segmentFinder, inclusionStrategy);
@@ -481,10 +483,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_RTL;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1Top = textBoundsInfo.getCharacterBounds(0).top;
-        final float line1Bottom = textBoundsInfo.getCharacterBounds(0).bottom;
-        final float char1Right = textBoundsInfo.getCharacterBounds(1).right;
-        final float char2Left = textBoundsInfo.getCharacterBounds(2).left;
+        final float line1Top = getCharacterTop(textBoundsInfo, 0);
+        final float line1Bottom = getCharacterBottom(textBoundsInfo, 0);
+        final float char1Right = getCharacterRight(textBoundsInfo, 1);
+        final float char2Left = getCharacterLeft(textBoundsInfo, 2);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getGraphemeSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_ANY_OVERLAP;
@@ -497,7 +499,7 @@ public class TextBoundsInfoMethodTest {
         final RectF area2 = new RectF(char2Left, line1Top, char1Right, line1Bottom);
         assertGetRangeForRect(1, 3, textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
-        final float char7Left = textBoundsInfo.getCharacterBounds(7).left;
+        final float char7Left = getCharacterLeft(textBoundsInfo, 7);
         // The area overlaps with 2 lines of text from character 1 to character 7; the range should
         // be [1, 8)
         final RectF area3 = new RectF(char7Left, line1Top, char1Right, line1Bottom + 1f);
@@ -510,10 +512,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_RTL;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1Top = textBoundsInfo.getCharacterBounds(0).top;
-        final float line1Bottom = textBoundsInfo.getCharacterBounds(0).bottom;
-        final float char1Right = textBoundsInfo.getCharacterBounds(1).right;
-        final float char2Left = textBoundsInfo.getCharacterBounds(2).left;
+        final float line1Top = getCharacterTop(textBoundsInfo, 0);
+        final float line1Bottom = getCharacterBottom(textBoundsInfo, 0);
+        final float char1Right = getCharacterRight(textBoundsInfo, 1);
+        final float char2Left = getCharacterLeft(textBoundsInfo, 2);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getGraphemeSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_CONTAINS_ALL;
@@ -529,8 +531,8 @@ public class TextBoundsInfoMethodTest {
 
 
         // In the test data, all characters in the second line have the same top and bottom.
-        final float line2Bottom = textBoundsInfo.getCharacterBounds(5).bottom;
-        final float char7Left = textBoundsInfo.getCharacterBounds(7).left;
+        final float line2Bottom = getCharacterBottom(textBoundsInfo, 5);
+        final float char7Left = getCharacterLeft(textBoundsInfo, 7);
 
         // The area contains character 1, 2, 5, 6 and 7; the range should be [1, 8)
         final RectF area3 = new RectF(char7Left, line1Top, char1Right, line2Bottom);
@@ -543,9 +545,9 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_BIDI;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1CenterY = textBoundsInfo.getCharacterBounds(0).centerY();
-        final float char2CenterX = textBoundsInfo.getCharacterBounds(2).centerX();
-        final float char4CenterX = textBoundsInfo.getCharacterBounds(4).centerX();
+        final float line1CenterY = getCharacterCenterY(textBoundsInfo, 0);
+        final float char2CenterX = getCharacterCenterX(textBoundsInfo, 2);
+        final float char4CenterX = getCharacterCenterX(textBoundsInfo, 4);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getGraphemeSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_CONTAINS_CENTER;
@@ -561,8 +563,8 @@ public class TextBoundsInfoMethodTest {
         assertGetRangeForRectIsNull(textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
         // In the test data, all characters in the second line have the same top and bottom.
-        final float line2CenterY = textBoundsInfo.getCharacterBounds(7).centerY();
-        final float char11CenterX = textBoundsInfo.getCharacterBounds(11).centerX();
+        final float line2CenterY = getCharacterCenterY(textBoundsInfo, 7);
+        final float char11CenterX = getCharacterCenterX(textBoundsInfo, 11);
 
         // This area includes character 2, 4, 9 and 11; the range should be [2, 12)
         final RectF area3 = new RectF(char11CenterX - 1f, line1CenterY - 1f,
@@ -576,10 +578,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_BIDI;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1Top = textBoundsInfo.getCharacterBounds(0).top;
-        final float line1Bottom = textBoundsInfo.getCharacterBounds(0).bottom;
-        final float char2Left = textBoundsInfo.getCharacterBounds(2).left;
-        final float char4Right = textBoundsInfo.getCharacterBounds(4).right;
+        final float line1Top = getCharacterTop(textBoundsInfo, 0);
+        final float line1Bottom = getCharacterBottom(textBoundsInfo, 0);
+        final float char2Left = getCharacterLeft(textBoundsInfo, 2);
+        final float char4Right = getCharacterRight(textBoundsInfo, 4);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getGraphemeSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_ANY_OVERLAP;
@@ -592,7 +594,7 @@ public class TextBoundsInfoMethodTest {
         final RectF area2 = new RectF(char2Left, line1Top, char4Right, line1Bottom);
         assertGetRangeForRect(2, 5, textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
-        final float char11Left = textBoundsInfo.getCharacterBounds(11).left;
+        final float char11Left = getCharacterLeft(textBoundsInfo, 11);
 
         // This area overlaps with character 2, 4, 9 and 11; the range should be [2, 12)
         final RectF area3 = new RectF(char11Left, line1Top, char4Right, line1Bottom + 1f);
@@ -605,10 +607,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_BIDI;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1Top = textBoundsInfo.getCharacterBounds(0).top;
-        final float line1Bottom = textBoundsInfo.getCharacterBounds(0).bottom;
-        final float char2Left = textBoundsInfo.getCharacterBounds(2).left;
-        final float char4Right = textBoundsInfo.getCharacterBounds(4).right;
+        final float line1Top = getCharacterTop(textBoundsInfo, 0);
+        final float line1Bottom = getCharacterBottom(textBoundsInfo, 0);
+        final float char2Left = getCharacterLeft(textBoundsInfo, 2);
+        final float char4Right = getCharacterRight(textBoundsInfo, 4);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getGraphemeSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_CONTAINS_ALL;
@@ -621,8 +623,8 @@ public class TextBoundsInfoMethodTest {
         final RectF area2 = new RectF(char2Left + 1f, line1Top, char4Right - 1f, line1Bottom);
         assertGetRangeForRectIsNull(textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
-        final float line2Bottom = textBoundsInfo.getCharacterBounds(7).bottom;
-        final float char11Left = textBoundsInfo.getCharacterBounds(11).left;
+        final float line2Bottom = getCharacterBottom(textBoundsInfo, 7);
+        final float char11Left = getCharacterLeft(textBoundsInfo, 11);
 
         // This area contains character 2, 4, 9 and 11; the range should be [2, 12)
         final RectF area3 = new RectF(char11Left, line1Top, char4Right, line2Bottom);
@@ -635,10 +637,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_LTR;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1CenterY = textBoundsInfo.getCharacterBounds(0).centerY();
-        final float word0CenterX = textBoundsInfo.getCharacterBounds(0).centerX();
-        final float word1CenterX = (textBoundsInfo.getCharacterBounds(2).left
-                + textBoundsInfo.getCharacterBounds(3).right) / 2;
+        final float line1CenterY = getCharacterCenterY(textBoundsInfo, 0);
+        final float word0CenterX = getCharacterCenterX(textBoundsInfo, 0);
+        final float word1CenterX = (getCharacterLeft(textBoundsInfo, 2)
+                + getCharacterRight(textBoundsInfo, 3)) / 2;
 
         final SegmentFinder segmentFinder = textBoundsInfo.getWordSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_CONTAINS_CENTER;
@@ -653,9 +655,9 @@ public class TextBoundsInfoMethodTest {
                 word1CenterX - 1f, line1CenterY + 1f);
         assertGetRangeForRectIsNull(textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
-        final float line2CenterY = textBoundsInfo.getCharacterBounds(5).centerY();
-        final float word2CenterX = (textBoundsInfo.getCharacterBounds(5).left
-                + textBoundsInfo.getCharacterBounds(6).right) / 2;
+        final float line2CenterY = getCharacterCenterY(textBoundsInfo, 5);
+        final float word2CenterX = (getCharacterLeft(textBoundsInfo, 5)
+                + getCharacterRight(textBoundsInfo, 6)) / 2;
 
         // The area includes the center of word [0, 1) and [5, 7); the range should be [0, 7).
         final RectF area3 = new RectF(word0CenterX - 1f, line1CenterY - 1f,
@@ -669,10 +671,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_LTR;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1Top = textBoundsInfo.getCharacterBounds(0).top;
-        final float line1Bottom = textBoundsInfo.getCharacterBounds(0).bottom;
-        final float word0Right = textBoundsInfo.getCharacterBounds(0).right;
-        final float word1Right = textBoundsInfo.getCharacterBounds(3).right;
+        final float line1Top = getCharacterTop(textBoundsInfo, 0);
+        final float line1Bottom = getCharacterBottom(textBoundsInfo, 0);
+        final float word0Right = getCharacterRight(textBoundsInfo, 0);
+        final float word1Right = getCharacterRight(textBoundsInfo, 3);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getWordSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_ANY_OVERLAP;
@@ -685,7 +687,7 @@ public class TextBoundsInfoMethodTest {
         final RectF area2 = new RectF(word0Right, line1Top, word1Right, line1Bottom);
         assertGetRangeForRect(2, 4, textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
-        final float word2Right = textBoundsInfo.getCharacterBounds(6).right;
+        final float word2Right = getCharacterRight(textBoundsInfo, 6);
 
         // The area overlaps with of word [0, 1) and [5, 7); the range should be [0, 7).
         final RectF area3 = new RectF(word0Right - 1f, line1Top, word2Right, line1Bottom + 1f);
@@ -698,10 +700,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_LTR;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1Top = textBoundsInfo.getCharacterBounds(0).top;
-        final float line1Bottom = textBoundsInfo.getCharacterBounds(0).bottom;
-        final float word0Left = textBoundsInfo.getCharacterBounds(0).left;
-        final float word1Right = textBoundsInfo.getCharacterBounds(3).right;
+        final float line1Top = getCharacterTop(textBoundsInfo, 0);
+        final float line1Bottom = getCharacterBottom(textBoundsInfo, 0);
+        final float word0Left = getCharacterLeft(textBoundsInfo, 0);
+        final float word1Right = getCharacterRight(textBoundsInfo, 3);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getWordSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_CONTAINS_ALL;
@@ -715,8 +717,8 @@ public class TextBoundsInfoMethodTest {
         final RectF area2 = new RectF(word0Left + 1f, line1Top, word1Right - 1f, line1Bottom);
         assertGetRangeForRectIsNull(textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
-        final float line2Bottom = textBoundsInfo.getCharacterBounds(5).bottom;
-        final float word2Right = textBoundsInfo.getCharacterBounds(6).right;
+        final float line2Bottom = getCharacterBottom(textBoundsInfo, 5);
+        final float word2Right = getCharacterRight(textBoundsInfo, 6);
 
         // The area contains with of word [0, 1) and [5, 7); the range should be [0, 7).
         final RectF area3 = new RectF(word0Left, line1Top, word2Right, line2Bottom);
@@ -730,10 +732,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_RTL;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1CenterY = textBoundsInfo.getCharacterBounds(0).centerY();
-        final float word0CenterX = textBoundsInfo.getCharacterBounds(0).centerX();
-        final float word1CenterX = (textBoundsInfo.getCharacterBounds(2).right
-                + textBoundsInfo.getCharacterBounds(3).left) / 2;
+        final float line1CenterY = getCharacterCenterY(textBoundsInfo, 0);
+        final float word0CenterX = getCharacterCenterX(textBoundsInfo, 0);
+        final float word1CenterX = (getCharacterRight(textBoundsInfo, 2)
+                + getCharacterLeft(textBoundsInfo, 3)) / 2;
 
         final SegmentFinder segmentFinder = textBoundsInfo.getWordSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_CONTAINS_CENTER;
@@ -748,9 +750,9 @@ public class TextBoundsInfoMethodTest {
                 word0CenterX - 1f, line1CenterY + 1f);
         assertGetRangeForRectIsNull(textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
-        final float line2CenterY = textBoundsInfo.getCharacterBounds(5).centerY();
-        final float word2CenterX = (textBoundsInfo.getCharacterBounds(5).right
-                + textBoundsInfo.getCharacterBounds(6).left) / 2;
+        final float line2CenterY = getCharacterCenterY(textBoundsInfo, 5);
+        final float word2CenterX = (getCharacterRight(textBoundsInfo, 5)
+                + getCharacterLeft(textBoundsInfo, 6)) / 2;
 
         // The area includes the center of word [0, 1) and [5, 7); the range should be [0, 7).
         final RectF area3 = new RectF(word0CenterX - 1f, line1CenterY - 1f,
@@ -764,10 +766,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_RTL;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1Top = textBoundsInfo.getCharacterBounds(0).top;
-        final float line1Bottom = textBoundsInfo.getCharacterBounds(0).bottom;
-        final float word0Left = textBoundsInfo.getCharacterBounds(0).left;
-        final float word1Left = textBoundsInfo.getCharacterBounds(3).left;
+        final float line1Top = getCharacterTop(textBoundsInfo, 0);
+        final float line1Bottom = getCharacterBottom(textBoundsInfo, 0);
+        final float word0Left = getCharacterLeft(textBoundsInfo, 0);
+        final float word1Left = getCharacterLeft(textBoundsInfo, 3);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getWordSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_ANY_OVERLAP;
@@ -780,7 +782,7 @@ public class TextBoundsInfoMethodTest {
         final RectF area2 = new RectF(word1Left, line1Top, word0Left - 1f, line1Bottom);
         assertGetRangeForRect(2, 4, textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
-        final float word2Left = textBoundsInfo.getCharacterBounds(6).left;
+        final float word2Left = getCharacterLeft(textBoundsInfo, 6);
 
         // The area overlaps with of word [0, 1) and [5, 7); the range should be [0, 7).
         final RectF area3 = new RectF(word0Left, line1Top, word2Left + 1f, line1Bottom + 1f);
@@ -793,10 +795,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_RTL;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1Top = textBoundsInfo.getCharacterBounds(0).top;
-        final float line1Bottom = textBoundsInfo.getCharacterBounds(0).bottom;
-        final float word0Right = textBoundsInfo.getCharacterBounds(0).right;
-        final float word1Left = textBoundsInfo.getCharacterBounds(3).left;
+        final float line1Top = getCharacterTop(textBoundsInfo, 0);
+        final float line1Bottom = getCharacterBottom(textBoundsInfo, 0);
+        final float word0Right = getCharacterRight(textBoundsInfo, 0);
+        final float word1Left = getCharacterLeft(textBoundsInfo, 3);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getWordSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_CONTAINS_ALL;
@@ -810,8 +812,8 @@ public class TextBoundsInfoMethodTest {
         final RectF area2 = new RectF(word1Left + 1f, line1Top, word0Right - 1f, line1Bottom);
         assertGetRangeForRectIsNull(textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
-        final float line2Bottom = textBoundsInfo.getCharacterBounds(5).bottom;
-        final float word2Left = textBoundsInfo.getCharacterBounds(6).left;
+        final float line2Bottom = getCharacterBottom(textBoundsInfo, 5);
+        final float word2Left = getCharacterLeft(textBoundsInfo, 6);
 
         // The area contains with of word [0, 1) and [5, 7); the range should be [0, 7).
         final RectF area3 = new RectF(word2Left, line1Top, word0Right, line2Bottom);
@@ -824,9 +826,9 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_BIDI;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1CenterY = textBoundsInfo.getCharacterBounds(0).centerY();
-        final float word0CenterX = (textBoundsInfo.getCharacterBounds(0).left
-                + textBoundsInfo.getCharacterBounds(1).right) / 2;
+        final float line1CenterY = getCharacterCenterY(textBoundsInfo, 0);
+        final float word0CenterX = (getCharacterLeft(textBoundsInfo, 0)
+                + getCharacterRight(textBoundsInfo, 1)) / 2;
 
         final SegmentFinder segmentFinder = textBoundsInfo.getWordSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_CONTAINS_CENTER;
@@ -836,19 +838,19 @@ public class TextBoundsInfoMethodTest {
                 word0CenterX + 1f, line1CenterY + 1f);
         assertGetRangeForRect(0, 2, textBoundsInfo, area1, segmentFinder, inclusionStrategy);
 
-        final float word2CenterX = (textBoundsInfo.getCharacterBounds(4).left
-                + textBoundsInfo.getCharacterBounds(5).right) / 2;
+        final float word2CenterX = (getCharacterLeft(textBoundsInfo, 4)
+                + getCharacterRight(textBoundsInfo, 5)) / 2;
         // This area includes the center of the word [4, 6); the range should be [4, 6).
         final RectF area2 = new RectF(word2CenterX - 1f, line1CenterY - 1f,
                 word2CenterX + 1f, line1CenterY + 1f);
         assertGetRangeForRect(4, 6, textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
         // In the test data, all characters in the second line have the same top and bottom.
-        final float line2CenterY = textBoundsInfo.getCharacterBounds(7).centerY();
+        final float line2CenterY = getCharacterCenterY(textBoundsInfo, 7);
         // The word [7, 13) contains multiple runs [7, 9) [9, 11) [11, 13). If the area includes
         // any of the run the entire words is included.
-        final float word3run0CenterX = (textBoundsInfo.getCharacterBounds(7).left
-                + textBoundsInfo.getCharacterBounds(8).right) / 2;
+        final float word3run0CenterX = (getCharacterLeft(textBoundsInfo, 7)
+                + getCharacterRight(textBoundsInfo, 8)) / 2;
 
         // This area includes the center of BiDi run [7, 9) which belongs to word [7, 13); the
         // range should be [7, 13).
@@ -863,10 +865,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_BIDI;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1Top = textBoundsInfo.getCharacterBounds(0).top;
-        final float line1Bottom = textBoundsInfo.getCharacterBounds(0).bottom;
-        final float word0LeftX = textBoundsInfo.getCharacterBounds(0).left;
-        final float word2LeftX = textBoundsInfo.getCharacterBounds(4).left;
+        final float line1Top = getCharacterTop(textBoundsInfo, 0);
+        final float line1Bottom = getCharacterBottom(textBoundsInfo, 0);
+        final float word0LeftX = getCharacterLeft(textBoundsInfo, 0);
+        final float word2LeftX = getCharacterLeft(textBoundsInfo, 4);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getWordSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_ANY_OVERLAP;
@@ -890,10 +892,10 @@ public class TextBoundsInfoMethodTest {
         final TextBoundsInfo textBoundsInfo = TEXT_BOUNDS_INFO_BIDI;
 
         // In the test data, all characters in the first line have the same top and bottom.
-        final float line1Top = textBoundsInfo.getCharacterBounds(0).top;
-        final float line1Bottom = textBoundsInfo.getCharacterBounds(0).bottom;
-        final float word0LeftX = textBoundsInfo.getCharacterBounds(0).left;
-        final float word1RightX = textBoundsInfo.getCharacterBounds(2).right;
+        final float line1Top = getCharacterTop(textBoundsInfo, 0);
+        final float line1Bottom = getCharacterBottom(textBoundsInfo, 0);
+        final float word0LeftX = getCharacterLeft(textBoundsInfo, 0);
+        final float word1RightX = getCharacterRight(textBoundsInfo, 2);
 
         final SegmentFinder segmentFinder = textBoundsInfo.getWordSegmentFinder();
         final Layout.TextInclusionStrategy inclusionStrategy = INCLUSION_STRATEGY_CONTAINS_ALL;
@@ -906,12 +908,12 @@ public class TextBoundsInfoMethodTest {
         final RectF area2 = new RectF(word0LeftX, line1Top, word1RightX - 1f, line1Bottom);
         assertGetRangeForRect(0, 2, textBoundsInfo, area2, segmentFinder, inclusionStrategy);
 
-        final float line2Top = textBoundsInfo.getCharacterBounds(7).top;
-        final float line2Bottom = textBoundsInfo.getCharacterBounds(7).bottom;
+        final float line2Top = getCharacterTop(textBoundsInfo, 7);
+        final float line2Bottom = getCharacterBottom(textBoundsInfo, 7);
         // The word [7, 13) contains multiple runs [7, 9) [9, 11) [11, 13). If the area includes
         // any of the run the entire words is included.
-        final float word3run0Left = textBoundsInfo.getCharacterBounds(8).left;
-        final float word3run0Right = textBoundsInfo.getCharacterBounds(7).right;
+        final float word3run0Left = getCharacterLeft(textBoundsInfo, 8);
+        final float word3run0Right = getCharacterRight(textBoundsInfo, 7);
         // This area contains the run [7, 9) which belongs to the word [7, 13); the range should be
         // [7, 13).
         final RectF area3 = new RectF(word3run0Left, line2Top, word3run0Right, line2Bottom);
@@ -925,14 +927,15 @@ public class TextBoundsInfoMethodTest {
     private static void assertGetOffsetForCharacterLeft(int[] expectedIndex,
             TextBoundsInfo textBoundsInfo, int start, int end) {
         for (int index = start; index < end; ++index) {
-            final RectF characterRect = textBoundsInfo.getCharacterBounds(index);
-            final float centerY = characterRect.centerY();
+            final RectF characterBounds = new RectF();
+            textBoundsInfo.getCharacterBounds(index, characterBounds);
+            final float centerY = getCharacterCenterY(textBoundsInfo, index);
 
-            assertThat(textBoundsInfo.getOffsetForPosition(characterRect.left, centerY))
+            assertThat(textBoundsInfo.getOffsetForPosition(characterBounds.left, centerY))
                     .isEqualTo(expectedIndex[index - start]);
-            assertThat(textBoundsInfo.getOffsetForPosition(characterRect.left + 1f, centerY))
+            assertThat(textBoundsInfo.getOffsetForPosition(characterBounds.left + 1f, centerY))
                     .isEqualTo(expectedIndex[index - start]);
-            assertThat(textBoundsInfo.getOffsetForPosition(characterRect.left - 1f, centerY))
+            assertThat(textBoundsInfo.getOffsetForPosition(characterBounds.left - 1f, centerY))
                     .isEqualTo(expectedIndex[index - start]);
         }
     }
@@ -944,14 +947,15 @@ public class TextBoundsInfoMethodTest {
     private static void assertGetOffsetForCharacterRight(int[] expectedIndex,
             TextBoundsInfo textBoundsInfo, int start, int end) {
         for (int index = start; index < end; ++index) {
-            final RectF characterRect = textBoundsInfo.getCharacterBounds(index);
-            final float centerY = characterRect.centerY();
+            final RectF characterBounds = new RectF();
+            textBoundsInfo.getCharacterBounds(index, characterBounds);
+            final float centerY = characterBounds.centerY();
 
-            assertThat(textBoundsInfo.getOffsetForPosition(characterRect.right, centerY))
+            assertThat(textBoundsInfo.getOffsetForPosition(characterBounds.right, centerY))
                     .isEqualTo(expectedIndex[index - start]);
-            assertThat(textBoundsInfo.getOffsetForPosition(characterRect.right + 1f, centerY))
+            assertThat(textBoundsInfo.getOffsetForPosition(characterBounds.right + 1f, centerY))
                     .isEqualTo(expectedIndex[index - start]);
-            assertThat(textBoundsInfo.getOffsetForPosition(characterRect.right - 1f, centerY))
+            assertThat(textBoundsInfo.getOffsetForPosition(characterBounds.right - 1f, centerY))
                     .isEqualTo(expectedIndex[index - start]);
         }
     }
@@ -969,5 +973,41 @@ public class TextBoundsInfoMethodTest {
         final int[] actualRange =
                 textBoundsInfo.getRangeForRect(area, segmentFinder, textInclusionStrategy);
         assertThat(actualRange).isNull();
+    }
+
+    private static float getCharacterTop(TextBoundsInfo textBoundsInfo, int index) {
+        final RectF bounds = new RectF();
+        textBoundsInfo.getCharacterBounds(index, bounds);
+        return bounds.top;
+    }
+
+    private static float getCharacterBottom(TextBoundsInfo textBoundsInfo, int index) {
+        final RectF bounds = new RectF();
+        textBoundsInfo.getCharacterBounds(index, bounds);
+        return bounds.bottom;
+    }
+
+    private static float getCharacterLeft(TextBoundsInfo textBoundsInfo, int index) {
+        final RectF bounds = new RectF();
+        textBoundsInfo.getCharacterBounds(index, bounds);
+        return bounds.left;
+    }
+
+    private static float getCharacterRight(TextBoundsInfo textBoundsInfo, int index) {
+        final RectF bounds = new RectF();
+        textBoundsInfo.getCharacterBounds(index, bounds);
+        return bounds.right;
+    }
+
+    private static float getCharacterCenterX(TextBoundsInfo textBoundsInfo, int index) {
+        final RectF bounds = new RectF();
+        textBoundsInfo.getCharacterBounds(index, bounds);
+        return bounds.centerX();
+    }
+
+    private static float getCharacterCenterY(TextBoundsInfo textBoundsInfo, int index) {
+        final RectF bounds = new RectF();
+        textBoundsInfo.getCharacterBounds(index, bounds);
+        return bounds.centerY();
     }
 }

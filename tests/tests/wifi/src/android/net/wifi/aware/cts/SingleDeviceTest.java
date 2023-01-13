@@ -111,9 +111,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     private ConnectivityManager mConnectivityManager;
 
     // used to store any WifiAwareSession allocated during tests - will clean-up after tests
-    private List<WifiAwareSession> mSessions = new ArrayList<>();
+    private final List<WifiAwareSession> mSessions = new ArrayList<>();
 
-    private class WifiAwareStateBroadcastReceiver extends BroadcastReceiver {
+    private static class WifiAwareStateBroadcastReceiver extends BroadcastReceiver {
         private final Object mLock = new Object();
         private CountDownLatch mBlocker = new CountDownLatch(1);
         private int mCountNumber = 0;
@@ -142,7 +142,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         }
     }
 
-    private class WifiAwareResourcesBroadcastReceiver extends BroadcastReceiver {
+    private static class WifiAwareResourcesBroadcastReceiver extends BroadcastReceiver {
         private final Object mLock = new Object();
         private CountDownLatch mBlocker = new CountDownLatch(1);
         private int mCountNumber = 0;
@@ -237,7 +237,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         }
     }
 
-    private class IdentityChangedListenerTest extends IdentityChangedListener {
+    private static class IdentityChangedListenerTest extends IdentityChangedListener {
         private final CountDownLatch mBlockerIdentityCallback = new CountDownLatch(1);
         private final CountDownLatch mBlockerClusterIdCallback = new CountDownLatch(1);
         private byte[] mMac = null;
@@ -304,7 +304,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         }
     }
 
-    private class DiscoverySessionCallbackTest extends DiscoverySessionCallback {
+    private static class DiscoverySessionCallbackTest extends DiscoverySessionCallback {
         static final int ON_PUBLISH_STARTED = 0;
         static final int ON_SUBSCRIBE_STARTED = 1;
         static final int ON_SESSION_CONFIG_UPDATED = 2;
@@ -317,10 +317,10 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         static final int ON_SESSION_DISCOVERED_LOST = 9;
 
         private final Object mLocalLock = new Object();
+        private final ArrayDeque<Integer> mCallbackQueue = new ArrayDeque<>();
 
         private CountDownLatch mBlocker;
         private int mCurrentWaitForCallback;
-        private ArrayDeque<Integer> mCallbackQueue = new ArrayDeque<>();
 
         private PublishDiscoverySession mPublishDiscoverySession;
         private SubscribeDiscoverySession mSubscribeDiscoverySession;
@@ -465,8 +465,8 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         }
     }
 
-    private class NetworkCallbackTest extends ConnectivityManager.NetworkCallback {
-        private CountDownLatch mBlocker = new CountDownLatch(1);
+    private static class NetworkCallbackTest extends ConnectivityManager.NetworkCallback {
+        private final CountDownLatch mBlocker = new CountDownLatch(1);
 
         @Override
         public void onUnavailable() {
@@ -694,8 +694,8 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             MacAddress clusterId = identityL.getClusterId();
             assertNotNull("Wi-Fi Aware cluster ID: iteration " + i, clusterId);
             int clusterEventType = identityL.getClusterEventType();
-            assertTrue("Wi-Fi Aware cluster event type: iteration " + i,
-                       clusterEventType == IdentityChangedListener.CLUSTER_CHANGE_EVENT_STARTED);
+            assertEquals("Wi-Fi Aware cluster event type: iteration " + i,
+                    IdentityChangedListener.CLUSTER_CHANGE_EVENT_STARTED, clusterEventType);
             byte[] mac = identityL.getMac();
             assertNotNull("Wi-Fi Aware discovery MAC: iteration " + i, mac);
 
@@ -922,6 +922,83 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Validate successful publish with a suspendable session when device supports suspension.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testPublishSuccessWithSuspendableSession() {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+        Characteristics characteristics = mWifiAwareManager.getCharacteristics();
+        if (!characteristics.isSuspensionSupported()) {
+            return;
+        }
+        final String serviceName = "PublishName";
+
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            WifiAwareSession session = attachAndGetSession();
+
+            PublishConfig publishConfig = new PublishConfig.Builder()
+                    .setServiceName(serviceName)
+                    .setSuspendable(true)
+                    .build();
+            assertTrue(publishConfig.isSuspendable());
+
+            DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
+
+            // 1. publish
+            session.publish(publishConfig, discoveryCb, mHandler);
+            assertTrue("Publish started",
+                    discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_PUBLISH_STARTED));
+            PublishDiscoverySession discoverySession = discoveryCb.getPublishDiscoverySession();
+            assertNotNull("Publish session", discoverySession);
+            assertFalse(discoveryCb.waitForCallback(
+                    DiscoverySessionCallbackTest.ON_SERVICE_DISCOVERED));
+            assertFalse(discoveryCb.waitForCallback(
+                    DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
+
+            // 2. destroy
+            assertFalse("Publish not terminated", discoveryCb.hasCallbackAlreadyHappened(
+                    DiscoverySessionCallbackTest.ON_SESSION_TERMINATED));
+            discoverySession.close();
+            session.close();
+        });
+    }
+
+    /**
+     * Validate failure to publish with a suspendable session when device doesn't support
+     * suspension.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testPublishFailureWithSuspendableSession() {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+        Characteristics characteristics = mWifiAwareManager.getCharacteristics();
+        if (characteristics.isSuspensionSupported()) {
+            return;
+        }
+        final String serviceName = "PublishName";
+
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            WifiAwareSession session = attachAndGetSession();
+
+            assertThrows(IllegalArgumentException.class, () -> {
+                PublishConfig publishConfig = new PublishConfig.Builder()
+                        .setServiceName(serviceName)
+                        .setSuspendable(true)
+                        .build();
+                assertTrue(publishConfig.isSuspendable());
+
+                DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
+                session.publish(publishConfig, discoveryCb, mHandler);
+            });
+
+            session.close();
+        });
+    }
+
+    /**
      * Validate a successful subscribe discovery session lifetime: subscribe, update subscribe,
      * destroy.
      */
@@ -1031,7 +1108,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         assertFalse(discoveryCb.waitForCallback(
                 DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
 
-        // 3. destroy
+        // 2. destroy
         assertFalse("Subscribe not terminated", discoveryCb.hasCallbackAlreadyHappened(
                 DiscoverySessionCallbackTest.ON_SESSION_TERMINATED));
         discoverySession.close();
@@ -1076,6 +1153,85 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
 
         session.close();
+    }
+
+    /**
+     * Validate successful subscribe with a suspendable session when device supports suspension.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testSubscribeSuccessWithSuspendableSession() {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+        Characteristics characteristics = mWifiAwareManager.getCharacteristics();
+        if (!characteristics.isSuspensionSupported()) {
+            return;
+        }
+        final String serviceName = "SubscribeName";
+
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            WifiAwareSession session = attachAndGetSession();
+
+            SubscribeConfig subscribeConfig = new SubscribeConfig.Builder()
+                    .setServiceName(serviceName)
+                    .setSuspendable(true)
+                    .build();
+
+            assertTrue(subscribeConfig.isSuspendable());
+
+            DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
+
+            // 1. subscribe
+            session.subscribe(subscribeConfig, discoveryCb, mHandler);
+            assertTrue("Subscribe started",
+                    discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_SUBSCRIBE_STARTED));
+            SubscribeDiscoverySession discoverySession = discoveryCb.getSubscribeDiscoverySession();
+            assertNotNull("Subscribe session", discoverySession);
+            assertFalse(discoveryCb.waitForCallback(
+                    DiscoverySessionCallbackTest.ON_SERVICE_DISCOVERED));
+            assertFalse(discoveryCb.waitForCallback(
+                    DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
+
+            // 2. destroy
+            assertFalse("Subscribe not terminated", discoveryCb.hasCallbackAlreadyHappened(
+                    DiscoverySessionCallbackTest.ON_SESSION_TERMINATED));
+            discoverySession.close();
+            session.close();
+        });
+    }
+
+    /**
+     * Validate failure to subscribe with a suspendable session when device doesn't support
+     * suspension.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testSubscribeFailureWithSuspendableSession() {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+        Characteristics characteristics = mWifiAwareManager.getCharacteristics();
+        if (characteristics.isSuspensionSupported()) {
+            return;
+        }
+        final String serviceName = "SubscribeName";
+
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            WifiAwareSession session = attachAndGetSession();
+
+            assertThrows(IllegalArgumentException.class, () -> {
+                SubscribeConfig subscribeConfig = new SubscribeConfig.Builder()
+                        .setServiceName(serviceName)
+                        .setSuspendable(true)
+                        .build();
+
+                assertTrue(subscribeConfig.isSuspendable());
+
+                DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
+                session.subscribe(subscribeConfig, discoveryCb, mHandler);
+            });
+
+            session.close();
+        });
     }
 
     /**

@@ -142,7 +142,7 @@ public class LocaleConfigTest extends ActivityManagerTestBase {
 
         assertEquals(RESOURCE_LOCALES.stream().sorted().collect(Collectors.toList()),
                 new ArrayList<String>(Arrays.asList(
-                        LocaleConfig.fromResources(
+                        LocaleConfig.fromContextIgnoringOverride(
                                 appContext).getSupportedLocales().toLanguageTags().split(
                                 ","))).stream().sorted().collect(Collectors.toList()));
     }

@@ -48,6 +48,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
@@ -95,12 +96,13 @@ public class CtsCredentialProviderServiceDeviceTest {
     }
 
     @Test
-    public void testCreatePasswordCredentialRequest_shouldSucceed() {
+    public void testCreatePasswordCredentialRequest_successCallbackThrows() {
+        AtomicReference<CreateCredentialException> loadedResult = new AtomicReference<>();
         Bundle empty = new Bundle();
         CreateCredentialRequest request = new CreateCredentialRequest("PASSWORD", empty, empty,
                 false);
         OutcomeReceiver<CreateCredentialResponse, CreateCredentialException> callback =
-                new OutcomeReceiver<CreateCredentialResponse, CreateCredentialException>() {
+                new OutcomeReceiver<>() {
                     @Override
                     public void onResult(CreateCredentialResponse response) {
                         // Do nothing
@@ -108,7 +110,7 @@ public class CtsCredentialProviderServiceDeviceTest {
 
                     @Override
                     public void onError(CreateCredentialException e) {
-                        throw new RuntimeException("Create Credential Failed.");
+                        loadedResult.set(e);
                     }
                 };
 

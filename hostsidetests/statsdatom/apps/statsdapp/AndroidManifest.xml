@@ -134,7 +134,8 @@
 
         <activity android:name=".TurnScreenOnActivity"
             android:exported="true"
-            android:turnScreenOn="true" />
+            android:turnScreenOn="true"
+            android:showWhenLocked="true" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

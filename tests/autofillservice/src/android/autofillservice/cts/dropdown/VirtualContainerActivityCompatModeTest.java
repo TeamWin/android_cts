@@ -27,7 +27,7 @@ import static android.autofillservice.cts.testcore.Helper.getContext;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillServiceCompatMode.SERVICE_NAME;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillServiceCompatMode.SERVICE_PACKAGE;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
-import static android.view.autofill.AutofillManager.DEVICE_CONFIG_AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES;
+import static android.view.autofill.AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES;
 
 import static com.google.common.truth.Truth.assertThat;
 

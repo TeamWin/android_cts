@@ -25,6 +25,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.media.AudioManager;
@@ -364,6 +365,10 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            return;
+        }
+
         //bind to test app selfmanagedcstestappone
         TestServiceConnection csControl =
                 setUpControl(SELF_MANAGED_CS_CONTROL, SELF_MANAGED_CS_1);
@@ -448,6 +453,10 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
 
     public void testSwapInCallServicesForSelfManagedCSCall() throws Exception {
         if (!mShouldTestTelecom) {
+            return;
+        }
+
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             return;
         }
 

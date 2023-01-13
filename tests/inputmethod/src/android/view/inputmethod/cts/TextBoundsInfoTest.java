@@ -71,23 +71,23 @@ public class TextBoundsInfoTest {
             TextBoundsInfo.FLAG_LINE_IS_RTL, TextBoundsInfo.FLAG_CHARACTER_WHITESPACE, 0, 0};
 
     private static final SegmentFinder GRAPHEME_SEGMENT_FINDER1 =
-            new SegmentFinder.DefaultSegmentFinder(
+            new SegmentFinder.PrescribedSegmentFinder(
                     new int[] { 0, 1, 1, 2, 2, 4, 4, 5, 5, 7, 7, 8, 8, 9, 9, 10, 10, 11 });
 
     private static final SegmentFinder GRAPHEME_SEGMENT_FINDER2 =
-            new SegmentFinder.DefaultSegmentFinder(
+            new SegmentFinder.PrescribedSegmentFinder(
                     new int[] { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10 });
 
     private static final SegmentFinder WORD_SEGMENT_FINDER1 =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 3, 4, 5, 5, 10 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 3, 4, 5, 5, 10 });
     private static final SegmentFinder WORD_SEGMENT_FINDER2 =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 4, 5, 8, 9, 11 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 4, 5, 8, 9, 11 });
 
 
     private static final SegmentFinder LINE_SEGMENT_FINDER1 =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 5, 5, 8, 8, 10, 10, 15 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 5, 5, 8, 8, 10, 10, 15 });
     private static final SegmentFinder LINE_SEGMENT_FINDER2 =
-            new SegmentFinder.DefaultSegmentFinder(new int[] { 0, 5, 5, 7, 7, 10, 10, 15 });
+            new SegmentFinder.PrescribedSegmentFinder(new int[] { 0, 5, 5, 7, 7, 10, 10, 15 });
 
     @Test
     @ApiTest(
@@ -119,9 +119,8 @@ public class TextBoundsInfoTest {
         final Matrix matrix1 = new Matrix();
         matrix1.setRotate(10f);
 
-        TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
-        TextBoundsInfo textBoundsInfo1 = builder.setStartAndEnd(start1, end1)
-                .setMatrix(matrix1)
+        TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder(start1, end1);
+        TextBoundsInfo textBoundsInfo1 = builder.setMatrix(matrix1)
                 .setCharacterBounds(CHARACTER_BOUNDS1)
                 .setCharacterBidiLevel(CHARACTER_BIDI_LEVEL1)
                 .setCharacterFlags(CHARACTER_FLAGS1)
@@ -130,9 +129,11 @@ public class TextBoundsInfoTest {
                 .setLineSegmentFinder(LINE_SEGMENT_FINDER1)
                 .build();
 
-        assertEquals(start1, textBoundsInfo1.getStart());
-        assertEquals(end1, textBoundsInfo1.getEnd());
-        assertEquals(matrix1, textBoundsInfo1.getMatrix());
+        assertEquals(start1, textBoundsInfo1.getStartIndex());
+        assertEquals(end1, textBoundsInfo1.getEndIndex());
+        final Matrix actualMatrix = new Matrix();
+        textBoundsInfo1.getMatrix(actualMatrix);
+        assertEquals(matrix1, actualMatrix);
         assertCharacterBounds(CHARACTER_BOUNDS1, textBoundsInfo1);
         assertCharacterBidiLevel(CHARACTER_BIDI_LEVEL1, textBoundsInfo1);
         assertCharacterFlags(CHARACTER_FLAGS1, textBoundsInfo1);
@@ -142,9 +143,10 @@ public class TextBoundsInfoTest {
 
         // Build another TextBoundsInfo, making sure the Builder creates an identical object.
         TextBoundsInfo textBoundsInfo2 = builder.build();
-        assertEquals(start1, textBoundsInfo2.getStart());
-        assertEquals(end1, textBoundsInfo2.getEnd());
-        assertEquals(matrix1, textBoundsInfo2.getMatrix());
+        assertEquals(start1, textBoundsInfo2.getStartIndex());
+        assertEquals(end1, textBoundsInfo2.getEndIndex());
+        textBoundsInfo2.getMatrix(actualMatrix);
+        assertEquals(matrix1, actualMatrix);
         assertCharacterBounds(CHARACTER_BOUNDS1, textBoundsInfo2);
         assertCharacterBidiLevel(CHARACTER_BIDI_LEVEL1, textBoundsInfo2);
         assertCharacterFlags(CHARACTER_FLAGS1, textBoundsInfo2);
@@ -169,9 +171,10 @@ public class TextBoundsInfoTest {
                 .setLineSegmentFinder(LINE_SEGMENT_FINDER2)
                 .build();
 
-        assertEquals(start2, textBoundsInfo3.getStart());
-        assertEquals(end2, textBoundsInfo3.getEnd());
-        assertEquals(matrix2, textBoundsInfo3.getMatrix());
+        assertEquals(start2, textBoundsInfo3.getStartIndex());
+        assertEquals(end2, textBoundsInfo3.getEndIndex());
+        textBoundsInfo3.getMatrix(actualMatrix);
+        assertEquals(matrix2, actualMatrix);
         assertCharacterBounds(CHARACTER_BOUNDS2, textBoundsInfo3);
         assertCharacterBidiLevel(CHARACTER_BIDI_LEVEL2, textBoundsInfo3);
         assertCharacterFlags(CHARACTER_FLAGS2, textBoundsInfo3);
@@ -186,8 +189,7 @@ public class TextBoundsInfoTest {
         final Matrix matrix = new Matrix();
         matrix.setRotate(15f);
 
-        TextBoundsInfo textBoundsInfo1 = new TextBoundsInfo.Builder()
-                .setStartAndEnd(5, 10)
+        TextBoundsInfo textBoundsInfo1 = new TextBoundsInfo.Builder(5, 10)
                 .setMatrix(matrix)
                 .setCharacterBounds(CHARACTER_BOUNDS1)
                 .setCharacterBidiLevel(CHARACTER_BIDI_LEVEL1)
@@ -198,9 +200,11 @@ public class TextBoundsInfoTest {
                 .build();
 
         // Gut check, making sure the first TextBoundsInfo is built correctly.
-        assertEquals(5, textBoundsInfo1.getStart());
-        assertEquals(10, textBoundsInfo1.getEnd());
-        assertEquals(matrix, textBoundsInfo1.getMatrix());
+        assertEquals(5, textBoundsInfo1.getStartIndex());
+        assertEquals(10, textBoundsInfo1.getEndIndex());
+        final Matrix actualMatrix = new Matrix();
+        textBoundsInfo1.getMatrix(actualMatrix);
+        assertEquals(matrix, actualMatrix);
         assertCharacterBounds(CHARACTER_BOUNDS1, textBoundsInfo1);
         assertCharacterFlags(CHARACTER_FLAGS1, textBoundsInfo1);
         assertCharacterBidiLevel(CHARACTER_BIDI_LEVEL1, textBoundsInfo1);
@@ -216,9 +220,10 @@ public class TextBoundsInfoTest {
         TextBoundsInfo textBoundsInfo2 =
                 parcel.readParcelable(TextBoundsInfo.class.getClassLoader(), TextBoundsInfo.class);
 
-        assertEquals(5, textBoundsInfo2.getStart());
-        assertEquals(10, textBoundsInfo2.getEnd());
-        assertEquals(matrix, textBoundsInfo2.getMatrix());
+        assertEquals(5, textBoundsInfo2.getStartIndex());
+        assertEquals(10, textBoundsInfo2.getEndIndex());
+        textBoundsInfo2.getMatrix(actualMatrix);
+        assertEquals(matrix, actualMatrix);
         assertCharacterBounds(CHARACTER_BOUNDS1, textBoundsInfo2);
         assertCharacterFlags(CHARACTER_FLAGS1, textBoundsInfo1);
         assertCharacterBidiLevel(CHARACTER_BIDI_LEVEL1, textBoundsInfo1);
@@ -235,8 +240,7 @@ public class TextBoundsInfoTest {
     @Test(expected = IllegalStateException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#build" })
     public void testBuilder_matrix_isRequired() {
-        final TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
-        builder.setStartAndEnd(5, 10)
+        new TextBoundsInfo.Builder(5, 10)
                 .setCharacterBounds(CHARACTER_BOUNDS1)
                 .setCharacterBidiLevel(CHARACTER_BIDI_LEVEL1)
                 .setCharacterFlags(CHARACTER_FLAGS1)
@@ -249,7 +253,8 @@ public class TextBoundsInfoTest {
     @Test(expected = IllegalStateException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#build" })
     public void testBuilder_startAndEnd_isRequired() {
-        final TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
+        final TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder(5, 10);
+        builder.clear();
         builder.setMatrix(Matrix.IDENTITY_MATRIX)
                 .setCharacterBounds(CHARACTER_BOUNDS1)
                 .setCharacterBidiLevel(CHARACTER_BIDI_LEVEL1)
@@ -263,27 +268,25 @@ public class TextBoundsInfoTest {
     @Test(expected = IllegalArgumentException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#setStart" })
     public void testBuilder_start_isNegative() {
-        new TextBoundsInfo.Builder().setStartAndEnd(-1, 5);
+        new TextBoundsInfo.Builder(-1 , 5);
     }
 
     @Test(expected = IllegalArgumentException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#setEnd" })
     public void testBuilder_end_isNegative() {
-        new TextBoundsInfo.Builder().setStartAndEnd(0, -1);
+        new TextBoundsInfo.Builder(0, -1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#build" })
     public void testBuilder_startGreaterThanEnd() {
-        new TextBoundsInfo.Builder().setStartAndEnd(1, 0);
-
+        new TextBoundsInfo.Builder(1, 0);
     }
 
     @Test(expected = IllegalStateException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#build" })
     public void testBuilder_characterBounds_isRequired() {
-        final TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
-        builder.setStartAndEnd(5, 10)
+        new TextBoundsInfo.Builder(5, 10)
                 .setMatrix(Matrix.IDENTITY_MATRIX)
                 .setCharacterFlags(CHARACTER_FLAGS1)
                 .setCharacterBidiLevel(CHARACTER_BIDI_LEVEL1)
@@ -296,15 +299,14 @@ public class TextBoundsInfoTest {
     @Test(expected = NullPointerException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#setCharacterBounds" })
     public void testBuilder_characterBounds_isNull() {
-        new TextBoundsInfo.Builder().setCharacterBounds(null);
+        new TextBoundsInfo.Builder(0, 5).setCharacterBounds(null);
     }
 
     @Test(expected = IllegalStateException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#build" })
     public void testBuilder_characterBounds_wrongLength() {
-        TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
         // Expected characterBounds.length == 20 to match the given range [0, 5).
-        builder.setStartAndEnd(5, 10)
+        new TextBoundsInfo.Builder(5, 10)
                 .setMatrix(Matrix.IDENTITY_MATRIX)
                 .setCharacterBounds(new float[16])
                 .setCharacterFlags(CHARACTER_FLAGS1)
@@ -318,8 +320,7 @@ public class TextBoundsInfoTest {
     @Test(expected = IllegalStateException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#build" })
     public void testBuilder_characterFlags_isRequired() {
-        final TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
-        builder.setStartAndEnd(5, 10)
+        new TextBoundsInfo.Builder(5, 10)
                 .setMatrix(Matrix.IDENTITY_MATRIX)
                 .setCharacterBounds(CHARACTER_BOUNDS1)
                 .setCharacterBidiLevel(CHARACTER_BIDI_LEVEL1)
@@ -332,15 +333,14 @@ public class TextBoundsInfoTest {
     @Test(expected = NullPointerException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#setCharacterFlags" })
     public void testBuilder_characterFlags_isNull() {
-        new TextBoundsInfo.Builder().setCharacterFlags(null);
+        new TextBoundsInfo.Builder(5, 10).setCharacterFlags(null);
     }
 
     @Test(expected = IllegalStateException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#build" })
     public void testBuilder_characterFlags_wrongLength() {
-        TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
         // Expected characterFlags.length == 5 to match the given range [0, 5).
-        builder.setStartAndEnd(5, 10)
+        new TextBoundsInfo.Builder(5, 10)
                 .setMatrix(Matrix.IDENTITY_MATRIX)
                 .setCharacterFlags(new int[6])
                 .setCharacterBidiLevel(CHARACTER_BIDI_LEVEL1)
@@ -354,8 +354,7 @@ public class TextBoundsInfoTest {
     @Test(expected = IllegalStateException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#build" })
     public void testBuilder_characterBidiLevel_isRequired() {
-        final TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
-        builder.setStartAndEnd(5, 10)
+        new TextBoundsInfo.Builder(5, 10)
                 .setMatrix(Matrix.IDENTITY_MATRIX)
                 .setCharacterBounds(CHARACTER_BOUNDS1)
                 .setCharacterFlags(CHARACTER_FLAGS1)
@@ -368,15 +367,14 @@ public class TextBoundsInfoTest {
     @Test(expected = NullPointerException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#setCharacterBidiLevel" })
     public void testBuilder_characterBidiLevel_isNull() {
-        new TextBoundsInfo.Builder().setCharacterBidiLevel(null);
+        new TextBoundsInfo.Builder(5, 10).setCharacterBidiLevel(null);
     }
 
     @Test(expected = IllegalStateException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#build" })
     public void testBuilder_characterBidiLevel_wrongLength() {
-        TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
         // Expected characterBidiLevel.length == 5 to match the given range [0, 5).
-        builder.setStartAndEnd(5, 10)
+        new TextBoundsInfo.Builder(5, 10)
                 .setMatrix(Matrix.IDENTITY_MATRIX)
                 .setCharacterFlags(CHARACTER_FLAGS1)
                 .setCharacterBidiLevel(new int[6])
@@ -392,12 +390,12 @@ public class TextBoundsInfoTest {
     public void testBuilder_characterBidiLevel_invalidBidiLevel() {
         // Bidi level must be in the range of [0, 125].
         try {
-            new TextBoundsInfo.Builder().setCharacterBidiLevel(new int[] { 126 });
+            new TextBoundsInfo.Builder(0, 1).setCharacterBidiLevel(new int[] { 126 });
             fail();
         } catch (IllegalArgumentException ignored) { }
 
         try {
-            new TextBoundsInfo.Builder().setCharacterBidiLevel(new int[] { -1 });
+            new TextBoundsInfo.Builder(0 , 1).setCharacterBidiLevel(new int[] { -1 });
             fail();
         } catch (IllegalArgumentException ignored) { }
     }
@@ -405,7 +403,7 @@ public class TextBoundsInfoTest {
     @Test(expected = IllegalArgumentException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#setCharacterFlags" })
     public void testBuilder_characterFlags_invalidFlag() {
-        TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
+        TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder(0, 5);
 
         // 1 << 20 is an unknown flags
         int[] characterFlags = new int[] { 0, 1 << 20, 0, 0, 0};
@@ -415,8 +413,7 @@ public class TextBoundsInfoTest {
     @Test(expected = IllegalStateException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#build" })
     public void testBuilder_graphemeSegmentFinder_isRequired() {
-        final TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
-        builder.setStartAndEnd(5, 10)
+        new TextBoundsInfo.Builder(5, 10)
                 .setMatrix(Matrix.IDENTITY_MATRIX)
                 .setCharacterBounds(CHARACTER_BOUNDS1)
                 .setCharacterBidiLevel(CHARACTER_BIDI_LEVEL1)
@@ -429,14 +426,13 @@ public class TextBoundsInfoTest {
     @Test(expected = NullPointerException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#setGraphemeSegmentFinder" })
     public void testBuilder_graphemeSegmentFinder_isNull() {
-        new TextBoundsInfo.Builder().setGraphemeSegmentFinder(null);
+        new TextBoundsInfo.Builder(5, 10).setGraphemeSegmentFinder(null);
     }
 
     @Test(expected = IllegalStateException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#build" })
     public void testBuilder_wordSegmentFinder_isRequired() {
-        final TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
-        builder.setStartAndEnd(5, 10)
+        new TextBoundsInfo.Builder(5, 10)
                 .setMatrix(Matrix.IDENTITY_MATRIX)
                 .setCharacterBounds(CHARACTER_BOUNDS1)
                 .setCharacterBidiLevel(CHARACTER_BIDI_LEVEL1)
@@ -449,14 +445,13 @@ public class TextBoundsInfoTest {
     @Test(expected = NullPointerException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#setWordSegmentFinder" })
     public void testBuilder_wordSegmentFinder_isNull() {
-        new TextBoundsInfo.Builder().setWordSegmentFinder(null);
+        new TextBoundsInfo.Builder(5, 10).setWordSegmentFinder(null);
     }
 
     @Test(expected = IllegalStateException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#build" })
     public void testBuilder_lineSegmentFinder_isRequired() {
-        final TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
-        builder.setStartAndEnd(5, 10)
+        new TextBoundsInfo.Builder(5, 10)
                 .setMatrix(Matrix.IDENTITY_MATRIX)
                 .setCharacterBounds(CHARACTER_BOUNDS1)
                 .setCharacterBidiLevel(CHARACTER_BIDI_LEVEL1)
@@ -469,7 +464,7 @@ public class TextBoundsInfoTest {
     @Test(expected = NullPointerException.class)
     @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#setLineSegmentFinder" })
     public void testBuilder_lineSegmentFinder_isNull() {
-        new TextBoundsInfo.Builder().setLineSegmentFinder(null);
+        new TextBoundsInfo.Builder(5, 10).setLineSegmentFinder(null);
     }
 
     @Test
@@ -486,8 +481,7 @@ public class TextBoundsInfoTest {
         result = new TextBoundsInfoResult(TextBoundsInfoResult.CODE_CANCELLED);
         assertEquals(result.getResultCode(), TextBoundsInfoResult.CODE_CANCELLED);
 
-        final TextBoundsInfo.Builder builder = new TextBoundsInfo.Builder();
-        final TextBoundsInfo textBoundsInfo = builder.setStartAndEnd(5, 10)
+        final TextBoundsInfo textBoundsInfo = new TextBoundsInfo.Builder(5, 10)
                 .setCharacterBounds(CHARACTER_BOUNDS1)
                 .setCharacterBidiLevel(CHARACTER_BIDI_LEVEL1)
                 .setMatrix(Matrix.IDENTITY_MATRIX)
@@ -519,8 +513,8 @@ public class TextBoundsInfoTest {
 
     private static void assertCharacterBounds(float[] characterBounds,
             TextBoundsInfo textBoundsInfo) {
-        final int start = textBoundsInfo.getStart();
-        final int end = textBoundsInfo.getEnd();
+        final int start = textBoundsInfo.getStartIndex();
+        final int end = textBoundsInfo.getEndIndex();
         for (int offset = 0; offset < end - start; ++offset) {
             final RectF expectedRect = new RectF(
                     characterBounds[4 * offset],
@@ -528,14 +522,16 @@ public class TextBoundsInfoTest {
                     characterBounds[4 * offset + 2],
                     characterBounds[4 * offset + 3]);
 
-            assertEquals(expectedRect, textBoundsInfo.getCharacterBounds(offset + start));
+            final RectF actualRectF = new RectF();
+            textBoundsInfo.getCharacterBounds(offset + start, actualRectF);
+            assertEquals(expectedRect, actualRectF);
         }
     }
 
     private static void assertCharacterFlags(int[] characterFlags,
             TextBoundsInfo textBoundsInfo) {
-        final int start = textBoundsInfo.getStart();
-        final int end = textBoundsInfo.getEnd();
+        final int start = textBoundsInfo.getStartIndex();
+        final int end = textBoundsInfo.getEndIndex();
         for (int offset = 0; offset < end - start; ++offset) {
             assertEquals(characterFlags[offset],
                     textBoundsInfo.getCharacterFlags(offset + start));
@@ -544,8 +540,8 @@ public class TextBoundsInfoTest {
 
     private static void assertCharacterBidiLevel(int[] characterBidiLevels,
             TextBoundsInfo textBoundsInfo) {
-        final int start = textBoundsInfo.getStart();
-        final int end = textBoundsInfo.getEnd();
+        final int start = textBoundsInfo.getStartIndex();
+        final int end = textBoundsInfo.getEndIndex();
         for (int offset = 0; offset < end - start; ++offset) {
             assertEquals(characterBidiLevels[offset],
                     textBoundsInfo.getCharacterBidiLevel(offset + start));

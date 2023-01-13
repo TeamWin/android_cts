@@ -66,6 +66,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
 
     private int mTestType = TEST_TYPE_NONE;
     private boolean mIsOnHold = false;
+    private int[] mAnbrValues = new int[3];
 
     private TestImsCallSessionImpl mConfSession = null;
     private ImsCallProfile mConfCallProfile = null;
@@ -832,5 +833,46 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                 t.printStackTrace();
             }
         }
+    }
+
+    /**
+     * ANBR Query received.
+     */
+    public void callSessionSendAnbrQuery(int mediaType, int direction, int bitsPerSecond) {
+        if (mListener != null) {
+            mListener.callSessionSendAnbrQuery(mediaType, direction, bitsPerSecond);
+        } else {
+            Log.d(LOG_TAG, "callSessionSendAnbrQuery - listener is null");
+        }
+    }
+
+    /**
+     * Deliver the bitrate for the indicated media type, direction and bitrate to the upper layer.
+     */
+    public void callSessionNotifyAnbr(int mediaType, int direction, int bitsPerSecond) {
+        mAnbrValues[0] = mediaType;
+        mAnbrValues[1] = direction;
+        mAnbrValues[2] = bitsPerSecond;
+    }
+
+    /**
+     * Returns the Anbr values received from NW.
+     */
+    public int[] getAnbrValues() {
+        if (mAnbrValues[0] > 0 && mAnbrValues[1] > 0 && mAnbrValues[2] >= 0) {
+            return mAnbrValues;
+        } else {
+            Log.d(LOG_TAG, "getAnbrValues - invalid values");
+            return null;
+        }
+    }
+
+    /**
+     * Clears the Anbr values.
+     */
+    public void resetAnbrValues() {
+        mAnbrValues[0] = -1;
+        mAnbrValues[1] = -1;
+        mAnbrValues[2] = -1;
     }
 }

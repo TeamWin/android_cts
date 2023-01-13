@@ -99,9 +99,13 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         for (Uri uri : mUriList) {
             deleteMedia(uri, mContext);
         }
-        mActivity.finish();
+        if (mActivity != null) {
+            mActivity.finish();
+        }
         mUriList.clear();
-        setCloudProvider(mContext, null);
+        if (mCloudPrimaryMediaGenerator != null) {
+            setCloudProvider(mContext, null);
+        }
     }
 
     @Test

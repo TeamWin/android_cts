@@ -26,7 +26,6 @@ import android.telephony.ims.stub.ImsSmsImplBase;
 import android.util.Log;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 public class TestImsSmsImpl extends ImsSmsImplBase {
@@ -44,14 +43,6 @@ public class TestImsSmsImpl extends ImsSmsImplBase {
     private int mResult;
     public byte[] ackPdu;
     public  boolean mMemoryEventReceived = false;
-
-    TestImsSmsImpl() {
-        super();
-    }
-
-    TestImsSmsImpl(Executor executor) {
-        super(executor);
-    }
 
     @Override
     public void sendSms(int token, int messageRef, String format, String smsc, boolean isRetry,

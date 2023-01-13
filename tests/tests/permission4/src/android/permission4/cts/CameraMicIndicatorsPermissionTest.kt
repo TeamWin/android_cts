@@ -48,6 +48,7 @@ import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.UiAutomatorUtils
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase
 import org.junit.After
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -83,7 +84,7 @@ private const val TV_MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator"
 private const val MIC_LABEL_NAME = "microphone_toggle_label_qs"
 private const val CAMERA_LABEL_NAME = "camera_toggle_label_qs"
 
-class CameraMicIndicatorsPermissionTest {
+class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context: Context = instrumentation.context
     private val uiAutomation: UiAutomation = instrumentation.uiAutomation
@@ -106,6 +107,8 @@ class CameraMicIndicatorsPermissionTest {
 
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()
+
+    constructor() : super()
 
     companion object {
         const val SAFETY_CENTER_ENABLED = "safety_center_is_enabled"
@@ -209,7 +212,7 @@ class CameraMicIndicatorsPermissionTest {
     }
 
     @Test
-    @AsbSecurityTest(cveBugId = [242537498])
+    @AsbSecurityTest(cveBugId = [258672042])
     fun testMicIndicatorWithManualFinishOpStillShows() {
         changeSafetyCenterFlag(false.toString())
         testCameraAndMicIndicator(useMic = true, useCamera = false, finishEarly = true)

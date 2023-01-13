@@ -1256,7 +1256,7 @@ public class AtomTests {
     @Test
     public void testCreateHintSession() throws Exception {
         final long targetNs = 16666666L;
-        final int androidTApiLevel = Build.VERSION_CODES.TIRAMISU;
+        final int androidTApiLevel = Build.VERSION_CODES.S;
         final int apiLevel = SystemProperties.getInt("ro.vendor.api_level", -1);
         Context context = InstrumentationRegistry.getContext();
         PerformanceHintManager phm = context.getSystemService(PerformanceHintManager.class);

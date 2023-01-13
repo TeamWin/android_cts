@@ -61,6 +61,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -235,6 +236,76 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
         isCallDisconnected(call, callSession);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    @Test
+    @Ignore("b/259254356 - This api is not public yet")
+    public void testSendAnbrQuery() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        assumeTrue(sSupportsImsHal);
+
+        bindImsService();
+
+        // Place outgoing call
+        Call call = placeOutgoingCall();
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
+
+        isCallActive(call, callSession);
+
+        sMockModemManager.resetAnbrValues(sTestSlot);
+        callSession.callSessionSendAnbrQuery(2, 1, 24400);
+        TimeUnit.MILLISECONDS.sleep(500);
+
+        int[] retValues = sMockModemManager.getAnbrValues(sTestSlot);
+        assertNotNull(retValues);
+        assertEquals(2, retValues[0]);
+        assertEquals(1, retValues[1]);
+        assertEquals(24400, retValues[2]);
+
+        call.disconnect();
+        waitForUnboundService();
+    }
+
+    @Test
+    @Ignore("b/259254356 - This api is not public yet")
+    public void testNotifyAnbr() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        assumeTrue(sSupportsImsHal);
+
+        bindImsService();
+
+        // Place outgoing call
+        Call call = placeOutgoingCall();
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
+
+        isCallActive(call, callSession);
+
+        callSession.resetAnbrValues();
+        assertTrue(sMockModemManager.notifyAnbr(sTestSlot, 2, 1, 24400));
+        TimeUnit.MILLISECONDS.sleep(500);
+
+        int[] retValues = callSession.getAnbrValues();
+        assertNotNull(retValues);
+        assertEquals(2, retValues[0]);
+        assertEquals(1, retValues[1]);
+        assertEquals(24400, retValues[2]);
+
+        call.disconnect();
         waitForUnboundService();
     }
 

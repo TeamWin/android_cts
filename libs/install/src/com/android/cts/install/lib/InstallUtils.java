@@ -169,6 +169,7 @@ public class InstallUtils {
             case PackageInstaller.STATUS_FAILURE_CONFLICT:
             case PackageInstaller.STATUS_FAILURE_STORAGE:
             case PackageInstaller.STATUS_FAILURE_INCOMPATIBLE:
+            case PackageInstaller.STATUS_FAILURE_TIMEOUT:
                 break;
             default:
                 String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);

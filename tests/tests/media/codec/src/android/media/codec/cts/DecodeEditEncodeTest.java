@@ -23,7 +23,6 @@ import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10;
 import static android.media.MediaCodecInfo.CodecProfileLevel.VP9Profile2;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -230,17 +229,30 @@ public class DecodeEditEncodeTest {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{4})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{4}_{5})")
     public static Collection<Object[]> input() {
-        final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
-                // mediaType, width, height, bitrate, useHighBitDepth
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 176, 144, 1000000, false},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 320, 240, 2000000, false},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 6000000, false},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 176, 144, 1000000, true},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 320, 240, 2000000, true},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1280, 720, 6000000, true},
+        final List<Object[]> baseArgsList = Arrays.asList(new Object[][]{
+                // width, height, bitrate
+                {176, 144, 1000000},
+                {320, 240, 2000000},
+                {1280, 720, 6000000}
         });
+        final String[] mediaTypes = {MediaFormat.MIMETYPE_VIDEO_AVC,
+                MediaFormat.MIMETYPE_VIDEO_HEVC, MediaFormat.MIMETYPE_VIDEO_VP8,
+                MediaFormat.MIMETYPE_VIDEO_VP9, MediaFormat.MIMETYPE_VIDEO_AV1};
+        final boolean[] useHighBitDepthModes = {false, true};
+        final List<Object[]> exhaustiveArgsList = new ArrayList<>();
+        for (boolean useHighBitDepth : useHighBitDepthModes) {
+            for (String mediaType : mediaTypes) {
+                for (Object[] obj : baseArgsList) {
+                    if (mediaType.equals(MediaFormat.MIMETYPE_VIDEO_VP8) && useHighBitDepth) {
+                        continue;
+                    }
+                    exhaustiveArgsList.add(
+                            new Object[]{mediaType, obj[0], obj[1], obj[2], useHighBitDepth});
+                }
+            }
+        }
         return prepareParamList(exhaustiveArgsList);
     }
 
@@ -304,10 +316,7 @@ public class DecodeEditEncodeTest {
             throws IOException {
         VideoChunks sourceChunks = new VideoChunks();
 
-        if (!generateVideoFile(sourceChunks)) {
-            // No AVC codec?  Fail silently.
-            return;
-        }
+        generateVideoFile(sourceChunks);
 
         if (DEBUG_SAVE_FILE) {
             // Save a copy to a file.  We call it ".mp4", but it's actually just an elementary
@@ -333,10 +342,8 @@ public class DecodeEditEncodeTest {
     /**
      * Generates a test video file, saving it as VideoChunks.  We generate frames with GL to
      * avoid having to deal with multiple YUV formats.
-     *
-     * @return true on success, false on "soft" failure
      */
-    private boolean generateVideoFile(VideoChunks output)
+    private void generateVideoFile(VideoChunks output)
             throws IOException {
         if (VERBOSE) Log.d(TAG, "generateVideoFile " + mWidth + "x" + mHeight);
         MediaCodec encoder = null;
@@ -390,8 +397,6 @@ public class DecodeEditEncodeTest {
                 inputSurface.release();
             }
         }
-
-        return true;
     }
 
     /**
@@ -463,18 +468,15 @@ public class DecodeEditEncodeTest {
                         fail("encoderOutputBuffer " + encoderStatus + " was null");
                     }
 
-                    // Codec config flag must be set iff this is the first chunk of output.  This
-                    // may not hold for all codecs, but it appears to be the case for video/avc.
-                    assertTrue((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0 ||
-                            outputCount != 0);
-
                     if (info.size != 0) {
                         // Adjust the ByteBuffer values to match BufferInfo.
                         encodedData.position(info.offset);
                         encodedData.limit(info.offset + info.size);
 
                         output.addChunk(encodedData, info.flags, info.presentationTimeUs);
-                        outputCount++;
+                        if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
+                            outputCount++;
+                        }
                     }
 
                     encoder.releaseOutputBuffer(encoderStatus, false);
@@ -486,8 +488,7 @@ public class DecodeEditEncodeTest {
             }
         }
 
-        // One chunk per frame, plus one for the config data.
-        assertEquals("Frame count", NUM_FRAMES + 1, outputCount);
+        assertEquals("Frame count", NUM_FRAMES, outputCount);
     }
 
     /**

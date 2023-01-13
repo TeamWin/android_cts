@@ -1727,6 +1727,51 @@ public class StagedInstallTest {
         assertThat(result.isAllConstraintsSatisfied()).isTrue();
     }
 
+    @Test
+    public void testCommitAfterInstallConstraintsMet_NoTimeout() throws Exception {
+        Install.single(TestApp.A1).commit();
+
+        // Constraints are satisfied. The session will be committed without timeout.
+        var pi = InstallUtils.getPackageInstaller();
+        int sessionId = Install.single(TestApp.A2).createSession();
+        var constraints = new InstallConstraints.Builder().requireAppNotForeground().build();
+        var sender = new LocalIntentSender();
+        pi.commitSessionAfterInstallConstraintsAreMet(sessionId, sender.getIntentSender(),
+                constraints, TimeUnit.MINUTES.toMillis(1));
+        InstallUtils.assertStatusSuccess(sender.getResult());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+    }
+
+    @Test
+    public void testCommitAfterInstallConstraintsMet_RetryOnTimeout() throws Exception {
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.B1).commit();
+        // We will have a foreground app
+        startActivity(TestApp.A);
+
+        // Timeout for constraints not satisfied
+        var pi = InstallUtils.getPackageInstaller();
+        int sessionId = Install.single(TestApp.A2).createSession();
+        var constraints = new InstallConstraints.Builder().requireAppNotForeground().build();
+        var sender = new LocalIntentSender();
+        pi.commitSessionAfterInstallConstraintsAreMet(sessionId, sender.getIntentSender(),
+                constraints, TimeUnit.SECONDS.toMillis(3));
+        InstallUtils.assertStatusFailure(sender.getResult());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+
+        // Test app A is no longer foreground
+        startActivity(TestApp.B);
+        PollingCheck.waitFor(() -> {
+            var importance = getPackageImportance(TestApp.A);
+            return importance > ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
+        });
+        // Commit will succeed for constraints are satisfied
+        pi.commitSessionAfterInstallConstraintsAreMet(sessionId, sender.getIntentSender(),
+                constraints, TimeUnit.MINUTES.toMillis(1));
+        InstallUtils.assertStatusSuccess(sender.getResult());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+    }
+
     private static byte[] computeSha256DigestBytes(byte[] data) {
         try {
             var messageDigest = MessageDigest.getInstance("SHA256");
