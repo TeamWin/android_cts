@@ -45,6 +45,8 @@ _ARDUINO_SERVO_SPEED = 20
 _NUM_ROTATIONS = 10
 _START_FRAME = 1
 _FRAME_DELTA_TOL = 1.5  # 50% margin over nominal FPS of captures
+_POLYFIT_DEGREES_LEGACY = (2, 3)
+_POLYFIT_DEGREES = (3,)
 
 # Constants to convert between different units (for clarity).
 _SEC_TO_MSEC = 1000
@@ -204,7 +206,7 @@ def _get_cam_times(cam_events, fps):
   return frame_times
 
 
-def _plot_best_shift(best, coeff, x, y, name_with_log_path):
+def _plot_best_shift(best, coeff, x, y, name_with_log_path, degree):
   """Saves a plot the best offset, fit data and x,y data.
 
   Args:
@@ -213,11 +215,14 @@ def _plot_best_shift(best, coeff, x, y, name_with_log_path):
     x: np array of x data that was fit.
     y: np array of y data that was fit.
     name_with_log_path: file name with where to store data.
+    degree: degree of polynomial used to fit.
   """
   xfit = np.arange(x[0], x[-1], 0.05).tolist()
-  yfit = [coeff[0]*x*x + coeff[1]*x + coeff[2] for x in xfit]
+  polynomial = sensor_fusion_utils.polynomial_from_coefficients(coeff)
+  yfit = [polynomial(x) for x in xfit]
+  logging.debug('Degree %s best x: %s, y: %s', degree, best, min(yfit))
   pylab.figure()
-  pylab.title(f'{_NAME} Gyro/Camera Time Correlation')
+  pylab.title(f'{_NAME} Degree: {degree} Gyro/Camera Time Correlation')
   pylab.plot(x, y, 'ro', label='data', alpha=0.7)
   pylab.plot(xfit, yfit, 'b', label='fit', alpha=0.7)
   pylab.plot(best, min(yfit), 'g*', label='best', markersize=10)
@@ -225,7 +230,8 @@ def _plot_best_shift(best, coeff, x, y, name_with_log_path):
   pylab.xlabel('Relative horizontal shift between curves (ms)')
   pylab.ylabel('Correlation distance')
   pylab.legend()
-  matplotlib.pyplot.savefig(f'{name_with_log_path}_plot_shifts.png')
+  matplotlib.pyplot.savefig(
+      f'{name_with_log_path}_plot_shifts_degree{degree}.png')
 
 
 def _plot_rotations(cam_rots, gyro_rots, name_with_log_path):
@@ -313,7 +319,8 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
     gyro_smp_per_sec = len(gyro_times) / gyro_time_range
     logging.debug('Gyro samples per second: %f', gyro_smp_per_sec)
     if cam_frame_range > _CAM_FRAME_RANGE_MAX:
-      raise AssertionError(f'Camera frame range, {cam_frame_range}s, too high!')
+      raise AssertionError(
+          f'Camera frame range, {cam_frame_range}s, too high!')
     if gyro_smp_per_sec < _GYRO_SAMP_RATE_MIN:
       raise AssertionError(f'Gyro sample rate, {gyro_smp_per_sec}S/s, low!')
 
@@ -370,11 +377,29 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
         events['gyro'], cam_times)
     _plot_rotations(cam_rots, gyro_rots, name_with_log_path)
 
-    # Find the best offset.
-    offset_ms, coeffs, candidates, distances = sensor_fusion_utils.get_best_alignment_offset(
-        cam_times, cam_rots, events['gyro'])
-    _plot_best_shift(
-        offset_ms, coeffs, candidates, distances, name_with_log_path)
+    # Find the best offset. Starting with Android 14, use 3rd order polynomial
+    first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
+    polyfit_degrees = list(_POLYFIT_DEGREES)
+    if first_api_level <= its_session_utils.ANDROID13_API_LEVEL:
+      polyfit_degrees = list(_POLYFIT_DEGREES_LEGACY)
+    logging.debug('Attempting to fit data to polynomials of degrees: %s',
+                  polyfit_degrees)
+    for degree in polyfit_degrees:
+      output = sensor_fusion_utils.get_best_alignment_offset(
+          cam_times, cam_rots, events['gyro'], degree=degree
+      )
+      if not output:
+        logging.debug('Degree %d was not a good fit.', degree)
+        continue
+      logging.debug('Degree %d was a good fit.', degree)
+      offset_ms, coeffs, candidates, distances = output
+      _plot_best_shift(
+          offset_ms, coeffs, candidates, distances, name_with_log_path, degree)
+      break
+    else:
+      raise AssertionError(
+          f'No degree in {polyfit_degrees} was a good fit for the data!'
+      )
 
     # Calculate correlation distance with best offset.
     corr_dist = scipy.spatial.distance.correlation(cam_rots, gyro_rots)

@@ -23,9 +23,8 @@ import android.icu.util.ULocale;
 import android.media.AudioFormat;
 import android.media.AudioMetadata;
 import android.media.AudioMetadataMap;
-import android.media.AudioMetadataReadMap;
 import android.media.AudioPresentation;
-import android.util.Log;
+
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.NonMainlineTest;

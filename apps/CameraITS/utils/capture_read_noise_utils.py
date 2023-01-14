@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Utility functions to enable capture read noise analysis."""
 
 import csv
 import logging
@@ -18,11 +19,13 @@ import math
 import os
 import pickle
 
+import matplotlib.pyplot as plt
+from matplotlib.ticker import NullLocator
+from matplotlib.ticker import ScalarFormatter
+import numpy as np
+
 import camera_properties_utils
 import capture_request_utils
-import matplotlib.pyplot as plt
-from matplotlib.ticker import NullLocator, ScalarFormatter
-import numpy as np
 
 
 _BAYER_COLOR_PLANE = ('red', 'green_r', 'blue', 'green_b')

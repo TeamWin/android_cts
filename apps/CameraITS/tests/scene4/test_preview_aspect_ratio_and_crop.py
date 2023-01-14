@@ -16,13 +16,14 @@
 import logging
 import os
 
+from mobly import test_runner
+
+import its_base_test
 import camera_properties_utils
 import capture_request_utils
 import image_fov_utils
 import image_processing_utils
-import its_base_test
 import its_session_utils
-from mobly import test_runner
 import opencv_processing_utils
 import video_processing_utils
 
@@ -212,13 +213,16 @@ class PreviewAspectRatioAndCropTest(its_base_test.ItsBaseTest):
           height = int(preview_size.split('x')[-1])
 
           key_frame_files = []
-          key_frame_files = video_processing_utils.extract_key_frames_from_video(
-              self.log_path, preview_file_name)
+          key_frame_files = (
+              video_processing_utils.extract_key_frames_from_video(
+                  self.log_path, preview_file_name)
+          )
           logging.debug('key_frame_files: %s', key_frame_files)
 
           # Get the key frame file to process
-          last_key_frame_file = video_processing_utils.get_key_frame_to_process(
-              key_frame_files)
+          last_key_frame_file = (
+              video_processing_utils.get_key_frame_to_process(key_frame_files)
+          )
           logging.debug('last_key_frame: %s', last_key_frame_file)
           last_key_frame_path = os.path.join(
               self.log_path, last_key_frame_file)
@@ -229,7 +233,8 @@ class PreviewAspectRatioAndCropTest(its_base_test.ItsBaseTest):
           logging.debug('numpy image shape: %s', np_image.shape)
 
           # Check fov
-          ref_img_name = f'{name_with_log_path}_{quality}_w{width}_h{height}_circle.png'
+          ref_img_name = (f'{name_with_log_path}_{quality}'
+                          f'_w{width}_h{height}_circle.png')
           circle = opencv_processing_utils.find_circle(
               np_image, ref_img_name, image_fov_utils.CIRCLE_MIN_AREA,
               image_fov_utils.CIRCLE_COLOR)

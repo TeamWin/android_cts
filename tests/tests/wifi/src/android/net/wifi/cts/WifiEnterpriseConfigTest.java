@@ -1010,9 +1010,7 @@ public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
         assertEquals(TEST_DECORATED_IDENTITY_PREFIX, config.getDecoratedIdentityPrefix());
     }
 
-    // TODO(b/196180536): Wait for T SDK finalization before changing
-    // to `@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)`
-    @SdkSuppress(minSdkVersion = 31)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testSetGetTrustOnFirstUse() {
         if (!hasWifi()) {
             return;
@@ -1025,9 +1023,7 @@ public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
         assertFalse(config.isTrustOnFirstUseEnabled());
     }
 
-    // TODO(b/196180536): Wait for T SDK finalization before changing
-    // to `@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)`
-    @SdkSuppress(minSdkVersion = 31)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testHasCaCertificate() {
         if (!hasWifi()) {
             return;
@@ -1043,9 +1039,7 @@ public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
         assertTrue(config.hasCaCertificate());
     }
 
-    // TODO(b/160819609): Wait for U SDK finalization before changing
-    // to `@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)`
-    @SdkSuppress(minSdkVersion = 34)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     public void testSetMinimumTlsVersion() throws Exception {
         if (!hasWifi()) {
             return;

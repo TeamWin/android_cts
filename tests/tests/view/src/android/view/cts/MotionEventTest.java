@@ -948,6 +948,7 @@ public class MotionEventTest {
                 MotionEvent.AXIS_GESTURE_Y_OFFSET,
                 MotionEvent.AXIS_GESTURE_SCROLL_X_DISTANCE,
                 MotionEvent.AXIS_GESTURE_SCROLL_Y_DISTANCE,
+                MotionEvent.AXIS_GESTURE_PINCH_SCALE_FACTOR,
         };
 
         // There is no hard guarantee on the actual return result on any specific axis

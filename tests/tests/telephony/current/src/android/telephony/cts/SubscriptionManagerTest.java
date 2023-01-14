@@ -100,6 +100,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -1078,82 +1079,88 @@ public class SubscriptionManagerTest {
         PersistableBundle bundle = new PersistableBundle();
         bundle.putBoolean(CarrierConfigManager.KEY_EDITABLE_ENHANCED_4G_LTE_BOOL, true);
         bundle.putBoolean(CarrierConfigManager.KEY_HIDE_ENHANCED_4G_LTE_BOOL, false);
+
         overrideCarrierConfig(bundle, activeDataSubId);
+        try {
+            // Get the original ims values.
+            ImsManager imsManager = InstrumentationRegistry.getContext().getSystemService(
+                    ImsManager.class);
+            ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(activeDataSubId);
+            boolean isVolteVtEnabledOriginal = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mMmTelManager, (m) -> m.isAdvancedCallingSettingEnabled());
+            boolean isVtImsEnabledOriginal = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mMmTelManager, (m) -> m.isVtSettingEnabled());
+            boolean isVoWiFiSettingEnabledOriginal =
+                    ShellIdentityUtils.invokeMethodWithShellPermissions(
+                            mMmTelManager, (m) -> m.isVoWiFiSettingEnabled());
+            int voWifiModeOriginal = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mMmTelManager, (m) -> m.getVoWiFiModeSetting());
+            int voWiFiRoamingModeOriginal = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mMmTelManager, (m) -> m.getVoWiFiRoamingModeSetting());
 
-        // Get the original ims values.
-        ImsManager imsManager = InstrumentationRegistry.getContext().getSystemService(
-                ImsManager.class);
-        ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(activeDataSubId);
-        boolean isVolteVtEnabledOriginal = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mMmTelManager, (m) -> m.isAdvancedCallingSettingEnabled());
-        boolean isVtImsEnabledOriginal = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mMmTelManager, (m) -> m.isVtSettingEnabled());
-        boolean isVoWiFiSettingEnabledOriginal =
-                ShellIdentityUtils.invokeMethodWithShellPermissions(
-                        mMmTelManager, (m) -> m.isVoWiFiSettingEnabled());
-        int voWifiModeOriginal = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mMmTelManager, (m) -> m.getVoWiFiModeSetting());
-        int voWiFiRoamingModeOriginal = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mMmTelManager, (m) -> m.getVoWiFiRoamingModeSetting());
+            // Get the original RcsUce values.
+            ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(activeDataSubId);
+            RcsUceAdapter rcsUceAdapter = imsRcsManager.getUceAdapter();
+            boolean isImsRcsUceEnabledOriginal =
+                    ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
+                    rcsUceAdapter, (a) -> a.isUceSettingEnabled(), ImsException.class,
+                    android.Manifest.permission.READ_PHONE_STATE);
 
-        // Get the original RcsUce values.
-        ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(activeDataSubId);
-        RcsUceAdapter rcsUceAdapter = imsRcsManager.getUceAdapter();
-        boolean isImsRcsUceEnabledOriginal =
-                ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
-                rcsUceAdapter, (a) -> a.isUceSettingEnabled(), ImsException.class,
-                android.Manifest.permission.READ_PHONE_STATE);
+            //Change values in DB.
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
+                    (m) -> m.setAdvancedCallingSettingEnabled(!isVolteVtEnabledOriginal));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
+                    (m) -> m.setVtSettingEnabled(!isVtImsEnabledOriginal));
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                    rcsUceAdapter, (a) -> a.setUceSettingEnabled(!isImsRcsUceEnabledOriginal),
+                    ImsException.class);
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
+                    (m) -> m.setVoWiFiSettingEnabled(!isVoWiFiSettingEnabledOriginal));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
+                    (m) -> m.setVoWiFiModeSetting((voWifiModeOriginal + 1) % 3));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
+                    (m) -> m.setVoWiFiRoamingModeSetting((voWiFiRoamingModeOriginal + 1) % 3));
 
-        //Change values in DB.
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
-                (m) -> m.setAdvancedCallingSettingEnabled(!isVolteVtEnabledOriginal));
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
-                (m) -> m.setVtSettingEnabled(!isVtImsEnabledOriginal));
-        ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                rcsUceAdapter, (a) -> a.setUceSettingEnabled(!isImsRcsUceEnabledOriginal),
-                ImsException.class);
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
-                (m) -> m.setVoWiFiSettingEnabled(!isVoWiFiSettingEnabledOriginal));
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
-                (m) -> m.setVoWiFiModeSetting((voWifiModeOriginal + 1) % 3));
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
-                (m) -> m.setVoWiFiRoamingModeSetting((voWiFiRoamingModeOriginal + 1) % 3));
+            // Restore back to original values.
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.restoreAllSimSpecificSettingsFromBackup(backupData));
 
-        // Restore back to original values.
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
-                (sm) -> sm.restoreAllSimSpecificSettingsFromBackup(backupData));
+            // Get ims values to verify with.
+            boolean isVolteVtEnabledAfterRestore =
+                    ShellIdentityUtils.invokeMethodWithShellPermissions(
+                            mMmTelManager, (m) -> m.isAdvancedCallingSettingEnabled());
+            boolean isVtImsEnabledAfterRestore =
+                    ShellIdentityUtils.invokeMethodWithShellPermissions(
+                            mMmTelManager, (m) -> m.isVtSettingEnabled());
+            boolean isVoWiFiSettingEnabledAfterRestore =
+                    ShellIdentityUtils.invokeMethodWithShellPermissions(
+                            mMmTelManager, (m) -> m.isVoWiFiSettingEnabled());
+            int voWifiModeAfterRestore = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mMmTelManager, (m) -> m.getVoWiFiModeSetting());
+            int voWiFiRoamingModeAfterRestore = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mMmTelManager, (m) -> m.getVoWiFiRoamingModeSetting());
+            // Get RcsUce values to verify with.
+            boolean isImsRcsUceEnabledAfterRestore =
+                    ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
+                            rcsUceAdapter, (a) -> a.isUceSettingEnabled(), ImsException.class,
+                            android.Manifest.permission.READ_PHONE_STATE);
 
-        // Get ims values to verify with.
-        boolean isVolteVtEnabledAfterRestore = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mMmTelManager, (m) -> m.isAdvancedCallingSettingEnabled());
-        boolean isVtImsEnabledAfterRestore = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mMmTelManager, (m) -> m.isVtSettingEnabled());
-        boolean isVoWiFiSettingEnabledAfterRestore =
-                ShellIdentityUtils.invokeMethodWithShellPermissions(
-                        mMmTelManager, (m) -> m.isVoWiFiSettingEnabled());
-        int voWifiModeAfterRestore = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mMmTelManager, (m) -> m.getVoWiFiModeSetting());
-        int voWiFiRoamingModeAfterRestore = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mMmTelManager, (m) -> m.getVoWiFiRoamingModeSetting());
-        // Get RcsUce values to verify with.
-        boolean isImsRcsUceEnabledAfterRestore =
-                ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
-                        rcsUceAdapter, (a) -> a.isUceSettingEnabled(), ImsException.class,
-                        android.Manifest.permission.READ_PHONE_STATE);
-
-        assertEquals(isVolteVtEnabledOriginal, isVolteVtEnabledAfterRestore);
-        if (isoCountryCode == null || isoCountryCode.equals("us") || isoCountryCode.equals("ca")) {
-            assertEquals(!isVoWiFiSettingEnabledOriginal, isVoWiFiSettingEnabledAfterRestore);
-        } else {
-            assertEquals(isVoWiFiSettingEnabledOriginal, isVoWiFiSettingEnabledAfterRestore);
+            assertEquals(isVolteVtEnabledOriginal, isVolteVtEnabledAfterRestore);
+            if (isoCountryCode == null
+                    || isoCountryCode.equals("us")
+                    || isoCountryCode.equals("ca")) {
+                assertEquals(!isVoWiFiSettingEnabledOriginal, isVoWiFiSettingEnabledAfterRestore);
+            } else {
+                assertEquals(isVoWiFiSettingEnabledOriginal, isVoWiFiSettingEnabledAfterRestore);
+            }
+            assertEquals(voWifiModeOriginal, voWifiModeAfterRestore);
+            assertEquals(voWiFiRoamingModeOriginal, voWiFiRoamingModeAfterRestore);
+            assertEquals(isVtImsEnabledOriginal, isVtImsEnabledAfterRestore);
+            assertEquals(isImsRcsUceEnabledOriginal, isImsRcsUceEnabledAfterRestore);
+        } finally {
+            // restore original carrier config.
+            overrideCarrierConfig(null, activeDataSubId);
         }
-        assertEquals(voWifiModeOriginal, voWifiModeAfterRestore);
-        assertEquals(voWiFiRoamingModeOriginal, voWiFiRoamingModeAfterRestore);
-        assertEquals(isVtImsEnabledOriginal, isVtImsEnabledAfterRestore);
-        assertEquals(isImsRcsUceEnabledOriginal, isImsRcsUceEnabledAfterRestore);
-
-        // restore original carrier config.
-        overrideCarrierConfig(null, activeDataSubId);
 
 
         try {
@@ -1351,6 +1358,76 @@ public class SubscriptionManagerTest {
             overrideCarrierConfig(null, mSubId);
         }
     }
+
+    private String getSubscriptionIso(int subId) {
+        SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getActiveSubscriptionInfo(mSubId));
+        return info.getCountryIso();
+    }
+
+    /**
+     * Monitor the onSubscriptionsChangedListener until a condition is satisfied.
+     */
+    private void waitForSubscriptionCondition(
+            BooleanSupplier condition, long maxWaitMillis) throws Exception {
+        final Object lock = new Object();
+
+        TestThread t = new TestThread(new Runnable() {
+            @Override
+            public void run() {
+                Looper.prepare();
+
+                SubscriptionManager.OnSubscriptionsChangedListener listener =
+                        new SubscriptionManager.OnSubscriptionsChangedListener() {
+                            @Override
+                            public void onSubscriptionsChanged() {
+                                synchronized (lock) {
+                                    if (condition.getAsBoolean()) lock.notifyAll();
+                                }
+                            }
+                        };
+                mSm.addOnSubscriptionsChangedListener(listener);
+                try {
+                    synchronized (lock) {
+                        if (condition.getAsBoolean()) lock.notifyAll();
+                    }
+                    Looper.loop();
+                } finally {
+                    mSm.removeOnSubscriptionsChangedListener(listener);
+                }
+            }
+        });
+
+        t.start();
+
+        synchronized (lock) {
+            if (!condition.getAsBoolean()) lock.wait(maxWaitMillis);
+        }
+    }
+
+    @Test
+    public void testCountryIso() throws Exception {
+        final String liechtensteinIso = "li";
+        final String faroeIslandsIso = "fo";
+
+        final long maxWaitMillis = 5000;
+        final String isoUT = liechtensteinIso.equals(getSubscriptionIso(mSubId))
+                ? faroeIslandsIso : liechtensteinIso;
+
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putString(CarrierConfigManager.KEY_SIM_COUNTRY_ISO_OVERRIDE_STRING, isoUT);
+        overrideCarrierConfig(bundle, mSubId);
+        try {
+            waitForSubscriptionCondition(
+                    () -> isoUT.equals(getSubscriptionIso(mSubId)),
+                    maxWaitMillis);
+
+            assertEquals(isoUT, getSubscriptionIso(mSubId));
+        } finally {
+            overrideCarrierConfig(null, mSubId);
+        }
+    }
+
 
     @Test
     public void testSetAndGetSubscriptionUserHandle() throws Exception {

@@ -18,6 +18,7 @@ package android.voiceinteraction.cts.services;
 
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 
+import android.os.Bundle;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
@@ -45,6 +46,9 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     public static CountDownLatch sConnectLatch;
     public static CountDownLatch sDisconnectLatch;
 
+    // The CountDownLatch waits for onPrepareToShowSession
+    public static CountDownLatch sPrepareToShowSessionLatch;
+
     // The CountDownLatch waits for a service init result
     // TODO: rename to mHotwordDetectionServiceInitializedLatch, keep this name until the
     //  refactor done. The original tests use trigger in many places. To make the mapping asier,
@@ -58,6 +62,9 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     private boolean mIsCreateDetectorIllegalStateExceptionThrow;
     // Throws SecurityException when calling createAlwaysOnHotwordDetector() API
     private boolean mIsCreateDetectorSecurityExceptionThrow;
+
+    private Bundle mPrepareToShowSessionArgs = new Bundle();
+    private int mPrepareToShowSessionFlags = -1;
 
     // An AlwaysOnHotwordDetector.Callback no nothing on callback methods
     final AlwaysOnHotwordDetector.Callback mNoOpHotwordDetectorCallback =
@@ -127,6 +134,21 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
         }
     }
 
+    @Override
+    public void onPrepareToShowSession(Bundle args, int flags) {
+        Log.d(mTag, "onPrepareToShowSession args = " + args + ", flags =" + flags);
+        if (sPrepareToShowSessionLatch != null) {
+            sPrepareToShowSessionLatch.countDown();
+        }
+        mPrepareToShowSessionArgs = args;
+        mPrepareToShowSessionFlags = flags;
+    }
+
+    @Override
+    public void onShowSessionFailed() {
+        Log.d(mTag, "onShowSessionFailed");
+    }
+
     /**
      * Reset the static variables of this service.
      */
@@ -134,6 +156,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
         sService = null;
         sConnectLatch = null;
         sDisconnectLatch = null;
+        sPrepareToShowSessionLatch = null;
     }
 
     /**
@@ -142,6 +165,13 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     public static void initServiceConnectionLatches() {
         sConnectLatch = new CountDownLatch(1);
         sDisconnectLatch = new CountDownLatch(1);
+    }
+
+    /**
+     * Init the CountDownLatch that is used to wait for onPrepareToShowSession.
+     */
+    public static void initShowSessionLatch() {
+        sPrepareToShowSessionLatch = new CountDownLatch(1);
     }
 
     /**
@@ -168,6 +198,19 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
             throw new AssertionError("VoiceInteractionService doesn't shut down.");
         }
         sDisconnectLatch = null;
+    }
+
+    /**
+     * Wait for onPrepareToShowSession
+     */
+    public static void waitOnPrepareToShowSession() throws InterruptedException {
+        if (sPrepareToShowSessionLatch == null) {
+            throw new AssertionError("Should init prepareToShowSession CountDownLatch");
+        }
+        if (!sPrepareToShowSessionLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
+            throw new AssertionError("onPrepareToShowSession has not been triggered");
+        }
+        sPrepareToShowSessionLatch = null;
     }
 
     public static VoiceInteractionService getService() {
@@ -222,6 +265,21 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     private void resetVales() {
         mIsCreateDetectorIllegalStateExceptionThrow = false;
         mIsCreateDetectorSecurityExceptionThrow = false;
+    }
+
+    /**
+     * Return the args from onPrepareToShowSession.
+     */
+    @NonNull
+    public Bundle getPrepareToShowSessionArgs() {
+        return mPrepareToShowSessionArgs;
+    }
+
+    /**
+     * Return the flags from onPrepareToShowSession.
+     */
+    public int getPrepareToShowSessionFlags() {
+        return mPrepareToShowSessionFlags;
     }
 
 

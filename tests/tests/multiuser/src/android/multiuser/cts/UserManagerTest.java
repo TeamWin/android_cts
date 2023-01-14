@@ -782,8 +782,12 @@ public final class UserManagerTest {
     @EnsureHasAdditionalUser(installInstrumentedApp = TRUE)
     @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testIsMainUser_trueForAtMostOneUser() {
+        //Install instrumented test app on the SYSTEM user which is not covered in annotations.
+        TestApis.packages().instrumented().installExisting(UserReference.of(UserHandle.SYSTEM));
+
         final List<UserHandle> userHandles = mUserManager.getUserHandles(false);
         final List<UserHandle> mainUsers = new ArrayList<>();
+
         for (UserHandle user : userHandles) {
             final Context userContext = getContextForUser(user.getIdentifier());
             final UserManager userManager = userContext.getSystemService(UserManager.class);

@@ -25,6 +25,11 @@ import android.media.MediaFormat;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.cts.verifier.CtsVerifierReportLog;
+
 import com.google.common.base.Preconditions;
 
 import org.junit.rules.TestName;
@@ -1770,8 +1775,12 @@ public class PerformanceClassEvaluator {
         return this.addRequirement(AudioTap2ToneLatencyRequirement.createR5_6__H_1_1());
     }
 
+    private enum SubmitType {
+        TRADEFED, VERIFIER
+    }
+
     public void submitAndCheck() {
-        boolean perfClassMet = submit();
+        boolean perfClassMet = submit(SubmitType.TRADEFED);
 
         // check performance class
         assumeTrue("Build.VERSION.MEDIA_PERFORMANCE_CLASS is not declared", Utils.isPerfClass());
@@ -1779,20 +1788,34 @@ public class PerformanceClassEvaluator {
     }
 
     public void submitAndVerify() {
-        boolean perfClassMet = submit();
+        boolean perfClassMet = submit(SubmitType.VERIFIER);
 
         if (!perfClassMet && Utils.isPerfClass()) {
             Log.w(TAG, "Device did not meet specified performance class: " + Utils.getPerfClass());
         }
     }
 
-    public boolean submit() {
+    private boolean submit(SubmitType type) {
         boolean perfClassMet = true;
         for (Requirement req: this.mRequirements) {
-            perfClassMet &= req.writeLogAndCheck(this.mTestName);
+            switch (type) {
+                case VERIFIER:
+                    CtsVerifierReportLog verifierLog = new CtsVerifierReportLog(
+                            RequirementConstants.REPORT_LOG_NAME, req.id());
+                    perfClassMet &= req.writeLogAndCheck(verifierLog, this.mTestName);
+                    verifierLog.submit();
+                    break;
+
+                case TRADEFED:
+                default:
+                    DeviceReportLog tradefedLog = new DeviceReportLog(
+                            RequirementConstants.REPORT_LOG_NAME, req.id());
+                    perfClassMet &= req.writeLogAndCheck(tradefedLog, this.mTestName);
+                    tradefedLog.submit(InstrumentationRegistry.getInstrumentation());
+                    break;
+            }
         }
         this.mRequirements.clear(); // makes sure report isn't submitted twice
         return perfClassMet;
     }
-
 }

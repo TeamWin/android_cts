@@ -39,7 +39,7 @@ _MONO_UV_SPREAD_MAX = 2  # max spread for U & V channels [0:255] for mono image
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _VGA_W, _VGA_H = 640, 480
 _YUV_MAX = 255  # normalization number for YUV images [0:1] --> [0:255]
-_YUV_UV_SPREAD_ATOL = 10  # min spread for U & V channels [0:255] for color image
+_YUV_UV_SPREAD_ATOL = 10  # min spread for U & V channels [0:255] for color img
 _YUV_Y_SPREAD_ATOL = 50  # min spread for Y channel [0:255] for color image
 
 
@@ -81,32 +81,39 @@ class EffectsTest(its_base_test.ItsBaseTest):
         # Save image of each effect
         img = image_processing_utils.convert_capture_to_rgb_image(
             cap, props=props)
-        img_name = f'{os.path.join(self.log_path,_NAME)}_{_EFFECTS[effect]}.jpg'
+        img_name = (f'{os.path.join(self.log_path,_NAME)}_'
+                    f'{_EFFECTS[effect]}.jpg')
         image_processing_utils.write_image(img, img_name)
 
         # Simple checks
         if effect == 0:
           logging.debug('Checking effects OFF...')
-          y, u, v = image_processing_utils.convert_capture_to_planes(cap, props)
+          y, u, v = image_processing_utils.convert_capture_to_planes(
+              cap, props)
           y_min, y_max = np.amin(y)*_YUV_MAX, np.amax(y)*_YUV_MAX
-          e_msg = f'Y_range: {y_min:.2f},{y_max:.2f} THRESH: {_YUV_Y_SPREAD_ATOL}; '
+          e_msg = (f'Y_range: {y_min:.2f},{y_max:.2f} '
+                   f'THRESH: {_YUV_Y_SPREAD_ATOL}; ')
           if (y_max-y_min) < _YUV_Y_SPREAD_ATOL:
             failed.append({'effect': _EFFECTS[effect], 'error': e_msg})
           if not mono_camera:
             u_min, u_max = np.amin(u) * _YUV_MAX, np.amax(u) * _YUV_MAX
             v_min, v_max = np.amin(v) * _YUV_MAX, np.amax(v) * _YUV_MAX
-            e_msg += f'U_range: {u_min:.2f},{u_max:.2f} THRESH: {_YUV_UV_SPREAD_ATOL}; '
-            e_msg += f'V_range: {v_min:.2f},{v_max:.2f} THRESH: {_YUV_UV_SPREAD_ATOL}'
+            e_msg += (f'U_range: {u_min:.2f},{u_max:.2f} '
+                      f'THRESH: {_YUV_UV_SPREAD_ATOL}; ')
+            e_msg += (f'V_range: {v_min:.2f},{v_max:.2f} '
+                      f'THRESH: {_YUV_UV_SPREAD_ATOL}')
             if ((u_max - u_min) < _YUV_UV_SPREAD_ATOL or
                 (v_max - v_min) < _YUV_UV_SPREAD_ATOL):
               failed.append({'effect': _EFFECTS[effect], 'error': e_msg})
         elif effect == 1:
           logging.debug('Checking MONO effect...')
-          _, u, v = image_processing_utils.convert_capture_to_planes(cap, props)
+          _, u, v = image_processing_utils.convert_capture_to_planes(
+              cap, props)
           u_min, u_max = np.amin(u)*_YUV_MAX, np.amax(u)*_YUV_MAX
           v_min, v_max = np.amin(v)*_YUV_MAX, np.amax(v)*_YUV_MAX
           e_msg = (f'U_range: {u_min:.2f},{u_max:.2f}; '
-                   f'V_range: {v_min:.2f},{v_max:.2f}; TOL: {_MONO_UV_SPREAD_MAX}')
+                   f'V_range: {v_min:.2f},{v_max:.2f}; '
+                   f'TOL: {_MONO_UV_SPREAD_MAX}')
           if ((u_max - u_min) > _MONO_UV_SPREAD_MAX or
               (v_max - v_min) > _MONO_UV_SPREAD_MAX):
             failed.append({'effect': _EFFECTS[effect], 'error': e_msg})

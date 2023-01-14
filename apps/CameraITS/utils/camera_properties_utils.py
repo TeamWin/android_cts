@@ -16,7 +16,6 @@
 
 import logging
 import math
-import unittest
 from mobly import asserts
 import numpy as np
 import capture_request_utils
@@ -891,8 +890,3 @@ def linear_tonemap(props):
   return ('android.tonemap.availableToneMapModes' in props and
           (0 in props.get('android.tonemap.availableToneMapModes') or
            3 in props.get('android.tonemap.availableToneMapModes')))
-
-
-if __name__ == '__main__':
-  unittest.main()
-

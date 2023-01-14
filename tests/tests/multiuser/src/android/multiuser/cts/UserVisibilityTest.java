@@ -37,7 +37,7 @@ import android.util.Log;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
-import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipleDisplays;
+import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsers;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
@@ -192,9 +192,9 @@ public final class UserVisibilityTest extends UserVisibilityTestCase {
     }
 
     @Test
-    @RequireNotMultipleUsersOnMultipleDisplays(reason = "Because API is not supported")
-    @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
-    public void testStartUserInBackgroundOnSecondaryDisplay() {
+    @RequireNotVisibleBackgroundUsers(reason = "Because API is not supported")
+    @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundVisibleOnDisplay"})
+    public void testStartUserInBackgroundVisibleOnDisplay() {
         // ids doen't really matter, as it should throw right away
         assertThrows(UnsupportedOperationException.class,
                 () -> tryToStartVisibleBackgroundUser(42, 108));

@@ -132,11 +132,13 @@ def assert_increasing_means(means, exps, sens, black_levels, white_level):
     logging.debug('iso: %d, exp: %.3f, means: %s', sens, exps[i-1], mean)
     for ch, color in enumerate(_BAYER_COLORS):
       if mean[ch] <= prev_mean[ch] * _IMG_DELTA_THRESH:
-        e_msg = f'{color} not increasing with increased exp time! ISO: {sens}, '
+        e_msg = (f'{color} not increasing with increased exp time! '
+                 f'ISO: {sens}, ')
         if i == 1:
           e_msg += f'black_level: {black_levels[ch]}, '
         else:
-          e_msg += f'exp[i-1]: {exps[i-2]:.3f}ms, mean[i-1]: {prev_mean[ch]:.2f}, '
+          e_msg += (f'exp[i-1]: {exps[i-2]:.3f}ms, '
+                    f'mean[i-1]: {prev_mean[ch]:.2f}, ')
         e_msg += (f'exp[i]: {exps[i-1]:.3f}ms, mean[i]: {mean[ch]}, '
                   f'TOL: {_IMG_DELTA_THRESH}')
         raise AssertionError(e_msg)

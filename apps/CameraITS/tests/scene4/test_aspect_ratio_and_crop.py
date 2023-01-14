@@ -18,7 +18,6 @@ import logging
 import math
 import os.path
 from mobly import test_runner
-import numpy as np
 
 import its_base_test
 import camera_properties_utils

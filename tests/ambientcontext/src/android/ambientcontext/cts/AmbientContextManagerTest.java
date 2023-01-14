@@ -68,12 +68,15 @@ public class AmbientContextManagerTest {
         Instant start = Instant.ofEpochMilli(1000L);
         Instant end = Instant.ofEpochMilli(3000L);
         int levelHigh = AmbientContextEvent.LEVEL_HIGH;
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putString(AmbientContextEvent.KEY_VENDOR_WEARABLE_EVENT_NAME, "test_event");
         AmbientContextEvent expectedEvent = new AmbientContextEvent.Builder()
                 .setEventType(eventCough)
                 .setStartTime(start)
                 .setEndTime(end)
                 .setConfidenceLevel(levelHigh)
                 .setDensityLevel(levelHigh)
+                .setVendorData(bundle)
                 .build();
         events.add(expectedEvent);
         intent.putExtra(AmbientContextManager.EXTRA_AMBIENT_CONTEXT_EVENTS, events);
@@ -88,6 +91,8 @@ public class AmbientContextManagerTest {
         assertEquals(end, actualEvent.getEndTime());
         assertEquals(levelHigh, actualEvent.getConfidenceLevel());
         assertEquals(levelHigh, actualEvent.getDensityLevel());
+        assertEquals("test_event", actualEvent.getVendorData().getString(
+                AmbientContextEvent.KEY_VENDOR_WEARABLE_EVENT_NAME));
     }
 
     @Test

@@ -24,14 +24,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to indicate that a test should run on devices that do not support running background
- * users on secondary displays.
+ * Annotation to indicate that a test should run on devices that do not support starting visible
+ * background users.
  *
  * <p>This can be enforced by using {@code Devicestate}.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequireNotMultipleUsersOnMultipleDisplays {
+public @interface RequireNotVisibleBackgroundUsers {
     String reason();
     FailureMode failureMode() default FailureMode.SKIP;
 

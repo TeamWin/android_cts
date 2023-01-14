@@ -19,6 +19,8 @@ import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
 
+import static org.junit.Assert.assertNotEquals;
+
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
@@ -229,7 +231,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
     /**
      * Schedule a job with a generic connectivity constraint, and ensure that it isn't stopped when
-     * the device transitions to WiFi.
+     * the device transitions to WiFi, but is informed of the network change.
      */
     public void testConnectivityConstraintExecutes_transitionNetworks() throws Exception {
         if (!mHasWifi) {
@@ -251,11 +253,15 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         assertTrue("Job with connectivity constraint did not fire on mobile.",
                 kTestEnvironment.awaitExecution());
+        JobParameters startParams = kTestEnvironment.getLastStartJobParameters();
 
         connectToWifi();
         assertFalse(
                 "Job with connectivity constraint was stopped when network transitioned to WiFi.",
                 kTestEnvironment.awaitStopped());
+        JobParameters networkChangedParams = kTestEnvironment.getLastNetworkChangedJobParameters();
+        assertNotNull(networkChangedParams.getNetwork());
+        assertNotEquals(startParams.getNetwork(), networkChangedParams.getNetwork());
     }
 
     /**

@@ -49,34 +49,37 @@ public class AltitudeConverterTest {
 
     @Test
     public void testAddMslAltitudeToLocation_expectedBehavior() throws IOException {
-        // Interpolates between bffff, 95555, and 00001.
+        // Interpolates between bffffc, 955554, and 000004.
         Location location = new Location("");
         location.setLatitude(-35.246789);
         location.setLongitude(-44.962683);
         location.setAltitude(-1);
         location.setVerticalAccuracyMeters(1);
+        // Requires data to be loaded from raw assets.
         mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
         assertThat(location.getMslAltitudeMeters()).isWithin(2).of(5.1076);
         assertThat(location.getMslAltitudeAccuracyMeters()).isGreaterThan(1f);
         assertThat(location.getMslAltitudeAccuracyMeters()).isLessThan(1.1f);
 
-        // Again interpolates between bffff, 95555, and 00001 - no disk read.
+        // Again interpolates between bffffc, 955554, and 000004.
         location = new Location("");
-        location.setLatitude(-35.281923);
-        location.setLongitude(-44.887958);
+        location.setLatitude(-35.246789);
+        location.setLongitude(-44.962683);
         location.setAltitude(-1);
         location.setVerticalAccuracyMeters(1);
+        // Requires no data to be loaded from raw assets.
         mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
         assertThat(location.getMslAltitudeMeters()).isWithin(2).of(5.1076);
         assertThat(location.getMslAltitudeAccuracyMeters()).isGreaterThan(1f);
         assertThat(location.getMslAltitudeAccuracyMeters()).isLessThan(1.1f);
 
-        // Interpolates between 95555, 00001, 00007, and 95553 - no vertical accuracy.
+        // Interpolate between 955554, 000004, 00000c, and 95554c - no vertical accuracy.
         location = new Location("");
-        location.setLatitude(-34.947045);
-        location.setLongitude(-44.925335);
+        location.setLatitude(-35.176383);
+        location.setLongitude(-44.962683);
         location.setAltitude(-1);
         location.setVerticalAccuracyMeters(-1); // Invalid vertical accuracy
+        // Requires no data to be loaded from raw assets.
         mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
         assertThat(location.getMslAltitudeMeters()).isWithin(2).of(5.1919);
         assertThat(location.hasMslAltitudeAccuracy()).isFalse();
@@ -87,6 +90,7 @@ public class AltitudeConverterTest {
         location.setLongitude(-155.998774);
         location.setAltitude(-1);
         location.setVerticalAccuracyMeters(1);
+        // Requires data to be loaded from raw assets.
         mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
         assertThat(location.getMslAltitudeMeters()).isWithin(2).of(-19.2359);
         assertThat(location.getMslAltitudeAccuracyMeters()).isGreaterThan(1f);

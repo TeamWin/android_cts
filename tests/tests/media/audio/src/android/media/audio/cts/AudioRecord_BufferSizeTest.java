@@ -25,7 +25,6 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.NonMainlineTest;
-import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.ArrayList;
 import java.util.List;

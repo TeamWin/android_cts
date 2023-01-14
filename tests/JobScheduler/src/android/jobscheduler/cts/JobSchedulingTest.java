@@ -16,10 +16,13 @@
 
 package android.jobscheduler.cts;
 
+import static android.Manifest.permission.RUN_LONG_JOBS;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_DEFAULT;
 import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.app.AppOpsManager.MODE_IGNORED;
+import static android.app.AppOpsManager.OP_RUN_LONG_JOBS;
+import static android.app.AppOpsManager.opToPermission;
 import static android.text.format.DateUtils.HOUR_IN_MILLIS;
 
 import static org.junit.Assert.assertNotEquals;
@@ -31,6 +34,7 @@ import android.app.job.JobScheduler;
 import android.jobscheduler.MockJobService.TestEnvironment;
 import android.jobscheduler.MockJobService.TestEnvironment.Event;
 import android.provider.DeviceConfig;
+import android.text.TextUtils;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.BatteryUtils;
@@ -61,18 +65,22 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
     }
 
     public void testCanRunLongJobs() throws Exception {
+        final boolean isAppOpPermission = isLongBackgroundTaskPermissionAppOp();
+
         // Default is allowed.
         AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_DEFAULT);
         assertTrue(mJobScheduler.canRunLongJobs());
 
+        // Toggle the appop won't make a change of JobScheduler#canRunLongJobs if it's not
+        // an appop permission.
         AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_ERRORED);
-        assertFalse(mJobScheduler.canRunLongJobs());
+        assertTrue(isAppOpPermission ^ mJobScheduler.canRunLongJobs());
 
         AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_ALLOWED);
         assertTrue(mJobScheduler.canRunLongJobs());
 
         AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_IGNORED);
-        assertFalse(mJobScheduler.canRunLongJobs());
+        assertTrue(isAppOpPermission ^ mJobScheduler.canRunLongJobs());
     }
 
     /**
@@ -503,6 +511,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
     }
 
     public void testRunLongJobPermissionRequirement() throws Exception {
+        final boolean isAppOpPermission = isLongBackgroundTaskPermissionAppOp();
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setUserInitiated(true)
                 .build();
@@ -511,11 +520,15 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
         assertEquals(JobScheduler.RESULT_SUCCESS, mJobScheduler.schedule(ji));
 
         AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_ERRORED);
-        try {
-            mJobScheduler.schedule(ji);
-            fail("Successfully scheduled user-initiated job without permission");
-        } catch (Exception expected) {
-            // Success
+        if (isAppOpPermission) {
+            try {
+                mJobScheduler.schedule(ji);
+                fail("Successfully scheduled user-initiated job without permission");
+            } catch (Exception expected) {
+                // Success
+            }
+        } else {
+            assertEquals(JobScheduler.RESULT_SUCCESS, mJobScheduler.schedule(ji));
         }
 
         AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_ALLOWED);
@@ -524,5 +537,12 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
         AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_IGNORED);
         // TODO(263159631): uncomment to enable testing this scenario
         // assertEquals(JobScheduler.RESULT_FAILURE, mJobScheduler.schedule(ji));
+    }
+
+    /**
+     * @return {@code true} if the RUN_LONG_JOBS is an appop permission.
+     */
+    private boolean isLongBackgroundTaskPermissionAppOp() {
+        return TextUtils.equals(RUN_LONG_JOBS, opToPermission(OP_RUN_LONG_JOBS));
     }
 }

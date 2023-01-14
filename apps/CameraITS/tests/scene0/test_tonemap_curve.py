@@ -119,7 +119,8 @@ def check_raw_pattern(img_raw):
         logging.debug('No match w/ %s: %s, ATOL: %.3f',
                       color, str(_COLOR_CHECKER[color]), _RAW_TOL)
   if set(color_match) != set(_COLOR_BARS):
-    raise AssertionError('RAW _COLOR_BARS test pattern does not have all colors')
+    raise AssertionError(
+        'RAW _COLOR_BARS test pattern does not have all colors')
 
 
 def check_yuv_vs_raw(img_raw, img_yuv, name_with_log_path, debug):

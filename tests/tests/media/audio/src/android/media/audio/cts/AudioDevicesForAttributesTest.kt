@@ -22,9 +22,7 @@ import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-
-import com.android.compatibility.common.util.NonMainlineTest;
-
+import com.android.compatibility.common.util.NonMainlineTest
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test

@@ -17,13 +17,14 @@
 import logging
 import os.path
 
+from mobly import test_runner
+import numpy as np
+
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
 import its_session_utils
-from mobly import test_runner
-import numpy as np
 import target_exposure_utils
 
 # 5 regions specified in normalized (x, y, w, h) coords.

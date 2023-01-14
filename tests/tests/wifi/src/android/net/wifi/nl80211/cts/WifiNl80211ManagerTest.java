@@ -144,7 +144,7 @@ public class WifiNl80211ManagerTest {
         } catch (Exception ignore) { }
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     @Test
     public void testStartScan2() {
         try {
@@ -194,7 +194,7 @@ public class WifiNl80211ManagerTest {
         }
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     @Test
     public void testWifiNl80211ManagerConstructor() {
         IBinder testBinder = new Binder();

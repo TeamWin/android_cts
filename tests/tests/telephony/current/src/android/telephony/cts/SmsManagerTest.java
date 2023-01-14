@@ -36,6 +36,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.app.AppOpsManager;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
@@ -68,6 +69,7 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -859,6 +861,31 @@ public class SmsManagerTest {
                 smsManager.getSubscriptionId());
     }
 
+    /**
+     * Verify the API will not throw any exception when READ_PRIVILEGED_PHONE_STATE is granted
+     */
+    @Test
+    public void testGetSmscIdentity() {
+        SmsManager smsManager = getSmsManager();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(smsManager,
+                sm -> sm.getSmscIdentity(), Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+    }
+
+    /**
+     * verify the API will throw the SecurityException or not when no permissions are granted.
+     */
+    @Test
+    public void testGetSmscIdentity_Exception() {
+        dropShellIdentity();
+        try {
+            getSmsManager().getSmscIdentity();
+            fail();
+        } catch (SecurityException se) {
+            // API will throw SecurityException as no permission is granted to the caller
+        }
+        adoptShellIdentity();
+    }
+
     protected ArrayList<String> divideMessage(String text) {
         return getSmsManager().divideMessage(text);
     }
@@ -1014,5 +1041,21 @@ public class SmsManagerTest {
                 return true;  // success
             }
         }
+    }
+
+    /**
+     * Adopts shell permission identity
+     */
+    private static void adoptShellIdentity() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity();
+    }
+
+    /**
+     * Drop shell permission identity
+     */
+    private static void dropShellIdentity() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
     }
 }

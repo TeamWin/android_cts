@@ -93,12 +93,11 @@ import com.android.bedstead.harrier.annotations.RequireGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
-import com.android.bedstead.harrier.annotations.RequireMultipleUsersOnMultipleDisplays;
 import com.android.bedstead.harrier.annotations.RequireNotCnGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
-import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipleDisplays;
+import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsers;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
@@ -111,6 +110,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
+import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
 import com.android.bedstead.harrier.annotations.RunWithFeatureFlagEnabledAndDisabled;
 import com.android.bedstead.harrier.annotations.TestTag;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
@@ -120,8 +120,8 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnFinancedDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnOrganizationOwnedProfileOwner;
@@ -904,15 +904,15 @@ public class DeviceStateTest {
     }
 
     @Test
-    @RequireMultipleUsersOnMultipleDisplays(reason = "Test")
-    public void requireMultipleUsersOnMultipleDisplaysAnnotation_supported() {
+    @RequireVisibleBackgroundUsers(reason = "Test")
+    public void requireVisibleBackgroundUsersAnnotation_supported() {
         assertThat(TestApis.context().instrumentedContext().getSystemService(UserManager.class)
                 .isVisibleBackgroundUsersSupported()).isTrue();
     }
 
     @Test
-    @RequireNotMultipleUsersOnMultipleDisplays(reason = "Test")
-    public void requireNotMultipleUsersOnMultipleDisplaysAnnotation_notSupported() {
+    @RequireNotVisibleBackgroundUsers(reason = "Test")
+    public void requireNotVisibleBackgroundUsersAnnotation_notSupported() {
         assertThat(TestApis.context().instrumentedContext().getSystemService(UserManager.class)
                 .isVisibleBackgroundUsersSupported()).isFalse();
     }

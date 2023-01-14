@@ -115,7 +115,8 @@ class BurstSamenessManualTest(its_base_test.ItsBaseTest):
 
       # determine spread_thresh
       spread_thresh = _SPREAD_THRESH
-      if its_session_utils.get_first_api_level(self.dut.serial) >= _API_LEVEL_30:
+      if its_session_utils.get_first_api_level(
+          self.dut.serial) >= _API_LEVEL_30:
         spread_thresh = _SPREAD_THRESH_API_LEVEL_30
 
       # PASS/FAIL based on center patch similarity

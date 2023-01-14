@@ -36,6 +36,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.mediaprovidertranscode.cts" />
         <option name="runner" value="androidx.test.runner.AndroidJUnitRunner" />
+        <option name="test-filter-dir" value="/data/data/android.mediaprovidertranscode.cts"/>
         <option name="hidden-api-checks" value="false"/>
     </test>
 

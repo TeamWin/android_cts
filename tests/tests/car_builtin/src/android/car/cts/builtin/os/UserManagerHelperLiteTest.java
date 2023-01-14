@@ -29,9 +29,9 @@ import android.os.UserManager;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
-import com.android.bedstead.harrier.annotations.RequireMultipleUsersOnMultipleDisplays;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
-import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipleDisplays;
+import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsers;
+import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
 import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
 
@@ -202,7 +202,7 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
     @Test
     @ApiTest(apis = {"android.car.builtin.os.UserManagerHelper#"
             + "isVisibleBackgroundUsersSupported(UserManager)"})
-    @RequireMultipleUsersOnMultipleDisplays(reason = "Because test is testing exactly that")
+    @RequireVisibleBackgroundUsers(reason = "Because test is testing exactly that")
     public void testIsVisibleBackgroundUsersSupported() {
         expectWithMessage("Users on secondary displays supported").that(
                 UserManagerHelper.isVisibleBackgroundUsersSupported(mUserManager)).isTrue();
@@ -211,7 +211,7 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
     @Test
     @ApiTest(apis = {"android.car.builtin.os.UserManagerHelper#"
             + "isVisibleBackgroundUsersSupported(UserManager)"})
-    @RequireNotMultipleUsersOnMultipleDisplays(reason = "Because test is testing exactly that")
+    @RequireNotVisibleBackgroundUsers(reason = "Because test is testing exactly that")
     public void testIsVisibleBackgroundUsersSupported_not() {
         expectWithMessage("Users on secondary displays supported").that(
                 UserManagerHelper.isVisibleBackgroundUsersSupported(mUserManager)).isFalse();

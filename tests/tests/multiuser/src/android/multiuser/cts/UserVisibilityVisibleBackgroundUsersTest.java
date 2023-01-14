@@ -36,11 +36,11 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
-import com.android.bedstead.harrier.annotations.RequireMultipleUsersOnMultipleDisplays;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
@@ -53,15 +53,16 @@ import java.util.Collection;
 
 /**
  * Tests for user-related APIs that are only available on devices that
- * {@link UserManager#isUsersOnSecondaryDisplaysSupported() support background users running on
- * secondary displays} (such as cars with passenger displays).
+ * {@link UserManager#isVisibleBackgroundUsersSupported() support visible background users } (such
+ * as cars with passenger displays).
  *
  */
 @AppModeFull(reason = "it's testing user features, not related to apps")
-@RequireMultipleUsersOnMultipleDisplays(reason = "Because class is testing exactly that")
-public final class UserVisibilityMultipleDisplaysTest extends UserVisibilityTestCase {
+@RequireVisibleBackgroundUsers(reason = "Because class is testing exactly that")
+public final class UserVisibilityVisibleBackgroundUsersTest extends UserVisibilityTestCase {
 
-    private static final String TAG = UserVisibilityMultipleDisplaysTest.class.getSimpleName();
+    private static final String TAG = UserVisibilityVisibleBackgroundUsersTest.class
+            .getSimpleName();
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserVisible"})

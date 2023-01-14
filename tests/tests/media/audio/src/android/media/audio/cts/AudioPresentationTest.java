@@ -20,7 +20,6 @@ import static org.junit.Assert.assertNotEquals;
 
 import android.icu.util.ULocale;
 import android.media.AudioPresentation;
-import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.NonMainlineTest;

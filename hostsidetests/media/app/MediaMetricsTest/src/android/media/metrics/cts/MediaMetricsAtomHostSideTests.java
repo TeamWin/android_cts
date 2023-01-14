@@ -19,6 +19,7 @@ package android.media.metrics.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.device.collectors.util.SendToInstrumentation;
 import android.media.metrics.BundleSession;
 import android.media.metrics.EditingSession;
 import android.media.metrics.LogSessionId;
@@ -43,10 +44,6 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaMetricsAtomHostSideTests {
@@ -300,7 +297,7 @@ public class MediaMetricsAtomHostSideTests {
                         .setNetworkBytesRead(102400)
                         .setLocalBytesRead(2000)
                         .setNetworkTransferDurationMillis(6000)
-                        .setDrmSessionId(new byte[] {2, 3, 3, 10})
+                        .setDrmSessionId(new byte[]{2, 3, 3, 10})
                         .setMetricsBundle(new Bundle())
                         .addExperimentId(123)
                         .build();
@@ -443,7 +440,7 @@ public class MediaMetricsAtomHostSideTests {
                         .setNetworkBytesRead(102400)
                         .setLocalBytesRead(2000)
                         .setNetworkTransferDurationMillis(6000)
-                        .setDrmSessionId(new byte[] {2, 3, 3, 10})
+                        .setDrmSessionId(new byte[]{2, 3, 3, 10})
                         .setMetricsBundle(new Bundle())
                         .addExperimentId(123)
                         .build();
@@ -507,7 +504,7 @@ public class MediaMetricsAtomHostSideTests {
                         .setNetworkBytesRead(102400)
                         .setLocalBytesRead(2000)
                         .setNetworkTransferDurationMillis(6000)
-                        .setDrmSessionId(new byte[] {2, 3, 3, 10})
+                        .setDrmSessionId(new byte[]{2, 3, 3, 10})
                         .setMetricsBundle(new Bundle())
                         .addExperimentId(123)
                         .build();
@@ -547,16 +544,11 @@ public class MediaMetricsAtomHostSideTests {
         midiTestHelper.testEchoVariableMessage(9 /* 9 bytes */);
     }
 
-    private void writeSessionIdToFile(String stringId) throws IOException {
-        // TODO(b/259258249): Name session id after the test.
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+    private void writeSessionIdToFile(String stringId) {
         Log.i(TAG, "log_session_id=" + stringId);
-        File logDir = context.getExternalFilesDir(null);
-        File logFile = new File(logDir, "log_session_id.txt");
-        logFile.createNewFile();
-        FileWriter fw = new FileWriter(logFile.getAbsolutePath());
-        fw.write(stringId);
-        fw.close();
-        Log.i(TAG, "Logged to " + logFile.getAbsolutePath());
+        Bundle b = new Bundle();
+        // TODO(b/265311058): use a common constant for metrics keys.
+        b.putString("log_session_id", stringId);
+        SendToInstrumentation.sendBundle(InstrumentationRegistry.getInstrumentation(), b);
     }
 }

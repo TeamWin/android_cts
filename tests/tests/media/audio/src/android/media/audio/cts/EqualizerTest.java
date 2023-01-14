@@ -17,12 +17,9 @@
 package android.media.audio.cts;
 
 import android.media.audiofx.AudioEffect;
-import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.audiofx.Equalizer;
 import android.media.cts.PostProcTestBase;
 import android.os.Looper;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.NonMainlineTest;

@@ -18,18 +18,13 @@ package android.media.audio.cts;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-
-import android.media.cts.AudioHelper;
-import android.media.cts.DeviceUtils;
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
-
+import android.media.cts.DeviceUtils;
 import android.os.Handler;
 import android.os.Looper;
-
 import android.test.AndroidTestCase;
-
 import android.util.Log;
 
 import com.android.compatibility.common.util.NonMainlineTest;

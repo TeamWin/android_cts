@@ -391,7 +391,7 @@ public class ItsTestActivity extends DialogTestListActivity {
 
             // Save MPC info once both front primary and rear primary data are collected.
             if (mExecutedMpcTests.size() == 4) {
-                mPce.submit();
+                mPce.submitAndVerify();
             }
             return true;
         }

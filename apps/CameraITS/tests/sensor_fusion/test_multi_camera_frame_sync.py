@@ -45,7 +45,7 @@ _FRAMES_WITH_SQUARES_MIN = 20  # min number of frames with angles extracted
 _NAME = os.path.basename(__file__).split('.')[0]
 _NUM_CAPTURES = 100
 _NUM_ROTATIONS = 10
-_ROT_INIT_WAIT_TIME = 4  # seconds
+_ROT_INIT_WAIT_TIME = 6  # seconds
 _CHART_DISTANCE_SF = 25  # cm
 _CM_TO_M = 1/100.0
 

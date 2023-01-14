@@ -17,12 +17,7 @@
 package android.media.audio.cts;
 
 import android.annotation.RawRes;
-import android.app.ActivityManager;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.Resources;
-import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;

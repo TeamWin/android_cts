@@ -20,13 +20,6 @@ import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_DELETE;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_DELETE_RANGE;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_INSERT;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_JOIN_OR_SPLIT;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_REMOVE_SPACE;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_SELECT;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_SELECT_RANGE;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -43,7 +36,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.Parcelable;
 import android.os.Process;
 import android.os.ResultReceiver;
 import android.os.StrictMode;
@@ -65,8 +57,6 @@ import android.view.WindowManager;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.CursorAnchorInfo;
-import android.view.inputmethod.DeleteGesture;
-import android.view.inputmethod.DeleteRangeGesture;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.HandwritingGesture;
@@ -79,12 +69,7 @@ import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
-import android.view.inputmethod.InsertGesture;
-import android.view.inputmethod.JoinOrSplitGesture;
 import android.view.inputmethod.PreviewableHandwritingGesture;
-import android.view.inputmethod.RemoveSpaceGesture;
-import android.view.inputmethod.SelectGesture;
-import android.view.inputmethod.SelectRangeGesture;
 import android.view.inputmethod.TextAttribute;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -401,60 +386,19 @@ public final class MockIme extends InputMethodService {
                                 data);
                     }
                     case "previewHandwritingGesture": {
-                        int type = command.getExtras().getInt("type");
+                        final PreviewableHandwritingGesture gesture =
+                                (PreviewableHandwritingGesture) HandwritingGesture.fromByteArray(
+                                        command.getExtras().getByteArray("gesture"));
 
-                        Class<? extends Parcelable> clazz = null;
-                        switch (type) {
-                            case GESTURE_TYPE_SELECT:
-                                clazz = SelectGesture.class;
-                                break;
-                            case GESTURE_TYPE_SELECT_RANGE:
-                                clazz = SelectRangeGesture.class;
-                                break;
-                            case GESTURE_TYPE_DELETE:
-                                clazz = DeleteGesture.class;
-                                break;
-                            case GESTURE_TYPE_DELETE_RANGE:
-                                clazz = DeleteRangeGesture.class;
-                                break;
-                        }
-                        PreviewableHandwritingGesture gesture =
-                                (PreviewableHandwritingGesture) command.getExtras().getParcelable(
-                                        "gesture", clazz);
                         getMemorizedOrCurrentInputConnection()
                                 .previewHandwritingGesture(gesture, null /* cancellationSignal */);
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                     case "performHandwritingGesture": {
-                        int type = command.getExtras().getInt("type");
+                        final HandwritingGesture gesture =
+                                HandwritingGesture.fromByteArray(
+                                        command.getExtras().getByteArray("gesture"));
 
-                        Class<? extends Parcelable> clazz = null;
-                        switch (type) {
-                            case GESTURE_TYPE_SELECT:
-                                clazz = SelectGesture.class;
-                                break;
-                            case GESTURE_TYPE_SELECT_RANGE:
-                                clazz = SelectRangeGesture.class;
-                                break;
-                            case GESTURE_TYPE_INSERT:
-                                clazz = InsertGesture.class;
-                                break;
-                            case GESTURE_TYPE_DELETE:
-                                clazz = DeleteGesture.class;
-                                break;
-                            case GESTURE_TYPE_DELETE_RANGE:
-                                clazz = DeleteRangeGesture.class;
-                                break;
-                            case GESTURE_TYPE_REMOVE_SPACE:
-                                clazz = RemoveSpaceGesture.class;
-                                break;
-                            case GESTURE_TYPE_JOIN_OR_SPLIT:
-                                clazz = JoinOrSplitGesture.class;
-                                break;
-                        }
-                        HandwritingGesture gesture =
-                                (HandwritingGesture) command.getExtras().getParcelable(
-                                        "gesture", clazz);
                         IntConsumer consumer = value ->
                                 getTracer().onPerformHandwritingGestureResult(
                                         value, command.getId(), () -> {});

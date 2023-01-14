@@ -143,6 +143,9 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
                         "bikes_qcif_color_bt2020_smpte2086Hlg_bt2020Ncl_fr_hevc.mp4",
                         MediaFormat.COLOR_RANGE_FULL, MediaFormat.COLOR_STANDARD_BT2020,
                         MediaFormat.COLOR_TRANSFER_HLG, true, CODEC_OPTIONAL},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, "cosmat_352x288_hlg_hevc.mkv",
+                        MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709,
+                        MediaFormat.COLOR_TRANSFER_HLG, true, CODEC_OPTIONAL},
 
                 // Mpeg2 clips
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2, "bbb_qcif_color_bt709_lr_sdr_mpeg2.mp4",
@@ -227,6 +230,9 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
                         "bikes_qcif_color_bt2020_smpte2086Hlg_bt2020Ncl_fr_vp9.mkv",
                         MediaFormat.COLOR_RANGE_FULL, MediaFormat.COLOR_STANDARD_BT2020,
                         MediaFormat.COLOR_TRANSFER_HLG, false, CODEC_ANY},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, "cosmat_352x288_hlg_vp9.mkv",
+                        MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709,
+                        MediaFormat.COLOR_TRANSFER_HLG, false, CODEC_OPTIONAL},
 
                 // AV1 clips
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_qcif_color_bt709_lr_sdr_av1.mp4",
@@ -254,6 +260,9 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
                         "bikes_qcif_color_bt2020_smpte2086Hlg_bt2020Ncl_fr_av1.mp4",
                         MediaFormat.COLOR_RANGE_FULL, MediaFormat.COLOR_STANDARD_BT2020,
                         MediaFormat.COLOR_TRANSFER_HLG, true, CODEC_OPTIONAL},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_352x288_hlg_av1.mkv",
+                        MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709,
+                        MediaFormat.COLOR_TRANSFER_HLG, true, CODEC_ALL},
         });
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }

@@ -282,6 +282,11 @@ public class MockJobService extends JobService {
         }
     }
 
+    @Override
+    public void onNetworkChanged(JobParameters params) {
+        TestEnvironment.getTestEnvironment().notifyNetworkChanged(params);
+    }
+
     boolean processNextPendingCompletion() {
         if (mPendingCompletions.size() <= 0) {
             return false;
@@ -436,6 +441,7 @@ public class MockJobService extends JobService {
         private TestWorkItem[] mExpectedWork;
         private boolean mContinueAfterStart;
         private JobParameters mExecutedJobParameters;
+        private JobParameters mNetworkChangedJobParameters;
         private MockJobService mExecutedJobService;
         private int mExecutedPermCheckRead;
         private int mExecutedPermCheckWrite;
@@ -476,6 +482,10 @@ public class MockJobService extends JobService {
 
         public JobParameters getLastStopJobParameters() {
             return mStopJobParameters;
+        }
+
+        public JobParameters getLastNetworkChangedJobParameters() {
+            return mNetworkChangedJobParameters;
         }
 
         public int getLastPermCheckRead() {
@@ -554,6 +564,10 @@ public class MockJobService extends JobService {
             if (mLatch != null) {
                 mLatch.countDown();
             }
+        }
+
+        private void notifyNetworkChanged(JobParameters params) {
+            mNetworkChangedJobParameters = params;
         }
 
         private void notifyWaitingForStop() {

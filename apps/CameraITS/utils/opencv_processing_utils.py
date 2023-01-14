@@ -17,7 +17,6 @@
 import logging
 import math
 import os
-import unittest
 import cv2
 import numpy
 
@@ -576,53 +575,3 @@ def get_angle(input_img):
     return None
 
   return numpy.median(filtered_angles)
-
-
-class Cv2ImageProcessingUtilsTests(unittest.TestCase):
-  """Unit tests for this module."""
-
-  def test_get_angle_identify_rotated_chessboard_angle(self):
-    """Unit test to check extracted angles from images."""
-    # Array of the image files and angles containing rotated chessboards.
-    test_cases = [
-        ('', 0),
-        ('_15_ccw', -15),
-        ('_30_ccw', -30),
-        ('_45_ccw', -45),
-        ('_60_ccw', -60),
-        ('_75_ccw', -75),
-    ]
-    test_fails = ''
-
-    # For each rotated image pair (normal, wide), check angle against expected.
-    for suffix, angle in test_cases:
-      # Define image paths.
-      normal_img_path = os.path.join(
-          TEST_IMG_DIR, f'rotated_chessboards/normal{suffix}.jpg')
-      wide_img_path = os.path.join(
-          TEST_IMG_DIR, f'rotated_chessboards/wide{suffix}.jpg')
-
-      # Load and color-convert images.
-      normal_img = cv2.cvtColor(cv2.imread(normal_img_path), cv2.COLOR_BGR2GRAY)
-      wide_img = cv2.cvtColor(cv2.imread(wide_img_path), cv2.COLOR_BGR2GRAY)
-
-      # Assert angle as expected.
-      normal = get_angle(normal_img)
-      wide = get_angle(wide_img)
-      valid_angles = (angle, angle+90)  # try both angle & +90 due to squares
-      e_msg = (f'\n Rotation angle test failed: {angle}, extracted normal: '
-               f'{normal:.2f}, wide: {wide:.2f}, valid_angles: {valid_angles}')
-      matched_angles = False
-      for a in valid_angles:
-        if (math.isclose(normal, a, abs_tol=ANGLE_CHECK_TOL) and
-            math.isclose(wide, a, abs_tol=ANGLE_CHECK_TOL)):
-          matched_angles = True
-
-      if not matched_angles:
-        test_fails += e_msg
-
-    self.assertEqual(len(test_fails), 0, test_fails)
-
-
-if __name__ == '__main__':
-  unittest.main()

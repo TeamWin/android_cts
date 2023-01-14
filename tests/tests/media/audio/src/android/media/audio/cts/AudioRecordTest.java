@@ -36,10 +36,8 @@ import android.media.AudioRecord.OnRecordPositionUpdateListener;
 import android.media.AudioRecordingConfiguration;
 import android.media.AudioSystem;
 import android.media.AudioTimestamp;
-import android.media.AudioTrack;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
-import android.media.MediaSyncEvent;
 import android.media.MicrophoneDirection;
 import android.media.MicrophoneInfo;
 import android.media.cts.AudioHelper;
@@ -75,8 +73,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
-import java.util.concurrent.Executor;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
 
 @NonMainlineTest

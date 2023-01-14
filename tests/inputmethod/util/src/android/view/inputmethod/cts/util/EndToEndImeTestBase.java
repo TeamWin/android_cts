@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 
@@ -44,6 +45,11 @@ import java.util.List;
 public class EndToEndImeTestBase {
     @Rule
     public TestName mTestName = new TestName();
+
+    /** Returns a unique marker based on the concrete class name and elapsed time. */
+    protected String createUniqueMarker() {
+        return getClass().getName() + "/" + SystemClock.elapsedRealtimeNanos();
+    }
 
     /**
      * Enters touch mode when instrumenting.

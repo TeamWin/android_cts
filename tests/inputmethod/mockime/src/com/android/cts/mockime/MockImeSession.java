@@ -36,7 +36,6 @@ import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
-import android.os.Parcelable;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -1269,10 +1268,9 @@ public class MockImeSession implements AutoCloseable {
      *         wait until this event is handled by {@link MockIme}.
      */
     @NonNull
-    public ImeCommand callPerformHandwritingGesture(@NonNull Parcelable gesture, int type) {
+    public ImeCommand callPerformHandwritingGesture(@NonNull HandwritingGesture gesture) {
         final Bundle params = new Bundle();
-        params.putParcelable("gesture", gesture);
-        params.putInt("type", type);
+        params.putByteArray("gesture", gesture.toByteArray());
         return callCommandInternal("performHandwritingGesture", params);
     }
 
@@ -1294,12 +1292,10 @@ public class MockImeSession implements AutoCloseable {
      *         wait until this event is handled by {@link MockIme}.
      */
     @NonNull
-    public ImeCommand callPreviewHandwritingGesture(@NonNull Parcelable gesture, int type) {
+    public ImeCommand callPreviewHandwritingGesture(
+            @NonNull PreviewableHandwritingGesture gesture) {
         final Bundle params = new Bundle();
-        // TODO(b/217957587): Create @TestApi util in HandwritingGesture for easy
-        // serialization/deserialization.
-        params.putParcelable("gesture", gesture);
-        params.putInt("type", type);
+        params.putByteArray("gesture", gesture.toByteArray());
         return callCommandInternal("previewHandwritingGesture", params);
     }
 

@@ -17,13 +17,6 @@
 package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_DELETE;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_DELETE_RANGE;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_INSERT;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_JOIN_OR_SPLIT;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_REMOVE_SPACE;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_SELECT;
-import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_SELECT_RANGE;
 
 import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.editorMatcherForA11yIme;
 import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.expectA11yImeCommand;
@@ -51,7 +44,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Handler;
-import android.os.Parcelable;
 import android.os.Process;
 import android.os.SystemClock;
 import android.text.Annotation;
@@ -1718,31 +1710,6 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
         final int expectedResult = returnResult;
         final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
-        final AtomicReference<Class<? extends Parcelable>> classRef = new AtomicReference<>();
-        switch (gesture.getGestureType()) {
-            case GESTURE_TYPE_SELECT:
-                classRef.set(SelectGesture.class);
-                break;
-            case GESTURE_TYPE_SELECT_RANGE:
-                classRef.set(SelectRangeGesture.class);
-                break;
-            case GESTURE_TYPE_INSERT:
-                classRef.set(InsertGesture.class);
-                break;
-            case GESTURE_TYPE_DELETE:
-                classRef.set(DeleteGesture.class);
-                break;
-            case GESTURE_TYPE_DELETE_RANGE:
-                classRef.set(DeleteRangeGesture.class);
-                break;
-            case GESTURE_TYPE_REMOVE_SPACE:
-                classRef.set(RemoveSpaceGesture.class);
-                break;
-            case GESTURE_TYPE_JOIN_OR_SPLIT:
-                classRef.set(JoinOrSplitGesture.class);
-                break;
-        }
-
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
                 super(target, false);
@@ -1760,19 +1727,19 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                     consumer.accept(InputConnection.HANDWRITING_GESTURE_RESULT_UNSUPPORTED);
                 }
                 methodCallVerifier.onMethodCalled(args -> {
-                    args.putParcelable("gesture", classRef.get().cast(gesture));
+                    args.putByteArray("gesture", gesture.toByteArray());
                 });
             }
         }
 
         testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
-            ImeCommand command =
-                    session.callPerformHandwritingGesture(
-                            classRef.get().cast(gesture), gesture.getGestureType());
+            ImeCommand command = session.callPerformHandwritingGesture(gesture);
 
             expectCommand(stream, command, TIMEOUT);
             methodCallVerifier.assertCalledOnce(args -> {
-                assertEquals(gesture, args.getParcelable("gesture", classRef.get()));
+                byte[] bytes = args.getByteArray("gesture");
+                HandwritingGesture gesture1 = HandwritingGesture.fromByteArray(bytes);
+                assertEquals(gesture, gesture1);
             });
 
             long requestId = command.getId();
@@ -1798,8 +1765,8 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
 
     /**
      * Test
-     * {@link InputConnection#previewHandwritingGesture(HandwritingGesture, CancellationSignal)}
-     * works as expected for {@link SelectGesture}.
+     * {@link InputConnection#previewHandwritingGesture(PreviewableHandwritingGesture,
+     * CancellationSignal)} works as expected for {@link SelectGesture}.
      */
     @Test
     @ApiTest(apis = {"android.view.inputmethod.SelectGesture.Builder#setGranularity",
@@ -1814,25 +1781,9 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                         .build());
     }
 
-    private <T extends HandwritingGesture> void testPreviewHandwritingGesture(T gesture)
+    private <T extends PreviewableHandwritingGesture> void testPreviewHandwritingGesture(T gesture)
             throws Exception {
         final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
-
-        final AtomicReference<Class<? extends Parcelable>> classRef = new AtomicReference<>();
-        switch (gesture.getGestureType()) {
-            case GESTURE_TYPE_SELECT:
-                classRef.set(SelectGesture.class);
-                break;
-            case GESTURE_TYPE_SELECT_RANGE:
-                classRef.set(SelectRangeGesture.class);
-                break;
-            case GESTURE_TYPE_DELETE:
-                classRef.set(DeleteGesture.class);
-                break;
-            case GESTURE_TYPE_DELETE_RANGE:
-                classRef.set(DeleteRangeGesture.class);
-                break;
-        }
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -1845,7 +1796,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                 assertNotNull(gesture);
 
                 methodCallVerifier.onMethodCalled(args ->
-                        args.putParcelable("gesture", classRef.get().cast(gesture)));
+                        args.putByteArray("gesture", gesture.toByteArray()));
 
                 return true;
             }
@@ -1853,12 +1804,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
 
         testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
             ImeCommand command =
-                    session.callPreviewHandwritingGesture(
-                            classRef.get().cast(gesture), gesture.getGestureType());
+                    session.callPreviewHandwritingGesture(gesture);
 
             expectCommand(stream, command, TIMEOUT);
             methodCallVerifier.assertCalledOnce(
-                    args -> assertEquals(gesture, args.getParcelable("gesture", classRef.get())));
+                    args -> assertEquals(gesture,
+                            HandwritingGesture.fromByteArray(args.getByteArray("gesture"))));
         });
     }
 

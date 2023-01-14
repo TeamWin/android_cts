@@ -924,7 +924,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     /**
      * Validate successful publish with a suspendable session when device supports suspension.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     public void testPublishSuccessWithSuspendableSession() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
@@ -969,7 +969,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
      * Validate failure to publish with a suspendable session when device doesn't support
      * suspension.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     public void testPublishFailureWithSuspendableSession() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
@@ -1158,7 +1158,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     /**
      * Validate successful subscribe with a suspendable session when device supports suspension.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     public void testSubscribeSuccessWithSuspendableSession() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
@@ -1204,7 +1204,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
      * Validate failure to subscribe with a suspendable session when device doesn't support
      * suspension.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     public void testSubscribeFailureWithSuspendableSession() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
@@ -1471,8 +1471,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         assertTrue(config.isPairingVerificationEnabled());
         assertEquals(PAIRING_BOOTSTRAPPING_OPPORTUNISTIC, config.getBootstrappingMethods());
 
-        if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-                && !ApiLevelUtil.codenameStartsWith("U")) {
+        if (!ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)) {
             return;
         }
 

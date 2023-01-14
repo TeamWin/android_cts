@@ -24,9 +24,7 @@ import android.media.AudioProfile
 import android.media.AudioTrack
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-
-import com.android.compatibility.common.util.NonMainlineTest;
-
+import com.android.compatibility.common.util.NonMainlineTest
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.Before

@@ -18,12 +18,5 @@ package android.credentials.cts;
 
 
 import android.app.Activity;
-import android.content.Context;
-import android.credentials.CredentialManager;
 
-public class TestCredentialActivity extends Activity {
-    public CredentialManager getCredentialManager() {
-        return (CredentialManager) getSystemService(
-                Context.CREDENTIAL_SERVICE);
-    }
-}
+public class TestCredentialActivity extends Activity {}

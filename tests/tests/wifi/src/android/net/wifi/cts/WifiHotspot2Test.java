@@ -24,6 +24,7 @@ import android.net.wifi.hotspot2.OsuProvider;
 import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
+import android.os.Build;
 import android.text.TextUtils;
 
 import androidx.test.filters.SdkSuppress;
@@ -490,9 +491,7 @@ public class WifiHotspot2Test extends WifiJUnit3TestBase {
         assertEquals(TEST_SERVER_URI, osuProvider.getServerUri());
     }
 
-    // TODO(b/160819609): Wait for U SDK finalization before changing
-    // to `@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)`
-    @SdkSuppress(minSdkVersion = 34)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     public void testSetMinimumTlsVersion() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported

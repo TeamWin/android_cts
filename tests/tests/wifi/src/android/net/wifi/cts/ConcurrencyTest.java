@@ -1096,7 +1096,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     }
 
     /** Test setWfdInfo() API. */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     public void testP2pSetWfdInfo() {
         if (!setupWifiP2p()) {
             return;

@@ -79,17 +79,17 @@ import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequireMultiUserSupport;
-import com.android.bedstead.harrier.annotations.RequireMultipleUsersOnMultipleDisplays;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
-import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipleDisplays;
+import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsers;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
+import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
 import com.android.bedstead.harrier.annotations.TestTag;
 import com.android.bedstead.harrier.annotations.UsesAnnotationExecutor;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
@@ -658,19 +658,20 @@ public final class DeviceState extends HarrierRule {
                 continue;
             }
 
-            if (annotation instanceof RequireMultipleUsersOnMultipleDisplays) {
-                RequireMultipleUsersOnMultipleDisplays requireMumdAnnotation =
-                        (RequireMultipleUsersOnMultipleDisplays) annotation;
-                requireMumd(requireMumdAnnotation.reason(),
-                        requireMumdAnnotation.failureMode());
+            if (annotation instanceof RequireVisibleBackgroundUsers) {
+                RequireVisibleBackgroundUsers requireVisibleBgUsersAnnotation =
+                        (RequireVisibleBackgroundUsers) annotation;
+                requireVisibleBackgroundUsersSupported(requireVisibleBgUsersAnnotation.reason(),
+                        requireVisibleBgUsersAnnotation.failureMode());
                 continue;
             }
 
-            if (annotation instanceof RequireNotMultipleUsersOnMultipleDisplays) {
-                RequireNotMultipleUsersOnMultipleDisplays requireNotMumdAnnotation =
-                        (RequireNotMultipleUsersOnMultipleDisplays) annotation;
-                requireNotMumd(requireNotMumdAnnotation.reason(),
-                        requireNotMumdAnnotation.failureMode());
+            if (annotation instanceof RequireNotVisibleBackgroundUsers) {
+                RequireNotVisibleBackgroundUsers requireNotVisibleBgUsersAnnotation =
+                        (RequireNotVisibleBackgroundUsers) annotation;
+                requireVisibleBackgroundUsersNotSupported(
+                        requireNotVisibleBgUsersAnnotation.reason(),
+                        requireNotVisibleBgUsersAnnotation.failureMode());
                 continue;
             }
 
@@ -3009,20 +3010,20 @@ public final class DeviceState extends HarrierRule {
                 failureMode);
     }
 
-    private void requireMumd(String reason, FailureMode failureMode) {
+    private void requireVisibleBackgroundUsersSupported(String reason, FailureMode failureMode) {
         if (!TestApis.context().instrumentedContext()
                 .getSystemService(UserManager.class).isVisibleBackgroundUsersSupported()) {
-            String message = "Device supports does not support multiple users on multiple display, "
-                    + "but test requires it. Reason: " + reason;
+            String message = "Device does not support visible background users, but test requires "
+                    + "it. Reason: " + reason;
             failOrSkip(message, failureMode);
         }
     }
 
-    private void requireNotMumd(String reason, FailureMode failureMode) {
+    private void requireVisibleBackgroundUsersNotSupported(String reason, FailureMode failureMode) {
         if (TestApis.context().instrumentedContext()
                 .getSystemService(UserManager.class).isVisibleBackgroundUsersSupported()) {
-            String message = "Device supports multiple users on multiple display, but test requires"
-                    + " that it doesn't. Reason: " + reason;
+            String message = "Device supports visible background users, but test requires that it "
+                    + "doesn't. Reason: " + reason;
             failOrSkip(message, failureMode);
         }
     }

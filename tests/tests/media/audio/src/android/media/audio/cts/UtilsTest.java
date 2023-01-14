@@ -23,15 +23,17 @@ import static org.junit.Assert.assertTrue;
 import android.media.Utils;
 import android.os.Handler;
 import android.os.HandlerThread;
+
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.NonMainlineTest;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.concurrent.Executor;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 @NonMainlineTest
 @RunWith(AndroidJUnit4.class)
