@@ -620,6 +620,15 @@ public class UiBot {
     }
 
     /**
+     * Asserts the save snackbar is showing with a custom service name and returns it.
+     */
+    public UiObject2 assertSaveShowingWithCustomServiceName(int type, String customServiceName)
+            throws Exception {
+        return assertSaveOrUpdateShowing(/* update= */ false, SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL,
+                SaveInfo.POSITIVE_BUTTON_STYLE_SAVE, null, SAVE_TIMEOUT, customServiceName, type);
+    }
+
+    /**
      * Asserts the save snackbar is showing and returns it.
      */
     public UiObject2 assertSaveShowing(Timeout timeout, int type) throws Exception {
@@ -725,6 +734,13 @@ public class UiBot {
     public UiObject2 assertSaveOrUpdateShowing(boolean update, int negativeButtonStyle,
             int positiveButtonStyle, String description, Timeout timeout, int... types)
             throws Exception {
+        return assertSaveOrUpdateShowing(update, negativeButtonStyle, positiveButtonStyle,
+            description, timeout, InstrumentedAutoFillService.getServiceLabel(), types);
+    }
+
+    public UiObject2 assertSaveOrUpdateShowing(boolean update, int negativeButtonStyle,
+            int positiveButtonStyle, String description, Timeout timeout, String serviceLabel,
+            int... types) throws Exception {
 
         final UiObject2 snackbar = waitForObject(SAVE_UI_SELECTOR, timeout);
 
@@ -750,7 +766,6 @@ public class UiBot {
             titleWithTypeId = RESOURCE_STRING_SAVE_TITLE_WITH_TYPE;
         }
 
-        final String serviceLabel = InstrumentedAutoFillService.getServiceLabel();
         switch (types.length) {
             case 1:
                 final String expectedTitle = (types[0] == SAVE_DATA_TYPE_GENERIC)

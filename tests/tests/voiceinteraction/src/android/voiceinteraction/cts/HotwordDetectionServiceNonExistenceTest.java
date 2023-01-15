@@ -66,7 +66,7 @@ public final class HotwordDetectionServiceNonExistenceTest {
         service.createAlwaysOnHotwordDetector();
 
         // Wait the result and verify expected result
-        service.waitHotwordDetectionServiceInitializedCalledOrException();
+        service.waitSandboxedDetectionServiceInitializedCalledOrException();
         // Verify IllegalStateException throws
         assertThat(service.isCreateDetectorIllegalStateExceptionThrow()).isTrue();
     }

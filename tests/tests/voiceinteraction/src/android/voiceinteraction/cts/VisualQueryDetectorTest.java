@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,22 @@
 
 package android.voiceinteraction.cts;
 
-import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
-import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-
 import static com.google.common.truth.Truth.assertThat;
+
 
 import android.content.Context;
 import android.os.SystemClock;
-import android.platform.test.annotations.AppModeFull;
-import android.service.voice.AlwaysOnHotwordDetector;
-import android.service.voice.HotwordDetectionService;
+import android.service.voice.SandboxedDetectionServiceBase;
+import android.service.voice.VisualQueryDetector;
 import android.util.Log;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
 import org.junit.Before;
@@ -47,23 +41,20 @@ import org.junit.runner.RunWith;
 
 import java.util.Objects;
 
+
 /**
- * Tests for {@link AlwaysOnHotwordDetector} APIs.
+ * Tests for {@link VisualQueryDetector} APIs.
  */
 @RunWith(AndroidJUnit4.class)
-@AppModeFull(reason = "No real use case for instant mode hotword detector")
-public class AlwaysOnHotwordDetectorTest {
+public class VisualQueryDetectorTest {
 
-    private static final String TAG = "AlwaysOnHotwordDetectorTest";
+    private static final String TAG = "VisualQueryDetectorTest";
     // The VoiceInteractionService used by this test
     private static final String SERVICE_COMPONENT =
             "android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService";
     protected final Context mContext = getInstrumentation().getTargetContext();
 
     private CtsBasicVoiceInteractionService mService;
-
-    @Rule
-    public RequiredFeatureRule REQUIRES_MIC_RULE = new RequiredFeatureRule(FEATURE_MICROPHONE);
 
     @Rule
     public VoiceInteractionServiceConnectedRule mConnectedRule =
@@ -91,43 +82,18 @@ public class AlwaysOnHotwordDetectorTest {
     }
 
     @Test
-    public void testAlwaysOnHotwordDetector_startRecognitionWithData() throws Exception {
+    public void testVisualQueryDetector_initializationSuccess() throws Exception {
         // Create alwaysOnHotwordDetector and wait onHotwordDetectionServiceInitialized() callback
-        mService.createAlwaysOnHotwordDetector();
+        mService.createVisualQueryDetector();
 
         // verify callback result
         mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+        // The VisualQueryDetector should be created correctly
+        VisualQueryDetector visualQueryDetector = mService.getVisualQueryDetector();
+        Objects.requireNonNull(visualQueryDetector);
+
         assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
-                HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
-
-        // The AlwaysOnHotwordDetector should be created correctly
-        AlwaysOnHotwordDetector alwaysOnHotwordDetector = mService.getAlwaysOnHotwordDetector();
-        Objects.requireNonNull(alwaysOnHotwordDetector);
-
-        // override availability and wait onAvailabilityChanged() callback called
-        mService.initAvailabilityChangeLatch();
-        alwaysOnHotwordDetector.overrideAvailability(
-                AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED);
-
-        // verify callback result
-        mService.waitAvailabilityChangedCalled();
-        assertThat(mService.getHotwordDetectionServiceAvailabilityResult()).isEqualTo(
-                AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED);
-
-        // Start recognition
-        runWithShellPermissionIdentity(() -> {
-            boolean startRecognitionThrowException = true;
-            try {
-                alwaysOnHotwordDetector.startRecognition(0,
-                        new byte[]{1, 2, 3, 4, 5});
-                startRecognitionThrowException = false;
-            } catch (UnsupportedOperationException | IllegalStateException e) {
-                startRecognitionThrowException = true;
-            } finally {
-                alwaysOnHotwordDetector.destroy();
-            }
-            // verify recognition result
-            assertThat(startRecognitionThrowException).isFalse();
-        }, MANAGE_HOTWORD_DETECTION);
+                SandboxedDetectionServiceBase.INITIALIZATION_STATUS_SUCCESS);
     }
 }

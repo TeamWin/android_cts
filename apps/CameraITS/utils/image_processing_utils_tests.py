@@ -14,12 +14,13 @@
 """Tests for image_processing_utils."""
 
 
-import cv2
 import math
 import numpy
 import os
 import random
 import unittest
+
+import cv2
 
 import image_processing_utils
 

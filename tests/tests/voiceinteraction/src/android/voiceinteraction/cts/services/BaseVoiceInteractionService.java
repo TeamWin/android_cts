@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
+import android.service.voice.VisualQueryDetector;
 import android.service.voice.VoiceInteractionService;
 import android.util.Log;
 import android.voiceinteraction.cts.testcore.Helper;
@@ -30,6 +31,7 @@ import androidx.annotation.NonNull;
 
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,6 +57,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     //  keep the current name now.
     public CountDownLatch mServiceTriggerLatch;
 
+    VisualQueryDetector mVisualQueryDetector = null;
     HotwordDetector mSoftwareHotwordDetector = null;
     // The AlwaysOnHotwordDetector created by createAlwaysOnHotwordDetector() API
     AlwaysOnHotwordDetector mAlwaysOnHotwordDetector = null;
@@ -62,7 +65,6 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     private boolean mIsCreateDetectorIllegalStateExceptionThrow;
     // Throws SecurityException when calling createAlwaysOnHotwordDetector() API
     private boolean mIsCreateDetectorSecurityExceptionThrow;
-
     private Bundle mPrepareToShowSessionArgs = new Bundle();
     private int mPrepareToShowSessionFlags = -1;
 
@@ -246,18 +248,25 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     }
 
     /**
-     * Wait for onHotwordDetectionServiceInitialized() be called or exception throws when creating
-     * AlwaysOnHotwordDetector.
+     * Returns the Service's VisualQueryDetector.
      */
-    public void waitHotwordDetectionServiceInitializedCalledOrException()
+    public VisualQueryDetector getVisualQueryDetector() {
+        return mVisualQueryDetector;
+    }
+
+    /**
+     * Wait for onSandboxedDetectionServiceInitialized() be called or exception throws when creating
+     * AlwaysOnHotwordDetector or VisualQueryDetector.
+     */
+    public void waitSandboxedDetectionServiceInitializedCalledOrException()
             throws InterruptedException {
-        Log.d(mTag, "waitHotwordDetectionServiceInitializedCalledOrException(), latch="
+        Log.d(mTag, "waitSandboxedDetectionServiceInitializedCalledOrException(), latch="
                 + mServiceTriggerLatch);
         if (mServiceTriggerLatch == null
                 || !mServiceTriggerLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
-            Log.w(mTag, "waitAndGetHotwordServiceInitializedResult()");
+            Log.w(mTag, "waitAndGetSandboxedServiceInitializedResult()");
             mServiceTriggerLatch = null;
-            throw new AssertionError("HotwordService initialized fail.");
+            throw new AssertionError("Sandboxed detection service initialized fail.");
         }
         mServiceTriggerLatch = null;
     }
@@ -286,7 +295,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     /**
      * Return the result for onHotwordDetectionServiceInitialized().
      */
-    public int getHotwordDetectionServiceInitializedResult() {
+    public int getSandboxedDetectionServiceInitializedResult() {
         return mInitializedStatus;
     }
 
@@ -327,6 +336,27 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
             }
             if (e instanceof IllegalStateException) {
                 mIsCreateDetectorIllegalStateExceptionThrow = true;
+            }
+        }
+        return null;
+    }
+
+    VisualQueryDetector callCreateVisualQueryDetector(VisualQueryDetector.Callback callback) {
+        Log.i(mTag, "callCreateVisualQueryDetector()");
+        try {
+            resetVales();
+            return createVisualQueryDetector(Helper.createFakePersistableBundleData(),
+                    Helper.createFakeSharedMemoryData(), Executors.newSingleThreadExecutor(),
+                    callback);
+        } catch (IllegalStateException | SecurityException e) {
+            Log.w(mTag, "callCreateVisualQueryDetector() exception: " + e);
+            if (mServiceTriggerLatch != null) {
+                mServiceTriggerLatch.countDown();
+            }
+            if (e instanceof IllegalStateException) {
+                mIsCreateDetectorIllegalStateExceptionThrow = true;
+            } else {
+                mIsCreateDetectorSecurityExceptionThrow = true;
             }
         }
         return null;

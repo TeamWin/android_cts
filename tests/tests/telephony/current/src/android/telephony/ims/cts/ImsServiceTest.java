@@ -956,7 +956,8 @@ public class ImsServiceTest {
         Assert.assertArrayEquals(pduWithStatusReport, sServiceConnector.getCarrierService()
                 .getMmTelFeature().getSmsImplementation().sentPdu);
     }
-
+    @Ignore("The onMemoryAvailable and onMemoryAvailableResult Apis were moved back to @hide for"
+            + " now, so do not want to completely remove this test.")
     @Test
     public void testMmTelSendMemoryAvailabilityNotification() throws Exception {
         if (!ImsUtils.shouldRunSmsImsTests(sTestSub)) {
@@ -964,14 +965,15 @@ public class ImsServiceTest {
         }
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        Resources mResource = Resources.getSystem();
+        boolean sendSmmaViaIms = mResource.getBoolean(
+                com.android.internal.R.bool.config_smma_notification_supported_over_ims);
+        if (!sendSmmaViaIms) {
+            return;
+        }
         try {
             setupImsServiceForSms();
-            Resources mResource = Resources.getSystem();
-            boolean sendSmmaViaIms = mResource.getBoolean(
-                    com.android.internal.R.bool.config_smma_notification_supported_over_ims);
-            if (!sendSmmaViaIms) {
-                return;
-            }
+
             SmsManager.getSmsManagerForSubscriptionId(sTestSub)
                         .setStorageMonitorMemoryStatusOverride(false);
 

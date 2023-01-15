@@ -14,10 +14,11 @@
 """Tests for opencv_processing_utils."""
 
 
-import cv2
 import math
 import os
 import unittest
+
+import cv2
 
 import opencv_processing_utils
 

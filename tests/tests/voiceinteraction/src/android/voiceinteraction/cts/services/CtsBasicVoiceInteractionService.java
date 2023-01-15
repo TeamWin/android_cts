@@ -28,6 +28,8 @@ import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
+import android.service.voice.SandboxedDetectionServiceBase;
+import android.service.voice.VisualQueryDetector;
 import android.service.voice.VoiceInteractionService;
 import android.util.Log;
 
@@ -210,6 +212,52 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             };
             mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector(callback);
         }, MANAGE_HOTWORD_DETECTION));
+    }
+
+    public void createVisualQueryDetector() {
+        mServiceTriggerLatch = new CountDownLatch(1);
+        mHandler.post(() -> runWithShellPermissionIdentity(() -> {
+            VisualQueryDetector.Callback callback = new VisualQueryDetector.Callback() {
+                @Override
+                public void onQueryDetected(@NonNull String transcribedText) {
+                    Log.i(TAG, "onQueryDetected");
+                    //TOOD: Add latches and assign transcribedText for integration test
+                }
+
+                @Override
+                public void onQueryRejected() {
+                    Log.i(TAG, "onQueryRejected");
+                }
+
+                @Override
+                public void onQueryFinished() {
+                    Log.i(TAG, "onQueryFinished");
+                }
+
+                @Override
+                public void onVisualQueryDetectionServiceInitialized(int status) {
+                    Log.i(TAG, "onVisualQueryDetectionServiceInitialized status = " + status);
+                    if (status != SandboxedDetectionServiceBase.INITIALIZATION_STATUS_SUCCESS) {
+                        return;
+                    }
+                    mInitializedStatus = status;
+                    if (mServiceTriggerLatch != null) {
+                        mServiceTriggerLatch.countDown();
+                    }
+                }
+
+                @Override
+                public void onVisualQueryDetectionServiceRestarted() {
+                    Log.i(TAG, "onVisualQueryDetectionServiceRestarted");
+                }
+
+                @Override
+                public void onError() {
+                    Log.i(TAG, "onError");
+                }
+            };
+            mVisualQueryDetector = callCreateVisualQueryDetector(callback);
+        }));
     }
 
     /**

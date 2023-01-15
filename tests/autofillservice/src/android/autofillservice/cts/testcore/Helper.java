@@ -122,6 +122,8 @@ public final class Helper {
     public static final String ID_STATIC_TEXT = "static_text";
     public static final String ID_EMPTY = "empty";
     public static final String ID_CANCEL_FILL = "cancel_fill";
+    public static final String ID_IMEACTION_TEXT = "ime_option_text";
+    public static final String ID_IMEACTION_LABEL = "ime_option_text_label";
 
     public static final String NULL_DATASET_ID = null;
 

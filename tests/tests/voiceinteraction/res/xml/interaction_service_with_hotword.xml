@@ -18,6 +18,7 @@
     android:sessionService="android.voiceinteraction.service.MainInteractionSessionService"
     android:recognitionService="android.voiceinteraction.cts.services.MainRecognitionService"
     android:hotwordDetectionService="android.voiceinteraction.service.MainHotwordDetectionService"
+    android:visualQueryDetectionService="android.voiceinteraction.cts.services.NoOpVisualQueryDetectionService"
     android:settingsActivity=""
     android:supportsAssist="false"
     android:supportsLocalInteraction="true" />

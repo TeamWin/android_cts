@@ -117,6 +117,14 @@
             android:isolatedProcess="true"
             android:exported="true">
         </service>
+
+        <!-- VisualQueryDetectionService -->
+        <service
+            android:name=".services.NoOpVisualQueryDetectionService"
+            android:isolatedProcess="true"
+            android:exported="true">
+        </service>
+
         <!-- AttentionService, in CtsAttentionServiceDevice apk  -->
         <service android:name="android.attentionservice.cts.CtsTestAttentionService"
                  android:label="CtsTestAttentionService"

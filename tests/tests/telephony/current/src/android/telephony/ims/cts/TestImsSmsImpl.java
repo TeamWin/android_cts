@@ -211,6 +211,8 @@ public class TestImsSmsImpl extends ImsSmsImplBase {
         try {
             complete = mOnMemoryAvailableLatch.await(ImsUtils.TEST_TIMEOUT_MS,
                                                      TimeUnit.MILLISECONDS);
+            onMemoryAvailableResult(mToken, ImsSmsImplBase.SEND_STATUS_OK,
+                    SmsManager.RESULT_ERROR_NONE);
         } catch (InterruptedException e) {
             // complete = false
         }

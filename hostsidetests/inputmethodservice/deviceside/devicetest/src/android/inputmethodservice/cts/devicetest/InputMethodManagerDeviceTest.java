@@ -77,6 +77,60 @@ public class InputMethodManagerDeviceTest {
     }
 
     /**
+     * Make sure {@link InputMethodManager#getCurrentInputMethodInfo()} contains
+     * {@link Ime1Constants#IME_ID}.
+     */
+    @Test
+    public void testIme1InCurrentInputMethodInfo() throws Throwable {
+        pollingCheck(() -> TextUtils.equals(
+                mImm.getCurrentInputMethodInfo().getId(), Ime1Constants.IME_ID),
+                TIMEOUT, "Ime1 must be the current IME. Found "
+                        + mImm.getCurrentInputMethodInfo().getId());
+    }
+
+    /**
+     * Make sure {@link InputMethodManager#getCurrentInputMethodInfo()} does not contain
+     * {@link Ime1Constants#IME_ID}.
+     */
+    @Test
+    public void testIme1NotCurrentInputMethodInfo() throws Throwable {
+        pollingCheck(() -> {
+            final InputMethodInfo info  = mImm.getCurrentInputMethodInfo();
+            if (info == null) {
+                return true;
+            }
+            return !TextUtils.equals(info.getId(), Ime1Constants.IME_ID);
+        }, TIMEOUT, "Ime1 must not be the current IME.");
+    }
+
+    /**
+     * Make sure {@link InputMethodManager#getCurrentInputMethodInfo()} contains
+     * {@link Ime2Constants#IME_ID}.
+     */
+    @Test
+    public void testIme2InCurrentInputMethodInfo() throws Throwable {
+        pollingCheck(() -> TextUtils.equals(
+                        mImm.getCurrentInputMethodInfo().getId(), Ime2Constants.IME_ID),
+                TIMEOUT, "Ime2 must be the current IME. Found "
+                        + mImm.getCurrentInputMethodInfo().getId());
+    }
+
+    /**
+     * Make sure {@link InputMethodManager#getCurrentInputMethodInfo()} does not contain
+     * {@link Ime2Constants#IME_ID}.
+     */
+    @Test
+    public void testIme2NotCurrentInputMethodInfo() throws Throwable {
+        pollingCheck(() -> {
+            final InputMethodInfo info  = mImm.getCurrentInputMethodInfo();
+            if (info == null) {
+                return true;
+            }
+            return !TextUtils.equals(info.getId(), Ime2Constants.IME_ID);
+        }, TIMEOUT, "Ime2 must not be the current IME.");
+    }
+
+    /**
      * Make sure {@link InputMethodManager#getInputMethodList()} does not contain
      * {@link Ime1Constants#IME_ID}.
      */

@@ -352,10 +352,10 @@ public final class HotwordDetectionServiceProximityTest {
         // Create SoftwareHotwordDetector
         mService.createSoftwareHotwordDetector();
 
-        mService.waitHotwordDetectionServiceInitializedCalledOrException();
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
 
         // verify callback result
-        assertThat(mService.getHotwordDetectionServiceInitializedResult()).isEqualTo(
+        assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
                 HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
         HotwordDetector softwareHotwordDetector = mService.getSoftwareHotwordDetector();
         Objects.requireNonNull(softwareHotwordDetector);
@@ -370,10 +370,10 @@ public final class HotwordDetectionServiceProximityTest {
         // Create AlwaysOnHotwordDetector and wait ready.
         mService.createAlwaysOnHotwordDetector();
 
-        mService.waitHotwordDetectionServiceInitializedCalledOrException();
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
 
         // verify callback result
-        assertThat(mService.getHotwordDetectionServiceInitializedResult()).isEqualTo(
+        assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
                 HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
         AlwaysOnHotwordDetector alwaysOnHotwordDetector = mService.getAlwaysOnHotwordDetector();
         Objects.requireNonNull(alwaysOnHotwordDetector);

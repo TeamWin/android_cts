@@ -30,7 +30,6 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
-import android.media.cts.Preconditions;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -39,6 +38,8 @@ import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
+
+import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.After;
 import org.junit.Assert;

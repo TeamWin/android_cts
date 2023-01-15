@@ -43,7 +43,9 @@ java_defaults {
     ],
     srcs: [
         "src/**/*.java",
-        ":CtsMediaBetterTogetherHostSideTestCommon",
+    ],
+    libs: [
+        "CtsMediaHostTestCommon",
     ],
     static_libs: [
         "androidx.test.rules",

@@ -162,10 +162,10 @@ public class HotwordDetectionServiceBasicTest {
         // Create alwaysOnHotwordDetector and wait result
         mService.createAlwaysOnHotwordDetector();
 
-        mService.waitHotwordDetectionServiceInitializedCalledOrException();
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
 
         // verify callback result
-        assertThat(mService.getHotwordDetectionServiceInitializedResult()).isEqualTo(
+        assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
                 HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
 
         // The AlwaysOnHotwordDetector should be created correctly
@@ -182,7 +182,7 @@ public class HotwordDetectionServiceBasicTest {
         mService.createAlwaysOnHotwordDetectorWithoutManageHotwordDetectionPermission();
 
         // Wait the result and verify expected result
-        mService.waitHotwordDetectionServiceInitializedCalledOrException();
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
 
         // Verify IllegalStateException throws
         assertThat(mService.isCreateDetectorSecurityExceptionThrow()).isTrue();
@@ -195,7 +195,7 @@ public class HotwordDetectionServiceBasicTest {
         mService.createAlwaysOnHotwordDetectorHoldBindHotwordDetectionPermission();
 
         // Wait the result and verify expected result
-        mService.waitHotwordDetectionServiceInitializedCalledOrException();
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
 
         // Verify IllegalStateException throws
         assertThat(mService.isCreateDetectorSecurityExceptionThrow()).isTrue();
@@ -213,7 +213,7 @@ public class HotwordDetectionServiceBasicTest {
         // Create second AlwaysOnHotwordDetector, it will get the IllegalStateException due to
         // the previous AlwaysOnHotwordDetector is not destroy.
         mService.createAlwaysOnHotwordDetector();
-        mService.waitHotwordDetectionServiceInitializedCalledOrException();
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
 
         // Verify IllegalStateException throws
         assertThat(mService.isCreateDetectorIllegalStateExceptionThrow()).isTrue();
@@ -233,7 +233,7 @@ public class HotwordDetectionServiceBasicTest {
         // Create second SoftwareHotwordDetector, it will get the IllegalStateException due to
         // the previous SoftwareHotwordDetector is not destroy.
         mService.createSoftwareHotwordDetector();
-        mService.waitHotwordDetectionServiceInitializedCalledOrException();
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
 
         // Verify IllegalStateException throws
         assertThat(mService.isCreateDetectorIllegalStateExceptionThrow()).isTrue();
@@ -633,10 +633,10 @@ public class HotwordDetectionServiceBasicTest {
         // Create SoftwareHotwordDetector
         mService.createSoftwareHotwordDetector();
 
-        mService.waitHotwordDetectionServiceInitializedCalledOrException();
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
 
         // verify callback result
-        assertThat(mService.getHotwordDetectionServiceInitializedResult()).isEqualTo(
+        assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
                 HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
         HotwordDetector softwareHotwordDetector = mService.getSoftwareHotwordDetector();
         Objects.requireNonNull(softwareHotwordDetector);
@@ -651,10 +651,10 @@ public class HotwordDetectionServiceBasicTest {
         // Create AlwaysOnHotwordDetector and wait ready.
         mService.createAlwaysOnHotwordDetector();
 
-        mService.waitHotwordDetectionServiceInitializedCalledOrException();
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
 
         // verify callback result
-        assertThat(mService.getHotwordDetectionServiceInitializedResult()).isEqualTo(
+        assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
                 HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
         AlwaysOnHotwordDetector alwaysOnHotwordDetector = mService.getAlwaysOnHotwordDetector();
         Objects.requireNonNull(alwaysOnHotwordDetector);

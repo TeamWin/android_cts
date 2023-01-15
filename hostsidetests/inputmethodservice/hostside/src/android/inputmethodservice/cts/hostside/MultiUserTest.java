@@ -170,6 +170,13 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         assertIme1ExistsInApiResult(secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
         assertIme1ImplicitlyEnabledSubtypeExists(secondaryUserId);
+        // check getCurrentInputMethodInfoAsUser(userId)
+        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID, secondaryUserId));
+        shell(ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID, secondaryUserId));
+        assertIme1InCurrentInputMethodInfo(secondaryUserId);
+        assertIme1NotCurrentInputMethodInfo(primaryUserId);
+        assertIme2NotCurrentInputMethodInfo(primaryUserId);
+        assertIme2NotCurrentInputMethodInfo(secondaryUserId);
 
         switchUser(secondaryUserId);
 
@@ -177,6 +184,11 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         assertIme1ExistsInApiResult(secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
         assertIme1ImplicitlyEnabledSubtypeExists(secondaryUserId);
+        // check getCurrentInputMethodInfoAsUser(userId)
+        assertIme1InCurrentInputMethodInfo(secondaryUserId);
+        assertIme1NotCurrentInputMethodInfo(primaryUserId);
+        assertIme2NotCurrentInputMethodInfo(primaryUserId);
+        assertIme2NotCurrentInputMethodInfo(secondaryUserId);
 
         switchUser(primaryUserId);
 
@@ -190,6 +202,11 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         assertIme1ExistsInApiResult(secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
         assertIme1ImplicitlyEnabledSubtypeExists(secondaryUserId);
+        // check getCurrentInputMethodInfoAsUser(userId)
+        assertIme1InCurrentInputMethodInfo(secondaryUserId);
+        assertIme1NotCurrentInputMethodInfo(primaryUserId);
+        assertIme2NotCurrentInputMethodInfo(primaryUserId);
+        assertIme2NotCurrentInputMethodInfo(secondaryUserId);
     }
 
     /**
@@ -251,6 +268,9 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         assertIme2NotExistInApiResult(primaryUserId);
         assertIme2NotEnabledInApiResult(primaryUserId);
         assertIme1Selected(primaryUserId);
+        // check getCurrentInputMethodInfoAsUser(userId)
+        assertIme1InCurrentInputMethodInfo(primaryUserId);
+        assertIme2NotCurrentInputMethodInfo(primaryUserId);
 
         // Profile User: IME1:N/A, IME2:enabled
         assertIme1NotExistInApiResult(profileUserId);
@@ -258,6 +278,9 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         assertIme2ExistsInApiResult(profileUserId);
         assertIme2EnabledInApiResult(profileUserId);
         assertIme2Selected(profileUserId);
+        // check getCurrentInputMethodInfoAsUser(userId)
+        assertIme1NotCurrentInputMethodInfo(profileUserId);
+        assertIme2InCurrentInputMethodInfo(profileUserId);
 
         // Make sure that IME switches depending on the target user.
         runTestAsUser(DeviceTestConstants.TEST_CONNECTING_TO_THE_SAME_USER_IME, primaryUserId);
@@ -271,6 +294,9 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         assertIme1NotExistInApiResult(profileUserId);
         assertIme1ImplicitlyEnabledSubtypeExists(primaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
+        // check getCurrentInputMethodInfoAsUser(userId)
+        assertIme1InCurrentInputMethodInfo(primaryUserId);
+        assertIme1NotCurrentInputMethodInfo(profileUserId);
     }
 
     private String shell(String command) {
@@ -368,6 +394,22 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         runTestAsUser(DeviceTestConstants.TEST_WAIT_15SEC, userId);
     }
 
+
+    private void assertIme1InCurrentInputMethodInfo(int userId) throws Exception {
+        runTestAsUser(DeviceTestConstants.TEST_IME1_IN_CURRENT_INPUT_METHOD_INFO, userId);
+    }
+
+    private void assertIme1NotCurrentInputMethodInfo(int userId) throws Exception {
+        runTestAsUser(DeviceTestConstants.TEST_IME1_NOT_CURRENT_INPUT_METHOD_INFO, userId);
+    }
+
+    private void assertIme2InCurrentInputMethodInfo(int userId) throws Exception {
+        runTestAsUser(DeviceTestConstants.TEST_IME2_IN_CURRENT_INPUT_METHOD_INFO, userId);
+    }
+
+    private void assertIme2NotCurrentInputMethodInfo(int userId) throws Exception {
+        runTestAsUser(DeviceTestConstants.TEST_IME2_NOT_CURRENT_INPUT_METHOD_INFO, userId);
+    }
 
     private void assertIme1ExistsInApiResult(int userId) throws Exception  {
         runTestAsUser(DeviceTestConstants.TEST_IME1_IN_INPUT_METHOD_LIST, userId);

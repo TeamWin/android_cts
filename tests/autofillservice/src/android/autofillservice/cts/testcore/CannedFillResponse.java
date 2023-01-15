@@ -102,6 +102,10 @@ public final class CannedFillResponse {
     private final int[] mCancelIds;
     private final String[] mDialogTriggerIds;
     private final RemoteViews mDialogHeaderPresentation;
+    private final int mIconResourceId;
+    private final int mServiceDisplayNameResourceId;
+    private final boolean mShowFillDialogIcon;
+    private final boolean mShowSaveDialogIcon;
 
 
     private CannedFillResponse(Builder builder) {
@@ -137,6 +141,10 @@ public final class CannedFillResponse {
         mCancelIds = builder.mCancelIds;
         mDialogTriggerIds = builder.mDialogTriggerIds;
         mDialogHeaderPresentation = builder.mDialogHeaderPresentation;
+        mIconResourceId = builder.mIconResourceId;
+        mServiceDisplayNameResourceId = builder.mServiceDisplayNameResourceId;
+        mShowFillDialogIcon = builder.mShowFillDialogIcon;
+        mShowSaveDialogIcon = builder.mShowSaveDialogIcon;
     }
 
     /**
@@ -297,6 +305,11 @@ public final class CannedFillResponse {
             builder.setDialogHeader(mDialogHeaderPresentation);
         }
 
+        builder.setIconResourceId(mIconResourceId);
+        builder.setServiceDisplayNameResourceId(mServiceDisplayNameResourceId);
+        builder.setShowFillDialogIcon(mShowFillDialogIcon);
+        builder.setShowSaveDialogIcon(mShowSaveDialogIcon);
+
         final FillResponse response = builder.build();
         Log.v(TAG, "Response: " + response);
         return response;
@@ -373,6 +386,10 @@ public final class CannedFillResponse {
         private int[] mCancelIds;
         private String[] mDialogTriggerIds;
         private RemoteViews mDialogHeaderPresentation;
+        private int mIconResourceId;
+        private int mServiceDisplayNameResourceId;
+        private boolean mShowFillDialogIcon = true;
+        private boolean mShowSaveDialogIcon = true;
 
 
         public Builder(ResponseType type) {
@@ -386,6 +403,26 @@ public final class CannedFillResponse {
         public Builder addDataset(CannedDataset dataset) {
             assertWithMessage("already set failure").that(mFailureMessage).isNull();
             mDatasets.add(dataset);
+            return this;
+        }
+
+        public Builder setIconResourceId(int id) {
+            mIconResourceId = id;
+            return this;
+        }
+
+        public Builder setServiceDisplayNameResourceId(int id) {
+            mServiceDisplayNameResourceId = id;
+            return this;
+        }
+
+        public Builder setShowFillDialogIcon(boolean show) {
+            mShowFillDialogIcon = show;
+            return this;
+        }
+
+        public Builder setShowSaveDialogIcon(boolean show) {
+            mShowSaveDialogIcon = show;
             return this;
         }
 

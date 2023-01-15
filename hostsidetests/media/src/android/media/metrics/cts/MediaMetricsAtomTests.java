@@ -27,20 +27,28 @@ import android.cts.statsdatom.lib.ReportUtils;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.metrics.proto.MetricMeasurement;
 import com.android.tradefed.result.CollectingTestListener;
 import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
-import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 
 import com.google.common.truth.Correspondence;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,7 +61,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildReceiver {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
 
     private static final String TEST_RUNNER = "androidx.test.runner.AndroidJUnitRunner";
     private static final String TAG = "MediaMetricsAtomTests";
@@ -63,31 +72,34 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
     private static final String FEATURE_MICROPHONE = "android.hardware.microphone";
     private static final String FEATURE_MIDI = "android.software.midi";
     private static final int MAX_BUFFER_CAPACITY = 30 * 1024 * 1024; // 30M
-    private IBuildInfo mCtsBuild;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        assertThat(mCtsBuild).isNotNull();
-        DeviceUtils.installTestApp(getDevice(), TEST_APK, TEST_PKG, mCtsBuild);
+    @BeforeClassWithInfo
+    public static void installApp(TestInformation testInfo)
+            throws DeviceNotAvailableException, FileNotFoundException {
+        DeviceUtils.installTestApp(testInfo.getDevice(), TEST_APK, TEST_PKG,
+                testInfo.getBuildInfo());
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        assertThat(getBuild()).isNotNull();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
-        DeviceUtils.uninstallTestApp(getDevice(), TEST_PKG);
-        super.tearDown();
     }
 
-    @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = buildInfo;
+    @AfterClassWithInfo
+    public static void uninstallApp(TestInformation testInfo) throws Exception {
+        DeviceUtils.uninstallTestApp(testInfo.getDevice(), TEST_PKG);
     }
 
+    @Test
     public void testPlaybackStateEvent_default() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_STATE_CHANGED_FIELD_NUMBER);
@@ -106,6 +118,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getTimeSincePlaybackCreatedMillis()).isEqualTo(-1L);
     }
 
+    @Test
     public void testPlaybackStateEvent() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_STATE_CHANGED_FIELD_NUMBER);
@@ -125,6 +138,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
     }
 
     // same as testPlaybackStateEvent, but we use the BundleSession transport.
+    @Test
     public void testBundleSessionPlaybackStateEvent() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_STATE_CHANGED_FIELD_NUMBER);
@@ -143,7 +157,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getTimeSincePlaybackCreatedMillis()).isEqualTo(1763L);
     }
 
-
+    @Test
     public void testPlaybackErrorEvent_default() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_ERROR_REPORTED_FIELD_NUMBER);
@@ -167,6 +181,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
                         + ".testPlaybackErrorEvent")).isTrue();
     }
 
+    @Test
     public void testPlaybackErrorEvent() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_ERROR_REPORTED_FIELD_NUMBER);
@@ -190,6 +205,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
                         + ".testPlaybackErrorEvent")).isTrue();
     }
 
+    @Test
     public void testTrackChangeEvent_default() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_TRACK_CHANGED_FIELD_NUMBER);
@@ -219,6 +235,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getChannelCount()).isEqualTo(-1);
     }
 
+    @Test
     public void testTrackChangeEvent_text() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_TRACK_CHANGED_FIELD_NUMBER);
@@ -246,6 +263,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getLanguageRegion()).isEqualTo("US");
     }
 
+    @Test
     public void testTrackChangeEvent_audio() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_TRACK_CHANGED_FIELD_NUMBER);
@@ -275,6 +293,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getChannelCount()).isEqualTo(3);
     }
 
+    @Test
     public void testTrackChangeEvent_video() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_TRACK_CHANGED_FIELD_NUMBER);
@@ -305,6 +324,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getVideoFrameRate()).isEqualTo(60);
     }
 
+    @Test
     public void testNetworkEvent_default() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_NETWORK_INFO_CHANGED_FIELD_NUMBER);
@@ -324,6 +344,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getType().toString()).isEqualTo("NETWORK_TYPE_UNKNOWN");
     }
 
+    @Test
     public void testNetworkEvent() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_NETWORK_INFO_CHANGED_FIELD_NUMBER);
@@ -343,6 +364,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getType().toString()).isEqualTo("NETWORK_TYPE_WIFI");
     }
 
+    @Test
     public void testPlaybackMetrics_default() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIAMETRICS_PLAYBACK_REPORTED_FIELD_NUMBER);
@@ -378,6 +400,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getDrmSessionId().length()).isEqualTo(0);
     }
 
+    @Test
     public void testPlaybackMetrics() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIAMETRICS_PLAYBACK_REPORTED_FIELD_NUMBER);
@@ -415,6 +438,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getDrmSessionId()).isNotEqualTo(null);
     }
 
+    @Test
     public void testSessionId() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIAMETRICS_PLAYBACK_REPORTED_FIELD_NUMBER);
@@ -427,6 +451,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(data).isEmpty();
     }
 
+    @Test
     public void testRecordingSession() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIAMETRICS_PLAYBACK_REPORTED_FIELD_NUMBER);
@@ -439,6 +464,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(data).isEmpty();
     }
 
+    @Test
     public void testEditingSession() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIAMETRICS_PLAYBACK_REPORTED_FIELD_NUMBER);
@@ -451,6 +477,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(data).isEmpty();
     }
 
+    @Test
     public void testTranscodingSession() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIAMETRICS_PLAYBACK_REPORTED_FIELD_NUMBER);
@@ -463,6 +490,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(data).isEmpty();
     }
 
+    @Test
     public void testBundleSession() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIAMETRICS_PLAYBACK_REPORTED_FIELD_NUMBER);
@@ -475,6 +503,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(data).isEmpty();
     }
 
+    @Test
     public void testAppBlocklist() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_STATE_CHANGED_FIELD_NUMBER);
@@ -495,7 +524,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
                 "getLogSessionId")).doesNotContain(logSessionId);
     }
 
-
+    @Test
     public void testAttributionBlocklist() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIAMETRICS_PLAYBACK_REPORTED_FIELD_NUMBER);
@@ -534,6 +563,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getNetworkTransferDurationMillis()).isEqualTo(6000);
     }
 
+    @Test
     public void testAppAllowlist() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_STATE_CHANGED_FIELD_NUMBER);
@@ -558,6 +588,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getTimeSincePlaybackCreatedMillis()).isEqualTo(1763L);
     }
 
+    @Test
     public void testAttributionAllowlist() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIAMETRICS_PLAYBACK_REPORTED_FIELD_NUMBER);
@@ -638,6 +669,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
      * After that, the event metric data for MediametricsAAudioStreamReported is pushed to verify
      * the data is collected correctly.
      */
+    @Test
     public void testAAudioLowLatencyInputStream() throws Exception {
         runAAudioTestAndValidate(FEATURE_MICROPHONE,
                 AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_INPUT_VALUE,
@@ -650,6 +682,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
      * After that, the event metric data for MediametricsAAudioStreamReported is pushed to verify
      * the data is collected correctly.
      */
+    @Test
     public void testAAudioLowLatencyOutputStream() throws Exception {
         runAAudioTestAndValidate(FEATURE_AUDIO_OUTPUT,
                 AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_OUTPUT_VALUE,
@@ -662,6 +695,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
      * After that, the event metric data for MediametricsAAudioStreamReported is pushed to verify
      * the data is collected correctly.
      */
+    @Test
     public void testAAudioLegacyInputStream() throws Exception {
         runAAudioTestAndValidate(FEATURE_MICROPHONE,
                 AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_INPUT_VALUE,
@@ -674,6 +708,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
      * After that, the event metric data for MediametricsAAudioStreamReported is pushed to verify
      * the data is collected correctly.
      */
+    @Test
     public void testAAudioLegacyOutputStream() throws Exception {
         runAAudioTestAndValidate(FEATURE_AUDIO_OUTPUT,
                 AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_OUTPUT_VALUE,
@@ -686,6 +721,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
      * After that, the event metric data for MediametricsMidiDeviceCloseReported is pushed to verify
      * the data is collected correctly.
      */
+    @Test
     public void testMidiMetrics() throws Exception {
         if (!DeviceUtils.hasFeature(getDevice(), FEATURE_MIDI)) {
             return;

@@ -119,10 +119,10 @@ public class HotwordDetectionServicePermissionTest {
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
         mService.createAlwaysOnHotwordDetector();
 
-        mService.waitHotwordDetectionServiceInitializedCalledOrException();
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
 
         // verify callback result
-        assertThat(mService.getHotwordDetectionServiceInitializedResult()).isEqualTo(
+        assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
                 HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
 
         AlwaysOnHotwordDetector alwaysOnHotwordDetector = mService.getAlwaysOnHotwordDetector();

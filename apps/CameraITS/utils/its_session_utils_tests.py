@@ -14,8 +14,9 @@
 """Tests for its_session_utils."""
 
 import logging
-import numpy
 import unittest
+
+import numpy
 
 import its_session_utils
 
