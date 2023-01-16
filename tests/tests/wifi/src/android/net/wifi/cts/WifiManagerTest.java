@@ -221,7 +221,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private static final int[] TEST_RSSI2_THRESHOLDS = {-81, -79, -73, -60};
     private static final int[] TEST_RSSI5_THRESHOLDS = {-80, -77, -71, -55};
     private static final int[] TEST_RSSI6_THRESHOLDS = {-79, -72, -65, -55};
-
+    private static final SparseArray<Integer> TEST_FREQUENCY_WEIGHTS = new SparseArray<>();
 
     private IntentFilter mIntentFilter;
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -1213,6 +1213,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     private WifiNetworkSelectionConfig buildTestNetworkSelectionConfig() {
+        TEST_FREQUENCY_WEIGHTS.put(2400, WifiNetworkSelectionConfig.FREQUENCY_WEIGHT_LOW);
+        TEST_FREQUENCY_WEIGHTS.put(6000, WifiNetworkSelectionConfig.FREQUENCY_WEIGHT_HIGH);
+
         return new WifiNetworkSelectionConfig.Builder()
                 .setAssociatedNetworkSelectionOverride(
                         WifiNetworkSelectionConfig.ASSOCIATED_NETWORK_SELECTION_OVERRIDE_ENABLED)
@@ -1223,6 +1226,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 .setRssiThresholds(ScanResult.WIFI_BAND_24_GHZ, TEST_RSSI2_THRESHOLDS)
                 .setRssiThresholds(ScanResult.WIFI_BAND_5_GHZ, TEST_RSSI5_THRESHOLDS)
                 .setRssiThresholds(ScanResult.WIFI_BAND_6_GHZ, TEST_RSSI6_THRESHOLDS)
+                .setFrequencyWeights(TEST_FREQUENCY_WEIGHTS)
                 .build();
     }
 
@@ -1269,6 +1273,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     nsConfig.getRssiThresholds(ScanResult.WIFI_BAND_5_GHZ));
             assertArrayEquals(TEST_RSSI6_THRESHOLDS,
                     nsConfig.getRssiThresholds(ScanResult.WIFI_BAND_6_GHZ));
+            assertTrue(TEST_FREQUENCY_WEIGHTS.contentEquals(nsConfig.getFrequencyWeights()));
             assertThrows(SecurityException.class,
                     () -> mWifiManager.setNetworkSelectionConfig(nsConfig));
             ShellIdentityUtils.invokeWithShellPermissions(

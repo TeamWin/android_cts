@@ -418,6 +418,9 @@ public class ScanResultTest extends WifiJUnit3TestBase {
         assertNull(mloLink.getStaMacAddress());
         assertNull(mloLink.getApMacAddress());
         assertEquals(MloLink.MLO_LINK_STATE_UNASSOCIATED, mloLink.getState());
+        assertEquals(WifiInfo.INVALID_RSSI, mloLink.getRssi());
+        assertEquals(WifiInfo.LINK_SPEED_UNKNOWN, mloLink.getRxLinkSpeedMbps());
+        assertEquals(WifiInfo.LINK_SPEED_UNKNOWN, mloLink.getTxLinkSpeedMbps());
     }
 
     /**

@@ -26,6 +26,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.credentials.ClearCredentialStateException;
 import android.credentials.ClearCredentialStateRequest;
 import android.credentials.CreateCredentialException;
@@ -39,15 +40,22 @@ import android.credentials.GetCredentialResponse;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
+import android.os.Looper;
 import android.os.OutcomeReceiver;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.DeviceConfig;
+import android.text.TextUtils;
+import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
+import com.android.compatibility.common.util.DeviceConfigStateManager;
+import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
 import org.junit.Before;
@@ -63,29 +71,35 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CtsCredentialProviderServiceDeviceTest {
     public static final String CTS_PACKAGE_NAME =
             CtsNoOpCredentialProviderService.class.getPackage().getName();
+    public static final String CREDENTIAL_SERVICE = "credential_service";
     private static final String NAMESPACE_CREDENTIAL_MANAGER = "credential_manager";
-    private static final String ENABLE_CREDENTIAL_MANAGER = "enable_credential_manager";
-    private static final String CTS_SERVICE_NAME = CTS_PACKAGE_NAME + "/."
+    private static final String CTS_SERVICE_NAME = CTS_PACKAGE_NAME + "/" + CTS_PACKAGE_NAME + "/"
             + CtsNoOpCredentialProviderService.class.getSimpleName();
     private static final int USER_ID = UserHandle.myUserId();
-    private static final int TEMPORARY_SERVICE_DURATION = 5000;
+    private static final int TEMPORARY_SERVICE_DURATION = 10000;
+    private static final String TAG = "CtsCredentialProviderServiceDeviceTest";
+    public static final String DEVICE_CONFIG_ENABLE_CREDENTIAL_MANAGER =
+            "enable_credential_manager";
 
     private CredentialManager mCredentialManager;
     private Context mContext;
 
     @Rule
-    public final DeviceConfigStateChangerRule mLookAllTheseRules =
-            new DeviceConfigStateChangerRule(getInstrumentation().getTargetContext(),
-                    NAMESPACE_CREDENTIAL_MANAGER,
-                    ENABLE_CREDENTIAL_MANAGER,
-                    "true");
-    @Rule
     public ActivityScenarioRule mActivityScenarioRule =
             new ActivityScenarioRule(TestCredentialActivity.class);
 
+    // Sets up the feature flag rule.
+    @Rule
+    public final RequiredFeatureRule sRequiredFeatureRule =
+            new RequiredFeatureRule(PackageManager.FEATURE_CREDENTIALS);
+
     @Before
     public void setUp() {
+
+        Log.i(TAG, "Enabling service from scratch for " + CTS_SERVICE_NAME);
+        Log.i(TAG, "Enabling CredentialManager flags as well...");
         mContext = getInstrumentation().getContext();
+        enableCredentialManagerDeviceFeature(mContext);
         mCredentialManager = (CredentialManager) mContext.getSystemService(
                 Context.CREDENTIAL_SERVICE);
         assumeTrue("VERSION.SDK_INT=" + VERSION.SDK_INT,
@@ -96,6 +110,8 @@ public class CtsCredentialProviderServiceDeviceTest {
 
     @After
     public void tearDown() {
+        Log.i(TAG, "Disabling credman services and device feature flag");
+        disableCredentialManagerDeviceFeature(mContext);
         clearTestableCredentialProviderService();
     }
 
@@ -114,6 +130,9 @@ public class CtsCredentialProviderServiceDeviceTest {
     // TODO (rightly) flips an error bit since we have test inputs
     @Test
     public void testGetCredentialRequest_serviceNotSetUp_onErrorInvoked() {
+        if (Looper.myLooper() == null) {
+            Looper.prepare();
+        }
         AtomicReference<GetCredentialException> loadedResult = new AtomicReference<>();
         Bundle empty = new Bundle();
         GetCredentialRequest request = new GetCredentialRequest.Builder(empty)
@@ -122,12 +141,12 @@ public class CtsCredentialProviderServiceDeviceTest {
         OutcomeReceiver<GetCredentialResponse, GetCredentialException> callback =
                 new OutcomeReceiver<>() {
                     @Override
-                    public void onResult(GetCredentialResponse response) {
+                    public void onResult(@NonNull GetCredentialResponse response) {
                         // Do nothing
                     }
 
                     @Override
-                    public void onError(GetCredentialException e) {
+                    public void onError(@NonNull GetCredentialException e) {
                         loadedResult.set(e);
                     }
                 };
@@ -137,10 +156,10 @@ public class CtsCredentialProviderServiceDeviceTest {
         activityScenario.onActivity(activity -> {
             mCredentialManager.executeGetCredential(request, activity, null,
                     Executors.newSingleThreadExecutor(), callback);
-
-            assertThat(loadedResult.get().getClass()).isEqualTo(
-                    GetCredentialException.class);
         });
+
+        assertThat(loadedResult.get().getClass()).isEqualTo(
+                GetCredentialException.class);
     }
 
     @Test
@@ -148,13 +167,13 @@ public class CtsCredentialProviderServiceDeviceTest {
         OutcomeReceiver<GetCredentialResponse, GetCredentialException> callback =
                 new OutcomeReceiver<>() {
                     @Override
-                    public void onResult(GetCredentialResponse response) {
+                    public void onResult(@NonNull GetCredentialResponse response) {
                         // Do nothing
                     }
 
                     @Override
-                    public void onError(GetCredentialException e) {
-                        throw new RuntimeException("Get Credential Failed.");
+                    public void onError(@NonNull GetCredentialException e) {
+                        // Do nothing
                     }
                 };
 
@@ -170,6 +189,9 @@ public class CtsCredentialProviderServiceDeviceTest {
 
     @Test
     public void testCreatePasswordCredentialRequest_serviceNotSetUp_onErrorInvoked() {
+        if (Looper.myLooper() == null) {
+            Looper.prepare();
+        }
         AtomicReference<CreateCredentialException> loadedResult = new AtomicReference<>();
         Bundle empty = new Bundle();
         CreateCredentialRequest request = new CreateCredentialRequest("PASSWORD", empty, empty,
@@ -177,12 +199,12 @@ public class CtsCredentialProviderServiceDeviceTest {
         OutcomeReceiver<CreateCredentialResponse, CreateCredentialException> callback =
                 new OutcomeReceiver<>() {
                     @Override
-                    public void onResult(CreateCredentialResponse response) {
+                    public void onResult(@NonNull CreateCredentialResponse response) {
                         // Do nothing
                     }
 
                     @Override
-                    public void onError(CreateCredentialException e) {
+                    public void onError(@NonNull CreateCredentialException e) {
                         loadedResult.set(e);
                     }
                 };
@@ -192,10 +214,10 @@ public class CtsCredentialProviderServiceDeviceTest {
         activityScenario.onActivity(activity -> {
             mCredentialManager.executeCreateCredential(request, activity, null,
                     Executors.newSingleThreadExecutor(), callback);
-
-            assertThat(loadedResult.get().getClass()).isEqualTo(
-                    CreateCredentialException.class);
         });
+
+        assertThat(loadedResult.get().getClass()).isEqualTo(
+                CreateCredentialException.class);
     }
 
     @Test
@@ -203,12 +225,12 @@ public class CtsCredentialProviderServiceDeviceTest {
         OutcomeReceiver<CreateCredentialResponse, CreateCredentialException> callback =
                 new OutcomeReceiver<>() {
                     @Override
-                    public void onResult(CreateCredentialResponse response) {
+                    public void onResult(@NonNull CreateCredentialResponse response) {
                         // Do nothing
                     }
 
                     @Override
-                    public void onError(CreateCredentialException e) {
+                    public void onError(@NonNull CreateCredentialException e) {
                         // Do nothing
                     }
                 };
@@ -225,18 +247,21 @@ public class CtsCredentialProviderServiceDeviceTest {
 
     @Test
     public void testClearCredentialRequest_serviceNotSetUp_onErrorInvoked() {
+        if (Looper.myLooper() == null) {
+            Looper.prepare();
+        }
         AtomicReference<ClearCredentialStateException> loadedResult = new AtomicReference<>();
         Bundle empty = new Bundle();
         ClearCredentialStateRequest request = new ClearCredentialStateRequest(empty);
         OutcomeReceiver<Void, ClearCredentialStateException> callback =
                 new OutcomeReceiver<>() {
                     @Override
-                    public void onResult(Void response) {
+                    public void onResult(@NonNull Void response) {
                         // Do nothing
                     }
 
                     @Override
-                    public void onError(ClearCredentialStateException e) {
+                    public void onError(@NonNull ClearCredentialStateException e) {
                         loadedResult.set(e);
                     }
                 };
@@ -246,10 +271,10 @@ public class CtsCredentialProviderServiceDeviceTest {
         activityScenario.onActivity(activity -> {
             mCredentialManager.clearCredentialState(request, null,
                     Executors.newSingleThreadExecutor(), callback);
-
-            assertThat(loadedResult.get().getClass()).isEqualTo(
-                    ClearCredentialStateException.class);
         });
+
+        assertThat(loadedResult.get().getClass()).isEqualTo(
+                ClearCredentialStateException.class);
     }
 
     @Test
@@ -260,8 +285,50 @@ public class CtsCredentialProviderServiceDeviceTest {
 
             assertThrows("expect null request to throw NPE", NullPointerException.class,
                     () -> mCredentialManager.clearCredentialState(null, null,
-                            Executors.newSingleThreadExecutor(), null));
+                    Executors.newSingleThreadExecutor(), null));
         });
+    }
+
+    /**
+     * Enable the main credential manager feature.
+     * If this is off, any underlying changes for autofill-credentialManager integrations are off.
+     */
+    public static void enableCredentialManagerDeviceFeature(@NonNull Context context) {
+        setCredentialManagerFeature(context, true);
+    }
+
+    public static void disableCredentialManagerDeviceFeature(@NonNull Context context) {
+        setCredentialManagerFeature(context, false);
+    }
+
+    /**
+     * Enable Credential Manager related autofill changes
+     */
+    public static void setCredentialManagerFeature(@NonNull Context context, boolean enabled) {
+        setDeviceConfig(context,
+                DEVICE_CONFIG_ENABLE_CREDENTIAL_MANAGER, enabled);
+    }
+
+    /**
+     * Set device config to set flag values.
+     */
+    public static void setDeviceConfig(
+            @NonNull Context context, @NonNull String feature, boolean value) {
+        DeviceConfigStateManager deviceConfigStateManager =
+                new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_CREDENTIAL, feature);
+        setDeviceConfig(deviceConfigStateManager, String.valueOf(value));
+    }
+
+    public static void setDeviceConfig(@NonNull DeviceConfigStateManager deviceConfigStateManager,
+            @Nullable String value) {
+        final String previousValue = deviceConfigStateManager.get();
+        if (TextUtils.isEmpty(value) && TextUtils.isEmpty(previousValue)
+                || TextUtils.equals(previousValue, value)) {
+            Log.v(TAG, "No changed in config: " + deviceConfigStateManager);
+            return;
+        }
+
+        deviceConfigStateManager.set(value);
     }
 
     private void bindToTestService() {

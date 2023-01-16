@@ -340,6 +340,100 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                         assertThat(radioStats.getTotalPnoScanTimeMillis()).isAtLeast(0);
                         assertThat(radioStats.getTotalHotspot2ScanTimeMillis()).isAtLeast(0);
                     }
+                    int[] links = statsEntry.getLinkIds();
+                    if (links != null) {
+                        for (int link : links) {
+                            assertThat(statsEntry.getRssi(link)).isLessThan(0);
+                            assertThat(statsEntry.getRadioId(link)).isAtLeast(0);
+                            assertThat(statsEntry.getTxLinkSpeedMbps(link)).isAtLeast(0);
+                            assertThat(statsEntry.getRxLinkSpeedMbps(link)).isAtLeast(0);
+                            assertThat(statsEntry.getTotalTxSuccess(link)).isAtLeast(0L);
+                            assertThat(statsEntry.getTotalTxRetries(link)).isAtLeast(0L);
+                            assertThat(statsEntry.getTotalTxBad(link)).isAtLeast(0L);
+                            assertThat(statsEntry.getTotalRxSuccess(link)).isAtLeast(0L);
+                            assertThat(statsEntry.getTotalBeaconRx(link)).isAtLeast(0L);
+                            try {
+                                assertThat(statsEntry.getTimeSliceDutyCycleInPercent(link))
+                                        .isIn(Range.closed(0, 100));
+                            } catch (NoSuchElementException e) {
+                                // pass - Device does not support the field.
+                            }
+
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_BE).getContentionTimeMinMicros()).isAtLeast(
+                                    0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_BE).getContentionTimeMaxMicros()).isAtLeast(
+                                    0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_BE).getContentionTimeAvgMicros()).isAtLeast(
+                                    0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_BE).getContentionNumSamples()).isAtLeast(0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_BK).getContentionTimeMinMicros()).isAtLeast(
+                                    0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_BK).getContentionTimeMaxMicros()).isAtLeast(
+                                    0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_BK).getContentionTimeAvgMicros()).isAtLeast(
+                                    0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_BK).getContentionNumSamples()).isAtLeast(0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_VI).getContentionTimeMinMicros()).isAtLeast(
+                                    0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_VI).getContentionTimeMaxMicros()).isAtLeast(
+                                    0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_VI).getContentionTimeAvgMicros()).isAtLeast(
+                                    0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_VI).getContentionNumSamples()).isAtLeast(0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_VO).getContentionTimeMinMicros()).isAtLeast(
+                                    0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_VO).getContentionTimeMaxMicros()).isAtLeast(
+                                    0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_VO).getContentionTimeAvgMicros()).isAtLeast(
+                                    0);
+                            assertThat(statsEntry.getContentionTimeStats(link,
+                                    WME_ACCESS_CATEGORY_VO).getContentionNumSamples()).isAtLeast(0);
+
+                            assertThat(statsEntry.getRateStats(link)).isNotNull();
+                            if (statsEntry.getRateStats(link).size() > 0) {
+                                assertThat(statsEntry.getRateStats(link).get(
+                                        0).getPreamble()).isAtLeast(
+                                        0);
+                                assertThat(statsEntry.getRateStats(link).get(
+                                        0).getNumberOfSpatialStreams())
+                                        .isAtLeast(1);
+                                assertThat(statsEntry.getRateStats(link).get(0).getBandwidthInMhz())
+                                        .isAtLeast(0);
+                                assertThat(statsEntry.getRateStats(link).get(
+                                        0).getRateMcsIdx()).isAtLeast(
+                                        0);
+                                assertThat(statsEntry.getRateStats(link).get(0).getBitRateInKbps())
+                                        .isAtLeast(0);
+                                assertThat(statsEntry.getRateStats(link).get(
+                                        0).getTxMpdu()).isAtLeast(
+                                        0);
+                                assertThat(statsEntry.getRateStats(link).get(
+                                        0).getRxMpdu()).isAtLeast(
+                                        0);
+                                assertThat(statsEntry.getRateStats(link).get(
+                                        0).getMpduLost()).isAtLeast(
+                                        0);
+                                assertThat(statsEntry.getRateStats(link).get(
+                                        0).getRetries()).isAtLeast(0);
+                            }
+
+                        }
+                    }
                 }
                 // no longer populated, return default value.
                 assertThat(statsEntry.getCellularDataNetworkType())

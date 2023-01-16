@@ -300,5 +300,8 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
         assertEquals(MloLink.INVALID_MLO_LINK_ID, wifiInfo.getApMloLinkId());
         assertNotNull(wifiInfo.getAffiliatedMloLinks());
         assertTrue(wifiInfo.getAffiliatedMloLinks().isEmpty());
+        assertNotNull(wifiInfo.getAssociatedMloLinks());
+        assertTrue(wifiInfo.getAssociatedMloLinks().isEmpty());
+
     }
 }
