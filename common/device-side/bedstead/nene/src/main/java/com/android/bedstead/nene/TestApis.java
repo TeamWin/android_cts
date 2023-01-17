@@ -152,6 +152,12 @@ public final class TestApis {
         return Broadcasts.sInstance;
     }
 
+    /** Access Test  APIs related to telecom */
+    @Experimental
+    public static Telecom telecom() {
+        return Telecom.sInstance;
+    }
+
     /** @deprecated Use statically */
     @Deprecated()
     public TestApis() {

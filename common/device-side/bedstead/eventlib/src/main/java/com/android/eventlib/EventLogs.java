@@ -88,7 +88,7 @@ public abstract class EventLogs<E extends Event> implements Serializable {
     }
 
     /**
-     * Returns immediately if there is an existing event matching the query which has not be
+     * Returns immediately if there is an existing event matching the query which has not been
      * returned by a previous call to {@link #poll()}, or blocks until a matching event is logged.
      *
      * <p>This will timeout after {@code timeout} and throw an {@link AssertionError} if no

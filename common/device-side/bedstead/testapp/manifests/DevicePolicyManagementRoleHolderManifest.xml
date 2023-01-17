@@ -41,6 +41,14 @@
             </intent-filter>
         </activity>
 
+        <receiver android:name=".RoleHolderReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MANAGED_PROFILE_REMOVED" />
+                <action android:name="android.intent.action.MANAGED_PROFILE_AVAILABLE" />
+                <action android:name="android.intent.action.MANAGED_PROFILE_UNAVAILABLE" />
+            </intent-filter>
+        </receiver>
+
     </application>
     <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
 </manifest>

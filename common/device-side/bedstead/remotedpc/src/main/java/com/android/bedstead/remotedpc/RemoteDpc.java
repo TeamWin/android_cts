@@ -18,8 +18,12 @@ package com.android.bedstead.remotedpc;
 
 import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 
+import android.app.admin.DevicePolicyManager;
+import android.app.admin.ManagedProfileProvisioningParams;
+import android.app.admin.ProvisioningException;
 import android.content.ComponentName;
 import android.os.Build;
 import android.os.UserHandle;
@@ -32,6 +36,7 @@ import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.testapp.TestApp;
@@ -45,10 +50,14 @@ public class RemoteDpc extends RemotePolicyManager {
             "com.android.bedstead.testapp.BaseTestAppDeviceAdminReceiver"
     );
 
+    private static final DevicePolicyManager sDevicePolicyManager =
+            TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     public static final TestApp REMOTE_DPC_TEST_APP = sTestAppProvider.query()
             .wherePackageName().isEqualTo(DPC_COMPONENT_NAME.getPackageName())
             .get();
+
+    private boolean mShouldRemoveUserWhenRemoved = false;
 
     /**
      * Get the {@link RemoteDpc} instance for the Device Owner.
@@ -229,7 +238,21 @@ public class RemoteDpc extends RemotePolicyManager {
     }
 
     /**
+     * Create a work profile of the instrumented user with RemoteDpc as the profile owner.
+     *
+     * <p>If autoclosed, the user will be removed along with the dpc.
+     *
+     * <p>If called for Android versions prior to Q an exception will be thrown
+     */
+    @Experimental
+    public static RemoteDpc createWorkProfile() {
+        return createWorkProfile(TestApis.users().instrumented());
+    }
+
+    /**
      * Create a work profile with RemoteDpc as the profile owner.
+     *
+     * <p>If autoclosed, the user will be removed along with the dpc.
      *
      * <p>If called for Android versions prior to Q an exception will be thrown
      */
@@ -245,12 +268,28 @@ public class RemoteDpc extends RemotePolicyManager {
             throw new NeneException("Cannot use RemoteDPC across users prior to Q");
         }
 
-        UserReference profile = TestApis.users().createUser()
+        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+            UserReference profile = TestApis.users().createUser()
                 .type(TestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME))
                 .parent(parent)
                 .createAndStart();
 
-        return setAsProfileOwner(profile);
+            return setAsProfileOwner(profile);
+        }
+        ensureInstalled(parent);
+
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
+            RemoteDpc dpc = forDevicePolicyController(TestApis.devicePolicy().getProfileOwner(
+                    sDevicePolicyManager.createAndProvisionManagedProfile(
+                            new ManagedProfileProvisioningParams.Builder(
+                                    DPC_COMPONENT_NAME, "RemoteDPC").build())));
+            dpc.mShouldRemoveUserWhenRemoved = true;
+            return dpc;
+
+        } catch (ProvisioningException e) {
+            throw new NeneException("Error provisioning work profile", e);
+        }
     }
 
     private static void ensureInstalled(UserReference user) {
@@ -276,9 +315,18 @@ public class RemoteDpc extends RemotePolicyManager {
      * Remove RemoteDPC as Device Owner or Profile Owner and uninstall the APK from the user.
      */
     public void remove() {
-        mDevicePolicyController.remove();
-        TestApis.packages().find(DPC_COMPONENT_NAME.getPackageName())
-                .uninstall(mDevicePolicyController.user());
+        if (mShouldRemoveUserWhenRemoved) {
+            mDevicePolicyController.user().remove();
+        } else {
+            mDevicePolicyController.remove();
+            TestApis.packages().find(DPC_COMPONENT_NAME.getPackageName())
+                    .uninstall(mDevicePolicyController.user());
+        }
+    }
+
+    @Override
+    public void close() {
+        remove();
     }
 
     /**

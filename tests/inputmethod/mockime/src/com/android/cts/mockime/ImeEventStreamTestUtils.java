@@ -213,6 +213,21 @@ public final class ImeEventStreamTestUtils {
         });
     }
 
+    public static Predicate<ImeEvent> showSoftInputMatcher(int requiredFlags) {
+        return withDescription("showSoftInput(requiredFlags=" + requiredFlags + ")", event -> {
+            if (!TextUtils.equals("showSoftInput", event.getEventName())) {
+                return false;
+            }
+            final int flags = event.getArguments().getInt("flags");
+            return (flags & requiredFlags) == requiredFlags;
+        });
+    }
+
+    public static Predicate<ImeEvent> hideSoftInputMatcher() {
+        return withDescription("hideSoftInput",
+                event -> TextUtils.equals("hideSoftInput", event.getEventName()));
+    }
+
     /**
      * Wait until an event that matches the given command is consumed by the {@link MockIme}.
      *
@@ -444,7 +459,7 @@ public final class ImeEventStreamTestUtils {
         return stream.copy();
     }
 
-    private static Predicate<ImeEvent> withDescription(String description, Predicate<ImeEvent> p) {
+    public static Predicate<ImeEvent> withDescription(String description, Predicate<ImeEvent> p) {
         return new Predicate<>() {
             @Override
             public boolean test(ImeEvent ev) {

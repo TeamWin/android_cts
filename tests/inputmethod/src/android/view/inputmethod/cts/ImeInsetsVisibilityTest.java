@@ -31,6 +31,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.showSoftInputMatcher;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -43,7 +44,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.text.TextUtils;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
@@ -66,7 +66,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
-import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -77,7 +76,6 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Predicate;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -500,16 +498,6 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
             activity.getSystemService(WindowManager.class).addView(childViewRoot, attrs);
             return new ChildWindowHolder(childViewRoot);
         });
-    }
-
-    private static Predicate<ImeEvent> showSoftInputMatcher(int requiredFlags) {
-        return event -> {
-            if (!TextUtils.equals("showSoftInput", event.getEventName())) {
-                return false;
-            }
-            final int flags = event.getArguments().getInt("flags");
-            return (flags & requiredFlags) == requiredFlags;
-        };
     }
 
     @NonNull

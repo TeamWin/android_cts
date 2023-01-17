@@ -199,6 +199,34 @@ public class FreeformWindowingModeTests extends MultiDisplayTestBase {
                 WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD);
     }
 
+    @Test
+    public void testMultiWindowFullscreenOnNonPcDevice() throws Exception {
+        assumeTrue("Only test on non-PC device",
+                !supportsFreeform() || !hasDeviceFeature(FEATURE_PC));
+        int displayId = Display.DEFAULT_DISPLAY;
+        launchActivityOnDisplay(MULTI_WINDOW_FULLSCREEN_ACTIVITY, displayId);
+        mWmState.computeState(MULTI_WINDOW_FULLSCREEN_ACTIVITY);
+        mWmState.assertDoesNotContainStack("Must has no freeform stack.",
+                WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD);
+
+        mBroadcastActionTrigger.doAction(ACTION_RESTORE_FREEFORM);
+        mWmState.assertDoesNotContainStack("Must has no freeform stack.",
+                WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD);
+
+        if (supportsFreeform()) {
+            removeRootTasksWithActivityTypes(ACTIVITY_TYPE_STANDARD);
+            waitAndAssertStoppedActivity(MULTI_WINDOW_FULLSCREEN_ACTIVITY,
+                    "Needs to remove the fullscreen activity to run the following test.");
+            launchActivityOnDisplay(MULTI_WINDOW_FULLSCREEN_ACTIVITY, WINDOWING_MODE_FREEFORM,
+                    displayId);
+            mWmState.assertContainsStack("Must has a freeform stack.",
+                    WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD);
+            mBroadcastActionTrigger.doAction(ACTION_REQUEST_FULLSCREEN);
+            mWmState.assertContainsStack("Must has a freeform stack.",
+                    WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD);
+        }
+    }
+
     private boolean waitForEnterFullscreen(ComponentName activityName) {
         return mWmState.waitForWithAmState(wmState -> {
             Task task = wmState.getTaskByActivity(activityName);

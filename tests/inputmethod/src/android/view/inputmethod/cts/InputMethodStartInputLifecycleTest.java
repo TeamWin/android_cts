@@ -26,6 +26,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.withDescription;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -560,6 +561,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
     }
 
     private static Predicate<ImeEvent> onFinishInputMatcher() {
-        return event -> TextUtils.equals("onFinishInput", event.getEventName());
+        return withDescription("onFinishInput()",
+                event -> TextUtils.equals("onFinishInput", event.getEventName()));
     }
 }

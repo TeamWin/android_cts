@@ -1,0 +1,219 @@
+/*
+ * Copyright (C) 2023 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.voiceinteraction.service;
+
+import android.os.Handler;
+import android.os.Looper;
+import android.os.PersistableBundle;
+import android.os.Process;
+import android.os.SharedMemory;
+import android.service.voice.VisualQueryDetectionService;
+import android.system.ErrnoException;
+import android.util.Log;
+import android.voiceinteraction.common.Utils;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import java.util.function.IntConsumer;
+
+import javax.annotation.concurrent.GuardedBy;
+
+public class MainVisualQueryDetectionService extends VisualQueryDetectionService {
+    static final String TAG = "MainVisualQueryDetectionService";
+
+    public static final String FAKE_QUERY_FIRST = "What is ";
+    public static final String FAKE_QUERY_SECOND = "the weather today?";
+
+    public static String KEY_VQDS_TEST_SCENARIO = "test scenario";
+    public static int SCENARIO_ATTENTION_LEAVE = 0;
+    public static int SCENARIO_ATTENTION_QUERY_REJECTED_LEAVE = 1;
+    public static int SCENARIO_ATTENTION_QUERY_FINISHED_LEAVE = 2;
+    public static int SCENARIO_ATTENTION_DOUBLE_QUERY_FINISHED_LEAVE = 3;
+    public static int SCENARIO_QUERY_NO_ATTENTION = 4;
+    public static int SCENARIO_QUERY_NO_QUERY_FINISH = 5;
+
+    private int mScenario = -1;
+
+    private final Object mLock = new Object();
+    private Handler mHandler;
+    private Callback mCallback;
+
+    @GuardedBy("mLock")
+    private boolean mStopDetectionCalled;
+    @GuardedBy("mLock")
+    private int mDetectionDelayMs = 0;
+
+    @GuardedBy("mLock")
+    @Nullable
+    private Runnable mDetectionJob;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mHandler = Handler.createAsync(Looper.getMainLooper());
+        Log.d(TAG, "onCreate");
+    }
+
+    @Override
+    public void onStartDetection(@NonNull Callback callback) {
+        Log.d(TAG, "onStartDetection");
+
+        mCallback = callback;
+
+        synchronized (mLock) {
+            if (mDetectionJob != null) {
+                throw new IllegalStateException("onStartDetection called while already detecting");
+            }
+            if (!mStopDetectionCalled) {
+                // Delaying this allows us to test other flows, such as stopping detection. It's
+                // also more realistic to schedule it onto another thread.
+
+                // Try different combinations of attention/query permutations with different
+                // detection jobs.
+                mDetectionJob = createTestDetectionJob(mScenario);
+                mHandler.postDelayed(mDetectionJob, 1500);
+
+            } else {
+                Log.d(TAG, "Sending detected result after stop detection");
+                // We can't store and use this callback in onStopDetection (not valid anymore
+                // there), so we shut down the service.
+                mCallback.onAttentionGained();
+                mCallback.onQueryDetected(FAKE_QUERY_SECOND);
+                mCallback.onQueryRejected();
+                mCallback.onAttentionLost();
+            }
+        }
+    }
+
+    @Override
+    public void onStopDetection() {
+        super.onStopDetection();
+        Log.d(TAG, "onStopDetection");
+        synchronized (mLock) {
+            mHandler.removeCallbacks(mDetectionJob);
+            mDetectionJob = null;
+            mStopDetectionCalled = true;
+        }
+    }
+
+    @Override
+    public void onUpdateState(
+            @Nullable PersistableBundle options,
+            @Nullable SharedMemory sharedMemory,
+            long callbackTimeoutMillis,
+            @Nullable IntConsumer statusCallback) {
+        super.onUpdateState(options, sharedMemory, callbackTimeoutMillis, statusCallback);
+        Log.d(TAG, "onUpdateState");
+
+        // Reset mDetectionJob and mStopDetectionCalled when service is initializing.
+        synchronized (mLock) {
+            if (statusCallback != null) {
+                if (mDetectionJob != null) {
+                    Log.d(TAG, "onUpdateState mDetectionJob is not null");
+                    mHandler.removeCallbacks(mDetectionJob);
+                    mDetectionJob = null;
+                }
+                mStopDetectionCalled = false;
+            }
+
+            if (options != null) {
+                mDetectionDelayMs = options.getInt(Utils.KEY_DETECTION_DELAY_MS, 0);
+            }
+        }
+
+        if (options != null) {
+            if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
+                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH) {
+                Log.d(TAG, "Crash itself. Pid: " + Process.myPid());
+                Process.killProcess(Process.myPid());
+                return;
+            }
+            mScenario = options.getInt(KEY_VQDS_TEST_SCENARIO);
+        }
+
+        if (sharedMemory != null) {
+            try {
+                sharedMemory.mapReadWrite();
+                Log.d(TAG, "sharedMemory : is not read-only");
+                return;
+            } catch (ErrnoException e) {
+                // For read-only case
+            } finally {
+                sharedMemory.close();
+            }
+        }
+
+        // Report success
+        Log.d(TAG, "onUpdateState success");
+        if (statusCallback != null) {
+            statusCallback.accept(INITIALIZATION_STATUS_SUCCESS);
+        }
+    }
+
+    private Runnable createTestDetectionJob(int scenario) {
+        Runnable detectionJob;
+
+        if (scenario == SCENARIO_ATTENTION_LEAVE) {
+            detectionJob = () -> {
+                mCallback.onAttentionGained();
+                mCallback.onAttentionLost();
+            };
+        } else if (scenario == SCENARIO_ATTENTION_QUERY_FINISHED_LEAVE) {
+            detectionJob = () -> {
+                mCallback.onAttentionGained();
+                mCallback.onQueryDetected(FAKE_QUERY_FIRST);
+                mCallback.onQueryDetected(FAKE_QUERY_SECOND);
+                mCallback.onQueryFinished();
+                mCallback.onAttentionLost();
+            };
+        } else if (scenario == SCENARIO_ATTENTION_QUERY_REJECTED_LEAVE) {
+            detectionJob = () -> {
+                mCallback.onAttentionGained();
+                mCallback.onQueryDetected(FAKE_QUERY_FIRST);
+                mCallback.onQueryRejected();
+                mCallback.onAttentionLost();
+            };
+        } else if (scenario == SCENARIO_ATTENTION_DOUBLE_QUERY_FINISHED_LEAVE) {
+            detectionJob = () -> {
+                mCallback.onAttentionGained();
+                mCallback.onQueryDetected(FAKE_QUERY_FIRST);
+                mCallback.onQueryFinished();
+                mCallback.onQueryDetected(FAKE_QUERY_SECOND);
+                mCallback.onQueryFinished();
+                mCallback.onAttentionLost();
+            };
+        } else if (scenario == SCENARIO_QUERY_NO_ATTENTION) {
+            detectionJob = () -> {
+                mCallback.onQueryDetected(FAKE_QUERY_FIRST);
+                mCallback.onQueryFinished();
+                mCallback.onQueryRejected();
+            };
+        } else if (scenario == SCENARIO_QUERY_NO_QUERY_FINISH) {
+            detectionJob = () -> {
+                mCallback.onAttentionGained();
+                mCallback.onQueryFinished();
+                mCallback.onAttentionLost();
+            };
+        } else {
+            Log.i(TAG, "Do nothing...");
+            return null;
+        }
+        return detectionJob;
+    }
+}
+

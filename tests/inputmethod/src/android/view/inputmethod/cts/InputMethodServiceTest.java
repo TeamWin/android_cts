@@ -41,6 +41,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKey
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectNoImeCrash;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.verificationMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.withDescription;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -140,7 +141,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     private Instrumentation mInstrumentation;
 
     private static Predicate<ImeEvent> backKeyDownMatcher(boolean expectedReturnValue) {
-        return event -> {
+        return withDescription("onKeyDown(KEYCODE_BACK) = " + expectedReturnValue, event -> {
             if (!TextUtils.equals("onKeyDown", event.getEventName())) {
                 return false;
             }
@@ -149,7 +150,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                 return false;
             }
             return event.getReturnBooleanValue() == expectedReturnValue;
-        };
+        });
     }
 
     @Before

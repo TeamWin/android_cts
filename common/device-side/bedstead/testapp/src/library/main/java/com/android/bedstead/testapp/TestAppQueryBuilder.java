@@ -213,8 +213,8 @@ public final class TestAppQueryBuilder implements Queryable {
         }
 
         // TODO(b/198419895): Actually query for the correct receiver + metadata
-        boolean isDeviceAdmin = details.mApp.getPackageName().equals(
-                "com.android.bedstead.testapp.DeviceAdminTestApp");
+        boolean isDeviceAdmin = details.mApp.getPackageName().contains(
+                "DeviceAdminTestApp");
         if (!BooleanQueryHelper.matches(mIsDeviceAdmin, isDeviceAdmin)) {
             return false;
         }

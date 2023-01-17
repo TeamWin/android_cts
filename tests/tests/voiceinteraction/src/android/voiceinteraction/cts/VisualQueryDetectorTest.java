@@ -95,5 +95,27 @@ public class VisualQueryDetectorTest {
 
         assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
                 SandboxedDetectionServiceBase.INITIALIZATION_STATUS_SUCCESS);
+
+        // Start recognition
+        boolean startRecognitionThrowException = true;
+        try {
+            visualQueryDetector.startRecognition();
+            startRecognitionThrowException = false;
+        } catch (UnsupportedOperationException | IllegalStateException e) {
+            startRecognitionThrowException = true;
+        }
+        assertThat(startRecognitionThrowException).isFalse();
+
+        // Stop recognition
+        boolean stopRecognitionThrowException = true;
+        try {
+            visualQueryDetector.stopRecognition();
+            stopRecognitionThrowException = false;
+        } catch (UnsupportedOperationException | IllegalStateException e) {
+            stopRecognitionThrowException = true;
+        }
+        assertThat(stopRecognitionThrowException).isFalse();
+
+        visualQueryDetector.destroy();
     }
 }

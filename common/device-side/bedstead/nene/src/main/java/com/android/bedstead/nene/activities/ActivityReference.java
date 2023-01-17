@@ -16,6 +16,8 @@
 
 package com.android.bedstead.nene.activities;
 
+import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
+
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
 
@@ -50,7 +52,7 @@ public final class ActivityReference extends ComponentReference {
         try {
             return TestApis.context().androidContextAsUser(user)
                     .getPackageManager()
-                    .getActivityInfo(componentName(), 0)
+                    .getActivityInfo(componentName(), MATCH_DISABLED_COMPONENTS)
                     .enabled;
         } catch (PackageManager.NameNotFoundException e) {
             throw new NeneException("Activity does not exist or is not activity " + this, e);

@@ -73,6 +73,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
@@ -860,6 +861,57 @@ public final class UserManagerTest {
 
         assertWithMessage("Cannot run in headless system user mode if telephony is present")
                 .that(isHeadless && hasTelephony).isFalse();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#setBootUser"})
+    @EnsureHasAdditionalUser
+    @EnsureHasPermission({CREATE_USERS})
+    public void setBootUser_providedUserIsSwitchable() {
+        UserReference additionalUser = sDeviceState.additionalUser();
+        mUserManager.setBootUser(additionalUser.userHandle());
+
+        assertThat(mUserManager.getBootUser()).isEqualTo(additionalUser.userHandle());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#setBootUser"})
+    @EnsureHasWorkProfile
+    @EnsureHasAdditionalUser
+    @EnsureHasPermission({CREATE_USERS})
+    @RequireNotHeadlessSystemUserMode(reason = "Testing non-HSUM scenario")
+    public void setBootUser_providedUserIsNotSwitchable_nonHsum() {
+        UserReference additionalUser = sDeviceState.additionalUser();
+        UserReference workProfile = sDeviceState.workProfile();
+        mUserManager.setBootUser(workProfile.userHandle());
+
+        // Switch to additional user to make sure there is a previous user that is not the
+        // current user.
+        additionalUser.switchTo();
+
+        // Boot user will be the system user
+        assertThat(mUserManager.getBootUser())
+                .isEqualTo(sDeviceState.primaryUser().userHandle());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#setBootUser"})
+    @EnsureHasWorkProfile
+    @EnsureHasAdditionalUser
+    @EnsureHasPermission({CREATE_USERS})
+    @RequireHeadlessSystemUserMode(reason = "Testing HSUM scenario")
+    public void setBootUser_providedUserIsNotSwitchable_Hsum() {
+        UserReference additionalUser = sDeviceState.additionalUser();
+        UserReference workProfile = sDeviceState.workProfile();
+        mUserManager.setBootUser(workProfile.userHandle());
+
+        // Switch to additional user to make sure there is a previous user that is not the
+        // current user.
+        additionalUser.switchTo();
+
+        // Boot user will be most recent user
+        assertThat(mUserManager.getBootUser())
+                .isEqualTo(mUserManager.getPreviousForegroundUser());
     }
 
     private Function<Intent, Boolean> userIsEqual(UserHandle userHandle) {

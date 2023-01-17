@@ -37,10 +37,14 @@ import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.hideSoftInputMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.showSoftInputMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.waitForInputViewLayoutStable;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.withDescription;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -72,7 +76,6 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
-import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.AutoCloseableWrapper;
@@ -154,39 +157,16 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         return TEST_MARKER_PREFIX + "/"  + SystemClock.elapsedRealtimeNanos();
     }
 
-    private static Predicate<ImeEvent> editorMatcher(
-            @NonNull String eventName, @NonNull String marker) {
-        return event -> {
-            if (!TextUtils.equals(eventName, event.getEventName())) {
-                return false;
-            }
-            final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
-            return TextUtils.equals(marker, editorInfo.privateImeOptions);
-        };
-    }
-
-    private static Predicate<ImeEvent> showSoftInputMatcher(int requiredFlags) {
-        return event -> {
-            if (!TextUtils.equals("showSoftInput", event.getEventName())) {
-                return false;
-            }
-            final int flags = event.getArguments().getInt("flags");
-            return (flags & requiredFlags) == requiredFlags;
-        };
-    }
-
-    private static Predicate<ImeEvent> hideSoftInputMatcher() {
-        return event -> TextUtils.equals("hideSoftInput", event.getEventName());
-    }
-
     private static Predicate<ImeEvent> onFinishInputViewMatcher(boolean expectedFinishingInput) {
-        return event -> {
+        Predicate<ImeEvent> matcher = event -> {
             if (!TextUtils.equals("onFinishInputView", event.getEventName())) {
                 return false;
             }
             final boolean finishingInput = event.getArguments().getBoolean("finishingInput");
             return finishingInput == expectedFinishingInput;
         };
+        return withDescription("onFinishInputView(finishingInput=" + expectedFinishingInput + ")",
+                matcher);
     }
 
     private Pair<EditText, EditText> launchTestActivity(@NonNull String focusedMarker,

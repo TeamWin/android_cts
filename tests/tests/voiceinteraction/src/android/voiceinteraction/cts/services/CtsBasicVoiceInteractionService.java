@@ -17,6 +17,7 @@
 package android.voiceinteraction.cts.services;
 
 import static android.Manifest.permission.BIND_HOTWORD_DETECTION_SERVICE;
+import static android.Manifest.permission.BIND_VISUAL_QUERY_DETECTION_SERVICE;
 import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 
@@ -35,6 +36,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -52,9 +54,13 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     private CountDownLatch mOnDetectRejectLatch;
     // The CountDownLatch waits for a service onError called
     private CountDownLatch mOnErrorLatch;
+    // The CountDownLatch waits for vqds
+    private CountDownLatch mOnQueryFinishRejectLatch;
 
     private AlwaysOnHotwordDetector.EventPayload mDetectedResult;
     private HotwordRejectedResult mRejectedResult;
+    private ArrayList<String> mStreamedQueries = new ArrayList<>();
+    private String mCurrentQuery = "";
 
     public CtsBasicVoiceInteractionService() {
         HandlerThread handlerThread = new HandlerThread("CtsBasicVoiceInteractionService");
@@ -214,6 +220,17 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         }, MANAGE_HOTWORD_DETECTION));
     }
 
+    /**
+     * Create a VisualQueryDetector but doesn't hold MANAGE_HOTWORD_DETECTION but hold
+     * BIND_VISUAL_QUERY_DETECTION_SERVICE.
+     */
+    public void createVisualQueryDetectorHoldBindVisualQueryDetectionPermission() {
+        mServiceTriggerLatch = new CountDownLatch(1);
+        mHandler.post(() -> runWithShellPermissionIdentity(
+                () -> callCreateVisualQueryDetector(mNoOpVisualQueryDetectorCallback),
+                BIND_VISUAL_QUERY_DETECTION_SERVICE));
+    }
+
     public void createVisualQueryDetector() {
         mServiceTriggerLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(() -> {
@@ -221,17 +238,30 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 @Override
                 public void onQueryDetected(@NonNull String transcribedText) {
                     Log.i(TAG, "onQueryDetected");
-                    //TOOD: Add latches and assign transcribedText for integration test
+                    mCurrentQuery += transcribedText;
                 }
 
                 @Override
                 public void onQueryRejected() {
                     Log.i(TAG, "onQueryRejected");
+                    // mStreamedQueries are used to store previously streamed queries for testing
+                    // reason, regardless of the queries being rejected or finished.
+                    mStreamedQueries.add(mCurrentQuery);
+                    mCurrentQuery = "";
+                    if (mOnQueryFinishRejectLatch != null) {
+                        mOnQueryFinishRejectLatch.countDown();
+                    }
                 }
 
                 @Override
                 public void onQueryFinished() {
+
                     Log.i(TAG, "onQueryFinished");
+                    mStreamedQueries.add(mCurrentQuery);
+                    mCurrentQuery = "";
+                    if (mOnQueryFinishRejectLatch != null) {
+                        mOnQueryFinishRejectLatch.countDown();
+                    }
                 }
 
                 @Override
@@ -257,7 +287,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 }
             };
             mVisualQueryDetector = callCreateVisualQueryDetector(callback);
-        }));
+        }, MANAGE_HOTWORD_DETECTION)); //Permission placeholder - Don't really need any
     }
 
     /**
@@ -272,6 +302,13 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public void initDetectRejectLatch() {
         mOnDetectRejectLatch = new CountDownLatch(1);
+    }
+
+    /**
+     * Create a CountDownLatch that wait for onQueryFinished() or onQueryRejected() result
+     */
+    public void initQueryFinishRejectLatch(int numQueries) {
+        mOnQueryFinishRejectLatch = new CountDownLatch(numQueries);
     }
 
     /**
@@ -293,6 +330,13 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public HotwordRejectedResult getHotwordServiceOnRejectedResult() {
         return mRejectedResult;
+    }
+
+    /**
+     * Returns the OnQueryDetected() result.
+     */
+    public ArrayList<String> getStreamedQueriesResult() {
+        return mStreamedQueries;
     }
 
     /**
@@ -326,6 +370,19 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             throw new AssertionError("onDetected or OnRejected() fail.");
         }
         mOnDetectRejectLatch = null;
+    }
+
+    /**
+     * Wait for onQueryFinished() or OnQueryRejected() callback called.
+     */
+    public void waitOnQueryFinishedRejectCalled() throws InterruptedException {
+        Log.d(TAG, "waitOnQueryFinishedRejectCalled(), latch=" + mOnQueryFinishRejectLatch);
+        if (mOnQueryFinishRejectLatch == null
+                || !mOnQueryFinishRejectLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
+            mOnQueryFinishRejectLatch = null;
+            throw new AssertionError("onDetected or OnRejected() fail.");
+        }
+        mOnQueryFinishRejectLatch = null;
     }
 
     /**

@@ -59,7 +59,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
-public class UsersTest {
+public final class UsersTest {
 
     private static final int MAX_SYSTEM_USERS = UserType.UNLIMITED;
     private static final int MAX_SYSTEM_USERS_PER_PARENT = UserType.UNLIMITED;
@@ -240,10 +240,18 @@ public class UsersTest {
 
     @Test
     @EnsureCanAddUser
+    public void createUser_specifiesNullStringUserType_throwsException() {
+        UserBuilder userBuilder = TestApis.users().createUser();
+
+        assertThrows(NullPointerException.class, () -> userBuilder.type((String) null));
+    }
+
+    @Test
+    @EnsureCanAddUser
     public void createUser_specifiesNullUserType_throwsException() {
         UserBuilder userBuilder = TestApis.users().createUser();
 
-        assertThrows(NullPointerException.class, () -> userBuilder.type(null));
+        assertThrows(NullPointerException.class, () -> userBuilder.type((UserType) null));
     }
 
     @Test

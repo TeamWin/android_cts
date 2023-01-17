@@ -80,6 +80,13 @@ public class ComponentReference {
     }
 
     /**
+     * See {@link ComponentName#flattenToString()}.
+     */
+    public String flattenToString() {
+        return componentName().flattenToString();
+    }
+
+    /**
      * Enable this component for the instrumented user.
      */
     public ComponentReference enable() {

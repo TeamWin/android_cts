@@ -26,6 +26,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.withDescription;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -1755,12 +1756,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
 
     private static Predicate<ImeEvent> onPerformHandwritingGestureResultMatcher(
             long requestId) {
-        return event -> {
+        return withDescription("onPerformHandwritingGestureResult(" + requestId + ")", event -> {
             if (!TextUtils.equals("onPerformHandwritingGestureResult", event.getEventName())) {
                 return false;
             }
             return event.getArguments().getLong("requestId") == requestId;
-        };
+        });
     }
 
     /**

@@ -103,11 +103,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testCannotRemoveManagedProfile() throws DeviceNotAvailableException {
-        assertThat(getDevice().removeUser(mUserId)).isFalse();
-    }
-
-    @Test
     public void testCanRelinquishControlOverDevice() throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", "testSetAndGetLockInfo",
                 mUserId);
@@ -116,13 +111,13 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         assertHasNoUser(mUserId);
 
         try {
-            installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+            installAppAsUser(DEVICE_ADMIN_APK, /* userId= */ 0);
             assertTrue(setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED,
-                    mPrimaryUserId, /*expectFailure*/false));
+                    /* userId= */ 0, /*expectFailure*/false));
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", "testLockInfoIsNull",
-                    mPrimaryUserId);
+                    /* userId= */ 0);
         } finally {
-            removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mPrimaryUserId);
+            removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, /* userId= */ 0);
             getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
         }
     }
@@ -519,23 +514,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                         .setAdminPackageName(DEVICE_ADMIN_PKG)
                         .setTimePeriod(0)
                         .build());
-    }
-
-    @Test
-    public void testWorkProfileMaximumTimeOff() throws Exception {
-        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
-                "testSetManagedProfileMaximumTimeOff1Sec", mUserId);
-
-        toggleQuietMode(true);
-        // Verify that at some point personal app becomes impossible to launch.
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, SUSPENSION_CHECKER_CLASS,
-                "testWaitForActivityNotLaunchable", mPrimaryUserId);
-        toggleQuietMode(false);
-        // Ensure the profile is properly started before wipe broadcast is sent in teardown.
-        waitForUserUnlock(mUserId);
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
-                "testPersonalAppsSuspendedByTimeout", mUserId);
     }
 
     @Test

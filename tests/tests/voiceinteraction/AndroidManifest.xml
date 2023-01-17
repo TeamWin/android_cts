@@ -120,7 +120,8 @@
 
         <!-- VisualQueryDetectionService -->
         <service
-            android:name=".services.NoOpVisualQueryDetectionService"
+            android:name="android.voiceinteraction.service.MainVisualQueryDetectionService"
+            android:permission="android.permission.BIND_VISUAL_QUERY_DETECTION_SERVICE"
             android:isolatedProcess="true"
             android:exported="true">
         </service>

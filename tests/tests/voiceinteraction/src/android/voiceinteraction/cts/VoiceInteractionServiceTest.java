@@ -16,6 +16,7 @@
 
 package android.voiceinteraction.cts;
 
+import static android.service.voice.VoiceInteractionService.KEY_SHOW_SESSION_ID;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -50,7 +51,7 @@ import java.util.Objects;
 public class VoiceInteractionServiceTest {
 
     private static final String TAG = "VoiceInteractionServiceTest";
-    private static final String KEY_SHOW_SESSION = "showSession";
+    private static final String KEY_SHOW_SESSION_TEST = "showSessionTest";
 
     // The VoiceInteractionService used by this test
     private static final String SERVICE_COMPONENT =
@@ -72,7 +73,7 @@ public class VoiceInteractionServiceTest {
     public void setup() {
         // VoiceInteractionServiceConnectedRule handles the service connected, we should be
         // able to get service
-        mService = (CtsBasicVoiceInteractionService) CtsBasicVoiceInteractionService.getService();
+        mService = (CtsBasicVoiceInteractionService) BaseVoiceInteractionService.getService();
         // Check we can get the service, we need service object to call the service provided method
         Objects.requireNonNull(mService);
     }
@@ -86,7 +87,7 @@ public class VoiceInteractionServiceTest {
     public void testShowSession_onPrepareToShowSessionCalled() throws Exception {
         final Bundle args = new Bundle();
         final int value = 100;
-        args.putInt(KEY_SHOW_SESSION, value);
+        args.putInt(KEY_SHOW_SESSION_TEST, value);
         final int flags = VoiceInteractionSession.SHOW_WITH_ASSIST;
 
         BaseVoiceInteractionService.initShowSessionLatch();
@@ -94,7 +95,51 @@ public class VoiceInteractionServiceTest {
         BaseVoiceInteractionService.waitOnPrepareToShowSession();
 
         final Bundle resultArgs = mService.getPrepareToShowSessionArgs();
-        assertThat(resultArgs.getInt(KEY_SHOW_SESSION , /* defaultValue= */ -1)).isEqualTo(value);
+        assertThat(resultArgs.getInt(KEY_SHOW_SESSION_TEST, /* defaultValue= */ -1))
+                .isEqualTo(value);
+        assertThat(resultArgs.containsKey(KEY_SHOW_SESSION_ID)).isTrue();
         assertThat(mService.getPrepareToShowSessionFlags()).isEqualTo(flags);
+    }
+
+    @Test
+    public void testShowSessionWithNullArgs_onPrepareToShowSessionCalledHasId() throws Exception {
+        final int flags = VoiceInteractionSession.SHOW_WITH_ASSIST;
+
+        BaseVoiceInteractionService.initShowSessionLatch();
+        mService.showSession(/* args= */ null, flags);
+        BaseVoiceInteractionService.waitOnPrepareToShowSession();
+
+        final Bundle resultArgs = mService.getPrepareToShowSessionArgs();
+        assertThat(resultArgs).isNotNull();
+        assertThat(resultArgs.containsKey(KEY_SHOW_SESSION_ID)).isTrue();
+        assertThat(mService.getPrepareToShowSessionFlags()).isEqualTo(flags);
+    }
+
+    @Test
+    public void testShowSession_onPrepareToShowSessionCalledTwiceIdIsDifferent() throws Exception {
+        final Bundle args = new Bundle();
+        final int flags = 0;
+
+        // trigger showSession first time
+        BaseVoiceInteractionService.initShowSessionLatch();
+        mService.showSession(args, flags);
+        BaseVoiceInteractionService.waitOnPrepareToShowSession();
+
+        // get the first showSession id
+        Bundle resultArgs = mService.getPrepareToShowSessionArgs();
+        assertThat(resultArgs.containsKey(KEY_SHOW_SESSION_ID)).isTrue();
+        final int firstId = resultArgs.getInt(KEY_SHOW_SESSION_ID);
+
+        // trigger showSession second time
+        BaseVoiceInteractionService.initShowSessionLatch();
+        mService.showSession(args, flags);
+        BaseVoiceInteractionService.waitOnPrepareToShowSession();
+
+        // get the second showSession id
+        resultArgs = mService.getPrepareToShowSessionArgs();
+        assertThat(resultArgs.containsKey(KEY_SHOW_SESSION_ID)).isTrue();
+        final int secondId = resultArgs.getInt(KEY_SHOW_SESSION_ID);
+
+        assertThat(secondId).isGreaterThan(firstId);
     }
 }

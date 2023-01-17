@@ -29,9 +29,8 @@ import java.lang.annotation.Target;
 /**
  * Mark that a test requires the given test app to be installed on the given user.
  *
- * <p>You should use {@code Devicestate} to ensure that the device enters
- * the correct state for the method. You can use {@code Devicestate#delegate()} to interact with
- * the delegate.
+ * <p>You should use {@code DeviceState} to ensure that the device enters
+ * the correct state for the method.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

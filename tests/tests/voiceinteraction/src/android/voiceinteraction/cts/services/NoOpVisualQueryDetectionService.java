@@ -19,7 +19,6 @@ package android.voiceinteraction.cts.services;
 import android.os.PersistableBundle;
 import android.os.SharedMemory;
 import android.service.voice.VisualQueryDetectionService;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -50,11 +49,6 @@ public class NoOpVisualQueryDetectionService extends VisualQueryDetectionService
             long callbackTimeoutMillis,
             @Nullable IntConsumer statusCallback) {
         super.onUpdateState(options, sharedMemory, callbackTimeoutMillis, statusCallback);
-        // Report success
-        Log.d(TAG, "onUpdateState success");
-        if (statusCallback != null) {
-            statusCallback.accept(INITIALIZATION_STATUS_SUCCESS);
-        }
     }
 
 }

@@ -17,7 +17,6 @@
 package com.android.bedstead.nene.packages;
 
 import static android.Manifest.permission.FORCE_STOP_PACKAGES;
-import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.QUERY_ALL_PACKAGES;
 import static android.content.pm.ApplicationInfo.FLAG_STOPPED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
@@ -31,12 +30,14 @@ import static android.os.Build.VERSION_CODES.S;
 import static android.os.Process.myUid;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.CHANGE_COMPONENT_ENABLED_STATE;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_ROLE_HOLDERS;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.role.RoleManager;
@@ -933,7 +934,7 @@ public final class Package {
     @Experimental
     public RoleContext setAsRoleHolder(String role, UserReference user) {
         try (PermissionContext p = TestApis.permissions().withPermission(
-                MANAGE_ROLE_HOLDERS)) {
+                MANAGE_ROLE_HOLDERS, INTERACT_ACROSS_USERS_FULL)) {
             DefaultBlockingCallback<Boolean> blockingCallback = new DefaultBlockingCallback<>();
 
             sRoleManager.addRoleHolderAsUser(

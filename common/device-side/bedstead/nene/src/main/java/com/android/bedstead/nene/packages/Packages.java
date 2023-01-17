@@ -333,7 +333,7 @@ public final class Packages {
         }
 
         if (!user.exists() || !user.isUnlocked()) {
-            throw new NeneException("Packages can not be installed in non-started users "
+            throw new NeneException("Packages can not be installed in non-unlocked users "
                     + "(Trying to install into user " + user + ")");
         }
 

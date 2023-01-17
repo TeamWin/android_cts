@@ -112,6 +112,40 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                 }
             };
 
+    // A VisualQueryDetector.Callback no nothing on callback methods
+    final VisualQueryDetector.Callback mNoOpVisualQueryDetectorCallback =
+                new VisualQueryDetector.Callback() {
+        @Override
+        public void onQueryDetected(@NonNull String partialQuery) {
+            //No-op
+        }
+
+        @Override
+        public void onQueryRejected() {
+            //No-op
+        }
+
+        @Override
+        public void onQueryFinished() {
+            //No-op
+        }
+
+        @Override
+        public void onVisualQueryDetectionServiceInitialized(int status) {
+            Log.i(mTag, "onVisualQueryDetectionServiceInitialized status = " + status);
+        }
+
+        @Override
+        public void onVisualQueryDetectionServiceRestarted() {
+            //No-op
+        }
+
+        @Override
+        public void onError() {
+            //No-op
+        }
+    };
+
     // the status of onHotwordDetectionServiceInitialized()
     int mInitializedStatus = STATUS_NO_CALLBACK_CALLED;
 
@@ -147,8 +181,8 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     }
 
     @Override
-    public void onShowSessionFailed() {
-        Log.d(mTag, "onShowSessionFailed");
+    public void onShowSessionFailed(Bundle args) {
+        Log.d(mTag, "onShowSessionFailed args = " + args);
     }
 
     /**

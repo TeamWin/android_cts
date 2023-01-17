@@ -102,18 +102,34 @@ public final class UserReference implements AutoCloseable {
                 .getSystemService(UserManager.class);
     }
 
-    public final int id() {
+    /**
+     * The user's id.
+     */
+    public int id() {
         return mId;
     }
 
+    /**
+     * {@code true} if this is the system user.
+     */
     public boolean isSystem() {
         return id() == 0;
     }
 
     /**
+     * {@code true} if this is a test user which should not include any user data.
+     */
+    public boolean isForTesting() {
+        if (!Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
+            return false;
+        }
+        return userInfo().isForTesting();
+    }
+
+    /**
      * Get a {@link UserHandle} for the {@link #id()}.
      */
-    public final UserHandle userHandle() {
+    public UserHandle userHandle() {
         return UserHandle.of(mId);
     }
 
@@ -123,7 +139,7 @@ public final class UserReference implements AutoCloseable {
      * <p>If the user does not exist, or the removal fails for any other reason, a
      * {@link NeneException} will be thrown.
      */
-    public final void remove() {
+    public void remove() {
         try {
             // Expected success string is "Success: removed user"
             ShellCommand.builder("pm remove-user")
@@ -687,6 +703,9 @@ public final class UserReference implements AutoCloseable {
         return TestApis.users().fetchUser(mId);
     }
 
+    /**
+     * Do not use this method except for backwards compatibility.
+     */
     private AdbUser adbUser() {
         AdbUser user = adbUserOrNull();
         if (user == null) {

@@ -426,10 +426,6 @@ public final class Processor extends AbstractProcessor {
                     + "startUpdateCredentialsSession(android.accounts.Account, String, android.os"
                     + ".Bundle, android.app.Activity, android.accounts"
                     + ".AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
-            "public android.accounts.AccountManagerFuture<android.os.Bundle> updateCredentials"
-                    + "(android.accounts.Account, String, android.os.Bundle, android.app"
-                    + ".Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, "
-                    + "android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.os.Bundle> confirmCredentials"
                     + "(android.accounts.Account, android.os.Bundle, android.app.Activity, "
                     + "android.accounts.AccountManagerCallback<android.os.Bundle>, android.os"

@@ -67,8 +67,9 @@ import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivity;
 import com.android.bedstead.testapp.TestAppInstance;
 
+import com.google.common.truth.Truth;
+
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -453,7 +454,6 @@ public final class PermissionGrantTest {
     }
 
     @CanSetPolicyTest(policy = SetSensorPermissionGranted.class)
-    @Ignore("TODO(198280344): Re-enable when we can set sensor permissions using device owner")
     public void grantSensorPermission_setsGrantState(
             @SensorPermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -499,7 +499,6 @@ public final class PermissionGrantTest {
     }
 
     @PolicyAppliesTest(policy = SetSensorPermissionGranted.class)
-    @Ignore("TODO(198280344): Re-enable when we can set sensor permissions using device owner")
     public void grantSensorPermission_permissionIsGranted(
             @SensorPermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -541,7 +540,6 @@ public final class PermissionGrantTest {
     }
 
     @PolicyDoesNotApplyTest(policy = SetSensorPermissionGranted.class)
-    @Ignore("TODO(198280344): Re-enable when we can set sensor permissions using device owner")
     public void grantSensorPermission_doesNotApplyToUser_permissionIsNotGranted(
             @SensorPermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -706,7 +704,6 @@ public final class PermissionGrantTest {
 
     @PolicyAppliesTest(policy = SetSensorPermissionGranted.class)
     @NotificationsTest
-    @Ignore("TODO(198280344): Re-enable when we can set sensor permissions using device owner")
     public void grantLocationPermission_userNotified(
             @LocationPermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()

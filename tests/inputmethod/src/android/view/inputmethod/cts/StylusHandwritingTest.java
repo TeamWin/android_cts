@@ -23,6 +23,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.withDescription;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -907,16 +908,16 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
 
             expectEvent(
                     stream,
-                    updateEditorToolTypeMatcher(toolType),
+                    onUpdateEditorToolTypeMatcher(toolType),
                     TIMEOUT);
 
             // Tap with stylus on unfocused editor
             TestUtils.injectStylusDownEvent(unfocusedEditText, startX, startY);
             event = TestUtils.injectStylusUpEvent(unfocusedEditText, startX, startY);
-            expectEvent(stream, startInputMatcher(toolType, marker2), TIMEOUT);
+            expectEvent(stream, onStartInputMatcher(toolType, marker2), TIMEOUT);
             expectEvent(
                     stream,
-                    updateEditorToolTypeMatcher(event.getToolType(event.getActionIndex())),
+                    onUpdateEditorToolTypeMatcher(event.getToolType(event.getActionIndex())),
                     TIMEOUT);
         }
     }
@@ -953,7 +954,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     "tool type finger must match", MotionEvent.TOOL_TYPE_FINGER, toolTypeFinger);
             expectEvent(
                     stream,
-                    updateEditorToolTypeMatcher(toolTypeFinger),
+                    onUpdateEditorToolTypeMatcher(toolTypeFinger),
                     TIMEOUT);
 
             // tap on unfocused editor
@@ -963,16 +964,16 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             toolTypeFinger = upEvent.getToolType(upEvent.getActionIndex());
             assertEquals(
                     "tool type finger must match", MotionEvent.TOOL_TYPE_FINGER, toolTypeFinger);
-            expectEvent(stream, startInputMatcher(toolTypeFinger, marker2), TIMEOUT);
+            expectEvent(stream, onStartInputMatcher(toolTypeFinger, marker2), TIMEOUT);
             expectEvent(
                     stream,
-                    updateEditorToolTypeMatcher(MotionEvent.TOOL_TYPE_FINGER),
+                    onUpdateEditorToolTypeMatcher(MotionEvent.TOOL_TYPE_FINGER),
                     TIMEOUT);
         }
     }
 
-    private static Predicate<ImeEvent> startInputMatcher(int toolType, String marker) {
-        return event -> {
+    private static Predicate<ImeEvent> onStartInputMatcher(int toolType, String marker) {
+        Predicate<ImeEvent> matcher = event -> {
             if (!TextUtils.equals("onStartInput", event.getEventName())) {
                 return false;
             }
@@ -980,16 +981,20 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             return info.getInitialToolType() == toolType
                     && TextUtils.equals(marker, info.privateImeOptions);
         };
+        return withDescription(
+                "onStartInput(initialToolType=" + toolType + ",marker=" + marker + ")", matcher);
     }
 
-    private static Predicate<ImeEvent> updateEditorToolTypeMatcher(int expectedToolType) {
-        return event -> {
+    private static Predicate<ImeEvent> onUpdateEditorToolTypeMatcher(int expectedToolType) {
+        Predicate<ImeEvent> matcher = event -> {
             if (!TextUtils.equals("onUpdateEditorToolType", event.getEventName())) {
                 return false;
             }
             final int actualToolType = event.getArguments().getInt("toolType");
             return actualToolType == expectedToolType;
         };
+        return withDescription("onUpdateEditorToolType(toolType=" + expectedToolType + ")",
+                matcher);
     }
 
     /**

@@ -23,10 +23,12 @@ import static android.os.Build.VERSION.SDK_INT;
 import static com.android.bedstead.harrier.AnnotationExecutorUtil.checkFailOrSkip;
 import static com.android.bedstead.harrier.AnnotationExecutorUtil.failOrSkip;
 import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
+import static com.android.bedstead.harrier.annotations.EnsureHasAccount.DEFAULT_ACCOUNT_KEY;
 import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DEFAULT_TEST_APP_KEY;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
+import static com.android.bedstead.remoteaccountauthenticator.RemoteAccountAuthenticator.REMOTE_ACCOUNT_AUTHENTICATOR_TEST_APP;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
@@ -52,14 +54,20 @@ import com.android.bedstead.harrier.annotations.EnsureCanAddUser;
 import com.android.bedstead.harrier.annotations.EnsureCanGetPermission;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagValue;
 import com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet;
+import com.android.bedstead.harrier.annotations.EnsureHasAccount;
+import com.android.bedstead.harrier.annotations.EnsureHasAccountAuthenticator;
+import com.android.bedstead.harrier.annotations.EnsureHasAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
+import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
@@ -109,6 +117,7 @@ import com.android.bedstead.harrier.annotations.meta.RequireRunOnProfileAnnotati
 import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
 import com.android.bedstead.harrier.annotations.meta.RequiresBedsteadJUnit4;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.accounts.AccountReference;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
 import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
@@ -125,6 +134,7 @@ import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.Tags;
 import com.android.bedstead.nene.utils.Versions;
+import com.android.bedstead.remoteaccountauthenticator.RemoteAccountAuthenticator;
 import com.android.bedstead.remotedpc.RemoteDelegate;
 import com.android.bedstead.remotedpc.RemoteDevicePolicyManagerRoleHolder;
 import com.android.bedstead.remotedpc.RemoteDpc;
@@ -161,6 +171,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -1002,6 +1013,56 @@ public final class DeviceState extends HarrierRule {
                 executor.applyAnnotation(annotation);
                 continue;
             }
+
+
+            if (annotation instanceof EnsureHasAccountAuthenticator) {
+                EnsureHasAccountAuthenticator ensureHasAccountAuthenticatorAnnotation =
+                        (EnsureHasAccountAuthenticator) annotation;
+                ensureHasAccountAuthenticator(ensureHasAccountAuthenticatorAnnotation.onUser());
+                continue;
+            }
+
+            if (annotation instanceof EnsureHasAccount) {
+                EnsureHasAccount ensureHasAccountAnnotation =
+                        (EnsureHasAccount) annotation;
+                ensureHasAccount(
+                        ensureHasAccountAnnotation.onUser(),
+                        ensureHasAccountAnnotation.key(),
+                        ensureHasAccountAnnotation.features());
+                continue;
+            }
+
+            if (annotation instanceof EnsureHasAccounts) {
+                EnsureHasAccounts ensureHasAccountsAnnotation =
+                        (EnsureHasAccounts) annotation;
+                ensureHasAccounts(ensureHasAccountsAnnotation.value());
+                continue;
+            }
+
+            if (annotation instanceof EnsureHasNoAccounts) {
+                EnsureHasNoAccounts ensureHasNoAccountsAnnotation =
+                        (EnsureHasNoAccounts) annotation;
+                ensureHasNoAccounts(ensureHasNoAccountsAnnotation.onUser());
+                continue;
+            }
+
+            if (annotation instanceof EnsureHasUserRestriction) {
+                EnsureHasUserRestriction ensureHasUserRestrictionAnnotation =
+                        (EnsureHasUserRestriction) annotation;
+                ensureHasUserRestriction(
+                        ensureHasUserRestrictionAnnotation.value(),
+                        ensureHasUserRestrictionAnnotation.onUser());
+                continue;
+            }
+
+            if (annotation instanceof EnsureDoesNotHaveUserRestriction) {
+                EnsureDoesNotHaveUserRestriction ensureDoesNotHaveUserRestrictionAnnotation =
+                        (EnsureDoesNotHaveUserRestriction) annotation;
+                ensureDoesNotHaveUserRestriction(
+                        ensureDoesNotHaveUserRestrictionAnnotation.value(),
+                        ensureDoesNotHaveUserRestrictionAnnotation.onUser());
+                continue;
+            }
         }
 
         requireSdkVersion(/* min= */ mMinSdkVersionCurrentTest,
@@ -1375,6 +1436,8 @@ public final class DeviceState extends HarrierRule {
     private UserType mOtherUserType;
 
     private PermissionContextImpl mPermissionContext = null;
+    private Map<UserReference, Set<String>> mAddedUserRestrictions = new HashMap<>();
+    private Map<UserReference, Set<String>> mRemovedUserRestrictions = new HashMap<>();
     private final List<UserReference> mCreatedUsers = new ArrayList<>();
     private final List<RemovedUser> mRemovedUsers = new ArrayList<>();
     private final List<UserReference> mUsersSetPasswords = new ArrayList<>();
@@ -1391,6 +1454,10 @@ public final class DeviceState extends HarrierRule {
     private Map<String, TestAppInstance> mTestApps = new HashMap<>();
     private final Map<String, String> mOriginalGlobalSettings = new HashMap<>();
     private boolean mAnnotationHasSwitchedUser = false;
+    private final Set<AccountReference> mCreatedAccounts = new HashSet<>();
+    private Map<String, AccountReference> mAccounts = new HashMap<>();
+    private final Map<UserReference, RemoteAccountAuthenticator> mAccountAuthenticators =
+            new HashMap<>();
 
     private static final class RemovedUser {
         // Store the user builder so we can recreate the user later
@@ -2135,6 +2202,8 @@ public final class DeviceState extends HarrierRule {
         mPrimaryPolicyManager = null;
         mOtherUserType = null;
         mTestApps.clear();
+        mAccounts.clear();
+        mAccountAuthenticators.clear();
 
         mTestAppProvider.restore();
         if (mPermissionContext != null) {
@@ -2149,6 +2218,25 @@ public final class DeviceState extends HarrierRule {
     private Set<TestAppInstance> mUninstalledTestApps = new HashSet<>();
 
     private void teardownShareableState() {
+        mCreatedAccounts.forEach(AccountReference::remove);
+
+        for (Map.Entry<UserReference, Set<String>> userRestrictions
+                : mAddedUserRestrictions.entrySet()) {
+            for (String restriction : userRestrictions.getValue()) {
+                ensureDoesNotHaveUserRestriction(restriction, userRestrictions.getKey());
+            }
+        }
+
+        for (Map.Entry<UserReference, Set<String>> userRestrictions
+                : mRemovedUserRestrictions.entrySet()) {
+            for (String restriction : userRestrictions.getValue()) {
+                ensureHasUserRestriction(restriction, userRestrictions.getKey());
+            }
+        }
+
+        mAddedUserRestrictions.clear();
+        mRemovedUserRestrictions.clear();
+
         if (mHasChangedDeviceOwner) {
             if (mOriginalDeviceOwner == null) {
                 if (mDeviceOwner != null) {
@@ -2549,7 +2637,12 @@ public final class DeviceState extends HarrierRule {
                 }
             }
 
-            // TODO(scottjonathan): Remove accounts
+            if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
+                ensureHasNoAccounts(UserType.ANY);
+            } else {
+                // Prior to U this only checked the system user
+                ensureHasNoAccounts(UserType.SYSTEM_USER);
+            }
             ensureHasNoProfileOwner(userReference);
 
             if (!mHasChangedDeviceOwner) {
@@ -2619,6 +2712,13 @@ public final class DeviceState extends HarrierRule {
         if (currentDeviceOwner != null && currentDeviceOwner.user().equals(user)) {
             // Can't have DO and PO on the same user
             ensureHasNoDeviceOwner();
+        }
+
+        if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
+            ensureHasNoAccounts(user);
+        } else {
+            // Prior to U this incorrectly checked the system user
+            ensureHasNoAccounts(UserType.SYSTEM_USER);
         }
 
         if (currentProfileOwner != null && currentProfileOwner.componentName()
@@ -3195,6 +3295,115 @@ public final class DeviceState extends HarrierRule {
         TestApis.flags().set(namespace, key, value);
     }
 
+    /**
+     * Access harrier-managed accounts on the instrumented user.
+     */
+    public RemoteAccountAuthenticator accounts() {
+        return accounts(TestApis.users().instrumented());
+    }
+
+    /**
+     * Access harrier-managed accounts on the given user.
+     */
+    public RemoteAccountAuthenticator accounts(UserType user) {
+        return accounts(resolveUserTypeToUser(user));
+    }
+
+    /**
+     * Access harrier-managed accounts on the given user.
+     */
+    public RemoteAccountAuthenticator accounts(UserReference user) {
+        if (!mAccountAuthenticators.containsKey(user)) {
+            throw new IllegalStateException("No Harrier-Managed account authenticator on user "
+                    + user + ". Did you use @EnsureHasAccountAuthenticator or @EnsureHasAccount?");
+        }
+
+        return mAccountAuthenticators.get(user);
+    }
+
+    private void ensureHasAccountAuthenticator(UserType onUser) {
+        UserReference user = resolveUserTypeToUser(onUser);
+        // We don't use .install() so we can rely on the default testapp sharing/uninstall logic
+        ensureTestAppInstalled(REMOTE_ACCOUNT_AUTHENTICATOR_TEST_APP,
+                user);
+
+        mAccountAuthenticators.put(user, RemoteAccountAuthenticator.install(user));
+    }
+
+    private void ensureHasAccount(UserType onUser, String key, String[] features) {
+        ensureHasAccount(onUser, key, features, new HashSet<>());
+    }
+
+
+    private AccountReference ensureHasAccount(UserType onUser, String key, String[] features,
+            Set<AccountReference> ignoredAccounts) {
+        ensureHasAccountAuthenticator(onUser);
+
+        Optional<AccountReference> account =
+                accounts(onUser).allAccounts().stream().filter(i -> !ignoredAccounts.contains(i))
+                        .findFirst();
+
+        if (account.isPresent()) {
+            accounts(onUser).setFeatures(account.get(), Set.of(features));
+            mAccounts.put(key, account.get());
+            return account.get();
+        }
+
+        AccountReference createdAccount = accounts(onUser).addAccount()
+                .features(Set.of(features))
+                .add();
+        mCreatedAccounts.add(createdAccount);
+        mAccounts.put(key, createdAccount);
+        return createdAccount;
+    }
+
+    private void ensureHasAccounts(EnsureHasAccount[] accounts) {
+        Set<AccountReference> ignoredAccounts = new HashSet<>();
+
+        for (EnsureHasAccount account : accounts) {
+            ignoredAccounts.add(ensureHasAccount(
+                    account.onUser(), account.key(), account.features(), ignoredAccounts));
+        }
+    }
+
+    private void ensureHasNoAccounts(UserType userType) {
+        if (userType == UserType.ANY) {
+            TestApis.users().all().forEach(this::ensureHasNoAccounts);
+        } else {
+            ensureHasNoAccounts(resolveUserTypeToUser(userType));
+        }
+    }
+
+    private void ensureHasNoAccounts(UserReference user) {
+        if (REMOTE_ACCOUNT_AUTHENTICATOR_TEST_APP.pkg().installedOnUser(user)) {
+            RemoteAccountAuthenticator.install(user).allAccounts()
+                    .forEach(AccountReference::remove);
+        }
+
+        if (!TestApis.accounts().all(user).isEmpty()) {
+            throw new NeneException("Expected no accounts on user " + user
+                    + " but there was some that could not be removed");
+        }
+    }
+
+    /**
+     * Get the default account defined with {@link EnsureHasAccount}.
+     */
+    public AccountReference account() {
+        return account(DEFAULT_ACCOUNT_KEY);
+    }
+
+    /**
+     * Get the account defined with {@link EnsureHasAccount} with a given key.
+     */
+    public AccountReference account(String key) {
+        if (!mAccounts.containsKey(key)) {
+            throw new IllegalStateException("No account for key " + key);
+        }
+
+        return mAccounts.get(key);
+    }
+
     @Override
     boolean isHeadlessSystemUserMode() {
         return TestApis.users().isHeadlessSystemUserMode();
@@ -3212,5 +3421,70 @@ public final class DeviceState extends HarrierRule {
             }
         }
         return mAnnotationExecutors.get(annotationExecutorClass);
+    }
+
+    private void ensureHasUserRestriction(String restriction, UserType onUser) {
+        ensureHasUserRestriction(restriction, resolveUserTypeToUser(onUser));
+    }
+
+    private void ensureHasUserRestriction(String restriction, UserReference onUser) {
+        if (TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction)) {
+            return;
+        }
+
+        ensureHasProfileOwner(onUser,
+                /* isPrimary= */ false, /* isParentInstance= */ false,
+                /* affiliationIds= */ Set.of());
+
+        RemotePolicyManager dpc = profileOwner(onUser);
+        dpc.devicePolicyManager().addUserRestriction(dpc.componentName(), restriction);
+
+        if (mRemovedUserRestrictions.containsKey(onUser)
+                && mRemovedUserRestrictions.get(onUser).contains(restriction)) {
+            mRemovedUserRestrictions.get(onUser).remove(restriction);
+        } else {
+            if (!mAddedUserRestrictions.containsKey(onUser)) {
+                mAddedUserRestrictions.put(onUser, new HashSet<>());
+            }
+
+            mAddedUserRestrictions.get(onUser).add(restriction);
+        }
+
+        if (!TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction)) {
+            throw new NeneException("Error setting user restriction " + restriction);
+        }
+    }
+
+    private void ensureDoesNotHaveUserRestriction(String restriction, UserType onUser) {
+        ensureDoesNotHaveUserRestriction(restriction, resolveUserTypeToUser(onUser));
+    }
+
+    private void ensureDoesNotHaveUserRestriction(String restriction, UserReference onUser) {
+        if (!TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction)) {
+            return;
+        }
+
+        ensureHasProfileOwner(onUser,
+                /* isPrimary= */ false, /* isParentInstance= */ false,
+                /* affiliationIds= */ Set.of());
+
+        RemotePolicyManager dpc = profileOwner(onUser);
+        dpc.devicePolicyManager().clearUserRestriction(dpc.componentName(), restriction);
+
+        if (mAddedUserRestrictions.containsKey(onUser)
+                && mAddedUserRestrictions.get(onUser).contains(restriction)) {
+            mAddedUserRestrictions.get(onUser).remove(restriction);
+        } else {
+            if (!mRemovedUserRestrictions.containsKey(onUser)) {
+                mRemovedUserRestrictions.put(onUser, new HashSet<>());
+            }
+
+            mRemovedUserRestrictions.get(onUser).add(restriction);
+        }
+
+        if (TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction)) {
+            throw new NeneException("Error removing user restriction " + restriction + ". "
+                    + "It's possible this is set by the system and cannot be removed");
+        }
     }
 }
