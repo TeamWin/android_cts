@@ -1,16 +1,7 @@
 {
-  "kernel-presubmit": [
+  "kernel-postsubmit": [
     {
-      "name": "CtsLibcoreFileIOTestCases",
-      "options": [
-        {
-          // TODO(b/236710517)
-          "exclude-filter": "android.cts.FileChannelInterProcessLockTest#test_lockJJZ_Exclusive_asyncChannel"
-        },
-        {
-          "exclude-filter": "android.cts.FileChannelInterProcessLockTest#test_tryLockJJZ_Exclusive_syncChannel"
-        }
-      ]
+      "name": "CtsLibcoreFileIOTestCases"
     }
   ]
 }

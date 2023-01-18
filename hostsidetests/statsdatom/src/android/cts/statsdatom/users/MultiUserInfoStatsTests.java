@@ -75,6 +75,7 @@ public class MultiUserInfoStatsTests extends DeviceTestCase implements IBuildRec
             MultiUserInfo multiUserInfo = data.get(0).getMultiUserInfo();
             assertThat(multiUserInfo.getMaxSupportedUsers()).isEqualTo(maxSupportedUsers);
             assertThat(multiUserInfo.getMultiUserSettingOn()).isEqualTo(true);
+            assertThat(multiUserInfo.getSupportsAddingFullUsers()).isEqualTo(true);
         } else {
             data.isEmpty();
         }

@@ -585,12 +585,15 @@ public final class DevicePolicy {
      * Get active admins on the given user.
      */
     public Set<ComponentReference> getActiveAdmins(UserReference user) {
-        List<ComponentName> activeAdmins = devicePolicyManager(user).getActiveAdmins();
-        if (activeAdmins == null) {
-            return Set.of();
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            List<ComponentName> activeAdmins = devicePolicyManager(user).getActiveAdmins();
+            if (activeAdmins == null) {
+                return Set.of();
+            }
+            return activeAdmins.stream().map(ComponentReference::new).collect(
+                    Collectors.toSet());
         }
-        return activeAdmins.stream().map(ComponentReference::new).collect(
-                Collectors.toSet());
     }
 
     /**
@@ -627,5 +630,47 @@ public final class DevicePolicy {
         return new UserRestrictions(user);
     }
 
+    /**
+     * OEM-Set default cross profile packages.
+     */
+    @Experimental
+    public Set<Package> defaultCrossProfilePackages() {
+        return sDevicePolicyManager.getDefaultCrossProfilePackages()
+                .stream().map(i -> TestApis.packages().find(i))
+                .collect(Collectors.toSet());
+    }
 
+    /**
+     * True if there is a Device Owner who can grant sensor permissions.
+     */
+    @Experimental
+    @SuppressWarnings("NewApi")
+    public boolean canAdminGrantSensorsPermissions() {
+        if (!Versions.meetsMinimumSdkVersionRequirement(31)) {
+            return true;
+        }
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            return devicePolicyManager(TestApis.users().system()).canAdminGrantSensorsPermissions();
+        }
+    }
+
+    /**
+     * See DevicePolicyManager#getUserProvisioningState().
+     */
+    @Experimental
+    public int getUserProvisioningState() {
+        return getUserProvisioningState(TestApis.users().instrumented());
+    }
+
+    /**
+     * @see DevicePolicyManager#getUserProvisioningState().
+     */
+    @Experimental
+    public int getUserProvisioningState(UserReference user) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            return devicePolicyManager(user).getUserProvisioningState();
+        }
+    }
 }

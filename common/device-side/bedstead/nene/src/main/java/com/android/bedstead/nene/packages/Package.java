@@ -37,13 +37,13 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
 
-import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.role.RoleManager;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
@@ -733,11 +733,19 @@ public final class Package {
     }
 
     /**
-     * Interact with AppOps for the given package.
+     * Interact with AppOps on the instrumented user for the given package.
      */
     @Experimental
     public AppOps appOps() {
-        return new AppOps(this);
+        return appOps(TestApis.users().instrumented());
+    }
+
+    /**
+     * Interact with AppOps on the given user for the given package.
+     */
+    @Experimental
+    public AppOps appOps(UserReference user) {
+        return new AppOps(this, user);
     }
 
     /**
@@ -989,5 +997,25 @@ public final class Package {
         } catch (InterruptedException e) {
             throw new NeneException("Error while clearing role holder " + role, e);
         }
+    }
+
+    /**
+     * True if the given package on the instrumented user can have its ability to interact across
+     * profiles configured by the user.
+     */
+    @Experimental
+    public boolean canConfigureInteractAcrossProfiles() {
+        return canConfigureInteractAcrossProfiles(TestApis.users().instrumented());
+    }
+
+    /**
+     * True if the given package can have its ability to interact across profiles configured
+     * by the user.
+     */
+    @Experimental
+    public boolean canConfigureInteractAcrossProfiles(UserReference user) {
+        return TestApis.context().androidContextAsUser(user)
+                .getSystemService(CrossProfileApps.class)
+                .canConfigureInteractAcrossProfiles(packageName());
     }
 }

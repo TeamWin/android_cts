@@ -30,6 +30,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.media.tv.tuner.DemuxCapabilities;
+import android.media.tv.tuner.DemuxInfo;
 import android.media.tv.tuner.Descrambler;
 import android.media.tv.tuner.Lnb;
 import android.media.tv.tuner.LnbCallback;
@@ -107,6 +108,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.util.SparseIntArray;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -122,6 +124,7 @@ import org.junit.runner.RunWith;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -149,6 +152,176 @@ public class TunerTest {
     private TunerResourceManager mTunerResourceManager = null;
     private TestServiceConnection mConnection;
     private ISharedFilterTestServer mSharedFilterTestServer;
+
+    private int mDummyResourceCount = 0;
+    private DemuxFilterTypeProcessor mDFMTProcessor = new DemuxFilterTypeProcessor();
+
+    private final Object mResourceLostCountLock = new Object();
+    private int mResourceLostCount = 0;
+
+    private int getFilterSubTypeForTest(int filterType) {
+        int subType = Filter.TYPE_UNDEFINED;
+        switch (filterType) {
+            case (Filter.TYPE_TS):
+                subType = Filter.SUBTYPE_SECTION;
+                break;
+            case (Filter.TYPE_MMTP):
+                subType = Filter.SUBTYPE_PES;
+                break;
+            case (Filter.TYPE_IP):
+                subType = Filter.SUBTYPE_IP;
+                break;
+            case (Filter.TYPE_TLV):
+                subType = Filter.SUBTYPE_TLV;
+                break;
+            case (Filter.TYPE_ALP):
+                subType = Filter.SUBTYPE_SECTION;
+                break;
+            default:
+                break;
+        }
+        return subType;
+    }
+
+    private class DemuxFilterTypeProcessor {
+        // number of the emuxes on the system
+        int mNumOfDemuxes;
+
+        // the bitwise OR of all the DemuxFilterTypes on the system
+        int mCombinedCaps;
+
+        // the cap (singular) that are supported by the least # of demuxes on the system
+        int mLeastFrequentCap;
+        int mRunningMinCount;
+
+        // the cap with the least # of bits that are not singular
+        // e.g. if there are 4 demuxes with b111, b1011, b1000, b1010 --> b1010
+        int mSmallestMultiBitsCap;
+        int mRunningSmallestNumOfBits;
+
+        // for storing # of demux resources supporting each cap
+        SparseIntArray mCapCounts = new SparseIntArray();
+
+        public int getNumOfDemuxes() {
+            return mNumOfDemuxes;
+        }
+
+        public int getSmallestMultiBitsCap() {
+            return mSmallestMultiBitsCap;
+        }
+
+        public int getCapCount(int cap) {
+            if (cap >= Integer.SIZE) {
+                return 0;
+            }
+            return mCapCounts.get(cap, -1);
+        }
+
+        public int getLeastFrequentCap() {
+            return mLeastFrequentCap;
+        }
+
+        // e.g. getPartialCap(b101) --> b1
+        public int getPartialCap(int baseCap) {
+            int cap = 1;
+            for (int i = 0; i < Integer.SIZE; i++) {
+                if ((cap & baseCap) == cap) {
+                    return cap;
+                }
+                cap = cap << 1;
+            }
+            return baseCap;
+        }
+
+        // e.g. getFirstSupportedCap(b0) -> b1, when mCombinedCaps is b10101
+        //      getFirstSupportedCap(b1) -> b100, when mCombinedCaps is b10101
+        public int getFirstSupportedCap(int excludeCaps) {
+            int cap = 1;
+            for (int i = 0; i < Integer.SIZE; i++) {
+                if ((excludeCaps & cap) == 0
+                        && (mCombinedCaps & cap) == cap) {
+                    return cap;
+                }
+                cap = cap << 1;
+            }
+            return 0;
+        }
+
+        // e.g. getFirstNonSupportedCap() -> b01, when mCombinedCaps is b10101
+        public int getFirstNonSupportedCap() {
+            int cap = 1;
+            for (int i = 0; i < Integer.SIZE; i++) {
+                if ((cap & mCombinedCaps) != cap) {
+                    return cap;
+                }
+                cap = cap << 1;
+            }
+            return 0;
+        }
+
+        public void reset() {
+            mNumOfDemuxes = 0;
+            mSmallestMultiBitsCap = 0;
+            mRunningSmallestNumOfBits = Integer.SIZE;
+            mCombinedCaps = 0;
+            mCapCounts.clear();
+            mLeastFrequentCap = 0;
+            mRunningMinCount = Integer.MAX_VALUE;
+        }
+
+        DemuxFilterTypeProcessor() {
+            reset();
+        }
+
+        private void updateCapCounts(int caps) {
+            int mask = 1;
+            for (int i = 0; i < Integer.SIZE - 1; i++) {
+                if (mask > caps) {
+                    break;
+                }
+                if ((caps & mask) == mask) {
+                    int newCount = mCapCounts.get(mask, 0) + 1;
+                    mCapCounts.put(mask, newCount);
+                    if (newCount < mRunningMinCount) {
+                        mRunningMinCount = newCount;
+                        mLeastFrequentCap = mask;
+                    }
+                }
+                mask = mask << 1;
+            }
+        }
+
+        public void processEntry(DemuxFilterTypeInfo entry) {
+            int caps = entry.getCaps();
+            int numOfCaps = entry.getNumOfCaps();
+
+            // update mSmallestMultiBitsCap
+            if (numOfCaps > 1 && numOfCaps < mRunningSmallestNumOfBits) {
+                mRunningSmallestNumOfBits = numOfCaps;
+                mSmallestMultiBitsCap = caps;
+            }
+            mCombinedCaps = mCombinedCaps | caps;
+            updateCapCounts(caps);
+            mNumOfDemuxes++;
+        }
+    }
+
+    private class DemuxFilterTypeInfo {
+        int mFilterTypes;
+        int mNumOfCaps;
+
+        DemuxFilterTypeInfo(int filterTypes) {
+            mFilterTypes = filterTypes;
+            mNumOfCaps = Integer.bitCount(filterTypes);
+        }
+        public int getCaps() {
+            return mFilterTypes;
+        }
+        public int getNumOfCaps() {
+            return mNumOfCaps;
+        }
+    }
+
 
     private class TestServiceConnection implements ServiceConnection {
         private BlockingQueue<IBinder> mBlockingQueue = new LinkedBlockingQueue<>();
@@ -656,6 +829,185 @@ public class TunerTest {
             tuner.cancelTuning();
             tuner.close();
             tuner = null;
+        }
+    }
+
+    @Test
+    public void testConfigureDemux() throws Exception {
+        DemuxCapabilities dc = mTuner.getDemuxCapabilities();
+        if (dc == null || dc.getFilterTypeCapabilityList().length <= 0) {
+            return;
+        }
+
+        // Test configureDemux with all the valid capabilities and set up the demux info processor
+        mDFMTProcessor.reset();
+        DemuxInfo di = new DemuxInfo(Filter.TYPE_UNDEFINED);
+
+        for (int caps : dc.getFilterTypeCapabilityList()) {
+            di.setFilterTypes(caps);
+            assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(di));
+            assertEquals(caps, mTuner.getDesiredDemuxInfo().getFilterTypes());
+            mDFMTProcessor.processEntry(new DemuxFilterTypeInfo(caps));
+        }
+
+        // Test configureDemux with TYPE_UNDEFINED
+        di.setFilterTypes(Filter.TYPE_UNDEFINED);
+        assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(di));
+        assertEquals(Filter.TYPE_UNDEFINED, mTuner.getDesiredDemuxInfo().getFilterTypes());
+
+        // Validate getCurrentDemuxInfo() returns null
+        assertNull(mTuner.getCurrentDemuxInfo());
+
+        // Test configureDemux with unsupported cap
+        int nonSupportedCap = mDFMTProcessor.getFirstNonSupportedCap();
+        di.setFilterTypes(nonSupportedCap);
+        assertEquals(Tuner.RESULT_UNAVAILABLE, mTuner.configureDemux(di));
+
+        // Now confirm the demux release related behavior
+        // first get any demux resource
+        assertNotNull(mTuner.openDescrambler());
+        assertNotNull(mTuner.getCurrentDemuxInfo());
+        // configureDemux with TYPE_UNDEFINED and expect no release
+        di.setFilterTypes(Filter.TYPE_UNDEFINED);
+        assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(di));
+        assertEquals(Filter.TYPE_UNDEFINED, mTuner.getDesiredDemuxInfo().getFilterTypes());
+        assertNotNull(mTuner.getCurrentDemuxInfo());
+        // configureDemux with null to invoke demux release
+        assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(null));
+        assertEquals(Filter.TYPE_UNDEFINED, mTuner.getDesiredDemuxInfo().getFilterTypes());
+        assertNull(mTuner.getCurrentDemuxInfo());
+
+
+        // now through openFilter
+        int cap = mDFMTProcessor.getFirstSupportedCap(0);
+        assertNotEquals(0, cap);
+        Filter f = mTuner.openFilter(
+                cap, getFilterSubTypeForTest(cap), 1000, getExecutor(), getFilterCallback());
+        assertEquals(cap, mTuner.getDesiredDemuxInfo().getFilterTypes());
+        assertNotNull(f);
+        assertEquals(cap, mTuner.getCurrentDemuxInfo().getFilterTypes() & cap);
+
+        // configureDemux with TYPE_UNDEFINED and expect no release
+        assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(di));
+        assertEquals(Filter.TYPE_UNDEFINED, mTuner.getDesiredDemuxInfo().getFilterTypes());
+        assertNotNull(mTuner.getCurrentDemuxInfo());
+
+        // now configureDemux with null to invoke demux release
+        assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(null));
+        assertEquals(Filter.TYPE_UNDEFINED, mTuner.getDesiredDemuxInfo().getFilterTypes());
+        assertNull(mTuner.getCurrentDemuxInfo());
+
+        // do additional test if multi bits caps is available
+        int caps = mDFMTProcessor.getSmallestMultiBitsCap();
+        if (caps != 0) {
+            // configureDemux with multi bits caps and allocate demux
+            di.setFilterTypes(caps);
+            assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(di));
+            assertEquals(caps, mTuner.getDesiredDemuxInfo().getFilterTypes());
+            assertNotNull(mTuner.openDescrambler());
+            assertEquals(caps, mTuner.getCurrentDemuxInfo().getFilterTypes());
+
+            // configure with the same caps - everything should stay the same
+            assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(di));
+            assertEquals(caps, mTuner.getDesiredDemuxInfo().getFilterTypes());
+            assertEquals(caps, mTuner.getCurrentDemuxInfo().getFilterTypes());
+
+            // configure with the subset - everything except for the desired cap should stay the
+            // same
+            int partialCap = mDFMTProcessor.getPartialCap(caps);
+            di.setFilterTypes(partialCap);
+            assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(di));
+            assertEquals(partialCap, mTuner.getDesiredDemuxInfo().getFilterTypes());
+            assertEquals(caps, mTuner.getCurrentDemuxInfo().getFilterTypes());
+
+            // configure with another subset - everything except for the desired cap should stay the
+            // same
+            partialCap = partialCap ^ caps;
+            di.setFilterTypes(partialCap);
+            assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(di));
+            assertEquals(partialCap, mTuner.getDesiredDemuxInfo().getFilterTypes());
+            assertEquals(caps, mTuner.getCurrentDemuxInfo().getFilterTypes());
+
+            // configure with different cap - should trigger demux relesase
+            int exclusiveCap = mDFMTProcessor.getFirstSupportedCap(caps);
+            di.setFilterTypes(exclusiveCap);
+            assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(di));
+            assertEquals(exclusiveCap, mTuner.getDesiredDemuxInfo().getFilterTypes());
+            assertNull(mTuner.getCurrentDemuxInfo());
+
+            // now confirm that the openFilter() won't change the desired filter types when it's
+            // called with a type that is a subset of previously set desired filter types.
+            di.setFilterTypes(caps);
+            assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(di));
+            assertEquals(caps, mTuner.getDesiredDemuxInfo().getFilterTypes());
+            f = mTuner.openFilter(
+                    partialCap, getFilterSubTypeForTest(partialCap), 1000, getExecutor(),
+                        getFilterCallback());
+            assertEquals(caps, mTuner.getDesiredDemuxInfo().getFilterTypes());
+            assertEquals(caps, mTuner.getCurrentDemuxInfo().getFilterTypes());
+            assertNotNull(f);
+        }
+    }
+
+    @Test
+    public void testDemuxReclaim() throws Exception {
+        DemuxCapabilities dc = mTuner.getDemuxCapabilities();
+        if (dc == null || dc.getFilterTypeCapabilityList().length <= 0) {
+            return;
+        }
+
+        // Test configureDemux with all the valid capabilities and set up the demux info processor
+        mDFMTProcessor.reset();
+        DemuxInfo di = new DemuxInfo(Filter.TYPE_UNDEFINED);
+        for (int caps : dc.getFilterTypeCapabilityList()) {
+            di.setFilterTypes(caps);
+            assertEquals(Tuner.RESULT_SUCCESS, mTuner.configureDemux(di));
+            assertEquals(caps, mTuner.getDesiredDemuxInfo().getFilterTypes());
+            mDFMTProcessor.processEntry(new DemuxFilterTypeInfo(caps));
+        }
+
+        // get the cap that is supported by least number of Demux
+        int cap = mDFMTProcessor.getLeastFrequentCap();
+        int subType = getFilterSubTypeForTest(cap);
+        assertNotEquals(0, cap);
+
+        List<Tuner> lowerPrioTuners = new ArrayList<Tuner>();
+        List<Filter> filters = new ArrayList<Filter>();
+        int numOfCompatibleDemuxes = mDFMTProcessor.getCapCount(cap);
+        mResourceLostCount = 0;
+        Filter filter;
+        for (int i = 0; i < numOfCompatibleDemuxes; i++) {
+            Tuner tuner = new Tuner(mContext, null, 100);
+            tuner.setResourceLostListener(getExecutor(), new Tuner.OnResourceLostListener() {
+                @Override
+                public void onResourceLost(Tuner tuner) {
+                    synchronized (mResourceLostCountLock) {
+                        mResourceLostCount++;
+                    }
+                }
+            });
+            filter = tuner.openFilter(
+                    cap, subType, 1000, getExecutor(), getFilterCallback());
+            assertNotNull(filter);
+            assertEquals(cap, tuner.getCurrentDemuxInfo().getFilterTypes() & cap);
+
+            filters.add(filter);
+            lowerPrioTuners.add(tuner);
+        }
+
+        // now claim another demux with higher priority
+        Tuner highPrioTuner = new Tuner(mContext, null, 200);
+        filter = highPrioTuner.openFilter(
+                cap, subType, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(filter);
+        assertEquals(cap, highPrioTuner.getCurrentDemuxInfo().getFilterTypes() & cap);
+        Thread.sleep(1);
+        assertEquals(1, mResourceLostCount);
+        highPrioTuner.close();
+
+        // clean up the resource
+        for (Tuner t : lowerPrioTuners) {
+            t.close();
         }
     }
 
@@ -1186,6 +1538,7 @@ public class TunerTest {
         d.getFilterCapabilities();
         d.getLinkCapabilities();
         d.isTimeFilterSupported();
+        d.getFilterTypeCapabilityList();
     }
 
     @Test

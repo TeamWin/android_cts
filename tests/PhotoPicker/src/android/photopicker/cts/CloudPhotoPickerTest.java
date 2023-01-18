@@ -284,10 +284,15 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         assertThat(mediaIds).containsExactly(CLOUD_ID1);
 
         final ContentResolver resolver = mContext.getContentResolver();
+        try (Cursor c = resolver.query(
+                clipData.getItemAt(0).getUri(),
+                new String[] {MediaStore.MediaColumns.RELATIVE_PATH}, null, null)) {
+            assertThat(c).isNotNull();
+            assertThat(c.moveToFirst()).isTrue();
 
-        assertThrows(IllegalArgumentException.class, () -> resolver.query(
-                        clipData.getItemAt(0).getUri(),
-                        new String[] {MediaStore.MediaColumns.RELATIVE_PATH}, null, null));
+            assertThat(c.getString(c.getColumnIndex(MediaStore.MediaColumns.RELATIVE_PATH)))
+                    .isEqualTo(null);
+        }
     }
 
     @Test

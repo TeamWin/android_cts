@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.provider.Settings.Global.STAY_ON_WHILE_PLUGGED_IN;
 import static android.provider.Settings.System.SCREEN_OFF_TIMEOUT;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TURN_SCREEN_ON_ACTIVITY;
@@ -24,6 +25,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.PowerManager;
@@ -40,19 +42,27 @@ import org.junit.Test;
 public class KeepScreenOnTests extends MultiDisplayTestBase {
     private static final String TAG = "KeepScreenOnTests";
     private String mInitialDisplayTimeout;
+    private int mInitialStayOnWhilePluggedInSetting;
     private PowerManager mPowerManager;
+    private ContentResolver mContentResolver;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        mContentResolver = mContext.getContentResolver();
         mInitialDisplayTimeout =
-                Settings.System.getString(mContext.getContentResolver(), SCREEN_OFF_TIMEOUT);
+                Settings.System.getString(mContentResolver, SCREEN_OFF_TIMEOUT);
+        mInitialStayOnWhilePluggedInSetting =
+                Settings.Global.getInt(mContentResolver, STAY_ON_WHILE_PLUGGED_IN);
+        Settings.Global.putInt(mContentResolver, STAY_ON_WHILE_PLUGGED_IN, 0);
         mPowerManager = mContext.getSystemService(PowerManager.class);
     }
 
     @After
     public void tearDown() {
         setScreenOffTimeoutMs(mInitialDisplayTimeout);
+        Settings.Global.putInt(mContentResolver, STAY_ON_WHILE_PLUGGED_IN,
+                mInitialStayOnWhilePluggedInSetting);
     }
 
     @ApiTest(apis = "android.view.WindowManager.LayoutParams#FLAG_KEEP_SCREEN_ON")
@@ -120,8 +130,7 @@ public class KeepScreenOnTests extends MultiDisplayTestBase {
     }
 
     private void setScreenOffTimeoutMs(String timeoutMs) {
-        Settings.System.putString(
-                mContext.getContentResolver(), SCREEN_OFF_TIMEOUT, timeoutMs);
+        Settings.System.putString(mContentResolver, SCREEN_OFF_TIMEOUT, timeoutMs);
     }
 
     private int getMinimumScreenOffTimeoutMs() {

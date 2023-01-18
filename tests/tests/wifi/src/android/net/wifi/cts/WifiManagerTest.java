@@ -55,6 +55,7 @@ import android.net.NetworkRequest;
 import android.net.TetheringManager;
 import android.net.Uri;
 import android.net.wifi.CoexUnsafeChannel;
+import android.net.wifi.QosPolicyParams;
 import android.net.wifi.ScanResult;
 import android.net.wifi.SoftApCapability;
 import android.net.wifi.SoftApConfiguration;
@@ -6042,4 +6043,37 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         mWifiManager.isTlsMinimumVersionSupported();
     }
 
+    /**
+     * Tests that {@link WifiManager#addQosPolicy(QosPolicyParams)},
+     * {@link WifiManager#removeQosPolicy(int)}, and
+     * {@link WifiManager#removeAllQosPolicies()} do not crash.
+     */
+    public void testAddAndRemoveQosPolicy() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        final int policyId = 2;
+        final int direction = QosPolicyParams.DIRECTION_DOWNLINK;
+        final int userPriority = QosPolicyParams.USER_PRIORITY_VIDEO_LOW;
+        QosPolicyParams policyParams = new QosPolicyParams.Builder(policyId, direction)
+                .setUserPriority(userPriority)
+                .build();
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.addQosPolicy(policyParams));
+
+        // sleep to wait for a response from supplicant
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.removeQosPolicy(policyId));
+
+        // sleep to wait for a response from supplicant
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.removeAllQosPolicies());
+    }
 }

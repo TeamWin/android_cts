@@ -35,6 +35,12 @@
         <option name="test-file-name" value="CtsBackgroundActivityAppB.apk" />
         <option name="test-file-name" value="CtsBackgroundActivityAppB33.apk" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <option name="cleanup-apks" value="true" />
+        <option name="install-arg" value="-t" />
+        <option name="test-file-name" value="CtsBackgroundActivityAppC.apk" />
+        <option name="test-file-name" value="CtsBackgroundActivityAppC33.apk" />
+    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
         <option name="package" value="android.server.wm.backgroundactivity.cts" />
         <option name="runtime-hint" value="1m" />

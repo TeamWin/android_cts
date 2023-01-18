@@ -37,16 +37,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
 import android.content.pm.UserProperties;
@@ -99,8 +96,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.annotation.concurrent.GuardedBy;
-
 @RunWith(BedsteadJUnit4.class)
 public final class UserManagerTest {
 
@@ -115,24 +110,11 @@ public final class UserManagerTest {
 
     private final String mAccountName = "test_account_name";
     private final String mAccountType = "test_account_type";
-    private static final int REMOVE_CHECK_INTERVAL_MILLIS = 500; // 0.5 seconds
-    private static final int REMOVE_TIMEOUT_MILLIS = 60 * 1000; // 60 seconds
-    private final Object mUserRemoveLock = new Object();
 
     @Before
     public void setUp() {
         mUserManager = sContext.getSystemService(UserManager.class);
         assertWithMessage("UserManager service").that(mUserManager).isNotNull();
-
-        IntentFilter filter = new IntentFilter(Intent.ACTION_USER_REMOVED);
-        sContext.registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                synchronized (mUserRemoveLock) {
-                    mUserRemoveLock.notifyAll();
-                }
-            }
-        }, filter);
     }
 
     @EnsureHasPermission(CREATE_USERS)
@@ -141,9 +123,7 @@ public final class UserManagerTest {
             return;
         }
 
-        synchronized (mUserRemoveLock) {
-            assertThat(mUserManager.removeUser(userHandle)).isTrue();
-        }
+        assertThat(mUserManager.removeUser(userHandle)).isTrue();
     }
 
     /**
@@ -466,9 +446,9 @@ public final class UserManagerTest {
             parentUser = workProfile.parent().userHandle();
             UserHandle workProfileUser = workProfile.userHandle();
 
-            removeUser(workProfile.userHandle());
-            synchronized (mUserRemoveLock) {
-                waitForUserRemovalLocked(workProfileUser.getIdentifier());
+            try (BlockingBroadcastReceiver receiver = BlockingBroadcastReceiver.create(sContext,
+                    Intent.ACTION_USER_REMOVED, userIsEqual(workProfileUser)).register()) {
+                removeUser(workProfileUser);
             }
 
             //Removing a profile will only remove the profile and not the parent user
@@ -492,10 +472,9 @@ public final class UserManagerTest {
             additionalUser.switchTo();
         }
 
-        synchronized (mUserRemoveLock) {
-            assertThat(mUserManager.removeUserWhenPossible(initialUser.userHandle(), false))
-                    .isEqualTo(UserManager.REMOVE_RESULT_ERROR_MAIN_USER_PERMANENT_ADMIN);
-        }
+        assertThat(mUserManager.removeUserWhenPossible(initialUser.userHandle(), false))
+                .isEqualTo(UserManager.REMOVE_RESULT_ERROR_MAIN_USER_PERMANENT_ADMIN);
+
         // Initial/main user should not be removed.
         assertThat(hasUser(initialUser.id())).isTrue();
     }
@@ -921,22 +900,6 @@ public final class UserManagerTest {
             assumeNoException("User handle is null", e);
         }
         return (intent) -> false;
-    }
-
-    @GuardedBy("mUserRemoveLock")
-    private void waitForUserRemovalLocked(int userId) {
-        long startTime = System.currentTimeMillis();
-        while (getUser(userId) != null) {
-            try {
-                mUserRemoveLock.wait(REMOVE_CHECK_INTERVAL_MILLIS);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                return;
-            }
-            if (System.currentTimeMillis() - startTime > REMOVE_TIMEOUT_MILLIS) {
-                fail("Timeout waiting for removeUser. userId = " + userId);
-            }
-        }
     }
 
     @Nullable

@@ -21,10 +21,11 @@ import math
 import os
 import sys
 
-import capture_request_utils
 import error_util
 import numpy
 from PIL import Image
+
+import capture_request_utils
 
 
 # The matrix is from JFIF spec

@@ -16,7 +16,6 @@
 
 package com.android.bedstead.testapp;
 
-import com.android.bedstead.nene.TestApis;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.activities.ActivityDestroyedEvent;
 import com.android.eventlib.events.activities.ActivityEvents;
@@ -155,9 +154,9 @@ public class TestAppEvents implements ActivityEvents, BroadcastReceiverEvents,
 
     @Override
     public BroadcastReceivedEvent.BroadcastReceivedEventQuery broadcastReceived() {
-        TestApis.broadcasts().waitForBroadcastBarrier(
-                "When waiting for broadcastReceived we should push through any"
-                        + " pending broadcasts");
+//        TestApis.broadcasts().waitForBroadcastBarrier(
+//                "When waiting for broadcastReceived we should push through any"
+//                        + " pending broadcasts");
         return BroadcastReceivedEvent.queryPackage(
                 mTestApp.packageName())
                 .onUser(mTestApp.user());

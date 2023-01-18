@@ -45,6 +45,8 @@ static void testEmptyCreate(JNIEnv* env, jclass) {
     AImageDecoder* decoderPtr = nullptr;
     for (AImageDecoder** outDecoder : { &decoderPtr, (AImageDecoder**) nullptr }) {
         for (AAsset* asset : { nullptr }) {
+            // Intentional negative test to pass nullptr.
+            // NOLINTNEXTLINE(clang-analyzer-nullability.NullPassedToNonnull)
             int result = AImageDecoder_createFromAAsset(asset, outDecoder);
             ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
             if (outDecoder) {
@@ -53,6 +55,8 @@ static void testEmptyCreate(JNIEnv* env, jclass) {
         }
 
         for (int fd : { 0, -1 }) {
+            // Intentional negative test to pass nullptr.
+            // NOLINTNEXTLINE(clang-analyzer-nullability.NullPassedToNonnull)
             int result = AImageDecoder_createFromFd(fd, outDecoder);
             ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
             if (outDecoder) {
@@ -61,6 +65,8 @@ static void testEmptyCreate(JNIEnv* env, jclass) {
         }
 
         auto testEmptyBuffer = [env, outDecoder](void* buffer, size_t length) {
+            // Intentional negative test to pass nullptr.
+            // NOLINTNEXTLINE(clang-analyzer-nullability.NullPassedToNonnull)
             int result = AImageDecoder_createFromBuffer(buffer, length, outDecoder);
             ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
             if (outDecoder) {

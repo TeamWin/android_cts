@@ -103,6 +103,19 @@ public final class Users {
         ).collect(Collectors.toSet());
     }
 
+    /** Get all {@link UserReference}s in the instrumented user's profile group. */
+    @Experimental
+    public Collection<UserReference> profileGroup() {
+        return profileGroup(TestApis.users().instrumented());
+    }
+
+    /** Get all {@link UserReference}s in the given profile group. */
+    @Experimental
+    public Collection<UserReference> profileGroup(UserReference user) {
+        return users().filter(ui -> ui.profileGroupId == user.id()).map(ui -> find(ui.id)).collect(
+                Collectors.toSet());
+    }
+
     /**
      * Gets a {@link UserReference} for the initial user for the device.
      *

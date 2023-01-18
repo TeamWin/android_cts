@@ -97,7 +97,7 @@ public final class Automator {
                     pkg.installExisting(systemUser);
                 }
 
-                pkg.appOps().set(systemUser, OPSTR_MANAGE_EXTERNAL_STORAGE, AppOpsMode.ALLOWED);
+                pkg.appOps(systemUser).set(OPSTR_MANAGE_EXTERNAL_STORAGE, AppOpsMode.ALLOWED);
                 try (ParcelFileDescriptor remoteFile = mContext.createContextAsUser(
                         systemUser.userHandle(), /* flags= */0)
                         .getContentResolver()

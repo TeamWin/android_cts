@@ -806,8 +806,8 @@ public final class CrossProfileAppsTest {
              TestAppInstance workApp = sCrossProfileTestApp.install(sDeviceState.workProfile())) {
             sCrossProfileTestApp.pkg().appOps().set(
                     AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES, AppOpsMode.ALLOWED);
-            sCrossProfileTestApp.pkg().appOps().set(
-                    sDeviceState.workProfile(), AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES,
+            sCrossProfileTestApp.pkg().appOps(sDeviceState.workProfile()).set(
+                    AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES,
                     AppOpsMode.ALLOWED);
 
             assertThat(primaryApp.crossProfileApps().canInteractAcrossProfiles()).isTrue();
@@ -823,8 +823,8 @@ public final class CrossProfileAppsTest {
              TestAppInstance workApp = sCrossProfileTestApp.install(sDeviceState.workProfile())) {
             sCrossProfileTestApp.pkg().appOps().set(
                     AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES, AppOpsMode.DEFAULT);
-            sCrossProfileTestApp.pkg().appOps().set(
-                    sDeviceState.workProfile(), AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES,
+            sCrossProfileTestApp.pkg().appOps(sDeviceState.workProfile()).set(
+                    AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES,
                     AppOpsMode.ALLOWED);
 
             assertThat(primaryApp.crossProfileApps().canInteractAcrossProfiles()).isFalse();
@@ -839,8 +839,8 @@ public final class CrossProfileAppsTest {
              TestAppInstance workApp = sCrossProfileTestApp.install(sDeviceState.workProfile())) {
             sCrossProfileTestApp.pkg().appOps().set(
                     AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES, AppOpsMode.ALLOWED);
-            sCrossProfileTestApp.pkg().appOps().set(
-                    sDeviceState.workProfile(), AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES,
+            sCrossProfileTestApp.pkg().appOps(sDeviceState.workProfile()).set(
+                    AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES,
                     AppOpsMode.DEFAULT);
 
             assertThat(primaryApp.crossProfileApps().canInteractAcrossProfiles()).isFalse();
@@ -867,8 +867,8 @@ public final class CrossProfileAppsTest {
             INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS, INTERACT_ACROSS_USERS_FULL})
     // TODO(b/191637162): When we can adopt permissions for testapps, we can use testapps here
     public void canInteractAcrossProfiles_permissionIsSet_returnsTrue() {
-        TestApis.packages().instrumented().appOps().set(
-                sDeviceState.workProfile(), AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES,
+        TestApis.packages().instrumented().appOps(sDeviceState.workProfile()).set(
+                AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES,
                 AppOpsMode.ALLOWED);
 
         assertThat(sCrossProfileApps.canInteractAcrossProfiles()).isTrue();
@@ -893,8 +893,8 @@ public final class CrossProfileAppsTest {
              TestAppInstance workApp = sCrossProfileTestApp.install(sDeviceState.workProfile())) {
             sCrossProfileTestApp.pkg().appOps().set(
                     AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES, AppOpsMode.ALLOWED);
-            sCrossProfileTestApp.pkg().appOps().set(
-                    sDeviceState.workProfile(), AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES,
+            sCrossProfileTestApp.pkg().appOps(sDeviceState.workProfile()).set(
+                    AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES,
                     AppOpsMode.ALLOWED);
 
             Intent intent = primaryApp.crossProfileApps()

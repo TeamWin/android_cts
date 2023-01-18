@@ -69,7 +69,6 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -222,28 +221,10 @@ public class ExactAlarmsTest {
     }
 
     private boolean getCanScheduleExactAlarmFromTestApp(String testAppName) throws Exception {
-        final CountDownLatch resultLatch = new CountDownLatch(1);
-        final AtomicBoolean apiResult = new AtomicBoolean(false);
-        final AtomicInteger result = new AtomicInteger(-1);
-
-        final Intent requestToTestApp = new Intent(
-                RequestReceiver.ACTION_GET_CAN_SCHEDULE_EXACT_ALARM)
-                .setClassName(testAppName, RequestReceiver.class.getName())
-                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        sContext.sendOrderedBroadcast(requestToTestApp, null, new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                result.set(getResultCode());
-                final String resultStr = getResultData();
-                apiResult.set(Boolean.parseBoolean(resultStr));
-                resultLatch.countDown();
-            }
-        }, null, Activity.RESULT_CANCELED, null, null);
-
-        assertTrue("Timed out waiting for response from helper app " + testAppName,
-                resultLatch.await(10, TimeUnit.SECONDS));
-        assertEquals(Activity.RESULT_OK, result.get());
-        return apiResult.get();
+        final String apiResult = assertResultFromTestApp(
+                RequestReceiver.ACTION_GET_CAN_SCHEDULE_EXACT_ALARM, testAppName,
+                Activity.RESULT_OK);
+        return Boolean.parseBoolean(apiResult);
     }
 
     @Test
@@ -303,10 +284,11 @@ public class ExactAlarmsTest {
         assertTrue(getCanScheduleExactAlarmFromTestApp(TEST_APP_30));
     }
 
-    private static void assertSecurityExceptionFromTestApp(String requestAction, String testAppName)
-            throws Exception {
+    private static String assertResultFromTestApp(String requestAction, String testAppName,
+            int expectedResult) throws InterruptedException {
         final CountDownLatch resultLatch = new CountDownLatch(1);
         final AtomicInteger result = new AtomicInteger(-1);
+        final AtomicReference<String> resultData = new AtomicReference<>(null);
 
         final Intent requestToTestApp = new Intent(requestAction)
                 .setClassName(testAppName, RequestReceiver.class.getName())
@@ -315,14 +297,15 @@ public class ExactAlarmsTest {
             @Override
             public void onReceive(Context context, Intent intent) {
                 result.set(getResultCode());
+                resultData.set(getResultData());
                 resultLatch.countDown();
             }
         }, null, Activity.RESULT_CANCELED, null, null);
 
         assertTrue("Timed out waiting for response from helper app " + testAppName,
                 resultLatch.await(10, TimeUnit.SECONDS));
-        assertEquals("Security exception not reported", RequestReceiver.RESULT_SECURITY_EXCEPTION,
-                result.get());
+        assertEquals(expectedResult, result.get());
+        return resultData.get();
     }
 
     private void whitelistTestApp() {
@@ -402,28 +385,29 @@ public class ExactAlarmsTest {
     @Test
     public void setAlarmClockWithoutPermissionOrWhitelist() throws Exception {
         revokeAppOp(TEST_APP_PACKAGE);
-        assertSecurityExceptionFromTestApp(RequestReceiver.ACTION_SET_ALARM_CLOCK,
-                TEST_APP_PACKAGE);
+        assertResultFromTestApp(RequestReceiver.ACTION_SET_ALARM_CLOCK, TEST_APP_PACKAGE,
+                RequestReceiver.RESULT_SECURITY_EXCEPTION);
     }
 
     @Test
     public void setExactAwiWithoutPermissionOrWhitelist() throws Exception {
         revokeAppOp(TEST_APP_PACKAGE);
-        assertSecurityExceptionFromTestApp(RequestReceiver.ACTION_SET_EXACT_AND_AWI,
-                TEST_APP_PACKAGE);
+        assertResultFromTestApp(RequestReceiver.ACTION_SET_EXACT_AND_AWI, TEST_APP_PACKAGE,
+                RequestReceiver.RESULT_SECURITY_EXCEPTION);
     }
 
     @Test
     public void setExactPiWithoutPermissionOrWhitelist() throws Exception {
         revokeAppOp(TEST_APP_PACKAGE);
-        assertSecurityExceptionFromTestApp(RequestReceiver.ACTION_SET_EXACT_PI, TEST_APP_PACKAGE);
+        assertResultFromTestApp(RequestReceiver.ACTION_SET_EXACT_PI, TEST_APP_PACKAGE,
+                RequestReceiver.RESULT_SECURITY_EXCEPTION);
     }
 
     @Test
     public void setExactCallbackWithoutPermissionOrWhitelist() throws Exception {
         revokeAppOp(TEST_APP_PACKAGE);
-        assertSecurityExceptionFromTestApp(RequestReceiver.ACTION_SET_EXACT_CALLBACK,
-                TEST_APP_PACKAGE);
+        assertResultFromTestApp(RequestReceiver.ACTION_SET_EXACT_CALLBACK, TEST_APP_PACKAGE,
+                Activity.RESULT_OK);
     }
 
     @Test

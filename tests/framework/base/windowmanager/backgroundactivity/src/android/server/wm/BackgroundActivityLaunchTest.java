@@ -119,6 +119,8 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     private static final String TEST_PACKAGE_APP_A = "android.server.wm.backgroundactivity.appa";
     private static final String TEST_PACKAGE_APP_B = "android.server.wm.backgroundactivity.appb";
+    private static final String TEST_PACKAGE_APP_C = "android.server.wm.backgroundactivity.appc";
+    private static final String TEST_PACKAGE_APP_C33 = TEST_PACKAGE_APP_C + 33;
     public static final ComponentName APP_A_RELAUNCHING_ACTIVITY =
             new ComponentName(TEST_PACKAGE_APP_A,
                     "android.server.wm.backgroundactivity.appa.RelaunchingActivity");
@@ -134,6 +136,12 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     public static final ComponentName APP_A_APPWIDGET_PROVIDER =
             new ComponentName(TEST_PACKAGE_APP_A,
                     "android.server.wm.backgroundactivity.appa.WidgetProvider");
+    public static final ComponentName APP_C_FOREGROUND_ACTIVITY =
+            new ComponentName(TEST_PACKAGE_APP_C,
+                    "android.server.wm.backgroundactivity.appc.ForegroundActivity");
+    public static final ComponentName APP_C_33_FOREGROUND_ACTIVITY =
+            new ComponentName(TEST_PACKAGE_APP_C33,
+                    "android.server.wm.backgroundactivity.appc.ForegroundActivity");
     private static final String SHELL_PACKAGE = "com.android.shell";
 
     /**
@@ -634,6 +642,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
         assertTrue("Main activity not started", waitUntilForegroundChanged(
                 TEST_PACKAGE_APP_A, true, ACTIVITY_START_TIMEOUT_MS));
+        assertActivityFocused(APP_A_RELAUNCHING_ACTIVITY);
 
         // Click home button, and test app activity onPause() will try to start a background
         // activity, but we expect this will be blocked BAL logic in system, as app cannot start
@@ -713,6 +722,37 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         boolean result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
         assertFalse("Should not able to launch background activity", result);
         assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
+    }
+
+    @Test
+    public void testBalOptInBindToService_whenOptedIn_allowsActivityStarts() {
+        Intent appcIntent = new Intent()
+                .setComponent(APP_C_FOREGROUND_ACTIVITY)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .putExtra("android.server.wm.backgroundactivity.appc.ALLOW_BAL", true);
+
+        mContext.startActivity(appcIntent);
+        assertActivityFocused(APP_A_BACKGROUND_ACTIVITY);
+    }
+
+    @Test
+    public void testBalOptInBindToService_whenNotOptedIn_blocksActivityStarts() {
+        Intent appcIntent = new Intent()
+                .setComponent(APP_C_FOREGROUND_ACTIVITY)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        mContext.startActivity(appcIntent);
+        assertActivityNotFocused(APP_A_BACKGROUND_ACTIVITY);
+    }
+
+    @Test
+    public void testBalOptInBindToService_whenNotOptedInAndSdk33_allowsActivityStart() {
+        Intent appcIntent = new Intent()
+                .setComponent(APP_C_33_FOREGROUND_ACTIVITY)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        mContext.startActivity(appcIntent);
+        assertActivityFocused(APP_A_BACKGROUND_ACTIVITY);
     }
 
     private void clickAllowBindWidget(ResultReceiver resultReceiver) throws Exception {
@@ -883,6 +923,14 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     private boolean waitForActivityFocused(ComponentName componentName) {
         return waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
+    }
+
+    private void assertActivityFocused(ComponentName componentName) {
+        assertActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
+    }
+
+    private void assertActivityNotFocused(ComponentName componentName) {
+        assertActivityNotFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
     }
 
     private void setupPendingIntentService() throws Exception {

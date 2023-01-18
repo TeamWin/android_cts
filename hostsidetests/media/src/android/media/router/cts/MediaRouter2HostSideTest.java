@@ -26,36 +26,52 @@ import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_3
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_TEST_APK;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_TEST_PACKAGE;
 
-import android.media.cts.BaseMediaHostSideTest;
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.ApiTest;
+import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.invoker.TestInformation;
+import com.android.tradefed.log.LogUtil;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.FileNotFoundException;
 
 /** Installs route provider apps and runs tests in {@link MediaRouter2DeviceTest}. */
-public class MediaRouter2HostSideTest extends BaseMediaHostSideTest {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
 
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        installApp(MEDIA_ROUTER_PROVIDER_1_APK);
-        installApp(MEDIA_ROUTER_PROVIDER_2_APK);
-        installApp(MEDIA_ROUTER_PROVIDER_3_APK);
-        installApp(MEDIA_ROUTER_TEST_APK);
+    @BeforeClassWithInfo
+    public static void installApps(TestInformation testInfo)
+            throws DeviceNotAvailableException, FileNotFoundException {
+        installTestApp(testInfo, MEDIA_ROUTER_PROVIDER_1_APK);
+        installTestApp(testInfo, MEDIA_ROUTER_PROVIDER_2_APK);
+        installTestApp(testInfo, MEDIA_ROUTER_PROVIDER_3_APK);
+        installTestApp(testInfo, MEDIA_ROUTER_TEST_APK);
     }
 
-    @Override
-    public void tearDown() throws Exception {
-        getDevice().uninstallPackage(MEDIA_ROUTER_PROVIDER_1_PACKAGE);
-        getDevice().uninstallPackage(MEDIA_ROUTER_PROVIDER_2_PACKAGE);
-        getDevice().uninstallPackage(MEDIA_ROUTER_PROVIDER_3_PACKAGE);
-        getDevice().uninstallPackage(MEDIA_ROUTER_TEST_PACKAGE);
-        super.tearDown();
+    @BeforeClassWithInfo
+    public static void uninstallApps(TestInformation testInfo) throws DeviceNotAvailableException {
+        ITestDevice device = testInfo.getDevice();
+        device.uninstallPackage(MEDIA_ROUTER_PROVIDER_1_PACKAGE);
+        device.uninstallPackage(MEDIA_ROUTER_PROVIDER_2_PACKAGE);
+        device.uninstallPackage(MEDIA_ROUTER_PROVIDER_3_PACKAGE);
+        device.uninstallPackage(MEDIA_ROUTER_TEST_PACKAGE);
     }
 
     @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
     @AppModeFull
     @RequiresDevice
+    @Test
     public void testDeduplicationIds_propagateAcrossApps() throws Exception {
         runDeviceTests(
                 MEDIA_ROUTER_TEST_PACKAGE,
@@ -66,6 +82,7 @@ public class MediaRouter2HostSideTest extends BaseMediaHostSideTest {
     @ApiTest(apis = {"android.media.RouteListingPreference, android.media.MediaRouter2"})
     @AppModeFull
     @RequiresDevice
+    @Test
     public void testSetRouteListingPreference_propagatesToManager() throws Exception {
         runDeviceTests(
                 MEDIA_ROUTER_TEST_PACKAGE,
@@ -76,6 +93,7 @@ public class MediaRouter2HostSideTest extends BaseMediaHostSideTest {
     @ApiTest(apis = {"android.media.RouteListingPreference, android.media.MediaRouter2"})
     @AppModeFull
     @RequiresDevice
+    @Test
     public void testSetRouteListingPreference_withIllegalComponentName_throws() throws Exception {
         runDeviceTests(
                 MEDIA_ROUTER_TEST_PACKAGE,
@@ -85,6 +103,7 @@ public class MediaRouter2HostSideTest extends BaseMediaHostSideTest {
 
     @AppModeFull
     @RequiresDevice
+    @Test
     public void testSetInstance_findsExternalPackage() throws Exception {
         runDeviceTests(
                 MEDIA_ROUTER_TEST_PACKAGE,
@@ -95,10 +114,22 @@ public class MediaRouter2HostSideTest extends BaseMediaHostSideTest {
     @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
     @AppModeFull
     @RequiresDevice
+    @Test
     public void testVisibilityAndAllowedPackages_propagateAcrossApps() throws Exception {
         runDeviceTests(
                 MEDIA_ROUTER_TEST_PACKAGE,
                 DEVICE_SIDE_TEST_CLASS,
                 "visibilityAndAllowedPackages_propagateAcrossApps");
+    }
+
+    private static void installTestApp(TestInformation testInfo, String apkName)
+            throws FileNotFoundException, DeviceNotAvailableException {
+        LogUtil.CLog.d("Installing app " + apkName);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(
+                testInfo.getBuildInfo());
+        final String result = testInfo.getDevice().installPackage(
+                buildHelper.getTestFile(apkName), /*reinstall=*/true, /*grantPermissions=*/true,
+                /*allow test apps*/"-t");
+        assertWithMessage("Failed to install " + apkName + ": " + result).that(result).isNull();
     }
 }

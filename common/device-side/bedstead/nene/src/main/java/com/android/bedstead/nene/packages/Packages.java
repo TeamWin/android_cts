@@ -580,4 +580,22 @@ public final class Packages {
             throw new NeneException("Error parsing package dumpsys", e);
         }
     }
+
+    /**
+     * System apps installed on the instrumented user.
+     */
+    @Experimental
+    public Set<Package> systemApps() {
+        return systemApps(TestApis.users().instrumented());
+    }
+
+    /**
+     * System apps installed on the given user.
+     */
+    @Experimental
+    public Set<Package> systemApps(UserReference user) {
+        return installedForUser(user).stream()
+                .filter(Package::hasSystemFlag)
+                .collect(Collectors.toSet());
+    }
 }

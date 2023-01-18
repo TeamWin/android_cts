@@ -43,6 +43,7 @@ import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.CameraPolicy;
 import com.android.bedstead.nene.TestApis;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.ClassRule;
@@ -73,6 +74,7 @@ public final class CameraPolicyTest {
 
     @Postsubmit(reason = "new test")
     @PolicyDoesNotApplyTest(policy = CameraPolicy.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
     public void setCameraDisabledTrue_policyDoesNotApply_cameraNotDisabled() {
         sDeviceState.dpc().devicePolicyManager()
                 .setCameraDisabled(sDeviceState.dpc().componentName(), true);
@@ -83,6 +85,7 @@ public final class CameraPolicyTest {
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = CameraPolicy.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
     public void setCameraDisabledTrue_cameraDisabledLocally() {
         sDeviceState.dpc().devicePolicyManager()
                 .setCameraDisabled(sDeviceState.dpc().componentName(), true);
@@ -93,6 +96,7 @@ public final class CameraPolicyTest {
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = CameraPolicy.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
     public void setCameraDisabledFalse_cameraEnabledLocally() {
         sDeviceState.dpc().devicePolicyManager()
                 .setCameraDisabled(sDeviceState.dpc().componentName(), false);
@@ -103,6 +107,7 @@ public final class CameraPolicyTest {
 
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = CameraPolicy.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
     public void setCameraDisabledTrue_cameraDisabledAtDPC() {
         sDeviceState.dpc().devicePolicyManager()
                 .setCameraDisabled(sDeviceState.dpc().componentName(), true);
@@ -113,6 +118,7 @@ public final class CameraPolicyTest {
 
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = CameraPolicy.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
     public void setCameraDisabledFalse_cameraEnabledAtDPC() {
         sDeviceState.dpc().devicePolicyManager()
                 .setCameraDisabled(sDeviceState.dpc().componentName(), false);
@@ -124,6 +130,7 @@ public final class CameraPolicyTest {
     @Ignore("b/201753989 Properly define behaviour of setCameraDisabled on secondary user POs")
     @Postsubmit(reason = "new test")
     @CannotSetPolicyTest(policy = CameraPolicy.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
     public void setCameraDisabledTrue_policyNotAllowedToBeSet_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> sDeviceState.dpc().devicePolicyManager()
                 .setCameraDisabled(sDeviceState.dpc().componentName(), true));
@@ -132,14 +139,24 @@ public final class CameraPolicyTest {
     @Ignore("b/201753989 Properly define behaviour of setCameraDisabled on secondary user POs")
     @Postsubmit(reason = "new test")
     @CannotSetPolicyTest(policy = CameraPolicy.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
     public void setCameraDisabledFalse_policyNotAllowedToBeSet_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> sDeviceState.dpc().devicePolicyManager()
                 .setCameraDisabled(sDeviceState.dpc().componentName(), false));
     }
 
     @Postsubmit(reason = "new test")
+    @PolicyAppliesTest(policy = CameraPolicy.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getCameraDisabled")
+    public void getCameraDisabled_callingAsAdmin_throwsException() {
+        assertThrows(SecurityException.class, () -> sLocalDevicePolicyManager.getCameraDisabled(
+                sDeviceState.dpc().componentName()));
+    }
+
+    @Postsubmit(reason = "new test")
     @EnsureHasPermission(CAMERA)
     @CanSetPolicyTest(policy = CameraPolicy.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
     public void openCamera_cameraEnabled_successful() throws Exception {
         sDeviceState.dpc().devicePolicyManager()
                 .setCameraDisabled(sDeviceState.dpc().componentName(), false);
@@ -156,6 +173,7 @@ public final class CameraPolicyTest {
     @Postsubmit(reason = "new test")
     @EnsureHasPermission(CAMERA)
     @CanSetPolicyTest(policy = CameraPolicy.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
     public void openCamera_cameraDisabled_unsuccessful() throws Exception {
         sDeviceState.dpc().devicePolicyManager()
                 .setCameraDisabled(sDeviceState.dpc().componentName(), true);

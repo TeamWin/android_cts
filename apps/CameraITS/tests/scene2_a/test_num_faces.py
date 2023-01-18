@@ -15,6 +15,7 @@
 
 
 import logging
+import math
 import os.path
 
 import cv2
@@ -28,10 +29,11 @@ import error_util
 import image_processing_utils
 import its_session_utils
 
-_CV2_FACE_SCALE_FACTOR = 1.1  # found empirically
-_CV2_FACE_MIN_NEIGHBORS = 4  # recommended 3-6: lower for less faces
+_CV2_FACE_SCALE_FACTOR = 1.05  # 5% step for resizing image to find face
+_CV2_FACE_MIN_NEIGHBORS = 4  # recommended 3-6: higher for less faces
 _CV2_GREEN = (0, 1, 0)
 _CV2_RED = (1, 0, 0)
+_FACE_CENTER_MATCH_TOL = 10  # 10 pixels or ~1% in 640x480 image
 _FD_MODE_OFF, _FD_MODE_SIMPLE, _FD_MODE_FULL = 0, 1, 2
 _HAARCASCADE_FILE = os.path.join(
     os.path.dirname(os.path.abspath(cv2.__file__)), 'opencv', 'haarcascades',
@@ -56,7 +58,8 @@ def match_face_locations(faces_cropped, faces_opencv, mode):
   """Assert face locations between two methods.
 
   Method determines if center of opencv face boxes is within face detection
-  face boxes.
+  face boxes. Using math.hypot to measure the distance between the centers,
+  as math.dist is not available for python versions before 3.8.
 
   Args:
     faces_cropped: list of lists with (l, r, t, b) for each face.
@@ -65,17 +68,20 @@ def match_face_locations(faces_cropped, faces_opencv, mode):
   """
   # turn faces_opencv into list of center locations
   faces_opencv_centers = [(x+w//2, y+h//2) for (x, y, w, h) in faces_opencv]
+  cropped_faces_centers = [
+      ((l+r)//2, (t+b)//2) for (l, r, t, b) in faces_cropped]
+  logging.debug('cropped face centers: %s', str(cropped_faces_centers))
   logging.debug('opencv face centers: %s', str(faces_opencv_centers))
+  num_centers_aligned = 0
   for (x, y) in faces_opencv_centers:
-    centered = False
-    for (l, r, t, b) in faces_cropped:
-      if (l < x < r) and (t < y < b):
-        centered = True
-        break
-    if not centered:
-      raise AssertionError('Face rectangle in wrong location! '
-                           f'mode: {mode}, faces l,r,t,b: {faces_cropped}, '
-                           f'opencv x,y: {x},{y}')
+    for (x1, y1) in cropped_faces_centers:
+      if math.hypot(x-x1, y-y1) < _FACE_CENTER_MATCH_TOL:
+        num_centers_aligned += 1
+  if num_centers_aligned != _NUM_FACES:
+    logging.debug('centered: %s', str(num_centers_aligned))
+    raise AssertionError(f'Mode {mode} face rectangles in wrong location(s)!. '
+                         f'Found {num_centers_aligned} rectangles near cropped '
+                         f'face centers, expected {_NUM_FACES}')
 
 
 def find_opencv_faces(img):

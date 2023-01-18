@@ -117,6 +117,8 @@ import static android.window.DisplayAreaOrganizer.FEATURE_UNDEFINED;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -382,10 +384,29 @@ public abstract class ActivityManagerTestBase {
     protected void runWithShellPermission(Runnable runnable) {
         NestedShellPermission.run(runnable);
     }
+
     /**
      * Returns true if the activity is shown before timeout.
      */
     protected boolean waitForActivityFocused(int timeoutMs, ComponentName componentName) {
+        waitForActivityResumed(timeoutMs, componentName);
+        return getActivityName(componentName).equals(mWmState.getFocusedActivity());
+    }
+
+    /** Asserts the activity is focused before timeout. */
+    protected void assertActivityFocused(int timeoutMs, ComponentName componentName) {
+        waitForActivityResumed(timeoutMs, componentName);
+        assertThat(mWmState.getFocusedActivity()).isEqualTo(getActivityName(componentName));
+    }
+
+    /** Asserts the activity is not focused until timeout. */
+    protected void assertActivityNotFocused(int timeoutMs, ComponentName componentName) {
+        waitForActivityResumed(timeoutMs, componentName);
+        assertThat(mWmState.getFocusedActivity())
+                .isNotEqualTo(getActivityName(componentName));
+    }
+
+    private void waitForActivityResumed(int timeoutMs, ComponentName componentName) {
         long endTime = System.currentTimeMillis() + timeoutMs;
         while (endTime > System.currentTimeMillis()) {
             mWmState.computeState();
@@ -397,7 +418,6 @@ public abstract class ActivityManagerTestBase {
             SystemClock.sleep(200);
             mWmState.computeState();
         }
-        return getActivityName(componentName).equals(mWmState.getFocusedActivity());
     }
 
     /**

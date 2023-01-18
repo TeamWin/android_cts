@@ -22,6 +22,8 @@
         <package android:name="android.server.wm.backgroundactivity.appa" />
         <package android:name="android.server.wm.backgroundactivity.appb" />
         <package android:name="android.server.wm.backgroundactivity.appb33" />
+        <package android:name="android.server.wm.backgroundactivity.appc" />
+        <package android:name="android.server.wm.backgroundactivity.appc33" />
     </queries>
 
     <instrumentation

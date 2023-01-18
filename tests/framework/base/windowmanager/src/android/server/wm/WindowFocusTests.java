@@ -245,10 +245,12 @@ public class WindowFocusTests extends WindowManagerTestBase {
         final TertiaryActivity tertiaryActivity = tertiarySession.startActivityAndFocus(
                 TertiaryActivity.class);
 
-        // The primary activity will not have window focus. It does not manage its own focus and by
-        // launching activities on the second and third display the primary display is not the
-        // top focused display anymore, therefore also not having window focus anymore.
-        primaryActivity.waitAndAssertWindowFocusState(false);
+        // The primary activity will have window focus based on perDisplayFocusEnabled. If it is
+        // enabled then all displays have their own focus. The primary activity should have focus.
+        // If it is disabled then it should have lost the focus when the secondary activity launched
+        // on the second monitor. That brought that display to the top and removed window focus from
+        // the default display (where primary activity is running).
+        primaryActivity.waitAndAssertWindowFocusState(perDisplayFocusEnabled());
 
         // Both activities running on displays with their own focus should have window focus.
         secondaryActivity.waitAndAssertWindowFocusState(true);

@@ -338,17 +338,16 @@ public class HotwordDetectionServiceBasicTest {
         // Create AlwaysOnHotwordDetector
         AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
         try {
-            adoptShellPermissionIdentityForHotword();
-
             mService.initDetectRejectLatch();
-            // pass null data parameter
-            alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
-                    /* status= */ 0, /* soundModelHandle= */ 100, /* captureAvailable= */ true,
-                    /* captureSession= */ 101, /* captureDelayMs= */ 1000,
-                    /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
-                    Helper.createFakeAudioFormat(), null,
-                    Helper.createFakeKeyphraseRecognitionExtraList());
-
+            runWithShellPermissionIdentity(() -> {
+                // pass null data parameter
+                alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
+                        /* status= */ 0, /* soundModelHandle= */ 100, /* captureAvailable= */ true,
+                        /* captureSession= */ 101, /* captureDelayMs= */ 1000,
+                        /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
+                        Helper.createFakeAudioFormat(), null,
+                        Helper.createFakeKeyphraseRecognitionExtraList());
+            });
             // wait onDetected() called and verify the result
             mService.waitOnDetectOrRejectCalled();
             HotwordRejectedResult rejectedResult =
@@ -358,13 +357,9 @@ public class HotwordDetectionServiceBasicTest {
 
             // Verify microphone indicator
             verifyMicrophoneChip(/* shouldBePresent= */ false);
-
+        } finally {
             // destroy detector
             alwaysOnHotwordDetector.destroy();
-        } finally {
-            // Drop identity adopted.
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity();
         }
     }
 

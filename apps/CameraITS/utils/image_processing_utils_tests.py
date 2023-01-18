@@ -15,12 +15,12 @@
 
 
 import math
-import numpy
 import os
 import random
 import unittest
 
 import cv2
+import numpy
 
 import image_processing_utils
 

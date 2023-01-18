@@ -45,6 +45,8 @@ android_test {
         ":CtsBackgroundActivityAppA",
         ":CtsBackgroundActivityAppB",
         ":CtsBackgroundActivityAppB33",
+        ":CtsBackgroundActivityAppC",
+        ":CtsBackgroundActivityAppC33",
     ],
     per_testcase_directory: true,
 }

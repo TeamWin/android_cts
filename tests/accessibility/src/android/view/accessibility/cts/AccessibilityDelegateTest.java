@@ -49,8 +49,8 @@ public class AccessibilityDelegateTest {
     private LinearLayout mParentView;
     private View mChildView;
 
-    private ActivityTestRule<DummyActivity> mActivityRule =
-            new ActivityTestRule<>(DummyActivity.class, false, false);
+    private ActivityTestRule<DefaultActivity> mActivityRule =
+            new ActivityTestRule<>(DefaultActivity.class, false, false);
 
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();

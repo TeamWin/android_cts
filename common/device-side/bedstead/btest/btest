@@ -224,7 +224,7 @@ class CloneProfileState:
     def initialise(self, device_state):
         self.user_id = device_state["users"][device_state["current_user"]]["clone_profile_id"]
 
-    def enter(self):
+    def enter(self, device_state):
         debug(self.args, "[Test] Entering state " + self.name())
         user = self._get_or_create_clone_profile()
         self.user_id = user["id"]
@@ -272,8 +272,11 @@ STATE_CODES = {
     "y": RUN_ON_SECONDARY_USER,
     "w": RUN_ON_WORK_PROFILE,
     "a": RUN_ON_ADDITIONAL_USER,
-    "l": RUN_ON_CLONE_PROFILE
+    "l": RUN_ON_CLONE_PROFILE,
+    "i": "i" # SPECIAL CASE DEALT WITH AT THE START OF PARSING
 }
+
+DEFAULT_STATES = "csywal"
 
 SHORT_PACKAGE_PREFIXES = {
     "a.d.c": "android.devicepolicy.cts",
@@ -422,7 +425,7 @@ def get_args():
     parser.add_argument("-i", "--install", action='store_true', help="Builds test targets. (default)")
     parser.add_argument("-t", "--test", action='store_true', help="Builds test targets. (default)")
     parser.add_argument("-d", "--debug", action="store_true", help="Include debug output.")
-    parser.add_argument("-s", "--states", help="Specify states which should be included. Options are (c)urrent (s)ystem secondar(y), (w)ork profile, (a)dditional, c(l)one. Defaults to all states.")
+    parser.add_argument("-s", "--states", help="Specify states which should be included. Options are (c)urrent (s)ystem secondar(y), (w)ork profile, c(l)one (i)nitial, (a)dditional. Defaults to all states.")
     parser.add_argument("-n", "--interactive", action='store', nargs='?', default="disabled", help="Run interactive tests. This will exclude non-interactive tests and will enable manual testing. Pass 'bi' to build and install automations, 't' to use automations (default) and m to enable manual interaction (default)")
     args = parser.parse_args()
     if not args.build and not args.install and not args.test:
@@ -431,9 +434,9 @@ def get_args():
         args.test = True
 
     if not args.states:
-        args.states = "csywal"
+        args.states = DEFAULT_STATES
     args.states = set(args.states)
-    valid_states = ["c", "s", "y", "w", "a", "l"]
+    valid_states = ["c", "s", "y", "w", "l", "a", "i"]
     for state in args.states:
         if not state in valid_states:
             print("State " + state + " is invalid, must be one of " + str(valid_states))
@@ -893,11 +896,24 @@ def main():
         device_state = gather_device_state(args)
         args.headless = "HEADLESS" in device_state["users"][0]["type"]
 
+        if args.headless:
+            if RUN_ON_CLONE_PROFILE in args.states:
+                print("Not running on clone profile on headless")
+                args.states.remove(RUN_ON_CLONE_PROFILE)
+
         # Construct modules with args
         states = [m(args) for m in supported_modules[args.module][STATES]]
 
         if not args.headless:
             states = [t for t in states if not t.name() == "RUN_ON_ADDITIONAL_USER"]
+
+        if "i" in args.states:
+            args.states.remove("i")
+            # Initial - replace with system or secondary
+            if args.headless:
+                args.states.append(RUN_ON_SECONDARY_USER)
+            else:
+                args.states.append(RUN_ON_SYSTEM_USER)
 
         if RUN_ON_CURRENT_USER in args.states and len(args.states) > 1:
             for state in states:

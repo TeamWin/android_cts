@@ -22,6 +22,12 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application android:testOnly="true" android:manageSpaceActivity=".BackgroundActivity">
         <receiver android:name=".StartBackgroundActivityReceiver"
              android:exported="true"/>
@@ -62,5 +68,20 @@
             <meta-data android:name="android.appwidget.provider"
                        android:resource="@xml/my_appwidget_info" />
         </receiver>
+        <activity android:name=".SystemBoundRelaunchingActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <service
+            android:name=".ActivityStarterService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.TTS_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

@@ -69,6 +69,7 @@ public class BlockingIntentSender implements AutoCloseable {
 
         Intent intent = new Intent(mAction);
         intent.setPackage(mTestApis.context().instrumentedContext().getPackageName());
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 mTestApis.context().instrumentedContext(),
                 /* requestCode= */ 0,

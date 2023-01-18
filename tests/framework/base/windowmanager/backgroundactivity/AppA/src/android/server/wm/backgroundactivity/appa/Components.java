@@ -35,6 +35,8 @@ public class Components extends ComponentsBase {
             component(Components.class, "SimpleAdminReceiver");
     public static final ComponentName APP_A_BACKGROUND_ACTIVITY_TEST_SERVICE =
             component(Components.class, "BackgroundActivityTestService");
+    public static final ComponentName APP_A_ACTIVITY_START_SERVICE =
+            component(Components.class, "ActivityStarterService");
 
     /** Extra key constants for {@link #APP_A_FOREGROUND_ACTIVITY}. */
     public static class ForegroundActivity {

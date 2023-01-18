@@ -19,6 +19,7 @@ package android.view.accessibility.cts;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_IN_DIRECTION;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -31,7 +32,6 @@ import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
-import android.content.Context;
 import android.os.Message;
 import android.os.Parcel;
 import android.os.SystemClock;
@@ -63,6 +63,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 /** Class for testing {@link AccessibilityEvent}. */
 @Presubmit
@@ -74,15 +75,15 @@ public class AccessibilityEventTest {
     // From ViewConfiguration.SEND_RECURRING_ACCESSIBILITY_EVENTS_INTERVAL_MILLIS
     private static final long SEND_RECURRING_ACCESSIBILITY_EVENTS_INTERVAL_MILLIS = 100;
 
-    private EventReportingLinearLayout mParentView;
+    private LinearLayout mParentView;
     private View mChildView;
     private TextView mTextView;
     private String mPackageName;
 
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
-    private final ActivityTestRule<DummyActivity> mActivityRule =
-            new ActivityTestRule<>(DummyActivity.class, false, false);
+    private final ActivityTestRule<DefaultActivity> mActivityRule =
+            new ActivityTestRule<>(DefaultActivity.class, false, false);
     private final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
     private InstrumentedAccessibilityServiceTestRule<SpeakingAccessibilityService>
@@ -108,7 +109,7 @@ public class AccessibilityEventTest {
                         mActivityRule.runOnUiThread(() -> {
                             final LinearLayout grandparent = new LinearLayout(activity);
                             activity.setContentView(grandparent);
-                            mParentView = new EventReportingLinearLayout(activity);
+                            mParentView = new LinearLayout(activity);
                             mChildView = new View(activity);
                             mTextView = new TextView(activity);
                             grandparent.addView(mParentView);
@@ -126,20 +127,6 @@ public class AccessibilityEventTest {
                 accessibilityEvent -> mPackageName.equals(accessibilityEvent.getPackageName()),
                 DEFAULT_TIMEOUT_MS);
         sUiAutomation.waitForIdle(IDLE_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
-    }
-
-    private static class EventReportingLinearLayout extends LinearLayout {
-        public List<AccessibilityEvent> mReceivedEvents = new ArrayList<AccessibilityEvent>();
-
-        public EventReportingLinearLayout(Context context) {
-            super(context);
-        }
-
-        @Override
-        public boolean requestSendAccessibilityEvent(View child, AccessibilityEvent event) {
-            mReceivedEvents.add(AccessibilityEvent.obtain(event));
-            return super.requestSendAccessibilityEvent(child, event);
-        }
     }
 
     @Test
@@ -482,6 +469,24 @@ public class AccessibilityEventTest {
                                 && isExpectedChangeType(
                                         event, AccessibilityEvent.CONTENT_CHANGE_TYPE_UNDEFINED),
                 DEFAULT_TIMEOUT_MS);
+    }
+
+    @Test
+    public void setSelected_onlyDispatchEventForParent() {
+        // Wait DEFAULT_TIMEOUT_MS while collecting all events.
+        List<AccessibilityEvent> events = new ArrayList<>();
+        sUiAutomation.setOnAccessibilityEventListener(events::add);
+        assertThrows(TimeoutException.class, () ->
+                sUiAutomation.executeAndWaitForEvent(
+                        () -> sInstrumentation.runOnMainSync(() -> mParentView.setSelected(true)),
+                        event -> false, DEFAULT_TIMEOUT_MS));
+
+        List<AccessibilityEvent> selectedEvents = events.stream()
+                .filter(event -> event.getEventType() == AccessibilityEvent.TYPE_VIEW_SELECTED)
+                .collect(Collectors.toList());
+        assertThat(selectedEvents).hasSize(1);
+        assertWithMessage("TYPE_VIEW_SELECTED should come from the parent only")
+                .that(isExpectedSource(selectedEvents.get(0), mParentView)).isTrue();
     }
 
     private static boolean isExpectedSource(AccessibilityEvent event, View view) {
