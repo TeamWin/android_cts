@@ -37,6 +37,7 @@ import android.text.style.ClickableSpan
 import android.view.View
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.eventually
+import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.modules.utils.build.SdkLevel
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
@@ -594,17 +595,38 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         vararg permissions: String,
         state: PermissionState,
         isLegacyApp: Boolean,
-        targetSdk: Int
+        targetSdk: Int,
+        manuallyNavigate: Boolean = false,
     ) {
-        navigateToAppPermissionSettings()
+        val useLegacyNavigation = isWatch || isAutomotive || isTv || manuallyNavigate
+        if (useLegacyNavigation) {
+            navigateToAppPermissionSettings()
+        }
 
+        val navigatedGroupLabels = mutableSetOf<String>()
         for (permission in permissions) {
             // Find the permission screen
             val permissionLabel = getPermissionLabel(permission)
-            if (isWatch) {
-                click(By.text(permissionLabel), 40_000)
+            if (navigatedGroupLabels.contains(getPermissionLabel(permission))) {
+                continue
+            }
+            navigatedGroupLabels.add(permissionLabel)
+            if (useLegacyNavigation) {
+                if (isWatch) {
+                    click(By.text(permissionLabel), 40_000)
+                } else {
+                    clickPermissionControllerUi(By.text(permissionLabel))
+                }
             } else {
-                clickPermissionControllerUi(By.text(permissionLabel))
+                runWithShellPermissionIdentity {
+                    context.startActivity(
+                        Intent(Intent.ACTION_MANAGE_APP_PERMISSION).apply {
+                            putExtra(Intent.EXTRA_PACKAGE_NAME, APP_PACKAGE_NAME)
+                            putExtra(Intent.EXTRA_PERMISSION_NAME, permission)
+                            putExtra(Intent.EXTRA_USER, Process.myUserHandle())
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        })
+                }
             }
 
             val wasGranted = if (isAutomotive) {

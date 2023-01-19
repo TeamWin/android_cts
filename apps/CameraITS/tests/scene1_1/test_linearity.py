@@ -97,7 +97,7 @@ class LinearityTest(its_base_test.ItsBaseTest):
             cam, req, sync_latency, fmt)
         img = image_processing_utils.convert_capture_to_rgb_image(cap)
         image_processing_utils.write_image(
-            img, f'{name_with_log_path}_sens={sens:04d}.jpg')
+            img, f'{name_with_log_path}_sens={int(sens):04d}.jpg')
         img = image_processing_utils.apply_lut_to_image(
             img, _INV_GAMMA_LUT[1::2] * _L)
         patch = image_processing_utils.get_image_patch(

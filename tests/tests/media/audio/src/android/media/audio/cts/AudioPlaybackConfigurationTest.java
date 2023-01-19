@@ -467,24 +467,25 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 .build();
 
         try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(Manifest.permission.MODIFY_AUDIO_ROUTING);
+
             mMp = createPreparedMediaPlayer(R.raw.sine1khzs40dblong, aa,
                     am.generateAudioSessionId());
 
             am.registerAudioPlaybackCallback(callback, h /*handler*/);
 
-            // query how many active players before starting the MediaPlayer
-            List<AudioPlaybackConfiguration> configs =
-                    am.getActivePlaybackConfigurations();
-            final int nbActivePlayersBeforeStart = configs.size();
-
-            assertPlayerStartAndCallbackWithPlayerAttributes(mMp, callback,
-                    nbActivePlayersBeforeStart + 1, aa);
+            mMp.start();
+            // time for the new configuration to propagate
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS);
 
             assertTrue("Active player, device not found",
                     hasDevice(callback.getConfigs(), aa));
 
         } finally {
             am.unregisterAudioPlaybackCallback(callback);
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
             if (h != null) {
                 h.getLooper().quit();
             }

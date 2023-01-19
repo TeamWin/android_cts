@@ -17,6 +17,7 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.photopicker.cts">
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
 <application android:label="Photo Picker Device Tests">
     <uses-library android:name="android.test.runner" />
     <activity android:name="android.photopicker.cts.GetResultActivity"

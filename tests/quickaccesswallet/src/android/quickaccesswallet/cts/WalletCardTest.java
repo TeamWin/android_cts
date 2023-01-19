@@ -19,6 +19,8 @@ import static android.quickaccesswallet.cts.TestUtils.compareIcons;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -55,14 +57,18 @@ public class WalletCardTest {
     @Test
     public void testParcel_toParcel() {
         Bitmap bitmap = Bitmap.createBitmap(70, 44, Bitmap.Config.ARGB_8888);
+        Bitmap bitmapSecondary = Bitmap.createBitmap(50, 30, Bitmap.Config.ARGB_8888);
         Intent intent = new Intent(mContext, QuickAccessWalletActivity.class);
         WalletCard card = new WalletCard.Builder(
                 "cardId",
+                WalletCard.CARD_TYPE_VALUABLE,
                 Icon.createWithBitmap(bitmap),
                 "content description",
-                PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_IMMUTABLE))
+                PendingIntent.getActivity(mContext, 0, intent,
+                        PendingIntent.FLAG_IMMUTABLE))
                 .setCardIcon(Icon.createWithResource(mContext, android.R.drawable.ic_dialog_info))
                 .setCardLabel("card label")
+                .setValuableCardSecondaryImage(Icon.createWithBitmap(bitmapSecondary))
                 .build();
 
         Parcel p = Parcel.obtain();
@@ -70,11 +76,14 @@ public class WalletCardTest {
         p.setDataPosition(0);
         WalletCard newCard = WalletCard.CREATOR.createFromParcel(p);
         assertThat(card.getCardId()).isEqualTo(newCard.getCardId());
+        assertThat(card.getCardType()).isEqualTo(newCard.getCardType());
         compareIcons(mContext, card.getCardImage(), newCard.getCardImage());
         assertThat(card.getContentDescription()).isEqualTo(newCard.getContentDescription());
         assertThat(card.getPendingIntent()).isEqualTo(newCard.getPendingIntent());
         compareIcons(mContext, card.getCardIcon(), newCard.getCardIcon());
         assertThat(card.getCardLabel()).isEqualTo(newCard.getCardLabel());
+        compareIcons(mContext, card.getValuableCardSecondaryImage(),
+                newCard.getValuableCardSecondaryImage());
     }
 
     @Test
@@ -83,9 +92,11 @@ public class WalletCardTest {
         Intent intent = new Intent(mContext, QuickAccessWalletActivity.class);
         WalletCard card = new WalletCard.Builder(
                 "cardId",
+                WalletCard.CARD_TYPE_PAYMENT,
                 Icon.createWithBitmap(bitmap),
                 "content description",
-                PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_IMMUTABLE))
+                PendingIntent.getActivity(mContext, 0, intent,
+                        PendingIntent.FLAG_IMMUTABLE))
                 .build();
 
         Parcel p = Parcel.obtain();
@@ -93,10 +104,42 @@ public class WalletCardTest {
         p.setDataPosition(0);
         WalletCard newCard = WalletCard.CREATOR.createFromParcel(p);
         assertThat(card.getCardId()).isEqualTo(newCard.getCardId());
+        assertThat(card.getCardType()).isEqualTo(newCard.getCardType());
         compareIcons(mContext, card.getCardImage(), newCard.getCardImage());
         assertThat(card.getContentDescription()).isEqualTo(newCard.getContentDescription());
         assertThat(card.getPendingIntent()).isEqualTo(newCard.getPendingIntent());
         compareIcons(mContext, card.getCardIcon(), card.getCardIcon());
         assertThat(card.getCardLabel()).isEqualTo(newCard.getCardLabel());
+        compareIcons(mContext, card.getValuableCardSecondaryImage(),
+                newCard.getValuableCardSecondaryImage());
+    }
+
+    @Test
+    public void testBuilder_defaultsToUnknownCardType() {
+        Bitmap bitmap = Bitmap.createBitmap(70, 44, Bitmap.Config.ARGB_8888);
+        Intent intent = new Intent(mContext, QuickAccessWalletActivity.class);
+        WalletCard card = new WalletCard.Builder(
+                "cardId",
+                Icon.createWithBitmap(bitmap),
+                "content description",
+                PendingIntent.getActivity(mContext, 0, intent,
+                        PendingIntent.FLAG_IMMUTABLE))
+                .build();
+
+        assertThat(card.getCardType()).isEqualTo(WalletCard.CARD_TYPE_UNKNOWN);
+    }
+
+    @Test
+    public void testSetValuableCardSecondaryImage_throwsException() {
+        Bitmap bitmap = Bitmap.createBitmap(70, 44, Bitmap.Config.ARGB_8888);
+        Intent intent = new Intent(mContext, QuickAccessWalletActivity.class);
+        assertThrows(IllegalStateException.class, () -> new WalletCard.Builder(
+                "cardId",
+                WalletCard.CARD_TYPE_PAYMENT,
+                Icon.createWithBitmap(bitmap),
+                "content description",
+                PendingIntent.getActivity(mContext, 0, intent,
+                        PendingIntent.FLAG_IMMUTABLE))
+                .setValuableCardSecondaryImage(Icon.createWithBitmap(bitmap)));
     }
 }

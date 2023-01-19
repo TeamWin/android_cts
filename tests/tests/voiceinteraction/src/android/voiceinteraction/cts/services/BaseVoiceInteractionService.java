@@ -50,6 +50,8 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
 
     // The CountDownLatch waits for onPrepareToShowSession
     public static CountDownLatch sPrepareToShowSessionLatch;
+    // The CountDownLatch waits for onShowSessionFailed
+    public static CountDownLatch sShowSessionFailedLatch;
 
     // The CountDownLatch waits for a service init result
     // TODO: rename to mHotwordDetectionServiceInitializedLatch, keep this name until the
@@ -66,6 +68,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     // Throws SecurityException when calling createAlwaysOnHotwordDetector() API
     private boolean mIsCreateDetectorSecurityExceptionThrow;
     private Bundle mPrepareToShowSessionArgs = new Bundle();
+    private Bundle mShowSessionFailedArgs = new Bundle();
     private int mPrepareToShowSessionFlags = -1;
 
     // An AlwaysOnHotwordDetector.Callback no nothing on callback methods
@@ -183,6 +186,10 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     @Override
     public void onShowSessionFailed(Bundle args) {
         Log.d(mTag, "onShowSessionFailed args = " + args);
+        if (sShowSessionFailedLatch != null) {
+            sShowSessionFailedLatch.countDown();
+        }
+        mShowSessionFailedArgs = args;
     }
 
     /**
@@ -193,6 +200,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
         sConnectLatch = null;
         sDisconnectLatch = null;
         sPrepareToShowSessionLatch = null;
+        sShowSessionFailedLatch = null;
     }
 
     /**
@@ -204,10 +212,12 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     }
 
     /**
-     * Init the CountDownLatch that is used to wait for onPrepareToShowSession.
+     * Init the CountDownLatch that is used to wait for onPrepareToShowSession and
+     * onShowSessionFailed
      */
     public static void initShowSessionLatch() {
         sPrepareToShowSessionLatch = new CountDownLatch(1);
+        sShowSessionFailedLatch = new CountDownLatch(1);
     }
 
     /**
@@ -247,6 +257,19 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
             throw new AssertionError("onPrepareToShowSession has not been triggered");
         }
         sPrepareToShowSessionLatch = null;
+    }
+
+    /**
+     * Wait for onShowSessionFailed
+     */
+    public static void waitOnShowSessionFailed() throws InterruptedException {
+        if (sShowSessionFailedLatch == null) {
+            throw new AssertionError("Should init showSessionFailed CountDownLatch");
+        }
+        if (!sShowSessionFailedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
+            throw new AssertionError("onShowSessionFailed has not been triggered");
+        }
+        sShowSessionFailedLatch = null;
     }
 
     public static VoiceInteractionService getService() {
@@ -315,6 +338,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
      */
     @NonNull
     public Bundle getPrepareToShowSessionArgs() {
+        Log.d(mTag, "getPrepareToShowSessionArgs = " + mPrepareToShowSessionArgs);
         return mPrepareToShowSessionArgs;
     }
 
@@ -322,9 +346,18 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
      * Return the flags from onPrepareToShowSession.
      */
     public int getPrepareToShowSessionFlags() {
+        Log.d(mTag, "getPrepareToShowSessionFlags = " + mPrepareToShowSessionFlags);
         return mPrepareToShowSessionFlags;
     }
 
+    /**
+     * Return the args from onShowSessionFailed.
+     */
+    @NonNull
+    public Bundle getShowSessionFailedArgs() {
+        Log.d(mTag, "getShowSessionFailedArgs = " + mShowSessionFailedArgs);
+        return mShowSessionFailedArgs;
+    }
 
     /**
      * Return the result for onHotwordDetectionServiceInitialized().

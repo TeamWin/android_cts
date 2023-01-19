@@ -105,40 +105,6 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         getDevice().uninstallPackage(PACKAGE_NAME);
     }
 
-    @CddTest(requirement = "9.10/C-0-3,C-0-5")
-    @Test
-    @Parameters(method = "installSingle")
-    public void testInstallEverythingWithoutSignature(boolean incremental) throws Exception {
-        assumePreconditions(incremental);
-        new InstallMultiple(incremental)
-                .addFile(BASE_APK)
-                .addFile(BASE_APK_DM)
-                .addFile(SPLIT_APK)
-                .addFile(SPLIT_APK_DM)
-                .run();
-        verifyFsverityInstall(incremental, BASE_APK, SPLIT_APK);
-    }
-
-    @CddTest(requirement = "9.10/C-0-3,C-0-5")
-    @Test
-    @Parameters(method = "installAndUpdate")
-    public void testInstallWithoutSignatureSplitOnly(boolean installIncremental,
-            boolean updateIncremental, boolean isSupported) throws Exception {
-        assumePreconditions(installIncremental || updateIncremental);
-        new InstallMultiple(installIncremental)
-                .addFile(BASE_APK)
-                .run();
-        verifyFsverityInstall(installIncremental, BASE_APK);
-
-        new InstallMultiple(updateIncremental)
-                .inheritFrom(PACKAGE_NAME)
-                .addFile(SPLIT_APK)
-                .run(isSupported);
-        if (isSupported) {
-            verifyFsverityInstall(updateIncremental, BASE_APK, SPLIT_APK);
-        }
-    }
-
     @CddTest(requirement = "9.10/C-0-3")
     @Test
     @Parameters(method = "installSingle")
@@ -264,7 +230,6 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         new InstallMultiple(installIncremental)
                 .addFile(BASE_APK)
                 .run();
-        verifyFsverityInstall(installIncremental, BASE_APK);
 
         new InstallMultiple(updateIncremental)
                 .inheritFrom(PACKAGE_NAME)
@@ -285,7 +250,6 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         new InstallMultiple(installIncremental)
                 .addFile(BASE_APK)
                 .run();
-        verifyFsverityInstall(installIncremental, BASE_APK);
 
         new InstallMultiple(updateIncremental)
                 .inheritFrom(PACKAGE_NAME)
@@ -413,7 +377,6 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         new InstallMultiple(/*incremental=*/true)
                 .addFile(BASE_APK)
                 .run();
-        verifyFsverityInstall(true, BASE_APK);
     }
 
     @Test

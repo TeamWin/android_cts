@@ -1,0 +1,73 @@
+/*
+ * Copyright (C) 2023 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.jobscheduler.cts;
+
+import static android.jobscheduler.cts.JobThrottlingTest.setTestPackageStandbyBucket;
+
+import static org.junit.Assert.assertTrue;
+
+import android.content.Context;
+import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
+import android.support.test.uiautomator.UiDevice;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.Map;
+
+@RunWith(AndroidJUnit4.class)
+public class UserInitiatedJobTest {
+    private static final long DEFAULT_WAIT_TIMEOUT_MS = 2_000;
+    private static final int JOB_ID = UserInitiatedJobTest.class.hashCode();
+
+    private Context mContext;
+    private UiDevice mUiDevice;
+    private TestAppInterface mTestAppInterface;
+
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        mTestAppInterface = new TestAppInterface(mContext, JOB_ID);
+        setTestPackageStandbyBucket(mUiDevice, JobThrottlingTest.Bucket.ACTIVE);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        mTestAppInterface.cleanup();
+    }
+
+    /** Test that UIJs for the TOP app start immediately and there is no limit on the number. */
+    @Test
+    public void testTopUiUnlimited() throws Exception {
+        final int standardConcurrency = 64;
+        final int numUijs = standardConcurrency + 1;
+        mTestAppInterface.startAndKeepTestActivity(true);
+        for (int i = 0; i < numUijs; ++i) {
+            mTestAppInterface.scheduleJob(
+                    Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
+                    Map.of(TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, i));
+            assertTrue("Job did not start after scheduling",
+                    mTestAppInterface.awaitJobStart(i, DEFAULT_WAIT_TIMEOUT_MS));
+        }
+    }
+}

@@ -31,6 +31,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.google.common.truth.Truth.assertThat
+import kotlin.reflect.KClass
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsNot
 import org.junit.AfterClass
@@ -39,7 +40,6 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import kotlin.reflect.KClass
 
 /**
  * Tests how [Configuration] overrides affect the value of resources in an [Activity].
@@ -53,6 +53,7 @@ class OverrideConfigTest {
 
         private var isNaturalPortrait = true
 
+        @JvmStatic
         @BeforeClass
         fun assumeRotationSupported() {
             val packageManager = context.packageManager
@@ -83,6 +84,7 @@ class OverrideConfigTest {
             }
         }
 
+        @JvmStatic
         @AfterClass
         fun resetRotation() {
             uiDevice.unfreezeRotation()

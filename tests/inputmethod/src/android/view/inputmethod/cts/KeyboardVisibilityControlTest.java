@@ -912,18 +912,19 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             final ImeEventStream stream = imeSession.openEventStream();
             final String marker = getTestMarker();
             final AtomicReference<EditText> editorRef = new AtomicReference<>();
-            TestActivity.startSync(activity -> {
-                final LinearLayout layout = new LinearLayout(activity);
-                layout.setOrientation(LinearLayout.VERTICAL);
-                layout.setGravity(Gravity.BOTTOM);
-                final EditText editText = new EditText(activity);
-                editorRef.set(editText);
-                editText.setHint("focused editText");
-                editText.setPrivateImeOptions(marker);
-                editText.requestFocus();
-                layout.addView(editText);
-                return layout;
-            });
+            new TestActivity.Starter().withWindowingMode(
+                    WINDOWING_MODE_FULLSCREEN).startSync(activity -> {
+                        final LinearLayout layout = new LinearLayout(activity);
+                        layout.setOrientation(LinearLayout.VERTICAL);
+                        layout.setGravity(Gravity.BOTTOM);
+                        final EditText editText = new EditText(activity);
+                        editorRef.set(editText);
+                        editText.setHint("focused editText");
+                        editText.setPrivateImeOptions(marker);
+                        editText.requestFocus();
+                        layout.addView(editText);
+                        return layout;
+                    }, TestActivity.class);
             // Show IME.
             runOnMainSync(() -> editorRef.get().getContext().getSystemService(
                     InputMethodManager.class).showSoftInput(editorRef.get(), 0));

@@ -250,6 +250,8 @@ public class AtomTests {
                         .OPSTR_SYSTEM_EXEMPT_FROM_FGS_BG_START_WHILE_IN_USE_PERMISSION_RESTRICTION,
                 129);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_SYSTEM_EXEMPT_FROM_FGS_STOP_BUTTON, 130);
+        APP_OPS_ENUM_MAP.put(
+                AppOpsManager.OPSTR_CAPTURE_CONSENTLESS_BUGREPORT_ON_USERDEBUG_BUILD, 131);
     }
 
     @Test

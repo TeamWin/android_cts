@@ -261,7 +261,10 @@ public class MtpHostTestActivity extends PassFailButtons.Activity implements Han
             mUsbManager.requestPermission(
                     mUsbDevice,
                     PendingIntent.getBroadcast(
-                            MtpHostTestActivity.this, 0, new Intent(ACTION_PERMISSION_GRANTED), PendingIntent.FLAG_MUTABLE_UNAUDITED));
+                            MtpHostTestActivity.this, 0,
+                            new Intent(ACTION_PERMISSION_GRANTED)
+                                    .setPackage(MtpHostTestActivity.this.getPackageName()),
+                            PendingIntent.FLAG_MUTABLE));
 
             latch.await();
             assertTrue(mUsbManager.hasPermission(mUsbDevice));

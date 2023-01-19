@@ -48,8 +48,8 @@ public class PhotoPickerCloudUtils {
         return mediaIds;
     }
 
-    public static ClipData fetchPickerMedia(GetResultActivity activity, UiDevice uiDevice,
-            int maxCount) throws Exception {
+    public static void selectAndAddPickerMedia(UiDevice uiDevice, int maxCount)
+            throws Exception {
         final List<UiObject> itemList = findItemList(maxCount);
         for (int i = 0; i < itemList.size(); i++) {
             final UiObject item = itemList.get(i);
@@ -60,6 +60,11 @@ public class PhotoPickerCloudUtils {
         final UiObject addButton = findAddButton();
         addButton.click();
         uiDevice.waitForIdle();
+    }
+
+    public static ClipData fetchPickerMedia(GetResultActivity activity, UiDevice uiDevice,
+            int maxCount) throws Exception {
+        selectAndAddPickerMedia(uiDevice, maxCount);
 
         return activity.getResult().data.getClipData();
     }

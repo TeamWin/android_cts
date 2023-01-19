@@ -36,6 +36,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -643,6 +644,92 @@ public class BluetoothAdapterTest extends AndroidTestCase {
         assertEquals(mAdapter.getBluetoothHciSnoopLoggingMode(),
                 BluetoothAdapter.BT_SNOOP_LOG_MODE_DISABLED);
 
+    }
+
+    public void test_setPreferredAudioProfiles_getPreferredAudioProfiles() {
+        if (!mHasBluetooth) {
+            // Skip the test if bluetooth or companion device are not present.
+            return;
+        }
+        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
+        String deviceAddress = "00:11:22:AA:BB:CC";
+        BluetoothDevice device = mAdapter.getRemoteDevice(deviceAddress);
+
+        Bundle preferences = new Bundle();
+        preferences.putInt(BluetoothAdapter.AUDIO_MODE_OUTPUT_ONLY, BluetoothProfile.HEADSET);
+
+        // Test invalid input
+        assertThrows(NullPointerException.class, () ->
+                mAdapter.setPreferredAudioProfiles(device, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> mAdapter.setPreferredAudioProfiles(device, preferences));
+        assertThrows(NullPointerException.class, () -> mAdapter.getPreferredAudioProfiles(null));
+
+        preferences.putInt(BluetoothAdapter.AUDIO_MODE_OUTPUT_ONLY, BluetoothProfile.HID_HOST);
+        assertThrows(IllegalArgumentException.class,
+                () -> mAdapter.setPreferredAudioProfiles(device, preferences));
+
+        preferences.putInt(BluetoothAdapter.AUDIO_MODE_OUTPUT_ONLY, BluetoothProfile.LE_AUDIO);
+        preferences.putInt(BluetoothAdapter.AUDIO_MODE_DUPLEX, BluetoothProfile.A2DP);
+        assertThrows(IllegalArgumentException.class,
+                () -> mAdapter.setPreferredAudioProfiles(device, preferences));
+
+        preferences.putInt(BluetoothAdapter.AUDIO_MODE_DUPLEX, BluetoothProfile.GATT);
+        assertThrows(IllegalArgumentException.class,
+                () -> mAdapter.setPreferredAudioProfiles(device, preferences));
+
+        preferences.putInt(BluetoothAdapter.AUDIO_MODE_DUPLEX, BluetoothProfile.HEADSET);
+
+        assertThrows(NullPointerException.class, () ->
+                mAdapter.setPreferredAudioProfiles(null, preferences));
+
+        // Check what happens when the device is not bonded
+        assertTrue(mAdapter.getPreferredAudioProfiles(device).isEmpty());
+        assertEquals(BluetoothStatusCodes.ERROR_DEVICE_NOT_BONDED,
+                mAdapter.setPreferredAudioProfiles(device, preferences));
+    }
+
+    public void test_preferredAudioProfileCallbacks() {
+        if (!mHasBluetooth) {
+            // Skip the test if bluetooth or companion device are not present.
+            return;
+        }
+        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
+        String deviceAddress = "00:11:22:AA:BB:CC";
+        BluetoothDevice device = mAdapter.getRemoteDevice(deviceAddress);
+
+        Executor executor = mContext.getMainExecutor();
+        BluetoothAdapter.PreferredAudioProfilesChangedCallback callback =
+                new BluetoothAdapter.PreferredAudioProfilesChangedCallback() {
+            @Override
+            public void onPreferredAudioProfilesChanged(
+                    @androidx.annotation.NonNull BluetoothDevice device,
+                    @androidx.annotation.NonNull Bundle preferredAudioProfiles, int status) {}
+        };
+
+        callback.onPreferredAudioProfilesChanged(device, Bundle.EMPTY,
+                BluetoothStatusCodes.SUCCESS);
+
+        assertThrows(NullPointerException.class, () ->
+                mAdapter.registerPreferredAudioProfilesChangedCallback(null, callback));
+        assertThrows(NullPointerException.class, () ->
+                mAdapter.registerPreferredAudioProfilesChangedCallback(executor, null));
+        assertThrows(NullPointerException.class, () ->
+                mAdapter.unregisterPreferredAudiProfilesChangedCallback(null));
+
+        // This should throw a SecurityException because no BLUETOOTH_PRIVILEGED permission
+        assertThrows(SecurityException.class, () ->
+                mAdapter.registerPreferredAudioProfilesChangedCallback(executor, callback));
+        assertThrows(IllegalArgumentException.class, () ->
+                mAdapter.unregisterPreferredAudiProfilesChangedCallback(callback));
+
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+
+        // Try the happy path
+        assertEquals(BluetoothStatusCodes.SUCCESS,
+                mAdapter.registerPreferredAudioProfilesChangedCallback(executor, callback));
+        assertEquals(BluetoothStatusCodes.SUCCESS,
+                mAdapter.unregisterPreferredAudiProfilesChangedCallback(callback));
     }
 
     private static void sleep(long t) {

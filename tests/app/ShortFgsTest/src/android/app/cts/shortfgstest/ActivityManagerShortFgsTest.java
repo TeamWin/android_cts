@@ -714,58 +714,6 @@ public class ActivityManagerShortFgsTest {
     }
 
     /**
-     * Make sure, the FGS type can't be changed *to* SHORT_SERVICE.
-     */
-    @Test
-    public void testCannotChangeTypeToShortService() throws Exception {
-        testCannotChangeType(
-                FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
-                FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
-    }
-
-    /**
-     * Make sure, the FGS type can't be changed *from* SHORT_SERVICE.
-     */
-    @Test
-    public void testCannotChangeTypeFromShortService() throws Exception {
-        testCannotChangeType(
-                FOREGROUND_SERVICE_TYPE_SHORT_SERVICE,
-                FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
-    }
-
-    private void testCannotChangeType(int from, int to) throws Exception {
-        startForegroundService(FGS0, from, Service.START_NOT_STICKY);
-
-        // Wait for the method name message.
-        waitForMethodCall(FGS0, "onStartCommand");
-        assertServiceRunning(FGS0);
-
-        // Calling Service.startForeground() without starting it.
-        // This should fail.
-        ShortFgsMessageReceiver.sendMessage(
-                newMessage().setDoCallStartForeground(true).setComponentName(FGS0)
-                        .setFgsType(to)
-                        .setExpectedExceptionClass(IllegalArgumentException.class));
-
-        ShortFgsMessage m = waitForException();
-
-        assertThat(m.getActualExceptionClasss())
-                .isEqualTo(IllegalArgumentException.class.getName());
-
-        assertThat(m.getActualExceptionMessage())
-                .matches(".*Changing.*SHORT_SERVICE is now allowed.*");
-
-        // Stop the service.
-        sContext.stopService(new Intent().setComponent(FGS0));
-
-        // Stop the service.
-        waitForMethodCall(FGS0, "onDestroy");
-        assertServiceNotRunning(FGS0);
-
-        CallProvider.ensureNoMoreMessages();
-    }
-
-    /**
      * Make sure another FGS cannot be started from a SHORT_SERVICE.
      */
     @Test

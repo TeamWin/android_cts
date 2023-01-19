@@ -38,6 +38,8 @@ import android.webkit.WebViewClient;
 import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 import android.util.Pair;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.google.common.util.concurrent.SettableFuture;
@@ -141,6 +143,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
 
     // Verify shouldoverrideurlloading called on webview called via onCreateWindow
     // TODO(sgurun) upstream this test to Aw.
+    @FlakyTest(bugId = 253448914)
     public void testShouldOverrideUrlLoadingOnCreateWindow() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;

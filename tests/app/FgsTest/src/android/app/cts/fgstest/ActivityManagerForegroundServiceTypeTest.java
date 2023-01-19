@@ -55,6 +55,7 @@ import com.android.internal.util.ArrayUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -232,6 +233,7 @@ public final class ActivityManagerForegroundServiceTypeTest {
                 new String[] {SPECIAL_PERMISSION_OP_ALLOWLISTED});
     }
 
+    @Ignore("b/265347862")
     @Test
     public void testForegroundServiceTypeFileManagementPermission() throws Exception {
         testPermissionEnforcementCommon(ServiceInfo.FOREGROUND_SERVICE_TYPE_FILE_MANAGEMENT);

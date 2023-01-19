@@ -152,7 +152,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
                             mUsbManager.requestPermission(device,
                                     PendingIntent.getBroadcast(UsbDeviceTestActivity.this, 0,
-                                            new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_MUTABLE_UNAUDITED));
+                                            new Intent(ACTION_USB_PERMISSION)
+                                                    .setPackage(UsbDeviceTestActivity.this
+                                                            .getPackageName()),
+                                            PendingIntent.FLAG_MUTABLE));
                             break;
                         case ACTION_USB_PERMISSION:
                             boolean granted = intent.getBooleanExtra(
@@ -1596,7 +1599,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
                             mUsbManager.requestPermission(device,
                                     PendingIntent.getBroadcast(UsbDeviceTestActivity.this, 0,
-                                         new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_MUTABLE_UNAUDITED));
+                                            new Intent(ACTION_USB_PERMISSION)
+                                                    .setPackage(UsbDeviceTestActivity.this
+                                                            .getPackageName()),
+                                            PendingIntent.FLAG_MUTABLE));
                             break;
                     }
                 }

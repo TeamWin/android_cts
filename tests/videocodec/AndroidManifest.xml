@@ -23,6 +23,7 @@
 
     <application
         android:requestLegacyExternalStorage="true"
+        android:largeHeap="true"
         android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner" />
     </application>

@@ -1006,23 +1006,33 @@ public class TestUtils {
         final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
                 callingPackageName, otherApp.getPackageName()));
         final File file = new File(otherAppExternalDataDir, fileName);
-        String absolutePath = file.getAbsolutePath();
-
-        final ContentValues valuesWithRelativePath = new ContentValues();
-        final String absoluteDirectoryPath = otherAppExternalDataDir.getAbsolutePath();
-        valuesWithRelativePath.put(MediaStore.MediaColumns.RELATIVE_PATH,
-                absoluteDirectoryPath.substring(absoluteDirectoryPath.indexOf("Android")));
-        valuesWithRelativePath.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-
         try {
             assertThat(createFileAs(otherApp, file.getPath())).isTrue();
-            assertCantInsertDataValue(throwsExceptionForDataValue, absolutePath);
-            assertCantInsertDataValue(throwsExceptionForDataValue,
-                    "/sdcard/" + absolutePath.substring(absolutePath.indexOf("Android")));
-            assertCantInsertDataValue(throwsExceptionForDataValue,
-                    "/storage/emulated/0/Pictures/../"
-                            + absolutePath.substring(absolutePath.indexOf("Android")));
 
+            final ContentValues valuesWithData = new ContentValues();
+            valuesWithData.put(MediaStore.MediaColumns.DATA, file.getAbsolutePath());
+            try {
+                Uri uri = getContentResolver().insert(
+                        MediaStore.Files.getContentUri(VOLUME_EXTERNAL),
+                        valuesWithData);
+
+                if (throwsExceptionForDataValue) {
+                    fail("File insert expected to fail: " + file);
+                } else {
+                    try (Cursor c = getContentResolver().query(uri, new String[]{
+                            MediaStore.MediaColumns.DATA}, null, null)) {
+                        assertThat(c.moveToFirst()).isTrue();
+                        assertThat(c.getString(0)).isNotEqualTo(file.getAbsolutePath());
+                    }
+                }
+            } catch (IllegalArgumentException expected) {
+            }
+
+            final ContentValues valuesWithRelativePath = new ContentValues();
+            final String path = file.getAbsolutePath();
+            valuesWithRelativePath.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                    path.substring(path.indexOf("Android")));
+            valuesWithRelativePath.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
             try {
                 getContentResolver().insert(MediaStore.Files.getContentUri(VOLUME_EXTERNAL),
                         valuesWithRelativePath);
@@ -1032,34 +1042,6 @@ public class TestUtils {
         } finally {
             deleteFileAsNoThrow(otherApp, file.getPath());
         }
-    }
-
-    private static void assertCantInsertDataValue(boolean throwsExceptionForDataValue,
-            String path) throws Exception {
-        if (throwsExceptionForDataValue) {
-            assertThrowsErrorOnInsertToOtherAppPrivateDirectories(path);
-        } else {
-            insertDataWithValue(path);
-            try (Cursor c = getContentResolver().query(
-                    MediaStore.Files.getContentUri(VOLUME_EXTERNAL),
-                    new String[] {MediaStore.MediaColumns.DATA},
-                    MediaStore.MediaColumns.DATA + "=?", new String[] {path}, null)) {
-                assertThat(c.getCount()).isEqualTo(0);
-            }
-        }
-    }
-
-    private static void assertThrowsErrorOnInsertToOtherAppPrivateDirectories(String path)
-            throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> insertDataWithValue(path));
-    }
-
-    private static void insertDataWithValue(String path) {
-        final ContentValues valuesWithData = new ContentValues();
-        valuesWithData.put(MediaStore.MediaColumns.DATA, path);
-
-        getContentResolver().insert(MediaStore.Files.getContentUri(VOLUME_EXTERNAL),
-                valuesWithData);
     }
 
     /**

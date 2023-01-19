@@ -65,6 +65,7 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InsertGesture;
+import android.view.inputmethod.InsertModeGesture;
 import android.view.inputmethod.JoinOrSplitGesture;
 import android.view.inputmethod.PreviewableHandwritingGesture;
 import android.view.inputmethod.RemoveSpaceGesture;
@@ -1628,6 +1629,23 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     public void testPerformHandwritingInsertGesture_emptyText() throws Exception {
         InsertGesture.Builder builder = new InsertGesture.Builder();
         testPerformHandwritingGesture(builder.setTextToInsert("")
+                        .setInsertionPoint(new PointF(1, 1)).setFallbackText("").build(),
+                InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+    }
+
+    /**
+     * Test
+     * InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}
+     * works as expected  for {@link InsertGesture}.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.InsertModeGesture.Builder#setInsertionPoint",
+            "android.view.inputmethod.InsertGesture.Builder#setFallbackText",
+            "android.view.inputmethod.InsertGesture.Builder#setCancellationSignal",
+            "android.view.inputmethod.InputConnection#performHandwritingGesture"})
+    public void testPerformHandwritingInsertModeGesture() throws Exception {
+        InsertModeGesture.Builder builder = new InsertModeGesture.Builder();
+        testPerformHandwritingGesture(builder.setCancellationSignal(new CancellationSignal())
                         .setInsertionPoint(new PointF(1, 1)).setFallbackText("").build(),
                 InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
     }

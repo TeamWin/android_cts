@@ -97,6 +97,10 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
                 createMotionEvent(MotionEvent.ACTION_HOVER_ENTER, startPosition.x,
                         startPosition.y, /* relativeX= */ 0f, /* relativeY= */ 0f,
                         /* vScroll= */ 0f, /* hScroll= */ 0f, /* buttonState= */ 0,
+                        /* pressure= */ 0.0f),
+                createMotionEvent(MotionEvent.ACTION_HOVER_MOVE, startPosition.x,
+                        startPosition.y, /* relativeX= */ 0f, /* relativeY= */ 0f,
+                        /* vScroll= */ 0f, /* hScroll= */ 0f, /* buttonState= */ 0,
                         /* pressure= */ 0.0f)));
     }
 

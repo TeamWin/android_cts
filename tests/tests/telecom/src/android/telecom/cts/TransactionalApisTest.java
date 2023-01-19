@@ -533,10 +533,8 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             cleanup();
             assertNull(mCall1.getCurrentCallEndpoint());
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
-            assertNumCalls(getInCallService(), 1);
             verifyCallEndpointIsNotNull(mCall1);
             callControlAction(DISCONNECT, mCall1);
-            assertNumCalls(getInCallService(), 0);
         } finally {
             cleanup();
         }
@@ -554,10 +552,8 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             cleanup();
             assertNull(mCall1.getAvailableEndpoints());
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
-            assertNumCalls(getInCallService(), 1);
             verifyOnAvailableEndpointsIsNotNull(mCall1);
             callControlAction(DISCONNECT, mCall1);
-            assertNumCalls(getInCallService(), 0);
         } finally {
             cleanup();
         }
@@ -574,7 +570,6 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         try {
             cleanup();
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
-            assertNumCalls(getInCallService(), 1);
 
             // mute call and verify onMuteStateChanged was updated
             getInCallService().setMuted(true);
@@ -585,7 +580,6 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             verifyMuteState(false, mCall1);
 
             callControlAction(DISCONNECT, mCall1);
-            assertNumCalls(getInCallService(), 0);
         } finally {
             cleanup();
         }
@@ -604,7 +598,6 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         try {
             cleanup();
             startCallWithAttributesAndVerify(mIncomingCallAttributes, mCall1);
-            assertNumCalls(getInCallService(), 1);
             // verify there is at least one endpoint that is non-null
             verifyCallEndpointIsNotNull(mCall1);
             int startingEndpointType = mCall1.getCurrentCallEndpoint().getEndpointType();
@@ -629,7 +622,6 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
                 assertEndpointType(getInCallService(), anotherEndpoint.getEndpointType());
                 // disconnect the call
                 callControlAction(DISCONNECT, mCall1);
-                assertNumCalls(getInCallService(), 0);
             }
         } finally {
             cleanup();

@@ -42,6 +42,7 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
     public static final String EXTRA_REQUIRED_NETWORK_TYPE =
             PACKAGE_NAME + ".extra.REQUIRED_NETWORK_TYPE";
     public static final String EXTRA_AS_EXPEDITED = PACKAGE_NAME + ".extra.AS_EXPEDITED";
+    public static final String EXTRA_AS_USER_INITIATED = PACKAGE_NAME + ".extra.AS_USER_INITIATED";
     public static final String EXTRA_REQUEST_JOB_UID_STATE =
             PACKAGE_NAME + ".extra.REQUEST_JOB_UID_STATE";
     public static final String ACTION_SCHEDULE_JOB = PACKAGE_NAME + ".action.SCHEDULE_JOB";
@@ -63,6 +64,8 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                 final int networkType =
                         intent.getIntExtra(EXTRA_REQUIRED_NETWORK_TYPE, JobInfo.NETWORK_TYPE_NONE);
                 final boolean expedited = intent.getBooleanExtra(EXTRA_AS_EXPEDITED, false);
+                final boolean userInitiated =
+                        intent.getBooleanExtra(EXTRA_AS_USER_INITIATED, false);
                 final boolean requestJobUidState = intent.getBooleanExtra(
                         EXTRA_REQUEST_JOB_UID_STATE, false);
                 final Bundle extras = new Bundle();
@@ -72,6 +75,7 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                         .setTransientExtras(extras)
                         .setImportantWhileForeground(allowInIdle)
                         .setExpedited(expedited)
+                        .setUserInitiated(userInitiated)
                         .setRequiredNetworkType(networkType);
                 final int result = jobScheduler.schedule(jobBuilder.build());
                 if (result != JobScheduler.RESULT_SUCCESS) {

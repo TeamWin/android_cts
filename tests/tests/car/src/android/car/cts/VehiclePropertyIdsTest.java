@@ -404,6 +404,9 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 VehiclePropertyIds.toString(VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_ENABLED))
                 .isEqualTo("AUTOMATIC_EMERGENCY_BRAKING_ENABLED");
         assertThat(
+                VehiclePropertyIds.toString(VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_STATE))
+                .isEqualTo("AUTOMATIC_EMERGENCY_BRAKING_STATE");
+        assertThat(
                 VehiclePropertyIds.toString(VehiclePropertyIds.FORWARD_COLLISION_WARNING_ENABLED))
                 .isEqualTo("FORWARD_COLLISION_WARNING_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.BLIND_SPOT_WARNING_ENABLED))

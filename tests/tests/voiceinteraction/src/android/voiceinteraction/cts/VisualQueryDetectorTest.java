@@ -25,6 +25,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.service.voice.SandboxedDetectionServiceBase;
 import android.service.voice.VisualQueryDetector;
 import android.util.Log;
@@ -46,6 +47,7 @@ import java.util.Objects;
  * Tests for {@link VisualQueryDetector} APIs.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "No real use case for instant mode")
 public class VisualQueryDetectorTest {
 
     private static final String TAG = "VisualQueryDetectorTest";

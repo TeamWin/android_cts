@@ -274,8 +274,8 @@ public abstract class CodecTestBase {
     // SurfaceView or TextureView, ... They hold the responsibility of calling release().
     protected CodecTestActivity mActivity;
 
-    private static final MediaCodecList MEDIA_CODEC_LIST_ALL;
-    private static final MediaCodecList MEDIA_CODEC_LIST_REGULAR;
+    public static final MediaCodecList MEDIA_CODEC_LIST_ALL;
+    public static final MediaCodecList MEDIA_CODEC_LIST_REGULAR;
     static {
         MEDIA_CODEC_LIST_ALL = new MediaCodecList(MediaCodecList.ALL_CODECS);
         MEDIA_CODEC_LIST_REGULAR = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
@@ -581,7 +581,7 @@ public abstract class CodecTestBase {
         return false;
     }
 
-    private static String paramToString(Object[] param) {
+    protected static String paramToString(Object[] param) {
         StringBuilder paramStr = new StringBuilder("[  ");
         for (int j = 0; j < param.length - 1; j++) {
             Object o = param[j];

@@ -97,6 +97,18 @@
                 <action android:name="android.service.voice.VoiceInteractionService"/>
             </intent-filter>
         </service>
+        <service
+            android:name=".services.NoSessionVoiceInteractionService"
+            android:label="Voice interaction service with no existing session service"
+            android:permission="android.permission.BIND_VOICE_INTERACTION"
+            android:exported="true"
+            android:visibleToInstantApps="true">
+            <meta-data android:name="android.voice_interaction"
+                       android:resource="@xml/interaction_service_no_existing_session_service"/>
+            <intent-filter>
+                <action android:name="android.service.voice.VoiceInteractionService"/>
+            </intent-filter>
+        </service>
         <!-- RecognitionService -->
         <service android:name=".services.MainRecognitionService"
                  android:label="CTS Voice Recognition Service"

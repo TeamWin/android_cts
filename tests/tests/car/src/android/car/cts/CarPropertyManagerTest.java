@@ -40,8 +40,10 @@ import android.car.annotation.ApiRequirements;
 import android.car.cts.utils.VehiclePropertyVerifier;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
+import android.car.hardware.property.AutomaticEmergencyBrakingState;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback;
+import android.car.hardware.property.ErrorState;
 import android.car.hardware.property.EvChargeState;
 import android.car.hardware.property.EvRegenerativeBrakingState;
 import android.car.hardware.property.EvStoppingMode;
@@ -161,6 +163,23 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     private static final ImmutableSet<Integer> HVAC_TEMPERATURE_DISPLAY_UNITS =
             ImmutableSet.<Integer>builder().add(VehicleUnit.CELSIUS,
                     VehicleUnit.FAHRENHEIT).build();
+    private static final ImmutableSet<Integer> ERROR_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            ErrorState.OTHER_ERROR_STATE,
+                            ErrorState.NOT_AVAILABLE_DISABLED,
+                            ErrorState.NOT_AVAILABLE_SPEED_LOW,
+                            ErrorState.NOT_AVAILABLE_SPEED_HIGH,
+                            ErrorState.NOT_AVAILABLE_SAFETY)
+                    .build();
+    private static final ImmutableSet<Integer> AUTOMATIC_EMERGENCY_BRAKING_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            AutomaticEmergencyBrakingState.OTHER,
+                            AutomaticEmergencyBrakingState.ENABLED,
+                            AutomaticEmergencyBrakingState.ACTIVATED,
+                            AutomaticEmergencyBrakingState.USER_OVERRIDE)
+                    .build();
     private static final ImmutableSet<Integer> SINGLE_HVAC_FAN_DIRECTIONS = ImmutableSet.of(
             /*VehicleHvacFanDirection.FACE=*/0x1, /*VehicleHvacFanDirection.FLOOR=*/0x2,
             /*VehicleHvacFanDirection.DEFROST=*/0x4);
@@ -477,6 +496,17 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.VEHICLE_CURB_WEIGHT,
                             VehiclePropertyIds.TRAILER_PRESENT)
                     .build();
+    private static final ImmutableList<Integer>
+            PERMISSION_CONTROL_DISPLAY_UNITS_VENDOR_EXTENSION_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.DISTANCE_DISPLAY_UNITS,
+                            VehiclePropertyIds.FUEL_VOLUME_DISPLAY_UNITS,
+                            VehiclePropertyIds.TIRE_PRESSURE_DISPLAY_UNITS,
+                            VehiclePropertyIds.EV_BATTERY_DISPLAY_UNITS,
+                            VehiclePropertyIds.VEHICLE_SPEED_DISPLAY_UNITS,
+                            VehiclePropertyIds.FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME)
+                    .build();
     private static final ImmutableList<Integer> PERMISSION_READ_ADAS_SETTINGS_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
@@ -503,7 +533,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .build();
     private static final ImmutableList<Integer> PERMISSION_READ_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
-                    .add()
+                    .add(
+                            VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_STATE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -578,6 +609,20 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             default:
                 return Integer.toString(wheel);
         }
+    }
+
+    private static void verifyEnumValuesAreDistinct(
+            ImmutableSet<Integer>... possibleCarPropertyValues) {
+        ImmutableSet.Builder<Integer> combinedCarPropertyValues = ImmutableSet.<Integer>builder();
+        int numCarPropertyValues = 0;
+        for (ImmutableSet<Integer> values: possibleCarPropertyValues) {
+            combinedCarPropertyValues.addAll(values);
+            numCarPropertyValues += values.size();
+        }
+        int combinedCarPropertyValuesLength = combinedCarPropertyValues.build().size();
+        assertWithMessage("The number of distinct enum values")
+                .that(combinedCarPropertyValuesLength)
+                .isEqualTo(numCarPropertyValues);
     }
 
     // TODO(b/242350638): remove once all tests are annotated
@@ -4601,6 +4646,30 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testAutomaticEmergencyBrakingStateIfSupported() {
+        ImmutableSet<Integer> combinedCarPropertyValues = ImmutableSet.<Integer>builder()
+                .addAll(AUTOMATIC_EMERGENCY_BRAKING_STATES)
+                .addAll(ERROR_STATES)
+                .build();
+
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setPossibleCarPropertyValues(combinedCarPropertyValues)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testAutomaticEmergencyBrakingStateWithErrorState() {
+        verifyEnumValuesAreDistinct(AUTOMATIC_EMERGENCY_BRAKING_STATES, ERROR_STATES);
+    }
+
+    @Test
     public void testForwardCollisionWarningEnabledIfSupported() {
         VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.FORWARD_COLLISION_WARNING_ENABLED,
@@ -5764,6 +5833,24 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     }
                 },
                 Car.PERMISSION_PRIVILEGED_CAR_INFO);
+    }
+
+    @Test
+    public void testPermissionControlDisplayUnitsAndVendorExtensionGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_DISPLAY_UNITS_VENDOR_EXTENSION_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                Car.PERMISSION_VENDOR_EXTENSION);
     }
 
     @Test

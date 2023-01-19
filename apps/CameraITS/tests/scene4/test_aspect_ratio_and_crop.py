@@ -234,6 +234,8 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
       raw_avlb = camera_properties_utils.raw16(props)
       debug = self.debug_mode
 
+      # Converge 3A.
+      cam.do_3a()
       req = capture_request_utils.auto_capture_request()
 
       # If raw available, use as ground truth.

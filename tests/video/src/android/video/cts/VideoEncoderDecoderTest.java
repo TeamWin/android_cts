@@ -146,6 +146,7 @@ public class VideoEncoderDecoderTest {
     private int mWidth;
     private int mHeight;
     private String mEncoderName;
+    private int mMaxBFrames;
 
     private class TestConfig {
         public boolean mTestPixels = true;
@@ -201,26 +202,29 @@ public class VideoEncoderDecoderTest {
     }
 
     /** run performance test. */
-    private void perf(String mimeType, int w, int h, String encoder) throws Exception {
-        doTest(mimeType, w, h, true /* isPerf */, encoder);
+    private void perf(String mimeType, int w, int h, String encoder, int maxBFrames)
+            throws Exception {
+        doTest(mimeType, w, h, true /* isPerf */, encoder, maxBFrames);
     }
 
     /** run quality test. */
-    private void qual(String mimeType, int w, int h, String encoder) throws Exception {
-        doTest(mimeType, w, h, false /* isPerf */, encoder);
+    private void qual(String mimeType, int w, int h, String encoder, int maxBFrames)
+            throws Exception {
+        doTest(mimeType, w, h, false /* isPerf */, encoder, maxBFrames);
     }
 
     /** run quality test but do not report error. */
-    private void qual(String mimeType, int w, int h, String encoder, double margin)
+    private void qual(String mimeType, int w, int h, String encoder, int maxBFrames, double margin)
             throws Exception {
         mRmsErrorMargin = margin;
-        doTest(mimeType, w, h, false /* isPerf */, encoder);
+        doTest(mimeType, w, h, false /* isPerf */, encoder, maxBFrames);
     }
 
     static void prepareParamsList(List<Object[]> testParams, String mediaType, int[] widths,
             int[] heights) {
         final Type[] types = {Type.Qual, Type.Perf};
         String[] encoderNames = MediaUtils.getEncoderNamesForMime(mediaType);
+        int[] maxBFrames = {0, 2};
         for (Type type : types) {
             for (int i = 0; i < widths.length; i++) {
                 MediaFormat format =
@@ -230,8 +234,16 @@ public class VideoEncoderDecoderTest {
                         continue;
                     }
                     if (MediaUtils.supports(encoder, format)) {
-                        testParams.add(
-                                new Object[]{type, mediaType, widths[i], heights[i], encoder});
+                        for (int maxBFrame : maxBFrames) {
+                            if (!mediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)
+                                    && !mediaType.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)
+                                    && maxBFrame != 0) {
+                                continue;
+                            }
+                            testParams.add(
+                                    new Object[]{type, mediaType, widths[i], heights[i], encoder,
+                                            maxBFrame});
+                        }
                         break;
                     }
                 }
@@ -239,7 +251,7 @@ public class VideoEncoderDecoderTest {
         }
     }
 
-    @Parameterized.Parameters(name = "{1}_{4}_{0}_{2}x{3}")
+    @Parameterized.Parameters(name = "{1}_{4}_{0}_{2}x{3}_{5}")
     public static Collection<Object[]> input() throws IOException {
         final List<Object[]> testParams = new ArrayList<>();
         final String[] mediaTypes = {AVC, HEVC, MPEG2, MPEG4, VP8, VP9, H263};
@@ -278,12 +290,13 @@ public class VideoEncoderDecoderTest {
     }
 
     public VideoEncoderDecoderTest(Type type, String mediaType, int width, int height,
-            String encoderName) {
+            String encoderName, int maxBFrames) {
         this.mType = type;
         this.mMediaType = mediaType;
         this.mWidth = width;
         this.mHeight = height;
         this.mEncoderName = encoderName;
+        this.mMaxBFrames = maxBFrames;
     }
 
     @Test
@@ -291,12 +304,12 @@ public class VideoEncoderDecoderTest {
         if (mType == Type.Qual) {
             if (mMediaType == H263 && (mWidth == 704
                     || mWidth == 1408)) {
-                qual(mMediaType, mWidth, mHeight, mEncoderName, 25);
+                qual(mMediaType, mWidth, mHeight, mEncoderName, mMaxBFrames, 25);
             } else {
-                qual(mMediaType, mWidth, mHeight, mEncoderName);
+                qual(mMediaType, mWidth, mHeight, mEncoderName, mMaxBFrames);
             }
         } else {
-            perf(mMediaType, mWidth, mHeight, mEncoderName);
+            perf(mMediaType, mWidth, mHeight, mEncoderName, mMaxBFrames);
         }
     }
 
@@ -351,8 +364,8 @@ public class VideoEncoderDecoderTest {
         }
     }
 
-    private void doTest(String mimeType, int w, int h, boolean isPerf, String encoderName)
-            throws Exception {
+    private void doTest(String mimeType, int w, int h, boolean isPerf, String encoderName,
+            int maxBFrames) throws Exception {
         if (TestArgs.shouldSkipMediaType(mimeType)) {
             return;
         }
@@ -433,6 +446,7 @@ public class VideoEncoderDecoderTest {
             format.setInteger(MediaFormat.KEY_FRAME_RATE, infoEnc.mFps);
             mFrameRate = infoEnc.mFps;
             format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, KEY_I_FRAME_INTERVAL);
+            format.setInteger(MediaFormat.KEY_MAX_B_FRAMES, maxBFrames);
 
             RunResult encodingResult =
                 runEncoder(encoderName, format, mTestConfig.mTotalFrames, i);
@@ -504,7 +518,7 @@ public class VideoEncoderDecoderTest {
             // allow improvements in mainline-updated google-supplied software codecs.
             boolean fasterIsOk =  mUpdatedSwCodec & encoderName.startsWith("c2.android.");
             String error = MediaPerfUtils.verifyAchievableFrameRates(
-                    encoderName, mimeType, w, h, fasterIsOk, measuredFps);
+                    encoderName, mimeType, w, h, fasterIsOk, maxBFrames > 0, measuredFps);
             // Performance numbers only make sense on real devices, so skip on non-real devices
             //
             // Also ignore verification on non-preferred ABIs due to the possibility of

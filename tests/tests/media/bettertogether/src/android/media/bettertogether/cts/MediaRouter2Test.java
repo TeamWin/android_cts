@@ -47,6 +47,7 @@ import android.media.MediaRouter2.RouteCallback;
 import android.media.MediaRouter2.RoutingController;
 import android.media.MediaRouter2.TransferCallback;
 import android.media.RouteDiscoveryPreference;
+import android.media.RoutingSessionInfo;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
@@ -1095,6 +1096,15 @@ public class MediaRouter2Test {
 
         OnGetControllerHintsListener listener = route -> null;
         listener.onGetControllerHints(null);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.media.MediaRouter2.RoutingController#getRoutingSessionInfo"})
+    public void getRoutingSessionInfo_returnsNonNullSession() {
+        // System controller is always available regardless of MediaRouter2 state.
+        RoutingController controller = mRouter2.getSystemController();
+        RoutingSessionInfo sessionInfo = controller.getRoutingSessionInfo();
+        assertThat(sessionInfo).isNotNull();
     }
 
     // Helper for getting routes easily. Uses original ID as a key

@@ -20,6 +20,7 @@ import static android.photopicker.cts.PhotoPickerCloudUtils.containsExcept;
 import static android.photopicker.cts.PhotoPickerCloudUtils.extractMediaIds;
 import static android.photopicker.cts.PhotoPickerCloudUtils.fetchPickerMedia;
 import static android.photopicker.cts.PhotoPickerCloudUtils.initCloudProviderWithImage;
+import static android.photopicker.cts.PhotoPickerCloudUtils.selectAndAddPickerMedia;
 import static android.photopicker.cts.PickerProviderMediaGenerator.getMediaGenerator;
 import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImagesAndGetUris;
@@ -35,7 +36,9 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Process;
 import android.photopicker.cts.PickerProviderMediaGenerator.MediaGenerator;
 import android.photopicker.cts.cloudproviders.CloudProviderPrimary;
@@ -44,10 +47,10 @@ import android.photopicker.cts.util.UiAssertionUtils;
 import android.provider.MediaStore;
 import android.util.Pair;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -55,6 +58,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** PhotoPicker tests for {@link MediaStore#ACTION_USER_SELECT_IMAGES_FOR_APP} intent. */
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 @RunWith(AndroidJUnit4.class)
 public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
 
@@ -128,23 +132,45 @@ public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
         UiAssertionUtils.assertThatShowsPickerUi();
     }
 
-    @Ignore("ACTION_USER_SELECT_IMAGES_FOR_APP no longer returns Uri grants.")
     @Test
-    // TODO(b/261390126): Enable CtsPhotoPickerTests#testNoCloudContent for ACTION_USER_SELECT
     public void testNoCloudContent() throws Exception {
         final List<Uri> uriList = new ArrayList<>();
         final String cloudId = "cloud_id1";
 
         try {
             uriList.addAll(createImagesAndGetUris(1, mContext.getUserId()));
+            final long localId = Long.parseLong(uriList.get(0).getLastPathSegment());
             setupCloudProviderWithImage(cloudId);
 
-            launchActivityForResult(getUserSelectImagesIntent());
-
+            // 1. Verify we can see cloud item in Photo Picker
+            final Intent photoPickerIntent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+            photoPickerIntent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX,
+                    MediaStore.getPickImagesMaxLimit());
+            launchActivityForResult(photoPickerIntent);
             final ClipData clipData = fetchPickerMedia(mActivity, sDevice, 1);
-            final List<String> mediaIds = extractMediaIds(clipData, 1);
+            // Verify that selected item is a cloud item
+            containsExcept(extractMediaIds(clipData, 1), cloudId, String.valueOf(localId));
 
-            containsExcept(mediaIds, uriList.get(0).getLastPathSegment(), cloudId);
+            // 2. Verify we can't see cloud item in Picker choice.
+            launchActivityForResult(getUserSelectImagesIntent());
+            selectAndAddPickerMedia(sDevice, 1);
+
+            // Query the media_grants to verify that the grant was on local id.
+            // Please note that READ_MEDIA_VISUAL_USER_SELECTED is granted by declaring it in
+            // AndroidManifest of this test. Launching ActionUserSelectForApp activity directly
+            // doesn't grant any manifest permissions.
+            try (Cursor c = mContext.getContentResolver().query(
+                    MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL),
+                    new String[]{MediaStore.MediaColumns._ID}, null, null)) {
+                assertThat(c.getCount()).isEqualTo(1);
+                assertThat(c.moveToFirst()).isTrue();
+                // Verify that the access is given on an id that is not cloud_id
+                assertThat(c.getLong(c.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)))
+                        .isNotEqualTo(cloudId);
+                // verify that the access was given on local id.
+                assertThat(c.getLong(c.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)))
+                        .isEqualTo(localId);
+            }
         } finally {
             for (Uri uri : uriList) {
                 PhotoPickerFilesUtils.deleteMedia(uri, mContext);

@@ -77,14 +77,33 @@ public class InputDeviceKeyLayoutMapTest {
 
     private static final Set<String> EXCLUDED_KEYS = new HashSet<>(Arrays.asList(
                 // Meta control keys.
-                 "META_LEFT", "META_RIGHT",
+                "META_LEFT",
+                "META_RIGHT",
                 // KeyEvents not delivered to apps.
-                "APP_SWITCH", "SYSRQ", "ASSIST", "VOICE_ASSIST",
-                "HOME", "POWER", "SLEEP", "SOFT_SLEEP", "WAKEUP", "RECENT_APPS",
-                "BRIGHTNESS_UP", "BRIGHTNESS_DOWN", "SEARCH",
-                "KEYBOARD_BACKLIGHT_UP", "KEYBOARD_BACKLIGHT_DOWN", "KEYBOARD_BACKLIGHT_TOGGLE",
+                "APP_SWITCH",
+                "ASSIST",
+                "BRIGHTNESS_DOWN",
+                "BRIGHTNESS_UP",
+                "HOME",
+                "KEYBOARD_BACKLIGHT_DOWN",
+                "KEYBOARD_BACKLIGHT_TOGGLE",
+                "KEYBOARD_BACKLIGHT_UP",
+                "MUTE",
+                "POWER",
+                "RECENT_APPS",
+                "SEARCH",
+                "SLEEP",
+                "SOFT_SLEEP",
+                "SYSRQ",
+                "WAKEUP",
+                "VOICE_ASSIST",
                 // Keys that cause the test activity to lose focus
-                 "CALCULATOR", "MUSIC", "CONTACTS", "CALENDAR", "ENVELOPE", "EXPLORER"
+                "CALCULATOR",
+                "CALENDAR",
+                "CONTACTS",
+                "ENVELOPE",
+                "EXPLORER",
+                "MUSIC"
                 ));
 
     private Map<String, Integer> mKeyLayout;

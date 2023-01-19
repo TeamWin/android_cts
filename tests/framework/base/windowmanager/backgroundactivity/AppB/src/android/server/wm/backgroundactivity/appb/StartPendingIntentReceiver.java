@@ -58,7 +58,9 @@ public class StartPendingIntentReceiver extends BroadcastReceiver {
             } else {
                 bundle = ActivityOptions.makeBasic().toBundle();
             }
-            Log.i(TAG, "pendingIntent.send with bundle: " + bundle);
+            Log.d(TAG, "sending " + pendingIntent + " with " + bundle + " from "
+                    + context.getPackageName() + " at "
+                    + context.getApplicationInfo().targetSdkVersion);
             pendingIntent.send(
                     /* context */ null, /* code */
                     0, /* intent */

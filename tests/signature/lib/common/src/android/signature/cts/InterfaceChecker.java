@@ -83,6 +83,7 @@ class InterfaceChecker {
         HIDDEN_INTERFACE_METHOD_ALLOW_LIST.add("public abstract void android.view.inputmethod.InputMethod.setCurrentShowInputToken(android.os.IBinder)");
         HIDDEN_INTERFACE_METHOD_ALLOW_LIST.add("public abstract void android.view.inputmethod.InputMethodSession.notifyImeHidden()");
         HIDDEN_INTERFACE_METHOD_ALLOW_LIST.add("public abstract void android.view.inputmethod.InputMethodSession.removeImeSurface()");
+        HIDDEN_INTERFACE_METHOD_ALLOW_LIST.add("public abstract void android.bluetooth.BluetoothProfile.close()");
     }
 
     private final ResultObserver resultObserver;

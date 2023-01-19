@@ -27,6 +27,8 @@ import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static android.media.AudioManager.AUDIO_SESSION_ID_GENERATE;
+import static android.media.AudioManager.FX_BACK;
+import static android.media.AudioManager.FX_KEY_CLICK;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
@@ -57,6 +59,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
@@ -358,6 +361,92 @@ public class VirtualDeviceManagerBasicTest {
                 mVirtualDevice.getDeviceId())).isEqualTo(playbackSessionId);
         assertThat(mVirtualDeviceManager.getAudioRecordingSessionId(
                 mVirtualDevice.getDeviceId())).isEqualTo(recordingSessionId);
+    }
+
+    @Test
+    public void playSoundEffect_callsListener() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                new VirtualDeviceParams.Builder().setDevicePolicy(POLICY_TYPE_AUDIO,
+                        DEVICE_POLICY_CUSTOM).build());
+        SoundEffectListenerForTest soundEffectListener = new SoundEffectListenerForTest();
+        mVirtualDevice.addSoundEffectListener(runnable -> runnable.run(), soundEffectListener);
+
+        mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId(), FX_KEY_CLICK);
+        mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId(), FX_BACK);
+
+        assertThat(soundEffectListener.getObservedSoundEffects()).isEqualTo(
+                List.of(FX_KEY_CLICK, FX_BACK));
+    }
+
+    @Test
+    public void playSoundEffect_callsMultipleListeners() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                new VirtualDeviceParams.Builder().setDevicePolicy(POLICY_TYPE_AUDIO,
+                        DEVICE_POLICY_CUSTOM).build());
+        SoundEffectListenerForTest soundEffectListener1 = new SoundEffectListenerForTest();
+        SoundEffectListenerForTest soundEffectListener2 = new SoundEffectListenerForTest();
+        mVirtualDevice.addSoundEffectListener(runnable -> runnable.run(), soundEffectListener1);
+        mVirtualDevice.addSoundEffectListener(runnable -> runnable.run(), soundEffectListener2);
+
+        mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId(), FX_KEY_CLICK);
+        mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId(), FX_BACK);
+
+        assertThat(soundEffectListener1.getObservedSoundEffects()).isEqualTo(
+                List.of(FX_KEY_CLICK, FX_BACK));
+        assertThat(soundEffectListener2.getObservedSoundEffects()).isEqualTo(
+                List.of(FX_KEY_CLICK, FX_BACK));
+    }
+
+    @Test
+    public void playSoundEffect_unregistersListener() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                new VirtualDeviceParams.Builder().setDevicePolicy(POLICY_TYPE_AUDIO,
+                        DEVICE_POLICY_CUSTOM).build());
+        SoundEffectListenerForTest soundEffectListener1 = new SoundEffectListenerForTest();
+        SoundEffectListenerForTest soundEffectListener2 = new SoundEffectListenerForTest();
+        mVirtualDevice.addSoundEffectListener(runnable -> runnable.run(), soundEffectListener1);
+        mVirtualDevice.addSoundEffectListener(runnable -> runnable.run(), soundEffectListener2);
+
+        mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId(), FX_KEY_CLICK);
+        mVirtualDevice.removeSoundEffectListener(soundEffectListener2);
+        mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId(), FX_BACK);
+
+        assertThat(soundEffectListener1.getObservedSoundEffects()).isEqualTo(
+                List.of(FX_KEY_CLICK, FX_BACK));
+        assertThat(soundEffectListener2.getObservedSoundEffects()).isEqualTo(
+                List.of(FX_KEY_CLICK));
+    }
+
+    @Test
+    public void playSoundEffect_incorrectDeviceId_doesNothing() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                new VirtualDeviceParams.Builder().setDevicePolicy(POLICY_TYPE_AUDIO,
+                        DEVICE_POLICY_CUSTOM).build());
+        SoundEffectListenerForTest soundEffectListener = new SoundEffectListenerForTest();
+        mVirtualDevice.addSoundEffectListener(runnable -> runnable.run(), soundEffectListener);
+
+        mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId() + 1, FX_KEY_CLICK);
+
+        assertThat(soundEffectListener.getObservedSoundEffects()).isEmpty();
+    }
+
+    private static class SoundEffectListenerForTest
+            implements VirtualDeviceManager.SoundEffectListener {
+
+        private final ArrayList<Integer> mObservedSoundEffects = new ArrayList<>();
+
+        public ArrayList<Integer> getObservedSoundEffects() {
+            return mObservedSoundEffects;
+        }
+
+        @Override
+        public void onPlaySoundEffect(int effectType) {
+            mObservedSoundEffects.add(effectType);
+        }
     }
 }
 

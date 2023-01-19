@@ -19,11 +19,11 @@ import android.R
 import android.app.Notification
 import android.app.cts.NotificationTemplateTestBase
 import android.content.pm.PackageManager
-import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import com.google.common.truth.Truth.assertThat
+import org.junit.Assume
 
 class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
 
@@ -58,11 +58,8 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigPicture_isSquareForLegacyApps() {
-        if (isPlatformAutomotive()) {
-            Log.i(TAG, "Skipping: testWideIcon_inBigPicture_isSquareForLegacyApps" +
-                    " - BigPictureStyle is not supported in automotive.")
-            return
-        }
+        skipIfPlatformDoesNotSupportNotificationStyles()
+
         val picture = createBitmap(40, 30)
         val icon = createBitmap(200, 100)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -92,11 +89,8 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withoutLargeIcon() {
-        if (isPlatformAutomotive()) {
-            Log.i(TAG, "Skipping: testPromoteBigPicture_withoutLargeIcon" +
-                    " - BigPictureStyle is not supported in automotive.")
-            return
-        }
+        skipIfPlatformDoesNotSupportNotificationStyles()
+
         val picture = createBitmap(40, 30)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
@@ -121,11 +115,8 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withLargeIcon() {
-        if (isPlatformAutomotive()) {
-            Log.i(TAG, "Skipping: testPromoteBigPicture_withLargeIcon" +
-                    " - BigPictureStyle is not supported in automotive.")
-            return
-        }
+        skipIfPlatformDoesNotSupportNotificationStyles()
+
         val picture = createBitmap(40, 30)
         val icon = createBitmap(80, 65)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -137,36 +128,24 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
                         .showBigPictureWhenCollapsed(true)
                 )
 
-        // At really high densities the size of rendered icon can dip below the
-        // tested size - we allow rendering of smaller icon with the same
-        // aspect ratio then.
-        val expectedIconWidth = minOf(rightIconSize(), 80)
-        val expectedIconHeight = minOf(rightIconSize() * 65 / 80, 65)
-
         // the promoted big picture is shown with enlarged aspect ratio
         checkIconView(builder.createContentView()) { iconView ->
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
             assertThat(iconView.width.toFloat())
                     .isWithin(1f)
                     .of((iconView.height * 4 / 3).toFloat())
-            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(40)
-            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(30)
         }
         // because it doesn't target S, the icon is still shown in a square
         checkIconView(builder.createBigContentView()) { iconView ->
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
             assertThat(iconView.width).isEqualTo(iconView.height)
-            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(expectedIconWidth)
-            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(expectedIconHeight)
+            assertThat(iconView.scaleType).isEqualTo(ImageView.ScaleType.CENTER_CROP)
         }
     }
 
     fun testPromoteBigPicture_withBigLargeIcon() {
-        if (isPlatformAutomotive()) {
-            Log.i(TAG, "Skipping: testPromoteBigPicture_withBigLargeIcon" +
-                    " - BigPictureStyle is not supported in automotive.")
-            return
-        }
+        skipIfPlatformDoesNotSupportNotificationStyles()
+
         val picture = createBitmap(40, 30)
         val inputWidth = 400
         val inputHeight = 300
@@ -180,24 +159,19 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
                         .showBigPictureWhenCollapsed(true)
                 )
 
-        val expectedIconWidth = minOf(rightIconSize(), inputWidth)
-        val expectedIconHeight = minOf(rightIconSize() * inputHeight / inputWidth, inputHeight)
-
         // the promoted big picture is shown with enlarged aspect ratio
         checkIconView(builder.createContentView()) { iconView ->
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
             assertThat(iconView.width.toFloat())
                     .isWithin(1f)
                     .of((iconView.height * 4 / 3).toFloat())
-            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(40)
-            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(30)
+            assertThat(iconView.scaleType).isEqualTo(ImageView.ScaleType.CENTER_CROP)
         }
         // because it doesn't target S, the icon is still shown in a square
         checkIconView(builder.createBigContentView()) { iconView ->
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
             assertThat(iconView.width).isEqualTo(iconView.height)
-            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(expectedIconWidth)
-            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(expectedIconHeight)
+            assertThat(iconView.scaleType).isEqualTo(ImageView.ScaleType.CENTER_CROP)
         }
     }
 
@@ -314,13 +288,15 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
         }
     }
 
-    private fun rightIconSize(): Int {
-        return mContext.resources.getDimensionPixelSize(
-                getAndroidRDimen("notification_right_icon_size"))
-    }
-
-    private fun isPlatformAutomotive(): Boolean {
-        return mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    /**
+     * Assume that we're running on the platform that supports styled notifications.
+     *
+     * If the current platform does not support notification styles, skip this test without failure.
+     */
+    private fun skipIfPlatformDoesNotSupportNotificationStyles() {
+        Assume.assumeFalse("Current platform does not support notification styles.",
+                mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) ||
+                        mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK))
     }
 
     companion object {

@@ -35,6 +35,7 @@ import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.os.PersistableBundle;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.service.voice.HotwordDetector;
 import android.service.voice.VisualQueryDetector;
@@ -59,6 +60,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Objects;
 
+@AppModeFull(reason = "No real use case for instant mode")
 public class VisualQueryDetectionServiceBasicTest {
     private static final String TAG = "VisualQueryDetectionServiceTest";
     // The VoiceInteractionService used by this test

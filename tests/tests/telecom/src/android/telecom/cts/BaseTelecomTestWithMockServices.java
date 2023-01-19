@@ -33,6 +33,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.location.LocationManager;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -56,6 +57,7 @@ import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 import android.telecom.cts.MockInCallService.InCallServiceCallbacks;
 import android.telecom.cts.carmodetestapp.ICtsCarModeInCallServiceControl;
+import android.telephony.CarrierConfigManager;
 import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.telephony.emergency.EmergencyNumber;
@@ -102,6 +104,8 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     Context mContext;
     TelecomManager mTelecomManager;
     TelephonyManager mTelephonyManager;
+    CarrierConfigManager mCarrierConfigManager;
+    LocationManager mLocationManager;
     UiModeManager mUiModeManager;
 
     TestUtils.InvokeCounter mOnBringToForegroundCounter;
@@ -294,7 +298,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
         mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
         mTelephonyManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
-
+        mCarrierConfigManager = (CarrierConfigManager) mContext.getSystemService(
+                Context.CARRIER_CONFIG_SERVICE);
+        mLocationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
         mPreviousDefaultDialer = TestUtils.getDefaultDialer(getInstrumentation());
         TestUtils.setDefaultDialer(getInstrumentation(), PACKAGE);
         setupCallbacks();

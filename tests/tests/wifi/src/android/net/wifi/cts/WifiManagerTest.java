@@ -6044,7 +6044,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Tests that {@link WifiManager#addQosPolicy(QosPolicyParams)},
+     * Tests that {@link WifiManager#addQosPolicy(QosPolicyParams, Executor, Consumer)},
      * {@link WifiManager#removeQosPolicy(int)}, and
      * {@link WifiManager#removeAllQosPolicies()} do not crash.
      */
@@ -6059,21 +6059,45 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         QosPolicyParams policyParams = new QosPolicyParams.Builder(policyId, direction)
                 .setUserPriority(userPriority)
                 .build();
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.addQosPolicy(policyParams));
 
-        // sleep to wait for a response from supplicant
-        synchronized (mLock) {
-            mLock.wait(TEST_WAIT_DURATION_MS);
-        }
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.removeQosPolicy(policyId));
+        Consumer<Integer> listener = new Consumer<Integer>() {
+            @Override
+            public void accept(Integer value) {
+                synchronized (mLock) {
+                    // TODO: Check status code when implemented.
+                    mLock.notify();
+                }
+            }
+        };
 
-        // sleep to wait for a response from supplicant
-        synchronized (mLock) {
-            mLock.wait(TEST_WAIT_DURATION_MS);
+        // Test that invalid inputs trigger an IllegalArgumentException.
+        assertThrows("null executor should trigger exception", NullPointerException.class,
+                () -> mWifiManager.addQosPolicy(policyParams, null, listener));
+        assertThrows("null listener should trigger exception", NullPointerException.class,
+                () -> mWifiManager.addQosPolicy(policyParams, mExecutor, null));
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.addQosPolicy(policyParams, mExecutor, listener);
+
+            // sleep to wait for a response from supplicant
+            synchronized (mLock) {
+                mLock.wait(TEST_WAIT_DURATION_MS);
+            }
+            mWifiManager.removeQosPolicy(policyId);
+
+            // sleep to wait for a response from supplicant
+            synchronized (mLock) {
+                mLock.wait(TEST_WAIT_DURATION_MS);
+            }
+            mWifiManager.removeAllQosPolicies();
+        } catch (UnsupportedOperationException ex) {
+            // Expected if the feature is disabled by the feature flag.
+        } catch (Exception e) {
+            fail("addAndRemoveQosPolicy unexpected Exception " + e);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
         }
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.removeAllQosPolicies());
     }
 }

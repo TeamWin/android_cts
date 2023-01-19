@@ -16,6 +16,8 @@
 
 package android.bluetooth.cts;
 
+import static org.junit.Assert.assertThrows;
+
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -23,6 +25,7 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -33,6 +36,7 @@ import java.util.List;
  * Other tests that run with real bluetooth connections are located in CtsVerifier.
  */
 public class BasicBluetoothGattTest extends AndroidTestCase {
+    private static final String TAG = BasicBluetoothGattTest.class.getSimpleName();
 
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothDevice mBluetoothDevice;
@@ -53,6 +57,17 @@ public class BasicBluetoothGattTest extends AndroidTestCase {
         mBluetoothDevice = mBluetoothAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
         mBluetoothGatt = mBluetoothDevice.connectGatt(
                 mContext, /*autoConnect=*/ true, new BluetoothGattCallback() {});
+        if (mBluetoothGatt == null) {
+            try {
+                Thread.sleep(500); // Bt is not binded yet. Wait and retry
+            } catch (InterruptedException e) {
+                Log.e(TAG, "delay connectGatt interrupted");
+            }
+            mBluetoothGatt = mBluetoothDevice.connectGatt(
+                    mContext, /*autoConnect=*/ true, new BluetoothGattCallback() {});
+        }
+        assertNotNull(mBluetoothGatt);
+
     }
 
     @Override
@@ -61,7 +76,9 @@ public class BasicBluetoothGattTest extends AndroidTestCase {
             // mBluetoothAdapter == null.
             return;
         }
-        mBluetoothGatt.disconnect();
+        if (mBluetoothGatt != null) {
+            mBluetoothGatt.disconnect();
+        }
         assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
             .dropShellPermissionIdentity();
@@ -83,11 +100,7 @@ public class BasicBluetoothGattTest extends AndroidTestCase {
             return;
         }
 
-        try {
-            mBluetoothGatt.connect();
-        } catch (Exception e) {
-            fail("Exception caught from connect(): " + e.toString());
-        }
+        mBluetoothGatt.connect();
     }
 
     public void testSetPreferredPhy() throws Exception {
@@ -95,47 +108,34 @@ public class BasicBluetoothGattTest extends AndroidTestCase {
             return;
         }
 
-        try {
-            mBluetoothGatt.setPreferredPhy(BluetoothDevice.PHY_LE_1M, BluetoothDevice.PHY_LE_1M,
-                    BluetoothDevice.PHY_OPTION_NO_PREFERRED);
-        } catch (Exception e) {
-            fail("Exception caught from setPreferredPhy(): " + e.toString());
-        }
+        mBluetoothGatt.setPreferredPhy(BluetoothDevice.PHY_LE_1M, BluetoothDevice.PHY_LE_1M,
+                BluetoothDevice.PHY_OPTION_NO_PREFERRED);
     }
 
     public void testGetConnectedDevices() {
         if (!TestUtils.isBleSupported(getContext())) {
             return;
         }
-        try {
-            mBluetoothGatt.getConnectedDevices();
-            fail("Should throw UnsupportedOperationException!");
-        } catch (UnsupportedOperationException ex) {
-            // Expected
-        }
+
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBluetoothGatt.getConnectedDevices());
     }
 
     public void testGetConnectionState() {
         if (!TestUtils.isBleSupported(getContext())) {
             return;
         }
-        try {
-            mBluetoothGatt.getConnectionState(null);
-            fail("Should throw UnsupportedOperationException!");
-        } catch (UnsupportedOperationException ex) {
-            // Expected
-        }
+
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBluetoothGatt.getConnectionState(null));
     }
 
     public void testGetDevicesMatchingConnectionStates() {
         if (!TestUtils.isBleSupported(getContext())) {
             return;
         }
-        try {
-            mBluetoothGatt.getDevicesMatchingConnectionStates(null);
-            fail("Should throw UnsupportedOperationException!");
-        } catch (UnsupportedOperationException ex) {
-            // Expected
-        }
+
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBluetoothGatt.getDevicesMatchingConnectionStates(null));
     }
 }
