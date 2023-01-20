@@ -16,7 +16,7 @@
 
 package android.voiceinteraction.cts;
 
-import static android.service.voice.VoiceInteractionService.KEY_SHOW_SESSION_ID;
+import static android.service.voice.VoiceInteractionSession.KEY_SHOW_SESSION_ID;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;

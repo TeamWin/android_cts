@@ -16,13 +16,13 @@
 
 package android.server.wm.jetpack;
 
-import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.ActivityTaskManager;
 import android.content.Context;
 import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
@@ -31,6 +31,7 @@ import android.server.wm.jetpack.utils.SidecarUtil;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 import android.view.Display;
 
+import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.window.extensions.WindowExtensions;
@@ -42,9 +43,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
+
 /**
  * Tests for devices implementations include an Android-compatible display(s)
- * that has a minimum screen dimension greater than or equal to 600dp.
+ * that has a minimum screen dimension greater than or equal to 600dp and support multi window.
  *
  * Build/Install/Run:
  * atest CtsWindowManagerJetpackTestCases:SdkAvailabilityTest
@@ -60,7 +63,8 @@ public class SdkAvailabilityTest extends WindowManagerJetpackTestBase {
     @Override
     public void setUp() {
         super.setUp();
-        assumeScreenWidth600dp();
+        assumeSmallestScreenWidthAtLeast600dp();
+        assumeMultiWindowSupported();
     }
 
     /**
@@ -96,17 +100,28 @@ public class SdkAvailabilityTest extends WindowManagerJetpackTestBase {
         assertTrue("Sidecar is not available", SidecarUtil.isSidecarVersionValid());
     }
 
-    private void assumeScreenWidth600dp() {
+    private void assumeSmallestScreenWidthAtLeast600dp() {
+        final DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+        boolean hasDisplayScreenWidth600dp = Arrays.stream(displayManager.getDisplays())
+                .filter(display -> display.getType() == Display.TYPE_INTERNAL)
+                .anyMatch(this::isSmallestScreenWidthAtLeast600dp);
+        assumeTrue("Device does not has a minimum screen dimension greater than or equal to 600dp",
+                hasDisplayScreenWidth600dp);
+    }
+
+    private void assumeMultiWindowSupported() {
+        assumeTrue("Device's default display doesn't support multi window",
+                ActivityTaskManager.supportsMultiWindow(mContext));
+    }
+
+    private boolean isSmallestScreenWidthAtLeast600dp(@NonNull Display display) {
         // Use WindowContext with type application overlay to prevent the metrics overridden by
         // activity bounds. Note that process configuration may still be overridden by
         // foreground Activity.
         final Context appContext = ApplicationProvider.getApplicationContext();
-        final Display defaultDisplay = appContext.getSystemService(DisplayManager.class)
-                .getDisplay(DEFAULT_DISPLAY);
-        final Context windowContext = appContext.createWindowContext(defaultDisplay,
+        final Context windowContext = appContext.createWindowContext(display,
                 TYPE_APPLICATION_OVERLAY, null /* options */);
-        assumeTrue("Device does not has a minimum screen dimension greater than or equal to 600dp",
-                windowContext.getResources().getConfiguration().smallestScreenWidthDp
-                        >= DISPLAY_MIN_WIDTH);
+        return windowContext.getResources().getConfiguration().smallestScreenWidthDp
+                >= DISPLAY_MIN_WIDTH;
     }
 }

@@ -19,6 +19,8 @@ package android.widget.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyFloat;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -33,6 +35,8 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.os.CancellationSignal;
+import android.text.Layout;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -43,6 +47,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.HandwritingGesture;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InsertGesture;
+import android.view.inputmethod.InsertModeGesture;
 import android.view.inputmethod.JoinOrSplitGesture;
 import android.view.inputmethod.PreviewableHandwritingGesture;
 import android.view.inputmethod.RemoveSpaceGesture;
@@ -81,6 +86,10 @@ public class TextViewHandwritingGestureTest {
     private static final float CHAR_WIDTH_PX = 10;
     private static final String INSERT_TEXT = "insert";
     private static final String FALLBACK_TEXT = "fallback";
+
+    // The placeholder text used in insert mode.
+    private static final String PLACEHOLDER_TEXT_MULTI_LINE = "\n\n";
+    private static final String PLACEHOLDER_TEXT_SINGLE_LINE = "\uFFFD";
 
     private int mGestureLineMargin;
     private EditText mEditText;
@@ -144,7 +153,8 @@ public class TextViewHandwritingGestureTest {
                 DeleteRangeGesture.class,
                 InsertGesture.class,
                 RemoveSpaceGesture.class,
-                JoinOrSplitGesture.class);
+                JoinOrSplitGesture.class,
+                InsertModeGesture.class);
     }
 
     @Test
@@ -1211,6 +1221,412 @@ public class TextViewHandwritingGestureTest {
         assertGestureFailure(/* initialCursorPosition= */ 6);
     }
 
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_firstLine() {
+        // The point is closest to offset 3 with horizontal position 3 * CHAR_WIDTH_PX.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(3 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertGestureInsertMode(/* offset= */ 3);
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(3);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_secondLine() {
+        // The point is closest to offset 3 with horizontal position 3 * CHAR_WIDTH_PX.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(3 * CHAR_WIDTH_PX - 4f, mEditText.getLayout().getLineTop(1) + 1f));
+
+        assertGestureInsertMode(/* offset= */ 13);
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(13);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_aboveFirstLineWithinMargin() {
+        // The point is closest to offset 3 with horizontal position 3 * CHAR_WIDTH_PX.
+        // The point is (mGestureLineMargin - 1) above the top of the line.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(
+                        3 * CHAR_WIDTH_PX + 2f,
+                        mEditText.getLayout().getLineTop(0) - mGestureLineMargin + 1f));
+
+        assertGestureInsertMode(3);
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(3);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_aboveFirstLine_shouldFallback() {
+        mEditText.setSelection(3);
+
+        performInsertGesture(
+                new PointF(32f, mEditText.getLayout().getLineTop(0) - mGestureLineMargin - 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 3);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_betweenLinesWithinMargin() {
+        // The point is closest to offset 3 with horizontal position 3 * CHAR_WIDTH_PX.
+        // The point is (mGestureLineMargin - 1) below the bottom of line 0.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(
+                        3 * CHAR_WIDTH_PX + 2f,
+                        mEditText.getLayout().getLineBottom(0, false) + mGestureLineMargin - 1f));
+
+        assertGestureInsertMode(/* offset= */ 3);
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(3);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_betweenLines_shouldFallback() {
+        mEditText.setSelection(4);
+
+        // Due to the additional line spacing, this point is in the space between the two lines.
+        performInsertModeGesture(
+                new PointF(
+                        32f,
+                        mEditText.getLayout().getLineBottom(0, false) + mGestureLineMargin + 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 4);
+        assertNoInsertMode();
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_belowLastLineWithinMargin() {
+        // The point is closest to offset 13 with horizontal position 3 * CHAR_WIDTH_PX.
+        // The point is (mGestureLineMargin - 1) below the bottom of line 1.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(
+                        3 * CHAR_WIDTH_PX + 2f,
+                        mEditText.getLayout().getLineBottom(1) + mGestureLineMargin - 1f));
+
+        assertGestureInsertMode(/* offset= */ 13);
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(13);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_belowLastLine_shouldFallback() {
+        mEditText.setSelection(11);
+
+        performInsertModeGesture(
+                new PointF(32f, mEditText.getLayout().getLineBottom(1) + mGestureLineMargin + 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 11);
+        assertNoInsertMode();
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_leftOfLineWithinMargin() {
+        // The point is closest to offset 0 at the start of line 0.
+        // The point is (mGestureLineMargin - 1) to the left of line 0.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(-mGestureLineMargin + 1f, mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertGestureInsertMode(/* offset= */ 0);
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(0);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_leftOfLine_shouldFallback() {
+        mEditText.setSelection(7);
+
+        performInsertModeGesture(
+                new PointF(-mGestureLineMargin - 1f, mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 7);
+        assertNoInsertMode();
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_rightOfLineWithinMargin() {
+        // The point is closest to offset 9 at the end of line 0.
+        // The point is (mGestureLineMargin - 1) to the right of line 0.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(
+                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin - 1f,
+                        mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertGestureInsertMode(/* offset= */ 9);
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(9);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_rightOfLine_shouldFallback() {
+        mEditText.setSelection(6);
+
+        performInsertModeGesture(
+                new PointF(
+                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin + 5f,
+                        mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 6);
+        assertNoInsertMode();
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_noFallback_shouldFail() {
+        mEditText.setSelection(6);
+
+        performInsertModeGesture(
+                new PointF(-mGestureLineMargin - 1f, mEditText.getLayout().getLineTop(0) - 1f),
+                /* setFallbackText= */ false);
+
+        assertGestureFailure(/* initialCursorPosition= */ 6);
+        assertNoInsertMode();
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_singleLine() {
+        setEditTextSingleLine();
+
+        // The point is closest to offset 3 with horizontal position 3 * CHAR_WIDTH_PX.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(3 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertGestureInsertMode(/* offset= */ 3);
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(3);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_aboveLineWithinMargin_singleLine() {
+        setEditTextSingleLine();
+        // The point is closest to offset 3 with horizontal position 3 * CHAR_WIDTH_PX.
+        // The point is (mGestureLineMargin - 1) above the top of the line.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(
+                        3 * CHAR_WIDTH_PX + 2f,
+                        mEditText.getLayout().getLineTop(0) - mGestureLineMargin + 1f));
+
+        assertGestureInsertMode(3);
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(3);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_aboveLine_shouldFallback_singleLine() {
+        setEditTextSingleLine();
+        mEditText.setSelection(3);
+
+        performInsertGesture(
+                new PointF(32f, mEditText.getLayout().getLineTop(0) - mGestureLineMargin - 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 3);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_belowLineWithinMargin_singleLine() {
+        setEditTextSingleLine();
+        // The point is closest to offset 3 with horizontal position 3 * CHAR_WIDTH_PX.
+        // The point is (mGestureLineMargin - 1) below the bottom of line 0.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(
+                        3 * CHAR_WIDTH_PX + 2f,
+                        mEditText.getLayout().getLineBottom(0) + mGestureLineMargin - 1f));
+
+        assertGestureInsertMode(/* offset= */ 3);
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(3);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_belowLine_shouldFallback_singleLine() {
+        setEditTextSingleLine();
+        mEditText.setSelection(11);
+
+        performInsertModeGesture(
+                new PointF(32f, mEditText.getLayout().getLineBottom(0) + mGestureLineMargin + 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 11);
+        assertNoInsertMode();
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_leftOfLineWithinMargin_singleLine() {
+        setEditTextSingleLine();
+        // The point is closest to offset 0 at the start of line 0.
+        // The point is (mGestureLineMargin - 1) to the left of line 0.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(-mGestureLineMargin + 1f, mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertGestureInsertMode(/* offset= */ 0);
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(0);
+    }
+
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_leftOfLine_shouldFallback_singleLine() {
+        setEditTextSingleLine();
+        mEditText.setSelection(7);
+
+        performInsertModeGesture(
+                new PointF(-mGestureLineMargin - 1f, mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 7);
+        assertNoInsertMode();
+    }
+
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_rightOfLineWithinMargin_singleLine() {
+        setEditTextSingleLine();
+        // The point is closest to offset 27 at the end of line 0.
+        // The point is (mGestureLineMargin - 1) to the right of line 0.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(
+                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin - 1f,
+                        mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertGestureInsertMode(/* offset= */ 27);
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(27);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_rightOfLine_shouldFallback_singleLine() {
+        setEditTextSingleLine();
+        mEditText.setSelection(6);
+
+        performInsertModeGesture(
+                new PointF(
+                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin + 5f,
+                        mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 6);
+        assertNoInsertMode();
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_noFallback_shouldFail_singleLine() {
+        setEditTextSingleLine();
+        mEditText.setSelection(6);
+
+        performInsertModeGesture(
+                new PointF(-mGestureLineMargin - 1f, mEditText.getLayout().getLineTop(0) - 1f),
+                /* setFallbackText= */ false);
+
+        assertGestureFailure(/* initialCursorPosition= */ 6);
+        assertNoInsertMode();
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_appendText() {
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(3 * CHAR_WIDTH_PX, mEditText.getLayout().getLineTop(0) - 1f),
+                /* setFallbackText= */ false);
+
+        final int expectedOffset = 3;
+        assertGestureInsertMode(expectedOffset);
+
+        final String insertText = "insert text";
+        performAppendText(insertText);
+        assertThat(mEditText.getText().toString()).isEqualTo(
+                DEFAULT_TEXT.substring(0, expectedOffset) + insertText
+                        + DEFAULT_TEXT.substring(expectedOffset));
+
+        // The highlight range includes the placeholder text.
+        assertGestureInsertModeHighlightRange(expectedOffset,
+                expectedOffset + insertText.length() + PLACEHOLDER_TEXT_MULTI_LINE.length());
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(expectedOffset + insertText.length());
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_appendText_singleLine() {
+        setEditTextSingleLine();
+
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(3 * CHAR_WIDTH_PX, mEditText.getLayout().getLineTop(0) - 1f),
+                /* setFallbackText= */ false);
+
+        final int expectedOffset = 3;
+        assertGestureInsertMode(expectedOffset);
+
+        final String insertText = "insert text";
+        performAppendText(insertText);
+        assertThat(mEditText.getText().toString()).isEqualTo(
+                DEFAULT_TEXT.substring(0, expectedOffset) + insertText
+                        + DEFAULT_TEXT.substring(expectedOffset));
+
+        // The highlight range includes the placeholder text.
+        assertGestureInsertModeHighlightRange(expectedOffset,
+                expectedOffset + insertText.length() + PLACEHOLDER_TEXT_SINGLE_LINE.length());
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertMode();
+        assertCursorOffset(expectedOffset + insertText.length());
+    }
+
+    private void setEditTextSingleLine() {
+        mEditText.setSingleLine(true);
+        mEditText.measure(
+                View.MeasureSpec.makeMeasureSpec(WIDTH, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(HEIGHT, View.MeasureSpec.EXACTLY));
+        mEditText.layout(0, 0, WIDTH, HEIGHT);
+        mEditText.setLayoutParams(new ViewGroup.LayoutParams(WIDTH, HEIGHT));
+
+        mLocationOnScreen = mEditText.getLocationOnScreen();
+        mLocationOnScreen[0] += mEditText.getTotalPaddingLeft();
+        mLocationOnScreen[1] += mEditText.getTotalPaddingTop();
+    }
+
     private void performSelectGesture(RectF area, int granularity) {
         performSelectGesture(area, granularity, /* setFallbackText= */ true);
     }
@@ -1328,6 +1744,28 @@ public class TextViewHandwritingGestureTest {
         inputConnection.performHandwritingGesture(gesture, Runnable::run, mResultConsumer);
     }
 
+    private InsertModeGesture performInsertModeGesture(PointF point) {
+        return performInsertModeGesture(point, /* setFallbackText= */ true);
+    }
+
+    private InsertModeGesture performInsertModeGesture(PointF point, boolean setFallbackText) {
+        point.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
+        InsertModeGesture gesture = new InsertModeGesture.Builder()
+                .setInsertionPoint(point)
+                .setCancellationSignal(new CancellationSignal())
+                .setFallbackText(setFallbackText ? FALLBACK_TEXT : null)
+                .build();
+        InputConnection inputConnection = mEditText.onCreateInputConnection(new EditorInfo());
+        inputConnection.performHandwritingGesture(gesture, Runnable::run, mResultConsumer);
+        return gesture;
+    }
+
+    private void performAppendText(String text) {
+        InputConnection inputConnection = mEditText.onCreateInputConnection(new EditorInfo());
+        inputConnection.commitText(text, 1);
+    }
+
+
     private void performRemoveSpaceGesture(PointF startPoint, PointF endPoint) {
         performRemoveSpaceGesture(startPoint, endPoint, /* setFallbackText= */ true);
     }
@@ -1380,6 +1818,93 @@ public class TextViewHandwritingGestureTest {
                 DEFAULT_TEXT.substring(0, offset) + insertText + DEFAULT_TEXT.substring(offset));
         assertThat(mEditText.getSelectionStart()).isEqualTo(offset + insertText.length());
         assertThat(mEditText.getSelectionEnd()).isEqualTo(offset + insertText.length());
+    }
+
+    private void assertGestureInsertMode(int offset) {
+        assertThat(mResult).isEqualTo(InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+        assertThat(mEditText.getText().toString()).isEqualTo(DEFAULT_TEXT);
+        assertThat(mEditText.getSelectionStart()).isEqualTo(offset);
+        assertThat(mEditText.getSelectionEnd()).isEqualTo(offset);
+
+        final boolean singleLine = mEditText.isSingleLine();
+        final Layout layout = mEditText.getLayout();
+        final String placeholder =
+                singleLine ? PLACEHOLDER_TEXT_SINGLE_LINE : PLACEHOLDER_TEXT_MULTI_LINE;
+
+        String expectedDisplayText =
+                DEFAULT_TEXT.substring(0, offset) + placeholder + DEFAULT_TEXT.substring(offset);
+        if (singleLine) {
+            expectedDisplayText = expectedDisplayText.replace('\n', ' ');
+        }
+
+        assertThat(layout.getText().toString()).isEqualTo(expectedDisplayText);
+        assertGestureInsertModeHighlightRange(offset, offset + placeholder.length());
+    }
+
+    private void assertNoInsertMode() {
+        // There is no API to directly check if the editText is in insert mode.
+        // Here we check that 1) no highlight is draw 2) the display text doesn't contain the
+        // placeholder text from the insert mode.
+        final Canvas canvas = prepareMockCanvas();
+        mEditText.draw(canvas);
+        verify(canvas, never()).drawRect(anyFloat(), anyFloat(), anyFloat(), anyFloat(), any());
+
+        String expectedDisplayText = mEditText.getText().toString();
+        if (mEditText.isSingleLine()) {
+            expectedDisplayText = expectedDisplayText.replace('\n', ' ');
+        }
+        assertThat(mEditText.getLayout().getText().toString()).isEqualTo(expectedDisplayText);
+    }
+
+    private void assertInsertModeHighlightColor(Paint paint) {
+        final TypedValue typedValue = new TypedValue();
+        mEditText.getContext().getTheme()
+                .resolveAttribute(android.R.attr.colorPrimary, typedValue, true);
+        final int colorPrimary = typedValue.data;
+        final int expectedColor = ColorUtils.setAlphaComponent(colorPrimary,
+                (int) (0.12f * Color.alpha(colorPrimary)));
+
+        assertThat(paint.getColor()).isEqualTo(expectedColor);
+
+    }
+
+    private void assertGestureInsertModeHighlightRange(int start, int end) {
+        final Canvas canvas = prepareMockCanvas();
+        mEditText.draw(canvas);
+
+        final ArgumentCaptor<Float> leftCaptor = ArgumentCaptor.forClass(Float.class);
+        final ArgumentCaptor<Float> topCaptor = ArgumentCaptor.forClass(Float.class);
+        final ArgumentCaptor<Float> rightCaptor = ArgumentCaptor.forClass(Float.class);
+        final ArgumentCaptor<Float> bottomCaptor = ArgumentCaptor.forClass(Float.class);
+        final ArgumentCaptor<Paint> paintCaptor = ArgumentCaptor.forClass(Paint.class);
+        verify(canvas, atLeastOnce()).drawRect(leftCaptor.capture(), topCaptor.capture(),
+                rightCaptor.capture(), bottomCaptor.capture(), paintCaptor.capture());
+
+        // Check that each paint used have the expected color.
+        final List<Paint> paints = paintCaptor.getAllValues();
+        for (Paint paint : paints) {
+            assertInsertModeHighlightColor(paint);
+        }
+
+        final Path actualPath = new Path();
+
+        final List<Float> lefts = leftCaptor.getAllValues();
+        final List<Float> tops = topCaptor.getAllValues();
+        final List<Float> rights = rightCaptor.getAllValues();
+        final List<Float> bottom = bottomCaptor.getAllValues();
+        for (int index = 0; index < lefts.size(); ++index) {
+            actualPath.addRect(lefts.get(index), tops.get(index), rights.get(index),
+                    bottom.get(index), Path.Direction.CW);
+        }
+
+        final Path expectedPath = new Path();
+        mEditText.getLayout().getSelectionPath(start, end, expectedPath);
+        assertPathEquals(expectedPath, actualPath);
+    }
+
+    private void assertCursorOffset(int offset) {
+        assertThat(mEditText.getSelectionStart()).isEqualTo(offset);
+        assertThat(mEditText.getSelectionEnd()).isEqualTo(offset);
     }
 
     private void assertFallbackTextInserted(int initialCursorPosition) {

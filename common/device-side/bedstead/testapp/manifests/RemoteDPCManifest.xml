@@ -26,8 +26,6 @@
         <!-- Don't allow this test app to be returned by queries unless filtered by package name -->
         <meta-data android:name="testapp-package-query-only" android:value="true" />
 
-        <meta-data android:name="headless-system-user-management-mode" android:value="affiliated" />
-
         <receiver android:name="com.android.bedstead.testapp.BaseTestAppDeviceAdminReceiver"
                   android:permission="android.permission.BIND_DEVICE_ADMIN"
                   android:exported="true">

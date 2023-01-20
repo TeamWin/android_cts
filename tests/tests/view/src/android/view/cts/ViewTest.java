@@ -4391,7 +4391,6 @@ public class ViewTest {
     @Test
     public void testHapticFeedback() {
         Vibrator vib = (Vibrator) mActivity.getSystemService(Context.VIBRATOR_SERVICE);
-        boolean hasVibrator = vib.hasVibrator();
 
         final MockView view = (MockView) mActivity.findViewById(R.id.mock_view);
         final int LONG_PRESS = HapticFeedbackConstants.LONG_PRESS;
@@ -4403,12 +4402,23 @@ public class ViewTest {
         assertFalse(view.isHapticFeedbackEnabled());
         assertFalse(view.performHapticFeedback(LONG_PRESS));
         assertFalse(view.performHapticFeedback(LONG_PRESS, FLAG_IGNORE_GLOBAL_SETTING));
-        assertEquals(hasVibrator, view.performHapticFeedback(LONG_PRESS, ALWAYS));
+        assertPerformHapticFeedbackTrueIfHasVibrator(vib,
+                view.performHapticFeedback(LONG_PRESS, ALWAYS));
 
         view.setHapticFeedbackEnabled(true);
         assertTrue(view.isHapticFeedbackEnabled());
-        assertEquals(hasVibrator, view.performHapticFeedback(LONG_PRESS,
-                FLAG_IGNORE_GLOBAL_SETTING));
+        assertPerformHapticFeedbackTrueIfHasVibrator(vib,
+                view.performHapticFeedback(LONG_PRESS, FLAG_IGNORE_GLOBAL_SETTING));
+    }
+
+    /**
+     * Assert that the result must be true if the device has a vibrator. If no vibrator, the method
+     * may return true or false depending on whether USE_ASYNC_PERFORM_HAPTIC_FEEDBACK is active.
+     */
+    private void assertPerformHapticFeedbackTrueIfHasVibrator(Vibrator vib, boolean result) {
+        if (vib.hasVibrator()) {
+            assertTrue(result);
+        }
     }
 
     @Test

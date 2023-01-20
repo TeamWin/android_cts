@@ -24,14 +24,21 @@ import static com.android.internal.telephony.RILConstants.INTERNAL_ERR;
 import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.hardware.radio.network.Domain;
+import android.hardware.radio.sim.Carrier;
+import android.hardware.radio.sim.CarrierRestrictions;
 import android.hardware.radio.voice.LastCallFailCause;
 import android.hardware.radio.voice.UusInfo;
 import android.net.Uri;
@@ -47,6 +54,7 @@ import android.telephony.ServiceState;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
+import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.mockmodem.MockCallControlInfo;
 import android.telephony.mockmodem.MockModemManager;
 import android.util.Log;
@@ -54,14 +62,19 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.internal.telephony.uicc.IccUtils;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /** Test MockModemService interfaces. */
@@ -87,7 +100,9 @@ public class TelephonyManagerTestOnMockModem {
     private final Object mCallStateChangeLock = new Object();
     private final Executor mCallDisconnectCauseExecutor = Runnable::run;
     private final Executor mCallStateChangeExecutor = Runnable::run;
-
+    private boolean mResetCarrierStatusInfo;
+    private static String mShaId;
+    private final int TIMEOUT_IN_SEC_FOR_MODEM_CB = 5;
     @BeforeClass
     public static void beforeAllTests() throws Exception {
         Log.d(TAG, "TelephonyManagerTestOnMockModem#beforeAllTests()");
@@ -116,6 +131,7 @@ public class TelephonyManagerTestOnMockModem {
         sCallStateChangeCallbackHandlerThread.start();
         sCallStateChangeCallbackHandler =
                 new Handler(sCallStateChangeCallbackHandlerThread.getLooper());
+        mShaId = getShaId(TelephonyUtils.CTS_APP_PACKAGE);
     }
 
     @AfterClass
@@ -153,6 +169,7 @@ public class TelephonyManagerTestOnMockModem {
         sMockModemManager.forceErrorResponse(0, RIL_REQUEST_RADIO_POWER, -1);
         assertTrue(sMockModemManager.disconnectMockModemService());
         sMockModemManager = null;
+        mShaId = null;
     }
 
     @Before
@@ -160,8 +177,38 @@ public class TelephonyManagerTestOnMockModem {
         assumeTrue(hasTelephonyFeature());
     }
 
+    @After
+    public void afterTest() {
+        if (mResetCarrierStatusInfo) {
+            try {
+                TelephonyUtils.resetCarrierRestrictionStatusAllowList(
+                        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation());
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                mResetCarrierStatusInfo = false;
+            }
+        }
+    }
+
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    private static String getShaId(String packageName) {
+        try {
+            final PackageManager packageManager = getContext().getPackageManager();
+            MessageDigest sha1MDigest = MessageDigest.getInstance("SHA1");
+            final PackageInfo packageInfo = packageManager.getPackageInfo(packageName,
+                    PackageManager.GET_SIGNATURES);
+            for (Signature signature : packageInfo.signatures) {
+                final byte[] signatureSha1 = sha1MDigest.digest(signature.toByteArray());
+                return IccUtils.bytesToHexString(signatureSha1);
+            }
+        } catch (NoSuchAlgorithmException | PackageManager.NameNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        return null;
     }
 
     private static boolean hasTelephonyFeature() {
@@ -666,5 +713,181 @@ public class TelephonyManagerTestOnMockModem {
         // Remove the SIM
         sMockModemManager.removeSimCard(slotId_0);
         sMockModemManager.removeSimCard(slotId_1);
+    }
+
+    /**
+     * Verify the NotRestricted status of the device with READ_PHONE_STATE permission granted.
+     */
+    @Test
+    public void getCarrierRestrictionStatus_ReadPhoneState_NotRestricted() throws Exception {
+        LinkedBlockingQueue<Integer> carrierRestrictionStatusResult = new LinkedBlockingQueue<>(1);
+        try {
+            sMockModemManager.updateCarrierRestrictionInfo(null,
+                    CarrierRestrictions.CarrierRestrictionStatus.NOT_RESTRICTED);
+            TelephonyUtils.addCarrierRestrictionStatusAllowList(
+                    androidx.test.platform.app.InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE, 10110, mShaId);
+            mResetCarrierStatusInfo = true;
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(sTelephonyManager,
+                    tm -> tm.getCarrierRestrictionStatus(getContext().getMainExecutor(),
+                            carrierRestrictionStatusResult::offer),
+                    Manifest.permission.READ_PHONE_STATE);
+        } catch (SecurityException ex) {
+            fail();
+        }
+        Integer value = carrierRestrictionStatusResult.poll(TIMEOUT_IN_SEC_FOR_MODEM_CB,
+                TimeUnit.SECONDS);
+        assertNotNull(value);
+        assertEquals(TelephonyManager.CARRIER_RESTRICTION_STATUS_NOT_RESTRICTED, value.intValue());
+    }
+
+    /**
+     * Verify the Restricted status of the device with READ_PHONE_STATE permission granted.
+     */
+    @Test
+    public void getCarrierRestrictionStatus_ReadPhoneState_Restricted() throws Exception {
+        LinkedBlockingQueue<Integer> carrierRestrictionStatusResult = new LinkedBlockingQueue<>(1);
+        try {
+            sMockModemManager.updateCarrierRestrictionInfo(getCarrierList(false),
+                    CarrierRestrictions.CarrierRestrictionStatus.RESTRICTED);
+            TelephonyUtils.addCarrierRestrictionStatusAllowList(
+                    androidx.test.platform.app.InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE, 10110, mShaId);
+            mResetCarrierStatusInfo = true;
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(sTelephonyManager,
+                    tm -> tm.getCarrierRestrictionStatus(getContext().getMainExecutor(),
+                            carrierRestrictionStatusResult::offer),
+                    Manifest.permission.READ_PHONE_STATE);
+        } catch (SecurityException ex) {
+            fail();
+        }
+        Integer value = carrierRestrictionStatusResult.poll(TIMEOUT_IN_SEC_FOR_MODEM_CB,
+                TimeUnit.SECONDS);
+        assertNotNull(value);
+        assertEquals(TelephonyManager.CARRIER_RESTRICTION_STATUS_RESTRICTED, value.intValue());
+    }
+
+    /**
+     * Verify the Restricted To Caller status of the device with READ_PHONE_STATE permission
+     * granted.
+     */
+    @Test
+    public void getCarrierRestrictionStatus_ReadPhoneState_RestrictedToCaller_MNO() throws Exception {
+        LinkedBlockingQueue<Integer> carrierRestrictionStatusResult = new LinkedBlockingQueue<>(1);
+        try {
+            sMockModemManager.updateCarrierRestrictionInfo(getCarrierList(false),
+                    CarrierRestrictions.CarrierRestrictionStatus.RESTRICTED);
+            TelephonyUtils.addCarrierRestrictionStatusAllowList(
+                    androidx.test.platform.app.InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE, 1839, mShaId);
+            mResetCarrierStatusInfo = true;
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(sTelephonyManager,
+                    tm -> tm.getCarrierRestrictionStatus(getContext().getMainExecutor(),
+                            carrierRestrictionStatusResult::offer),
+                    Manifest.permission.READ_PHONE_STATE);
+        } catch (SecurityException ex) {
+            fail();
+        }
+        Integer value = carrierRestrictionStatusResult.poll(TIMEOUT_IN_SEC_FOR_MODEM_CB,
+                TimeUnit.SECONDS);
+        assertNotNull(value);
+        assertEquals(TelephonyManager.CARRIER_RESTRICTION_STATUS_RESTRICTED_TO_CALLER,
+                value.intValue());
+    }
+
+    /**
+     * Verify the Restricted status of the device with READ_PHONE_STATE permission granted.
+     * MVNO operator reference without GID
+     */
+    @Test
+    public void getCarrierRestrictionStatus_ReadPhoneState_RestrictedToCaller_MNO1() throws Exception {
+        LinkedBlockingQueue<Integer> carrierRestrictionStatusResult = new LinkedBlockingQueue<>(1);
+        try {
+            sMockModemManager.updateCarrierRestrictionInfo(getCarrierList(false),
+                    CarrierRestrictions.CarrierRestrictionStatus.RESTRICTED);
+            TelephonyUtils.addCarrierRestrictionStatusAllowList(
+                    androidx.test.platform.app.InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE, 2032, mShaId);
+            mResetCarrierStatusInfo = true;
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(sTelephonyManager,
+                    tm -> tm.getCarrierRestrictionStatus(getContext().getMainExecutor(),
+                            carrierRestrictionStatusResult::offer),
+                    Manifest.permission.READ_PHONE_STATE);
+        } catch (SecurityException ex) {
+            fail();
+        }
+        Integer value = carrierRestrictionStatusResult.poll(TIMEOUT_IN_SEC_FOR_MODEM_CB,
+                TimeUnit.SECONDS);
+        assertNotNull(value);
+        assertEquals(TelephonyManager.CARRIER_RESTRICTION_STATUS_RESTRICTED,
+                value.intValue());
+    }
+
+    /**
+     * Verify the Restricted To Caller status of the device with READ_PHONE_STATE permission
+     * granted.
+     */
+    @Test
+    public void getCarrierRestrictionStatus_ReadPhoneState_RestrictedToCaller_MVNO() throws Exception {
+        LinkedBlockingQueue<Integer> carrierRestrictionStatusResult = new LinkedBlockingQueue<>(1);
+        try {
+            sMockModemManager.updateCarrierRestrictionInfo(getCarrierList(true),
+                    CarrierRestrictions.CarrierRestrictionStatus.RESTRICTED);
+            TelephonyUtils.addCarrierRestrictionStatusAllowList(
+                    androidx.test.platform.app.InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE, 2032, mShaId);
+            mResetCarrierStatusInfo = true;
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(sTelephonyManager,
+                    tm -> tm.getCarrierRestrictionStatus(getContext().getMainExecutor(),
+                            carrierRestrictionStatusResult::offer),
+                    Manifest.permission.READ_PHONE_STATE);
+        } catch (SecurityException ex) {
+            fail();
+        }
+        Integer value = carrierRestrictionStatusResult.poll(TIMEOUT_IN_SEC_FOR_MODEM_CB,
+                TimeUnit.SECONDS);
+        assertNotNull(value);
+        assertEquals(TelephonyManager.CARRIER_RESTRICTION_STATUS_RESTRICTED_TO_CALLER,
+                value.intValue());
+    }
+
+    /**
+     * Verify the Unknown status of the device with READ_PHONE_STATE permission granted.
+     */
+    @Test
+    public void getCarrierRestrictionStatus_ReadPhoneState_Unknown() throws Exception {
+        LinkedBlockingQueue<Integer> carrierRestrictionStatusResult = new LinkedBlockingQueue<>(1);
+        try {
+            sMockModemManager.updateCarrierRestrictionInfo(null,
+                    CarrierRestrictions.CarrierRestrictionStatus.UNKNOWN);
+            TelephonyUtils.addCarrierRestrictionStatusAllowList(
+                    androidx.test.platform.app.InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE, 10110, mShaId);
+            mResetCarrierStatusInfo = true;
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(sTelephonyManager,
+                    tm -> tm.getCarrierRestrictionStatus(getContext().getMainExecutor(),
+                            carrierRestrictionStatusResult::offer),
+                    Manifest.permission.READ_PHONE_STATE);
+        } catch (SecurityException ex) {
+            fail();
+        }
+        Integer value = carrierRestrictionStatusResult.poll(TIMEOUT_IN_SEC_FOR_MODEM_CB,
+                TimeUnit.SECONDS);
+        assertNotNull(value);
+        assertEquals(TelephonyManager.CARRIER_RESTRICTION_STATUS_UNKNOWN, value.intValue());
+    }
+
+    private Carrier[] getCarrierList(boolean isGidRequired) {
+        android.hardware.radio.sim.Carrier carrier
+                = new android.hardware.radio.sim.Carrier();
+        carrier.mcc = "310";
+        carrier.mnc = "599";
+        if (isGidRequired) {
+            carrier.matchType = Carrier.MATCH_TYPE_GID1;
+            carrier.matchData = "BA01450000000000";
+        }
+        Carrier[] carrierList = new Carrier[1];
+        carrierList[0] = carrier;
+        return carrierList;
     }
 }

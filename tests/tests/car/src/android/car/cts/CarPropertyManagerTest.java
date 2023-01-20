@@ -496,17 +496,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.VEHICLE_CURB_WEIGHT,
                             VehiclePropertyIds.TRAILER_PRESENT)
                     .build();
-    private static final ImmutableList<Integer>
-            PERMISSION_CONTROL_DISPLAY_UNITS_VENDOR_EXTENSION_PROPERTIES =
-            ImmutableList.<Integer>builder()
-                    .add(
-                            VehiclePropertyIds.DISTANCE_DISPLAY_UNITS,
-                            VehiclePropertyIds.FUEL_VOLUME_DISPLAY_UNITS,
-                            VehiclePropertyIds.TIRE_PRESSURE_DISPLAY_UNITS,
-                            VehiclePropertyIds.EV_BATTERY_DISPLAY_UNITS,
-                            VehiclePropertyIds.VEHICLE_SPEED_DISPLAY_UNITS,
-                            VehiclePropertyIds.FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME)
-                    .build();
     private static final ImmutableList<Integer> PERMISSION_READ_ADAS_SETTINGS_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
@@ -5833,24 +5822,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     }
                 },
                 Car.PERMISSION_PRIVILEGED_CAR_INFO);
-    }
-
-    @Test
-    public void testPermissionControlDisplayUnitsAndVendorExtensionGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_DISPLAY_UNITS_VENDOR_EXTENSION_PROPERTIES);
-                    }
-                },
-                Car.PERMISSION_CONTROL_DISPLAY_UNITS,
-                Car.PERMISSION_VENDOR_EXTENSION);
     }
 
     @Test

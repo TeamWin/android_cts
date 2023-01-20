@@ -17,10 +17,10 @@
 package android.telephony.mockmodem;
 
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_DEFAULT;
-
 import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
 
 import android.content.Context;
+import android.hardware.radio.sim.Carrier;
 import android.hardware.radio.voice.CdmaSignalInfoRecord;
 import android.hardware.radio.voice.UusInfo;
 import android.telephony.Annotation;
@@ -28,6 +28,8 @@ import android.telephony.BarringInfo;
 import android.telephony.ims.feature.ConnectionFailureInfo;
 import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
+import android.telephony.satellite.PointingInfo;
+import android.telephony.satellite.stub.SatelliteImplBase;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -943,5 +945,198 @@ public class MockModemManager {
     public void notifyEmergencyNumberList(int slotId, String[] numbers) {
         Log.d(TAG, "notifyEmergencyNumberList[" + slotId + "]");
         mMockModemService.getIRadioVoice((byte) slotId).notifyEmergencyNumberList(numbers);
+    }
+
+    /**
+     * Confirms that ongoing Satellite message transfer is complete.
+     *
+     * @param slotId which slot would insert.
+     * @param complete True mean the transfer is complete.
+     *                 False means the transfer is not complete.
+     * @return boolean true if there is no error
+     */
+    public boolean sendSatelliteMessagesTransferComplete(int slotId, boolean complete) {
+        Log.d(TAG, "sendSatelliteMessagesTransferComplete[" + slotId
+                + "] complete(" + complete + ")");
+
+        boolean result = false;
+        try {
+            mMockModemService.getIRadioSatellite((byte) slotId).sendMessagesTransferComplete(
+                    complete);
+            waitForTelephonyFrameworkDone(1);
+            result = true;
+        } catch (Exception e) {
+            Log.e(TAG, "sendSatelliteMessagesTransferComplete e=" + e);
+        }
+        return result;
+    }
+
+    /**
+     * Indicates new message received on Satellite modem.
+     *
+     * @param slotId which slot would insert.
+     * @param messages List of new messages received.
+     * @return boolean true if there is no error
+     */
+    public boolean sendNewSatelliteMessages(int slotId, String[] messages) {
+        Log.d(TAG, "sendNewSatelliteMessages[" + slotId
+                + "] messages(" + strArrayToStr(messages) + ")");
+
+        boolean result = false;
+        try {
+            mMockModemService.getIRadioSatellite((byte) slotId).sendNewMessages(messages);
+            waitForTelephonyFrameworkDone(1);
+            result = true;
+        } catch (Exception e) {
+            Log.e(TAG, "sendNewSatelliteMessages e=" + e);
+        }
+        return result;
+    }
+
+    /**
+     * Indicates that satellite has pending messages for the device to be pulled.
+     *
+     * @param slotId which slot would insert.
+     * @param count Number of pending messages.
+     */
+    public boolean sendPendingSatelliteMessageCount(int slotId, int count) {
+        Log.d(TAG, "sendPendingSatelliteMessageCount[" + slotId
+                + "] count(" + count + ")");
+
+        boolean result = false;
+        try {
+            mMockModemService.getIRadioSatellite((byte) slotId).sendPendingMessageCount(count);
+            waitForTelephonyFrameworkDone(1);
+            result = true;
+        } catch (Exception e) {
+            Log.e(TAG, "sendPendingSatelliteMessageCount e=" + e);
+        }
+        return result;
+    }
+
+    /**
+     * Indicate that satellite provision state has changed.
+     *
+     * @param slotId which slot would insert.
+     * @param provisioned True means the service is provisioned.
+     *                    False means the service is not provisioned.
+     * @param features List of Feature whose provision state has changed.
+     */
+    public boolean sendSatelliteProvisionStateChanged(
+            int slotId, boolean provisioned, int[] features) {
+        Log.d(TAG, "sendSatelliteProvisionStateChanged[" + slotId
+                + "] provisioned(" + provisioned + ")"
+                + " features(" + intArrayToStr(features) + ")");
+
+        boolean result = false;
+        try {
+            mMockModemService.getIRadioSatellite((byte) slotId).sendProvisionStateChanged(
+                    provisioned, features);
+            waitForTelephonyFrameworkDone(1);
+            result = true;
+        } catch (Exception e) {
+            Log.e(TAG, "sendSatelliteProvisionStateChanged e=" + e);
+        }
+        return result;
+    }
+
+    /**
+     * Indicate that satellite mode has changed.
+     *
+     * @param slotId which slot would insert.
+     * @param mode The current mode of the satellite modem.
+     */
+    public boolean sendSatelliteModeChanged(int slotId, @SatelliteImplBase.Mode int mode) {
+        Log.d(TAG, "sendSatelliteModeChanged[" + slotId
+                + "] mode(" + mode + ")");
+
+        boolean result = false;
+        try {
+            mMockModemService.getIRadioSatellite((byte) slotId).sendSatelliteModeChanged(mode);
+            waitForTelephonyFrameworkDone(1);
+            result = true;
+        } catch (Exception e) {
+            Log.e(TAG, "sendSatelliteModeChanged e=" + e);
+        }
+        return result;
+    }
+
+    /**
+     * Indicate that satellite Pointing input has changed.
+     *
+     * @param slotId which slot would insert.
+     * @param pointingInfo The current pointing info.
+     */
+    public boolean sendSatellitePointingInfoChanged(int slotId, PointingInfo pointingInfo) {
+        Log.d(TAG, "sendSatellitePointingInfoChanged[" + slotId
+                + "] pointingInfo(" + pointingInfo.toString() + ")");
+
+        boolean result = false;
+        try {
+            mMockModemService.getIRadioSatellite((byte) slotId).sendSatellitePointingInfoChanged(
+                    pointingInfo);
+            waitForTelephonyFrameworkDone(1);
+            result = true;
+        } catch (Exception e) {
+            Log.e(TAG, "sendSatellitePointingInfoChanged e=" + e);
+        }
+        return result;
+    }
+
+    /**
+     * Indicate that satellite radio technology has changed.
+     *
+     * @param slotId which slot would insert.
+     * @param technology The current technology of the satellite modem.
+     */
+    public boolean sendSatelliteRadioTechnologyChanged(
+            int slotId, @SatelliteImplBase.NTRadioTechnology int technology) {
+        Log.d(TAG, "sendSatelliteRadioTechnologyChanged[" + slotId
+                + "] technology(" + technology + ")");
+
+        boolean result = false;
+        try {
+            mMockModemService.getIRadioSatellite((byte) slotId).sendSatelliteRadioTechnologyChanged(
+                    technology);
+            waitForTelephonyFrameworkDone(1);
+            result = true;
+        } catch (Exception e) {
+            Log.e(TAG, "sendSatelliteRadioTechnologyChanged e=" + e);
+        }
+        return result;
+    }
+
+    private String strArrayToStr(String[] strArr) {
+        StringBuilder sb = new StringBuilder();
+        if (strArr != null && strArr.length > 0) {
+            for (int i = 0; i < strArr.length - 1; i++) {
+                sb.append(strArr[i]);
+                sb.append(", ");
+            }
+            sb.append(strArr[strArr.length - 1]);
+        }
+        return sb.toString();
+    }
+
+    private String intArrayToStr(int[] intArr) {
+        StringBuilder sb = new StringBuilder();
+        if (intArr != null && intArr.length > 0) {
+            for (int i = 0; i < intArr.length - 1; i++) {
+                sb.append(intArr[i]);
+                sb.append(", ");
+            }
+            sb.append(intArr[intArr.length - 1]);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Sets the new carrierId and CarrierRestriction status values in IRadioSimImpl.java
+     * @param carrierList
+     * @param carrierRestrictionStatus
+     */
+    public void updateCarrierRestrictionInfo(Carrier[] carrierList, int carrierRestrictionStatus) {
+        mMockModemService.getIRadioSim().updateCarrierRestrictionStatusInfo(carrierList,
+                carrierRestrictionStatus);
     }
 }

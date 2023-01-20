@@ -83,10 +83,12 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
 
         // Intent in owner profile should be resolved in both profiles
         queryIntentForUser(intentAction, OWNER_USER_ID,
-                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
         // Intent in clone profile should be resolved in both profiles
         queryIntentForUser(intentAction, sCloneUserId,
-                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
     }
 
     /**
@@ -106,10 +108,12 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
         try {
             // Intent in owner profile should be resolved in owner profile
             queryIntentForUser(intentAction, OWNER_USER_ID,
-                    /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true);
+                    /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true,
+                    /* isMatchCloneProfileFlagSet */ true);
             // Intent in clone profile should be resolved in clone profile
             queryIntentForUser(intentAction, sCloneUserId,
-                    /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ false);
+                    /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ false,
+                    /* isMatchCloneProfileFlagSet */ true);
         } finally {
             switchOnIntentRedirectionFlag();
         }
@@ -128,10 +132,12 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
 
         // Intent in owner profile should be resolved in both profiles
         queryIntentForUser(intentAction, OWNER_USER_ID,
-                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
         // Intent in clone profile should be resolved in both profiles
         queryIntentForUser(intentAction, sCloneUserId,
-                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
     }
 
     /**
@@ -148,10 +154,12 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
 
         // Intent in owner profile should be resolved in both profiles
         queryIntentForUser(intentAction, OWNER_USER_ID,
-                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
         // Intent in clone profile should be resolved in both profiles
         queryIntentForUser(intentAction, sCloneUserId,
-                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
     }
 
     /**
@@ -167,10 +175,12 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
 
         // Intent in owner profile should be resolved in both profiles
         queryIntentForUser(intentAction, OWNER_USER_ID,
-                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
         // Intent in clone profile should be resolved in both profiles
         queryIntentForUser(intentAction, sCloneUserId,
-                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
     }
 
     /**
@@ -186,10 +196,12 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
 
         // Intent in owner profile should be resolved in owner profile
         queryIntentForUser(intentAction, OWNER_USER_ID,
-                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
         // Intent in clone profile should be resolved in owner profile
         queryIntentForUser(intentAction, sCloneUserId,
-                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
     }
 
     /**
@@ -205,10 +217,12 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
 
         // Intent in owner profile should be resolved in owner profile
         queryIntentForUser(intentAction, OWNER_USER_ID,
-                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
         // Intent in owner profile should be resolved in owner profile
         queryIntentForUser(intentAction, sCloneUserId,
-                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
     }
 
     /**
@@ -225,11 +239,13 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
         // Intent in owner profile should be resolved in both profiles but has only owner app
         // installed
         queryIntentForUser(intentAction, OWNER_USER_ID,
-                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
         // Intent in clone profile should be resolved in both profiles but has only owner app
         // installed
         queryIntentForUser(intentAction, sCloneUserId,
-                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true);
+                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ true);
     }
 
     /**
@@ -246,11 +262,34 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
         // Intent in owner profile should be resolved in both profiles but has only clone app
         // installed
         queryIntentForUser(intentAction, OWNER_USER_ID,
-                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ false);
+                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ false,
+                /* isMatchCloneProfileFlagSet */ true);
         // Intent in clone profile should be resolved in both profiles but has only clone app
         // installed
         queryIntentForUser(intentAction, sCloneUserId,
-                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ false);
+                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ false,
+                /* isMatchCloneProfileFlagSet */ true);
+    }
+
+    /**
+     * Intent for Intent.ACTION_VIEW query should search only in current profile where flag
+     * MATCH_CLONE_PROFILE is not passed.
+     * @throws Exception
+     */
+    @Test
+    public void testActionViewQueryWithoutMatchCloneProfileFlag() throws Exception {
+        String intentAction = "android.intent.action.VIEW";
+        installPackage(CLONE_PROFILE_APP, "--user " + Integer.valueOf(sCloneUserId));
+        installPackage(OWNER_PROFILE_APP, "--user " + Integer.valueOf(OWNER_USER_ID));
+
+        // Intent in owner profile should be resolved in only owner profile
+        queryIntentForUser(intentAction, OWNER_USER_ID,
+                /* shouldCloneAppBePresent */ false, /* shouldOwnerAppBePresent */ true,
+                /* isMatchCloneProfileFlagSet */ false);
+        // Intent in clone profile should be resolved in only clone profile
+        queryIntentForUser(intentAction, sCloneUserId,
+                /* shouldCloneAppBePresent */ true, /* shouldOwnerAppBePresent */ false,
+                /* isMatchCloneProfileFlagSet */ false);
     }
 
     /**
@@ -263,12 +302,14 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
      * @throws Exception
      */
     private void queryIntentForUser(String intentAction, String userId,
-            boolean shouldCloneAppBePresent, boolean shouldOwnerAppBePresent) throws Exception {
+            boolean shouldCloneAppBePresent, boolean shouldOwnerAppBePresent,
+            boolean isMatchCloneProfileFlagSet) throws Exception {
         Map<String, String> args = new HashMap<>();
         args.put("intent_action", intentAction);
         args.put("user_id", userId);
         args.put("clone_app_present", String.valueOf(shouldCloneAppBePresent));
         args.put("owner_app_present", String.valueOf(shouldOwnerAppBePresent));
+        args.put("match_clone_profile_flag", String.valueOf(isMatchCloneProfileFlagSet));
 
         runDeviceTestAsUser(INTENT_REDIRECTION_TEST_PACKAGE,
                 INTENT_REDIRECTION_TEST_PACKAGE + "." + INTENT_REDIRECTION_TEST_CLASS,

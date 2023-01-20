@@ -49,6 +49,7 @@ public class AdvertiseSettingsTest extends AndroidTestCase {
         AdvertiseSettings settings = new AdvertiseSettings.Builder()
                 .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
                 .setConnectable(false)
+                .setDiscoverable(false)
                 .setTimeout(timeoutMillis)
                 .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
                 .setOwnAddressType(AdvertisingSetParameters.ADDRESS_TYPE_DEFAULT)
@@ -61,6 +62,7 @@ public class AdvertiseSettingsTest extends AndroidTestCase {
                 settingsFromParcel.getTxPowerLevel());
         assertEquals(timeoutMillis, settingsFromParcel.getTimeout());
         assertFalse(settings.isConnectable());
+        assertFalse(settings.isDiscoverable());
         assertEquals(AdvertisingSetParameters.ADDRESS_TYPE_DEFAULT, settings.getOwnAddressType());
     }
 

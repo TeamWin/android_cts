@@ -100,6 +100,23 @@ public class NearbyAppStreamingPolicyTest {
         }
     }
 
+    @PolicyDoesNotApplyTest(policy = SetNearbyAppStreamingPolicy.class)
+    @EnsureHasPermission(READ_NEARBY_STREAMING_POLICY)
+    public void setNearbyAppStreamingPolicy_policyApplied_otherUsersUnaffected() {
+        RemoteDevicePolicyManager dpm = sDeviceState.dpc().devicePolicyManager();
+        int originalLocalPolicy = sLocalDevicePolicyManager.getNearbyAppStreamingPolicy();
+        int originalPolicy = dpm.getNearbyAppStreamingPolicy();
+
+        dpm.setNearbyAppStreamingPolicy(DevicePolicyManager.NEARBY_STREAMING_DISABLED);
+
+        try {
+            assertThat(sLocalDevicePolicyManager.getNearbyAppStreamingPolicy())
+                    .isEqualTo(originalLocalPolicy);
+        } finally {
+            dpm.setNearbyAppStreamingPolicy(originalPolicy);
+        }
+    }
+
     @CannotSetPolicyTest(policy = SetNearbyAppStreamingPolicy.class)
     public void setNearbyAppStreamingPolicy_policyIsNotAllowedToBeSet_throwsException() {
         RemoteDevicePolicyManager dpm = sDeviceState.dpc().devicePolicyManager();

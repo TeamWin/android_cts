@@ -6770,4 +6770,35 @@ Follow the instructions on the screen to measure the frequency response for the 
         \n Then, open the device controls space (instructions below the button) and verify that the
         text inside the panel indicates that the setting is %1$s
     </string>
+
+    <!--  Strings for Input tests  -->
+    <string name="test_category_input">Input</string>
+    <string name="usi_version_test">USI Version Test</string>
+    <string name="usi_version_test_info">This test verifies that a device that supports a
+        <a href="https://universalstylus.org">Universal Stylus Initiative (USI)</a> stylus through
+        its built-in touchscreen correctly reports its supported USI version.
+    </string>
+    <string name="usi_version_yes">Yes</string>
+    <string name="usi_version_no">No</string>
+    <string name="usi_test_start">This test will ask you to verify that the reported
+        <a href="https://universalstylus.org">Universal Stylus Initiative (USI)</a> protocol
+        version is correct for each built-in display.\n
+        To begin the test, please disconnect all external peripheral devices, such as mice,
+        keyboards, or styluses that are connected through USB or Bluetooth.\n\n
+        Found %1$d built-in display(s). Are you ready to proceed?
+    </string>
+    <string name="usi_test_verify_display_usi_version">The display \"%1$s\" reports its USI version
+        as %2$s.\n\n
+        Is this correct?
+    </string>
+    <string name="usi_version_not_supported">not supported</string>
+    <string name="usi_test_passed">Test Passed\n\n
+        Press Pass.
+    </string>
+    <string name="usi_test_failed">Test Failed\n\n
+        Reason: %1$s
+    </string>
+    <string name="usi_fail_reason_not_ready">Not ready to check for USI stylus versions.</string>
+    <string name="usi_fail_reason_incorrect_version">The USI version was incorrectly reported.
+    </string>
 </resources>

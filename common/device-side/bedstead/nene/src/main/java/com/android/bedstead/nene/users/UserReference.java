@@ -440,6 +440,13 @@ public final class UserReference implements AutoCloseable {
         if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
             return;
         }
+
+        if (TestApis.users().system().equals(this) && TestApis.users().isHeadlessSystemUserMode()) {
+            // We should also copy the setup status onto the instrumented user as DO provisioning
+            // depends on both
+            TestApis.users().instrumented().setSetupComplete(complete);
+        }
+
         DevicePolicyManager devicePolicyManager =
                 TestApis.context().androidContextAsUser(this)
                         .getSystemService(DevicePolicyManager.class);

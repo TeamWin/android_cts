@@ -67,12 +67,19 @@ public class IntentRedirectionAppTest {
                 Boolean.valueOf(getTestArgumentValueForGivenKey("clone_app_present"));
         boolean ownerAppShouldBePresent =
                 Boolean.valueOf(getTestArgumentValueForGivenKey("owner_app_present"));
+        boolean isMatchCloneProfileFlagSet =
+                Boolean.valueOf(getTestArgumentValueForGivenKey(
+                        "match_clone_profile_flag"));
 
         Log.d(TAG, "test for intent : " + intentAction);
         Intent intent = buildIntentForTest(intentAction);
         assertThat(intent).isNotNull();
+        int queryFlag = PackageManager.MATCH_ALL;
+        if (isMatchCloneProfileFlagSet) {
+            queryFlag |= PackageManager.MATCH_CLONE_PROFILE;
+        }
         List<ResolveInfo> resolveInfos = mPackageManager.queryIntentActivities(intent,
-                PackageManager.MATCH_ALL);
+                queryFlag);
 
         Log.i(TAG, "resolveInfos : " + resolveInfos);
         boolean isCloneAppPresent = false;

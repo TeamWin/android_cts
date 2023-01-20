@@ -89,6 +89,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Ensure end-to-end functionality of SurfaceControlViewHost.
@@ -136,6 +137,26 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
     private static final int DEFAULT_SURFACE_VIEW_HEIGHT = 100;
     MockImeSession mImeSession;
 
+    Consumer<MotionEvent> mSurfaceViewMotionConsumer = null;
+
+    class MotionConsumingSurfaceView extends SurfaceView {
+        MotionConsumingSurfaceView(Context c) {
+            super(c);
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent ev) {
+            if (mSurfaceViewMotionConsumer == null) {
+                return false;
+            } else {
+                mSurfaceViewMotionConsumer.accept(ev);
+                return true;
+            }
+        }
+    }
+
+    boolean mHostGotEvent = false;
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -173,7 +194,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             final FrameLayout content = new FrameLayout(mActivity);
-            mSurfaceView = new SurfaceView(mActivity);
+            mSurfaceView = new MotionConsumingSurfaceView(mActivity);
             mSurfaceView.setZOrderOnTop(onTop);
             final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                     width, height, Gravity.LEFT | Gravity.TOP);
@@ -1222,5 +1243,112 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
                 mActivity.getWindow());
         assertPixelColorInBounds(screenshot, Color.BLUE, new Rect(0, 0, 50, 50));
         assertPixelColorInBounds(screenshot, Color.BLACK, new Rect(50, 50, 100, 100));
+    }
+
+    class TouchTransferringView extends View {
+        boolean mExpectsFirstMotion = true;
+        boolean mExpectsCancel = false;
+        boolean mGotCancel = false;
+
+        TouchTransferringView(Context c) {
+            super(c);
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent ev) {
+            int action = ev.getAction();
+            synchronized (this) {
+                if (mExpectsFirstMotion) {
+                    assertEquals(action, MotionEvent.ACTION_DOWN);
+                    assertTrue(mVr.transferTouchGestureToHost());
+                    mExpectsFirstMotion = false;
+                    mExpectsCancel = true;
+                } else if (mExpectsCancel) {
+                    assertEquals(action, MotionEvent.ACTION_CANCEL);
+                    mExpectsCancel = false;
+                    mGotCancel = true;
+                }
+                this.notifyAll();
+            }
+            return true;
+        }
+
+        void waitForEmbeddedTouch() {
+            synchronized (this) {
+                if (!mExpectsFirstMotion) {
+                    assertTrue(mExpectsCancel || mGotCancel);
+                    return;
+                }
+                try {
+                    this.wait();
+                } catch (Exception e) {
+                }
+                assertFalse(mExpectsFirstMotion);
+            }
+        }
+
+        void waitForCancel() {
+            synchronized (this) {
+                if (!mExpectsCancel) {
+                    return;
+                }
+                try {
+                    this.wait();
+                } catch (Exception e) {
+                }
+                assertTrue(mGotCancel);
+            }
+        }
+    }
+
+    @Test
+    public void testEmbeddedWindowCanTransferTouchGestureToHost() throws Throwable {
+        // Inside the embedded view hierarchy, we set up a view that transfers touch
+        // to the host upon receiving a touch event
+        TouchTransferringView ttv = new TouchTransferringView(mActivity);
+        mEmbeddedView = ttv;
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+        // On the host SurfaceView, we set a motion consumer which expects to receive one event.
+        mHostGotEvent = false;
+        mSurfaceViewMotionConsumer = (ev) -> {
+            synchronized (this) {
+                mHostGotEvent = true;
+                this.notifyAll();
+            }
+        };
+
+        // Prepare to inject an event offset one pixel from the top of the SurfaceViews location
+        // on-screen.
+        final int[] viewOnScreenXY = new int[2];
+        mSurfaceView.getLocationOnScreen(viewOnScreenXY);
+        final int injectedX = viewOnScreenXY[0] + 1;
+        final int injectedY = viewOnScreenXY[1] + 1;
+        final UiAutomation uiAutomation = mInstrumentation.getUiAutomation();
+        long downTime = SystemClock.uptimeMillis();
+
+        // We inject a down event
+        CtsTouchUtils.injectDownEvent(uiAutomation, downTime, injectedX, injectedY, null);
+
+
+        // And this down event should arrive on the embedded view, which should transfer the touch
+        // focus
+        ttv.waitForEmbeddedTouch();
+        ttv.waitForCancel();
+
+        downTime = SystemClock.uptimeMillis();
+        // Now we inject an up event
+        CtsTouchUtils.injectUpEvent(uiAutomation, downTime, false, injectedX, injectedY, null);
+        // This should arrive on the host now, since we have transferred the touch focus
+        synchronized (this) {
+            if (!mHostGotEvent) {
+                try {
+                    this.wait();
+                } catch (Exception e) {
+                }
+            }
+        }
+        assertTrue(mHostGotEvent);
     }
 }

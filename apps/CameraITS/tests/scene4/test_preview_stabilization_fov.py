@@ -38,7 +38,7 @@ _ROUNDESS_DELTA_THRESHOLD = 0.05
 
 _MAX_CENTER_THRESHOLD_PERCENT = 0.075
 _MAX_AREA = 1920 * 1440  # max mandatory preview stream resolution
-_MIN_CENTER_THRESHOLD_PERCENT = 0.02
+_MIN_CENTER_THRESHOLD_PERCENT = 0.03
 _MIN_AREA = 176 * 144  # assume QCIF to be min preview size
 
 

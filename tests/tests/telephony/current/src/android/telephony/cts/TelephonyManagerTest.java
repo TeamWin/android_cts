@@ -39,6 +39,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest.permission;
@@ -5961,5 +5962,36 @@ public class TelephonyManagerTest {
                 mTelephonyManager,
                 tm -> tm.getRadioPowerOffReasons(), permission.READ_PRIVILEGED_PHONE_STATE);
         assertTrue(radioPowerOffReasons.contains(reason));
+    }
+
+    /**
+     * verify the valid response of the getCarrierRestrictionStatus.
+     */
+    @Test
+    public void getCarrierRestrictionStatus_ReadPhoneState() throws InterruptedException {
+        final int TIMEOUT_FOR_MODEM_QUERY = 5;
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+        Set<Integer> validCarrierRestrictionStatus = new HashSet<Integer>();
+        validCarrierRestrictionStatus.add(TelephonyManager.CARRIER_RESTRICTION_STATUS_UNKNOWN);
+        validCarrierRestrictionStatus.add(
+                TelephonyManager.CARRIER_RESTRICTION_STATUS_NOT_RESTRICTED);
+        validCarrierRestrictionStatus.add(TelephonyManager.CARRIER_RESTRICTION_STATUS_RESTRICTED);
+        validCarrierRestrictionStatus.add(
+                TelephonyManager.CARRIER_RESTRICTION_STATUS_RESTRICTED_TO_CALLER);
+        LinkedBlockingQueue<Integer> carrierRestrictionStatusResult = new LinkedBlockingQueue<>(1);
+
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    tm -> tm.getCarrierRestrictionStatus(getContext().getMainExecutor(),
+                            carrierRestrictionStatusResult::offer), permission.READ_PHONE_STATE);
+        } catch (SecurityException ex) {
+            assumeFalse(ex.getMessage().contains("Not an authorized caller"));
+        }
+        assertTrue(validCarrierRestrictionStatus.contains(
+                carrierRestrictionStatusResult.poll(TIMEOUT_FOR_MODEM_QUERY,
+                        TimeUnit.SECONDS)));
     }
 }

@@ -26,6 +26,7 @@ import android.graphics.PixelFormat
 import android.graphics.Point
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
+import android.hardware.input.InputManager
 import android.media.ImageReader
 import android.os.Handler
 import android.os.Looper
@@ -35,6 +36,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.After
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -105,6 +107,13 @@ class TouchScreenTest {
         touchScreen.close()
         virtualDisplay.release()
         reader.close()
+    }
+
+    @Test
+    fun testHostUsiVersionIsNull() {
+        assertNull(
+            instrumentation.targetContext.getSystemService(InputManager::class.java)
+                .getHostUsiVersion(virtualDisplay.display))
     }
 
     @Test

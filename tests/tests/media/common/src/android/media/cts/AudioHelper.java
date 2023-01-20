@@ -221,6 +221,23 @@ public class AudioHelper {
         return ms * format.getSampleRate() / 1000;
     }
 
+    public static boolean hasAudioSilentProperty() {
+        String silent = null;
+
+        try {
+            silent = (String) Class.forName("android.os.SystemProperties").getMethod("get",
+                    String.class).invoke(null, "ro.audio.silent");
+        } catch (Exception e) {
+            // pass through
+        }
+
+        if (silent != null && silent.equals("1")) {
+            return true;
+        }
+
+        return false;
+    }
+
     public static class Statistics {
         public void add(double value) {
             final double absValue = Math.abs(value);

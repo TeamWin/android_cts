@@ -96,7 +96,24 @@ public class NearbyNotificationStreamingPolicyTest {
             assertThat(dpm.getNearbyNotificationStreamingPolicy())
                     .isEqualTo(DevicePolicyManager.NEARBY_STREAMING_DISABLED);
         } finally {
-            dpm.setNearbyAppStreamingPolicy(originalPolicy);
+            dpm.setNearbyNotificationStreamingPolicy(originalPolicy);
+        }
+    }
+
+    @PolicyDoesNotApplyTest(policy = SetNearbyNotificationStreamingPolicy.class)
+    @EnsureHasPermission(READ_NEARBY_STREAMING_POLICY)
+    public void setNearbyNotificationStreamingPolicy_policyApplied_otherUsersUnaffected() {
+        RemoteDevicePolicyManager dpm = sDeviceState.dpc().devicePolicyManager();
+        int originalLocalPolicy = sLocalDevicePolicyManager.getNearbyNotificationStreamingPolicy();
+        int originalPolicy = dpm.getNearbyNotificationStreamingPolicy();
+
+        dpm.setNearbyNotificationStreamingPolicy(DevicePolicyManager.NEARBY_STREAMING_DISABLED);
+
+        try {
+            assertThat(sLocalDevicePolicyManager.getNearbyNotificationStreamingPolicy())
+                    .isEqualTo(originalLocalPolicy);
+        } finally {
+            dpm.setNearbyNotificationStreamingPolicy(originalPolicy);
         }
     }
 
@@ -123,7 +140,7 @@ public class NearbyNotificationStreamingPolicyTest {
                     sLocalDevicePolicyManager.getNearbyNotificationStreamingPolicy()).isNotEqualTo(
                     DevicePolicyManager.NEARBY_STREAMING_ENABLED);
         } finally {
-            dpm.setNearbyAppStreamingPolicy(originalPolicy);
+            dpm.setNearbyNotificationStreamingPolicy(originalPolicy);
         }
     }
 

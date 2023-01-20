@@ -21,8 +21,6 @@
     <application android:appComponentFactory="com.android.bedstead.testapp.TestAppAppComponentFactory"
                  android:label="DeviceAdminTestApp" android:testOnly="true">
 
-        <meta-data android:name="headless-system-user-management-mode" android:value="affiliated" />
-
         <receiver android:name=".DeviceAdminReceiver"
                   android:permission="android.permission.BIND_DEVICE_ADMIN"
                   android:exported="true">

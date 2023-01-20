@@ -181,6 +181,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         static final int ATTACHED = 0;
         static final int ATTACH_FAILED = 1;
         static final int ERROR = 2; // no callback: timeout, interruption
+        static final int TERMINATE = 3;
 
         private CountDownLatch mBlocker = new CountDownLatch(1);
         private int mCallbackCalled = ERROR; // garbage init
@@ -207,7 +208,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             synchronized (mLock) {
                 mSessions.remove(mSession);
             }
+            mCallbackCalled = TERMINATE;
             mSession = null;
+            mBlocker.countDown();
         }
 
         /**
@@ -1659,6 +1662,29 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             assertTrue("Subscribe started", discoveryCb2
                     .waitForCallback(DiscoverySessionCallbackTest.ON_SUBSCRIBE_STARTED));
         }
+    }
+
+    public void testAttachOffload() {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+        // Attach offload session
+        final AttachCallbackTest attachCb = new AttachCallbackTest();
+        ShellIdentityUtils.invokeWithShellPermissions(() ->
+                mWifiAwareManager.attachOffload(mHandler, attachCb));
+        int cbCalled = attachCb.waitForAnyCallback();
+        assertEquals("Wi-Fi Aware attach", AttachCallbackTest.ATTACHED, cbCalled);
+        // Attach a normal session offload session should be terminated
+        attachAndGetCallback();
+        cbCalled = attachCb.waitForAnyCallback();
+        assertEquals("Wi-Fi Aware session terminate", AttachCallbackTest.TERMINATE, cbCalled);
+        assertNull(attachCb.getSession());
+        // Attach offload again, should fail.
+        final AttachCallbackTest attachCb1 = new AttachCallbackTest();
+        ShellIdentityUtils.invokeWithShellPermissions(() ->
+                mWifiAwareManager.attachOffload(mHandler, attachCb1));
+        cbCalled = attachCb1.waitForAnyCallback();
+        assertEquals("Wi-Fi Aware attach", AttachCallbackTest.ATTACH_FAILED, cbCalled);
     }
 
     /**

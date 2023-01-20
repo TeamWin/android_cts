@@ -83,6 +83,10 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
         navigateToPermissionRationaleActivity()
 
         assertPermissionRationaleActivityTitleIsVisible(true)
+        assertPermissionRationaleActivityDataSharingSourceSectionVisible(true)
+        assertPermissionRationaleActivityPurposeSectionVisible(true)
+        assertPermissionRationaleActivityLearnMoreSectionVisible(true)
+        assertPermissionRationaleActivitySettingsSectionVisible(true)
     }
 
     @Test
@@ -151,11 +155,12 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
     }
 
     private fun clickInstallSourceLink() {
-        waitForIdle()
+        findView(By.res(DATA_SHARING_SOURCE_MESSAGE_ID), true)
+
         eventually {
             // UiObject2 doesn't expose CharSequence.
             val node = uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByViewId(
-                PURPOSE_MESSAGE_ID
+                DATA_SHARING_SOURCE_MESSAGE_ID
             )[0]
             assertTrue(node.isVisibleToUser)
             val text = node.text as Spanned
@@ -167,7 +172,8 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
     }
 
     private fun clickSettingsLink() {
-        waitForIdle()
+        findView(By.res(SETTINGS_MESSAGE_ID), true)
+
         eventually {
             // UiObject2 doesn't expose CharSequence.
             val node = uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByViewId(
@@ -214,6 +220,28 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
         findView(By.res(PERMISSION_RATIONALE_ACTIVITY_TITLE_VIEW), expected = expected)
     }
 
+    private fun assertPermissionRationaleActivityDataSharingSourceSectionVisible(
+        expected: Boolean
+    ) {
+        findView(By.res(DATA_SHARING_SOURCE_TITLE_ID), expected = expected)
+        findView(By.res(DATA_SHARING_SOURCE_MESSAGE_ID), expected = expected)
+    }
+
+    private fun assertPermissionRationaleActivityPurposeSectionVisible(expected: Boolean) {
+        findView(By.res(PURPOSE_TITLE_ID), expected = expected)
+        findView(By.res(PURPOSE_MESSAGE_ID), expected = expected)
+    }
+
+    private fun assertPermissionRationaleActivityLearnMoreSectionVisible(expected: Boolean) {
+        findView(By.res(LEARN_MORE_TITLE_ID), expected = expected)
+        findView(By.res(LEARN_MORE_MESSAGE_ID), expected = expected)
+    }
+
+    private fun assertPermissionRationaleActivitySettingsSectionVisible(expected: Boolean) {
+        findView(By.res(SETTINGS_TITLE_ID), expected = expected)
+        findView(By.res(SETTINGS_MESSAGE_ID), expected = expected)
+    }
+
     private fun assertPermissionSettingsVisible(expected: Boolean) {
         findView(By.res(DENY_RADIO_BUTTON), expected = expected)
     }
@@ -249,7 +277,20 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
         private const val PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED =
             "privacy_placeholder_safety_label_data_enabled"
 
-        private const val PURPOSE_MESSAGE_ID = "com.android.permissioncontroller:id/purpose_message"
+        private const val DATA_SHARING_SOURCE_TITLE_ID =
+            "com.android.permissioncontroller:id/data_sharing_source_title"
+        private const val DATA_SHARING_SOURCE_MESSAGE_ID =
+            "com.android.permissioncontroller:id/data_sharing_source_message"
+        private const val PURPOSE_TITLE_ID =
+            "com.android.permissioncontroller:id/purpose_title"
+        private const val PURPOSE_MESSAGE_ID =
+            "com.android.permissioncontroller:id/purpose_message"
+        private const val LEARN_MORE_TITLE_ID =
+            "com.android.permissioncontroller:id/learn_more_title"
+        private const val LEARN_MORE_MESSAGE_ID =
+            "com.android.permissioncontroller:id/learn_more_message"
+        private const val SETTINGS_TITLE_ID =
+            "com.android.permissioncontroller:id/settings_title"
         private const val SETTINGS_MESSAGE_ID =
             "com.android.permissioncontroller:id/settings_message"
     }

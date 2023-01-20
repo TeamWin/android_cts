@@ -65,6 +65,7 @@ public class AdvertisingSetParametersTest {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder().build();
 
         assertFalse(params.isConnectable());
+        assertTrue(params.isDiscoverable());
         assertFalse(params.isScannable());
         assertFalse(params.isLegacy());
         assertFalse(params.isAnonymous());
@@ -82,6 +83,15 @@ public class AdvertisingSetParametersTest {
                 .build();
         assertTrue(params.isConnectable());
     }
+
+    @Test
+    public void testIsDiscoverable() {
+        AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
+                .setDiscoverable(false)
+                .build();
+        assertFalse(params.isDiscoverable());
+    }
+
 
     @Test
     public void testIsScannable() {
@@ -237,6 +247,7 @@ public class AdvertisingSetParametersTest {
         }
 
         assertEquals(p.isConnectable(), other.isConnectable());
+        assertEquals(p.isDiscoverable(), other.isDiscoverable());
         assertEquals(p.isScannable(), other.isScannable());
         assertEquals(p.isLegacy(), other.isLegacy());
         assertEquals(p.isAnonymous(), other.isAnonymous());

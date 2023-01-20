@@ -48,6 +48,7 @@ import static com.android.bedstead.harrier.UserType.SYSTEM_USER;
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_PROFILES;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
+import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_USER;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.remotedpc.RemoteDpc.REMOTE_DPC_TEST_APP;
 
@@ -99,12 +100,14 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwn
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
+import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.UserType;
 import com.android.bedstead.remotedpc.RemoteDpc;
+import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.eventlib.events.broadcastreceivers.BroadcastReceivedEvent;
@@ -467,7 +470,7 @@ public final class ProvisioningTest {
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#provisionFullyManagedDevice")
     public void provisionFullyManagedDevice_headless_setsProfileOwnerOnInitialUser()
             throws Exception {
-        boolean setupComplete = TestApis.users().system().getSetupComplete();
+        boolean systemSetupComplete = TestApis.users().system().getSetupComplete();
         TestApis.users().system().setSetupComplete(false);
         try {
             FullyManagedDeviceProvisioningParams params =
@@ -480,7 +483,66 @@ public final class ProvisioningTest {
             if (deviceOwner != null) {
                 deviceOwner.remove();
             }
-            TestApis.users().system().setSetupComplete(setupComplete);
+            ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner();
+            if (profileOwner != null) {
+                profileOwner.remove();
+            }
+            TestApis.users().system().setSetupComplete(systemSetupComplete);
+        }
+    }
+
+    @Postsubmit(reason = "New test")
+    @EnsureHasNoDpc
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
+    @RequireHeadlessSystemUserMode(reason = "Testing headless-specific functionality")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#provisionFullyManagedDevice")
+    public void provisionFullyManagedDevice_headless_dpcDoesNotDeclareHeadlessCompatibility_throwsException()
+            throws Exception {
+
+        TestApp noHeadlessSupportTestApp = sDeviceState.testApps().query().wherePackageName().isEqualTo("com.android.bedstead.testapp.DeviceAdminTestApp").get();
+
+        try (TestAppInstance testApp = noHeadlessSupportTestApp.install()) {
+            FullyManagedDeviceProvisioningParams params =
+                    new FullyManagedDeviceProvisioningParams.Builder(
+                            new ComponentName(testApp.packageName(), testApp.packageName() + ".DeviceAdminReceiver"),
+                            DEVICE_OWNER_NAME)
+                            .build();
+
+            ProvisioningException exception = assertThrows(ProvisioningException.class, () ->
+                    sDevicePolicyManager.provisionFullyManagedDevice(params));
+            assertThat(exception.getProvisioningError()).isEqualTo(
+                    ERROR_PRE_CONDITION_FAILED);
+        }
+    }
+
+    @EnsureHasNoDpc
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#provisionFullyManagedDevice")
+    public void provisionFullyManagedDevice_disallowAddUserIsSet()
+            throws Exception {
+        boolean systemSetupComplete = TestApis.users().system().getSetupComplete();
+        TestApis.users().system().setSetupComplete(false);
+        try {
+            FullyManagedDeviceProvisioningParams params =
+                    createDefaultManagedDeviceProvisioningParamsBuilder().build();
+            sDevicePolicyManager.provisionFullyManagedDevice(params);
+
+            assertThat(TestApis.devicePolicy().userRestrictions().isSet(DISALLOW_ADD_USER))
+                    .isTrue();
+        } finally {
+            DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
+            if (deviceOwner != null) {
+                deviceOwner.remove();
+            }
+            ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner();
+            if (profileOwner != null) {
+                profileOwner.remove();
+            }
+            TestApis.users().system().setSetupComplete(systemSetupComplete);
         }
     }
 

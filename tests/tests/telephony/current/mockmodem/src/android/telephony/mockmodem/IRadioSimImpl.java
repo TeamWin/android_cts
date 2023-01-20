@@ -24,6 +24,8 @@ import android.hardware.radio.RadioError;
 import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.sim.CardStatus;
+import android.hardware.radio.sim.Carrier;
+import android.hardware.radio.sim.CarrierRestrictions;
 import android.hardware.radio.sim.IRadioSim;
 import android.hardware.radio.sim.IRadioSimIndication;
 import android.hardware.radio.sim.IRadioSimResponse;
@@ -57,6 +59,10 @@ public class IRadioSimImpl extends IRadioSim.Stub {
     // ***** Cache of modem attributes/status
     private CardStatus mCardStatus;
     private ArrayList<SimAppData> mSimAppList;
+
+    private Carrier[] mCarrierList;
+    private int mCarrierRestrictionStatus =
+            CarrierRestrictions.CarrierRestrictionStatus.UNKNOWN;
 
     public IRadioSimImpl(
             MockModemService service, MockModemConfigInterface configInterface, int instanceId) {
@@ -225,9 +231,17 @@ public class IRadioSimImpl extends IRadioSim.Stub {
 
         android.hardware.radio.sim.CarrierRestrictions carriers =
                 new android.hardware.radio.sim.CarrierRestrictions();
+        if (mCarrierList == null || mCarrierList.length < 1) {
+            carriers.allowedCarriers = new Carrier[0];
+        } else {
+            carriers.allowedCarriers = mCarrierList;
+        }
+        carriers.excludedCarriers = new Carrier[0];
+        carriers.status = mCarrierRestrictionStatus;
+
         int multiSimPolicy = android.hardware.radio.sim.SimLockMultiSimPolicy.NO_MULTISIM_POLICY;
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioSimResponse.getAllowedCarriersResponse(rsp, carriers, multiSimPolicy);
         } catch (RemoteException ex) {
@@ -991,5 +1005,10 @@ public class IRadioSimImpl extends IRadioSim.Stub {
     @Override
     public int getInterfaceVersion() {
         return IRadioSim.VERSION;
+    }
+
+    public void updateCarrierRestrictionStatusInfo(Carrier[] carrierList, int carrierRestrictionStatus) {
+        mCarrierList = carrierList;
+        mCarrierRestrictionStatus = carrierRestrictionStatus;
     }
 }
