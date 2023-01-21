@@ -288,7 +288,8 @@ public class MmsTest {
                 .build();
         // Send
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context, 0, new Intent(ACTION_MMS_SENT), PendingIntent.FLAG_MUTABLE);
+                context, 0, new Intent(ACTION_MMS_SENT).setPackage(context.getPackageName()),
+                PendingIntent.FLAG_MUTABLE);
         if (messageId == 0L) {
             smsManager.sendMultimediaMessage(context,
                     contentUri, null/*locationUrl*/, null/*configOverrides*/, pendingIntent);
@@ -462,7 +463,7 @@ public class MmsTest {
                 .build();
 
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context, 0, new Intent(ACTION_MMS_DOWNLOAD),
+                context, 0, new Intent(ACTION_MMS_DOWNLOAD).setPackage(context.getPackageName()),
                 PendingIntent.FLAG_MUTABLE);
 
         if (messageId == 0L) {

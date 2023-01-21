@@ -17,18 +17,17 @@
 package com.android.cts.packagemanager.verify.domain.device.multiuser
 
 import com.android.bedstead.harrier.BedsteadJUnit4
-import com.android.bedstead.harrier.DeviceState
 import com.android.bedstead.harrier.UserType
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile
 import com.android.bedstead.harrier.annotations.Postsubmit
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser
+import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser
 import com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@EnsureHasWorkProfile(forUser = UserType.PRIMARY_USER)
+@EnsureHasWorkProfile(forUser = UserType.INITIAL_USER)
 @RunWith(BedsteadJUnit4::class)
 class DomainVerificationWorkProfileAllowParentLinkingTests :
     DomainVerificationWorkProfileTestsBase() {
@@ -52,7 +51,7 @@ class DomainVerificationWorkProfileAllowParentLinkingTests :
         }
     }
 
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @Postsubmit(reason = "New test")
     @Test
     override fun inPersonal_verifiedInOtherProfile() {

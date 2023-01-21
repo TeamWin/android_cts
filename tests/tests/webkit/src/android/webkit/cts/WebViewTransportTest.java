@@ -16,31 +16,55 @@
 
 package android.webkit.cts;
 
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+
 import android.webkit.WebView;
 import android.webkit.WebView.WebViewTransport;
 
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
+
 import com.android.compatibility.common.util.NullWebViewUtils;
 
-public class WebViewTransportTest
-        extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-    public WebViewTransportTest() {
-        super("android.webkit.cts", WebViewCtsActivity.class);
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class WebViewTransportTest {
+    @Rule
+    public ActivityScenarioRule mActivityScenarioRule =
+            new ActivityScenarioRule(WebViewCtsActivity.class);
+
+    private ActivityScenario mScenario;
+    private WebViewCtsActivity mActivity;
+
+    @Before
+    public void setUp() throws Throwable {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+
+        mScenario = mActivityScenarioRule.getScenario();
+        mScenario.onActivity(activity -> {
+            mActivity = (WebViewCtsActivity) activity;
+        });
     }
 
-    @UiThreadTest
+    @Test
     public void testAccessWebView() {
-        if (!NullWebViewUtils.isWebViewAvailable()) {
-            return;
-        }
-        WebView webView = getActivity().getWebView();
-        WebViewTransport transport = webView.new WebViewTransport();
+        WebkitUtils.onMainThreadSync(() -> {
+            WebView webView = mActivity.getWebView();
+            WebViewTransport transport = webView.new WebViewTransport();
 
-        assertNull(transport.getWebView());
+            assertNull(transport.getWebView());
 
-        transport.setWebView(webView);
-        assertSame(webView, transport.getWebView());
+            transport.setWebView(webView);
+            assertSame(webView, transport.getWebView());
+        });
     }
 }

@@ -90,9 +90,6 @@ public class BluetoothHeadsetClientTest extends AndroidTestCase {
             mBluetoothHeadsetClient = null;
             mIsProfileReady = false;
         }
-        if (mAdapter != null) {
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        }
         mAdapter = null;
     }
 

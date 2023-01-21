@@ -22,6 +22,8 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 import static com.android.compatibility.common.util.BlockedNumberUtil.deleteBlockedNumber;
 import static com.android.compatibility.common.util.BlockedNumberUtil.insertBlockedNumber;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.equalTo;
@@ -55,10 +57,12 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.provider.Telephony;
 import android.telephony.SmsCbMessage;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cdma.CdmaSmsCbProgramData;
 import android.telephony.cts.util.DefaultSmsAppHelper;
@@ -118,6 +122,7 @@ public class SmsManagerTest {
     private static final String FINANCIAL_SMS_APP = "android.telephony.cts.financialsms";
 
     private TelephonyManager mTelephonyManager;
+    private SubscriptionManager mSubscriptionManager;
     private String mDestAddr;
     private String mText;
     private SmsBroadcastReceiver mSendReceiver;
@@ -151,6 +156,7 @@ public class SmsManagerTest {
         mTelephonyManager =
             (TelephonyManager) getContext().getSystemService(
                     Context.TELEPHONY_SERVICE);
+        mSubscriptionManager = getContext().getSystemService(SubscriptionManager.class);
         mDestAddr = mTelephonyManager.getLine1Number();
         mText = "This is a test message";
 
@@ -159,8 +165,8 @@ public class SmsManagerTest {
         mDeliveryReportSupported = !(CarrierCapability.NO_DELIVERY_REPORTS.contains(mccmnc));
 
         // register receivers
-        mSendIntent = new Intent(SMS_SEND_ACTION);
-        mDeliveryIntent = new Intent(SMS_DELIVERY_ACTION);
+        mSendIntent = new Intent(SMS_SEND_ACTION).setPackage(mContext.getPackageName());
+        mDeliveryIntent = new Intent(SMS_DELIVERY_ACTION).setPackage(mContext.getPackageName());
 
         IntentFilter sendIntentFilter = new IntentFilter(SMS_SEND_ACTION);
         IntentFilter deliveryIntentFilter = new IntentFilter(SMS_DELIVERY_ACTION);
@@ -553,6 +559,55 @@ public class SmsManagerTest {
                         setModeForOps(ctsPackageName,
                                 finalOriginalWriteSmsMode, AppOpsManager.OPSTR_WRITE_SMS));
             }
+        }
+    }
+
+    @Test
+    public void testSmsBlocking_userNotAllowed() throws Exception {
+        assertFalse("[RERUN] SIM card does not provide phone number. "
+                        + "Use a suitable SIM Card.", TextUtils.isEmpty(mDestAddr));
+
+        // disable suppressing blocking.
+        TelephonyUtils.endBlockSuppression(getInstrumentation());
+        setDefaultSmsApp(true);
+
+        int defaultSmsSubId = SubscriptionManager.getDefaultSmsSubscriptionId();
+
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(
+                            android.Manifest.permission.MANAGE_SUBSCRIPTION_USER_ASSOCIATION);
+            UserHandle originalUserHandle = mSubscriptionManager.getSubscriptionUserHandle(
+                    defaultSmsSubId);
+
+            // Change user handle of default sms subscription.
+            UserHandle testUserHandle = UserHandle.of(100);
+            mSubscriptionManager.setSubscriptionUserHandle(defaultSmsSubId, testUserHandle);
+            assertThat(mSubscriptionManager.getSubscriptionUserHandle(defaultSmsSubId))
+                    .isEqualTo(testUserHandle);
+
+            // Send SMS.
+            init();
+            sendTextMessage(mDestAddr, String.valueOf(SystemClock.elapsedRealtimeNanos()),
+                    mSentIntent, mDeliveredIntent);
+            assertTrue("[RERUN] Could not send SMS. Check signal.",
+                    mSendReceiver.waitForCalls(1, TIME_OUT));
+            assertTrue("Expected no messages to be received as user is not allowed to "
+                            + "send sms.",
+                    mSmsReceivedReceiver.verifyNoCalls(NO_CALLS_TIMEOUT_MILLIS));
+            assertTrue("Expected no messages to be delivered as user is not allowed to "
+                            + "send sms.",
+                    mSmsDeliverReceiver.verifyNoCalls(NO_CALLS_TIMEOUT_MILLIS));
+
+            // CTS tests run in USER_SYSTEM. RESULT_USER_NOT_ALLOWED should be returned as
+            // default sms subscription is not associated with USER_SYSTEM.
+            assertThat(mSendReceiver.getPendingResult().getResultCode())
+                    .isEqualTo(SmsManager.RESULT_USER_NOT_ALLOWED);
+
+            mSubscriptionManager.setSubscriptionUserHandle(defaultSmsSubId, originalUserHandle);
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
         }
     }
 

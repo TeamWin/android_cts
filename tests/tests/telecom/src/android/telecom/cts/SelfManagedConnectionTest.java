@@ -20,6 +20,7 @@ import static android.media.AudioManager.MODE_IN_COMMUNICATION;
 
 import android.app.ActivityManager;
 import android.app.UiAutomation;
+import android.app.UiModeManager;
 import android.app.role.RoleManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -350,6 +351,13 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
         assertTrue(serviceControl.placeIncomingCall(handle, address.toString(),
                 VideoProfile.STATE_BIDIRECTIONAL));
 
+        // Wait for Telecom to finish creating the new connection.
+        try {
+            TestUtils.waitOnAllHandlers(getInstrumentation());
+        } catch (Exception e) {
+            fail("Failed to wait on handlers");
+        }
+
         // Ensure Telecom bound to the self managed CS
         if (!serviceControl.waitForBinding()) {
             fail("Could not bind to Self-Managed ConnectionService");
@@ -368,6 +376,15 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
         if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             return;
         }
+
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
+            if (uiModeManager.isUiModeLocked()) {
+                Log.e(TAG, "testIncomingVideoCallWithNoVideoSupportInCarMode: UI mode Locked");
+                return;
+            }
+        }
+
 
         //bind to test app selfmanagedcstestappone
         TestServiceConnection csControl =
@@ -458,6 +475,14 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
 
         if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             return;
+        }
+
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
+            if (uiModeManager.isUiModeLocked()) {
+                Log.e(TAG, "testSwapInCallServicesForSelfManagedCSCall: UI mode Locked");
+                return;
+            }
         }
 
         //Place self-managed CS second call

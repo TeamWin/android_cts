@@ -720,6 +720,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
         ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
         // received holdFailed because the other party of the outgoing call terminated the call
+        waitCallRenegotiating(moCallSession);
         moCallSession.sendHoldFailRemoteTerminated();
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
         isCallDisconnected(moCall, moCallSession);
@@ -978,7 +979,7 @@ public class ImsCallingTest extends ImsCallingBase {
         // swap the call
         ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
         mConferenceCall.unhold();
-        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_HOLDING, WAIT_FOR_CALL_STATE));
+        isCallHolding(mCall3, mCallSession3);
         assertTrue("Call is not in Hold State", (mCall3.getDetails().getState()
                 == Call.STATE_HOLDING));
         isCallActive(mConferenceCall, mConfCallSession);
@@ -988,13 +989,18 @@ public class ImsCallingTest extends ImsCallingBase {
 
         // merge call
         mConferenceCall.conference(mCall3);
-        isCallActive(mConferenceCall, mConfCallSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_MERGE_START, WAIT_FOR_CALL_STATE));
 
-        // verify third call disconnected after conference Merge success
+        // verify third call disconnected.
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
         assertParticiapantDisconnected(mCall3);
 
         // verify conference participant connections are connected.
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_MERGE_COMPLETE, WAIT_FOR_CALL_STATE));
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CHILDREN_CHANGED, WAIT_FOR_CALL_STATE));
         assertParticiapantAddedToConference(3);
+
+        isCallActive(mConferenceCall, mConfCallSession);
 
         // disconnect the conference call.
         mConferenceCall.disconnect();
@@ -1023,7 +1029,7 @@ public class ImsCallingTest extends ImsCallingBase {
         // swap the call
         ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
         mConferenceCall.unhold();
-        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_HOLDING, WAIT_FOR_CALL_STATE));
+        isCallHolding(mCall3, mCallSession3);
         assertTrue("Call is not in Hold State", (mCall3.getDetails().getState()
                 == Call.STATE_HOLDING));
         isCallActive(mConferenceCall, mConfCallSession);
@@ -1336,8 +1342,8 @@ public class ImsCallingTest extends ImsCallingBase {
         Bundle extras3 = new Bundle();
 
         telecomManager.placeCall(imsUri3, extras3);
-        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
-        callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+        waitNextCallAdded(String.valueOf(sCounter));
 
         mCall3 = getCall(mCurrentCallId);
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
@@ -1372,13 +1378,60 @@ public class ImsCallingTest extends ImsCallingBase {
                 }, WAIT_FOR_CONDITION, "CallSession Created");
     }
 
+    private void waitNextCallAdded(String expectedUri) {
+        callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE);
+        final String[] actualUri = {getCall(mCurrentCallId).getDetails().getHandle().toString()};
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        if (!actualUri[0].contains(expectedUri)) {
+                            assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED,
+                                    WAIT_FOR_CALL_STATE));
+                            actualUri[0] = getCall(
+                                    mCurrentCallId).getDetails().getHandle().toString();
+                            return false;
+                        }
+                        return true;
+                    }
+                }, WAIT_FOR_CONDITION, "Next Call added");
+    }
+
+    private void waitCallRenegotiating(TestImsCallSessionImpl callSession) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return callSession.isRenegotiating() ? true : false;
+                    }
+                }, WAIT_FOR_CONDITION, callSession.getState() + ", waitCallRenegotiating");
+    }
+
     private void makeConferenceCall() throws Exception {
         addOutgoingCalls();
         addConferenceCall(mCall1, mCall2);
 
-        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+        // Wait for merge start first and second call
+        callingTestLatchCountdown(LATCH_IS_ON_MERGE_START, WAIT_FOR_CALL_STATE);
+        callingTestLatchCountdown(LATCH_IS_ON_MERGE_START, WAIT_FOR_CALL_STATE);
+        // Wait for remove first call
+        callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE);
+        // Wait for conference call added
+        assertTrue(
+                callingTestLatchCountdown(LATCH_IS_ON_CONFERENCE_CALL_ADDED, WAIT_FOR_CALL_STATE));
+        // Wait for remove second call
+        callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE);
         // Wait to add participants in conference
-        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
         assertTrue("Conference call is not added", mServiceCallBack.getService()
                 .getConferenceCallCount() > 0);
 
@@ -1397,6 +1450,7 @@ public class ImsCallingTest extends ImsCallingBase {
         assertParticiapantDisconnected(mCall2);
 
         //Verify conference participant connections are connected.
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CHILDREN_CHANGED, WAIT_FOR_CALL_STATE));
         assertParticiapantAddedToConference(2);
 
         // Since the conference call has been made, remove session1&2 from the confHelper session.

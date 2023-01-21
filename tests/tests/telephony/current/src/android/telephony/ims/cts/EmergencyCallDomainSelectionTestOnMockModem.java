@@ -877,7 +877,7 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
     }
 
     @Test
-    public void testVoLteOffEpsImsNotRegisteredSelectCs() throws Exception {
+    public void testVoLteOffEpsImsNotRegisteredScanCsPreferred() throws Exception {
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         bundle.putBoolean(KEY_EMERGENCY_REQUIRES_VOLTE_ENABLED_BOOL, true);
@@ -895,7 +895,7 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mmTelManager,
                 (m) -> m.setAdvancedCallingSettingEnabled(false));
 
-        verifyCsDialed();
+        verifyScanCsPreferred();
     }
 
     @Test

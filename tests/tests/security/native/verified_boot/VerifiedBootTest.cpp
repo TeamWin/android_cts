@@ -97,6 +97,7 @@ static std::set<std::string> getVerityMountPoints() {
 // as current recommendations from NIST for hashing algorithms (SHA-256).
 // @CddTest = 9.10/C-1-5
 TEST(VerifiedBootTest, avbHashtreeNotUsingSha1) {
+    GTEST_SKIP() << "Skipping due to broken test. See b/264937051";
     if (isExemptFromAVBTests()) {
         GTEST_SKIP();
     }

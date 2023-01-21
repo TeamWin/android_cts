@@ -621,9 +621,10 @@ public class EuiccManagerTest {
     }
 
     private PendingIntent createCallbackIntent(String action) {
-        Intent intent = new Intent(action);
+        Intent intent = new Intent(action).setPackage(getContext().getPackageName());
         return PendingIntent.getBroadcast(
-                getContext(), REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
+                getContext(), REQUEST_CODE, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
     }
 
     private static class CallbackReceiver extends BroadcastReceiver {

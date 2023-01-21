@@ -42,7 +42,8 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
             String userName = "TestUser_" + System.currentTimeMillis();
             int userId = userCreate(userName, true);
             List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-            assertExpectedEvents(data, -1, userId, "USER_CREATE_FULL_GUEST");
+            assertExpectedEvents(data, getDevice().getCurrentUser(),
+                    userId, "USER_CREATE_FULL_GUEST");
         }
     }
 
@@ -51,7 +52,8 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
             String userName = "TestUser_" + System.currentTimeMillis();
             int userId = removeGuestUser(userName, true);
             List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-            assertExpectedEvents(data, -1, userId, "USER_REMOVE_FULL_GUEST");
+            assertExpectedEvents(data, getDevice().getCurrentUser(),
+                    userId, "USER_REMOVE_FULL_GUEST");
         }
     }
 
@@ -68,7 +70,8 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
             String userName = "FullUser_" + System.currentTimeMillis();
             int userId = userCreate(userName, false);
             List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-            assertExpectedEvents(data, -1, userId, "USER_CREATE_FULL_SECONDARY");
+            assertExpectedEvents(data, getDevice().getCurrentUser(),
+                    userId, "USER_CREATE_FULL_SECONDARY");
         }
     }
 
@@ -77,7 +80,8 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
             String userName = "FullUser_" + System.currentTimeMillis();
             int userId = removeGuestUser(userName, false);
             List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-            assertExpectedEvents(data, -1, userId, "USER_REMOVE_FULL_SECONDARY");
+            assertExpectedEvents(data, getDevice().getCurrentUser(),
+                    userId, "USER_REMOVE_FULL_SECONDARY");
         }
     }
 

@@ -29,6 +29,7 @@ import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.content.Intent;
 import android.provider.DeviceConfig;
+import android.util.Log;
 import android.view.autofill.AutofillFeatureFlags;
 import android.view.inputmethod.EditorInfo;
 
@@ -50,6 +51,7 @@ public class AutofillForAllAppsTest extends
     private DeviceConfigStateManager mIsTriggerFillRequestOnUnimportantViewEnabledStateManager =
             new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
               AutofillFeatureFlags.DEVICE_CONFIG_TRIGGER_FILL_REQUEST_ON_UNIMPORTANT_VIEW);
+    private static final String TAG = "AutofillForAllAppsTest";
     private static final String TEST_CTS_PACKAGE_NAME = "android.autofillservice.cts";
     private static final String TEST_NOT_IMPORTANT_FOR_AUTOFILL_ACTIVITY_NAME =
             "android.autofillservice.cts/.activities.LoginNotImportantForAutofillActivity";
@@ -220,7 +222,7 @@ public class AutofillForAllAppsTest extends
         final Intent intent = new Intent(mContext, LoginNotImportantForAutofillActivity.class)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
-        mUiBot.assertShownByRelativeId(ID_USERNAME_LABEL);
+        waitSeveralIdleSyncToAssertSpecifiedUiShown(ID_USERNAME_LABEL, 11);
         return LoginNotImportantForAutofillActivity.getCurrentActivity();
     }
 
@@ -228,7 +230,24 @@ public class AutofillForAllAppsTest extends
         final Intent intent = new Intent(mContext, ImeOptionActivity.class)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
-        mUiBot.assertShownByRelativeId(ID_IMEACTION_LABEL);
+        waitSeveralIdleSyncToAssertSpecifiedUiShown(ID_IMEACTION_LABEL, 11);
         return ImeOptionActivity.getCurrentActivity();
+    }
+
+    private void waitSeveralIdleSyncToAssertSpecifiedUiShown(String labelId, int numOfRounds) {
+        int count = 0;
+        while (count < numOfRounds) {
+            try {
+                mUiBot.assertShownByRelativeId(labelId);
+                return;
+            } catch (Exception e) {
+                mUiBot.waitForIdleSync();
+                count += 1;
+            }
+        }
+        Log.w(TAG,
+                "Label " + labelId + "didn't show after "
+                    + numOfRounds + " rounds of wait idle syncs");
+        return;
     }
 }

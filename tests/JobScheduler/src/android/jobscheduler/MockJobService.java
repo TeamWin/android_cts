@@ -438,6 +438,7 @@ public class MockJobService extends JobService {
         private CountDownLatch mDoJobLatch;
         private CountDownLatch mStoppedLatch;
         private CountDownLatch mDoWorkLatch;
+        private CountDownLatch mNetworkChangeLatch;
         private TestWorkItem[] mExpectedWork;
         private boolean mContinueAfterStart;
         private JobParameters mExecutedJobParameters;
@@ -548,6 +549,10 @@ public class MockJobService extends JobService {
             return mDoJobLatch.await(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         }
 
+        public boolean awaitNetworkChange() throws InterruptedException {
+            return mNetworkChangeLatch.await(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        }
+
         public boolean awaitStopped() throws InterruptedException {
             return mStoppedLatch.await(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         }
@@ -568,6 +573,9 @@ public class MockJobService extends JobService {
 
         private void notifyNetworkChanged(JobParameters params) {
             mNetworkChangedJobParameters = params;
+            if (mNetworkChangeLatch != null) {
+                mNetworkChangeLatch.countDown();
+            }
         }
 
         private void notifyWaitingForStop() {
@@ -600,6 +608,7 @@ public class MockJobService extends JobService {
             mDoJobLatch = null;
             mStoppedLatch = null;
             mDoWorkLatch = null;
+            mNetworkChangeLatch = null;
             mExpectedWork = null;
             mContinueAfterStart = false;
             mExecutedEvents.clear();
@@ -617,6 +626,10 @@ public class MockJobService extends JobService {
 
         public void setExpectedStopped() {
             mStoppedLatch = new CountDownLatch(1);
+        }
+
+        public void setExpectedNetworkChange() {
+            mNetworkChangeLatch = new CountDownLatch(1);
         }
 
         public void setNotificationAtStart(int notificationId,

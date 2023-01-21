@@ -77,7 +77,6 @@ public class BluetoothDeviceTest extends AndroidTestCase {
     public void tearDown() throws Exception {
         super.tearDown();
         if (mHasBluetooth && mHasCompanionDevice) {
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
             mAdapter = null;
             mUiAutomation.dropShellPermissionIdentity();
         }

@@ -151,9 +151,6 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
             mBluetoothLeAudio = null;
             mIsProfileReady = false;
         }
-        if (mAdapter != null) {
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        }
         TestUtils.dropPermissionAsShellUid();
         mAdapter = null;
     }

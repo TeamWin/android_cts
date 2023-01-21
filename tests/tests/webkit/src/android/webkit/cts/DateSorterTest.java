@@ -19,27 +19,39 @@ package android.webkit.cts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
 import android.content.Context;
-import android.test.AndroidTestCase;
 import android.webkit.DateSorter;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.HashSet;
 
-public class DateSorterTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class DateSorterTest {
     private Context mContext;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mContext = getContext();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
     }
 
+    @Test
     public void testConstructor() {
         new DateSorter(mContext);
     }
 
+    @Test
     public void testConstants() {
         // according to DateSorter javadoc
         assertThat("DAY_COUNT should be >= 3",
@@ -47,6 +59,7 @@ public class DateSorterTest extends AndroidTestCase {
                 greaterThanOrEqualTo(3));
     }
 
+    @Test
     public void testGetLabel() {
         DateSorter dateSorter = new DateSorter(mContext);
         HashSet<String> set = new HashSet<String>();
@@ -61,6 +74,7 @@ public class DateSorterTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetIndex() {
         DateSorter dateSorter = new DateSorter(mContext);
 
@@ -75,6 +89,7 @@ public class DateSorterTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetBoundary() {
         DateSorter dateSorter = new DateSorter(mContext);
 

@@ -90,9 +90,6 @@ public class BluetoothHidHostTest extends AndroidTestCase {
             mHidHost = null;
             mIsProfileReady = false;
         }
-        if (mAdapter != null) {
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        }
         mAdapter = null;
     }
 

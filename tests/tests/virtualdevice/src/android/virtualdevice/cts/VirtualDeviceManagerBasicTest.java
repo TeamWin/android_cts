@@ -33,6 +33,7 @@ import static android.media.AudioManager.FX_KEY_CLICK;
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.util.concurrent.Uninterruptibles.tryAcquireUninterruptibly;
 
 import static org.junit.Assert.assertThrows;
 
@@ -51,6 +52,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.internal.annotations.GuardedBy;
 
 import org.junit.After;
 import org.junit.Before;
@@ -61,6 +63,8 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
@@ -374,6 +378,7 @@ public class VirtualDeviceManagerBasicTest {
 
         mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId(), FX_KEY_CLICK);
         mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId(), FX_BACK);
+        soundEffectListener.waitUntilCalled(/*nrTimes=*/2);
 
         assertThat(soundEffectListener.getObservedSoundEffects()).isEqualTo(
                 List.of(FX_KEY_CLICK, FX_BACK));
@@ -392,6 +397,8 @@ public class VirtualDeviceManagerBasicTest {
 
         mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId(), FX_KEY_CLICK);
         mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId(), FX_BACK);
+        soundEffectListener1.waitUntilCalled(/*nrTimes=*/2);
+        soundEffectListener2.waitUntilCalled(/*nrTimes=*/2);
 
         assertThat(soundEffectListener1.getObservedSoundEffects()).isEqualTo(
                 List.of(FX_KEY_CLICK, FX_BACK));
@@ -411,9 +418,15 @@ public class VirtualDeviceManagerBasicTest {
         mVirtualDevice.addSoundEffectListener(runnable -> runnable.run(), soundEffectListener2);
 
         mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId(), FX_KEY_CLICK);
+        // Wait for listeners to be called before removing the second listener.
+        soundEffectListener1.waitUntilCalled(/*nrTimes=*/1);
+        soundEffectListener2.waitUntilCalled(/*nrTimes=*/1);
         mVirtualDevice.removeSoundEffectListener(soundEffectListener2);
         mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId(), FX_BACK);
 
+        assertThat(soundEffectListener1.waitUntilCalled(/*nrTimes=*/1)).isTrue();
+        // Second listener is not called after removal.
+        assertThat(soundEffectListener2.waitUntilCalled(/*nrTimes=*/1)).isFalse();
         assertThat(soundEffectListener1.getObservedSoundEffects()).isEqualTo(
                 List.of(FX_KEY_CLICK, FX_BACK));
         assertThat(soundEffectListener2.getObservedSoundEffects()).isEqualTo(
@@ -431,21 +444,45 @@ public class VirtualDeviceManagerBasicTest {
 
         mVirtualDeviceManager.playSoundEffect(mVirtualDevice.getDeviceId() + 1, FX_KEY_CLICK);
 
+        assertThat(soundEffectListener.waitUntilCalled(/*nrTimes=1*/1)).isFalse();
         assertThat(soundEffectListener.getObservedSoundEffects()).isEmpty();
     }
 
     private static class SoundEffectListenerForTest
             implements VirtualDeviceManager.SoundEffectListener {
-
+        private final Semaphore mSemaphore = new Semaphore(0);
+        private final Object mLock = new Object();
+        @GuardedBy("mLock")
         private final ArrayList<Integer> mObservedSoundEffects = new ArrayList<>();
 
-        public ArrayList<Integer> getObservedSoundEffects() {
-            return mObservedSoundEffects;
+        /**
+         * Return observed sound effects.
+         */
+        public List<Integer> getObservedSoundEffects() {
+            synchronized (mLock) {
+                // Return observed sound effects regardless of whether we actually acquired the
+                // semaphore permits or the attempt time out.
+                return List.copyOf(mObservedSoundEffects);
+            }
+        }
+
+
+        /**
+         * Wait until listener is called specifies number of times or until the timeout expires.
+         *
+         * @param nrTimes
+         * @return true if the listener was called before timeout expired.
+         */
+        public boolean waitUntilCalled(int nrTimes) {
+            return tryAcquireUninterruptibly(mSemaphore, nrTimes, 1000, TimeUnit.MILLISECONDS);
         }
 
         @Override
         public void onPlaySoundEffect(int effectType) {
-            mObservedSoundEffects.add(effectType);
+            synchronized (mLock) {
+                mObservedSoundEffects.add(effectType);
+                mSemaphore.release();
+            }
         }
     }
 }

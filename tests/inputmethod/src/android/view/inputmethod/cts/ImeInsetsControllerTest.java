@@ -164,8 +164,8 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
             CountDownLatch insetsLatch = new CountDownLatch(1);
             InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
                 editText.setOnApplyWindowInsetsListener((v, insets) -> {
-                    insetsLatch.countDown();
                     lastInsets[0] = insets;
+                    insetsLatch.countDown();
                     return CONSUMED;
                 });
                 animController[0].finish(true);

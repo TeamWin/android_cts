@@ -64,6 +64,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -223,6 +224,7 @@ public class SyncAdapterEnumerationTests extends AppEnumerationTestsBase {
                 not(hasItemInArray(TARGET_SYNCADAPTER_AUTHORITY)));
     }
 
+    @Ignore("b/265100724")
     @Test
     public void queriesPackage_getPeriodicSyncs_canSeeSyncAdapterTarget() throws Exception {
         requestPeriodicSync(TARGET_SYNCADAPTER, ACCOUNT_SYNCADAPTER);

@@ -131,10 +131,7 @@ public class BluetoothCsipSetCoordinatorTest extends AndroidTestCase {
                 mTestCallback = null;
                 mTestExecutor = null;
             }
-            if (mAdapter != null ) {
-                assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-                mAdapter = null;
-            }
+            mAdapter = null;
             TestUtils.dropPermissionAsShellUid();
         }
     }

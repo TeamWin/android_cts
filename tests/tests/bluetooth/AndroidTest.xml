@@ -26,6 +26,12 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsBluetoothTestCases.apk" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="cmd bluetooth_manager enable" />
+        <option name="run-command" value="cmd bluetooth_manager wait-for-state:STATE_ON" />
+        <option name="teardown-command" value="cmd bluetooth_manager disable" />
+        <option name="teardown-command" value="cmd bluetooth_manager wait-for-state:STATE_OFF" />
+    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.bluetooth.cts" />
         <option name="runtime-hint" value="1m11s" />

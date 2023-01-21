@@ -51,9 +51,6 @@ public class LeL2capSocketTest extends AndroidTestCase {
         if (!TestUtils.isBleSupported(getContext())) {
             return;
         }
-        if (mAdapter != null) {
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        }
         mAdapter = null;
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
             .dropShellPermissionIdentity();

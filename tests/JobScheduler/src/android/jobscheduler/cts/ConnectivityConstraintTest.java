@@ -245,6 +245,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         kTestEnvironment.setExpectedExecutions(1);
         kTestEnvironment.setExpectedStopped();
+        kTestEnvironment.setExpectedNetworkChange();
         mJobScheduler.schedule(
                 mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                         .build());
@@ -259,6 +260,8 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         assertFalse(
                 "Job with connectivity constraint was stopped when network transitioned to WiFi.",
                 kTestEnvironment.awaitStopped());
+        assertTrue("Job didn't get network change signal when network transitioned to WiFi.",
+                kTestEnvironment.awaitNetworkChange());
         JobParameters networkChangedParams = kTestEnvironment.getLastNetworkChangedJobParameters();
         assertNotNull(networkChangedParams.getNetwork());
         assertNotEquals(startParams.getNetwork(), networkChangedParams.getNetwork());

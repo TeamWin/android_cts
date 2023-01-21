@@ -62,20 +62,21 @@ _INT_STR_DICT = {'11': '1_1', '12': '1_2'}  # recover replaced '_' in scene def
 #   scene*_a/b/... are similar scenes that share one or more tests
 _ALL_SCENES = [
     'scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b', 'scene2_c',
-    'scene2_d', 'scene2_e', 'scene3', 'scene4', 'scene5', 'scene6',
-    'sensor_fusion'
+    'scene2_d', 'scene2_e', 'scene2_f', 'scene3', 'scene4', 'scene5',
+    'scene6', 'sensor_fusion'
 ]
 
 # Scenes that can be automated through tablet display
 _AUTO_SCENES = [
     'scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b', 'scene2_c',
-    'scene2_d', 'scene2_e', 'scene3', 'scene4', 'scene6'
+    'scene2_d', 'scene2_e', 'scene2_f', 'scene3', 'scene4', 'scene6'
 ]
 
 # Scenes that are logically grouped and can be called as group
 _GROUPED_SCENES = {
         'scene1': ['scene1_1', 'scene1_2'],
-        'scene2': ['scene2_a', 'scene2_b', 'scene2_c', 'scene2_d', 'scene2_e']
+        'scene2': ['scene2_a', 'scene2_b', 'scene2_c', 'scene2_d', 'scene2_e',
+                   'scene2_f']
 }
 
 # Scenes that have to be run manually regardless of configuration
@@ -91,6 +92,7 @@ _SCENE_REQ = {
     'scene2_c': 'The picture with 3 faces in tests/scene2_c/scene2_c.png',
     'scene2_d': 'The picture with 3 faces in tests/scene2_d/scene2_d.png',
     'scene2_e': 'The picture with 3 faces in tests/scene2_e/scene2_e.png',
+    'scene2_f': 'The picture with 3 faces in tests/scene2_f/scene2_f.png',
     'scene3': 'The ISO12233 chart',
     'scene4': 'A test chart of a circle covering at least the middle 50% of '
               'the scene. See tests/scene4/scene4.png',

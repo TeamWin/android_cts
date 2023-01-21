@@ -1802,7 +1802,7 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         MotionEvent event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_HOVER_MOVE,
                 xOnScreen, yOnScreen, 0);
         event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-        sUiAutomation.injectInputEvent(event, true);
+        sInstrumentation.sendPointerSync(event);
         event.recycle();
     }
 

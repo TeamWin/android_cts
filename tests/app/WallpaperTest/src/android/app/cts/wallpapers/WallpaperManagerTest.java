@@ -18,6 +18,7 @@ package android.app.cts.wallpapers;
 
 import static android.app.WallpaperManager.FLAG_LOCK;
 import static android.app.WallpaperManager.FLAG_SYSTEM;
+import static android.app.cts.wallpapers.util.WallpaperTestUtils.isSimilar;
 import static android.opengl.cts.Egl14Utils.getMaxTextureSize;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -921,7 +922,6 @@ public class WallpaperManagerTest {
     }
 
     @Test
-    @Ignore("b/263126531")
     public void getDrawable_homeScreen_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -929,7 +929,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.getDrawable(FLAG_SYSTEM);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSameImage(actual, expected)).isTrue();
+                isSimilar(actual, expected)).isTrue();
     }
 
     @Test
@@ -940,7 +940,6 @@ public class WallpaperManagerTest {
     }
 
     @Test
-    @Ignore("b/263126531")
     public void getDrawable_lockScreenSet_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_LOCK);
@@ -948,11 +947,10 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.getDrawable(FLAG_LOCK);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSameImage(actual, expected)).isTrue();
+                isSimilar(actual, expected)).isTrue();
     }
 
     @Test
-    @Ignore("b/263126531")
     public void getDrawable_default_sameAsHome() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -960,11 +958,10 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.getDrawable();
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSameImage(actual, expected)).isTrue();
+                isSimilar(actual, expected)).isTrue();
     }
 
     @Test
-    @Ignore("b/263126531")
     public void getFastDrawable_homeScreen_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -972,7 +969,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.getFastDrawable(FLAG_SYSTEM);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSameImage(actual, expected)).isTrue();
+                isSimilar(actual, expected)).isTrue();
     }
 
     @Test
@@ -983,7 +980,6 @@ public class WallpaperManagerTest {
     }
 
     @Test
-    @Ignore("b/263126531")
     public void getFastDrawable_lockScreenSet_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_LOCK);
@@ -991,11 +987,10 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.getFastDrawable(FLAG_LOCK);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSameImage(actual, expected)).isTrue();
+                isSimilar(actual, expected)).isTrue();
     }
 
     @Test
-    @Ignore("b/263126531")
     public void getFastDrawable_default_sameAsHome() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -1003,11 +998,10 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.getFastDrawable();
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSameImage(actual, expected)).isTrue();
+                isSimilar(actual, expected)).isTrue();
     }
 
     @Test
-    @Ignore("b/263126531")
     public void peekDrawable_homeScreen_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -1015,7 +1009,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.peekDrawable(FLAG_SYSTEM);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSameImage(actual, expected)).isTrue();
+                isSimilar(actual, expected)).isTrue();
     }
 
     @Test
@@ -1026,7 +1020,6 @@ public class WallpaperManagerTest {
     }
 
     @Test
-    @Ignore("b/263126531")
     public void peekDrawable_lockScreenSet_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_LOCK);
@@ -1034,11 +1027,10 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.peekDrawable(FLAG_LOCK);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSameImage(actual, expected)).isTrue();
+                isSimilar(actual, expected)).isTrue();
     }
 
     @Test
-    @Ignore("b/263126531")
     public void peekDrawable_default_sameAsHome() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -1046,11 +1038,10 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.peekDrawable();
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSameImage(actual, expected)).isTrue();
+                isSimilar(actual, expected)).isTrue();
     }
 
     @Test
-    @Ignore("b/263126531")
     public void peekFastDrawable_homeScreen_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -1058,7 +1049,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.peekFastDrawable(FLAG_SYSTEM);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSameImage(actual, expected)).isTrue();
+                isSimilar(actual, expected)).isTrue();
     }
 
     @Test
@@ -1069,7 +1060,6 @@ public class WallpaperManagerTest {
     }
 
     @Test
-    @Ignore("b/263126531")
     public void peekFastDrawable_lockScreenSet_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_LOCK);
@@ -1077,11 +1067,10 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.peekFastDrawable(FLAG_LOCK);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSameImage(actual, expected)).isTrue();
+                isSimilar(actual, expected)).isTrue();
     }
 
     @Test
-    @Ignore("b/263126531")
     public void peekFastDrawable_default_sameAsHome() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -1089,7 +1078,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.peekFastDrawable();
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSameImage(actual, expected)).isTrue();
+                isSimilar(actual, expected)).isTrue();
     }
 
     private void assertBitmapDimensions(Bitmap bitmap) {
@@ -1258,30 +1247,6 @@ public class WallpaperManagerTest {
     public WallpaperManager.OnColorsChangedListener getTestableListener() {
         // Unfortunately mockito cannot mock anonymous classes or lambdas.
         return spy(new TestableColorListener());
-    }
-
-    private static boolean isSameImage(Drawable d1, Drawable d2) {
-        Drawable.ConstantState c1 = d1.getConstantState();
-        Drawable.ConstantState c2 = d2.getConstantState();
-        return (c1 != null && c1.equals(c2)) || getBitmap(d1).sameAs(getBitmap(d2));
-    }
-
-    private static Bitmap getBitmap(Drawable drawable) {
-        int width = drawable.getIntrinsicWidth();
-        int height = drawable.getIntrinsicHeight();
-        // Some drawables have no intrinsic width - e.g. solid colours.
-        if (width <= 0) {
-            width = 1;
-        }
-        if (height <= 0) {
-            height = 1;
-        }
-
-        Bitmap result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(result);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-        return result;
     }
 
     public static class TestableColorListener implements WallpaperManager.OnColorsChangedListener {

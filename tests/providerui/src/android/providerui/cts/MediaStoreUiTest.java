@@ -281,6 +281,11 @@ public class MediaStoreUiTest {
     public void testOpenFile_onMediaDocumentsProvider_failsWithoutAccess() throws Exception {
         if (!supportsHardware()) return;
 
+        String rawText = "TEST";
+        // Read and write grants will be provided to the file associated with this pair.
+        // Stages a text file which contains raw text "TEST"
+        Pair<Uri, File> uriFilePairWithGrants =  prepareFileAndFetchDetails(rawText);
+
         clearDocumentsUi();
         final Intent intent = new Intent();
         intent.setAction(Intent.ACTION_OPEN_DOCUMENT);
@@ -289,10 +294,6 @@ public class MediaStoreUiTest {
         mActivity.startActivityForResult(intent, REQUEST_CODE);
         mDevice.waitForIdle();
 
-        String rawText = "TEST";
-        // Read and write grants will be provided to the file associated with this pair.
-        // Stages a text file which contains raw text "TEST"
-        Pair<Uri, File> uriFilePairWithGrants =  prepareFileAndFetchDetails(rawText);
         // Read and write grants will not be provided to the file associated with this pair
         // Stages a text file which contains raw text "TEST"
         Pair<Uri, File> uriFilePairWithoutGrants =  prepareFileAndFetchDetails(rawText);

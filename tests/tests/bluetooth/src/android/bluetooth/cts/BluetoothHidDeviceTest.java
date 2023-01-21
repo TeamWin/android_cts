@@ -101,10 +101,6 @@ public class BluetoothHidDeviceTest extends AndroidTestCase {
             mBluetoothHidDevice = null;
             mIsProfileReady = false;
         }
-        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
-        if (mAdapter != null) {
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        }
         mAdapter = null;
         mUiAutomation.dropShellPermissionIdentity();
     }

@@ -73,7 +73,6 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
             mAdvertiser.stopAdvertisingSet(mCallback);
             assertTrue(mCallback.mAdvertisingSetStoppedLatch.await(TIMEOUT_MS,
                     TimeUnit.MILLISECONDS));
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
             mAdvertiser = null;
             mAdapter = null;
         }

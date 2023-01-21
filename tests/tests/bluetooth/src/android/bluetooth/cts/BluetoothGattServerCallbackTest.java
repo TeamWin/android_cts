@@ -122,8 +122,6 @@ public class BluetoothGattServerCallbackTest extends AndroidTestCase {
     public void tearDown() throws Exception {
         super.tearDown();
         if (mHasBluetooth) {
-            mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
             mAdapter = null;
             mBluetoothDevice = null;
             mBluetoothGattService = null;

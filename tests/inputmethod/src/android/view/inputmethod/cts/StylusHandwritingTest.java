@@ -17,6 +17,7 @@
 package android.view.inputmethod.cts;
 
 import static android.provider.Settings.Global.STYLUS_HANDWRITING_ENABLED;
+import static android.view.inputmethod.InputMethodInfo.ACTION_STYLUS_HANDWRITING_SETTINGS;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
@@ -37,6 +38,7 @@ import static org.junit.Assume.assumeTrue;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.hardware.input.InputManager;
@@ -54,6 +56,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.NoOpInputConnection;
@@ -135,6 +138,30 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                 Settings.Global.putInt(mContext.getContentResolver(),
                         STYLUS_HANDWRITING_ENABLED, mHwInitialState);
             }, Manifest.permission.WRITE_SECURE_SETTINGS);
+        }
+    }
+
+    /**
+     * Verify current IME has {@link InputMethodInfo} for stylus handwriting, settings.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.InputMethodInfo#supportsStylusHandwriting",
+            "android.view.inputmethod.InputMethodInfo#ACTION_STYLUS_HANDWRITING_SETTINGS",
+            "android.view.inputmethod.InputMethodInfo#createStylusHandwritingSettingsActivityIntent"
+    })
+    public void testHandwritingInfo() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            InputMethodInfo info = imeSession.getInputMethodInfo();
+            assertTrue(info.supportsStylusHandwriting());
+            // TODO(b/217957587): migrate CtsMockInputMethodLib to android_library and use
+            //  string resource.
+            Intent stylusSettingsIntent = info.createStylusHandwritingSettingsActivityIntent();
+            assertEquals(ACTION_STYLUS_HANDWRITING_SETTINGS, stylusSettingsIntent.getAction());
+            assertEquals("handwriting_settings",
+                    stylusSettingsIntent.getComponent().getClassName());
         }
     }
 
@@ -614,6 +641,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     stream,
                     editorMatcher("onStartStylusHandwriting", marker),
                     TIMEOUT);
+            TestUtils.injectStylusUpEvent(editText, endX, endY);
             // Inject stylus swipe up on navbar.
             TestUtils.injectNavBarToHomeGestureEvents(
                     ((Activity) editText.getContext()), MotionEvent.TOOL_TYPE_STYLUS);
@@ -670,6 +698,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     stream,
                     editorMatcher("onStartStylusHandwriting", marker),
                     TIMEOUT);
+            TestUtils.injectStylusUpEvent(editText, endX, endY);
             // Inject finger swipe up on navbar.
             TestUtils.injectNavBarToHomeGestureEvents(
                     ((Activity) editText.getContext()), MotionEvent.TOOL_TYPE_FINGER);

@@ -108,9 +108,6 @@ public class HearingAidProfileTest extends AndroidTestCase {
         if (!(mIsBleSupported && mIsHearingAidSupported)) {
             return;
         }
-        if (mBluetoothAdapter != null) {
-            assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
-        }
         mUiAutomation.dropShellPermissionIdentity();
     }
 

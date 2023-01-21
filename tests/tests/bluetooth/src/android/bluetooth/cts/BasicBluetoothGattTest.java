@@ -79,7 +79,6 @@ public class BasicBluetoothGattTest extends AndroidTestCase {
         if (mBluetoothGatt != null) {
             mBluetoothGatt.disconnect();
         }
-        assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
             .dropShellPermissionIdentity();
     }

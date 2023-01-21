@@ -22,6 +22,7 @@ import static android.app.AppOpsManager.OPSTR_MONITOR_HIGH_POWER_LOCATION;
 import static android.app.AppOpsManager.OPSTR_MONITOR_LOCATION;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_TELEVISION;
+import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.location.LocationManager.EXTRA_PROVIDER_ENABLED;
 import static android.location.LocationManager.EXTRA_PROVIDER_NAME;
 import static android.location.LocationManager.FUSED_PROVIDER;
@@ -756,9 +757,10 @@ public class LocationManagerFineTest {
     @Test
     @AppModeFull(reason = "Instant apps can't access ACTION_BATTERY_CHANGED intent")
     public void testRequestLocationUpdates_BatterySaver_GpsDisabledScreenOff() throws Exception {
-        // battery saver is unsupported on auto and tv
+        // battery saver is unsupported on auto, tv and watch
         assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_AUTOMOTIVE));
         assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_TELEVISION));
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
         assumeTrue(BatteryUtils.isBatterySaverSupported());
 
         PowerManager powerManager = Objects.requireNonNull(
@@ -819,9 +821,10 @@ public class LocationManagerFineTest {
     @Test
     @AppModeFull(reason = "Instant apps can't access ACTION_BATTERY_CHANGED intent")
     public void testRequestLocationUpdates_BatterySaver_AllDisabledScreenOff() throws Exception {
-        // battery saver is unsupported on auto and tv
+        // battery saver is unsupported on auto, tv and watch
         assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_AUTOMOTIVE));
         assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_TELEVISION));
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
         assumeTrue(BatteryUtils.isBatterySaverSupported());
 
         PowerManager powerManager = Objects.requireNonNull(
@@ -863,9 +866,10 @@ public class LocationManagerFineTest {
     @Test
     @AppModeFull(reason = "Instant apps can't access ACTION_BATTERY_CHANGED intent")
     public void testRequestLocationUpdates_BatterySaver_ThrottleScreenOff() throws Exception {
-        // battery saver is unsupported on auto and tv
+        // battery saver is unsupported on auto, tv and watch
         assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_AUTOMOTIVE));
         assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_TELEVISION));
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
         assumeTrue(BatteryUtils.isBatterySaverSupported());
 
         PowerManager powerManager = Objects.requireNonNull(

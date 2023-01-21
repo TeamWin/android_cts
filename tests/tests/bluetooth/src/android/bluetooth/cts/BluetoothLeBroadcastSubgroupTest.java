@@ -104,9 +104,6 @@ public class BluetoothLeBroadcastSubgroupTest {
     @After
     public void tearDown() {
         if (mHasBluetooth) {
-            if (mAdapter != null) {
-                assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-            }
             mAdapter = null;
             TestUtils.dropPermissionAsShellUid();
         }

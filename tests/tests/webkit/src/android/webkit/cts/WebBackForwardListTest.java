@@ -16,45 +16,64 @@
 
 package android.webkit.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import android.platform.test.annotations.AppModeFull;
-import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebHistoryItem;
 import android.webkit.WebView;
 
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
+
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 
-public class WebBackForwardListTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class WebBackForwardListTest {
+
+    @Rule
+    public ActivityScenarioRule mActivityScenarioRule =
+            new ActivityScenarioRule(WebViewCtsActivity.class);
 
     private WebViewOnUiThread mOnUiThread;
+    private ActivityScenario mScenario;
+    private WebViewCtsActivity mActivity;
 
-    public WebBackForwardListTest() {
-        super("android.webkit.cts", WebViewCtsActivity.class);
-    }
-
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
-        WebView webview = getActivity().getWebView();
-        if (webview != null) {
-            mOnUiThread = new WebViewOnUiThread(webview);
-        }
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+        mScenario = mActivityScenarioRule.getScenario();
+        mScenario.onActivity(activity -> {
+            mActivity = (WebViewCtsActivity) activity;
+            WebView webview = mActivity.getWebView();
+            if (webview != null) {
+                mOnUiThread = new WebViewOnUiThread(webview);
+            }
+        });
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
-        super.tearDown();
     }
 
     @AppModeFull(reason = "Instant apps cannot bind sockets")
+    @Test
     public void testGetCurrentItem() throws Exception {
-        if (!NullWebViewUtils.isWebViewAvailable()) {
-            return;
-        }
         WebBackForwardList list = mOnUiThread.copyBackForwardList();
 
         assertNull(list.getCurrentItem());
@@ -63,7 +82,7 @@ public class WebBackForwardListTest extends ActivityInstrumentationTestCase2<Web
         assertNull(list.getItemAtIndex(-1));
         assertNull(list.getItemAtIndex(2));
 
-        CtsTestServer server = new CtsTestServer(getActivity(), false);
+        CtsTestServer server = new CtsTestServer(mActivity, false);
         try {
             String url1 = server.getAssetUrl(TestHtmlConstants.HTML_URL1);
             String url2 = server.getAssetUrl(TestHtmlConstants.HTML_URL2);

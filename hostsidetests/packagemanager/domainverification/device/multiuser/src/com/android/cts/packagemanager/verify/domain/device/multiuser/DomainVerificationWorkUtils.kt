@@ -38,7 +38,7 @@ internal fun RemoteDevicePolicyManager.setAppLinkPolicy(admin: ComponentName, al
 }
 
 internal fun DeviceState.getWorkDevicePolicyManager() =
-    profileOwner(workProfile(UserType.PRIMARY_USER))!!
+    profileOwner(workProfile(UserType.INITIAL_USER))!!
             .devicePolicyManager()
 
 internal fun <T> withUserContext(user: UserReference, block: (context: Context) -> T) =

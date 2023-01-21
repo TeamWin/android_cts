@@ -533,6 +533,7 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to getLastCallFailCause from AIDL. Exception" + ex);
         }
+        countDownLatch(LATCH_GET_LAST_CALL_FAIL_CAUSE);
     }
 
     @Override

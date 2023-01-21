@@ -33,6 +33,7 @@ import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -122,16 +123,19 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
                 AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported());
     }
 
+    @Ignore("b/265187199")
     @Test
     public void testIsRequestPinAppWidgetSupported_launcher1() throws Exception {
         verifyIsRequestPinAppWidgetSupported("android.appwidget.cts.packages.launcher1", true);
     }
 
+    @Ignore("b/265187199")
     @Test
     public void testIsRequestPinAppWidgetSupported_launcher2() throws Exception {
         verifyIsRequestPinAppWidgetSupported("android.appwidget.cts.packages.launcher2", true);
     }
 
+    @Ignore("b/265187199")
     @Test
     public void testIsRequestPinAppWidgetSupported_launcher3() throws Exception {
         verifyIsRequestPinAppWidgetSupported("android.appwidget.cts.packages.launcher3", false);

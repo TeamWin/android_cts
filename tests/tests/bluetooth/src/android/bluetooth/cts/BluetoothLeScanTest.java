@@ -102,7 +102,6 @@ public class BluetoothLeScanTest extends AndroidTestCase {
         if (!mLocationOn) {
             TestUtils.disableLocation(getContext());
         }
-        assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }

@@ -151,13 +151,11 @@ public class WindowFocusTests extends WindowManagerTestBase {
         sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_2, INVALID_DISPLAY);
         sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3, secondaryDisplayId);
 
-        final boolean perDisplayFocusEnabled = perDisplayFocusEnabled();
-        if (perDisplayFocusEnabled) {
-            primaryActivity.assertWindowFocusState(true /* hasFocus */);
-            sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_4, DEFAULT_DISPLAY);
-        } else {
-            primaryActivity.waitAndAssertWindowFocusState(false /* hasFocus */);
-        }
+        // After launching the second activity the primary activities focus depends on the state of
+        // perDisplayFocusEnabled. If the display has its own focus, then the activities still has
+        // window focus. If it is disabled, then primary activity should no longer have window focus
+        // because the secondary activity got it.
+        primaryActivity.waitAndAssertWindowFocusState(perDisplayFocusEnabled());
 
         // Press display-unspecified keys and a display-specified key but not release them.
         sendKey(ACTION_DOWN, KEYCODE_5, INVALID_DISPLAY);
@@ -174,7 +172,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
         // key events sent to secondary activity would be cancelled.
         secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_5, FLAG_CANCELED);
         secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_7, FLAG_CANCELED);
-        if (!perDisplayFocusEnabled) {
+        if (!perDisplayFocusEnabled()) {
             secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_6, FLAG_CANCELED);
         }
         assertEquals(secondaryActivity.getLogTag() + " must only receive expected events",
@@ -270,7 +268,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
     @Test
     public void testMovingDisplayToTopByKeyEvent() {
         assumeTrue(supportsMultiDisplay());
-        assumeFalse(perDisplayFocusEnabled());
 
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);

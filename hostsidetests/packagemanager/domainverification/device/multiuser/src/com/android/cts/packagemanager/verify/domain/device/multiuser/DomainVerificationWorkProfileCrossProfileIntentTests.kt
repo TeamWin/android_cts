@@ -20,11 +20,10 @@ import android.app.admin.DevicePolicyManager
 import android.content.Intent
 import android.content.IntentFilter
 import com.android.bedstead.harrier.BedsteadJUnit4
-import com.android.bedstead.harrier.DeviceState
 import com.android.bedstead.harrier.UserType
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile
 import com.android.bedstead.harrier.annotations.Postsubmit
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser
+import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser
 import com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_1
 import org.junit.After
@@ -32,7 +31,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@EnsureHasWorkProfile(forUser = UserType.PRIMARY_USER)
+@EnsureHasWorkProfile(forUser = UserType.INITIAL_USER)
 @RunWith(BedsteadJUnit4::class)
 class DomainVerificationWorkProfileCrossProfileIntentTests :
     DomainVerificationWorkProfileTestsBase() {
@@ -72,7 +71,7 @@ class DomainVerificationWorkProfileCrossProfileIntentTests :
         manager.clearCrossProfileIntentFilters(DPC_COMPONENT_NAME)
     }
 
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @Postsubmit(reason = "New test")
     @Test
     override fun inPersonal_verifiedInOtherProfile() {

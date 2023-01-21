@@ -765,6 +765,10 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
         return (mState == ImsCallSessionImplBase.State.TERMINATED) ? true : false;
     }
 
+    public boolean isRenegotiating() {
+        return (mState == State.RENEGOTIATING) ? true : false;
+    }
+
     private ImsReasonInfo getReasonInfo(int code, int extraCode) {
         ImsReasonInfo reasonInfo = new ImsReasonInfo(code, extraCode, "");
         return reasonInfo;

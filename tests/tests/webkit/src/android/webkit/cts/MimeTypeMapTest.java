@@ -16,21 +16,33 @@
 
 package android.webkit.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
-import android.test.AndroidTestCase;
 import android.webkit.MimeTypeMap;
 
-public class MimeTypeMapTest extends AndroidTestCase {
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class MimeTypeMapTest {
 
     private MimeTypeMap mMimeTypeMap;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setUp() throws Exception {
         mMimeTypeMap = MimeTypeMap.getSingleton();
     }
 
+    @Test
     public void testGetFileExtensionFromUrl() {
         assertEquals("html", MimeTypeMap.getFileExtensionFromUrl("http://localhost/index.html"));
         assertEquals("html", MimeTypeMap.getFileExtensionFromUrl("http://host/x.html?x=y"));
@@ -42,8 +54,9 @@ public class MimeTypeMapTest extends AndroidTestCase {
 
         // ToBeFixed: Uncomment the following line after fixing the implementation
         //assertEquals("", MimeTypeMap.getFileExtensionFromUrl("http://www.example.com"));
-}
+    }
 
+    @Test
     public void testHasMimeType() {
         assertTrue(mMimeTypeMap.hasMimeType("audio/mpeg"));
         assertTrue(mMimeTypeMap.hasMimeType("text/plain"));
@@ -54,6 +67,7 @@ public class MimeTypeMapTest extends AndroidTestCase {
         assertFalse(mMimeTypeMap.hasMimeType(null));
     }
 
+    @Test
     public void testGetMimeTypeFromExtension() {
         assertEquals("audio/mpeg", mMimeTypeMap.getMimeTypeFromExtension("mp3"));
         assertEquals("application/zip", mMimeTypeMap.getMimeTypeFromExtension("zip"));
@@ -62,8 +76,9 @@ public class MimeTypeMapTest extends AndroidTestCase {
 
         assertNull(mMimeTypeMap.getMimeTypeFromExtension(null));
         assertNull(mMimeTypeMap.getMimeTypeFromExtension(""));
-}
+    }
 
+    @Test
     public void testHasExtension() {
         assertTrue(mMimeTypeMap.hasExtension("mp3"));
         assertTrue(mMimeTypeMap.hasExtension("zip"));
@@ -74,6 +89,7 @@ public class MimeTypeMapTest extends AndroidTestCase {
         assertFalse(mMimeTypeMap.hasExtension(null));
     }
 
+    @Test
     public void testGetExtensionFromMimeType() {
         assertEquals("mp3", mMimeTypeMap.getExtensionFromMimeType("audio/mpeg"));
         assertEquals("png", mMimeTypeMap.getExtensionFromMimeType("image/png"));
@@ -83,8 +99,9 @@ public class MimeTypeMapTest extends AndroidTestCase {
 
         assertNull(mMimeTypeMap.getExtensionFromMimeType(null));
         assertNull(mMimeTypeMap.getExtensionFromMimeType(""));
-}
+    }
 
+    @Test
     public void testGetSingleton() {
         MimeTypeMap firstMimeTypeMap = MimeTypeMap.getSingleton();
         MimeTypeMap secondMimeTypeMap = MimeTypeMap.getSingleton();

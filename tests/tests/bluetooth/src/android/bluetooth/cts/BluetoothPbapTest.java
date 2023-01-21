@@ -91,9 +91,6 @@ public class BluetoothPbapTest extends AndroidTestCase {
             mBluetoothPbap = null;
             mIsProfileReady = false;
         }
-        if (mAdapter != null) {
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        }
         mAdapter = null;
     }
 

@@ -285,6 +285,16 @@ public class DeviceAssociationTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.content.Context#isDeviceContext"})
+    public void isDeviceContext_deviceContextAndDeviceIsClosed_returnsFalse() {
+        final Context appContext = getApplicationContext();
+        Context deviceContext = appContext.createDeviceContext(mVirtualDevice.getDeviceId());
+        mVirtualDevice.close();
+
+        assertFalse(deviceContext.isDeviceContext());
+    }
+
+    @Test
     @ApiTest(apis = {"android.content.Context#updateDeviceId"})
     public void updateDeviceId_invalidDeviceId_shouldThrowIllegalArgumentException() {
         Context context = getApplicationContext();

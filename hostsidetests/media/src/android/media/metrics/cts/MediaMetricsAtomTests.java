@@ -76,13 +76,13 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
     @BeforeClassWithInfo
     public static void installApp(TestInformation testInfo)
             throws DeviceNotAvailableException, FileNotFoundException {
+        assertThat(testInfo.getBuildInfo()).isNotNull();
         DeviceUtils.installTestApp(testInfo.getDevice(), TEST_APK, TEST_PKG,
                 testInfo.getBuildInfo());
     }
 
     @Before
     public void setUp() throws Exception {
-        assertThat(getBuild()).isNotNull();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);

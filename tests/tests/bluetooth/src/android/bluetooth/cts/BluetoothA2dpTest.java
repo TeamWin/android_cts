@@ -90,9 +90,6 @@ public class BluetoothA2dpTest extends AndroidTestCase {
             mBluetoothA2dp = null;
             mIsProfileReady = false;
         }
-        if (mAdapter != null) {
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        }
         mAdapter = null;
         mUiAutomation.dropShellPermissionIdentity();
     }

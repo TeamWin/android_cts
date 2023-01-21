@@ -153,6 +153,14 @@
          android:protectionLevel="signature|privileged"
          android:label="@string/car_permission_label_vendor_permission_info"
          android:description="@string/car_permission_desc_vendor_permission_info"/>
+    <permission android:name="android.car.permission.MANAGE_REMOTE_DEVICE"
+                android:protectionLevel="signature|privileged"
+                android:label="@string/car_permission_label_manage_remote_device"
+                android:description="@string/car_permission_desc_manage_remote_device"/>
+    <permission android:name="android.car.permission.MANAGE_OCCUPANT_CONNECTION"
+                android:protectionLevel="signature|privileged"
+                android:label="@string/car_permission_label_manage_occupant_connection"
+                android:description="@string/car_permission_desc_manage_occupant_connection"/>
 
     <!-- Allows an application to read the vehicle exterior environment information. For example,
          it allows an application to read the vehicle exterior temperature and night mode status.

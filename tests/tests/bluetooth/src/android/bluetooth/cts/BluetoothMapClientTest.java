@@ -105,9 +105,6 @@ public class BluetoothMapClientTest extends AndroidTestCase {
             mBluetoothMapClient = null;
             mIsProfileReady = false;
         }
-        if (mAdapter != null) {
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        }
         mAdapter = null;
     }
 

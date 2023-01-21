@@ -88,10 +88,6 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
             mBluetoothA2dpSink = null;
             mIsProfileReady = false;
         }
-        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
-        if (mAdapter != null) {
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        }
         mUiAutomation.dropShellPermissionIdentity();
         mAdapter = null;
     }

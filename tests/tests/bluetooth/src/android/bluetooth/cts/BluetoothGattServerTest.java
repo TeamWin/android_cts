@@ -70,7 +70,6 @@ public class BluetoothGattServerTest extends AndroidTestCase {
                 mBluetoothGattServer.close();
                 mBluetoothGattServer = null;
             }
-            assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
             mBluetoothAdapter = null;
             mUIAutomation.dropShellPermissionIdentity();
         }

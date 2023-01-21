@@ -52,6 +52,7 @@ NOT_YET_MANDATED = {
     'scene2_c': [],
     'scene2_d': [['test_num_faces', 30]],
     'scene2_e': [['test_num_faces', 30], ['test_continuous_picture', 30]],
+    'scene2_f': [['test_num_faces', 30]],
     'scene3': [],
     'scene4': [],
     'scene5': [],

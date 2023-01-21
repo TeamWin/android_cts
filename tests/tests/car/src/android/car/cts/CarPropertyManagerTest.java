@@ -47,6 +47,7 @@ import android.car.hardware.property.ErrorState;
 import android.car.hardware.property.EvChargeState;
 import android.car.hardware.property.EvRegenerativeBrakingState;
 import android.car.hardware.property.EvStoppingMode;
+import android.car.hardware.property.ForwardCollisionWarningState;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
 import android.car.hardware.property.VehicleLightState;
@@ -179,6 +180,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             AutomaticEmergencyBrakingState.ENABLED,
                             AutomaticEmergencyBrakingState.ACTIVATED,
                             AutomaticEmergencyBrakingState.USER_OVERRIDE)
+                    .build();
+    private static final ImmutableSet<Integer> FORWARD_COLLISION_WARNING_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            ForwardCollisionWarningState.OTHER,
+                            ForwardCollisionWarningState.NO_WARNING,
+                            ForwardCollisionWarningState.WARNING)
                     .build();
     private static final ImmutableSet<Integer> SINGLE_HVAC_FAN_DIRECTIONS = ImmutableSet.of(
             /*VehicleHvacFanDirection.FACE=*/0x1, /*VehicleHvacFanDirection.FLOOR=*/0x2,
@@ -496,6 +504,17 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.VEHICLE_CURB_WEIGHT,
                             VehiclePropertyIds.TRAILER_PRESENT)
                     .build();
+    private static final ImmutableList<Integer>
+            PERMISSION_CONTROL_DISPLAY_UNITS_VENDOR_EXTENSION_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.DISTANCE_DISPLAY_UNITS,
+                            VehiclePropertyIds.FUEL_VOLUME_DISPLAY_UNITS,
+                            VehiclePropertyIds.TIRE_PRESSURE_DISPLAY_UNITS,
+                            VehiclePropertyIds.EV_BATTERY_DISPLAY_UNITS,
+                            VehiclePropertyIds.VEHICLE_SPEED_DISPLAY_UNITS,
+                            VehiclePropertyIds.FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME)
+                    .build();
     private static final ImmutableList<Integer> PERMISSION_READ_ADAS_SETTINGS_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
@@ -523,12 +542,16 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     private static final ImmutableList<Integer> PERMISSION_READ_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
-                            VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_STATE)
+                            VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_STATE,
+                            VehiclePropertyIds.FORWARD_COLLISION_WARNING_STATE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add()
                     .build();
+
+    private static final int VEHICLE_PROPERTY_GROUP_MASK = 0xf0000000;
+    private static final int VEHICLE_PROPERTY_GROUP_VENDOR = 0x20000000;
 
     /** contains property Ids for the properties required by CDD */
     private final ArraySet<Integer> mPropertyIds = new ArraySet<>();
@@ -4673,6 +4696,30 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testForwardCollisionWarningStateIfSupported() {
+        ImmutableSet<Integer> combinedCarPropertyValues = ImmutableSet.<Integer>builder()
+                .addAll(FORWARD_COLLISION_WARNING_STATES)
+                .addAll(ERROR_STATES)
+                .build();
+
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.FORWARD_COLLISION_WARNING_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setPossibleCarPropertyValues(combinedCarPropertyValues)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testForwardCollisionWarningStateWithErrorState() {
+        verifyEnumValuesAreDistinct(FORWARD_COLLISION_WARNING_STATES, ERROR_STATES);
+    }
+
+    @Test
     public void testBlindSpotWarningEnabledIfSupported() {
         VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.BLIND_SPOT_WARNING_ENABLED,
@@ -5822,6 +5869,28 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     }
                 },
                 Car.PERMISSION_PRIVILEGED_CAR_INFO);
+    }
+
+    @Test
+    public void testPermissionControlDisplayUnitsAndVendorExtensionGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        if ((carPropertyConfig.getPropertyId() & VEHICLE_PROPERTY_GROUP_MASK)
+                                == VEHICLE_PROPERTY_GROUP_VENDOR) {
+                            continue;
+                        }
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_DISPLAY_UNITS_VENDOR_EXTENSION_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                Car.PERMISSION_VENDOR_EXTENSION);
     }
 
     @Test

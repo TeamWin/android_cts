@@ -86,7 +86,11 @@ public class ImsCallingBase {
     public static final int LATCH_IS_CALL_HOLDING = 10;
     public static final int LATCH_IS_ON_CALL_REMOTELY_HELD = 11;
     public static final int LATCH_IS_ON_CALL_REMOTELY_UNHELD = 12;
-    public static final int LATCH_MAX = 13;
+    public static final int LATCH_IS_ON_CHILDREN_CHANGED = 13;
+    public static final int LATCH_IS_ON_MERGE_START = 14;
+    public static final int LATCH_IS_ON_MERGE_COMPLETE = 15;
+    public static final int LATCH_IS_ON_CONFERENCE_CALL_ADDED = 16;
+    public static final int LATCH_MAX = 17;
     public static final int TEST_RTP_THRESHOLD_PACKET_LOSS_RATE = 47;
     public static final int TEST_RTP_THRESHOLD_JITTER_MILLIS = 150;
     public static final long TEST_RTP_THRESHOLD_INACTIVITY_TIME_MILLIS = 3000;
@@ -364,7 +368,28 @@ public class ImsCallingBase {
                                 && call.getDetails().getState() == Call.STATE_DISCONNECTED) ? true
                                 : false;
                     }
-                }, WAIT_FOR_CONDITION, "Call Disconnected");
+                }, WAIT_FOR_CONDITION,
+                "session " + callsession.getState() + ", call "
+                        + call.getDetails().getState() + ", Call Disconnected");
+    }
+
+    public void isCallHolding(Call call, TestImsCallSessionImpl callsession) {
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_HOLDING, WAIT_FOR_CALL_STATE));
+        assertNotNull("Unable to get callSession, its null", callsession);
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return (callsession.isSessionOnHold()
+                                && call.getDetails().getState() == Call.STATE_HOLDING) ? true
+                                : false;
+                    }
+                }, WAIT_FOR_CONDITION, "Call Holding");
     }
 
     protected void setCallID(String callid) {
@@ -427,6 +452,9 @@ public class ImsCallingBase {
             Log.i(LOG_TAG, "onCallAdded, Call: " + call + ", Num Calls: " + numCalls);
             addCall(call);
             countDownLatch(LATCH_IS_ON_CALL_ADDED);
+            if (call.getDetails().hasProperty(Call.Details.PROPERTY_CONFERENCE)) {
+                countDownLatch(LATCH_IS_ON_CONFERENCE_CALL_ADDED);
+            }
         }
 
         @Override
@@ -473,8 +501,9 @@ public class ImsCallingBase {
         @Override
         public void onChildrenChanged(Call call, List<Call> children) {
             if (call.getDetails().hasProperty(Call.Details.PROPERTY_CONFERENCE)) {
-                Log.i(LOG_TAG, "onChildrenChanged, Call: " + call + " , size "  + children.size());
+                Log.i(LOG_TAG, "onChildrenChanged, Call: " + call + " , size " + children.size());
                 mParticipantCount = children.size();
+                countDownLatch(LATCH_IS_ON_CHILDREN_CHANGED);
             }
         }
 
@@ -485,8 +514,13 @@ public class ImsCallingBase {
                 countDownLatch(LATCH_IS_ON_CALL_REMOTELY_HELD);
             } else if (event.equals(android.telecom.Connection.EVENT_CALL_REMOTELY_UNHELD)) {
                 countDownLatch(LATCH_IS_ON_CALL_REMOTELY_UNHELD);
+            } else if (event.equals(android.telecom.Connection.EVENT_MERGE_START)) {
+                countDownLatch(LATCH_IS_ON_MERGE_START);
+            } else if (event.equals(android.telecom.Connection.EVENT_MERGE_COMPLETE)) {
+                countDownLatch(LATCH_IS_ON_MERGE_COMPLETE);
             }
         }
+
     }
 
     protected static Context getContext() {

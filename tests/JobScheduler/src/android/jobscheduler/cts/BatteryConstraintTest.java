@@ -24,6 +24,7 @@ import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.provider.Settings;
 import android.util.Log;
+import android.content.res.Resources;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -41,6 +42,7 @@ public class BatteryConstraintTest extends BaseJobSchedulerTest {
     public static final int BATTERY_JOB_ID = BatteryConstraintTest.class.hashCode();
 
     private JobInfo.Builder mBuilder;
+    private int mLowBatteryWarningLevel = 15;
     /**
      * Record of the previous state of power save mode trigger level to reset it after the test
      * finishes.
@@ -51,6 +53,9 @@ public class BatteryConstraintTest extends BaseJobSchedulerTest {
     public void setUp() throws Exception {
         super.setUp();
 
+        mLowBatteryWarningLevel = Resources.getSystem().getInteger(
+                     Resources.getSystem().getIdentifier(
+                             "config_lowBatteryWarningLevel", "integer", "android"));
         // Disable power save mode as some devices may turn off Android when power save mode is
         // enabled, causing the test to fail.
         mPreviousLowPowerTriggerLevel = Settings.Global.getInt(getContext().getContentResolver(),
@@ -251,7 +256,7 @@ public class BatteryConstraintTest extends BaseJobSchedulerTest {
             return;
         }
 
-        setBatteryState(false, 5);
+        setBatteryState(false, mLowBatteryWarningLevel);
         // setBatteryState() waited for the charging/not-charging state to formally settle,
         // but battery level reporting lags behind that.  wait a moment to let that happen
         // before proceeding.
@@ -286,8 +291,8 @@ public class BatteryConstraintTest extends BaseJobSchedulerTest {
                 kTestEnvironment.awaitExecution());
 
         // And check that the job is stopped if battery goes low again.
-        setBatteryState(false, 5);
-        setBatteryState(false, 4);
+        setBatteryState(false, mLowBatteryWarningLevel);
+        setBatteryState(false, mLowBatteryWarningLevel - 1);
         Thread.sleep(2_000);
         verifyChargingState(false);
         verifyBatteryNotLowState(false);

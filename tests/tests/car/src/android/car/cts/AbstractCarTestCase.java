@@ -24,6 +24,7 @@ import android.car.FuelType;
 import android.car.PortLocationType;
 import android.car.test.AbstractExpectableTestCase;
 import android.car.test.ApiCheckerRule;
+import android.car.test.PermissionsCheckerRule;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
@@ -72,6 +73,9 @@ abstract class AbstractCarTestCase extends AbstractExpectableTestCase {
     // TODO(b/242350638): temporary hack to allow subclasses to disable checks - should be removed
     // when not needed anymore
     private final ApiCheckerRule.Builder mApiCheckerRuleBuilder = new ApiCheckerRule.Builder();
+
+    @Rule
+    public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
 
     @Rule
     public final ApiCheckerRule mApiCheckerRule;
