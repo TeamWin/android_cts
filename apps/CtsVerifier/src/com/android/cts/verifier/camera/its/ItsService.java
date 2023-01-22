@@ -79,6 +79,7 @@ import android.os.SystemClock;
 import android.os.Vibrator;
 import android.util.Log;
 import android.util.Range;
+import android.util.Pair;
 import android.util.Rational;
 import android.util.Size;
 import android.util.SparseArray;
@@ -124,6 +125,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -185,6 +187,8 @@ public class ItsService extends Service implements SensorEventListener {
     public static final String AUTO_FLASH_KEY = "autoFlash";
     public static final String ZOOM_RATIO_KEY = "zoomRatio";
     public static final String AUDIO_RESTRICTION_MODE_KEY = "mode";
+    public static final int AVAILABILITY_TIMEOUT_MS = 10;
+
 
     private CameraManager mCameraManager = null;
     private HandlerThread mCameraThread = null;
@@ -254,6 +258,8 @@ public class ItsService extends Service implements SensorEventListener {
     private volatile boolean mNeedsLockedAWB = false;
     private volatile boolean mDoAE = true;
     private volatile boolean mDoAF = true;
+    private Set<Pair<String, String>> mUnavailablePhysicalCameras;
+
 
     class MySensorEvent {
         public Sensor sensor;
@@ -475,6 +481,7 @@ public class ItsService extends Service implements SensorEventListener {
         }
 
         try {
+            mUnavailablePhysicalCameras = getUnavailablePhysicalCameras();
             mCamera = mBlockingCameraManager.openCamera(cameraId, mCameraListener, mCameraHandler);
             mCameraCharacteristics = mCameraManager.getCameraCharacteristics(cameraId);
 
@@ -840,6 +847,9 @@ public class ItsService extends Service implements SensorEventListener {
                     doCheckHLG10Support(cameraId, profileId);
                 } else if ("doCaptureWithFlash".equals(cmdObj.getString("cmdName"))) {
                     doCaptureWithFlash(cmdObj);
+                } else if ("doGetUnavailablePhysicalCameras".equals(cmdObj.getString("cmdName"))) {
+                    String cameraId = cmdObj.getString("cameraId");
+                    doGetUnavailablePhysicalCameras(cameraId);
                 } else {
                     throw new ItsException("Unknown command: " + cmd);
                 }
@@ -1196,6 +1206,53 @@ public class ItsService extends Service implements SensorEventListener {
                 .supportsSensorToggle(SensorPrivacyManager.Sensors.CAMERA);
         mSocketRunnableObj.sendResponse("cameraPrivacyModeSupport",
                 hasPrivacySupport ? "true" : "false");
+    }
+
+    private void doGetUnavailablePhysicalCameras(String cameraId) throws ItsException {
+        try {
+            JSONArray cameras = new JSONArray();
+            JSONObject jsonObj = new JSONObject();
+            for (Pair<String, String> p : mUnavailablePhysicalCameras) {
+                if (cameraId.equals(p.first)) {
+                    cameras.put(p.second);
+                }
+            }
+            jsonObj.put("unavailablePhysicalCamerasArray", cameras);
+            Log.i(TAG, "unavailablePhysicalCameras : " +
+                    Arrays.asList(mUnavailablePhysicalCameras.toString()));
+            mSocketRunnableObj.sendResponse("unavailablePhysicalCameras", null, jsonObj, null);
+        } catch (org.json.JSONException e) {
+            throw new ItsException("JSON error: ", e);
+        }
+    }
+
+    private Set<Pair<String, String>> getUnavailablePhysicalCameras() throws ItsException {
+        final LinkedBlockingQueue<Pair<String, String>> unavailablePhysicalCamEventQueue =
+                new LinkedBlockingQueue<>();
+        try {
+            CameraManager.AvailabilityCallback ac = new CameraManager.AvailabilityCallback() {
+                @Override
+                public void onPhysicalCameraUnavailable(String cameraId, String physicalCameraId) {
+                    unavailablePhysicalCamEventQueue.offer(new Pair<>(cameraId, physicalCameraId));
+                }
+            };
+            mCameraManager.registerAvailabilityCallback(ac, mCameraHandler);
+            Set<Pair<String, String>> unavailablePhysicalCameras =
+                    new HashSet<Pair<String, String>>();
+            Pair<String, String> candidatePhysicalIds =
+                    unavailablePhysicalCamEventQueue.poll(AVAILABILITY_TIMEOUT_MS,
+                    java.util.concurrent.TimeUnit.MILLISECONDS);
+            while (candidatePhysicalIds != null) {
+                unavailablePhysicalCameras.add(candidatePhysicalIds);
+                candidatePhysicalIds =
+                        unavailablePhysicalCamEventQueue.poll(AVAILABILITY_TIMEOUT_MS,
+                        java.util.concurrent.TimeUnit.MILLISECONDS);
+            }
+            mCameraManager.unregisterAvailabilityCallback(ac);
+            return unavailablePhysicalCameras;
+        } catch (Exception e) {
+            throw new ItsException("Exception: ", e);
+        }
     }
 
     private void doCheckPrimaryCamera(String cameraId) throws ItsException {

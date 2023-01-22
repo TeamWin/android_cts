@@ -243,10 +243,21 @@ class MultiCameraFrameSyncTest(its_base_test.ItsBaseTest):
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
       name_with_log_path = os.path.join(self.log_path, _NAME)
+      unavailable_physical_cameras = cam.get_unavailable_physical_cameras(
+          self.camera_id)
+      unavailable_physical_ids = unavailable_physical_cameras['unavailablePhysicalCamerasArray']
+      # find available physical camera IDs
+      all_physical_ids = camera_properties_utils.logical_multi_camera_physical_ids(
+          props)
+      for i in unavailable_physical_ids:
+        if i in all_physical_ids:
+          all_physical_ids.remove(i)
 
+      logging.debug('available physical ids: %s', all_physical_ids)
       # Check SKIP conditions.
       camera_properties_utils.skip_unless(
-          camera_properties_utils.multi_camera_frame_sync_capable(props))
+          camera_properties_utils.multi_camera_frame_sync_capable(props) and
+          len(all_physical_ids) >= 2)
 
       # Get first API level & multi camera sync type
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)

@@ -339,6 +339,7 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
     public void testBatterySaverModeStateChangedAtom() throws Exception {
         if (DeviceUtils.hasFeature(getDevice(), FEATURE_TWM)) return;
         if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_WATCH)) return;
         // Setup, turn off battery saver.
         turnBatterySaverOff();
         DeviceUtils.flushBatteryStatsHandlers(getDevice());

@@ -253,7 +253,7 @@ public abstract class ActivityManagerTestBase {
     private static final int UI_MODE_TYPE_VR_HEADSET = 0x07;
 
     public static final boolean ENABLE_SHELL_TRANSITIONS =
-            SystemProperties.getBoolean("persist.wm.debug.shell_transit", true);
+            SystemProperties.getBoolean("persist.wm.debug.shell_transit", false);
 
     private static Boolean sHasHomeScreen = null;
     private static Boolean sSupportsSystemDecorsOnSecondaryDisplays = null;

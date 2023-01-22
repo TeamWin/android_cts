@@ -16,6 +16,8 @@
 
 package android.app.appsearch.cts.app;
 
+import static android.app.appsearch.PropertyPath.PathSegment.NON_REPEATED_CARDINALITY;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.appsearch.PropertyPath;
@@ -25,6 +27,7 @@ import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class PropertyPathCtsTest {
@@ -66,8 +69,7 @@ public class PropertyPathCtsTest {
         PropertyPath path = new PropertyPath("foo.bar[1]");
         assertThat(path.size()).isEqualTo(2);
         assertThat(path.get(0).getPropertyName()).isEqualTo("foo");
-        assertThat(path.get(0).getPropertyIndex())
-                .isEqualTo(PropertyPath.PathSegment.NON_REPEATED_CARDINALITY);
+        assertThat(path.get(0).getPropertyIndex()).isEqualTo(NON_REPEATED_CARDINALITY);
         assertThat(path.get(1).getPropertyName()).isEqualTo("bar");
         assertThat(path.get(1).getPropertyIndex()).isEqualTo(1);
 
@@ -75,6 +77,36 @@ public class PropertyPathCtsTest {
         assertThat(path.size()).isEqualTo(10);
         assertThat(path.get(4).getPropertyName()).isEqualTo("e");
         assertThat(path.get(9).getPropertyName()).isEqualTo("j");
+    }
+
+    @Test
+    public void testPropertyPathIterator() {
+        PropertyPath path = new PropertyPath("foo.bar[2].bat.baz");
+        Iterator<PropertyPath.PathSegment> iterator = path.iterator();
+
+        PropertyPath.PathSegment segment;
+
+        assertThat(iterator.hasNext()).isTrue();
+        segment = iterator.next();
+        assertThat(segment.getPropertyIndex()).isEqualTo(NON_REPEATED_CARDINALITY);
+        assertThat(segment.getPropertyName()).isEqualTo("foo");
+
+        assertThat(iterator.hasNext()).isTrue();
+        segment = iterator.next();
+        assertThat(segment.getPropertyIndex()).isEqualTo(2);
+        assertThat(segment.getPropertyName()).isEqualTo("bar");
+
+        assertThat(iterator.hasNext()).isTrue();
+        segment = iterator.next();
+        assertThat(segment.getPropertyIndex()).isEqualTo(NON_REPEATED_CARDINALITY);
+        assertThat(segment.getPropertyName()).isEqualTo("bat");
+
+        assertThat(iterator.hasNext()).isTrue();
+        segment = iterator.next();
+        assertThat(segment.getPropertyIndex()).isEqualTo(NON_REPEATED_CARDINALITY);
+        assertThat(segment.getPropertyName()).isEqualTo("baz");
+
+        assertThat(iterator.hasNext()).isFalse();
     }
 
     @Test

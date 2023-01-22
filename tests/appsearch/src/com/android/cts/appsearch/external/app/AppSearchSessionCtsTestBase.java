@@ -42,6 +42,7 @@ import android.app.appsearch.Features;
 import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GetByDocumentIdRequest;
 import android.app.appsearch.GetSchemaResponse;
+import android.app.appsearch.JoinSpec;
 import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.PropertyPath;
 import android.app.appsearch.PutDocumentsRequest;
@@ -56,6 +57,7 @@ import android.app.appsearch.SetSchemaRequest;
 import android.app.appsearch.StorageInfo;
 import android.app.appsearch.exceptions.AppSearchException;
 import android.app.appsearch.testutil.AppSearchEmail;
+import android.app.appsearch.util.DocumentIdUtil;
 import android.content.Context;
 import android.util.ArrayMap;
 
@@ -3689,6 +3691,25 @@ public abstract class AppSearchSessionCtsTestBase {
     }
 
     @Test
+    public void testRemoveQueryWithJoinSpecThrowsException() {
+        assumeTrue(mDb1.getFeatures().isFeatureSupported(Features.JOIN_SPEC_AND_QUALIFIED_ID));
+
+        IllegalArgumentException e =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () ->
+                                mDb2.removeAsync(
+                                        "",
+                                        new SearchSpec.Builder()
+                                                .setJoinSpec(
+                                                        new JoinSpec.Builder("entityId").build())
+                                                .build()));
+        assertThat(e.getMessage())
+                .isEqualTo(
+                        "JoinSpec not allowed in removeByQuery, " + "but JoinSpec was provided.");
+    }
+
+    @Test
     public void testCloseAndReopen() throws Exception {
         // Schema registration
         mDb1.setSchemaAsync(
@@ -4583,6 +4604,135 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(resultsWithInvalidPath.get(0).getGenericDocument()).isEqualTo(email1);
     }
 
+    @Test
+    public void testSimpleJoin() throws Exception {
+        assumeTrue(mDb1.getFeatures().isFeatureSupported(Features.JOIN_SPEC_AND_QUALIFIED_ID));
+
+        // A full example of how join might be used
+        AppSearchSchema actionSchema =
+                new AppSearchSchema.Builder("BookmarkAction")
+                        .addProperty(
+                                new StringPropertyConfig.Builder("entityId")
+                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_EXACT_TERMS)
+                                        .setJoinableValueType(
+                                                StringPropertyConfig
+                                                        .JOINABLE_VALUE_TYPE_QUALIFIED_ID)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .build())
+                        .addProperty(
+                                new StringPropertyConfig.Builder("note")
+                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_EXACT_TERMS)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .build())
+                        .build();
+
+        // Schema registration
+        mDb1.setSchemaAsync(
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(AppSearchEmail.SCHEMA, actionSchema)
+                                .build())
+                .get();
+
+        // Index a document
+        // While inEmail2 has a higher document score, we will rank based on the number of joined
+        // documents. inEmail1 will have 1 joined document while inEmail2 will have 0 joined
+        // documents.
+        AppSearchEmail inEmail =
+                new AppSearchEmail.Builder("namespace", "id1")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .setScore(1)
+                        .build();
+
+        AppSearchEmail inEmail2 =
+                new AppSearchEmail.Builder("namespace", "id2")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .setScore(10)
+                        .build();
+
+        String qualifiedId =
+                DocumentIdUtil.createQualifiedId(
+                        mContext.getPackageName(), DB_NAME_1, "namespace", "id1");
+        GenericDocument join =
+                new GenericDocument.Builder<>("NS", "id3", "BookmarkAction")
+                        .setPropertyString("entityId", qualifiedId)
+                        .setPropertyString("note", "Hi this is a joined doc")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.putAsync(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(inEmail, inEmail2, join)
+                                .build()));
+
+        SearchSpec nestedSearchSpec = new SearchSpec.Builder().build();
+
+        JoinSpec js =
+                new JoinSpec.Builder("entityId")
+                        .setNestedSearch("", nestedSearchSpec)
+                        .setAggregationScoringStrategy(JoinSpec.AGGREGATION_SCORING_RESULT_COUNT)
+                        .build();
+
+        SearchResultsShim searchResults =
+                mDb1.search(
+                        "body email",
+                        new SearchSpec.Builder()
+                                .setRankingStrategy(
+                                        SearchSpec.RANKING_STRATEGY_JOIN_AGGREGATE_SCORE)
+                                .setJoinSpec(js)
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .build());
+
+        List<SearchResult> sr = searchResults.getNextPageAsync().get();
+
+        // Both email docs are returned, but id1 comes first due to the join
+        assertThat(sr).hasSize(2);
+
+        assertThat(sr.get(0).getGenericDocument().getId()).isEqualTo("id1");
+        assertThat(sr.get(0).getJoinedResults()).hasSize(1);
+        assertThat(sr.get(0).getJoinedResults().get(0).getGenericDocument()).isEqualTo(join);
+        assertThat(sr.get(0).getRankingSignal()).isEqualTo(1.0);
+
+        assertThat(sr.get(1).getGenericDocument().getId()).isEqualTo("id2");
+        assertThat(sr.get(1).getRankingSignal()).isEqualTo(0.0);
+        assertThat(sr.get(1).getJoinedResults()).isEmpty();
+    }
+
+    @Test
+    public void testJoinWithoutSupport() throws Exception {
+        assumeFalse(mDb1.getFeatures().isFeatureSupported(Features.JOIN_SPEC_AND_QUALIFIED_ID));
+
+        SearchSpec nestedSearchSpec = new SearchSpec.Builder().build();
+        JoinSpec js =
+                new JoinSpec.Builder("entityId").setNestedSearch("", nestedSearchSpec).build();
+        SearchResultsShim searchResults =
+                mDb1.search(
+                        "",
+                        new SearchSpec.Builder()
+                                .setJoinSpec(js)
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .build());
+
+        Exception e =
+                assertThrows(
+                        UnsupportedOperationException.class,
+                        () -> searchResults.getNextPageAsync().get());
+        assertThat(e).isInstanceOf(UnsupportedOperationException.class);
+        assertThat(e.getMessage())
+                .isEqualTo(
+                        "Searching with a SearchSpec containing a JoinSpec "
+                                + "is not supported on this AppSearch implementation.");
+    }
+
+    @Test
     public void testSearchSuggestion() throws Exception {
         // Schema registration
         AppSearchSchema schema =

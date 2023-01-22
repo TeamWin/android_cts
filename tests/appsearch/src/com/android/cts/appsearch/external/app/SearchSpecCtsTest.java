@@ -134,6 +134,27 @@ public class SearchSpecCtsTest {
     }
 
     @Test
+    public void testGetProjectionObjects() {
+        PropertyPath path1 = new PropertyPath("field1");
+        PropertyPath path2 = new PropertyPath("field2.subfield2");
+        PropertyPath path3 = new PropertyPath("field7");
+
+        SearchSpec searchSpec =
+                new SearchSpec.Builder()
+                        .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
+                        .addProjectionPaths("TypeA", ImmutableList.of(path1, path2))
+                        .addProjectionPaths("TypeB", ImmutableList.of(path3))
+                        .addProjectionPaths("TypeC", ImmutableList.of())
+                        .build();
+
+        Map<String, List<PropertyPath>> typePropertyPathMap = searchSpec.getProjectionPaths();
+        assertThat(typePropertyPathMap.keySet()).containsExactly("TypeA", "TypeB", "TypeC");
+        assertThat(typePropertyPathMap.get("TypeA")).containsExactly(path1, path2);
+        assertThat(typePropertyPathMap.get("TypeB")).containsExactly(path3);
+        assertThat(typePropertyPathMap.get("TypeC")).isEmpty();
+    }
+
+    @Test
     public void testGetTypePropertyWeights() {
         SearchSpec searchSpec =
                 new SearchSpec.Builder()
@@ -289,7 +310,11 @@ public class SearchSpecCtsTest {
                         .setMaxJoinedResultCount(20)
                         .build();
 
-        SearchSpec searchSpec = new SearchSpec.Builder().setJoinSpec(joinSpec).build();
+        SearchSpec searchSpec =
+                new SearchSpec.Builder()
+                        .setRankingStrategy(SearchSpec.RANKING_STRATEGY_JOIN_AGGREGATE_SCORE)
+                        .setJoinSpec(joinSpec)
+                        .build();
 
         assertThat(searchSpec.getJoinSpec()).isNotNull();
         assertThat(searchSpec.getJoinSpec().getNestedQuery()).isEqualTo("joe");
@@ -363,6 +388,26 @@ public class SearchSpecCtsTest {
                 .isEqualTo(
                         "Attempting to rank based on joined documents, but"
                                 + " no JoinSpec provided");
+
+        JoinSpec joinSpec =
+                new JoinSpec.Builder("childProp")
+                        .setAggregationScoringStrategy(
+                                JoinSpec.AGGREGATION_SCORING_SUM_RANKING_SIGNAL)
+                        .build();
+        e =
+                assertThrows(
+                        IllegalStateException.class,
+                        () ->
+                                new SearchSpec.Builder()
+                                        .setRankingStrategy(
+                                                SearchSpec.RANKING_STRATEGY_CREATION_TIMESTAMP)
+                                        .setJoinSpec(joinSpec)
+                                        .build());
+        assertThat(e.getMessage())
+                .isEqualTo(
+                        "Aggregate scoring strategy has been set in the "
+                                + "nested JoinSpec, but ranking strategy is not "
+                                + "RANKING_STRATEGY_JOIN_AGGREGATE_SCORE");
     }
 
     @Test

@@ -2126,5 +2126,31 @@ public abstract class GlobalSearchSessionCtsTestBase {
         assertThat(globalResults).hasSize(2);
         assertThat(globalResults.get(0).getGenericDocument()).isEqualTo(emailDb1);
         assertThat(globalResults.get(1).getGenericDocument()).isEqualTo(emailDb2);
+
+        // We expect that the email added to db1 will have a higher score than the email added to
+        // db2 as the query term "foo" is contained in the "subject" property which has a higher
+        // weight than the "body" property.
+        assertThat(globalResults.get(0).getRankingSignal()).isGreaterThan(0);
+        assertThat(globalResults.get(0).getRankingSignal())
+                .isGreaterThan(globalResults.get(1).getRankingSignal());
+
+        // Query for "foo" without property weights.
+        SearchResultsShim searchResultsWithoutWeights =
+                mGlobalSearchSession.search(
+                        "foo",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .setRankingStrategy(SearchSpec.RANKING_STRATEGY_RELEVANCE_SCORE)
+                                .setOrder(SearchSpec.ORDER_DESCENDING)
+                                .build());
+        List<SearchResult> resultsWithoutWeights =
+                retrieveAllSearchResults(searchResultsWithoutWeights);
+
+        // email1 should have the same ranking signal as email2 as each contains the term "foo"
+        // once.
+        assertThat(resultsWithoutWeights).hasSize(2);
+        assertThat(resultsWithoutWeights.get(0).getRankingSignal()).isGreaterThan(0);
+        assertThat(resultsWithoutWeights.get(0).getRankingSignal())
+                .isEqualTo(resultsWithoutWeights.get(1).getRankingSignal());
     }
 }

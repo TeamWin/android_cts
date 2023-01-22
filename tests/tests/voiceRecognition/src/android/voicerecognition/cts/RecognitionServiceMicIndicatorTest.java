@@ -21,6 +21,7 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
@@ -114,6 +115,10 @@ public final class RecognitionServiceMicIndicatorTest {
                     DeviceConfig.getProperty(DeviceConfig.NAMESPACE_PRIVACY, INDICATORS_FLAG);
             Log.v(TAG, "setup(): mOriginalIndicatorsState=" + mOriginalIndicatorsState);
         });
+
+        // TODO(http://b/259941077): Remove once privacy indicators are implemented.
+        assumeFalse("Privacy indicators not supported", isWatch());
+
         setIndicatorsEnabledState(Boolean.toString(true));
         // Wait for any privacy indicator to disappear to avoid the test becoming flaky.
         SystemClock.sleep(INDICATOR_DISMISS_TIMEOUT);
@@ -285,5 +290,10 @@ public final class RecognitionServiceMicIndicatorTest {
     private boolean isCar() {
         PackageManager pm = mContext.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    private boolean isWatch() {
+        PackageManager pm = mContext.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
