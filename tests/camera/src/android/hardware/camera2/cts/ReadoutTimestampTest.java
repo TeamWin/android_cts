@@ -122,11 +122,11 @@ public class ReadoutTimestampTest extends Camera2SurfaceViewTestCase {
         List<OutputConfiguration> outputConfigs = new ArrayList<>();
         OutputConfiguration configuration = new OutputConfiguration(reader.getSurface());
         assertFalse("OutputConfiguration: Readout timestamp should be false by default",
-                configuration.isReadoutTimestampUsed());
+                configuration.isReadoutTimestampEnabled());
         configuration.setTimestampBase(timestampBase);
-        configuration.useReadoutTimestamp(true);
+        configuration.setReadoutTimestampEnabled(true);
         assertTrue("OutputConfiguration: Readout timestamp should be true",
-                configuration.isReadoutTimestampUsed());
+                configuration.isReadoutTimestampEnabled());
         outputConfigs.add(configuration);
 
         BlockingSessionCallback sessionCallback = new BlockingSessionCallback();

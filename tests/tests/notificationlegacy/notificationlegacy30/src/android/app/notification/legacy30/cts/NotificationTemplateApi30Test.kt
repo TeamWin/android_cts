@@ -105,8 +105,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
             assertThat(iconView.width.toFloat())
                     .isWithin(1f)
                     .of((iconView.height * 4 / 3).toFloat())
-            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(40)
-            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(30)
+            assertThat(iconView.scaleType).isEqualTo(ImageView.ScaleType.CENTER_CROP)
         }
         // there should be no icon in the large state
         checkIconView(builder.createBigContentView()) { iconView ->

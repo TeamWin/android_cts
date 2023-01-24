@@ -32,11 +32,15 @@ import android.telecom.Call;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
 import android.telephony.AccessNetworkConstants;
+import android.telephony.CallState;
+import android.telephony.PreciseCallState;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.InCallServiceStateValidator;
+import android.telephony.ims.ImsCallProfile;
 import android.telephony.ims.ImsCallSessionListener;
+import android.telephony.ims.ImsStreamMediaProfile;
 import android.telephony.ims.MediaQualityStatus;
 import android.telephony.ims.feature.MmTelFeature;
 import android.util.Log;
@@ -1118,6 +1122,95 @@ public class ImsCallingTest extends ImsCallingBase {
     }
 
     @Test
+    public void testNotifyCallStateChanged() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
+                .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
+
+        final Uri imsUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, String.valueOf(++sCounter), null);
+        Bundle extras = new Bundle();
+
+        // Place outgoing call
+        telecomManager.placeCall(imsUri, extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        Call call = getCall(mCurrentCallId);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
+
+        isCallActive(call, callSession);
+        String callSessionId = callSession.getCallId();
+
+        LinkedBlockingQueue<List<CallState>> queue = new LinkedBlockingQueue<>();
+        ImsCallingTest.TestTelephonyCallbackForCallStateChange testCb =
+                new ImsCallingTest.TestTelephonyCallbackForCallStateChange(queue);
+        TelephonyManager telephonyManager = getContext().getSystemService(TelephonyManager.class);
+
+        //test registration without permission
+        try {
+            telephonyManager.registerTelephonyCallback(getContext().getMainExecutor(), testCb);
+            fail("registerTelephonyCallback requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            telephonyManager.registerTelephonyCallback(getContext().getMainExecutor(), testCb);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        //Expect to receive cached CallState in TelephonyRegistry when the listener registers event.
+        List<CallState> callStateList = queue.poll(ImsUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        assertNotNull(callStateList);
+        assertEquals(1, callStateList.size());
+        assertEquals(
+                PreciseCallState.PRECISE_CALL_STATE_ACTIVE, callStateList.get(0).getCallState());
+        assertEquals(callSessionId, callStateList.get(0).getImsCallSessionId());
+        assertEquals(ImsCallProfile.CALL_TYPE_VOICE, callStateList.get(0).getImsCallType());
+        assertEquals(ImsCallProfile.SERVICE_TYPE_NORMAL,
+                callStateList.get(0).getImsCallServiceType());
+
+        //update call type to Video.
+        ImsStreamMediaProfile mediaProfile = new ImsStreamMediaProfile(
+                ImsStreamMediaProfile.AUDIO_QUALITY_AMR,
+                ImsStreamMediaProfile.DIRECTION_SEND_RECEIVE,
+                ImsStreamMediaProfile.VIDEO_QUALITY_QCIF,
+                ImsStreamMediaProfile.DIRECTION_SEND_RECEIVE,
+                ImsStreamMediaProfile.RTT_MODE_DISABLED);
+        callSession.update(ImsCallProfile.CALL_TYPE_VT, mediaProfile);
+
+        //Check receiving CallState change callback.
+        callStateList = queue.poll(ImsUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        assertNotNull(callStateList);
+        assertEquals(1, callStateList.size());
+        assertEquals(
+                PreciseCallState.PRECISE_CALL_STATE_ACTIVE, callStateList.get(0).getCallState());
+        assertEquals(callSessionId, callStateList.get(0).getImsCallSessionId());
+        assertEquals(ImsCallProfile.CALL_TYPE_VT, callStateList.get(0).getImsCallType());
+        assertEquals(ImsCallProfile.SERVICE_TYPE_NORMAL,
+                callStateList.get(0).getImsCallServiceType());
+
+        call.disconnect();
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(call, callSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    @Test
     public void testNotifyMediaCallStatusChanged() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;
@@ -1213,6 +1306,18 @@ public class ImsCallingTest extends ImsCallingBase {
         @Override
         public void onMediaQualityStatusChanged(@NonNull MediaQualityStatus status) {
             mTestMediaQualityStatusQueue.offer(status);
+        }
+    }
+
+    private class TestTelephonyCallbackForCallStateChange extends TelephonyCallback
+            implements TelephonyCallback.CallAttributesListener {
+        LinkedBlockingQueue<List<CallState>> mTestCallStateListeQueue;
+        TestTelephonyCallbackForCallStateChange(LinkedBlockingQueue<List<CallState>> queue) {
+            mTestCallStateListeQueue = queue;
+        }
+        @Override
+        public void onCallStatesChanged(@NonNull List<CallState> states) {
+            mTestCallStateListeQueue.offer(states);
         }
     }
 

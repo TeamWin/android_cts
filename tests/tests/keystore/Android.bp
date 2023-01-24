@@ -64,6 +64,7 @@ android_test {
         "DeviceAdminApp",
         "Harrier",
         "Nene",
+        "android-key-attestation",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "core-tests-support",

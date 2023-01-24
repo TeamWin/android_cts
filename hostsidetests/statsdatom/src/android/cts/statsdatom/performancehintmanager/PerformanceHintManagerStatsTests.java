@@ -68,9 +68,9 @@ public class PerformanceHintManagerStatsTests extends DeviceTestCase implements 
     }
 
     public void testCreateHintSessionStatsd() throws Exception {
-        final int androidTApiLevel = 31; // android.os.Build.VERSION_CODES.S
-        final int apiLevel = Integer.parseInt(
-                DeviceUtils.getProperty(getDevice(), "ro.vendor.api_level"));
+        final int androidSApiLevel = 31; // android.os.Build.VERSION_CODES.S
+        final int firstApiLevel = Integer.parseInt(
+                DeviceUtils.getProperty(getDevice(), "ro.product.first_api_level"));
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.PERFORMANCE_HINT_SESSION_REPORTED_FIELD_NUMBER);
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(),
@@ -80,7 +80,7 @@ public class PerformanceHintManagerStatsTests extends DeviceTestCase implements 
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
-        if (apiLevel < androidTApiLevel) {
+        if (firstApiLevel < androidSApiLevel) {
             assume().that(data.size()).isEqualTo(0);
         }
 

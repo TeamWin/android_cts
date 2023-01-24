@@ -36,10 +36,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * These tests are run by DisplayWakeReportedStatsTests to generate some stats by exercising
  * wake APIs.
@@ -49,7 +45,6 @@ import java.util.regex.Pattern;
 @NonApiTest(exemptionReasons = {}, justification = "METRIC")
 public class DisplayWakeReportedTests {
     private static final String TAG = "DisplayWakeReportedTests";
-    private static final String WAKEFULNESS_ASLEEP = "Asleep";
     private static final int WAKEFULNESS_TIMEOUT = 10000;
 
     private PowerManager mPowerManager;
@@ -65,8 +60,7 @@ public class DisplayWakeReportedTests {
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mUiDevice.executeShellCommand("input keyevent SLEEP");
         PollingCheck.check("Device failed to sleep", WAKEFULNESS_TIMEOUT,
-                () -> !mPowerManager.isInteractive()
-                        && Objects.equals(getWakefulness(mUiDevice), WAKEFULNESS_ASLEEP));
+                () -> !mPowerManager.isInteractive());
     }
 
     @After
@@ -110,15 +104,5 @@ public class DisplayWakeReportedTests {
         Intent intent = new Intent(context, TurnScreenOnActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
-    }
-
-    private static String getWakefulness(UiDevice uiDevice) throws Exception {
-        Pattern pattern = Pattern.compile("mWakefulness=(.*)\\n");
-        String dump = uiDevice.executeShellCommand("dumpsys power");
-        Matcher matcher = pattern.matcher(dump);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return null;
     }
 }

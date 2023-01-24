@@ -266,6 +266,30 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     }
 
     @Override
+    public void update(int callType, ImsStreamMediaProfile mediaProfile) {
+        ImsCallProfile callProfile = new ImsCallProfile(ImsCallProfile.SERVICE_TYPE_NORMAL,
+                callType, new Bundle(), mediaProfile);
+        mCallProfile.updateMediaProfile(callProfile);
+
+        postAndRunTask(() -> {
+            try {
+                if (mListener == null) {
+                    return;
+                }
+                Log.d(LOG_TAG, "callSessionUpdated mCallId = " + mCallId);
+                mListener.callSessionUpdated(callProfile);
+                setState(ImsCallSessionImplBase.State.ESTABLISHED);
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("update cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+    }
+
+    @Override
     public void terminate(int reason) {
         postAndRunTask(() -> {
             try {

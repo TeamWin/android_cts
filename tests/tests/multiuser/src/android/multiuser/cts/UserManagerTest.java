@@ -738,8 +738,8 @@ public final class UserManagerTest {
 
         assertThat(properties.getShowInLauncher()).isIn(Arrays.asList(
                 UserProperties.SHOW_IN_LAUNCHER_WITH_PARENT));
-        assertThat(properties.getIsMediaSharedWithParent()).isFalse();
-        assertThat(properties.getIsCredentialSharableWithParent()).isFalse();
+        assertThat(properties.isMediaSharedWithParent()).isFalse();
+        assertThat(properties.isCredentialShareableWithParent()).isFalse();
     }
 
     @Test

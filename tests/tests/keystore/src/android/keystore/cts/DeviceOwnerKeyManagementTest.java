@@ -21,6 +21,7 @@ import static android.app.admin.DevicePolicyManager.ID_TYPE_IMEI;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_MEID;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_SERIAL;
 
+import static com.google.android.attestation.ParsedAttestationRecord.createParsedAttestationRecord;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -47,10 +48,13 @@ import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.ApiTest;
 
+import com.google.android.attestation.ParsedAttestationRecord;
+
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -138,6 +142,10 @@ public class DeviceOwnerKeyManagementTest {
         assertThat(teeAttestation.getImei()).isEqualTo(expectedImei);
         assertThat(teeAttestation.getMeid()).isEqualTo(expectedMeid);
 
+        validateSecondImei(teeAttestation.getSecondImei(), expectedSecondImei);
+    }
+
+    private void validateSecondImei(String attestedSecondImei, String expectedSecondImei) {
         /**
          * Test attestation support for 2nd IMEI:
          * * Attestation of 2nd IMEI (if present on the device) is required for devices shipping
@@ -155,23 +163,67 @@ public class DeviceOwnerKeyManagementTest {
         if (!isKeyMintV3) {
             // Earlier versions of KeyMint must not attest to second IMEI values as they are not
             // allowed to emit an attestation extension version that includes it.
-            assertThat(teeAttestation.getSecondImei()).isNull();
+            assertThat(attestedSecondImei).isNull();
         } else if (emptySecondImei) {
             // Device doesn't have a second IMEI, so none should be included in the attestation
             // extension.
-            assertThat(teeAttestation.getSecondImei()).isNull();
+            assertThat(attestedSecondImei).isNull();
         } else if (deviceShippedWithKeyMint3) {
             // The device has a second IMEI and should attest to it.
-            assertThat(teeAttestation.getSecondImei()).isEqualTo(expectedSecondImei);
+            assertThat(attestedSecondImei).isEqualTo(expectedSecondImei);
         } else {
             // Device has KeyMint 3, but originally shipped with an earlier KeyMint and
             // may not have provisioned the second IMEI as an attestation ID.
             // It does not have to support attesting to the second IMEI, but if there is something
             // in the attestation record, it must match the platform-provided second IMEI.
-            if (!TextUtils.isEmpty(teeAttestation.getSecondImei())) {
-                assertThat(teeAttestation.getSecondImei()).isEqualTo(expectedSecondImei);
+            if (!TextUtils.isEmpty(attestedSecondImei)) {
+                assertThat(attestedSecondImei).isEqualTo(expectedSecondImei);
             }
         }
+    }
+
+    private void validateDeviceIdAttestationDataUsingExtLib(Certificate leaf,
+                                                            String expectedSerial,
+                                                            String expectedImei,
+                                                            String expectedMeid,
+                                                            String expectedSecondImei)
+            throws CertificateParsingException, IOException {
+        ParsedAttestationRecord parsedAttestationRecord =
+                createParsedAttestationRecord((X509Certificate) leaf);
+
+        com.google.android.attestation.AuthorizationList teeAttestation =
+                parsedAttestationRecord.teeEnforced;
+
+        assertThat(teeAttestation).isNotNull();
+        assertThat(new String(teeAttestation.attestationIdBrand.get())).isEqualTo(Build.BRAND);
+        assertThat(new String(teeAttestation.attestationIdDevice.get())).isEqualTo(Build.DEVICE);
+        assertThat(new String(teeAttestation.attestationIdProduct.get())).isEqualTo(Build.PRODUCT);
+        assertThat(new String(teeAttestation.attestationIdManufacturer.get()))
+                .isEqualTo(Build.MANUFACTURER);
+        assertThat(new String(teeAttestation.attestationIdModel.get())).isEqualTo(Build.MODEL);
+
+        assertThat(!TextUtils.isEmpty(expectedSerial))
+                .isEqualTo(teeAttestation.attestationIdSerial.isPresent());
+        if (!TextUtils.isEmpty(expectedSerial)) {
+            assertThat(new String(teeAttestation.attestationIdSerial.get()))
+                    .isEqualTo(expectedSerial);
+        }
+        assertThat(!TextUtils.isEmpty(expectedImei))
+                .isEqualTo(teeAttestation.attestationIdImei.isPresent());
+        if (!TextUtils.isEmpty(expectedImei)) {
+            assertThat(new String(teeAttestation.attestationIdImei.get()))
+                    .isEqualTo(expectedImei);
+        }
+        assertThat(!TextUtils.isEmpty(expectedMeid))
+                .isEqualTo(teeAttestation.attestationIdMeid.isPresent());
+        if (!TextUtils.isEmpty(expectedMeid)) {
+            assertThat(new String(teeAttestation.attestationIdMeid.get()))
+                    .isEqualTo(expectedMeid);
+        }
+        // TODO: Second IMEI parsing is not supported by external library yet,
+        //  hence skipping for now.
+        /* validateSecondImei(new String(teeAttestation.attestationIdSecondImei.get()),
+                expectedSecondImei); */
     }
 
     private void validateAttestationRecord(List<Certificate> attestation, byte[] providedChallenge)
@@ -375,6 +427,10 @@ public class DeviceOwnerKeyManagementTest {
                             }
                         }
                         validateDeviceIdAttestationData(attestation, expectedSerial,
+                                expectedImei, expectedMeid, expectedSecondImei);
+                        // Validate attestation record using external library. As above validation
+                        // is successful external library validation should also pass.
+                        validateDeviceIdAttestationDataUsingExtLib(attestation, expectedSerial,
                                 expectedImei, expectedMeid, expectedSecondImei);
                     }
                 } catch (UnsupportedOperationException expected) {

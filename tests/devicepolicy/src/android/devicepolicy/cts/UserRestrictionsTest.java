@@ -18,6 +18,7 @@ package android.devicepolicy.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -31,6 +32,9 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDevice
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnUnaffiliatedProfileOwnerSecondaryUser;
 import com.android.bedstead.harrier.policies.AffiliatedProfileOwnerOnlyUserRestrictions;
 import com.android.bedstead.harrier.policies.UserRestrictions;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.devicepolicy.DeviceOwner;
+import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
 import com.android.bedstead.nene.userrestrictions.CommonUserRestrictions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
@@ -327,6 +331,8 @@ public final class UserRestrictionsTest {
     @Postsubmit(reason = "new test")
     public void addUserRestriction_deviceOwnerOnlyRestriction_throwsSecurityException(
             @DeviceOwnerOnlyUserRestrictions String restriction) {
+        skipTestForFinancedDevice();
+
         try {
             assertThrows(SecurityException.class, () -> {
                 sDeviceState.dpc().devicePolicyManager().addUserRestriction(
@@ -370,5 +376,13 @@ public final class UserRestrictionsTest {
                     sDeviceState.dpc().componentName(), ANY_USER_RESTRICTION);
             broadcastReceiver.awaitForBroadcastOrFail();
         }
+    }
+
+    private void skipTestForFinancedDevice() {
+        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
+
+        // TODO(): Determine a pattern to special case states so that they are not considered in
+        //  tests.
+        assumeFalse(deviceOwner != null && deviceOwner.getType() == DeviceOwnerType.FINANCED);
     }
 }

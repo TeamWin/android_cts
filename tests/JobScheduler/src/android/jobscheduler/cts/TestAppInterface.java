@@ -86,10 +86,16 @@ class TestAppInterface {
 
     void scheduleJob(boolean allowWhileIdle, int requiredNetworkType, boolean asExpeditedJob)
             throws Exception {
+        scheduleJob(allowWhileIdle, requiredNetworkType, asExpeditedJob, false);
+    }
+
+    void scheduleJob(boolean allowWhileIdle, int requiredNetworkType, boolean asExpeditedJob,
+            boolean asUserInitiatedJob) throws Exception {
         scheduleJob(
                 Map.of(
                         TestJobSchedulerReceiver.EXTRA_ALLOW_IN_IDLE, allowWhileIdle,
-                        TestJobSchedulerReceiver.EXTRA_AS_EXPEDITED, asExpeditedJob
+                        TestJobSchedulerReceiver.EXTRA_AS_EXPEDITED, asExpeditedJob,
+                        TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, asUserInitiatedJob
                 ),
                 Map.of(
                         TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, requiredNetworkType
@@ -117,6 +123,12 @@ class TestAppInterface {
     /** Asks (not forces) JobScheduler to run the job if constraints are met. */
     void runSatisfiedJob() throws Exception {
         SystemUtil.runShellCommand("cmd jobscheduler run -s"
+                + " -u " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE + " " + mJobId);
+    }
+
+    /** Forces JobScheduler to run the job */
+    void forceRunJob() throws Exception {
+        SystemUtil.runShellCommand("cmd jobscheduler run -f"
                 + " -u " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE + " " + mJobId);
     }
 

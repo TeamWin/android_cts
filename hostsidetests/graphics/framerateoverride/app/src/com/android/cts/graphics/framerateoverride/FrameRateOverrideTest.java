@@ -137,7 +137,7 @@ public final class FrameRateOverrideTest {
     // supports a 60Hz mode).
     private List<Display.Mode> getModesToTest() {
         List<Display.Mode> modesToTest = new ArrayList<>();
-        if (!SurfaceFlingerProperties.enable_frame_rate_override().orElse(true)) {
+        if (!SurfaceFlingerProperties.enable_frame_rate_override().orElse(false)) {
             Log.i(TAG, "Frame rate override is not enabled, skipping");
             return modesToTest;
         }
@@ -156,7 +156,7 @@ public final class FrameRateOverrideTest {
         }
 
         final boolean overrideForNativeRates = SurfaceFlingerProperties
-                        .frame_rate_override_for_native_rates().orElse(false);
+                        .frame_rate_override_for_native_rates().orElse(true);
         if (overrideForNativeRates) {
             for (Display.Mode mode : modesWithSameResolution) {
                 for (Display.Mode otherMode : modesWithSameResolution) {
@@ -186,7 +186,7 @@ public final class FrameRateOverrideTest {
     private void testGlobalFrameRateOverride(FrameRateObserver frameRateObserver)
             throws InterruptedException, IOException {
         FrameRateOverrideTestActivity activity = mActivityRule.getActivity();
-        if (!SurfaceFlingerProperties.frame_rate_override_global().orElse(true)) {
+        if (!SurfaceFlingerProperties.frame_rate_override_global().orElse(false)) {
             Log.i(TAG, "Global frame rate override is not enabled, skipping");
             return;
         }

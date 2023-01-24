@@ -20,6 +20,7 @@ import static android.jobscheduler.cts.JobThrottlingTest.setTestPackageStandbyBu
 
 import static org.junit.Assert.assertTrue;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.support.test.uiautomator.UiDevice;
@@ -32,6 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Collections;
 import java.util.Map;
 
 @RunWith(AndroidJUnit4.class)
@@ -54,6 +56,22 @@ public class UserInitiatedJobTest {
     @After
     public void tearDown() throws Exception {
         mTestAppInterface.cleanup();
+    }
+
+    @Test
+    public void testJobUidState() throws Exception {
+        mTestAppInterface.scheduleJob(
+                Map.of(
+                        TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true,
+                        TestJobSchedulerReceiver.EXTRA_REQUEST_JOB_UID_STATE, true
+                ),
+                Collections.emptyMap());
+        mTestAppInterface.forceRunJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
+        mTestAppInterface.assertJobUidState(ActivityManager.PROCESS_STATE_IMPORTANT_FOREGROUND,
+                ActivityManager.PROCESS_CAPABILITY_NETWORK,
+                227 /* ProcessList.PERCEPTIBLE_MEDIUM_APP_ADJ + 2 */);
     }
 
     /** Test that UIJs for the TOP app start immediately and there is no limit on the number. */

@@ -18,12 +18,26 @@ package android.car.cts;
 
 import static android.Manifest.permission.CREATE_USERS;
 import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED;
+import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_INVISIBLE;
 import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_REMOVED;
+import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_STARTING;
+import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_STOPPED;
+import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_STOPPING;
+import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_SWITCHING;
+import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_UNLOCKED;
+import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_UNLOCKING;
+import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_VISIBLE;
 import static android.car.user.CarUserManager.UserLifecycleEvent;
 import static android.car.user.CarUserManager.UserLifecycleListener;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertThrows;
+
+import static java.lang.Math.max;
+
+import android.app.ActivityManager;
 import android.car.test.ApiCheckerRule;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.car.test.util.AndroidHelper;
@@ -222,6 +236,48 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
         }
     }
 
+
+    @Test
+    @ApiTest(apis = {"android.car.user.CarUserManager#isValidUser(UserHandle)"})
+    @EnsureHasPermission(CREATE_USERS)
+    public void testIsValidUserExists() {
+        assertThat(mCarUserManager.isValidUser(
+                UserHandle.of(ActivityManager.getCurrentUser()))).isTrue();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.user.CarUserManager#isValidUser(UserHandle)"})
+    public void testIsValidUserDoesNotExist() {
+        assertThrows(SecurityException.class,
+                () -> mCarUserManager.isValidUser(getNonExistentUser()));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.user.CarUserManager#lifecycleEventTypeToString"})
+    public void testLifecycleEventTypeToString() {
+        expectThat(mCarUserManager.lifecycleEventTypeToString(
+                USER_LIFECYCLE_EVENT_TYPE_STARTING)).isEqualTo("STARTING");
+        expectThat(mCarUserManager.lifecycleEventTypeToString(
+                USER_LIFECYCLE_EVENT_TYPE_SWITCHING)).isEqualTo("SWITCHING");
+        expectThat(mCarUserManager.lifecycleEventTypeToString(
+                USER_LIFECYCLE_EVENT_TYPE_UNLOCKING)).isEqualTo("UNLOCKING");
+        expectThat(mCarUserManager.lifecycleEventTypeToString(
+                USER_LIFECYCLE_EVENT_TYPE_UNLOCKED)).isEqualTo("UNLOCKED");
+        expectThat(mCarUserManager.lifecycleEventTypeToString(
+                USER_LIFECYCLE_EVENT_TYPE_STOPPING)).isEqualTo("STOPPING");
+        expectThat(mCarUserManager.lifecycleEventTypeToString(
+                USER_LIFECYCLE_EVENT_TYPE_STOPPED)).isEqualTo("STOPPED");
+        expectThat(mCarUserManager.lifecycleEventTypeToString(
+                USER_LIFECYCLE_EVENT_TYPE_CREATED)).isEqualTo("CREATED");
+        expectThat(mCarUserManager.lifecycleEventTypeToString(
+                USER_LIFECYCLE_EVENT_TYPE_REMOVED)).isEqualTo("REMOVED");
+        expectThat(mCarUserManager.lifecycleEventTypeToString(
+                USER_LIFECYCLE_EVENT_TYPE_VISIBLE)).isEqualTo("VISIBLE");
+        expectThat(mCarUserManager.lifecycleEventTypeToString(
+                USER_LIFECYCLE_EVENT_TYPE_INVISIBLE)).isEqualTo("INVISIBLE");
+        expectThat(mCarUserManager.lifecycleEventTypeToString(0)).isEqualTo("UNKNOWN-0");
+    }
+
     @NonNull
     private UserHandle createUser(@Nullable String name, boolean isGuest) {
         name = getNewUserName(name);
@@ -280,6 +336,17 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
         String message = String.format(format, args);
         Log.e(TAG, "test failed: " + message);
         org.junit.Assert.fail(message);
+    }
+
+    private UserHandle getNonExistentUser() {
+        List<UserHandle> existingUsers = mUserManager.getUserHandles(false);
+
+        int newUserId = UserHandle.USER_NULL;
+        for (UserHandle userHandle : existingUsers) {
+            newUserId = max(newUserId, userHandle.getIdentifier());
+        }
+
+        return UserHandle.of(++newUserId);
     }
 
     // TODO(b/244594590): Clean this listener up once BlockingUserLifecycleListener supports

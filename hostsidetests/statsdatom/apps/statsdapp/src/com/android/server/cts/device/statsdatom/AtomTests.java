@@ -72,7 +72,6 @@ import android.os.PowerManager;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.os.SystemProperties;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
@@ -86,6 +85,7 @@ import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import libcore.javax.net.ssl.TestSSLContext;
@@ -1258,8 +1258,7 @@ public class AtomTests {
     @Test
     public void testCreateHintSession() throws Exception {
         final long targetNs = 16666666L;
-        final int androidTApiLevel = Build.VERSION_CODES.S;
-        final int apiLevel = SystemProperties.getInt("ro.vendor.api_level", -1);
+        final int firstApiLevel = PropertyUtil.getFirstApiLevel();
         Context context = InstrumentationRegistry.getContext();
         PerformanceHintManager phm = context.getSystemService(PerformanceHintManager.class);
 
@@ -1268,7 +1267,7 @@ public class AtomTests {
         PerformanceHintManager.Session session =
                 phm.createHintSession(new int[]{Process.myPid()}, targetNs);
 
-        if (apiLevel < androidTApiLevel) {
+        if (firstApiLevel < Build.VERSION_CODES.S) {
             assumeNotNull(session);
         } else {
             assertNotNull(session);

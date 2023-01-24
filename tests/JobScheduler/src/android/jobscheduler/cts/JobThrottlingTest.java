@@ -967,6 +967,60 @@ public class JobThrottlingTest {
     }
 
     @Test
+    public void testUserInitiatedJobBypassesBatterySaverOn() throws Exception {
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
+        BatteryUtils.assumeBatterySaverFeature();
+
+        setChargingState(false);
+        BatteryUtils.enableBatterySaver(true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, false, true);
+        assertTrue("New user-initiated job failed to start with battery saver ON",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testUserInitiatedJobBypassesBatterySaver_toggling() throws Exception {
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
+        BatteryUtils.assumeBatterySaverFeature();
+
+        setChargingState(false);
+        BatteryUtils.enableBatterySaver(false);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, false, true);
+        assertTrue("New user-initiated job failed to start with battery saver ON",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        BatteryUtils.enableBatterySaver(true);
+        assertFalse("Job stopped when battery saver turned on",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testUserInitiatedJobBypassesDeviceIdle() throws Exception {
+        assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+
+        toggleDozeState(true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, false, true);
+        runJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testUserInitiatedJobBypassesDeviceIdle_toggling() throws Exception {
+        assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+
+        toggleDozeState(false);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, false, true);
+        runJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        toggleDozeState(true);
+        assertFalse("Job stopped when device enabled turned on",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
     public void testRestrictingStopReason_RestrictedBucket() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeFalse("not testable in automotive device", mAutomotiveDevice);

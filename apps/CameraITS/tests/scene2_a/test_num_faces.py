@@ -54,7 +54,7 @@ def load_opencv_haarcascade_file():
                                     f'must be in {_HAARCASCADE_FILE}')
 
 
-def match_face_locations(faces_cropped, faces_opencv, mode):
+def match_face_locations(faces_cropped, faces_opencv, mode, img, img_name):
   """Assert face locations between two methods.
 
   Method determines if center of opencv face boxes is within face detection
@@ -65,6 +65,8 @@ def match_face_locations(faces_cropped, faces_opencv, mode):
     faces_cropped: list of lists with (l, r, t, b) for each face.
     faces_opencv: list of lists with (x, y, w, h) for each face.
     mode: int indicating face detection mode
+    img: np image array
+    img_name: text string with path to image file
   """
   # turn faces_opencv into list of center locations
   faces_opencv_centers = [(x+w//2, y+h//2) for (x, y, w, h) in faces_opencv]
@@ -77,8 +79,15 @@ def match_face_locations(faces_cropped, faces_opencv, mode):
     for (x1, y1) in cropped_faces_centers:
       if math.hypot(x-x1, y-y1) < _FACE_CENTER_MATCH_TOL:
         num_centers_aligned += 1
+
+  # If test failed, save image with green AND OpenCV red rectangles
+  faces_opencv = find_opencv_faces(img)
+  image_processing_utils.write_image(img, img_name)
   if num_centers_aligned != _NUM_FACES:
-    logging.debug('centered: %s', str(num_centers_aligned))
+    for (x, y, w, h) in faces_opencv:
+      cv2.rectangle(img, (x, y), (x+w, y+h), _CV2_RED, 2)
+      image_processing_utils.write_image(img, img_name)
+      logging.debug('centered: %s', str(num_centers_aligned))
     raise AssertionError(f'Mode {mode} face rectangles in wrong location(s)!. '
                          f'Found {num_centers_aligned} rectangles near cropped '
                          f'face centers, expected {_NUM_FACES}')
@@ -204,7 +213,6 @@ class NumFacesTest(its_base_test.ItsBaseTest):
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
-      debug_mode = self.debug_mode
 
       # Load chart for scene
       its_session_utils.load_scene(
@@ -258,14 +266,7 @@ class NumFacesTest(its_base_test.ItsBaseTest):
             for (l, r, t, b) in faces_cropped:
               cv2.rectangle(img, (l, t), (r, b), _CV2_GREEN, 2)
 
-            # Draw opencv boxes and center points in red
-            faces_opencv = find_opencv_faces(img)
-            for (x, y, w, h) in faces_opencv:
-              cv2.rectangle(img, (x, y), (x+w, y+h), _CV2_RED, 2)
-              if debug_mode:
-                cv2.circle(img, (x+w//2, y+h//2), 2, _CV2_RED, 2)
-
-            # save image with rectangles
+            # Save image with green rectangles
             img_name = f'{file_name_stem}_fd_mode_{fd_mode}.jpg'
             image_processing_utils.write_image(img, img_name)
             if fnd_faces != _NUM_FACES:
@@ -287,8 +288,10 @@ class NumFacesTest(its_base_test.ItsBaseTest):
               check_face_landmarks(face, fd_mode, k)
 
             # Match location of opencv and face detection mode faces
+            faces_opencv = find_opencv_faces(img)
             if fd_mode:  # non-zero value for ON
-              match_face_locations(faces_cropped, faces_opencv, fd_mode)
+              match_face_locations(faces_cropped, faces_opencv,
+                                   fd_mode, img, img_name)
 
           if not faces:
             continue

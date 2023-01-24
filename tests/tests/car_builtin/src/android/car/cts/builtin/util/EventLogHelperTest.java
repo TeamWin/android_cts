@@ -402,6 +402,55 @@ public final class EventLogHelperTest {
     }
 
     @Test
+    public void testWriteCarInitialUserStartFgUser() {
+        EventLogHelper.writeCarInitialUserStartFgUser(101);
+
+        assertLogMessage("car_initial_user_start_fg_user", "101");
+    }
+
+    @Test
+    public void testWriteCarInitialUserInfo() {
+        EventLogHelper.writeCarInitialUserInfo(101, true, 102, "string1", 103, true, "string2");
+
+        assertLogMessage("car_initial_user_info", "[101,1,102,string1,103,1,string2]");
+    }
+
+    @Test
+    public void testWriteCarInitialUserFallbackDefaultBehavior() {
+        EventLogHelper.writeCarInitialUserFallbackDefaultBehavior("string1");
+
+        assertLogMessage("car_initial_user_fallback_default_behavior", "string1");
+    }
+
+    @Test
+    public void testWriteCarInitialUserReplaceGuest() {
+        EventLogHelper.writeCarInitialUserReplaceGuest(101);
+
+        assertLogMessage("car_initial_user_replace_guest", "101");
+    }
+
+    @Test
+    public void testWriteCarInitialUserUnlockSystemUser() {
+        EventLogHelper.writeCarInitialUserUnlockSystemUser();
+
+        assertLogMessage("car_initial_user_unlock_system_user");
+    }
+
+    @Test
+    public void testWriteCarInitialUserSetLastActive() {
+        EventLogHelper.writeCarInitialUserSetLastActive(101);
+
+        assertLogMessage("car_initial_user_set_last_active", "101");
+    }
+
+    @Test
+    public void testWriteCarInitialUserResetGlobalProperty() {
+        EventLogHelper.writeCarInitialUserResetGlobalProperty("string1");
+
+        assertLogMessage("car_initial_user_reset_global_property", "string1");
+    }
+
+    @Test
     public void testWriteCarUserHalSwitchUserReq() {
         EventLogHelper.writeCarUserHalSwitchUserReq(101, 102, 103, 104);
 
