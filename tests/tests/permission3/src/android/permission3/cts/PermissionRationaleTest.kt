@@ -79,6 +79,42 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
     }
 
     @Test
+    fun startsPermissionRationaleActivity_failedByNullMetadata() {
+        installPackageWithInstallSourceAndNoMetadata(APP_APK_NAME_31)
+        navigateToPermissionRationaleActivity_failedShowPermissionRationaleContainer()
+    }
+
+    @Test
+    fun startsPermissionRationaleActivity_failedByEmptyMetadata() {
+        installPackageWithInstallSourceAndEmptyMetadata(APP_APK_NAME_31)
+        navigateToPermissionRationaleActivity_failedShowPermissionRationaleContainer()
+    }
+
+    @Test
+    fun startsPermissionRationaleActivity_failedByNoTopLevelVersion() {
+        installPackageWithInstallSourceAndMetadataWithoutTopLevelVersion(APP_APK_NAME_31)
+        navigateToPermissionRationaleActivity_failedShowPermissionRationaleContainer()
+    }
+
+    @Test
+    fun startsPermissionRationaleActivity_failedByInvalidTopLevelVersion() {
+        installPackageWithInstallSourceAndMetadataWithInvalidTopLevelVersion(APP_APK_NAME_31)
+        navigateToPermissionRationaleActivity_failedShowPermissionRationaleContainer()
+    }
+
+    @Test
+    fun startsPermissionRationaleActivity_failedByNoSafetyLabelVersion() {
+        installPackageWithInstallSourceAndMetadataWithoutSafetyLabelVersion(APP_APK_NAME_31)
+        navigateToPermissionRationaleActivity_failedShowPermissionRationaleContainer()
+    }
+
+    @Test
+    fun startsPermissionRationaleActivity_failedByInvalidSafetyLabelVersion() {
+        installPackageWithInstallSourceAndMetadataWithInvalidSafetyLabelVersion(APP_APK_NAME_31)
+        navigateToPermissionRationaleActivity_failedShowPermissionRationaleContainer()
+    }
+
+    @Test
     fun startsPermissionRationaleActivity() {
         navigateToPermissionRationaleActivity()
 
@@ -145,6 +181,12 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
         }
 
         assertAppHasPermission(Manifest.permission.ACCESS_FINE_LOCATION, false)
+    }
+
+    private fun navigateToPermissionRationaleActivity_failedShowPermissionRationaleContainer() {
+        requestAppPermissionsForNoResult(Manifest.permission.ACCESS_FINE_LOCATION) {
+            assertPermissionRationaleOnGrantDialogIsVisible(false)
+        }
     }
 
     private fun navigateToPermissionRationaleActivity() {

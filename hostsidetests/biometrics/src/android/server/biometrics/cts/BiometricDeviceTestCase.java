@@ -40,19 +40,21 @@ abstract class BiometricDeviceTestCase extends DeviceTestCase implements IBuildR
         mCtsBuild = buildInfo;
     }
 
-    /** If any biometric feature is present. */
-    protected boolean hasBiometrics() throws Exception {
-        return hasFeatureFace() || hasFeatureFingerprint();
+    /** If any AIDL biometric feature is present. */
+    protected boolean hasAidlBiometrics() throws Exception {
+        return hasFeatureFace(true /* aidlOnly */) || hasFeatureFingerprint(true /* aidlOnly */);
     }
 
     /** {@see PackageManager.FEATURE_FACE}. */
-    protected boolean hasFeatureFace() throws Exception {
-        return DeviceUtils.hasFeature(getDevice(), FEATURE_FACE);
+    protected boolean hasFeatureFace(boolean aidlOnly) throws Exception {
+        final boolean hasFeature = DeviceUtils.hasFeature(getDevice(), FEATURE_FACE);
+        return aidlOnly ? hasFeature && hasAidlFaceSensorId() : hasFeature;
     }
 
     /** {@see PackageManager.FEATURE_FINGERPRINT}. */
-    protected boolean hasFeatureFingerprint() throws Exception {
-        return DeviceUtils.hasFeature(getDevice(), FEATURE_FINGERPRINT);
+    protected boolean hasFeatureFingerprint(boolean aidlOnly) throws Exception {
+        final boolean hasFeature = DeviceUtils.hasFeature(getDevice(), FEATURE_FINGERPRINT);
+        return aidlOnly ? hasFeature && hasAidlFingerprintSensorId() : hasFeature;
     }
 
     /** Get info about all sensors on the device. */
@@ -69,8 +71,16 @@ abstract class BiometricDeviceTestCase extends DeviceTestCase implements IBuildR
 
     /** If there is an AIDL fingerprint HAL on the test device. */
     protected boolean hasAidlFingerprintSensorId() throws Exception {
-        final String dumpsys = getDevice().executeShellCommand("dumpsys fingerprint");
-        final int indexOfAidlProvider = dumpsys.indexOf(", provider: FingerprintProvider");
-        return indexOfAidlProvider > -1;
+        return getAidlSensorId("dumpsys fingerprint", ", provider: FingerprintProvider") > -1;
+    }
+
+    /** If there is an AIDL face HAL on the test device. */
+    protected boolean hasAidlFaceSensorId() throws Exception {
+        return getAidlSensorId("dumpsys face", ", provider: FaceProvider") > -1;
+    }
+
+    private int getAidlSensorId(String adbCommand, String providerRegex) throws Exception {
+        final String dumpsys = getDevice().executeShellCommand(adbCommand);
+        return dumpsys.indexOf(providerRegex);
     }
 }

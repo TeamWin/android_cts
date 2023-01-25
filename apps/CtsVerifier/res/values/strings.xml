@@ -6746,13 +6746,20 @@ Follow the instructions on the screen to measure the frequency response for the 
 
     <!-- Strings for ControlsPanelVerifierActivity -->
     <string name="controls_panel_test">Controls Panel tests</string>
+    <string name="controls_panel_install_test">0. Install helper app</string>
+    <string name="controls_panel_install_test_info">This test helps install the helper app that will be used for all subsequent tests in this group.</string>
+    <string name="controls_panel_install_test_instructions">You should have received a helper app apk with this CTS
+        Verifier package. Its name is \"CtsDeviceControlsApp\". Install the test app, by running\n
+        \"adb install /path/to/CtsDeviceControlsApp.apk\".\n
+        Pass the test if the install was successful, or if the app was already installed. Fail it otherwise.</string>
     <string name="controls_panel_basic_test">1. Controls Panel visible test</string>
     <string name="controls_panel_basic_test_info">This test verifies that an app that uses the
     correct metadata will be able to show a panel (custom activity) in the device controls space.</string>
     <string name="controls_panel_general_test_instructions">Open the Device controls space in this device.
         This is the space that allows you to control individual home automation devices for many apps.\n\n
-        Once there, you should see a header with the name \"Cts controls\" and the icon [ICON]. If you don\'t see it, there may be a drop down
-        to select that app. Once the app is selected, you should see a container with the title \"Cts controls\"
+        Once there, you should see a header with the name \"Cts controls\" and the icon [ICON]. If you don\'t see it, there may be a drop-down
+        to select that app. Alternatively, there may be a menu that allows you to add this app before it\'s visible in the drop-down.
+        Once the app is selected, you should see a container with the title \"Cts controls\"
         and content that starts with \"This is a panel belonging to Cts controls\".\n\n</string>
     <string name="controls_panel_basic_test_instructions">
     If you can observe this panel, pass this test. Otherwise fail this test.

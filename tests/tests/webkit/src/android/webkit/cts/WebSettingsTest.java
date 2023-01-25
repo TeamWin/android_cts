@@ -1195,7 +1195,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
      */
     private void startWebServer() throws Exception {
         assertNull(mWebServer);
-        mWebServer = new CtsTestServer(getActivity(), false);
+        mWebServer = new CtsTestServer(getActivity(), SslMode.INSECURE);
     }
 
     /**

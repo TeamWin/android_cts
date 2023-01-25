@@ -132,14 +132,6 @@ public class CtsTestServer {
     public static final String MESSAGE_403 = "403 forbidden";
     public static final String MESSAGE_404 = "404 not found";
 
-    public enum SslMode {
-        INSECURE,
-        NO_CLIENT_AUTH,
-        WANTS_CLIENT_AUTH,
-        NEEDS_CLIENT_AUTH,
-        TRUST_ANY_CLIENT
-    }
-
     private static Hashtable<Integer, String> sReasons;
 
     private ServerThread mServerThread;
@@ -147,7 +139,7 @@ public class CtsTestServer {
     private AssetManager mAssets;
     private Context mContext;
     private Resources mResources;
-    private SslMode mSsl;
+    private @SslMode int mSsl;
     private MimeTypeMap mMap;
     private Vector<String> mQueries;
     private ArrayList<HttpEntity> mRequestEntities;
@@ -162,7 +154,7 @@ public class CtsTestServer {
      * @throws IOException
      */
     public CtsTestServer(Context context) throws Exception {
-        this(context, false);
+        this(context, SslMode.INSECURE);
     }
 
     public static String getReasonString(int status) {
@@ -181,7 +173,7 @@ public class CtsTestServer {
      * @param context The application context to use for fetching assets.
      * @param ssl True if the server should be using secure sockets.
      * @throws Exception
-     */
+    */
     public CtsTestServer(Context context, boolean ssl) throws Exception {
         this(context, ssl ? SslMode.NO_CLIENT_AUTH : SslMode.INSECURE);
     }
@@ -192,7 +184,7 @@ public class CtsTestServer {
      * @param sslMode Whether to use SSL, and if so, what client auth (if any) to use.
      * @throws Exception
      */
-    public CtsTestServer(Context context, SslMode sslMode) throws Exception {
+    public CtsTestServer(Context context, @SslMode int sslMode) throws Exception {
         this(context, sslMode, 0, 0);
     }
 
@@ -203,7 +195,7 @@ public class CtsTestServer {
      * @param trustManager the trustManager
      * @throws Exception
      */
-    public CtsTestServer(Context context, SslMode sslMode, X509TrustManager trustManager)
+    public CtsTestServer(Context context, @SslMode int sslMode, X509TrustManager trustManager)
             throws Exception {
         this(context, sslMode, trustManager, 0, 0);
     }
@@ -216,7 +208,7 @@ public class CtsTestServer {
      * @param certResId Raw resource ID of the server certificate to use.
      * @throws Exception
      */
-    public CtsTestServer(Context context, SslMode sslMode, int keyResId, int certResId)
+    public CtsTestServer(Context context, @SslMode int sslMode, int keyResId, int certResId)
             throws Exception {
         this(context, sslMode, new CtsTrustManager(), keyResId, certResId);
     }
@@ -230,7 +222,7 @@ public class CtsTestServer {
      * @param certResId Raw resource ID of the server certificate to use.
      * @throws Exception
      */
-    public CtsTestServer(Context context, SslMode sslMode, X509TrustManager trustManager,
+    public CtsTestServer(Context context, @SslMode int sslMode, X509TrustManager trustManager,
             int keyResId, int certResId) throws Exception {
         mContext = context;
         mAssets = mContext.getAssets();
@@ -918,7 +910,7 @@ public class CtsTestServer {
     private static class ServerThread extends Thread {
         private CtsTestServer mServer;
         private ServerSocket mSocket;
-        private SslMode mSsl;
+        private @SslMode int mSsl;
         private boolean mWillShutDown = false;
         private SSLContext mSslContext;
         private ExecutorService mExecutorService = Executors.newFixedThreadPool(20);
@@ -1005,7 +997,7 @@ public class CtsTestServer {
             return keyManagerFactory.getKeyManagers();
         }
 
-        ServerThread(CtsTestServer server, SslMode sslMode, InputStream key,
+        ServerThread(CtsTestServer server, @SslMode int sslMode, InputStream key,
                 InputStream cert) throws Exception {
             super("ServerThread");
             mServer = server;

@@ -251,7 +251,7 @@ public class UsbManagerApiTest {
         SystemUtil.runShellCommand("dumpsys usb add-port " + portIdTestString
                 + " dual --displayport");
         SystemUtil.runShellCommand("dumpsys usb set-displayport-status "
-                + portIdTestString + " 2 2 2");
+                + portIdTestString + " 2 2 2 false 0");
 
         assertTrue(notifiedForCtsPort.await(1000, TimeUnit.MILLISECONDS));
         mUsbManagerSys.unregisterDisplayPortAltModeInfoListener(displayPortListener);
@@ -289,7 +289,7 @@ public class UsbManagerApiTest {
         SystemUtil.runShellCommand("dumpsys usb add-port " + portIdTestString
                 + " dual --displayport");
         SystemUtil.runShellCommand("dumpsys usb set-displayport-status "
-                + portIdTestString + " 2 2 2");
+                + portIdTestString + " 2 2 2 false 0");
 
         assertTrue(notifiedForCtsPort.await(1000, TimeUnit.MILLISECONDS));
 

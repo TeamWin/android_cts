@@ -110,7 +110,7 @@ public class BiometricsAtomsHostSideTests {
             } catch (Throwable t) {
                 throw new IllegalStateException("Failed to check modality", t);
             }
-            return true;
+            return false;
         }).collect(Collectors.toList());
     }
 

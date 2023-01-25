@@ -51,6 +51,7 @@ import android.support.test.uiautomator.UiObject2
 import android.support.test.uiautomator.Until
 import android.text.Html
 import android.util.Log
+import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.android.compatibility.common.util.DisableAnimationRule
@@ -121,6 +122,8 @@ abstract class BasePermissionTest {
     @get:Rule
     val activityRule = ActivityTestRule(StartForFutureActivity::class.java, false, false)
 
+    var activityScenario: ActivityScenario<StartForFutureActivity>? = null
+
     @get:Rule
     val installDialogStarter = ActivityTestRule(FutureResultActivity::class.java)
 
@@ -185,6 +188,12 @@ abstract class BasePermissionTest {
                 context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT,
                 screenTimeoutBeforeTest
             )
+        }
+
+        try {
+            activityScenario?.close()
+        } catch (e: NullPointerException) {
+            // ignore
         }
 
         pressHome()
@@ -360,7 +369,10 @@ abstract class BasePermissionTest {
         intent: Intent
     ): CompletableFuture<Instrumentation.ActivityResult> =
         CompletableFuture<Instrumentation.ActivityResult>().also {
-            activityRule.launchActivity(null).startActivityForFuture(intent, it)
+            activityScenario = ActivityScenario.launch(
+                StartForFutureActivity::class.java).onActivity { activity ->
+                activity.startActivityForFuture(intent, it)
+            }
         }
 
     open fun enableComponent(component: ComponentName) {

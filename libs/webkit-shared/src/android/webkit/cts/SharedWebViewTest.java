@@ -24,6 +24,8 @@ package android.webkit.cts;
  * SharedWebViewTestEnvironment} implementation.
  */
 public abstract class SharedWebViewTest {
+    public static final String WEB_VIEW_TEST_CLASS_NAME = "WEB_VIEW_TEST_CLASS_NAME";
+
     private SharedWebViewTestEnvironment mEnvironment;
 
     protected abstract SharedWebViewTestEnvironment createTestEnvironment();

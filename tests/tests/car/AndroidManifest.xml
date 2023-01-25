@@ -41,6 +41,8 @@
             <meta-data android:name="distractionOptimized" android:value="false"/>
         </activity>
         <activity android:name=".CarDisplayInputLockTest$TestActivity" />
+        <activity android:name="android.car.app.cts.CarActivityManagerTest$TestActivity"
+            android:allowEmbedded="true" />
 
         <!-- Setting the car target version to TIRAMISU_1 to allow tests checking car target version
              to pass, e.g.

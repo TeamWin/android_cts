@@ -14,13 +14,12 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.cts.sdksidetests.webviewsandboxtest">
 
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="android.virtualdevice.streamedtestapp2">
     <application>
-        <sdk-library android:name="com.android.cts.sdksidetests.webviewsandboxtest"
-                     android:versionMajor="1"/>
-        <property android:name="android.sdksandbox.PROPERTY_SDK_PROVIDER_CLASS_NAME"
-                  android:value="com.android.cts.sdksidetests.webviewsandboxtest.WebViewSandboxTestSdk"/>
+        <activity android:name=".ClipboardTestActivity2"
+                  android:allowEmbedded="true"
+                  android:exported="true" />
     </application>
 </manifest>

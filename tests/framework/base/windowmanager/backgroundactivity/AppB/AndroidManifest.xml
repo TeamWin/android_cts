@@ -20,7 +20,6 @@
 
     <!-- To enable the app to start activities from the background. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-
     <application>
         <receiver
             android:name=".StartPendingIntentReceiver"
@@ -30,6 +29,7 @@
             android:exported="true"/>
         <activity
             android:name=".ForegroundActivity"
+            android:allowUntrustedActivityEmbedding="true"
             android:exported="true" />
     </application>
 </manifest>

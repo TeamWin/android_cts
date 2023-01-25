@@ -258,6 +258,65 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }
     }
 
+    protected fun installPackageWithInstallSourceAndEmptyMetadata(
+        apkName: String
+    ) {
+    installPackageViaSession(apkName, AppMetadata.createEmptyAppMetadata())
+    }
+
+    protected fun installPackageWithInstallSourceAndMetadata(
+        apkName: String
+    ) {
+        installPackageViaSession(apkName, AppMetadata.createDefaultAppMetadata())
+    }
+
+    protected fun installPackageWithInstallSourceAndNoMetadata(
+      apkName: String
+    ) {
+        installPackageViaSession(apkName)
+    }
+
+    protected fun installPackageWithInstallSourceAndInvalidMetadata(
+      apkName: String
+    ) {
+        installPackageViaSession(apkName, AppMetadata.createInvalidAppMetadata())
+    }
+
+    protected fun installPackageWithInstallSourceAndMetadataWithoutTopLevelVersion(
+        apkName: String
+    ) {
+        installPackageViaSession(
+            apkName, AppMetadata.createInvalidAppMetadataWithoutTopLevelVersion())
+    }
+
+    protected fun installPackageWithInstallSourceAndMetadataWithInvalidTopLevelVersion(
+        apkName: String
+    ) {
+        installPackageViaSession(
+            apkName, AppMetadata.createInvalidAppMetadataWithInvalidTopLevelVersion())
+    }
+
+    protected fun installPackageWithInstallSourceAndMetadataWithoutSafetyLabelVersion(
+        apkName: String
+    ) {
+        installPackageViaSession(
+            apkName, AppMetadata.createInvalidAppMetadataWithoutSafetyLabelVersion())
+    }
+
+     protected fun installPackageWithInstallSourceAndMetadataWithInvalidSafetyLabelVersion(
+         apkName: String
+     ) {
+        installPackageViaSession(
+            apkName, AppMetadata.createInvalidAppMetadataWithInvalidSafetyLabelVersion())
+    }
+
+    protected fun installPackageWithoutInstallSource(
+        apkName: String
+    ) {
+        // TODO(b/257293222): Update/remove when hooking up PackageManager APIs
+        installPackage(apkName)
+    }
+
     protected fun clickPermissionReviewCancel() {
         if (isAutomotive || isWatch) {
             click(By.text(getPermissionControllerString("review_button_cancel")))

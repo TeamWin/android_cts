@@ -16,15 +16,10 @@
 
 package android.sdksandbox.webkit.cts;
 
-import static android.app.sdksandbox.testutils.testscenario.SdkSandboxScenarioRule.ENABLE_LIFE_CYCLE_ANNOTATIONS;
-
 import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
-import android.app.sdksandbox.testutils.testscenario.SdkSandboxScenarioRule;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.webkit.cts.SharedWebViewTestEnvironment;
 
-import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
@@ -47,12 +42,8 @@ public class WebViewSandboxTest {
             new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
 
     @Rule
-    public final SdkSandboxScenarioRule sdkTester =
-            new SdkSandboxScenarioRule(
-                    "com.android.cts.sdksidetests.webviewsandboxtest",
-                    SharedWebViewTestEnvironment.createHostAppInvoker(
-                            ApplicationProvider.getApplicationContext()),
-                    ENABLE_LIFE_CYCLE_ANNOTATIONS);
+    public final WebViewSandboxTestRule sdkTester =
+            new WebViewSandboxTestRule("android.webkit.cts.WebViewTest");
 
     @Test
     @MediumTest

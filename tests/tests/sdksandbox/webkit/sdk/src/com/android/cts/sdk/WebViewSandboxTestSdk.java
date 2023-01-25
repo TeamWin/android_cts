@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package com.android.cts.sdksidetests.webviewsandboxtest;
+package com.android.cts.sdk;
 
+import android.app.sdksandbox.SandboxedSdk;
+import android.app.sdksandbox.testutils.testscenario.ISdkSandboxTestExecutor;
 import android.app.sdksandbox.testutils.testscenario.SdkSandboxTestScenarioRunner;
 import android.content.Context;
 import android.os.Bundle;
@@ -23,35 +25,51 @@ import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.webkit.WebView;
 import android.webkit.cts.IHostAppInvoker;
+import android.webkit.cts.SharedWebViewTest;
 import android.webkit.cts.SharedWebViewTestEnvironment;
-import android.webkit.cts.WebViewOnUiThread;
-import android.webkit.cts.WebViewTest;
 import android.widget.LinearLayout;
 
+import androidx.annotation.Nullable;
+
 public class WebViewSandboxTestSdk extends SdkSandboxTestScenarioRunner {
-    private WebViewTest mTestInstance = new WebViewTest();
+    private static final String TAG = WebViewSandboxTestSdk.class.getName();
+
+    private @Nullable SharedWebViewTest mTestInstance;
     private WebView mWebView;
-    private WebViewOnUiThread mOnUiThread;
 
     @Override
-    public Object getTestInstance() {
-        return mTestInstance;
+    public SandboxedSdk onLoadSdk(Bundle params) {
+        try {
+            Bundle setupParams = params.getBundle(ISdkSandboxTestExecutor.TEST_SETUP_PARAMS);
+            if (setupParams != null) {
+                String webViewTestClassName =
+                        setupParams.getString(SharedWebViewTest.WEB_VIEW_TEST_CLASS_NAME);
+                mTestInstance = (SharedWebViewTest) Class.forName(webViewTestClassName)
+                        .newInstance();
+                setTestInstance(mTestInstance);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return super.onLoadSdk(params);
     }
 
     @Override
-    public View beforeEachTest(Context windowContext, Bundle params, int width, int height) {
+    public View getView(Context windowContext, Bundle params, int width, int height) {
         mWebView = new WebView(getContext());
-        mOnUiThread = new WebViewOnUiThread(mWebView);
 
-        SharedWebViewTestEnvironment testEnvironment =
-                new SharedWebViewTestEnvironment.Builder()
-                        .setContext(getContext())
-                        .setWebView(mWebView)
-                        .setWebViewOnUiThread(mOnUiThread)
-                        .setHostAppInvoker(IHostAppInvoker.Stub.asInterface(getCustomInterface()))
-                        .build();
+        if (mTestInstance != null) {
+            SharedWebViewTestEnvironment testEnvironment =
+                    new SharedWebViewTestEnvironment.Builder()
+                            .setContext(getContext())
+                            .setWebView(mWebView)
+                            .setHostAppInvoker(
+                                    IHostAppInvoker.Stub.asInterface(getCustomInterface()))
+                            .build();
 
-        mTestInstance.setTestEnvironment(testEnvironment);
+            mTestInstance.setTestEnvironment(testEnvironment);
+        }
 
         // Some tests expect the WebView to have a parent so making the parent
         // a linear layout the same as the regular webkit tests.

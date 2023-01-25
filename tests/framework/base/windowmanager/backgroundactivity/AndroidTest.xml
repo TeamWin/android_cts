@@ -27,11 +27,12 @@
         <option name="cleanup-apks" value="true" />
         <option name="install-arg" value="-t" />
         <option name="test-file-name" value="CtsBackgroundActivityAppA.apk" />
+        <option name="test-file-name" value="CtsBackgroundActivityAppA33.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <!-- TODO(b/129909356): Rename to CtsWindowManagerDeviceTestCases.apk -->
-        <option name="test-file-name" value="CtsActivityManagerBackgroundActivityTestCases.apk" />
+        <option name="test-file-name" value="CtsWindowManagerBackgroundActivityTestCases.apk" />
         <option name="test-file-name" value="CtsBackgroundActivityAppB.apk" />
         <option name="test-file-name" value="CtsBackgroundActivityAppB33.apk" />
     </target_preparer>

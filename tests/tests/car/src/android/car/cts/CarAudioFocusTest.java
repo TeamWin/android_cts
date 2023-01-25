@@ -18,6 +18,7 @@ package android.car.cts;
 
 import static android.car.media.CarAudioManager.AUDIO_FEATURE_DYNAMIC_ROUTING;
 import static android.media.AudioManager.AUDIOFOCUS_GAIN;
+import static android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK;
 import static android.media.AudioManager.AUDIOFOCUS_LOSS;
 import static android.media.AudioManager.AUDIOFOCUS_REQUEST_DELAYED;
 import static android.media.AudioManager.AUDIOFOCUS_REQUEST_FAILED;
@@ -25,6 +26,7 @@ import static android.media.AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.car.Car;
@@ -280,6 +282,51 @@ public final class CarAudioFocusTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void requestAudioFocus_forCallWhileMediaHoldsFocus_callShouldReceiveFocus() {
+        AudioFocusRequest mediaAudioFocusRequest = delayedFocusRequestBuilder().build();
+        mAudioFocusRequestsSet.add(mediaAudioFocusRequest);
+        mAudioManager.requestAudioFocus(mediaAudioFocusRequest);
+        AudioFocusRequest phoneAudioFocusRequest = phoneFocusRequestBuilder().build();
+        mAudioFocusRequestsSet.add(phoneAudioFocusRequest);
+        mAudioManager.requestAudioFocus(phoneAudioFocusRequest);
+
+        int results = mAudioManager.requestAudioFocus(phoneAudioFocusRequest);
+
+        assertWithMessage("Call focus request during media")
+                .that(results).isEqualTo(AUDIOFOCUS_REQUEST_GRANTED);
+    }
+
+    @Test
+    public void requestAudioFocus_forAssistantWhileMediaHoldsFocus_assistantShouldReceiveFocus() {
+        AudioFocusRequest mediaAudioFocusRequest = delayedFocusRequestBuilder().build();
+        mAudioFocusRequestsSet.add(mediaAudioFocusRequest);
+        mAudioManager.requestAudioFocus(mediaAudioFocusRequest);
+        AudioFocusRequest assistantAudioFocusRequest = assistantFocusRequestBuilder().build();
+        mAudioFocusRequestsSet.add(assistantAudioFocusRequest);
+        mAudioManager.requestAudioFocus(assistantAudioFocusRequest);
+
+        int results = mAudioManager.requestAudioFocus(assistantAudioFocusRequest);
+
+        assertWithMessage("Assistant focus request during media")
+                .that(results).isEqualTo(AUDIOFOCUS_REQUEST_GRANTED);
+    }
+
+    @Test
+    public void requestAudioFocus_forNavWhileMediaHoldsFocus_navShouldReceiveFocus() {
+        AudioFocusRequest mediaAudioFocusRequest = delayedFocusRequestBuilder().build();
+        mAudioFocusRequestsSet.add(mediaAudioFocusRequest);
+        mAudioManager.requestAudioFocus(mediaAudioFocusRequest);
+        AudioFocusRequest navigationAudioFocusRequest = navigationFocusRequestBuilder().build();
+        mAudioFocusRequestsSet.add(navigationAudioFocusRequest);
+        mAudioManager.requestAudioFocus(navigationAudioFocusRequest);
+
+        int results = mAudioManager.requestAudioFocus(navigationAudioFocusRequest);
+
+        assertWithMessage("Navigation focus request during media")
+                .that(results).isEqualTo(AUDIOFOCUS_REQUEST_GRANTED);
+    }
+
+    @Test
     public void individualAttributeFocusRequest_focusRequestGranted() {
         // Make sure each usage is able to request and release audio focus individually
         requestAndLoseFocusForAttribute(ATTR_MEDIA);
@@ -294,6 +341,7 @@ public final class CarAudioFocusTest extends AbstractCarTestCase {
 
     @Test
     public void exclusiveInteractionsForFocusGain_requestGrantedAndFocusLossSent() {
+        assumeOEMServiceIsNotEnabled();
         // For each interaction the focus request is granted and on the second request
         // focus lost is dispatched to the first focus listener
 
@@ -306,6 +354,7 @@ public final class CarAudioFocusTest extends AbstractCarTestCase {
 
     @Test
     public void exclusiveInteractionsTransient_requestGrantedAndFocusLossSent() {
+        assumeOEMServiceIsNotEnabled();
         // For each interaction the focus request is granted and on the second request
         // focus lost transient is dispatched to the first focus listener
 
@@ -319,6 +368,7 @@ public final class CarAudioFocusTest extends AbstractCarTestCase {
 
     @Test
     public void exclusiveInteractionsTransientMayDuck_requestGrantedAndFocusLossSent() {
+        assumeOEMServiceIsNotEnabled();
         // For each interaction the focus request is granted and on the second request
         // focus lost transient is dispatched to the first focus listener
 
@@ -332,6 +382,7 @@ public final class CarAudioFocusTest extends AbstractCarTestCase {
 
     @Test
     public void rejectedInteractions_focusRequestRejected() {
+        assumeOEMServiceIsNotEnabled();
         // Test different paired interaction between different usages
         // for each interaction pair the first focus request will be granted but the second
         // will be rejected
@@ -353,6 +404,7 @@ public final class CarAudioFocusTest extends AbstractCarTestCase {
 
     @Test
     public void concurrentInteractionsFocusGain_requestGrantedAndFocusLossSent() {
+        assumeOEMServiceIsNotEnabled();
         // Test concurrent interactions i.e. interactions that can
         // potentially gain focus at the same time.
         // For this test permanent focus gain is requested by two usages.
@@ -363,6 +415,7 @@ public final class CarAudioFocusTest extends AbstractCarTestCase {
 
     @Test
     public void concurrentInteractionsTransientGain_requestGrantedAndFocusLossTransientSent() {
+        assumeOEMServiceIsNotEnabled();
         // Test concurrent interactions i.e. interactions that can
         // potentially gain focus at the same time.
         // For this test permanent focus gain is requested by first usage and focus gain transient
@@ -376,6 +429,7 @@ public final class CarAudioFocusTest extends AbstractCarTestCase {
 
     @Test
     public void concurrentInteractionsTransientGainMayDuck_requestGrantedAndNoFocusLossSent() {
+        assumeOEMServiceIsNotEnabled();
         // Test concurrent interactions i.e. interactions that can
         // potentially gain focus at the same time.
         // For this test permanent focus gain is requested by first usage and focus gain transient
@@ -667,6 +721,20 @@ public final class CarAudioFocusTest extends AbstractCarTestCase {
                 .setOnAudioFocusChangeListener(listener);
     }
 
+    private static AudioFocusRequest.Builder assistantFocusRequestBuilder() {
+        AudioManager.OnAudioFocusChangeListener listener = new FocusChangeListener();
+        return new AudioFocusRequest.Builder(AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                .setAudioAttributes(ATTR_VOICE_COMMAND)
+                .setOnAudioFocusChangeListener(listener);
+    }
+
+    private static AudioFocusRequest.Builder navigationFocusRequestBuilder() {
+        AudioManager.OnAudioFocusChangeListener listener = new FocusChangeListener();
+        return new AudioFocusRequest.Builder(AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                .setAudioAttributes(ATTR_NAVIGATION)
+                .setOnAudioFocusChangeListener(listener);
+    }
+
     private static final class FocusChangeListener
             implements AudioManager.OnAudioFocusChangeListener {
         private final Semaphore mChangeEventSignal = new Semaphore(0);
@@ -728,6 +796,12 @@ public final class CarAudioFocusTest extends AbstractCarTestCase {
 
     private void assumeDynamicRoutingIsEnabled() {
         assumeTrue("Dynamic routing is disabled.", isDynamicRoutingEnabled());
+    }
+
+    private void assumeOEMServiceIsNotEnabled() {
+        assumeFalse("Oem service is enabled",
+                mCarAudioManager.isAudioFeatureEnabled(
+                        CarAudioManager.AUDIO_FEATURE_OEM_AUDIO_SERVICE));
     }
 
     private boolean isDynamicRoutingEnabled() {

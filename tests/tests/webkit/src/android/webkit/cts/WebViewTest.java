@@ -159,7 +159,7 @@ public class WebViewTest extends SharedWebViewTest {
     @Before
     public void setUp() throws Exception {
         mWebView = getTestEnvironment().getWebView();
-        mOnUiThread = getTestEnvironment().getWebViewOnUiThread();
+        mOnUiThread = new WebViewOnUiThread(mWebView);
         mContext = getTestEnvironment().getContext();
     }
 
@@ -197,11 +197,6 @@ public class WebViewTest extends SharedWebViewTest {
                                                     mActivity))
                                     .setContext(mActivity)
                                     .setWebView(webView);
-
-                            if (webView != null) {
-                                WebViewOnUiThread onUi = new WebViewOnUiThread(webView);
-                                builder.setWebViewOnUiThread(onUi);
-                            }
                         });
 
         SharedWebViewTestEnvironment environment = builder.build();
@@ -227,7 +222,7 @@ public class WebViewTest extends SharedWebViewTest {
     private void startWebServer(boolean secure) throws Exception {
         assertNull(mWebServer);
         mWebServer = getTestEnvironment().getWebServer();
-        mWebServer.start(secure);
+        mWebServer.start(secure ? SslMode.NO_CLIENT_AUTH : SslMode.INSECURE);
     }
 
     @Test

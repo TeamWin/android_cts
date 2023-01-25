@@ -16,10 +16,6 @@
 
 package android.server.wm.backgroundactivity.appb;
 
-import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentActivity.ALLOW_BAL_EXTRA;
-import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentActivity.USE_NULL_BUNDLE;
-import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentReceiver.PENDING_INTENT_EXTRA;
-
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.PendingIntent;
@@ -31,23 +27,29 @@ import android.util.Log;
  * Receive pending intent from AppA and launch it
  */
 public class StartPendingIntentActivity extends Activity {
+    private Components mB;
 
     public static final String TAG = "StartPendingIntentActivity";
 
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        Intent intent = getIntent();
-        final PendingIntent pendingIntent = intent.getParcelableExtra(PENDING_INTENT_EXTRA);
+        mB = Components.get(getApplicationContext());
 
+        Intent intent = getIntent();
+
+        final PendingIntent pendingIntent = intent.getParcelableExtra(
+                mB.START_PENDING_INTENT_RECEIVER_EXTRA.PENDING_INTENT);
         try {
             final Bundle bundle;
-            if (intent.hasExtra(ALLOW_BAL_EXTRA)) {
+            if (intent.hasExtra(mB.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_BAL)) {
                 ActivityOptions options = ActivityOptions.makeBasic();
-                final boolean allowBal = intent.getBooleanExtra(ALLOW_BAL_EXTRA, false);
+                final boolean allowBal = intent.getBooleanExtra(
+                        mB.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_BAL, false);
                 options.setPendingIntentBackgroundActivityLaunchAllowed(allowBal);
                 bundle = options.toBundle();
-            } else if (intent.getBooleanExtra(USE_NULL_BUNDLE, false)) {
+            } else if (intent.getBooleanExtra(
+                    mB.START_PENDING_INTENT_ACTIVITY_EXTRA.USE_NULL_BUNDLE, false)) {
                 bundle = null;
             } else {
                 bundle = ActivityOptions.makeBasic().toBundle();

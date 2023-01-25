@@ -46,6 +46,7 @@ import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -654,6 +655,23 @@ public class BitmapRegionDecoderTest {
         Bitmap full = decoder.decodeRegion(new Rect(0, 0, decoder.getWidth(), decoder.getHeight()),
                 null);
         assertNotNull(full);
+    }
+
+    @Test
+    @Ignore("TODO(b/264715926): Enable when region decoding is there")
+    public void testJpegr() throws IOException {
+        InputStream is = obtainInputStream(R.raw.sample_jpegr);
+        BitmapFactory.Options opt = new BitmapFactory.Options();
+        opt.inPreferredConfig = Config.RGBA_1010102;
+        opt.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.BT2020_HLG);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
+        Bitmap region = decoder.decodeRegion(new Rect(100, 100, 250, 250), opt);
+        assertNotNull(region);
+        assertEquals(150, region.getWidth());
+        assertEquals(150, region.getHeight());
+        assertEquals(Config.RGBA_1010102, region.getConfig());
+        assertEquals(region.getColorSpace().getName(),
+                     ColorSpace.get(ColorSpace.Named.BT2020_HLG).getName());
     }
 
     @Test(expected = NullPointerException.class)

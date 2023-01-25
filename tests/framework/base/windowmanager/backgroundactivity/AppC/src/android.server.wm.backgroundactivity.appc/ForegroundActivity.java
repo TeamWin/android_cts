@@ -22,7 +22,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.server.wm.backgroundactivity.appa.Components;
 import android.util.Log;
 
 /**
@@ -46,7 +45,10 @@ public class ForegroundActivity extends Activity {
         mAllowBackgroundActivityLaunch = getIntent().getBooleanExtra(
                 "android.server.wm.backgroundactivity.appc.ALLOW_BAL", false);
         Log.d(TAG, "mAllowBackgroundActivityLaunch: " + mAllowBackgroundActivityLaunch);
-        Intent serviceIntent = new Intent().setComponent(Components.APP_A_ACTIVITY_START_SERVICE);
+        android.server.wm.backgroundactivity.appa.Components appA =
+                android.server.wm.backgroundactivity.appa.Components.get(
+                        android.server.wm.backgroundactivity.appa.Components.JAVA_PACKAGE_NAME);
+        Intent serviceIntent = new Intent().setComponent(appA.ACTIVITY_START_SERVICE);
         int flags = Context.BIND_AUTO_CREATE;
         if (mAllowBackgroundActivityLaunch) {
             flags |= Context.BIND_ALLOW_ACTIVITY_STARTS;

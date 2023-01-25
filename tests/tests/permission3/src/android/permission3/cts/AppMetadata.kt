@@ -20,6 +20,16 @@ import android.os.PersistableBundle
 
 /** Helper methods for creating test app metadata [PersistableBundle] */
 object AppMetadata {
+    private const val KEY_VERSION = "version"
+    private const val INITIAL_SAFETY_LABELS_VERSION = 1L
+    private const val INITIAL_TOP_LEVEL_VERSION = 1L
+    private const val INVALID_SAFETY_LABELS_VERSION = -1L
+    private const val INVALID_TOP_LEVEL_VERSION = 0L
+
+    /** Returns empty App Metadata [PersistableBundle] representation */
+    fun createEmptyAppMetadata(): PersistableBundle {
+        return PersistableBundle()
+    }
 
     /** Returns valid App Metadata [PersistableBundle] representation */
     fun createDefaultAppMetadata(): PersistableBundle {
@@ -44,10 +54,12 @@ object AppMetadata {
         }
 
         val safetyLabelBundle = PersistableBundle().apply {
+            putLong(KEY_VERSION, INITIAL_SAFETY_LABELS_VERSION)
             putPersistableBundle("data_labels", dataLabelBundle)
         }
 
         return PersistableBundle().apply {
+            putLong(KEY_VERSION, INITIAL_TOP_LEVEL_VERSION)
             putPersistableBundle("safety_labels", safetyLabelBundle)
         }
     }
@@ -61,7 +73,69 @@ object AppMetadata {
         val validSafetyLabel = validAppMetaData.getPersistableBundle("safety_labels")
 
         return PersistableBundle().apply {
+            putLong(KEY_VERSION, INITIAL_TOP_LEVEL_VERSION)
             putPersistableBundle("invalid_safety_labels", validSafetyLabel)
+        }
+    }
+
+    /**
+     * Returns invalid App Metadata [PersistableBundle] representation. Invalidity due to no top
+     * level meta data version number.
+     */
+    fun createInvalidAppMetadataWithoutTopLevelVersion(): PersistableBundle {
+        val validAppMetaData = createDefaultAppMetadata()
+        val validSafetyLabel = validAppMetaData.getPersistableBundle("safety_labels")
+
+        return PersistableBundle().apply {
+            putPersistableBundle("safety_labels", validSafetyLabel)
+        }
+    }
+
+    /**
+     * Returns invalid App Metadata [PersistableBundle] representation. Invalidity due to invalid
+     * top level meta data version number.
+     */
+    fun createInvalidAppMetadataWithInvalidTopLevelVersion(): PersistableBundle {
+        val validAppMetaData = createDefaultAppMetadata()
+        val validSafetyLabel = validAppMetaData.getPersistableBundle("safety_labels")
+
+        return PersistableBundle().apply {
+            putLong(KEY_VERSION, INVALID_TOP_LEVEL_VERSION)
+            putPersistableBundle("safety_labels", validSafetyLabel)
+        }
+    }
+
+    /**
+     * Returns invalid App Metadata [PersistableBundle] representation. Invalidity due to no safety
+     * label version number.
+     */
+    fun createInvalidAppMetadataWithoutSafetyLabelVersion(): PersistableBundle {
+        val validAppMetaData = createDefaultAppMetadata()
+        val invalidSafetyLabel =
+            validAppMetaData.getPersistableBundle("safety_labels").apply {
+                this?.remove(KEY_VERSION)
+        }
+
+        return PersistableBundle().apply {
+            putLong(KEY_VERSION, INITIAL_TOP_LEVEL_VERSION)
+            putPersistableBundle("safety_labels", invalidSafetyLabel)
+        }
+    }
+
+    /**
+     * Returns invalid App Metadata [PersistableBundle] representation. Invalidity due to invalid
+     * safety label version number.
+     */
+    fun createInvalidAppMetadataWithInvalidSafetyLabelVersion(): PersistableBundle {
+        val validAppMetaData = createDefaultAppMetadata()
+        val invalidSafetyLabel =
+            validAppMetaData.getPersistableBundle("safety_labels")?.apply {
+                putLong(KEY_VERSION, INVALID_SAFETY_LABELS_VERSION)
+            }
+
+        return PersistableBundle().apply {
+            putLong(KEY_VERSION, INITIAL_TOP_LEVEL_VERSION)
+            putPersistableBundle("safety_labels", invalidSafetyLabel)
         }
     }
 }

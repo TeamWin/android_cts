@@ -40,6 +40,7 @@ import static android.media.AudioManager.VIBRATE_SETTING_ON;
 import static android.media.AudioManager.VIBRATE_SETTING_ONLY_SILENT;
 import static android.media.AudioManager.VIBRATE_TYPE_NOTIFICATION;
 import static android.media.AudioManager.VIBRATE_TYPE_RINGER;
+import static android.media.audio.cts.AudioVolumeTestUtil.resetVolumeIndex;
 import static android.provider.Settings.Global.APPLY_RAMPING_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
@@ -69,6 +70,7 @@ import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.MicrophoneInfo;
 import android.media.audiopolicy.AudioProductStrategy;
+import android.media.audiopolicy.AudioVolumeGroup;
 import android.media.cts.Utils;
 import android.os.Build;
 import android.os.SystemClock;
@@ -1938,7 +1940,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
             Log.i(TAG, "Skip testPreferredDevicesForStrategy as there is no strategy for media");
             return;
         }
-
+        Log.i(TAG, "Found strategy " + strategyForMedia.getName() + " for media");
         try {
             mAudioManager.setPreferredDeviceForStrategy(strategyForMedia, ada);
             fail("setPreferredDeviceForStrategy must fail due to no permission");
@@ -2222,6 +2224,232 @@ public class AudioManagerTest extends InstrumentationTestCase {
                 }
             }
             mAudioManager.removeOnPreferredMixerAttributesChangedListener(listener);
+        }
+    }
+
+    public void testAdjustVolumeGroupVolume() {
+        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.MODIFY_AUDIO_SYSTEM_SETTINGS,
+                Manifest.permission.MODIFY_AUDIO_ROUTING,
+                Manifest.permission.QUERY_AUDIO_STATE,
+                Manifest.permission.MODIFY_PHONE_STATE);
+
+        List<AudioVolumeGroup> audioVolumeGroups = mAudioManager.getAudioVolumeGroups();
+        assertTrue(audioVolumeGroups.size() > 0);
+
+        final AudioAttributes callAa = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                .build();
+        int voiceCallVolumeGroup = mAudioManager.getVolumeGroupIdForAttributes(callAa);
+
+        assertNotEquals(voiceCallVolumeGroup, AudioVolumeGroup.DEFAULT_VOLUME_GROUP);
+
+        AudioVolumeGroupCallbackHelper vgCbReceiver = new AudioVolumeGroupCallbackHelper();
+        mAudioManager.registerVolumeGroupCallback(mContext.getMainExecutor(), vgCbReceiver);
+
+        try {
+            // Validate Audio Volume Groups callback reception
+            for (final AudioVolumeGroup audioVolumeGroup : audioVolumeGroups) {
+                int volumeGroupId = audioVolumeGroup.getId();
+                int[] avgStreamTypes = audioVolumeGroup.getLegacyStreamTypes();
+                if (avgStreamTypes.length != 0) {
+                    // filters out bijective as API is dispatched to stream.
+                    // Following compatibility test will ensure API are dispatched
+                    continue;
+                }
+                int indexMax = mAudioManager.getVolumeGroupMaxVolumeIndex(volumeGroupId);
+                int indexMin = mAudioManager.getVolumeGroupMinVolumeIndex(volumeGroupId);
+                boolean isMutable = (indexMin == 0) || (volumeGroupId == voiceCallVolumeGroup);
+
+                // Set the receiver to filter only the current group callback
+                int index = resetVolumeIndex(indexMin, indexMax);
+                vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                mAudioManager.setVolumeGroupVolumeIndex(volumeGroupId, index, 0/*flags*/);
+                assertTrue(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                        AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                int readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                assertEquals("Failed to set volume for group id "
+                        + volumeGroupId, readIndex, index);
+
+                while (index < indexMax) {
+                    vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                    mAudioManager.adjustVolumeGroupVolume(
+                            volumeGroupId, AudioManager.ADJUST_RAISE, 0/*flags*/);
+                    assertTrue(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                            AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                    readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                    index += 1;
+                    assertEquals(readIndex, index);
+                }
+                // Max reached
+                vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                mAudioManager.adjustVolumeGroupVolume(
+                        volumeGroupId, AudioManager.ADJUST_RAISE, 0/*flags*/);
+                assertTrue("Cb expected for group "
+                        + volumeGroupId, vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                        AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                assertEquals(readIndex, indexMax);
+
+                while (index > indexMin) {
+                    vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                    mAudioManager.adjustVolumeGroupVolume(
+                            volumeGroupId, AudioManager.ADJUST_LOWER, 0/*flags*/);
+                    assertTrue(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                            AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                    index -= 1;
+                    readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                    assertEquals("Failed to decrease volume for group id "
+                            + volumeGroupId, readIndex, index);
+                }
+                // Min reached
+                vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                mAudioManager.adjustVolumeGroupVolume(
+                        volumeGroupId, AudioManager.ADJUST_LOWER, 0/*flags*/);
+                assertTrue("Cb expected for group "
+                        + volumeGroupId, vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                        AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                assertEquals("Failed to decrease volume for group id "
+                        + volumeGroupId, readIndex, indexMin);
+
+                // Mute/Unmute
+                if (isMutable) {
+                    int lastAudibleIndex;
+                    index = resetVolumeIndex(indexMin, indexMax);
+                    vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                    mAudioManager.setVolumeGroupVolumeIndex(volumeGroupId, index, 0/*flags*/);
+                    assertTrue(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                            AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+
+                    readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                    assertEquals("Failed to set volume for group id "
+                            + volumeGroupId, readIndex, index);
+
+                    lastAudibleIndex =
+                            mAudioManager.getLastAudibleVolumeGroupVolume(volumeGroupId);
+                    assertEquals(lastAudibleIndex, index);
+                    assertFalse(mAudioManager.isVolumeGroupMuted(volumeGroupId));
+
+                    // Mute
+                    vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                    mAudioManager.adjustVolumeGroupVolume(
+                            volumeGroupId, AudioManager.ADJUST_MUTE, 0/*flags*/);
+                    assertTrue(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                            AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                    readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                    assertEquals("Failed to mute volume for group id "
+                            + volumeGroupId, readIndex, indexMin);
+                    assertEquals(lastAudibleIndex,
+                            mAudioManager.getLastAudibleVolumeGroupVolume(volumeGroupId));
+                    assertTrue(mAudioManager.isVolumeGroupMuted(volumeGroupId));
+
+                    // Unmute
+                    vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                    mAudioManager.adjustVolumeGroupVolume(
+                            volumeGroupId, AudioManager.ADJUST_UNMUTE, 0/*flags*/);
+                    assertTrue(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                            AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                    readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                    assertEquals("Failed to unmute volume for group id "
+                            + volumeGroupId, readIndex, lastAudibleIndex);
+                    assertEquals(lastAudibleIndex,
+                            mAudioManager.getLastAudibleVolumeGroupVolume(volumeGroupId));
+                    assertFalse(mAudioManager.isVolumeGroupMuted(volumeGroupId));
+
+                    // Toggle Mute (from unmuted)
+                    vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                    mAudioManager.adjustVolumeGroupVolume(
+                            volumeGroupId, AudioManager.ADJUST_TOGGLE_MUTE, 0/*flags*/);
+                    assertTrue(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                            AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                    readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                    assertEquals("Failed to mute volume for group id "
+                            + volumeGroupId, readIndex, indexMin);
+                    assertEquals(lastAudibleIndex,
+                            mAudioManager.getLastAudibleVolumeGroupVolume(volumeGroupId));
+                    assertTrue(mAudioManager.isVolumeGroupMuted(volumeGroupId));
+
+                    // Toggle Mute (from muted)
+                    vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                    mAudioManager.adjustVolumeGroupVolume(
+                            volumeGroupId, AudioManager.ADJUST_TOGGLE_MUTE, 0/*flags*/);
+                    assertTrue(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                            AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                    readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                    assertEquals("Failed to unmute volume for group id "
+                            + volumeGroupId, readIndex, lastAudibleIndex);
+                    assertEquals(lastAudibleIndex,
+                            mAudioManager.getLastAudibleVolumeGroupVolume(volumeGroupId));
+                    assertFalse(mAudioManager.isVolumeGroupMuted(volumeGroupId));
+                } else {
+                    int lastAudibleIndex;
+                    index = resetVolumeIndex(indexMin, indexMax);
+                    vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                    mAudioManager.setVolumeGroupVolumeIndex(volumeGroupId, index, 0/*flags*/);
+                    assertTrue(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                            AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                    readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                    assertEquals(readIndex, index);
+
+                    lastAudibleIndex =
+                            mAudioManager.getLastAudibleVolumeGroupVolume(volumeGroupId);
+                    assertEquals(lastAudibleIndex, index);
+                    assertFalse(mAudioManager.isVolumeGroupMuted(volumeGroupId));
+
+                    // Mute
+                    vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                    mAudioManager.adjustVolumeGroupVolume(
+                            volumeGroupId, AudioManager.ADJUST_MUTE, 0/*flags*/);
+                    assertFalse(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                            AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                    readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                    assertEquals("Unexpected volume mute for group id " + volumeGroupId
+                            + " readIndex=" + readIndex, readIndex, lastAudibleIndex);
+                    assertEquals(lastAudibleIndex,
+                            mAudioManager.getLastAudibleVolumeGroupVolume(volumeGroupId));
+                    assertFalse(mAudioManager.isVolumeGroupMuted(volumeGroupId));
+
+                    // Unmute
+                    vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                    mAudioManager.adjustVolumeGroupVolume(
+                            volumeGroupId, AudioManager.ADJUST_UNMUTE, 0/*flags*/);
+                    assertFalse(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                            AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                    readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                    assertEquals(readIndex, lastAudibleIndex);
+                    assertEquals(lastAudibleIndex,
+                            mAudioManager.getLastAudibleVolumeGroupVolume(volumeGroupId));
+                    assertFalse(mAudioManager.isVolumeGroupMuted(volumeGroupId));
+
+                    // Toggle Mute (from unmuted)
+                    vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                    mAudioManager.adjustVolumeGroupVolume(
+                            volumeGroupId, AudioManager.ADJUST_TOGGLE_MUTE, 0/*flags*/);
+                    assertFalse(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                            AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                    readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                    assertEquals(readIndex, lastAudibleIndex);
+                    assertEquals(lastAudibleIndex,
+                            mAudioManager.getLastAudibleVolumeGroupVolume(volumeGroupId));
+                    assertFalse(mAudioManager.isVolumeGroupMuted(volumeGroupId));
+
+                    // Toggle Mute (from muted)
+                    vgCbReceiver.setExpectedVolumeGroup(volumeGroupId);
+                    mAudioManager.adjustVolumeGroupVolume(
+                            volumeGroupId, AudioManager.ADJUST_TOGGLE_MUTE, 0/*flags*/);
+                    assertFalse(vgCbReceiver.waitForExpectedVolumeGroupChanged(
+                            AudioVolumeGroupCallbackHelper.ASYNC_TIMEOUT_MS));
+                    readIndex = mAudioManager.getVolumeGroupVolumeIndex(volumeGroupId);
+                    assertEquals(readIndex, lastAudibleIndex);
+                    assertEquals(lastAudibleIndex,
+                            mAudioManager.getLastAudibleVolumeGroupVolume(volumeGroupId));
+                    assertFalse(mAudioManager.isVolumeGroupMuted(volumeGroupId));
+                }
+            }
+        } finally {
+            mAudioManager.unregisterVolumeGroupCallback(vgCbReceiver);
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
         }
     }
 

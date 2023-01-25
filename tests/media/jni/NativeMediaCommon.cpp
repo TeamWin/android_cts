@@ -154,3 +154,59 @@ bool isMediaTypeOutputUnAffectedBySeek(const char* mediaType) {
     if (strncmp(mediaType, "video/", strlen("video/")) == 0) return true;
     return false;
 }
+
+AMediaFormat* deSerializeMediaFormat(const char* msg, const char* separator) {
+    // constants to be kept in sync with definitions at MediaFormat.java
+    static const int TYPE_INTEGER = 1;
+    static const int TYPE_FLOAT = 3;
+    static const int TYPE_STRING = 4;
+    std::string limiter{separator};
+    std::string fmtMsg{msg};
+    AMediaFormat* fmt = AMediaFormat_new();
+    if (fmt == nullptr) {
+        ALOGE("no format received");
+        return nullptr;
+    }
+    auto start = 0u;
+    auto end = fmtMsg.find(limiter);
+    std::string keyStr, valueTypeStr, valueStr;
+    for (; end != std::string::npos;) {
+        // key
+        keyStr = fmtMsg.substr(start, end - start);
+        start = end + limiter.length();
+        end = fmtMsg.find(limiter, start);
+        if (end == std::string::npos) {
+            ALOGE("incomplete media format received %s", msg);
+            AMediaFormat_delete(fmt);
+            return nullptr;
+        }
+        // value type
+        valueTypeStr = fmtMsg.substr(start, end - start);
+        start = end + limiter.length();
+        end = fmtMsg.find(limiter, start);
+        if (end == std::string::npos) {
+            ALOGE("incomplete media format received %s", msg);
+            AMediaFormat_delete(fmt);
+            return nullptr;
+        }
+
+        // value
+        valueStr = fmtMsg.substr(start, end - start);
+        start = end + limiter.length();
+        end = fmtMsg.find(limiter, start);
+
+        auto valueType = std::stoi(valueTypeStr);
+        if (valueType == TYPE_INTEGER) {
+            AMediaFormat_setInt32(fmt, keyStr.c_str(), std::stoi(valueStr));
+        } else if (valueType == TYPE_FLOAT) {
+            AMediaFormat_setFloat(fmt, keyStr.c_str(), std::stof(valueStr));
+        } else if (valueType == TYPE_STRING) {
+            AMediaFormat_setString(fmt, keyStr.c_str(), valueStr.c_str());
+        } else {
+            ALOGE("unrecognized type for key %s", keyStr.c_str());
+            AMediaFormat_delete(fmt);
+            return nullptr;
+        }
+    }
+    return fmt;
+}

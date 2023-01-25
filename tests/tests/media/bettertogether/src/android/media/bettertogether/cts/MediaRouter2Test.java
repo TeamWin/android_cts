@@ -17,6 +17,8 @@
 package android.media.bettertogether.cts;
 
 import static android.content.Context.AUDIO_SERVICE;
+import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
+import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.media.MediaRoute2Info.FEATURE_LIVE_AUDIO;
 import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.FEATURES_SPECIAL;
@@ -37,6 +39,7 @@ import static org.junit.Assert.assertThrows;
 import android.Manifest;
 import android.annotation.NonNull;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaRoute2Info;
@@ -1105,6 +1108,20 @@ public class MediaRouter2Test {
         RoutingController controller = mRouter2.getSystemController();
         RoutingSessionInfo sessionInfo = controller.getRoutingSessionInfo();
         assertThat(sessionInfo).isNotNull();
+    }
+
+    @Test
+    public void testShowSystemOutputSwitcherNotThrowingException() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        mRouter2.showSystemOutputSwitcher();
+
+        // Wait for the dialog to show before dismissing it.
+        latch.await(WAIT_MS, TimeUnit.MILLISECONDS);
+
+        // Dismiss the system output switcher dialog in order to clean up, leaving the device in
+        // the same state as it was when the test started.
+        InstrumentationRegistry.getInstrumentation().getContext().sendBroadcast(
+                new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
     }
 
     // Helper for getting routes easily. Uses original ID as a key

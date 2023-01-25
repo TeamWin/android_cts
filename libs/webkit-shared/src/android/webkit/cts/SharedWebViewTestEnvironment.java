@@ -39,17 +39,14 @@ import org.apache.http.util.EncodingUtils;
 public final class SharedWebViewTestEnvironment {
     @Nullable private final Context mContext;
     @Nullable private final WebView mWebView;
-    @Nullable private final WebViewOnUiThread mWebViewOnUiThread;
     private final IHostAppInvoker mHostAppInvoker;
 
     private SharedWebViewTestEnvironment(
             Context context,
             WebView webView,
-            WebViewOnUiThread webViewOnUiThread,
             IHostAppInvoker hostAppInvoker) {
         mContext = context;
         mWebView = webView;
-        mWebViewOnUiThread = webViewOnUiThread;
         mHostAppInvoker = hostAppInvoker;
     }
 
@@ -61,11 +58,6 @@ public final class SharedWebViewTestEnvironment {
     @Nullable
     public WebView getWebView() {
         return mWebView;
-    }
-
-    @Nullable
-    public WebViewOnUiThread getWebViewOnUiThread() {
-        return mWebViewOnUiThread;
     }
 
     /**
@@ -123,7 +115,6 @@ public final class SharedWebViewTestEnvironment {
     public static final class Builder {
         private Context mContext;
         private WebView mWebView;
-        private WebViewOnUiThread mWebViewOnUiThread;
         private IHostAppInvoker mHostAppInvoker;
 
         /** Provide a {@link Context} the tests should use for your environment. */
@@ -135,12 +126,6 @@ public final class SharedWebViewTestEnvironment {
         /** Provide a {@link WebView} the tests should use for your environment. */
         public Builder setWebView(@NonNull WebView webView) {
             mWebView = webView;
-            return this;
-        }
-
-        /** Provide a {@link WebViewOnUiThread} the tests should use for your environment. */
-        public Builder setWebViewOnUiThread(@NonNull WebViewOnUiThread webViewOnUiThread) {
-            mWebViewOnUiThread = webViewOnUiThread;
             return this;
         }
 
@@ -162,7 +147,7 @@ public final class SharedWebViewTestEnvironment {
                 throw new NullPointerException("The host app invoker is required");
             }
             return new SharedWebViewTestEnvironment(
-                    mContext, mWebView, mWebViewOnUiThread, mHostAppInvoker);
+                    mContext, mWebView, mHostAppInvoker);
         }
     }
 
@@ -194,10 +179,10 @@ public final class SharedWebViewTestEnvironment {
                 return new IWebServer.Stub() {
                     private CtsTestServer mWebServer;
 
-                    public void start(boolean secure) {
+                    public void start(@SslMode int sslMode) {
                         assertNull(mWebServer);
                         try {
-                            mWebServer = new CtsTestServer(applicationContext, secure);
+                            mWebServer = new CtsTestServer(applicationContext, sslMode);
                         } catch (Exception e) {
                             fail("Failed to launch CtsTestServer");
                         }

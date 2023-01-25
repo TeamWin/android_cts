@@ -19,18 +19,16 @@ package android.webkit.cts;
 import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.CookieManager;
-import android.webkit.CookieSyncManager;
-import android.webkit.WebView;
 import android.webkit.ValueCallback;
+import android.webkit.WebView;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 
+import java.util.Date;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -108,7 +106,7 @@ public class CookieManagerTest extends
         mCookieManager.setAcceptCookie(false);
         assertFalse(mCookieManager.acceptCookie());
 
-        mServer = new CtsTestServer(getActivity(), false);
+        mServer = new CtsTestServer(getActivity(), SslMode.INSECURE);
         String url = mServer.getCookieUrl("conquest.html");
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals("0", mOnUiThread.getTitle()); // no cookies passed
@@ -427,7 +425,7 @@ public class CookieManagerTest extends
         // Verify that two servers with different schemes on the same host are not considered
         // same-site to each other.
         CtsTestServer secureServer = new CtsTestServer(getActivity(),
-                CtsTestServer.SslMode.NO_CLIENT_AUTH, R.raw.trustedkey, R.raw.trustedcert);
+                SslMode.NO_CLIENT_AUTH, R.raw.trustedkey, R.raw.trustedcert);
         try {
             String cookieUrl = secureServer.getSetCookieUrl("/cookie_1.js", "test1", "value1");
             String url = mServer.getLinkedScriptUrl("/content_1.html", cookieUrl);

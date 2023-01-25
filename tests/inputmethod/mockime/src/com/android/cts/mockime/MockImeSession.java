@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.RectF;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -1256,9 +1257,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}
      * with the given parameters.
      *
-     * <p>Use {@link ImeEvent#getReturnIntegerValue()} for {@link ImeEvent} returned from
-     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
-     * value returned from the API.</p>
+     * <p>The result callback will be recorded as an {@code onPerformHandwritingGestureResult}
+     * event.
      *
      * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
@@ -1272,6 +1272,25 @@ public class MockImeSession implements AutoCloseable {
         final Bundle params = new Bundle();
         params.putByteArray("gesture", gesture.toByteArray());
         return callCommandInternal("performHandwritingGesture", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#requestTextBoundsInfo}.
+     *
+     * <p>The result callback will be recorded as an {@code onRequestTextBoundsInfoResult} event.
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
+     * @param gesture {@link SelectGesture} or {@link InsertGesture} or {@link DeleteGesture}.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callRequestTextBoundsInfo(RectF rectF) {
+        final Bundle params = new Bundle();
+        params.putParcelable("rectF", rectF);
+        return callCommandInternal("requestTextBoundsInfo", params);
     }
 
     /**

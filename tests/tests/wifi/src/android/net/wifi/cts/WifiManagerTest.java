@@ -6048,6 +6048,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * {@link WifiManager#removeQosPolicy(int)}, and
      * {@link WifiManager#removeAllQosPolicies()} do not crash.
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     public void testAddAndRemoveQosPolicy() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported

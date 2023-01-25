@@ -49,6 +49,7 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.AnrMonitor;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.ShellUtils;
 import com.android.server.am.nano.ServiceRecordProto;
@@ -879,8 +880,6 @@ public class ActivityManagerShortFgsTest {
 
             // The ANR time should be after the timeout + the ANR grace period.
             assertThat(anrTime).isAtLeast(startTime + SHORTENED_TIMEOUT + anrExtraTimeout);
-
-            // Should trigger an ANR.
         }
     }
 }

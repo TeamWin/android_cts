@@ -46,6 +46,20 @@
         return false;                          \
     }
 
+#define RETURN_IF_FALSE(cond, msg)              \
+    if (!(cond)) {                              \
+        ALOGE("%s", (msg).c_str());             \
+        mErrorLogs.append((msg)).append("\n");  \
+        return false;                           \
+    }
+
+#define RETURN_IF_NULL(var, msg)               \
+    if ((var) == nullptr) {                    \
+        ALOGE("%s", (msg).c_str());            \
+        mErrorLogs.append((msg)).append("\n"); \
+        return false;                          \
+    }
+
 struct callbackObject {
     AMediaCodecBufferInfo bufferInfo;
     int32_t bufferIndex;

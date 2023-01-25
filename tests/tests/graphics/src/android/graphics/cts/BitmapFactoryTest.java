@@ -34,6 +34,7 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapFactory.Options;
 import android.graphics.Color;
+import android.graphics.ColorSpace;
 import android.graphics.Rect;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -58,6 +59,7 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -1006,6 +1008,47 @@ public class BitmapFactoryTest {
             }
         }
         return argb;
+    }
+
+    @Test
+    public void testDecodeJpegrSDR() {
+        Bitmap bm = BitmapFactory.decodeStream(obtainInputStream(R.raw.sample_jpegr));
+        assertNotNull(bm);
+        assertEquals(1280, bm.getWidth());
+        assertEquals(720, bm.getHeight());
+        assertEquals(Config.ARGB_8888, bm.getConfig());
+        assertEquals(bm.getColorSpace().getName(),
+                     ColorSpace.get(ColorSpace.Named.SRGB).getName());
+    }
+
+    @Test
+    public void testDecodeJpegrHDR() {
+        BitmapFactory.Options opt = new BitmapFactory.Options();
+        opt.inPreferredConfig = Config.RGBA_1010102;
+        opt.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.BT2020_HLG);
+        Bitmap bm = BitmapFactory.decodeStream(obtainInputStream(R.raw.sample_jpegr), null, opt);
+        assertNotNull(bm);
+        assertEquals(1280, bm.getWidth());
+        assertEquals(720, bm.getHeight());
+        assertEquals(Config.RGBA_1010102, bm.getConfig());
+        assertEquals(bm.getColorSpace().getName(),
+                     ColorSpace.get(ColorSpace.Named.BT2020_HLG).getName());
+    }
+
+    @Test
+    @Ignore("TODO(b/264715926): Enable when Sampled decoding is there")
+    public void testDecodeJpegrSampled() {
+        BitmapFactory.Options opt = new BitmapFactory.Options();
+        opt.inPreferredConfig = Config.RGBA_1010102;
+        opt.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.BT2020_HLG);
+        opt.inSampleSize = 4;
+        Bitmap bm = BitmapFactory.decodeStream(obtainInputStream(R.raw.sample_jpegr), null, opt);
+        assertNotNull(bm);
+        assertEquals(320, bm.getWidth());
+        assertEquals(180, bm.getHeight());
+        assertEquals(Config.RGBA_1010102, bm.getConfig());
+        assertEquals(bm.getColorSpace().getName(),
+                     ColorSpace.get(ColorSpace.Named.BT2020_HLG).getName());
     }
 
     @Test

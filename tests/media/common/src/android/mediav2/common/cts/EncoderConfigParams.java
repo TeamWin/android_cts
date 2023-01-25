@@ -18,6 +18,8 @@ package android.mediav2.common.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 
 import android.media.AudioFormat;
@@ -29,6 +31,8 @@ import androidx.annotation.NonNull;
  * Class to hold encoder configuration settings.
  */
 public class EncoderConfigParams {
+    public static final String TOKEN_SEPARATOR = "<>";
+
     public final boolean mIsAudio;
     public final String mMediaType;
 
@@ -141,7 +145,9 @@ public class EncoderConfigParams {
             mLevel = cfg.mLevel;
             if (cfg.mColorFormat != COLOR_FormatYUV420Flexible
                     && cfg.mColorFormat != COLOR_FormatYUVP010
-                    && cfg.mColorFormat != COLOR_FormatSurface) {
+                    && cfg.mColorFormat != COLOR_FormatSurface
+                    && cfg.mColorFormat != COLOR_FormatYUV420SemiPlanar
+                    && cfg.mColorFormat != COLOR_FormatYUV420Planar) {
                 throw new IllegalArgumentException("bad color format config for video component");
             }
             mColorFormat = cfg.mColorFormat;
@@ -149,6 +155,14 @@ public class EncoderConfigParams {
                 if (cfg.mColorFormat == COLOR_FormatYUV420Flexible && cfg.mInputBitDepth != 8) {
                     throw new IllegalArgumentException(
                             "bad bit depth configuration for COLOR_FormatYUV420Flexible");
+                } else if (cfg.mColorFormat == COLOR_FormatYUV420SemiPlanar
+                        && cfg.mInputBitDepth != 8) {
+                    throw new IllegalArgumentException(
+                            "bad bit depth configuration for COLOR_FormatYUV420SemiPlanar");
+                } else if (cfg.mColorFormat == COLOR_FormatYUV420Planar
+                        && cfg.mInputBitDepth != 8) {
+                    throw new IllegalArgumentException(
+                            "bad bit depth configuration for COLOR_FormatYUV420Planar");
                 } else if (cfg.mColorFormat == COLOR_FormatYUVP010 && cfg.mInputBitDepth != 10) {
                     throw new IllegalArgumentException(
                             "bad bit depth configuration for COLOR_FormatYUVP010");
@@ -214,6 +228,30 @@ public class EncoderConfigParams {
             if (mTransfer >= 0) mFormat.setInteger(MediaFormat.KEY_COLOR_TRANSFER, mTransfer);
         }
         return new MediaFormat(mFormat);
+    }
+
+    /**
+     * Converts MediaFormat object to a string. All Keys, ValueTypes, Values are concatenated with
+     * a separator and sent for further usage.
+     */
+    public static String serializeMediaFormat(MediaFormat format) {
+        StringBuilder msg = new StringBuilder();
+        java.util.Set<String> keys = format.getKeys();
+        for (String key : keys) {
+            int valueTypeForKey = format.getValueTypeForKey(key);
+            msg.append(key).append(TOKEN_SEPARATOR);
+            msg.append(valueTypeForKey).append(TOKEN_SEPARATOR);
+            if (valueTypeForKey == MediaFormat.TYPE_INTEGER) {
+                msg.append(format.getInteger(key)).append(TOKEN_SEPARATOR);
+            } else if (valueTypeForKey == MediaFormat.TYPE_FLOAT) {
+                msg.append(format.getFloat(key)).append(TOKEN_SEPARATOR);
+            } else if (valueTypeForKey == MediaFormat.TYPE_STRING) {
+                msg.append(format.getString(key)).append(TOKEN_SEPARATOR);
+            } else {
+                throw new RuntimeException("unrecognized Type for Key: " + key);
+            }
+        }
+        return msg.toString();
     }
 
     @NonNull

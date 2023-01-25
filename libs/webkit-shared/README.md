@@ -61,34 +61,23 @@ protected SharedWebViewTestEnvironment createTestEnvironment() {
 
 Your test suite is now sharable with an SDK runtime test suite!
 
-### 2. Creating a new SDK Runtime test suite
+### 2. Sharing your tests with the SDK Runtime
 
 The SDK Runtime tests for webkit live under `//cts/tests/tests/sdksandbox/webkit`.
 
-You need to create a test SDK that will actually have your tests, and a
-JUnit test suite that JUnit will have to invoke your tests from an activity.
+You need a test SDK that will actually have your tests, and a JUnit test suite that JUnit will have to invoke your tests from an activity.
 
 You can follow the "Creating new SDK Runtime tests" section under the SDK testscenario
 guide (store these SDK tests in `//cts/tests/tests/sdksandbox/webkit`):
 `//packages/modules/AdServices/sdksandbox/tests/testutils/testscenario/README.md`
 
-By the end of that guide, you should have two new modules:
-*  A test SDK that will reference your shared tests
-*  A JUnit test suite that will load your test SDK
-
-Your SharedWebViewTest will be provided as a test instance to be executed via the test SDK.
-You can use `SharedWebViewTest.setTestEnvironment` to override the test environment for the
-SDK Runtime.
-You can look at WebViewSandboxTestSdk for an example of how this is done:
-`//cts/tests/tests/sdksandbox/webkit/sdksidetests/WebViewSandboxTest/src/com/android/cts/sdksidetests/webviewsandboxtest/WebViewSandboxTestSdk.java`
-
-The "Custom test instances" section under the SDK testscenario has more info on how this works:
-`//packages/modules/AdServices/sdksandbox/tests/testutils/testscenario/README.md`
-
 *** aside
-**Note:**   Your test SDK needs to depend on `CtsWebkitTestCasesSharedWithSdk`. This contains
-the JUnit test suite you will depend on.
+**Note:**  If you reuse the WebViewSandboxTestSdk below you will only need to follow the last step of the "Invoke from a JUnit test suite" section from the guide above.
 ***
+
+However, instead of creating a new test SDK as per the guide above, you can reuse the WebViewSandboxTestSdk
+`//cts/tests/tests/sdksandbox/webkit/sdksidetests/WebViewSandboxTest/src/com/android/cts/sdksidetests/webviewsandboxtest/WebViewSandboxTestSdk.java`
+To do this use the `android.sdksandbox.webkit.cts.WebViewSandboxTestRule` and pass in the fully qualified name of your test class.
 
 Congratulations! Your webkit tests are now shared with your SDK Runtime tests!
 

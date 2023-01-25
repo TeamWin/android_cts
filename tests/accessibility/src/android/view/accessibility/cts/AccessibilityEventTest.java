@@ -36,7 +36,6 @@ import android.os.Message;
 import android.os.Parcel;
 import android.os.SystemClock;
 import android.platform.test.annotations.FlakyTest;
-import android.platform.test.annotations.Presubmit;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.LocaleSpan;
@@ -66,7 +65,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /** Class for testing {@link AccessibilityEvent}. */
-@Presubmit
+// TODO(b/263942937) Re-enable @Presubmit
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityEventTest {
     private static final long IDLE_TIMEOUT_MS = 500;

@@ -33,6 +33,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
+    <uses-permission android:name="android.permission.DETECT_SCREEN_CAPTURE"/>
 
     <application android:label="CtsWindowManagerDeviceTestCases"
                  android:requestLegacyExternalStorage="true"
@@ -339,6 +340,8 @@
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
         <activity android:name="android.server.wm.WindowFocusTests$TertiaryActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
+        <activity android:name="android.server.wm.ActivityCaptureCallbackTests$PrimaryActivity"/>
+        <activity android:name="android.server.wm.ActivityCaptureCallbackTests$SecondaryActivity"/>
         <activity android:name="android.server.wm.WindowFocusTests$LosingFocusActivity"/>
         <activity android:name="android.server.wm.WindowFocusTests$AutoEngagePointerCaptureActivity" />
         <activity android:name="android.server.wm.WindowMetricsActivityTests$MetricsActivity"

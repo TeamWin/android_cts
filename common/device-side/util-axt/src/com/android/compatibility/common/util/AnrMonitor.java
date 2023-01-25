@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.app.cts.shortfgstest;
+package com.android.compatibility.common.util;
 
 import android.app.Instrumentation;
 import android.os.ParcelFileDescriptor;
@@ -83,7 +83,7 @@ public class AnrMonitor implements AutoCloseable {
 
     /**
      * Return for an early-ANR event from the target process, and return the uptime of it.
-     * Throws if an ANR doesn't happen before the timeout.
+     * Fails if an ANR doesn't happen before the timeout.
      */
     public long waitForAnrAndReturnUptime(long timeoutMillis) {
         try {

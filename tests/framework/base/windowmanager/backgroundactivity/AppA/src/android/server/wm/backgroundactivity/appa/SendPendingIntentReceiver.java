@@ -16,21 +16,11 @@
 
 package android.server.wm.backgroundactivity.appa;
 
-
-import static android.server.wm.backgroundactivity.appa.Components.SendPendingIntentReceiver.ALLOW_BAL_EXTRA_ON_PENDING_INTENT;
-import static android.server.wm.backgroundactivity.appa.Components.SendPendingIntentReceiver.APP_B_PACKAGE;
-import static android.server.wm.backgroundactivity.appa.Components.SendPendingIntentReceiver.IS_BROADCAST_EXTRA;
-import static android.server.wm.backgroundactivity.appa.Components.StartBackgroundActivityReceiver.START_ACTIVITY_DELAY_MS_EXTRA;
-import static android.server.wm.backgroundactivity.appb.Components.APP_B_START_PENDING_INTENT_RECEIVER;
-import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentActivity.ALLOW_BAL_EXTRA;
-import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentActivity.USE_NULL_BUNDLE;
-import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentReceiver.PENDING_INTENT_EXTRA;
 import static android.server.wm.backgroundactivity.common.CommonComponents.EVENT_NOTIFIER_EXTRA;
 
 import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -44,7 +34,6 @@ import java.util.Optional;
  * Receive broadcast command to create a pendingIntent and send it to AppB.
  */
 public class SendPendingIntentReceiver extends BroadcastReceiver {
-
     private static final String TAG = "SendPendingIntentReceiver";
 
     private static Bundle createBundleWithBalEnabled() {
@@ -56,14 +45,17 @@ public class SendPendingIntentReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent receivedIntent) {
-        boolean isBroadcast = receivedIntent.getBooleanExtra(IS_BROADCAST_EXTRA, false);
-        int startActivityDelayMs = receivedIntent.getIntExtra(START_ACTIVITY_DELAY_MS_EXTRA, 0);
-        Optional<Boolean> extraBal =
-                getOptionalBooleanExtra(receivedIntent, ALLOW_BAL_EXTRA, false);
+        Components appA = Components.get(context);
+
+        boolean isBroadcast = receivedIntent.getBooleanExtra(
+                appA.SEND_PENDING_INTENT_RECEIVER_EXTRA.IS_BROADCAST, false);
+        int startActivityDelayMs = receivedIntent.getIntExtra(
+                appA.START_ACTIVITY_RECEIVER_EXTRA.START_ACTIVITY_DELAY_MS, 0);
+
         Optional<Boolean> extraBalOnIntent =
-                getOptionalBooleanExtra(receivedIntent, ALLOW_BAL_EXTRA_ON_PENDING_INTENT, false);
-        Optional<Boolean> useNullBundle =
-                getOptionalBooleanExtra(receivedIntent, USE_NULL_BUNDLE, false);
+                getOptionalBooleanExtra(receivedIntent,
+                        appA.SEND_PENDING_INTENT_RECEIVER_EXTRA.ALLOW_BAL_EXTRA_ON_PENDING_INTENT,
+                        false);
 
         ResultReceiver eventNotifier = receivedIntent.getParcelableExtra(EVENT_NOTIFIER_EXTRA);
 
@@ -77,7 +69,8 @@ public class SendPendingIntentReceiver extends BroadcastReceiver {
             // background activity.
             Intent newIntent = new Intent();
             newIntent.setClass(context, StartBackgroundActivityReceiver.class);
-            newIntent.putExtra(START_ACTIVITY_DELAY_MS_EXTRA, startActivityDelayMs);
+            newIntent.putExtra(appA.START_ACTIVITY_RECEIVER_EXTRA.START_ACTIVITY_DELAY_MS,
+                    startActivityDelayMs);
             newIntent.putExtra(EVENT_NOTIFIER_EXTRA, eventNotifier);
             if (extraBalOnIntent.orElse(false)) {
                 newIntent.putExtras(createBundleWithBalEnabled());
@@ -104,20 +97,32 @@ public class SendPendingIntentReceiver extends BroadcastReceiver {
                             PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         }
 
-        ComponentName appBStartPendingIntentReceiver = APP_B_START_PENDING_INTENT_RECEIVER;
-        if (receivedIntent.hasExtra(APP_B_PACKAGE)) {
-            appBStartPendingIntentReceiver = new ComponentName(
-                    receivedIntent.getStringExtra(APP_B_PACKAGE),
-                                                APP_B_START_PENDING_INTENT_RECEIVER.getClassName());
+        String appBPackage = receivedIntent.getStringExtra(
+                appA.SEND_PENDING_INTENT_RECEIVER_EXTRA.APP_B_PACKAGE);
+        if (appBPackage == null) {
+            appBPackage = android.server.wm.backgroundactivity.appb.Components.JAVA_PACKAGE_NAME;
         }
+
+        android.server.wm.backgroundactivity.appb.Components appB =
+                android.server.wm.backgroundactivity.appb.Components.get(appBPackage);
+
+        Optional<Boolean> extraBal =
+                getOptionalBooleanExtra(receivedIntent,
+                        appB.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_BAL, false);
+        Optional<Boolean> useNullBundle =
+                getOptionalBooleanExtra(receivedIntent,
+                        appB.START_PENDING_INTENT_ACTIVITY_EXTRA.USE_NULL_BUNDLE, false);
+
 
         // Send the pendingIntent to appB
         Intent intent = new Intent();
-        intent.setComponent(appBStartPendingIntentReceiver);
-        intent.putExtra(PENDING_INTENT_EXTRA, pendingIntent);
+        intent.setComponent(appB.START_PENDING_INTENT_RECEIVER);
+        intent.putExtra(appB.START_PENDING_INTENT_RECEIVER_EXTRA.PENDING_INTENT, pendingIntent);
         intent.putExtra(EVENT_NOTIFIER_EXTRA, eventNotifier);
-        extraBal.ifPresent(v -> intent.putExtra(ALLOW_BAL_EXTRA, v));
-        useNullBundle.ifPresent(v -> intent.putExtra(USE_NULL_BUNDLE, v));
+        extraBal.ifPresent(v -> intent
+                .putExtra(appB.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_BAL, v));
+        useNullBundle.ifPresent(v -> intent
+                .putExtra(appB.START_PENDING_INTENT_ACTIVITY_EXTRA.USE_NULL_BUNDLE, v));
         Log.d(TAG, "sendBroadcast(" + intent + ") from " + context.getPackageName() + " at "
                 + context.getApplicationInfo().targetSdkVersion);
         context.sendBroadcast(intent);

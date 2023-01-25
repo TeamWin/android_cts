@@ -146,7 +146,11 @@ public class HdmiControlManagerTest {
         final boolean mhl = false;
         final boolean arc = true;
         final HdmiPortInfo info =
-                new HdmiPortInfo(id, HdmiPortInfo.PORT_INPUT, address, cec, mhl, arc);
+                new HdmiPortInfo.Builder(id, HdmiPortInfo.PORT_INPUT, address)
+                        .setCecSupported(cec)
+                        .setMhlSupported(mhl)
+                        .setArcSupported(arc)
+                        .build();
         expectedInfo.add(info);
         mService.setPortInfo(expectedInfo);
 
@@ -163,7 +167,12 @@ public class HdmiControlManagerTest {
         final boolean arc = true;
         final boolean earc = true;
         final HdmiPortInfo info =
-                new HdmiPortInfo(id, HdmiPortInfo.PORT_INPUT, address, cec, mhl, arc, earc);
+                new HdmiPortInfo.Builder(id, HdmiPortInfo.PORT_INPUT, address)
+                        .setCecSupported(cec)
+                        .setMhlSupported(mhl)
+                        .setArcSupported(arc)
+                        .setEarcSupported(earc)
+                        .build();
 
         assertThat(info.getId()).isEqualTo(id);
         assertThat(info.getAddress()).isEqualTo(address);

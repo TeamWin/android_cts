@@ -33,9 +33,9 @@ public final class SharedSdkWebServer {
     }
 
     /** Starts the web server. */
-    public void start(boolean secure) {
+    public void start(@SslMode int sslMode) {
         try {
-            mWebServer.start(secure);
+            mWebServer.start(sslMode);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }

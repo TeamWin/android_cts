@@ -2447,8 +2447,10 @@ public class CameraTestUtils extends Assert {
             // regular jpeg.
             case ImageFormat.DEPTH_JPEG:
             case ImageFormat.JPEG:
-            case ImageFormat.JPEG_R:
                 validateJpegData(data, width, height, filePath, colorSpace);
+                break;
+            case ImageFormat.JPEG_R:
+                validateJpegData(data, width, height, filePath, null /*colorSpace*/);
                 break;
             case ImageFormat.YCBCR_P010:
                 validateP010Data(data, width, height, format, image.getTimestamp(), filePath);

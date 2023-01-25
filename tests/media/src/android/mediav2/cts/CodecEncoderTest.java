@@ -17,13 +17,14 @@
 package android.mediav2.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
-import android.mediav2.common.cts.CodecEncoderTestBase;
+import android.mediav2.common.cts.EncoderConfigParams;
+import android.mediav2.common.cts.EncoderTestBase;
 import android.mediav2.common.cts.OutputManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,6 +35,7 @@ import androidx.test.filters.SmallTest;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,28 +71,26 @@ import java.util.List;
  * The test runs mediacodec in synchronous and asynchronous mode.
  */
 @RunWith(Parameterized.class)
-public class CodecEncoderTest extends CodecEncoderTestBase {
+public class CodecEncoderTest extends EncoderTestBase {
     private static final String LOG_TAG = CodecEncoderTest.class.getSimpleName();
-    private static ArrayList<String> sAdaptiveBitrateMimeList = new ArrayList<>();
+    private static final ArrayList<String> ABR_MEDIATYPE_LIST = new ArrayList<>();
 
     private int mNumSyncFramesReceived;
-    private ArrayList<Integer> mSyncFramesPos;
+    private final ArrayList<Integer> mSyncFramesPos = new ArrayList<>();
 
     static {
         System.loadLibrary("ctsmediav2codecenc_jni");
 
-        sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_AVC);
-        sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
-        sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP8);
-        sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP9);
+        ABR_MEDIATYPE_LIST.add(MediaFormat.MIMETYPE_VIDEO_AVC);
+        ABR_MEDIATYPE_LIST.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
+        ABR_MEDIATYPE_LIST.add(MediaFormat.MIMETYPE_VIDEO_VP8);
+        ABR_MEDIATYPE_LIST.add(MediaFormat.MIMETYPE_VIDEO_VP9);
+        ABR_MEDIATYPE_LIST.add(MediaFormat.MIMETYPE_VIDEO_AV1);
     }
 
-    public CodecEncoderTest(String encoder, String mime, int[] bitrates, int[] encoderInfo1,
-            int[] encoderInfo2, int maxBFrames, String allTestParams) {
-        super(encoder, mime, bitrates, encoderInfo1, encoderInfo2,
-                EncoderInput.getRawResource(mime, /* isHighBitDepth */ false), allTestParams);
-        mMaxBFrames = maxBFrames;
-        mSyncFramesPos = new ArrayList<>();
+    public CodecEncoderTest(String encoder, String mime, EncoderConfigParams[] cfgParams,
+            String allTestParams) {
+        super(encoder, mime, cfgParams, allTestParams);
     }
 
     @Override
@@ -126,60 +126,154 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         mCodec.setParameters(bitrateUpdate);
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{5})")
+    private static EncoderConfigParams getVideoEncoderCfgParam(String mediaType, int width,
+            int height, int bitRate, int maxBFrames) {
+        return new EncoderConfigParams.Builder(mediaType).setWidth(width).setHeight(height)
+                .setMaxBFrames(maxBFrames).setBitRate(bitRate).build();
+    }
+
+    private static EncoderConfigParams getAudioEncoderCfgParam(String mediaType, int sampleRate,
+            int channelCount, int qualityPreset) {
+        EncoderConfigParams.Builder foreman =
+                new EncoderConfigParams.Builder(mediaType).setSampleRate(sampleRate)
+                        .setChannelCount(channelCount);
+        if (mediaType.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)) {
+            foreman = foreman.setCompressionLevel(qualityPreset);
+        } else {
+            foreman = foreman.setBitRate(qualityPreset);
+        }
+        return foreman.build();
+    }
+
+    private static EncoderConfigParams[] getAacCfgParams() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getAudioEncoderCfgParam(MediaFormat.MIMETYPE_AUDIO_AAC, 8000, 1, 128000);
+        params[1] = getAudioEncoderCfgParam(MediaFormat.MIMETYPE_AUDIO_AAC, 48000, 2, 128000);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getOpusCfgParams() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getAudioEncoderCfgParam(MediaFormat.MIMETYPE_AUDIO_OPUS, 16000, 1, 64000);
+        params[1] = getAudioEncoderCfgParam(MediaFormat.MIMETYPE_AUDIO_OPUS, 16000, 1, 128000);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getAmrnbCfgParams() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getAudioEncoderCfgParam(MediaFormat.MIMETYPE_AUDIO_AMR_NB, 8000, 1, 4750);
+        params[1] = getAudioEncoderCfgParam(MediaFormat.MIMETYPE_AUDIO_AMR_NB, 8000, 1, 12200);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getAmrwbCfgParams() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getAudioEncoderCfgParam(MediaFormat.MIMETYPE_AUDIO_AMR_WB, 16000, 1, 6600);
+        params[1] = getAudioEncoderCfgParam(MediaFormat.MIMETYPE_AUDIO_AMR_WB, 16000, 1, 23850);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getFlacCfgParams() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getAudioEncoderCfgParam(MediaFormat.MIMETYPE_AUDIO_FLAC, 8000, 1, 6);
+        params[1] = getAudioEncoderCfgParam(MediaFormat.MIMETYPE_AUDIO_FLAC, 48000, 2, 5);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getH263CfgParams() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_H263, 176, 144, 32000, 0);
+        params[1] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_H263, 176, 144, 64000, 0);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getMpeg4CfgParams() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_MPEG4, 176, 144, 32000, 0);
+        params[1] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_MPEG4, 176, 144, 64000, 0);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getAvcCfgParams() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_AVC, 176, 144, 512000, 0);
+        params[1] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_AVC, 352, 288, 512000, 0);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getHevcCfgParams() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_HEVC, 176, 144, 512000, 0);
+        params[1] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_HEVC, 352, 288, 512000, 0);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getAvcCfgParamsWithBFrames() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_AVC, 320, 240, 512000, 2);
+        params[1] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 360, 768000, 2);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getHevcCfgParamsWithBFrames() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_HEVC, 320, 240, 384000, 2);
+        params[1] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_HEVC, 480, 360, 512000, 2);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getVp8CfgParams() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_VP8, 176, 144, 512000, 0);
+        params[1] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_VP8, 352, 288, 512000, 0);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getVp9CfgParams() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_VP9, 176, 144, 512000, 0);
+        params[1] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_VP9, 352, 288, 512000, 0);
+        return params;
+    }
+
+    private static EncoderConfigParams[] getAv1CfgParams() {
+        EncoderConfigParams[] params = new EncoderConfigParams[2];
+        params[0] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_AV1, 176, 144, 512000, 0);
+        params[1] = getVideoEncoderCfgParam(MediaFormat.MIMETYPE_VIDEO_AV1, 352, 288, 512000, 0);
+        return params;
+    }
+
+    @Parameterized.Parameters(name = "{index}({0}_{1})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = true;
         final boolean needVideo = true;
-        final List<Object[]> exhaustiveArgsList = new ArrayList<>();
-        final List<Object[]> args = new ArrayList<>(Arrays.asList(new Object[][]{
-                // Audio - CodecMime, arrays of bit-rates, sample rates, channel counts
-                {MediaFormat.MIMETYPE_AUDIO_AAC, new int[]{128000}, new int[]{8000, 48000},
-                        new int[]{1, 2}},
-                {MediaFormat.MIMETYPE_AUDIO_OPUS, new int[]{6600, 23850}, new int[]{16000},
-                        new int[]{1}},
-                {MediaFormat.MIMETYPE_AUDIO_AMR_NB, new int[]{4750, 12200}, new int[]{8000},
-                        new int[]{1}},
-                {MediaFormat.MIMETYPE_AUDIO_AMR_WB, new int[]{6600, 23850}, new int[]{16000},
-                        new int[]{1}},
-                {MediaFormat.MIMETYPE_AUDIO_FLAC, new int[]{5}, new int[]{8000, 48000},
-                        new int[]{1, 2}},
-
-                // Video - CodecMime, arrays of bit-rates, height, width
-                {MediaFormat.MIMETYPE_VIDEO_H263, new int[]{32000, 64000}, new int[]{176},
-                        new int[]{144}},
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, new int[]{32000, 64000}, new int[]{176},
-                        new int[]{144}},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, new int[]{512000}, new int[]{176, 352},
-                        new int[]{144, 288}},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, new int[]{512000}, new int[]{176, 352},
-                        new int[]{144, 288}},
-                {MediaFormat.MIMETYPE_VIDEO_VP8, new int[]{512000}, new int[]{176, 352},
-                        new int[]{144, 288}},
-                {MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{512000}, new int[]{176, 352},
-                        new int[]{144, 288}},
-                {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{512000}, new int[]{176, 352},
-                        new int[]{144, 288}},
+        final List<Object[]> exhaustiveArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
+                // mediaType, cfg params
+                {MediaFormat.MIMETYPE_AUDIO_AAC, getAacCfgParams()},
+                {MediaFormat.MIMETYPE_AUDIO_OPUS, getOpusCfgParams()},
+                {MediaFormat.MIMETYPE_AUDIO_AMR_NB, getAmrnbCfgParams()},
+                {MediaFormat.MIMETYPE_AUDIO_AMR_WB, getAmrwbCfgParams()},
+                {MediaFormat.MIMETYPE_AUDIO_FLAC, getFlacCfgParams()},
+                {MediaFormat.MIMETYPE_VIDEO_H263, getH263CfgParams()},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, getMpeg4CfgParams()},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, getAvcCfgParams()},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, getAvcCfgParamsWithBFrames()},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, getHevcCfgParams()},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, getHevcCfgParamsWithBFrames()},
+                {MediaFormat.MIMETYPE_VIDEO_VP8, getVp8CfgParams()},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, getVp9CfgParams()},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, getAv1CfgParams()},
         }));
-
-        int[] maxBFrames = {0, 2};
-        int argLength = args.get(0).length;
-        for (Object[] arg : args) {
-            for (int maxBFrame : maxBFrames) {
-                String mediaType = arg[0].toString();
-                if (!mediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)
-                        && !mediaType.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)
-                        && maxBFrame != 0) {
-                    continue;
-                }
-                Object[] argUpdate = new Object[argLength + 1];
-                System.arraycopy(arg, 0, argUpdate, 0, argLength);
-                argUpdate[argLength] = maxBFrame;
-                exhaustiveArgsList.add(argUpdate);
-            }
-        }
-
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, true);
+    }
+
+    @Before
+    public void setUp() throws IOException {
+        mActiveEncCfg = mEncCfgParams[0];
+        mActiveRawRes = EncoderInput.getRawResource(mActiveEncCfg);
+        assertNotNull("no raw resource found for testing config : " + mActiveEncCfg + mTestConfig
+                + mTestEnv, mActiveRawRes);
     }
 
     /**
@@ -198,7 +292,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncode() throws IOException, InterruptedException {
-        setUpParams(1);
         boolean[] boolStates = {true, false};
         setUpSource(mActiveRawRes.mFileName);
         OutputManager ref = new OutputManager();
@@ -210,7 +303,8 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
             assertTrue("error! codec canonical name is null or empty",
                     mCodec.getCanonicalName() != null && !mCodec.getCanonicalName().isEmpty());
             mSaveToMem = false; /* TODO(b/149027258) */
-            for (MediaFormat format : mFormats) {
+            MediaFormat format = mActiveEncCfg.getFormat();
+            {
                 int loopCounter = 0;
                 for (boolean eosType : boolStates) {
                     for (boolean isAsync : boolStates) {
@@ -240,7 +334,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     private native boolean nativeTestSimpleEncode(String encoder, String file, String mime,
-            int[] list0, int[] list1, int[] list2, int colorFormat, StringBuilder retMsg);
+            String cfgParams, String separator, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testSimpleEncode()} but uses ndk api
@@ -249,18 +343,18 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
             "android.media.AudioFormat#ENCODING_PCM_16BIT"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testSimpleEncodeNative() throws IOException {
-        int colorFormat = -1;
-        {
-            if (mIsVideo) {
-                colorFormat = findByteBufferColorFormat(mCodecName, mMime);
-                assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
-                        colorFormat != -1);
-            }
-            boolean isPass = nativeTestSimpleEncode(mCodecName, mActiveRawRes.mFileName, mMime,
-                    mBitrates, mEncParamList1, mEncParamList2, colorFormat, mTestConfig);
-            assertTrue(mTestConfig.toString(), isPass);
+    public void testSimpleEncodeNative() throws IOException, CloneNotSupportedException {
+        MediaFormat format = mActiveEncCfg.getFormat();
+        if (mIsVideo) {
+            int colorFormat = findByteBufferColorFormat(mCodecName, mMime);
+            assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
+                    colorFormat != -1);
+            format = mActiveEncCfg.getBuilder().setColorFormat(colorFormat).build().getFormat();
         }
+        boolean isPass = nativeTestSimpleEncode(mCodecName, mActiveRawRes.mFileName, mMime,
+                EncoderConfigParams.serializeMediaFormat(format),
+                EncoderConfigParams.TOKEN_SEPARATOR, mTestConfig);
+        assertTrue(mTestConfig.toString(), isPass);
     }
 
     /**
@@ -296,25 +390,23 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigure() throws IOException, InterruptedException {
-        setUpParams(2);
-        setUpSource(mActiveRawRes.mFileName);
+
         boolean[] boolStates = {true, false};
         {
             boolean saveToMem = false; /* TODO(b/149027258) */
             OutputManager configRef = null;
             OutputManager configTest = null;
-            if (mFormats.size() > 1) {
-                MediaFormat format = mFormats.get(1);
-                encodeToMemory(mActiveRawRes.mFileName, mCodecName, Integer.MAX_VALUE,
-                        format, saveToMem);
+            if (mEncCfgParams.length > 1) {
+                encodeToMemory(mCodecName, mEncCfgParams[1], mActiveRawRes, Integer.MAX_VALUE,
+                        saveToMem, mMuxOutput);
                 configRef = mOutputBuff;
                 configTest = new OutputManager(configRef.getSharedErrorLogs());
             }
-            MediaFormat format = mFormats.get(0);
-            encodeToMemory(mActiveRawRes.mFileName, mCodecName, Integer.MAX_VALUE,
-                    format, saveToMem);
+            encodeToMemory(mCodecName, mEncCfgParams[0], mActiveRawRes, Integer.MAX_VALUE,
+                    saveToMem, mMuxOutput);
             OutputManager ref = mOutputBuff;
             OutputManager test = new OutputManager(ref.getSharedErrorLogs());
+            MediaFormat format = mEncCfgParams[0].getFormat();
             mCodec = MediaCodec.createByCodecName(mCodecName);
             for (boolean isAsync : boolStates) {
                 mOutputBuff = test;
@@ -363,9 +455,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 }
 
                 /* test reconfigure codec for new format */
-                if (mFormats.size() > 1) {
+                if (mEncCfgParams.length > 1) {
                     mOutputBuff = configTest;
-                    reConfigureCodec(mFormats.get(1), isAsync, false, true);
+                    reConfigureCodec(mEncCfgParams[1].getFormat(), isAsync, false, true);
                     mCodec.start();
                     configTest.reset();
                     doWork(Integer.MAX_VALUE);
@@ -386,7 +478,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     private native boolean nativeTestReconfigure(String encoder, String file, String mime,
-            int[] list0, int[] list1, int[] list2, int colorFormat, StringBuilder retMsg);
+            String cfgParams, String cfgReconfigParams, String separator, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testReconfigure()} but uses ndk api
@@ -395,17 +487,24 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#configure"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testReconfigureNative() throws IOException {
-        int colorFormat = -1;
-        {
-            if (mIsVideo) {
-                colorFormat = findByteBufferColorFormat(mCodecName, mMime);
-                assertTrue("no valid color formats received", colorFormat != -1);
+    public void testReconfigureNative() throws IOException, CloneNotSupportedException {
+        MediaFormat format = mEncCfgParams[0].getFormat();
+        MediaFormat reconfigFormat = mEncCfgParams.length > 1 ? mEncCfgParams[1].getFormat() : null;
+        if (mIsVideo) {
+            int colorFormat = findByteBufferColorFormat(mCodecName, mMime);
+            assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
+                    colorFormat != -1);
+            format = mEncCfgParams[0].getBuilder().setColorFormat(colorFormat).build().getFormat();
+            if (mEncCfgParams.length > 1) {
+                reconfigFormat = mEncCfgParams[1].getBuilder().setColorFormat(colorFormat).build()
+                        .getFormat();
             }
-            boolean isPass = nativeTestReconfigure(mCodecName, mActiveRawRes.mFileName, mMime,
-                    mBitrates, mEncParamList1, mEncParamList2, colorFormat, mTestConfig);
-            assertTrue(mTestConfig.toString(), isPass);
         }
+        boolean isPass = nativeTestReconfigure(mCodecName, mActiveRawRes.mFileName, mMime,
+                EncoderConfigParams.serializeMediaFormat(format), reconfigFormat == null ? null :
+                        EncoderConfigParams.serializeMediaFormat(reconfigFormat),
+                EncoderConfigParams.TOKEN_SEPARATOR, mTestConfig);
+        assertTrue(mTestConfig.toString(), isPass);
     }
 
     /**
@@ -417,7 +516,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testOnlyEos() throws IOException, InterruptedException {
-        setUpParams(1);
         boolean[] boolStates = {true, false};
         OutputManager ref = new OutputManager();
         OutputManager test = new OutputManager(ref.getSharedErrorLogs());
@@ -425,8 +523,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             mSaveToMem = false; /* TODO(b/149027258) */
             int loopCounter = 0;
+            MediaFormat format = mActiveEncCfg.getFormat();
             for (boolean isAsync : boolStates) {
-                configureCodec(mFormats.get(0), isAsync, false, true);
+                configureCodec(format, isAsync, false, true);
                 mOutputBuff = loopCounter == 0 ? ref : test;
                 mOutputBuff.reset();
                 mInfoList.clear();
@@ -446,8 +545,8 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         }
     }
 
-    private native boolean nativeTestOnlyEos(String encoder, String mime, int[] list0, int[] list1,
-            int[] list2, int colorFormat, StringBuilder retMsg);
+    private native boolean nativeTestOnlyEos(String encoder, String mime, String cfgParams,
+            String separator, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testOnlyEos()} but uses ndk api
@@ -455,17 +554,18 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @ApiTest(apis = "android.media.MediaCodec#BUFFER_FLAG_END_OF_STREAM")
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
-    public void testOnlyEosNative() throws IOException {
-        int colorFormat = -1;
-        {
-            if (mIsVideo) {
-                colorFormat = findByteBufferColorFormat(mCodecName, mMime);
-                assertTrue("no valid color formats received", colorFormat != -1);
-            }
-            boolean isPass = nativeTestOnlyEos(mCodecName, mMime, mBitrates, mEncParamList1,
-                    mEncParamList2, colorFormat, mTestConfig);
-            assertTrue(mTestConfig.toString(), isPass);
+    public void testOnlyEosNative() throws IOException, CloneNotSupportedException {
+        MediaFormat format = mActiveEncCfg.getFormat();
+        if (mIsVideo) {
+            int colorFormat = findByteBufferColorFormat(mCodecName, mMime);
+            assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
+                    colorFormat != -1);
+            format = mActiveEncCfg.getBuilder().setColorFormat(colorFormat).build().getFormat();
         }
+        boolean isPass = nativeTestOnlyEos(mCodecName, mMime,
+                EncoderConfigParams.serializeMediaFormat(format),
+                EncoderConfigParams.TOKEN_SEPARATOR, mTestConfig);
+        assertTrue(mTestConfig.toString(), isPass);
     }
 
     /**
@@ -477,20 +577,20 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_REQUEST_SYNC_FRAME")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testSetForceSyncFrame() throws IOException, InterruptedException {
+    public void testSetForceSyncFrame()
+            throws IOException, InterruptedException, CloneNotSupportedException {
         Assume.assumeTrue("Test is applicable only for video encoders", mIsVideo);
+        EncoderConfigParams currCfg = mActiveEncCfg.getBuilder().setKeyFrameInterval(500.f).build();
+        MediaFormat format = currCfg.getFormat();
         // Maximum allowed key frame interval variation from the target value.
-        final int MAX_KEYFRAME_INTERVAL_VARIATION = 3;
-        setUpParams(1);
-        boolean[] boolStates = {true, false};
+        final int maxKeyframeIntervalVariation = 3;
+        final int keyFrameInterval = 2; // force key frame every 2 seconds.
+        final int keyFramePos = currCfg.mFrameRate * keyFrameInterval;
+        final int numKeyFrameRequests = 7;
+
         setUpSource(mActiveRawRes.mFileName);
-        MediaFormat format = mFormats.get(0);
-        format.removeKey(MediaFormat.KEY_I_FRAME_INTERVAL);
-        format.setFloat(MediaFormat.KEY_I_FRAME_INTERVAL, 500.f);
-        final int KEY_FRAME_INTERVAL = 2; // force key frame every 2 seconds.
-        final int KEY_FRAME_POS = mFrameRate * KEY_FRAME_INTERVAL;
-        final int NUM_KEY_FRAME_REQUESTS = 7;
         mOutputBuff = new OutputManager();
+        boolean[] boolStates = {true, false};
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             for (boolean isAsync : boolStates) {
@@ -498,11 +598,11 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 mInfoList.clear();
                 configureCodec(format, isAsync, false, true);
                 mCodec.start();
-                for (int i = 0; i < NUM_KEY_FRAME_REQUESTS; i++) {
-                    doWork(KEY_FRAME_POS);
+                for (int i = 0; i < numKeyFrameRequests; i++) {
+                    doWork(keyFramePos);
                     if (mSawInputEOS) {
                         fail(String.format("Unable to encode %d frames as the input resource "
-                                + "contains only %d frames \n", KEY_FRAME_POS, mInputCount));
+                                + "contains only %d frames \n", keyFramePos, mInputCount));
                     }
                     forceSyncFrame();
                     mInputBufferReadOffset = 0;
@@ -513,17 +613,17 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 if (false) mCodec.stop();
                 else mCodec.reset();
                 String msg = String.format("Received only %d key frames for %d key frame "
-                        + "requests \n", mNumSyncFramesReceived, NUM_KEY_FRAME_REQUESTS);
+                        + "requests \n", mNumSyncFramesReceived, numKeyFrameRequests);
                 assertTrue(msg + mTestConfig + mTestEnv,
-                        mNumSyncFramesReceived >= NUM_KEY_FRAME_REQUESTS);
-                for (int i = 0, expPos = 0, index = 0; i < NUM_KEY_FRAME_REQUESTS; i++) {
+                        mNumSyncFramesReceived >= numKeyFrameRequests);
+                for (int i = 0, expPos = 0, index = 0; i < numKeyFrameRequests; i++) {
                     int j = index;
                     for (; j < mSyncFramesPos.size(); j++) {
                         // Check key frame intervals:
                         // key frame position should not be greater than target value + 3
                         // key frame position should not be less than target value - 3
                         if (Math.abs(expPos - mSyncFramesPos.get(j)) <=
-                                MAX_KEYFRAME_INTERVAL_VARIATION) {
+                                maxKeyframeIntervalVariation) {
                             index = j;
                             break;
                         }
@@ -532,7 +632,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                         Log.w(LOG_TAG, "requested key frame at frame index " + expPos +
                                 " none found near by");
                     }
-                    expPos += KEY_FRAME_POS;
+                    expPos += keyFramePos;
                 }
             }
             mCodec.release();
@@ -540,7 +640,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     private native boolean nativeTestSetForceSyncFrame(String encoder, String file, String mime,
-            int[] list0, int[] list1, int[] list2, int colorFormat, StringBuilder retMsg);
+            String cfgParams, String separator, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testSetForceSyncFrame()} but uses ndk api
@@ -548,18 +648,19 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_REQUEST_SYNC_FRAME")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testSetForceSyncFrameNative() throws IOException {
+    public void testSetForceSyncFrameNative() throws IOException, CloneNotSupportedException {
         Assume.assumeTrue("Test is applicable only for encoders", mIsVideo);
-        int colorFormat = -1;
-        {
-            if (mIsVideo) {
-                colorFormat = findByteBufferColorFormat(mCodecName, mMime);
-                assertTrue("no valid color formats received", colorFormat != -1);
-            }
-            boolean isPass = nativeTestSetForceSyncFrame(mCodecName, mActiveRawRes.mFileName, mMime,
-                    mBitrates, mEncParamList1, mEncParamList2, colorFormat, mTestConfig);
-            assertTrue(mTestConfig.toString(), isPass);
-        }
+
+        int colorFormat = findByteBufferColorFormat(mCodecName, mMime);
+        assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
+                colorFormat != -1);
+        MediaFormat format =
+                mActiveEncCfg.getBuilder().setColorFormat(colorFormat).setKeyFrameInterval(500.f)
+                        .build().getFormat();
+        boolean isPass = nativeTestSetForceSyncFrame(mCodecName, mActiveRawRes.mFileName, mMime,
+                EncoderConfigParams.serializeMediaFormat(format),
+                EncoderConfigParams.TOKEN_SEPARATOR, mTestConfig);
+        assertTrue(mTestConfig.toString(), isPass);
     }
 
     /**
@@ -574,30 +675,20 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptiveBitRate() throws IOException, InterruptedException {
         Assume.assumeTrue("Skipping AdaptiveBitrate test for " + mMime,
-                sAdaptiveBitrateMimeList.contains(mMime));
-        setUpParams(1);
+                ABR_MEDIATYPE_LIST.contains(mMime));
+        MediaFormat format = mActiveEncCfg.getFormat();
+        final int adaptiveBrInterval = 3; // change br every 3 seconds.
+        final int adaptiveBrDurFrm = mActiveEncCfg.mFrameRate * adaptiveBrInterval;
+        final int brChangeRequests = 7;
+        // TODO(b/251265293) Reduce the allowed deviation after improving the test conditions
+        final float maxBitrateDeviation = 60.0f; // allowed bitrate deviation in %
+
         boolean[] boolStates = {true, false};
         setUpSource(mActiveRawRes.mFileName);
-        MediaFormat format = mFormats.get(0);
-        final int ADAPTIVE_BR_INTERVAL = 3; // change br every 3 seconds.
-        final int ADAPTIVE_BR_DUR_FRM = mFrameRate * ADAPTIVE_BR_INTERVAL;
-        final int BR_CHANGE_REQUESTS = 7;
-        // TODO(b/251265293) Reduce the allowed deviation after improving the test conditions
-        final float MAX_BITRATE_DEVIATION = 60.0f; // allowed bitrate deviation in %
         mOutputBuff = new OutputManager();
         mSaveToMem = true;
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
-            format.removeKey(MediaFormat.KEY_BITRATE_MODE);
-            MediaCodecInfo.EncoderCapabilities cap =
-                    mCodec.getCodecInfo().getCapabilitiesForType(mMime).getEncoderCapabilities();
-            if (cap.isBitrateModeSupported(MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)) {
-                format.setInteger(MediaFormat.KEY_BITRATE_MODE,
-                        MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR);
-            } else {
-                format.setInteger(MediaFormat.KEY_BITRATE_MODE,
-                        MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
-            }
             for (boolean isAsync : boolStates) {
                 mOutputBuff.reset();
                 mInfoList.clear();
@@ -605,13 +696,13 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 mCodec.start();
                 int expOutSize = 0;
                 int bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
-                for (int i = 0; i < BR_CHANGE_REQUESTS; i++) {
-                    doWork(ADAPTIVE_BR_DUR_FRM);
+                for (int i = 0; i < brChangeRequests; i++) {
+                    doWork(adaptiveBrDurFrm);
                     if (mSawInputEOS) {
                         fail(String.format("Unable to encode %d frames as the input resource "
-                                + "contains only %d frames \n", ADAPTIVE_BR_DUR_FRM, mInputCount));
+                                + "contains only %d frames \n", adaptiveBrDurFrm, mInputCount));
                     }
-                    expOutSize += ADAPTIVE_BR_INTERVAL * bitrate;
+                    expOutSize += adaptiveBrInterval * bitrate;
                     if ((i & 1) == 1) bitrate *= 2;
                     else bitrate /= 2;
                     updateBitrate(bitrate);
@@ -625,7 +716,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 /* TODO: validate output br with sliding window constraints Sec 5.2 cdd */
                 int outSize = mOutputBuff.getOutStreamSize() * 8;
                 float brDev = Math.abs(expOutSize - outSize) * 100.0f / expOutSize;
-                if (brDev > MAX_BITRATE_DEVIATION) {
+                if (brDev > maxBitrateDeviation) {
                     fail("Relative Bitrate error is too large " + brDev + "\n" + mTestConfig
                             + mTestEnv);
                 }
@@ -635,7 +726,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     private native boolean nativeTestAdaptiveBitRate(String encoder, String file, String mime,
-            int[] list0, int[] list1, int[] list2, int colorFormat, StringBuilder retMsg);
+            String cfgParams, String separator, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testAdaptiveBitRate()} but uses ndk api
@@ -643,18 +734,17 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_VIDEO_BITRATE")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testAdaptiveBitRateNative() throws IOException {
+    public void testAdaptiveBitRateNative() throws IOException, CloneNotSupportedException {
         Assume.assumeTrue("Skipping Native AdaptiveBitrate test for " + mMime,
-                sAdaptiveBitrateMimeList.contains(mMime));
-        int colorFormat = -1;
-        {
-            if (mIsVideo) {
-                colorFormat = findByteBufferColorFormat(mCodecName, mMime);
-                assertTrue("no valid color formats received", colorFormat != -1);
-            }
-            boolean isPass = nativeTestAdaptiveBitRate(mCodecName, mActiveRawRes.mFileName, mMime,
-                    mBitrates, mEncParamList1, mEncParamList2, colorFormat, mTestConfig);
-            assertTrue(mTestConfig.toString(), isPass);
-        }
+                ABR_MEDIATYPE_LIST.contains(mMime));
+        int colorFormat = findByteBufferColorFormat(mCodecName, mMime);
+        assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
+                colorFormat != -1);
+        MediaFormat format =
+                mActiveEncCfg.getBuilder().setColorFormat(colorFormat).build().getFormat();
+        boolean isPass = nativeTestAdaptiveBitRate(mCodecName, mActiveRawRes.mFileName, mMime,
+                EncoderConfigParams.serializeMediaFormat(format),
+                EncoderConfigParams.TOKEN_SEPARATOR, mTestConfig);
+        assertTrue(mTestConfig.toString(), isPass);
     }
 }

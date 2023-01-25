@@ -51,6 +51,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.graphics.Color;
 import android.platform.test.annotations.Presubmit;
 import android.util.SparseArray;
 import android.view.Display;
@@ -69,6 +70,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -470,6 +472,40 @@ public class AccessibilityDisplayProxyTest {
 
         waitOn(mA11yProxy.mWaitObject, ()-> mA11yProxy.mConnected.get(), TIMEOUT_MS,
                 "Proxy was not connected");
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#setFocusAppearance"})
+    public void testSetFocusAppearanceDataAfterProxyEnabled() {
+        registerProxyAndWaitForConnection();
+        // This test verifies that the proxy can set the user's focus appearance, which affects all
+        // apps. Ideally this should only affect the apps that are proxy-ed.
+        // TODO(264594384): Test that a non-proxy activity does not get a changed focus appearance.
+        final AccessibilityManager activityA11yManager =
+                mActivity.getSystemService(AccessibilityManager.class);
+        final int width = activityA11yManager.getAccessibilityFocusStrokeWidth();
+        final int color = activityA11yManager.getAccessibilityFocusColor();
+        final int updatedWidth = width + 10;
+        final int updatedColor = color == Color.BLUE ? Color.RED : Color.BLUE;
+
+        try {
+            setFocusAppearanceDataAndCheckItCorrect(mA11yProxy, updatedWidth, updatedColor);
+        } finally {
+            setFocusAppearanceDataAndCheckItCorrect(mA11yProxy, width, color);
+        }
+    }
+
+    private void setFocusAppearanceDataAndCheckItCorrect(AccessibilityDisplayProxy proxy,
+            int focusStrokeWidthValue, int focusColorValue) {
+        proxy.setAccessibilityFocusAppearance(focusStrokeWidthValue,
+                focusColorValue);
+        final AccessibilityManager activityA11yManager =
+                mActivity.getSystemService(AccessibilityManager.class);
+        // Checks if the color and the stroke values from AccessibilityManager are
+        // updated as expected.
+        PollingCheck.waitFor(()->
+                activityA11yManager.getAccessibilityFocusStrokeWidth() == focusStrokeWidthValue
+                && activityA11yManager.getAccessibilityFocusColor() == focusColorValue);
     }
 
     AccessibilityEvent getProxyClickAccessibilityEvent() {

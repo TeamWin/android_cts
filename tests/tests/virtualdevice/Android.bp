@@ -48,6 +48,7 @@ android_test {
     ],
     data: [
         ":CtsVirtualDeviceStreamedTestApp",
+        ":CtsVirtualDeviceStreamedTestApp2",
     ],
     per_testcase_directory: true,
 }

@@ -83,6 +83,7 @@ static const int kBitrateModeConstant = 2;
 // common utility functions
 bool isCSDIdentical(AMediaFormat* refFormat, AMediaFormat* testFormat);
 bool isFormatSimilar(AMediaFormat* refFormat, AMediaFormat* testFormat);
+AMediaFormat* deSerializeMediaFormat(const char* msg, const char* separator);
 bool isMediaTypeOutputUnAffectedBySeek(const char* mediaType);
 
 template <class T>

@@ -35,6 +35,7 @@ import android.hardware.biometrics.SessionTypeEnum;
 
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -67,7 +68,8 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
     }
 
     public void testEnrollAtom() throws Exception {
-        if (!hasBiometrics()) {
+        if (!hasAidlBiometrics()) {
+            CLog.w("Skipping test - no AIDL biometrics on device");
             return;
         }
 
@@ -76,7 +78,7 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
                 new int[]{AtomsProto.Atom.BIOMETRIC_ENROLLED_FIELD_NUMBER,
                         AtomsProto.Atom.BIOMETRIC_ACQUIRED_FIELD_NUMBER});
 
-        if (hasFeatureFingerprint()) {
+        if (hasFeatureFingerprint(true /* aidlOnly */)) {
             final ModalityEnum modality = ModalityEnum.MODALITY_FINGERPRINT;
 
             final List<AtomsProto.BiometricEnrolled> enrolledAtoms =
@@ -87,9 +89,11 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
             final List<AtomsProto.BiometricAcquired> acquiredAtoms =
                     filterAcquiredAtoms(data, modality);
             assertEnrollmentAcquiredAtomsData(acquiredAtoms, modality);
+        } else {
+            CLog.w("Skipping test - no AIDL biometrics on device");
         }
 
-        if (hasFeatureFace()) {
+        if (hasFeatureFace(true /* aidlOnly */)) {
             final ModalityEnum modality = ModalityEnum.MODALITY_FACE;
 
             final List<AtomsProto.BiometricEnrolled> enrolledAtoms =
@@ -100,6 +104,8 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
             final List<AtomsProto.BiometricAcquired> acquiredAtoms =
                     filterAcquiredAtoms(data, modality);
             assertEnrollmentAcquiredAtomsData(acquiredAtoms, modality);
+        } else {
+            CLog.w("Skipping test - no AIDL biometrics on device");
         }
     }
 
@@ -136,7 +142,8 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
     }
 
     public void testAuthenticateAtom() throws Exception {
-        if (!hasBiometrics()) {
+        if (!hasAidlBiometrics()) {
+            CLog.w("Skipping test - no AIDL biometrics on device");
             return;
         }
 
@@ -146,7 +153,7 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
                 new int[]{AtomsProto.Atom.BIOMETRIC_AUTHENTICATED_FIELD_NUMBER,
                         AtomsProto.Atom.BIOMETRIC_ACQUIRED_FIELD_NUMBER});
 
-        if (hasFeatureFingerprint()) {
+        if (hasFeatureFingerprint(true /* aidlOnly */)) {
             final ModalityEnum modality = ModalityEnum.MODALITY_FINGERPRINT;
 
             final List<AtomsProto.BiometricAuthenticated> authAtoms =
@@ -164,9 +171,11 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
             } else {
                 assertThat(authAtoms).isEmpty();
             }
+        } else {
+            CLog.w("Skipping test - no AIDL biometrics on device");
         }
 
-        if (hasFeatureFace()) {
+        if (hasFeatureFace(true /* aidlOnly */)) {
             final ModalityEnum modality = ModalityEnum.MODALITY_FACE;
 
             final List<AtomsProto.BiometricAuthenticated> authAtoms =
@@ -184,6 +193,8 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
             } else {
                 assertThat(authAtoms).isEmpty();
             }
+        } else {
+            CLog.w("Skipping test - no AIDL biometrics on device");
         }
     }
 
@@ -192,9 +203,8 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
         assertThat(atom.getState()).isEqualTo(AtomsProto.BiometricAuthenticated.State.CONFIRMED);
         assertThat(atom.getUser()).isEqualTo(getDevice().getCurrentUser());
         assertThat(atom.hasAmbientLightLux()).isTrue();
-        assertThat(atom.hasSessionType()
-                && atom.getSessionType() == SessionTypeEnum.SESSION_TYPE_BIOMETRIC_PROMPT).isTrue();
         assertThat(atom.getSessionId()).isGreaterThan(0);
+        assertThat(atom.getSessionType()).isEqualTo(SessionTypeEnum.SESSION_TYPE_BIOMETRIC_PROMPT);
     }
 
     // check enrollment acquired messages match the fixed values in the test

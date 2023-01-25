@@ -108,7 +108,7 @@ void CodecDecoderTest::deleteReference() {
 
 bool CodecDecoderTest::setUpExtractor(const char* srcFile, int colorFormat) {
     FILE* fp = fopen(srcFile, "rbe");
-    RETURN_IF_TRUE(!fp, StringFormat("Unable to open file %s", srcFile))
+    RETURN_IF_NULL(fp, StringFormat("Unable to open file %s", srcFile))
     struct stat buf {};
     if (!fstat(fileno(fp), &buf)) {
         deleteExtractor();
@@ -143,7 +143,7 @@ bool CodecDecoderTest::setUpExtractor(const char* srcFile, int colorFormat) {
         }
     }
     if (fp) fclose(fp);
-    RETURN_IF_TRUE(mInpDecFormat == nullptr,
+    RETURN_IF_NULL(mInpDecFormat,
                    StringFormat("No track with media type %s found in file: %s", mMime, srcFile))
     return true;
 }
@@ -198,7 +198,7 @@ bool CodecDecoderTest::configureCodec(AMediaFormat* format, bool isAsync,
 bool CodecDecoderTest::enqueueCodecConfig(int32_t bufferIndex) {
     size_t bufSize;
     uint8_t* buf = AMediaCodec_getInputBuffer(mCodec, bufferIndex, &bufSize);
-    RETURN_IF_TRUE(buf == nullptr, std::string{"AMediaCodec_getInputBuffer returned nullptr"})
+    RETURN_IF_NULL(buf, std::string{"AMediaCodec_getInputBuffer returned nullptr"})
     void* csdBuffer = mCsdBuffers[mCurrCsdIdx].first;
     size_t csdSize = mCsdBuffers[mCurrCsdIdx].second;
     RETURN_IF_TRUE(bufSize < csdSize,
@@ -218,7 +218,7 @@ bool CodecDecoderTest::enqueueInput(size_t bufferIndex) {
         uint32_t flags = 0;
         size_t bufSize;
         uint8_t* buf = AMediaCodec_getInputBuffer(mCodec, bufferIndex, &bufSize);
-        RETURN_IF_TRUE(buf == nullptr, std::string{"AMediaCodec_getInputBuffer returned nullptr"})
+        RETURN_IF_NULL(buf, std::string{"AMediaCodec_getInputBuffer returned nullptr"})
         ssize_t size = AMediaExtractor_getSampleSize(mExtractor);
         int64_t pts = AMediaExtractor_getSampleTime(mExtractor);
         RETURN_IF_TRUE(size > bufSize,
@@ -250,8 +250,7 @@ bool CodecDecoderTest::dequeueOutput(size_t bufferIndex, AMediaCodecBufferInfo* 
         if (mSaveToMem) {
             size_t buffSize;
             uint8_t* buf = AMediaCodec_getOutputBuffer(mCodec, bufferIndex, &buffSize);
-            RETURN_IF_TRUE(buf == nullptr,
-                           std::string{"AMediaCodec_getOutputBuffer returned nullptr"})
+             RETURN_IF_NULL(buf, std::string{"AMediaCodec_getOutputBuffer returned nullptr"})
             if (mIsAudio) {
                 mOutputBuff->saveToMemory(buf, info);
                 mOutputBuff->updateChecksum(buf, info);
@@ -277,9 +276,9 @@ bool CodecDecoderTest::dequeueOutput(size_t bufferIndex, AMediaCodecBufferInfo* 
 
 bool CodecDecoderTest::isTestStateValid() {
     if (!CodecTestBase::isTestStateValid()) return false;
-    RETURN_IF_TRUE(!mOutputBuff->isPtsStrictlyIncreasing(mPrevOutputPts),
-                   std::string{"Output timestamps are not strictly increasing \n"}.append(
-                           mOutputBuff->getErrorMsg()))
+    RETURN_IF_FALSE(mOutputBuff->isPtsStrictlyIncreasing(mPrevOutputPts),
+                    std::string{"Output timestamps are not strictly increasing \n"}.append(
+                            mOutputBuff->getErrorMsg()))
     RETURN_IF_TRUE(mIsVideo && !mIsInterlaced &&
                    !mOutputBuff->isOutPtsListIdenticalToInpPtsList(false),
                    std::string{"Input pts list and Output pts list are not identical \n"}.append(
@@ -338,7 +337,7 @@ bool CodecDecoderTest::decodeToMemory(const char* decoder, AMediaFormat* format,
     mOutputBuff = ref;
     AMediaExtractor_seekTo(mExtractor, pts, mode);
     mCodec = AMediaCodec_createCodecByName(decoder);
-    RETURN_IF_TRUE(!mCodec, StringFormat("unable to create codec %s", decoder))
+    RETURN_IF_NULL(mCodec, StringFormat("unable to create codec %s", decoder))
     if (!configureCodec(format, false, true, false)) return false;
     RETURN_IF_FAIL(AMediaCodec_start(mCodec), "AMediaCodec_start failed")
     if (!doWork(frameLimit)) return false;
@@ -370,10 +369,10 @@ bool CodecDecoderTest::testSimpleDecode(const char* decoder, const char* testFil
             /* Instead of create and delete codec at every iteration, we would like to create
              * once and use it for all iterations and delete before exiting */
             mCodec = AMediaCodec_createCodecByName(decoder);
-            RETURN_IF_TRUE(!mCodec, StringFormat("unable to create codec %s", decoder))
+            RETURN_IF_NULL(mCodec, StringFormat("unable to create codec %s", decoder))
             char* name = nullptr;
             RETURN_IF_FAIL(AMediaCodec_getName(mCodec, &name), "AMediaCodec_getName failed")
-            RETURN_IF_TRUE(!name, std::string{"AMediaCodec_getName returned null"})
+            RETURN_IF_NULL(name, std::string{"AMediaCodec_getName returned null"})
             auto res = strcmp(name, decoder) != 0;
             AMediaCodec_releaseName(mCodec, name);
             RETURN_IF_TRUE(res, StringFormat("Codec name mismatch act/got: %s/%s", decoder, name))
@@ -431,8 +430,8 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile, int 
     const int64_t pts = 500000;
     const SeekMode mode = AMEDIAEXTRACTOR_SEEK_CLOSEST_SYNC;
     auto ref = mRefBuff;
-    RETURN_IF_TRUE(!decodeToMemory(decoder, mInpDecFormat, INT32_MAX, ref, pts, mode),
-                   StringFormat("decodeToMemory failed for file: %s codec: %s", testFile, decoder))
+    RETURN_IF_FALSE(decodeToMemory(decoder, mInpDecFormat, INT32_MAX, ref, pts, mode),
+                    StringFormat("decodeToMemory failed for file: %s codec: %s", testFile, decoder))
     auto test = mTestBuff;
     mOutputBuff = test;
     const bool boolStates[]{true, false};
@@ -442,7 +441,7 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile, int 
         /* Instead of create and delete codec at every iteration, we would like to create
          * once and use it for all iterations and delete before exiting */
         mCodec = AMediaCodec_createCodecByName(decoder);
-        RETURN_IF_TRUE(!mCodec, StringFormat("unable to create codec %s", decoder))
+        RETURN_IF_NULL(mCodec, StringFormat("unable to create codec %s", decoder))
         AMediaExtractor_seekTo(mExtractor, 0, mode);
         if (!configureCodec(mInpDecFormat, isAsync, true, false)) return false;
         AMediaFormat* defFormat = AMediaCodec_getOutputFormat(mCodec);
@@ -527,7 +526,7 @@ bool CodecDecoderTest::testOnlyEos(const char* decoder, const char* testFile, in
         /* Instead of create and delete codec at every iteration, we would like to create
          * once and use it for all iterations and delete before exiting */
         mCodec = AMediaCodec_createCodecByName(decoder);
-        RETURN_IF_TRUE(!mCodec, StringFormat("unable to create codec %s", decoder))
+        RETURN_IF_NULL(mCodec, StringFormat("unable to create codec %s", decoder))
         if (!configureCodec(mInpDecFormat, isAsync, false, false)) return false;
         RETURN_IF_FAIL(AMediaCodec_start(mCodec), "AMediaCodec_start failed")
         if (!queueEOS()) return false;
@@ -579,7 +578,7 @@ bool CodecDecoderTest::testSimpleDecodeQueueCSD(const char* decoder, const char*
                 /* Instead of create and delete codec at every iteration, we would like to create
                  * once and use it for all iterations and delete before exiting */
                 mCodec = AMediaCodec_createCodecByName(decoder);
-                RETURN_IF_TRUE(!mCodec, StringFormat("unable to create codec %s", decoder))
+                RETURN_IF_NULL(mCodec, StringFormat("unable to create codec %s", decoder))
                 AMediaExtractor_seekTo(mExtractor, 0, AMEDIAEXTRACTOR_SEEK_CLOSEST_SYNC);
                 if (!configureCodec(fmt, isAsync, eosType, false)) return false;
                 AMediaFormat* defFormat = AMediaCodec_getOutputFormat(mCodec);

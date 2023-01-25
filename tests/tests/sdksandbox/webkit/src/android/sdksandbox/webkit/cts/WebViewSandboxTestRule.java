@@ -1,0 +1,49 @@
+/*
+ * Copyright (C) 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.sdksandbox.webkit.cts;
+
+import static android.app.sdksandbox.testutils.testscenario.SdkSandboxScenarioRule.ENABLE_LIFE_CYCLE_ANNOTATIONS;
+
+import android.app.sdksandbox.testutils.testscenario.SdkSandboxScenarioRule;
+import android.os.Bundle;
+import android.webkit.cts.SharedWebViewTest;
+import android.webkit.cts.SharedWebViewTestEnvironment;
+
+import androidx.test.core.app.ApplicationProvider;
+
+/**
+ * This rule is used to invoke webview tests inside a test sdk.
+ * This rule is a wrapper for using the
+ * {@link WebViewSandboxTestSdk}, for detailed implementation
+ * details please refer to its parent class
+ * {@link SdkSandboxScenarioRule}.
+ */
+public class WebViewSandboxTestRule extends SdkSandboxScenarioRule {
+
+    public WebViewSandboxTestRule(String webViewTestClassName) {
+        super("com.android.cts.sdk.webviewsandboxtest",
+                getSetupParams(webViewTestClassName),
+                SharedWebViewTestEnvironment.createHostAppInvoker(
+                        ApplicationProvider.getApplicationContext()),
+                ENABLE_LIFE_CYCLE_ANNOTATIONS);
+    }
+
+    private static Bundle getSetupParams(String webViewTestClassName) {
+        Bundle params = new Bundle();
+        params.putString(SharedWebViewTest.WEB_VIEW_TEST_CLASS_NAME, webViewTestClassName);
+        return params;
+    }
+}

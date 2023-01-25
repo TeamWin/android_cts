@@ -6628,6 +6628,20 @@
         </activity>
 
         <activity
+            android:name=".controls.ControlsPanelInstallerTest"
+            android:label="@string/controls_panel_install_test"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.controls.ControlsPanelVerifierTestList"/>
+            <meta-data android:name="test_required_features" android:value="android.software.controls"/>
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+            <meta-data android:name="NonApiTest" android:value="Instructions for installing helper app. CtsDeviceControlsApp is needed to conduct the tests" />
+        </activity>
+
+        <activity
             android:name=".controls.ControlsPanelVerifierBasicTest"
             android:label="@string/controls_panel_basic_test"
             android:exported="true">

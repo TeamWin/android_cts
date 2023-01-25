@@ -157,6 +157,7 @@ android_library {
 filegroup {
     name: "pre_installed_apps",
     srcs: [
+        ":CtsDeviceControlsApp",
         ":CtsEmptyDeviceAdmin",
         ":CtsEmptyDeviceOwner",
         ":CtsPermissionApp",

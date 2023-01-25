@@ -38,12 +38,21 @@ import java.util.HashSet;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class DateSorterTest {
+public class DateSorterTest extends SharedWebViewTest {
     private Context mContext;
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext = getTestEnvironment().getContext();
+    }
+
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        return new SharedWebViewTestEnvironment.Builder()
+            .setContext(context)
+            .setHostAppInvoker(SharedWebViewTestEnvironment.createHostAppInvoker(context))
+            .build();
     }
 
     @Test
