@@ -42,8 +42,7 @@ import org.junit.runner.RunWith;
 @AppModeFull
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class HttpAuthHandlerTest {
-
+public class HttpAuthHandlerTest extends SharedWebViewTest {
     private static final long TIMEOUT = 10000;
 
     private static final String WRONG_USERNAME = "wrong_user";
@@ -51,9 +50,8 @@ public class HttpAuthHandlerTest {
     private static final String CORRECT_USERNAME = CtsTestServer.AUTH_USER;
     private static final String CORRECT_PASSWORD = CtsTestServer.AUTH_PASS;
 
-    private CtsTestServer mWebServer;
+    private SharedSdkWebServer mWebServer;
     private WebViewOnUiThread mOnUiThread;
-    private WebViewCtsActivity mActivity;
 
     @Rule
     public ActivityScenarioRule mActivityScenarioRule =
@@ -61,14 +59,13 @@ public class HttpAuthHandlerTest {
 
     @Before
     public void setUp() throws Exception {
-        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-        mActivityScenarioRule.getScenario().onActivity(activity -> {
-            mActivity = (WebViewCtsActivity) activity;
-            WebView webview = mActivity.getWebView();
-            if (webview != null) {
-                mOnUiThread = new WebViewOnUiThread(webview);
-            }
-        });
+        WebView webview = getTestEnvironment().getWebView();
+        if (webview != null) {
+            mOnUiThread = new WebViewOnUiThread(webview);
+        }
+
+        mWebServer = getTestEnvironment().getWebServer();
+        mWebServer.start(SslMode.INSECURE);
     }
 
     @After
@@ -77,9 +74,28 @@ public class HttpAuthHandlerTest {
             mOnUiThread.cleanUp();
         }
 
-        if (mWebServer != null) {
-            mWebServer.shutdown();
-        }
+        mWebServer.shutdown();
+    }
+
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+
+        SharedWebViewTestEnvironment.Builder builder = new SharedWebViewTestEnvironment.Builder();
+
+        mActivityScenarioRule
+                .getScenario()
+                .onActivity(
+                        activity -> {
+                            WebView webView = ((WebViewCtsActivity) activity).getWebView();
+                            builder.setHostAppInvoker(
+                                            SharedWebViewTestEnvironment.createHostAppInvoker(
+                                                activity))
+                                    .setContext(activity)
+                                    .setWebView(webView);
+                        });
+
+        return builder.build();
     }
 
     private class ProceedHttpAuthClient extends WaitForLoadedClient {
@@ -166,7 +182,6 @@ public class HttpAuthHandlerTest {
 
     @Test
     public void testProceed() throws Throwable {
-        mWebServer = new CtsTestServer(mActivity);
         String url = mWebServer.getAuthAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
 
         incorrectCredentialsAccessDenied(url);
@@ -176,7 +191,6 @@ public class HttpAuthHandlerTest {
 
     @Test
     public void testCancel() throws Throwable {
-        mWebServer = new CtsTestServer(mActivity);
         String url = mWebServer.getAuthAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
 
         CancelHttpAuthClient client = new CancelHttpAuthClient();
@@ -189,7 +203,6 @@ public class HttpAuthHandlerTest {
 
     @Test
     public void testUseHttpAuthUsernamePassword() throws Throwable {
-        mWebServer = new CtsTestServer(mActivity);
         String url = mWebServer.getAuthAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
 
         // Try to login once with incorrect credentials. This should cause

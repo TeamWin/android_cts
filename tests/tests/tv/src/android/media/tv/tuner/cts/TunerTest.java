@@ -772,6 +772,22 @@ public class TunerTest {
                         List<Atsc3PlpInfo> plps = status.getAllAtsc3PlpInfo();
                         assertFalse(plps.isEmpty());
                         break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_IPTV_CONTENT_URL:
+                        String iptvContentUrl = status.getIptvContentUrl();
+                        assertNotNull(iptvContentUrl);
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_IPTV_PACKETS_LOST:
+                        status.getIptvPacketsLost();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_IPTV_PACKETS_RECEIVED:
+                        status.getIptvPacketsReceived();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_IPTV_WORST_JITTER_MS:
+                        status.getIptvWorstJitterMillis();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_IPTV_AVERAGE_JITTER_MS:
+                        status.getIptvAverageJitterMillis();
+                        break;
                 }
             }
             tuner.close();

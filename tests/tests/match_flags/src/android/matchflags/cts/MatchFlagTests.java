@@ -27,6 +27,7 @@ import android.net.Uri;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.ShellUtils;
 
 import org.junit.After;
@@ -121,6 +122,7 @@ public class MatchFlagTests {
 
     @Test
     public void startNoBrowserRequireDefaultUnapproved() throws Exception {
+        assumeFalse("Skipping test for watch", FeatureUtil.isWatch());
         setDomainUserSelectionApproval(false);
         startNoBrowserRequireDefaultInternal(false);
     }

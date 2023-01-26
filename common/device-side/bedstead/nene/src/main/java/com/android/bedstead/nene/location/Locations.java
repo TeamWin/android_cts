@@ -16,13 +16,17 @@
 
 package com.android.bedstead.nene.location;
 
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
+import static android.location.LocationManager.FUSED_PROVIDER;
 
 import android.content.Context;
+import android.location.Location;
 import android.location.LocationManager;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.BlockingCallback;
 
 import java.util.function.Consumer;
@@ -59,6 +63,26 @@ public final class Locations {
                 WRITE_SECURE_SETTINGS)) {
             sLocationManager.setLocationEnabledForUser(enabled,
                     TestApis.users().instrumented().userHandle());
+        }
+
+        // Location should return null after disabling location on the device. This can take a
+        // bit of time to propagate through the location stack, so poll until location is null.
+        if (!enabled) {
+            Poll.forValue("Last known location is null",
+                            () -> getLastKnownLocation(FUSED_PROVIDER))
+                    .toBeNull()
+                    .errorOnFail()
+                    .await();
+        }
+    }
+
+    /**
+     * Get the last known location for a given location provider
+     */
+    public Location getLastKnownLocation(String providerName) {
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                ACCESS_FINE_LOCATION)) {
+            return sLocationManager.getLastKnownLocation(providerName);
         }
     }
 

@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.PendingIntent;
@@ -37,6 +38,7 @@ import android.content.pm.ShortcutManager;
 import android.graphics.Point;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
+import android.os.ResultReceiver;
 import android.service.chooser.ChooserAction;
 import android.service.chooser.ChooserTarget;
 import android.support.test.uiautomator.By;
@@ -84,6 +86,8 @@ public class CtsSharesheetDeviceTest {
             "android.sharesheet.cts.ACTION_INTENT_SENDER_FIRED_ON_CLICK";
     private static final String CHOOSER_CUSTOM_ACTION_BROADCAST_ACTION =
             "android.sharesheet.cts.CHOOSER_CUSTOM_ACTION_BROADCAST_ACTION";
+    private static final String CHOOSER_REFINEMENT_BROADCAST_ACTION =
+            "android.sharesheet.cts.CHOOSER_REFINEMENT_BROADCAST_ACTION";
     static final String CTS_DATA_TYPE = "test/cts"; // Special CTS mime type
     static final String CATEGORY_CTS_TEST = "CATEGORY_CTS_TEST";
 
@@ -276,6 +280,62 @@ public class CtsSharesheetDeviceTest {
         } catch (Exception e) {
             // No-op
         } finally {
+            closeSharesheet();
+        }
+    }
+
+    @Test
+    public void testRefinementIntentSender() throws InterruptedException {
+        if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
+
+        final CountDownLatch broadcastInvoked = new CountDownLatch(1);
+        final CountDownLatch chooserCallbackInvoked = new CountDownLatch(1);
+
+        BroadcastReceiver refinementReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                assertEquals(1, chooserCallbackInvoked.getCount());
+                // Call back the sharesheet to complete the share.
+                ResultReceiver resultReceiver = intent.getParcelableExtra(
+                        Intent.EXTRA_RESULT_RECEIVER, ResultReceiver.class);
+                Bundle bundle = new Bundle();
+                bundle.putParcelable(Intent.EXTRA_INTENT,
+                        intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class));
+                resultReceiver.send(Activity.RESULT_OK, bundle);
+                broadcastInvoked.countDown();
+            }
+        };
+
+        BroadcastReceiver chooserCallbackReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                chooserCallbackInvoked.countDown();
+            }
+        };
+        mContext.registerReceiver(chooserCallbackReceiver,
+                new IntentFilter(ACTION_INTENT_SENDER_FIRED_ON_CLICK),
+                Context.RECEIVER_EXPORTED);
+
+        PendingIntent refinement = PendingIntent.getBroadcast(
+                mContext,
+                1,
+                new Intent(CHOOSER_REFINEMENT_BROADCAST_ACTION),
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
+
+        try {
+            Intent shareIntent = createShareIntent(false, 0, 0, null);
+            shareIntent.putExtra(Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER,
+                    refinement.getIntentSender());
+            mContext.registerReceiver(
+                    refinementReceiver, new IntentFilter(CHOOSER_REFINEMENT_BROADCAST_ACTION),
+                    Context.RECEIVER_EXPORTED);
+            launchSharesheet(shareIntent);
+            findTextContains(mAppLabel).click();
+            assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
+            assertTrue(chooserCallbackInvoked.await(1000, TimeUnit.MILLISECONDS));
+        } finally {
+            mContext.unregisterReceiver(refinementReceiver);
+            mContext.unregisterReceiver(chooserCallbackReceiver);
             closeSharesheet();
         }
     }

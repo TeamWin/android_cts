@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.presence;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -54,6 +56,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
     private boolean isReferenceDevice;
     private BleScanner mBleScanner;
     private BleAdvertiser mBleAdvertiser;
+    private BluetoothAdapter mBluetoothAdapter;
     private HashMap<String, ArrayList<Integer>> mRssiResultMap;
     private Button mStartTestButton;
     private Button mStopTestButton;
@@ -65,6 +68,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
     private TextView mDeviceFoundTextView;
     private EditText mReferenceDeviceIdInput;
     private String mReferenceDeviceName;
+    private CheckBox mIsReferenceDeviceCheckbox;
     private boolean mTestPassed;
 
     @Override
@@ -80,11 +84,13 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         mDeviceIdInfoTextView = findViewById(R.id.device_id_info);
         mDeviceFoundTextView = findViewById(R.id.device_found_info);
         mReferenceDeviceIdInput = findViewById(R.id.ref_device_id_input);
-        CheckBox isReferenceDeviceCheckbox = findViewById(R.id.is_reference_device);
+        mIsReferenceDeviceCheckbox = findViewById(R.id.is_reference_device);
         mDutModeLayout = findViewById(R.id.dut_mode_layout);
         mRefModeLayout = findViewById(R.id.ref_mode_layout);
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
                 PackageManager.FEATURE_BLUETOOTH_LE);
+        BluetoothManager bluetoothManager = getSystemService(BluetoothManager.class);
+        mBluetoothAdapter = bluetoothManager.getAdapter();
         mBleAdvertiser = new BleAdvertiser();
         mBleScanner = new BleScanner();
         mRssiResultMap = new HashMap<>();
@@ -92,9 +98,9 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         mStopAdvertisingButton.setEnabled(false);
         mDeviceIdInfoTextView.setVisibility(View.GONE);
         mDeviceFoundTextView.setVisibility(View.GONE);
-        isReferenceDevice = isReferenceDeviceCheckbox.isChecked();
+        isReferenceDevice = mIsReferenceDeviceCheckbox.isChecked();
         checkUiMode();
-        isReferenceDeviceCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        mIsReferenceDeviceCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             isReferenceDevice = isChecked;
             checkUiMode();
         });
@@ -105,12 +111,16 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
     }
 
     private void startTest() {
+        if (!checkBluetoothEnabled()) {
+            return;
+        }
         if (mReferenceDeviceIdInput.getText().toString().isEmpty()) {
             makeToast("Input the device ID shown on the advertising device before commencing test");
             return;
         }
         mStartTestButton.setEnabled(false);
         mStopTestButton.setEnabled(true);
+        mIsReferenceDeviceCheckbox.setEnabled(false);
         mBleScanner.startScanning((uuids,
                 macAddress,
                 deviceName,
@@ -118,13 +128,18 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
                 deviceId,
                 rawRssi) -> {
 
+            if (deviceId != Byte.parseByte(mReferenceDeviceIdInput.getText().toString())) {
+                //reference device does not match discovered device and scan should be discarded
+                Log.i(TAG, "Reference device does not match discovered device. Skipping");
+                return;
+            }
             mRssiResultMap.computeIfAbsent(deviceName, k -> new ArrayList<>());
             ArrayList<Integer> resultList = mRssiResultMap.get(deviceName);
             resultList.add(rawRssi);
             mDeviceFoundTextView.setVisibility(View.VISIBLE);
             mReferenceDeviceName = referenceDeviceName;
             String deviceFoundText = getString(R.string.device_found_presence,
-                    resultList.size());
+                    resultList.size(), 1000);
             mDeviceFoundTextView.setText(deviceFoundText);
             if (resultList.size() >= 1000) {
                 Log.i(TAG, "Data collection complete");
@@ -152,18 +167,30 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
 
     private void stopTest() {
         mBleScanner.stopScanning();
+        for (String device : mRssiResultMap.keySet()) {
+            mRssiResultMap.get(device).clear();
+        }
         mStopTestButton.setEnabled(false);
         mStartTestButton.setEnabled(true);
+        mIsReferenceDeviceCheckbox.setEnabled(true);
     }
 
     private void startAdvertising() {
+        if (!checkBluetoothEnabled()) {
+            return;
+        }
         byte randomAdvertiserDeviceId = getRandomDeviceId();
         String deviceIdInfoText = getString(R.string.device_id_info_presence,
                 randomAdvertiserDeviceId);
         mDeviceIdInfoTextView.setText(deviceIdInfoText);
         mDeviceIdInfoTextView.setVisibility(View.VISIBLE);
-        String packetDeviceName = DEVICE_NAME.substring(0,
-                BleAdvertisingPacket.MAX_REFERENCE_DEVICE_NAME_LENGTH - 1);
+        String packetDeviceName = "";
+        if (DEVICE_NAME.length() > BleAdvertisingPacket.MAX_REFERENCE_DEVICE_NAME_LENGTH) {
+            packetDeviceName = DEVICE_NAME.substring(0,
+                    BleAdvertisingPacket.MAX_REFERENCE_DEVICE_NAME_LENGTH - 1);
+        } else {
+            packetDeviceName = DEVICE_NAME;
+        }
         mBleAdvertiser.startAdvertising(
                 new BleAdvertisingPacket(packetDeviceName, randomAdvertiserDeviceId).toBytes());
         mStartAdvertisingButton.setEnabled(false);
@@ -175,6 +202,15 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         mStopAdvertisingButton.setEnabled(false);
         mStartAdvertisingButton.setEnabled(true);
         mDeviceIdInfoTextView.setVisibility(View.GONE);
+    }
+
+    private boolean checkBluetoothEnabled() {
+        if (!mBluetoothAdapter.isEnabled()) {
+            makeToast("Bluetooth is not enabled, turn on bluetooth before starting test");
+            Log.w(TAG, "Could not start test because Bluetooth is not enabled");
+            return false;
+        }
+        return true;
     }
 
     private void checkUiMode() {

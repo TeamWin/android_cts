@@ -29,7 +29,7 @@ android_test {
     ],
     srcs: [
         "src/**/*.java",
-        ":CtsBroadcastsTestsAidl",
+        ":CtsBroadcastsTestsCommon",
     ],
     test_suites: [
         "cts",
@@ -52,7 +52,7 @@ android_test_helper_app {
     ],
     srcs: [
         "helper-app/src/**/*.java",
-        ":CtsBroadcastsTestsAidl",
+        ":CtsBroadcastsTestsCommon",
     ],
     test_suites: [
         "cts",
@@ -71,7 +71,7 @@ android_test_helper_app {
     ],
     srcs: [
         "helper-app/src/**/*.java",
-        ":CtsBroadcastsTestsAidl",
+        ":CtsBroadcastsTestsCommon",
     ],
     test_suites: [
         "cts",
@@ -85,8 +85,10 @@ android_test_helper_app {
 }
 
 filegroup {
-    name: "CtsBroadcastsTestsAidl",
+    name: "CtsBroadcastsTestsCommon",
     srcs: [
-        "aidl/**/*.aidl",
+        "common/src/**/*.aidl",
+        "common/src/**/*.java",
     ],
+    path: "common/src",
 }

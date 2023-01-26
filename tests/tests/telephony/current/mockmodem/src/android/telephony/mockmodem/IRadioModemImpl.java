@@ -24,6 +24,7 @@ import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.modem.IRadioModem;
 import android.hardware.radio.modem.IRadioModemIndication;
 import android.hardware.radio.modem.IRadioModemResponse;
+import android.hardware.radio.modem.ImeiInfo;
 import android.hardware.radio.modem.RadioState;
 import android.os.AsyncResult;
 import android.os.Handler;
@@ -210,7 +211,16 @@ public class IRadioModemImpl extends IRadioModem.Stub {
 
         android.hardware.radio.modem.ImeiInfo imeiInfo =
                 new android.hardware.radio.modem.ImeiInfo();
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        synchronized (mCacheUpdateMutex) {
+            if (mSubId == 1) {
+                imeiInfo.type = ImeiInfo.ImeiType.PRIMARY;
+            } else {
+                imeiInfo.type = ImeiInfo.ImeiType.SECONDARY;
+            }
+            imeiInfo.imei = mImei;
+            imeiInfo.svn = mImeiSv;
+        }
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioModemResponse.getImeiResponse(rsp, imeiInfo);
         } catch (RemoteException ex) {

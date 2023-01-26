@@ -33,9 +33,10 @@ Eg:
 ```
 
 *** aside
-**Note:**  WebView tests are quite old so you may need to first migrate the test suite
-from `ActivityInstrumentationTestCase2`, to use `ActivityScenarioRule`. You can see an example
-of this migration [here](http://ag/20258043) and [here](http://ag/20300224).
+**Note:**  Some WebView tests still use the JUnit 3 style, so you may need to
+first migrate the test suite from `ActivityInstrumentationTestCase2` to use
+`ActivityScenarioRule` (which is for JUnit 4 style). See
+[b/112773416](http://b/112773416) for details.
 ***
 
 This abstract class requires you to implement the method `createTestEnvironment` that

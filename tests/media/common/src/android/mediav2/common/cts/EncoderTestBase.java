@@ -82,10 +82,15 @@ public class EncoderTestBase extends CodecTestBase {
         mEncCfgParams = encCfgParams;
     }
 
-    private static final List<String> MEDIATYPE_LIST_FOR_TYPE_MP4 =
+    private static final List<String> MEDIATYPE_LIST_FOR_TYPE_MP4 = new ArrayList<>(
             Arrays.asList(MediaFormat.MIMETYPE_VIDEO_MPEG4, MediaFormat.MIMETYPE_VIDEO_H263,
                     MediaFormat.MIMETYPE_VIDEO_AVC, MediaFormat.MIMETYPE_VIDEO_HEVC,
-                    MediaFormat.MIMETYPE_AUDIO_AAC);
+                    MediaFormat.MIMETYPE_AUDIO_AAC));
+    static {
+        if (CodecTestBase.IS_AT_LEAST_U) {
+            MEDIATYPE_LIST_FOR_TYPE_MP4.add(MediaFormat.MIMETYPE_VIDEO_AV1);
+        }
+    }
     private static final List<String> MEDIATYPE_LIST_FOR_TYPE_WEBM =
             Arrays.asList(MediaFormat.MIMETYPE_VIDEO_VP8, MediaFormat.MIMETYPE_VIDEO_VP9,
                     MediaFormat.MIMETYPE_AUDIO_VORBIS, MediaFormat.MIMETYPE_AUDIO_OPUS);

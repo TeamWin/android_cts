@@ -35,7 +35,6 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.attentionservice.cts.CtsTestAttentionService;
 import android.os.ParcelFileDescriptor;
-import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.service.voice.AlwaysOnHotwordDetector;
@@ -57,10 +56,7 @@ import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.RequiredServiceRule;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -88,8 +84,8 @@ public final class HotwordDetectionServiceProximityTest {
     private static final String FAKE_SERVICE_PACKAGE =
             HotwordDetectionServiceProximityTest.class.getPackage().getName();
 
-    @ClassRule
-    public static final RequiredServiceRule ATTENTION_SERVICE_RULE =
+    @Rule
+    public final RequiredServiceRule ATTENTION_SERVICE_RULE =
             new RequiredServiceRule(ATTENTION_SERVICE);
 
     @Rule
@@ -109,34 +105,24 @@ public final class HotwordDetectionServiceProximityTest {
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
 
-    @BeforeClass
-    public static void enableAttentionService() throws InterruptedException {
+    @Before
+    public void setup() {
+        // Set up Attention Service
         CtsTestAttentionService.reset();
         assertThat(setTestableAttentionService(FAKE_SERVICE_PACKAGE)).isTrue();
         assertThat(getAttentionServiceComponent()).contains(FAKE_SERVICE_PACKAGE);
         runShellCommand("cmd attention call checkAttention");
-    }
 
-    @AfterClass
-    public static void clearAttentionService() {
-        runShellCommand("cmd attention clearTestableAttentionService");
-    }
-
-    @Before
-    public void setup() {
         // VoiceInteractionServiceConnectedRule handles the service connected,
         // the test should be able to get service
         mService = (CtsBasicVoiceInteractionService) BaseVoiceInteractionService.getService();
         // Check the test can get the service
         Objects.requireNonNull(mService);
-
-        // Wait the original HotwordDetectionService finish clean up to avoid flaky
-        // This also waits for mic indicator disappear
-        SystemClock.sleep(10_000);
     }
 
     @After
     public void tearDown() {
+        runShellCommand("cmd attention clearTestableAttentionService");
         mService = null;
     }
 

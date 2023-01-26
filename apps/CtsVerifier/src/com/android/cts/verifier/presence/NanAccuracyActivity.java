@@ -16,7 +16,9 @@
 
 package com.android.cts.verifier.presence;
 
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.wifi.WifiManager;
 import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.rtt.RangingResult;
 import android.os.Bundle;
@@ -54,6 +56,7 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
 
     private HashMap<PeerHandle, ArrayList<Double>> mReceivedSamples;
     private WifiAwarePeer mWifiAwarePeer;
+    private WifiManager mWifiManager;
     private TestResult mTestResult;
     private TestDistance mCurrentTestDistance;
     private Button mStartTestButton;
@@ -73,7 +76,7 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
             Log.i(TAG, "Discovered NAN Peer");
             mReceivedSamples.put(peerHandle, new ArrayList<>());
             mDeviceFoundTextView.setText(getString(R.string.device_found_presence,
-                    mReceivedSamples.get(peerHandle).size()));
+                    mReceivedSamples.get(peerHandle).size(), 100));
             mDeviceFoundTextView.setVisibility(View.VISIBLE);
             updateTestStatus(TestStatus.IN_PROGRESS);
         }
@@ -106,6 +109,10 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
         mTestDistanceRadioGroup = findViewById(R.id.test_distance_radio_group);
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
                 PackageManager.FEATURE_WIFI_AWARE);
+        DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
+                PackageManager.FEATURE_WIFI_RTT);
+        mWifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
         Handler handler = new Handler(Looper.getMainLooper());
         mWifiAwarePeer = new WifiAwarePeer(this, handler);
         mReceivedSamples = new HashMap<>();
@@ -136,6 +143,9 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
     }
 
     private void startTest() {
+        if (!checkWifiEnabled()) {
+            return;
+        }
         if (mServiceIdInputEditText.getText().toString().isEmpty()) {
             makeToast(
                     "Input the service ID shown on the publishing device before commencing test");
@@ -153,6 +163,9 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
     }
 
     private void startPublishing() {
+        if (!checkWifiEnabled()) {
+            return;
+        }
         byte randomServiceId = getRandomServiceId();
         String serviceIdInfoText = getString(R.string.service_id_info_presence,
                 randomServiceId);
@@ -168,13 +181,22 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
         mServiceIdInfoTextView.setVisibility(View.GONE);
     }
 
+    private boolean checkWifiEnabled() {
+        if (!mWifiManager.isWifiEnabled()) {
+            makeToast("Turn on wifi to start test. You do not need to be connected to a network");
+            Log.w(TAG, "Could not start test because Wifi is not enabled");
+            return false;
+        }
+        return true;
+    }
+
     private void nanResultListener(RangingResult result) {
         Log.i(TAG, "Got range result");
         if (mReceivedSamples.containsKey(result.getPeerHandle())) {
             Double distanceRangeMeters = result.getDistanceMm() / 1000.0;
             mReceivedSamples.get(result.getPeerHandle()).add(distanceRangeMeters);
             mDeviceFoundTextView.setText(getString(R.string.device_found_presence,
-                    mReceivedSamples.get(result.getPeerHandle()).size()));
+                    mReceivedSamples.get(result.getPeerHandle()).size(), 100));
             checkDataCollectionStatus(result.getPeerHandle());
         }
     }

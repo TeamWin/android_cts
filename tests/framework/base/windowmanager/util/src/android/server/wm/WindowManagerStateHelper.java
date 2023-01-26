@@ -28,6 +28,8 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD_DIALOG;
 import static android.view.WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.hamcrest.Matchers.greaterThan;
@@ -43,7 +45,10 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.graphics.Rect;
+import android.hardware.display.AmbientDisplayConfiguration;
+import android.hardware.display.DisplayManager;
 import android.util.SparseArray;
+import android.view.Display;
 
 import java.util.Arrays;
 import java.util.List;
@@ -52,8 +57,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+
 /** Window Manager State helper class with assert and wait functions. */
 public class WindowManagerStateHelper extends WindowManagerState {
+
+    private final AmbientDisplayConfiguration mAmbientDisplayConfiguration =
+            new AmbientDisplayConfiguration(getInstrumentation().getContext());
 
     /**
      * Compute AM and WM state of device, check validity and bounds.
@@ -708,27 +717,21 @@ public class WindowManagerStateHelper extends WindowManagerState {
         }
     }
 
-    public void assertKeyguardShowingAndOccluded() {
-        assertTrue("Keyguard is showing",
-                getKeyguardControllerState().keyguardShowing);
-        assertFalse("keygaurd is not going away",
-                getKeyguardControllerState().mKeyguardGoingAway);
+    public void assertKeyguardOccluded() {
         assertTrue("Keyguard is occluded",
                 getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY));
     }
 
-    public void assertKeyguardShowingAndNotOccluded() {
+    public void assertKeyguardShowing() {
         assertTrue("Keyguard is showing",
                 getKeyguardControllerState().keyguardShowing);
-        assertFalse("keygaurd is not going away",
-                getKeyguardControllerState().mKeyguardGoingAway);
-        assertFalse("Keyguard is not occluded",
-                getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY));
     }
 
     public void assertKeyguardGone() {
-        assertFalse("Keyguard is not shown",
+        assertFalse("Keyguard must not be showing",
                 getKeyguardControllerState().keyguardShowing);
+        assertFalse("AOD must not be showing",
+                getKeyguardControllerState().aodShowing);
     }
 
     void assertKeyguardShownOnSecondaryDisplay(int displayId) {
@@ -749,6 +752,24 @@ public class WindowManagerStateHelper extends WindowManagerState {
     public void assertAodNotShowing() {
         assertFalse("AOD is not showing",
                 getKeyguardControllerState().aodShowing);
+    }
+
+    private static boolean isDisplayOn(int displayId) {
+        final DisplayManager displayManager = getInstrumentation()
+                .getContext().getSystemService(DisplayManager.class);
+        final Display display = displayManager.getDisplay(displayId);
+        return display != null && display.getState() == Display.STATE_ON;
+    }
+
+    public void assertSleeping() {
+        final boolean isAlwaysOnEnabled = mAmbientDisplayConfiguration.alwaysOnEnabled(
+                android.os.Process.myUserHandle().getIdentifier());
+        if (isAlwaysOnEnabled) {
+            assertAodShowing();
+        } else {
+            assertFalse("Display is off", isDisplayOn(DEFAULT_DISPLAY));
+            assertKeyguardShowing();
+        }
     }
 
     public void assertIllegalTaskState() {

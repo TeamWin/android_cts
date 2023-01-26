@@ -18,12 +18,17 @@ package com.android.app.cts.broadcasts;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.RemoteCallback;
+
+import com.android.app.cts.broadcasts.BroadcastReceipt;
 
 import java.util.List;
 
 interface ICommandReceiver {
     void sendBroadcast(in Intent intent, in Bundle options);
     void monitorBroadcasts(in IntentFilter filter, in String cookie);
-    List<Intent> getReceivedBroadcasts(in String cookie);
+    List<BroadcastReceipt> getReceivedBroadcasts(in String cookie);
     void clearCookie(in String cookie);
+    int getPid();
+    void tearDown();
 }

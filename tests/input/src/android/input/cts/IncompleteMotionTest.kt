@@ -25,6 +25,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.InputDevice
 import android.view.MotionEvent
+import android.view.MotionEvent.ACTION_CANCEL
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
 import android.view.View
@@ -140,6 +141,8 @@ class IncompleteMotionTest {
         // If we wait too long here, we will cause ANR (if the platform has a bug).
         // If the MOVE event is received, however, we can stop the test.
         PollingCheck.waitFor { activity.receivedMove() }
+        // Finish the gesture. No dangling injected pointers should remain
+        sendEvent(downTime, ACTION_CANCEL, x, y, true /*sync*/)
     }
 
     private fun sendEvent(downTime: Long, action: Int, x: Float, y: Float, sync: Boolean) {

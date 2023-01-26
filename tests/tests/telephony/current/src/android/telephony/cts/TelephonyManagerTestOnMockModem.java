@@ -56,6 +56,7 @@ import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.mockmodem.MockCallControlInfo;
+import android.telephony.mockmodem.MockModemConfigInterface;
 import android.telephony.mockmodem.MockModemManager;
 import android.util.Log;
 
@@ -889,5 +890,16 @@ public class TelephonyManagerTestOnMockModem {
         Carrier[] carrierList = new Carrier[1];
         carrierList[0] = carrier;
         return carrierList;
+    }
+
+    /**
+     * Test for primaryImei will return the IMEI that is set through mockModem
+     */
+    @Test
+    public void testGetPrimaryImei() {
+        String primaryImei = ShellIdentityUtils.invokeMethodWithShellPermissions(sTelephonyManager,
+                (tm) -> tm.getPrimaryImei());
+        assertNotNull(primaryImei);
+        assertEquals(MockModemConfigInterface.DEFAULT_PHONE2_IMEI, primaryImei);
     }
 }

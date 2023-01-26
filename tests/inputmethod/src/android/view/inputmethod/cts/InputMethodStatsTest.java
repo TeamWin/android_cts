@@ -42,7 +42,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
-import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 import com.android.os.nano.AtomsProto;
@@ -77,9 +76,6 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
 
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mPkgName = mInstrumentation.getContext().getPackageName();
-
-        // Enable verbose ImeTracker logging.
-        SystemUtil.runShellCommand("setprop persist.debug.imetracker 1");
     }
 
     @After
@@ -89,9 +85,6 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
 
         mInstrumentation = null;
         mPkgName = "";
-
-        // Disable verbose ImeTracker logging.
-        SystemUtil.runShellCommand("setprop persist.debug.imetracker 0");
     }
 
     private TestActivity createTestActivity(final int windowFlags) {

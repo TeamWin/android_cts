@@ -86,6 +86,15 @@ public final class SharedSdkWebServer {
         }
     }
 
+    /** Get the full auth url for an asset. */
+    public String getAuthAssetUrl(String path) {
+        try {
+            return mWebServer.getAuthAssetUrl(path);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /** Get a binary url. */
     public String getBinaryUrl(String mimeType, int contentLength) {
         try {

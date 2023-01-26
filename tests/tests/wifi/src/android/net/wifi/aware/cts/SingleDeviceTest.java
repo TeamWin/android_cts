@@ -16,12 +16,15 @@
 
 package android.net.wifi.aware.cts;
 
+import static android.Manifest.permission.OVERRIDE_WIFI_CONFIG;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.net.wifi.aware.AwarePairingConfig.PAIRING_BOOTSTRAPPING_OPPORTUNISTIC;
 
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.mock;
 
+import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -62,6 +65,7 @@ import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SdkSuppress;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -370,7 +374,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         }
 
         @Override
-        public void onSessionSuspendSuccess() {
+        public void onSessionSuspendSucceeded() {
             processCallback(ON_SESSION_SUSPEND_SUCCEEDED);
         }
 
@@ -380,7 +384,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         }
 
         @Override
-        public void onSessionResumeSuccess() {
+        public void onSessionResumeSucceeded() {
             processCallback(ON_SESSION_RESUME_SUCCEEDED);
         }
 
@@ -1668,23 +1672,35 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
         }
-        // Attach offload session
-        final AttachCallbackTest attachCb = new AttachCallbackTest();
-        ShellIdentityUtils.invokeWithShellPermissions(() ->
-                mWifiAwareManager.attachOffload(mHandler, attachCb));
-        int cbCalled = attachCb.waitForAnyCallback();
-        assertEquals("Wi-Fi Aware attach", AttachCallbackTest.ATTACHED, cbCalled);
-        // Attach a normal session offload session should be terminated
-        attachAndGetCallback();
-        cbCalled = attachCb.waitForAnyCallback();
-        assertEquals("Wi-Fi Aware session terminate", AttachCallbackTest.TERMINATE, cbCalled);
-        assertNull(attachCb.getSession());
-        // Attach offload again, should fail.
-        final AttachCallbackTest attachCb1 = new AttachCallbackTest();
-        ShellIdentityUtils.invokeWithShellPermissions(() ->
-                mWifiAwareManager.attachOffload(mHandler, attachCb1));
-        cbCalled = attachCb1.waitForAnyCallback();
-        assertEquals("Wi-Fi Aware attach", AttachCallbackTest.ATTACH_FAILED, cbCalled);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            boolean hasPermission = mContext.checkCallingPermission(OVERRIDE_WIFI_CONFIG)
+                    == PERMISSION_GRANTED;
+            // Attach offload session
+            final AttachCallbackTest attachCb = new AttachCallbackTest();
+            if (!hasPermission) {
+                assertThrows(SecurityException.class, () ->
+                        mWifiAwareManager.attachOffload(mHandler, attachCb));
+                return;
+            }
+            mWifiAwareManager.attachOffload(mHandler, attachCb);
+            int cbCalled = attachCb.waitForAnyCallback();
+            assertEquals("Wi-Fi Aware attach", AttachCallbackTest.ATTACHED, cbCalled);
+            // Attach a normal session offload session should be terminated
+            attachAndGetCallback();
+            cbCalled = attachCb.waitForAnyCallback();
+            assertEquals("Wi-Fi Aware session terminate", AttachCallbackTest.TERMINATE, cbCalled);
+            assertNull(attachCb.getSession());
+            // Attach offload again, should fail.
+            final AttachCallbackTest attachCb1 = new AttachCallbackTest();
+
+            mWifiAwareManager.attachOffload(mHandler, attachCb1);
+            cbCalled = attachCb1.waitForAnyCallback();
+            assertEquals("Wi-Fi Aware attach", AttachCallbackTest.ATTACH_FAILED, cbCalled);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     /**

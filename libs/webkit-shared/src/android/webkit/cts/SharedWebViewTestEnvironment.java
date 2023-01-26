@@ -221,6 +221,11 @@ public final class SharedWebViewTestEnvironment {
                         return mWebServer.getAssetUrl(path);
                     }
 
+                    public String getAuthAssetUrl(String path) {
+                        assertNotNull("The WebServer needs to be started", mWebServer);
+                        return mWebServer.getAuthAssetUrl(path);
+                    }
+
                     public String getBinaryUrl(String mimeType, int contentLength) {
                         assertNotNull("The WebServer needs to be started", mWebServer);
                         return mWebServer.getBinaryUrl(mimeType, contentLength);

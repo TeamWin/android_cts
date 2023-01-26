@@ -25,6 +25,7 @@ import static android.permission.cts.TestUtils.eventually;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
@@ -204,7 +205,9 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
 
         // Verify content intent
         PendingIntent contentIntent = currentNotification.getNotification().contentIntent;
-        contentIntent.send();
+        contentIntent.send(null, 0, null, null, null, null,
+                ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
+                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle());
 
         SafetyCenterUtils.assertSafetyCenterStarted();
     }

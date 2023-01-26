@@ -31,6 +31,8 @@ interface IWebServer {
 
     String getAssetUrl(String path);
 
+    String getAuthAssetUrl(String path);
+
     String getBinaryUrl(String mimeType, int contentLength);
 
     boolean wasResourceRequested(String url);

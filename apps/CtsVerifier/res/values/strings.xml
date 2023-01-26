@@ -6670,7 +6670,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="start_advertising_presence">Start Advertising</string>
     <string name="stop_advertising_presence">Stop Advertising</string>
     <string name="device_id_info_presence">You are advertising with deviceId: %1$d</string>
-    <string name="device_found_presence">Reference device found. %1$d of 100 samples collected</string>
+    <string name="device_found_presence">Reference device found. %1$d of %2$d samples collected</string>
     <string name="reference_device_id_input_presence">Enter the device ID displayed on the advertising device</string>
 
     <!-- Strings for BLE RSSI Precision Test -->
@@ -6808,4 +6808,22 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="usi_fail_reason_not_ready">Not ready to check for USI stylus versions.</string>
     <string name="usi_fail_reason_incorrect_version">The USI version was incorrectly reported.
     </string>
+
+    <!-- Strings for PreferredMixerAttributesTestActivity -->
+    <string name="audio_preferred_mixer_attributes_test">Audio Preferred Mixer Attributes Test</string>
+    <string name="audio_preferred_mixer_attributes_test_info">
+        This test verifies that apps can set preferred mixer attributes for USB devices.
+        \nTo pass the test:
+        \n  - Connect a USB audio device to the Android device under test.
+        \n  - The test will automatically run by setting preferred mixer attributes. If the test passes, the pass button will be clickable. Otherwise, the failure message will show.
+    </string>
+    <string name="audio_preferred_mixer_attributes_test_connect_usb_device">Please connect USB audio device</string>
+    <string name="audio_preferred_mixer_attributes_test_usb_device_connected">USB device connected</string>
+    <string name="audio_preferred_mixer_attributes_test_running">Running test, please wait&#8230;</string>
+    <string name="audio_can_not_set_preferred_mixer_attributes">Cannot set preferred mixer attributes for USB device.</string>
+    <string name="audio_set_preferred_mixer_attributes_failed">Set preferred mixer attributes failed.</string>
+    <string name="audio_get_preferred_mixer_attributes_not_equal">Preferred mixer attributes are different from ones set.</string>
+    <string name="audio_clear_preferred_mixer_attributes_failed">Clearing preferred mixer attributes failed.</string>
+    <string name="audio_get_preferred_mixer_attributes_should_be_null">Preferred mixer attributes is not null after calling AudioManager#clearPreferredMixerAttributes.</string>
+    <string name="audio_no_callback_for_preferred_mixer_attributes_changed">Callback is not called when preferred mixer attributes changed.</string>
 </resources>

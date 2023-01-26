@@ -226,6 +226,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             android.Manifest.permission.BODY_SENSORS to "@android:string/permgrouplab_sensors",
             android.Manifest.permission.BODY_SENSORS_BACKGROUND
                     to "@android:string/permgrouplab_sensors",
+            android.Manifest.permission.BODY_SENSORS_WRIST_TEMPERATURE
+                    to "@android:string/permgrouplab_sensors",
+            android.Manifest.permission.BODY_SENSORS_WRIST_TEMPERATURE_BACKGROUND
+                    to "@android:string/permgrouplab_sensors",
             // Bluetooth
             android.Manifest.permission.BLUETOOTH_CONNECT to
                     "@android:string/permgrouplab_nearby_devices",

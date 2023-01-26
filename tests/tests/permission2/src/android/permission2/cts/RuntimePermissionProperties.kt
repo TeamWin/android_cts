@@ -26,6 +26,8 @@ import android.Manifest.permission.BLUETOOTH_ADVERTISE
 import android.Manifest.permission.BLUETOOTH_CONNECT
 import android.Manifest.permission.BLUETOOTH_SCAN
 import android.Manifest.permission.BODY_SENSORS
+import android.Manifest.permission.BODY_SENSORS_WRIST_TEMPERATURE
+import android.Manifest.permission.BODY_SENSORS_WRIST_TEMPERATURE_BACKGROUND
 import android.Manifest.permission.CALL_PHONE
 import android.Manifest.permission.CAMERA
 import android.Manifest.permission.GET_ACCOUNTS
@@ -165,6 +167,8 @@ class RuntimePermissionProperties {
         // Add runtime permissions added in U which were _not_ split from a previously existing
         // runtime permission
         expectedPerms.add(READ_MEDIA_VISUAL_USER_SELECTED)
+        expectedPerms.add(BODY_SENSORS_WRIST_TEMPERATURE)
+        expectedPerms.add(BODY_SENSORS_WRIST_TEMPERATURE_BACKGROUND)
 
         assertThat(expectedPerms).containsExactlyElementsIn(platformRuntimePerms.map { it.name })
     }

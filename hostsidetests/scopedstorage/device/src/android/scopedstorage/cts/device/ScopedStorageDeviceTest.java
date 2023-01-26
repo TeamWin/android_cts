@@ -146,6 +146,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.test.filters.SdkSuppress;
 
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.cts.install.lib.TestApp;
 import com.android.modules.utils.build.SdkLevel;
 
@@ -3125,6 +3126,10 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     @Test
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testExternalStorageProviderAndDownloadsProvider() throws Exception {
+        // External Storage Provider and Downloads Provider are not supported on Wear OS
+        if (FeatureUtil.isWatch()) {
+            return;
+        }
         assertWritableMountModeForProvider(DocumentsContract.EXTERNAL_STORAGE_PROVIDER_AUTHORITY);
         assertWritableMountModeForProvider(DocumentsContract.DOWNLOADS_PROVIDER_AUTHORITY);
     }

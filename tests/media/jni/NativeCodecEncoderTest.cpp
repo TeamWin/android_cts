@@ -324,7 +324,7 @@ bool CodecEncoderTest::initFormat(AMediaFormat* format) {
         RETURN_IF_FALSE(AMediaFormat_getInt32(format, TBD_AMEDIACODEC_PARAMETER_KEY_MAX_B_FRAMES,
                                               &mMaxBFrames),
                         StringFormat("format does not have key %s",
-                                    TBD_AMEDIACODEC_PARAMETER_KEY_MAX_B_FRAMES))
+                                     TBD_AMEDIACODEC_PARAMETER_KEY_MAX_B_FRAMES))
         RETURN_IF_FALSE(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_FRAME_RATE, &mDefFrameRate),
                         StringFormat("format does not have key %s", AMEDIAFORMAT_KEY_FRAME_RATE))
         RETURN_IF_FALSE(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, &mColorFormat),
@@ -430,8 +430,8 @@ bool CodecEncoderTest::testReconfigure(const char* encoder, const char* srcPath)
     RETURN_IF_NULL(format, std::string{"encountered error during deserialization of media format"})
     auto ref = mRefBuff;
     RETURN_IF_FALSE(encodeToMemory(srcPath, encoder, INT32_MAX, format, ref),
-                   StringFormat("encodeToMemory failed for file: %s codec: %s \n format: %s",
-                                srcPath, encoder, AMediaFormat_toString(format)))
+                    StringFormat("encodeToMemory failed for file: %s codec: %s \n format: %s",
+                                 srcPath, encoder, AMediaFormat_toString(format)))
 
     auto test = mTestBuff;
     mOutputBuff = test;

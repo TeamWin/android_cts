@@ -18,6 +18,7 @@ package android.permission.cts
 
 import android.accessibility.cts.common.InstrumentedAccessibilityService
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule
+import android.app.ActivityOptions
 import android.app.Instrumentation
 import android.app.UiAutomation
 import android.content.ComponentName
@@ -237,7 +238,11 @@ class AccessibilityPrivacySourceTest {
             getNotification(permissionControllerPackage, ACCESSIBILITY_NOTIFICATION_ID)
         Assert.assertNotNull(statusBarNotification)
         val contentIntent = statusBarNotification!!.notification.contentIntent
-        contentIntent.send()
+        val options = ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
+                ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+        contentIntent.send(/* context = */ null, /* code = */ 0, /* intent = */ null,
+                /* onFinished = */ null, /* handler = */ null, /* requiredPermission = */ null,
+                /* options = */ options.toBundle())
         assertSafetyCenterStarted()
     }
 
