@@ -16,20 +16,38 @@
 
 package android.webkit.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.platform.test.annotations.AppModeFull;
-import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.WebBackForwardList;
-import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 import android.webkit.WebHistoryItem;
 import android.webkit.WebIconDatabase;
 import android.webkit.WebView;
+import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
+
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 @AppModeFull
-public class WebHistoryItemTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class WebHistoryItemTest {
     private CtsTestServer mWebServer;
     private WebViewOnUiThread mOnUiThread;
     private WebIconDatabase mIconDb;
@@ -49,43 +67,45 @@ public class WebHistoryItemTest extends ActivityInstrumentationTestCase2<WebView
         public synchronized boolean receivedIcon() { return mReceivedIcon; }
     };
 
-    public WebHistoryItemTest() {
-        super("android.webkit.cts", WebViewCtsActivity.class);
+    @Rule
+    public ActivityScenarioRule mActivityScenarioRule =
+            new ActivityScenarioRule(WebViewCtsActivity.class);
+
+    @Before
+    public void setUp() throws Exception {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+        mActivityScenarioRule.getScenario().onActivity(activity -> {
+            WebViewCtsActivity webViewCtsActivity = (WebViewCtsActivity) activity;
+            WebView webview = webViewCtsActivity.getWebView();
+            if (webview != null) {
+                mOnUiThread = new WebViewOnUiThread(webview);
+            }
+        });
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        mWebServer = new CtsTestServer(context);
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mWebServer = new CtsTestServer(getActivity());
-        WebView webview = getActivity().getWebView();
-        if (webview != null) {
-            mOnUiThread = new WebViewOnUiThread(webview);
-        }
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
         mWebServer.shutdown();
-        super.tearDown();
         if (mIconDb != null) {
             mIconDb.removeAllIcons();
             mIconDb.close();
         }
     }
 
+    @Test
     public void testWebHistoryItem() throws Throwable {
-        if (!NullWebViewUtils.isWebViewAvailable()) {
-            return;
-        }
         final WaitForIconClient waitForIconClient = new WaitForIconClient(mOnUiThread);
         mOnUiThread.setWebChromeClient(waitForIconClient);
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         WebkitUtils.onMainThreadSync(() -> {
             // getInstance must run on the UI thread
             mIconDb = WebIconDatabase.getInstance();
-            String dbPath = getActivity().getFilesDir().toString() + "/icons";
+            String dbPath = context.getFilesDir().toString() + "/icons";
             mIconDb.open(dbPath);
         });
 

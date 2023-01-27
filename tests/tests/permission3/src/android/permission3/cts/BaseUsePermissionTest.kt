@@ -136,6 +136,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "com.android.permissioncontroller:id/permission_rationale_container"
         const val PERMISSION_RATIONALE_ACTIVITY_TITLE_VIEW =
             "com.android.permissioncontroller:id/permission_rationale_title"
+        const val PERMISSION_RATIONALE_SETTINGS_SECTION =
+            "com.android.permissioncontroller:id/settings_section"
 
         const val REQUEST_LOCATION_MESSAGE = "permgrouprequest_location"
 
@@ -321,6 +323,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         installPackage(apkName)
     }
 
+    protected fun assertPermissionRationaleDialogSettingsSectionIsVisible(
+        expected: Boolean
+    ) {
+        findView(By.res(PERMISSION_RATIONALE_SETTINGS_SECTION), expected = expected)
+    }
     protected fun clickPermissionReviewCancel() {
         if (isAutomotive || isWatch) {
             click(By.text(getPermissionControllerString("review_button_cancel")))

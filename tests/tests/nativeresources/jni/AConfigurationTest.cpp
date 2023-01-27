@@ -50,8 +50,3 @@ TEST_F(AConfigurationTest, testGrammaticalGender) {
     EXPECT_EQ(ACONFIGURATION_GRAMMATICAL_GENDER_NEUTER, AConfiguration_getGrammaticalGender(config_));
 }
 
-int main(int argc, char** argv) {
-    testing::InitGoogleTest(&argc, argv);
-
-    return RUN_ALL_TESTS();
-}

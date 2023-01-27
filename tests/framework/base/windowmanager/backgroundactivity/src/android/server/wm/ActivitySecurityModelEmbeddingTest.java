@@ -41,7 +41,7 @@ public class ActivitySecurityModelEmbeddingTest extends BackgroundActivityTestBa
                 .setupTaskWithEmbeddingActivity(APP_A)
                 .startFromEmbeddingActivity(APP_A)
                 .activity(APP_B.FOREGROUND_ACTIVITY)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 .thenAssertEmbeddingTaskStack(new ComponentName[]{
                         APP_B.FOREGROUND_ACTIVITY
                 }, APP_A.FOREGROUND_EMBEDDING_ACTIVITY);
@@ -64,7 +64,7 @@ public class ActivitySecurityModelEmbeddingTest extends BackgroundActivityTestBa
                 // Test - A1 launches A.FG (A2) - succeeds
                 // As B allows itself to be embedded by A, A is may close or replace B with another
                 // activity (e.g, split-pane views)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 // Final State:
                 // |            | A.FG (A2) |   --> left | right
                 // | A.FGE (A1) | B.FG (B1) |   --> left | right
@@ -82,7 +82,7 @@ public class ActivitySecurityModelEmbeddingTest extends BackgroundActivityTestBa
                 .startFromForegroundActivity(APP_B)
                 .activity(APP_A.FOREGROUND_ACTIVITY)
                 // Test - B1 launches A.FG (A2) - succeeds
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 // Final State:
                 // |            | A.FG (A2) |   --> left | right
                 // | A.FGE (A1) | B.FG (B1) |   --> left | right
@@ -95,7 +95,7 @@ public class ActivitySecurityModelEmbeddingTest extends BackgroundActivityTestBa
                 .startFromForegroundActivity(APP_B)
                 .activity(APP_A.BACKGROUND_ACTIVITY)
                 // Test - B1 launches A.BG (A3) - fails
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ false)
                 // Final State (no change):
                 // |            | A.FG (A2) |   --> left | right
                 // | A.FGE (A1) | B.FG (B1) |   --> left | right

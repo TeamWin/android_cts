@@ -179,6 +179,100 @@ public class PendingIntentTest extends AndroidTestCase {
             fail("Shouldn't accept both FLAG_IMMUTABLE and FLAG_MUTABLE for the PendingIntent");
         } catch (IllegalArgumentException expected) {
         }
+
+        // creating a mutable explicit PendingIntent works fine
+        mPendingIntent = PendingIntent.getActivity(mContext, 1, mIntent,
+                PendingIntent.FLAG_MUTABLE);
+
+        // make mIntent implicit
+        mIntent.setComponent(null);
+        mIntent.setPackage(null);
+
+        // creating an immutable implicit PendingIntent works fine
+        mPendingIntent = PendingIntent.getActivity(mContext, 1, mIntent,
+                PendingIntent.FLAG_IMMUTABLE);
+
+        // retrieving a mutable implicit PendingIntent with NO_CREATE works fine
+        mPendingIntent = PendingIntent.getActivity(mContext, 1, mIntent,
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_NO_CREATE);
+
+        // creating a mutable implicit PendingIntent with ALLOW_UNSAFE_IMPLICIT_INTENT works fine
+        mPendingIntent = PendingIntent.getActivity(mContext, 1, mIntent,
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
+
+        try {
+            mPendingIntent = PendingIntent.getActivity(mContext, 1, mIntent,
+                    PendingIntent.FLAG_MUTABLE);
+            fail("Shouldn't accept new mutable implicit PendingIntent");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    public void testGetActivities() throws InterruptedException, CanceledException {
+        PendingIntentStubActivity.prepare();
+        mPendingIntent = null;
+        Intent[] mIntents = new Intent[]{new Intent(), new Intent()};
+
+        for (int i = 0; i < mIntents.length; i++) {
+            mIntents[i].setClass(mContext, PendingIntentStubActivity.class);
+            mIntents[i].setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        mPendingIntent = PendingIntent.getActivities(mContext, 1, mIntents,
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        assertEquals(mContext.getPackageName(), mPendingIntent.getTargetPackage());
+
+        mPendingIntent.send();
+
+        PendingIntentStubActivity.waitForCreate(WAIT_TIME);
+        assertNotNull(mPendingIntent);
+        assertEquals(PendingIntentStubActivity.status, PendingIntentStubActivity.ON_CREATE);
+
+        // test getActivities return null
+        mPendingIntent.cancel();
+        mPendingIntent = PendingIntent.getActivities(mContext, 1, mIntents,
+                PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_IMMUTABLE);
+        assertNull(mPendingIntent);
+
+        mPendingIntent = PendingIntent.getActivities(mContext, 1, mIntents,
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+
+        pendingIntentSendError(mPendingIntent);
+
+        try {
+            mPendingIntent = PendingIntent.getActivities(mContext, 1, mIntents,
+                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_MUTABLE);
+            fail("Shouldn't accept both FLAG_IMMUTABLE and FLAG_MUTABLE for the PendingIntent");
+        } catch (IllegalArgumentException expected) {
+        }
+
+        // creating a mutable explicit PendingIntent works fine
+        mPendingIntent = PendingIntent.getActivities(mContext, 1, mIntents,
+                PendingIntent.FLAG_MUTABLE);
+
+        // make mIntents implicit
+        for (int i = 0; i < mIntents.length; i++) {
+            mIntents[i].setComponent(null);
+            mIntents[i].setPackage(null);
+        }
+
+        // creating an immutable implicit PendingIntent works fine
+        mPendingIntent = PendingIntent.getActivities(mContext, 1, mIntents,
+                PendingIntent.FLAG_IMMUTABLE);
+
+        // retrieving a mutable implicit PendingIntent with NO_CREATE works fine
+        mPendingIntent = PendingIntent.getActivities(mContext, 1, mIntents,
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_NO_CREATE);
+
+        // creating a mutable implicit PendingIntent with ALLOW_UNSAFE_IMPLICIT_INTENT works fine
+        mPendingIntent = PendingIntent.getActivities(mContext, 1, mIntents,
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
+
+        try {
+            mPendingIntent = PendingIntent.getActivities(mContext, 1, mIntents,
+                    PendingIntent.FLAG_MUTABLE);
+            fail("Shouldn't accept new mutable implicit PendingIntent");
+        } catch (IllegalArgumentException expected) {
+        }
     }
 
     private void pendingIntentSendError(PendingIntent pendingIntent) {
@@ -221,6 +315,33 @@ public class PendingIntentTest extends AndroidTestCase {
             mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent,
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_MUTABLE);
             fail("Shouldn't accept both FLAG_IMMUTABLE and FLAG_MUTABLE for the PendingIntent");
+        } catch (IllegalArgumentException expected) {
+        }
+
+        // creating a mutable explicit PendingIntent works fine
+        mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent,
+                PendingIntent.FLAG_MUTABLE);
+
+        // make mIntent implicit
+        mIntent.setComponent(null);
+        mIntent.setPackage(null);
+
+        // creating an immutable implicit PendingIntent works fine
+        mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent,
+                PendingIntent.FLAG_IMMUTABLE);
+
+        // retrieving a mutable implicit PendingIntent with NO_CREATE works fine
+        mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent,
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_NO_CREATE);
+
+        // creating a mutable implicit PendingIntent with ALLOW_UNSAFE_IMPLICIT_INTENT works fine
+        mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent,
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
+
+        try {
+            mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent,
+                    PendingIntent.FLAG_MUTABLE);
+            fail("Shouldn't accept new mutable implicit PendingIntent");
         } catch (IllegalArgumentException expected) {
         }
     }
@@ -324,9 +445,36 @@ public class PendingIntentTest extends AndroidTestCase {
         pendingIntentSendError(mPendingIntent);
 
         try {
-            mPendingIntent = PendingIntent.getActivity(mContext, 1, mIntent,
+            mPendingIntent = PendingIntent.getService(mContext, 1, mIntent,
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_MUTABLE);
             fail("Shouldn't accept both FLAG_IMMUTABLE and FLAG_MUTABLE for the PendingIntent");
+        } catch (IllegalArgumentException expected) {
+        }
+
+        // creating a mutable explicit PendingIntent works fine
+        mPendingIntent = PendingIntent.getService(mContext, 1, mIntent,
+                PendingIntent.FLAG_MUTABLE);
+
+        // make mIntent implicit
+        mIntent.setComponent(null);
+        mIntent.setPackage(null);
+
+        // creating an immutable implicit PendingIntent works fine
+        mPendingIntent = PendingIntent.getService(mContext, 1, mIntent,
+                PendingIntent.FLAG_IMMUTABLE);
+
+        // retrieving a mutable implicit PendingIntent with NO_CREATE works fine
+        mPendingIntent = PendingIntent.getService(mContext, 1, mIntent,
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_NO_CREATE);
+
+        // creating a mutable implicit PendingIntent with ALLOW_UNSAFE_IMPLICIT_INTENT works fine
+        mPendingIntent = PendingIntent.getService(mContext, 1, mIntent,
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
+
+        try {
+            mPendingIntent = PendingIntent.getService(mContext, 1, mIntent,
+                    PendingIntent.FLAG_MUTABLE);
+            fail("Shouldn't accept new mutable implicit PendingIntent");
         } catch (IllegalArgumentException expected) {
         }
     }

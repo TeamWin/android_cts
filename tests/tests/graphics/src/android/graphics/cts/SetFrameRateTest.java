@@ -32,6 +32,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.DisplayUtil;
+import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -61,7 +62,8 @@ public class SetFrameRateTest {
     @Before
     public void setUp() throws Exception {
         Context context = getInstrumentation().getTargetContext();
-        assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(context));
+        assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(context)
+                || MediaUtils.onCuttlefish());
 
         FrameRateCtsActivity activity = mActivityRule.getActivity();
 

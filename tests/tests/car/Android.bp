@@ -29,6 +29,7 @@ android_test {
         "ctstestrunner-axt",
         "libprotobuf-java-lite",
         "framework-annotations-lib",
+        "Harrier",
     ],
     libs: [
         "android.test.base",

@@ -22,8 +22,9 @@ import android.os.UserHandle;
 import android.platform.test.annotations.RequiresDevice;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
-import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
+
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;

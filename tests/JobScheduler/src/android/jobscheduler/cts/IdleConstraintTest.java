@@ -22,9 +22,9 @@ import android.app.UiModeManager;
 import android.app.job.JobInfo;
 import android.content.pm.PackageManager;
 import android.os.UserHandle;
-import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.SystemUtil;
 

@@ -34,7 +34,7 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
                 .setupTaskWithForegroundActivity(APP_A)
                 .startFromForegroundActivity(APP_A)
                 .activity(APP_B.FOREGROUND_ACTIVITY)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 .thenAssertTaskStack(
                         APP_B.FOREGROUND_ACTIVITY,
                         APP_A.FOREGROUND_ACTIVITY);
@@ -44,7 +44,7 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
         new ActivityStartVerifier()
                 .startFromForegroundActivity(APP_B)
                 .activity(APP_A.FOREGROUND_ACTIVITY)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 .thenAssertTaskStack(
                         APP_A.FOREGROUND_ACTIVITY,
                         APP_B.FOREGROUND_ACTIVITY,
@@ -63,7 +63,7 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
                 .setupTaskWithForegroundActivity(APP_A)
                 .startFromForegroundActivity(APP_A)
                 .activity(APP_B.FOREGROUND_ACTIVITY)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 .thenAssertTaskStack(
                         APP_B.FOREGROUND_ACTIVITY,
                         APP_A.FOREGROUND_ACTIVITY);
@@ -73,7 +73,7 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
         new ActivityStartVerifier()
                 .startFromForegroundActivity(APP_A)
                 .activity(APP_A.FOREGROUND_ACTIVITY)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ false)
                 .thenAssertTaskStack(
                         APP_B.FOREGROUND_ACTIVITY,
                         APP_A.FOREGROUND_ACTIVITY);
@@ -92,7 +92,7 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
                 .setupTaskWithForegroundActivity(APP_A)
                 .startFromForegroundActivity(APP_A)
                 .activity(APP_B_33.FOREGROUND_ACTIVITY)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 .thenAssertTaskStack(
                         APP_B_33.FOREGROUND_ACTIVITY,
                         APP_A.FOREGROUND_ACTIVITY);
@@ -102,7 +102,7 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
         new ActivityStartVerifier()
                 .startFromForegroundActivity(APP_A)
                 .activity(APP_A.FOREGROUND_ACTIVITY)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 .thenAssertTaskStack(
                         APP_A.FOREGROUND_ACTIVITY,
                         APP_B_33.FOREGROUND_ACTIVITY,
@@ -121,7 +121,7 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
                 .setupTaskWithForegroundActivity(APP_A_33)
                 .startFromForegroundActivity(APP_A_33)
                 .activity(APP_B.FOREGROUND_ACTIVITY)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 .thenAssertTaskStack(
                         APP_B.FOREGROUND_ACTIVITY,
                         APP_A_33.FOREGROUND_ACTIVITY);
@@ -131,7 +131,7 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
         new ActivityStartVerifier()
                 .startFromForegroundActivity(APP_A_33)
                 .activity(APP_A_33.FOREGROUND_ACTIVITY)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 .thenAssertTaskStack(
                         APP_A_33.FOREGROUND_ACTIVITY,
                         APP_B.FOREGROUND_ACTIVITY,
@@ -150,10 +150,10 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
                 .setupTaskWithForegroundActivity(APP_A, 1)
                 .startFromForegroundActivity(APP_A, 1)
                 .activity(APP_B.FOREGROUND_ACTIVITY, 1)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 .startFromForegroundActivity(APP_B, 1)
                 .activity(APP_A.FOREGROUND_ACTIVITY, 2)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 .thenAssertTaskStack(
                         APP_A.FOREGROUND_ACTIVITY,
                         APP_B.FOREGROUND_ACTIVITY,
@@ -164,7 +164,7 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
         new ActivityStartVerifier()
                 .startFromForegroundActivity(APP_A, 1)
                 .activity(APP_A.FOREGROUND_ACTIVITY, 3)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 .thenAssertTaskStack(
                         APP_A.FOREGROUND_ACTIVITY,
                         APP_A.FOREGROUND_ACTIVITY,
@@ -188,7 +188,7 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
                 .startFromForegroundActivity(APP_A)
                 .withBroadcastExtra(COMMON_FOREGROUND_ACTIVITY_EXTRAS.FINISH_FIRST, true)
                 .activity(APP_A.BACKGROUND_ACTIVITY)
-                .execute()
+                .executeAndAssertLaunch(/*succeeds*/ true)
                 .thenAssert(() -> mWmState.waitAndAssertActivityRemoved(APP_A.FOREGROUND_ACTIVITY))
                 .thenAssertTaskStack(
                         APP_A.BACKGROUND_ACTIVITY);

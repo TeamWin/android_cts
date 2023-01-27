@@ -34,7 +34,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class URLUtilTest {
+public class URLUtilTest extends SharedWebViewTest {
     private final String VALID_HTTP_URL = "http://www.google.com";
     private final String VALID_HTTPS_URL = "https://www.google.com";
     private final String VALID_ASSET_URL = "file:///android_asset/test";
@@ -46,6 +46,11 @@ public class URLUtilTest {
     private final String VALID_FILE_URL = "file:///test";
     private final String VALID_FTP_URL = "ftp://www.domain.com";
     private final String FILE_URL_NO_SLASH = "file:test";
+
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        return new SharedWebViewTestEnvironment.Builder().build();
+    }
 
     @Test
     public void testIsAssetUrl() {

@@ -37,6 +37,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.DisplayUtil;
 import com.android.compatibility.common.util.FeatureUtil;
+import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -71,7 +72,8 @@ public class DefaultDisplayModeTest {
     public void setUp() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         assumeTrue("Need an Android TV device to run this test.", FeatureUtil.isTV());
-        assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(context));
+        assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(context)
+                || MediaUtils.onCuttlefish());
 
         mDisplayManager = context.getSystemService(DisplayManager.class);
         mDefaultDisplay = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);

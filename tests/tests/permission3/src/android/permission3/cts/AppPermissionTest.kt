@@ -64,6 +64,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
 
     clickPermissionRationaleContentInAppPermission()
     assertPermissionRationaleDialogOnAppPermissionIsVisible(true)
+    assertPermissionRationaleDialogSettingsSectionIsVisible(false)
   }
 
   @Test
@@ -76,6 +77,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
 
     clickPermissionRationaleContentInAppPermission()
     assertPermissionRationaleDialogOnAppPermissionIsVisible(true)
+    assertPermissionRationaleDialogSettingsSectionIsVisible(false)
   }
 
   @Test

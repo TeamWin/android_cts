@@ -130,7 +130,7 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
         for (android.server.wm.backgroundactivity.appb.Components appB : ALL_B) {
             assertNull(mWmState.getTaskByActivity(appB.FOREGROUND_ACTIVITY));
             runShellCommand("cmd deviceidle tempwhitelist -d 100000 "
-                    + appB.FOREGROUND_ACTIVITY.getPackageName());
+                    + appB.APP_PACKAGE_NAME);
         }
     }
 
@@ -196,8 +196,8 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
     }
 
     class ActivityStartVerifier {
-        private final Intent mBroadcastIntent = new Intent();
-        private final Intent mLaunchIntent = new Intent();
+        private Intent mBroadcastIntent = new Intent();
+        private Intent mLaunchIntent = new Intent();
 
         ActivityStartVerifier setupTaskWithForegroundActivity(
                 android.server.wm.backgroundactivity.appa.Components appA) {
@@ -279,10 +279,28 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
             return this;
         }
 
-        ActivityStartVerifier execute() {
+        /**
+         * Broadcasts the specified intents, asserts that the launch succeeded or failed, then
+         * resets all ActivityStartVerifier state (i.e - intent component and flags) so the
+         * ActivityStartVerifier can be reused.
+         */
+        ActivityStartVerifier executeAndAssertLaunch(boolean succeeds) {
             mContext.sendBroadcast(mBroadcastIntent);
-            mWmState.waitForValidState(mLaunchIntent.getComponent());
+
+            ComponentName launchedComponent = mLaunchIntent.getComponent();
+            mWmState.waitForValidState(launchedComponent);
+            boolean result = waitForActivityFocused(launchedComponent);
+            assertEquals("Activity: " + launchedComponent.flattenToShortString() + " launch ",
+                    succeeds, result);
+
+            // Reset intents to remove any added flags
+            reset();
             return this;
+        }
+
+        void reset() {
+            mBroadcastIntent = new Intent();
+            mLaunchIntent = new Intent();
         }
 
         ActivityStartVerifier thenAssert(Runnable run) {

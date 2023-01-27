@@ -519,7 +519,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // Bring launching activity back to the foreground
         launchActivityNoWait(LAUNCHING_ACTIVITY);
         // Wait for the most front activity of the task.
-        mWmState.waitForValidState(ALT_LAUNCHING_ACTIVITY);
+        mWmState.waitForFocusedActivity("Waiting for Alt Launching Activity to be focused",
+                ALT_LAUNCHING_ACTIVITY);
 
         // Ensure the alternate launching activity is still in focus.
         mWmState.assertFocusedActivity("Alt Launching Activity must be focused",
@@ -528,7 +529,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         pressBackButton();
 
         // Wait for the bottom activity back to the foreground.
-        mWmState.waitForValidState(LAUNCHING_ACTIVITY);
+        mWmState.waitForFocusedActivity("Waiting for Launching Activity to be focused",
+                LAUNCHING_ACTIVITY);
 
         // Ensure launching activity was brought forward.
         mWmState.assertFocusedActivity("Launching Activity must be focused",

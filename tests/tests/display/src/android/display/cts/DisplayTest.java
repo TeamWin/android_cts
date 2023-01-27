@@ -72,6 +72,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DisplayUtil;
+import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.PropertyUtil;
 
 import com.google.common.truth.Truth;
@@ -220,7 +221,8 @@ public class DisplayTest {
 
         mScreenOnActivity = launchScreenOnActivity();
         mContext = getInstrumentation().getTargetContext();
-        assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(mContext));
+        assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(mContext)
+                || MediaUtils.onCuttlefish());
 
         mDisplayManager = mContext.getSystemService(DisplayManager.class);
         mWindowManager = mContext.getSystemService(WindowManager.class);

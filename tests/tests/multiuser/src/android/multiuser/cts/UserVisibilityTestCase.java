@@ -20,6 +20,7 @@ package android.multiuser.cts;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.multiuser.cts.PermissionHelper.adoptShellPermissionIdentity;
 import static android.multiuser.cts.TestingUtils.sContext;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -59,17 +60,24 @@ public abstract class UserVisibilityTestCase {
 
     private static final String TAG = UserVisibilityTestCase.class.getSimpleName();
 
+    protected static final String CMD_DUMP_MEDIATOR = "dumpsys user --visibility-mediator";
+
     @Rule
     @ClassRule
     public static final DeviceState sDeviceState = new DeviceState();
 
+    @Rule
+    public final LogShellCommandRule mLogShellCommandRule = new LogShellCommandRule();
+
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
-    protected  UserManager mUserManager;
+    protected UserManager mUserManager;
 
     @Before
     public void setUp() {
         mUserManager = sContext.getSystemService(UserManager.class);
         assertWithMessage("UserManager service").that(mUserManager).isNotNull();
+
+        mLogShellCommandRule.addCommand(CMD_DUMP_MEDIATOR);
     }
 
     /**
@@ -80,7 +88,7 @@ public abstract class UserVisibilityTestCase {
     protected void runTestOnSecondaryDisplay(BackgroundUserOnSecondaryDisplayTester test) {
         Log.d(TAG, "Creating bg user");
         try (UserReference user = TestApis.users().createUser().name("childless_user").create()) {
-            int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+            int displayId = getSecondaryDisplayIdForStartingVisibleBackgroundUser();
             startVisibleBackgroundUser(user, displayId);
             try {
                 TestApp testApp = sDeviceState.testApps().any();
@@ -112,7 +120,7 @@ public abstract class UserVisibilityTestCase {
                     .create()) {
                 Log.d(TAG, "profile: id=" + profile.id());
 
-                int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+                int displayId = getSecondaryDisplayIdForStartingVisibleBackgroundUser();
                 startVisibleBackgroundUser(user, displayId);
                 try {
                     // Make sure profile is stopped, as it could have been automatically started
@@ -141,20 +149,23 @@ public abstract class UserVisibilityTestCase {
     // TODO(b/240736142): methods below are a temporary workaround until proper annotation or test
     // API are available
 
-    protected int getDisplayIdForStartingVisibleBackgroundUser() {
+    protected int getSecondaryDisplayIdForStartingVisibleBackgroundUser() {
         int[] displayIds = null;
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation,
                 INTERACT_ACROSS_USERS)) {
             displayIds = sContext.getSystemService(ActivityManager.class)
                     .getDisplayIdsForStartingVisibleBackgroundUsers();
         }
-        Log.d(TAG, "getDisplayForBackgroundUserOnDisplay(): displays returned by AM:"
-                + Arrays.toString(displayIds));
-        if (displayIds != null && displayIds.length > 0) {
-            int displayId = displayIds[0];
-            Log.d(TAG, "getDisplayForBackgroundUserOnDisplay(): returning first display from the "
-                    + "list (" + displayId + ")");
-            return displayId;
+        Log.d(TAG, "getSecondaryDisplayIdForStartingVisibleBackgroundUser(): displays returned by "
+                + "AM:" + Arrays.toString(displayIds));
+        if (displayIds != null) {
+            for (int displayId : displayIds) {
+                if (displayId != DEFAULT_DISPLAY) {
+                    Log.d(TAG, "getDisplayForBackgroundUserOnDisplay(): returning first non-DEFAULT"
+                            + " display from the list (" + displayId + ")");
+                    return displayId;
+                }
+            }
         }
 
         DisplayManager displayManager = sContext.getSystemService(DisplayManager.class);

@@ -138,7 +138,6 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
-    @Ignore("b/252781795")
     fun transferToReceiverSucceeded_hidesChip() {
         // First, make sure we display the chip
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
@@ -168,7 +167,6 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
-    @Ignore("b/252781795")
     fun transferToReceiverFailed_hidesChip() {
         // First, make sure we display the chip
         statusBarManager.updateMediaTapToTransferReceiverDisplay(

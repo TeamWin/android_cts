@@ -23,10 +23,10 @@ import static org.junit.Assert.assertTrue;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
-import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.UiDevice;
 
 import org.junit.After;
 import org.junit.Before;

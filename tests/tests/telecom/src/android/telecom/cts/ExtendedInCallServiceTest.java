@@ -28,6 +28,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.OutcomeReceiver;
+import android.os.ParcelUuid;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.CallEndpoint;
@@ -41,6 +42,7 @@ import android.telecom.VideoProfile;
 import android.telephony.TelephonyManager;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 
 /**
@@ -499,8 +501,8 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
             }
         }
 
+        Executor executor = mContext.getMainExecutor();
         if (anotherEndpoint != null) {
-            Executor executor = mContext.getMainExecutor();
             final int anotherEndpointType = anotherEndpoint.getEndpointType();
             ((InCallService) inCallService).requestCallEndpointChange(anotherEndpoint, executor,
                     new OutcomeReceiver<>() {
@@ -526,6 +528,23 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
             assertEndpointType(connection, currentEndpointType);
             assertEndpointType(inCallService, currentEndpointType);
         }
+
+        CharSequence name = "unavailableCallEndpoint";
+        ParcelUuid identifier = new ParcelUuid(UUID.randomUUID());
+        CallEndpoint cep = new CallEndpoint(name, CallEndpoint.TYPE_BLUETOOTH, identifier);
+        CallEndpointException expected = new CallEndpointException(
+                "Requested CallEndpoint does not exist",
+                CallEndpointException.ERROR_ENDPOINT_DOES_NOT_EXIST);
+        inCallService.requestCallEndpointChange(cep, executor,
+                new OutcomeReceiver<>() {
+                    @Override
+                    public void onResult(Void result) {}
+                    @Override
+                    public void onError(CallEndpointException exception) {
+                        assertEquals(expected.getCode(), exception.getCode());
+                        assertEquals(expected.getMessage(), exception.getMessage());
+                    }
+                });
     }
 
     private Uri blockNumber(Uri phoneNumberUri) {

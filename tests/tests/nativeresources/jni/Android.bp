@@ -1,4 +1,4 @@
-// Copyright (C) 2023 The Android Open Source Project
+// Copyright 2023 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,26 +16,24 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsNativeResourcesTestCases",
-    defaults: ["cts_defaults"],
-    // Include both the 32 and 64 bit versions
+cc_library_shared {
+    name: "libnativeresourcestest",
     compile_multilib: "both",
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
+    srcs: [
+        "*.cpp",
     ],
-    libs: [
-        "platform-test-annotations",
-        "android.test.base",
+    shared_libs: [
+        "libandroid",
     ],
     static_libs: [
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "nativetesthelper",
+        "libgtest_ndk_c++",
     ],
-    jni_libs: ["libnativeresourcestest"],
-    srcs: ["src/**/*.java"],
-    sdk_version: "test_current",
+    whole_static_libs: ["libnativetesthelper_jni"],
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+    ],
+    sdk_version: "current",
+    stl: "c++_static",
 }

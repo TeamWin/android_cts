@@ -744,9 +744,9 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
 
     class LoopbackLatencyRequirements {
         public static final int MPC_NONE = 0;
-        public static final int MPC_R = 1;
-        public static final int MPC_S = 2;
-        public static final int MPC_T = 3;
+        public static final int MPC_R = Build.VERSION_CODES.R;
+        public static final int MPC_S = Build.VERSION_CODES.S;
+        public static final int MPC_T = Build.VERSION_CODES.TIRAMISU;
 
         String mResultsString = new String();
 
