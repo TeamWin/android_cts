@@ -85,18 +85,4 @@ public class EncoderInput {
         }
         return null;
     }
-
-    /**
-     * TODO (b/260533828) remove this once all encoders are update to use
-     * @deprecated This function is marked for future removal. Use
-     * {@link EncoderInput#getRawResource(EncoderConfigParams)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public static RawResource getRawResource(String mediaType, boolean isHighBitDepth) {
-        if (mediaType.startsWith("audio/")) {
-            return isHighBitDepth ? INPUT_AUDIO_FILE_HBD : INPUT_AUDIO_FILE;
-        } else {
-            return isHighBitDepth ? INPUT_VIDEO_FILE_HBD : INPUT_VIDEO_FILE;
-        }
-    }
 }

@@ -36,6 +36,7 @@ import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_HAS_
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_RESULT_RECEIVER;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_SET_CLIP_DATA;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_WAIT_FOR_FOCUS;
+import static android.virtualdevice.cts.common.ClipboardTestConstants.RESULT_CODE_CLIP_LISTENER_READY;
 import static android.virtualdevice.cts.util.VirtualDeviceTestUtils.createActivityOptions;
 import static android.virtualdevice.cts.util.VirtualDeviceTestUtils.createResultReceiver;
 
@@ -48,12 +49,14 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import android.app.Activity;
 import android.app.UiAutomation;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
@@ -73,6 +76,7 @@ import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
+import android.support.test.uiautomator.UiDevice;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -83,11 +87,14 @@ import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.SystemUtil;
 
 import com.google.common.util.concurrent.SettableFuture;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -139,6 +146,27 @@ public class StreamedAppClipboardTest {
     // so we can restore it after the test.
     private String mOriginalVDSilosDeviceFlagValue;
 
+
+    @BeforeClass
+    public static void setUpClass() {
+        // Disable Toasts shown on clipboard access to avoid a crash in sysui that happens when a
+        // VirtualDisplay with a Toast about to be shown is closed. (b/265325338)
+        SystemUtil.runWithShellPermissionIdentity(()-> {
+            Context context = InstrumentationRegistry.getInstrumentation().getContext();
+            Settings.Secure.putInt(context.getContentResolver(),
+                    Settings.Secure.CLIPBOARD_SHOW_ACCESS_NOTIFICATIONS, 0);
+            UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).waitForIdle();
+        }, WRITE_SECURE_SETTINGS);
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            Context context = InstrumentationRegistry.getInstrumentation().getContext();
+            Settings.Secure.resetToDefaults(context.getContentResolver(), null);
+        }, WRITE_SECURE_SETTINGS);
+    }
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -167,7 +195,7 @@ public class StreamedAppClipboardTest {
 
         // Wait for the DeviceConfig change to be broadcasted, so we can be sure that
         // ClipboardService is using the updated value.
-        flagBecameSet.get(2, TimeUnit.SECONDS);
+        flagBecameSet.get(EVENT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         DeviceConfig.removeOnPropertiesChangedListener(deviceConfigListener);
 
         mVirtualDeviceManager = mContext.getSystemService(VirtualDeviceManager.class);
@@ -187,17 +215,10 @@ public class StreamedAppClipboardTest {
                 /* executor= */ Runnable::run,
                 mVirtualDisplayCallback);
         mResultReceiver = createResultReceiver(mOnReceiveResultListener);
-
-        // Disable Toasts shown on clipboard access to avoid a crash in sysui that happens when a
-        // VirtualDisplay with a Toast about to be shown is closed. (b/265325338)
-        Settings.Secure.putInt(mContext.getContentResolver(),
-                Settings.Secure.CLIPBOARD_SHOW_ACCESS_NOTIFICATIONS, 0);
     }
 
     @After
     public void tearDown() {
-        Settings.Secure.resetToDefaults(mContext.getContentResolver(), null);
-
         DeviceConfig.setProperty(DeviceConfig.NAMESPACE_CLIPBOARD,
                 ClipboardManager.DEVICE_CONFIG_ALLOW_VIRTUALDEVICE_SILOS,
                 mOriginalVDSilosDeviceFlagValue, /* makeDefault= */ false);
@@ -284,12 +305,16 @@ public class StreamedAppClipboardTest {
         // Give the activity focus so that it is allowed to read the clipboard.
         tapOnDisplay(mVirtualDisplay.getDisplay());
 
+        // Make sure the clip listener is ready
+        verify(mOnReceiveResultListener, timeout(EVENT_TIMEOUT_MS)).onReceiveResult(
+                eq(RESULT_CODE_CLIP_LISTENER_READY), any());
+
         ClipData clipToSet = ClipData.newPlainText("some label", "Hello World");
         deviceClipboard.setPrimaryClip(clipToSet);
 
         ArgumentCaptor<Bundle> bundle = ArgumentCaptor.forClass(Bundle.class);
-        verify(mOnReceiveResultListener, timeout(EVENT_TIMEOUT_MS)).onReceiveResult(anyInt(),
-                bundle.capture());
+        verify(mOnReceiveResultListener, timeout(EVENT_TIMEOUT_MS)).onReceiveResult(
+                eq(Activity.RESULT_OK), bundle.capture());
 
         ClipData clipData = bundle.getValue().getParcelable(EXTRA_GET_CLIP_DATA, ClipData.class);
         assertThat(clipData).isNotNull();
@@ -451,7 +476,12 @@ public class StreamedAppClipboardTest {
         // change event.
         launchAndAwaitActivityOnVirtualDisplay(new Intent(ACTION_WAIT_FOR_CLIP)
                 .setComponent(CLIPBOARD_TEST_ACTIVITY)
-                .putExtra(EXTRA_WAIT_FOR_FOCUS, false));
+                .putExtra(EXTRA_WAIT_FOR_FOCUS, false)
+                .putExtra(EXTRA_RESULT_RECEIVER, mResultReceiver));
+
+        // Make sure the clip listener is ready
+        verify(mOnReceiveResultListener, timeout(EVENT_TIMEOUT_MS)).onReceiveResult(
+                eq(RESULT_CODE_CLIP_LISTENER_READY), any());
 
         // The second app is launched on top of the first app, and once given focus it writes into
         // the clipboard.
@@ -468,7 +498,7 @@ public class StreamedAppClipboardTest {
         // The second app should have been successful at writing the clipboard, and the first app
         // should not have gotten any change events that caused it to send a result back.
         verify(secondResultReceiver, timeout(EVENT_TIMEOUT_MS)).onReceiveResult(anyInt(), any());
-        verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
+        verify(mOnReceiveResultListener, never()).onReceiveResult(eq(Activity.RESULT_OK), any());
     }
 
     @Test

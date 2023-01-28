@@ -34,11 +34,8 @@ import android.widget.TextView;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
-import com.android.cts.verifier.audio.midilib.MidiIODevice;
+import com.android.cts.verifier.audio.midilib.MidiTestModule;
 import com.android.midi.VerifierMidiEchoService;
-
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Common information and behaviors for the MidiJavaTestActivity and MidiNativeTestActivity
@@ -57,15 +54,6 @@ public abstract class MidiTestActivityBase
 
     // Flags
     protected boolean mHasMIDI;
-
-    // Test Status
-    protected static final int TESTSTATUS_NOTRUN = 0;
-    protected static final int TESTSTATUS_PASSED = 1;
-    protected static final int TESTSTATUS_FAILED_MISMATCH = 2;
-    protected static final int TESTSTATUS_FAILED_TIMEOUT = 3;
-    protected static final int TESTSTATUS_FAILED_OVERRUN = 4;
-    protected static final int TESTSTATUS_FAILED_DEVICE = 5;
-    protected static final int TESTSTATUS_FAILED_JNI = 6;
 
     private MidiTestModule mUSBTestModule;
     private MidiTestModule mVirtualTestModule;
@@ -87,12 +75,6 @@ public abstract class MidiTestActivityBase
     protected TextView    mBTInputDeviceLbl;
     protected TextView    mBTOutputDeviceLbl;
     protected TextView    mBTTestStatusTxt;
-
-    protected static final int TESTID_NONE = 0;
-    protected static final int TESTID_USBLOOPBACK = 1;
-    protected static final int TESTID_VIRTUALLOOPBACK = 2;
-    protected static final int TESTID_BTLOOPBACK = 3;
-    protected int mRunningTestID = TESTID_NONE;
 
     public MidiTestActivityBase() {
     }
@@ -181,15 +163,15 @@ public abstract class MidiTestActivityBase
     }
 
     void startWiredLoopbackTest() {
-        mUSBTestModule.startLoopbackTest(TESTID_USBLOOPBACK);
+        mUSBTestModule.startLoopbackTest(MidiTestModule.TESTID_USBLOOPBACK);
     }
 
     void startVirtualLoopbackTest() {
-        mVirtualTestModule.startLoopbackTest(TESTID_VIRTUALLOOPBACK);
+        mVirtualTestModule.startLoopbackTest(MidiTestModule.TESTID_VIRTUALLOOPBACK);
     }
 
     void startBTLoopbackTest() {
-        mBTTestModule.startLoopbackTest(TESTID_BTLOOPBACK);
+        mBTTestModule.startLoopbackTest(MidiTestModule.TESTID_BTLOOPBACK);
     }
 
     boolean calcTestPassed() {
@@ -295,25 +277,25 @@ public abstract class MidiTestActivityBase
     public String getTestStatusString(int status) {
         Resources appResources = getApplicationContext().getResources();
         switch (status) {
-            case TESTSTATUS_NOTRUN:
+            case MidiTestModule.TESTSTATUS_NOTRUN:
                 return appResources.getString(R.string.midiNotRunLbl);
 
-            case TESTSTATUS_PASSED:
+            case MidiTestModule.TESTSTATUS_PASSED:
                 return appResources.getString(R.string.midiPassedLbl);
 
-            case TESTSTATUS_FAILED_MISMATCH:
+            case MidiTestModule.TESTSTATUS_FAILED_MISMATCH:
                 return appResources.getString(R.string.midiFailedMismatchLbl);
 
-            case TESTSTATUS_FAILED_TIMEOUT:
+            case MidiTestModule.TESTSTATUS_FAILED_TIMEOUT:
                 return appResources.getString(R.string.midiFailedTimeoutLbl);
 
-            case TESTSTATUS_FAILED_OVERRUN:
+            case MidiTestModule.TESTSTATUS_FAILED_OVERRUN:
                 return appResources.getString(R.string.midiFailedOverrunLbl);
 
-            case TESTSTATUS_FAILED_DEVICE:
+            case MidiTestModule.TESTSTATUS_FAILED_DEVICE:
                 return appResources.getString(R.string.midiFailedDeviceLbl);
 
-            case TESTSTATUS_FAILED_JNI:
+            case MidiTestModule.TESTSTATUS_FAILED_JNI:
                 return appResources.getString(R.string.midiFailedJNILbl);
 
             default:
@@ -372,80 +354,4 @@ public abstract class MidiTestActivityBase
             scanMidiDevices();
         }
     } /* class MidiDeviceCallback */
-
-    abstract class MidiTestModule {
-        protected int mTestStatus = TESTSTATUS_NOTRUN;
-
-        // The Test Peripheral
-        MidiIODevice                mIODevice;
-
-        // Test State
-        protected final Object        mTestLock = new Object();
-        protected boolean             mTestRunning;
-
-        // Timeout handling
-        protected static final int    TEST_TIMEOUT_MS = 5000;
-        protected final Timer         mTimeoutTimer = new Timer();
-        protected int                 mTestCounter = 0;
-
-        public MidiTestModule(int deviceType) {
-            mIODevice = new MidiIODevice(deviceType);
-        }
-
-        abstract void startLoopbackTest(int testID);
-        abstract boolean hasTestPassed();
-
-        public int getTestStatus() { return mTestStatus; }
-
-        public boolean isTestReady() {
-            return mIODevice.mReceiveDevInfo != null && mIODevice.mSendDevInfo != null;
-        }
-
-        public String getInputName() {
-            return mIODevice.getInputName();
-        }
-
-        public String getOutputName() {
-            return mIODevice.getOutputName();
-        }
-
-        public void scanDevices(MidiDeviceInfo[] devInfos) {
-            mIODevice.scanDevices(devInfos);
-        }
-
-        void showTimeoutMessage() {
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    synchronized (mTestLock) {
-                        if (mTestRunning) {
-                            if (DEBUG) {
-                                Log.i(TAG, "---- Test Failed - TIMEOUT");
-                            }
-                            mTestStatus = TESTSTATUS_FAILED_TIMEOUT;
-                            updateTestStateUI();
-                        }
-                    }
-                }
-            });
-        }
-
-        void startTimeoutHandler() {
-            final int currentTestCounter = mTestCounter;
-            // Start the timeout timer
-            TimerTask task = new TimerTask() {
-                @Override
-                public void run() {
-                    synchronized (mTestLock) {
-                        if (mTestRunning && currentTestCounter == mTestCounter) {
-                            // Timeout
-                            showTimeoutMessage();
-                            enableTestButtons(true);
-                        }
-                    }
-                }
-            };
-            mTimeoutTimer.schedule(task, TEST_TIMEOUT_MS);
-        }
-    }
-
 }

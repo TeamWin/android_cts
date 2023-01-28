@@ -16,7 +16,7 @@
 
 package android.mediav2.cts;
 
-import static android.mediav2.common.cts.EncoderTestBase.isMediaTypeContainerPairValid;
+import static android.mediav2.common.cts.CodecEncoderTestBase.isMediaTypeContainerPairValid;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

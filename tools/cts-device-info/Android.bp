@@ -61,6 +61,7 @@ genrule {
     cmd: "$(location :compatibility-manifest-generator) " +
         " -r android.permission.READ_PHONE_STATE " +
         " -r android.permission.WRITE_EXTERNAL_STORAGE " +
+        " -r android.permission.ACCESS_FINE_LOCATION " +
         " -a com.android.compatibility.common.deviceinfo.GlesStubActivity " +
         " -a com.android.cts.deviceinfo.CameraDeviceInfo " +
         " -a com.android.cts.deviceinfo.SensorDeviceInfo " +

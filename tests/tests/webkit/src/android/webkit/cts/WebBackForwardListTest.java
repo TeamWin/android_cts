@@ -41,7 +41,7 @@ import org.junit.runner.RunWith;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class WebBackForwardListTest {
+public class WebBackForwardListTest extends SharedWebViewTest {
 
     @Rule
     public ActivityScenarioRule mActivityScenarioRule =
@@ -49,19 +49,13 @@ public class WebBackForwardListTest {
 
     private WebViewOnUiThread mOnUiThread;
     private ActivityScenario mScenario;
-    private WebViewCtsActivity mActivity;
 
     @Before
     public void setUp() throws Exception {
-        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-        mScenario = mActivityScenarioRule.getScenario();
-        mScenario.onActivity(activity -> {
-            mActivity = (WebViewCtsActivity) activity;
-            WebView webview = mActivity.getWebView();
-            if (webview != null) {
-                mOnUiThread = new WebViewOnUiThread(webview);
-            }
-        });
+        WebView webview = getTestEnvironment().getWebView();
+        if (webview != null) {
+            mOnUiThread = new WebViewOnUiThread(webview);
+        }
     }
 
     @After
@@ -69,6 +63,27 @@ public class WebBackForwardListTest {
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
+    }
+
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+
+        SharedWebViewTestEnvironment.Builder builder = new SharedWebViewTestEnvironment.Builder();
+
+        mActivityScenarioRule
+                .getScenario()
+                .onActivity(
+                        activity -> {
+                            WebView webView = ((WebViewCtsActivity) activity).getWebView();
+                            builder.setHostAppInvoker(
+                                            SharedWebViewTestEnvironment.createHostAppInvoker(
+                                                activity))
+                                    .setContext(activity)
+                                    .setWebView(webView);
+                        });
+
+        return builder.build();
     }
 
     @AppModeFull(reason = "Instant apps cannot bind sockets")
@@ -82,7 +97,8 @@ public class WebBackForwardListTest {
         assertNull(list.getItemAtIndex(-1));
         assertNull(list.getItemAtIndex(2));
 
-        CtsTestServer server = new CtsTestServer(mActivity, false);
+        SharedSdkWebServer server = getTestEnvironment().getWebServer();
+        server.start(SslMode.INSECURE);
         try {
             String url1 = server.getAssetUrl(TestHtmlConstants.HTML_URL1);
             String url2 = server.getAssetUrl(TestHtmlConstants.HTML_URL2);

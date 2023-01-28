@@ -5682,7 +5682,7 @@
             <meta-data android:name="test_excluded_features"
                 android:value="android.hardware.type.watch:android.hardware.type.television:android.hardware.type.automotive" />
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
-            <meta-data android:name="CddTest" android:value="5.10/C-1-2,C-1-5" />
+            <meta-data android:name="CddTest" android:value="5.10/C-1-2,C-1-5|5.6/H-1-3" />
         </activity>
 
         <activity android:name=".audio.AudioOutColdStartLatencyActivity"
@@ -5943,6 +5943,21 @@
             <meta-data android:name="CddTest" android:value="7.8.2.2/H-1-1|7.7.2/C-2-1,C-2-2" />
             <meta-data android:name="ApiTest"
                 android:value="android.app.Activity#onKeyDown"/>
+        </activity>
+
+        <activity android:name=".audio.UsbMidiAudioActivity"
+                android:exported="true"
+                  android:label="@string/usb_midi_audio_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.usb.host:android.software.midi" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="5.9/C-1-3,C-1-2|7.8.2/C-1-1,C-1-2" />
         </activity>
 
         <activity android:name=".audio.USBRestrictRecordAActivity"

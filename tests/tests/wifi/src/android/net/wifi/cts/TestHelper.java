@@ -24,6 +24,7 @@ import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PAID;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
+import static android.net.wifi.WifiManager.STATUS_LOCAL_ONLY_CONNECTION_FAILURE_UNKNOWN;
 import static android.os.Process.myUid;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -278,6 +279,29 @@ public class TestHelper {
             @NonNull WifiConfiguration network) {
         return createSpecifierBuilderWithCredentialFromSavedNetwork(network, false)
                 .setBssid(MacAddress.fromString(network.BSSID));
+    }
+
+    private static class TestLocalOnlyListener implements WifiManager
+            .LocalOnlyConnectionFailureListener {
+        private CountDownLatch mBlocker;
+        public boolean onFailureCalled = false;
+        public int failureReason = STATUS_LOCAL_ONLY_CONNECTION_FAILURE_UNKNOWN;
+        TestLocalOnlyListener() {
+            mBlocker = new CountDownLatch(1);
+        }
+
+        @Override
+        public void onConnectionFailed(
+                @androidx.annotation.NonNull WifiNetworkSpecifier wifiNetworkSpecifier,
+                int failureReason) {
+            mBlocker.countDown();
+            onFailureCalled = true;
+        }
+
+        public boolean await(long timeout) throws Exception {
+            return mBlocker.await(timeout, TimeUnit.MILLISECONDS);
+        }
+
     }
 
     public static class TestNetworkCallback extends ConnectivityManager.NetworkCallback {
@@ -757,6 +781,9 @@ public class TestHelper {
             throws Exception {
         // File the network request & wait for the callback.
         TestNetworkCallback testNetworkCallback = createTestNetworkCallback();
+        TestLocalOnlyListener localOnlyListener = new TestLocalOnlyListener();
+        mWifiManager.addLocalOnlyConnectionFailureListener(Executors.newSingleThreadExecutor(),
+                localOnlyListener);
 
         // Fork a thread to handle the UI interactions.
         Thread uiThread = new Thread(() -> {
@@ -803,6 +830,8 @@ public class TestHelper {
                         assertThat(wifiInfo.isPrimary()).isTrue();
                     }
                 }
+                assertThat(localOnlyListener.await(DURATION_NETWORK_CONNECTION_MILLIS)).isFalse();
+                assertThat(localOnlyListener.onFailureCalled).isFalse();
             }
         } catch (Throwable e /* catch assertions & exceptions */) {
             try {
@@ -819,6 +848,7 @@ public class TestHelper {
             } catch (IllegalArgumentException ie) { }
             fail("UI interaction interrupted");
         }
+        mWifiManager.removeLocalOnlyConnectionFailureListener(localOnlyListener);
         return testNetworkCallback;
     }
 

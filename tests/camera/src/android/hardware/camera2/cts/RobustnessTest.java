@@ -2482,18 +2482,12 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {PRIV, S1440P, USE_CASE_PREVIEW_VIDEO_STILL, JPEG, MAXIMUM, USE_CASE_STILL_CAPTURE},
             // YUV and JPEG concurrent still image capture (for testing).
             {YUV, PREVIEW, USE_CASE_STILL_CAPTURE, JPEG, MAXIMUM, USE_CASE_STILL_CAPTURE},
-            // Preview, video record and JPEG or YUV video snapshot.
-            {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, RECORD, USE_CASE_VIDEO_RECORD, YUV, RECORD,
-                    USE_CASE_STILL_CAPTURE},
+            // Preview, video record and JPEG video snapshot.
             {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, RECORD, USE_CASE_VIDEO_RECORD, JPEG, RECORD,
-                    USE_CASE_STILL_CAPTURE},
-            {PRIV, PREVIEW, USE_CASE_PREVIEW, PRIV, RECORD, USE_CASE_VIDEO_RECORD, YUV, RECORD,
                     USE_CASE_STILL_CAPTURE},
             {PRIV, PREVIEW, USE_CASE_PREVIEW, PRIV, RECORD, USE_CASE_VIDEO_RECORD, JPEG, RECORD,
                     USE_CASE_STILL_CAPTURE},
-            // Preview, in-application image processing, and JPEG or YUV still image capture.
-            {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, PREVIEW, USE_CASE_PREVIEW, YUV, MAXIMUM,
-                    USE_CASE_STILL_CAPTURE},
+            // Preview, in-application image processing, and JPEG still image capture.
             {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, PREVIEW, USE_CASE_PREVIEW, JPEG, MAXIMUM,
                     USE_CASE_STILL_CAPTURE},
         };

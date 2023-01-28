@@ -132,7 +132,8 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
         assertCallState(eCall, Call.STATE_ACTIVE);
 
         // Notify as missed instead of rejected, since the user did not explicitly reject.
-        verifyCallLogging(normalCallNumber, CallLog.Calls.MISSED_TYPE);
+        verifyCallLogging(normalCallNumber, CallLog.Calls.MISSED_TYPE,
+                TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
     }
 
     /**
@@ -163,7 +164,8 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
         assertCallState(eCall, Call.STATE_ACTIVE);
 
         // Notify as missed instead of rejected, since the user did not explicitly reject.
-        verifyCallLogging(normalCallNumber, CallLog.Calls.MISSED_TYPE);
+        verifyCallLogging(normalCallNumber, CallLog.Calls.MISSED_TYPE,
+                TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
     }
 
     /**
@@ -204,7 +206,8 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
         assertCallState(eCall, Call.STATE_ACTIVE);
 
         // Notify as missed instead of rejected, since the user did not explicitly reject.
-        verifyCallLogging(normalIncomingCallNumber, CallLog.Calls.MISSED_TYPE);
+        verifyCallLogging(normalIncomingCallNumber, CallLog.Calls.MISSED_TYPE,
+                TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
     }
 
     public void testEmergencyCallAndNoAdditionalCallPermitted() throws Exception {

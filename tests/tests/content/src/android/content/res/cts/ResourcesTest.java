@@ -350,6 +350,80 @@ public class ResourcesTest extends AndroidTestCase {
                 .of(dpToPx(100f, metrics1x));
     }
 
+    public void testTypedValue_convertPixelsToDimensionAlias() {
+        Resources res = createNewResources();
+        final DisplayMetrics metrics = res.getDisplayMetrics();
+
+        IntStream.range(5, 20)
+                .asDoubleStream()
+                .forEach(
+                        spDouble -> {
+                            float sp = (float) spDouble;
+                            assertThat(TypedValue.convertDimensionToPixels(
+                                        TypedValue.COMPLEX_UNIT_SP,
+                                        sp,
+                                        metrics))
+                                    .isWithin(FONT_SCALING_TOLERANCE)
+                                    .of(TypedValue.applyDimension(
+                                        TypedValue.COMPLEX_UNIT_SP,
+                                        sp,
+                                        metrics));
+                        });
+
+        IntStream.range(5, 20)
+                .asDoubleStream()
+                .forEach(
+                        dpDouble -> {
+                            float dp = (float) dpDouble;
+                            assertThat(TypedValue.convertDimensionToPixels(
+                                        TypedValue.COMPLEX_UNIT_DIP,
+                                        dp,
+                                        metrics))
+                                    .isWithin(FONT_SCALING_TOLERANCE)
+                                    .of(TypedValue.applyDimension(
+                                        TypedValue.COMPLEX_UNIT_DIP,
+                                        dp,
+                                        metrics));
+                        });
+    }
+
+    public void testTypedValue_convertDimensionToPixelsAlias() {
+        Resources res = createNewResources();
+        final DisplayMetrics metrics = res.getDisplayMetrics();
+
+        IntStream.range(5, 20)
+                .asDoubleStream()
+                .forEach(
+                        spDouble -> {
+                            float sp = (float) spDouble;
+                            assertThat(TypedValue.convertPixelsToDimension(
+                                        TypedValue.COMPLEX_UNIT_SP,
+                                        sp,
+                                        metrics))
+                                    .isWithin(FONT_SCALING_TOLERANCE)
+                                    .of(TypedValue.deriveDimension(
+                                        TypedValue.COMPLEX_UNIT_SP,
+                                        sp,
+                                        metrics));
+                        });
+
+        IntStream.range(5, 20)
+                .asDoubleStream()
+                .forEach(
+                        dpDouble -> {
+                            float dp = (float) dpDouble;
+                            assertThat(TypedValue.convertPixelsToDimension(
+                                        TypedValue.COMPLEX_UNIT_DIP,
+                                        dp,
+                                        metrics))
+                                    .isWithin(FONT_SCALING_TOLERANCE)
+                                    .of(TypedValue.deriveDimension(
+                                        TypedValue.COMPLEX_UNIT_DIP,
+                                        dp,
+                                        metrics));
+                        });
+    }
+
     public void testGetDimensionPixelSize() {
         try {
             mResources.getDimensionPixelSize(-1);

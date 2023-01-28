@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.Instrumentation;
+import android.content.AttributionSource;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -29,7 +30,6 @@ import android.database.Cursor;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.tv.cts.TvViewTest.MockCallback;
 import android.media.tv.TunedInfo;
 import android.media.tv.TvContentRating;
 import android.media.tv.TvContract;
@@ -43,6 +43,7 @@ import android.media.tv.TvInputManager.SessionCallback;
 import android.media.tv.TvInputService;
 import android.media.tv.TvStreamConfig;
 import android.media.tv.TvView;
+import android.media.tv.cts.TvViewTest.MockCallback;
 import android.media.tv.tunerresourcemanager.TunerResourceManager;
 import android.net.Uri;
 import android.os.Binder;
@@ -52,11 +53,8 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.test.ActivityInstrumentationTestCase2;
 import android.tv.cts.R;
-
-import com.android.compatibility.common.util.PollingCheck;
-
 import androidx.test.InstrumentationRegistry;
-
+import com.android.compatibility.common.util.PollingCheck;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +62,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
-
 import org.xmlpull.v1.XmlPullParserException;
 
 /**
@@ -119,6 +116,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     };
 
     private String mStubId;
+    private Context mContext;
     private TvInputManager mManager;
     private LoggingCallback mCallback = new LoggingCallback();
     private TvInputInfo mStubTvInputInfo;
@@ -215,6 +213,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                 .adoptShellPermissionIdentity(BASE_SHELL_PERMISSIONS);
 
         mInstrumentation = getInstrumentation();
+        mContext = mInstrumentation.getTargetContext();
         mTvView = findTvViewById(R.id.tvview);
         mManager = (TvInputManager) mActivity.getSystemService(Context.TV_INPUT_SERVICE);
         mStubId = getInfoForClassName(
@@ -702,7 +701,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
 
         Handler handler = new Handler(Looper.getMainLooper());
         final SessionCallback sessionCallback = new SessionCallback();
-        mManager.createSession(mStubId, sessionCallback, handler);
+        mManager.createSession(mStubId, mContext.getAttributionSource(), sessionCallback, handler);
         PollingCheck.waitFor(TIME_OUT_MS, () -> sessionCallback.getSession() != null);
         Session session = sessionCallback.getSession();
         String sessionId = StubTvInputService2.getSessionId();
@@ -743,7 +742,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
 
         Handler handler = new Handler(Looper.getMainLooper());
         final SessionCallback sessionCallback = new SessionCallback();
-        mManager.createSession(mStubId, sessionCallback, handler);
+        mManager.createSession(mStubId, mContext.getAttributionSource(), sessionCallback, handler);
         PollingCheck.waitFor(TIME_OUT_MS, () -> sessionCallback.getSession() != null);
         Session session = sessionCallback.getSession();
         String sessionId = StubTvInputService2.getSessionId();

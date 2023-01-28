@@ -16,6 +16,8 @@
 
 package android.virtualdevice.cts.common;
 
+import android.app.Activity;
+
 public class ClipboardTestConstants {
     // The test activity should attempt to write a ClipData to the clipboard, and then read the
     // clipboard contents and send them back.
@@ -30,6 +32,11 @@ public class ClipboardTestConstants {
     // The test activity should register a ClipboardManager.OnPrimaryClipChangedListener, wait until
     // it fires, and then read and send the clipboard contents back.
     public static final String ACTION_WAIT_FOR_CLIP = "waitForClip";
+
+
+    // A result code sent to indicate that the test activity has finished registering a clipboard
+    // change listener.
+    public static final int RESULT_CODE_CLIP_LISTENER_READY = Activity.RESULT_FIRST_USER;
 
 
     // A boolean indicating whether a test activity should automatically call finish() after sending

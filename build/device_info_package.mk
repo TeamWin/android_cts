@@ -23,6 +23,7 @@ DEVICE_INFO_USES_OPTIONAL_LIBRARIES += \
   androidx.window.extensions \
   androidx.window.sidecar
 DEVICE_INFO_PERMISSIONS += \
+  android.permission.ACCESS_FINE_LOCATION \
   android.permission.READ_PHONE_STATE \
   android.permission.WRITE_EXTERNAL_STORAGE
 DEVICE_INFO_ACTIVITIES += \

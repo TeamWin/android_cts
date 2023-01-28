@@ -22,6 +22,10 @@ import android.platform.test.annotations.AppModeFull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
+import com.android.compatibility.common.util.NullWebViewUtils;
+
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,6 +42,11 @@ public class URLUtilTest {
     @Rule
     public final WebViewSandboxTestRule sdkTester =
             new WebViewSandboxTestRule("android.webkit.cts.URLUtilTest");
+
+    @Before
+    public void setUp() {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+    }
 
     @Test
     public void testIsAssetUrl() throws Exception {

@@ -29,11 +29,11 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.UserManager;
-import android.provider.DeviceConfig;
 
 import androidx.annotation.CallSuper;
 
 import com.android.compatibility.common.util.AppOpsUtils;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -60,50 +60,29 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
             List.of(APP_B, APP_B_33);
 
     static final String SHELL_PACKAGE = "com.android.shell";
+    static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
+
+    // TODO(b/258792202): Cleanup with feature flag
+    static final String NAMESPACE_WINDOW_MANAGER = "window_manager";
+    static final String ASM_RESTRICTIONS_ENABLED =
+            "ActivitySecurity__asm_restrictions_enabled";
+    static final String ENABLE_DEFAULT_RESCIND_BAL_PRIVILEGES_FROM_PENDING_INTENT_SENDER =
+            "enable_default_rescind_bal_privileges_from_pending_intent_sender";
+    final DeviceConfigStateHelper mDeviceConfig =
+            new DeviceConfigStateHelper(NAMESPACE_WINDOW_MANAGER);
 
     ServiceConnection mBalServiceConnection;
 
-    static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
-
-    private String initialAsmFlagVal;
-    private String initialBalFlagVal;
-
     @Before
     public void enableFeatureFlags() {
-        runWithShellPermission(() -> {
-            initialAsmFlagVal = DeviceConfig.getProperty("window_manager",
-                    "asm_restrictions_enabled");
-            DeviceConfig.setProperty("window_manager",
-                    "asm_restrictions_enabled", "1", false);
-
-            initialBalFlagVal = DeviceConfig.getProperty("window_manager",
-                    "enable_default_rescind_bal_privileges_from_pending_intent_sender");
-            DeviceConfig.setProperty("window_manager",
-                    "enable_default_rescind_bal_privileges_from_pending_intent_sender", "true",
-                    false);
-        });
+        mDeviceConfig.set(ASM_RESTRICTIONS_ENABLED, "1");
+        mDeviceConfig.set(
+                ENABLE_DEFAULT_RESCIND_BAL_PRIVILEGES_FROM_PENDING_INTENT_SENDER, "true");
     }
 
     @After
-    public void disableFeatureFlags() {
-        runWithShellPermission(() -> {
-            if (initialAsmFlagVal != null) {
-                DeviceConfig.setProperty("window_manager",
-                        "asm_restrictions_enabled", initialAsmFlagVal, false);
-            } else {
-                DeviceConfig.deleteProperty("window_manager",
-                        "asm_restrictions_enabled");
-            }
-
-            if (initialBalFlagVal != null) {
-                DeviceConfig.setProperty("window_manager",
-                        "enable_default_rescind_bal_privileges_from_pending_intent_sender",
-                        initialBalFlagVal, false);
-            } else {
-                DeviceConfig.deleteProperty("window_manager",
-                        "enable_default_rescind_bal_privileges_from_pending_intent_sender");
-            }
-        });
+    public void disableFeatureFlags() throws Exception {
+        mDeviceConfig.close();
     }
 
     @Override

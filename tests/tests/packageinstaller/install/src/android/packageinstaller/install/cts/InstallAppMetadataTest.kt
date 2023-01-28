@@ -113,9 +113,11 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         val data = createAppMetadata()
         val (sessionId, session) = createSession(0, false, null)
         setAppMetadata(session, data)
-        val pendingIntent = PendingIntent.getBroadcast(context, 0 /* requestCode */,
-                Intent(INSTALL_ACTION_CB),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context, 0 /* requestCode */,
+            Intent(INSTALL_ACTION_CB), PendingIntent.FLAG_UPDATE_CURRENT
+                    or PendingIntent.FLAG_MUTABLE
+                    or PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT)
         session.commit(pendingIntent.intentSender)
         val result = getInstallSessionResult()
         assertThat(result.status).isEqualTo(PackageInstaller.STATUS_FAILURE_INVALID)

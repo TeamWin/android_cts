@@ -23,8 +23,8 @@ import static org.junit.Assert.fail;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecEncoderTestBase;
 import android.mediav2.common.cts.EncoderConfigParams;
-import android.mediav2.common.cts.EncoderTestBase;
 import android.mediav2.common.cts.OutputManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -71,7 +71,7 @@ import java.util.List;
  * The test runs mediacodec in synchronous and asynchronous mode.
  */
 @RunWith(Parameterized.class)
-public class CodecEncoderTest extends EncoderTestBase {
+public class CodecEncoderTest extends CodecEncoderTestBase {
     private static final String LOG_TAG = CodecEncoderTest.class.getSimpleName();
     private static final ArrayList<String> ABR_MEDIATYPE_LIST = new ArrayList<>();
 

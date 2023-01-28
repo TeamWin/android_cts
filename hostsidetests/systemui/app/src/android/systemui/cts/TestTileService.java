@@ -82,7 +82,7 @@ public class TestTileService extends TileService {
         filter.addAction(START_ACTIVITY_WITH_PENDING_INTENT);
         filter.addAction(SET_PENDING_INTENT);
         filter.addAction(SET_NULL_PENDING_INTENT);
-        registerReceiver(mReceiver, filter);
+        registerReceiver(mReceiver, filter, Context.RECEIVER_EXPORTED);
 
         // Set up some initial good state.
         Tile tile = getQsTile();

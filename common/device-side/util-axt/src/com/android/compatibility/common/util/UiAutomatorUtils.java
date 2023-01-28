@@ -45,7 +45,13 @@ public class UiAutomatorUtils {
     private static final String LOG_TAG = "UiAutomatorUtils";
 
     /** Default swipe deadzone percentage. See {@link UiScrollable}. */
-    private static final double DEFAULT_SWIPE_DEADZONE_PCT = 0.1;
+    private static final double DEFAULT_SWIPE_DEADZONE_PCT_TV       = 0.1f;
+    private static final double DEFAULT_SWIPE_DEADZONE_PCT_ALL      = 0.25f;
+    /**
+     * On Wear, some cts tests like CtsPermission3TestCases that run on
+     * low performance device. Keep 0.05 to have better matching.
+     */
+    private static final double DEFAULT_SWIPE_DEADZONE_PCT_WEAR     = 0.05f;
 
     /** Minimum view height accepted (before needing to scroll more). */
     private static final float MIN_VIEW_HEIGHT_DP = 8;
@@ -81,6 +87,16 @@ public class UiAutomatorUtils {
                 ApplicationProvider.getApplicationContext().getResources().getDisplayMetrics()));
     }
 
+    private static double getSwipeDeadZonePct() {
+        if (FeatureUtil.isTV()) {
+            return DEFAULT_SWIPE_DEADZONE_PCT_TV;
+        } else if (FeatureUtil.isWatch()) {
+            return DEFAULT_SWIPE_DEADZONE_PCT_WEAR;
+        } else {
+            return DEFAULT_SWIPE_DEADZONE_PCT_ALL;
+        }
+    }
+
     public static UiObject2 waitFindObjectOrNull(BySelector selector, long timeoutMs)
             throws UiObjectNotFoundException {
         UiObject2 view = null;
@@ -104,8 +120,7 @@ public class UiAutomatorUtils {
             }
 
             if (view == null || view.getVisibleBounds().height() < minViewHeightPx) {
-                final double deadZone = !(FeatureUtil.isWatch() || FeatureUtil.isTV())
-                        ? 0.25 : DEFAULT_SWIPE_DEADZONE_PCT;
+                final double deadZone = getSwipeDeadZonePct();
                 UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
                 scrollable.setSwipeDeadZonePercentage(deadZone);
                 if (scrollable.exists()) {

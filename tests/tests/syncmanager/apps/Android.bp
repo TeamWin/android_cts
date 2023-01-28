@@ -26,7 +26,6 @@ android_test_helper_app {
         "androidx.legacy_legacy-support-v4",
         "mockito-target-minus-junit4",
         "compatibility-device-util-axt",
-        "ub-uiautomator",
     ],
     sdk_version: "test_current",
     // tag this module as a cts test artifact
@@ -48,7 +47,6 @@ android_test_helper_app {
         "androidx.legacy_legacy-support-v4",
         "mockito-target-minus-junit4",
         "compatibility-device-util-axt",
-        "ub-uiautomator",
     ],
     sdk_version: "test_current",
     // tag this module as a cts test artifact

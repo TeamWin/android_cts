@@ -16,13 +16,12 @@
 
 package com.android.cts.verifier.audio;
 
-import android.content.Context;
 import android.util.Log;
 
 import com.android.cts.verifier.audio.audiolib.AudioSystemParams;
 
 // MegaAudio imports
-import org.hyphonate.megaaudio.player.AudioSource;
+import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
 import org.hyphonate.megaaudio.player.JavaPlayer;
 import org.hyphonate.megaaudio.player.PlayerBuilder;
@@ -68,19 +67,28 @@ public abstract class USBAudioPeripheralPlayerActivity extends USBAudioPeriphera
         }
     }
 
-    protected void startPlay() {
+    // Returns whether the stream started correctly.
+    protected boolean startPlay() {
+        boolean result = false;
         if (mOutputDevInfo != null && !mIsPlaying) {
-            mAudioPlayer.startStream();
-
+            result = (mAudioPlayer.startStream() == StreamBase.OK);
+        }
+        if (result) {
             mIsPlaying = true;
         }
+        return result;
     }
 
-    protected void stopPlay() {
+    // Returns whether the stream stopped correctly.
+    protected boolean stopPlay() {
+        boolean result = false;
         if (mIsPlaying) {
-            mAudioPlayer.stopStream();
+            result = (mAudioPlayer.stopStream() == StreamBase.OK);
+        }
+        if (result) {
             mIsPlaying = false;
         }
+        return result;
     }
 
     public boolean isPlaying() {

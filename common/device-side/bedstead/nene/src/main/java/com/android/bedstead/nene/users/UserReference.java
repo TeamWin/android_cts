@@ -43,6 +43,7 @@ import androidx.annotation.Nullable;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
+import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.exceptions.PollValueFailedException;
@@ -140,6 +141,11 @@ public final class UserReference implements AutoCloseable {
      * {@link NeneException} will be thrown.
      */
     public void remove() {
+        ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(this);
+        if (profileOwner != null && profileOwner.isOrganizationOwned()) {
+            profileOwner.remove();
+        }
+
         try {
             // Expected success string is "Success: removed user"
             ShellCommand.builder("pm remove-user")
@@ -486,8 +492,8 @@ public final class UserReference implements AutoCloseable {
         try {
             ShellCommand.builder("cmd lock_settings")
                     .addOperand("set-" + lockType)
-                    .addOperand(lockCredential)
                     .addOption("--user", mId)
+                    .addOperand(lockCredential)
                     .validate(s -> s.startsWith(lockTypeSentenceCase + " set to"))
                     .execute();
         } catch (AdbException e) {

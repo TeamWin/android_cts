@@ -39,14 +39,14 @@ public class HttpAuthHandlerTest {
     public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
             new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
 
+    @Rule
+    public final WebViewSandboxTestRule sdkTester =
+            new WebViewSandboxTestRule("android.webkit.cts.HttpAuthHandlerTest");
+
     @Before
     public void setUp() {
         Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
     }
-
-    @Rule
-    public final WebViewSandboxTestRule sdkTester =
-            new WebViewSandboxTestRule("android.webkit.cts.HttpAuthHandlerTest");
 
     @Test
     public void testProceed() throws Exception {

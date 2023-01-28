@@ -47,10 +47,10 @@ import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.DisplayMetricsSession;
+import android.server.wm.jetpack.utils.JavaConsumerAdapter;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.server.wm.jetpack.utils.TestValueCountConsumer;
-import android.server.wm.jetpack.utils.TestValueCountJavaConsumer;
 import android.server.wm.jetpack.utils.WindowExtensionTestRule;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 import android.view.Display;
@@ -204,8 +204,8 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
     public void testWindowLayoutComponent_windowLayoutInfoListener() {
         TestActivity activity = startFullScreenActivityNewTask(TestActivity.class,
                 null /* activityId */);
-        TestValueCountJavaConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
-                new TestValueCountJavaConsumer<>();
+        JavaConsumerAdapter<WindowLayoutInfo> windowLayoutInfoConsumer =
+                new JavaConsumerAdapter<>(new TestValueCountConsumer<>());
         // Test that adding and removing callback succeeds
         mWindowLayoutComponent.addWindowLayoutInfoListener(activity, windowLayoutInfoConsumer);
         mWindowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);

@@ -38,14 +38,14 @@ public class CookieTest {
     public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
             new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
 
+    @Rule
+    public final WebViewSandboxTestRule sdkTester =
+            new WebViewSandboxTestRule("android.webkit.cts.CookieTest");
+
     @Before
     public void setUp() {
         Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
     }
-
-    @Rule
-    public final WebViewSandboxTestRule sdkTester =
-            new WebViewSandboxTestRule("android.webkit.cts.CookieTest");
 
     @Presubmit
     @Test

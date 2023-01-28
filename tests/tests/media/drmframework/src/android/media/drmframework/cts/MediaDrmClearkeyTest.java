@@ -20,6 +20,7 @@ import android.media.MediaDrm;
 import android.media.MediaDrm.KeyStatus;
 import android.media.MediaDrm.MediaDrmStateException;
 import android.media.MediaDrmException;
+import android.media.MediaDrmThrowable;
 import android.media.MediaFormat;
 import android.media.NotProvisionedException;
 import android.media.ResourceBusyException;
@@ -51,6 +52,7 @@ import com.android.compatibility.common.util.ApiLevelUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.Assert;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -968,6 +970,10 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
             if (!Arrays.equals(deviceId, getByteArrayProperty(drm, DEVICEID_PROPERTY_KEY))) {
                 throw new Error("Failed to set byte array for key=" + DEVICEID_PROPERTY_KEY);
             }
+
+            for (String k: new String[] {"oemError", "errorContext"}) {
+                testIntegerProperties(drm, k);
+            }
         } finally {
             stopDrm(drm);
         }
@@ -1232,10 +1238,16 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
 
         MediaDrm drm = null;
         boolean gotException = false;
+        final int OEM_ERROR = 123;
+        final int ERROR_CONTEXT = 456;
 
         try {
             drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
             drm.setPropertyString("drmErrorTest", "resourceContention");
+            if (getClearkeyVersionInt(drm) >= 14) {
+                drm.setPropertyString("oemError", Integer.toString(OEM_ERROR));
+                drm.setPropertyString("errorContext", Integer.toString(ERROR_CONTEXT));
+            }
             byte[] sessionId = drm.openSession();
 
             try {
@@ -1247,6 +1259,13 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
                 }
                 if(sIsAtLeastS && !e.isTransient()) {
                         throw new Error("Expected transient ERROR_RESOURCE_CONTENTION");
+                }
+                if (getClearkeyVersionInt(drm) >= 14) {
+                    final MediaDrmThrowable mdt = e;
+                    final int RESOURCE_CONTENTION_AIDL = 16;
+                    assertEquals("Vendor Error mismatch", mdt.getVendorError(), RESOURCE_CONTENTION_AIDL);
+                    assertEquals("OEM Error mismatch", mdt.getOemError(), OEM_ERROR);
+                    assertEquals("Error context mismatch", mdt.getErrorContext(), ERROR_CONTEXT);
                 }
                 gotException = true;
             }
@@ -1643,8 +1662,6 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
             assertTrue("Expected ERROR_SESSION_NOT_OPENED value in info",
                     e.getDiagnosticInfo().contains(
                             String.valueOf(MediaDrm.ErrorCodes.ERROR_SESSION_NOT_OPENED)));
-            assertEquals("No vendor error expected from Clearkey", 0, e.getVendorError());
-            assertEquals("No OEM error expected from Clearkey", 0, e.getOemError());
         }  finally {
             if (drm != null) {
                 drm.close();
@@ -1652,11 +1669,38 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
     }
 
+    private void testIntegerProperties(MediaDrm drm, String testKey)
+            throws ResourceBusyException, UnsupportedSchemeException, NotProvisionedException {
+        if (getClearkeyVersionInt(drm) < 14) {
+            return;
+        }
+        String testValue = "123456";
+        assertEquals("Default value not 0", drm.getPropertyString(testKey), "0");
+        Assert.assertThrows("Non-numeric must throw", Exception.class, () -> {
+            drm.setPropertyString(testKey, "xyz"); });
+        Assert.assertThrows("Non-integral must throw", Exception.class, () -> {
+            drm.setPropertyString(testKey, "3.141"); });
+        Assert.assertThrows("Out-of-range (MAX) must throw", Exception.class, () -> {
+            drm.setPropertyString(testKey, Long.toString(Long.MAX_VALUE)); });
+        Assert.assertThrows("Out-of-range (MIN) must throw", Exception.class, () -> {
+            drm.setPropertyString(testKey, Long.toString(Long.MIN_VALUE)); });
+        drm.setPropertyString(testKey, testValue);
+        assertEquals("Property didn't match", drm.getPropertyString(testKey), testValue);
+    }
+
     private String getClearkeyVersion(MediaDrm drm) {
         try {
             return drm.getPropertyString("version");
         } catch (Exception e) {
             return "unavailable";
+        }
+    }
+
+    private int getClearkeyVersionInt(MediaDrm drm) {
+        try {
+            return Integer.parseInt(drm.getPropertyString("version"));
+        } catch (Exception e) {
+            return Integer.MIN_VALUE;
         }
     }
 

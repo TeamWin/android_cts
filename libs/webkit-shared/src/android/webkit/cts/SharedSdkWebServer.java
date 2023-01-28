@@ -114,9 +114,9 @@ public final class SharedSdkWebServer {
     }
 
     /** Retrieve the last request to be made on a url. */
-    public HttpRequest getLastRequest(String url) {
+    public HttpRequest getLastAssetRequest(String url) {
         try {
-            return mWebServer.getLastRequest(url);
+            return mWebServer.getLastAssetRequest(url);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }

@@ -236,9 +236,9 @@ public final class SharedWebViewTestEnvironment {
                         return mWebServer.wasResourceRequested(url);
                     }
 
-                    public HttpRequest getLastRequest(String url) {
+                    public HttpRequest getLastAssetRequest(String url) {
                         assertNotNull("The WebServer needs to be started", mWebServer);
-                        org.apache.http.HttpRequest request = mWebServer.getLastRequest(url);
+                        org.apache.http.HttpRequest request = mWebServer.getLastAssetRequest(url);
                         if (request == null) {
                             return null;
                         }

@@ -649,10 +649,7 @@ public final class DevicePolicy {
         if (!Versions.meetsMinimumSdkVersionRequirement(31)) {
             return true;
         }
-        try (PermissionContext p =
-                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
-            return devicePolicyManager(TestApis.users().system()).canAdminGrantSensorsPermissions();
-        }
+        return sDevicePolicyManager.canAdminGrantSensorsPermissions();
     }
 
     /**
@@ -669,7 +666,7 @@ public final class DevicePolicy {
     @Experimental
     public int getUserProvisioningState(UserReference user) {
         try (PermissionContext p =
-                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
             return devicePolicyManager(user).getUserProvisioningState();
         }
     }

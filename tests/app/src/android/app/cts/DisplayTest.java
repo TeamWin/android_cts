@@ -20,11 +20,16 @@ import static com.android.compatibility.common.util.PackageUtil.supportsRotation
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.ActivityOptions;
 import android.app.stubs.DisplayTestActivity;
 import android.app.stubs.OrientationTestUtils;
+import android.content.Intent;
 import android.graphics.Point;
 import android.server.wm.SetRequestedOrientationRule;
+import android.util.Pair;
 import android.view.Display;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 
@@ -52,55 +57,62 @@ public class DisplayTest {
             return;
         }
 
-        final DisplayTestActivity activity =
-                mSetRequestedOrientationRule.launchActivityInFullscreen(DisplayTestActivity.class);
+        final Pair<Intent, ActivityOptions> launchArgs =
+                SetRequestedOrientationRule.buildFullScreenLaunchArgs(DisplayTestActivity.class);
 
-        // Get a {@link Display} instance before rotation.
-        final Display origDisplay = activity.getDisplay();
+        final DisplayTestActivity activity = (DisplayTestActivity) InstrumentationRegistry
+                .getInstrumentation()
+                .startActivitySync(launchArgs.first, launchArgs.second.toBundle());
+        try {
+            // Get a {@link Display} instance before rotation.
+            final Display origDisplay = activity.getDisplay();
 
-        // Capture the originally reported width and heights
-        final Point origSize = new Point();
-        origDisplay.getRealSize(origSize);
+            // Capture the originally reported width and heights
+            final Point origSize = new Point();
+            origDisplay.getRealSize(origSize);
 
-        // Change orientation
-        activity.configurationChangeObserver.startObserving();
-        OrientationTestUtils.switchOrientation(activity);
+            // Change orientation
+            activity.configurationChangeObserver.startObserving();
+            OrientationTestUtils.switchOrientation(activity);
 
-        final boolean closeToSquareBounds =
-                OrientationTestUtils.isCloseToSquareBounds(activity);
+            final boolean closeToSquareBounds =
+                    OrientationTestUtils.isCloseToSquareBounds(activity);
 
-        // Don't wait for the configuration to change if
-        // the display is square. In many cases it won't.
-        if (!closeToSquareBounds) {
-            activity.configurationChangeObserver.await();
-        }
+            // Don't wait for the configuration to change if
+            // the display is square. In many cases it won't.
+            if (!closeToSquareBounds) {
+                activity.configurationChangeObserver.await();
+            }
 
-        final Point newOrigSize = new Point();
-        origDisplay.getRealSize(newOrigSize);
+            final Point newOrigSize = new Point();
+            origDisplay.getRealSize(newOrigSize);
 
-        // Get a {@link Display} instance after rotation.
-        final Display updatedDisplay = activity.getDisplay();
-        final Point updatedSize = new Point();
-        updatedDisplay.getRealSize(updatedSize);
+            // Get a {@link Display} instance after rotation.
+            final Display updatedDisplay = activity.getDisplay();
+            final Point updatedSize = new Point();
+            updatedDisplay.getRealSize(updatedSize);
 
-        // For square screens the following assertions do not make sense and will always
-        // fail.
-        if (!closeToSquareBounds) {
-            // Ensure that the width and height of the original instance no longer are the
-            // same.
-            // Note that this will be false if the device width and height are identical.
-            // Note there are cases where width and height may not all be updated, such as
-            // on docked devices where the app is letterboxed. However, at least one
-            // dimension needs to be updated.
+            // For square screens the following assertions do not make sense and will always
+            // fail.
+            if (!closeToSquareBounds) {
+                // Ensure that the width and height of the original instance no longer are the
+                // same.
+                // Note that this will be false if the device width and height are identical.
+                // Note there are cases where width and height may not all be updated, such as
+                // on docked devices where the app is letterboxed. However, at least one
+                // dimension needs to be updated.
+                assertWithMessage(
+                        "size from original display instance should have changed")
+                        .that(origSize).isNotEqualTo(newOrigSize);
+            }
+
+            // Ensure that the width and height of the original instance have been updated to
+            // match the values that would be found in a new instance.
             assertWithMessage(
-                    "size from original display instance should have changed")
-                    .that(origSize).isNotEqualTo(newOrigSize);
+                    "size from original display instance should match current")
+                    .that(newOrigSize).isEqualTo(updatedSize);
+        } finally {
+            InstrumentationRegistry.getInstrumentation().runOnMainSync(activity::finish);
         }
-
-        // Ensure that the width and height of the original instance have been updated to
-        // match the values that would be found in a new instance.
-        assertWithMessage(
-                "size from original display instance should match current")
-                .that(newOrigSize).isEqualTo(updatedSize);
     }
 }

@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNotEquals;
 
 import android.icu.util.ULocale;
 import android.media.AudioPresentation;
+import android.os.Parcel;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.NonMainlineTest;
@@ -33,7 +34,7 @@ public class AudioPresentationTest extends CtsAndroidTestCase {
     private String TAG = "AudioPresentationTest";
     private static final String REPORT_LOG_NAME = "CtsMediaAudioTestCases";
 
-    public void testGetters() throws Exception {
+    private void testGetters(boolean fromParcelable) throws Exception {
         final int PRESENTATION_ID = 42;
         final int PROGRAM_ID = 43;
         final Map<Locale, CharSequence> LABELS = generateLabels();
@@ -51,6 +52,12 @@ public class AudioPresentationTest extends CtsAndroidTestCase {
                 .setHasAudioDescription(HAS_AUDIO_DESCRIPTION)
                 .setHasSpokenSubtitles(HAS_SPOKEN_SUBTITLES)
                 .setHasDialogueEnhancement(HAS_DIALOGUE_ENHANCEMENT)).build();
+        if (fromParcelable) {
+            Parcel p = Parcel.obtain();
+            presentation.writeToParcel(p, 0);
+            p.setDataPosition(0);
+            presentation = AudioPresentation.CREATOR.createFromParcel(p);
+        }
         assertEquals(PRESENTATION_ID, presentation.getPresentationId());
         assertEquals(PROGRAM_ID, presentation.getProgramId());
         assertEquals(LABELS, presentation.getLabels());
@@ -59,6 +66,14 @@ public class AudioPresentationTest extends CtsAndroidTestCase {
         assertEquals(HAS_AUDIO_DESCRIPTION, presentation.hasAudioDescription());
         assertEquals(HAS_SPOKEN_SUBTITLES, presentation.hasSpokenSubtitles());
         assertEquals(HAS_DIALOGUE_ENHANCEMENT, presentation.hasDialogueEnhancement());
+    }
+
+    public void testGetters() throws Exception {
+        testGetters(false);
+    }
+
+    public void testParcelable() throws Exception {
+        testGetters(true);
     }
 
     public void testEqualsAndHashCode() throws Exception {

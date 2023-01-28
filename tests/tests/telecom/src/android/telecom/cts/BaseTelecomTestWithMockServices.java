@@ -1256,22 +1256,27 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         return changeLatch;
     }
 
-
-    public void verifyCallLogging(CountDownLatch logLatch, boolean isCallLogged, Uri testNumber) {
-        Cursor logCursor = getLatestCallLogCursorIfMatchesUri(logLatch, isCallLogged, testNumber);
-        if (isCallLogged) {
-            assertNotNull("Call log entry not found for test number", logCursor);
-        }
-    }
-
-    public void verifyCallLogging(Uri testNumber, int expectedLogType) {
+    public void verifyCallLogging(
+            Uri testNumber, int expectedLogType, PhoneAccountHandle handle) {
         CountDownLatch logLatch = getCallLogEntryLatch();
         Cursor logCursor = getLatestCallLogCursorIfMatchesUri(logLatch, true /*isCallLogged*/,
                 testNumber);
         assertNotNull("Call log entry not found for test number", logCursor);
+
         int typeIndex = logCursor.getColumnIndex(CallLog.Calls.TYPE);
         int type = logCursor.getInt(typeIndex);
         assertEquals("recorded type does not match expected", expectedLogType, type);
+
+        int phoneAccountIdIndex = logCursor.getColumnIndex(CallLog.Calls.PHONE_ACCOUNT_ID);
+        String phoneAccountId = logCursor.getString(phoneAccountIdIndex);
+        assertEquals("recorded account ID does not match expected",
+                handle.getId(), phoneAccountId);
+
+        int phoneAccountComponentNameIndex = logCursor.getColumnIndex(
+                CallLog.Calls.PHONE_ACCOUNT_COMPONENT_NAME);
+        String phoneAccountComponentName = logCursor.getString(phoneAccountComponentNameIndex);
+        assertEquals("recorded account component name does not match expected",
+                handle.getComponentName().flattenToString(), phoneAccountComponentName);
     }
 
     public Cursor getLatestCallLogCursorIfMatchesUri(CountDownLatch latch, boolean newLogExpected,

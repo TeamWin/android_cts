@@ -31,8 +31,8 @@ import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.mediav2.common.cts.CodecEncoderTestBase;
 import android.mediav2.common.cts.EncoderConfigParams;
-import android.mediav2.common.cts.EncoderTestBase;
 import android.mediav2.common.cts.OutputManager;
 import android.util.Log;
 import android.util.Pair;
@@ -75,7 +75,7 @@ import java.util.Objects;
  * handle certain profile and level configurations. This is verified as well.
  */
 @RunWith(Parameterized.class)
-public class EncoderProfileLevelTest extends EncoderTestBase {
+public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     private static final String LOG_TAG = EncoderProfileLevelTest.class.getSimpleName();
     private static final HashMap<String, Pair<int[], Integer>> PROFILE_LEVEL_CDD = new HashMap<>();
 

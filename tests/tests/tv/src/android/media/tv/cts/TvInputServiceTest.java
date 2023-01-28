@@ -17,17 +17,18 @@
 package android.media.tv.cts;
 
 import static androidx.test.ext.truth.view.MotionEventSubject.assertThat;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.Instrumentation;
+import android.content.AttributionSource;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.PlaybackParams;
 import android.media.tv.AitInfo;
+import android.media.AudioPresentation;
 import android.media.tv.TvContentRating;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
@@ -50,30 +51,25 @@ import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.LinearLayout;
-
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.RequiredFeatureRule;
-
 import com.google.common.truth.Truth;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link android.media.tv.TvInputService}.
@@ -95,15 +91,24 @@ public class TvInputServiceTest {
     private static final Uri CHANNEL_0 = TvContract.buildChannelUri(0);
     /** The maximum time to wait for an operation. */
     private static final long TIME_OUT = 5000L;
+    private static final int AUDIO_PRESENTATION_ID_UNKNOWN =
+            AudioPresentation.PRESENTATION_ID_UNKNOWN;
+    private static final int AUDIO_PROGRAM_ID_UNKNOWN =
+            AudioPresentation.PROGRAM_ID_UNKNOWN;
     private static final TvTrackInfo TEST_TV_TRACK =
             new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "testTrackId")
                     .setVideoWidth(1920)
                     .setVideoHeight(1080)
                     .setLanguage("und")
                     .build();
+    private static final AudioPresentation TEST_AUDIO_PRESENTATION =
+            new AudioPresentation.Builder(1)
+                .setProgramId(123)
+                .build();
 
     private TvRecordingClient mTvRecordingClient;
     private Instrumentation mInstrumentation;
+    private Context mContext;
     private TvInputManager mManager;
     private TvInputInfo mStubInfo;
     private TvInputInfo mFaultyStubInfo;
@@ -118,6 +123,8 @@ public class TvInputServiceTest {
         private int mVideoUnavailableCount;
         private int mTrackSelectedCount;
         private int mTrackChangedCount;
+        private int mAudioPresentationSelectedCount;
+        private int mAudioPresentationChangedCount;
         private int mVideoSizeChanged;
         private int mContentAllowedCount;
         private int mContentBlockedCount;
@@ -128,7 +135,10 @@ public class TvInputServiceTest {
         private Integer mVideoUnavailableReason;
         private Integer mTrackSelectedType;
         private String mTrackSelectedTrackId;
+        private Integer mAudioPresentationId;
+        private Integer mAudioProgramId;
         private List<TvTrackInfo> mTracksChangedTrackList;
+        private List<AudioPresentation> mAudioPresentationsList;
         private TvContentRating mContentBlockedRating;
         private Integer mTimeShiftStatusChangedStatus;
         private AitInfo mAitInfo;
@@ -164,6 +174,20 @@ public class TvInputServiceTest {
         }
 
         @Override
+        public void onAudioPresentationSelected(String inputId, int presentationId, int programId) {
+            mAudioPresentationSelectedCount++;
+            mAudioPresentationId = presentationId;
+            mAudioProgramId = programId;
+        }
+
+        @Override
+        public void onAudioPresentationsChanged(String inputId,
+                                                List<AudioPresentation> audioPresentations) {
+            mAudioPresentationChangedCount++;
+            mAudioPresentationsList = audioPresentations;
+        }
+
+        @Override
         public void onVideoSizeChanged(String inputId, int width, int height) {
             mVideoSizeChanged++;
         }
@@ -196,6 +220,8 @@ public class TvInputServiceTest {
             mVideoUnavailableCount = 0;
             mTrackSelectedCount = 0;
             mTrackChangedCount = 0;
+            mAudioPresentationSelectedCount = 0;
+            mAudioPresentationChangedCount = 0;
             mContentAllowedCount = 0;
             mContentBlockedCount = 0;
             mTimeShiftStatusChangedCount = 0;
@@ -208,6 +234,9 @@ public class TvInputServiceTest {
             mTrackSelectedType = null;
             mTrackSelectedTrackId = null;
             mTracksChangedTrackList = null;
+            mAudioPresentationsList = null;
+            mAudioPresentationId = AUDIO_PRESENTATION_ID_UNKNOWN;
+            mAudioProgramId = AUDIO_PROGRAM_ID_UNKNOWN;
             mContentBlockedRating = null;
             mTimeShiftStatusChangedStatus = null;
             mAitInfo = null;
@@ -244,11 +273,10 @@ public class TvInputServiceTest {
     public void setUp() {
         mInstrumentation = InstrumentationRegistry
                 .getInstrumentation();
-        mTvRecordingClient = new TvRecordingClient(mInstrumentation.getTargetContext(),
-                "TvInputServiceTest",
-                mRecordingCallback, null);
-        mManager = (TvInputManager) mInstrumentation.getTargetContext().getSystemService(
-                Context.TV_INPUT_SERVICE);
+        mContext = mInstrumentation.getTargetContext();
+        mTvRecordingClient =
+                new TvRecordingClient(mContext, "TvInputServiceTest", mRecordingCallback, null);
+        mManager = (TvInputManager) mContext.getSystemService(Context.TV_INPUT_SERVICE);
         for (TvInputInfo info : mManager.getTvInputList()) {
             if (info.getServiceInfo().name.equals(CountingTvInputService.class.getName())) {
                 mStubInfo = info;
@@ -807,6 +835,33 @@ public class TvInputServiceTest {
     }
 
     @Test
+    public void verifyCallbackAudioPresentationChanged() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+        ArrayList<AudioPresentation> audioPresentations = new ArrayList<>();
+        audioPresentations.add(TEST_AUDIO_PRESENTATION);
+        session.notifyAudioPresentationChanged(audioPresentations);
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mAudioPresentationChangedCount > 0);
+        assertThat(mCallback.mAudioPresentationChangedCount).isEqualTo(1);
+        assertThat(mCallback.mAudioPresentationsList).isEqualTo(audioPresentations);
+    }
+
+    @Test
+    public void verifyCallbackAudioPresentationSelected() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+        session.notifyAudioPresentationSelected(TEST_AUDIO_PRESENTATION.getPresentationId(),
+                                                TEST_AUDIO_PRESENTATION.getProgramId());
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mAudioPresentationSelectedCount > 0);
+        assertThat(mCallback.mAudioPresentationSelectedCount).isEqualTo(1);
+        assertThat(mCallback.mAudioPresentationId).isEqualTo(
+            TEST_AUDIO_PRESENTATION.getPresentationId());
+        assertThat(mCallback.mAudioProgramId).isEqualTo(TEST_AUDIO_PRESENTATION.getProgramId());
+    }
+
+    @Test
     @Ignore("b/174076887")
     public void verifyCallbackVideoSizeChanged() {
         final CountingSession session = tune(CHANNEL_0);
@@ -1037,6 +1092,7 @@ public class TvInputServiceTest {
     private CountingSession tune(Uri uri) {
         onTvView(tvView -> {
             tvView.setCallback(mCallback);
+            tvView.overrideTvAppAttributionSource(mContext.getAttributionSource());
             tvView.tune(mStubInfo.getId(), CHANNEL_0);
         });
         return waitForSessionCheck(session -> session.mTuneCount > 0);
@@ -1092,6 +1148,13 @@ public class TvInputServiceTest {
             sSession = new CountingSession(this, tvInputSessionId);
             sSession.setOverlayViewEnabled(true);
             return sSession;
+        }
+
+        @Override
+        public Session onCreateSession(
+                String inputId, String tvInputSessionId, AttributionSource tvAppAttributionSource) {
+            // todo: add AttributionSource equal check
+            return onCreateSession(inputId, tvInputSessionId);
         }
 
         @Override
@@ -1168,7 +1231,6 @@ public class TvInputServiceTest {
             public volatile Integer mOverlayViewSizeChangedWidth;
             public volatile Integer mOverlayViewSizeChangedHeight;
             public volatile Boolean mInteractiveAppNotificationEnabled;
-
 
             CountingSession(Context context, @Nullable String sessionId) {
 

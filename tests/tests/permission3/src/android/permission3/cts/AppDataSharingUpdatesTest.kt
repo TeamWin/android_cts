@@ -20,6 +20,8 @@ import android.content.Intent
 import android.content.Intent.ACTION_REVIEW_APP_DATA_SHARING_UPDATES
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.os.Build
+import android.permission3.cts.AppMetadata.createAppMetadataWithLocationSharingNoAds
+import android.permission3.cts.AppMetadata.createAppMetadataWithNoSharing
 import android.provider.DeviceConfig
 import android.safetylabel.SafetyLabelConstants.PERMISSION_RATIONALE_ENABLED
 import android.safetylabel.SafetyLabelConstants.SAFETY_LABEL_CHANGE_NOTIFICATIONS_ENABLED
@@ -27,6 +29,7 @@ import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.SystemUtil.waitForBroadcasts
 import com.android.modules.utils.build.SdkLevel
 import org.junit.Assume
 import org.junit.Before
@@ -37,7 +40,6 @@ import org.junit.Test
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     // TODO(b/263838456): Add tests for personal and work profile.
-    // TODO(b/261660881): Add tests involving installing an app with test app metadata.
 
     @get:Rule
     val deviceConfigSafetyLabelChangeNotificationsEnabled =
@@ -60,6 +62,26 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
         DeviceConfigStateChangerRule(
             context, DeviceConfig.NAMESPACE_PRIVACY, PERMISSION_RATIONALE_ENABLED, true.toString())
 
+    @get:Rule
+    val deviceConfigDataSharingUpdatesPeriod =
+        DeviceConfigStateChangerRule(
+            context,
+            DeviceConfig.NAMESPACE_PRIVACY,
+            PROPERTY_DATA_SHARING_UPDATE_PERIOD_MILLIS,
+            "600000")
+
+    /**
+     * This rule serves to limit the max number of safety labels that can be persisted, so that
+     * repeated tests don't overwhelm the disk storage on the device.
+     */
+    @get:Rule
+    val deviceConfigMaxSafetyLabelsPersistedPerApp =
+        DeviceConfigStateChangerRule(
+            context,
+            DeviceConfig.NAMESPACE_PRIVACY,
+            PROPERTY_MAX_SAFETY_LABELS_PERSISTED_PER_APP,
+            "2")
+
     @Before
     fun setup() {
         Assume.assumeTrue(
@@ -67,11 +89,15 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
         Assume.assumeFalse(isAutomotive)
         Assume.assumeFalse(isTv)
         Assume.assumeFalse(isWatch)
+
+        installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        waitForBroadcasts()
+        installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+        waitForBroadcasts()
     }
 
     @Test
     fun startActivityWithIntent_featuresEnabled_whenAppHasLocationGranted_showUpdates() {
-        installPackage(APP_APK_PATH_31, installSource = TEST_INSTALLER_PACKAGE_NAME)
         grantLocationPermission(APP_PACKAGE_NAME)
 
         startAppDataSharingUpdatesActivity()
@@ -82,7 +108,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
             findView(By.textContains(UPDATES_IN_LAST_30_DAYS), true)
             findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), true)
             findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
-            findView(By.textContains(LEARN_MORE_ABOUT_DATA_SHARING), true)
+            findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
         } finally {
             pressBack()
         }
@@ -99,7 +125,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
             findView(By.textContains(DATA_SHARING_UPDATES_SUBTITLE), true)
             findView(By.textContains(UPDATES_IN_LAST_30_DAYS), true)
             findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
-            findView(By.textContains(LEARN_MORE_ABOUT_DATA_SHARING), true)
+            findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
         } finally {
             pressBack()
         }
@@ -108,17 +134,16 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     // TODO(b/263838996): Check that Safety Label Help Center is opened.
     @Test
     fun clickLearnMore_opensPermissionManager() {
-        installPackage(APP_APK_PATH_31, installSource = TEST_INSTALLER_PACKAGE_NAME)
         grantLocationPermission(APP_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
         try {
             findView(By.descContains(DATA_SHARING_UPDATES), true)
-            findView(By.textContains(LEARN_MORE_ABOUT_DATA_SHARING), true)
+            findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
             findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), true)
             waitForIdle()
 
-            click(By.textContains(LEARN_MORE_ABOUT_DATA_SHARING))
+            click(By.textContains(LEARN_ABOUT_DATA_SHARING))
 
             findView(By.descContains(PERMISSION_MANAGER), true)
         } finally {
@@ -129,7 +154,6 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     @Test
     fun clickSettingsGearInUpdate_opensAppPermissionsPage() {
-        installPackage(APP_APK_PATH_31, installSource = TEST_INSTALLER_PACKAGE_NAME)
         grantLocationPermission(APP_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
@@ -151,17 +175,16 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     @Test
     fun startActivityWithIntent_featuresEnabled_whenAppDoesntHaveLocationGranted_showsNoUpdates() {
-        installPackage(APP_APK_PATH_31, installSource = TEST_INSTALLER_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
         try {
             findView(By.descContains(DATA_SHARING_UPDATES), true)
-            findView(By.textContains(DATA_SHARING_NO_UPDATES_SUBTITLE), true)
-            findView(By.textContains(DATA_SHARING_UPDATES_SUBTITLE), false)
+            findView(By.textContains(DATA_SHARING_UPDATES_SUBTITLE), true)
+            findView(By.textContains(DATA_SHARING_NO_UPDATES_MESSAGE), true)
             findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), false)
             findView(By.textContains(UPDATES_IN_LAST_30_DAYS), false)
-            findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), false)
-            findView(By.textContains(LEARN_MORE_ABOUT_DATA_SHARING), false)
+            findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
+            findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
         } finally {
             pressBack()
         }
@@ -214,15 +237,15 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     companion object {
         private const val DATA_SHARING_UPDATES = "Data sharing updates"
         private const val DATA_SHARING_UPDATES_SUBTITLE =
-            "These apps have provided updates on data sharing practices. Review these updates and" +
-                " modify app permissions if necessary."
-        private const val DATA_SHARING_NO_UPDATES_SUBTITLE = "No apps have provided recent updates."
-        private const val UPDATES_IN_LAST_30_DAYS = "Updated in the last 30 days"
+            "These apps have changed the way they share location data. They may not have shared" +
+                    " it before, or may now share it for advertising or marketing purposes."
+        private const val DATA_SHARING_NO_UPDATES_MESSAGE = "No updates at this time"
+        private const val UPDATES_IN_LAST_30_DAYS = "Updated within 30 days"
         private const val DATA_SHARING_UPDATES_FOOTER_MESSAGE =
-            "The developers of the apps listed here provided this information about their sharing" +
-                " practices and may update it over time.\nData privacy and security practices" +
-                " may vary based on your use, region, and age."
-        private const val LEARN_MORE_ABOUT_DATA_SHARING = "Learn more about data sharing"
+            "The developers of these apps provided info about their data sharing practices and" +
+                    " may update it over time.\n\nData sharing practices may vary based on your" +
+                    " app version, use, region, and age."
+        private const val LEARN_ABOUT_DATA_SHARING = "Learn about data sharing"
         private const val APP_PERMISSIONS = "App permissions"
         private const val PERMISSION_MANAGER = "Permission manager"
         private const val APP_PACKAGE_NAME_SUBSTRING = "android.permission3"
@@ -230,5 +253,9 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
             "com.android.permissioncontroller:id/settings_button"
         private const val PLACEHOLDER_SAFETY_LABEL_UPDATES_FLAG =
             "placeholder_safety_label_updates_flag"
+        private const val PROPERTY_DATA_SHARING_UPDATE_PERIOD_MILLIS =
+            "data_sharing_update_period_millis"
+        private const val PROPERTY_MAX_SAFETY_LABELS_PERSISTED_PER_APP =
+            "max_safety_labels_persisted_per_app"
     }
 }

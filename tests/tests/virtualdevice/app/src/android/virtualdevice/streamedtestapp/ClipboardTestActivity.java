@@ -26,6 +26,7 @@ import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_HAS_
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_RESULT_RECEIVER;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_SET_CLIP_DATA;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_WAIT_FOR_FOCUS;
+import static android.virtualdevice.cts.common.ClipboardTestConstants.RESULT_CODE_CLIP_LISTENER_READY;
 
 import android.app.Activity;
 import android.content.ClipData;
@@ -104,11 +105,21 @@ public class ClipboardTestActivity extends Activity {
 
     void doWaitForClipboardWrite() {
         mClipboard.addPrimaryClipChangedListener(() -> {
+            if (isFinishing()) {
+                // Avoid calling sendResultAndMaybeFinish again if this listener is called a
+                // second time before we've completely torn down the activity.
+                return;
+            }
             Bundle result = new Bundle();
             result.putBoolean(EXTRA_HAS_CLIP, mClipboard.hasPrimaryClip());
             result.putParcelable(EXTRA_GET_CLIP_DATA, mClipboard.getPrimaryClip());
             sendResultAndMaybeFinish(result);
         });
+        ResultReceiver resultReceiver =
+                getIntent().getParcelableExtra(EXTRA_RESULT_RECEIVER, ResultReceiver.class);
+        if (resultReceiver != null) {
+            resultReceiver.send(RESULT_CODE_CLIP_LISTENER_READY, null);
+        }
     }
     void sendResultAndMaybeFinish(Bundle result) {
         ResultReceiver resultReceiver =

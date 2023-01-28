@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,24 @@
  * limitations under the License.
  */
 
-package android.view.accessibility.cts;
+package android.server.wm.jetpack.utils;
 
-public class DefaultActivity extends AccessibilityTestActivity {}
+import androidx.annotation.NonNull;
+
+import java.util.function.Consumer;
+
+public class JavaConsumerAdapter<T> implements Consumer<T> {
+
+    private final androidx.window.extensions.core.util.function.Consumer<T> mConsumer;
+
+    public JavaConsumerAdapter(
+            @NonNull androidx.window.extensions.core.util.function.Consumer<T> consumer
+    ) {
+        mConsumer = consumer;
+    }
+
+    @Override
+    public void accept(T t) {
+        mConsumer.accept(t);
+    }
+}

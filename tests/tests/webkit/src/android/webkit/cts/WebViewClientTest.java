@@ -267,7 +267,7 @@ public class WebViewClientTest {
     public void testOnReceivedLoginRequest() throws Exception {
         final MockWebViewClient webViewClient = new MockWebViewClient();
         mOnUiThread.setWebViewClient(webViewClient);
-        TestWebServer testServer = null;
+
         //set the url and html
         final String path = "/main";
         final String page = "<head></head><body>test onReceivedLoginRequest</body>";
@@ -276,24 +276,20 @@ public class WebViewClientTest {
         List<Pair<String, String>> headers = new ArrayList<Pair<String, String>>();
         headers.add(Pair.create(headerName, headerValue));
 
-        try {
-            testServer = new TestWebServer(false);
-            String url = testServer.setResponse(path, page, headers);
-            assertFalse(webViewClient.hasOnReceivedLoginRequest());
-            mOnUiThread.loadUrlAndWaitForCompletion(url);
-            assertTrue(webViewClient.hasOnReceivedLoginRequest());
-            new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
-                @Override
-                protected boolean check() {
-                    return webViewClient.hasOnReceivedLoginRequest();
-                }
-            }.run();
-           assertEquals("com.google", webViewClient.getLoginRequestRealm());
-           assertEquals("foo@bar.com", webViewClient.getLoginRequestAccount());
-           assertEquals("random_string", webViewClient.getLoginRequestArgs());
-        } finally {
-            testServer.shutdown();
-        }
+        mWebServer = new CtsTestServer(mActivity);
+        String url = mWebServer.setResponse(path, page, headers);
+        assertFalse(webViewClient.hasOnReceivedLoginRequest());
+        mOnUiThread.loadUrlAndWaitForCompletion(url);
+        assertTrue(webViewClient.hasOnReceivedLoginRequest());
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
+            @Override
+            protected boolean check() {
+                return webViewClient.hasOnReceivedLoginRequest();
+            }
+        }.run();
+        assertEquals("com.google", webViewClient.getLoginRequestRealm());
+        assertEquals("foo@bar.com", webViewClient.getLoginRequestAccount());
+        assertEquals("random_string", webViewClient.getLoginRequestArgs());
     }
     /**
      * This should remain functionally equivalent to
@@ -494,28 +490,21 @@ public class WebViewClientTest {
         TestClient client = new TestClient();
         mOnUiThread.setWebViewClient(client);
 
-        TestWebServer server = new TestWebServer(false);
-        try {
-            String mainUrl = server.setResponse(mainPath, mainPage, null);
-
-            mOnUiThread.loadUrlAndWaitForCompletion(mainUrl, headers);
-
-            // Inspect the fields of the saved WebResourceRequest
-            assertNotNull(client.interceptRequest);
-            assertEquals(mainUrl, client.interceptRequest.getUrl().toString());
-            assertTrue(client.interceptRequest.isForMainFrame());
-            assertEquals(server.getLastRequest(mainPath).getRequestLine().getMethod(),
-                client.interceptRequest.getMethod());
-
-            // Web request headers are case-insensitive. We provided lower-case headerName and
-            // headerValue. This will pass implementations which either do not mangle case,
-            // convert to lowercase, or convert to uppercase but return a case-insensitive map.
-            Map<String, String> interceptHeaders = client.interceptRequest.getRequestHeaders();
-            assertTrue(interceptHeaders.containsKey(headerName));
-            assertEquals(headerValue, interceptHeaders.get(headerName));
-        } finally {
-            server.shutdown();
-        }
+        mWebServer = new CtsTestServer(mActivity);
+        String mainUrl = mWebServer.setResponse(mainPath, mainPage, null);
+        mOnUiThread.loadUrlAndWaitForCompletion(mainUrl, headers);
+        // Inspect the fields of the saved WebResourceRequest
+        assertNotNull(client.interceptRequest);
+        assertEquals(mainUrl, client.interceptRequest.getUrl().toString());
+        assertTrue(client.interceptRequest.isForMainFrame());
+        assertEquals(mWebServer.getLastRequest(mainPath).getRequestLine().getMethod(),
+            client.interceptRequest.getMethod());
+        // Web request headers are case-insensitive. We provided lower-case headerName and
+        // headerValue. This will pass implementations which either do not mangle case,
+        // convert to lowercase, or convert to uppercase but return a case-insensitive map.
+        Map<String, String> interceptHeaders = client.interceptRequest.getRequestHeaders();
+        assertTrue(interceptHeaders.containsKey(headerName));
+        assertEquals(headerValue, interceptHeaders.get(headerName));
     }
 
     // Test that the WebResourceResponse returned by shouldInterceptRequest is handled correctly
@@ -550,41 +539,32 @@ public class WebViewClientTest {
         TestClient client = new TestClient();
         mOnUiThread.setWebViewClient(client);
 
-        TestWebServer server = new TestWebServer(false);
-        try {
-            String interceptUrl = server.getResponseUrl(interceptPath);
-
-            // JavaScript which makes a synchronous AJAX request and logs and returns the status
-            String js =
-                "(function() {" +
-                "  var xhr = new XMLHttpRequest();" +
-                "  xhr.open('GET', '" + interceptUrl + "', false);" +
-                "  xhr.send(null);" +
-                "  console.info('xhr.status = ' + xhr.status);" +
-                "  console.info('xhr.statusText = ' + xhr.statusText);" +
-                "  return '[' + xhr.status + '][' + xhr.statusText + ']';" +
-                "})();";
-
-            String mainUrl = server.setResponse(mainPath, mainPage, null);
-            mOnUiThread.loadUrlAndWaitForCompletion(mainUrl, null);
-
-            // Test a nonexistent page
-            client.interceptResponse = new WebResourceResponse("text/html", "UTF-8", null);
-            assertEquals("\"[404][Not Found]\"", mOnUiThread.evaluateJavascriptSync(js));
-
-            // Test an empty page
-            client.interceptResponse = new WebResourceResponse("text/html", "UTF-8",
-                new ByteArrayInputStream(new byte[0]));
-            assertEquals("\"[200][OK]\"", mOnUiThread.evaluateJavascriptSync(js));
-
-            // Test a nonempty page with unusual response code/text
-            client.interceptResponse =
-                new WebResourceResponse("text/html", "UTF-8", 123, "unusual", null,
-                    new ByteArrayInputStream("nonempty page".getBytes(StandardCharsets.UTF_8)));
-            assertEquals("\"[123][unusual]\"", mOnUiThread.evaluateJavascriptSync(js));
-        } finally {
-            server.shutdown();
-        }
+        mWebServer = new CtsTestServer(mActivity);
+        String interceptUrl = mWebServer.getAbsoluteUrl(interceptPath);
+        // JavaScript which makes a synchronous AJAX request and logs and returns the status
+        String js =
+            "(function() {" +
+            "  var xhr = new XMLHttpRequest();" +
+            "  xhr.open('GET', '" + interceptUrl + "', false);" +
+            "  xhr.send(null);" +
+            "  console.info('xhr.status = ' + xhr.status);" +
+            "  console.info('xhr.statusText = ' + xhr.statusText);" +
+            "  return '[' + xhr.status + '][' + xhr.statusText + ']';" +
+            "})();";
+        String mainUrl = mWebServer.setResponse(mainPath, mainPage, null);
+        mOnUiThread.loadUrlAndWaitForCompletion(mainUrl, null);
+        // Test a nonexistent page
+        client.interceptResponse = new WebResourceResponse("text/html", "UTF-8", null);
+        assertEquals("\"[404][Not Found]\"", mOnUiThread.evaluateJavascriptSync(js));
+        // Test an empty page
+        client.interceptResponse = new WebResourceResponse("text/html", "UTF-8",
+            new ByteArrayInputStream(new byte[0]));
+        assertEquals("\"[200][OK]\"", mOnUiThread.evaluateJavascriptSync(js));
+        // Test a nonempty page with unusual response code/text
+        client.interceptResponse =
+            new WebResourceResponse("text/html", "UTF-8", 123, "unusual", null,
+                new ByteArrayInputStream("nonempty page".getBytes(StandardCharsets.UTF_8)));
+        assertEquals("\"[123][unusual]\"", mOnUiThread.evaluateJavascriptSync(js));
     }
 
     // Verify that OnRenderProcessGone returns false by default

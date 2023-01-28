@@ -103,6 +103,7 @@ public class ValidateTestsAbi {
         BINARY_EXCEPTIONS.add("sepolicy-analyze");
         BINARY_EXCEPTIONS.add("avbtool");
         BINARY_EXCEPTIONS.add("img2simg");
+        BINARY_EXCEPTIONS.add("initrd_bootconfig");
         BINARY_EXCEPTIONS.add("lpmake");
         BINARY_EXCEPTIONS.add("lpunpack");
         BINARY_EXCEPTIONS.add("mk_payload");

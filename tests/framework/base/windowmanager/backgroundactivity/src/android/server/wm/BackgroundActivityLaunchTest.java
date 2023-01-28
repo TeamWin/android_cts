@@ -52,7 +52,6 @@ import android.os.SystemProperties;
 import android.os.UserManager;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.SystemUserOnly;
-import android.provider.DeviceConfig;
 import android.server.wm.backgroundactivity.appa.Components;
 import android.server.wm.backgroundactivity.appa.IBackgroundActivityTestService;
 import android.server.wm.backgroundactivity.common.CommonComponents.Event;
@@ -91,9 +90,6 @@ import java.util.concurrent.TimeoutException;
 public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     private static final String TAG = "BackgroundActivityLaunchTest";
-    public static final String NAMESPACE_WINDOW_MANAGER = "window_manager";
-    private static final String ENABLE_DEFAULT_RESCIND_BAL_PRIVILEGES_FROM_PENDING_INTENT_SENDER =
-            "enable_default_rescind_bal_privileges_from_pending_intent_sender";
 
     private static final long ACTIVITY_BG_START_GRACE_PERIOD_MS = 10 * 1000;
     private static final int ACTIVITY_START_TIMEOUT_MS = 5000;
@@ -597,14 +593,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     private void enableDefaultRescindBalPrivilegesFromPendingIntentSender(boolean enable) {
-        runWithShellPermissionIdentity(
-                () -> {
-                    DeviceConfig.setProperty(
-                            NAMESPACE_WINDOW_MANAGER,
-                            ENABLE_DEFAULT_RESCIND_BAL_PRIVILEGES_FROM_PENDING_INTENT_SENDER,
-                            String.valueOf(enable),
-                            false);
-                });
+        mDeviceConfig.set(ENABLE_DEFAULT_RESCIND_BAL_PRIVILEGES_FROM_PENDING_INTENT_SENDER,
+                String.valueOf(enable));
     }
 
     @Test

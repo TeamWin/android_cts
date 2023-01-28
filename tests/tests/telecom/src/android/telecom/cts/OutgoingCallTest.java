@@ -24,6 +24,7 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.CallLog;
 import android.provider.Contacts;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
@@ -268,10 +269,14 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
 
         final Bundle extras1 = new Bundle();
         final Bundle extras2 = new Bundle();
+        final Uri testNumber1 = createTestNumber();
+        final Uri testNumber2 = createTestNumber();
         extras1.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
                 TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+        extras1.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, testNumber1);
         extras2.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
                 TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2);
+        extras2.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, testNumber2);
 
         mTelecomManager.registerPhoneAccount(TestUtils.TEST_PHONE_ACCOUNT);
         TestUtils.enablePhoneAccount(
@@ -284,6 +289,8 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
         assertCtsConnectionServiceUnbound();
         CtsConnectionService.tearDown();
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+        verifyCallLogging(testNumber1, CallLog.Calls.OUTGOING_TYPE,
+                TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
 
         mTelecomManager.registerPhoneAccount(TestUtils.TEST_PHONE_ACCOUNT_2);
         TestUtils.enablePhoneAccount(
@@ -292,6 +299,8 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
         conn = verifyConnectionForOutgoingCall();
         assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2, conn.getPhoneAccountHandle());
         conn.onDisconnect();
+        verifyCallLogging(testNumber2, CallLog.Calls.OUTGOING_TYPE,
+                TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2);
     }
 
     public void testAccountSelectionAvailable() throws Exception {

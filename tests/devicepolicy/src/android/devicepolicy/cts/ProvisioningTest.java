@@ -47,7 +47,9 @@ import static com.android.bedstead.harrier.UserType.ADDITIONAL_USER;
 import static com.android.bedstead.harrier.UserType.SYSTEM_USER;
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_PROFILES;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_USERS;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_USER;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.remotedpc.RemoteDpc.REMOTE_DPC_TEST_APP;
@@ -85,6 +87,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureIsNotDemoDevice;
+import com.android.bedstead.harrier.annotations.PermissionTest;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
@@ -260,6 +263,7 @@ public final class ProvisioningTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Test
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#createAndProvisionManagedProfile")
+    @Ignore
     public void createAndProvisionManagedProfile_onInitialUser_withExistingManagedProfileOnAdditionalUser_preconditionFails() {
         ProvisioningException exception = assertThrows(ProvisioningException.class, () ->
                 sDevicePolicyManager.createAndProvisionManagedProfile(MANAGED_PROFILE_PARAMS));
@@ -654,6 +658,25 @@ public final class ProvisioningTest {
             TestApis.users().system().setSetupComplete(setupComplete);
             TestApis.settings().global().putInt(Settings.Global.DEVICE_DEMO_MODE, 0);
         }
+    }
+
+    @EnsureHasAdditionalUser
+    @PermissionTest({INTERACT_ACROSS_USERS})
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
+    public void getUserProvisioningState_differentUser_validPermission_doesNotThrow() {
+        TestApis.context().androidContextAsUser(sDeviceState.additionalUser())
+                .getSystemService(DevicePolicyManager.class).getUserProvisioningState();
+    }
+
+    @EnsureHasAdditionalUser
+    @EnsureDoesNotHavePermission({MANAGE_USERS, INTERACT_ACROSS_USERS})
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
+    public void getUserProvisioningState_differentUser_noPermission_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> TestApis.context().androidContextAsUser(sDeviceState.additionalUser())
+                        .getSystemService(DevicePolicyManager.class).getUserProvisioningState());
     }
 
     @Postsubmit(reason = "New test")

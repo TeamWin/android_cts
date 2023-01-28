@@ -83,7 +83,7 @@
         </service>
 
         <activity android:label="@string/some_description"
-             android:name=".DefaultActivity"
+             android:name=".DummyActivity"
              android:screenOrientation="locked"/>
 
         <activity android:name=".AccessibilityShortcutTargetActivity"

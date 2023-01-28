@@ -345,7 +345,7 @@ public class WebViewTest extends SharedWebViewTest {
 
                     // verify that the request also includes X-Requested-With header
                     HttpRequest request =
-                            mWebServer.getLastRequest(TestHtmlConstants.HELLO_WORLD_URL);
+                            mWebServer.getLastAssetRequest(TestHtmlConstants.HELLO_WORLD_URL);
                     String[] matchingHeaders = request.getHeaders(X_REQUESTED_WITH);
                     assertEquals(1, matchingHeaders.length);
 
@@ -379,7 +379,7 @@ public class WebViewTest extends SharedWebViewTest {
 
         mOnUiThread.postUrlAndWaitForCompletion(networkUrl, postData);
 
-        HttpRequest request = mWebServer.getLastRequest(TestHtmlConstants.HELLO_WORLD_URL);
+        HttpRequest request = mWebServer.getLastAssetRequest(TestHtmlConstants.HELLO_WORLD_URL);
         assertEquals("The last request should be POST", request.getMethod(), "POST");
         assertEquals(request.getBody(), postDataString);
     }
@@ -416,7 +416,7 @@ public class WebViewTest extends SharedWebViewTest {
                     // verify that the request also includes X-Requested-With header
                     // but is not overwritten by the webview
                     HttpRequest request =
-                            mWebServer.getLastRequest(TestHtmlConstants.HELLO_WORLD_URL);
+                            mWebServer.getLastAssetRequest(TestHtmlConstants.HELLO_WORLD_URL);
                     String[] matchingHeaders = request.getHeaders(X_REQUESTED_WITH);
                     assertEquals(1, matchingHeaders.length);
 
@@ -440,7 +440,7 @@ public class WebViewTest extends SharedWebViewTest {
                     // verify that the request also includes X-Requested-With header
                     // but is not overwritten by the webview
                     HttpRequest request =
-                            mWebServer.getLastRequest(TestHtmlConstants.HELLO_WORLD_URL);
+                            mWebServer.getLastAssetRequest(TestHtmlConstants.HELLO_WORLD_URL);
                     String[] matchingHeaders = request.getHeaders(X_REQUESTED_WITH);
                     assertEquals(1, matchingHeaders.length);
 
@@ -463,7 +463,7 @@ public class WebViewTest extends SharedWebViewTest {
         map.put(X_REFERER, X_REFERER_VALUE);
         mOnUiThread.loadUrlAndWaitForCompletion(url, map);
 
-        HttpRequest request = mWebServer.getLastRequest(TestHtmlConstants.HELLO_WORLD_URL);
+        HttpRequest request = mWebServer.getLastAssetRequest(TestHtmlConstants.HELLO_WORLD_URL);
         for (Map.Entry<String, String> value : map.entrySet()) {
             String header = value.getKey();
             String[] matchingHeaders = request.getHeaders(header);

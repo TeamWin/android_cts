@@ -1807,6 +1807,30 @@ public class ViewTest {
     }
 
     @Test
+    public void testShowContextMenu_withDefaultHapticFeedbackDisabled_performHapticFeedback() {
+        MockView view = new MockView(mActivity);
+        View.OnLongClickListener listener = new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                return false;
+            }
+
+            @Override
+            public boolean onLongClickUseDefaultHapticFeedback(View v) {
+                return false;
+            }
+        };
+        view.setParent(mMockParent);
+        view.setOnLongClickListener(listener);
+        mMockParent.setShouldShowContextMenu(true);
+
+        assertTrue(view.performLongClick(0, 0));
+        assertTrue(mMockParent.hasShowContextMenuForChildXY());
+        assertTrue(view.hasCalledPerformHapticFeedback());
+        mMockParent.reset();
+    }
+
+    @Test
     public void testFitSystemWindows() {
         final XmlResourceParser parser = mResources.getLayout(R.layout.view_layout);
         final AttributeSet attrs = Xml.asAttributeSet(parser);
@@ -1904,6 +1928,42 @@ public class ViewTest {
         assertTrue(view.performLongClick());
         assertFalse(mMockParent.hasShowContextMenuForChild());
         verify(listener, times(1)).onLongClick(view);
+    }
+
+    @Test
+    public void testPerformLongClick_withDefaultHapticFeedbackEnabled_performHapticFeedback() {
+        MockView view = new MockView(mActivity);
+        View.OnLongClickListener listener = v -> true;
+
+        view.setParent(mMockParent);
+        view.setOnLongClickListener(listener);
+        mMockParent.reset();
+
+        assertTrue(view.performLongClick());
+        assertTrue(view.hasCalledPerformHapticFeedback());
+    }
+
+    @Test
+    public void testPerformLongClick_withDefaultHapticFeedbackDisabled_skipHapticFeedback() {
+        MockView view = new MockView(mActivity);
+        View.OnLongClickListener listener = new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                return true;
+            }
+
+            @Override
+            public boolean onLongClickUseDefaultHapticFeedback(View v) {
+                return false;
+            }
+        };
+
+        view.setParent(mMockParent);
+        view.setOnLongClickListener(listener);
+        mMockParent.reset();
+
+        assertTrue(view.performLongClick());
+        assertFalse(view.hasCalledPerformHapticFeedback());
     }
 
     @Test(expected=NullPointerException.class)
@@ -5305,6 +5365,7 @@ public class ViewTest {
         private boolean mHasShowContextMenuForChildXY = false;
         private boolean mHasChildDrawableStateChanged = false;
         private boolean mHasBroughtChildToFront = false;
+        private boolean mShouldShowContextMenu = false;
 
         private final static int[] DEFAULT_PARENT_STATE_SET = new int[] { 789 };
 
@@ -5316,6 +5377,10 @@ public class ViewTest {
 
         public MockViewParent(Context context) {
             super(context);
+        }
+
+        void setShouldShowContextMenu(boolean shouldShowContextMenu) {
+            mShouldShowContextMenu = shouldShowContextMenu;
         }
 
         @Override
@@ -5422,13 +5487,13 @@ public class ViewTest {
         @Override
         public boolean showContextMenuForChild(View originalView) {
             mHasShowContextMenuForChild = true;
-            return false;
+            return mShouldShowContextMenu;
         }
 
         @Override
         public boolean showContextMenuForChild(View originalView, float x, float y) {
             mHasShowContextMenuForChildXY = true;
-            return false;
+            return mShouldShowContextMenu;
         }
 
         @Override
@@ -5468,6 +5533,7 @@ public class ViewTest {
             mHasShowContextMenuForChildXY = false;
             mHasChildDrawableStateChanged = false;
             mHasBroughtChildToFront = false;
+            mShouldShowContextMenu = false;
         }
 
         @Override

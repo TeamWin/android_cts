@@ -19,12 +19,12 @@ package android.mediav2.cts;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
+import static android.mediav2.common.cts.CodecEncoderTestBase.colorFormatToString;
+import static android.mediav2.common.cts.CodecEncoderTestBase.getMuxerFormatForMediaType;
+import static android.mediav2.common.cts.CodecEncoderTestBase.getTempFilePath;
 import static android.mediav2.common.cts.CodecTestBase.hasSupportForColorFormat;
 import static android.mediav2.common.cts.CodecTestBase.isHardwareAcceleratedCodec;
 import static android.mediav2.common.cts.CodecTestBase.isSoftwareCodec;
-import static android.mediav2.common.cts.EncoderTestBase.colorFormatToString;
-import static android.mediav2.common.cts.EncoderTestBase.getMuxerFormatForMediaType;
-import static android.mediav2.common.cts.EncoderTestBase.getTempFilePath;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

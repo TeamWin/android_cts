@@ -35,7 +35,7 @@ import java.util.Map;
 /**
  * Wrapper class for testing HDR support in video encoder components
  */
-public class HDREncoderTestBase extends EncoderTestBase {
+public class HDREncoderTestBase extends CodecEncoderTestBase {
     private static final String LOG_TAG = HDREncoderTestBase.class.getSimpleName();
 
     private ByteBuffer mHdrStaticInfo;

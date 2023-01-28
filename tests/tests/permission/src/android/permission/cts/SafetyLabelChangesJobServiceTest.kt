@@ -129,9 +129,9 @@ class SafetyLabelChangesJobServiceTest {
             val notification = getNotification(false)
             assertThat(notification).isNotNull()
             assertThat(notification!!.extras.getString(Notification.EXTRA_TITLE))
-                .isEqualTo(safety_label_changes_notification_title)
+                .isEqualTo(SAFETY_LABEL_CHANGES_NOTIFICATION_TITLE)
             assertThat(notification!!.extras.getString(Notification.EXTRA_TEXT))
-                .isEqualTo(safety_label_changes_notification_desc)
+                .isEqualTo(SAFETY_LABEL_CHANGES_NOTIFICATION_DESC)
         }
     }
 
@@ -173,8 +173,9 @@ class SafetyLabelChangesJobServiceTest {
 
         private const val SAFETY_LABEL_CHANGES_NOTIFICATION_ID = 5
 
-        private val safety_label_changes_notification_title = "Safety label notification title"
-        private val safety_label_changes_notification_desc = "Safety label notification description"
+        private val SAFETY_LABEL_CHANGES_NOTIFICATION_TITLE = "Review data sharing updates"
+        private val SAFETY_LABEL_CHANGES_NOTIFICATION_DESC = "The way some apps share location " +
+                "data has changed"
 
         @BeforeClass
         @JvmStatic

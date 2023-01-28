@@ -110,6 +110,13 @@ public class UserReferenceTest {
     }
 
     @Test
+    @EnsureHasWorkProfile(isOrganizationOwned = true)
+    public void remove_copeUser_removeUser() {
+        sDeviceState.workProfile().remove();
+
+        assertThat(sDeviceState.workProfile().exists()).isFalse();
+    }
+    @Test
     public void start_userDoesNotExist_throwsException() {
         assertThrows(NeneException.class,
                 () -> TestApis.users().find(NON_EXISTING_USER_ID).start());

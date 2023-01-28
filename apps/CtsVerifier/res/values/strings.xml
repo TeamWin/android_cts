@@ -5279,6 +5279,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_uap_play_test">USB Audio Peripheral Play Test</string>
     <string name="uapPlayTestInstructions">Connect the USB Audio Interface Peripheral and press the
         PLAY button below. Verify that a tone is correctly played.</string>
+    <string name="uapPlayStopTestInstructions">Connect the USB Audio Interface Peripheral and press the
+        PLAY button below. Verify that a tone is correctly played. Then press the STOP button.
+    </string>
     <string name="audio_uap_play_playBtn">Play</string>
     <string name="audio_uap_play_stopBtn">Stop</string>
 
@@ -5379,15 +5382,35 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="midi_java_test">Java MIDI Test</string>
     <string name="midi_native_test">Native MIDI Test</string>
     <string name="midi_info">
-       For the USB MIDI interface test it is required that you have connected a supported USB
-       Audio Peripheral device with standard MIDI 5-pin, DIN (round) connectors and a standard
-       MIDI cable. The cable must be connected to the MIDI input and output plugs on the
-       peripheral.
+       For the USB MIDI interface test, connect a supported USB Audio Peripheral device that has
+       standard MIDI 5-pin, DIN (round) connectors and a standard MIDI cable. The cable must be
+       connected to the MIDI input and output plugs on the peripheral.
        \nFor the USB Bluetooth test it is required that you connect a Yamaha MD-BT01 to the
        correct MIDI plugs on the USB peripheral, the BT01 output jack to the USB interface
        input jack and BT01 input plug to the USB interface output jack.
        \nThe Virtual MIDI test does not require any MIDI interface hardware.
     </string>
+    <string name="analog_headset_test_info_tv">This test tests the following functionality with respect to wired analog headsets.\n
+        1. Correct audio playback.\n
+        2. Plug intents.\n
+        \nTo execute test:\n
+        1. Plug in an Android-compatible, analog headset. Verify connection/recognition.\n
+        2. Play test tone and verify correct behavior.\n
+        \nTo run this test it is necessary to have an Android device with a 3.5mm analog headset jack and a compatible analog headset.\n
+        \n(see <a href="https://source.android.com/devices/accessories/headset/plug-headset-spec">3.5 mm Headset: Accessory Specification</a> and
+        <a href="https://source.android.com/compatibility/android-cdd#7_8_2_1_analog_audio_ports">Android CDD § 7.8.2.1. Analog Audio Ports</a>)
+    </string>
+
+    <string name="usb_midi_audio_test">USB MIDI and Audio Test</string>
+    <string name="usb_midi_audio_info">
+       Connect a supported USB Audio Peripheral device that has standard MIDI 5-pin, DIN (round)
+       connectors and a standard MIDI cable. The cable must be connected to the MIDI input and
+       output plugs on the peripheral.
+       \nPlease attach a wired headset with a 3.5mm jack to the audio output of this peripheral.
+       \nTest the USB MIDI interface first. Then, press the PLAY to button test audio. Verify
+       that a tone is correctly played.
+    </string>
+    <string name="midiUSBAudioTestLbl">USB Audio Playback Test:</string>
 
     <string name="midiHasMIDILbl">Has MIDI Support</string>
 
@@ -6546,6 +6569,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     \n\nNote: Devices declaring feature android.hardware.audio.pro MUST implement USB host mode (CDD 5.10 C-1-3).
     Devices that omit a 4 conductor 3.5mm audio jack MUST support USB audio class (CDD 5.10 C-3-1).
     </string>
+    <string name="uap_test_playing">Playing. Now press stop.</string>
 
     <string name="refmic_test_no">No</string>
     <string name="refmic_test_yes">Yes</string>

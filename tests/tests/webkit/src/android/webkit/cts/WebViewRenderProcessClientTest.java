@@ -49,9 +49,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @AppModeFull
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class WebViewRenderProcessClientTest {
+public class WebViewRenderProcessClientTest extends SharedWebViewTest {
     private WebViewOnUiThread mOnUiThread;
-    private WebViewCtsActivity mActivity;
 
     @Rule
     public ActivityScenarioRule mActivityScenarioRule =
@@ -59,14 +58,10 @@ public class WebViewRenderProcessClientTest {
 
     @Before
     public void setUp() throws Exception {
-        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-        mActivityScenarioRule.getScenario().onActivity(activity -> {
-            mActivity = (WebViewCtsActivity) activity;
-            WebView webview = mActivity.getWebView();
-            if (webview != null) {
-                mOnUiThread = new WebViewOnUiThread(webview);
-            }
-        });
+        WebView webview = getTestEnvironment().getWebView();
+        if (webview != null) {
+            mOnUiThread = new WebViewOnUiThread(webview);
+        }
     }
 
     @After
@@ -74,6 +69,26 @@ public class WebViewRenderProcessClientTest {
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
+    }
+
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+
+        SharedWebViewTestEnvironment.Builder builder = new SharedWebViewTestEnvironment.Builder();
+
+        mActivityScenarioRule
+                .getScenario()
+                .onActivity(
+                        activity -> {
+                            WebView webView = ((WebViewCtsActivity) activity).getWebView();
+                            builder.setHostAppInvoker(
+                                            SharedWebViewTestEnvironment.createHostAppInvoker(
+                                                activity))
+                                    .setWebView(webView);
+                        });
+
+        return builder.build();
     }
 
     private static class JSBlocker {

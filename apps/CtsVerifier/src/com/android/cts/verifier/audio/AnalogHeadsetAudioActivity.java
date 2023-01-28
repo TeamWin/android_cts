@@ -23,6 +23,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.media.AudioDeviceCallback;
@@ -153,6 +154,14 @@ public class AnalogHeadsetAudioActivity
         mHeadsetVolUpText = (TextView)findViewById(R.id.headset_keycode_volume_up);
         mHeadsetVolDownText = (TextView)findViewById(R.id.headset_keycode_volume_down);
 
+        if (isTelevision()) {
+            mButtonsPromptTxt.setVisibility(View.GONE);
+            mHeadsetHookText.setVisibility(View.GONE);
+            mHeadsetVolUpText.setVisibility(View.GONE);
+            mHeadsetVolDownText.setVisibility(View.GONE);
+            ((TextView) findViewById(R.id.headset_keycodes)).setVisibility(View.GONE);
+        }
+
         mResultsTxt = (TextView)findViewById(R.id.headset_results);
 
         mAudioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
@@ -168,7 +177,8 @@ public class AnalogHeadsetAudioActivity
 
         showKeyMessagesState();
 
-        setInfoResources(R.string.analog_headset_test, R.string.analog_headset_test_info, -1);
+        setInfoResources(R.string.analog_headset_test, isTelevision()
+                ? R.string.analog_headset_test_info_tv : R.string.analog_headset_test_info, -1);
 
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
@@ -182,11 +192,12 @@ public class AnalogHeadsetAudioActivity
             mResultsTxt.setText(getResources().getString(R.string.analog_headset_pass_noheadset));
             return true;
         } else {
-            boolean pass = isReportLogOkToPass()
-                    && mPlugIntentReceived
-                    && mHeadsetDeviceInfo != null
-                    && mPlaybackSuccess
-                    && (mHasHeadsetHook || mHasPlayPause) && mHasVolUp && mHasVolDown;
+            boolean pass = isReportLogOkToPass() &&
+                    mPlugIntentReceived &&
+                    mHeadsetDeviceInfo != null &&
+                    mPlaybackSuccess &&
+                    (isTelevision()
+                    || ((mHasHeadsetHook || mHasPlayPause) && mHasVolUp && mHasVolDown));
             if (pass) {
                 mResultsTxt.setText(getResources().getString(R.string.analog_headset_pass));
             } else if (!isReportLogOkToPass()) {
@@ -487,5 +498,9 @@ public class AnalogHeadsetAudioActivity
                 break;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    private boolean isTelevision() {
+        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 }

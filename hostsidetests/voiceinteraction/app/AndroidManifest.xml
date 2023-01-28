@@ -47,9 +47,10 @@
                  android:exported="true"
                  android:visibleToInstantApps="true">
         </service>
-        <service android:name=".MainHotwordDetectionService"
+        <service android:name=".ControllableHotwordDetectionService"
                  android:permission="android.permission.BIND_HOTWORD_DETECTION_SERVICE"
                  android:isolatedProcess="true"
+                 android:allowSharedIsolatedProcess="true"
                  android:exported="true">
         </service>
         <service android:name=".ProxyVoiceInteractionService"

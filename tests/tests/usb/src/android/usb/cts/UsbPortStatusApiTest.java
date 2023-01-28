@@ -29,6 +29,7 @@ import static android.hardware.usb.UsbPortStatus.DATA_STATUS_DISABLED_DOCK;
 import static android.hardware.usb.UsbPortStatus.DATA_STATUS_DISABLED_DOCK_DEVICE_MODE;
 import static android.hardware.usb.UsbPortStatus.DATA_STATUS_DISABLED_DOCK_HOST_MODE;
 
+import android.annotation.Nullable;
 import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.content.Context;
@@ -50,8 +51,10 @@ import java.util.List;
 
 import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -174,32 +177,22 @@ public class UsbPortStatusApiTest {
         mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
 
         // Simulate UsbPort
-        final String portIdTestString = "ctstest-plugState";
-        UsbPort port = null;
-
-        SystemUtil.runShellCommand("dumpsys usb add-port " + portIdTestString + " dual");
-
-        for (UsbPort p : mUsbManagerSys.getPorts()) {
-            if (p.getId().equals(portIdTestString)) {
-                port = p;
-                break;
-            }
-        }
-        assertNotNull(port);
+        final String portId = "ctstest-plugState";
+        UsbPort port = setupSimulatedPort(portId);
         UsbPortStatus portStatus = port.getStatus();
 
         assertEquals(UsbPortStatus.PLUG_STATE_UNKNOWN,
                 portStatus.getPlugState());
 
-        SystemUtil.runShellCommand("dumpsys usb remove-port " + portIdTestString);
+        removeSimulatedPort(portId);
 
         // Drop MANAGE_USB permission.
         mUiAutomation.dropShellPermissionIdentity();
     }
 
     /**
-     * Verify that getDpAltModeCableStatus(), getDpAltModePartnerStatus(),
-     * and getDpAltModePinConfig() are initialized to default values.
+     * Verify that getDpAltModeCableStatus(), getDpAltModePartnerStatus(), getDpAltModePinConfig(),
+     * isHotPlugDetectActive(), and getLinkTrainingStatus() are initialized to default values.
      */
     @Test
     public void test_UsbApiForDisplayPortAltMode() throws Exception {
@@ -207,19 +200,8 @@ public class UsbPortStatusApiTest {
         mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
 
         // Simulate UsbPort
-        final String portIdTestString = "ctstest-displayPortAltMode";
-        UsbPort port = null;
-
-        SystemUtil.runShellCommand("dumpsys usb add-port " + portIdTestString
-                + " dual --displayport", null);
-
-        for (UsbPort p : mUsbManagerSys.getPorts()) {
-            if (p.getId().equals(portIdTestString)) {
-                port = p;
-                break;
-            }
-        }
-        assertNotNull(port);
+        final String portId = "ctstest-displayPortAltMode";
+        UsbPort port = setupSimulatedPort(portId);
         UsbPortStatus portStatus = port.getStatus();
         DisplayPortAltModeInfo displayPortAltModeInfo = portStatus.getDisplayPortAltModeInfo();
 
@@ -229,10 +211,100 @@ public class UsbPortStatusApiTest {
         assertEquals(DisplayPortAltModeInfo.DISPLAYPORT_ALT_MODE_STATUS_UNKNOWN,
                 displayPortAltModeInfo.getCableStatus());
         assertEquals(0, displayPortAltModeInfo.getNumberOfLanes());
+        assertFalse(displayPortAltModeInfo.isHotPlugDetectActive());
+        assertEquals(DisplayPortAltModeInfo.LINK_TRAINING_STATUS_UNKNOWN,
+                displayPortAltModeInfo.getLinkTrainingStatus());
 
-        SystemUtil.runShellCommand("dumpsys usb remove-port " + portIdTestString, null);
+        removeSimulatedPort(portId);
 
         // Drop MANAGE_USB permission.
         mUiAutomation.dropShellPermissionIdentity();
+    }
+
+    /**
+     * Verify that changes to mLinkTrainingStatus within DisplayPortAltModeInfo
+     * are properly reflected.
+     */
+    @Test
+    public void test_UsbApiForDisplayPortAltModeLinkTrainingStatus() throws Exception {
+        // Adopt MANAGE_USB permission to access UsbPort and UsbPortStatus
+        mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
+
+        final String portId = "ctstest-linkTrainingStatus";
+        UsbPort port = setupSimulatedPort(portId,
+                "0 0 0 false " + DisplayPortAltModeInfo.LINK_TRAINING_STATUS_SUCCESS);
+
+        UsbPortStatus portStatus = port.getStatus();
+        DisplayPortAltModeInfo displayPortAltModeInfo = portStatus.getDisplayPortAltModeInfo();
+        assertEquals(DisplayPortAltModeInfo.LINK_TRAINING_STATUS_SUCCESS,
+                displayPortAltModeInfo.getLinkTrainingStatus());
+
+        removeSimulatedPort(portId);
+
+        // Drop MANAGE_USB permission.
+        mUiAutomation.dropShellPermissionIdentity();
+    }
+
+    /**
+     * Verify that changes to mHotPlugDetect within DisplayPortAltModeInfo
+     * are properly reflected.
+     */
+    @Test
+    public void test_UsbApiForDisplayPortAltModeHotPlugDetect() throws Exception {
+        // Adopt MANAGE_USB permission to access UsbPort and UsbPortStatus
+        mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
+
+        final String portId = "ctstest-hotPlugDetect";
+        UsbPort port = setupSimulatedPort(portId, "0 0 0 true 0");
+
+        UsbPortStatus portStatus = port.getStatus();
+        DisplayPortAltModeInfo displayPortAltModeInfo = portStatus.getDisplayPortAltModeInfo();
+        assertTrue(displayPortAltModeInfo.isHotPlugDetectActive());
+
+        removeSimulatedPort(portId);
+
+        // Drop MANAGE_USB permission.
+        mUiAutomation.dropShellPermissionIdentity();
+    }
+
+    /**
+     * Sets up a simulated UsbPort with full functionality.
+     */
+    UsbPort setupSimulatedPort(String portId) {
+        SystemUtil.runShellCommand("dumpsys usb add-port " + portId
+                + " dual --compliance-warnings --displayport", null);
+
+        for (UsbPort p : mUsbManagerSys.getPorts()) {
+            if (p.getId().equals(portId)) {
+                return p;
+            }
+        }
+        fail("Could not find the port after add-port");
+        return null;
+    }
+
+    /**
+     * Sets up a simulated UsbPort and sets the DisplayPortAltModeInfo values if given.
+     * setDisplayPortStatusString is expected to be given with format
+     * "<partner-sink> <cable> <num-lanes> <hpd> <link-training-status>" with given types:
+     *      <partner-sink>          type DisplayPortAltModeStatus
+     *      <cable>                 type DisplayPortAltModeStatus
+     *      <num-lanes>             type int, with typical values of 0, 2, or 4
+     *      <hpd>                   type boolean, with values true or false
+     *      <link-training-status>  type LinkTrainingStatus
+     */
+    UsbPort setupSimulatedPort(String portId, @Nullable String setDisplayPortStatusString) {
+        UsbPort port = setupSimulatedPort(portId);
+        assertNotNull(port);
+
+        if (setDisplayPortStatusString != null) {
+            SystemUtil.runShellCommand("dumpsys usb set-displayport-status "
+            + portId + " " + setDisplayPortStatusString, null);
+        }
+        return port;
+    }
+
+    void removeSimulatedPort(String portId) {
+        SystemUtil.runShellCommand("dumpsys usb remove-port " + portId, null);
     }
 }

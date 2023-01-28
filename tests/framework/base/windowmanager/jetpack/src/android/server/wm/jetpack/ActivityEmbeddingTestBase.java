@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeNotNull;
 
 import android.server.wm.ActivityManagerTestBase.ReportedDisplayMetrics;
 import android.server.wm.UiDeviceUtils;
+import android.server.wm.jetpack.utils.JavaConsumerAdapter;
 import android.server.wm.jetpack.utils.TestValueCountConsumer;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 import android.view.Display;
@@ -57,7 +58,13 @@ public class ActivityEmbeddingTestBase extends WindowManagerJetpackTestBase {
         mActivityEmbeddingComponent = windowExtensions.getActivityEmbeddingComponent();
         assumeNotNull(mActivityEmbeddingComponent);
         mSplitInfoConsumer = new TestValueCountConsumer<>();
-        mActivityEmbeddingComponent.setSplitInfoCallback(mSplitInfoConsumer);
+        if (windowExtensions.getVendorApiLevel() >= 2) {
+            mActivityEmbeddingComponent.setSplitInfoCallback(mSplitInfoConsumer);
+        } else {
+            mActivityEmbeddingComponent.setSplitInfoCallback(
+                    new JavaConsumerAdapter<>(mSplitInfoConsumer)
+            );
+        }
 
         UiDeviceUtils.pressWakeupButton();
         UiDeviceUtils.pressUnlockButton();

@@ -17,6 +17,7 @@
 package android.car.cts;
 
 import static android.Manifest.permission.CREATE_USERS;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED;
 import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_INVISIBLE;
 import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_REMOVED;
@@ -239,7 +240,7 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {"android.car.user.CarUserManager#isValidUser(UserHandle)"})
-    @EnsureHasPermission(CREATE_USERS)
+    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testIsValidUserExists() {
         assertThat(mCarUserManager.isValidUser(
                 UserHandle.of(ActivityManager.getCurrentUser()))).isTrue();

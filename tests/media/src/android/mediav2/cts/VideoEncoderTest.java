@@ -24,8 +24,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecEncoderTestBase;
 import android.mediav2.common.cts.EncoderConfigParams;
-import android.mediav2.common.cts.EncoderTestBase;
 import android.mediav2.common.cts.RawResource;
 
 import androidx.test.filters.LargeTest;
@@ -55,7 +55,7 @@ import java.util.List;
  * </ul>
  */
 @RunWith(Parameterized.class)
-public class VideoEncoderTest extends EncoderTestBase {
+public class VideoEncoderTest extends CodecEncoderTestBase {
     public VideoEncoderTest(String encoder, String mediaType, EncoderConfigParams encCfgParams,
             @SuppressWarnings("unused") String testLabel, String allTestParams) {
         super(encoder, mediaType, new EncoderConfigParams[]{encCfgParams}, allTestParams);

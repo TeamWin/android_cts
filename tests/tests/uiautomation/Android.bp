@@ -27,7 +27,6 @@ android_test {
     static_libs: [
         "CtsAccessibilityCommon",
         "ctstestrunner-axt",
-        "ub-uiautomator",
     ],
     libs: ["android.test.base"],
     srcs: ["src/**/*.java"],

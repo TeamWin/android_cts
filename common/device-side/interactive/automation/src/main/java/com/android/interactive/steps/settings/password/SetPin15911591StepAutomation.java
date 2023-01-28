@@ -16,6 +16,7 @@
 
 package com.android.interactive.steps.settings.password;
 
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -56,6 +57,14 @@ public final class SetPin15911591StepAutomation implements Automation<Nothing> {
                 new UiSelector().text("Confirm"));
         while (confirmButton.exists()) {
             confirmButton.click();
+        }
+
+        UiObject doneButton = TestApis.ui().device().findObject(
+                new UiSelector()
+                        .className(Button.class).text("Done"));
+
+        while (doneButton.exists()) {
+            doneButton.click();
         }
 
         return null;

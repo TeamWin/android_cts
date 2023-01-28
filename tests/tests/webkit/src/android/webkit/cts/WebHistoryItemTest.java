@@ -32,7 +32,6 @@ import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -47,10 +46,11 @@ import org.junit.runner.RunWith;
 @AppModeFull
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class WebHistoryItemTest {
-    private CtsTestServer mWebServer;
+public class WebHistoryItemTest extends SharedWebViewTest {
+    private SharedSdkWebServer mWebServer;
     private WebViewOnUiThread mOnUiThread;
     private WebIconDatabase mIconDb;
+    private Context mContext;
 
     class WaitForIconClient extends WaitForProgressClient {
         private boolean mReceivedIcon;
@@ -73,16 +73,13 @@ public class WebHistoryItemTest {
 
     @Before
     public void setUp() throws Exception {
-        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-        mActivityScenarioRule.getScenario().onActivity(activity -> {
-            WebViewCtsActivity webViewCtsActivity = (WebViewCtsActivity) activity;
-            WebView webview = webViewCtsActivity.getWebView();
-            if (webview != null) {
-                mOnUiThread = new WebViewOnUiThread(webview);
-            }
-        });
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        mWebServer = new CtsTestServer(context);
+        WebView webview = getTestEnvironment().getWebView();
+        if (webview != null) {
+            mOnUiThread = new WebViewOnUiThread(webview);
+        }
+        mContext = getTestEnvironment().getContext();
+        mWebServer = getTestEnvironment().getWebServer();
+        mWebServer.start(SslMode.INSECURE);
     }
 
     @After
@@ -97,15 +94,35 @@ public class WebHistoryItemTest {
         }
     }
 
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+
+        SharedWebViewTestEnvironment.Builder builder = new SharedWebViewTestEnvironment.Builder();
+
+        mActivityScenarioRule
+                .getScenario()
+                .onActivity(
+                        activity -> {
+                            WebView webView = ((WebViewCtsActivity) activity).getWebView();
+                            builder.setHostAppInvoker(
+                                            SharedWebViewTestEnvironment.createHostAppInvoker(
+                                                activity))
+                                    .setContext(activity)
+                                    .setWebView(webView);
+                        });
+
+        return builder.build();
+    }
+
     @Test
     public void testWebHistoryItem() throws Throwable {
         final WaitForIconClient waitForIconClient = new WaitForIconClient(mOnUiThread);
         mOnUiThread.setWebChromeClient(waitForIconClient);
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         WebkitUtils.onMainThreadSync(() -> {
             // getInstance must run on the UI thread
             mIconDb = WebIconDatabase.getInstance();
-            String dbPath = context.getFilesDir().toString() + "/icons";
+            String dbPath = mContext.getFilesDir().toString() + "/icons";
             mIconDb.open(dbPath);
         });
 

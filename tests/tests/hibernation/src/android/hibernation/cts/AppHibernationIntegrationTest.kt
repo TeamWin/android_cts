@@ -66,7 +66,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.BeforeClass
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -142,7 +141,6 @@ class AppHibernationIntegrationTest {
 
     @Test
     @CddTest(requirement = "3.5.2/C-1-2")
-    @Ignore("b/201545116")
     fun testUnusedApp_getsForceStopped() {
         withUnusedThresholdMs(TEST_UNUSED_THRESHOLD) {
             withApp(APK_PATH_S_APP, APK_PACKAGE_NAME_S_APP) {

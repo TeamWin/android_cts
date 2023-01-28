@@ -21,6 +21,7 @@ import android.app.ActivityOptions;
 import android.app.WindowConfiguration;
 import android.content.Intent;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -30,19 +31,12 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
-import org.junit.runners.model.MultipleFailureException;
 import org.junit.runners.model.Statement;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
 
 /**
  * Rule for using setRequestedOrientation API in tests.
  */
 public class SetRequestedOrientationRule implements TestRule {
-    final Deque<AutoCloseable> mAutoCloseables = new ArrayDeque<>();
-
     @Override
     public Statement apply(Statement base,
             Description description) {
@@ -51,44 +45,35 @@ public class SetRequestedOrientationRule implements TestRule {
             public void evaluate() throws Throwable {
                 final DisableFixedToUserRotationRule mDisableFixedToUserRotationRule =
                         new DisableFixedToUserRotationRule();
+                mDisableFixedToUserRotationRule.before();
                 try {
-                    mDisableFixedToUserRotationRule.before();
-                    mAutoCloseables.push(mDisableFixedToUserRotationRule::after);
-                    mAutoCloseables.push(
-                            new IgnoreOrientationRequestSession(false /* don' ignore */));
-                    base.evaluate();
-                } finally {
-                    final ArrayList<Throwable> throwables = new ArrayList<>();
-                    while (!mAutoCloseables.isEmpty()) {
-                        try {
-                            mAutoCloseables.pop().close();
-                        } catch (Throwable t) {
-                            throwables.add(t);
-                        }
+                    try (IgnoreOrientationRequestSession session =
+                                 new IgnoreOrientationRequestSession(false /* don' ignore */)) {
+                        base.evaluate();
                     }
-                    MultipleFailureException.assertEmpty(throwables);
+                } finally {
+                    mDisableFixedToUserRotationRule.after();
                 }
             }
         };
     }
 
     /**
-     * Launch an activity in fullscreen.
+     * Builds launch args to launch Activity in fullscreen windowing mode.
      *
      * Activities which request orientation need to be in fullscreen windowing mode.
-     * The activity will be finished at the test end.
      */
-    public <T extends Activity> T launchActivityInFullscreen(Class<T> klass) {
+    public static <T extends Activity> Pair<Intent, ActivityOptions> buildFullScreenLaunchArgs(
+            Class<T> klass) {
         final Intent intent = new Intent(
                 InstrumentationRegistry.getInstrumentation().getTargetContext(),
                 klass);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
         final ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchWindowingMode(WindowConfiguration.WINDOWING_MODE_FULLSCREEN);
-        final T activity = (T) InstrumentationRegistry.getInstrumentation().startActivitySync(
-                intent, options.toBundle());
-        mAutoCloseables.push(activity::finish);
-        return activity;
+
+        return Pair.create(intent, options);
     }
 
     public static class DisableFixedToUserRotationRule extends ExternalResource {

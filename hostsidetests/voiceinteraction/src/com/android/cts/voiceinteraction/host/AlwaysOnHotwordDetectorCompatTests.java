@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.voiceinteraction;
+package com.android.cts.voiceinteraction.host;
 
 import android.compat.cts.CompatChangeGatingTestCase;
 
@@ -26,7 +26,7 @@ import com.google.common.collect.ImmutableSet;
  * Hotside entry point for tests covering the System API compatibility changes in
  * {@link android.service.voice.AlwaysOnHotwordDetector}
  */
-public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTestCase {
+public class AlwaysOnHotwordDetectorCompatTests extends CompatChangeGatingTestCase {
 
     private static final long START_RECOGNITION_THROW_EXECUTION_EXCEPTION = 226355112L;
     private static final String TEST_APP_PACKAGE_NAME =
@@ -54,7 +54,7 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
                 VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
 
         runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
-                ".AlwaysOnHotwordDetectorChangesTest",
+                ".AlwaysOnHotwordDetectorCompatTests",
                 "testChangeThrowCheckedException_verifyChangeEnabled",
                 /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
                 /* disabledChanges */ ImmutableSet.of(),
@@ -62,7 +62,7 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
                 /* reportedDisabledChanges */ ImmutableSet.of());
 
         runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
-                ".AlwaysOnHotwordDetectorChangesTest",
+                ".AlwaysOnHotwordDetectorCompatTests",
                 "startRecognitionThrowCheckedExceptionEnabled_verifyCheckedThrown",
                 /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
                 /* disabledChanges */ ImmutableSet.of(),
@@ -78,7 +78,7 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
                 VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
 
         runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
-                ".AlwaysOnHotwordDetectorChangesTest",
+                ".AlwaysOnHotwordDetectorCompatTests",
                 "testChangeThrowCheckedException_verifyChangeEnabled",
                 /* enabledChanges */ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
                 /* disabledChanges */ ImmutableSet.of(),
@@ -86,7 +86,7 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
                 /* reportedDisabledChanges */ ImmutableSet.of());
 
         runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
-                ".AlwaysOnHotwordDetectorChangesTest",
+                ".AlwaysOnHotwordDetectorCompatTests",
                 "stopRecognitionThrowCheckedExceptionEnabled_verifyCheckedThrown",
                 /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
                 /* disabledChanges */ ImmutableSet.of(),
@@ -101,7 +101,7 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
                 VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
 
         runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
-                ".AlwaysOnHotwordDetectorChangesTest",
+                ".AlwaysOnHotwordDetectorCompatTests",
                 "testChangeThrowCheckedException_verifyChangeEnabled",
                 /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
                 /* disabledChanges */ ImmutableSet.of(),
@@ -109,7 +109,7 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
                 /* reportedDisabledChanges */ ImmutableSet.of());
 
         runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
-                ".AlwaysOnHotwordDetectorChangesTest",
+                ".AlwaysOnHotwordDetectorCompatTests",
                 "updateStateThrowCheckedExceptionEnabled_verifyCheckedThrown",
                 /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
                 /* disabledChanges */ ImmutableSet.of(),
@@ -125,7 +125,7 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
                 VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
 
         runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
-                ".AlwaysOnHotwordDetectorChangesTest",
+                ".AlwaysOnHotwordDetectorCompatTests",
                 "testChangeThrowCheckedException_verifyChangeDisabled",
                 /* enabledChanges */ ImmutableSet.of(),
                 /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
@@ -133,7 +133,7 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
                 /* reportedDisabledChanges */ ImmutableSet.of());
 
         runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
-                ".AlwaysOnHotwordDetectorChangesTest",
+                ".AlwaysOnHotwordDetectorCompatTests",
                 "startRecognitionThrowCheckedExceptionDisabled_verifyRuntimeThrown",
                 /* enabledChanges */ ImmutableSet.of(),
                 /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
@@ -149,7 +149,7 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
                 VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
 
         runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
-                ".AlwaysOnHotwordDetectorChangesTest",
+                ".AlwaysOnHotwordDetectorCompatTests",
                 "testChangeThrowCheckedException_verifyChangeDisabled",
                 /* enabledChanges */ ImmutableSet.of(),
                 /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
@@ -157,7 +157,7 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
                 /* reportedDisabledChanges */ ImmutableSet.of());
 
         runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
-                ".AlwaysOnHotwordDetectorChangesTest",
+                ".AlwaysOnHotwordDetectorCompatTests",
                 "stopRecognitionThrowCheckedExceptionDisabled_verifyRuntimeThrown",
                 /* enabledChanges */ ImmutableSet.of(),
                 /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
@@ -172,7 +172,7 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
                 VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
 
         runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
-                ".AlwaysOnHotwordDetectorChangesTest",
+                ".AlwaysOnHotwordDetectorCompatTests",
                 "testChangeThrowCheckedException_verifyChangeDisabled",
                 /* enabledChanges */ ImmutableSet.of(),
                 /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
@@ -180,7 +180,7 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
                 /* reportedDisabledChanges */ ImmutableSet.of());
 
         runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
-                ".AlwaysOnHotwordDetectorChangesTest",
+                ".AlwaysOnHotwordDetectorCompatTests",
                 "updateStateThrowCheckedExceptionDisabled_verifyRuntimeThrown",
                 /* disabledChanges */ ImmutableSet.of(),
                 /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),

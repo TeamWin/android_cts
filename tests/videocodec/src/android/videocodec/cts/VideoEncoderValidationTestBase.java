@@ -27,9 +27,9 @@ import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.mediav2.common.cts.BitStreamUtils;
+import android.mediav2.common.cts.CodecEncoderTestBase;
 import android.mediav2.common.cts.DecodeStreamToYuv;
 import android.mediav2.common.cts.EncoderConfigParams;
-import android.mediav2.common.cts.EncoderTestBase;
 import android.mediav2.common.cts.RawResource;
 import android.util.Log;
 
@@ -47,7 +47,7 @@ import java.util.TreeMap;
 /**
  * Wrapper class for handling and testing video encoder components.
  */
-public class VideoEncoderValidationTestBase extends EncoderTestBase {
+public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
     private static final String LOG_TAG = VideoEncoderValidationTestBase.class.getSimpleName();
     private static final String MEDIA_DIR = WorkDir.getMediaDirString();
 

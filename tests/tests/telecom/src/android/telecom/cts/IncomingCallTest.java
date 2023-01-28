@@ -29,6 +29,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
@@ -98,11 +99,15 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
             return;
         }
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
-        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        Uri testNumber = createTestNumber();
+        addAndVerifyNewIncomingCall(testNumber, null);
         final Connection connection3 = verifyConnectionForIncomingCall();
         Collection<Connection> connections = CtsConnectionService.getAllConnectionsFromTelecom();
         assertEquals(1, connections.size());
         assertTrue(connections.contains(connection3));
+        connection3.onDisconnect();
+        verifyCallLogging(testNumber, CallLog.Calls.INCOMING_TYPE,
+                TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
     }
 
     public void testPhoneStateListenerInvokedOnIncomingCall() throws Exception {

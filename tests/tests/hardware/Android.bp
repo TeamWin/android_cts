@@ -65,7 +65,6 @@ android_test {
         "cts-wm-util",
         "mockito-target-minus-junit4",
         "platform-test-annotations",
-        "ub-uiautomator",
         "ctshardware-aidl-java",
     ],
     jni_libs: [

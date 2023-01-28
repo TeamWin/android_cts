@@ -33,7 +33,7 @@ _CV2_FACE_SCALE_FACTOR = 1.05  # 5% step for resizing image to find face
 _CV2_FACE_MIN_NEIGHBORS = 4  # recommended 3-6: higher for less faces
 _CV2_GREEN = (0, 1, 0)
 _CV2_RED = (1, 0, 0)
-_FACE_CENTER_MATCH_TOL = 10  # 10 pixels or ~1% in 640x480 image
+_FACE_CENTER_MATCH_TOL = 12  # 12 pixels or ~1% in 640x480 image
 _FD_MODE_OFF, _FD_MODE_SIMPLE, _FD_MODE_FULL = 0, 1, 2
 _HAARCASCADE_FILE = os.path.join(
     os.path.dirname(os.path.abspath(cv2.__file__)), 'opencv', 'haarcascades',
@@ -72,13 +72,17 @@ def match_face_locations(faces_cropped, faces_opencv, mode, img, img_name):
   faces_opencv_centers = [(x+w//2, y+h//2) for (x, y, w, h) in faces_opencv]
   cropped_faces_centers = [
       ((l+r)//2, (t+b)//2) for (l, r, t, b) in faces_cropped]
+  faces_opencv_centers.sort(key=lambda t: [t[1], t[0]])
+  cropped_faces_centers.sort(key=lambda t: [t[1], t[0]])
   logging.debug('cropped face centers: %s', str(cropped_faces_centers))
   logging.debug('opencv face centers: %s', str(faces_opencv_centers))
   num_centers_aligned = 0
   for (x, y) in faces_opencv_centers:
     for (x1, y1) in cropped_faces_centers:
-      if math.hypot(x-x1, y-y1) < _FACE_CENTER_MATCH_TOL:
+      centers_dist = math.hypot(x-x1, y-y1)
+      if centers_dist < _FACE_CENTER_MATCH_TOL:
         num_centers_aligned += 1
+        logging.debug('centers_dist:%.3f',centers_dist)
 
   # If test failed, save image with green AND OpenCV red rectangles
   faces_opencv = find_opencv_faces(img)

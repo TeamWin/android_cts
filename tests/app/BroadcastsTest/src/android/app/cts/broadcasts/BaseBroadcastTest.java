@@ -112,6 +112,11 @@ abstract class BaseBroadcastTest {
                 mAm.isModernBroadcastQueueEnabled());
     }
 
+    protected boolean isAppFreezerEnabled() throws Exception {
+        final ActivityManager am = mContext.getSystemService(ActivityManager.class);
+        return am.getService().isAppFreezerEnabled();
+    }
+
     protected void waitForProcessFreeze(int pid, long timeoutMs) {
         // TODO: Add a listener to monitor freezer state changes.
         SystemUtil.runWithShellPermissionIdentity(() -> {

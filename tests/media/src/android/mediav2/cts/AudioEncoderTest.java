@@ -27,8 +27,8 @@ import android.media.AudioFormat;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.mediav2.common.cts.CodecDecoderTestBase;
+import android.mediav2.common.cts.CodecEncoderTestBase;
 import android.mediav2.common.cts.EncoderConfigParams;
-import android.mediav2.common.cts.EncoderTestBase;
 import android.mediav2.common.cts.OutputManager;
 
 import androidx.test.filters.LargeTest;
@@ -61,7 +61,7 @@ import java.util.List;
  * </ul>
  */
 @RunWith(Parameterized.class)
-public class AudioEncoderTest extends EncoderTestBase {
+public class AudioEncoderTest extends CodecEncoderTestBase {
     public AudioEncoderTest(String encoder, String mediaType, EncoderConfigParams encCfgParams,
             @SuppressWarnings("unused") String testLabel, String allTestParams) {
         super(encoder, mediaType, new EncoderConfigParams[]{encCfgParams}, allTestParams);

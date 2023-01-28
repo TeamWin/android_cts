@@ -26,6 +26,7 @@ import android.util.Log;
 import com.android.compatibility.common.util.CddTest;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.midilib.MidiIODevice;
+import com.android.cts.verifier.audio.midilib.MidiTestModule;
 import com.android.cts.verifier.audio.midilib.NativeMidiManager;
 
 import java.io.IOException;
@@ -118,12 +119,43 @@ public class MidiNativeTestActivity extends MidiTestActivityBase {
             endTest(TESTSTATUS_NOTRUN);
         }
 
+        @Override
+        protected void updateTestStateUIAbstract() {
+            updateTestStateUI();
+        }
+
+        @Override
+        protected void showTimeoutMessageAbstract() {
+            showTimeoutMessage();
+        }
+
+        @Override
+        protected void enableTestButtonsAbstract(boolean enable) {
+            enableTestButtons(enable);
+        }
+
+        void showTimeoutMessage() {
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    synchronized (mTestLock) {
+                        if (mTestRunning) {
+                            if (DEBUG) {
+                                Log.i(TAG, "---- Test Failed - TIMEOUT");
+                            }
+                            mTestStatus = TESTSTATUS_FAILED_TIMEOUT;
+                            updateTestStateUIAbstract();
+                        }
+                    }
+                }
+            });
+        }
+
         protected void closePorts() {
             // NOP
         }
 
         @Override
-        void startLoopbackTest(int testID) {
+        public void startLoopbackTest(int testID) {
             synchronized (mTestLock) {
                 mTestCounter++;
                 mTestRunning = true;
@@ -133,8 +165,6 @@ public class MidiNativeTestActivity extends MidiTestActivityBase {
             if (DEBUG) {
                 Log.i(TAG, "---- startLoopbackTest()");
             }
-
-            mRunningTestID = testID;
 
             synchronized (mTestLock) {
                 mTestStatus = TESTSTATUS_NOTRUN;
@@ -148,7 +178,7 @@ public class MidiNativeTestActivity extends MidiTestActivityBase {
         }
 
         @Override
-        boolean hasTestPassed() {
+        public boolean hasTestPassed() {
             int status;
             synchronized (mTestLock) {
                 status = mTestStatus;
@@ -218,7 +248,7 @@ public class MidiNativeTestActivity extends MidiTestActivityBase {
         }
 
         @Override
-        void startLoopbackTest(int testID) {
+        public void startLoopbackTest(int testID) {
             if (DEBUG) {
                 Log.i(TAG, "---- startLoopbackTest()");
             }

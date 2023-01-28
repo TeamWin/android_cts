@@ -22,11 +22,16 @@ import android.platform.test.annotations.AppModeFull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
+import com.android.compatibility.common.util.NullWebViewUtils;
+
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+@MediumTest
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 public class DateSorterTest {
@@ -38,26 +43,27 @@ public class DateSorterTest {
     public final WebViewSandboxTestRule sdkTester =
             new WebViewSandboxTestRule("android.webkit.cts.DateSorterTest");
 
+    @Before
+    public void setUp() {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+    }
+
     @Test
-    @MediumTest
     public void testConstructor() throws Exception {
         sdkTester.assertSdkTestRunPasses("testConstructor");
     }
 
     @Test
-    @MediumTest
     public void testGetLabel() throws Exception {
         sdkTester.assertSdkTestRunPasses("testGetLabel");
     }
 
     @Test
-    @MediumTest
     public void testGetIndex() throws Exception {
         sdkTester.assertSdkTestRunPasses("testGetIndex");
     }
 
     @Test
-    @MediumTest
     public void testGetBoundary() throws Exception {
         sdkTester.assertSdkTestRunPasses("testGetBoundary");
     }

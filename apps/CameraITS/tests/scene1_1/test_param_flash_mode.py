@@ -26,7 +26,6 @@ import image_processing_utils
 import its_session_utils
 import target_exposure_utils
 
-_CHART_DISTANCE_NO_SCALING = 100  # 1 meter to disable scaling
 _FLASH_MODES = {'OFF': 0, 'SINGLE': 1, 'TORCH': 2}
 _FLASH_STATES = {'UNAVAIL': 0, 'CHARGING': 1, 'READY': 2, 'FIRED': 3,
                  'PARTIAL': 4}
@@ -68,7 +67,8 @@ class ParamFlashModeTest(its_base_test.ItsBaseTest):
 
       # Load chart for scene
       its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, _CHART_DISTANCE_NO_SCALING)
+          cam, props, self.scene, self.tablet,
+          its_session_utils.CHART_DISTANCE_NO_SCALING)
 
       modes = []
       states = []

@@ -37,5 +37,5 @@ interface IWebServer {
 
     boolean wasResourceRequested(String url);
 
-    HttpRequest getLastRequest(String url);
+    HttpRequest getLastAssetRequest(String url);
 }

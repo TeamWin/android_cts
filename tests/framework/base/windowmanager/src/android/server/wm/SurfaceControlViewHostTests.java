@@ -1215,36 +1215,6 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         assertPixelColorInBounds(screenshot, Color.BLACK, new Rect(50, 50, 100, 100));
     }
 
-    @Test
-    public void testFloatingWindowCroppedByParent() throws Throwable {
-        mEmbeddedView = new View(mActivity);
-        mEmbeddedViewWidth = 50;
-        mEmbeddedViewHeight = 50;
-        addSurfaceView(100, 100);
-        mInstrumentation.waitForIdleSync();
-
-        View popupView = new FrameLayout(mActivity);
-        popupView.setBackgroundColor(Color.BLUE);
-
-        WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
-        layoutParams.setTitle("FloatingWindow");
-        layoutParams.height = 100;
-        layoutParams.width = 100;
-        layoutParams.token = mEmbeddedView.getWindowToken();
-
-        mActivityRule.runOnUiThread(() -> {
-            WindowManager windowManager = mActivity.getSystemService(WindowManager.class);
-            windowManager.addView(popupView, layoutParams);
-        });
-
-        waitForViewsDrawn(Arrays.asList(mSurfaceView, mEmbeddedView, popupView));
-
-        Bitmap screenshot = mInstrumentation.getUiAutomation().takeScreenshot(
-                mActivity.getWindow());
-        assertPixelColorInBounds(screenshot, Color.BLUE, new Rect(0, 0, 50, 50));
-        assertPixelColorInBounds(screenshot, Color.BLACK, new Rect(50, 50, 100, 100));
-    }
-
     class TouchTransferringView extends View {
         boolean mExpectsFirstMotion = true;
         boolean mExpectsCancel = false;

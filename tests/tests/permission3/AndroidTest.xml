@@ -33,6 +33,7 @@
     <!-- Keep screen on for Bluetooth scanning -->
     <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
         <option name="force-skip-system-props" value="true" /> <!-- avoid restarting device -->
+        <option name="disable-device-config-sync" value="true" />
         <option name="screen-always-on" value="on" />
     </target_preparer>
 
@@ -73,6 +74,7 @@
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="appops set android.permission3.cts REQUEST_INSTALL_PACKAGES allow" />
+        <option name="run-command" value="am wait-for-broadcast-barrier"  />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

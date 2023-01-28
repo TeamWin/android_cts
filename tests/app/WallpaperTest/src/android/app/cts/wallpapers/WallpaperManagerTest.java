@@ -79,6 +79,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Tests for {@link WallpaperManager} and related classes.
@@ -1113,9 +1114,10 @@ public class WallpaperManagerTest {
 
     /**
      * Helper to set a listener and verify if it was called with the same flags.
-     * Executes operation synchronously.
+     * Executes operation synchronously. Params are FLAG_LOCK, FLAG_SYSTEM or a combination of both.
      *
-     * @param which FLAG_LOCK, FLAG_SYSTEM or a combination of both.
+     * @param which wallpaper destinations to set
+     * @param whichExpected wallpaper destinations that should receive listener calls
      */
     private void verifyColorListenerInvoked(int which, int whichExpected) {
         ensureCleanState();
@@ -1128,22 +1130,34 @@ public class WallpaperManagerTest {
         Handler handler = new Handler(Looper.getMainLooper());
 
         WallpaperManager.OnColorsChangedListener listener = getTestableListener();
+        final AtomicBoolean allOk = new AtomicBoolean(true);
         WallpaperManager.OnColorsChangedListener counter = (colors, whichWp) -> {
             handler.post(() -> {
+                final boolean wantSystem = (whichExpected & FLAG_SYSTEM) != 0;
+                final boolean wantLock = (whichExpected & FLAG_LOCK) != 0;
+                final boolean gotSystem = (whichWp & FLAG_SYSTEM) != 0;
+                final boolean gotLock = (whichWp & FLAG_LOCK) != 0;
                 received.add(whichWp);
-                boolean ok = false;
-                if ((whichWp & FLAG_LOCK) != 0
-                        && (whichExpected & FLAG_LOCK) != 0) {
-                    latch.countDown();
-                    ok = true;
+                boolean ok = true;
+
+                if (gotLock) {
+                    if (wantLock) {
+                        latch.countDown();
+                    } else {
+                        ok = false;
+                    }
                 }
-                if ((whichWp & FLAG_SYSTEM) != 0 && (whichExpected & FLAG_SYSTEM) != 0) {
-                    latch.countDown();
-                    ok = true;
+                if (gotSystem) {
+                    if (wantSystem) {
+                        latch.countDown();
+                    } else {
+                        ok = false;
+                    }
                 }
                 if (!ok) {
-                    throw new AssertionError("Unexpected which flag: " + whichWp
-                            + " should be: " + whichExpected);
+                    allOk.set(false);
+                    Log.e(TAG,
+                            "Unexpected which flag: " + whichWp + " should be: " + whichExpected);
                 }
             });
         };
@@ -1153,16 +1167,20 @@ public class WallpaperManagerTest {
 
         try {
             mWallpaperManager.setResource(R.drawable.robot, which);
-            if (!latch.await(5, TimeUnit.SECONDS)) {
-                throw new AssertionError("Didn't receive all color events. Expected: "
-                        + whichExpected + " received: " + received);
-            }
+            boolean eventsReceived = latch.await(5, TimeUnit.SECONDS);
+            assertWithMessage("Timed out waiting for color events. Expected: "
+                    + whichExpected + " received: " + received)
+                    .that(eventsReceived).isTrue();
+            // Wait in case there are additional unwanted callbacks
+            Thread.sleep(500);
+            assertWithMessage("Unexpected which flag, check logs for details")
+                    .that(allOk.get()).isTrue();
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            mWallpaperManager.removeOnColorsChangedListener(listener);
+            mWallpaperManager.removeOnColorsChangedListener(counter);
         }
-
-        mWallpaperManager.removeOnColorsChangedListener(listener);
-        mWallpaperManager.removeOnColorsChangedListener(counter);
     }
 
     /**

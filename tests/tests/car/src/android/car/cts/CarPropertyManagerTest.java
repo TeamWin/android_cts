@@ -48,6 +48,7 @@ import android.car.hardware.property.EvChargeState;
 import android.car.hardware.property.EvRegenerativeBrakingState;
 import android.car.hardware.property.EvStoppingMode;
 import android.car.hardware.property.ForwardCollisionWarningState;
+import android.car.hardware.property.TrailerState;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
 import android.car.hardware.property.VehicleLightState;
@@ -131,6 +132,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehicleGear.GEAR_SEVENTH,
                             VehicleGear.GEAR_EIGHTH,
                             VehicleGear.GEAR_NINTH)
+                    .build();
+    private static final ImmutableSet<Integer> TRAILER_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            TrailerState.STATE_UNKNOWN,
+                            TrailerState.STATE_NOT_PRESENT,
+                            TrailerState.STATE_PRESENT,
+                            TrailerState.STATE_ERROR)
                     .build();
     private static final ImmutableSet<Integer> DISTANCE_DISPLAY_UNITS =
             ImmutableSet.<Integer>builder().add(VehicleUnit.MILLIMETER, VehicleUnit.METER,
@@ -2825,13 +2834,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(
-                        ImmutableSet.of(
-                                /*TrailerState.UNKNOWN=*/
-                                0, /*TrailerState.NOT_PRESENT*/
-                                1, /*TrailerState.PRESENT=*/
-                                2, /*TrailerState.ERROR=*/
-                                3))
+                .setPossibleCarPropertyValues(TRAILER_STATES)
                 .addReadPermission(Car.PERMISSION_PRIVILEGED_CAR_INFO)
                 .build()
                 .verify(mCarPropertyManager);
