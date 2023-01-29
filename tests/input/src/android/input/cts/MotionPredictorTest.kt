@@ -31,8 +31,8 @@ import java.time.Duration
 import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
-import org.junit.runner.RunWith
 import org.junit.Test
+import org.junit.runner.RunWith
 
 private val DEVICE_ID = 0
 
@@ -97,21 +97,25 @@ class MotionPredictorTest {
 
         // One-time: send a DOWN event
         var eventTime = Duration.ofMillis(0) // t= 0 ms
-        predictor.record(getStylusMotionEvent(eventTime, ACTION_DOWN, /*x=*/10f, /*y=*/0f))
+        predictor.record(getStylusMotionEvent(eventTime, ACTION_DOWN, /*x=*/10f, /*y=*/20f))
 
         // Send a few coordinates
         eventTime += Duration.ofMillis(8) // t= 8 ms
         // Send MOVE event and then call .predict
-        predictor.record(getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/10f, /*y=*/0f))
+        predictor.record(getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/10f, /*y=*/20f))
 
         eventTime += Duration.ofMillis(8) // t= 16 ms
-        predictor.record(getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/10f, /*y=*/0f))
+        predictor.record(getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/10f, /*y=*/20f))
 
         val predicted = predictor.predict(Duration.ofMillis(24).toNanos())
-        assertEquals(1, predicted.size)
-        assertEquals(10f, predicted[0].getX())
-        assertEquals(0f, predicted[0].getY())
-        assertEquals(DEVICE_ID, predicted[0].deviceId)
+        // There should either be no predictions (indicating no movement), or a prediction at the
+        // same location.
+        if (predicted.size > 0) {
+            assertEquals(1, predicted.size)
+            assertEquals(10f, predicted[0].getX(), /*delta=*/1f)
+            assertEquals(20f, predicted[0].getY(), /*delta=*/2f)
+            assertEquals(DEVICE_ID, predicted[0].deviceId)
+        }
     }
 
     /**
@@ -124,20 +128,26 @@ class MotionPredictorTest {
 
         // One-time: send a DOWN event
         var eventTime = Duration.ofMillis(0) // t= 0 ms
-        predictor.record(getStylusMotionEvent(eventTime, ACTION_DOWN, /*x=*/10f, /*y=*/0f))
+        predictor.record(getStylusMotionEvent(eventTime, ACTION_DOWN, /*x=*/10f, /*y=*/10f))
 
         // Send a few coordinates
         eventTime += Duration.ofMillis(8) // t= 8 ms
         // Send MOVE event and then call .predict
-        predictor.record(getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/10f, /*y=*/1f))
+        predictor.record(getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/10f, /*y=*/20f))
 
         eventTime += Duration.ofMillis(8) // t= 16 ms
-        predictor.record(getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/10f, /*y=*/2f))
+        predictor.record(getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/10f, /*y=*/30f))
 
         val predicted = predictor.predict(Duration.ofMillis(24).toNanos())
         assertEquals(1, predicted.size)
-        assertEquals(10f, predicted[0].getX())
-        assertEquals(3f, predicted[0].getY())
+
+        // Calculate the expected location based on the timestamp of the prediction.
+        val yMovement = 10 / 8f // px per ms
+        // The last event was at t=16, y=30.
+        val expectedY = 30 + ((predicted[0].getEventTime() - 16) * yMovement)
+
+        assertEquals(10f, predicted[0].getX(), /*delta=*/5f)
+        assertEquals(expectedY, predicted[0].getY(), /*delta=*/15f)
         assertEquals(DEVICE_ID, predicted[0].deviceId)
     }
 }

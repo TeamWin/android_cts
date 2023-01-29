@@ -22,7 +22,6 @@ import android.Manifest.permission.CAMERA
 import android.os.Build
 import android.provider.DeviceConfig
 import android.safetylabel.SafetyLabelConstants.PERMISSION_RATIONALE_ENABLED
-import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.modules.utils.build.SdkLevel
@@ -71,7 +70,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
@@ -83,7 +82,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
@@ -95,7 +94,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
@@ -107,7 +106,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
@@ -119,7 +118,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
@@ -131,7 +130,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
@@ -143,7 +142,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
@@ -155,7 +154,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
@@ -167,7 +166,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
@@ -180,7 +179,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
@@ -191,7 +190,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(CAMERA, false)
 
         requestAppPermissionsForNoResult(CAMERA) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
@@ -205,7 +204,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(true)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(true)
         }
     }
 
@@ -216,7 +215,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(true)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(true)
         }
     }
 
@@ -227,7 +226,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(true)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(true)
         }
     }
 
@@ -239,8 +238,8 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
 
         requestAppPermissionsForNoResult(ACCESS_FINE_LOCATION) {
             clickPermissionRationaleViewInGrantDialog()
-            assertPermissionRationaleActivityTitleIsVisible(true)
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleDialogIsVisible(true)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
@@ -254,20 +253,12 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         requestAppPermissionsForNoResult(ACCESS_FINE_LOCATION) {
             clickPermissionRationaleViewInGrantDialog()
             waitForIdle()
-            assertPermissionRationaleActivityTitleIsVisible(true)
+            assertPermissionRationaleDialogIsVisible(true)
             pressBack()
             waitForIdle()
-            assertPermissionRationaleActivityTitleIsVisible(false)
-            assertPermissionRationaleOnGrantDialogIsVisible(true)
+            assertPermissionRationaleDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(true)
         }
-    }
-
-    private fun assertPermissionRationaleOnGrantDialogIsVisible(expected: Boolean) {
-        findView(By.res(GRANT_DIALOG_PERMISSION_RATIONALE_CONTAINER_VIEW), expected = expected)
-    }
-
-    private fun assertPermissionRationaleActivityTitleIsVisible(expected: Boolean) {
-        findView(By.res(PERMISSION_RATIONALE_ACTIVITY_TITLE_VIEW), expected = expected)
     }
 
     companion object {

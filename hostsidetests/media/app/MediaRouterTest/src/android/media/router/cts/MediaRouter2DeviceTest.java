@@ -37,6 +37,8 @@ import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_3_ROUTE_5;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_4;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_5;
 
+import static org.junit.Assert.assertThrows;
+
 import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
@@ -178,7 +180,7 @@ public class MediaRouter2DeviceTest {
                 new MediaRouter2ManagerCallbackImpl();
         mRouter2Manager.registerCallback(Runnable::run, mediaRouter2ManagerCallback);
         mRouter2.setRouteListingPreference(routeListingPreference);
-        mediaRouter2ManagerCallback.mConditionVariable.block();
+        mediaRouter2ManagerCallback.waitForRouteListingPreferenceUpdateOnManager();
         RouteListingPreference receivedRouteListingPreference =
                 mediaRouter2ManagerCallback.mRouteListingPreference;
         Truth.assertThat(receivedRouteListingPreference).isEqualTo(routeListingPreference);
@@ -199,6 +201,57 @@ public class MediaRouter2DeviceTest {
                 .isEqualTo(RouteListingPreference.Item.DISABLE_REASON_SUBSCRIPTION_REQUIRED);
         Truth.assertThat(receivedRouteListingPreference.getInAppOnlyItemRoutingReceiver())
                 .isEqualTo(new ComponentName(mContext, getClass()));
+
+        // Check that null is also propagated correctly.
+        mediaRouter2ManagerCallback.closeRouteListingPreferenceWaitingCondition();
+        mRouter2.setRouteListingPreference(null);
+        mediaRouter2ManagerCallback.waitForRouteListingPreferenceUpdateOnManager();
+        Truth.assertThat(mediaRouter2ManagerCallback.mRouteListingPreference).isNull();
+    }
+
+    @ApiTest(apis = {"android.media.RouteListingPreference, android.media.MediaRouter2"})
+    @Test
+    public void setRouteListingPreference_withCustomDisableReason_propagatesCorrectly() {
+        List<RouteListingPreference.Item> item =
+                List.of(
+                        new RouteListingPreference.Item.Builder(ROUTE_ID_APP_1_ROUTE_1)
+                                .setDisableReason(RouteListingPreference.Item.DISABLE_REASON_CUSTOM)
+                                .setCustomDisableReasonMessage("Fake disable reason message")
+                                .build());
+        RouteListingPreference routeListingPreference =
+                new RouteListingPreference.Builder().setItems(item).build();
+        MediaRouter2ManagerCallbackImpl mediaRouter2ManagerCallback =
+                new MediaRouter2ManagerCallbackImpl();
+        mRouter2Manager.registerCallback(Runnable::run, mediaRouter2ManagerCallback);
+
+        mRouter2.setRouteListingPreference(routeListingPreference);
+        mediaRouter2ManagerCallback.waitForRouteListingPreferenceUpdateOnManager();
+        RouteListingPreference receivedRouteListingPreference =
+                mediaRouter2ManagerCallback.mRouteListingPreference;
+        Truth.assertThat(receivedRouteListingPreference)
+                .isNotSameInstanceAs(routeListingPreference);
+        Truth.assertThat(receivedRouteListingPreference).isEqualTo(routeListingPreference);
+        Truth.assertThat(receivedRouteListingPreference.getItems()).hasSize(1);
+
+        RouteListingPreference.Item receivedItem = receivedRouteListingPreference.getItems().get(0);
+        Truth.assertThat(receivedItem.getDisableReason())
+                .isEqualTo(RouteListingPreference.Item.DISABLE_REASON_CUSTOM);
+        Truth.assertThat(receivedItem.getCustomDisableReasonMessage())
+                .isEqualTo("Fake disable reason message");
+    }
+
+    @ApiTest(apis = {"android.media.RouteListingPreference"})
+    @Test
+    public void newRouteListingPreference_withInvalidCustomReason_throws() {
+        RouteListingPreference.Item.Builder builder =
+                new RouteListingPreference.Item.Builder("fake_route_id")
+                        .setDisableReason(RouteListingPreference.Item.DISABLE_REASON_CUSTOM);
+        // Check that the builder throws if DISABLE_REASON_CUSTOM is used, but no disable reason
+        // message is provided.
+        assertThrows(IllegalArgumentException.class, builder::build);
+
+        // Check that the builder does not throw if we provide a message.
+        builder.setCustomDisableReasonMessage("Fake disable reason message").build();
     }
 
     @Test
@@ -291,10 +344,18 @@ public class MediaRouter2DeviceTest {
         private ConditionVariable mConditionVariable = new ConditionVariable();
         private RouteListingPreference mRouteListingPreference;
 
+        public void closeRouteListingPreferenceWaitingCondition() {
+            mConditionVariable.close();
+        }
+
+        public void waitForRouteListingPreferenceUpdateOnManager() {
+            Truth.assertThat(mConditionVariable.block(ROUTE_UPDATE_MAX_WAIT_MS)).isTrue();
+        }
+
         @Override
         public void onRouteListingPreferenceUpdated(
                 String packageName, RouteListingPreference routeListingPreference) {
-            if (packageName.equals(mContext.getPackageName()) && routeListingPreference != null) {
+            if (packageName.equals(mContext.getPackageName())) {
                 mRouteListingPreference = routeListingPreference;
                 mConditionVariable.open();
             }

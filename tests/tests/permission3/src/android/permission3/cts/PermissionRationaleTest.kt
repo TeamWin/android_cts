@@ -118,17 +118,14 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
     fun startsPermissionRationaleActivity() {
         navigateToPermissionRationaleActivity()
 
-        assertPermissionRationaleActivityTitleIsVisible(true)
-        assertPermissionRationaleActivityDataSharingSourceSectionVisible(true)
-        assertPermissionRationaleActivityPurposeSectionVisible(true)
-        assertPermissionRationaleActivityLearnMoreSectionVisible(true)
-        assertPermissionRationaleActivitySettingsSectionVisible(true)
+        assertPermissionRationaleDialogIsVisible(true)
     }
 
     @Test
     fun linksToInstallSource() {
         navigateToPermissionRationaleActivity()
-        assertPermissionRationaleActivityTitleIsVisible(true)
+
+        assertPermissionRationaleDialogIsVisible(true)
 
         clickInstallSourceLink()
 
@@ -140,27 +137,29 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
     @Test
     fun linksToSettings_noOp_dialogsNotClosed() {
         navigateToPermissionRationaleActivity()
-        assertPermissionRationaleActivityTitleIsVisible(true)
+
+        assertPermissionRationaleDialogIsVisible(true)
 
         clicksSettings_doesNothing_leaves()
 
         eventually {
-            assertPermissionRationaleActivityTitleIsVisible(true)
+            assertPermissionRationaleDialogIsVisible(true)
         }
     }
 
     @Test
     fun linksToSettings_grants_dialogsClose() {
         navigateToPermissionRationaleActivity()
-        assertPermissionRationaleActivityTitleIsVisible(true)
+
+        assertPermissionRationaleDialogIsVisible(true)
 
         clicksSettings_allowsForeground_leaves()
 
         // Setting, Permission rationale and Grant dialog should be dismissed
         eventually {
             assertPermissionSettingsVisible(false)
-            assertPermissionRationaleActivityTitleIsVisible(false)
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
 
         assertAppHasPermission(Manifest.permission.ACCESS_FINE_LOCATION, true)
@@ -169,15 +168,16 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
     @Test
     fun linksToSettings_denies_dialogsClose() {
         navigateToPermissionRationaleActivity()
-        assertPermissionRationaleActivityTitleIsVisible(true)
+
+        assertPermissionRationaleDialogIsVisible(true)
 
         clicksSettings_denies_leaves()
 
         // Setting, Permission rationale and Grant dialog should be dismissed
         eventually {
             assertPermissionSettingsVisible(false)
-            assertPermissionRationaleActivityTitleIsVisible(false)
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
 
         assertAppHasPermission(Manifest.permission.ACCESS_FINE_LOCATION, false)
@@ -185,13 +185,13 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
 
     private fun navigateToPermissionRationaleActivity_failedShowPermissionRationaleContainer() {
         requestAppPermissionsForNoResult(Manifest.permission.ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(false)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
     private fun navigateToPermissionRationaleActivity() {
         requestAppPermissionsForNoResult(Manifest.permission.ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleOnGrantDialogIsVisible(true)
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(true)
             clickPermissionRationaleViewInGrantDialog()
         }
     }
@@ -254,36 +254,6 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
         pressBack()
     }
 
-    private fun assertPermissionRationaleOnGrantDialogIsVisible(expected: Boolean) {
-        findView(By.res(GRANT_DIALOG_PERMISSION_RATIONALE_CONTAINER_VIEW), expected = expected)
-    }
-
-    private fun assertPermissionRationaleActivityTitleIsVisible(expected: Boolean) {
-        findView(By.res(PERMISSION_RATIONALE_ACTIVITY_TITLE_VIEW), expected = expected)
-    }
-
-    private fun assertPermissionRationaleActivityDataSharingSourceSectionVisible(
-        expected: Boolean
-    ) {
-        findView(By.res(DATA_SHARING_SOURCE_TITLE_ID), expected = expected)
-        findView(By.res(DATA_SHARING_SOURCE_MESSAGE_ID), expected = expected)
-    }
-
-    private fun assertPermissionRationaleActivityPurposeSectionVisible(expected: Boolean) {
-        findView(By.res(PURPOSE_TITLE_ID), expected = expected)
-        findView(By.res(PURPOSE_MESSAGE_ID), expected = expected)
-    }
-
-    private fun assertPermissionRationaleActivityLearnMoreSectionVisible(expected: Boolean) {
-        findView(By.res(LEARN_MORE_TITLE_ID), expected = expected)
-        findView(By.res(LEARN_MORE_MESSAGE_ID), expected = expected)
-    }
-
-    private fun assertPermissionRationaleActivitySettingsSectionVisible(expected: Boolean) {
-        findView(By.res(SETTINGS_TITLE_ID), expected = expected)
-        findView(By.res(SETTINGS_MESSAGE_ID), expected = expected)
-    }
-
     private fun assertPermissionSettingsVisible(expected: Boolean) {
         findView(By.res(DENY_RADIO_BUTTON), expected = expected)
     }
@@ -313,27 +283,5 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
                 packageName,
                 observedPackageName)
         }
-    }
-
-    companion object {
-        private const val PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED =
-            "privacy_placeholder_safety_label_data_enabled"
-
-        private const val DATA_SHARING_SOURCE_TITLE_ID =
-            "com.android.permissioncontroller:id/data_sharing_source_title"
-        private const val DATA_SHARING_SOURCE_MESSAGE_ID =
-            "com.android.permissioncontroller:id/data_sharing_source_message"
-        private const val PURPOSE_TITLE_ID =
-            "com.android.permissioncontroller:id/purpose_title"
-        private const val PURPOSE_MESSAGE_ID =
-            "com.android.permissioncontroller:id/purpose_message"
-        private const val LEARN_MORE_TITLE_ID =
-            "com.android.permissioncontroller:id/learn_more_title"
-        private const val LEARN_MORE_MESSAGE_ID =
-            "com.android.permissioncontroller:id/learn_more_message"
-        private const val SETTINGS_TITLE_ID =
-            "com.android.permissioncontroller:id/settings_title"
-        private const val SETTINGS_MESSAGE_ID =
-            "com.android.permissioncontroller:id/settings_message"
     }
 }

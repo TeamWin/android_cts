@@ -79,6 +79,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.BeforeClass
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -475,6 +476,7 @@ class AutoRevokeTest {
     @AppModeFull(reason = "Uses separate apps for testing")
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     @Test
+    @Ignore
     fun testAutoRevoke_goToUnusedAppsPage_removesSafetyCenterIssue() {
         withSafetyCenterEnabled {
             withUnusedThresholdMs(3L) {

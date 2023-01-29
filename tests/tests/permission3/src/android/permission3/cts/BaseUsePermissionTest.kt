@@ -136,8 +136,20 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "com.android.permissioncontroller:id/permission_rationale_container"
         const val PERMISSION_RATIONALE_ACTIVITY_TITLE_VIEW =
             "com.android.permissioncontroller:id/permission_rationale_title"
+        const val DATA_SHARING_SOURCE_TITLE_ID =
+            "com.android.permissioncontroller:id/data_sharing_source_title"
+        const val DATA_SHARING_SOURCE_MESSAGE_ID =
+            "com.android.permissioncontroller:id/data_sharing_source_message"
+        const val PURPOSE_TITLE_ID = "com.android.permissioncontroller:id/purpose_title"
+        const val PURPOSE_MESSAGE_ID = "com.android.permissioncontroller:id/purpose_message"
+        const val LEARN_MORE_TITLE_ID = "com.android.permissioncontroller:id/learn_more_title"
+        const val LEARN_MORE_MESSAGE_ID = "com.android.permissioncontroller:id/learn_more_message"
         const val PERMISSION_RATIONALE_SETTINGS_SECTION =
             "com.android.permissioncontroller:id/settings_section"
+        const val SETTINGS_TITLE_ID =
+            "com.android.permissioncontroller:id/settings_title"
+        const val SETTINGS_MESSAGE_ID =
+            "com.android.permissioncontroller:id/settings_message"
 
         const val REQUEST_LOCATION_MESSAGE = "permgrouprequest_location"
 
@@ -323,11 +335,50 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         installPackage(apkName)
     }
 
-    protected fun assertPermissionRationaleDialogSettingsSectionIsVisible(
+    protected fun assertPermissionRationaleActivityTitleIsVisible(expected: Boolean) {
+        findView(By.res(PERMISSION_RATIONALE_ACTIVITY_TITLE_VIEW), expected = expected)
+    }
+
+    protected fun assertPermissionRationaleActivityDataSharingSourceSectionVisible(
         expected: Boolean
     ) {
-        findView(By.res(PERMISSION_RATIONALE_SETTINGS_SECTION), expected = expected)
+        findView(By.res(DATA_SHARING_SOURCE_TITLE_ID), expected = expected)
+        findView(By.res(DATA_SHARING_SOURCE_MESSAGE_ID), expected = expected)
     }
+
+    protected fun assertPermissionRationaleActivityPurposeSectionVisible(expected: Boolean) {
+        findView(By.res(PURPOSE_TITLE_ID), expected = expected)
+        findView(By.res(PURPOSE_MESSAGE_ID), expected = expected)
+    }
+
+    protected fun assertPermissionRationaleActivityLearnMoreSectionVisible(expected: Boolean) {
+        findView(By.res(LEARN_MORE_TITLE_ID), expected = expected)
+        findView(By.res(LEARN_MORE_MESSAGE_ID), expected = expected)
+    }
+
+    protected fun assertPermissionRationaleActivitySettingsSectionVisible(expected: Boolean) {
+        findView(By.res(PERMISSION_RATIONALE_SETTINGS_SECTION), expected = expected)
+        findView(By.res(SETTINGS_TITLE_ID), expected = expected)
+        findView(By.res(SETTINGS_MESSAGE_ID), expected = expected)
+    }
+
+    protected fun assertPermissionRationaleDialogIsVisible(
+        expected: Boolean,
+        showSettingsSection: Boolean = true
+    ) {
+        assertPermissionRationaleActivityTitleIsVisible(expected)
+        assertPermissionRationaleActivityDataSharingSourceSectionVisible(expected)
+        assertPermissionRationaleActivityPurposeSectionVisible(expected)
+        assertPermissionRationaleActivityLearnMoreSectionVisible(expected)
+        if (expected) {
+            assertPermissionRationaleActivitySettingsSectionVisible(showSettingsSection)
+        }
+    }
+
+    protected fun assertPermissionRationaleContainerOnGrantDialogIsVisible(expected: Boolean) {
+        findView(By.res(GRANT_DIALOG_PERMISSION_RATIONALE_CONTAINER_VIEW), expected = expected)
+    }
+
     protected fun clickPermissionReviewCancel() {
         if (isAutomotive || isWatch) {
             click(By.text(getPermissionControllerString("review_button_cancel")))

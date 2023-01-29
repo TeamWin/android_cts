@@ -23,7 +23,6 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import com.google.common.truth.Truth.assertThat
-import org.junit.Assume
 
 class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
 
@@ -58,7 +57,9 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigPicture_isSquareForLegacyApps() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+        if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
 
         val picture = createBitmap(40, 30)
         val icon = createBitmap(200, 100)
@@ -89,7 +90,9 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withoutLargeIcon() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+                if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
 
         val picture = createBitmap(40, 30)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -114,7 +117,9 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withLargeIcon() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+        if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
 
         val picture = createBitmap(40, 30)
         val icon = createBitmap(80, 65)
@@ -143,7 +148,9 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withBigLargeIcon() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+        if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
 
         val picture = createBitmap(40, 30)
         val inputWidth = 400
@@ -292,10 +299,9 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
      *
      * If the current platform does not support notification styles, skip this test without failure.
      */
-    private fun skipIfPlatformDoesNotSupportNotificationStyles() {
-        Assume.assumeFalse("Current platform does not support notification styles.",
-                mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) ||
-                        mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK))
+    private fun skipIfPlatformDoesNotSupportNotificationStyles(): Boolean {
+        return mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) ||
+                        mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
     }
 
     companion object {

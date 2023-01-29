@@ -122,6 +122,29 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
                 "visibilityAndAllowedPackages_propagateAcrossApps");
     }
 
+    @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
+    @AppModeFull
+    @RequiresDevice
+    @Test
+    public void setRouteListingPreference_withCustomDisableReason_propagatesCorrectly()
+            throws Exception {
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS,
+                "setRouteListingPreference_withCustomDisableReason_propagatesCorrectly");
+    }
+
+    @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
+    @AppModeFull
+    @RequiresDevice
+    @Test
+    public void newRouteListingPreference_withInvalidCustomReason_throws() throws Exception {
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS,
+                "newRouteListingPreference_withInvalidCustomReason_throws");
+    }
+
     private static void installTestApp(TestInformation testInfo, String apkName)
             throws FileNotFoundException, DeviceNotAvailableException {
         LogUtil.CLog.d("Installing app " + apkName);

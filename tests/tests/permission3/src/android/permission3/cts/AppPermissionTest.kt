@@ -60,11 +60,10 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndMetadata(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(true)
+    assertAppPermissionRationaleContainerIsVisible(true)
 
     clickPermissionRationaleContentInAppPermission()
-    assertPermissionRationaleDialogOnAppPermissionIsVisible(true)
-    assertPermissionRationaleDialogSettingsSectionIsVisible(false)
+    assertPermissionRationaleDialogIsVisible(expected = true, showSettingsSection = false)
   }
 
   @Test
@@ -73,11 +72,10 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndNoMetadata(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(true)
+    assertAppPermissionRationaleContainerIsVisible(true)
 
     clickPermissionRationaleContentInAppPermission()
-    assertPermissionRationaleDialogOnAppPermissionIsVisible(true)
-    assertPermissionRationaleDialogSettingsSectionIsVisible(false)
+    assertPermissionRationaleDialogIsVisible(expected = true, showSettingsSection = false)
   }
 
   @Test
@@ -85,7 +83,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndNoMetadata(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(false)
+    assertAppPermissionRationaleContainerIsVisible(false)
   }
 
   @Test
@@ -93,7 +91,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndNoMetadata(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(false)
+    assertAppPermissionRationaleContainerIsVisible(false)
   }
 
   @Test
@@ -101,7 +99,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndEmptyMetadata(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(false)
+    assertAppPermissionRationaleContainerIsVisible(false)
   }
 
   @Test
@@ -109,7 +107,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndInvalidMetadata(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(false)
+    assertAppPermissionRationaleContainerIsVisible(false)
   }
 
   @Test
@@ -117,7 +115,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndMetadataWithoutTopLevelVersion(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(false)
+    assertAppPermissionRationaleContainerIsVisible(false)
   }
 
   @Test
@@ -125,7 +123,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndMetadataWithInvalidTopLevelVersion(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(false)
+    assertAppPermissionRationaleContainerIsVisible(false)
   }
 
   @Test
@@ -133,7 +131,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndMetadataWithoutSafetyLabelVersion(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(false)
+    assertAppPermissionRationaleContainerIsVisible(false)
   }
 
   @Test
@@ -142,7 +140,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndMetadataWithInvalidSafetyLabelVersion(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(false)
+    assertAppPermissionRationaleContainerIsVisible(false)
   }
 
   @Test
@@ -150,7 +148,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithoutInstallSource(APP_APK_PATH_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(false)
+    assertAppPermissionRationaleContainerIsVisible(false)
   }
 
   @Test
@@ -159,7 +157,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndNoMetadata(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(CAMERA)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(false)
+    assertAppPermissionRationaleContainerIsVisible(false)
   }
 
   @Test
@@ -167,7 +165,7 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndNoMetadata(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(false)
+    assertAppPermissionRationaleContainerIsVisible(false)
   }
 
   @Test
@@ -177,15 +175,11 @@ class AppPermissionTest : BaseUsePermissionTest() {
     installPackageWithInstallSourceAndNoMetadata(APP_APK_NAME_31)
     navigateToIndividualPermissionSetting(ACCESS_COARSE_LOCATION)
 
-    assertPermissionRationaleOnAppPermissionIsVisible(false)
+    assertAppPermissionRationaleContainerIsVisible(false)
   }
 
-  private fun assertPermissionRationaleOnAppPermissionIsVisible(expected: Boolean) {
-    findView(By.res(APP_PERMISSION_RATIONALE_CONTAINER_VIEW), expected = expected)
-  }
-
-  private fun assertPermissionRationaleDialogOnAppPermissionIsVisible(expected: Boolean) {
-    findView(By.res(PERMISSION_RATIONALE_ACTIVITY_TITLE_VIEW), expected = expected)
+  private fun assertAppPermissionRationaleContainerIsVisible(expected: Boolean) {
+    findView(By.res(APP_PERMISSION_RATIONALE_CONTAINER_VIEW), expected)
   }
 
   companion object {

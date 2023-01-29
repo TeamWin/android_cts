@@ -36,7 +36,6 @@ import androidx.test.filters.SmallTest
 import com.android.compatibility.common.util.CddTest
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
-import org.junit.Assume
 
 class NotificationTemplateTest : NotificationTemplateTestBase() {
 
@@ -143,7 +142,10 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigPicture_cappedTo16By9() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+        if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
+
         val picture = createBitmap(40, 30)
         val icon = createBitmap(200, 100)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -161,7 +163,10 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigPicture_canShowExact4By3() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+        if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
+
         val picture = createBitmap(40, 30)
         val icon = createBitmap(400, 300)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -179,7 +184,10 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigPicture_neverNarrowerThanSquare() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+        if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
+
         val picture = createBitmap(40, 30)
         val icon = createBitmap(200, 300)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -241,7 +249,10 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testBigPictureStyle_populatesExtrasCompatibly() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+        if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
+
         val bitmap = createBitmap(40, 30)
         val uri = Uri.parse("content://android.app.stubs.assets/picture_400_by_300.png")
         val iconWithUri = Icon.createWithContentUri(uri)
@@ -276,7 +287,9 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
 
     @CddTest(requirement = "3.8.3.1/C-2-1")
     fun testBigPictureStyle_bigPictureUriIcon() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+        if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
 
         val pictureUri = Uri.parse("content://android.app.stubs.assets/picture_400_by_300.png")
         val pictureIcon = Icon.createWithContentUri(pictureUri)
@@ -296,7 +309,10 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
 
     @CddTest(requirement = "3.8.3.1/C-2-1")
     fun testPromoteBigPicture_withBigPictureUriIcon() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+        if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
+
         val pictureUri = Uri.parse("content://android.app.stubs.assets/picture_800_by_600.png")
         val pictureIcon = Icon.createWithContentUri(pictureUri)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -316,7 +332,9 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withoutLargeIcon() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+        if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
 
         val picture = createBitmap(40, 30)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -339,7 +357,9 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withLargeIcon() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+        if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
 
         val picture = createBitmap(40, 30)
         val icon = createBitmap(80, 65)
@@ -370,7 +390,9 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
 
     @CddTest(requirement = "3.8.3.1/C-2-1")
     fun testPromoteBigPicture_withBigLargeIcon() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+        if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
 
         val picture = createBitmap(40, 30)
         val inputWidth = 400
@@ -405,7 +427,9 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
 
     @CddTest(requirement = "3.8.3.1/C-2-1")
     fun testBigPicture_withBigLargeIcon_withContentUri() {
-        skipIfPlatformDoesNotSupportNotificationStyles()
+    if (skipIfPlatformDoesNotSupportNotificationStyles()) {
+            return
+        }
 
         val iconUri = Uri.parse("content://android.app.stubs.assets/picture_800_by_600.png")
         val icon = Icon.createWithContentUri(iconUri)
@@ -808,10 +832,9 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
      *
      * If the current platform does not support notification styles, skip this test without failure.
      */
-    private fun skipIfPlatformDoesNotSupportNotificationStyles() {
-        Assume.assumeFalse("Current platform does not support notification styles.",
-                mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) ||
-                        mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK))
+    private fun skipIfPlatformDoesNotSupportNotificationStyles(): Boolean {
+        return mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) ||
+                        mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
     }
 
     companion object {
