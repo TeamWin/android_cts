@@ -108,6 +108,7 @@ public abstract class CodecTestBase {
     //TODO(b/248315681) Remove codenameEquals() check once devices return correct version for U
     public static final boolean IS_AT_LEAST_U = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)
             || ApiLevelUtil.codenameEquals("UpsideDownCake");
+    public static final boolean IS_BEFORE_U = !IS_AT_LEAST_U;
     public static final boolean FIRST_SDK_IS_AT_LEAST_T =
             ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU);
     public static final boolean VNDK_IS_AT_LEAST_T =

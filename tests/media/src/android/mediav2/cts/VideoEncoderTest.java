@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.media.MediaFormat;
 import android.mediav2.common.cts.CodecEncoderTestBase;
+import android.mediav2.common.cts.CodecTestBase;
 import android.mediav2.common.cts.EncoderConfigParams;
 import android.mediav2.common.cts.RawResource;
 
@@ -170,10 +171,19 @@ public class VideoEncoderTest extends CodecEncoderTestBase {
         RawResource res = EncoderInput.getRawResource(mEncCfgParams[0]);
         assertNotNull("no raw resource found for testing config : " + mActiveEncCfg + mTestConfig
                 + mTestEnv, res);
-        encodeToMemory(mCodecName, mEncCfgParams[0], res, Integer.MAX_VALUE, false, false);
+
+        boolean muxOutput = true;
+        if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_AV1) && CodecTestBase.IS_BEFORE_U) {
+            muxOutput = false;
+        }
+        encodeToMemory(mCodecName, mEncCfgParams[0], res, Integer.MAX_VALUE, false, muxOutput);
 
         // cleanup tmp files
-        if (mMuxOutput) {
+        if (muxOutput) {
+            // validate output
+            validateEncodedPSNR(res, mMime, mMuxedOutputFile, true, mIsLoopBack,
+                    ACCEPTABLE_WIRELESS_TX_QUALITY);
+
             File tmp = new File(mMuxedOutputFile);
             if (tmp.exists()) {
                 assertTrue("unable to delete tmp file" + mMuxedOutputFile, tmp.delete());

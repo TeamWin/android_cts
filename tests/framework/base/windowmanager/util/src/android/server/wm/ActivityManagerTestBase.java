@@ -1699,15 +1699,15 @@ public abstract class ActivityManagerTestBase {
                 mInstrumentation.getUiAutomation().performGlobalAction(
                         AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
             }
-            final boolean isAlwaysOnEnabled = mAmbientDisplayConfiguration.alwaysOnEnabled(
-                    android.os.Process.myUserHandle().getIdentifier());
-            if (isAlwaysOnEnabled) {
+            if (mAmbientDisplayConfiguration.alwaysOnEnabled(
+                    android.os.Process.myUserHandle().getIdentifier())) {
                 mWmState.waitForAodShowing();
             } else {
                 Condition.waitFor("display to turn off", () -> !isDisplayOn(DEFAULT_DISPLAY));
             }
-            if (!isLockDisabled() && !isAlwaysOnEnabled) {
-                mWmState.waitForKeyguardShowingAndNotOccluded();
+            if(!isLockDisabled()) {
+                mWmState.waitFor(state -> state.getKeyguardControllerState().keyguardShowing,
+                        "Keyguard showing");
             }
             return this;
         }

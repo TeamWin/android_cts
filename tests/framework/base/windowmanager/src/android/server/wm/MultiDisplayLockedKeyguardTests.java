@@ -16,9 +16,9 @@
 
 package android.server.wm;
 
-import static android.server.wm.ActivityManagerTestBase.LockScreenSession.FLAG_REMOVE_ACTIVITIES_ON_CLOSE;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
+import static android.server.wm.ActivityManagerTestBase.LockScreenSession.FLAG_REMOVE_ACTIVITIES_ON_CLOSE;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -28,6 +28,8 @@ import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.DisplayContent;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -119,7 +121,7 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
                 .createDisplay();
 
         lockScreenSession.gotoKeyguard();
-        mWmState.assertKeyguardShowing();
+        mWmState.assertKeyguardShowingAndNotOccluded();
         getLaunchActivityBuilder().setUseInstrumentation()
                 .setTargetActivity(DISMISS_KEYGUARD_ACTIVITY).setNewTask(true)
                 .setMultipleTask(true).setDisplayId(newDisplay.mId)
@@ -142,7 +144,7 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
                 .createDisplay();
 
         lockScreenSession.gotoKeyguard();
-        mWmState.assertKeyguardShowing();
+        mWmState.assertKeyguardShowingAndNotOccluded();
         launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
         mWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);

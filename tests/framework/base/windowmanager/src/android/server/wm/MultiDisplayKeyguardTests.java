@@ -58,10 +58,10 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
         final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
 
         lockScreenSession.gotoKeyguard();
-        mWmState.assertKeyguardShowing();
+        mWmState.assertKeyguardShowingAndNotOccluded();
         launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
         mWmState.waitForKeyguardShowingAndNotOccluded();
-        mWmState.assertKeyguardShowing();
+        mWmState.assertKeyguardShowingAndNotOccluded();
         mWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
     }
 
@@ -173,7 +173,7 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
 
         // Lock screen. Keyguard should be shown on the second display
         lockScreenSession.gotoKeyguard();
-        mWmState.assertKeyguardShowing();
+        mWmState.assertKeyguardShowingAndNotOccluded();
         mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(secondDisplayId);
 
         // Change second display. Keyguard should still be shown on the second display
@@ -203,7 +203,7 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
 
         // Lock screen. Keyguard should be shown on the decored system display
         lockScreenSession.gotoKeyguard();
-        mWmState.assertKeyguardShowing();
+        mWmState.assertKeyguardShowingAndNotOccluded();
         mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(decoredSystemDisplayId);
 
         // Resize decored display. Keyguard should still be shown on the decored system display

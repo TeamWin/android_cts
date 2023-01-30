@@ -27,6 +27,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.annotation.NonNull;
 import android.graphics.ImageFormat;
 import android.media.AudioFormat;
 import android.media.Image;
@@ -167,6 +168,48 @@ public class CodecEncoderTestBase extends CodecTestBase {
 
     public static String getTempFilePath(String infix) throws IOException {
         return File.createTempFile("tmp" + infix, ".bin").getAbsolutePath();
+    }
+
+    public static void validateEncodedPSNR(String inpMediaType, String inpFile,
+            String outMediaType, String outFile, boolean allowInpResize, boolean allowInpLoopBack,
+            double perFramePsnrThreshold)
+            throws IOException, InterruptedException {
+        CompareStreams cs = new CompareStreams(inpMediaType, inpFile, outMediaType, outFile,
+                allowInpResize, allowInpLoopBack);
+        validateEncodedPSNR(cs, perFramePsnrThreshold);
+        cs.cleanUp();
+    }
+
+    public static void validateEncodedPSNR(RawResource inp, String outMediaType, String outFile,
+            boolean allowInpResize, boolean allowInpLoopBack, double perFramePsnrThreshold)
+            throws IOException, InterruptedException {
+        CompareStreams cs = new CompareStreams(inp, outMediaType, outFile, allowInpResize,
+                allowInpLoopBack);
+        validateEncodedPSNR(cs, perFramePsnrThreshold);
+        cs.cleanUp();
+    }
+
+    public static void validateEncodedPSNR(@NonNull CompareStreams cs,
+            double perFramePsnrThreshold) throws IOException {
+        ArrayList<double[]> framesPSNR = cs.getFramesPSNR();
+        StringBuilder msg = new StringBuilder();
+        boolean isOk = true;
+        for (int j = 0; j < framesPSNR.size(); j++) {
+            double[] framePSNR = framesPSNR.get(j);
+            // https://www.itu.int/wftp3/av-arch/jctvc-site/2011_01_D_Daegu/JCTVC-D500.doc
+            // weighted psnr (6 * psnrY + psnrU + psnrV) / 8;
+            double weightPSNR = (6 * framePSNR[0] + framePSNR[1] + framePSNR[2]) / 8;
+            if (weightPSNR < perFramePsnrThreshold) {
+                msg.append(String.format(
+                        "Frame %d - PSNR Y: %f, PSNR U: %f, PSNR V: %f, Weighted PSNR: %f < "
+                                + "Threshold %f \n",
+                        j, framePSNR[0], framePSNR[1], framePSNR[2], weightPSNR,
+                        perFramePsnrThreshold));
+                isOk = false;
+            }
+        }
+        assertTrue("Encountered frames with PSNR less than configured threshold "
+                + perFramePsnrThreshold + "dB \n" + msg, isOk);
     }
 
     public static String bitRateModeToString(int mode) {

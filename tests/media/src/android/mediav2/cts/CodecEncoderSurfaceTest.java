@@ -19,6 +19,7 @@ package android.mediav2.cts;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
+import static android.mediav2.common.cts.CodecEncoderTestBase.ACCEPTABLE_WIRELESS_TX_QUALITY;
 import static android.mediav2.common.cts.CodecEncoderTestBase.colorFormatToString;
 import static android.mediav2.common.cts.CodecEncoderTestBase.getMuxerFormatForMediaType;
 import static android.mediav2.common.cts.CodecEncoderTestBase.getTempFilePath;
@@ -40,6 +41,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.mediav2.common.cts.CodecAsyncHandler;
+import android.mediav2.common.cts.CodecEncoderTestBase;
 import android.mediav2.common.cts.CodecTestBase;
 import android.mediav2.common.cts.EncoderConfigParams;
 import android.mediav2.common.cts.OutputManager;
@@ -686,8 +688,10 @@ public class CodecEncoderSurfaceTest {
     public void testSimpleEncodeFromSurface() throws IOException, InterruptedException {
         mDecoder = MediaCodec.createByCodecName(mDecoderName);
         String tmpPath = null;
-        boolean muxOutput = !mEncMediaType.equals(MediaFormat.MIMETYPE_VIDEO_AV1)
-                || CodecTestBase.IS_AT_LEAST_U;
+        boolean muxOutput = true;
+        if (mEncMediaType.equals(MediaFormat.MIMETYPE_VIDEO_AV1) && CodecTestBase.IS_BEFORE_U) {
+            muxOutput = false;
+        }
         {
             mEncoder = MediaCodec.createByCodecName(mEncoderName);
             /* TODO(b/149027258) */
@@ -790,6 +794,11 @@ public class CodecEncoderSurfaceTest {
         }
         mDecoder.release();
         mExtractor.release();
+        // Skip stream validation as there is no reference for tone mapped input
+        if (muxOutput && !mTestToneMap) {
+            CodecEncoderTestBase.validateEncodedPSNR(mTestFileMediaType, mTestFile, mEncMediaType,
+                    tmpPath, false, false, ACCEPTABLE_WIRELESS_TX_QUALITY);
+        }
         if (muxOutput) new File(tmpPath).delete();
     }
 
@@ -803,7 +812,7 @@ public class CodecEncoderSurfaceTest {
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testSimpleEncodeFromSurfaceNative() throws IOException {
+    public void testSimpleEncodeFromSurfaceNative() throws IOException, InterruptedException {
         assumeFalse("tone mapping tests are skipped in native mode", mTestToneMap);
         String tmpPath = null;
         if (!mEncMediaType.equals(MediaFormat.MIMETYPE_VIDEO_AV1) || CodecTestBase.IS_AT_LEAST_U) {
@@ -816,6 +825,8 @@ public class CodecEncoderSurfaceTest {
                 EncoderConfigParams.TOKEN_SEPARATOR, mTestConfig);
         assertTrue(mTestConfig.toString(), isPass);
         if (tmpPath != null) {
+            CodecEncoderTestBase.validateEncodedPSNR(mTestFileMediaType, mTestFile, mEncMediaType,
+                    tmpPath, false, false, ACCEPTABLE_WIRELESS_TX_QUALITY);
             new File(tmpPath).delete();
         }
     }
