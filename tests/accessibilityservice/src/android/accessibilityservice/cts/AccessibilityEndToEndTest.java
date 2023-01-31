@@ -806,6 +806,37 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
 
     @MediumTest
     @Test
+    public void testCollectionInfoRetained() throws Exception {
+        final AccessibilityNodeInfo sentInfo = new AccessibilityNodeInfo(new View(getContext()));
+        AccessibilityNodeInfo.CollectionInfo sentCi =
+                new AccessibilityNodeInfo.CollectionInfo.Builder()
+                        .setRowCount(1)
+                        .setColumnCount(2)
+                        .setHierarchical(true)
+                        .setSelectionMode(
+                                AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_MULTIPLE)
+                        .setItemCount(10)
+                        .setImportantForAccessibilityItemCount(3)
+                        .build();
+        sentInfo.setCollectionInfo(sentCi);
+        final Parcel parcel = Parcel.obtain();
+        sentInfo.writeToParcelNoRecycle(parcel, 0);
+        parcel.setDataPosition(0);
+        AccessibilityNodeInfo receivedInfo = AccessibilityNodeInfo.CREATOR.createFromParcel(parcel);
+        AccessibilityNodeInfo.CollectionInfo receivedCi = receivedInfo.getCollectionInfo();
+
+        assertThat(receivedCi.getRowCount()).isEqualTo(sentCi.getRowCount());
+        assertThat(receivedCi.getColumnCount()).isEqualTo(sentCi.getColumnCount());
+        assertThat(receivedCi.isHierarchical()).isEqualTo(sentCi.isHierarchical());
+        assertThat(receivedCi.getSelectionMode()).isEqualTo(sentCi.getSelectionMode());
+        assertThat(receivedCi.getItemCount()).isEqualTo(sentCi.getItemCount());
+        assertThat(receivedCi.getImportantForAccessibilityItemCount()).isEqualTo(
+                sentCi.getImportantForAccessibilityItemCount());
+        parcel.recycle();
+    }
+
+    @MediumTest
+    @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#getActionList"})
     public void testTooltipTextActionsReportedToAccessibility() throws Exception {
         final AccessibilityNodeInfo buttonNode = sUiAutomation.getRootInActiveWindow()
