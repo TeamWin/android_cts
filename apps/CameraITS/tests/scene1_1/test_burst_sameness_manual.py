@@ -69,7 +69,8 @@ class BurstSamenessManualTest(its_base_test.ItsBaseTest):
 
       # Load chart for scene
       its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance)
+          cam, props, self.scene, self.tablet,
+          its_session_utils.CHART_DISTANCE_NO_SCALING)
 
       # Capture at the smallest resolution
       _, fmt = capture_request_utils.get_fastest_manual_capture_settings(props)

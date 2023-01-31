@@ -91,7 +91,8 @@ class ParamTonemapModeTest(its_base_test.ItsBaseTest):
 
       # Load chart for scene
       its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance)
+          cam, props, self.scene, self.tablet,
+          its_session_utils.CHART_DISTANCE_NO_SCALING)
 
       # Determine format, exposure and gain for requests
       largest_yuv = capture_request_utils.get_largest_yuv_format(props)

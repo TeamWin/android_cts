@@ -51,6 +51,13 @@ public class GnssCapabilitiesTest {
         parcel.recycle();
     }
 
+    @Test
+    public void testClear() {
+        GnssCapabilities event = new GnssCapabilities.Builder(getTestGnssCapabilities())
+                .clearIsAccumulatedDeltaRangeCapabilityKnown().build();
+        assertEquals(false, event.isAccumulatedDeltaRangeCapabilityKnown());
+    }
+
     private static GnssCapabilities getTestGnssCapabilities() {
         GnssCapabilities.Builder builder = new GnssCapabilities.Builder();
         builder.setHasAccumulatedDeltaRange(true);

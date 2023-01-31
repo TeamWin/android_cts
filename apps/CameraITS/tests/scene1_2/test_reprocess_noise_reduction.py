@@ -121,7 +121,8 @@ class ReprocessNoiseReductionTest(its_base_test.ItsBaseTest):
 
       # Load chart for scene.
       its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance)
+          cam, props, self.scene, self.tablet,
+          its_session_utils.CHART_DISTANCE_NO_SCALING)
 
       # If reprocessing is supported, ZSL NR mode must be available.
       if not camera_properties_utils.noise_reduction_mode(

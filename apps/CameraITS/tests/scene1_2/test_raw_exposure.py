@@ -164,7 +164,8 @@ class RawExposureTest(its_base_test.ItsBaseTest):
 
       # Load chart for scene
       its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance)
+          cam, props, self.scene, self.tablet,
+          its_session_utils.CHART_DISTANCE_NO_SCALING)
 
       # Create list of exposures
       e_min, e_max = props['android.sensor.info.exposureTimeRange']

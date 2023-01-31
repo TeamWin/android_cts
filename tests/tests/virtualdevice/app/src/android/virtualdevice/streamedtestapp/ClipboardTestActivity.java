@@ -23,6 +23,7 @@ import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_WAI
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_FINISH_AFTER_SENDING_RESULT;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_GET_CLIP_DATA;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_HAS_CLIP;
+import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_NOT_FOCUSABLE;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_RESULT_RECEIVER;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_SET_CLIP_DATA;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_WAIT_FOR_FOCUS;
@@ -34,6 +35,7 @@ import android.content.ClipboardManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.ResultReceiver;
+import android.view.WindowManager;
 
 import androidx.annotation.Nullable;
 
@@ -52,7 +54,11 @@ public class ClipboardTestActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        boolean waitForFocus = getIntent().getBooleanExtra(EXTRA_WAIT_FOR_FOCUS, true);
+        Intent intent = getIntent();
+        if (intent.getBooleanExtra(EXTRA_NOT_FOCUSABLE, false)) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+        }
+        boolean waitForFocus = intent.getBooleanExtra(EXTRA_WAIT_FOR_FOCUS, true);
         if (!waitForFocus || hasWindowFocus()) {
             processAction();
         }

@@ -45,6 +45,7 @@ android_test {
         "alertwindowservice/src/**/*.java",
         ":cts-wm-components",
         ":CtsVerifierMockVrListenerServiceFiles",
+        "src/**/*.aidl",
     ],
 
     resource_dirs: ["res"],

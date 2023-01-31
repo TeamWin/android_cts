@@ -708,7 +708,7 @@ public class EncodeDecodeTest {
                     if (VERBOSE) Log.d(TAG, "decoder output format changed: " +
                             decoderOutputFormat);
                 } else if (decoderStatus < 0) {
-                    fail("unexpected result from deocder.dequeueOutputBuffer: " + decoderStatus);
+                    fail("unexpected result from decoder.dequeueOutputBuffer: " + decoderStatus);
                 } else {  // decoderStatus >= 0
                     if (!toSurface) {
                         ByteBuffer outputFrame = decoderOutputBuffers[decoderStatus];
@@ -863,7 +863,7 @@ public class EncodeDecodeTest {
                     if (VERBOSE) Log.d(TAG, "decoder output format changed: " +
                             decoderOutputFormat);
                 } else if (decoderStatus < 0) {
-                    fail("unexpected result from deocder.dequeueOutputBuffer: " + decoderStatus);
+                    fail("unexpected result from decoder.dequeueOutputBuffer: " + decoderStatus);
                 } else {  // decoderStatus >= 0
                     if (VERBOSE) Log.d(TAG, "surface decoder given buffer " + decoderStatus +
                             " (size=" + info.size + ")");

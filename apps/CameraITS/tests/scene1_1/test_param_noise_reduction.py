@@ -73,7 +73,8 @@ class ParamNoiseReductionTest(its_base_test.ItsBaseTest):
 
       # Load chart for scene
       its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance)
+          cam, props, self.scene, self.tablet,
+          its_session_utils.CHART_DISTANCE_NO_SCALING)
 
       snrs = [[], [], []]  # List of SNRs for R,G,B
       ref_snr = []  # Reference (baseline) SNR for each of R,G,B

@@ -300,7 +300,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.TIRE_PRESSURE_DISPLAY_UNITS,
                             VehiclePropertyIds.EV_BATTERY_DISPLAY_UNITS,
                             VehiclePropertyIds.VEHICLE_SPEED_DISPLAY_UNITS,
-                            VehiclePropertyIds.FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME)
+                            VehiclePropertyIds.FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME,
+                            VehiclePropertyIds.HVAC_TEMPERATURE_DISPLAY_UNITS)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_STEERING_WHEEL_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -3925,6 +3926,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .setPossibleConfigArrayValues(HVAC_TEMPERATURE_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
+                .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()

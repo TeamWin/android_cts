@@ -14,28 +14,15 @@
  * limitations under the License.
  */
 
-package android.webkit.cts;
+package android.server.wm.scvh;
 
-import android.webkit.cts.HttpRequest;
+import android.os.IBinder;
+import android.server.wm.scvh.IAttachEmbeddedWindowCallback;
+import android.view.SurfaceControlViewHost.SurfacePackage;
+import android.view.WindowManager.LayoutParams;
 
-interface IWebServer {
-    void start(int sslMode, in @nullable byte[] acceptedIssuerDer);
-
-    void shutdown();
-
-    void resetRequestState();
-
-    String getDelayedAssetUrl(String path);
-
-    String getRedirectingAssetUrl(String path);
-
-    String getAssetUrl(String path);
-
-    String getAuthAssetUrl(String path);
-
-    String getBinaryUrl(String mimeType, int contentLength);
-
-    boolean wasResourceRequested(String url);
-
-    HttpRequest getLastAssetRequest(String url);
+interface IAttachEmbeddedWindow {
+    void attachEmbedded(IBinder hostToken, int width, int height, int displayId, long delayMs,
+            IAttachEmbeddedWindowCallback callback);
+    void relayout(in LayoutParams lp);
 }

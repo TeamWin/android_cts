@@ -32,6 +32,13 @@ import androidx.test.InstrumentationRegistry;
 
 import org.apache.http.util.EncodingUtils;
 
+import java.io.ByteArrayInputStream;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.X509TrustManager;
+
 /**
  * This class contains all the environmental variables that need to be configured for WebView tests
  * to either run inside the SDK Runtime or within an Activity.
@@ -179,10 +186,34 @@ public final class SharedWebViewTestEnvironment {
                 return new IWebServer.Stub() {
                     private CtsTestServer mWebServer;
 
-                    public void start(@SslMode int sslMode) {
+                    public void start(@SslMode int sslMode, @Nullable byte[] acceptedIssuerDer) {
                         assertNull(mWebServer);
+                        final X509Certificate[] acceptedIssuerCerts;
+                        if (acceptedIssuerDer != null) {
+                            try {
+                                CertificateFactory certFactory = CertificateFactory.getInstance(
+                                        "X.509");
+                                acceptedIssuerCerts = new X509Certificate[]{
+                                        (X509Certificate) certFactory.generateCertificate(
+                                                new ByteArrayInputStream(acceptedIssuerDer))};
+                            } catch (CertificateException e) {
+                                // Throw manually, because compiler does not understand that fail()
+                                // does not return.
+                                throw new AssertionError(
+                                        "Failed to create certificate chain: " + e.toString());
+                            }
+                        } else {
+                            acceptedIssuerCerts = null;
+                        }
                         try {
-                            mWebServer = new CtsTestServer(applicationContext, sslMode);
+                            X509TrustManager trustManager = new CtsTestServer.CtsTrustManager() {
+                                @Override
+                                public X509Certificate[] getAcceptedIssuers() {
+                                    return acceptedIssuerCerts;
+                                }
+                            };
+                            mWebServer = new CtsTestServer(applicationContext, sslMode,
+                                    trustManager);
                         } catch (Exception e) {
                             fail("Failed to launch CtsTestServer");
                         }

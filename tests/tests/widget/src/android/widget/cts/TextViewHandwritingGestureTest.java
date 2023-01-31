@@ -1614,6 +1614,22 @@ public class TextViewHandwritingGestureTest {
         assertCursorOffset(expectedOffset + insertText.length());
     }
 
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_exitAfterLostFocus() {
+        mEditText.requestFocus();
+
+        performInsertModeGesture(
+                new PointF(3 * CHAR_WIDTH_PX, mEditText.getLayout().getLineTop(0) - 1f),
+                /* setFallbackText= */ false);
+
+        final int expectedOffset = 3;
+        assertGestureInsertMode(expectedOffset);
+
+        mEditText.clearFocus();
+        assertNoInsertMode();
+    }
+
     private void setEditTextSingleLine() {
         mEditText.setSingleLine(true);
         mEditText.measure(

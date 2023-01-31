@@ -177,7 +177,7 @@ object AppMetadata {
     private const val INVALID_TOP_LEVEL_VERSION = 0L
 
     private const val LOCATION_CATEGORY = "location"
-    private const val APPROX_LOCATION = "APPROX_LOCATION"
+    private const val APPROX_LOCATION = "approx_location"
     private const val PURPOSE_FRAUD_PREVENTION_SECURITY = 4
 
     private const val KEY_VERSION = "version"

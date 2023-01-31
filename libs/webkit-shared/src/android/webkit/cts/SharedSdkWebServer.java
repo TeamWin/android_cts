@@ -18,6 +18,8 @@ package android.webkit.cts;
 
 import android.os.RemoteException;
 
+import androidx.annotation.Nullable;
+
 /**
  * This class serves as the public fronting API for tests to interact with the CtsTestServer.
  *
@@ -34,8 +36,13 @@ public final class SharedSdkWebServer {
 
     /** Starts the web server. */
     public void start(@SslMode int sslMode) {
+        start(new Config().setSslMode(sslMode));
+    }
+
+    /** Starts the web server using the provided {@link Config}. */
+    public void start(Config config) {
         try {
-            mWebServer.start(sslMode);
+            mWebServer.start(config.mSslMode, config.mAcceptedIssuerDer);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -119,6 +126,37 @@ public final class SharedSdkWebServer {
             return mWebServer.getLastAssetRequest(url);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /** Configuration options for starting a SharedSdkWebServer */
+    public static class Config {
+        private @SslMode int mSslMode;
+        private @Nullable byte[] mAcceptedIssuerDer;
+
+        public Config() {
+            mSslMode = SslMode.INSECURE;
+            mAcceptedIssuerDer = null;
+        }
+
+        /** Set the server's SslMode */
+        public Config setSslMode(@SslMode int sslMode) {
+            mSslMode = sslMode;
+            return this;
+        }
+
+        /**
+         * Configures the server's TrustManager to contain a given accepted issuer certificate
+         * (specified as DER bytes).
+         *
+         * Note that this does not enforce that certificates are issued from this issuer - as with
+         * the default CTS trust manager, all certificates are always considered valid. Supplying an
+         * acceptedIssuer merely affects the issuer DNs contained in the certificate request sent to
+         * the client in the TLS handshake.
+         */
+        public Config setAcceptedIssuer(@Nullable byte[] acceptedIssuerDer) {
+            mAcceptedIssuerDer = acceptedIssuerDer;
+            return this;
         }
     }
 }

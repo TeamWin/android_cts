@@ -33,9 +33,12 @@ import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_WAI
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_FINISH_AFTER_SENDING_RESULT;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_GET_CLIP_DATA;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_HAS_CLIP;
+import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_NOTIFY_WHEN_ATTACHED_TO_WINDOW;
+import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_NOT_FOCUSABLE;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_RESULT_RECEIVER;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_SET_CLIP_DATA;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_WAIT_FOR_FOCUS;
+import static android.virtualdevice.cts.common.ClipboardTestConstants.RESULT_CODE_ATTACHED_TO_WINDOW;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.RESULT_CODE_CLIP_LISTENER_READY;
 import static android.virtualdevice.cts.util.VirtualDeviceTestUtils.createActivityOptions;
 import static android.virtualdevice.cts.util.VirtualDeviceTestUtils.createResultReceiver;
@@ -69,6 +72,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
 import android.os.Bundle;
@@ -88,6 +92,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.Timeout;
 
 import com.google.common.util.concurrent.SettableFuture;
 
@@ -334,6 +339,7 @@ public class StreamedAppClipboardTest {
 
         launchAndAwaitActivityOnVirtualDisplay(new Intent(ACTION_GET_CLIP)
                 .setComponent(CLIPBOARD_TEST_ACTIVITY)
+                .putExtra(EXTRA_NOT_FOCUSABLE, true)
                 .putExtra(EXTRA_WAIT_FOR_FOCUS, false)
                 .putExtra(EXTRA_RESULT_RECEIVER, mResultReceiver));
 
@@ -368,15 +374,21 @@ public class StreamedAppClipboardTest {
                 VirtualDeviceTestUtils.OnReceiveResultListener.class);
         final Intent secondAppIntent = new Intent(ACTION_GET_CLIP)
                 .setComponent(CLIPBOARD_TEST_ACTIVITY_2)
+                .putExtra(EXTRA_NOTIFY_WHEN_ATTACHED_TO_WINDOW, true)
                 .putExtra(EXTRA_RESULT_RECEIVER,
                         createResultReceiver(secondResultReceiver))
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         InstrumentationRegistry.getInstrumentation().getTargetContext()
                 .startActivity(secondAppIntent, null);
+        verify(secondResultReceiver, timeout(EVENT_TIMEOUT_MS)).onReceiveResult(
+                eq(RESULT_CODE_ATTACHED_TO_WINDOW), any());
+        DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+        tapOnDisplay(displayManager.getDisplay(Display.DEFAULT_DISPLAY));
+
         ArgumentCaptor<Bundle> bundle = ArgumentCaptor.forClass(Bundle.class);
-        verify(secondResultReceiver, timeout(EVENT_TIMEOUT_MS)).onReceiveResult(anyInt(),
-                bundle.capture());
+        verify(secondResultReceiver, timeout(EVENT_TIMEOUT_MS)).onReceiveResult(
+                eq(Activity.RESULT_OK), bundle.capture());
         assertThat(bundle.getValue().getBoolean(EXTRA_HAS_CLIP, true)).isFalse();
         ClipData clipData = bundle.getValue().getParcelable(EXTRA_GET_CLIP_DATA, ClipData.class);
         assertThat(clipData).isNull();
@@ -476,6 +488,7 @@ public class StreamedAppClipboardTest {
         // change event.
         launchAndAwaitActivityOnVirtualDisplay(new Intent(ACTION_WAIT_FOR_CLIP)
                 .setComponent(CLIPBOARD_TEST_ACTIVITY)
+                .putExtra(EXTRA_NOT_FOCUSABLE, true)
                 .putExtra(EXTRA_WAIT_FOR_FOCUS, false)
                 .putExtra(EXTRA_RESULT_RECEIVER, mResultReceiver));
 
@@ -668,9 +681,8 @@ public class StreamedAppClipboardTest {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         InstrumentationRegistry.getInstrumentation().getTargetContext()
                 .startActivity(intent, createActivityOptions(targetDisplay));
-
         try {
-            activityRunning.get(2, TimeUnit.SECONDS);
+            activityRunning.get(EVENT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -686,16 +698,29 @@ public class StreamedAppClipboardTest {
         final Point p = new Point(displayMetrics.widthPixels / 2, displayMetrics.heightPixels / 2);
         UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
 
-        final long downTime = SystemClock.elapsedRealtime();
-        final MotionEvent downEvent = MotionEvent.obtain(downTime, downTime,
-                MotionEvent.ACTION_DOWN, p.x, p.y, 0 /* metaState */);
-        downEvent.setDisplayId(display.getDisplayId());
-        uiAutomation.injectInputEvent(downEvent, /* sync */ true);
-
-        final long upTime = SystemClock.elapsedRealtime();
-        final MotionEvent upEvent = MotionEvent.obtain(downTime, upTime,
-                MotionEvent.ACTION_UP, p.x, p.y, 0 /* metaState */);
-        upEvent.setDisplayId(display.getDisplayId());
-        uiAutomation.injectInputEvent(upEvent, /* sync */ true);
+        // Sometimes the top activity on the display isn't quite ready to receive inputs and the
+        // injected input event gets rejected, so we retry a few times before giving up.
+        Timeout timeout = new Timeout("tapOnDisplay", EVENT_TIMEOUT_MS, 2f, EVENT_TIMEOUT_MS);
+        try {
+            timeout.run("tap on display " + display.getDisplayId(), ()-> {
+                final long downTime = SystemClock.elapsedRealtime();
+                final MotionEvent downEvent = MotionEvent.obtain(downTime, downTime,
+                        MotionEvent.ACTION_DOWN, p.x, p.y, 0 /* metaState */);
+                downEvent.setDisplayId(display.getDisplayId());
+                boolean downEventSuccess =
+                        uiAutomation.injectInputEvent(downEvent, /* sync */ true);
+                boolean upEventSuccess = false;
+                if (downEventSuccess) {
+                    final long upTime = SystemClock.elapsedRealtime();
+                    final MotionEvent upEvent = MotionEvent.obtain(downTime, upTime,
+                            MotionEvent.ACTION_UP, p.x, p.y, 0 /* metaState */);
+                    upEvent.setDisplayId(display.getDisplayId());
+                    upEventSuccess = uiAutomation.injectInputEvent(upEvent, /* sync */ true);
+                }
+                return (downEventSuccess && upEventSuccess) ? Boolean.TRUE : null;
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

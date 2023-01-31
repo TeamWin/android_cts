@@ -270,7 +270,7 @@ public class CtsTestServer {
      * for shutdown by blindly trusting the {@link CtsTestServer}'s
      * credentials.
      */
-    private static class CtsTrustManager implements X509TrustManager {
+    static class CtsTrustManager implements X509TrustManager {
         public void checkClientTrusted(X509Certificate[] chain, String authType) {
             // Trust the CtSTestServer's client...
         }

@@ -70,6 +70,7 @@
 
     <!-- Body Sensors -->
     <uses-permission android:name="android.permission.BODY_SENSORS" />
+    <uses-permission android:name="android.permission.BODY_SENSORS_WRIST_TEMPERATURE" />
 
     <application>
         <activity android:name=".CheckCalendarAccessActivity" android:exported="true" />

@@ -24,7 +24,6 @@ import android.service.battery.BatteryServiceDumpProto;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
-import com.android.internal.os.StatsdConfigProto.StatsdConfig;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -32,6 +31,8 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.CollectingTestListener;
+import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.ResultForwarder;
 import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
@@ -45,6 +46,7 @@ import java.io.FileNotFoundException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.StringTokenizer;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -79,6 +81,32 @@ public final class DeviceUtils {
     public static @Nonnull TestRunResult runDeviceTests(ITestDevice device, String pkgName,
             @Nullable String testClassName, @Nullable String testMethodName)
             throws DeviceNotAvailableException {
+        return internalRunDeviceTests(device, pkgName, testClassName, testMethodName, null);
+    }
+
+    /**
+     * Runs device side tests.
+     *
+     * @param device Can be retrieved by running getDevice() in a class that extends DeviceTestCase
+     * @param pkgName Test package name, such as "com.android.server.cts.statsdatom"
+     * @param testClassName Test class name which can either be a fully qualified name or "." + a
+     *     class name; if null, all test in the package will be run
+     * @param testMethodName Test method name; if null, all tests in class or package will be run
+     * @param listener Listener for test results from the test invocation.
+     * @return {@link TestRunResult} of this invocation
+     * @throws DeviceNotAvailableException
+     */
+    public static @Nonnull TestRunResult runDeviceTests(ITestDevice device, String pkgName,
+            @Nullable String testClassName, @Nullable String testMethodName,
+            ITestInvocationListener listener)
+            throws DeviceNotAvailableException {
+        return internalRunDeviceTests(device, pkgName, testClassName, testMethodName, listener);
+    }
+
+    private static @Nonnull TestRunResult internalRunDeviceTests(ITestDevice device, String pkgName,
+            @Nullable String testClassName, @Nullable String testMethodName,
+            @Nullable ITestInvocationListener otherListener)
+            throws DeviceNotAvailableException {
         if (testClassName != null && testClassName.startsWith(".")) {
             testClassName = pkgName + testClassName;
         }
@@ -91,10 +119,17 @@ public final class DeviceUtils {
             testRunner.setClassName(testClassName);
         }
 
-        CollectingTestListener listener = new CollectingTestListener();
-        assertThat(device.runInstrumentationTests(testRunner, listener)).isTrue();
+        CollectingTestListener collectingTestListener = new CollectingTestListener();
+        ITestInvocationListener combinedLister;
+        if (otherListener != null) {
+            combinedLister = new ResultForwarder(otherListener, collectingTestListener);
+        } else {
+            combinedLister = collectingTestListener;
+        }
 
-        final TestRunResult result = listener.getCurrentRunResults();
+        assertThat(device.runInstrumentationTests(testRunner, combinedLister)).isTrue();
+
+        final TestRunResult result = collectingTestListener.getCurrentRunResults();
         if (result.isRunFailure()) {
             throw new Error("Failed to successfully run device tests for "
                     + result.getName() + ": " + result.getRunFailureMessage());

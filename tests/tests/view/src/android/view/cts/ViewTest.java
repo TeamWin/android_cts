@@ -4464,11 +4464,13 @@ public class ViewTest {
         assertFalse(view.performHapticFeedback(LONG_PRESS, FLAG_IGNORE_GLOBAL_SETTING));
         assertPerformHapticFeedbackTrueIfHasVibrator(vib,
                 view.performHapticFeedback(LONG_PRESS, ALWAYS));
+        assertFalse(view.performHapticFeedback(HapticFeedbackConstants.NO_HAPTICS));
 
         view.setHapticFeedbackEnabled(true);
         assertTrue(view.isHapticFeedbackEnabled());
         assertPerformHapticFeedbackTrueIfHasVibrator(vib,
                 view.performHapticFeedback(LONG_PRESS, FLAG_IGNORE_GLOBAL_SETTING));
+        assertFalse(view.performHapticFeedback(HapticFeedbackConstants.NO_HAPTICS));
     }
 
     /**

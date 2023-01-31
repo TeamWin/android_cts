@@ -126,8 +126,8 @@ public final class CtsMouseUtil {
         @Override
         public boolean matches(MotionEvent actual) {
             return super.matches(actual)
-                    && ((int) actual.getX()) == mX
-                    && ((int) actual.getY()) == mY;
+                    && Math.round(actual.getX()) == mX
+                    && Math.round(actual.getY()) == mY;
         }
 
         @Override

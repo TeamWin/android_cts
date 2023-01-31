@@ -506,7 +506,7 @@ public class ImageReaderDecoderTest {
                 if (VERBOSE) Log.v(TAG, "decoder output format changed: " + outFormat);
             } else if (res < 0) {
                 // Should be decoding error.
-                fail("unexpected result from deocder.dequeueOutputBuffer: " + res);
+                fail("unexpected result from decoder.dequeueOutputBuffer: " + res);
             } else {
                 if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                     sawOutputEOS = true;

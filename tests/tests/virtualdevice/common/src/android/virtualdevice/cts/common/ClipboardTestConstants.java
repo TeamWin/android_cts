@@ -38,6 +38,9 @@ public class ClipboardTestConstants {
     // change listener.
     public static final int RESULT_CODE_CLIP_LISTENER_READY = Activity.RESULT_FIRST_USER;
 
+    // A result code sent to indicate that the test activity has been attached to a window
+    public static final int RESULT_CODE_ATTACHED_TO_WINDOW = Activity.RESULT_FIRST_USER;
+
 
     // A boolean indicating whether a test activity should automatically call finish() after sending
     // its result via the ResultReceiver.
@@ -46,6 +49,14 @@ public class ClipboardTestConstants {
     // A boolean indicating whether a test activity should wait for focus before processing the
     // action in the Intent sent to it.
     public static final String EXTRA_WAIT_FOR_FOCUS = "waitForFocus";
+
+    // A boolean which if true indicates the window should be marked as not focusable so that it
+    // doesn't accidentally receive focus.
+    public static final String EXTRA_NOT_FOCUSABLE = "notFocusable";
+
+    // A boolean extra to request that the activity send RESULT_CODE_ATTACHED_TO_WINDOW as soon
+    // as it is attached to a window.
+    public static final String EXTRA_NOTIFY_WHEN_ATTACHED_TO_WINDOW = "notifyWhenAttachedToWindow";
 
 
     // A parecelable containing a ResultReceiver used to send a result back to the caller.

@@ -20,9 +20,11 @@ import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_GET
 import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_SET_CLIP;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_GET_CLIP_DATA;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_HAS_CLIP;
+import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_NOTIFY_WHEN_ATTACHED_TO_WINDOW;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_RESULT_RECEIVER;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_SET_CLIP_DATA;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_WAIT_FOR_FOCUS;
+import static android.virtualdevice.cts.common.ClipboardTestConstants.RESULT_CODE_ATTACHED_TO_WINDOW;
 
 import android.app.Activity;
 import android.content.ClipData;
@@ -41,6 +43,17 @@ public class ClipboardTestActivity2 extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mClipboard = getSystemService(ClipboardManager.class);
+    }
+
+    @Override
+    public void onAttachedToWindow() {
+        if (getIntent().getBooleanExtra(EXTRA_NOTIFY_WHEN_ATTACHED_TO_WINDOW, false)) {
+            ResultReceiver resultReceiver =
+                    getIntent().getParcelableExtra(EXTRA_RESULT_RECEIVER, ResultReceiver.class);
+            if (resultReceiver != null) {
+                resultReceiver.send(RESULT_CODE_ATTACHED_TO_WINDOW, null);
+            }
+        }
     }
 
     @Override

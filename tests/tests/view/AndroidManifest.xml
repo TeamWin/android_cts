@@ -504,6 +504,13 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.view.cts.TrustedPresentationCallbackTest$TestActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity>
+
         <service android:name="android.view.textclassifier.cts.CtsTextClassifierService"
              android:exported="true"
              android:permission="android.permission.BIND_TEXTCLASSIFIER_SERVICE">

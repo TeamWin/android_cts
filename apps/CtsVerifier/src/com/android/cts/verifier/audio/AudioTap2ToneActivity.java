@@ -152,7 +152,7 @@ public class AudioTap2ToneActivity
 
     @Override
     public final String getReportSectionName() {
-        return setTestNameSuffix(sCurrentDisplayMode, "audio_tap2tone_latency_activity");
+        return setTestNameSuffix(sCurrentDisplayMode, "tap_to_tone_latency");
     }
 
     // ReportLog Schema

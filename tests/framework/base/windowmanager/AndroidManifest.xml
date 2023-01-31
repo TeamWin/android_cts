@@ -620,6 +620,9 @@
         <activity android:name="android.server.wm.SurfaceControlViewHostTests$TestActivity"
                   android:exported="true"
                   android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+
+        <service android:name="android.server.wm.scvh.EmbeddedSCVHService"
+            android:process="com.android.server.wm.scvh.embedded_process" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
