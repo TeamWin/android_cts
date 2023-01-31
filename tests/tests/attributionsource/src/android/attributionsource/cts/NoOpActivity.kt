@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.permission5.cts
+package android.attributionsource.cts
 
 import android.app.Activity
 import android.content.Context

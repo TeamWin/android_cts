@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.permission5.cts.blamed2
+package android.attributionsource.cts.blamed2
 
 import android.content.ContextParams
 import android.content.Intent

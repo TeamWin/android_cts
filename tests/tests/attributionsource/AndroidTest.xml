@@ -16,7 +16,7 @@
   ~ limitations under the License.
   -->
 
-<configuration description="Config for CTS Permission5 test cases">
+<configuration description="Config for CTS AttributionSource test cases">
 
     <option name="test-suite-tag" value="cts" />
 
@@ -32,7 +32,7 @@
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsPermission5TestCases.apk" />
+        <option name="test-file-name" value="CtsAttributionSourceTestCases.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
@@ -52,7 +52,7 @@
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.permission5.cts" />
+        <option name="package" value="android.attributionsource.cts" />
         <option name="runtime-hint" value="5m" />
     </test>
 

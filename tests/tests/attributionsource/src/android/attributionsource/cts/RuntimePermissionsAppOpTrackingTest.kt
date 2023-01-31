@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.permission5.cts
+package android.attributionsource.cts
 
 import android.Manifest
 import android.app.AppOpsManager
@@ -660,14 +660,14 @@ class RuntimePermissionsAppOpTrackingTest {
         private const val SNAPSHOT_INTERVAL_MILLIS: Long = 1000
 
         val SHELL_PACKAGE_NAME = "com.android.shell"
-        val RECEIVER_PACKAGE_NAME = "android.permission5.cts.blamed"
+        val RECEIVER_PACKAGE_NAME = "android.attributionsource.cts.blamed"
         val BRING_TO_FOREGROUND_ACTIVITY =
-                "android.permission5.cts.blamed.BringToForegroundActivity"
-        val RECOGNITION_SERVICE = "android.permission5.cts.blamed2.MyRecognitionService"
+                "android.attributionsource.cts.blamed.BringToForegroundActivity"
+        val RECOGNITION_SERVICE = "android.attributionsource.cts.blamed2.MyRecognitionService"
         val REMOTE_CALLBACK = "remote_callback"
         val ATTRIBUTION_SOURCE = "attribution_source"
         val ACCESSOR_ATTRIBUTION_TAG = "accessor_attribution_tag"
-        val RECEIVER2_PACKAGE_NAME = "android.permission5.cts.blamed2"
+        val RECEIVER2_PACKAGE_NAME = "android.attributionsource.cts.blamed2"
         val RECEIVER_ATTRIBUTION_TAG = "receiver_attribution_tag"
         val RECEIVER2_ATTRIBUTION_TAG = "receiver2_attribution_tag"
 
