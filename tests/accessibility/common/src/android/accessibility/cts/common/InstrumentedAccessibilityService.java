@@ -20,7 +20,6 @@ import static com.android.compatibility.common.util.TestUtils.waitOn;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
@@ -211,11 +210,7 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
                 return instance;
             }
         }
-        // AccessibilityManagerService may have not been notified of the test APK installation,
-        // causing it to be missing the services in the test APK from its installed service list.
-        // Ignore this test case because this indicates an issue with AMS and not the actual test.
-        assumeTrue("Accessibility service " + serviceName + " not found", false);
-        return null;
+        throw new RuntimeException("Accessibility service " + serviceName + " not found");
     }
 
     public static <T extends InstrumentedAccessibilityService> T getInstanceForClass(

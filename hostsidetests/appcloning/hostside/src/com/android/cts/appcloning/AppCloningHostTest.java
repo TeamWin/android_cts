@@ -18,6 +18,7 @@ package com.android.cts.appcloning;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
@@ -241,5 +242,89 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
         args.put(CLONE_USER_ID, sCloneUserId);
         runDeviceTestAsUserInPkgA("testStorageManager_verifyInclusionOfSharedProfileVolumes",
                 currentUserId, args);
+    }
+
+    @Test
+    public void testDeletionOfPrimaryApp_deleteAppWithParentPropertyTrue_deletesCloneApp()
+            throws Exception {
+        assumeTrue(isAtLeastU());
+
+        int currentUserId = getCurrentUserId();
+
+        // Install the app in owner user space
+        installPackage(APP_A, "--user " + currentUserId);
+        eventually(() -> {
+            // Wait for finish.
+            assertThat(isPackageInstalled(APP_A_PACKAGE, String.valueOf(currentUserId))).isTrue();
+        }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+
+        // Install the app in clone user profile
+        installPackage(APP_A, "--user " + sCloneUserId);
+        eventually(() -> {
+            // Wait for finish.
+            assertThat(isPackageInstalled(APP_A_PACKAGE, sCloneUserId)).isTrue();
+        }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+
+        eventually(() -> {
+            uninstallPackage(APP_A_PACKAGE, currentUserId);
+        }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+
+        assertTrue(!getPackageInUser(APP_A_PACKAGE, Integer.parseInt(sCloneUserId))
+                .contains(APP_A_PACKAGE));
+    }
+
+    @Test
+    public void testDeletionOfPrimaryApp_deleteAppWithParentPropertyFalse_doesNotDeleteInChild()
+            throws Exception {
+        assumeTrue(isAtLeastU());
+
+        int currentUserId = getCurrentUserId();
+        // Create test profile
+        CommandResult createUserResult = executeShellV2Command("pm create-user --profileOf "
+                + currentUserId + " --user-type android.os.usertype.profile.TEST test");
+        assertThat(isSuccessful(createUserResult)).isTrue();
+        String testUserOutput = createUserResult.getStdout();
+        String testUserId = testUserOutput.substring(
+                testUserOutput.lastIndexOf(' ') + 1).replaceAll("[^0-9]", "");
+
+        try {
+            // Install the app in owner user space
+            installPackage(APP_A, "--user " + currentUserId);
+            eventually(() -> {
+                // Wait for finish.
+                assertThat(isPackageInstalled(
+                        APP_A_PACKAGE, String.valueOf(currentUserId))).isTrue();
+            }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+
+            // Install the app in test user profile
+            installPackage(APP_A, "--user " + testUserId);
+            eventually(() -> {
+                // Wait for finish.
+                assertThat(isPackageInstalled(APP_A_PACKAGE, testUserId)).isTrue();
+            }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+
+            eventually(() -> {
+                uninstallPackage(APP_A_PACKAGE, currentUserId);
+            }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+
+            assertTrue(getPackageInUser(APP_A_PACKAGE, Integer.parseInt(testUserId))
+                    .contains(APP_A_PACKAGE));
+        } finally {
+            executeShellV2Command("pm remove-user " + testUserId);
+        }
+    }
+
+    private String getPackageInUser(String pkgName, int userId) throws Exception {
+        String command = "pm list packages --user " + userId + " " + pkgName;
+        CommandResult result = executeShellV2Command(command);
+        assertTrue(isSuccessful(result));
+        return result.getStdout();
+    }
+
+    private String uninstallPackage(String pkgName, int userId) throws Exception {
+        String command = "pm uninstall --user " + userId + " " + pkgName;
+        CommandResult result = executeShellV2Command(command);
+        assertTrue(isSuccessful(result));
+        return result.getStdout();
     }
 }

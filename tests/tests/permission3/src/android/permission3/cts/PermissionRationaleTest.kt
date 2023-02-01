@@ -135,6 +135,18 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
     }
 
     @Test
+    fun clickLinkToHelpCenter_opensHelpCenter() {
+        navigateToPermissionRationaleActivity()
+        assertPermissionRationaleActivityTitleIsVisible(true)
+
+        clickHelpCenterLink()
+
+        eventually {
+            assertHelpCenterLinkClickSuccessful()
+        }
+    }
+
+    @Test
     fun linksToSettings_noOp_dialogsNotClosed() {
         navigateToPermissionRationaleActivity()
 
@@ -203,6 +215,23 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
             // UiObject2 doesn't expose CharSequence.
             val node = uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByViewId(
                 DATA_SHARING_SOURCE_MESSAGE_ID
+            )[0]
+            assertTrue(node.isVisibleToUser)
+            val text = node.text as Spanned
+            val clickableSpan = text.getSpans(0, text.length, ClickableSpan::class.java)[0]
+            // We could pass in null here in Java, but we need an instance in Kotlin.
+            clickableSpan.onClick(View(context))
+        }
+        waitForIdle()
+    }
+
+    private fun clickHelpCenterLink() {
+        findView(By.res(LEARN_MORE_MESSAGE_ID), true)
+
+        eventually {
+            // UiObject2 doesn't expose CharSequence.
+            val node = uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByViewId(
+                LEARN_MORE_MESSAGE_ID
             )[0]
             assertTrue(node.isVisibleToUser)
             val text = node.text as Spanned
@@ -283,5 +312,41 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
                 packageName,
                 observedPackageName)
         }
+    }
+
+    private fun assertHelpCenterLinkClickSuccessful() {
+        SystemUtil.runWithShellPermissionIdentity {
+            val runningTasks = activityManager!!.getRunningTasks(1)
+
+            assertFalse("Expected runningTasks to not be empty",
+                runningTasks.isEmpty())
+
+            val taskInfo = runningTasks[0]
+            val observedIntentAction = taskInfo.baseIntent.action
+            val observedIntentDataString = taskInfo.baseIntent.dataString
+            val observedIntentScheme: String? = taskInfo.baseIntent.scheme
+
+            assertEquals("Unexpected intent action",
+                Intent.ACTION_VIEW,
+                observedIntentAction)
+
+            assertFalse(observedIntentDataString.isNullOrEmpty())
+            assertTrue(observedIntentDataString?.startsWith(EXPECTED_HELP_CENTER_URL) ?: false)
+
+            assertFalse(observedIntentScheme.isNullOrEmpty())
+            assertEquals("https", observedIntentScheme)
+        }
+    }
+
+    companion object {
+        private const val DATA_SHARING_SOURCE_MESSAGE_ID =
+            "com.android.permissioncontroller:id/data_sharing_source_message"
+        private const val LEARN_MORE_MESSAGE_ID =
+            "com.android.permissioncontroller:id/learn_more_message"
+        private const val SETTINGS_MESSAGE_ID =
+            "com.android.permissioncontroller:id/settings_message"
+
+        private const val EXPECTED_HELP_CENTER_URL =
+            "https://support.google.com/android?p=data_sharing"
     }
 }

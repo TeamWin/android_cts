@@ -116,6 +116,7 @@ import java.util.stream.Collectors;
 public class PackageManagerShellCommandTest {
     static final String TEST_APP_PACKAGE = "com.example.helloworld";
     static final String TEST_VERIFIER_PACKAGE = "com.example.helloverifier";
+    static final String TEST_SUFFICIENT_VERIFIER_PACKAGE = "com.example.hellosufficient";
 
     private static final String CTS_PACKAGE_NAME = "android.content.cts";
 
@@ -157,6 +158,11 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_USING_SDK3 = "HelloWorldUsingSdk3.apk";
 
     private static final String TEST_HW_NO_APP_STORAGE = "HelloWorldNoAppStorage.apk";
+
+    private static final String TEST_SUFFICIENT = "HelloWorldWithSufficient.apk";
+
+    private static final String TEST_SUFFICIENT_VERIFIER_REJECT =
+            "HelloSufficientVerifierReject.apk";
 
     private static final String TEST_VERIFIER_ALLOW = "HelloVerifierAllow.apk";
     private static final String TEST_VERIFIER_REJECT = "HelloVerifierReject.apk";
@@ -280,6 +286,7 @@ public class PackageManagerShellCommandTest {
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
 
         uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+        uninstallPackageSilently(TEST_SUFFICIENT_VERIFIER_PACKAGE);
 
         uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
         uninstallPackageSilently(TEST_SDK3_PACKAGE);
@@ -309,6 +316,7 @@ public class PackageManagerShellCommandTest {
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
 
         uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+        uninstallPackageSilently(TEST_SUFFICIENT_VERIFIER_PACKAGE);
 
         uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
         uninstallPackageSilently(TEST_SDK3_PACKAGE);
@@ -1273,14 +1281,21 @@ public class PackageManagerShellCommandTest {
 
     private void runPackageVerifierTest(BiConsumer<Context, Intent> onBroadcast)
             throws Exception {
-        runPackageVerifierTest("Success", onBroadcast);
+        runPackageVerifierTest(TEST_HW5, TEST_HW7, "Success", onBroadcast);
     }
 
     private void runPackageVerifierTest(String expectedResultStartsWith,
             BiConsumer<Context, Intent> onBroadcast) throws Exception {
+        runPackageVerifierTest(TEST_HW5, TEST_HW7, expectedResultStartsWith, onBroadcast);
+    }
+
+    private void runPackageVerifierTest(String baseName, String updatedName,
+            String expectedResultStartsWith, BiConsumer<Context, Intent> onBroadcast)
+            throws Exception {
         AtomicReference<Thread> onBroadcastThread = new AtomicReference<>();
 
-        runPackageVerifierTestSync(expectedResultStartsWith, (context, intent) -> {
+        runPackageVerifierTestSync(baseName, updatedName, expectedResultStartsWith,
+                (context, intent) -> {
             Thread thread = new Thread(() -> onBroadcast.accept(context, intent));
             thread.start();
             onBroadcastThread.set(thread);
@@ -1292,10 +1307,11 @@ public class PackageManagerShellCommandTest {
         }
     }
 
-    private void runPackageVerifierTestSync(String expectedResultStartsWith,
-            BiConsumer<Context, Intent> onBroadcast) throws Exception {
+    private void runPackageVerifierTestSync(String baseName, String updatedName,
+            String expectedResultStartsWith, BiConsumer<Context, Intent> onBroadcast)
+            throws Exception {
         // Install a package.
-        installPackage(TEST_HW5);
+        installPackage(baseName);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
 
         getUiAutomation().adoptShellPermissionIdentity(
@@ -1329,7 +1345,7 @@ public class PackageManagerShellCommandTest {
                 CTS_PACKAGE_NAME + ";" + TEST_VERIFIER_PACKAGE);
 
         // Update the package, should trigger verifier override.
-        installPackage(TEST_HW7, expectedResultStartsWith);
+        installPackage(updatedName, expectedResultStartsWith);
 
         // Wait for broadcast.
         broadcastReceived.get(VERIFICATION_BROADCAST_RECEIVED_TIMEOUT_MS, TimeUnit.MILLISECONDS);
@@ -1395,6 +1411,37 @@ public class PackageManagerShellCommandTest {
                     assertNotEquals(-1, sessionId);
 
                     getPackageManager().verifyPendingInstall(verificationId, VERIFICATION_REJECT);
+                });
+
+        assertEquals(mDataLoaderType, dataLoaderType.get());
+    }
+
+    @Test
+    @LargeTest
+    public void testPackageSufficientVerifierReject() throws Exception {
+        // TEST_SUFFICIENT configured to have hellosufficient as sufficient verifier.
+        installPackage(TEST_SUFFICIENT_VERIFIER_REJECT);
+        assertTrue(isAppInstalled(TEST_SUFFICIENT_VERIFIER_PACKAGE));
+
+        // PackageManager.verifyPendingInstall() call only works with user 0 as verifier is expected
+        // to be user 0. So skip the test if it is not user 0.
+        // TODO(b/232317379) Fix this in proper way
+        assumeTrue(getContext().getUserId() == UserHandle.USER_SYSTEM);
+        AtomicInteger dataLoaderType = new AtomicInteger(-1);
+
+        runPackageVerifierTest(TEST_HW5, TEST_SUFFICIENT,
+                "Failure [INSTALL_FAILED_VERIFICATION_FAILURE: Install not allowed",
+                (context, intent) -> {
+                    int verificationId = intent.getIntExtra(EXTRA_VERIFICATION_ID, -1);
+                    assertNotEquals(-1, verificationId);
+
+                    dataLoaderType.set(intent.getIntExtra(EXTRA_DATA_LOADER_TYPE, -1));
+                    int sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1);
+                    assertNotEquals(-1, sessionId);
+
+                    // This is a required verifier. The installation should fail, even though the
+                    // required verifier allows installation.
+                    getPackageManager().verifyPendingInstall(verificationId, VERIFICATION_ALLOW);
                 });
 
         assertEquals(mDataLoaderType, dataLoaderType.get());
@@ -1492,7 +1539,7 @@ public class PackageManagerShellCommandTest {
     public void testPackageVerifierRejectAfterTimeout() throws Exception {
         AtomicInteger dataLoaderType = new AtomicInteger(-1);
 
-        runPackageVerifierTestSync("Success", (context, intent) -> {
+        runPackageVerifierTestSync(TEST_HW5, TEST_HW7, "Success", (context, intent) -> {
             int verificationId = intent.getIntExtra(EXTRA_VERIFICATION_ID, -1);
             assertNotEquals(-1, verificationId);
 

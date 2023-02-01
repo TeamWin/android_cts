@@ -39,6 +39,7 @@ ANDROID14_API_LEVEL = 34
 CHART_DISTANCE_NO_SCALING = 0
 LOAD_SCENE_DELAY_SEC = 3
 SCALING_TO_FILE_ATOL = 0.01
+SINGLE_CAPTURE_NCAP = 1
 SUB_CAMERA_SEPARATOR = '.'
 _VALIDATE_LIGHTING_PATCH_H = 0.05
 _VALIDATE_LIGHTING_PATCH_W = 0.05
@@ -673,30 +674,12 @@ class ItsSession(object):
       raise error_util.CameraItsError('No supported preview sizes')
     return data['strValue'].split(';')
 
-  def do_capture_with_flash(self,
-                            preview_request_start,
-                            preview_request_idle,
-                            still_capture_req,
-                            out_surface):
-    """Issue capture request with flash and read back the image and metadata.
-
-    Captures a single image with still_capture_req as capture request
-    with flash. It triggers the precapture sequence with preview request
-    preview_request_start with capture intent preview by setting aePrecapture
-    trigger to Start. This is followed by repeated preview requests
-    preview_request_idle with aePrecaptureTrigger set to IDLE.
-    Once the AE is converged, a single image is captured still_capture_req
-    during which the flash must be fired.
-    Note: The part where we read output data from socket is cloned from
-    do_capture and will be consolidated in U.
+  def do_simple_capture(self, cmd, out_surface):
+    """Issue single capture request via command and read back image/metadata.
 
     Args:
-      preview_request_start: Preview request with aePrecaptureTrigger set to
-        Start
-      preview_request_idle: Preview request with aePrecaptureTrigger set to Idle
-      still_capture_req: Single still capture request.
-      out_surface: Specifications of the output image formats and
-        sizes to use for capture. Supports yuv and jpeg.
+      cmd: Dictionary specifying command name, requests, and output surface.
+      out_surface: Dictionary describing output surface.
     Returns:
       An object which contains following fields:
       * data: the image data as a numpy array of bytes.
@@ -705,18 +688,11 @@ class ItsSession(object):
       * format: image format
       * metadata: the capture result object
     """
-    cmd = {}
-    cmd['cmdName'] = 'doCaptureWithFlash'
-    cmd['previewRequestStart'] = [preview_request_start]
-    cmd['previewRequestIdle'] = [preview_request_idle]
-    cmd['stillCaptureRequest'] = [still_capture_req]
-    cmd['outputSurfaces'] = [out_surface]
-
     fmt = out_surface['format'] if 'format' in out_surface else 'yuv'
     if fmt == 'jpg': fmt = 'jpeg'
 
     # we only have 1 capture request and 1 surface by definition.
-    ncap = 1
+    ncap = SINGLE_CAPTURE_NCAP
 
     cam_id = None
     bufs = {}
@@ -770,7 +746,6 @@ class ItsSession(object):
 
     cam_ids = self._camera_id
     self.sock.settimeout(self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT)
-    logging.debug('Capturing image with ON_AUTO_FLASH.')
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     nbufs = 0
@@ -831,10 +806,7 @@ class ItsSession(object):
       cam_id = out_surface['physicalCamera']
     else:
       cam_id = self._camera_id
-    ret = {}
-    ret['width'] = width
-    ret['height'] = height
-    ret['format'] = fmt
+    ret = {'width': width, 'height': height, 'format': fmt}
     if cam_id == self._camera_id:
       ret['metadata'] = md
     else:
@@ -848,6 +820,81 @@ class ItsSession(object):
       ret['data'] = bufs[cam_id][fmt][0]
 
     return ret
+
+  def do_capture_with_flash(self,
+                            preview_request_start,
+                            preview_request_idle,
+                            still_capture_req,
+                            out_surface):
+    """Issue capture request with flash and read back the image and metadata.
+
+    Captures a single image with still_capture_req as capture request
+    with flash. It triggers the precapture sequence with preview request
+    preview_request_start with capture intent preview by setting aePrecapture
+    trigger to Start. This is followed by repeated preview requests
+    preview_request_idle with aePrecaptureTrigger set to IDLE.
+    Once the AE is converged, a single image is captured still_capture_req
+    during which the flash must be fired.
+    Note: The part where we read output data from socket is cloned from
+    do_capture and will be consolidated in U.
+
+    Args:
+      preview_request_start: Preview request with aePrecaptureTrigger set to
+        Start
+      preview_request_idle: Preview request with aePrecaptureTrigger set to Idle
+      still_capture_req: Single still capture request.
+      out_surface: Specifications of the output image formats and
+        sizes to use for capture. Supports yuv and jpeg.
+    Returns:
+      An object which contains following fields:
+      * data: the image data as a numpy array of bytes.
+      * width: the width of the captured image.
+      * height: the height of the captured image.
+      * format: image format
+      * metadata: the capture result object
+    """
+    cmd = {}
+    cmd['cmdName'] = 'doCaptureWithFlash'
+    cmd['previewRequestStart'] = [preview_request_start]
+    cmd['previewRequestIdle'] = [preview_request_idle]
+    cmd['stillCaptureRequest'] = [still_capture_req]
+    cmd['outputSurfaces'] = [out_surface]
+
+    logging.debug('Capturing image with ON_AUTO_FLASH.')
+    return self.do_simple_capture(cmd, out_surface)
+
+  def do_capture_with_extensions(self,
+                                 cap_request,
+                                 extension,
+                                 out_surface):
+    """Issue extension capture request(s), and read back image(s) and metadata.
+
+    Args:
+      cap_request: The Python dict/list specifying the capture(s), which will be
+        converted to JSON and sent to the device.
+      extension: The extension to be requested.
+      out_surface: specifications of the output image format and
+        size to use for the capture.
+
+    Returns:
+      An object, list of objects, or list of lists of objects, where each
+      object contains the following fields:
+      * data: the image data as a numpy array of bytes.
+      * width: the width of the captured image.
+      * height: the height of the captured image.
+      * format: image the format, in [
+                        "yuv","jpeg","raw","raw10","raw12","rawStats","dng"].
+      * metadata: the capture result object (Python dictionary).
+    """
+    cmd = {}
+    cmd['cmdName'] = 'doCaptureWithExtensions'
+    cmd['repeatRequests'] = []
+    cmd['captureRequests'] = [cap_request]
+    cmd['extension'] = extension
+    cmd['outputSurfaces'] = [out_surface]
+
+    logging.debug('Capturing image with EXTENSIONS.')
+    return self.do_simple_capture(cmd, out_surface)
 
   def do_capture(self,
                  cap_request,

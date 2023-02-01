@@ -109,7 +109,6 @@ class PermissionUpgradeTest : BaseUsePermissionTest() {
         // Make sure the permission is granted
         requestAppPermissionsAndAssertResult(
             android.Manifest.permission.READ_CALENDAR to true,
-            expectTargetSdkWarning = true
         ) {
             clickPermissionRequestAllowButton()
         }

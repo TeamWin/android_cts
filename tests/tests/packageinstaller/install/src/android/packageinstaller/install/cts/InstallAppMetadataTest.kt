@@ -40,37 +40,19 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
 
     @Test
     fun installViaSession() {
-        startInstallationViaSession()
-        clickInstallerUIButton(INSTALL_BUTTON_ID)
-
-        // Install should have succeeded
-        val result = getInstallSessionResult()
-        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
-        assertThat(result.preapproval).isFalse()
+        installTestApp(null)
 
         uiAutomation.adoptShellPermissionIdentity()
-        val data2 = pm.getAppMetadata(TEST_APK_PACKAGE_NAME)
+        val data = pm.getAppMetadata(TEST_APK_PACKAGE_NAME)
         uiAutomation.dropShellPermissionIdentity()
-        assertThat(data2).isNotNull()
-        assertThat(data2.isEmpty()).isTrue()
+        assertThat(data).isNotNull()
+        assertThat(data.isEmpty()).isTrue()
     }
 
     @Test
     fun installViaSessionWithAppMetadata() {
         val data = createAppMetadata()
-
-        val (sessionId, session) = createSession(0, false, null)
-        writeSession(session, TEST_APK_NAME)
-        setAppMetadata(session, data)
-        assertAppMetadata(data.getString(TEST_FIELD), session.getAppMetadata())
-        commitSession(session)
-
-        clickInstallerUIButton(INSTALL_BUTTON_ID)
-
-        // Install should have succeeded
-        val result = getInstallSessionResult()
-        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
-        assertThat(result.preapproval).isFalse()
+        installTestApp(data)
 
         uiAutomation.adoptShellPermissionIdentity()
         assertAppMetadata(data.getString(TEST_FIELD), pm.getAppMetadata(TEST_APK_PACKAGE_NAME))
@@ -79,21 +61,14 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
 
     @Test(expected = SecurityException::class)
     fun getAppMetadataWithNoPermission() {
-        startInstallationViaSession(createAppMetadata())
-        clickInstallerUIButton(INSTALL_BUTTON_ID)
-
-        // Install should have succeeded
-        val result = getInstallSessionResult()
-        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
-        assertThat(result.preapproval).isFalse()
+        installTestApp(createAppMetadata())
 
         pm.getAppMetadata(TEST_APK_PACKAGE_NAME)
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun installViaSessionWithBadAppMetadata() {
-        val data = createAppMetadataExceedSizeLimit()
-        startInstallationViaSession(data)
+        installTestApp(createAppMetadataExceedSizeLimit())
     }
 
     @Test(expected = NameNotFoundException::class)
@@ -121,6 +96,38 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         session.commit(pendingIntent.intentSender)
         val result = getInstallSessionResult()
         assertThat(result.status).isEqualTo(PackageInstaller.STATUS_FAILURE_INVALID)
+    }
+
+    @Test
+    fun installWithNoAppMetadataDropExisting() {
+        val data = createAppMetadata()
+        installTestApp(data)
+
+        uiAutomation.adoptShellPermissionIdentity()
+        assertAppMetadata(data.getString(TEST_FIELD), pm.getAppMetadata(TEST_APK_PACKAGE_NAME))
+        uiAutomation.dropShellPermissionIdentity()
+
+        installTestApp(null)
+
+        uiAutomation.adoptShellPermissionIdentity()
+        assertThat(pm.getAppMetadata(TEST_APK_PACKAGE_NAME).isEmpty()).isTrue()
+        uiAutomation.dropShellPermissionIdentity()
+    }
+
+    private fun installTestApp(data: PersistableBundle?) {
+        val (sessionId, session) = createSession(0, false, null)
+        writeSession(session, TEST_APK_NAME)
+        if (data != null) {
+            setAppMetadata(session, data)
+            assertAppMetadata(data.getString(TEST_FIELD), session.getAppMetadata())
+        }
+        commitSession(session)
+
+        clickInstallerUIButton(INSTALL_BUTTON_ID)
+
+        // Install should have succeeded
+        val result = getInstallSessionResult()
+        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
     }
 
     private fun setAppMetadata(session: PackageInstaller.Session, data: PersistableBundle) {

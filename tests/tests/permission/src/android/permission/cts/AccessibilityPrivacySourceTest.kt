@@ -238,11 +238,17 @@ class AccessibilityPrivacySourceTest {
             getNotification(permissionControllerPackage, ACCESSIBILITY_NOTIFICATION_ID)
         Assert.assertNotNull(statusBarNotification)
         val contentIntent = statusBarNotification!!.notification.contentIntent
-        val options = ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
-                ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
-        contentIntent.send(/* context = */ null, /* code = */ 0, /* intent = */ null,
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
+            val options = ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
+                ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+            )
+            contentIntent.send(/* context = */ null, /* code = */ 0, /* intent = */ null,
                 /* onFinished = */ null, /* handler = */ null, /* requiredPermission = */ null,
-                /* options = */ options.toBundle())
+                /* options = */ options.toBundle()
+            )
+        } else {
+            contentIntent.send()
+        }
         assertSafetyCenterStarted()
     }
 

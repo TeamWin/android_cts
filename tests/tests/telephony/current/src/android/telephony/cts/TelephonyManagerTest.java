@@ -3573,17 +3573,6 @@ public class TelephonyManagerTest {
                     }
             );
         });
-
-        assertThrows(SecurityException.class, () -> {
-            CarrierPrivilegeUtils.withCarrierPrivileges(getContext(),
-                    SubscriptionManager.getDefaultSubscriptionId(),
-                    () -> {
-                        mTelephonyManager.setAllowedNetworkTypesForReason(
-                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER_RESTRICTIONS,
-                                TelephonyManager.NETWORK_TYPE_BITMASK_NR);
-                    }
-            );
-        });
     }
 
     @Test

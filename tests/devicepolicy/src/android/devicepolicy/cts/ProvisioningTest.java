@@ -50,6 +50,7 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_A
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_USERS;
+import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_MANAGED_PROFILE;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_USER;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.remotedpc.RemoteDpc.REMOTE_DPC_TEST_APP;
@@ -555,6 +556,36 @@ public final class ProvisioningTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Test
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#provisionFullyManagedDevice")
+    public void provisionFullyManagedDevice_disallowAddManagedProfileIsSet()
+            throws Exception {
+        boolean systemSetupComplete = TestApis.users().system().getSetupComplete();
+        TestApis.users().system().setSetupComplete(false);
+        try {
+            FullyManagedDeviceProvisioningParams params =
+                    createDefaultManagedDeviceProvisioningParamsBuilder().build();
+            sDevicePolicyManager.provisionFullyManagedDevice(params);
+
+            assertThat(
+                    TestApis.devicePolicy().userRestrictions().isSet(DISALLOW_ADD_MANAGED_PROFILE))
+                    .isTrue();
+        } finally {
+            DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
+            if (deviceOwner != null) {
+                deviceOwner.remove();
+            }
+            ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner();
+            if (profileOwner != null) {
+                profileOwner.remove();
+            }
+            TestApis.users().system().setSetupComplete(systemSetupComplete);
+        }
+    }
+
+    @EnsureHasNoDpc
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#provisionFullyManagedDevice")
     public void provisionFullyManagedDevice_canControlSensorPermissionGrantsByDefault()
             throws Exception {
         boolean setupComplete = TestApis.users().system().getSetupComplete();
@@ -957,10 +988,9 @@ public final class ProvisioningTest {
     @Postsubmit(reason = "New test")
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
-    @EnsureHasDeviceOwner
-    @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasWorkProfile
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#checkProvisioningPrecondition")
-    public void checkProvisioningPreCondition_actionPO_onManagedDevice_returnsCanNotAddManagedProfile() {
+    public void checkProvisioningPreCondition_actionPO_withWorkProfile_returnsCanNotAddManagedProfile() {
         assertThat(
                 sDevicePolicyManager.checkProvisioningPrecondition(
                         DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE,
@@ -971,14 +1001,22 @@ public final class ProvisioningTest {
     @Postsubmit(reason = "New test")
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
-    @EnsureHasWorkProfile
+    @EnsureHasNoDpc
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#checkProvisioningPrecondition")
-    public void checkProvisioningPreCondition_actionPO_withWorkProfile_returnsCanNotAddManagedProfile() {
-        assertThat(
-                sDevicePolicyManager.checkProvisioningPrecondition(
-                        DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE,
-                        DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
-                .isEqualTo(DevicePolicyManager.STATUS_CANNOT_ADD_MANAGED_PROFILE);
+    public void checkProvisioningPreCondition_actionDO_afterSetupComplete_returnsUserSetupComplete() {
+        boolean setupComplete = TestApis.users().system().getSetupComplete();
+        TestApis.users().system().setSetupComplete(true);
+
+        try {
+            assertThat(
+                    sDevicePolicyManager.checkProvisioningPrecondition(
+                            DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE,
+                            DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                    .isEqualTo(DevicePolicyManager.STATUS_USER_SETUP_COMPLETED);
+
+        } finally {
+            TestApis.users().system().setSetupComplete(setupComplete);
+        }
     }
 
     @Postsubmit(reason = "New test")
@@ -1041,28 +1079,6 @@ public final class ProvisioningTest {
 
         } finally {
             TestApis.users().current().setSetupComplete(setupComplete);
-        }
-    }
-
-    @Postsubmit(reason = "New test")
-    @Test
-    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
-    @RequireRunOnWorkProfile
-    @EnsureHasNoDeviceOwner
-    @ApiTest(apis = "android.app.admin.DevicePolicyManager#checkProvisioningPrecondition")
-    public void checkProvisioningPreCondition_actionDO_onManagedProfile_returnsHasProfileOwner() {
-        boolean setupComplete = TestApis.users().system().getSetupComplete();
-        TestApis.users().system().setSetupComplete(false);
-
-        try {
-            assertThat(
-                    sDevicePolicyManager.checkProvisioningPrecondition(
-                            DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE,
-                            DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
-                    .isEqualTo(DevicePolicyManager.STATUS_USER_HAS_PROFILE_OWNER);
-
-        } finally {
-            TestApis.users().system().setSetupComplete(setupComplete);
         }
     }
 

@@ -70,12 +70,11 @@ public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
         final ITestDevice sDevice = testInfo.getDevice();
         assertThat(sDevice).isNotNull();
 
-        setDevice(sDevice);
-
-        assumeTrue("Device doesn't support multiple users", supportsMultipleUsers());
-        assumeFalse("Device is in headless system user mode", isHeadlessSystemUserMode());
-        assumeTrue(isAtLeastS());
-        assumeFalse("Device uses sdcardfs", usesSdcardFs());
+        assumeTrue("Device doesn't support multiple users", supportsMultipleUsers(sDevice));
+        assumeFalse("Device is in headless system user mode",
+                isHeadlessSystemUserMode(sDevice));
+        assumeTrue(isAtLeastS(sDevice));
+        assumeFalse("Device uses sdcardfs", usesSdcardFs(sDevice));
 
         // create clone user
         String output = sDevice.executeShellCommand(
@@ -98,8 +97,9 @@ public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
 
     @AfterClassWithInfo
     public static void afterClass(TestInformation testInfo) throws Exception {
-        if (!supportsMultipleUsers() || isHeadlessSystemUserMode() || !isAtLeastS()
-                || usesSdcardFs()) return;
+        ITestDevice device = testInfo.getDevice();
+        if (!supportsMultipleUsers(device) || isHeadlessSystemUserMode(device)
+                || !isAtLeastS(device) || usesSdcardFs(device)) return;
         testInfo.getDevice().executeShellCommand("pm remove-user " + sCloneUserId);
     }
 

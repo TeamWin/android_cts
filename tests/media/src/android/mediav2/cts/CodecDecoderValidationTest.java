@@ -103,10 +103,10 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     private final int mHeight;
     private final SupportClass mSupportRequirements;
 
-    public CodecDecoderValidationTest(String decoder, String mime, String[] srcFiles,
+    public CodecDecoderValidationTest(String decoder, String mediaType, String[] srcFiles,
             String refFile, float rmsError, long refCRC, int sampleRate, int channelCount,
             int width, int height, SupportClass supportRequirements, String allTestParams) {
-        super(decoder, mime, null, allTestParams);
+        super(decoder, mediaType, null, allTestParams);
         mSrcFiles = srcFiles;
         mRefFile = MEDIA_DIR + refFile;
         mRmsError = rmsError;
@@ -648,7 +648,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
             formats.add(setUpSource(MEDIA_DIR + file));
             mExtractor.release();
         }
-        checkFormatSupport(mCodecName, mMime, false, formats, null, mSupportRequirements);
+        checkFormatSupport(mCodecName, mMediaType, false, formats, null, mSupportRequirements);
         {
             OutputManager ref = new OutputManager();
             OutputManager test = new OutputManager(ref.getSharedErrorLogs());

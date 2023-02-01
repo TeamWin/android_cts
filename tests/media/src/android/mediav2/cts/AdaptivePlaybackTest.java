@@ -64,9 +64,9 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
 
     private long mMaxPts = 0;
 
-    public AdaptivePlaybackTest(String decoder, String mime, String[] srcFiles,
+    public AdaptivePlaybackTest(String decoder, String mediaType, String[] srcFiles,
             SupportClass supportRequirements, String allTestParams) {
-        super(decoder, mime, null, allTestParams);
+        super(decoder, mediaType, null, allTestParams);
         mSrcFiles = srcFiles;
         mSupportRequirements = supportRequirements;
     }
@@ -233,14 +233,14 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptivePlayback() throws IOException, InterruptedException {
         Assume.assumeTrue("codec: " + mCodecName + " does not support FEATURE_AdaptivePlayback",
-                isFeatureSupported(mCodecName, mMime,
+                isFeatureSupported(mCodecName, mMediaType,
                         MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback));
         ArrayList<MediaFormat> formats = new ArrayList<>();
         for (String file : mSrcFiles) {
             formats.add(setUpSource(MEDIA_DIR + file));
             mExtractor.release();
         }
-        checkFormatSupport(mCodecName, mMime, false, formats,
+        checkFormatSupport(mCodecName, mMediaType, false, formats,
                 new String[]{MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback},
                 mSupportRequirements);
         formats.clear();

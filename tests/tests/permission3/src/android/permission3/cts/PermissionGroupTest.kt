@@ -25,19 +25,19 @@ class PermissionGroupTest : BaseUsePermissionTest() {
     @Test
     fun testRuntimeGroupGrantExpansion23() {
         installPackage(APP_APK_PATH_23)
-        testRuntimeGroupGrantExpansion(true, true)
+        testRuntimeGroupGrantExpansion(true)
     }
 
     @Test
     fun testRuntimeGroupGrantExpansion25() {
         installPackage(APP_APK_PATH_25)
-        testRuntimeGroupGrantExpansion(true, true)
+        testRuntimeGroupGrantExpansion(true)
     }
 
     @Test
     fun testRuntimeGroupGrantExpansion26() {
         installPackage(APP_APK_PATH_26)
-        testRuntimeGroupGrantExpansion(false, true)
+        testRuntimeGroupGrantExpansion(false)
     }
 
     @Test
@@ -66,10 +66,7 @@ class PermissionGroupTest : BaseUsePermissionTest() {
         assertAppHasPermission(android.Manifest.permission.SEND_SMS, true)
     }
 
-    private fun testRuntimeGroupGrantExpansion(
-        expectExpansion: Boolean,
-        expectTargetSdkWarning: Boolean = false
-    ) {
+    private fun testRuntimeGroupGrantExpansion(expectExpansion: Boolean) {
         // Start out without permission
         assertAppHasPermission(android.Manifest.permission.RECEIVE_SMS, false)
         assertAppHasPermission(android.Manifest.permission.SEND_SMS, false)
@@ -78,7 +75,6 @@ class PermissionGroupTest : BaseUsePermissionTest() {
         // but two from this group are <uses-permission> in the manifest
         requestAppPermissionsAndAssertResult(
             android.Manifest.permission.RECEIVE_SMS to true,
-            expectTargetSdkWarning = expectTargetSdkWarning
         ) {
             clickPermissionRequestAllowButton()
         }

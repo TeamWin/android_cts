@@ -713,13 +713,13 @@ public class BluetoothAdapterTest extends AndroidTestCase {
         assertThrows(NullPointerException.class, () ->
                 mAdapter.registerPreferredAudioProfilesChangedCallback(executor, null));
         assertThrows(NullPointerException.class, () ->
-                mAdapter.unregisterPreferredAudiProfilesChangedCallback(null));
+                mAdapter.unregisterPreferredAudioProfilesChangedCallback(null));
 
         // This should throw a SecurityException because no BLUETOOTH_PRIVILEGED permission
         assertThrows(SecurityException.class, () ->
                 mAdapter.registerPreferredAudioProfilesChangedCallback(executor, callback));
         assertThrows(IllegalArgumentException.class, () ->
-                mAdapter.unregisterPreferredAudiProfilesChangedCallback(callback));
+                mAdapter.unregisterPreferredAudioProfilesChangedCallback(callback));
 
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
 
@@ -727,7 +727,7 @@ public class BluetoothAdapterTest extends AndroidTestCase {
         assertEquals(BluetoothStatusCodes.SUCCESS,
                 mAdapter.registerPreferredAudioProfilesChangedCallback(executor, callback));
         assertEquals(BluetoothStatusCodes.SUCCESS,
-                mAdapter.unregisterPreferredAudiProfilesChangedCallback(callback));
+                mAdapter.unregisterPreferredAudioProfilesChangedCallback(callback));
     }
 
     public void test_notifyPreferredAudioProfileChangeApplied() {
@@ -741,7 +741,6 @@ public class BluetoothAdapterTest extends AndroidTestCase {
 
         assertThrows(NullPointerException.class, () ->
                 mAdapter.notifyPreferredAudioProfileChangeApplied(null));
-
 
         assertEquals(BluetoothStatusCodes.ERROR_BLUETOOTH_NOT_ALLOWED,
                 mAdapter.notifyPreferredAudioProfileChangeApplied(device));

@@ -85,6 +85,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     private static final ArrayList<String> IGNORE_COLOR_BOX_LIST = new ArrayList<>();
 
     static {
+        IGNORE_COLOR_BOX_LIST.add(MediaFormat.MIMETYPE_VIDEO_AV1);
         IGNORE_COLOR_BOX_LIST.add(MediaFormat.MIMETYPE_VIDEO_AVC);
         IGNORE_COLOR_BOX_LIST.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
     }
@@ -146,7 +147,8 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
 
         List<Object[]> exhaustiveArgsList = new ArrayList<>();
 
-        String[] mediaTypes = {MediaFormat.MIMETYPE_VIDEO_AVC,
+        String[] mediaTypes = {MediaFormat.MIMETYPE_VIDEO_AV1,
+                MediaFormat.MIMETYPE_VIDEO_AVC,
                 MediaFormat.MIMETYPE_VIDEO_HEVC,
                 MediaFormat.MIMETYPE_VIDEO_VP8,
                 MediaFormat.MIMETYPE_VIDEO_VP9};
@@ -173,7 +175,8 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         // above
         if (IS_AT_LEAST_T) {
             // ColorAspects for HDR profiles
-            String[] mediaTypesHighBitDepth = {MediaFormat.MIMETYPE_VIDEO_AVC,
+            String[] mediaTypesHighBitDepth = {MediaFormat.MIMETYPE_VIDEO_AV1,
+                    MediaFormat.MIMETYPE_VIDEO_AVC,
                     MediaFormat.MIMETYPE_VIDEO_HEVC,
                     MediaFormat.MIMETYPE_VIDEO_VP9};
             int[] standardsHighBitDepth = {-1,
@@ -290,17 +293,19 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             // Check if encoder is capable of supporting HDR profiles.
             // Previous check doesn't verify this as profile isn't set in the format
             Assume.assumeTrue(mCodecName + " doesn't support HDR encoding",
-                    CodecTestBase.doesCodecSupportHDRProfile(mCodecName, mMime));
+                    CodecTestBase.doesCodecSupportHDRProfile(mCodecName, mMediaType));
 
             // Encoder surface mode tests are to be enabled only if an encoder supports
             // COLOR_Format32bitABGR2101010
             if (mActiveEncCfg.mColorFormat == COLOR_FormatSurface) {
                 Assume.assumeTrue(mCodecName + " doesn't support RGBA1010102",
-                        hasSupportForColorFormat(mCodecName, mMime, COLOR_Format32bitABGR2101010));
+                        hasSupportForColorFormat(mCodecName, mMediaType,
+                                                 COLOR_Format32bitABGR2101010));
             } else {
                 Assume.assumeTrue(mCodecName + " doesn't support " + colorFormatToString(
                                 mActiveEncCfg.mColorFormat, mActiveEncCfg.mInputBitDepth),
-                        hasSupportForColorFormat(mCodecName, mMime, mActiveEncCfg.mColorFormat));
+                        hasSupportForColorFormat(mCodecName, mMediaType,
+                                                 mActiveEncCfg.mColorFormat));
             }
         }
 
@@ -360,7 +365,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             mCodec.stop();
             mCodec.release();
 
-            int muxerFormat = getMuxerFormatForMediaType(mMime);
+            int muxerFormat = getMuxerFormatForMediaType(mMediaType);
             String tmpPath = getTempFilePath((mActiveEncCfg.mInputBitDepth == 10) ? "10bit" : "");
             muxOutput(tmpPath, muxerFormat, fmt, mOutputBuff.getBuffer(), mInfoList);
 
@@ -369,14 +374,14 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             String decoder = codecList.findDecoderForFormat(mActiveEncCfg.getFormat());
             assertNotNull("Device advertises support for encoding " + mActiveEncCfg.getFormat()
                     + " but not decoding it. \n" + mTestConfig + mTestEnv, decoder);
-            CodecDecoderTestBase cdtb = new CodecDecoderTestBase(decoder, mMime, tmpPath,
+            CodecDecoderTestBase cdtb = new CodecDecoderTestBase(decoder, mMediaType, tmpPath,
                     mAllTestParams);
             cdtb.validateColorAspects(mActiveEncCfg.mRange, mActiveEncCfg.mStandard,
                     mActiveEncCfg.mTransfer, false);
 
             // if color metadata can also be signalled via elementary stream then verify if the
             // elementary stream contains color aspects as expected
-            if (IGNORE_COLOR_BOX_LIST.contains(mMime)) {
+            if (IGNORE_COLOR_BOX_LIST.contains(mMediaType)) {
                 cdtb.validateColorAspects(mActiveEncCfg.mRange, mActiveEncCfg.mStandard,
                         mActiveEncCfg.mTransfer, true);
             }

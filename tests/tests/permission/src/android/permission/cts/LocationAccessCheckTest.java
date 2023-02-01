@@ -821,9 +821,13 @@ public class LocationAccessCheckTest {
 
         // Verify content intent
         PendingIntent contentIntent = currentNotification.getNotification().contentIntent;
-        contentIntent.send(null, 0, null, null, null, null,
-                ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
-                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle());
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
+            contentIntent.send(null, 0, null, null, null, null,
+                    ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
+                            ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle());
+        } else {
+            contentIntent.send();
+        }
 
         SafetyCenterUtils.assertSafetyCenterStarted();
     }

@@ -24,7 +24,10 @@ import android.os.RemoteException;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy;
 import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -46,15 +49,18 @@ import javax.net.ssl.X509TrustManager;
 public final class SharedWebViewTestEnvironment {
     @Nullable private final Context mContext;
     @Nullable private final WebView mWebView;
+    @Nullable private final FrameLayout mRootLayout;
     private final IHostAppInvoker mHostAppInvoker;
 
     private SharedWebViewTestEnvironment(
             Context context,
             WebView webView,
-            IHostAppInvoker hostAppInvoker) {
+            IHostAppInvoker hostAppInvoker,
+            FrameLayout rootLayout) {
         mContext = context;
         mWebView = webView;
         mHostAppInvoker = hostAppInvoker;
+        mRootLayout = rootLayout;
     }
 
     @Nullable
@@ -65,6 +71,16 @@ public final class SharedWebViewTestEnvironment {
     @Nullable
     public WebView getWebView() {
         return mWebView;
+    }
+
+    /**
+     * Some tests require adding a content view to the root view at runtime. This method mimics the
+     * behaviour of Activity.addContentView()
+     */
+    @Nullable
+    public void addContentView(View view, ViewGroup.LayoutParams params) {
+        view.setLayoutParams(params);
+        mRootLayout.addView(view);
     }
 
     /**
@@ -122,6 +138,8 @@ public final class SharedWebViewTestEnvironment {
     public static final class Builder {
         private Context mContext;
         private WebView mWebView;
+
+        private FrameLayout mRootLayout;
         private IHostAppInvoker mHostAppInvoker;
 
         /** Provide a {@link Context} the tests should use for your environment. */
@@ -148,13 +166,19 @@ public final class SharedWebViewTestEnvironment {
             return this;
         }
 
+        /** Provide a {@link FrameLayout} the tests should use for your environment. */
+        public Builder setRootLayout(@NonNull FrameLayout rootLayout) {
+            mRootLayout = rootLayout;
+            return this;
+        }
+
         /** Build a new SharedWebViewTestEnvironment. */
         public SharedWebViewTestEnvironment build() {
             if (mHostAppInvoker == null) {
                 throw new NullPointerException("The host app invoker is required");
             }
             return new SharedWebViewTestEnvironment(
-                    mContext, mWebView, mHostAppInvoker);
+                    mContext, mWebView, mHostAppInvoker, mRootLayout);
         }
     }
 

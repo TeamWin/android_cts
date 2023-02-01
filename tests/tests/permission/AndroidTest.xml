@@ -30,6 +30,7 @@
     <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
         <option name="force-skip-system-props" value="true" /> <!-- avoid restarting device -->
         <option name="screen-always-on" value="on" />
+        <option name="disable-device-config-sync" value="true" />
     </target_preparer>
 
     <!-- Install main test suite apk -->

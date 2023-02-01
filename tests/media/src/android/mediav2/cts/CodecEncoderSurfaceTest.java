@@ -142,7 +142,7 @@ public class CodecEncoderSurfaceTest {
         System.loadLibrary("ctsmediav2codecencsurface_jni");
 
         android.os.Bundle args = InstrumentationRegistry.getArguments();
-        CodecTestBase.mimeSelKeys = args.getString(CodecTestBase.MIME_SEL_KEY);
+        CodecTestBase.mediaTypeSelKeys = args.getString(CodecTestBase.MEDIA_TYPE_SEL_KEY);
     }
 
     public CodecEncoderSurfaceTest(String encoder, String mediaType, String testFile,
@@ -360,9 +360,9 @@ public class CodecEncoderSurfaceTest {
         mExtractor.setDataSource(srcFile);
         for (int trackID = 0; trackID < mExtractor.getTrackCount(); trackID++) {
             MediaFormat format = mExtractor.getTrackFormat(trackID);
-            String mime = format.getString(MediaFormat.KEY_MIME);
-            if (mime.startsWith("video/")) {
-                mTestFileMediaType = mime;
+            String mediaType = format.getString(MediaFormat.KEY_MIME);
+            if (mediaType.startsWith("video/")) {
+                mTestFileMediaType = mediaType;
                 mExtractor.selectTrack(trackID);
                 format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mColorFormat);
                 if (mTestToneMap) {
@@ -802,7 +802,7 @@ public class CodecEncoderSurfaceTest {
         if (muxOutput) new File(tmpPath).delete();
     }
 
-    private native boolean nativeTestSimpleEncode(String encoder, String decoder, String mime,
+    private native boolean nativeTestSimpleEncode(String encoder, String decoder, String mediaType,
             String testFile, String muxFile, int colorFormat, String cfgParams, String separator,
             StringBuilder retMsg);
 

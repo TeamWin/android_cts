@@ -18,11 +18,16 @@ package android.devicepolicy.cts;
 
 import static android.app.admin.DevicePolicyManager.MTE_DISABLED;
 import static android.app.admin.DevicePolicyManager.MTE_ENABLED;
+
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
+
 import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
 import android.stats.devicepolicy.EventId;
+
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
@@ -30,7 +35,9 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.policies.MteForceOff;
 import com.android.bedstead.harrier.policies.MteForceOn;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
+import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
@@ -39,9 +46,20 @@ import org.junit.runner.RunWith;
 public final class MtePolicyTest {
     @ClassRule @Rule public static final DeviceState sDeviceState = new DeviceState();
 
+    void skipIfUnsupported() {
+        assumeTrue(
+                TestApis.systemProperties()
+                        .getBoolean(
+                                "ro.arm64.memtag.bootctl_device_policy_manager",
+                                TestApis.systemProperties()
+                                        .getBoolean(
+                                                "ro.arm64.memtag.bootctl_settings_toggle", false)));
+    }
+
     @CanSetPolicyTest(policy = MteForceOn.class)
     @ApiTest(apis = "android.app.manager.DevicePolicyManager#setMtePolicy")
     public void setMtePolicy_MTE_ENABLED_applies() {
+        skipIfUnsupported();
         int originalValue = sDeviceState.dpc().devicePolicyManager().getMtePolicy();
 
         try {
@@ -56,6 +74,7 @@ public final class MtePolicyTest {
     @CanSetPolicyTest(policy = MteForceOn.class)
     @ApiTest(apis = "android.app.manager.DevicePolicyManager#setMtePolicy")
     public void setMtePolicy_MTE_ENABLED_logsEvent() {
+        skipIfUnsupported();
         int originalValue = sDeviceState.dpc().devicePolicyManager().getMtePolicy();
 
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
@@ -76,6 +95,7 @@ public final class MtePolicyTest {
     @CanSetPolicyTest(policy = MteForceOff.class)
     @ApiTest(apis = "android.app.manager.DevicePolicyManager#setMtePolicy")
     public void setMtePolicy_MTE_DISABLED_applies() {
+        skipIfUnsupported();
         int originalValue = sDeviceState.dpc().devicePolicyManager().getMtePolicy();
 
         try {
@@ -90,6 +110,7 @@ public final class MtePolicyTest {
     @CanSetPolicyTest(policy = MteForceOff.class)
     @ApiTest(apis = "android.app.manager.DevicePolicyManager#setMtePolicy")
     public void setMtePolicy_MTE_DISABLED_logsEvent() {
+        skipIfUnsupported();
         int originalValue = sDeviceState.dpc().devicePolicyManager().getMtePolicy();
 
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
@@ -110,6 +131,7 @@ public final class MtePolicyTest {
     @CannotSetPolicyTest(policy = MteForceOn.class)
     @ApiTest(apis = "android.app.manager.DevicePolicyManager#setMtePolicy")
     public void setMtePolicy_MTE_ENABLED_throwsException() {
+        skipIfUnsupported();
         assertThrows(
                 SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().setMtePolicy(MTE_ENABLED));
@@ -118,6 +140,7 @@ public final class MtePolicyTest {
     @CannotSetPolicyTest(policy = MteForceOff.class)
     @ApiTest(apis = "android.app.manager.DevicePolicyManager#setMtePolicy")
     public void setMtePolicy_MTE_DISABLED_throwsException() {
+        skipIfUnsupported();
         assertThrows(
                 SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().setMtePolicy(MTE_DISABLED));

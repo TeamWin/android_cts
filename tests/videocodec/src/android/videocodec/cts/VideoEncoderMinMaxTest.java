@@ -19,7 +19,6 @@ package android.videocodec.cts;
 import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR;
 import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
-import static android.mediav2.common.cts.CodecTestBase.MEDIA_CODEC_LIST_REGULAR;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -267,7 +266,7 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
-                areFormatsSupported(mCodecName, mMime, formats));
+                areFormatsSupported(mCodecName, mMediaType, formats));
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
         assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0]
                 + mTestConfig + mTestEnv, res);
@@ -276,7 +275,7 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
         StringBuilder msg = new StringBuilder();
         boolean isOk = true;
         try {
-            cs = new CompareStreams(res, mMime, mMuxedOutputFile, true, mIsLoopBack);
+            cs = new CompareStreams(res, mMediaType, mMuxedOutputFile, true, mIsLoopBack);
             final double[] minPSNR = cs.getMinimumPSNR();
             for (int i = 0; i < minPSNR.length; i++) {
                 if (minPSNR[i] < MIN_ACCEPTABLE_QUALITY) {

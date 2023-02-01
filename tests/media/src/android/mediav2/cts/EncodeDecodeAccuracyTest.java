@@ -171,9 +171,9 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
         }
         if (mEncCfgParams.mInputBitDepth == 10) {
             assumeTrue("Codec doesn't support ABGR2101010",
-                    hasSupportForColorFormat(mCompName, mMime, COLOR_Format32bitABGR2101010));
+                    hasSupportForColorFormat(mCompName, mMediaType, COLOR_Format32bitABGR2101010));
             assumeTrue("Codec doesn't support high bit depth profile encoding",
-                    doesCodecSupportHDRProfile(mCompName, mMime));
+                    doesCodecSupportHDRProfile(mCompName, mMediaType));
         }
     }
 
@@ -497,13 +497,14 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         ArrayList<String> listOfDecoders =
-                CodecDecoderTestBase.selectCodecs(mMime, formats, null, false);
+                CodecDecoderTestBase.selectCodecs(mMediaType, formats, null, false);
         assertFalse("no suitable codecs found for : " + format + "\n" + mTestConfig + mTestEnv,
                 listOfDecoders.isEmpty());
         for (String decoder : listOfDecoders) {
             if (mEncCfgParams.mInputBitDepth == 10
-                    && !hasSupportForColorFormat(decoder, mMime, COLOR_FormatYUVP010)
-                    && !hasSupportForColorFormat(decoder, mMime, COLOR_Format32bitABGR2101010)) {
+                    && !hasSupportForColorFormat(decoder, mMediaType, COLOR_FormatYUVP010)
+                    && !hasSupportForColorFormat(decoder, mMediaType,
+                                                 COLOR_Format32bitABGR2101010)) {
                 continue;
             }
             mCodec = MediaCodec.createByCodecName(decoder);
@@ -547,8 +548,8 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
             assertTrue(outputFormat.containsKey(MediaFormat.KEY_COLOR_RANGE));
             assertTrue(outputFormat.containsKey(MediaFormat.KEY_COLOR_STANDARD));
             assertTrue(outputFormat.containsKey(MediaFormat.KEY_COLOR_TRANSFER));
-            if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_AVC) ||
-                    mMime.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+            if (mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)
+                    || mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
                 outputFormat.removeKey(MediaFormat.KEY_COLOR_RANGE);
                 outputFormat.removeKey(MediaFormat.KEY_COLOR_STANDARD);
                 outputFormat.removeKey(MediaFormat.KEY_COLOR_TRANSFER);

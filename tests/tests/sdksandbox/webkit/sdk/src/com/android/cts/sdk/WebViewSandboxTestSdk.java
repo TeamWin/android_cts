@@ -27,6 +27,7 @@ import android.webkit.WebView;
 import android.webkit.cts.IHostAppInvoker;
 import android.webkit.cts.SharedWebViewTest;
 import android.webkit.cts.SharedWebViewTestEnvironment;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
@@ -35,7 +36,6 @@ public class WebViewSandboxTestSdk extends SdkSandboxTestScenarioRunner {
     private static final String TAG = WebViewSandboxTestSdk.class.getName();
 
     private @Nullable SharedWebViewTest mTestInstance;
-    private WebView mWebView;
 
     @Override
     public SandboxedSdk onLoadSdk(Bundle params) {
@@ -57,34 +57,48 @@ public class WebViewSandboxTestSdk extends SdkSandboxTestScenarioRunner {
 
     @Override
     public View getView(Context windowContext, Bundle params, int width, int height) {
-        mWebView = new WebView(getContext());
+        WebView webView = new WebView(getContext());
+        FrameLayout rootLayout = wrapWebViewInLayout(webView);
 
         if (mTestInstance != null) {
             SharedWebViewTestEnvironment testEnvironment =
                     new SharedWebViewTestEnvironment.Builder()
                             .setContext(getContext())
-                            .setWebView(mWebView)
+                            .setWebView(webView)
                             .setHostAppInvoker(
                                     IHostAppInvoker.Stub.asInterface(getCustomInterface()))
+                            .setRootLayout(rootLayout)
                             .build();
 
             mTestInstance.setTestEnvironment(testEnvironment);
         }
 
+        return rootLayout;
+    }
+
+    private FrameLayout wrapWebViewInLayout(WebView webView) {
+        // Some tests add content views the root view of the activity which
+        // is a FrameLayout, hence adding a FrameLayout as a root here as well
+        FrameLayout rootLayout = new FrameLayout(getContext());
+        rootLayout.setLayoutParams(
+                new FrameLayout.LayoutParams(
+                        LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+
         // Some tests expect the WebView to have a parent so making the parent
         // a linear layout the same as the regular webkit tests.
-        LinearLayout parent = new LinearLayout(getContext());
-        parent.setLayoutParams(
+        LinearLayout webviewParent = new LinearLayout(getContext());
+        webviewParent.setLayoutParams(
                 new LinearLayout.LayoutParams(
-                        LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-        parent.setOrientation(LinearLayout.VERTICAL);
+                        LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        webviewParent.setOrientation(LinearLayout.VERTICAL);
 
-        parent.addView(mWebView);
-
-        mWebView.setLayoutParams(
+        webView.setLayoutParams(
                 new LinearLayout.LayoutParams(
                         LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
-        return parent;
+        webviewParent.addView(webView);
+        rootLayout.addView(webviewParent);
+
+        return rootLayout;
     }
 }

@@ -176,6 +176,13 @@ public class WebViewSandboxTest {
     }
 
     @Test
+    @MediumTest
+    public void testJavascriptInterfaceForClientPopup() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testJavascriptInterfaceForClientPopup");
+    }
+
+    @Test
+    @MediumTest
     public void testLoadDataWithBaseUrl_historyUrl() throws Exception {
         sdkTester.assertSdkTestRunPasses("testLoadDataWithBaseUrl_historyUrl");
     }

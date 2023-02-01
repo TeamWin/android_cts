@@ -64,8 +64,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
         // Go through normal grant flow
         requestAppPermissionsAndAssertResult(
             android.Manifest.permission.READ_CALENDAR to true,
-            android.Manifest.permission.WRITE_CALENDAR to true,
-            expectTargetSdkWarning = true
+            android.Manifest.permission.WRITE_CALENDAR to true
         ) {
             clickPermissionRequestAllowButton()
         }
@@ -82,9 +81,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
 
         // Request only one permission from the 'contacts' permission group
         // Expect the permission is granted
-        requestAppPermissionsAndAssertResult(
-            android.Manifest.permission.WRITE_CONTACTS to true, expectTargetSdkWarning = true
-        ) {
+        requestAppPermissionsAndAssertResult(android.Manifest.permission.WRITE_CONTACTS to true) {
             clickPermissionRequestAllowButton()
         }
 
@@ -99,9 +96,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
 
         // Request the permission and cancel the request
         // Expect the permission is not granted
-        requestAppPermissionsAndAssertResult(
-            android.Manifest.permission.WRITE_CONTACTS to false, expectTargetSdkWarning = true
-        ) {
+        requestAppPermissionsAndAssertResult(android.Manifest.permission.WRITE_CONTACTS to false) {
             clickPermissionRequestDenyButton()
         }
     }
@@ -113,9 +108,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
 
         // Request the permission and allow it
         // Expect the permission is granted
-        requestAppPermissionsAndAssertResult(
-            android.Manifest.permission.WRITE_CONTACTS to true, expectTargetSdkWarning = true
-        ) {
+        requestAppPermissionsAndAssertResult(android.Manifest.permission.WRITE_CONTACTS to true) {
             clickPermissionRequestAllowButton()
         }
 
@@ -131,9 +124,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
 
         // Request the permission and deny it
         // Expect the permission is not granted
-        requestAppPermissionsAndAssertResult(
-            android.Manifest.permission.WRITE_CONTACTS to false, expectTargetSdkWarning = true
-        ) {
+        requestAppPermissionsAndAssertResult(android.Manifest.permission.WRITE_CONTACTS to false) {
             clickPermissionRequestDenyButton()
         }
 
@@ -173,9 +164,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
 
         // Request the permission and deny it
         // Expect the permission is not granted
-        requestAppPermissionsAndAssertResult(
-            android.Manifest.permission.CAMERA to false, expectTargetSdkWarning = true
-        ) {
+        requestAppPermissionsAndAssertResult(android.Manifest.permission.CAMERA to false) {
             clickPermissionRequestDenyButton()
         }
 
@@ -232,8 +221,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
         // Expect the permission are granted
         val result = requestAppPermissionsAndAssertResult(
             android.Manifest.permission.WRITE_CONTACTS to true,
-            android.Manifest.permission.WRITE_CALENDAR to true,
-            expectTargetSdkWarning = true
+            android.Manifest.permission.WRITE_CALENDAR to true
         ) {
             clickPermissionRequestAllowButton()
             clickPermissionRequestAllowButton()
@@ -259,7 +247,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
             android.Manifest.permission.CALL_PHONE,
             android.Manifest.permission.RECORD_AUDIO,
             android.Manifest.permission.CAMERA,
-            android.Manifest.permission.READ_EXTERNAL_STORAGE, targetSdk = 23
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
         )
         // Don't use UI for granting location and sensor permissions as they show another dialog
         uiAutomation.grantRuntimePermission(
@@ -303,7 +291,6 @@ class PermissionTest23 : BaseUsePermissionTest() {
             android.Manifest.permission.WRITE_CONTACTS to true,
             null to false,
             android.Manifest.permission.RECORD_AUDIO to true,
-            expectTargetSdkWarning = true
         ) {
             clickPermissionRequestAllowForegroundButton()
             clickPermissionRequestAllowButton()
@@ -322,12 +309,12 @@ class PermissionTest23 : BaseUsePermissionTest() {
         Assume.assumeFalse("other form factors might not support the ask button",
                 isTv || isAutomotive || isWatch)
 
-        grantAppPermissions(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION, targetSdk = 23)
+        grantAppPermissions(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         assertAppHasPermission(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION, true)
         assertAppHasPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, true)
         assertAppHasPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION, true)
 
-        revokeAppPermissions(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION, targetSdk = 23)
+        revokeAppPermissions(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         SystemUtil.runWithShellPermissionIdentity {
             val perms = listOf(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                     android.Manifest.permission.ACCESS_FINE_LOCATION,

@@ -22,8 +22,11 @@
 #include <gtest/gtest.h>
 
 #include <string>
+#include <thread>
 
 #include "utils.h"
+
+using namespace std::chrono_literals;
 
 static bool isExemptFromAVBTests() {
     int first_api_level = getFirstApiLevel();
@@ -93,11 +96,24 @@ static std::set<std::string> getVerityMountPoints() {
     return verity_partitions;
 }
 
+// The properties for this test are set in init.  There is a race condition that
+// causes this test to be evaluated before these properties are readable.  Avoid
+// this by waiting for the properties to be available.
+void waitForProperty(const std::string &property) {
+    int retries = 40;
+    std::string value = android::base::GetProperty(property, "unset");
+    while (android::base::EqualsIgnoreCase(property, "unset") && retries--) {
+        value = android::base::GetProperty(property, "unset");
+        std::this_thread::sleep_for(100ms);
+    }
+    if (android::base::EqualsIgnoreCase(property, "unset"))
+        ADD_FAILURE() << "Property was never set: " << property;
+}
+
 // As required by CDD, verified boot MUST use verification algorithms as strong
 // as current recommendations from NIST for hashing algorithms (SHA-256).
 // @CddTest = 9.10/C-1-5
 TEST(VerifiedBootTest, avbHashtreeNotUsingSha1) {
-    GTEST_SKIP() << "Skipping due to broken test. See b/264937051";
     if (isExemptFromAVBTests()) {
         GTEST_SKIP();
     }
@@ -108,9 +124,13 @@ TEST(VerifiedBootTest, avbHashtreeNotUsingSha1) {
         // root case.
         std::string partition = mount_point == "/" ? "system" : mount_point;
         std::string alg_prop_name = "partition." + partition + ".verified.hash_alg";
+        waitForProperty(alg_prop_name);
         std::string hash_alg = android::base::GetProperty(alg_prop_name, "");
-        ASSERT_FALSE(hash_alg.empty());
-        ASSERT_FALSE(android::base::StartsWithIgnoreCase(hash_alg, "sha1"));
+
+        if (hash_alg.empty())
+            ADD_FAILURE() << "Could not find hash algorithm for" << partition;
+        if (android::base::StartsWithIgnoreCase(hash_alg, "sha1"))
+            ADD_FAILURE() << "SHA1 is insecure, but is being used for " << partition;
     }
 }
 
@@ -140,6 +160,8 @@ TEST(VerifiedBootTest, avbNotUsingCheckAtMostOnce) {
         // root case.
         std::string partition = mount_point == "/" ? "system" : mount_point;
         std::string prop_name = "partition." + partition + ".verified.check_at_most_once";
-        ASSERT_FALSE(android::base::GetBoolProperty(prop_name, false));
+        waitForProperty(prop_name);
+        if (android::base::GetBoolProperty(prop_name, false))
+            ADD_FAILURE() << "check_at_most_once is set on " << partition;
     }
 }

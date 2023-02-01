@@ -40,6 +40,7 @@ import org.junit.runner.RunWith;
 public class MagnificationConfigTest {
 
     private final int mMode = MAGNIFICATION_MODE_FULLSCREEN;
+    private final boolean mActivated = true;
     private final float mScale = 1;
     private final float mCenterX = 2;
     private final float mCenterY = 3;
@@ -68,6 +69,8 @@ public class MagnificationConfigTest {
 
         assertEquals("getMode is different from magnificationConfig", mMode,
                 magnificationConfig.getMode());
+        assertEquals("isActivated is different from magnificationConfig", mActivated,
+                magnificationConfig.isActivated());
         assertEquals("getScale is different from magnificationConfig", mScale,
                 magnificationConfig.getScale(), 0);
         assertEquals("getCenterX is different from magnificationConfig", mCenterX,
@@ -80,6 +83,8 @@ public class MagnificationConfigTest {
             MagnificationConfig actualConfig) {
         assertEquals("getMode has incorrect value", expectedConfig.getMode(),
                 actualConfig.getMode());
+        assertEquals("isActivated has incorrect value", expectedConfig.isActivated(),
+                actualConfig.isActivated());
         assertEquals("getScale has incorrect value", expectedConfig.getScale(),
                 actualConfig.getScale(), 0);
         assertEquals("getCenterX has incorrect value", expectedConfig.getCenterX(),
@@ -91,8 +96,8 @@ public class MagnificationConfigTest {
     private MagnificationConfig populateMagnificationConfig() {
         MagnificationConfig.Builder builder =
                 new MagnificationConfig.Builder();
-        MagnificationConfig magnificationConfig = builder.setMode(mMode).setScale(
-                mScale).setCenterX(mCenterX).setCenterY(mCenterY).build();
+        MagnificationConfig magnificationConfig = builder.setMode(mMode).setActivated(mActivated)
+                        .setScale(mScale).setCenterX(mCenterX).setCenterY(mCenterY).build();
         return magnificationConfig;
     }
 }

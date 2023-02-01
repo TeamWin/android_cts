@@ -158,14 +158,15 @@ public class VideoEncoderTest extends CodecEncoderTestBase {
         // pre run checks
         if (mEncCfgParams[0].mInputBitDepth > 8) {
             Assume.assumeTrue("Codec doesn't support high bit depth profile encoding",
-                    doesCodecSupportHDRProfile(mCodecName, mMime));
+                    doesCodecSupportHDRProfile(mCodecName, mMediaType));
             Assume.assumeTrue(mCodecName + " doesn't support " + colorFormatToString(
                             mEncCfgParams[0].mColorFormat, mEncCfgParams[0].mInputBitDepth),
-                    hasSupportForColorFormat(mCodecName, mMime, mEncCfgParams[0].mColorFormat));
+                    hasSupportForColorFormat(mCodecName, mMediaType,
+                                             mEncCfgParams[0].mColorFormat));
         }
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(mEncCfgParams[0].getFormat());
-        checkFormatSupport(mCodecName, mMime, true, formats, null, CODEC_OPTIONAL);
+        checkFormatSupport(mCodecName, mMediaType, true, formats, null, CODEC_OPTIONAL);
 
         // encode
         RawResource res = EncoderInput.getRawResource(mEncCfgParams[0]);
@@ -173,7 +174,7 @@ public class VideoEncoderTest extends CodecEncoderTestBase {
                 + mTestEnv, res);
 
         boolean muxOutput = true;
-        if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_AV1) && CodecTestBase.IS_BEFORE_U) {
+        if (mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_AV1) && CodecTestBase.IS_BEFORE_U) {
             muxOutput = false;
         }
         encodeToMemory(mCodecName, mEncCfgParams[0], res, Integer.MAX_VALUE, false, muxOutput);
@@ -181,7 +182,7 @@ public class VideoEncoderTest extends CodecEncoderTestBase {
         // cleanup tmp files
         if (muxOutput) {
             // validate output
-            validateEncodedPSNR(res, mMime, mMuxedOutputFile, true, mIsLoopBack,
+            validateEncodedPSNR(res, mMediaType, mMuxedOutputFile, true, mIsLoopBack,
                     ACCEPTABLE_WIRELESS_TX_QUALITY);
 
             File tmp = new File(mMuxedOutputFile);

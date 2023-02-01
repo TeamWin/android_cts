@@ -41,6 +41,7 @@ import android.car.cts.utils.VehiclePropertyVerifier;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.AutomaticEmergencyBrakingState;
+import android.car.hardware.property.BlindSpotWarningState;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback;
 import android.car.hardware.property.ErrorState;
@@ -53,6 +54,7 @@ import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
 import android.car.hardware.property.VehicleLightState;
 import android.car.hardware.property.VehicleLightSwitch;
+import android.car.hardware.property.VehicleOilLevel;
 import android.car.hardware.property.VehicleTurnSignal;
 import android.car.test.ApiCheckerRule.Builder;
 import android.os.SystemClock;
@@ -166,6 +168,15 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             ImmutableSet.<Integer>builder().add(VehicleLightSwitch.STATE_OFF,
                     VehicleLightSwitch.STATE_ON, VehicleLightSwitch.STATE_DAYTIME_RUNNING,
                     VehicleLightSwitch.STATE_AUTOMATIC).build();
+    private static final ImmutableSet<Integer> VEHICLE_OIL_LEVELS =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            VehicleOilLevel.LEVEL_CRITICALLY_LOW,
+                            VehicleOilLevel.LEVEL_LOW,
+                            VehicleOilLevel.LEVEL_NORMAL,
+                            VehicleOilLevel.LEVEL_HIGH,
+                            VehicleOilLevel.LEVEL_ERROR)
+                    .build();
     private static final ImmutableSet<Integer> EV_STOPPING_MODES =
             ImmutableSet.<Integer>builder().add(EvStoppingMode.STATE_OTHER,
                     EvStoppingMode.STATE_CREEP, EvStoppingMode.STATE_ROLL,
@@ -196,6 +207,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             ForwardCollisionWarningState.OTHER,
                             ForwardCollisionWarningState.NO_WARNING,
                             ForwardCollisionWarningState.WARNING)
+                    .build();
+    private static final ImmutableSet<Integer> BLIND_SPOT_WARNING_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            BlindSpotWarningState.OTHER,
+                            BlindSpotWarningState.NO_WARNING,
+                            BlindSpotWarningState.WARNING)
                     .build();
     private static final ImmutableSet<Integer> SINGLE_HVAC_FAN_DIRECTIONS = ImmutableSet.of(
             /*VehicleHvacFanDirection.FACE=*/0x1, /*VehicleHvacFanDirection.FLOOR=*/0x2,
@@ -553,7 +571,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             ImmutableList.<Integer>builder()
                     .add(
                             VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_STATE,
-                            VehiclePropertyIds.FORWARD_COLLISION_WARNING_STATE)
+                            VehiclePropertyIds.FORWARD_COLLISION_WARNING_STATE,
+                            VehiclePropertyIds.BLIND_SPOT_WARNING_STATE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -2490,13 +2509,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(
-                        ImmutableSet.of(
-                                /*VehicleOilLevel.CRITICALLY_LOW=*/ 0,
-                                /*VehicleOilLevel.LOW=*/ 1,
-                                /*VehicleOilLevel.NORMAL=*/ 2,
-                                /*VehicleOilLevel.HIGH=*/ 3,
-                                /*VehicleOilLevel.ERROR=*/ 4))
+                .setPossibleCarPropertyValues(VEHICLE_OIL_LEVELS)
                 .addReadPermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
                 .build()
                 .verify(mCarPropertyManager);
@@ -4736,6 +4749,30 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
                 .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testBlindSpotWarningStateIfSupported() {
+        ImmutableSet<Integer> combinedCarPropertyValues = ImmutableSet.<Integer>builder()
+                .addAll(BLIND_SPOT_WARNING_STATES)
+                .addAll(ERROR_STATES)
+                .build();
+
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.BLIND_SPOT_WARNING_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setPossibleCarPropertyValues(combinedCarPropertyValues)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testBlindSpotWarningStateWithErrorState() {
+        verifyEnumValuesAreDistinct(BLIND_SPOT_WARNING_STATES, ERROR_STATES);
     }
 
     @Test

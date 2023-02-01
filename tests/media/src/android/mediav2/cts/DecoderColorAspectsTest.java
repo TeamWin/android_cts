@@ -64,10 +64,10 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
     private final SupportClass mSupportRequirements;
     private ArrayList<String> mCheckESList;
 
-    public DecoderColorAspectsTest(String decoderName, String mime, String testFile, int range,
+    public DecoderColorAspectsTest(String decoderName, String mediaType, String testFile, int range,
             int standard, int transferCurve, boolean canIgnoreColorBox,
             SupportClass supportRequirements, String allTestParams) {
-        super(decoderName, mime, MEDIA_DIR + testFile, allTestParams);
+        super(decoderName, mediaType, MEDIA_DIR + testFile, allTestParams);
         mColorRange = range;
         mColorStandard = standard;
         mColorTransferCurve = transferCurve;
@@ -290,17 +290,17 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
         mExtractor.release();
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
-        if (doesAnyFormatHaveHDRProfile(mMime, formats)) {
+        if (doesAnyFormatHaveHDRProfile(mMediaType, formats)) {
             Assume.assumeTrue(canDisplaySupportHDRContent());
         }
-        checkFormatSupport(mCodecName, mMime, false, formats, null, mSupportRequirements);
+        checkFormatSupport(mCodecName, mMediaType, false, formats, null, mSupportRequirements);
 
         mActivity.setScreenParams(getWidth(format), getHeight(format), true);
         {
             validateColorAspects(mColorRange, mColorStandard, mColorTransferCurve, false);
             // If color metadata can also be signalled via elementary stream, then verify if the
             // elementary stream contains color aspects as expected
-            if (mCanIgnoreColorBox && mCheckESList.contains(mMime)) {
+            if (mCanIgnoreColorBox && mCheckESList.contains(mMediaType)) {
                 validateColorAspects(mColorRange, mColorStandard, mColorTransferCurve, true);
             }
         }

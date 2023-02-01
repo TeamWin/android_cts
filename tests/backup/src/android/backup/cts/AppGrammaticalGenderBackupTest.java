@@ -55,6 +55,9 @@ public class AppGrammaticalGenderBackupTest extends BaseBackupCtsTest {
     /** Test installed app set gender before restoring */
     public void testBackupRestore_setGenderBeforeRestoring_doesNotRestore()
             throws IOException {
+        if (!isBackupSupported()) {
+            return;
+        }
         setAndBackupAppGender(Configuration.GRAMMATICAL_GENDER_NEUTRAL);
         // fake the behavior that user set the gender before restoring
         setGrammaticalGender(Configuration.GRAMMATICAL_GENDER_FEMININE);

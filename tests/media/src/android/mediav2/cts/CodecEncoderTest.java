@@ -88,9 +88,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         ABR_MEDIATYPE_LIST.add(MediaFormat.MIMETYPE_VIDEO_AV1);
     }
 
-    public CodecEncoderTest(String encoder, String mime, EncoderConfigParams[] cfgParams,
+    public CodecEncoderTest(String encoder, String mediaType, EncoderConfigParams[] cfgParams,
             String allTestParams) {
-        super(encoder, mime, cfgParams, allTestParams);
+        super(encoder, mediaType, cfgParams, allTestParams);
     }
 
     @Override
@@ -333,7 +333,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         }
     }
 
-    private native boolean nativeTestSimpleEncode(String encoder, String file, String mime,
+    private native boolean nativeTestSimpleEncode(String encoder, String file, String mediaType,
             String cfgParams, String separator, StringBuilder retMsg);
 
     /**
@@ -346,12 +346,12 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     public void testSimpleEncodeNative() throws IOException, CloneNotSupportedException {
         MediaFormat format = mActiveEncCfg.getFormat();
         if (mIsVideo) {
-            int colorFormat = findByteBufferColorFormat(mCodecName, mMime);
+            int colorFormat = findByteBufferColorFormat(mCodecName, mMediaType);
             assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
                     colorFormat != -1);
             format = mActiveEncCfg.getBuilder().setColorFormat(colorFormat).build().getFormat();
         }
-        boolean isPass = nativeTestSimpleEncode(mCodecName, mActiveRawRes.mFileName, mMime,
+        boolean isPass = nativeTestSimpleEncode(mCodecName, mActiveRawRes.mFileName, mMediaType,
                 EncoderConfigParams.serializeMediaFormat(format),
                 EncoderConfigParams.TOKEN_SEPARATOR, mTestConfig);
         assertTrue(mTestConfig.toString(), isPass);
@@ -477,7 +477,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         }
     }
 
-    private native boolean nativeTestReconfigure(String encoder, String file, String mime,
+    private native boolean nativeTestReconfigure(String encoder, String file, String mediaType,
             String cfgParams, String cfgReconfigParams, String separator, StringBuilder retMsg);
 
     /**
@@ -491,7 +491,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         MediaFormat format = mEncCfgParams[0].getFormat();
         MediaFormat reconfigFormat = mEncCfgParams.length > 1 ? mEncCfgParams[1].getFormat() : null;
         if (mIsVideo) {
-            int colorFormat = findByteBufferColorFormat(mCodecName, mMime);
+            int colorFormat = findByteBufferColorFormat(mCodecName, mMediaType);
             assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
                     colorFormat != -1);
             format = mEncCfgParams[0].getBuilder().setColorFormat(colorFormat).build().getFormat();
@@ -500,7 +500,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                         .getFormat();
             }
         }
-        boolean isPass = nativeTestReconfigure(mCodecName, mActiveRawRes.mFileName, mMime,
+        boolean isPass = nativeTestReconfigure(mCodecName, mActiveRawRes.mFileName, mMediaType,
                 EncoderConfigParams.serializeMediaFormat(format), reconfigFormat == null ? null :
                         EncoderConfigParams.serializeMediaFormat(reconfigFormat),
                 EncoderConfigParams.TOKEN_SEPARATOR, mTestConfig);
@@ -545,7 +545,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         }
     }
 
-    private native boolean nativeTestOnlyEos(String encoder, String mime, String cfgParams,
+    private native boolean nativeTestOnlyEos(String encoder, String mediaType, String cfgParams,
             String separator, StringBuilder retMsg);
 
     /**
@@ -557,12 +557,12 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     public void testOnlyEosNative() throws IOException, CloneNotSupportedException {
         MediaFormat format = mActiveEncCfg.getFormat();
         if (mIsVideo) {
-            int colorFormat = findByteBufferColorFormat(mCodecName, mMime);
+            int colorFormat = findByteBufferColorFormat(mCodecName, mMediaType);
             assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
                     colorFormat != -1);
             format = mActiveEncCfg.getBuilder().setColorFormat(colorFormat).build().getFormat();
         }
-        boolean isPass = nativeTestOnlyEos(mCodecName, mMime,
+        boolean isPass = nativeTestOnlyEos(mCodecName, mMediaType,
                 EncoderConfigParams.serializeMediaFormat(format),
                 EncoderConfigParams.TOKEN_SEPARATOR, mTestConfig);
         assertTrue(mTestConfig.toString(), isPass);
@@ -639,8 +639,8 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         }
     }
 
-    private native boolean nativeTestSetForceSyncFrame(String encoder, String file, String mime,
-            String cfgParams, String separator, StringBuilder retMsg);
+    private native boolean nativeTestSetForceSyncFrame(String encoder, String file,
+            String mediaType, String cfgParams, String separator, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testSetForceSyncFrame()} but uses ndk api
@@ -651,14 +651,14 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     public void testSetForceSyncFrameNative() throws IOException, CloneNotSupportedException {
         Assume.assumeTrue("Test is applicable only for encoders", mIsVideo);
 
-        int colorFormat = findByteBufferColorFormat(mCodecName, mMime);
+        int colorFormat = findByteBufferColorFormat(mCodecName, mMediaType);
         assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
                 colorFormat != -1);
         MediaFormat format =
                 mActiveEncCfg.getBuilder().setColorFormat(colorFormat).setKeyFrameInterval(500.f)
                         .build().getFormat();
-        boolean isPass = nativeTestSetForceSyncFrame(mCodecName, mActiveRawRes.mFileName, mMime,
-                EncoderConfigParams.serializeMediaFormat(format),
+        boolean isPass = nativeTestSetForceSyncFrame(mCodecName, mActiveRawRes.mFileName,
+                mMediaType, EncoderConfigParams.serializeMediaFormat(format),
                 EncoderConfigParams.TOKEN_SEPARATOR, mTestConfig);
         assertTrue(mTestConfig.toString(), isPass);
     }
@@ -674,8 +674,8 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptiveBitRate() throws IOException, InterruptedException {
-        Assume.assumeTrue("Skipping AdaptiveBitrate test for " + mMime,
-                ABR_MEDIATYPE_LIST.contains(mMime));
+        Assume.assumeTrue("Skipping AdaptiveBitrate test for " + mMediaType,
+                ABR_MEDIATYPE_LIST.contains(mMediaType));
         MediaFormat format = mActiveEncCfg.getFormat();
         final int adaptiveBrInterval = 3; // change br every 3 seconds.
         final int adaptiveBrDurFrm = mActiveEncCfg.mFrameRate * adaptiveBrInterval;
@@ -725,7 +725,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         }
     }
 
-    private native boolean nativeTestAdaptiveBitRate(String encoder, String file, String mime,
+    private native boolean nativeTestAdaptiveBitRate(String encoder, String file, String mediaType,
             String cfgParams, String separator, StringBuilder retMsg);
 
     /**
@@ -735,14 +735,14 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptiveBitRateNative() throws IOException, CloneNotSupportedException {
-        Assume.assumeTrue("Skipping Native AdaptiveBitrate test for " + mMime,
-                ABR_MEDIATYPE_LIST.contains(mMime));
-        int colorFormat = findByteBufferColorFormat(mCodecName, mMime);
+        Assume.assumeTrue("Skipping Native AdaptiveBitrate test for " + mMediaType,
+                ABR_MEDIATYPE_LIST.contains(mMediaType));
+        int colorFormat = findByteBufferColorFormat(mCodecName, mMediaType);
         assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
                 colorFormat != -1);
         MediaFormat format =
                 mActiveEncCfg.getBuilder().setColorFormat(colorFormat).build().getFormat();
-        boolean isPass = nativeTestAdaptiveBitRate(mCodecName, mActiveRawRes.mFileName, mMime,
+        boolean isPass = nativeTestAdaptiveBitRate(mCodecName, mActiveRawRes.mFileName, mMediaType,
                 EncoderConfigParams.serializeMediaFormat(format),
                 EncoderConfigParams.TOKEN_SEPARATOR, mTestConfig);
         assertTrue(mTestConfig.toString(), isPass);

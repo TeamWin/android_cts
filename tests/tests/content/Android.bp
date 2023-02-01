@@ -134,6 +134,8 @@ android_test {
         ":HelloWorldUsingSdk3",
         ":HelloWorldNoAppStorage",
         ":HelloWorldLotsOfFlags",
+        ":HelloWorldWithSufficient",
+        ":HelloSufficientVerifierReject",
         ":HelloVerifierAllow",
         ":HelloVerifierReject",
         ":HelloVerifierDelayedReject",

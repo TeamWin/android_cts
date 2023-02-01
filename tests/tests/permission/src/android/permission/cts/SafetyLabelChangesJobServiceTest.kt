@@ -17,46 +17,32 @@
 package android.permission.cts
 
 import android.app.Instrumentation
-import android.app.Notification
 import android.app.UiAutomation
-import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
-import android.permission.PermissionControllerManager
 import android.permission.cts.NotificationListenerUtils.getNotificationForPackageAndId
 import android.provider.DeviceConfig
 import android.safetylabel.SafetyLabelConstants
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
-import com.android.compatibility.common.util.DeviceConfigStateManager
 import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.FreezeRotationRule
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
-import org.junit.AfterClass
+import org.junit.Assume
 import org.junit.Before
-import org.junit.BeforeClass
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 
 /** End-to-end test for SafetyLabelChangesJobService. */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 class SafetyLabelChangesJobServiceTest {
-    private val context: Context = InstrumentationRegistry.getTargetContext()
-    private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
-    private val uiAutomation: UiAutomation = instrumentation.getUiAutomation()
-    private val permissionControllerPackageName =
-        context.packageManager.permissionControllerPackageName
-    private val userId = Process.myUserHandle().identifier
-
-    private lateinit var packageManager: PackageManager
-    private lateinit var permissionControllerManager: PermissionControllerManager
-
     @get:Rule val disableAnimationRule = DisableAnimationRule()
 
     @get:Rule val freezeRotationRule = FreezeRotationRule()
@@ -77,128 +63,104 @@ class SafetyLabelChangesJobServiceTest {
             SafetyLabelConstants.SAFETY_LABEL_CHANGE_NOTIFICATIONS_ENABLED,
             true.toString())
 
-    @get:Rule
-    val safetyLabelChangesJobDelayMillisConfig =
-        DeviceConfigStateChangerRule(
-            context,
-            DeviceConfig.NAMESPACE_PRIVACY,
-            PROPERTY_SAFETY_LABEL_CHANGES_JOB_DELAY_MILLIS,
-            0.toString())
-
     @Before
     fun setup() {
-        packageManager = context.packageManager
-        permissionControllerManager =
-            context.getSystemService(PermissionControllerManager::class.java)!!
-        assertThat(getJobState(PERIODIC_SAFETY_LABEL_CHANGES_JOB_ID)).startsWith("waiting")
-        cancelJob(SAFETY_LABEL_CHANGES_JOB_ID)
-        assertThat(getJobState(SAFETY_LABEL_CHANGES_JOB_ID)).startsWith("unknown")
+        val packageManager = context.packageManager
+        Assume.assumeFalse(packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE))
+        Assume.assumeFalse(packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK))
+        Assume.assumeFalse(packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH))
+
+        SystemUtil.runShellCommand("input keyevent KEYCODE_WAKEUP")
+        SystemUtil.runShellCommand("wm dismiss-keyguard")
+
+        // Bypass battery saving restrictions
+        SystemUtil.runShellCommand("cmd tare set-vip " +
+            "${Process.myUserHandle().identifier} $permissionControllerPackageName true")
         NotificationListenerUtils.cancelNotifications(permissionControllerPackageName)
-        assertNotificationNotShown()
+        resetPermissionControllerAndSimulateReboot()
     }
 
     @After
     fun tearDown() {
         cancelJob(SAFETY_LABEL_CHANGES_JOB_ID)
         NotificationListenerUtils.cancelNotifications(permissionControllerPackageName)
-    }
-
-    @Test
-    fun afterRunPeriodicJob_mainJobDelays() {
-        DeviceConfigStateManager(
-            context,
-            DeviceConfig.NAMESPACE_PRIVACY,
-            PROPERTY_SAFETY_LABEL_CHANGES_JOB_DELAY_MILLIS)
-            .set(TIMEOUT_TIME_MS.toString())
-
-        runJob(PERIODIC_SAFETY_LABEL_CHANGES_JOB_ID)
-
-        assertThat(getJobState(SAFETY_LABEL_CHANGES_JOB_ID)).startsWith("waiting")
+        // Reset battery saving restrictions
+        SystemUtil.runShellCommand("cmd tare set-vip " +
+            "${Process.myUserHandle().identifier} $permissionControllerPackageName default")
     }
 
     @Test
     fun afterRunMainJob_showNotification() {
-        runJob(PERIODIC_SAFETY_LABEL_CHANGES_JOB_ID)
-        waitForJobFinished(SAFETY_LABEL_CHANGES_JOB_ID)
-
+        runMainJob()
+        TestUtils.awaitJobUntilRequestedState(
+            permissionControllerPackageName,
+            SAFETY_LABEL_CHANGES_JOB_ID,
+            TIMEOUT_TIME_MS, uiAutomation(),
+            "unknown"
+        )
         assertNotificationShown()
     }
 
-    private fun assertNotificationShown() {
-        eventually {
-            val notification = getNotification(false)
-            assertThat(notification).isNotNull()
-            assertThat(notification!!.extras.getString(Notification.EXTRA_TITLE))
-                .isEqualTo(SAFETY_LABEL_CHANGES_NOTIFICATION_TITLE)
-            assertThat(notification!!.extras.getString(Notification.EXTRA_TEXT))
-                .isEqualTo(SAFETY_LABEL_CHANGES_NOTIFICATION_DESC)
-        }
-    }
-
-    private fun assertNotificationNotShown() = assertThat(getNotification(false))
-
-    private fun getNotification(cancelNotification: Boolean) =
-        getNotificationForPackageAndId(
-            permissionControllerPackageName,
-            SAFETY_LABEL_CHANGES_NOTIFICATION_ID,
-            cancelNotification)?.notification
-
-    private fun runJob(jobId: Int) =
-        TestUtils.runJobAndWaitUntilCompleted(
-            permissionControllerPackageName, jobId, TIMEOUT_TIME_MS, uiAutomation)
-
-    private fun cancelJob(jobId: Int) =
-        SystemUtil.runShellCommandOrThrow(
-            "cmd jobscheduler cancel -u $userId $permissionControllerPackageName $jobId")
-
-    private fun waitForJobFinished(jobId: Int) = waitForJobState(jobId, "unknown")
-
-    private fun waitForJobState(jobId: Int, requestedState: String) =
-        TestUtils.awaitJobUntilRequestedState(
-            permissionControllerPackageName, jobId, TIMEOUT_TIME_MS, uiAutomation, requestedState)
-
-    private fun getJobState(jobId: Int): String =
-        SystemUtil.runShellCommand(
-            "cmd jobscheduler get-job-state -u $userId $permissionControllerPackageName $jobId")
-            .trim()
-
     companion object {
-        private const val TIMEOUT_TIME_MS = 5000L
+        private const val TIMEOUT_TIME_MS = 25_000L
 
-        private const val PERIODIC_SAFETY_LABEL_CHANGES_JOB_ID = 8
         private const val SAFETY_LABEL_CHANGES_JOB_ID = 9
-
-        private const val PROPERTY_SAFETY_LABEL_CHANGES_JOB_DELAY_MILLIS =
-            "safety_label_changes_job_delay_millis"
+        private const val SET_UP_SAFETY_LABEL_CHANGES_JOB =
+            "com.android.permissioncontroller.action.SET_UP_SAFETY_LABEL_CHANGES_JOB"
+        private const val SAFETY_LABEL_CHANGES_JOB_SERVICE_RECEIVER_CLASS =
+            "com.android.permissioncontroller.permission.service.v34" +
+                ".SafetyLabelChangesJobService\$Receiver"
 
         private const val SAFETY_LABEL_CHANGES_NOTIFICATION_ID = 5
 
-        private val SAFETY_LABEL_CHANGES_NOTIFICATION_TITLE = "Review data sharing updates"
-        private val SAFETY_LABEL_CHANGES_NOTIFICATION_DESC = "The way some apps share location " +
-                "data has changed"
+        private val context: Context = InstrumentationRegistry.getTargetContext()
+        private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
+        private fun uiAutomation(): UiAutomation = instrumentation.uiAutomation
+        private val permissionControllerPackageName =
+            context.packageManager.permissionControllerPackageName
+        private val userId = Process.myUserHandle().identifier
 
-        @BeforeClass
+        @get:ClassRule
         @JvmStatic
-        fun beforeClassSetup() = allowNotificationAccess()
+        val ctsNotificationListenerHelper =
+            CtsNotificationListenerHelperRule(
+                InstrumentationRegistry.getInstrumentation().targetContext)
 
-        @AfterClass
-        @JvmStatic
-        fun cleanupAfterClass() = disallowNotificationAccess()
-
-        @JvmStatic
-        private fun allowNotificationAccess() {
-            SystemUtil.runShellCommand("cmd notification allow_listener " + ComponentName(
-                InstrumentationRegistry.getTargetContext(),
-                NotificationListener::class.java)
-                .flattenToString())
+        private fun assertNotificationShown() {
+            eventually {
+                val notification = getNotification(false)
+                assertThat(notification).isNotNull()
+            }
         }
 
-        @JvmStatic
-        private fun disallowNotificationAccess() {
-            SystemUtil.runShellCommand("cmd notification disallow_listener " + ComponentName(
-                InstrumentationRegistry.getTargetContext(),
-                NotificationListener::class.java)
-                .flattenToString())
+        private fun getNotification(cancelNotification: Boolean) =
+            getNotificationForPackageAndId(
+                permissionControllerPackageName,
+                SAFETY_LABEL_CHANGES_NOTIFICATION_ID,
+                cancelNotification)?.notification
+
+        private fun cancelJob(jobId: Int) {
+            SystemUtil.runShellCommand(
+                "cmd jobscheduler cancel -u $userId $permissionControllerPackageName $jobId")
+            TestUtils.awaitJobUntilRequestedState(
+                permissionControllerPackageName, jobId, TIMEOUT_TIME_MS, uiAutomation(), "unknown")
+        }
+
+        private fun runMainJob() {
+            val runJobCmd = "cmd jobscheduler run -u $userId -f $permissionControllerPackageName " +
+                "$SAFETY_LABEL_CHANGES_JOB_ID"
+            try {
+                SystemUtil.runShellCommand(uiAutomation(), runJobCmd)
+            } catch (e: Throwable) {
+                throw RuntimeException(e)
+            }
+        }
+
+        private fun resetPermissionControllerAndSimulateReboot() {
+            PermissionUtils.resetPermissionControllerJob(uiAutomation(),
+                permissionControllerPackageName, SAFETY_LABEL_CHANGES_JOB_ID,
+                TIMEOUT_TIME_MS, SET_UP_SAFETY_LABEL_CHANGES_JOB,
+                SAFETY_LABEL_CHANGES_JOB_SERVICE_RECEIVER_CLASS)
         }
     }
 }

@@ -83,6 +83,7 @@ abstract class BasePermissionTest {
 
         const val APK_DIRECTORY = "/data/local/tmp/cts/permission3"
 
+        const val QUICK_CHECK_TIMEOUT_MILLIS = 100L
         const val IDLE_TIMEOUT_MILLIS: Long = 1000
         const val UNEXPECTED_TIMEOUT_MILLIS = 1000
         const val TIMEOUT_MILLIS: Long = 20000

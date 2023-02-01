@@ -62,16 +62,16 @@ public class CodecDecoderTestBase extends CodecTestBase {
 
     protected MediaExtractor mExtractor;
 
-    public CodecDecoderTestBase(String codecName, String mime, String testFile,
+    public CodecDecoderTestBase(String codecName, String mediaType, String testFile,
             String allTestParams) {
-        super(codecName, mime, allTestParams);
+        super(codecName, mediaType, allTestParams);
         mTestFile = testFile;
         mCsdBuffers = new ArrayList<>();
     }
 
     @Before
     public void setUpCodecDecoderTestBase() {
-        assertTrue("Testing a mime that is neither audio nor video is not supported \n"
+        assertTrue("Testing a mediaType that is neither audio nor video is not supported \n"
                 + mTestConfig, mIsAudio || mIsVideo);
     }
 
@@ -89,15 +89,15 @@ public class CodecDecoderTestBase extends CodecTestBase {
         mExtractor.setDataSource(srcFile);
         for (int trackID = 0; trackID < mExtractor.getTrackCount(); trackID++) {
             MediaFormat format = mExtractor.getTrackFormat(trackID);
-            if (mMime.equalsIgnoreCase(format.getString(MediaFormat.KEY_MIME))) {
+            if (mMediaType.equalsIgnoreCase(format.getString(MediaFormat.KEY_MIME))) {
                 mExtractor.selectTrack(trackID);
                 if (mIsVideo) {
                     ArrayList<MediaFormat> formatList = new ArrayList<>();
                     formatList.add(format);
-                    boolean selectHBD = doesAnyFormatHaveHDRProfile(mMime, formatList)
+                    boolean selectHBD = doesAnyFormatHaveHDRProfile(mMediaType, formatList)
                             || srcFile.contains("10bit");
                     format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                            getColorFormat(mCodecName, mMime, mSurface != null, selectHBD));
+                            getColorFormat(mCodecName, mMediaType, mSurface != null, selectHBD));
                     if (selectHBD && (format.getInteger(MediaFormat.KEY_COLOR_FORMAT)
                             != COLOR_FormatYUVP010)) {
                         mSkipChecksumVerification = true;
@@ -118,8 +118,8 @@ public class CodecDecoderTestBase extends CodecTestBase {
                 return format;
             }
         }
-        fail("No track with mime: " + mMime + " found in file: " + srcFile + "\n" + mTestConfig
-                + mTestEnv);
+        fail("No track with mediaType: " + mMediaType + " found in file: " + srcFile + "\n"
+                + mTestConfig + mTestEnv);
         return null;
     }
 
@@ -365,7 +365,7 @@ public class CodecDecoderTestBase extends CodecTestBase {
     protected PersistableBundle validateMetrics(String decoder, MediaFormat format) {
         PersistableBundle metrics = super.validateMetrics(decoder, format);
         assertEquals("error! metrics#MetricsConstants.MIME_TYPE is not as expected \n" + mTestConfig
-                + mTestEnv, metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE), mMime);
+                + mTestEnv, metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE), mMediaType);
         assertEquals("error! metrics#MetricsConstants.ENCODER is not as expected \n" + mTestConfig
                 + mTestEnv, 0, metrics.getInt(MediaCodec.MetricsConstants.ENCODER));
         return metrics;

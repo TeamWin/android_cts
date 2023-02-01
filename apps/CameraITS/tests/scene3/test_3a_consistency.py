@@ -137,7 +137,7 @@ class ConsistencyTest(its_base_test.ItsBaseTest):
       fd_min = np.amin(fds)
       fd_max = np.amax(fds)
       if not math.isclose(fd_max, fd_min, rel_tol=_FD_TOL):
-        raise AssertionError(f'FD min: {fd_min}, max: {fd_min} TOL: {_FD_TOL}')
+        raise AssertionError(f'FD min: {fd_min}, max: {fd_max} TOL: {_FD_TOL}')
       for g in awb_gains:
         if np.isnan(g):
           raise AssertionError('AWB gain entry is not a number.')

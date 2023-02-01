@@ -38,7 +38,6 @@ import android.content.pm.PackageInstaller.Session
 import android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
 import android.content.pm.PackageManager
 import android.icu.util.ULocale
-import android.os.PersistableBundle
 import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
@@ -149,7 +148,8 @@ open class PackageInstallerTestBase {
 
     @Before
     fun registerInstallResultReceiver() {
-        context.registerReceiver(receiver, IntentFilter(INSTALL_ACTION_CB), Context.RECEIVER_EXPORTED)
+        context.registerReceiver(receiver, IntentFilter(INSTALL_ACTION_CB),
+            Context.RECEIVER_EXPORTED)
     }
 
     @Before
@@ -174,11 +174,6 @@ open class PackageInstallerTestBase {
 
     protected fun startInstallationViaSession(installFlags: Int): CompletableFuture<Int> {
         return startInstallationViaSession(installFlags, TEST_APK_NAME)
-    }
-
-    protected fun startInstallationViaSession(appMetadata: PersistableBundle):
-            CompletableFuture<Int> {
-        return startInstallationViaSession(0 /* installFlags */, TEST_APK_NAME, null, appMetadata)
     }
 
     protected fun startInstallationViaSessionNoPrompt(): CompletableFuture<Int> {
@@ -300,23 +295,6 @@ open class PackageInstallerTestBase {
         val (sessionId, session) = createSession(installFlags, false, packageSource)
         writeSession(session, apkName)
         return commitSession(session, expectedPrompt)
-    }
-
-    protected fun startInstallationViaSession(
-        installFlags: Int,
-        apkName: String,
-        packageSource: Int?,
-        appMetadata: PersistableBundle?
-    ): CompletableFuture<Int> {
-        val (sessionId, session) = createSession(installFlags, false, packageSource)
-        writeSession(session, apkName)
-        try {
-            session.setAppMetadata(appMetadata)
-            return commitSession(session)
-        } catch (e: Exception) {
-            session.abandon()
-            throw e
-        }
     }
 
     protected fun writeAndCommitSession(

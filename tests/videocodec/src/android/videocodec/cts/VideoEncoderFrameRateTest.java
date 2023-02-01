@@ -145,7 +145,7 @@ public class VideoEncoderFrameRateTest extends VideoEncoderValidationTestBase {
             MediaFormat format = cfg.getFormat();
             ArrayList<MediaFormat> formats = new ArrayList<>();
             formats.add(format);
-            if (!areFormatsSupported(mCodecName, mMime, formats)) {
+            if (!areFormatsSupported(mCodecName, mMediaType, formats)) {
                 continue;
             }
             encodeToMemory(mCodecName, cfg, res, FRAME_LIMIT, true, false);

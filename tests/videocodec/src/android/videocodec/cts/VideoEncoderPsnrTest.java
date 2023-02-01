@@ -138,7 +138,7 @@ public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
-                areFormatsSupported(mCodecName, mMime, formats));
+                areFormatsSupported(mCodecName, mMediaType, formats));
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
         assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
                 + mTestEnv, res);
@@ -147,7 +147,7 @@ public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
         StringBuilder msg = new StringBuilder();
         boolean isOk = true;
         try {
-            cs = new CompareStreams(res, mMime, mMuxedOutputFile, true, mIsLoopBack);
+            cs = new CompareStreams(res, mMediaType, mMuxedOutputFile, true, mIsLoopBack);
             final ArrayList<double[]> framesPSNR = cs.getFramesPSNR();
             for (int j = 0; j < framesPSNR.size(); j++) {
                 double[] framePSNR = framesPSNR.get(j);

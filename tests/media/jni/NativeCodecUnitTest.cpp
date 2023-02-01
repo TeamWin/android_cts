@@ -1535,7 +1535,7 @@ static jboolean nativeTestCreateDecoderByTypeForNull(JNIEnv*, jobject) {
     return static_cast<jboolean>(isPass);
 }
 
-static jboolean nativeTestCreateDecoderByTypeForInvalidMime(JNIEnv*, jobject) {
+static jboolean nativeTestCreateDecoderByTypeForInvalidMediaType(JNIEnv*, jobject) {
     bool isPass = true;
     AMediaCodec* codec = AMediaCodec_createDecoderByType("invalid name");
     if (codec) {
@@ -1557,7 +1557,7 @@ static jboolean nativeTestCreateEncoderByTypeForNull(JNIEnv*, jobject) {
     return static_cast<jboolean>(isPass);
 }
 
-static jboolean nativeTestCreateEncoderByTypeForInvalidMime(JNIEnv*, jobject) {
+static jboolean nativeTestCreateEncoderByTypeForInvalidMediaType(JNIEnv*, jobject) {
     bool isPass = true;
     AMediaCodec* codec = AMediaCodec_createEncoderByType("invalid name");
     if (codec) {
@@ -1982,12 +1982,12 @@ int registerAndroidMediaV2CtsCodecUnitTest(JNIEnv* env) {
              (void*)nativeTestCreateByCodecNameForInvalidName},
             {"nativeTestCreateDecoderByTypeForNull", "()Z",
              (void*)nativeTestCreateDecoderByTypeForNull},
-            {"nativeTestCreateDecoderByTypeForInvalidMime", "()Z",
-             (void*)nativeTestCreateDecoderByTypeForInvalidMime},
+            {"nativeTestCreateDecoderByTypeForInvalidMediaType", "()Z",
+             (void*)nativeTestCreateDecoderByTypeForInvalidMediaType},
             {"nativeTestCreateEncoderByTypeForNull", "()Z",
              (void*)nativeTestCreateEncoderByTypeForNull},
-            {"nativeTestCreateEncoderByTypeForInvalidMime", "()Z",
-             (void*)nativeTestCreateEncoderByTypeForInvalidMime},
+            {"nativeTestCreateEncoderByTypeForInvalidMediaType", "()Z",
+             (void*)nativeTestCreateEncoderByTypeForInvalidMediaType},
             {"nativeTestConfigureForNullFormat", "()Z", (void*)nativeTestConfigureForNullFormat},
             {"nativeTestConfigureForEmptyFormat", "()Z", (void*)nativeTestConfigureForEmptyFormat},
             {"nativeTestConfigureCodecForIncompleteFormat", "(ZZ)Z",

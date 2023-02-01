@@ -165,10 +165,10 @@ public class AudioEncoderTest extends CodecEncoderTestBase {
         ArrayList<MediaFormat> fmts = new ArrayList<>();
         mOutFormat.setInteger(MediaFormat.KEY_PCM_ENCODING, mActiveEncCfg.mPcmEncoding);
         fmts.add(mOutFormat);
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, fmts, null, false);
+        ArrayList<String> listOfDecoders = selectCodecs(mMediaType, fmts, null, false);
         assertFalse("no suitable codecs found for fmt: " + mOutFormat + "\n" + mTestConfig
                 + mTestEnv, listOfDecoders.isEmpty());
-        CodecDecoderTestBase cdtb = new CodecDecoderTestBase(listOfDecoders.get(0), mMime,
+        CodecDecoderTestBase cdtb = new CodecDecoderTestBase(listOfDecoders.get(0), mMediaType,
                 null, mAllTestParams);
         cdtb.decodeToMemory(mOutputBuff.getBuffer(), mInfoList, mOutFormat, listOfDecoders.get(0));
         assertEquals(String.format("cdd required audio encoding %s, not supported by %s \n",
@@ -179,8 +179,8 @@ public class AudioEncoderTest extends CodecEncoderTestBase {
 
         // validate
         ByteBuffer out = cdtb.getOutputManager().getBuffer();
-        if (isMediaTypeLossless(mMime)) {
-            if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)
+        if (isMediaTypeLossless(mMediaType)) {
+            if (mMediaType.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)
                     && mActiveEncCfg.mPcmEncoding == AudioFormat.ENCODING_PCM_FLOAT) {
                 CodecDecoderTest.verify(cdtb.getOutputManager(), mActiveRawRes.mFileName, 3.446394f,
                         mActiveEncCfg.mPcmEncoding, -1L,
@@ -217,7 +217,7 @@ public class AudioEncoderTest extends CodecEncoderTestBase {
         mActiveEncCfg = mEncCfgParams[0];
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(mActiveEncCfg.getFormat());
-        checkFormatSupport(mCodecName, mMime, true, formats, null, CODEC_OPTIONAL);
+        checkFormatSupport(mCodecName, mMediaType, true, formats, null, CODEC_OPTIONAL);
 
         // encode and validate
         mActiveRawRes = EncoderInput.getRawResource(mActiveEncCfg);

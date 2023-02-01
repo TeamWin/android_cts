@@ -66,9 +66,9 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         Assume.assumeTrue(mCodecName + " does not support HDR10/HDR10+ profile "
-                + mActiveEncCfg.mProfile, areFormatsSupported(mCodecName, mMime, formats));
+                + mActiveEncCfg.mProfile, areFormatsSupported(mCodecName, mMediaType, formats));
         Assume.assumeTrue(mCodecName + " does not support color format COLOR_FormatYUVP010",
-                hasSupportForColorFormat(mCodecName, mMime, mActiveEncCfg.mColorFormat));
+                hasSupportForColorFormat(mCodecName, mMediaType, mActiveEncCfg.mColorFormat));
 
         setUpSource(mActiveRawRes.mFileName);
 
@@ -110,9 +110,9 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
                 + mTestConfig + mTestEnv, decoder);
 
         HDRDecoderTestBase decoderTest =
-                new HDRDecoderTestBase(decoder, mMime, mMuxedOutputFile, mAllTestParams);
+                new HDRDecoderTestBase(decoder, mMediaType, mMuxedOutputFile, mAllTestParams);
         decoderTest.validateHDRInfo(hdrStaticInfo, hdrStaticInfo, mHdrDynamicInfo, mHdrDynamicInfo);
-        if (HDR_INFO_IN_BITSTREAM_CODECS.contains(mMime)) {
+        if (HDR_INFO_IN_BITSTREAM_CODECS.contains(mMediaType)) {
             decoderTest.validateHDRInfo(hdrStaticInfo, null, mHdrDynamicInfo, null);
         }
         new File(mMuxedOutputFile).delete();

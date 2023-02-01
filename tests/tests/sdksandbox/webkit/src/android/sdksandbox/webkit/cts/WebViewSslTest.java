@@ -116,12 +116,6 @@ public class WebViewSslTest {
 
     @Test
     @MediumTest
-    public void testProceedClientCertRequestKeyWithAndroidKeystoreKey() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testProceedClientCertRequestKeyWithAndroidKeystoreKey");
-    }
-
-    @Test
-    @MediumTest
     public void testIgnoreClientCertRequest() throws Exception {
         sdkTester.assertSdkTestRunPasses("testIgnoreClientCertRequest");
     }

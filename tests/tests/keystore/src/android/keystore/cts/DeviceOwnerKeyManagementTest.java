@@ -133,11 +133,17 @@ public class DeviceOwnerKeyManagementTest {
         Attestation attestationRecord = Attestation.loadFromCertificate((X509Certificate) leaf);
         AuthorizationList teeAttestation = attestationRecord.getTeeEnforced();
         assertThat(teeAttestation).isNotNull();
-        assertThat(teeAttestation.getBrand()).isEqualTo(Build.BRAND);
+        final String platformReportedBrand = TextUtils.isEmpty(Build.BRAND_FOR_ATTESTATION)
+                ? Build.BRAND : Build.BRAND_FOR_ATTESTATION;
+        assertThat(teeAttestation.getBrand()).isEqualTo(platformReportedBrand);
         assertThat(teeAttestation.getDevice()).isEqualTo(Build.DEVICE);
-        assertThat(teeAttestation.getProduct()).isEqualTo(Build.PRODUCT);
+        final String platformReportedProduct = TextUtils.isEmpty(Build.PRODUCT_FOR_ATTESTATION)
+                ? Build.PRODUCT : Build.PRODUCT_FOR_ATTESTATION;
+        assertThat(teeAttestation.getProduct()).isEqualTo(platformReportedProduct);
         assertThat(teeAttestation.getManufacturer()).isEqualTo(Build.MANUFACTURER);
-        assertThat(teeAttestation.getModel()).isEqualTo(Build.MODEL);
+        final String platformReportedModel = TextUtils.isEmpty(Build.MODEL_FOR_ATTESTATION)
+                ? Build.MODEL : Build.MODEL_FOR_ATTESTATION;
+        assertThat(teeAttestation.getModel()).isEqualTo(platformReportedModel);
         assertThat(teeAttestation.getSerialNumber()).isEqualTo(expectedSerial);
         assertThat(teeAttestation.getImei()).isEqualTo(expectedImei);
         assertThat(teeAttestation.getMeid()).isEqualTo(expectedMeid);
@@ -195,12 +201,21 @@ public class DeviceOwnerKeyManagementTest {
                 parsedAttestationRecord.teeEnforced;
 
         assertThat(teeAttestation).isNotNull();
-        assertThat(new String(teeAttestation.attestationIdBrand.get())).isEqualTo(Build.BRAND);
+        final String platformReportedBrand = TextUtils.isEmpty(Build.BRAND_FOR_ATTESTATION)
+                ? Build.BRAND : Build.BRAND_FOR_ATTESTATION;
+        assertThat(new String(teeAttestation.attestationIdBrand.get()))
+                .isEqualTo(platformReportedBrand);
         assertThat(new String(teeAttestation.attestationIdDevice.get())).isEqualTo(Build.DEVICE);
-        assertThat(new String(teeAttestation.attestationIdProduct.get())).isEqualTo(Build.PRODUCT);
+        final String platformReportedProduct = TextUtils.isEmpty(Build.PRODUCT_FOR_ATTESTATION)
+                ? Build.PRODUCT : Build.PRODUCT_FOR_ATTESTATION;
+        assertThat(new String(teeAttestation.attestationIdProduct.get()))
+                .isEqualTo(platformReportedProduct);
         assertThat(new String(teeAttestation.attestationIdManufacturer.get()))
                 .isEqualTo(Build.MANUFACTURER);
-        assertThat(new String(teeAttestation.attestationIdModel.get())).isEqualTo(Build.MODEL);
+        final String platformReportedModel = TextUtils.isEmpty(Build.MODEL_FOR_ATTESTATION)
+                ? Build.MODEL : Build.MODEL_FOR_ATTESTATION;
+        assertThat(new String(teeAttestation.attestationIdModel.get()))
+                .isEqualTo(platformReportedModel);
 
         assertThat(!TextUtils.isEmpty(expectedSerial))
                 .isEqualTo(teeAttestation.attestationIdSerial.isPresent());
@@ -334,7 +349,11 @@ public class DeviceOwnerKeyManagementTest {
         } catch (UnsupportedOperationException ex) {
             assertWithMessage(
                     String.format(
-                            "Unexpected failure while generating key %s with ID flags %d: %s",
+                            "Unexpected failure while generating key %s with ID flags %d: %s"
+                            + "\nIn case of AOSP/GSI builds, system provided properties could be"
+                            + " different from provisioned properties in KeyMaster/KeyMint. In"
+                            + " such cases, make sure attestation specific properties"
+                            + " (Build.*_FOR_ATTESTATION) are configured correctly.",
                             keyAlgorithm, deviceIdAttestationFlags, ex))
                     .that(
                             isDeviceIdAttestationRequested(deviceIdAttestationFlags)

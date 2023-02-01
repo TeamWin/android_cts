@@ -16,10 +16,15 @@
 
 package android.media.audio.cts;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioDeviceAttributes;
 import android.media.AudioFormat;
@@ -122,6 +127,11 @@ public class DevicesForAttributesTest {
 
     @Test
     public void testListenerWithAudioPolicy() {
+        if (isAutomotive()) {
+            Log.i(TAG, "skipping test: automotive platform");
+            return;
+        }
+
         DevicesForAttributesListener listener = new DevicesForAttributesListener();
         List<AudioDeviceAttributes> devices;
 
@@ -158,6 +168,11 @@ public class DevicesForAttributesTest {
 
     @Test
     public void testListenerWithMultipleAttributes() {
+        if (isAutomotive()) {
+            Log.i(TAG, "skipping test: automotive platform");
+            return;
+        }
+
         final AudioAttributes[] attributes = { MEDIA_ATTR, COMMUNICATION_ATTR };
         final DevicesForAttributesListener[] listeners =
                 new DevicesForAttributesListener[attributes.length];
@@ -267,5 +282,12 @@ public class DevicesForAttributesTest {
                         .build())
                 .setRouteFlags(AudioMix.ROUTE_FLAG_LOOP_BACK)
                 .build();
+    }
+
+    private boolean isAutomotive() {
+        Context context = InstrumentationRegistry.getTargetContext();
+        PackageManager packageManager = context.getPackageManager();
+        return (packageManager != null
+                && packageManager.hasSystemFeature(packageManager.FEATURE_AUTOMOTIVE));
     }
 }

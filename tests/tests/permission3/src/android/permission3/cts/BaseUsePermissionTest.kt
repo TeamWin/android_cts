@@ -36,12 +36,14 @@ import android.text.Spanned
 import android.text.style.ClickableSpan
 import android.view.View
 import com.android.compatibility.common.util.SystemUtil
+import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.modules.utils.build.SdkLevel
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import org.junit.After
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -152,6 +154,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "com.android.permissioncontroller:id/settings_message"
 
         const val REQUEST_LOCATION_MESSAGE = "permgrouprequest_location"
+
+        // The highest SDK for which the system will show a "low SDK" warning when launching the app
+        const val MAX_SDK_FOR_SDK_WARNING = 27
 
         val TEST_INSTALLER_ACTIVITY_COMPONENT_NAME =
             ComponentName(context, TestInstallerActivity::class.java)
@@ -265,8 +270,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         uninstallPackage(APP_PACKAGE_NAME, requireSuccess = false)
     }
 
-    protected fun clearTargetSdkWarning() =
-        waitFindObjectOrNull(By.res("android:id/button1"))?.click()?.also { waitForIdle() }
+    protected fun clearTargetSdkWarning(timeoutMillis: Long = TIMEOUT_MILLIS) =
+        waitFindObjectOrNull(By.res("android:id/button1"), timeoutMillis)?.click()?.also {
+            waitForIdle()
+        }
 
     protected fun clickPermissionReviewContinue() {
         if (isAutomotive || isWatch) {
@@ -390,6 +397,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     protected fun approvePermissionReview() {
         startAppActivityAndAssertResultCode(Activity.RESULT_OK) {
             clickPermissionReviewContinue()
+            waitForIdle()
+            clearTargetSdkWarning()
         }
     }
 
@@ -441,7 +450,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected inline fun requestAppPermissions(
         vararg permissions: String?,
-        expectTargetSdkWarning: Boolean = false,
         block: () -> Unit
     ): Instrumentation.ActivityResult {
         // Request the permissions
@@ -456,8 +464,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         waitForIdle()
 
         // Clear the low target SDK warning message if it's expected
-        if (expectTargetSdkWarning) {
-            clearTargetSdkWarning()
+        if (getTargetSdk() <= MAX_SDK_FOR_SDK_WARNING) {
+            clearTargetSdkWarning(timeoutMillis = QUICK_CHECK_TIMEOUT_MILLIS)
+            waitForIdle()
         }
 
         // Notification permission prompt is shown first, so get it out of the way
@@ -470,12 +479,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     protected inline fun requestAppPermissionsAndAssertResult(
         permissions: Array<out String?>,
         permissionAndExpectedGrantResults: Array<out Pair<String?, Boolean>>,
-        expectTargetSdkWarning: Boolean = false,
         block: () -> Unit
     ) {
-        val result = requestAppPermissions(
-            *permissions, expectTargetSdkWarning = expectTargetSdkWarning, block = block
-        )
+        val result = requestAppPermissions(*permissions, block = block)
         assertEquals(Activity.RESULT_OK, result.resultCode)
         assertEquals(
             result.resultData!!.getStringArrayExtra("$APP_PACKAGE_NAME.PERMISSIONS")!!.size,
@@ -499,12 +505,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected inline fun requestAppPermissionsAndAssertResult(
         vararg permissionAndExpectedGrantResults: Pair<String?, Boolean>,
-        expectTargetSdkWarning: Boolean = false,
         block: () -> Unit
     ) = requestAppPermissionsAndAssertResult(
         permissionAndExpectedGrantResults.map { it.first }.toTypedArray(),
         permissionAndExpectedGrantResults,
-        expectTargetSdkWarning,
         block
     )
 
@@ -654,18 +658,16 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         click(By.res(GRANT_DIALOG_PERMISSION_RATIONALE_CONTAINER_VIEW))
     }
 
-    protected fun grantAppPermissions(vararg permissions: String, targetSdk: Int = 30) {
-        setAppPermissionState(*permissions, state = PermissionState.ALLOWED, isLegacyApp = false,
-                targetSdk = targetSdk)
+    protected fun grantAppPermissions(vararg permissions: String) {
+        setAppPermissionState(*permissions, state = PermissionState.ALLOWED, isLegacyApp = false)
     }
 
     protected fun revokeAppPermissions(
         vararg permissions: String,
-        isLegacyApp: Boolean = false,
-        targetSdk: Int = 30
+        isLegacyApp: Boolean = false
     ) {
         setAppPermissionState(*permissions, state = PermissionState.DENIED,
-                isLegacyApp = isLegacyApp, targetSdk = targetSdk)
+                isLegacyApp = isLegacyApp)
     }
 
     private fun navigateToAppPermissionSettings() {
@@ -702,13 +704,45 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }, TIMEOUT_MILLIS)
     }
 
-    protected fun navigateToIndividualPermissionSetting(permission: String) {
-        navigateToAppPermissionSettings()
-        val permissionLabel = getPermissionLabel(permission)
-        if (isWatch) {
-            click(By.text(permissionLabel), 40_000)
-        } else {
-            clickPermissionControllerUi(By.text(permissionLabel))
+    protected fun getTargetSdk(packageName: String = APP_PACKAGE_NAME): Int {
+         return callWithShellPermissionIdentity {
+            try {
+                context.packageManager.getApplicationInfo(packageName, 0).targetSdkVersion
+            } catch (e: PackageManager.NameNotFoundException) {
+                Assert.fail("Package $packageName not found")
+                -1
+            }
+        }
+    }
+
+    protected fun navigateToIndividualPermissionSetting(
+        permission: String,
+        manuallyNavigate: Boolean = false
+    ) {
+        if (getTargetSdk() <= MAX_SDK_FOR_SDK_WARNING) {
+            clearTargetSdkWarning()
+        }
+
+        val useLegacyNavigation = isWatch || isTv || isAutomotive || manuallyNavigate
+        if (useLegacyNavigation) {
+            navigateToAppPermissionSettings()
+            val permissionLabel = getPermissionLabel(permission)
+            if (isWatch) {
+                click(By.text(permissionLabel), 40_000)
+            } else {
+                clickPermissionControllerUi(By.text(permissionLabel))
+            }
+            return
+        }
+
+        runWithShellPermissionIdentity {
+            context.startActivity(
+                Intent(Intent.ACTION_MANAGE_APP_PERMISSION).apply {
+                    putExtra(Intent.EXTRA_PACKAGE_NAME, APP_PACKAGE_NAME)
+                    putExtra(Intent.EXTRA_PERMISSION_NAME, permission)
+                    putExtra(Intent.EXTRA_USER, Process.myUserHandle())
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                })
         }
     }
 
@@ -716,9 +750,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         vararg permissions: String,
         state: PermissionState,
         isLegacyApp: Boolean,
-        targetSdk: Int,
         manuallyNavigate: Boolean = false,
     ) {
+        val targetSdk = getTargetSdk()
+        if (targetSdk <= MAX_SDK_FOR_SDK_WARNING) {
+            clearTargetSdkWarning(QUICK_CHECK_TIMEOUT_MILLIS)
+        }
         val useLegacyNavigation = isWatch || isAutomotive || isTv || manuallyNavigate
         if (useLegacyNavigation) {
             navigateToAppPermissionSettings()
@@ -839,7 +876,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             } else if (!alreadyChecked && isLegacyApp && wasGranted) {
                 if (!isTv) {
                     // Wait for alert dialog to popup, then scroll to the bottom of it
-                    waitFindObject(By.res(ALERT_DIALOG_MESSAGE))
+                    if (isWatch) {
+                        waitFindObject(By.text(
+                                getPermissionControllerString("old_sdk_deny_warning")))
+                    } else {
+                        waitFindObject(By.res(ALERT_DIALOG_MESSAGE))
+                    }
                     scrollToBottom()
                 }
 

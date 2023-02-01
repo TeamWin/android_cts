@@ -233,6 +233,21 @@
 
         <activity android:name="android.telephony.euicc.cts.EuiccResolutionActivity"/>
 
+        <activity android:name="android.telephony.euicc.cts.EuiccTestServiceActionResolutionActivity"
+                  android:screenOrientation="behind"
+                  android:exported="true"
+                  android:theme="@android:style/Theme.NoDisplay"
+                  android:permission="android.permission.BIND_EUICC_SERVICE">
+            <intent-filter android:priority="100">
+                <action android:name="android.service.euicc.action.PROVISION_EMBEDDED_SUBSCRIPTION" />
+                <action android:name="android.service.euicc.action.MANAGE_EMBEDDED_SUBSCRIPTIONS"/>
+                <action android:name="android.service.euicc.action.TRANSFER_EMBEDDED_SUBSCRIPTIONS"/>
+                <action android:name="android.service.euicc.action.CONVERT_TO_EMBEDDED_SUBSCRIPTION"/>
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.service.euicc.category.EUICC_UI" />
+            </intent-filter>
+        </activity>
+
         <uses-library android:name="android.test.runner"/>
 
 

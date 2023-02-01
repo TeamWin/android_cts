@@ -142,7 +142,7 @@ public class VideoEncoderIntraFrameIntervalTest extends VideoEncoderValidationTe
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
-                areFormatsSupported(mCodecName, mMime, formats));
+                areFormatsSupported(mCodecName, mMediaType, formats));
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
         assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
                 + mTestEnv, res);

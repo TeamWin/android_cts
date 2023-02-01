@@ -41,10 +41,7 @@ class MediaPermissionTest : BaseUsePermissionTest() {
     @Test
     fun testWhenRESIsGrantedFromGrantDialogThenShouldGrantAllPermissions() {
         installPackage(APP_APK_PATH_23)
-        requestAppPermissionsAndAssertResult(
-            android.Manifest.permission.READ_EXTERNAL_STORAGE to true,
-            expectTargetSdkWarning = true
-        ) {
+        requestAppPermissionsAndAssertResult(Manifest.permission.READ_EXTERNAL_STORAGE to true) {
             clickPermissionRequestAllowButton()
         }
         assertStorageAndMediaPermissionState(true)
@@ -53,31 +50,28 @@ class MediaPermissionTest : BaseUsePermissionTest() {
     @Test
     fun testWhenRESIsGrantedManuallyThenShouldGrantAllPermissions() {
         installPackage(APP_APK_PATH_23)
-        grantAppPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE, targetSdk = 23)
+        grantAppPermissions(Manifest.permission.READ_EXTERNAL_STORAGE)
         assertStorageAndMediaPermissionState(true)
     }
 
     @Test
     fun testWhenAuralIsGrantedManuallyThenShouldGrantAllPermissions() {
         installPackage(APP_APK_PATH_23)
-        grantAppPermissions(android.Manifest.permission.READ_MEDIA_AUDIO, targetSdk = 23)
+        grantAppPermissions(Manifest.permission.READ_MEDIA_AUDIO)
         assertStorageAndMediaPermissionState(true)
     }
 
     @Test
     fun testWhenVisualIsGrantedManuallyThenShouldGrantAllPermissions() {
         installPackage(APP_APK_PATH_23)
-        grantAppPermissions(android.Manifest.permission.READ_MEDIA_VIDEO, targetSdk = 23)
+        grantAppPermissions(Manifest.permission.READ_MEDIA_VIDEO)
         assertStorageAndMediaPermissionState(true)
     }
 
     @Test
     fun testWhenRESIsDeniedFromGrantDialogThenShouldDenyAllPermissions() {
         installPackage(APP_APK_PATH_23)
-        requestAppPermissionsAndAssertResult(
-            android.Manifest.permission.READ_EXTERNAL_STORAGE to false,
-            expectTargetSdkWarning = true
-        ) {
+        requestAppPermissionsAndAssertResult(Manifest.permission.READ_EXTERNAL_STORAGE to false) {
             clickPermissionRequestDenyButton()
         }
         assertStorageAndMediaPermissionState(false)
@@ -86,16 +80,16 @@ class MediaPermissionTest : BaseUsePermissionTest() {
     @Test
     fun testWhenRESIsDeniedManuallyThenShouldDenyAllPermissions() {
         installPackage(APP_APK_PATH_23)
-        grantAppPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE, targetSdk = 23)
-        revokeAppPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE, targetSdk = 23)
+        grantAppPermissions(Manifest.permission.READ_EXTERNAL_STORAGE)
+        revokeAppPermissions(Manifest.permission.READ_EXTERNAL_STORAGE)
         assertStorageAndMediaPermissionState(false)
     }
 
     @Test
     fun testWhenAuralIsDeniedManuallyThenShouldDenyAllPermissions() {
         installPackage(APP_APK_PATH_23)
-        grantAppPermissions(android.Manifest.permission.READ_MEDIA_AUDIO, targetSdk = 23)
-        revokeAppPermissions(android.Manifest.permission.READ_MEDIA_AUDIO, targetSdk = 23)
+        grantAppPermissions(Manifest.permission.READ_MEDIA_AUDIO)
+        revokeAppPermissions(Manifest.permission.READ_MEDIA_AUDIO)
         assertStorageAndMediaPermissionState(false)
     }
 
@@ -104,8 +98,8 @@ class MediaPermissionTest : BaseUsePermissionTest() {
         // TODO: Re-enable after b/239249703 is fixed
         Assume.assumeFalse("skip on TV due to flaky", isTv)
         installPackage(APP_APK_PATH_23)
-        grantAppPermissions(android.Manifest.permission.READ_MEDIA_VIDEO, targetSdk = 23)
-        revokeAppPermissions(android.Manifest.permission.READ_MEDIA_VIDEO, targetSdk = 23)
+        grantAppPermissions(Manifest.permission.READ_MEDIA_VIDEO)
+        revokeAppPermissions(Manifest.permission.READ_MEDIA_VIDEO)
         assertStorageAndMediaPermissionState(false)
     }
 
@@ -113,8 +107,8 @@ class MediaPermissionTest : BaseUsePermissionTest() {
     fun testWhenA33AppRequestsStorageThenNoDialogAndNoGrant() {
         installPackage(APP_APK_PATH_MEDIA_PERMISSION_33_WITH_STORAGE)
         requestAppPermissions(
-            android.Manifest.permission.READ_EXTERNAL_STORAGE,
-            android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
         ) {
         }
         assertStorageAndMediaPermissionState(false)
@@ -123,33 +117,33 @@ class MediaPermissionTest : BaseUsePermissionTest() {
     @Test
     fun testWhenA33AppRequestsAuralThenDialogAndGrant() {
         installPackage(APP_APK_PATH_LATEST)
-        requestAppPermissions(android.Manifest.permission.READ_MEDIA_AUDIO) {
+        requestAppPermissions(Manifest.permission.READ_MEDIA_AUDIO) {
             clickPermissionRequestAllowButton()
         }
-        assertAppHasPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE, false)
-        assertAppHasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, false)
-        assertAppHasPermission(android.Manifest.permission.READ_MEDIA_AUDIO, true)
-        assertAppHasPermission(android.Manifest.permission.READ_MEDIA_VIDEO, false)
-        assertAppHasPermission(android.Manifest.permission.READ_MEDIA_IMAGES, false)
+        assertAppHasPermission(Manifest.permission.READ_EXTERNAL_STORAGE, false)
+        assertAppHasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, false)
+        assertAppHasPermission(Manifest.permission.READ_MEDIA_AUDIO, true)
+        assertAppHasPermission(Manifest.permission.READ_MEDIA_VIDEO, false)
+        assertAppHasPermission(Manifest.permission.READ_MEDIA_IMAGES, false)
     }
 
     @Test
     fun testWhenA33AppRequestsVisualThenDialogAndGrant() {
         installPackage(APP_APK_PATH_LATEST)
         requestAppPermissions(
-            android.Manifest.permission.READ_MEDIA_VIDEO,
-            android.Manifest.permission.READ_MEDIA_IMAGES) {
+            Manifest.permission.READ_MEDIA_VIDEO,
+            Manifest.permission.READ_MEDIA_IMAGES) {
                 if (isPhotoPickerPermissionPromptEnabled()) {
                     clickPermissionRequestAllowAllPhotosButton()
                 } else {
                     clickPermissionRequestAllowButton()
                 }
             }
-        assertAppHasPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE, false)
-        assertAppHasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, false)
-        assertAppHasPermission(android.Manifest.permission.READ_MEDIA_AUDIO, false)
-        assertAppHasPermission(android.Manifest.permission.READ_MEDIA_VIDEO, true)
-        assertAppHasPermission(android.Manifest.permission.READ_MEDIA_IMAGES, true)
+        assertAppHasPermission(Manifest.permission.READ_EXTERNAL_STORAGE, false)
+        assertAppHasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, false)
+        assertAppHasPermission(Manifest.permission.READ_MEDIA_AUDIO, false)
+        assertAppHasPermission(Manifest.permission.READ_MEDIA_VIDEO, true)
+        assertAppHasPermission(Manifest.permission.READ_MEDIA_IMAGES, true)
     }
 
     @Test

@@ -343,6 +343,42 @@ android_test {
 
 //-----------------------------------------------------------
 android_test {
+    name: "HelloWorldWithSufficient",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src5/**/*.java"],
+    manifest: "AndroidManifestWithSufficient.xml",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "mts",
+        "cts",
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+//-----------------------------------------------------------
+android_test {
+    name: "HelloSufficientVerifierReject",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src_sufficient/**/*.java"],
+    manifest: "AndroidManifestSufficientVerifierReject.xml",
+    certificate: ":hello_sufficient_verifier_certificate",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "mts",
+        "cts",
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+android_app_certificate {
+    name: "hello_sufficient_verifier_certificate",
+    certificate: "hello_sufficient_verifier_cert",
+}
+
+//-----------------------------------------------------------
+android_test {
     name: "HelloVerifierAllow",
     defaults: ["hello_world_defaults"],
     srcs: ["src_verifier/**/*.java"],

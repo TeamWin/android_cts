@@ -77,9 +77,9 @@ public class CodecEncoderTestBase extends CodecTestBase {
     protected MediaMuxer mMuxer;
     protected int mTrackID = -1;
 
-    public CodecEncoderTestBase(String encoder, String mime, EncoderConfigParams[] encCfgParams,
-            String allTestParams) {
-        super(encoder, mime, allTestParams);
+    public CodecEncoderTestBase(String encoder, String mediaType,
+            EncoderConfigParams[] encCfgParams, String allTestParams) {
+        super(encoder, mediaType, allTestParams);
         mEncCfgParams = encCfgParams;
     }
 
@@ -110,9 +110,11 @@ public class CodecEncoderTestBase extends CodecTestBase {
      * 420p, 420sp. COLOR_FormatYUV420Flexible although can represent any form of yuv, it doesn't
      * work in ndk due to lack of AMediaCodec_GetInputImage()
      */
-    public static int findByteBufferColorFormat(String encoder, String mime) throws IOException {
+    public static int findByteBufferColorFormat(String encoder, String mediaType)
+            throws IOException {
         MediaCodec codec = MediaCodec.createByCodecName(encoder);
-        MediaCodecInfo.CodecCapabilities cap = codec.getCodecInfo().getCapabilitiesForType(mime);
+        MediaCodecInfo.CodecCapabilities cap =
+                codec.getCodecInfo().getCapabilitiesForType(mediaType);
         int colorFormat = -1;
         for (int c : cap.colorFormats) {
             if (c == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar
@@ -142,16 +144,17 @@ public class CodecEncoderTestBase extends CodecTestBase {
         }
     }
 
-    public static boolean isMediaTypeContainerPairValid(String mime, int format) {
+    public static boolean isMediaTypeContainerPairValid(String mediaType, int format) {
         boolean result = false;
         if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4) {
-            result = MEDIATYPE_LIST_FOR_TYPE_MP4.contains(mime) || mime.startsWith("application/");
+            result = MEDIATYPE_LIST_FOR_TYPE_MP4.contains(mediaType)
+                    || mediaType.startsWith("application/");
         } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM) {
-            result = MEDIATYPE_LIST_FOR_TYPE_WEBM.contains(mime);
+            result = MEDIATYPE_LIST_FOR_TYPE_WEBM.contains(mediaType);
         } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP) {
-            result = MEDIATYPE_LIST_FOR_TYPE_3GP.contains(mime);
+            result = MEDIATYPE_LIST_FOR_TYPE_3GP.contains(mediaType);
         } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG) {
-            result = MEDIATYPE_LIST_FOR_TYPE_OGG.contains(mime);
+            result = MEDIATYPE_LIST_FOR_TYPE_OGG.contains(mediaType);
         }
         return result;
     }
@@ -308,7 +311,7 @@ public class CodecEncoderTestBase extends CodecTestBase {
 
     @Before
     public void setUpCodecEncoderTestBase() {
-        assertTrue("Testing a mime that is neither audio nor video is not supported \n"
+        assertTrue("Testing a mediaType that is neither audio nor video is not supported \n"
                 + mTestConfig, mIsAudio || mIsVideo);
     }
 
@@ -532,7 +535,7 @@ public class CodecEncoderTestBase extends CodecTestBase {
     protected void doWork(int frameLimit) throws IOException, InterruptedException {
         mLoopBackFrameLimit = frameLimit;
         if (mMuxOutput) {
-            int muxerFormat = getMuxerFormatForMediaType(mMime);
+            int muxerFormat = getMuxerFormatForMediaType(mMediaType);
             mMuxedOutputFile = getTempFilePath((mActiveEncCfg.mInputBitDepth == 10) ? "10bit" : "");
             mMuxer = new MediaMuxer(mMuxedOutputFile, muxerFormat);
         }
@@ -558,7 +561,7 @@ public class CodecEncoderTestBase extends CodecTestBase {
     protected PersistableBundle validateMetrics(String codec, MediaFormat format) {
         PersistableBundle metrics = super.validateMetrics(codec, format);
         assertEquals("error! metrics#MetricsConstants.MIME_TYPE is not as expected \n" + mTestConfig
-                + mTestEnv, metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE), mMime);
+                + mTestEnv, metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE), mMediaType);
         assertEquals("error! metrics#MetricsConstants.ENCODER is not as expected \n" + mTestConfig
                 + mTestEnv, 1, metrics.getInt(MediaCodec.MetricsConstants.ENCODER));
         return metrics;

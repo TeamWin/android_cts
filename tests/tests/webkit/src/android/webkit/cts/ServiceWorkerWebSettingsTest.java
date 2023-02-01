@@ -16,43 +16,55 @@
 
 package android.webkit.cts;
 
-import android.content.pm.PackageManager;
-import android.os.Process;
-import android.test.ActivityInstrumentationTestCase2;
+import static org.junit.Assert.assertEquals;
+
 import android.webkit.ServiceWorkerController;
 import android.webkit.ServiceWorkerWebSettings;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.MediumTest;
+
 import com.android.compatibility.common.util.NullWebViewUtils;
 
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class ServiceWorkerWebSettingsTest extends
-        ActivityInstrumentationTestCase2<WebViewCtsActivity> {
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class ServiceWorkerWebSettingsTest {
 
     private ServiceWorkerWebSettings mSettings;
     private WebViewOnUiThread mOnUiThread;
 
-    public ServiceWorkerWebSettingsTest() {
-        super("android.webkit.cts", WebViewCtsActivity.class);
+    @Rule
+    public ActivityScenarioRule mActivityScenarioRule =
+            new ActivityScenarioRule(WebViewCtsActivity.class);
+
+    @Before
+    public void setUp() throws Exception {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+        mActivityScenarioRule.getScenario().onActivity(activity -> {
+            WebViewCtsActivity webViewCtsActivity = (WebViewCtsActivity) activity;
+            WebView webview = webViewCtsActivity.getWebView();
+            if (webview != null) {
+                mOnUiThread = new WebViewOnUiThread(webview);
+            }
+        });
+        mSettings = ServiceWorkerController.getInstance().getServiceWorkerWebSettings();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        WebView webview = getActivity().getWebView();
-        if (webview != null) {
-            mOnUiThread = new WebViewOnUiThread(webview);
-            mSettings = ServiceWorkerController.getInstance().getServiceWorkerWebSettings();
-        }
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
-        super.tearDown();
     }
 
     /**
@@ -60,11 +72,8 @@ public class ServiceWorkerWebSettingsTest extends
      * androidx.webkit.ServiceWorkerWebSettingsCompatTest#testCacheMode. Modifications to this test
      * should be reflected in that test as necessary. See http://go/modifying-webview-cts.
      */
+    @Test
     public void testCacheMode() {
-        if (!NullWebViewUtils.isWebViewAvailable()) {
-            return;
-        }
-
         int i = WebSettings.LOAD_DEFAULT;
         assertEquals(i, mSettings.getCacheMode());
         for (; i <= WebSettings.LOAD_CACHE_ONLY; i++) {
@@ -78,11 +87,8 @@ public class ServiceWorkerWebSettingsTest extends
      * androidx.webkit.ServiceWorkerWebSettingsCompatTest#testAllowContentAccess. Modifications to
      * this test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
      */
+    @Test
     public void testAllowContentAccess() {
-        if (!NullWebViewUtils.isWebViewAvailable()) {
-            return;
-        }
-
         assertEquals(mSettings.getAllowContentAccess(), true);
         for (boolean b : new boolean[]{false, true}) {
             mSettings.setAllowContentAccess(b);
@@ -95,11 +101,8 @@ public class ServiceWorkerWebSettingsTest extends
      * androidx.webkit.ServiceWorkerWebSettingsCompatTest#testAllowFileAccess. Modifications to
      * this test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
      */
+    @Test
     public void testAllowFileAccess() {
-        if (!NullWebViewUtils.isWebViewAvailable()) {
-            return;
-        }
-
         assertEquals(mSettings.getAllowFileAccess(), true);
         for (boolean b : new boolean[]{false, true}) {
             mSettings.setAllowFileAccess(b);
@@ -112,11 +115,8 @@ public class ServiceWorkerWebSettingsTest extends
      * androidx.webkit.ServiceWorkerWebSettingsCompatTest#testBlockNetworkLoads. Modifications to
      * this test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
      */
+    @Test
     public void testBlockNetworkLoads() {
-        if (!NullWebViewUtils.isWebViewAvailable()) {
-            return;
-        }
-
         // Note: we cannot test this setter unless we provide the INTERNET permission, otherwise we
         // get a SecurityException when we pass 'false'.
         final boolean hasInternetPermission = true;

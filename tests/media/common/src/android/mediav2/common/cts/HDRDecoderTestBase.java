@@ -46,8 +46,9 @@ public class HDRDecoderTestBase extends CodecDecoderTestBase {
     private Map<Integer, String> mHdrDynamicInfoContainer;
     private String mHdrDynamicInfoCurrent;
 
-    public HDRDecoderTestBase(String decoder, String mime, String testFile, String allTestParams) {
-        super(decoder, mime, testFile, allTestParams);
+    public HDRDecoderTestBase(String decoder, String mediaType, String testFile,
+                              String allTestParams) {
+        super(decoder, mediaType, testFile, allTestParams);
     }
 
     protected void enqueueInput(int bufferIndex) {
@@ -90,11 +91,11 @@ public class HDRDecoderTestBase extends CodecDecoderTestBase {
 
         if (mHdrDynamicInfoStream != null || mHdrDynamicInfoContainer != null) {
             Assume.assumeNotNull("Test is only applicable to codecs that have HDR10+ profiles",
-                    PROFILE_HDR10_PLUS_MAP.get(mMime));
+                    PROFILE_HDR10_PLUS_MAP.get(mMediaType));
         }
         if (mHdrStaticInfoStream != null || mHdrStaticInfoContainer != null) {
             Assume.assumeNotNull("Test is only applicable to codecs that have HDR10 profiles",
-                    PROFILE_HDR10_MAP.get(mMime));
+                    PROFILE_HDR10_MAP.get(mMediaType));
         }
 
         Preconditions.assertTestFileExists(mTestFile);
@@ -114,17 +115,17 @@ public class HDRDecoderTestBase extends CodecDecoderTestBase {
         MediaFormat format = setUpSource(mTestFile);
         if (mHdrDynamicInfoStream != null || mHdrDynamicInfoContainer != null) {
             format.setInteger(MediaFormat.KEY_PROFILE,
-                    Objects.requireNonNull(PROFILE_HDR10_PLUS_MAP.get(mMime),
-                            "mediaType : " + mMime + " has no profile supporting HDR10+")[0]);
+                    Objects.requireNonNull(PROFILE_HDR10_PLUS_MAP.get(mMediaType),
+                            "mediaType : " + mMediaType + " has no profile supporting HDR10+")[0]);
         } else {
             format.setInteger(MediaFormat.KEY_PROFILE,
-                    Objects.requireNonNull(PROFILE_HDR10_MAP.get(mMime),
-                            "mediaType : " + mMime + " has no profile supporting HDR10")[0]);
+                    Objects.requireNonNull(PROFILE_HDR10_MAP.get(mMediaType),
+                            "mediaType : " + mMediaType + " has no profile supporting HDR10")[0]);
         }
         ArrayList<MediaFormat> formatList = new ArrayList<>();
         formatList.add(format);
         Assume.assumeTrue(mCodecName + " does not support HDR10/HDR10+ profile",
-                areFormatsSupported(mCodecName, mMime, formatList));
+                areFormatsSupported(mCodecName, mMediaType, formatList));
         mCodec = MediaCodec.createByCodecName(mCodecName);
         configureCodec(format, false, true, false);
         mCodec.start();

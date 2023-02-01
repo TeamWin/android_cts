@@ -413,6 +413,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("FORWARD_COLLISION_WARNING_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.BLIND_SPOT_WARNING_ENABLED))
                 .isEqualTo("BLIND_SPOT_WARNING_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.BLIND_SPOT_WARNING_STATE))
+                .isEqualTo("BLIND_SPOT_WARNING_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_DEPARTURE_WARNING_ENABLED))
                 .isEqualTo("LANE_DEPARTURE_WARNING_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_KEEP_ASSIST_ENABLED))

@@ -41,11 +41,11 @@ public class VehicleLightStateTest {
     }
 
     @Test
-    public void testAllVehicleLightSwitchesAreMappedInToString() {
+    public void testAllVehicleLightStatesAreMappedInToString() {
         List<Integer> vehicleLightStates = VehiclePropertyUtils.getIntegersFromDataEnums(
                 VehicleLightState.class);
-        for (Integer VehicleLightState : vehicleLightStates) {
-            String vehicleLightStateString = VehicleLightState.toString(VehicleLightState);
+        for (Integer vehicleLightState : vehicleLightStates) {
+            String vehicleLightStateString = VehicleLightState.toString(vehicleLightState);
             assertWithMessage("%s starts with 0x", vehicleLightStateString).that(
                     vehicleLightStateString.startsWith("0x")).isFalse();
         }

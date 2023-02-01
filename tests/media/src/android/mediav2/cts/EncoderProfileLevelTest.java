@@ -130,10 +130,10 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         final boolean needAudio = true;
         final boolean needVideo = true;
         final Object[][] exhaustiveArgsList = new Object[][]{
-                // Audio - CodecMime, bit-rate, sample rate, channel count
+                // Audio - CodecMediaType, bit-rate, sample rate, channel count
                 {MediaFormat.MIMETYPE_AUDIO_AAC, 64000, 48000, 1, -1},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, 128000, 48000, 2, -1},
-                // Video - CodecMime, bit-rate, height, width, frame-rate
+                // Video - CodecMediaType, bit-rate, height, width, frame-rate
                 // TODO (b/151423508)
                 /*{MediaFormat.MIMETYPE_VIDEO_AVC, 64000, 176, 144, 15},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, 128000, 176, 144, 15},
@@ -313,9 +313,9 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 new Pair<>(new int[]{VP9Profile0}, VP9Level3));
     }
 
-    private static int getMinLevel(String mime, int width, int height, int frameRate, int bitrate,
-            int profile) {
-        switch (mime) {
+    private static int getMinLevel(String mediaType, int width, int height, int frameRate,
+            int bitrate, int profile) {
+        switch (mediaType) {
             case MediaFormat.MIMETYPE_VIDEO_AVC:
                 return getMinLevelAVC(width, height, frameRate, bitrate);
             case MediaFormat.MIMETYPE_VIDEO_HEVC:
@@ -697,11 +697,11 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
             Log.e(LOG_TAG, "Basic channel-rate/resolution comparisons failed");
             return false;
         }
-        String inpMime = inpFormat.getString(MediaFormat.KEY_MIME);
-        String outMime = outFormat.getString(MediaFormat.KEY_MIME);
-        assertEquals(String.format("input mime :- %s and output mime :- %s are different.", inpMime,
-                outMime), inpMime, outMime);
-        if (outMime.startsWith("audio/")) {
+        String inpMediaType = inpFormat.getString(MediaFormat.KEY_MIME);
+        String outMediaType = outFormat.getString(MediaFormat.KEY_MIME);
+        assertEquals(String.format("input mediaType :- %s and output mediaType :- %s are "
+                        + "different.", inpMediaType, outMediaType), inpMediaType, outMediaType);
+        if (outMediaType.startsWith("audio/")) {
             if (outFormat.getString(MediaFormat.KEY_MIME).equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
                 int inputProfileKey, outputProfileKey;
                 outputProfileKey = getAacProfile(outFormat);
@@ -712,7 +712,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                     return false;
                 }
             }
-        } else if (outMime.startsWith("video/")) {
+        } else if (outMediaType.startsWith("video/")) {
             if (!outFormat.containsKey(MediaFormat.KEY_PROFILE)) {
                 Log.e(LOG_TAG, "Output format doesn't contain profile key");
                 //TODO (b/151398466)
@@ -744,7 +744,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 return false;
             }
         } else {
-            Log.w(LOG_TAG, "non media mime:" + outMime);
+            Log.w(LOG_TAG, "non media mediaType:" + outMediaType);
         }
         return true;
     }
@@ -766,13 +766,14 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         if (mEncCfgParams[0].mInputBitDepth != 8) {
             Assume.assumeTrue(mCodecName + " doesn't support " + colorFormatToString(
                             mEncCfgParams[0].mColorFormat, mEncCfgParams[0].mInputBitDepth),
-                    hasSupportForColorFormat(mCodecName, mMime, mEncCfgParams[0].mColorFormat));
+                    hasSupportForColorFormat(mCodecName, mMediaType,
+                                             mEncCfgParams[0].mColorFormat));
         }
-        boolean cddSupportedMime = PROFILE_LEVEL_CDD.get(mMime) != null;
+        boolean cddSupportedMediaType = PROFILE_LEVEL_CDD.get(mMediaType) != null;
         int[] profileCdd = new int[0];
         int levelCdd = 0;
-        if (cddSupportedMime) {
-            Pair<int[], Integer> cddProfileLevel = PROFILE_LEVEL_CDD.get(mMime);
+        if (cddSupportedMediaType) {
+            Pair<int[], Integer> cddProfileLevel = PROFILE_LEVEL_CDD.get(mMediaType);
             profileCdd = cddProfileLevel.first;
             levelCdd = cddProfileLevel.second;
         }
@@ -786,12 +787,12 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
             mOutputBuff = new OutputManager();
             mCodec = MediaCodec.createByCodecName(mCodecName);
             MediaCodecInfo.CodecCapabilities codecCapabilities =
-                    mCodec.getCodecInfo().getCapabilitiesForType(mMime);
+                    mCodec.getCodecInfo().getCapabilitiesForType(mMediaType);
             for (EncoderConfigParams cfg : mEncCfgParams) {
                 mActiveEncCfg = cfg;
                 MediaFormat format = cfg.getFormat();
                 if (!codecCapabilities.isFormatSupported(format)) {
-                    if (cddSupportedMime) {
+                    if (cddSupportedMediaType) {
                         boolean shallSupportProfileLevel = false;
                         if (mIsAudio) {
                             for (int cddProfile : profileCdd) {
@@ -809,7 +810,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                             assertFalse(String.format("No components present on the device supports"
                                     + " cdd required profile:- %d, level:- %d, encode format:- %s",
                                     cfg.mProfile, cfg.mLevel, format),
-                                    selectCodecs(mMime, formats, null, false).isEmpty());
+                                    selectCodecs(mMediaType, formats, null, false).isEmpty());
                         }
                         Log.d(LOG_TAG, mCodecName + " doesn't support format: " + format);
                     }
@@ -822,7 +823,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                     formatList.add(format);
                     assertTrue("Device advertises support for encoding " + format
                                     + " but cannot decode it. \n" + mTestConfig + mTestEnv,
-                            selectCodecs(mMime, formatList, null, false).size() > 0);
+                            selectCodecs(mMediaType, formatList, null, false).size() > 0);
                 }
 
                 mOutputBuff.reset();
@@ -837,7 +838,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 else mCodec.reset();
 
                 // TODO (b/151398466)
-                if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
+                if (mMediaType.equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
                     Assume.assumeTrue("neither KEY_AAC_PROFILE nor KEY_PROFILE are present",
                             outFormat.containsKey(MediaFormat.KEY_AAC_PROFILE) ||
                                     outFormat.containsKey(MediaFormat.KEY_PROFILE));
@@ -846,29 +847,29 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                             outFormat.containsKey(MediaFormat.KEY_PROFILE));
                     Assume.assumeTrue(outFormat.containsKey(MediaFormat.KEY_LEVEL));
                 }
-                // TODO (b/166300446) avc mime fails validation
-                if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_AVC)) {
-                    Log.w(LOG_TAG, "Skip validation for mime = " + mMime);
+                // TODO (b/166300446) avc mediaType fails validation
+                if (mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+                    Log.w(LOG_TAG, "Skip validation for mediaType = " + mMediaType);
                     continue;
                 }
-                // TODO (b/166305723) hevc mime fails validation
-                if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
-                    Log.w(LOG_TAG, "Skip validation for mime = " + mMime);
+                // TODO (b/166305723) hevc mediaType fails validation
+                if (mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+                    Log.w(LOG_TAG, "Skip validation for mediaType = " + mMediaType);
                     continue;
                 }
-                // TODO (b/166300448) h263 and mpeg4 mimes fails validation
-                if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_H263) ||
-                        mMime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
-                    Log.w(LOG_TAG, "Skip validation for mime = " + mMime);
+                // TODO (b/166300448) h263 and mpeg4 mediaTypes fails validation
+                if (mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_H263)
+                        || mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
+                    Log.w(LOG_TAG, "Skip validation for mediaType = " + mMediaType);
                     continue;
                 }
                 // TODO (b/184889671) aac for profile AACObjectHE fails validation
                 // TODO (b/184890155) aac for profile AACObjectLD, AACObjectELD fails validation
-                if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
+                if (mMediaType.equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
                     if (cfg.mProfile == AACObjectHE || cfg.mProfile == AACObjectELD
                             || cfg.mProfile == AACObjectLD) {
-                        Log.w(LOG_TAG, "Skip validation for mime = " + mMime + " profile "
-                                + cfg.mProfile);
+                        Log.w(LOG_TAG, "Skip validation for mediaType = " + mMediaType
+                                + " profile " + cfg.mProfile);
                         continue;
                     }
                 }
@@ -879,7 +880,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
 
                 for (int muxerFormat = MediaMuxer.OutputFormat.MUXER_OUTPUT_FIRST;
                      muxerFormat <= MediaMuxer.OutputFormat.MUXER_OUTPUT_LAST; muxerFormat++) {
-                    if (!isMediaTypeContainerPairValid(mMime, muxerFormat)) continue;
+                    if (!isMediaTypeContainerPairValid(mMediaType, muxerFormat)) continue;
                     ByteBuffer mBuff = mOutputBuff.getBuffer();
                     String tmpPath = getTempFilePath((cfg.mInputBitDepth == 10) ? "10bit" : "");
                     muxOutput(tmpPath, muxerFormat, outFormat, mBuff, mInfoList);

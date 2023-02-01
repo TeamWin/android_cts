@@ -59,13 +59,13 @@ public class CodecListTest {
         final boolean needVideo = mediaTypePrefix == null || mediaTypePrefix.startsWith("video");
         boolean[] modes = {true, false};
         for (boolean isEncoder : modes) {
-            ArrayList<String> cddRequiredMimeList =
-                    CodecTestBase.compileRequiredMimeList(isEncoder, needAudio, needVideo);
-            for (String mime : cddRequiredMimeList) {
-                String log = String.format("no %s found for mime %s as required by cdd ",
-                        isEncoder ? "encoder" : "decoder", mime);
-                assertTrue(log, isEncoder ? CodecTestBase.hasEncoder(mime) :
-                        CodecTestBase.hasDecoder(mime));
+            ArrayList<String> cddRequiredMediaTypeList =
+                    CodecTestBase.compileRequiredMediaTypeList(isEncoder, needAudio, needVideo);
+            for (String mediaType : cddRequiredMediaTypeList) {
+                String log = String.format("no %s found for mediaType %s as required by cdd ",
+                        isEncoder ? "encoder" : "decoder", mediaType);
+                assertTrue(log, isEncoder ? CodecTestBase.hasEncoder(mediaType) :
+                        CodecTestBase.hasDecoder(mediaType));
             }
         }
         if (MediaUtils.hasCamera()) {

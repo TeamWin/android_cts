@@ -97,7 +97,7 @@ public class VideoDecoderValidationTest extends CodecDecoderTestBase {
         mExtractor.release();
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
-        checkFormatSupport(mCodecName, mMime, false, formats, null, CODEC_OPTIONAL);
+        checkFormatSupport(mCodecName, mMediaType, false, formats, null, CODEC_OPTIONAL);
         decodeToMemory(mTestFile, mCodecName, 0, MediaExtractor.SEEK_TO_CLOSEST_SYNC,
                 Integer.MAX_VALUE);
         validateColorAspects(getOutputFormat(), mRange, mStandard, mTransfer);

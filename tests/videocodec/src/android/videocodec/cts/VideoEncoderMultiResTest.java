@@ -177,7 +177,7 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
-                areFormatsSupported(mCodecName, mMime, formats));
+                areFormatsSupported(mCodecName, mMediaType, formats));
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
         assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
                 + mTestEnv, res);
@@ -190,7 +190,7 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
         StringBuilder msg = new StringBuilder();
         boolean isOk = true;
         try {
-            cs = new CompareStreams(res, mMime, mMuxedOutputFile, true, mIsLoopBack);
+            cs = new CompareStreams(res, mMediaType, mMuxedOutputFile, true, mIsLoopBack);
             final double[] minPSNR = cs.getMinimumPSNR();
             for (int i = 0; i < minPSNR.length; i++) {
                 if (minPSNR[i] < MIN_ACCEPTABLE_QUALITY) {

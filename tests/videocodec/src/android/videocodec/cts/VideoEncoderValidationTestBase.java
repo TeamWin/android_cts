@@ -187,7 +187,7 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
             }
             if (picType == PICTURE_TYPE_UNKNOWN) {
                 ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
-                picType = BitStreamUtils.getFrameTypeFromBitStream(mMime, buf, info);
+                picType = BitStreamUtils.getFrameTypeFromBitStream(mMediaType, buf, info);
             }
             mPtsPicTypeMap.put(info.presentationTimeUs, picType);
         }

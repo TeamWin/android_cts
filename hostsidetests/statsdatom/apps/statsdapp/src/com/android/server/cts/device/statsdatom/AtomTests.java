@@ -253,6 +253,7 @@ public class AtomTests {
         APP_OPS_ENUM_MAP.put(
                 AppOpsManager.OPSTR_CAPTURE_CONSENTLESS_BUGREPORT_ON_USERDEBUG_BUILD, 131);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_BODY_SENSORS_WRIST_TEMPERATURE, 132);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_USE_FULL_SCREEN_INTENT, 133);
     }
 
     @Test

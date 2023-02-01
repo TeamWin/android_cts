@@ -200,7 +200,7 @@ public class MuxerUnitTest {
         public void testIfInvalidMediaFormatIsRejected() throws IOException {
             MediaMuxer muxer = new MediaMuxer(mOutLoc, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             try {
-                // Invalid media format - no mime key
+                // Invalid media format - no mediaType key
                 try {
                     muxer.addTrack(new MediaFormat());
                     fail("Invalid media format accepted by addTrack");
@@ -208,7 +208,7 @@ public class MuxerUnitTest {
                     // expected
                 }
 
-                // metadata mime format shall start with "application/*"
+                // metadata mediaType format shall start with "application/*"
                 try {
                     MediaFormat format = new MediaFormat();
                     format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_TEXT_CEA_608);
