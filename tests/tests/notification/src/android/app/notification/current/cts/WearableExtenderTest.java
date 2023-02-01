@@ -26,6 +26,7 @@ import android.graphics.Bitmap.Config;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.view.Gravity;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,7 +71,6 @@ public class WearableExtenderTest extends AndroidTestCase {
                 .setDismissalId(dismissalId)
                 .setContentAction(contentActionIndex)
                 // deprecated methods follow
-                .setBackground(background)
                 .setGravity(gravity)
                 .setContentIcon(icon)
                 .setContentIconGravity(gravity)
@@ -93,7 +93,6 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals(dismissalId, extender.getDismissalId());
         assertEquals(contentActionIndex, extender.getContentAction());
         // deprecated methods follow
-        assertEquals(background, extender.getBackground());
         assertEquals(gravity, extender.getGravity());
         assertEquals(icon, extender.getContentIcon());
         assertEquals(gravity, extender.getContentIconGravity());
@@ -227,7 +226,6 @@ public class WearableExtenderTest extends AndroidTestCase {
                         .addAction(action)
                         .setContentAction(contentActionIndex)
                         // deprecated methods follow
-                        .setBackground(background)
                         .setGravity(gravity)
                         .setContentIcon(icon)
                         .setContentIconGravity(gravity)
@@ -256,7 +254,6 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals(contentActionIndex, extender.getContentAction());
         assertEquals(1, extender.getActions().size());
         // deprecated methods follow
-        assertNotNull(extender.getBackground());
         assertEquals(gravity, extender.getGravity());
         assertEquals(icon, extender.getContentIcon());
         assertEquals(gravity, extender.getContentIconGravity());
