@@ -1025,6 +1025,14 @@ public final class Helper {
     }
 
     /**
+     * Reset the pcc detection service
+     */
+    public static void resetAutofillDetectionService() {
+        Log.d(TAG, "resetAutofillDetectionService");
+        runShellCommand("cmd autofill set temporary-detection-service 0");
+    }
+
+    /**
      * Gets the instrumentation context.
      */
     public static Context getContext() {
