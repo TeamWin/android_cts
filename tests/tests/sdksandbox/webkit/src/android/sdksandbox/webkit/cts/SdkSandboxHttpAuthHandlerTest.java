@@ -22,6 +22,10 @@ import android.platform.test.annotations.AppModeFull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
+import com.android.compatibility.common.util.NullWebViewUtils;
+
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,27 +34,32 @@ import org.junit.runner.RunWith;
 @AppModeFull
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class WebViewRenderProcessClientTest {
+public class SdkSandboxHttpAuthHandlerTest {
     @ClassRule
     public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
             new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
 
     @Rule
     public final WebViewSandboxTestRule sdkTester =
-            new WebViewSandboxTestRule("android.webkit.cts.WebViewRenderProcessClientTest");
+            new WebViewSandboxTestRule("android.webkit.cts.HttpAuthHandlerTest");
 
-    @Test
-    public void testWebViewRenderProcessClientWithoutExecutor() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testWebViewRenderProcessClientWithoutExecutor");
+    @Before
+    public void setUp() {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
     }
 
     @Test
-    public void testWebViewRenderProcessClientWithExecutor() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testWebViewRenderProcessClientWithExecutor");
+    public void testProceed() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testProceed");
     }
 
     @Test
-    public void testSetWebViewRenderProcessClient() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testSetWebViewRenderProcessClient");
+    public void testCancel() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testCancel");
+    }
+
+    @Test
+    public void testUseHttpAuthUsernamePassword() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testUseHttpAuthUsernamePassword");
     }
 }

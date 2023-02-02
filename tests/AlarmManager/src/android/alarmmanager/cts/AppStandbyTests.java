@@ -139,7 +139,7 @@ public class AppStandbyTests {
             Thread.sleep(100);
         }
         // These tests are designed for the old quota system.
-        sTareDeviceConfigStateHelper.set("enable_tare", "false");
+        sTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
     }
 
     @Before

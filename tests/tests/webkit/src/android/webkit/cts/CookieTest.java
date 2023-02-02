@@ -30,7 +30,7 @@ import android.webkit.WebView;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.SmallTest;
+import androidx.test.filters.MediumTest;
 
 import org.junit.Assume;
 import org.junit.Before;
@@ -41,8 +41,8 @@ import org.junit.runner.RunWith;
 /**
  * Original framework tests for CookieManager
  */
+@MediumTest
 @RunWith(AndroidJUnit4.class)
-@SmallTest
 public class CookieTest extends SharedWebViewTest {
 
     private CookieManager mCookieManager;

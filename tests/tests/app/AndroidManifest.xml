@@ -31,6 +31,13 @@
 
         <activity android:name=".ShareIdentityTest$ShareIdentityTestActivity"
                   android:exported="true" />
+
+        <receiver android:name=".ShareIdentityTest$ShareIdentityTestReceiver"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.cts.SHARE_IDENTITY_TEST_MANIFEST_ACTION" />
+            </intent-filter>
+        </receiver>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
@@ -39,11 +46,6 @@
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
-
-    <!-- TODO(b/262605364): Remove when support is added for app visibility. -->
-    <queries>
-        <package android:name="android.app.cts.testshareidentity" />
-    </queries>
 
 </manifest>
 

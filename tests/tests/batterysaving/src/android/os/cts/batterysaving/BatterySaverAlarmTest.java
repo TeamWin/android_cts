@@ -188,7 +188,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
     @Test
     public void testAllowWhileIdleThrottled() throws Exception {
         // This test is designed for the old quota system.
-        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
         final String targetPackage = APP_25_PACKAGE;
 

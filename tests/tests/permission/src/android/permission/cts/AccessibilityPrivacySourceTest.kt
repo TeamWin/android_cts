@@ -25,11 +25,11 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.Build
 import android.os.Process
-import android.permission.cts.NotificationListenerUtils.assertEmptyNotification
-import android.permission.cts.NotificationListenerUtils.assertNotificationExist
-import android.permission.cts.NotificationListenerUtils.cancelNotification
-import android.permission.cts.NotificationListenerUtils.cancelNotifications
-import android.permission.cts.NotificationListenerUtils.getNotification
+import android.permission.cts.CtsNotificationListenerServiceUtils.assertEmptyNotification
+import android.permission.cts.CtsNotificationListenerServiceUtils.assertNotificationExist
+import android.permission.cts.CtsNotificationListenerServiceUtils.cancelNotification
+import android.permission.cts.CtsNotificationListenerServiceUtils.cancelNotifications
+import android.permission.cts.CtsNotificationListenerServiceUtils.getNotification
 import android.permission.cts.SafetyCenterUtils.assertSafetyCenterIssueDoesNotExist
 import android.permission.cts.SafetyCenterUtils.assertSafetyCenterIssueExist
 import android.permission.cts.SafetyCenterUtils.assertSafetyCenterStarted

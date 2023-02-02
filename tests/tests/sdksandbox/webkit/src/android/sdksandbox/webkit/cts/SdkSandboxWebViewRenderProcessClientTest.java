@@ -17,59 +17,40 @@
 package android.sdksandbox.webkit.cts;
 
 import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
-import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.SmallTest;
+import androidx.test.filters.MediumTest;
 
-import com.android.compatibility.common.util.NullWebViewUtils;
-
-import org.junit.Assume;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-@SmallTest
+@AppModeFull
+@MediumTest
 @RunWith(AndroidJUnit4.class)
-public class CookieTest {
+public class SdkSandboxWebViewRenderProcessClientTest {
     @ClassRule
     public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
             new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
 
     @Rule
     public final WebViewSandboxTestRule sdkTester =
-            new WebViewSandboxTestRule("android.webkit.cts.CookieTest");
+            new WebViewSandboxTestRule("android.webkit.cts.WebViewRenderProcessClientTest");
 
-    @Before
-    public void setUp() {
-        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-    }
-
-    @Presubmit
     @Test
-    public void testDomain() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testDomain");
+    public void testWebViewRenderProcessClientWithoutExecutor() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testWebViewRenderProcessClientWithoutExecutor");
     }
 
     @Test
-    public void testSubDomain() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testSubDomain");
+    public void testWebViewRenderProcessClientWithExecutor() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testWebViewRenderProcessClientWithExecutor");
     }
 
     @Test
-    public void testInvalidDomain() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testInvalidDomain");
-    }
-
-    @Test
-    public void testPath() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testPath");
-    }
-
-    @Test
-    public void testEmptyValue() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testEmptyValue");
+    public void testSetWebViewRenderProcessClient() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testSetWebViewRenderProcessClient");
     }
 }

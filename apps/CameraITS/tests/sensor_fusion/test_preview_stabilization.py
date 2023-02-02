@@ -244,7 +244,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
               f'{preview_size} preview not stabilized enough! '
               f"Max preview angle:  {max_angles['cam']:.3f}, "
               f"Max gyro angle: {max_angles['gyro']:.3f}, "
-              f"ratio: {max_angles['cam']/max_angles['gryo']:.3f} "
+              f"ratio: {max_angles['cam']/max_angles['gyro']:.3f} "
               f'THRESH: {preview_stabilization_factor}.')
 
       if test_failures:

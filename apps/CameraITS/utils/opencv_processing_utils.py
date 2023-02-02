@@ -29,7 +29,8 @@ ANGLE_NUM_MIN = 10  # Minimum number of angles for find_angle() to be valid
 
 TEST_IMG_DIR = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images')
 CHART_FILE = os.path.join(TEST_IMG_DIR, 'ISO12233.png')
-CHART_HEIGHT = 13.5  # cm
+CHART_HEIGHT_RFOV = 13.5  # cm
+CHART_HEIGHT_WFOV = 9.5  # cm
 CHART_DISTANCE_RFOV = 31.0  # cm
 CHART_DISTANCE_WFOV = 22.0  # cm
 CHART_SCALE_RTOL = 0.1
@@ -165,8 +166,13 @@ class Chart(object):
      scale_step: float; step value for scaling for chart search
     """
     self._file = chart_file or CHART_FILE
-    self._height = height or CHART_HEIGHT
-    self._distance = distance or CHART_DISTANCE_RFOV
+    if math.isclose(
+        distance, CHART_DISTANCE_RFOV, rel_tol=CHART_SCALE_RTOL):
+      self._height = height or CHART_HEIGHT_RFOV
+      self._distance = distance
+    else:
+      self._height = height or CHART_HEIGHT_WFOV
+      self._distance = CHART_DISTANCE_WFOV
     self._scale_start = scale_start or CHART_SCALE_START
     self._scale_stop = scale_stop or CHART_SCALE_STOP
     self._scale_step = scale_step or CHART_SCALE_STEP

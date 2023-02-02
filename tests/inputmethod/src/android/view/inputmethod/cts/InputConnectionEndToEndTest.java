@@ -2251,11 +2251,13 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             }
 
             @Override
-            public boolean requestCursorUpdates(int cursorUpdateMode) {
+            public boolean requestCursorUpdates(int cursorUpdateMode, int cursorUpdateFilter) {
                 methodCallVerifier.onMethodCalled(args -> {
                     args.putInt("cursorUpdateMode", cursorUpdateMode);
+                    args.putInt("cursorUpdateFilter", cursorUpdateFilter);
                 });
                 assertEquals(expectedFlags, cursorUpdateMode);
+                assertEquals(0, cursorUpdateFilter);
                 return expectedResult;
             }
         }
@@ -2265,6 +2267,45 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             assertTrue(expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
             methodCallVerifier.assertCalledOnce(args -> {
                 assertEquals(expectedFlags, args.getInt("cursorUpdateMode"));
+            });
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#requestCursorUpdates(int, int)} works as expected.
+     */
+    @Test
+    public void testRequestCursorUpdatesWithFilter() throws Exception {
+        final int expectedUpdateFlags = InputConnection.CURSOR_UPDATE_IMMEDIATE;
+        final int expectedFilterFlags = InputConnection.CURSOR_UPDATE_FILTER_EDITOR_BOUNDS;
+        final boolean expectedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean requestCursorUpdates(int cursorUpdateMode, int cursorUpdateFilter) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("cursorUpdateMode", cursorUpdateMode);
+                    args.putInt("cursorUpdateFilter", cursorUpdateFilter);
+                });
+                assertEquals(expectedUpdateFlags, cursorUpdateMode);
+                assertEquals(expectedFilterFlags, cursorUpdateFilter);
+                return expectedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command =
+                    session.callRequestCursorUpdates(expectedUpdateFlags, expectedFilterFlags);
+            assertTrue(expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedUpdateFlags, args.getInt("cursorUpdateMode"));
+                assertEquals(expectedFilterFlags, args.getInt("cursorUpdateFilter"));
             });
         });
     }
@@ -2287,9 +2328,10 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             }
 
             @Override
-            public boolean requestCursorUpdates(int cursorUpdateMode) {
+            public boolean requestCursorUpdates(int cursorUpdateMode, int cursorUpdateFilter) {
                 methodCallVerifier.onMethodCalled(args -> {
                     args.putInt("cursorUpdateMode", cursorUpdateMode);
+                    args.putInt("cursorUpdateFilter", cursorUpdateFilter);
                 });
                 blocker.onMethodCalled();
                 return unexpectedResult;

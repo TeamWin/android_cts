@@ -105,6 +105,7 @@ import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsers;
+import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsersOnDefaultDisplay;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
@@ -118,6 +119,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
+import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsersOnDefaultDisplay;
 import com.android.bedstead.harrier.annotations.RunWithFeatureFlagEnabledAndDisabled;
 import com.android.bedstead.harrier.annotations.TestTag;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
@@ -925,6 +927,20 @@ public class DeviceStateTest {
     public void requireNotVisibleBackgroundUsersAnnotation_notSupported() {
         assertThat(TestApis.context().instrumentedContext().getSystemService(UserManager.class)
                 .isVisibleBackgroundUsersSupported()).isFalse();
+    }
+
+    @Test
+    @RequireVisibleBackgroundUsersOnDefaultDisplay(reason = "Test")
+    public void requireVisibleBackgroundUsersOnDefaultDisplayAnnotation_supported() {
+        assertThat(TestApis.context().instrumentedContext().getSystemService(UserManager.class)
+                .isVisibleBackgroundUsersOnDefaultDisplaySupported()).isTrue();
+    }
+
+    @Test
+    @RequireNotVisibleBackgroundUsersOnDefaultDisplay(reason = "Test")
+    public void requireNotVisibleBackgroundUsersOnDefaultDisplayAnnotation_notSupported() {
+        assertThat(TestApis.context().instrumentedContext().getSystemService(UserManager.class)
+                .isVisibleBackgroundUsersOnDefaultDisplaySupported()).isFalse();
     }
 
     @Test

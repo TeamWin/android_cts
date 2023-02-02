@@ -27,16 +27,11 @@ import android.hardware.radio.data.QosSession;
 import android.hardware.radio.data.SetupDataCallResult;
 import android.hardware.radio.data.SliceInfo;
 import android.hardware.radio.data.TrafficDescriptor;
-import android.os.SystemProperties;
 import android.telephony.cts.util.TelephonyUtils;
 import android.util.Log;
-import android.util.Xml;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.xmlpull.v1.XmlPullParser;
-
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -103,11 +98,6 @@ public class MockDataService {
     int mPduSessionId;
     SliceInfo mSliceInfo;
     TrafficDescriptor[] mTrafficDescriptors;
-    String mCuttlefishInterfaceName;
-    String mCuttlefishIpAddress;
-    String mCuttlefishDnsAddress;
-    String mCuttlefishGatewayAddress;
-    int mCuttlefishMtuV4;
     private final Object mDataCallListLock = new Object();
     LinkAddress[] mImsLinkAddress;
     LinkAddress[] mDefaultLinkAddress;
@@ -135,7 +125,6 @@ public class MockDataService {
 
     /* Default value definition */
     private void initializeParameter() {
-        loadCuttlefishData();
         this.mDataCallFailCause = DataCallFailCause.NONE;
         this.mSuggestedRetryTime = -1;
 
@@ -235,24 +224,6 @@ public class MockDataService {
                 dc.gateways = this.mInternetGateways;
                 dc.mtuV4 = this.mInternetMtuV4;
                 dc.mtuV6 = this.mInternetMtuV6;
-                // We have two use cases, one is Cuttlefish instance and second one is real device.
-                // Since the Cuttlefish interface name/ipaddress/dns/gateway/mtu are the fixed
-                // value, so we write it in the mock_data_service.xml and initialize when
-                // constructor.
-                if (isCuttlefishInstance()) {
-                    dc.ifname = getCuttlefishInterfaceName();
-                    arrayLinkAddress = new LinkAddress[1];
-                    linkAddress = new LinkAddress();
-                    linkAddress.address = getCuttlefishIpAddress();
-                    dc.dnses = new String[] {getCuttlefishDnsAddress()};
-                    dc.gateways = new String[] {getCuttlefishGatewayAddress()};
-                    dc.mtuV4 = getCuttlefishMtuV4();
-                    linkAddress.addressProperties = this.mAddressProperties;
-                    linkAddress.deprecationTime = this.mLaDeprecationTime;
-                    linkAddress.expirationTime = this.mLaExpirationTime;
-                    arrayLinkAddress[0] = linkAddress;
-                    dc.addresses = arrayLinkAddress;
-                }
                 break;
             default:
                 Log.d(TAG, "Unexpected APN type: " + apnType);
@@ -306,92 +277,6 @@ public class MockDataService {
                 }
             }
         }
-    }
-
-    /* check if the instance is Cuttlefish */
-    boolean isCuttlefishInstance() {
-        String vendorManufacturer = SystemProperties.get("ro.product.vendor.manufacturer");
-        String vendorModel = SystemProperties.get("ro.product.vendor.model");
-        String vendorProduct = SystemProperties.get("ro.product.vendor.name");
-        // Return true for cuttlefish instances
-        if ((vendorManufacturer.equals("Android") || vendorManufacturer.equals("Google"))
-                && (vendorProduct.startsWith("cf_")
-                        || vendorProduct.startsWith("aosp_cf_")
-                        || vendorModel.startsWith("Cuttlefish "))) {
-            Log.d(TAG, "CuttlefishInstance");
-            return true;
-        }
-        return false;
-    }
-
-    private boolean loadCuttlefishData() {
-        boolean result = true;
-        try {
-            String file = "mock_data_service.xml";
-            int event;
-            XmlPullParser parser = Xml.newPullParser();
-            InputStream input;
-            input = mContext.getAssets().open(file);
-            parser.setInput(input, null);
-
-            while (result && (event = parser.next()) != XmlPullParser.END_DOCUMENT) {
-                switch (event) {
-                    case XmlPullParser.START_TAG:
-                        if (MOCK_DATA_CONFIG_TAG.equals(parser.getName())) {
-                            Log.d(TAG, "Enter XML file.");
-                        } else if (MOCK_CUTTLEFISH_CONFIG_TAG.equals(parser.getName())) {
-                            String type = parser.getAttributeValue(0);
-                            if (!MOCK_CUTTLEFISH_TYPE.equals(type)) {
-                                result = false;
-                                break;
-                            }
-                        } else if (MOCK_INTERFACE_NAME_TAG.equals(parser.getName())) {
-                            String interfacename = parser.nextText();
-                            this.mCuttlefishInterfaceName = interfacename;
-                        } else if (MOCK_IP_ADDRESS_TAG.equals(parser.getName())) {
-                            String ipaddress = parser.nextText();
-                            this.mCuttlefishIpAddress = ipaddress;
-                        } else if (MOCK_DNS_ADDRESS_TAG.equals(parser.getName())) {
-                            String dnsaddress = parser.nextText();
-                            this.mCuttlefishDnsAddress = dnsaddress;
-                        } else if (MOCK_GATEWAY_ADDRESS_TAG.equals(parser.getName())) {
-                            String gatewayaddress = parser.nextText();
-                            this.mCuttlefishGatewayAddress = gatewayaddress;
-                        } else if (MOCK_MTU_V4_TAG.equals(parser.getName())) {
-                            String mtuv4 = parser.nextText();
-                            this.mCuttlefishMtuV4 = convertToMtuV4(mtuv4);
-                        }
-                        break;
-                    case XmlPullParser.END_TAG:
-                        break;
-                }
-            }
-            input.close();
-        } catch (Exception e) {
-            Log.e(TAG, "Exception error: " + e);
-            result = false;
-        }
-        return result;
-    }
-
-    private String getCuttlefishInterfaceName() {
-        return this.mCuttlefishInterfaceName;
-    }
-
-    private String getCuttlefishIpAddress() {
-        return this.mCuttlefishIpAddress;
-    }
-
-    private String getCuttlefishDnsAddress() {
-        return this.mCuttlefishDnsAddress;
-    }
-
-    private String getCuttlefishGatewayAddress() {
-        return this.mCuttlefishGatewayAddress;
-    }
-
-    private int getCuttlefishMtuV4() {
-        return this.mCuttlefishMtuV4;
     }
 
     private int convertToMtuV4(String mtuv4) {
@@ -455,8 +340,18 @@ public class MockDataService {
         return dnses;
     }
 
-    private String[] getGateways() {
-        return new String[] {"0.0.0.0"};
+    private String[] getGateways(String string) {
+        ArrayList<String> gateways = new ArrayList<String>();
+        try {
+            gateways.add(
+                    string.split("Routes: \\[ ")[1]
+                            .split("-> ")[1]
+                            .split(" ")[0]);
+            Log.d(TAG, "getGateways: " + gateways);
+        } catch (Exception e) {
+            Log.e(TAG, "Exception error: " + e);
+        }
+        return gateways.toArray(new String[gateways.size()]);
     }
 
     private int getMtu(String string) {
@@ -525,7 +420,7 @@ public class MockDataService {
                     this.mInternetIfname = getInterfaceName(str);
                     this.mDefaultLinkAddress = getIpAddress(str);
                     this.mInternetDnses = getDnses(str);
-                    this.mInternetGateways = getGateways();
+                    this.mInternetGateways = getGateways(str);
                     this.mInternetMtuV4 = getMtu(str);
                     this.mInternetMtuV6 = getMtu(str);
                 } else if (capabilities.contains("IMS")) {
@@ -533,7 +428,7 @@ public class MockDataService {
                     this.mImsCid = getCid(str);
                     this.mImsIfname = getInterfaceName(str);
                     this.mImsLinkAddress = getIpAddress(str);
-                    this.mImsGateways = getGateways();
+                    this.mImsGateways = getGateways(str);
                     this.mImsPcscf = getPcscf(str);
                     this.mImsMtuV4 = getMtu(str);
                     this.mImsMtuV6 = getMtu(str);

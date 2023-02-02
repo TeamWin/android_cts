@@ -120,7 +120,8 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
           cam, props, self.scene, self.tablet, self.chart_distance)
 
       # Initialize chart class and locate chart in scene
-      chart = opencv_processing_utils.Chart(cam, props, self.log_path)
+      chart = opencv_processing_utils.Chart(
+          cam, props, self.log_path, distance=self.chart_distance)
 
       # Get proper sensitivity, exposure time, and focus distance with 3A.
       mono_camera = camera_properties_utils.mono_camera(props)

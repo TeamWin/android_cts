@@ -420,14 +420,9 @@ public final class MockIme extends InputMethodService {
                     case "requestCursorUpdates": {
                         final int cursorUpdateMode = command.getExtras().getInt("cursorUpdateMode");
                         final int cursorUpdateFilter =
-                                command.getExtras().getInt("cursorUpdateFilter", -1);
-                        if (cursorUpdateFilter == -1) {
-                            return getMemorizedOrCurrentInputConnection().requestCursorUpdates(
-                                    cursorUpdateMode);
-                        } else {
-                            return getMemorizedOrCurrentInputConnection().requestCursorUpdates(
-                                    cursorUpdateMode, cursorUpdateFilter);
-                        }
+                                command.getExtras().getInt("cursorUpdateFilter", 0);
+                        return getMemorizedOrCurrentInputConnection().requestCursorUpdates(
+                                cursorUpdateMode, cursorUpdateFilter);
                     }
                     case "getHandler":
                         return getMemorizedOrCurrentInputConnection().getHandler();

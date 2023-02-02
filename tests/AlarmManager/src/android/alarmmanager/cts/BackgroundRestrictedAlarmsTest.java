@@ -161,7 +161,7 @@ public class BackgroundRestrictedAlarmsTest {
 
     @Test
     public void testRepeatingAlarmAllowedWhenAutoRestrictedBucketFeatureOn() throws Exception {
-        mTareDeviceConfigStateHelper.set("enable_tare", "false"); // Test requires app standby
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0"); // Test requires app standby
         final long interval = MIN_REPEATING_INTERVAL;
         final long triggerElapsed = SystemClock.elapsedRealtime() + interval;
         toggleAutoRestrictedBucketOnBgRestricted(false);

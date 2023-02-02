@@ -32,6 +32,7 @@ import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.MediumTest;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -50,6 +51,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  *  Test WebView zooming behaviour
  */
 @AppModeFull
+@MediumTest
 @RunWith(AndroidJUnit4.class)
 public class WebViewZoomTest extends SharedWebViewTest{
     @Rule

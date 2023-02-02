@@ -34,7 +34,7 @@ import org.junit.runner.RunWith;
 @MediumTest
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
-public class URLUtilTest {
+public class SdkSandboxURLUtilTest {
     @ClassRule
     public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
             new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");

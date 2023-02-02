@@ -23,6 +23,7 @@ import android.media.tv.AdResponse;
 import android.media.tv.BroadcastInfoRequest;
 import android.media.tv.BroadcastInfoResponse;
 import android.media.tv.TvContentRating;
+import android.media.tv.TvRecordingInfo;
 import android.media.tv.TvTrackInfo;
 import android.media.tv.interactive.AppLinkInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
@@ -34,6 +35,7 @@ import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -88,6 +90,8 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mErrorCount;
         public int mRecordingStartedCount;
         public int mRecordingStoppedCount;
+        public int mSendTvRecordingInfoCount;
+        public int mSendTvRecordingInfoListCount;
 
         public Integer mKeyDownCode;
         public Integer mKeyUpCode;
@@ -102,6 +106,8 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public AdResponse mAdResponse;
         public BroadcastInfoResponse mBroadcastInfoResponse;
         public String mRecordingId;
+        public TvRecordingInfo mTvRecordingInfo;
+        public ArrayList<TvRecordingInfo> mTvRecordingInfoList;
 
         StubSessionImpl(Context context) {
             super(context);
@@ -125,6 +131,8 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mErrorCount = 0;
             mRecordingStartedCount = 0;
             mRecordingStoppedCount = 0;
+            mSendTvRecordingInfoCount = 0;
+            mSendTvRecordingInfoListCount = 0;
 
             mKeyDownCode = null;
             mKeyUpCode = null;
@@ -139,6 +147,8 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mAdResponse = null;
             mBroadcastInfoResponse = null;
             mRecordingId = null;
+            mTvRecordingInfo = null;
+            mTvRecordingInfoList = null;
         }
 
         @Override
@@ -431,6 +441,13 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             super.onRecordingStopped(recordingId);
             mRecordingStoppedCount++;
             mRecordingId = recordingId;
+        }
+
+        @Override
+        public void onTvRecordingInfo(TvRecordingInfo tvRecordingInfo) {
+            super.onTvRecordingInfo(tvRecordingInfo);
+            mSendTvRecordingInfoCount++;
+            mTvRecordingInfo = tvRecordingInfo;
         }
     }
 }

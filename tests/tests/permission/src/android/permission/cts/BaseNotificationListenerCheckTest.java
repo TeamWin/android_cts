@@ -309,7 +309,7 @@ public class BaseNotificationListenerCheckTest {
      * @return The notification or `null` if there is none
      */
     protected StatusBarNotification getNotification(boolean cancelNotification) throws Throwable {
-        return NotificationListenerUtils.getNotificationForPackageAndId(
+        return CtsNotificationListenerServiceUtils.getNotificationForPackageAndId(
                 PERMISSION_CONTROLLER_PKG,
                 NOTIFICATION_LISTENER_CHECK_NOTIFICATION_ID,
                 cancelNotification);
@@ -320,6 +320,6 @@ public class BaseNotificationListenerCheckTest {
      */
     protected void clearNotifications() throws Throwable {
         // Clear notification if present
-        NotificationListenerUtils.cancelNotifications(PERMISSION_CONTROLLER_PKG);
+        CtsNotificationListenerServiceUtils.cancelNotifications(PERMISSION_CONTROLLER_PKG);
     }
 }

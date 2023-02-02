@@ -34,4 +34,5 @@ android_test {
     manifest: "AndroidManifest.xml",
     test_config: "AndroidTest.xml",
     per_testcase_directory: true,
+    sdk_version: "test_current",
 }

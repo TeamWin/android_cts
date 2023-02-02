@@ -24,8 +24,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to indicate that a test should run on devices that do not support starting visible
- * background users.
+ * Annotation to indicate that a test should run on devices that do not support
+ * {@link android.os.UserManager#isVisibleBackgroundUsersSupported() starting visible background
+ * users}.
  *
  * <p>This can be enforced by using {@code Devicestate}.
  */

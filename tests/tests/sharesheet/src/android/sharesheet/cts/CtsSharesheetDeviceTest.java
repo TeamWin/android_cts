@@ -319,7 +319,8 @@ public class CtsSharesheetDeviceTest {
         PendingIntent refinement = PendingIntent.getBroadcast(
                 mContext,
                 1,
-                new Intent(CHOOSER_REFINEMENT_BROADCAST_ACTION),
+                new Intent(CHOOSER_REFINEMENT_BROADCAST_ACTION)
+                        .setPackage(mContext.getPackageName()),
                 PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
 
         try {

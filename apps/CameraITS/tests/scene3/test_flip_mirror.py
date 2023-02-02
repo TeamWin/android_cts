@@ -140,7 +140,8 @@ class FlipMirrorTest(its_base_test.ItsBaseTest):
           cam, props, self.scene, self.tablet, self.chart_distance)
 
       # initialize chart class and locate chart in scene
-      chart = opencv_processing_utils.Chart(cam, props, self.log_path)
+      chart = opencv_processing_utils.Chart(
+          cam, props, self.log_path, distance=self.chart_distance)
       fmt = {'format': 'yuv', 'width': _VGA_W, 'height': _VGA_H}
 
       # test that image is not flipped, mirrored, or rotated

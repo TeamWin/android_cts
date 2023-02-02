@@ -21,9 +21,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Process;
@@ -37,6 +39,8 @@ import com.android.compatibility.common.util.CddTest;
 
 import libcore.util.HexEncoding;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -46,11 +50,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Tests to verify {@link Activity#getLaunchedFromUid()} and {@link
- * Activity#getLaunchedFromPackage()} only return the uid and package name of the launching app
- * when that app has started the activity with {@link android.app.ActivityOptions} on which
- * {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} has been called with a
- * value of {@code true}.
+ * Tests to verify activities and receivers only have access to the uid and package name of the
+ * launching / sending app when that app has opted-in to sharing its identify via either
+ * {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} or {@link
+ * android.app.BroadcastOptions#setShareIdentityEnabled(boolean)}, respectively.
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -111,6 +114,70 @@ public class ShareIdentityTest {
      * expose the app's identity from {@link Activity#getCallingPackage()}.
      */
     private static final int START_ACTIVITY_FOR_RESULT_TEST_CASE = 3;
+    /**
+     * Test case to verify the broadcasting app's identity is shared with a runtime receiver when
+     * the broadcast is sent with {@link
+     * android.app.BroadcastOptions#setShareIdentityEnabled(boolean)} set to {@code true}.
+     */
+    private static final int SEND_BROADCAST_RUNTIME_RECEIVER_OPT_IN_TEST_CASE = 4;
+    /**
+     * Test case to verify the broadcasting app's identity is shared with a manifest receiver when
+     * the broadcast is sent with {@link
+     * android.app.BroadcastOptions#setShareIdentityEnabled(boolean)} set to {@code true}.
+     */
+    private static final int SEND_BROADCAST_MANIFEST_RECEIVER_OPT_IN_TEST_CASE = 5;
+    /**
+     * Test case to verify the broadcasting app's identity is not shared with a runtime receiver
+     * when the broadcast is sent with {@link
+     * android.app.BroadcastOptions#setShareIdentityEnabled(boolean)} set to {@code false}.
+     */
+    private static final int SEND_BROADCAST_RUNTIME_RECEIVER_OPT_OUT_TEST_CASE = 6;
+    /**
+     * Test case to verify the broadcasting app's identity is not shared with a manifest receiver
+     * when the broadcast is sent with {@link
+     * android.app.BroadcastOptions#setShareIdentityEnabled(boolean)} set to {@code false}.
+     */
+    private static final int SEND_BROADCAST_MANIFEST_RECEIVER_OPT_OUT_TEST_CASE = 7;
+    /**
+     * Test case to verify the broadcasting app's identity is not shared with a runtime receiver
+     * when the broadcast is not sent with {@link android.app.BroadcastOptions}.
+     */
+    private static final int SEND_BROADCAST_RUNTIME_RECEIVER_DEFAULT_TEST_CASE = 8;
+    /**
+     * Test case to verify the broadcasting app's identity is not shared with a manifest receiver
+     * when the broadcast is not sent with {@link android.app.BroadcastOptions}.
+     */
+    private static final int SEND_BROADCAST_MANIFEST_RECEIVER_DEFAULT_TEST_CASE = 9;
+    /**
+     * Test case to verify the broadcasting app's identity is shared with a runtime receiver when
+     * the ordered broadcast is sent with {@link
+     * android.app.BroadcastOptions#setShareIdentityEnabled(boolean)} set to {@code true}.
+     */
+    private static final int SEND_ORDERED_BROADCAST_RUNTIME_RECEIVER_OPT_IN_TEST_CASE = 10;
+    /**
+     * Test case to verify the broadcasting app's identity is shared with a manifest receiver when
+     * the ordered broadcast is sent with {@link
+     * android.app.BroadcastOptions#setShareIdentityEnabled(boolean)} set to {@code true}.
+     */
+    private static final int SEND_ORDERED_BROADCAST_MANIFEST_RECEIVER_OPT_IN_TEST_CASE = 11;
+    /**
+     * Test case to verify the broadcasting app's identity is not shared with a runtime receiver
+     * when the ordered broadcast is sent with {@link
+     * android.app.BroadcastOptions#setShareIdentityEnabled(boolean)} set to {@code false}.
+     */
+    private static final int SEND_ORDERED_BROADCAST_RUNTIME_RECEIVER_OPT_OUT_TEST_CASE = 12;
+    /**
+     * Test case to verify the broadcasting app's identity is not shared with a manifest receiver
+     * when the ordered broadcast is sent with {@link
+     * android.app.BroadcastOptions#setShareIdentityEnabled(boolean)} set to {@code false}.
+     */
+    private static final int SEND_ORDERED_BROADCAST_MANIFEST_RECEIVER_OPT_OUT_TEST_CASE = 13;
+
+    /**
+     * Action for which the runtime receiver registers to receive broadcasts from the test app.
+     */
+    private static final String TEST_BROADCAST_RUNTIME_ACTION =
+            "android.app.cts.SHARE_IDENTITY_TEST_RUNTIME_ACTION";
 
     /**
      * Key used to pass the int test ID as an extra in the {@code Intent} to the {@link
@@ -132,6 +199,19 @@ public class ShareIdentityTest {
 
     private Context mContext = ApplicationProvider.getApplicationContext();
 
+    private ShareIdentityTestReceiver mReceiver = new ShareIdentityTestReceiver();
+
+    @Before
+    public void setUp() {
+        mContext.registerReceiver(mReceiver, new IntentFilter(TEST_BROADCAST_RUNTIME_ACTION),
+                Context.RECEIVER_EXPORTED);
+    }
+
+    @After
+    public void tearDown() {
+        mContext.unregisterReceiver(mReceiver);
+    }
+
     @Test
     @CddTest(requirement = "4/C-0-2")
     public void testShareIdentity_explicitIdentityShared_identityAvailableToActivity()
@@ -152,34 +232,7 @@ public class ShareIdentityTest {
 
         assertTrue("Activity was not invoked by the timeout",
                 testData.countDownLatch.await(10, TimeUnit.SECONDS));
-        PackageManager packageManager = mContext.getPackageManager();
-        PackageInfo packageInfo = packageManager.getPackageInfo(TEST_PACKAGE,
-                PackageManager.PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES));
-        assertEquals(
-                "Expected launchedFromUid not obtained after launching app opted-in to sharing "
-                        + "identity",
-                packageInfo.applicationInfo.uid,
-                testData.launchedFromUid);
-        assertEquals(
-                "Expected launchedFromPackage not obtained after launching app opted-in to sharing "
-                        + "identity",
-                TEST_PACKAGE, testData.launchedFromPackage);
-        assertNotNull(
-                "Expected SigningInfo not available after launching app opted-in to sharing "
-                        + "identity",
-                packageInfo.signingInfo);
-        assertTrue(
-                "Expected rotated signer not reported after launching app opted-in to sharing "
-                        + "identity",
-                packageManager.hasSigningCertificate(testData.launchedFromUid,
-                        HexEncoding.decode(TEST_PACKAGE_ROTATED_SIGNER_DIGEST),
-                        PackageManager.CERT_INPUT_SHA256));
-        assertTrue(
-                "Expected original signer not reported after launching app opted-in to sharing "
-                        + "identity",
-                packageManager.hasSigningCertificate(testData.launchedFromPackage,
-                        HexEncoding.decode(TEST_PACKAGE_ORIGINAL_SIGNER_DIGEST),
-                        PackageManager.CERT_INPUT_SHA256));
+        assertPackageVisibility(testData);
     }
 
     @Test
@@ -198,9 +251,9 @@ public class ShareIdentityTest {
         assertEquals(
                 Process.INVALID_UID
                         + " launchedFromUid expected for app not opting-in to sharing identity",
-                Process.INVALID_UID, testData.launchedFromUid);
+                Process.INVALID_UID, testData.fromUid);
         assertNull("null launchedFromPackage expected for app not opting-in to sharing identity",
-                testData.launchedFromPackage);
+                testData.fromPackage);
     }
 
     @Test
@@ -219,9 +272,9 @@ public class ShareIdentityTest {
         assertEquals(
                 Process.INVALID_UID
                         + " launchedFromUid expected for app not opting-in to sharing identity",
-                Process.INVALID_UID, testData.launchedFromUid);
+                Process.INVALID_UID, testData.fromUid);
         assertNull("null launchedFromPackage expected for app not opting-in to sharing identity",
-                testData.launchedFromPackage);
+                testData.fromPackage);
     }
 
     @Test
@@ -244,10 +297,10 @@ public class ShareIdentityTest {
                 testData.countDownLatch.await(10, TimeUnit.SECONDS));
         assertEquals(
                 "Expected launchedFromUid not obtained after launching activity from same uid",
-                Process.myUid(), testData.launchedFromUid);
+                Process.myUid(), testData.fromUid);
         assertEquals(
                 "Expected launchedFromPackage not obtained after launching activity from same uid",
-                mContext.getPackageName(), testData.launchedFromPackage);
+                mContext.getPackageName(), testData.fromPackage);
     }
 
     @Test
@@ -274,13 +327,250 @@ public class ShareIdentityTest {
                 Process.INVALID_UID
                         + " launchedFromUid expected for app invoking startActivityForResult and "
                         + "not opting-in to sharing identity",
-                Process.INVALID_UID, testData.launchedFromUid);
+                Process.INVALID_UID, testData.fromUid);
         assertNull(
                 "null launchedFromPackage expected for app invoking startActivityForResult and "
                         + "not opting-in to sharing identity",
-                testData.launchedFromPackage);
+                testData.fromPackage);
     }
 
+    @Test
+    @CddTest(requirement = "4/C-0-2")
+    public void testShareIdentity_sendBroadcastToRuntimeReceiverIdentityShared_identityAvailable()
+            throws Exception {
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent testIntent = getTestIntent(testId, SEND_BROADCAST_RUNTIME_RECEIVER_OPT_IN_TEST_CASE);
+
+        mContext.startActivity(testIntent);
+
+        assertTrue("Broadcast was not received by the timeout",
+                testData.countDownLatch.await(10, TimeUnit.SECONDS));
+        assertPackageVisibility(testData);
+    }
+
+    @Test
+    @CddTest(requirement = "4/C-0-2")
+    public void testShareIdentity_sendBroadcastToManifestReceiverIdentityShared_identityAvailable()
+            throws Exception {
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent testIntent = getTestIntent(testId,
+                SEND_BROADCAST_MANIFEST_RECEIVER_OPT_IN_TEST_CASE);
+
+        mContext.startActivity(testIntent);
+
+        assertTrue("Broadcast was not received by the timeout",
+                testData.countDownLatch.await(10, TimeUnit.SECONDS));
+        assertPackageVisibility(testData);
+    }
+
+    @Test
+    @CddTest(requirement = "4/C-0-2")
+    public void
+    testShareIdentity_sendBroadcastToRuntimeReceiverIdentityNotShared_identityNotAvailable()
+            throws Exception {
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent testIntent = getTestIntent(testId,
+                SEND_BROADCAST_RUNTIME_RECEIVER_OPT_OUT_TEST_CASE);
+
+        mContext.startActivity(testIntent);
+
+        assertTrue("Broadcast was not received by the timeout",
+                testData.countDownLatch.await(10, TimeUnit.SECONDS));
+        assertEquals(
+                Process.INVALID_UID
+                        + " sentFromUid expected for app not opting-in to sharing identity",
+                Process.INVALID_UID, testData.fromUid);
+        assertNull("null sentFromPackage expected for app not opting-in to sharing identity",
+                testData.fromPackage);
+    }
+
+    @Test
+    @CddTest(requirement = "4/C-0-2")
+    public void
+    testShareIdentity_sendBroadcastToManifestReceiverIdentityNotShared_identityNotAvailable()
+            throws Exception {
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent testIntent = getTestIntent(testId,
+                SEND_BROADCAST_MANIFEST_RECEIVER_OPT_OUT_TEST_CASE);
+
+        mContext.startActivity(testIntent);
+
+        assertTrue("Broadcast was not received by the timeout",
+                testData.countDownLatch.await(10, TimeUnit.SECONDS));
+        assertEquals(
+                Process.INVALID_UID
+                        + " sentFromUid expected for app not opting-in to sharing identity",
+                Process.INVALID_UID, testData.fromUid);
+        assertNull("null sentFromPackage expected for app not opting-in to sharing identity",
+                testData.fromPackage);
+    }
+
+    @Test
+    @CddTest(requirement = "4/C-0-2")
+    public void testShareIdentity_sendBroadcastToRuntimeReceiverDefault_identityNotAvailable()
+            throws Exception {
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent testIntent = getTestIntent(testId,
+                SEND_BROADCAST_RUNTIME_RECEIVER_DEFAULT_TEST_CASE);
+
+        mContext.startActivity(testIntent);
+
+        assertTrue("Broadcast was not received by the timeout",
+                testData.countDownLatch.await(10, TimeUnit.SECONDS));
+        assertEquals(
+                Process.INVALID_UID
+                        + " sentFromUid expected for app not opting-in to sharing identity",
+                Process.INVALID_UID, testData.fromUid);
+        assertNull("null sentFromPackage expected for app not opting-in to sharing identity",
+                testData.fromPackage);
+    }
+
+    @Test
+    @CddTest(requirement = "4/C-0-2")
+    public void testShareIdentity_sendBroadcastToManifestReceiverDefault_identityNotAvailable()
+            throws Exception {
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent testIntent = getTestIntent(testId,
+                SEND_BROADCAST_MANIFEST_RECEIVER_DEFAULT_TEST_CASE);
+
+        mContext.startActivity(testIntent);
+
+        assertTrue("Broadcast was not received by the timeout",
+                testData.countDownLatch.await(10, TimeUnit.SECONDS));
+        assertEquals(
+                Process.INVALID_UID
+                        + " sentFromUid expected for app not opting-in to sharing identity",
+                Process.INVALID_UID, testData.fromUid);
+        assertNull("null sentFromPackage expected for app not opting-in to sharing identity",
+                testData.fromPackage);
+    }
+
+    @Test
+    @CddTest(requirement = "4/C-0-2")
+    public void
+    testShareIdentity_sendOrderedBroadcastToRuntimeReceiverIdentityShared_identityAvailable()
+            throws Exception {
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent testIntent = getTestIntent(testId,
+                SEND_ORDERED_BROADCAST_RUNTIME_RECEIVER_OPT_IN_TEST_CASE);
+
+        mContext.startActivity(testIntent);
+
+        assertTrue("Broadcast was not received by the timeout",
+                testData.countDownLatch.await(10, TimeUnit.SECONDS));
+        assertPackageVisibility(testData);
+    }
+
+    @Test
+    @CddTest(requirement = "4/C-0-2")
+    public void
+    testShareIdentity_sendOrderedBroadcastToManifestReceiverIdentityShared_identityAvailable()
+            throws Exception {
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent testIntent = getTestIntent(testId,
+                SEND_ORDERED_BROADCAST_MANIFEST_RECEIVER_OPT_IN_TEST_CASE);
+
+        mContext.startActivity(testIntent);
+
+        assertTrue("Broadcast was not received by the timeout",
+                testData.countDownLatch.await(10, TimeUnit.SECONDS));
+        assertPackageVisibility(testData);
+    }
+
+
+    @Test
+    @CddTest(requirement = "4/C-0-2")
+    public void
+    testShareIdentity_sendOrderedBroadcastToRuntimeReceiverIdentityNotShared_identityNotAvailable()
+            throws Exception {
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent testIntent = getTestIntent(testId,
+                SEND_ORDERED_BROADCAST_RUNTIME_RECEIVER_OPT_OUT_TEST_CASE);
+
+        mContext.startActivity(testIntent);
+
+        assertTrue("Broadcast was not received by the timeout",
+                testData.countDownLatch.await(10, TimeUnit.SECONDS));
+        assertEquals(
+                Process.INVALID_UID
+                        + " sentFromUid expected for app not opting-in to sharing identity",
+                Process.INVALID_UID, testData.fromUid);
+        assertNull("null sentFromPackage expected for app not opting-in to sharing identity",
+                testData.fromPackage);
+    }
+
+    @Test
+    @CddTest(requirement = "4/C-0-2")
+    public void
+    testShareIdentity_sendOrderedBroadcastToManifestReceiverIdentityNotShared_identityNotAvailable()
+            throws Exception {
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent testIntent = getTestIntent(testId,
+                SEND_ORDERED_BROADCAST_MANIFEST_RECEIVER_OPT_OUT_TEST_CASE);
+
+        mContext.startActivity(testIntent);
+
+        assertTrue("Broadcast was not received by the timeout",
+                testData.countDownLatch.await(10, TimeUnit.SECONDS));
+        assertEquals(
+                Process.INVALID_UID
+                        + " sentFromUid expected for app not opting-in to sharing identity",
+                Process.INVALID_UID, testData.fromUid);
+        assertNull("null sentFromPackage expected for app not opting-in to sharing identity",
+                testData.fromPackage);
+    }
+
+    private void assertPackageVisibility(TestData testData) throws Exception {
+        PackageManager packageManager = mContext.getPackageManager();
+        PackageInfo packageInfo = packageManager.getPackageInfo(TEST_PACKAGE,
+                PackageManager.PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES));
+        assertEquals(
+                "Expected fromUid not obtained after launching app opted-in to sharing "
+                        + "identity",
+                packageInfo.applicationInfo.uid,
+                testData.fromUid);
+        assertEquals(
+                "Expected fromPackage not obtained after launching app opted-in to sharing "
+                        + "identity",
+                TEST_PACKAGE, testData.fromPackage);
+        assertNotNull(
+                "Expected SigningInfo not available after launching app opted-in to sharing "
+                        + "identity",
+                packageInfo.signingInfo);
+        assertTrue(
+                "Expected rotated signer not reported after launching app opted-in to sharing "
+                        + "identity",
+                packageManager.hasSigningCertificate(testData.fromUid,
+                        HexEncoding.decode(TEST_PACKAGE_ROTATED_SIGNER_DIGEST),
+                        PackageManager.CERT_INPUT_SHA256));
+        assertTrue(
+                "Expected original signer not reported after launching app opted-in to sharing "
+                        + "identity",
+                packageManager.hasSigningCertificate(testData.fromPackage,
+                        HexEncoding.decode(TEST_PACKAGE_ORIGINAL_SIGNER_DIGEST),
+                        PackageManager.CERT_INPUT_SHA256));
+
+    }
 
     /**
      * Returns a test Intent to launch the {@link #TEST_COMPONENT} with the provided {@code testId}
@@ -310,10 +600,25 @@ public class ShareIdentityTest {
                 return;
             }
             TestData testData = sTestIdToData.remove(testId);
-            testData.launchedFromUid = getLaunchedFromUid();
-            testData.launchedFromPackage = getLaunchedFromPackage();
+            testData.fromUid = getLaunchedFromUid();
+            testData.fromPackage = getLaunchedFromPackage();
             testData.countDownLatch.countDown();
             finish();
+        }
+    }
+
+    public static class ShareIdentityTestReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int testId = intent.getIntExtra(TEST_ID_KEY, -1);
+            if (!sTestIdToData.containsKey(testId)) {
+                Log.e(TAG, "Unable to obtain test data from test ID " + testId);
+                return;
+            }
+            TestData testData = sTestIdToData.remove(testId);
+            testData.fromUid = getSentFromUid();
+            testData.fromPackage = getSentFromPackage();
+            testData.countDownLatch.countDown();
         }
     }
 
@@ -323,8 +628,8 @@ public class ShareIdentityTest {
      */
     private static class TestData {
         CountDownLatch countDownLatch;
-        int launchedFromUid;
-        String launchedFromPackage;
+        int fromUid;
+        String fromPackage;
 
         TestData(CountDownLatch countDownLatch) {
             this.countDownLatch = countDownLatch;

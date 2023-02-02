@@ -51,6 +51,11 @@ _VALIDATE_LIGHTING_REGIONS = {
                      1-_VALIDATE_LIGHTING_PATCH_H),
 }
 _VALIDATE_LIGHTING_THRESH = 0.05  # Determined empirically from scene[1:6] tests
+_CMD_NAME_STR = 'cmdName'
+_OBJ_VALUE_STR = 'objValue'
+_STR_VALUE = 'strValue'
+_TAG_STR = 'tag'
+_CAMERA_ID_STR = 'cameraId'
 
 
 class ItsSession(object):
@@ -303,13 +308,13 @@ class ItsSession(object):
      The Python dictionary object for the CameraProperties object.
     """
     cmd = {}
-    cmd['cmdName'] = 'getCameraProperties'
+    cmd[_CMD_NAME_STR] = 'getCameraProperties'
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'cameraProperties':
+    if data[_TAG_STR] != 'cameraProperties':
       raise error_util.CameraItsError('Invalid command response')
-    self.props = data['objValue']['cameraProperties']
-    return data['objValue']['cameraProperties']
+    self.props = data[_OBJ_VALUE_STR]['cameraProperties']
+    return data[_OBJ_VALUE_STR]['cameraProperties']
 
   def get_camera_properties_by_id(self, camera_id):
     """Get the camera properties object for device with camera_id.
@@ -322,13 +327,13 @@ class ItsSession(object):
      if no such device exists.
     """
     cmd = {}
-    cmd['cmdName'] = 'getCameraPropertiesById'
-    cmd['cameraId'] = camera_id
+    cmd[_CMD_NAME_STR] = 'getCameraPropertiesById'
+    cmd[_CAMERA_ID_STR] = camera_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'cameraProperties':
+    if data[_TAG_STR] != 'cameraProperties':
       raise error_util.CameraItsError('Invalid command response')
-    return data['objValue']['cameraProperties']
+    return data[_OBJ_VALUE_STR]['cameraProperties']
 
   def __read_response_from_socket(self):
     """Reads a line (newline-terminated) string serialization of JSON object.
@@ -379,17 +384,17 @@ class ItsSession(object):
             self._hidden_physical_id = camera_id_combos[0].sub_id
 
     logging.debug('Opening camera: %s', self._camera_id)
-    cmd = {'cmdName': 'open', 'cameraId': self._camera_id}
+    cmd = {_CMD_NAME_STR: 'open', _CAMERA_ID_STR: self._camera_id}
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'cameraOpened':
+    if data[_TAG_STR] != 'cameraOpened':
       raise error_util.CameraItsError('Invalid command response')
 
   def __close_camera(self):
-    cmd = {'cmdName': 'close'}
+    cmd = {_CMD_NAME_STR: 'close'}
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'cameraClosed':
+    if data[_TAG_STR] != 'cameraClosed':
       raise error_util.CameraItsError('Invalid command response')
 
   def zoom_ratio_within_range(self, zoom_ratio):
@@ -410,13 +415,13 @@ class ItsSession(object):
        A Python dictionary that returns keys and booleans for each sensor.
     """
     cmd = {}
-    cmd['cmdName'] = 'checkSensorExistence'
+    cmd[_CMD_NAME_STR] = 'checkSensorExistence'
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'sensorExistence':
+    if data[_TAG_STR] != 'sensorExistence':
       raise error_util.CameraItsError('Invalid response for command: %s' %
-                                      cmd['cmdName'])
-    return data['objValue']
+                                      cmd[_CMD_NAME_STR])
+    return data[_OBJ_VALUE_STR]
 
   def start_sensor_events(self):
     """Start collecting sensor events on the device.
@@ -427,12 +432,12 @@ class ItsSession(object):
        Nothing.
     """
     cmd = {}
-    cmd['cmdName'] = 'startSensorEvents'
+    cmd[_CMD_NAME_STR] = 'startSensorEvents'
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'sensorEventsStarted':
+    if data[_TAG_STR] != 'sensorEventsStarted':
       raise error_util.CameraItsError('Invalid response for command: %s' %
-                                      cmd['cmdName'])
+                                      cmd[_CMD_NAME_STR])
 
   def get_sensor_events(self):
     """Get a trace of all sensor events on the device.
@@ -456,16 +461,16 @@ class ItsSession(object):
             keys.
     """
     cmd = {}
-    cmd['cmdName'] = 'getSensorEvents'
+    cmd[_CMD_NAME_STR] = 'getSensorEvents'
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
     self.sock.settimeout(timeout)
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'sensorEvents':
+    if data[_TAG_STR] != 'sensorEvents':
       raise error_util.CameraItsError('Invalid response for command: %s ' %
-                                      cmd['cmdName'])
+                                      cmd[_CMD_NAME_STR])
     self.sock.settimeout(self.SOCK_TIMEOUT)
-    return data['objValue']
+    return data[_OBJ_VALUE_STR]
 
   def get_unavailable_physical_cameras(self, camera_id):
     """Get the unavailable physical cameras ids.
@@ -475,15 +480,15 @@ class ItsSession(object):
     Returns:
       List of all physical camera ids which are unavailable.
     """
-    cmd = {'cmdName': 'doGetUnavailablePhysicalCameras',
-           'cameraId': camera_id}
+    cmd = {_CMD_NAME_STR: 'doGetUnavailablePhysicalCameras',
+           _CAMERA_ID_STR: camera_id}
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
     self.sock.settimeout(timeout)
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'unavailablePhysicalCameras':
+    if data[_TAG_STR] != 'unavailablePhysicalCameras':
       raise error_util.CameraItsError('Invalid command response')
-    return data['objValue']
+    return data[_OBJ_VALUE_STR]
 
   def is_hlg10_recording_supported(self, profile_id):
     """Query whether the camera device supports HLG10 video recording.
@@ -495,15 +500,15 @@ class ItsSession(object):
       all other cases.
     """
     cmd = {}
-    cmd['cmdName'] = 'isHLG10Supported'
-    cmd['cameraId'] = self._camera_id
+    cmd[_CMD_NAME_STR] = 'isHLG10Supported'
+    cmd[_CAMERA_ID_STR] = self._camera_id
     cmd['profileId'] = profile_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'hlg10Response':
+    if data[_TAG_STR] != 'hlg10Response':
       raise error_util.CameraItsError('Failed to query HLG10 support')
-    return data['strValue'] == 'true'
+    return data[_STR_VALUE] == 'true'
 
   def do_basic_recording(self, profile_id, quality, duration,
                          video_stabilization_mode=0, hlg10_enabled=False,
@@ -546,7 +551,7 @@ class ItsSession(object):
         }
       }
     """
-    cmd = {'cmdName': 'doBasicRecording', 'cameraId': self._camera_id,
+    cmd = {_CMD_NAME_STR: 'doBasicRecording', _CAMERA_ID_STR: self._camera_id,
            'profileId': profile_id, 'quality': quality,
            'recordingDuration': duration,
            'videoStabilizationMode': video_stabilization_mode,
@@ -563,11 +568,11 @@ class ItsSession(object):
     timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
     self.sock.settimeout(timeout)
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'recordingResponse':
+    if data[_TAG_STR] != 'recordingResponse':
       raise error_util.CameraItsError(
-          f'Invalid response for command: {cmd["cmdName"]}')
+          f'Invalid response for command: {cmd[_CMD_NAME_STR]}')
     logging.debug('VideoRecordingObject: %s', data)
-    return data['objValue']
+    return data[_OBJ_VALUE_STR]
 
   def do_preview_recording(self, video_size, duration, stabilize,
                            zoom_ratio=None, ae_target_fps_min=None,
@@ -605,8 +610,8 @@ class ItsSession(object):
     """
 
     cmd = {
-        'cmdName': 'doPreviewRecording',
-        'cameraId': self._camera_id,
+        _CMD_NAME_STR: 'doPreviewRecording',
+        _CAMERA_ID_STR: self._camera_id,
         'videoSize': video_size,
         'recordingDuration': duration,
         'stabilize': stabilize
@@ -625,10 +630,10 @@ class ItsSession(object):
 
     data, _ = self.__read_response_from_socket()
     logging.debug('VideoRecordingObject: %s', str(data))
-    if data['tag'] != 'recordingResponse':
+    if data[_TAG_STR] != 'recordingResponse':
       raise error_util.CameraItsError(
-          f'Invalid response from command{cmd["cmdName"]}')
-    return data['objValue']
+          f'Invalid response from command{cmd[_CMD_NAME_STR]}')
+    return data[_OBJ_VALUE_STR]
 
   def get_supported_video_qualities(self, camera_id):
     """Get all supported video qualities for this camera device.
@@ -642,13 +647,13 @@ class ItsSession(object):
       List of all supported video qualities and corresponding profileIds.
     """
     cmd = {}
-    cmd['cmdName'] = 'getSupportedVideoQualities'
-    cmd['cameraId'] = camera_id
+    cmd[_CMD_NAME_STR] = 'getSupportedVideoQualities'
+    cmd[_CAMERA_ID_STR] = camera_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'supportedVideoQualities':
+    if data[_TAG_STR] != 'supportedVideoQualities':
       raise error_util.CameraItsError('Invalid command response')
-    return data['strValue'].split(';')[:-1]  # remove the last appended ';'
+    return data[_STR_VALUE].split(';')[:-1]  # remove the last appended ';'
 
   def get_supported_preview_sizes(self, camera_id):
     """Get all supported preview resolutions for this camera device.
@@ -661,18 +666,59 @@ class ItsSession(object):
       List of all supported video resolutions in ascending order.
     """
     cmd = {
-        'cmdName': 'getSupportedPreviewSizes',
+        _CMD_NAME_STR: 'getSupportedPreviewSizes',
+        _CAMERA_ID_STR: camera_id
+    }
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
+    data, _ = self.__read_response_from_socket()
+    if data[_TAG_STR] != 'supportedPreviewSizes':
+      raise error_util.CameraItsError('Invalid command response')
+    if not data[_STR_VALUE]:
+      raise error_util.CameraItsError('No supported preview sizes')
+    return data[_STR_VALUE].split(';')
+
+  def get_display_size(self):
+    """ Get the display size of the screen.
+
+    Returns:
+      The size of the display resolution in pixels.
+    """
+    cmd = {
+        'cmdName': 'getDisplaySize'
+    }
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
+    data, _ = self.__read_response_from_socket()
+    if data['tag'] != 'displaySize':
+      raise error_util.CameraItsError('Invalid command response')
+    if not data['strValue']:
+      raise error_util.CameraItsError('No display size')
+    return data['strValue'].split('x')
+
+  def get_max_camcorder_profile_size(self, camera_id):
+    """ Get the maximum camcorder profile size for this camera device.
+
+    Args:
+      camera_id: int; device id
+    Returns:
+      The maximum size among all camcorder profiles supported by this camera.
+    """
+    cmd = {
+        'cmdName': 'getMaxCamcorderProfileSize',
         'cameraId': camera_id
     }
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
     self.sock.settimeout(timeout)
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'supportedPreviewSizes':
+    if data['tag'] != 'maxCamcorderProfileSize':
       raise error_util.CameraItsError('Invalid command response')
     if not data['strValue']:
-      raise error_util.CameraItsError('No supported preview sizes')
-    return data['strValue'].split(';')
+      raise error_util.CameraItsError('No max camcorder profile size')
+    return data['strValue'].split('x')
 
   def do_simple_capture(self, cmd, out_surface):
     """Issue single capture request via command and read back image/metadata.
@@ -756,19 +802,20 @@ class ItsSession(object):
     capture_results_returned = False
     while (nbufs < ncap) or (not capture_results_returned):
       json_obj, buf = self.__read_response_from_socket()
-      if json_obj['tag'] in ItsSession.IMAGE_FORMAT_LIST_1 and buf is not None:
-        fmt = json_obj['tag'][:-5]
+      if (json_obj[_TAG_STR] in ItsSession.IMAGE_FORMAT_LIST_1 and
+          buf is not None):
+        fmt = json_obj[_TAG_STR][:-5]
         bufs[self._camera_id][fmt].append(buf)
         nbufs += 1
-      elif json_obj['tag'] == 'yuvImage':
+      elif json_obj[_TAG_STR] == 'yuvImage':
         buf_size = numpy.product(buf.shape)
         yuv_bufs[self._camera_id][buf_size].append(buf)
         nbufs += 1
-      elif json_obj['tag'] == 'captureResults':
+      elif json_obj[_TAG_STR] == 'captureResults':
         capture_results_returned = True
-        md = json_obj['objValue']['captureResult']
-        physical_md = json_obj['objValue']['physicalResults']
-        outputs = json_obj['objValue']['outputs']
+        md = json_obj[_OBJ_VALUE_STR]['captureResult']
+        physical_md = json_obj[_OBJ_VALUE_STR]['physicalResults']
+        outputs = json_obj[_OBJ_VALUE_STR]['outputs']
         returned_fmt = outputs[0]['format']
         if fmt != returned_fmt:
           raise AssertionError(
@@ -784,19 +831,19 @@ class ItsSession(object):
               f'Requested: {requested_width}x{requested_height}, '
               f'Received: {width}x{height}')
       else:
-        tag_string = unicodedata.normalize('NFKD', json_obj['tag']).encode(
+        tag_string = unicodedata.normalize('NFKD', json_obj[_TAG_STR]).encode(
             'ascii', 'ignore')
         for x in ItsSession.IMAGE_FORMAT_LIST_2:
           x = bytes(x, encoding='utf-8')
           if tag_string.startswith(x):
             if x == b'yuvImage':
-              physical_id = json_obj['tag'][len(x):]
+              physical_id = json_obj[_TAG_STR][len(x):]
               if physical_id in cam_ids:
                 buf_size = numpy.product(buf.shape)
                 yuv_bufs[physical_id][buf_size].append(buf)
                 nbufs += 1
             else:
-              physical_id = json_obj['tag'][len(x):]
+              physical_id = json_obj[_TAG_STR][len(x):]
               if physical_id in cam_ids:
                 fmt = x[:-5].decode('UTF-8')
                 bufs[physical_id][fmt].append(buf)
@@ -854,7 +901,7 @@ class ItsSession(object):
       * metadata: the capture result object
     """
     cmd = {}
-    cmd['cmdName'] = 'doCaptureWithFlash'
+    cmd[_CMD_NAME_STR] = 'doCaptureWithFlash'
     cmd['previewRequestStart'] = [preview_request_start]
     cmd['previewRequestIdle'] = [preview_request_idle]
     cmd['stillCaptureRequest'] = [still_capture_req]
@@ -887,7 +934,7 @@ class ItsSession(object):
       * metadata: the capture result object (Python dictionary).
     """
     cmd = {}
-    cmd['cmdName'] = 'doCaptureWithExtensions'
+    cmd[_CMD_NAME_STR] = 'doCaptureWithExtensions'
     cmd['repeatRequests'] = []
     cmd['captureRequests'] = [cap_request]
     cmd['extension'] = extension
@@ -1053,10 +1100,10 @@ class ItsSession(object):
       if repeat_request is not None:
         raise error_util.CameraItsError(
             'repeating request + reprocessing is not supported')
-      cmd['cmdName'] = 'doReprocessCapture'
+      cmd[_CMD_NAME_STR] = 'doReprocessCapture'
       cmd['reprocessFormat'] = reprocess_format
     else:
-      cmd['cmdName'] = 'doCapture'
+      cmd[_CMD_NAME_STR] = 'doCapture'
 
     if repeat_request is None:
       cmd['repeatRequests'] = []
@@ -1204,34 +1251,35 @@ class ItsSession(object):
     heights = None
     while nbufs < ncap * nsurf or len(mds) < ncap:
       json_obj, buf = self.__read_response_from_socket()
-      if json_obj['tag'] in ItsSession.IMAGE_FORMAT_LIST_1 and buf is not None:
-        fmt = json_obj['tag'][:-5]
+      if (json_obj[_TAG_STR] in ItsSession.IMAGE_FORMAT_LIST_1 and
+          buf is not None):
+        fmt = json_obj[_TAG_STR][:-5]
         bufs[self._camera_id][fmt].append(buf)
         nbufs += 1
-      elif json_obj['tag'] == 'yuvImage':
+      elif json_obj[_TAG_STR] == 'yuvImage':
         buf_size = numpy.product(buf.shape)
         yuv_bufs[self._camera_id][buf_size].append(buf)
         nbufs += 1
-      elif json_obj['tag'] == 'captureResults':
-        mds.append(json_obj['objValue']['captureResult'])
-        physical_mds.append(json_obj['objValue']['physicalResults'])
-        outputs = json_obj['objValue']['outputs']
+      elif json_obj[_TAG_STR] == 'captureResults':
+        mds.append(json_obj[_OBJ_VALUE_STR]['captureResult'])
+        physical_mds.append(json_obj[_OBJ_VALUE_STR]['physicalResults'])
+        outputs = json_obj[_OBJ_VALUE_STR]['outputs']
         widths = [out['width'] for out in outputs]
         heights = [out['height'] for out in outputs]
       else:
-        tag_string = unicodedata.normalize('NFKD', json_obj['tag']).encode(
+        tag_string = unicodedata.normalize('NFKD', json_obj[_TAG_STR]).encode(
             'ascii', 'ignore')
         for x in ItsSession.IMAGE_FORMAT_LIST_2:
           x = bytes(x, encoding='utf-8')
           if tag_string.startswith(x):
             if x == b'yuvImage':
-              physical_id = json_obj['tag'][len(x):]
+              physical_id = json_obj[_TAG_STR][len(x):]
               if physical_id in cam_ids:
                 buf_size = numpy.product(buf.shape)
                 yuv_bufs[physical_id][buf_size].append(buf)
                 nbufs += 1
             else:
-              physical_id = json_obj['tag'][len(x):]
+              physical_id = json_obj[_TAG_STR][len(x):]
               if physical_id in cam_ids:
                 fmt = x[:-5].decode('UTF-8')
                 bufs[physical_id][fmt].append(buf)
@@ -1287,13 +1335,13 @@ class ItsSession(object):
       Nothing.
     """
     cmd = {}
-    cmd['cmdName'] = 'doVibrate'
+    cmd[_CMD_NAME_STR] = 'doVibrate'
     cmd['pattern'] = pattern
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'vibrationStarted':
+    if data[_TAG_STR] != 'vibrationStarted':
       raise error_util.CameraItsError('Invalid response for command: %s' %
-                                      cmd['cmdName'])
+                                      cmd[_CMD_NAME_STR])
 
   def set_audio_restriction(self, mode):
     """Set the audio restriction mode for this camera device.
@@ -1305,13 +1353,13 @@ class ItsSession(object):
      Nothing.
     """
     cmd = {}
-    cmd['cmdName'] = 'setAudioRestriction'
+    cmd[_CMD_NAME_STR] = 'setAudioRestriction'
     cmd['mode'] = mode
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'audioRestrictionSet':
+    if data[_TAG_STR] != 'audioRestrictionSet':
       raise error_util.CameraItsError('Invalid response for command: %s' %
-                                      cmd['cmdName'])
+                                      cmd[_CMD_NAME_STR])
 
   # pylint: disable=dangerous-default-value
   def do_3a(self,
@@ -1370,7 +1418,7 @@ class ItsSession(object):
     """
     logging.debug('Running vendor 3A on device')
     cmd = {}
-    cmd['cmdName'] = 'do3A'
+    cmd[_CMD_NAME_STR] = 'do3A'
     cmd['regions'] = {
         'ae': sum(regions_ae, []),
         'awb': sum(regions_awb, []),
@@ -1403,19 +1451,19 @@ class ItsSession(object):
     converged = False
     while True:
       data, _ = self.__read_response_from_socket()
-      vals = data['strValue'].split()
-      if data['tag'] == 'aeResult':
+      vals = data[_STR_VALUE].split()
+      if data[_TAG_STR] == 'aeResult':
         if do_ae:
           ae_sens, ae_exp = [int(i) for i in vals]
-      elif data['tag'] == 'afResult':
+      elif data[_TAG_STR] == 'afResult':
         if do_af:
           af_dist = float(vals[0])
-      elif data['tag'] == 'awbResult':
+      elif data[_TAG_STR] == 'awbResult':
         awb_gains = [float(f) for f in vals[:4]]
         awb_transform = [float(f) for f in vals[4:]]
-      elif data['tag'] == '3aConverged':
+      elif data[_TAG_STR] == '3aConverged':
         converged = True
-      elif data['tag'] == '3aDone':
+      elif data[_TAG_STR] == '3aDone':
         break
       else:
         raise error_util.CameraItsError('Invalid command response')
@@ -1511,7 +1559,7 @@ class ItsSession(object):
       Boolean
     """
     cmd = {}
-    cmd['cmdName'] = 'isStreamCombinationSupported'
+    cmd[_CMD_NAME_STR] = 'isStreamCombinationSupported'
 
     if not isinstance(out_surfaces, list):
       cmd['outputSurfaces'] = [out_surfaces]
@@ -1524,10 +1572,10 @@ class ItsSession(object):
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'streamCombinationSupport':
+    if data[_TAG_STR] != 'streamCombinationSupport':
       raise error_util.CameraItsError('Failed to query stream combination')
 
-    return data['strValue'] == 'supportedCombination'
+    return data[_STR_VALUE] == 'supportedCombination'
 
   def is_camera_privacy_mode_supported(self):
     """Query whether the mobile device supports camera privacy mode.
@@ -1539,14 +1587,14 @@ class ItsSession(object):
       Boolean
     """
     cmd = {}
-    cmd['cmdName'] = 'isCameraPrivacyModeSupported'
+    cmd[_CMD_NAME_STR] = 'isCameraPrivacyModeSupported'
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'cameraPrivacyModeSupport':
+    if data[_TAG_STR] != 'cameraPrivacyModeSupport':
       raise error_util.CameraItsError('Failed to query camera privacy mode'
                                       ' support')
-    return data['strValue'] == 'true'
+    return data[_STR_VALUE] == 'true'
 
   def is_primary_camera(self):
     """Query whether the camera device is a primary rear/front camera.
@@ -1558,14 +1606,14 @@ class ItsSession(object):
       Boolean
     """
     cmd = {}
-    cmd['cmdName'] = 'isPrimaryCamera'
-    cmd['cameraId'] = self._camera_id
+    cmd[_CMD_NAME_STR] = 'isPrimaryCamera'
+    cmd[_CAMERA_ID_STR] = self._camera_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'primaryCamera':
+    if data[_TAG_STR] != 'primaryCamera':
       raise error_util.CameraItsError('Failed to query primary camera')
-    return data['strValue'] == 'true'
+    return data[_STR_VALUE] == 'true'
 
   def is_performance_class(self):
     """Query whether the mobile device is an R or S performance class device.
@@ -1574,13 +1622,13 @@ class ItsSession(object):
       Boolean
     """
     cmd = {}
-    cmd['cmdName'] = 'isPerformanceClass'
+    cmd[_CMD_NAME_STR] = 'isPerformanceClass'
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'performanceClass':
+    if data[_TAG_STR] != 'performanceClass':
       raise error_util.CameraItsError('Failed to query performance class')
-    return data['strValue'] == 'true'
+    return data[_STR_VALUE] == 'true'
 
   def measure_camera_launch_ms(self):
     """Measure camera launch latency in millisecond, from open to first frame.
@@ -1589,8 +1637,8 @@ class ItsSession(object):
       Camera launch latency from camera open to receipt of first frame
     """
     cmd = {}
-    cmd['cmdName'] = 'measureCameraLaunchMs'
-    cmd['cameraId'] = self._camera_id
+    cmd[_CMD_NAME_STR] = 'measureCameraLaunchMs'
+    cmd[_CAMERA_ID_STR] = self._camera_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     timeout = self.SOCK_TIMEOUT_FOR_PERF_MEASURE
@@ -1598,9 +1646,9 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     self.sock.settimeout(self.SOCK_TIMEOUT)
 
-    if data['tag'] != 'cameraLaunchMs':
+    if data[_TAG_STR] != 'cameraLaunchMs':
       raise error_util.CameraItsError('Failed to measure camera launch latency')
-    return float(data['strValue'])
+    return float(data[_STR_VALUE])
 
   def measure_camera_1080p_jpeg_capture_ms(self):
     """Measure camera 1080P jpeg capture latency in milliseconds.
@@ -1609,8 +1657,8 @@ class ItsSession(object):
       Camera jpeg capture latency in milliseconds
     """
     cmd = {}
-    cmd['cmdName'] = 'measureCamera1080pJpegCaptureMs'
-    cmd['cameraId'] = self._camera_id
+    cmd[_CMD_NAME_STR] = 'measureCamera1080pJpegCaptureMs'
+    cmd[_CAMERA_ID_STR] = self._camera_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     timeout = self.SOCK_TIMEOUT_FOR_PERF_MEASURE
@@ -1618,10 +1666,10 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     self.sock.settimeout(self.SOCK_TIMEOUT)
 
-    if data['tag'] != 'camera1080pJpegCaptureMs':
+    if data[_TAG_STR] != 'camera1080pJpegCaptureMs':
       raise error_util.CameraItsError(
           'Failed to measure camera 1080p jpeg capture latency')
-    return float(data['strValue'])
+    return float(data[_STR_VALUE])
 
 
 def parse_camera_ids(ids):

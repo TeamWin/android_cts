@@ -81,6 +81,8 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+        if (!mShouldTestTelecom) return;
+
         tearDownConnectionService(TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
     }
 

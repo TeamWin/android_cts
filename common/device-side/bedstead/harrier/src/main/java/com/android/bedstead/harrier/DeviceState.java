@@ -40,7 +40,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
-import android.os.UserManager;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -91,6 +90,7 @@ import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsers;
+import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsersOnDefaultDisplay;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
@@ -98,6 +98,7 @@ import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
+import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsersOnDefaultDisplay;
 import com.android.bedstead.harrier.annotations.TestTag;
 import com.android.bedstead.harrier.annotations.UsesAnnotationExecutor;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
@@ -670,19 +671,34 @@ public final class DeviceState extends HarrierRule {
             }
 
             if (annotation instanceof RequireVisibleBackgroundUsers) {
-                RequireVisibleBackgroundUsers requireVisibleBgUsersAnnotation =
+                RequireVisibleBackgroundUsers castedAnnotation =
                         (RequireVisibleBackgroundUsers) annotation;
-                requireVisibleBackgroundUsersSupported(requireVisibleBgUsersAnnotation.reason(),
-                        requireVisibleBgUsersAnnotation.failureMode());
+                requireVisibleBackgroundUsersSupported(castedAnnotation.reason(),
+                        castedAnnotation.failureMode());
                 continue;
             }
 
             if (annotation instanceof RequireNotVisibleBackgroundUsers) {
-                RequireNotVisibleBackgroundUsers requireNotVisibleBgUsersAnnotation =
+                RequireNotVisibleBackgroundUsers castedAnnotation =
                         (RequireNotVisibleBackgroundUsers) annotation;
-                requireVisibleBackgroundUsersNotSupported(
-                        requireNotVisibleBgUsersAnnotation.reason(),
-                        requireNotVisibleBgUsersAnnotation.failureMode());
+                requireVisibleBackgroundUsersNotSupported(castedAnnotation.reason(),
+                        castedAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequireVisibleBackgroundUsersOnDefaultDisplay) {
+                RequireVisibleBackgroundUsersOnDefaultDisplay castedAnnotation =
+                        (RequireVisibleBackgroundUsersOnDefaultDisplay) annotation;
+                requireVisibleBackgroundUsersOnDefaultDisplaySupported(castedAnnotation.reason(),
+                        castedAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequireNotVisibleBackgroundUsersOnDefaultDisplay) {
+                RequireNotVisibleBackgroundUsersOnDefaultDisplay castedAnnotation =
+                        (RequireNotVisibleBackgroundUsersOnDefaultDisplay) annotation;
+                requireVisibleBackgroundUsersOnDefaultDisplayNotSupported(castedAnnotation.reason(),
+                        castedAnnotation.failureMode());
                 continue;
             }
 
@@ -3111,8 +3127,7 @@ public final class DeviceState extends HarrierRule {
     }
 
     private void requireVisibleBackgroundUsersSupported(String reason, FailureMode failureMode) {
-        if (!TestApis.context().instrumentedContext()
-                .getSystemService(UserManager.class).isVisibleBackgroundUsersSupported()) {
+        if (!TestApis.users().isVisibleBackgroundUsersSupported()) {
             String message = "Device does not support visible background users, but test requires "
                     + "it. Reason: " + reason;
             failOrSkip(message, failureMode);
@@ -3120,10 +3135,27 @@ public final class DeviceState extends HarrierRule {
     }
 
     private void requireVisibleBackgroundUsersNotSupported(String reason, FailureMode failureMode) {
-        if (TestApis.context().instrumentedContext()
-                .getSystemService(UserManager.class).isVisibleBackgroundUsersSupported()) {
+        if (TestApis.users().isVisibleBackgroundUsersSupported()) {
             String message = "Device supports visible background users, but test requires that it "
                     + "doesn't. Reason: " + reason;
+            failOrSkip(message, failureMode);
+        }
+    }
+
+    private void requireVisibleBackgroundUsersOnDefaultDisplaySupported(String reason,
+            FailureMode failureMode) {
+        if (!TestApis.users().isVisibleBackgroundUsersOnDefaultDisplaySupported()) {
+            String message = "Device does not support visible background users on default display, "
+                    + "but test requires it. Reason: " + reason;
+            failOrSkip(message, failureMode);
+        }
+    }
+
+    private void requireVisibleBackgroundUsersOnDefaultDisplayNotSupported(String reason,
+            FailureMode failureMode) {
+        if (TestApis.users().isVisibleBackgroundUsersOnDefaultDisplaySupported()) {
+            String message = "Device supports visible background users on default display, but test"
+                    + " requires that it doesn't. Reason: " + reason;
             failOrSkip(message, failureMode);
         }
     }

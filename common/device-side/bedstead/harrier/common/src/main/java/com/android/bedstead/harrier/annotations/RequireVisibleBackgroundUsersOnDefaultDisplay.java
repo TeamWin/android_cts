@@ -25,14 +25,14 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation to indicate that a test should run on devices that support
- * {@link android.os.UserManager#isVisibleBackgroundUsersSupported() starting visible background
- * users}.
+ * {@link android.os.UserManager#isVisibleBackgroundUsersOnDefaultDisplaySupported() starting
+ * visible background users on default display}.
  *
  * <p>This can be enforced by using {@code Devicestate}.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequireVisibleBackgroundUsers {
+public @interface RequireVisibleBackgroundUsersOnDefaultDisplay {
     String reason();
     FailureMode failureMode() default FailureMode.SKIP;
 

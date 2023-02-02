@@ -16,7 +16,6 @@
 
 package android.multiuser.cts;
 
-
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.multiuser.cts.PermissionHelper.adoptShellPermissionIdentity;
 import static android.multiuser.cts.TestingUtils.sContext;
@@ -70,6 +69,7 @@ public abstract class UserVisibilityTestCase {
     public final LogShellCommandRule mLogShellCommandRule = new LogShellCommandRule();
 
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
+
     protected UserManager mUserManager;
 
     @Before
@@ -81,14 +81,36 @@ public abstract class UserVisibilityTestCase {
     }
 
     /**
-     * Creates and starts a new user in background in on secondary display and run a test on it.
+     * Creates and starts a new user visible in background on secondary display, and run a test on
+     * it.
      *
      * @param test to be run
      */
-    protected void runTestOnSecondaryDisplay(BackgroundUserOnSecondaryDisplayTester test) {
+    protected void runTestOnSecondaryDisplay(VisibleBackgroundUserOnSecondaryDisplayTester test) {
+        int displayId = getSecondaryDisplayIdForStartingVisibleBackgroundUser();
+        runTestOnDisplay(displayId, test);
+    }
+
+    /**
+     * Creates and starts a new user visible in background in the
+     * {@link android.view.Display#DEFAULT_DISPLAY default display}, and run a test on it.
+     *
+     * @param test to be run
+     */
+    protected void runTestOnDefaultDisplay(VisibleBackgroundUserOnDefaultDisplayTester test) {
+        runTestOnDisplay(DEFAULT_DISPLAY, (user, displayId, instance) -> test.run(user, instance));
+    }
+
+    /**
+     * Creates and starts a new user visible in background in the given display, and run a test on
+     * it.
+     *
+     * @param test to be run
+     */
+    protected void runTestOnDisplay(int displayId,
+            VisibleBackgroundUserOnSecondaryDisplayTester test) {
         Log.d(TAG, "Creating bg user");
         try (UserReference user = TestApis.users().createUser().name("childless_user").create()) {
-            int displayId = getSecondaryDisplayIdForStartingVisibleBackgroundUser();
             startVisibleBackgroundUser(user, displayId);
             try {
                 TestApp testApp = sDeviceState.testApps().any();
@@ -108,7 +130,7 @@ public abstract class UserVisibilityTestCase {
      * @param test to be run
      */
     protected void runTestOnSecondaryDisplay(
-            BackgroundUserAndProfileOnSecondaryDisplayTester tester) {
+            VisibleBackgroundUserAndProfileOnSecondaryDisplayTester tester) {
         Log.d(TAG, "Creating bg user and profile");
         try (UserReference user = TestApis.users().createUser().name("parent_user").create()) {
             Log.d(TAG, "user: id=" + user.id());
@@ -137,13 +159,17 @@ public abstract class UserVisibilityTestCase {
         } // new user
     }
 
-    interface BackgroundUserOnSecondaryDisplayTester {
+    interface VisibleBackgroundUserOnSecondaryDisplayTester {
         void run(UserReference user, int displayId, TestAppInstance instance);
     }
 
-    interface BackgroundUserAndProfileOnSecondaryDisplayTester {
+    interface VisibleBackgroundUserAndProfileOnSecondaryDisplayTester {
         void run(UserReference user, UserReference profile, int displayId,
                 TestAppInstance instance);
+    }
+
+    interface VisibleBackgroundUserOnDefaultDisplayTester {
+        void run(UserReference user, TestAppInstance instance);
     }
 
     // TODO(b/240736142): methods below are a temporary workaround until proper annotation or test

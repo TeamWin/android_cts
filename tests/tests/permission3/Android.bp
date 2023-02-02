@@ -35,6 +35,7 @@ android_test {
         "bluetooth-test-util-lib",
         "modules-utils-build_system",
         "androidx.test.core",
+        "permission-test-util-lib",
     ],
     data: [
         ":CtsPermissionPolicyApp25",

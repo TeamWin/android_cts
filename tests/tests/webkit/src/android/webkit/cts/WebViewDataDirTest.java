@@ -25,10 +25,9 @@ import android.content.Context;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 
-import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 
@@ -51,14 +50,12 @@ public class WebViewDataDirTest {
     private static final String COOKIE_VALUE = "foo=main";
     private static final String SET_COOKIE_PARAMS = "; Max-Age=86400";
 
-    private ActivityScenario mScenario;
     private WebViewCtsActivity mActivity;
 
     @Before
     public void setUp() throws Exception {
         Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-        mScenario = mActivityScenarioRule.getScenario();
-        mScenario.onActivity(activity -> {
+        mActivityScenarioRule.getScenario().onActivity(activity -> {
             mActivity = (WebViewCtsActivity) activity;
         });
     }

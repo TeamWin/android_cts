@@ -33,7 +33,7 @@ import org.junit.runner.RunWith;
 
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
-public class WebViewSslTest {
+public class SdkSandboxWebViewSslTest {
     @ClassRule
     public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
             new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");

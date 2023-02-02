@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,28 @@ package android.permission.cts;
 import android.service.notification.NotificationListenerService;
 import android.util.Log;
 
-public class NotificationListener extends NotificationListenerService {
-    private static final String LOG_TAG = NotificationListener.class.getSimpleName();
+/**
+ * Implementation of {@link NotificationListenerService} for CTS tests.
+ *
+ * <p>In order to use this service in a test suite, ensure this service is declared in the test
+ * suite's AndroidManifest.xml as follows:
+ *
+ * <pre>{@code
+ * <service android:name="android.permission.cts.CtsNotificationListenerService"
+ *      android:exported="true"
+ *      android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+ *      <intent-filter>
+ *          <action android:name="android.service.notification.NotificationListenerService"/>
+ *      </intent-filter>
+ * </service>
+ * }</pre>
+ */
+public class CtsNotificationListenerService extends NotificationListenerService {
+    private static final String LOG_TAG = CtsNotificationListenerService.class.getSimpleName();
 
     private static final Object sLock = new Object();
 
-    private static NotificationListener sService;
+    private static CtsNotificationListenerService sService;
 
     @Override
     public void onListenerConnected() {

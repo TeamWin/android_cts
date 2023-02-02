@@ -17,6 +17,7 @@
 package android.voicerecognition.cts;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -32,6 +33,7 @@ import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
+import android.safetycenter.SafetyCenterManager;
 import android.server.wm.WindowManagerStateHelper;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
@@ -56,29 +58,31 @@ import java.util.stream.Collectors;
 @RunWith(AndroidJUnit4.class)
 public final class RecognitionServiceMicIndicatorTest {
 
-    private final String TAG = "RecognitionServiceMicIndicatorTest";
+    private static final String TAG = "RecognitionServiceMicIndicatorTest";
     // same as Settings.Secure.VOICE_RECOGNITION_SERVICE
-    private final String VOICE_RECOGNITION_SERVICE = "voice_recognition_service";
-    private final String INDICATORS_FLAG = "camera_mic_icons_enabled";
+    private static final String VOICE_RECOGNITION_SERVICE = "voice_recognition_service";
+    private static final String INDICATORS_FLAG = "camera_mic_icons_enabled";
     // Same as PrivacyItemController DEFAULT_MIC_CAMERA
-    private final boolean DEFAULT_MIC_CAMERA = true;
+    private static final boolean DEFAULT_MIC_CAMERA = true;
     // Th notification privacy indicator
-    private final String PRIVACY_CHIP_PACKAGE_NAME = "com.android.systemui";
-    private final String PRIVACY_CHIP_ID = "privacy_chip";
-    private final String CAR_MIC_PRIVACY_CHIP_ID = "mic_privacy_chip";
-    private final String PRIVACY_DIALOG_PACKAGE_NAME = "com.android.systemui";
-    private final String PRIVACY_DIALOG_CONTENT_ID = "text";
-    private final String CAR_PRIVACY_DIALOG_CONTENT_ID = "qc_title";
-    private final String CAR_PRIVACY_DIALOG_APP_LABEL_CONTENT_ID = "qc_title";
-    private final String TV_MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator";
+    private static final String PRIVACY_CHIP_PACKAGE_NAME = "com.android.systemui";
+    private static final String PRIVACY_CHIP_ID = "privacy_chip";
+    private static final String CAR_MIC_PRIVACY_CHIP_ID = "mic_privacy_chip";
+    private static final String PRIVACY_DIALOG_PACKAGE_NAME = "com.android.systemui";
+    private static final String PRIVACY_DIALOG_CONTENT_ID = "text";
+    private static final String CAR_PRIVACY_DIALOG_CONTENT_ID = "qc_title";
+    private static final String CAR_PRIVACY_DIALOG_APP_LABEL_CONTENT_ID = "qc_title";
+    private static final String TV_MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator";
+    private static final String SC_PRIVACY_DIALOG_PACKAGE_NAME = "com.android.permissioncontroller";
+    private static final String SC_PRIVACY_DIALOG_CONTENT_ID = "indicator_label";
     // The cts app label
-    private final String APP_LABEL = "CtsVoiceRecognitionTestCases";
+    private static final String APP_LABEL = "CtsVoiceRecognitionTestCases";
     // A simple test voice recognition service implementation
-    private final String CTS_VOICE_RECOGNITION_SERVICE =
+    private static final String CTS_VOICE_RECOGNITION_SERVICE =
             "android.recognitionservice.service/android.recognitionservice.service"
                     + ".CtsVoiceRecognitionService";
-    private final long INDICATOR_DISMISS_TIMEOUT = 5000L;
-    private final long UI_WAIT_TIMEOUT = 1000L;
+    private static final long INDICATOR_DISMISS_TIMEOUT = 5000L;
+    private static final long UI_WAIT_TIMEOUT = 1000L;
 
     protected final Context mContext = InstrumentationRegistry.getTargetContext();
     private final String mOriginalVoiceRecognizer = Settings.Secure.getString(
@@ -87,6 +91,7 @@ public final class RecognitionServiceMicIndicatorTest {
     private SpeechRecognitionActivity mActivity;
     private String mCameraLabel;
     private String mOriginalIndicatorsState;
+    private boolean mSafetyCenterEnabled;
 
     @Rule
     public ActivityTestRule<SpeechRecognitionActivity> mActivityTestRule =
@@ -118,6 +123,13 @@ public final class RecognitionServiceMicIndicatorTest {
 
         // TODO(http://b/259941077): Remove once privacy indicators are implemented.
         assumeFalse("Privacy indicators not supported", isWatch());
+
+        try {
+            mSafetyCenterEnabled = callWithShellPermissionIdentity(
+                () -> mContext.getSystemService(SafetyCenterManager.class).isSafetyCenterEnabled());
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
 
         setIndicatorsEnabledState(Boolean.toString(true));
         // Wait for any privacy indicator to disappear to avoid the test becoming flaky.
@@ -233,9 +245,18 @@ public final class RecognitionServiceMicIndicatorTest {
         SystemClock.sleep(UI_WAIT_TIMEOUT);
 
         // Make sure dialog is shown
-        String contentId = isCar() ? CAR_PRIVACY_DIALOG_CONTENT_ID : PRIVACY_DIALOG_CONTENT_ID;
+        String dialogPackageName =
+                mSafetyCenterEnabled ? SC_PRIVACY_DIALOG_PACKAGE_NAME : PRIVACY_DIALOG_PACKAGE_NAME;
+        String contentId;
+        if (isCar()) {
+            contentId = CAR_PRIVACY_DIALOG_CONTENT_ID;
+        } else if (mSafetyCenterEnabled) {
+            contentId = SC_PRIVACY_DIALOG_CONTENT_ID;
+        } else {
+            contentId = PRIVACY_DIALOG_CONTENT_ID;
+        }
         List<UiObject2> recognitionCallingAppLabels = mUiDevice.findObjects(
-                By.res(PRIVACY_DIALOG_PACKAGE_NAME, contentId));
+                By.res(dialogPackageName, contentId));
         assertWithMessage("No permission dialog shown after clicking  privacy chip.").that(
                 recognitionCallingAppLabels).isNotEmpty();
 
@@ -244,7 +265,7 @@ public final class RecognitionServiceMicIndicatorTest {
         if (isCar()) {
             dialogDescription =
                     recognitionCallingAppLabels.get(0)
-                            .findObjects(By.res(PRIVACY_DIALOG_PACKAGE_NAME,
+                            .findObjects(By.res(dialogPackageName,
                                     CAR_PRIVACY_DIALOG_APP_LABEL_CONTENT_ID))
                             .stream()
                             .map(UiObject2::getText)

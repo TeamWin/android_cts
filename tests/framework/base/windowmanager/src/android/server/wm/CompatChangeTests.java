@@ -37,15 +37,20 @@ import static org.junit.Assume.assumeFalse;
 import android.app.Activity;
 import android.compat.testing.PlatformCompatChangeRule;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
 import android.provider.DeviceConfig.Properties;
 import android.server.wm.WindowManagerTestBase.FocusableActivity;
 import android.util.Size;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
@@ -307,6 +312,81 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         setNeverConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + ":::");
         runSizeCompatModeSandboxTest(activity, /* isSandboxed= */ true);
+    }
+
+    /** =================
+     * SANDBOX_VIEW_BOUNDS_APIS test cases
+     * @see #testSandbox_viewApiForLetterboxedActivity
+     * @see #testNoSandbox_viewApiForLetterboxedActivity
+     * =================
+     * Validates that an activity in letterbox mode has sandboxing applied to the
+     * view bounds when OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS is set.
+     * Without this flag
+     * {@link android.view.View#getLocationOnScreen},
+     * {@link android.view.View#getWindowDisplayFrame}
+     * {@link android.view.View#getBoundsOnScreen}
+     * and {@link android.view.View#getWindowVisibleDisplayFrame}
+     * return location or display frame offset by the window location on the screen:
+     * {@link android.view.View}.AttachInfo.mWindowLeft
+     * {@link android.view.View}.AttachInfo.mWindowTop
+     */
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS})
+    public void testSandbox_viewApiForLetterboxedActivity() {
+        final View view = getViewFromLetterboxedActivityForTestingViewApiSandboxing();
+
+        final Rect visibleDisplayFrame = new Rect();
+        view.getWindowVisibleDisplayFrame(visibleDisplayFrame);
+        assertThat(visibleDisplayFrame.left).isEqualTo(0);
+
+        final Rect displayFrame = new Rect();
+        view.getWindowDisplayFrame(displayFrame);
+        assertThat(displayFrame.left).isEqualTo(0);
+
+        final Rect boundsOnScreen = new Rect();
+        view.getBoundsOnScreen(boundsOnScreen, true);
+        assertThat(boundsOnScreen.left).isEqualTo(0);
+
+        final int[] location = new int[]{ 0, 0 };
+        view.getLocationOnScreen(location);
+        assertThat(location[0]).isEqualTo(0);
+    }
+
+    @Test
+    public void testNoSandbox_viewApiForLetterboxedActivity() {
+        final View view = getViewFromLetterboxedActivityForTestingViewApiSandboxing();
+
+        final Rect visibleDisplayFrame = new Rect();
+        view.getWindowVisibleDisplayFrame(visibleDisplayFrame);
+        assertThat(visibleDisplayFrame.left).isGreaterThan(0);
+
+        final Rect displayFrame = new Rect();
+        view.getWindowDisplayFrame(displayFrame);
+        assertThat(displayFrame.left).isGreaterThan(0);
+
+        final Rect boundsOnScreen = new Rect();
+        view.getBoundsOnScreen(boundsOnScreen, true);
+        assertThat(boundsOnScreen.left).isGreaterThan(0);
+
+        final int[] location = new int[]{ 0, 0 };
+        view.getLocationOnScreen(location);
+        assertThat(location[0]).isGreaterThan(0);
+    }
+
+    private View getViewFromLetterboxedActivityForTestingViewApiSandboxing() {
+        Size originalDisplaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
+        mDisplayMetricsSession.changeAspectRatio(2.0, ORIENTATION_LANDSCAPE);
+        Size currentDisplaySize = mDisplayMetricsSession.getDisplayMetrics().getSize();
+        assumeFalse("If a display size is capped, resizing may be a no-op",
+                originalDisplaySize.equals(currentDisplaySize));
+
+        final TestActivitySession<? extends TestActivityWithView> session =
+                createManagedTestActivitySession();
+        session.launchTestActivityOnDisplaySync(
+                TestPortraitActivityWithView.class.getName(),
+                new Intent(mContext, TestPortraitActivityWithView.class),
+                DEFAULT_DISPLAY);
+        return session.getActivity().mView;
     }
 
     // =================
@@ -826,4 +906,22 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
 
     public static class SupportsSizeChangesPortraitActivity extends FocusableActivity {
     }
+
+    public static class TestPortraitActivityWithView extends TestActivityWithView {
+    }
+
+    public static class TestActivityWithView extends Activity {
+        public View mView;
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            LinearLayout layout = new LinearLayout(this);
+            layout.addView(new TextView(this));
+
+            mView = layout;
+            setContentView(mView);
+        }
+    }
+
 }

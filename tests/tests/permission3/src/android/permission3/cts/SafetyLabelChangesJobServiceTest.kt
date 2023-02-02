@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.permission.cts
+package android.permission3.cts
 
 import android.app.Instrumentation
 import android.app.UiAutomation
@@ -22,7 +22,11 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
-import android.permission.cts.NotificationListenerUtils.getNotificationForPackageAndId
+import android.permission.cts.CtsNotificationListenerHelperRule
+import android.permission.cts.CtsNotificationListenerServiceUtils
+import android.permission.cts.CtsNotificationListenerServiceUtils.getNotificationForPackageAndId
+import android.permission.cts.PermissionUtils
+import android.permission.cts.TestUtils
 import android.provider.DeviceConfig
 import android.safetylabel.SafetyLabelConstants
 import androidx.test.InstrumentationRegistry
@@ -74,19 +78,21 @@ class SafetyLabelChangesJobServiceTest {
         SystemUtil.runShellCommand("wm dismiss-keyguard")
 
         // Bypass battery saving restrictions
-        SystemUtil.runShellCommand("cmd tare set-vip " +
-            "${Process.myUserHandle().identifier} $permissionControllerPackageName true")
-        NotificationListenerUtils.cancelNotifications(permissionControllerPackageName)
+        SystemUtil.runShellCommand(
+            "cmd tare set-vip " +
+                "${Process.myUserHandle().identifier} $permissionControllerPackageName true")
+        CtsNotificationListenerServiceUtils.cancelNotifications(permissionControllerPackageName)
         resetPermissionControllerAndSimulateReboot()
     }
 
     @After
     fun tearDown() {
         cancelJob(SAFETY_LABEL_CHANGES_JOB_ID)
-        NotificationListenerUtils.cancelNotifications(permissionControllerPackageName)
+        CtsNotificationListenerServiceUtils.cancelNotifications(permissionControllerPackageName)
         // Reset battery saving restrictions
-        SystemUtil.runShellCommand("cmd tare set-vip " +
-            "${Process.myUserHandle().identifier} $permissionControllerPackageName default")
+        SystemUtil.runShellCommand(
+            "cmd tare set-vip " +
+                "${Process.myUserHandle().identifier} $permissionControllerPackageName default")
     }
 
     @Test
@@ -95,9 +101,9 @@ class SafetyLabelChangesJobServiceTest {
         TestUtils.awaitJobUntilRequestedState(
             permissionControllerPackageName,
             SAFETY_LABEL_CHANGES_JOB_ID,
-            TIMEOUT_TIME_MS, uiAutomation(),
-            "unknown"
-        )
+            TIMEOUT_TIME_MS,
+            uiAutomation(),
+            "unknown")
         assertNotificationShown()
     }
 
@@ -135,20 +141,22 @@ class SafetyLabelChangesJobServiceTest {
 
         private fun getNotification(cancelNotification: Boolean) =
             getNotificationForPackageAndId(
-                permissionControllerPackageName,
-                SAFETY_LABEL_CHANGES_NOTIFICATION_ID,
-                cancelNotification)?.notification
+                    permissionControllerPackageName,
+                    SAFETY_LABEL_CHANGES_NOTIFICATION_ID,
+                    cancelNotification)
+                ?.notification
 
         private fun cancelJob(jobId: Int) {
             SystemUtil.runShellCommand(
                 "cmd jobscheduler cancel -u $userId $permissionControllerPackageName $jobId")
-            TestUtils.awaitJobUntilRequestedState(
-                permissionControllerPackageName, jobId, TIMEOUT_TIME_MS, uiAutomation(), "unknown")
+            TestUtils.awaitJobUntilRequestedState(permissionControllerPackageName, jobId,
+                    TIMEOUT_TIME_MS, uiAutomation(), "unknown")
         }
 
         private fun runMainJob() {
-            val runJobCmd = "cmd jobscheduler run -u $userId -f $permissionControllerPackageName " +
-                "$SAFETY_LABEL_CHANGES_JOB_ID"
+            val runJobCmd =
+                "cmd jobscheduler run -u $userId -f $permissionControllerPackageName " +
+                    "$SAFETY_LABEL_CHANGES_JOB_ID"
             try {
                 SystemUtil.runShellCommand(uiAutomation(), runJobCmd)
             } catch (e: Throwable) {
@@ -157,9 +165,12 @@ class SafetyLabelChangesJobServiceTest {
         }
 
         private fun resetPermissionControllerAndSimulateReboot() {
-            PermissionUtils.resetPermissionControllerJob(uiAutomation(),
-                permissionControllerPackageName, SAFETY_LABEL_CHANGES_JOB_ID,
-                TIMEOUT_TIME_MS, SET_UP_SAFETY_LABEL_CHANGES_JOB,
+            PermissionUtils.resetPermissionControllerJob(
+                uiAutomation(),
+                permissionControllerPackageName,
+                SAFETY_LABEL_CHANGES_JOB_ID,
+                TIMEOUT_TIME_MS,
+                SET_UP_SAFETY_LABEL_CHANGES_JOB,
                 SAFETY_LABEL_CHANGES_JOB_SERVICE_RECEIVER_CLASS)
         }
     }

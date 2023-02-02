@@ -22,10 +22,9 @@ import static org.junit.Assert.assertSame;
 import android.webkit.WebView;
 import android.webkit.WebView.WebViewTransport;
 
-import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 
@@ -42,15 +41,13 @@ public class WebViewTransportTest {
     public ActivityScenarioRule mActivityScenarioRule =
             new ActivityScenarioRule(WebViewCtsActivity.class);
 
-    private ActivityScenario mScenario;
     private WebViewCtsActivity mActivity;
 
     @Before
     public void setUp() throws Throwable {
         Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
 
-        mScenario = mActivityScenarioRule.getScenario();
-        mScenario.onActivity(activity -> {
+        mActivityScenarioRule.getScenario().onActivity(activity -> {
             mActivity = (WebViewCtsActivity) activity;
         });
     }

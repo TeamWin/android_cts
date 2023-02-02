@@ -256,7 +256,9 @@ abstract class BasePermissionTest {
     ) {
         val output = runShellCommand(
             "pm install${if (reinstall) " -r" else ""}${if (grantRuntimePermissions) " -g" else ""
-                }${if (installSource != null) " -i $installSource" else ""} $apkPath"
+                }${if (installSource != null) " -i $installSource" else ""} " +
+                    "--bypass-low-target-sdk-block $apkPath"
+
         ).trim()
         if (expectSuccess) {
             assertEquals("Success", output)

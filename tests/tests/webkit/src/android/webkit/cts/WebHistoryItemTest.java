@@ -87,7 +87,9 @@ public class WebHistoryItemTest extends SharedWebViewTest {
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
-        mWebServer.shutdown();
+        if (mWebServer != null) {
+            mWebServer.shutdown();
+        }
         if (mIconDb != null) {
             mIconDb.removeAllIcons();
             mIconDb.close();

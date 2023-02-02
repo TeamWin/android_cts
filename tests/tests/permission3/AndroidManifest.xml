@@ -30,6 +30,14 @@
 
         <uses-library android:name="android.test.runner" />
 
+        <service android:name="android.permission.cts.CtsNotificationListenerService"
+                 android:exported="true"
+                 android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService"/>
+            </intent-filter>
+        </service>
+
         <activity android:name="com.android.compatibility.common.util.FutureResultActivity" />
         <activity android:name=".StartForFutureActivity" />
 

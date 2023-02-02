@@ -16,6 +16,8 @@
 
 package android.permission3.cts
 
+import android.app.ActivityManager
+import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_REVIEW_APP_DATA_SHARING_UPDATES
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
@@ -28,9 +30,13 @@ import android.safetylabel.SafetyLabelConstants.SAFETY_LABEL_CHANGE_NOTIFICATION
 import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
+import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.waitForBroadcasts
 import com.android.modules.utils.build.SdkLevel
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
@@ -40,6 +46,8 @@ import org.junit.Test
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     // TODO(b/263838456): Add tests for personal and work profile.
+
+    private var activityManager: ActivityManager? = null
 
     @get:Rule
     val deviceConfigSafetyLabelChangeNotificationsEnabled =
@@ -90,6 +98,8 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
         Assume.assumeFalse(isTv)
         Assume.assumeFalse(isWatch)
 
+        activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+
         installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithNoSharing())
         waitForBroadcasts()
         installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
@@ -131,9 +141,8 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
         }
     }
 
-    // TODO(b/263838996): Check that Safety Label Help Center is opened.
     @Test
-    fun clickLearnMore_opensPermissionManager() {
+    fun clickLearnMore_opensHelpCenter() {
         grantLocationPermission(APP_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
@@ -144,8 +153,11 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
             waitForIdle()
 
             click(By.textContains(LEARN_ABOUT_DATA_SHARING))
+            waitForIdle()
 
-            findView(By.descContains(PERMISSION_MANAGER), true)
+            eventually {
+                assertHelpCenterLinkClickSuccessful()
+            }
         } finally {
             pressBack()
             pressBack()
@@ -233,6 +245,31 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
             packageName, android.Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
+    private fun assertHelpCenterLinkClickSuccessful() {
+        runWithShellPermissionIdentity {
+            val runningTasks = activityManager!!.getRunningTasks(1)
+
+            assertFalse("Expected runningTasks to not be empty",
+                    runningTasks.isEmpty())
+
+            val taskInfo = runningTasks[0]
+            val observedIntentAction = taskInfo.baseIntent.action
+            val observedIntentDataString = taskInfo.baseIntent.dataString
+            val observedIntentScheme: String? = taskInfo.baseIntent.scheme
+
+            assertEquals("Unexpected intent action",
+                    Intent.ACTION_VIEW,
+                    observedIntentAction)
+
+            assertFalse(observedIntentDataString.isNullOrEmpty())
+            assertTrue(observedIntentDataString?.startsWith(EXPECTED_HELP_CENTER_URL)
+                    ?: false)
+
+            assertFalse(observedIntentScheme.isNullOrEmpty())
+            assertEquals("https", observedIntentScheme)
+        }
+    }
+
     /** Companion object for [AppDataSharingUpdatesTest]. */
     companion object {
         private const val DATA_SHARING_UPDATES = "Data sharing updates"
@@ -257,5 +294,8 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
             "data_sharing_update_period_millis"
         private const val PROPERTY_MAX_SAFETY_LABELS_PERSISTED_PER_APP =
             "max_safety_labels_persisted_per_app"
+
+        private const val EXPECTED_HELP_CENTER_URL =
+                "https://support.google.com/android?p=data_sharing"
     }
 }

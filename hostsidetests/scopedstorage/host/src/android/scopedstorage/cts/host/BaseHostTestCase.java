@@ -43,11 +43,9 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
         return getDevice().isPackageInstalled(packageName, userId);
     }
 
-    // TODO (b/174775905) remove after exposing the check from ITestDevice.
     protected static boolean isHeadlessSystemUserMode(ITestDevice device)
             throws DeviceNotAvailableException {
-        String result = device.executeShellCommand("getprop ro.fw.mu.headless_system_user").trim();
-        return "true".equalsIgnoreCase(result);
+        return device.isHeadlessSystemUserMode();
     }
 
     protected static boolean isAtLeastS(ITestDevice device) throws DeviceNotAvailableException {

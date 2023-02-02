@@ -46,7 +46,7 @@ class InstallInfoTest : PackageInstallerTestBase() {
     @Test
     fun testInstallInfoOfMonolithicPackage() {
         val apk = File(context.filesDir.canonicalPath + "/$TEST_APK_NAME")
-        val installInfo = pi.getInstallInfo(apk, 0)
+        val installInfo = pi.readInstallInfo(apk, 0)
 
         assertEquals(PackageInfo.INSTALL_LOCATION_PREFER_EXTERNAL, installInfo.installLocation)
         assertEquals(TEST_APK_PACKAGE_NAME, installInfo.packageName)
@@ -56,7 +56,7 @@ class InstallInfoTest : PackageInstallerTestBase() {
     @Test
     fun testInstallInfoOfClusterPackage() {
         val apk = File(context.filesDir.canonicalPath)
-        val installInfo = pi.getInstallInfo(apk, 0)
+        val installInfo = pi.readInstallInfo(apk, 0)
 
         // The test APKs do not include native binaries or dex metadata. Thus, the total size of
         // the cluster package should be equal to sum of size of each APKs in the folder.
@@ -73,7 +73,7 @@ class InstallInfoTest : PackageInstallerTestBase() {
             this.writeBytes(Random.nextBytes(ByteArray(10)))
         }
         assertThrows(PackageInstaller.PackageParsingException::class.java) {
-            pi.getInstallInfo(apk, 0)
+            pi.readInstallInfo(apk, 0)
         }
     }
 
@@ -86,7 +86,7 @@ class InstallInfoTest : PackageInstallerTestBase() {
             }
         }
         assertThrows(PackageInstaller.PackageParsingException::class.java) {
-            pi.getInstallInfo(apk, 0)
+            pi.readInstallInfo(apk, 0)
         }
     }
 }

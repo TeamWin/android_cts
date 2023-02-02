@@ -16,20 +16,22 @@
 
 package android.multiuser.cts;
 
+import static android.view.Display.DEFAULT_DISPLAY;
+
 import static com.android.bedstead.nene.TestApis.users;
 import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
+import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 
 import static org.junit.Assert.assertThrows;
 
 import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
-import android.view.Display;
 
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsersOnDefaultDisplay;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
 import com.android.bedstead.nene.users.UserReference;
-import com.android.bedstead.nene.users.UserType;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Test;
@@ -37,11 +39,13 @@ import org.junit.Test;
 /**
  * Tests for user-related APIs that are only available on devices that
  * {@link UserManager#isVisibleBackgroundUsersSupported() support visible background users } (such
- * as cars with passenger displays), but DON'T support them started in the default display.
- *
+ * as cars with passenger displays), but DON'T support them
+ * {@link android.os.UserManager#isVisibleBackgroundUsersOnDefaultDisplaySupported() started in the
+ * default display}.
  */
 @AppModeFull(reason = "it's testing user features, not related to apps")
 @RequireVisibleBackgroundUsers(reason = "Because class is testing exactly that")
+@RequireNotVisibleBackgroundUsersOnDefaultDisplay(reason = "Because class is testing exactly that")
 public final class UserVisibilityVisibleBackgroundUsersTest
         extends UserVisibilityVisibleBackgroundUsersTestCase {
 
@@ -51,9 +55,9 @@ public final class UserVisibilityVisibleBackgroundUsersTest
     @Test
     public void testStartVisibleBgUser_onDefaultDisplay() {
         UserReference user = users()
-                .findUserOfType(users().supportedType(UserType.SECONDARY_USER_TYPE_NAME));
+                .findUserOfType(users().supportedType(SECONDARY_USER_TYPE_NAME));
 
         assertThrows(IllegalArgumentException.class,
-                () -> startVisibleBackgroundUser(user, Display.DEFAULT_DISPLAY));
+                () -> startVisibleBackgroundUser(user, DEFAULT_DISPLAY));
     }
 }

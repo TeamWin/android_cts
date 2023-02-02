@@ -61,8 +61,10 @@ public class RemoteConferenceTest extends BaseRemoteTelecomTest {
 
     @Override
     public void tearDown() throws Exception {
-        mRemoteConference.destroy();
-        mConference.destroy();
+        if (mShouldTestTelecom) {
+            mRemoteConference.destroy();
+            mConference.destroy();
+        }
         super.tearDown();
     }
 

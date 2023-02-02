@@ -81,13 +81,15 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.util.Log;
-import android.util.Range;
 import android.util.Pair;
+import android.util.Range;
 import android.util.Rational;
 import android.util.Size;
 import android.util.SparseArray;
 import android.view.Surface;
 import android.view.SurfaceHolder;
+import android.view.WindowManager;
+import android.view.WindowMetrics;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -112,7 +114,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.Math;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -125,12 +126,12 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -194,6 +195,24 @@ public class ItsService extends Service implements SensorEventListener {
     public static final String AUDIO_RESTRICTION_MODE_KEY = "mode";
     public static final int AVAILABILITY_TIMEOUT_MS = 10;
 
+    private static final HashMap<Integer, String> CAMCORDER_PROFILE_QUALITIES_MAP;
+    static {
+        CAMCORDER_PROFILE_QUALITIES_MAP = new HashMap<Integer, String>();
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_480P, "480P");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_1080P, "1080P");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_2160P, "2160P");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_2K, "2k");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_4KDCI, "4KDC");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_720P, "720P");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_8KUHD, "8KUHD");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_CIF, "CIF");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_HIGH, "HIGH");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_LOW, "LOW");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_QCIF, "QCIF");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_QHD, "QHD");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_QVGA, "QVGA");
+        CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_VGA, "VGA");
+    };
 
     private CameraManager mCameraManager = null;
     private HandlerThread mCameraThread = null;
@@ -867,6 +886,11 @@ public class ItsService extends Service implements SensorEventListener {
                 } else if ("doCaptureWithExtensions".equals(cmdObj.getString("cmdName"))) {
                     int extension = cmdObj.getInt("extension");
                     doCaptureWithExtensions(cmdObj, extension);
+                } else if ("getDisplaySize".equals(cmdObj.getString("cmdName"))) {
+                    doGetDisplaySize();
+                } else if ("getMaxCamcorderProfileSize".equals(cmdObj.getString("cmdName"))) {
+                    String cameraId = cmdObj.getString("cameraId");
+                    doGetMaxCamcorderProfileSize(cameraId);
                 } else {
                     throw new ItsException("Unknown command: " + cmd);
                 }
@@ -1241,6 +1265,59 @@ public class ItsService extends Service implements SensorEventListener {
         } catch (org.json.JSONException e) {
             throw new ItsException("JSON error: ", e);
         }
+    }
+
+    private void doGetDisplaySize() throws ItsException {
+        WindowManager windowManager = getSystemService(WindowManager.class);
+        if (windowManager == null) {
+            throw new ItsException("No window manager.");
+        }
+        WindowMetrics metrics = windowManager.getCurrentWindowMetrics();
+        if (metrics == null) {
+            throw new ItsException("No current window metrics in window manager.");
+        }
+        Rect windowBounds = metrics.getBounds();
+
+        int width = windowBounds.width();
+        int height = windowBounds.height();
+        if (height > width) {
+            height = width;
+            width = windowBounds.height();
+        }
+
+        Size displaySize = new Size(width, height);
+        mSocketRunnableObj.sendResponse("displaySize", displaySize.toString());
+    }
+
+    private void doGetMaxCamcorderProfileSize(String cameraId) throws ItsException {
+        if (mItsCameraIdList == null) {
+            mItsCameraIdList = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
+        }
+        if (mItsCameraIdList.mCameraIds.size() == 0) {
+            throw new ItsException("No camera devices");
+        }
+        if (!mItsCameraIdList.mCameraIds.contains(cameraId)) {
+            throw new ItsException("Invalid cameraId " + cameraId);
+        }
+
+        int cameraDeviceId = Integer.parseInt(cameraId);
+        int maxArea = -1;
+        Size maxProfileSize = new Size(0, 0);
+        for (int profileId : CAMCORDER_PROFILE_QUALITIES_MAP.keySet()) {
+            if (CamcorderProfile.hasProfile(cameraDeviceId, profileId)) {
+                CamcorderProfile profile = CamcorderProfile.get(cameraDeviceId, profileId);
+                if (profile == null) {
+                    throw new ItsException("Invalid camcorder profile for id " + profileId);
+                }
+
+                int area = profile.videoFrameWidth * profile.videoFrameHeight;
+                if (area > maxArea) {
+                    maxProfileSize = new Size(profile.videoFrameWidth, profile.videoFrameHeight);
+                    maxArea = area;
+                }
+            }
+        }
+        mSocketRunnableObj.sendResponse("maxCamcorderProfileSize", maxProfileSize.toString());
     }
 
     private Set<Pair<String, String>> getUnavailablePhysicalCameras() throws ItsException {
@@ -1901,20 +1978,9 @@ public class ItsService extends Service implements SensorEventListener {
     private void doGetSupportedVideoQualities(String id) throws ItsException {
         int cameraId = Integer.parseInt(id);
         StringBuilder profiles = new StringBuilder();
-        appendSupportProfile(profiles, "480P", CamcorderProfile.QUALITY_480P, cameraId);
-        appendSupportProfile(profiles, "1080P", CamcorderProfile.QUALITY_1080P, cameraId);
-        appendSupportProfile(profiles, "2160P", CamcorderProfile.QUALITY_2160P, cameraId);
-        appendSupportProfile(profiles, "2k", CamcorderProfile.QUALITY_2K, cameraId);
-        appendSupportProfile(profiles, "4KDCI", CamcorderProfile.QUALITY_4KDCI, cameraId);
-        appendSupportProfile(profiles, "720P", CamcorderProfile.QUALITY_720P, cameraId);
-        appendSupportProfile(profiles, "8KUHD", CamcorderProfile.QUALITY_8KUHD, cameraId);
-        appendSupportProfile(profiles, "CIF", CamcorderProfile.QUALITY_CIF, cameraId);
-        appendSupportProfile(profiles, "HIGH", CamcorderProfile.QUALITY_HIGH, cameraId);
-        appendSupportProfile(profiles, "LOW", CamcorderProfile.QUALITY_LOW, cameraId);
-        appendSupportProfile(profiles, "QCIF", CamcorderProfile.QUALITY_QCIF, cameraId);
-        appendSupportProfile(profiles, "QHD", CamcorderProfile.QUALITY_QHD, cameraId);
-        appendSupportProfile(profiles, "QVGA", CamcorderProfile.QUALITY_QVGA, cameraId);
-        appendSupportProfile(profiles, "VGA", CamcorderProfile.QUALITY_VGA,cameraId);
+        for (Map.Entry<Integer, String> entry : CAMCORDER_PROFILE_QUALITIES_MAP.entrySet()) {
+            appendSupportProfile(profiles, entry.getValue(), entry.getKey(), cameraId);
+        }
         mSocketRunnableObj.sendResponse("supportedVideoQualities", profiles.toString());
     }
 

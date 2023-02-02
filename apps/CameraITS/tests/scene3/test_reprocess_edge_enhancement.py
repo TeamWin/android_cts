@@ -155,7 +155,8 @@ class ReprocessEdgeEnhancementTest(its_base_test.ItsBaseTest):
           cam, props, self.scene, self.tablet, self.chart_distance)
 
       # Initialize chart class and locate chart in scene
-      chart = opencv_processing_utils.Chart(cam, props, self.log_path)
+      chart = opencv_processing_utils.Chart(
+          cam, props, self.log_path, distance=self.chart_distance)
 
       # If reprocessing is supported, ZSL edge mode must be available
       if not camera_properties_utils.edge_mode(props, _EDGE_MODES['ZSL']):

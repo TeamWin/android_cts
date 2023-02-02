@@ -15,6 +15,9 @@
  */
 package android.uirendering.cts.testclasses;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.animation.ObjectAnimator;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -25,6 +28,7 @@ import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
+import android.uirendering.cts.testinfrastructure.DrawActivity;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.Gravity;
 import android.view.PixelCopy;
@@ -136,7 +140,8 @@ public class SurfaceViewTests extends ActivityTestBase {
     private static class SurfaceViewHelper implements ViewInitializer, Screenshotter, SurfaceHolder.Callback {
         private final CanvasClient mCanvasClient;
         private final CountDownLatch mFence = new CountDownLatch(1);
-        private SurfaceView mSurfaceView;
+        private SurfaceView mSurfaceView = null;
+        private boolean mHasSurface = false;
 
         public SurfaceViewHelper(CanvasClient canvasClient) {
             mCanvasClient = canvasClient;
@@ -164,12 +169,23 @@ public class SurfaceViewTests extends ActivityTestBase {
                     FrameLayout.LayoutParams.MATCH_PARENT));
         }
 
+        public SurfaceView getSurfaceView() {
+            return mSurfaceView;
+        }
+
+
+        public boolean hasSurface() {
+            return mHasSurface;
+        }
+
+
         public void onSurfaceViewCreated(SurfaceView surfaceView) {
 
         }
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
+            mHasSurface = true;
         }
 
         @Override
@@ -185,6 +201,7 @@ public class SurfaceViewTests extends ActivityTestBase {
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
+            mHasSurface = false;
         }
 
         public CountDownLatch getFence() {
@@ -228,7 +245,7 @@ public class SurfaceViewTests extends ActivityTestBase {
     @Test
     public void surfaceViewMediaLayer() {
         // Add a shared latch which will fire after both callbacks are complete.
-        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch latch = new CountDownLatch(2);
         sGreenCanvasCallback.setFence(latch);
         sRedCanvasCallback.setFence(latch);
 
@@ -299,5 +316,165 @@ public class SurfaceViewTests extends ActivityTestBase {
                 .withScreenshotter(mScreenshotter)
                 .runWithVerifier(new ColorVerifier(
                         Color.rgb(191, 191, 191), 1 /* blending tolerance */));
+    }
+
+    @Test
+    public void surfaceViewSurfaceLifecycleFollowsVisibilityByDefault() {
+        SurfaceViewHelper helper = new SurfaceViewHelper((canvas, width, height) -> {
+            Assert.assertNotNull(canvas);
+            canvas.drawColor(Color.BLACK);
+        });
+
+        DrawActivity activity = getActivity();
+        try {
+            activity.enqueueRenderSpecAndWait(R.layout.frame_layout, null, helper, false, false);
+            assertTrue(helper.hasSurface());
+            activity.runOnUiThread(() -> helper.getSurfaceView().setVisibility(View.INVISIBLE));
+            activity.waitForRedraw();
+            assertFalse(helper.hasSurface());
+        } finally {
+            activity.reset();
+        }
+    }
+
+    @Test
+    public void surfaceViewSurfaceLifecycleFollowsVisibility() {
+        SurfaceViewHelper helper = new SurfaceViewHelper((canvas, width, height) -> {
+            Assert.assertNotNull(canvas);
+            canvas.drawColor(Color.BLACK);
+        });
+
+        DrawActivity activity = getActivity();
+        try {
+            activity.enqueueRenderSpecAndWait(R.layout.frame_layout, null, helper, false, false);
+            assertTrue(helper.hasSurface());
+            activity.runOnUiThread(() -> {
+                helper.getSurfaceView()
+                       .setSurfaceLifecycle(SurfaceView.SURFACE_LIFECYCLE_FOLLOWS_VISIBILITY);
+                helper.getSurfaceView().setVisibility(View.INVISIBLE);
+            });
+            activity.waitForRedraw();
+            assertFalse(helper.hasSurface());
+        } finally {
+            activity.reset();
+        }
+    }
+
+    @Test
+    public void surfaceViewSurfaceLifecycleFollowsAttachment() {
+        SurfaceViewHelper helper = new SurfaceViewHelper((canvas, width, height) -> {
+            Assert.assertNotNull(canvas);
+            canvas.drawColor(Color.BLACK);
+        });
+
+        DrawActivity activity = getActivity();
+        try {
+            activity.enqueueRenderSpecAndWait(R.layout.frame_layout, null, helper, false, false);
+            assertTrue(helper.hasSurface());
+            activity.runOnUiThread(() -> {
+                helper.getSurfaceView()
+                        .setSurfaceLifecycle(SurfaceView.SURFACE_LIFECYCLE_FOLLOWS_ATTACHMENT);
+                helper.getSurfaceView().setVisibility(View.INVISIBLE);
+            });
+            activity.waitForRedraw();
+            assertTrue(helper.hasSurface());
+        } finally {
+            activity.reset();
+        }
+    }
+
+    @Test
+    public void surfaceViewSurfaceLifecycleFollowsAttachmentWithOverlaps() {
+        // Add a shared latch which will fire after both callbacks are complete.
+        CountDownLatch latch = new CountDownLatch(2);
+        sGreenCanvasCallback.setFence(latch);
+        sRedCanvasCallback.setFence(latch);
+
+        ViewInitializer initializer = new ViewInitializer() {
+            @Override
+            public void initializeView(View view) {
+                FrameLayout root = (FrameLayout) view.findViewById(R.id.frame_layout);
+                SurfaceView surfaceViewA = new SurfaceView(view.getContext());
+                surfaceViewA.setVisibility(View.VISIBLE);
+                surfaceViewA.setSurfaceLifecycle(SurfaceView.SURFACE_LIFECYCLE_FOLLOWS_VISIBILITY);
+                surfaceViewA.getHolder().addCallback(sRedCanvasCallback);
+
+                root.addView(surfaceViewA, new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT));
+
+                SurfaceView surfaceViewB = new SurfaceView(view.getContext());
+                surfaceViewB.setVisibility(View.INVISIBLE);
+                surfaceViewB.setSurfaceLifecycle(SurfaceView.SURFACE_LIFECYCLE_FOLLOWS_ATTACHMENT);
+                surfaceViewB.getHolder().addCallback(sGreenCanvasCallback);
+
+                root.addView(surfaceViewB, new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT));
+            }
+        };
+
+        createTest()
+                .addLayout(R.layout.frame_layout, initializer, true, latch)
+                .withScreenshotter(mScreenshotter)
+                .runWithVerifier(new ColorVerifier(Color.RED, 0 /* zero tolerance */));
+    }
+
+    @Test
+    public void surfaceViewSurfaceLifecycleChangesFromFollowsAttachmentToFollowsVisibility() {
+        SurfaceViewHelper helper = new SurfaceViewHelper((canvas, width, height) -> {
+            Assert.assertNotNull(canvas);
+            canvas.drawColor(Color.BLACK);
+        });
+
+        DrawActivity activity = getActivity();
+        try {
+            activity.enqueueRenderSpecAndWait(R.layout.frame_layout, null, helper, false, false);
+            assertTrue(helper.hasSurface());
+            activity.runOnUiThread(() -> {
+                helper.getSurfaceView()
+                        .setSurfaceLifecycle(SurfaceView.SURFACE_LIFECYCLE_FOLLOWS_ATTACHMENT);
+                helper.getSurfaceView().setVisibility(View.INVISIBLE);
+            });
+            activity.waitForRedraw();
+            assertTrue(helper.hasSurface());
+            activity.runOnUiThread(() -> {
+                helper.getSurfaceView()
+                        .setSurfaceLifecycle(SurfaceView.SURFACE_LIFECYCLE_FOLLOWS_VISIBILITY);
+            });
+            activity.waitForRedraw();
+            assertFalse(helper.hasSurface());
+        } finally {
+            activity.reset();
+        }
+    }
+
+    @Test
+    public void surfaceViewSurfaceLifecycleChangesFromFollowsVisibilityToFollowsAttachment() {
+        SurfaceViewHelper helper = new SurfaceViewHelper((canvas, width, height) -> {
+            Assert.assertNotNull(canvas);
+            canvas.drawColor(Color.BLACK);
+        });
+
+        DrawActivity activity = getActivity();
+        try {
+            activity.enqueueRenderSpecAndWait(R.layout.frame_layout, null, helper, false, false);
+            assertTrue(helper.hasSurface());
+            activity.runOnUiThread(() -> {
+                helper.getSurfaceView()
+                        .setSurfaceLifecycle(SurfaceView.SURFACE_LIFECYCLE_FOLLOWS_VISIBILITY);
+                helper.getSurfaceView().setVisibility(View.INVISIBLE);
+            });
+            activity.waitForRedraw();
+            assertFalse(helper.hasSurface());
+            activity.runOnUiThread(() -> {
+                helper.getSurfaceView()
+                        .setSurfaceLifecycle(SurfaceView.SURFACE_LIFECYCLE_FOLLOWS_ATTACHMENT);
+            });
+            activity.waitForRedraw();
+            assertTrue(helper.hasSurface());
+        } finally {
+            activity.reset();
+        }
     }
 }

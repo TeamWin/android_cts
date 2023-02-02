@@ -71,7 +71,7 @@ public class UserInitiatedJobTest {
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
         mTestAppInterface.assertJobUidState(ActivityManager.PROCESS_STATE_IMPORTANT_FOREGROUND,
                 ActivityManager.PROCESS_CAPABILITY_NETWORK,
-                227 /* ProcessList.PERCEPTIBLE_MEDIUM_APP_ADJ + 2 */);
+                201 /* ProcessList.PERCEPTIBLE_APP_ADJ + 1 */);
     }
 
     /** Test that UIJs for the TOP app start immediately and there is no limit on the number. */

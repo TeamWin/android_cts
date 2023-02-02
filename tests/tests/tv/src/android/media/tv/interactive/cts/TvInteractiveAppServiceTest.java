@@ -337,6 +337,41 @@ public class TvInteractiveAppServiceTest {
         return Uri.parse("content://com.example/");
     }
 
+    private static TvRecordingInfo createMockRecordingInfo(String recordingId) {
+        return new TvRecordingInfo(recordingId, 0, 0, 0, "testName", "testDescription", 0, 0,
+                createTestUri(), createTestUri(), new ArrayList<TvContentRating>(), createTestUri(),
+                0, 0);
+    }
+
+    public static void compareTvRecordingInfo(TvRecordingInfo expected, TvRecordingInfo actual) {
+        assertThat(expected.getRecordingId())
+                .isEqualTo(actual.getRecordingId());
+        assertThat(expected.getRecordingUri())
+                .isEqualTo(actual.getRecordingUri());
+        assertThat(expected.getRecordingStartTimeMillis())
+                .isEqualTo(actual.getRecordingStartTimeMillis());
+        assertThat(expected.getRecordingDurationMillis())
+                .isEqualTo(actual.getRecordingDurationMillis());
+        assertThat(expected.getRepeatDays())
+                .isEqualTo(actual.getRepeatDays());
+        assertThat(expected.getChannelUri())
+                .isEqualTo(actual.getChannelUri());
+        assertThat(expected.getDescription())
+                .isEqualTo(actual.getDescription());
+        assertThat(expected.getEndPaddingMillis())
+                .isEqualTo(actual.getEndPaddingMillis());
+        assertThat(expected.getStartPaddingMillis())
+                .isEqualTo(actual.getStartPaddingMillis());
+        assertThat(expected.getScheduledStartTimeMillis())
+                .isEqualTo(actual.getScheduledStartTimeMillis());
+        assertThat(expected.getScheduledDurationMillis())
+                .isEqualTo(actual.getScheduledDurationMillis());
+        assertThat(expected.getName())
+                .isEqualTo(actual.getName());
+        assertThat(expected.getContentRatings())
+                .isEqualTo(actual.getContentRatings());
+    }
+
     @Before
     public void setUp() throws Throwable {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -812,42 +847,42 @@ public class TvInteractiveAppServiceTest {
     @Test
     public void testSetTvRecordingInfo() throws Throwable {
         String mockRecordingId = "testRecordingId";
-        TvRecordingInfo mockRecordingInfo = new TvRecordingInfo(mockRecordingId, 0, 0, 0,
-                "testName", "testDescription", 0, 0, createTestUri(), createTestUri(),
-                new ArrayList<TvContentRating>(), createTestUri(), 0, 0);
+        TvRecordingInfo mockRecordingInfo = createMockRecordingInfo(mockRecordingId);
         mSession.setTvRecordingInfo(mockRecordingId, mockRecordingInfo);
         mCallback.resetValues();
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mSetTvRecordingInfoCount > 0);
 
         assertThat(mCallback.mSetTvRecordingInfoCount).isEqualTo(1);
-        assertThat(mCallback.mTvRecordingInfo.getRecordingId())
-                .isEqualTo(mockRecordingId);
-        assertThat(mCallback.mTvRecordingInfo.getRecordingUri())
-                .isEqualTo(mockRecordingInfo.getRecordingUri());
-        assertThat(mCallback.mTvRecordingInfo.getRecordingStartTimeMillis())
-                .isEqualTo(mockRecordingInfo.getRecordingStartTimeMillis());
-        assertThat(mCallback.mTvRecordingInfo.getRecordingDurationMillis())
-                .isEqualTo(mockRecordingInfo.getRecordingDurationMillis());
-        assertThat(mCallback.mTvRecordingInfo.getRepeatDays())
-                .isEqualTo(mockRecordingInfo.getRepeatDays());
-        assertThat(mCallback.mTvRecordingInfo.getChannelUri())
-                .isEqualTo(mockRecordingInfo.getChannelUri());
-        assertThat(mCallback.mTvRecordingInfo.getDescription())
-                .isEqualTo(mockRecordingInfo.getDescription());
-        assertThat(mCallback.mTvRecordingInfo.getEndPaddingMillis())
-                .isEqualTo(mockRecordingInfo.getEndPaddingMillis());
-        assertThat(mCallback.mTvRecordingInfo.getStartPaddingMillis())
-                .isEqualTo(mockRecordingInfo.getStartPaddingMillis());
-        assertThat(mCallback.mTvRecordingInfo.getScheduledStartTimeMillis())
-                .isEqualTo(mockRecordingInfo.getScheduledStartTimeMillis());
-        assertThat(mCallback.mTvRecordingInfo.getScheduledDurationMillis())
-                .isEqualTo(mockRecordingInfo.getScheduledDurationMillis());
-        assertThat(mCallback.mTvRecordingInfo.getName())
-                .isEqualTo(mockRecordingInfo.getName());
-        assertThat(mCallback.mTvRecordingInfo.getContentRatings())
-                .isEqualTo(mockRecordingInfo.getContentRatings());
+        compareTvRecordingInfo(mockRecordingInfo, mCallback.mTvRecordingInfo);
         assertThat(mCallback.mRecordingId).isEqualTo(mockRecordingId);
+    }
+
+    @Test
+    public void testSendTvRecordingInfo() throws Throwable {
+        TvRecordingInfo mockRecordingInfo = createMockRecordingInfo("testRecordingId");
+        mSession.resetValues();
+        mTvIAppView.sendTvRecordingInfo(mockRecordingInfo);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mSendTvRecordingInfoCount > 0);
+
+        assertThat(mSession.mSendTvRecordingInfoCount).isEqualTo(1);
+        compareTvRecordingInfo(mockRecordingInfo, mSession.mTvRecordingInfo);
+    }
+
+    @Test
+    public void testSendTvRecordingInfoList() throws Throwable {
+        TvRecordingInfo mockRecordingInfo = createMockRecordingInfo("testRecordingId");
+        ArrayList<TvRecordingInfo> tvRecordingInfos = new ArrayList<>();
+        tvRecordingInfos.add(mockRecordingInfo);
+        mSession.resetValues();
+        mTvIAppView.sendTvRecordingInfoList(tvRecordingInfos);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mSendTvRecordingInfoListCount > 0);
+
+        assertThat(mSession.mSendTvRecordingInfoListCount).isEqualTo(1);
+        assertThat(mSession.mTvRecordingInfoList.size()).isEqualTo(1);
+        compareTvRecordingInfo(mockRecordingInfo, mSession.mTvRecordingInfoList.get(0));
     }
 
     @Test

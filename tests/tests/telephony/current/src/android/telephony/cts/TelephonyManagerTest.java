@@ -39,9 +39,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.Manifest.permission;
 import android.annotation.NonNull;
 import android.app.AppOpsManager;
@@ -55,6 +55,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -5981,33 +5982,114 @@ public class TelephonyManagerTest {
     }
 
     /**
-     * verify the valid response of the getCarrierRestrictionStatus.
+     * Verifies that {@link TelephonyManager#getImsPrivateUserIdentity()} does not throw any
+     * exception when called and has the correct permissions.
      */
+    @Ignore("TelephonyManager#getImsPrivateUserIdentity()" + " is hidden. Internal use only.")
     @Test
-    public void getCarrierRestrictionStatus_ReadPhoneState() throws InterruptedException {
-        final int TIMEOUT_FOR_MODEM_QUERY = 5;
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
-            return;
-        }
-        Set<Integer> validCarrierRestrictionStatus = new HashSet<Integer>();
-        validCarrierRestrictionStatus.add(TelephonyManager.CARRIER_RESTRICTION_STATUS_UNKNOWN);
-        validCarrierRestrictionStatus.add(
-                TelephonyManager.CARRIER_RESTRICTION_STATUS_NOT_RESTRICTED);
-        validCarrierRestrictionStatus.add(TelephonyManager.CARRIER_RESTRICTION_STATUS_RESTRICTED);
-        validCarrierRestrictionStatus.add(
-                TelephonyManager.CARRIER_RESTRICTION_STATUS_RESTRICTED_TO_CALLER);
-        LinkedBlockingQueue<Integer> carrierRestrictionStatusResult = new LinkedBlockingQueue<>(1);
-
+    public void getImsPrivateUserIdentity() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
+        // make sure not to face any permission problem while calling the API
         try {
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    tm -> tm.getCarrierRestrictionStatus(getContext().getMainExecutor(),
-                            carrierRestrictionStatusResult::offer), permission.READ_PHONE_STATE);
-        } catch (SecurityException ex) {
-            assumeFalse(ex.getMessage().contains("Not an authorized caller"));
+            setAppOpsPermissionAllowed(true, OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER);
+            mTelephonyManager.getImsPrivateUserIdentity();
+        } catch (IllegalStateException e) {
+            // expected in case SIM do not support ISIM
+        } catch (SecurityException secExp) {
+            fail();
+        } finally {
+            setAppOpsPermissionAllowed(false, OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER);
         }
-        assertTrue(validCarrierRestrictionStatus.contains(
-                carrierRestrictionStatusResult.poll(TIMEOUT_FOR_MODEM_QUERY,
-                        TimeUnit.SECONDS)));
+    }
+
+    /**
+     * Verifies that {@link TelephonyManager#getImsPrivateUserIdentity()} does throw
+     * SecurityException when required permissions are not granted.
+     */
+    @Ignore("TelephonyManager#getImsPrivateUserIdentity()" + " is hidden. Internal use only.")
+    @Test
+    public void getImsPrivateUserIdentity_NoPermissionGranted() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
+        try {
+            mTelephonyManager.getImsPrivateUserIdentity();
+            fail(); // if no SecurityException then it fails()
+        } catch (IllegalStateException e) {
+            // expected in case SIM do not support ISIM
+        } catch (SecurityException secExp) {
+            // expected as API has no permission to fetch ISIM
+        }
+    }
+
+    /**
+     * Verifies that {@link TelephonyManager#getImsPublicUserIdentities()} does not throw any
+     * exception when granted with READ_PRIVILEGED_PHONE_STATE permission.
+     */
+    @Ignore("TelephonyManager#getImsPublicUserIdentities()" + " is hidden. Internal use only.")
+    @Test
+    public void getImsPublicUserIdentities_ReadPrivilegedPermission() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
+        // make sure not to face any permission problem while calling the API
+        try {
+            List<Uri> impuList = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, tm -> tm.getImsPublicUserIdentities(),
+                    Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+            assertNotNull(impuList);
+            for (Uri impu : impuList) {
+                assertTrue(impu.getScheme().equalsIgnoreCase("sip"));
+            }
+        } catch (IllegalStateException e) {
+            // expected in case SIM do not support ISIM
+            fail();
+        }
+    }
+
+    /**
+     * Verifies that {@link TelephonyManager#getImsPublicUserIdentities()} does not throw any
+     * exception when granted with READ_PHONE_NUMBERS permission.
+     */
+    @Ignore("TelephonyManager#getImsPublicUserIdentities()" + " is hidden. Internal use only.")
+    @Test
+    public void getImsPublicUserIdentities_ReadPhoneNumberPermission() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
+        // make sure not to face any permission problem while calling the API
+        try {
+            List<Uri> impuList = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, tm -> tm.getImsPublicUserIdentities(),
+                    Manifest.permission.READ_PHONE_NUMBERS);
+            assertNotNull(impuList);
+            for (Uri impu : impuList) {
+                assertTrue(impu.getScheme().equalsIgnoreCase("sip"));
+            }
+        } catch (IllegalStateException e) {
+            // expected in case SIM do not support ISIM
+        }
+    }
+
+    /**
+     * Verifies that {@link TelephonyManager#getImsPublicUserIdentities()} does throw
+     * SecurityException when called with out any permissions granted.
+     */
+    @Ignore("TelephonyManager#getImsPublicUserIdentities()" + " is hidden. Internal use only.")
+    @Test
+    public void getImsPublicUserIdentities_NoPermissionGranted() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
+        try {
+            if (hasReadContactsPermission(mSelfPackageName)) {
+                InstrumentationRegistry.getInstrumentation().getUiAutomation().
+                        revokeRuntimePermission(mSelfPackageName,
+                                "android.permission.READ_PHONE_NUMBERS");
+            }
+            List<Uri> impuList = mTelephonyManager.getImsPublicUserIdentities();
+            fail(); // if no SecurityException then it fails()
+        } catch (IllegalStateException e) {
+            // expected in case SIM do not support ISIM
+        } catch (SecurityException secExp) {
+            // expected as caller is not granted with required permissions
+        }
+    }
+
+    private boolean hasReadContactsPermission(String pkgName) {
+        return mPackageManager.checkPermission(Manifest.permission.READ_CONTACTS, pkgName)
+                == PackageManager.PERMISSION_GRANTED;
     }
 }

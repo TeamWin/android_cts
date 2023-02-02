@@ -1214,16 +1214,13 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         assumeTrue("not device AB", "true".equalsIgnoreCase(result));
     }
 
-    // TODO (b/174775905) remove after exposing the check from ITestDevice.
     boolean isHeadlessSystemUserMode() throws DeviceNotAvailableException {
         return isHeadlessSystemUserMode(getDevice());
     }
 
-    // TODO (b/174775905) remove after exposing the check from ITestDevice.
     public static boolean isHeadlessSystemUserMode(ITestDevice device)
             throws DeviceNotAvailableException {
-        String result = device.executeShellCommand("dumpsys user");
-        return result.contains("headless-system mode: true");
+        return device.isHeadlessSystemUserMode();
     }
 
     protected void assumeHeadlessSystemUserMode(String reason)

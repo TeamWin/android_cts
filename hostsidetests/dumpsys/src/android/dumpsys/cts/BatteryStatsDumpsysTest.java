@@ -18,12 +18,9 @@ package android.dumpsys.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;

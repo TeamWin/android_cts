@@ -45,6 +45,9 @@ public class MockVoiceService {
     private static final int MSG_REQUEST_INCOMING_CALL = 6;
     private static final int MSG_REQUEST_CALL_END = 7;
 
+    private static final int EMERGENCY_TEMP_FAILURE = 325;
+    private static final int EMERGENCY_PERM_FAILURE = 326;
+
     private String mTag = "MockVoiceService";
     private Handler mConfigHandler;
     private HandlerThread mCallStateHandlerThread;
@@ -1236,6 +1239,10 @@ public class MockVoiceService {
                 return LastCallFailCause.NORMAL;
             case DisconnectCause.POWER_OFF:
                 return LastCallFailCause.RADIO_OFF;
+            case DisconnectCause.EMERGENCY_TEMP_FAILURE:
+                return EMERGENCY_TEMP_FAILURE;
+            case DisconnectCause.EMERGENCY_PERM_FAILURE:
+                return EMERGENCY_PERM_FAILURE;
             default:
                 return LastCallFailCause.ERROR_UNSPECIFIED;
         }

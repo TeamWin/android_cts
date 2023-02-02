@@ -16,11 +16,13 @@
 
 package android.telephony.cts;
 
-import static androidx.test.InstrumentationRegistry.getContext;
-
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
+import androidx.test.InstrumentationRegistry;
+
+import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.telephony.satellite.PointingInfo;
@@ -30,8 +32,13 @@ import android.util.Log;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 public class SatelliteManagerTest {
     private static final String TAG = "SatelliteManagerTest";
+
+    private static final long TIMEOUT = 1000;
 
     private SatelliteManager mSatelliteManager;
 
@@ -45,7 +52,6 @@ public class SatelliteManagerTest {
 
     @Test
     public void testSatellitePositionUpdates() {
-        // TODO: should check for SATELLITE_COMMUNICATION permission
         SatelliteManager.SatellitePositionUpdateCallback callback =
                 new SatelliteManager.SatellitePositionUpdateCallback() {
                     @Override
@@ -59,6 +65,12 @@ public class SatelliteManagerTest {
                     }
         };
 
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class, ()-> mSatelliteManager.startSatellitePositionUpdates(
+                getContext().getMainExecutor(), callback));
+
+        /*
+        grantSatellitePermission();
         int startResult = mSatelliteManager.startSatellitePositionUpdates(
                 getContext().getMainExecutor(), callback);
         if (startResult != SatelliteManager.SATELLITE_SERVICE_SUCCESS) {
@@ -79,5 +91,33 @@ public class SatelliteManagerTest {
         }
         assertThrows(IllegalArgumentException.class,
                 () -> mSatelliteManager.stopSatellitePositionUpdates(callback));
+         */
+    }
+
+    @Test
+    public void testGetMaxCharactersPerSatelliteTextMessage() throws Exception {
+        LinkedBlockingQueue<Integer> maxCharResult = new LinkedBlockingQueue<>(1);
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class,
+                ()-> mSatelliteManager.getMaxCharactersPerSatelliteTextMessage(
+                        getContext().getMainExecutor(), maxCharResult::offer));
+
+        /*
+        grantSatellitePermission();
+        mSatelliteManager.getMaxCharactersPerSatelliteTextMessage(
+                getContext().getMainExecutor(), maxCharResult::offer);
+        Integer result = maxCharResult.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+        assertNotNull(result);
+         */
+    }
+
+    private Context getContext() {
+        return InstrumentationRegistry.getContext();
+    }
+
+    private void grantSatellitePermission() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.SATELLITE_COMMUNICATION);
     }
 }

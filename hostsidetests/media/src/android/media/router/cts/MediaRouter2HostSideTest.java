@@ -138,11 +138,11 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
     @AppModeFull
     @RequiresDevice
     @Test
-    public void newRouteListingPreference_withInvalidCustomReason_throws() throws Exception {
+    public void newRouteListingPreference_withInvalidCustomSubtext_throws() throws Exception {
         runDeviceTests(
                 MEDIA_ROUTER_TEST_PACKAGE,
                 DEVICE_SIDE_TEST_CLASS,
-                "newRouteListingPreference_withInvalidCustomReason_throws");
+                "newRouteListingPreference_withInvalidCustomSubtext_throws");
     }
 
     private static void installTestApp(TestInformation testInfo, String apkName)

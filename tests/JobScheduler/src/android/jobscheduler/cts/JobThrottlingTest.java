@@ -468,7 +468,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable in leanback device", mLeanbackOnly);
 
         // This test is designed for the old quota system.
-        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
         setRestrictedBucketEnabled(true);
 
@@ -500,7 +500,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable in leanback device", mLeanbackOnly);
 
         // This test is designed for the old quota system.
-        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
         setRestrictedBucketEnabled(true);
 
@@ -535,7 +535,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable in leanback device", mLeanbackOnly);
 
         // This test is designed for the old quota system.
-        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
         setRestrictedBucketEnabled(true);
 
@@ -581,7 +581,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable, since ethernet is connected", hasEthernetConnection());
 
         // This test is designed for the old quota system.
-        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
         setRestrictedBucketEnabled(true);
 
@@ -625,7 +625,7 @@ public class JobThrottlingTest {
         mNetworkingHelper.ensureSavedWifiNetwork();
 
         // This test is designed for the old quota system.
-        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
         setRestrictedBucketEnabled(true);
 
@@ -676,7 +676,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable in leanback device", mLeanbackOnly);
 
         // This test is designed for the old quota system.
-        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
         setChargingState(false);
         setTestPackageStandbyBucket(Bucket.NEVER);
@@ -691,7 +691,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable in leanback device", mLeanbackOnly);
 
         // This test is designed for the old quota system.
-        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
         setChargingState(false);
         setTestPackageStandbyBucket(Bucket.NEVER);
@@ -1031,7 +1031,7 @@ public class JobThrottlingTest {
         mNetworkingHelper.ensureSavedWifiNetwork();
 
         // This test is designed for the old quota system.
-        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
         setRestrictedBucketEnabled(true);
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
@@ -1109,7 +1109,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable in leanback device", mLeanbackOnly); // Test needs battery
 
         // This test is designed for the old quota system.
-        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
         // Reduce allowed time for testing.
         mDeviceConfigStateHelper.set("qc_allowed_time_per_period_rare_ms", "60000");

@@ -79,8 +79,6 @@ public class MediaRouter2DeviceTest {
      */
     private static final int ROUTE_UPDATE_MAX_WAIT_MS = 10_000;
 
-    private static final int SAMPLE_SESSION_PARTICIPANT_COUNT = 3;
-
     private MediaRouter2 mRouter2;
     private MediaRouter2Manager mRouter2Manager;
     private PowerManager.WakeLock mWakeLock;
@@ -157,24 +155,24 @@ public class MediaRouter2DeviceTest {
                 List.of(
                         new RouteListingPreference.Item.Builder(ROUTE_ID_APP_1_ROUTE_1)
                                 .setFlags(RouteListingPreference.Item.FLAG_ONGOING_SESSION)
-                                .setDisableReason(RouteListingPreference.Item.DISABLE_REASON_NONE)
+                                .setSubText(RouteListingPreference.Item.SUBTEXT_NONE)
                                 .build(),
                         new RouteListingPreference.Item.Builder(ROUTE_ID_APP_2_ROUTE_2)
                                 .setFlags(0)
-                                .setDisableReason(RouteListingPreference.Item.DISABLE_REASON_NONE)
-                                .setSessionParticipantCount(SAMPLE_SESSION_PARTICIPANT_COUNT)
+                                .setSubText(RouteListingPreference.Item.SUBTEXT_NONE)
+                                .setSelectionBehavior(
+                                        RouteListingPreference.Item.SELECTION_BEHAVIOR_NONE)
                                 .build(),
                         new RouteListingPreference.Item.Builder(ROUTE_ID_APP_3_ROUTE_3)
                                 .setFlags(0)
-                                .setDisableReason(
-                                        RouteListingPreference.Item
-                                                .DISABLE_REASON_SUBSCRIPTION_REQUIRED)
+                                .setSubText(
+                                        RouteListingPreference.Item.SUBTEXT_SUBSCRIPTION_REQUIRED)
                                 .build());
         RouteListingPreference routeListingPreference =
                 new RouteListingPreference.Builder()
                         .setItems(items)
                         .setUseSystemOrdering(false)
-                        .setInAppOnlyItemRoutingReceiver(new ComponentName(mContext, getClass()))
+                        .setLinkedItemComponentName(new ComponentName(mContext, getClass()))
                         .build();
         MediaRouter2ManagerCallbackImpl mediaRouter2ManagerCallback =
                 new MediaRouter2ManagerCallbackImpl();
@@ -193,13 +191,13 @@ public class MediaRouter2DeviceTest {
         Truth.assertThat(receivedRouteListingPreference.getItems().get(0).getFlags())
                 .isEqualTo(RouteListingPreference.Item.FLAG_ONGOING_SESSION);
         RouteListingPreference.Item secondItem = receivedRouteListingPreference.getItems().get(1);
-        Truth.assertThat(secondItem.getDisableReason())
-                .isEqualTo(RouteListingPreference.Item.DISABLE_REASON_NONE);
-        Truth.assertThat(secondItem.getSessionParticipantCount())
-                .isEqualTo(SAMPLE_SESSION_PARTICIPANT_COUNT);
-        Truth.assertThat(receivedRouteListingPreference.getItems().get(2).getDisableReason())
-                .isEqualTo(RouteListingPreference.Item.DISABLE_REASON_SUBSCRIPTION_REQUIRED);
-        Truth.assertThat(receivedRouteListingPreference.getInAppOnlyItemRoutingReceiver())
+        Truth.assertThat(secondItem.getSubText())
+                .isEqualTo(RouteListingPreference.Item.SUBTEXT_NONE);
+        Truth.assertThat(secondItem.getSelectionBehavior())
+                .isEqualTo(RouteListingPreference.Item.SELECTION_BEHAVIOR_NONE);
+        Truth.assertThat(receivedRouteListingPreference.getItems().get(2).getSubText())
+                .isEqualTo(RouteListingPreference.Item.SUBTEXT_SUBSCRIPTION_REQUIRED);
+        Truth.assertThat(receivedRouteListingPreference.getLinkedItemComponentName())
                 .isEqualTo(new ComponentName(mContext, getClass()));
 
         // Check that null is also propagated correctly.
@@ -215,8 +213,8 @@ public class MediaRouter2DeviceTest {
         List<RouteListingPreference.Item> item =
                 List.of(
                         new RouteListingPreference.Item.Builder(ROUTE_ID_APP_1_ROUTE_1)
-                                .setDisableReason(RouteListingPreference.Item.DISABLE_REASON_CUSTOM)
-                                .setCustomDisableReasonMessage("Fake disable reason message")
+                                .setSubText(RouteListingPreference.Item.SUBTEXT_CUSTOM)
+                                .setCustomSubtextMessage("Fake disable reason message")
                                 .build());
         RouteListingPreference routeListingPreference =
                 new RouteListingPreference.Builder().setItems(item).build();
@@ -234,24 +232,24 @@ public class MediaRouter2DeviceTest {
         Truth.assertThat(receivedRouteListingPreference.getItems()).hasSize(1);
 
         RouteListingPreference.Item receivedItem = receivedRouteListingPreference.getItems().get(0);
-        Truth.assertThat(receivedItem.getDisableReason())
-                .isEqualTo(RouteListingPreference.Item.DISABLE_REASON_CUSTOM);
-        Truth.assertThat(receivedItem.getCustomDisableReasonMessage())
+        Truth.assertThat(receivedItem.getSubText())
+                .isEqualTo(RouteListingPreference.Item.SUBTEXT_CUSTOM);
+        Truth.assertThat(receivedItem.getCustomSubtextMessage())
                 .isEqualTo("Fake disable reason message");
     }
 
     @ApiTest(apis = {"android.media.RouteListingPreference"})
     @Test
-    public void newRouteListingPreference_withInvalidCustomReason_throws() {
+    public void newRouteListingPreference_withInvalidCustomSubtext_throws() {
         RouteListingPreference.Item.Builder builder =
                 new RouteListingPreference.Item.Builder("fake_route_id")
-                        .setDisableReason(RouteListingPreference.Item.DISABLE_REASON_CUSTOM);
+                        .setSubText(RouteListingPreference.Item.SUBTEXT_CUSTOM);
         // Check that the builder throws if DISABLE_REASON_CUSTOM is used, but no disable reason
         // message is provided.
         assertThrows(IllegalArgumentException.class, builder::build);
 
         // Check that the builder does not throw if we provide a message.
-        builder.setCustomDisableReasonMessage("Fake disable reason message").build();
+        builder.setCustomSubtextMessage("Fake disable reason message").build();
     }
 
     @Test
@@ -260,7 +258,7 @@ public class MediaRouter2DeviceTest {
                 () ->
                         mRouter2.setRouteListingPreference(
                                 new RouteListingPreference.Builder()
-                                        .setInAppOnlyItemRoutingReceiver(
+                                        .setLinkedItemComponentName(
                                                 new ComponentName(
                                                         /* package= */ "android",
                                                         /* class= */ getClass().getCanonicalName()))

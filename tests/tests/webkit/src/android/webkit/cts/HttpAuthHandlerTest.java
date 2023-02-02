@@ -73,8 +73,9 @@ public class HttpAuthHandlerTest extends SharedWebViewTest {
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
-
-        mWebServer.shutdown();
+        if (mWebServer != null) {
+            mWebServer.shutdown();
+        }
     }
 
     @Override
