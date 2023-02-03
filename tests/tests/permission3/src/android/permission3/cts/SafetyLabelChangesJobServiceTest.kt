@@ -27,15 +27,16 @@ import android.permission.cts.CtsNotificationListenerServiceUtils
 import android.permission.cts.CtsNotificationListenerServiceUtils.getNotificationForPackageAndId
 import android.permission.cts.PermissionUtils
 import android.permission.cts.TestUtils
+import android.permission3.cts.AppMetadata.createAppMetadataWithLocationSharingNoAds
+import android.permission3.cts.AppMetadata.createAppMetadataWithNoSharing
 import android.provider.DeviceConfig
 import android.safetylabel.SafetyLabelConstants
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
-import com.android.compatibility.common.util.DisableAnimationRule
-import com.android.compatibility.common.util.FreezeRotationRule
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.eventually
+import com.android.compatibility.common.util.SystemUtil.waitForBroadcasts
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Assume
@@ -46,10 +47,7 @@ import org.junit.Test
 
 /** End-to-end test for SafetyLabelChangesJobService. */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
-class SafetyLabelChangesJobServiceTest {
-    @get:Rule val disableAnimationRule = DisableAnimationRule()
-
-    @get:Rule val freezeRotationRule = FreezeRotationRule()
+class SafetyLabelChangesJobServiceTest : BaseUsePermissionTest() {
 
     @get:Rule
     val permissionRationaleEnabledConfig =
@@ -66,6 +64,26 @@ class SafetyLabelChangesJobServiceTest {
             DeviceConfig.NAMESPACE_PRIVACY,
             SafetyLabelConstants.SAFETY_LABEL_CHANGE_NOTIFICATIONS_ENABLED,
             true.toString())
+
+    /**
+     * This rule serves to limit the max number of safety labels that can be persisted, so that
+     * repeated tests don't overwhelm the disk storage on the device.
+     */
+    @get:Rule
+    val deviceConfigMaxSafetyLabelsPersistedPerApp =
+        DeviceConfigStateChangerRule(
+            context,
+            DeviceConfig.NAMESPACE_PRIVACY,
+            PROPERTY_MAX_SAFETY_LABELS_PERSISTED_PER_APP,
+            "2")
+
+    @get:Rule
+    val deviceConfigDataSharingUpdatesPeriod =
+        DeviceConfigStateChangerRule(
+            BasePermissionTest.context,
+            DeviceConfig.NAMESPACE_PRIVACY,
+            PROPERTY_DATA_SHARING_UPDATE_PERIOD_MILLIS,
+            "600000")
 
     @Before
     fun setup() {
@@ -86,7 +104,7 @@ class SafetyLabelChangesJobServiceTest {
     }
 
     @After
-    fun tearDown() {
+    fun cancelJobAndNotifications() {
         cancelJob(SAFETY_LABEL_CHANGES_JOB_ID)
         CtsNotificationListenerServiceUtils.cancelNotifications(permissionControllerPackageName)
         // Reset battery saving restrictions
@@ -96,7 +114,13 @@ class SafetyLabelChangesJobServiceTest {
     }
 
     @Test
-    fun afterRunMainJob_showNotification() {
+    fun runMainJob_whenLocationSharingUpdatesForLocationGrantedApps_showsNotification() {
+        installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        waitForBroadcasts()
+        installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+        waitForBroadcasts()
+        grantLocationPermission(APP_PACKAGE_NAME)
+
         runMainJob()
         TestUtils.awaitJobUntilRequestedState(
             permissionControllerPackageName,
@@ -104,7 +128,48 @@ class SafetyLabelChangesJobServiceTest {
             TIMEOUT_TIME_MS,
             uiAutomation(),
             "unknown")
+
         assertNotificationShown()
+    }
+
+    @Test
+    fun runMainJob_whenNoLocationGrantedApps_doesNotShowNotification() {
+        installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        waitForBroadcasts()
+        installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+        waitForBroadcasts()
+
+        runMainJob()
+        TestUtils.awaitJobUntilRequestedState(
+            permissionControllerPackageName,
+            SAFETY_LABEL_CHANGES_JOB_ID,
+            TIMEOUT_TIME_MS,
+            uiAutomation(),
+            "unknown")
+
+        assertNotificationNotShown()
+    }
+
+    @Test
+    fun runMainJob_whenNoLocationSharingUpdates_doesNotShowNotification() {
+        installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        waitForBroadcasts()
+        grantLocationPermission(APP_PACKAGE_NAME)
+
+        runMainJob()
+        TestUtils.awaitJobUntilRequestedState(
+            permissionControllerPackageName,
+            SAFETY_LABEL_CHANGES_JOB_ID,
+            TIMEOUT_TIME_MS,
+            uiAutomation(),
+            "unknown")
+
+        assertNotificationNotShown()
+    }
+
+    private fun grantLocationPermission(packageName: String) {
+        uiAutomation.grantRuntimePermission(
+            packageName, android.Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     companion object {
@@ -116,7 +181,10 @@ class SafetyLabelChangesJobServiceTest {
         private const val SAFETY_LABEL_CHANGES_JOB_SERVICE_RECEIVER_CLASS =
             "com.android.permissioncontroller.permission.service.v34" +
                 ".SafetyLabelChangesJobService\$Receiver"
-
+        private const val PROPERTY_DATA_SHARING_UPDATE_PERIOD_MILLIS =
+            "data_sharing_update_period_millis"
+        private const val PROPERTY_MAX_SAFETY_LABELS_PERSISTED_PER_APP =
+            "max_safety_labels_persisted_per_app"
         private const val SAFETY_LABEL_CHANGES_NOTIFICATION_ID = 5
 
         private val context: Context = InstrumentationRegistry.getTargetContext()
@@ -139,6 +207,13 @@ class SafetyLabelChangesJobServiceTest {
             }
         }
 
+        private fun assertNotificationNotShown() {
+            eventually {
+                val notification = getNotification(false)
+                assertThat(notification).isNull()
+            }
+        }
+
         private fun getNotification(cancelNotification: Boolean) =
             getNotificationForPackageAndId(
                     permissionControllerPackageName,
@@ -149,8 +224,8 @@ class SafetyLabelChangesJobServiceTest {
         private fun cancelJob(jobId: Int) {
             SystemUtil.runShellCommand(
                 "cmd jobscheduler cancel -u $userId $permissionControllerPackageName $jobId")
-            TestUtils.awaitJobUntilRequestedState(permissionControllerPackageName, jobId,
-                    TIMEOUT_TIME_MS, uiAutomation(), "unknown")
+            TestUtils.awaitJobUntilRequestedState(
+                permissionControllerPackageName, jobId, TIMEOUT_TIME_MS, uiAutomation(), "unknown")
         }
 
         private fun runMainJob() {

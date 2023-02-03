@@ -25,6 +25,7 @@ import android.Manifest;
 import android.content.Context;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.HdrConversionMode;
+import android.provider.Settings;
 import android.view.Display.HdrCapabilities;
 
 import androidx.test.InstrumentationRegistry;
@@ -35,6 +36,7 @@ import com.android.compatibility.common.util.DisplayUtil;
 import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,9 +50,12 @@ import java.util.List;
 public class HdrConversionTest {
     private DisplayManager mDisplayManager;
 
+    private HdrConversionMode mOriginalHdrConversionModeSettings;
+
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+            Manifest.permission.HDMI_CEC,
             Manifest.permission.MODIFY_HDR_CONVERSION_MODE);
 
     @Before
@@ -61,51 +66,66 @@ public class HdrConversionTest {
                 || MediaUtils.onCuttlefish());
 
         mDisplayManager = context.getSystemService(DisplayManager.class);
+        cacheOriginalHdrConversionModeSetting();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        restoreOriginalHdrConversionModeSettings();
     }
 
     @Test
     public void testSetHdrConversionModeThrowsExceptionWithInvalidArgument() {
-        final HdrConversionMode hdrConversionMode1 = new HdrConversionMode(
-                HdrConversionMode.HDR_CONVERSION_SYSTEM,
-                HdrCapabilities.HDR_TYPE_DOLBY_VISION);
         assertThrows(
                 "Preferred HDR output type should not be set if the conversion mode is "
                         + "PASSTHROUGH or SYSTEM",
                 IllegalArgumentException.class,
-                () -> mDisplayManager.setHdrConversionMode(hdrConversionMode1));
+                () -> new HdrConversionMode(
+                        HdrConversionMode.HDR_CONVERSION_SYSTEM,
+                        HdrCapabilities.HDR_TYPE_DOLBY_VISION));
 
-        final HdrConversionMode hdrConversionMode2 = new HdrConversionMode(
-                HdrConversionMode.HDR_CONVERSION_PASSTHROUGH,
-                HdrCapabilities.HDR_TYPE_DOLBY_VISION);
         assertThrows(
                 "Preferred HDR output type should not be set if the conversion mode is "
                         + "PASSTHROUGH or SYSTEM",
                 IllegalArgumentException.class,
-                () -> mDisplayManager.setHdrConversionMode(hdrConversionMode2));
+                () -> new HdrConversionMode(
+                        HdrConversionMode.HDR_CONVERSION_PASSTHROUGH,
+                        HdrCapabilities.HDR_TYPE_DOLBY_VISION));
     }
 
     @Test
     public void testSetHdrConversionMode() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        final int invalidHdrConversionMode = 0;
+
         HdrConversionMode hdrConversionMode = new HdrConversionMode(
                 HdrConversionMode.HDR_CONVERSION_SYSTEM);
         mDisplayManager.setHdrConversionMode(hdrConversionMode);
-        assertEquals(hdrConversionMode.getConversionMode(),
-                mDisplayManager.getHdrConversionMode().getConversionMode());
+        assertEquals(hdrConversionMode, mDisplayManager.getHdrConversionMode());
+        int currentHdrConversionMode = Settings.Global.getInt(context.getContentResolver(),
+                Settings.Global.HDR_CONVERSION_MODE, invalidHdrConversionMode);
+        assertEquals(hdrConversionMode.getConversionMode(), currentHdrConversionMode);
 
         hdrConversionMode = new HdrConversionMode(
                 HdrConversionMode.HDR_CONVERSION_PASSTHROUGH);
         mDisplayManager.setHdrConversionMode(hdrConversionMode);
-        assertEquals(hdrConversionMode.getConversionMode(),
-                mDisplayManager.getHdrConversionMode().getConversionMode());
+        assertEquals(hdrConversionMode, mDisplayManager.getHdrConversionMode());
+        currentHdrConversionMode = Settings.Global.getInt(context.getContentResolver(),
+                Settings.Global.HDR_CONVERSION_MODE, invalidHdrConversionMode);
+        assertEquals(hdrConversionMode.getConversionMode(), currentHdrConversionMode);
 
         hdrConversionMode = new HdrConversionMode(
                 HdrConversionMode.HDR_CONVERSION_FORCE,
                 HdrCapabilities.HDR_TYPE_DOLBY_VISION);
         mDisplayManager.setHdrConversionMode(hdrConversionMode);
-        assertEquals(hdrConversionMode.getConversionMode(),
-                mDisplayManager.getHdrConversionMode().getConversionMode());
+        assertEquals(hdrConversionMode, mDisplayManager.getHdrConversionMode());
+        currentHdrConversionMode = Settings.Global.getInt(context.getContentResolver(),
+                Settings.Global.HDR_CONVERSION_MODE, invalidHdrConversionMode);
+        assertEquals(hdrConversionMode.getConversionMode(), currentHdrConversionMode);
+        int preferredForceHdrConversionType = Settings.Global.getInt(context.getContentResolver(),
+                Settings.Global.HDR_FORCE_CONVERSION_TYPE, -1);
         assertEquals(hdrConversionMode.getPreferredHdrOutputType(),
-                mDisplayManager.getHdrConversionMode().getPreferredHdrOutputType());
+                preferredForceHdrConversionType);
     }
 
     @Test
@@ -121,5 +141,18 @@ public class HdrConversionTest {
                     + Arrays.toString(permissibleHdrTypes.toArray()),
                     permissibleHdrTypes.contains(hdrType));
         }
+    }
+
+    private void cacheOriginalHdrConversionModeSetting() {
+        mOriginalHdrConversionModeSettings = mDisplayManager.getHdrConversionMode();
+    }
+
+    private void restoreOriginalHdrConversionModeSettings() {
+        // mDisplayManager can be null if the test assumptions if setUp have failed.
+        if (mDisplayManager == null) {
+            return;
+        }
+        mDisplayManager.setHdrConversionMode(
+                new HdrConversionMode(mOriginalHdrConversionModeSettings.getConversionMode()));
     }
 }

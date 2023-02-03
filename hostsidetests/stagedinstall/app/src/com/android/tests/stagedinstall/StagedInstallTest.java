@@ -1443,14 +1443,14 @@ public class StagedInstallTest {
         InstallUtils.requestAudioFocus(TestApp.A);
 
         var pi = InstallUtils.getPackageInstaller();
-        var constraints = new InstallConstraints.Builder().requireAppNotInteracting().build();
+        var constraints = new InstallConstraints.Builder().setAppNotInteractingRequired().build();
         var future = new CompletableFuture<InstallConstraintsResult>();
         pi.checkInstallConstraints(
                 Arrays.asList(TestApp.A),
                 constraints,
                 r -> r.run(),
                 result -> future.complete(result));
-        assertThat(future.join().isAllConstraintsSatisfied()).isFalse();
+        assertThat(future.join().areAllConstraintsSatisfied()).isFalse();
     }
 
     @Test
@@ -1479,13 +1479,13 @@ public class StagedInstallTest {
 
         var pi = InstallUtils.getPackageInstaller();
         var f1 = new CompletableFuture<InstallConstraintsResult>();
-        var constraints = new InstallConstraints.Builder().requireAppNotTopVisible().build();
+        var constraints = new InstallConstraints.Builder().setAppNotTopVisibleRequired().build();
         pi.checkInstallConstraints(
                 Arrays.asList(TestApp.A),
                 constraints,
                 r -> r.run(),
                 result -> f1.complete(result));
-        assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
+        assertThat(f1.join().areAllConstraintsSatisfied()).isFalse();
 
         // Test app A is no longer top-visible
         startActivity(TestApp.B);
@@ -1499,7 +1499,7 @@ public class StagedInstallTest {
                 constraints,
                 r -> r.run(),
                 result -> f2.complete(result));
-        assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
+        assertThat(f2.join().areAllConstraintsSatisfied()).isTrue();
     }
 
     @Test
@@ -1511,13 +1511,13 @@ public class StagedInstallTest {
 
         var pi = InstallUtils.getPackageInstaller();
         var f1 = new CompletableFuture<InstallConstraintsResult>();
-        var constraints = new InstallConstraints.Builder().requireAppNotForeground().build();
+        var constraints = new InstallConstraints.Builder().setAppNotForegroundRequired().build();
         pi.checkInstallConstraints(
                 Arrays.asList(TestApp.A),
                 constraints,
                 r -> r.run(),
                 result -> f1.complete(result));
-        assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
+        assertThat(f1.join().areAllConstraintsSatisfied()).isFalse();
 
         // Test app A is no longer foreground
         startActivity(TestApp.B);
@@ -1531,7 +1531,7 @@ public class StagedInstallTest {
                 constraints,
                 r -> r.run(),
                 result -> f2.complete(result));
-        assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
+        assertThat(f2.join().areAllConstraintsSatisfied()).isTrue();
     }
 
     @Test
@@ -1544,13 +1544,13 @@ public class StagedInstallTest {
         SystemUtil.runShellCommand(" setprop " + propKey + " 0");
         var pi = InstallUtils.getPackageInstaller();
         var f1 = new CompletableFuture<InstallConstraintsResult>();
-        var constraints = new InstallConstraints.Builder().requireDeviceIdle().build();
+        var constraints = new InstallConstraints.Builder().setDeviceIdleRequired().build();
         pi.checkInstallConstraints(
                 Arrays.asList(TestApp.A),
                 constraints,
                 r -> r.run(),
                 result -> f1.complete(result));
-        assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
+        assertThat(f1.join().areAllConstraintsSatisfied()).isFalse();
 
         // Device is idle
         SystemUtil.runShellCommand(" setprop " + propKey + " 1");
@@ -1560,7 +1560,7 @@ public class StagedInstallTest {
                 constraints,
                 r -> r.run(),
                 result -> f2.complete(result));
-        assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
+        assertThat(f2.join().areAllConstraintsSatisfied()).isTrue();
     }
 
     @Test
@@ -1573,13 +1573,13 @@ public class StagedInstallTest {
         SystemUtil.runShellCommand(" setprop " + propKey + " 1");
         var pi = InstallUtils.getPackageInstaller();
         var f1 = new CompletableFuture<InstallConstraintsResult>();
-        var constraints = new InstallConstraints.Builder().requireNotInCall().build();
+        var constraints = new InstallConstraints.Builder().setNotInCallRequired().build();
         pi.checkInstallConstraints(
                 Arrays.asList(TestApp.A),
                 constraints,
                 r -> r.run(),
                 result -> f1.complete(result));
-        assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
+        assertThat(f1.join().areAllConstraintsSatisfied()).isFalse();
 
         // Device is not in call
         SystemUtil.runShellCommand(" setprop " + propKey + " 0");
@@ -1589,7 +1589,7 @@ public class StagedInstallTest {
                 constraints,
                 r -> r.run(),
                 result -> f2.complete(result));
-        assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
+        assertThat(f2.join().areAllConstraintsSatisfied()).isTrue();
     }
 
     @Test
@@ -1603,13 +1603,13 @@ public class StagedInstallTest {
 
         var pi = InstallUtils.getPackageInstaller();
         var f1 = new CompletableFuture<InstallConstraintsResult>();
-        var constraints = new InstallConstraints.Builder().requireAppNotForeground().build();
+        var constraints = new InstallConstraints.Builder().setAppNotForegroundRequired().build();
         pi.checkInstallConstraints(
                 Arrays.asList(TestApp.S),
                 constraints,
                 r -> r.run(),
                 result -> f1.complete(result));
-        assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
+        assertThat(f1.join().areAllConstraintsSatisfied()).isFalse();
 
         // Test app A is no longer foreground. So is test app S.
         startActivity(TestApp.B);
@@ -1623,7 +1623,7 @@ public class StagedInstallTest {
                 constraints,
                 r -> r.run(),
                 result -> f2.complete(result));
-        assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
+        assertThat(f2.join().areAllConstraintsSatisfied()).isTrue();
     }
 
     @Test
@@ -1632,7 +1632,6 @@ public class StagedInstallTest {
         // Disable package verifier to prevent pop-up during installation
         final String oldVal = SystemUtil.runShellCommand(
                 "settings get global package_verifier_enable");
-        SystemUtil.runShellCommand("settings put global package_verifier_enable 0");
 
         try {
             Install.single(TestApp.B1).commit();
@@ -1651,13 +1650,14 @@ public class StagedInstallTest {
             Log.d(TAG, "checkInstallConstraints");
             var pi = InstallUtils.getPackageInstaller();
             var f1 = new CompletableFuture<InstallConstraintsResult>();
-            var constraints = new InstallConstraints.Builder().requireAppNotForeground().build();
+            var constraints =
+                    new InstallConstraints.Builder().setAppNotForegroundRequired().build();
             pi.checkInstallConstraints(
                     Arrays.asList(HelloWorldSdk1.getPackageName()),
                     constraints,
                     r -> r.run(),
                     result -> f1.complete(result));
-            assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
+            assertThat(f1.join().areAllConstraintsSatisfied()).isFalse();
 
             Log.d(TAG, "Start activity B");
             // HelloWorldUsingSdk1 is no longer foreground. So is HelloWorldSdk1.
@@ -1674,11 +1674,10 @@ public class StagedInstallTest {
                     constraints,
                     r -> r.run(),
                     result -> f2.complete(result));
-            assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
+            assertThat(f2.join().areAllConstraintsSatisfied()).isTrue();
         } finally {
             Log.d(TAG, "finally restore settings");
             SystemUtil.runShellCommand("setprop " + propKey + " invalid");
-            SystemUtil.runShellCommand("settings put global package_verifier_enable " + oldVal);
         }
     }
 
@@ -1690,7 +1689,8 @@ public class StagedInstallTest {
         startActivity(TestApp.A);
 
         var pi = InstallUtils.getPackageInstaller();
-        var inputConstraints = new InstallConstraints.Builder().requireAppNotInteracting().build();
+        var inputConstraints =
+                new InstallConstraints.Builder().setAppNotInteractingRequired().build();
 
         // Timeout == 0, constraints not satisfied
         var sender = new LocalIntentSender();
@@ -1704,7 +1704,7 @@ public class StagedInstallTest {
                 PackageInstaller.EXTRA_INSTALL_CONSTRAINTS_RESULT, InstallConstraintsResult.class);
         assertThat(packageNames).asList().containsExactly(TestApp.A);
         assertThat(receivedConstraints).isEqualTo(inputConstraints);
-        assertThat(result.isAllConstraintsSatisfied()).isFalse();
+        assertThat(result.areAllConstraintsSatisfied()).isFalse();
 
         // Timeout == one day, constraints not satisfied
         sender = new LocalIntentSender();
@@ -1724,7 +1724,7 @@ public class StagedInstallTest {
                 PackageInstaller.EXTRA_INSTALL_CONSTRAINTS_RESULT, InstallConstraintsResult.class);
         assertThat(packageNames).asList().containsExactly(TestApp.A);
         assertThat(receivedConstraints).isEqualTo(inputConstraints);
-        assertThat(result.isAllConstraintsSatisfied()).isTrue();
+        assertThat(result.areAllConstraintsSatisfied()).isTrue();
     }
 
     @Test
@@ -1734,7 +1734,7 @@ public class StagedInstallTest {
         // Constraints are satisfied. The session will be committed without timeout.
         var pi = InstallUtils.getPackageInstaller();
         int sessionId = Install.single(TestApp.A2).createSession();
-        var constraints = new InstallConstraints.Builder().requireAppNotForeground().build();
+        var constraints = new InstallConstraints.Builder().setAppNotForegroundRequired().build();
         var sender = new LocalIntentSender();
         pi.commitSessionAfterInstallConstraintsAreMet(sessionId, sender.getIntentSender(),
                 constraints, TimeUnit.MINUTES.toMillis(1));
@@ -1752,7 +1752,7 @@ public class StagedInstallTest {
         // Timeout for constraints not satisfied
         var pi = InstallUtils.getPackageInstaller();
         int sessionId = Install.single(TestApp.A2).createSession();
-        var constraints = new InstallConstraints.Builder().requireAppNotForeground().build();
+        var constraints = new InstallConstraints.Builder().setAppNotForegroundRequired().build();
         var sender = new LocalIntentSender();
         pi.commitSessionAfterInstallConstraintsAreMet(sessionId, sender.getIntentSender(),
                 constraints, TimeUnit.SECONDS.toMillis(3));

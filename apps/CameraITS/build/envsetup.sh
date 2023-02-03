@@ -72,3 +72,6 @@ do
     python "tools/$M.py" 2>&1 | grep -q "OK" || \
         echo ">> Unit test for $M failed" >&2
 done
+
+echo -e "\n*****Please execute below adb command on your dut before running the tests*****\n"
+echo -e "adb -s <device_id> shell am compat enable ALLOW_TEST_API_ACCESS com.android.cts.verifier\n\n"

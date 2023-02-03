@@ -472,6 +472,21 @@ class ItsSession(object):
     self.sock.settimeout(self.SOCK_TIMEOUT)
     return data[_OBJ_VALUE_STR]
 
+  def get_camera_ids(self):
+    """Returns the list of all camera_ids.
+
+    Returns:
+      List of camera ids on the device.
+    """
+    cmd = {'cmdName': 'getCameraIds'}
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
+    data, _ = self.__read_response_from_socket()
+    if data['tag'] != 'cameraIds':
+      raise error_util.CameraItsError('Invalid command response')
+    return data['objValue']
+
   def get_unavailable_physical_cameras(self, camera_id):
     """Get the unavailable physical cameras ids.
 

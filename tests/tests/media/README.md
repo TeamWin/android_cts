@@ -12,6 +12,7 @@ The tests are organized into following testcases
 | CtsMediaExtractorTestCases      | MediaExtractor related tests                                              |
 | CtsMediaMuxerTestCases          | MediaMuxer related tests                                                  |
 | CtsMediaPlayerTestCases         | MediaPlayer related tests                                                 |
+| CtsMediaProjectionTestCases     | MediaProjection related tests                                             |
 | CtsMediaRecorderTestCases       | MediaRecorder related tests                                               |
 | CtsMediaMiscTestCases           | All other media tests                                                     |
 

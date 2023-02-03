@@ -32,6 +32,7 @@ TestBeds:
       lighting_ch: <controller-channel>
       camera: <camera-id>
       scene: <scene-name>  # if <scene-name> left as-is runs all scenes
+      foldable_device: "False" # set to True if testing a foldable device
 
   - Name: TEST_BED_SENSOR_FUSION  # Need 'sensor_fusion' in name for SF tests
     # Test configuration for sensor_fusion/test_sensor_fusion.py

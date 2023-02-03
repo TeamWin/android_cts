@@ -28,6 +28,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiDevice;
 
+import com.android.compatibility.common.util.ScreenUtils;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,6 +62,9 @@ public class UserInitiatedJobTest {
 
     @Test
     public void testJobUidState() throws Exception {
+        // Turn screen off so any lingering activity close processing from previous tests
+        // don't affect this one.
+        ScreenUtils.setScreenOn(false);
         mTestAppInterface.scheduleJob(
                 Map.of(
                         TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true,
@@ -79,6 +84,7 @@ public class UserInitiatedJobTest {
     public void testTopUiUnlimited() throws Exception {
         final int standardConcurrency = 64;
         final int numUijs = standardConcurrency + 1;
+        ScreenUtils.setScreenOn(true);
         mTestAppInterface.startAndKeepTestActivity(true);
         for (int i = 0; i < numUijs; ++i) {
             mTestAppInterface.scheduleJob(

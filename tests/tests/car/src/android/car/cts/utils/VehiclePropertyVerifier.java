@@ -33,6 +33,7 @@ import android.car.VehiclePropertyIds;
 import android.car.VehiclePropertyType;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
+import android.car.hardware.property.AreaIdConfig;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.GetPropertyCallback;
 import android.car.hardware.property.CarPropertyManager.GetPropertyError;
@@ -113,7 +114,7 @@ public class VehiclePropertyVerifier<T> {
     private final Optional<AreaIdsVerifier> mAreaIdsVerifier;
     private final Optional<CarPropertyConfigVerifier> mCarPropertyConfigVerifier;
     private final ImmutableSet<Integer> mPossibleConfigArrayValues;
-    private final ImmutableSet<T> mPossibleCarPropertyValues;
+    private final ImmutableSet<T> mAllPossibleEnumValues;
     private final boolean mRequirePropertyValueToBeInConfigArray;
     private final boolean mVerifySetterWithConfigArrayValues;
     private final boolean mRequireMinMaxValues;
@@ -135,7 +136,7 @@ public class VehiclePropertyVerifier<T> {
             Optional<AreaIdsVerifier> areaIdsVerifier,
             Optional<CarPropertyConfigVerifier> carPropertyConfigVerifier,
             ImmutableSet<Integer> possibleConfigArrayValues,
-            ImmutableSet<T> possibleCarPropertyValues,
+            ImmutableSet<T> allPossibleEnumValues,
             boolean requirePropertyValueToBeInConfigArray,
             boolean verifySetterWithConfigArrayValues,
             boolean requireMinMaxValues,
@@ -156,7 +157,7 @@ public class VehiclePropertyVerifier<T> {
         mAreaIdsVerifier = areaIdsVerifier;
         mCarPropertyConfigVerifier = carPropertyConfigVerifier;
         mPossibleConfigArrayValues = possibleConfigArrayValues;
-        mPossibleCarPropertyValues = possibleCarPropertyValues;
+        mAllPossibleEnumValues = allPossibleEnumValues;
         mRequirePropertyValueToBeInConfigArray = requirePropertyValueToBeInConfigArray;
         mVerifySetterWithConfigArrayValues = verifySetterWithConfigArrayValues;
         mRequireMinMaxValues = requireMinMaxValues;
@@ -371,9 +372,13 @@ public class VehiclePropertyVerifier<T> {
         } else if (mVerifySetterWithConfigArrayValues) {
             verifySetterWithValues((CarPropertyConfig<T>) carPropertyConfig, carPropertyManager,
                     (Collection<T>) carPropertyConfig.getConfigArray());
-        } else if (!mPossibleCarPropertyValues.isEmpty()) {
-            verifySetterWithValues((CarPropertyConfig<T>) carPropertyConfig, carPropertyManager,
-                    mPossibleCarPropertyValues);
+        } else if (!mAllPossibleEnumValues.isEmpty()) {
+            for (AreaIdConfig<?> areaIdConfig : carPropertyConfig.getAreaIdConfigs()) {
+                for (T valueToSet : (List<T>) areaIdConfig.getSupportedEnumValues()) {
+                    verifySetProperty((CarPropertyConfig<T>) carPropertyConfig, carPropertyManager,
+                            areaIdConfig.getAreaId(), valueToSet);
+                }
+            }
         } else {
             verifySetterWithMinMaxValues(carPropertyConfig, carPropertyManager);
         }
@@ -408,10 +413,24 @@ public class VehiclePropertyVerifier<T> {
 
     private void verifyFloatPropertySetter(CarPropertyConfig<T> carPropertyConfig,
             CarPropertyManager carPropertyManager) {
-        if (!mPossibleCarPropertyValues.isEmpty()) {
-            verifySetterWithValues((CarPropertyConfig<T>) carPropertyConfig, carPropertyManager,
-                    mPossibleCarPropertyValues);
+        if (mPropertyId != VehiclePropertyIds.HVAC_TEMPERATURE_SET) {
+            return;
         }
+        List<Integer> hvacTempSetConfigArray = carPropertyConfig.getConfigArray();
+        ImmutableSet.Builder<Float> possibleHvacTempSetValuesBuilder = ImmutableSet.builder();
+        // For HVAC_TEMPERATURE_SET, the configArray specifies the supported temperature values
+        // for the property. configArray[0] is the lower bound of the supported temperatures in
+        // Celsius. configArray[1] is the upper bound of the supported temperatures in Celsius.
+        // configArray[2] is the supported temperature increment between the two bounds. All
+        // configArray values are Celsius*10 since the configArray is List<Integer> but
+        // HVAC_TEMPERATURE_SET is a Float type property.
+        for (int possibleHvacTempSetValue = hvacTempSetConfigArray.get(0);
+                possibleHvacTempSetValue <= hvacTempSetConfigArray.get(1);
+                possibleHvacTempSetValue += hvacTempSetConfigArray.get(2)) {
+            possibleHvacTempSetValuesBuilder.add((float) possibleHvacTempSetValue / 10.0f);
+        }
+        verifySetterWithValues((CarPropertyConfig<T>) carPropertyConfig, carPropertyManager,
+                (Collection<T>) possibleHvacTempSetValuesBuilder.build());
     }
 
     private void verifySetProperty(CarPropertyConfig<T> carPropertyConfig,
@@ -640,8 +659,6 @@ public class VehiclePropertyVerifier<T> {
         }
 
         for (int areaId : carPropertyConfig.getAreaIds()) {
-            // TODO(b/261480597): verify AreaIdConfig#getSupportedEnumValues()
-
             T areaIdMinValue = (T) carPropertyConfig.getMinValue(areaId);
             T areaIdMaxValue = (T) carPropertyConfig.getMaxValue(areaId);
             if (mRequireMinMaxValues) {
@@ -661,16 +678,38 @@ public class VehiclePropertyVerifier<T> {
                         verifyMaxAndMinRangeContainsZero(areaIdMinValue, areaIdMaxValue)).isTrue();
 
             }
-            if (areaIdMinValue == null || areaIdMaxValue == null) {
-                continue;
+            if (areaIdMinValue != null || areaIdMaxValue != null) {
+                assertWithMessage(
+                        mPropertyName
+                                + " - areaId: "
+                                + areaId
+                                + "'s max value must be >= min value")
+                        .that(verifyMaxAndMin(areaIdMinValue, areaIdMaxValue))
+                        .isTrue();
             }
-            assertWithMessage(
-                            mPropertyName
-                                    + " - areaId: "
-                                    + areaId
-                                    + "'s max value must be >= min value")
-                    .that(verifyMaxAndMin(areaIdMinValue, areaIdMaxValue))
-                    .isTrue();
+
+            if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE
+                    && !mAllPossibleEnumValues.isEmpty()) {
+                List<?> supportedEnumValues = carPropertyConfig.getAreaIdConfig(
+                        areaId).getSupportedEnumValues();
+                assertWithMessage(mPropertyName + " - areaId: " + areaId
+                        + "'s supported enum values must be defined").that(
+                        supportedEnumValues).isNotEmpty();
+                assertWithMessage(mPropertyName + " - areaId: " + areaId
+                        + "'s supported enum values must not contain any duplicates").that(
+                        supportedEnumValues).containsNoDuplicates();
+                assertWithMessage(
+                        mPropertyName + " - areaId: " + areaId + "'s supported enum values "
+                                + supportedEnumValues + " must all exist in all possible enum set "
+                                + mAllPossibleEnumValues).that(
+                        mAllPossibleEnumValues.containsAll(supportedEnumValues)).isTrue();
+            } else {
+                assertWithMessage(mPropertyName + " - areaId: " + areaId
+                        + "'s supported enum values must be empty since property does not support"
+                        + " an enum").that(
+                        carPropertyConfig.getAreaIdConfig(
+                                areaId).getSupportedEnumValues()).isEmpty();
+            }
         }
     }
 
@@ -841,24 +880,12 @@ public class VehiclePropertyVerifier<T> {
                     .contains(value);
         }
 
-        if (!mPossibleCarPropertyValues.isEmpty()) {
-            if (Float.class.equals(mPropertyType)) {
-                boolean foundInPossibleValues = false;
-                for (Float possibleValue : (Collection<Float>) mPossibleCarPropertyValues) {
-                    if (floatEquals(possibleValue, (Float) value)) {
-                        foundInPossibleValues = true;
-                        break;
-                    }
-                }
-                assertWithMessage(
-                        mPropertyName + " - areaId: " + areaId + " - source: " + source + " value: "
-                                + value + " must be listed in the Float set: "
-                                + mPossibleCarPropertyValues).that(foundInPossibleValues).isTrue();
-            } else {
-                assertWithMessage(mPropertyName + " - areaId: " + areaId + " - source: " + source
-                        + " value must be listed in the set").that(
-                        value).isIn(mPossibleCarPropertyValues);
-            }
+        List<T> supportedEnumValues = carPropertyConfig.getAreaIdConfig(
+                areaId).getSupportedEnumValues();
+        if (!supportedEnumValues.isEmpty()) {
+            assertWithMessage(mPropertyName + " - areaId: " + areaId + " - source: " + source
+                    + " value must be listed in getSupportedEnumValues()").that(value).isIn(
+                    supportedEnumValues);
         }
 
         T areaIdMinValue = (T) carPropertyConfig.getMinValue(areaId);
@@ -1023,7 +1050,7 @@ public class VehiclePropertyVerifier<T> {
         private Optional<AreaIdsVerifier> mAreaIdsVerifier = Optional.empty();
         private Optional<CarPropertyConfigVerifier> mCarPropertyConfigVerifier = Optional.empty();
         private ImmutableSet<Integer> mPossibleConfigArrayValues = ImmutableSet.of();
-        private ImmutableSet<T> mPossibleCarPropertyValues = ImmutableSet.of();
+        private ImmutableSet<T> mAllPossibleEnumValues = ImmutableSet.of();
         private boolean mRequirePropertyValueToBeInConfigArray = false;
         private boolean mVerifySetterWithConfigArrayValues = false;
         private boolean mRequireMinMaxValues = false;
@@ -1076,8 +1103,8 @@ public class VehiclePropertyVerifier<T> {
             return this;
         }
 
-        public Builder<T> setPossibleCarPropertyValues(ImmutableSet<T> possibleCarPropertyValues) {
-            mPossibleCarPropertyValues = possibleCarPropertyValues;
+        public Builder<T> setAllPossibleEnumValues(ImmutableSet<T> allPossibleEnumValues) {
+            mAllPossibleEnumValues = allPossibleEnumValues;
             return this;
         }
 
@@ -1134,7 +1161,7 @@ public class VehiclePropertyVerifier<T> {
                     mAreaIdsVerifier,
                     mCarPropertyConfigVerifier,
                     mPossibleConfigArrayValues,
-                    mPossibleCarPropertyValues,
+                    mAllPossibleEnumValues,
                     mRequirePropertyValueToBeInConfigArray,
                     mVerifySetterWithConfigArrayValues,
                     mRequireMinMaxValues,

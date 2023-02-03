@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * A class to hold the MidiIODevice and ports objects associated with a MIDI I/O peripheral.
@@ -46,7 +47,13 @@ public class MidiIODevice {
         mDeviceType = deviceType;
     }
 
-    public void scanDevices(MidiDeviceInfo[] devInfos) {
+    /**
+     * Sets MidiDevice and info about sender and receiver ports from a collection of
+     * MidiDeviceInfo. It uses mDeviceType to match the device.
+     *
+     * @param devInfos the set of devices to check
+     */
+    public void scanDevices(Collection<MidiDeviceInfo> devInfos) {
         if (DEBUG) {
             Log.i(TAG, "---- scanDevices() typeID: " + mDeviceType);
         }

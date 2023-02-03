@@ -2170,6 +2170,26 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         }
     }
 
+    // Verify 'CameraExtensionSession.StillCaptureLatency' behavior
+    @Test
+    public void testSessionStillCaptureLatency() throws Exception {
+        final long CAPTURE_LATENCY_MS = 100;
+        final long PROCESSING_LATENCY_MS = 200;
+        final long DIFFERENT_PROCESSING_LATENCY_MS = 201;
+        CameraExtensionSession.StillCaptureLatency stillCaptureLatency =
+                new CameraExtensionSession.StillCaptureLatency(CAPTURE_LATENCY_MS,
+                        PROCESSING_LATENCY_MS);
+        assertEquals(stillCaptureLatency.getCaptureLatency(), CAPTURE_LATENCY_MS);
+        assertEquals(stillCaptureLatency.getProcessingLatency(), PROCESSING_LATENCY_MS);
+        assertNotNull(stillCaptureLatency.toString());
+        CameraExtensionSession.StillCaptureLatency differentStillCaptureLatency =
+                new CameraExtensionSession.StillCaptureLatency(CAPTURE_LATENCY_MS,
+                        DIFFERENT_PROCESSING_LATENCY_MS);
+        assertFalse(stillCaptureLatency.equals(differentStillCaptureLatency));
+        assertFalse(stillCaptureLatency.hashCode() ==
+                differentStillCaptureLatency.hashCode());
+    }
+
     @Test
     public void testIllegalArguments() throws Exception {
         for (String id : mCameraIdsUnderTest) {

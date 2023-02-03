@@ -27,6 +27,7 @@ import android.media.midi.MidiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -36,6 +37,9 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.midilib.MidiTestModule;
 import com.android.midi.VerifierMidiEchoService;
+
+import java.util.Collection;
+import java.util.concurrent.Executor;
 
 /**
  * Common information and behaviors for the MidiJavaTestActivity and MidiNativeTestActivity
@@ -159,7 +163,10 @@ public abstract class MidiTestActivityBase
 
     void connectDeviceListener() {
         // Plug in device connect/disconnect callback
-        mMidiManager.registerDeviceCallback(new MidiDeviceCallback(), new Handler(getMainLooper()));
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final Executor executor = handler::post;
+        mMidiManager.registerDeviceCallback(MidiManager.TRANSPORT_MIDI_BYTE_STREAM,
+                executor, new MidiDeviceCallback());
     }
 
     void startWiredLoopbackTest() {
@@ -195,9 +202,10 @@ public abstract class MidiTestActivityBase
         }
 
         // Get the list of all MIDI devices attached
-        MidiDeviceInfo[] devInfos = mMidiManager.getDevices();
+        Collection<MidiDeviceInfo> devInfos = mMidiManager.getDevicesForTransport(
+                MidiManager.TRANSPORT_MIDI_BYTE_STREAM);
         if (DEBUG) {
-            Log.i(TAG, "  numDevices:" + devInfos.length);
+            Log.i(TAG, "  numDevices:" + devInfos.size());
         }
 
         // Let each module select (if available) the associated device for their type

@@ -33,8 +33,8 @@ import android.credentials.CreateCredentialException;
 import android.credentials.CreateCredentialRequest;
 import android.credentials.CreateCredentialResponse;
 import android.credentials.CredentialManager;
+import android.credentials.CredentialOption;
 import android.credentials.GetCredentialException;
-import android.credentials.GetCredentialOption;
 import android.credentials.GetCredentialRequest;
 import android.credentials.GetCredentialResponse;
 import android.credentials.cts.testcore.DeviceConfigStateRequiredRule;
@@ -141,7 +141,7 @@ public class CtsCredentialProviderServiceDeviceTest {
         CountDownLatch latch = new CountDownLatch(1);
         Bundle empty = new Bundle();
         GetCredentialRequest request = new GetCredentialRequest.Builder(empty)
-                .addGetCredentialOption(new GetCredentialOption(
+                .addCredentialOption(new CredentialOption(
                 "type", empty, empty, false)).build();
         OutcomeReceiver<GetCredentialResponse, GetCredentialException> callback =
                 new OutcomeReceiver<>() {

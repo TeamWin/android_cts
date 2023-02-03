@@ -30,6 +30,8 @@
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tests/unrestricted" />
         <option name="module-name" value="CtsBionicTestCases" />
+        <option name="native-test-timeout" value="4m30s" />
+        <option name="test-case-timeout" value="4m30s" />
         <option name="runtime-hint" value="12m10s" />
     </test>
 </configuration>

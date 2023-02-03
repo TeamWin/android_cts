@@ -245,6 +245,8 @@ public class Install {
         if (isApex && mBypassAllowedApexUpdateCheck) {
             SystemUtil.runShellCommandForNoOutput("pm bypass-allowed-apex-update-check true");
         }
+        SystemUtil.runShellCommandForNoOutput("pm disable-verification-for-uid "
+                + android.os.Process.myUid());
         try {
             PackageInstaller.SessionParams params =
                     new PackageInstaller.SessionParams(mSessionMode);

@@ -3061,7 +3061,7 @@
         <activity android:name=".camera.its.ItsTestActivity"
                   android:label="@string/camera_its_test"
                   android:launchMode="singleTop"
-                  android:configChanges="keyboardHidden|screenSize"
+                  android:configChanges="keyboardHidden|screenSize|screenLayout"
                   android:exported="true"
                   android:screenOrientation="landscape">
             <intent-filter>

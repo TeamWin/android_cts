@@ -42,6 +42,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -65,7 +67,6 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     // CallControl
     private static final String SET_ACTIVE = "SetActive";
     private static final String SET_INACTIVE = "SetInactive";
-    private static final String REJECT = "Reject";
     private static final String DISCONNECT = "Disconnect";
 
     // Fail messages
@@ -83,6 +84,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             "Mute state was not updated at all or in time";
 
     // inner classes
+
     /**
      * simulates a VoIP app construct of a Call object that accepts every CallEventCallback
      */
@@ -340,9 +342,10 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
-     * Ensure the state transitions of a successful incoming call that was rejected
+     * Ensure the state transitions of a successful incoming call are correct.
+     * State Transitions:  Created -> Ringing -> Disconnected -> Destroyed
      */
-    public void testAddIncomingCallAndReject() {
+    public void testRejectIncomingCall() {
         if (!mShouldTestTelecom) {
             return;
         }
@@ -350,7 +353,14 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             cleanup();
             startCallWithAttributesAndVerify(mIncomingCallAttributes, mCall1);
             assertNumCalls(getInCallService(), 1);
-            callControlAction(REJECT, mCall1);
+            assertEquals(Call.STATE_RINGING, getLastAddedCall().getState());
+            try {
+                callControlAction(DISCONNECT, mCall1, DisconnectCause.ERROR);
+                fail("testRejectIncomingCall: forced fail b/c IllegalArgumentException not thrown");
+            } catch (IllegalArgumentException e) {
+                assertNotNull(e);
+            }
+            callControlAction(DISCONNECT, mCall1, DisconnectCause.REJECTED);
             assertNumCalls(getInCallService(), 0);
         } finally {
             cleanup();
@@ -360,7 +370,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     /**
      * Ensure the state transitions of a successful outgoing call are correct.
      * State Transitions:  New -> Connecting  -> Active -> Inactive ->
-     *                                                          Disconnecting -> Disconnected
+     * Disconnecting -> Disconnected
      */
     public void testAddOutgoingCallAndSetInactive() {
         if (!mShouldTestTelecom) {
@@ -383,6 +393,86 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             cleanup();
         }
     }
+
+    /**
+     * Calls that do not have the {@link CallAttributes#SUPPORTS_SET_INACTIVE} and call
+     * {@link CallControl#setInactive(Executor, OutcomeReceiver)} should always result in an
+     * OutcomeReceiver#onError with CallException#CODE_CANNOT_HOLD_CURRENT_ACTIVE_CALL
+     */
+    @ApiTest(apis = {"android.telecom.CallException(java.lang.String, int)"})
+    public void testCallDoesNotSupportHoldResultsInOnError() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        final CallAttributes cannotSetInactiveAttributes =
+                new CallAttributes.Builder(HANDLE, DIRECTION_OUTGOING,
+                        TEST_NAME_1, TEST_URI_1)
+                        .setCallCapabilities(CallAttributes.SUPPORTS_STREAM)
+                        .build();
+
+        assertEquals(CallAttributes.SUPPORTS_STREAM,
+                cannotSetInactiveAttributes.getCallCapabilities());
+
+        CallException cannotSetInactiveException = new CallException("call does not support hold",
+                CallException.CODE_CANNOT_HOLD_CURRENT_ACTIVE_CALL);
+        try {
+            cleanup();
+            startCallWithAttributesAndVerify(cannotSetInactiveAttributes, mCall1);
+            mCall1.mCallControl.setInactive(Runnable::run, new OutcomeReceiver<>() {
+                @Override
+                public void onResult(Void result) {
+                    fail("testCannotSetInactiveExpectFail:"
+                            + " onResult should not be called");
+                }
+
+                @Override
+                public void onError(CallException exception) {
+                    assertEquals(cannotSetInactiveException.getCode(),
+                            exception.getCode());
+                }
+            });
+            callControlAction(DISCONNECT, mCall1);
+        } finally {
+            cleanup();
+        }
+    }
+
+    /**
+     * Calling any {@link CallControl} API after calling
+     * {@link CallControl#disconnect(DisconnectCause, Executor, OutcomeReceiver)} will always
+     * result in OutcomeReceiver#onError.
+     */
+    @ApiTest(apis = {"android.telecom.CallException(java.lang.String, int)"})
+    public void testUsingCallControlAfterDisconnect() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        CallException callNotTrackedException = new CallException("does not contain call",
+                CallException.CODE_CALL_IS_NOT_BEING_TRACKED);
+        try {
+            cleanup();
+            startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
+            callControlAction(DISCONNECT, mCall1);
+            assertNumCalls(getInCallService(), 0);
+
+            mCall1.mCallControl.setActive(Runnable::run, new OutcomeReceiver<>() {
+                @Override
+                public void onResult(Void result) {
+                    fail("testUsingCallControlAfterDisconnect:"
+                            + " onResult should not be called");
+                }
+
+                @Override
+                public void onError(CallException exception) {
+                    assertEquals(callNotTrackedException.getCode(),
+                            exception.getCode());
+                }
+            });
+        } finally {
+            cleanup();
+        }
+    }
+
 
     /**
      * Ensure {@link CallEventCallback#onReject} is being called and destroying the call.
@@ -733,14 +823,19 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     }
 
 
-    public void callControlAction(String action, TestVoipCall call) {
+    public void callControlAction(String action, TestVoipCall call, Object... objects) {
         final CountDownLatch latch = new CountDownLatch(1);
         final LatchedOutcomeReceiver outcome = new LatchedOutcomeReceiver(latch);
+        DisconnectCause disconnectCause = new DisconnectCause(DisconnectCause.LOCAL);
 
         CallControl callControl = call.mCallControl;
         if (callControl == null) {
             fail("callControl object is null");
             return;
+        }
+
+        if (objects != null && objects.length >= 1) {
+            disconnectCause = new DisconnectCause((int) objects[0]);
         }
 
         switch (action) {
@@ -751,11 +846,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
                 call.mCallControl.setInactive(Runnable::run, outcome);
                 break;
             case DISCONNECT:
-                call.mCallControl.disconnect(new DisconnectCause(DisconnectCause.LOCAL),
-                        Runnable::run, outcome);
-                break;
-            case REJECT:
-                call.mCallControl.rejectCall(Runnable::run, outcome);
+                call.mCallControl.disconnect(disconnectCause, Runnable::run, outcome);
                 break;
             default:
                 fail("should never reach the default case");

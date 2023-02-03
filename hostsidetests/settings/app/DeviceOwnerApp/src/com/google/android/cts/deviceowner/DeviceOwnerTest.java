@@ -147,10 +147,15 @@ public final class DeviceOwnerTest extends InstrumentationTestCase {
         boolean found = null != mDevice.wait(Until.findObject(By.text(mWorkPolicyInfoText)),
                 TIMEOUT_MS);
 
-        // For automotive UI, try to scroll the privacy list to find the item
-        if (!found && mIsAutomotive) {
-            UiScrollable scroller = new UiScrollable(new UiSelector()
-                    .resourceIdMatches(CAR_SETTING_FRAG_RESOURCE_ID_REGEX));
+        // For automotive and Safety Center UI, try to scroll the privacy list to find the item
+        if (!found) {
+            UiScrollable scroller;
+            if (mIsAutomotive) {
+                scroller = new UiScrollable(new UiSelector()
+                        .resourceIdMatches(CAR_SETTING_FRAG_RESOURCE_ID_REGEX));
+            } else {
+                scroller = new UiScrollable(new UiSelector().scrollable(true));
+            }
             try {
                 // Swipe far away from the edges to avoid triggering navigation gestures
                 scroller.setSwipeDeadZonePercentage(DEADZONE_PCT);

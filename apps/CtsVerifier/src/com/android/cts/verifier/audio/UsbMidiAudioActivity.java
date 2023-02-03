@@ -22,6 +22,7 @@ import android.media.midi.MidiDeviceInfo;
 import android.media.midi.MidiManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -31,6 +32,9 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.midilib.JavaMidiTestModule;
 import com.android.cts.verifier.audio.midilib.MidiTestModule;
+
+import java.util.Collection;
+import java.util.concurrent.Executor;
 
 /**
  * Tests MIDI and Audio for an USB peripheral.
@@ -163,8 +167,10 @@ public class UsbMidiAudioActivity extends USBAudioPeripheralPlayerActivity {
 
     void connectMidiDeviceListener() {
         // Plug in device connect/disconnect callback
-        mMidiManager.registerDeviceCallback(new MidiDeviceCallback(),
-                new Handler(getMainLooper()));
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final Executor executor = handler::post;
+        mMidiManager.registerDeviceCallback(MidiManager.TRANSPORT_MIDI_BYTE_STREAM,
+                executor, new MidiDeviceCallback());
     }
 
     void startWiredLoopbackTest() {
@@ -191,9 +197,10 @@ public class UsbMidiAudioActivity extends USBAudioPeripheralPlayerActivity {
         }
 
         // Get the list of all MIDI devices attached
-        MidiDeviceInfo[] devInfos = mMidiManager.getDevices();
+        Collection<MidiDeviceInfo> devInfos = mMidiManager.getDevicesForTransport(
+                MidiManager.TRANSPORT_MIDI_BYTE_STREAM);
         if (DEBUG) {
-            Log.i(TAG, "  numDevices:" + devInfos.length);
+            Log.i(TAG, "  numDevices:" + devInfos.size());
         }
 
         mUsbMidiTestModule.scanDevices(devInfos);

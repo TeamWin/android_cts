@@ -852,7 +852,7 @@ public class DynamicAuthTest {
         authKeys = credential.getAuthKeysNeedingCertification();
         assertEquals(0, authKeys.size());
 
-        // Check we can read back expirations
+        // Check we can read back expirations and usage counts
         List<AuthenticationKeyMetadata> mds = credential.getAuthenticationKeyMetadata();
         assertEquals(mds.size(), numAuthKeys);
         for (n = 0; n < numAuthKeys; n++) {
@@ -861,6 +861,7 @@ public class DynamicAuthTest {
                 assertNull(md);
             } else {
                 assertEquals(tenSecondsFromBeginning + n, md.getExpirationDate().toEpochMilli());
+                assertEquals(0, md.getUsageCount());
             }
         }
 

@@ -27,7 +27,8 @@
 
         <activity android:name="android.car.cts.builtin.activity.SimpleActivity" />
 
-        <activity android:name="android.car.cts.builtin.activity.VirtualDisplayIdTestActivity" />
+        <activity android:name="android.car.cts.builtin.activity.VirtualDisplayIdTestActivity"
+                  android:exported="true"/>
 
         <activity android:name="android.car.cts.builtin.activity.TaskInfoTestActivity"
                   android:label="@string/task_info_test_activity"

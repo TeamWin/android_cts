@@ -1206,7 +1206,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         Integer.class)
-                .setPossibleCarPropertyValues(PORT_LOCATION_TYPES)
+                .setAllPossibleEnumValues(PORT_LOCATION_TYPES)
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
                 .verify(mCarPropertyManager);
@@ -1220,7 +1220,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         Integer.class)
-                .setPossibleCarPropertyValues(PORT_LOCATION_TYPES)
+                .setAllPossibleEnumValues(PORT_LOCATION_TYPES)
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
                 .verify(mCarPropertyManager);
@@ -1264,7 +1264,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         Integer.class)
-                .setPossibleCarPropertyValues(
+                .setAllPossibleEnumValues(
                         ImmutableSet.of(
                                 VehicleAreaSeat.SEAT_UNKNOWN,
                                 VehicleAreaSeat.SEAT_ROW_1_LEFT,
@@ -1324,7 +1324,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(
+                .setAllPossibleEnumValues(
                         ImmutableSet.of(
                                 VehicleElectronicTollCollectionCardType.UNKNOWN,
                                 VehicleElectronicTollCollectionCardType
@@ -1344,7 +1344,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(
+                .setAllPossibleEnumValues(
                         ImmutableSet.of(
                                 VehicleElectronicTollCollectionCardStatus.UNKNOWN,
                                 VehicleElectronicTollCollectionCardStatus
@@ -1366,7 +1366,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         Integer.class)
-                .setPossibleCarPropertyValues(
+                .setAllPossibleEnumValues(
                         ImmutableSet.of(
                                 GsrComplianceType.GSR_COMPLIANCE_TYPE_NOT_REQUIRED,
                                 GsrComplianceType.GSR_COMPLIANCE_TYPE_REQUIRED_V1))
@@ -1424,7 +1424,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(
+                .setAllPossibleEnumValues(
                         ImmutableSet.of(
                                 VehicleIgnitionState.UNDEFINED,
                                 VehicleIgnitionState.LOCK,
@@ -1461,7 +1461,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(EV_STOPPING_MODES)
+                .setAllPossibleEnumValues(EV_STOPPING_MODES)
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
                 .addWritePermission(Car.PERMISSION_CONTROL_POWERTRAIN)
                 .build()
@@ -2395,7 +2395,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(ImmutableSet.of(
+                .setAllPossibleEnumValues(
+                                            ImmutableSet.of(
                                                     EvChargeState.STATE_UNKNOWN,
                                                     EvChargeState.STATE_CHARGING,
                                                     EvChargeState.STATE_FULLY_CHARGED,
@@ -2449,7 +2450,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(
+
+                .setAllPossibleEnumValues(
                                             ImmutableSet.of(
                                                     EvRegenerativeBrakingState.STATE_UNKNOWN,
                                                     EvRegenerativeBrakingState.STATE_DISABLED,
@@ -2509,7 +2511,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_OIL_LEVELS)
+                .setAllPossibleEnumValues(VEHICLE_OIL_LEVELS)
                 .addReadPermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
                 .build()
                 .verify(mCarPropertyManager);
@@ -2590,7 +2592,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(TURN_SIGNAL_STATES)
+                .setAllPossibleEnumValues(TURN_SIGNAL_STATES)
                 .addReadPermission(Car.PERMISSION_EXTERIOR_LIGHTS)
                 .build()
                 .verify(mCarPropertyManager);
@@ -2604,7 +2606,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_EXTERIOR_LIGHTS)
                 .build()
                 .verify(mCarPropertyManager);
@@ -2618,7 +2620,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_EXTERIOR_LIGHTS)
                 .build()
                 .verify(mCarPropertyManager);
@@ -2632,7 +2634,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, carPropertyValue) -> {
                             assertWithMessage(
@@ -2664,7 +2666,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_EXTERIOR_LIGHTS)
                 .build()
                 .verify(mCarPropertyManager);
@@ -2678,7 +2680,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, carPropertyValue) -> {
                             assertWithMessage(
@@ -2702,7 +2704,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, carPropertyValue) -> {
                             assertWithMessage(
@@ -2734,7 +2736,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_READ_INTERIOR_LIGHTS)
                 .build()
                 .verify(mCarPropertyManager);
@@ -2756,7 +2758,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_READ_INTERIOR_LIGHTS)
                 .build()
                 .verify(mCarPropertyManager);
@@ -2770,7 +2772,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_READ_INTERIOR_LIGHTS)
                 .build()
                 .verify(mCarPropertyManager);
@@ -2833,7 +2835,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .build()
@@ -2848,7 +2850,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(TRAILER_STATES)
+                .setAllPossibleEnumValues(TRAILER_STATES)
                 .addReadPermission(Car.PERMISSION_PRIVILEGED_CAR_INFO)
                 .build()
                 .verify(mCarPropertyManager);
@@ -2862,7 +2864,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .build()
@@ -2877,7 +2879,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, carPropertyValue) -> {
                             assertWithMessage(
@@ -2910,7 +2912,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .build()
@@ -2925,7 +2927,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, carPropertyValue) -> {
                             assertWithMessage(
@@ -2950,7 +2952,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, carPropertyValue) -> {
                             assertWithMessage(
@@ -2984,7 +2986,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .build()
@@ -3008,7 +3010,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .build()
@@ -3023,7 +3025,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .build()
@@ -3710,7 +3712,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_READ_INTERIOR_LIGHTS)
                 .build()
                 .verify(mCarPropertyManager);
@@ -3724,7 +3726,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .build()
@@ -3853,7 +3855,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(VEHICLE_SEAT_OCCUPANCY_STATES)
+                .setAllPossibleEnumValues(VEHICLE_SEAT_OCCUPANCY_STATES)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
                 .verify(mCarPropertyManager);
@@ -4228,94 +4230,89 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         + "unregisterCallback(CarPropertyEventCallback, int)"
             })
     public void testHvacTemperatureSetIfSupported() {
-        VehiclePropertyVerifier.Builder<Float> hvacTempSetVerifierBuilder =
-                VehiclePropertyVerifier.newBuilder(
-                                VehiclePropertyIds.HVAC_TEMPERATURE_SET,
-                                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                                VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
-                                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                                Float.class)
-                        .setPossiblyDependentOnHvacPowerOn()
-                        .setCarPropertyConfigVerifier(
-                                carPropertyConfig -> {
-                                    List<Integer> configArray = carPropertyConfig.getConfigArray();
-                                    assertWithMessage(
-                                                    "HVAC_TEMPERATURE_SET config "
-                                                            + "array must be size 6")
-                                            .that(configArray.size())
-                                            .isEqualTo(6);
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.HVAC_TEMPERATURE_SET,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Float.class)
+                .setPossiblyDependentOnHvacPowerOn()
+                .setCarPropertyConfigVerifier(
+                        carPropertyConfig -> {
+                            List<Integer> configArray = carPropertyConfig.getConfigArray();
+                            assertWithMessage("HVAC_TEMPERATURE_SET config array must be size 6")
+                                    .that(configArray.size())
+                                    .isEqualTo(6);
 
-                                    assertWithMessage(
-                                                    "HVAC_TEMPERATURE_SET lower bound must be less"
-                                                        + " than the upper bound for the supported"
-                                                        + " temperatures in Celsius")
-                                            .that(configArray.get(0))
-                                            .isLessThan(configArray.get(1));
-                                    assertWithMessage(
-                                                    "HVAC_TEMPERATURE_SET increment in Celsius"
-                                                            + " must be greater than 0")
-                                            .that(configArray.get(2))
-                                            .isGreaterThan(0);
-                                    assertWithMessage(
-                                                    "HVAC_TEMPERATURE_SET increment in Celsius must"
-                                                        + " be less than the difference between the"
-                                                        + " upper and lower bound supported"
-                                                        + " temperatures")
-                                            .that(configArray.get(2))
-                                            .isLessThan(configArray.get(1) - configArray.get(0));
-                                    assertWithMessage(
-                                                    "HVAC_TEMPERATURE_SET increment in Celsius must"
-                                                        + " evenly space the gap between upper and"
-                                                        + " lower bound")
-                                            .that(
-                                                    (configArray.get(1) - configArray.get(0))
-                                                            % configArray.get(2))
-                                            .isEqualTo(0);
-
-                                    assertWithMessage(
-                                                    "HVAC_TEMPERATURE_SET lower bound must be less"
-                                                        + " than the upper bound for the supported"
-                                                        + " temperatures in Fahrenheit")
-                                            .that(configArray.get(3))
-                                            .isLessThan(configArray.get(4));
-                                    assertWithMessage(
-                                                    "HVAC_TEMPERATURE_SET increment in Fahrenheit"
-                                                            + " must be greater than 0")
-                                            .that(configArray.get(5))
-                                            .isGreaterThan(0);
-                                    assertWithMessage(
-                                                    "HVAC_TEMPERATURE_SET increment in Fahrenheit"
-                                                        + " must be less than the difference"
-                                                        + " between the upper and lower bound"
-                                                        + " supported temperatures")
-                                            .that(configArray.get(5))
-                                            .isLessThan(configArray.get(4) - configArray.get(3));
-                                    assertWithMessage(
-                                                    "HVAC_TEMPERATURE_SET increment in Fahrenheit"
-                                                        + " must evenly space the gap between upper"
-                                                        + " and lower bound")
-                                            .that(
-                                                    (configArray.get(4) - configArray.get(3))
-                                                            % configArray.get(5))
-                                            .isEqualTo(0);
-                                    assertWithMessage(
-                                            "HVAC_TEMPERATURE_SET number of supported values for "
-                                                    + "Celsius and Fahrenheit must be equal.").that(
+                            assertWithMessage(
+                                            "HVAC_TEMPERATURE_SET lower bound must be less"
+                                                    + " than the upper bound for the supported"
+                                                    + " temperatures in Celsius")
+                                    .that(configArray.get(0))
+                                    .isLessThan(configArray.get(1));
+                            assertWithMessage(
+                                            "HVAC_TEMPERATURE_SET increment in Celsius"
+                                                    + " must be greater than 0")
+                                    .that(configArray.get(2))
+                                    .isGreaterThan(0);
+                            assertWithMessage(
+                                            "HVAC_TEMPERATURE_SET increment in Celsius must"
+                                                    + " be less than the difference between the"
+                                                    + " upper and lower bound supported"
+                                                    + " temperatures")
+                                    .that(configArray.get(2))
+                                    .isLessThan(configArray.get(1) - configArray.get(0));
+                            assertWithMessage(
+                                            "HVAC_TEMPERATURE_SET increment in Celsius must"
+                                                    + " evenly space the gap between upper and"
+                                                    + " lower bound")
+                                    .that(
                                             (configArray.get(1) - configArray.get(0))
-                                                    / configArray.get(2)).isEqualTo(
+                                                    % configArray.get(2))
+                                    .isEqualTo(0);
+                            assertWithMessage(
+                                            "HVAC_TEMPERATURE_SET lower bound must be less"
+                                                    + " than the upper bound for the supported"
+                                                    + " temperatures in Fahrenheit")
+                                    .that(configArray.get(3))
+                                    .isLessThan(configArray.get(4));
+                            assertWithMessage(
+                                            "HVAC_TEMPERATURE_SET increment in Fahrenheit"
+                                                    + " must be greater than 0")
+                                    .that(configArray.get(5))
+                                    .isGreaterThan(0);
+                            assertWithMessage(
+                                            "HVAC_TEMPERATURE_SET increment in Fahrenheit"
+                                                    + " must be less than the difference"
+                                                    + " between the upper and lower bound"
+                                                    + " supported temperatures")
+                                    .that(configArray.get(5))
+                                    .isLessThan(configArray.get(4) - configArray.get(3));
+                            assertWithMessage(
+                                            "HVAC_TEMPERATURE_SET increment in Fahrenheit"
+                                                    + " must evenly space the gap between upper"
+                                                    + " and lower bound")
+                                    .that(
                                             (configArray.get(4) - configArray.get(3))
-                                                    / configArray.get(5));
+                                                    % configArray.get(5))
+                                    .isEqualTo(0);
+                            assertWithMessage(
+                                    "HVAC_TEMPERATURE_SET number of supported values for "
+                                            + "Celsius and Fahrenheit must be equal.").that(
+                                    (configArray.get(1) - configArray.get(0))
+                                            / configArray.get(2)).isEqualTo(
+                                    (configArray.get(4) - configArray.get(3))
+                                            / configArray.get(5));
 
-                                    int[] supportedAreaIds = carPropertyConfig.getAreaIds();
-                                    int configMinValue = configArray.get(0);
-                                    int configMaxValue = configArray.get(1);
-                                    for (int i = 0; i < supportedAreaIds.length; i++) {
-                                        int areaId = supportedAreaIds[i];
-                                        Float minValueFloat =
-                                                (Float) carPropertyConfig.getMinValue(areaId);
-                                        if (minValueFloat != null) {
-                                            Integer minValueInt = (int) (minValueFloat * 10);
-                                            assertWithMessage(
+                            int[] supportedAreaIds = carPropertyConfig.getAreaIds();
+                            int configMinValue = configArray.get(0);
+                            int configMaxValue = configArray.get(1);
+                            for (int i = 0; i < supportedAreaIds.length; i++) {
+                                int areaId = supportedAreaIds[i];
+                                Float minValueFloat = (Float) carPropertyConfig.getMinValue(areaId);
+                                if (minValueFloat != null) {
+                                    Integer minValueInt = (int) (minValueFloat * 10);
+                                    assertWithMessage(
                                                     "HVAC_TEMPERATURE_SET minimum value: "
                                                             + minValueInt
                                                             + " at areaId: "
@@ -4324,14 +4321,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                             + " value specified in config"
                                                             + " array: "
                                                             + configMinValue)
-                                                    .that(minValueInt)
-                                                    .isEqualTo(configMinValue);
-                                        }
-                                        Float maxValueFloat =
-                                                (Float) carPropertyConfig.getMaxValue(areaId);
-                                        if (maxValueFloat != null) {
-                                            Integer maxValueInt = (int) (maxValueFloat * 10);
-                                            assertWithMessage(
+                                            .that(minValueInt)
+                                            .isEqualTo(configMinValue);
+                                }
+                                Float maxValueFloat = (Float) carPropertyConfig.getMaxValue(areaId);
+                                if (maxValueFloat != null) {
+                                    Integer maxValueInt = (int) (maxValueFloat * 10);
+                                    assertWithMessage(
                                                     "HVAC_TEMPERATURE_SET maximum value: "
                                                             + maxValueInt
                                                             + " at areaId: "
@@ -4340,34 +4336,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                             + " value specified in config"
                                                             + " array: "
                                                             + configMaxValue)
-                                                    .that(maxValueInt)
-                                                    .isEqualTo(configMaxValue);
-                                        }
-                                    }
-                                });
-
-        runWithShellPermissionIdentity(
-                () -> {
-                    CarPropertyConfig<?> hvacTempSetConfig =
-                            mCarPropertyManager.getCarPropertyConfig(
-                                    VehiclePropertyIds.HVAC_TEMPERATURE_SET);
-                    if (hvacTempSetConfig != null) {
-                        List<Integer> hvacTempSetConfigArray = hvacTempSetConfig.getConfigArray();
-                        ImmutableSet.Builder<Float> possibleHvacTempSetValuesBuilder =
-                                ImmutableSet.builder();
-                        for (int possibleHvacTempSetValue = hvacTempSetConfigArray.get(0);
-                                possibleHvacTempSetValue <= hvacTempSetConfigArray.get(1);
-                                possibleHvacTempSetValue += hvacTempSetConfigArray.get(2)) {
-                            possibleHvacTempSetValuesBuilder.add(
-                                    (float) possibleHvacTempSetValue / 10.0f);
-                        }
-                        hvacTempSetVerifierBuilder.setPossibleCarPropertyValues(
-                                possibleHvacTempSetValuesBuilder.build());
-                    }
-                },
-                Car.PERMISSION_CONTROL_CAR_CLIMATE);
-
-        hvacTempSetVerifierBuilder
+                                            .that(maxValueInt)
+                                            .isEqualTo(configMaxValue);
+                                }
+                            }
+                        })
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
@@ -4688,7 +4661,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(combinedCarPropertyValues)
+                .setAllPossibleEnumValues(combinedCarPropertyValues)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
                 .verify(mCarPropertyManager);
@@ -4726,7 +4699,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(combinedCarPropertyValues)
+                .setAllPossibleEnumValues(combinedCarPropertyValues)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
                 .verify(mCarPropertyManager);
@@ -4764,7 +4737,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setPossibleCarPropertyValues(combinedCarPropertyValues)
+                .setAllPossibleEnumValues(combinedCarPropertyValues)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
                 .verify(mCarPropertyManager);

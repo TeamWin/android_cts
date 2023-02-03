@@ -16,6 +16,10 @@
 
 package android.view.cts;
 
+import static android.view.MotionEvent.ACTION_HOVER_ENTER;
+import static android.view.MotionEvent.ACTION_HOVER_EXIT;
+import static android.view.MotionEvent.ACTION_HOVER_MOVE;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -183,13 +187,20 @@ public class TooltipTest {
         mInstrumentation.sendPointerSync(event);
     }
 
+    private void injectHoverEvent(int action, int source, View target, int offsetX, int offsetY) {
+        injectMotionEvent(obtainMotionEvent(source, target, action, offsetX,  offsetY));
+    }
+
     private void injectHoverMove(int source, View target, int offsetX, int offsetY) {
-        injectMotionEvent(obtainMotionEvent(
-                    source, target, MotionEvent.ACTION_HOVER_MOVE, offsetX,  offsetY));
+        injectHoverEvent(ACTION_HOVER_MOVE, source, target, offsetX, offsetY);
     }
 
     private void injectHoverMove(View target, int offsetX, int offsetY) {
-        injectHoverMove(InputDevice.SOURCE_MOUSE, target, offsetX,  offsetY);
+        injectHoverMove(InputDevice.SOURCE_MOUSE, target, offsetX, offsetY);
+    }
+
+    private void injectHoverEvent(int action, View target) {
+        injectHoverEvent(action, InputDevice.SOURCE_MOUSE, target, 0, 0);
     }
 
     private void injectHoverMove(View target) {
@@ -268,6 +279,7 @@ public class TooltipTest {
         assertFalse(hasTooltip(mTooltipView));
 
         // Hover does show the tooltip on a disabled view.
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
@@ -557,6 +569,7 @@ public class TooltipTest {
     @Test
     public void testMouseHoverTooltipOnClickableView() throws Throwable {
         setClickable(mTooltipView);
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
@@ -564,6 +577,7 @@ public class TooltipTest {
     @Test
     public void testMouseHoverTooltipOnLongClickableView() throws Throwable {
         setLongClickable(mTooltipView);
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
@@ -571,12 +585,14 @@ public class TooltipTest {
     @Test
     public void testMouseHoverTooltipOnContextClickableView() throws Throwable {
         setContextClickable(mTooltipView);
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
 
     @Test
     public void testMouseHoverTooltipStaysOnMouseMove() throws Throwable {
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
 
@@ -590,6 +606,7 @@ public class TooltipTest {
 
     @Test
     public void testMouseHoverTooltipHidesOnExit() throws Throwable {
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
 
@@ -600,6 +617,7 @@ public class TooltipTest {
 
     @Test
     public void testMouseHoverTooltipHidesOnClick() throws Throwable {
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
 
@@ -609,6 +627,7 @@ public class TooltipTest {
 
     @Test
     public void testMouseHoverTooltipHidesOnClickOnElsewhere() throws Throwable {
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
 
@@ -618,6 +637,7 @@ public class TooltipTest {
 
     @Test
     public void testMouseHoverTooltipHidesOnKey() throws Throwable {
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
 
@@ -627,6 +647,7 @@ public class TooltipTest {
 
     @Test
     public void testMouseHoverTooltipHidesOnTimeout() throws Throwable {
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
 
@@ -638,6 +659,7 @@ public class TooltipTest {
     public void testMouseHoverTooltipHidesOnShortTimeout() throws Throwable {
         requestLowProfileSystemUi();
 
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
 
@@ -648,6 +670,7 @@ public class TooltipTest {
     @Test
     public void testMouseHoverTooltipWithHoverListener() throws Throwable {
         mTooltipView.setOnHoverListener((v, event) -> true);
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
@@ -662,6 +685,7 @@ public class TooltipTest {
 
     @Test
     public void testMouseHoverTooltipDisableWhileHovering() throws Throwable {
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectHoverMove(mTooltipView);
         mActivityRule.runOnUiThread(() -> mTooltipView.setEnabled(false));
         waitOut(ViewConfiguration.getHoverTooltipShowTimeout());
@@ -678,38 +702,47 @@ public class TooltipTest {
         setTooltipText(mTopmostView, "tooltip");
 
         // Hover over a child with a tooltip works normally.
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertFalse(hasTooltip(mTopmostView));
         assertTrue(hasTooltip(mTooltipView));
+        injectHoverEvent(ACTION_HOVER_EXIT, mTooltipView);
         injectShortClick(mTopmostView);
         assertFalse(hasTooltip(mTooltipView));
 
         // Hover over a child with no tooltip triggers a tooltip on its parent.
+        injectHoverEvent(ACTION_HOVER_ENTER, mNoTooltipView2);
         injectLongHoverMove(mNoTooltipView2);
         assertFalse(hasTooltip(mNoTooltipView2));
         assertTrue(hasTooltip(mTopmostView));
+        injectHoverEvent(ACTION_HOVER_EXIT, mNoTooltipView2);
         injectShortClick(mTopmostView);
         assertFalse(hasTooltip(mTopmostView));
 
         // Same but the child is and empty view group.
+        injectHoverEvent(ACTION_HOVER_ENTER, mEmptyGroup);
         injectLongHoverMove(mEmptyGroup);
         assertFalse(hasTooltip(mEmptyGroup));
         assertTrue(hasTooltip(mTopmostView));
+        injectHoverEvent(ACTION_HOVER_EXIT, mEmptyGroup);
         injectShortClick(mTopmostView);
         assertFalse(hasTooltip(mTopmostView));
 
         // Hover over a grandchild with no tooltip triggers a tooltip on its grandparent.
+        injectHoverEvent(ACTION_HOVER_ENTER, mNoTooltipView);
         injectLongHoverMove(mNoTooltipView);
         assertFalse(hasTooltip(mNoTooltipView));
         assertTrue(hasTooltip(mTopmostView));
         // Move to another child one level up, the tooltip stays.
         injectHoverMove(mNoTooltipView2);
         assertTrue(hasTooltip(mTopmostView));
+        injectHoverEvent(ACTION_HOVER_EXIT, mNoTooltipView2);
         injectShortClick(mTopmostView);
         assertFalse(hasTooltip(mTopmostView));
 
         // Set a tooltip on the intermediate parent, now it is showing tooltips.
         setTooltipText(mGroupView, "tooltip");
+        injectHoverEvent(ACTION_HOVER_ENTER, mNoTooltipView);
         injectLongHoverMove(mNoTooltipView);
         assertFalse(hasTooltip(mNoTooltipView));
         assertFalse(hasTooltip(mTopmostView));
@@ -719,6 +752,7 @@ public class TooltipTest {
         injectLongHoverMove(mNoTooltipView2);
         assertFalse(hasTooltip(mGroupView));
         assertTrue(hasTooltip(mTopmostView));
+        injectHoverEvent(ACTION_HOVER_EXIT, mNoTooltipView2);
         injectShortClick(mTopmostView);
         assertFalse(hasTooltip(mTopmostView));
     }
@@ -757,6 +791,7 @@ public class TooltipTest {
     @Test
     public void testMouseHoverTooltipRemoveWhileShowing() throws Throwable {
         // Remove the view while showing the tooltip.
+        injectHoverEvent(ACTION_HOVER_ENTER, mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
         removeView(mTooltipView);
@@ -780,6 +815,7 @@ public class TooltipTest {
         final View child2 = mActivity.findViewById(R.id.overlap2);
         final View child3 = mActivity.findViewById(R.id.overlap3);
 
+        injectHoverEvent(ACTION_HOVER_ENTER, parent);
         injectLongHoverMove(parent);
         assertTrue(hasTooltip(child3));
 
@@ -828,6 +864,7 @@ public class TooltipTest {
         assertTrue(jitterHigh <= mTooltipView.getWidth());
         assertTrue(jitterHigh <= mTooltipView.getHeight());
 
+        injectHoverEvent(ACTION_HOVER_ENTER, source, mTooltipView, 0, 0);
         injectHoverMove(source, mTooltipView, 0, 0);
         waitOut(quaterTimeout);
         assertFalse(hasTooltip(mTooltipView));
@@ -836,18 +873,24 @@ public class TooltipTest {
         waitOut(quaterTimeout);
         assertFalse(hasTooltip(mTooltipView));
 
+        injectHoverEvent(ACTION_HOVER_EXIT, source, mTooltipView, jitterHigh, 0);
         injectShortClick(mTooltipView);
+        injectHoverEvent(ACTION_HOVER_ENTER, source, mTooltipView, 0, 0);
         injectHoverMove(source, mTooltipView, 0, 0);
         waitOut(quaterTimeout);
         assertFalse(hasTooltip(mTooltipView));
 
+        injectHoverEvent(ACTION_HOVER_EXIT, source, mTooltipView, 0, 0);
         injectShortClick(mTooltipView);
+        injectHoverEvent(ACTION_HOVER_ENTER, source, mTooltipView, 0, jitterHigh);
         injectHoverMove(source, mTooltipView, 0, jitterHigh);
         waitOut(quaterTimeout);
         assertFalse(hasTooltip(mTooltipView));
 
         // Jitter below threshold should be ignored and the tooltip should be shown.
+        injectHoverEvent(ACTION_HOVER_EXIT, source, mTooltipView, 0, jitterHigh);
         injectShortClick(mTooltipView);
+        injectHoverEvent(ACTION_HOVER_ENTER, source, mTooltipView, 0, 0);
         injectHoverMove(source, mTooltipView, 0, 0);
         waitOut(quaterTimeout);
         assertFalse(hasTooltip(mTooltipView));
@@ -859,10 +902,12 @@ public class TooltipTest {
         assertTrue(hasTooltip(mTooltipView));
 
         // Dismiss the tooltip
+        injectHoverEvent(ACTION_HOVER_EXIT, source, mTooltipView, jitterLow, 0);
         injectShortClick(mTooltipView);
         assertFalse(hasTooltip(mTooltipView));
 
         injectShortClick(mTooltipView);
+        injectHoverEvent(ACTION_HOVER_ENTER, source, mTooltipView, 0, 0);
         injectHoverMove(source, mTooltipView, 0, 0);
         waitOut(quaterTimeout);
         assertFalse(hasTooltip(mTooltipView));

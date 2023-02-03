@@ -399,15 +399,13 @@ public class SystemUtil {
         }
     }
 
-    /**
-     * Use `wait-for-broadcast-barrier` on U+
-     * and `wait-for-broadcast-idle` on previous version
-     */
     public static void waitForBroadcasts() {
         String cmd;
         if (SdkLevel.isAtLeastU()) {
+            // wait for pending broadcasts to be completed.
             cmd = "am wait-for-broadcast-barrier";
         } else {
+            // wait for broadcast queues to be idle.
             cmd = "am wait-for-broadcast-idle";
         }
         runShellCommand(cmd);

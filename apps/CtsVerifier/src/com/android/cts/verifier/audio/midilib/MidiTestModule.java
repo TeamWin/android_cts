@@ -18,6 +18,7 @@ package com.android.cts.verifier.audio.midilib;
 
 import android.media.midi.MidiDeviceInfo;
 
+import java.util.Collection;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -102,7 +103,7 @@ public abstract class MidiTestModule {
     /**
      * Scans an array of MidiDeviceInfo
      */
-    public void scanDevices(MidiDeviceInfo[] devInfos) {
+    public void scanDevices(Collection<MidiDeviceInfo> devInfos) {
         mIODevice.scanDevices(devInfos);
     }
 

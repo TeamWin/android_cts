@@ -30,6 +30,7 @@ import com.android.cts.verifier.audio.midilib.MidiTestModule;
 import com.android.cts.verifier.audio.midilib.NativeMidiManager;
 
 import java.io.IOException;
+import java.util.Collection;
 
 /*
  * A note about the USB MIDI device.
@@ -233,7 +234,7 @@ public class MidiNativeTestActivity extends MidiTestActivityBase {
         }
 
         @Override
-        public void scanDevices(MidiDeviceInfo[] devInfos) {
+        public void scanDevices(Collection<MidiDeviceInfo> devInfos) {
             // (normal) Scan for BT MIDI device
             super.scanDevices(devInfos);
             // Find a USB Loopback Device

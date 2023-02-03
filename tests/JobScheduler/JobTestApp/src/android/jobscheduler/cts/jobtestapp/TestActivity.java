@@ -60,6 +60,7 @@ public class TestActivity extends Activity {
     public void onCreate(Bundle savedInstance) {
         Log.d(TAG, "Started test activity: " + TestActivity.class.getCanonicalName());
         super.onCreate(savedInstance);
-        registerReceiver(mFinishReceiver, new IntentFilter(ACTION_FINISH_ACTIVITY));
+        registerReceiver(mFinishReceiver, new IntentFilter(ACTION_FINISH_ACTIVITY),
+                Context.RECEIVER_EXPORTED);
     }
 }

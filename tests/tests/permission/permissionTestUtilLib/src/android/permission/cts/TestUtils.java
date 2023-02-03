@@ -152,7 +152,8 @@ public class TestUtils {
         String runJobCmd = "cmd jobscheduler run -u " + Process.myUserHandle().getIdentifier()
                 + " -f " + packageName + " " + jobId;
         try {
-            runShellCommand(automation, runJobCmd);
+            String result = runShellCommand(automation, runJobCmd);
+            Log.v(LOG_TAG, "jobscheduler run job command output: " + result);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
@@ -169,10 +170,11 @@ public class TestUtils {
         String statusCmd = "cmd jobscheduler get-job-state -u "
                 + Process.myUserHandle().getIdentifier() + " " + packageName + " " + jobId;
         try {
-            eventually(() -> Assert.assertTrue(
-                    "The job doesn't have requested state " + requestedState + " yet",
-                    runShellCommand(automation, statusCmd).trim().startsWith(requestedState)),
-                    timeout);
+            eventually(() -> {
+                String jobState = runShellCommand(automation, statusCmd).trim();
+                Assert.assertTrue("The job doesn't have requested state " + requestedState
+                        + " yet, current state: " + jobState, jobState.startsWith(requestedState));
+            }, timeout);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
