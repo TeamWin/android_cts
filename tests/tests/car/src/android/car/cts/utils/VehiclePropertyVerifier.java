@@ -36,9 +36,9 @@ import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.AreaIdConfig;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.GetPropertyCallback;
-import android.car.hardware.property.CarPropertyManager.GetPropertyError;
 import android.car.hardware.property.CarPropertyManager.GetPropertyRequest;
 import android.car.hardware.property.CarPropertyManager.GetPropertyResult;
+import android.car.hardware.property.CarPropertyManager.PropertyAsyncError;
 import android.car.hardware.property.PropertyNotAvailableException;
 import android.os.SystemClock;
 import android.util.SparseArray;
@@ -173,6 +173,38 @@ public class VehiclePropertyVerifier<T> {
         return new Builder<>(propertyId, access, areaType, changeMode, propertyType);
     }
 
+    @Nullable
+    public static <U> U getDefaultValue(Class<?> clazz) {
+        if (clazz == Boolean.class) {
+            return (U) Boolean.TRUE;
+        }
+        if (clazz == Integer.class) {
+            return (U) (Integer) 2;
+        }
+        if (clazz == Float.class) {
+            return (U) (Float) 2.f;
+        }
+        if (clazz == Long.class) {
+            return (U) (Long) 2L;
+        }
+        if (clazz == Integer[].class) {
+            return (U) new Integer[]{2};
+        }
+        if (clazz == Float[].class) {
+            return (U) new Float[]{2.f};
+        }
+        if (clazz == Long[].class) {
+            return (U) new Long[]{2L};
+        }
+        if (clazz == String.class) {
+            return (U) new String("test");
+        }
+        if (clazz == byte[].class) {
+            return (U) new byte[]{(byte) 0xbe, (byte) 0xef};
+        }
+        return null;
+    }
+
     private static String accessToString(int access) {
         switch (access) {
             case CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_NONE:
@@ -256,6 +288,7 @@ public class VehiclePropertyVerifier<T> {
                     verifyCarPropertyValueCallback(carPropertyConfig, carPropertyManager);
                     verifyCarPropertyValueSetter(carPropertyConfig, carPropertyManager);
                     verifyGetPropertiesAsync(carPropertyConfig, carPropertyManager);
+                    // TODO(b/266000988): verifySetProeprtiesAsync(...)
 
                     if (hvacPowerStateByAreaId != null) {
                         // TODO(b/265483050): Reenable once the bug is fixed.
@@ -449,34 +482,6 @@ public class VehiclePropertyVerifier<T> {
                 CAR_PROPERTY_VALUE_SOURCE_CALLBACK);
     }
 
-    @Nullable
-    private static <U> U getDefaultValue(Class<?> clazz) {
-        if (clazz == Integer.class) {
-            return (U) (Integer) 2;
-        }
-        if (clazz == Float.class) {
-            return (U) (Float) 2.f;
-        }
-        if (clazz == Long.class) {
-            return (U) (Long) 2L;
-        }
-        if (clazz == Integer[].class) {
-            return (U) new Integer[]{2};
-        }
-        if (clazz == Float[].class) {
-            return (U) new Float[]{2.f};
-        }
-        if (clazz == Long[].class) {
-            return (U) new Long[]{2L};
-        }
-        if (clazz == String.class) {
-            return (U) new String("test");
-        }
-        if (clazz == byte[].class) {
-            return (U) new byte[]{(byte) 0xbe, (byte) 0xef};
-        }
-        return null;
-    }
 
     private void verifySetNotAvailable(CarPropertyConfig<T> carPropertyConfig,
             CarPropertyManager carPropertyManager) {
@@ -1337,8 +1342,8 @@ public class VehiclePropertyVerifier<T> {
         }
 
         @Override
-        public void onFailure(GetPropertyError getPropertyError) {
-            assertWithMessage("GetPropertyError with requestId "
+        public void onFailure(PropertyAsyncError getPropertyError) {
+            assertWithMessage("PropertyAsyncError with requestId "
                     + getPropertyError.getRequestId() + " returned with error code: "
                     + getPropertyError.getErrorCode()).fail();
         }

@@ -217,6 +217,7 @@ public class ApplicationInfoTest {
         assertEquals(0, applicationInfo.descriptionRes);
         assertEquals(0, applicationInfo.uiOptions);
         assertEquals(CATEGORY_UNDEFINED, applicationInfo.category);
+        assertFalse(applicationInfo.hasFragileUserData());
     }
 
     @Test(expected=IllegalArgumentException.class)

@@ -42,5 +42,6 @@
     <!-- Load additional APKs onto device -->
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsSelfUninstallingTestApp.apk->/data/local/tmp/cts/uninstall/CtsSelfUninstallingTestApp.apk" />
+        <option name="push" value="CtsEmptyTestApp.apk->/data/local/tmp/cts/uninstall/CtsEmptyTestApp.apk" />
     </target_preparer>
 </configuration>

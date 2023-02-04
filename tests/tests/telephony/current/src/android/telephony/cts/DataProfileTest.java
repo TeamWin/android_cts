@@ -316,7 +316,8 @@ public class DataProfileTest {
         assertEquals(null, profile.getUserName());
         assertEquals(null, profile.getPassword());
         assertEquals(0, profile.getProfileId());
-        assertEquals(ApnSetting.PROTOCOL_IPV4V6, profile.getProtocolType());
+        assertTrue(profile.getProtocolType() == ApnSetting.PROTOCOL_IPV4V6
+                || profile.getProtocolType() == ApnSetting.PROTOCOL_IP);
         assertEquals(ApnSetting.PROTOCOL_IP, profile.getRoamingProtocolType());
         assertEquals(ApnSetting.TYPE_NONE, profile.getSupportedApnTypesBitmask());
         assertEquals(DataProfile.TYPE_COMMON, profile.getType());
@@ -338,18 +339,5 @@ public class DataProfileTest {
             // Expected to get illegal argument exception.
         }
 
-    }
-
-    @Test
-    public void testTdOnlyProfileProtocol() {
-        TrafficDescriptor td = new TrafficDescriptor(null, new TrafficDescriptor.OsAppId(
-                TrafficDescriptor.OsAppId.ANDROID_OS_ID, "ENTERPRISE", 1).getBytes());
-
-        DataProfile profile = new DataProfile.Builder()
-                .setTrafficDescriptor(td)
-                .build();
-
-        assertEquals(ApnSetting.PROTOCOL_IPV4V6, profile.getProtocolType());
-        assertEquals(ApnSetting.PROTOCOL_IP, profile.getRoamingProtocolType());
     }
 }

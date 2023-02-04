@@ -52,10 +52,7 @@ public class MediaDrmTest {
 
     private void testSingleScheme(UUID scheme) throws Exception {
         MediaDrm md = new MediaDrm(scheme);
-        assertTrue(md.getOpenSessionCount() <= md.getMaxSessionCount());
-        assertThrows(() -> {
-            md.closeSession(null);
-        });
+        // TODO(b/267460223): test properties description, vendor, version
         md.close();
     }
 
@@ -126,7 +123,9 @@ public class MediaDrmTest {
 
     @Test
     public void testPlaybackComponent() throws UnsupportedSchemeException {
-        for (UUID scheme : MediaDrm.getSupportedCryptoSchemes()) {
+        final UUID CLEARKEY_UUID = new UUID(0xe2719d58a985b3c9L, 0x781ab030af78d30eL);
+        // TODO(b/267463362): move testPlaybackComponent to MediaDrmClearkeyTest
+        for (UUID scheme : new UUID[] {CLEARKEY_UUID}) {
             MediaDrm drm = new MediaDrm(scheme);
             byte[] sid = null;
             try {

@@ -16,7 +16,6 @@
 
 package android.app.cts;
 
-import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_CAMERA;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_LOCATION;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_MICROPHONE;
@@ -154,6 +153,11 @@ public class ActivityManagerProcessStateTest {
     private int mAppCount;
     private ApplicationInfo[] mAppInfo;
     private WatchUidRunner[] mWatchers;
+
+    private static final int PROCESS_CAPABILITY_ALL = PROCESS_CAPABILITY_FOREGROUND_LOCATION
+            | PROCESS_CAPABILITY_FOREGROUND_CAMERA
+            | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
+            | PROCESS_CAPABILITY_NETWORK;
 
     @Before
     public void setUp() throws Exception {

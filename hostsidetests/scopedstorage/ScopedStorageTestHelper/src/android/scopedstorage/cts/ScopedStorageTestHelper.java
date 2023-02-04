@@ -27,6 +27,7 @@ import static android.scopedstorage.cts.lib.TestUtils.DELETE_FILE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.DELETE_RECURSIVE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.FILE_EXISTS_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXCEPTION;
+import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_ARGS;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_CALLING_PKG;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_PATH;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_URI;
@@ -37,8 +38,10 @@ import static android.scopedstorage.cts.lib.TestUtils.OPEN_FILE_FOR_READ_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.OPEN_FILE_FOR_WRITE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.QUERY_MAX_ROW_ID;
 import static android.scopedstorage.cts.lib.TestUtils.QUERY_MIN_ROW_ID;
+import static android.scopedstorage.cts.lib.TestUtils.QUERY_OWNER_PACKAGE_NAMES;
 import static android.scopedstorage.cts.lib.TestUtils.QUERY_TYPE;
 import static android.scopedstorage.cts.lib.TestUtils.QUERY_URI;
+import static android.scopedstorage.cts.lib.TestUtils.QUERY_WITH_ARGS;
 import static android.scopedstorage.cts.lib.TestUtils.READDIR_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.RENAME_FILE_PARAMS_SEPARATOR;
 import static android.scopedstorage.cts.lib.TestUtils.RENAME_FILE_QUERY;
@@ -65,11 +68,15 @@ import android.provider.MediaStore;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
+import com.google.common.base.Strings;
+
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -138,6 +145,12 @@ public class ScopedStorageTestHelper extends Activity {
                 case QUERY_MIN_ROW_ID:
                     returnIntent = queryRowId(queryType);
                     break;
+                case QUERY_OWNER_PACKAGE_NAMES:
+                    returnIntent = queryOwnerPackageNames(queryType);
+                    break;
+                case QUERY_WITH_ARGS:
+                    returnIntent = queryWithArgs(queryType);
+                    break;
                 case "null":
                 default:
                     throw new IllegalStateException(
@@ -176,6 +189,43 @@ public class ScopedStorageTestHelper extends Activity {
             if (c != null && c.moveToFirst()) {
                 intent.putExtra(queryType, c.getLong(0));
             }
+        } catch (Exception e) {
+            intent.putExtra(INTENT_EXCEPTION, e);
+        }
+
+        return intent;
+    }
+
+    private Intent queryOwnerPackageNames(String queryType) {
+        final Intent intent = new Intent(queryType);
+        final Uri uri = getIntent().getParcelableExtra(INTENT_EXTRA_URI);
+
+        try {
+            final Cursor c = getContentResolver().query(uri,
+                    new String[]{MediaStore.MediaColumns.OWNER_PACKAGE_NAME}, null, null);
+            final Set<String> ownerPackageNames = new HashSet<>();
+            while (c.moveToNext()) {
+                final String ownerPackageName = c.getString(0);
+                if (!Strings.isNullOrEmpty(ownerPackageName)) {
+                    ownerPackageNames.add(ownerPackageName);
+                }
+            }
+            intent.putExtra(queryType, ownerPackageNames.toArray(new String[0]));
+        } catch (Exception e) {
+            intent.putExtra(INTENT_EXCEPTION, e);
+        }
+
+        return intent;
+    }
+
+    private Intent queryWithArgs(String queryType) {
+        final Intent intent = new Intent(queryType);
+        final Uri uri = getIntent().getParcelableExtra(INTENT_EXTRA_URI);
+        final Bundle args = getIntent().getBundleExtra(INTENT_EXTRA_ARGS);
+        try {
+            final Cursor c = getContentResolver().query(uri,
+                    new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, args, null);
+            intent.putExtra(queryType, c.getCount());
         } catch (Exception e) {
             intent.putExtra(INTENT_EXCEPTION, e);
         }
@@ -291,15 +341,15 @@ public class ScopedStorageTestHelper extends Activity {
             final String relativePath = path.substring(0, path.lastIndexOf('/'));
             final String name = path.substring(path.lastIndexOf('/') + 1);
 
-            ContentValues values = new ContentValues();
+            final ContentValues values = new ContentValues();
             values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
             values.put(MediaStore.Images.Media.RELATIVE_PATH, relativePath);
             values.put(MediaStore.Images.Media.DISPLAY_NAME, name);
 
-            getContentResolver().insert(getImageContentUri(), values);
+            final Uri imageUri = getContentResolver().insert(getImageContentUri(), values);
 
             final Intent intent = new Intent(queryType);
-            intent.putExtra(queryType, true);
+            intent.putExtra(queryType, imageUri.toString());
             return intent;
         } else {
             throw new IllegalStateException(

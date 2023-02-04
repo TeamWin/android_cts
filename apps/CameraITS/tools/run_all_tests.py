@@ -533,6 +533,8 @@ def main():
     auto_scene_switch = False
     logging.info('No tablet: manual, sensor_fusion, or scene5 testing.')
 
+  folded_prompted = False
+  opened_prompted = False
   for camera_id in camera_id_combos:
     test_params_content['camera'] = camera_id
     results = {}
@@ -559,14 +561,17 @@ def main():
           f'Camera {camera_id} is unavailable in device state {device_state}'
           f' and cannot be tested with device {device_state}!')
 
-    if (testing_folded_front_camera and camera_id not in unav_cameras):
+    if (testing_folded_front_camera and camera_id not in unav_cameras
+        and not folded_prompted):
+      folded_prompted = True
       input('\nYou are testing a foldable device in folded state.'
             'Please make sure the device is folded and press <ENTER>'
             'after positioning properly.\n')
 
     if (testing_foldable_device and
         not device_folded and _FRONT_CAMERA_ID in camera_id and
-        camera_id not in unav_cameras):
+        camera_id not in unav_cameras and not opened_prompted):
+      opened_prompted = True
       input('\nYou are testing a foldable device in opened state.'
             'Please make sure the device is unfolded and press <ENTER>'
             'after positioning properly.\n')

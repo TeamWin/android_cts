@@ -4477,12 +4477,21 @@
     <permission android:name="android.permission.BIND_AUTOFILL_SERVICE"
         android:protectionLevel="signature" />
 
-   <!-- Alternative version of android.permission.BIND_AUTOFILL_FIELD_CLASSIFICATION_SERVICE.
-        This permission was renamed during the O previews but it was supported on the final O
-        release, so we need to carry it over.
-        <p>Protection level: signature
-        @hide
+    <!-- Must be required by a
+         {@link android.service.assist.classification.FieldClassificationService},
+         to ensure that only the system can bind to it.
+         @SystemApi @hide This is not a third-party API (intended for OEMs and system apps).
+         <p>Protection level: signature
     -->
+    <permission android:name="android.permission.BIND_FIELD_CLASSIFICATION_SERVICE"
+                android:protectionLevel="signature" />
+
+    <!-- Alternative version of android.permission.BIND_AUTOFILL_FIELD_CLASSIFICATION_SERVICE.
+         This permission was renamed during the O previews but it was supported on the final O
+         release, so we need to carry it over.
+         <p>Protection level: signature
+         @hide
+     -->
     <permission android:name="android.permission.BIND_AUTOFILL"
         android:protectionLevel="signature" />
 

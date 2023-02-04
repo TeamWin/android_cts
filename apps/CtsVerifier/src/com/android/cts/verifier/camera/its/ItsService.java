@@ -284,7 +284,10 @@ public class ItsService extends Service implements SensorEventListener {
     private volatile boolean mNeedsLockedAWB = false;
     private volatile boolean mDoAE = true;
     private volatile boolean mDoAF = true;
-    private Set<Pair<String, String>> mUnavailablePhysicalCameras;
+    private final LinkedBlockingQueue<String> unavailableEventQueue = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<Pair<String, String>> unavailablePhysicalCamEventQueue =
+                new LinkedBlockingQueue<>();
+    private Set<String> mUnavailablePhysicalCameras;
 
 
     class MySensorEvent {
@@ -293,6 +296,31 @@ public class ItsService extends Service implements SensorEventListener {
         public long timestamp;
         public float values[];
     }
+
+    CameraManager.AvailabilityCallback ac = new CameraManager.AvailabilityCallback() {
+        @Override
+        public void onCameraAvailable(String cameraId) {
+            super.onCameraAvailable(cameraId);
+        }
+
+        @Override
+        public void onCameraUnavailable(String cameraId) {
+            super.onCameraUnavailable(cameraId);
+            unavailableEventQueue.offer(cameraId);
+        }
+
+        @Override
+        public void onPhysicalCameraAvailable(String cameraId, String physicalCameraId) {
+            super.onPhysicalCameraAvailable(cameraId, physicalCameraId);
+            unavailablePhysicalCamEventQueue.remove(new Pair<>(cameraId, physicalCameraId));
+        }
+
+        @Override
+        public void onPhysicalCameraUnavailable(String cameraId, String physicalCameraId) {
+            super.onPhysicalCameraUnavailable(cameraId, physicalCameraId);
+            unavailablePhysicalCamEventQueue.offer(new Pair<>(cameraId, physicalCameraId));
+        }
+    };
 
     static class VideoRecordingObject {
         private static final int INVALID_FRAME_RATE = -1;
@@ -484,6 +512,9 @@ public class ItsService extends Service implements SensorEventListener {
     public void openCameraDevice(String cameraId) throws ItsException {
         Logt.i(TAG, String.format("Opening camera %s", cameraId));
 
+        // Get initial physical unavailable callbacks without opening camera
+        mCameraManager.registerAvailabilityCallback(ac, mCameraHandler);
+
         try {
             if (mMemoryQuota == -1) {
                 // Initialize memory quota on this device
@@ -509,17 +540,22 @@ public class ItsService extends Service implements SensorEventListener {
         }
 
         try {
-            mUnavailablePhysicalCameras = getUnavailablePhysicalCameras();
+            mUnavailablePhysicalCameras = getUnavailablePhysicalCameras(
+                    unavailablePhysicalCamEventQueue, cameraId);
+            Log.i(TAG, "Unavailable cameras:" + Arrays.asList(mUnavailablePhysicalCameras.toString()));
             mCamera = mBlockingCameraManager.openCamera(cameraId, mCameraListener, mCameraHandler);
             mCameraCharacteristics = mCameraManager.getCameraCharacteristics(cameraId);
-            mCameraExtensionCharacteristics = mCameraManager.getCameraExtensionCharacteristics(
-                    cameraId);
-
+            // The camera should be in available->unavailable state.
+            unavailableEventQueue.clear();
             boolean isLogicalCamera = hasCapability(
                     CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA);
             if (isLogicalCamera) {
                 Set<String> physicalCameraIds = mCameraCharacteristics.getPhysicalCameraIds();
                 for (String id : physicalCameraIds) {
+                    if (mUnavailablePhysicalCameras.contains(id)) {
+                        Log.i(TAG, "Physical camera id not available: " + id);
+                        continue;
+                    }
                     mPhysicalCameraChars.put(id, mCameraManager.getCameraCharacteristics(id));
                 }
             }
@@ -528,6 +564,8 @@ public class ItsService extends Service implements SensorEventListener {
             throw new ItsException("Failed to open camera", e);
         } catch (BlockingOpenException e) {
             throw new ItsException("Failed to open camera (after blocking)", e);
+        } catch (Exception e) {
+            throw new ItsException("Failed to get unavailable physical cameras", e);
         }
         mSocketRunnableObj.sendResponse("cameraOpened", "");
     }
@@ -538,6 +576,7 @@ public class ItsService extends Service implements SensorEventListener {
                 Logt.i(TAG, "Closing camera");
                 mCamera.close();
                 mCamera = null;
+                mCameraManager.unregisterAvailabilityCallback(ac);
             }
         } catch (Exception e) {
             throw new ItsException("Failed to close device");
@@ -891,6 +930,8 @@ public class ItsService extends Service implements SensorEventListener {
                 } else if ("getMaxCamcorderProfileSize".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     doGetMaxCamcorderProfileSize(cameraId);
+                } else if ("getAvailablePhysicalCameraProperties".equals(cmdObj.getString("cmdName"))) {
+                    doGetAvailablePhysicalCameraProperties();
                 } else {
                     throw new ItsException("Unknown command: " + cmd);
                 }
@@ -987,6 +1028,25 @@ public class ItsService extends Service implements SensorEventListener {
                 objs[1] = props;
                 mSerializerQueue.put(objs);
             } catch (InterruptedException e) {
+                throw new ItsException("Interrupted: ", e);
+            }
+        }
+
+        public void sendResponse(String tag, HashMap<String, CameraCharacteristics> props)
+                throws ItsException {
+            try {
+                JSONArray jsonSurfaces = new JSONArray();
+                int n = props.size();
+                for (String s : props.keySet()) {
+                    JSONObject jsonSurface = new JSONObject();
+                    jsonSurface.put(s, ItsSerializer.serialize(props.get(s)));
+                    jsonSurfaces.put(jsonSurface);
+                }
+                Object objs[] = new Object[2];
+                objs[0] = "availablePhysicalCameraProperties";
+                objs[1] = jsonSurfaces;
+                mSerializerQueue.put(objs);
+            } catch (Exception e) {
                 throw new ItsException("Interrupted: ", e);
             }
         }
@@ -1169,6 +1229,27 @@ public class ItsService extends Service implements SensorEventListener {
         }
     }
 
+    private void doGetAvailablePhysicalCameraProperties() throws ItsException {
+        mSocketRunnableObj.sendResponse("availablePhysicalCameraProperties", mPhysicalCameraChars);
+    }
+
+    private Set<String> getUnavailablePhysicalCameras(
+            LinkedBlockingQueue<Pair<String, String>> queue, String cameraId) throws Exception {
+        Set<String> unavailablePhysicalCameras = new HashSet<String>();
+        while (true) {
+            Pair<String, String> unavailableIdCombo = queue.poll(
+                    AVAILABILITY_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS);
+            if (unavailableIdCombo == null) {
+                // No more entries in the queue. Break out of the loop and return.
+                break;
+            }
+            if (cameraId.equals(unavailableIdCombo.first)) {
+                unavailablePhysicalCameras.add(unavailableIdCombo.second);
+            }
+        };
+        return unavailablePhysicalCameras;
+    }
+
     private void doGetCameraIds() throws ItsException {
         if (mItsCameraIdList == null) {
             mItsCameraIdList = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
@@ -1253,10 +1334,8 @@ public class ItsService extends Service implements SensorEventListener {
         try {
             JSONArray cameras = new JSONArray();
             JSONObject jsonObj = new JSONObject();
-            for (Pair<String, String> p : mUnavailablePhysicalCameras) {
-                if (cameraId.equals(p.first)) {
-                    cameras.put(p.second);
-                }
+            for (String p : mUnavailablePhysicalCameras) {
+                cameras.put(p);
             }
             jsonObj.put("unavailablePhysicalCamerasArray", cameras);
             Log.i(TAG, "unavailablePhysicalCameras : " +

@@ -46,7 +46,6 @@ import android.os.UserManager;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.SystemUtil;
@@ -168,7 +167,6 @@ public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestC
         }
     }
 
-    @FlakyTest(bugId = 222167696)
     @Test
     @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_REMOVED"})
     @SupportedVersionTest(unsupportedVersionTest =
@@ -178,7 +176,6 @@ public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestC
         testSendUserLifecycleEventAndOnUserRemoved(/*onSupportedVersion=*/ true);
     }
 
-    @FlakyTest(bugId = 222167696)
     @Test
     @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_REMOVED"})
     @UnsupportedVersionTest(behavior = Behavior.EXPECT_PASS,

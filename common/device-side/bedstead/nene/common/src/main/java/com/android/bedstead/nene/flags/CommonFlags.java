@@ -115,6 +115,7 @@ public final class CommonFlags {
             "ambient_context_manager_service";
     public static final String NAMESPACE_VENDOR_SYSTEM_NATIVE = "vendor_system_native";
     public static final String NAMESPACE_VENDOR_SYSTEM_NATIVE_BOOT = "vendor_system_native_boot";
+    public static final String NAMESPACE_MEMORY_SAFETY_NATIVE_BOOT = "memory_safety_native_boot";
     public static final String NAMESPACE_MEMORY_SAFETY_NATIVE = "memory_safety_native";
     public static final String NAMESPACE_WEAR = "wear";
     public static final String NAMESPACE_TRANSPARENCY_METADATA = "transparency_metadata";

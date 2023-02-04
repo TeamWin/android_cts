@@ -1,4 +1,3 @@
-tgunn@google.com
 nicksauer@google.com
 nona@google.com
 
@@ -16,3 +15,9 @@ per-file OWNERS = file:platform/frameworks/base:/core/java/android/os/storage/OW
 # Bug component: 856262 = per-file src/android/provider/cts/settings/*
 
 per-file src/android/provider/cts/settings/* = file:platform/frameworks/base:/packages/SettingsProvider/OWNERS
+
+# Call log provider ownership (Telecom team)
+# Bug component: 151185 = per-file src/android/provider/cts/BlockedNumber*
+# Bug component: 151185 = per-file src/android/provider/cts/contacts/*
+per-file src/android/provider/cts/BlockedNumber* =  file:../telecom/OWNERS
+per-file src/android/provider/cts/contacts/* = file:../telecom/OWNERS

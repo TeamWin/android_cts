@@ -165,7 +165,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun clickSettingsGearInUpdate_opensAppPermissionsPage() {
+    fun clickSettingsGearInUpdate_opensAppLocationPermissionPage() {
         grantLocationPermission(APP_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
@@ -177,7 +177,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
             click(By.res(SETTINGS_BUTTON_RES_ID))
 
-            findView(By.descContains(APP_PERMISSIONS), true)
+            findView(By.descContains(LOCATION_PERMISSION), true)
             findView(By.textContains(APP_PACKAGE_NAME), true)
         } finally {
             pressBack()
@@ -275,15 +275,15 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
         private const val DATA_SHARING_UPDATES = "Data sharing updates"
         private const val DATA_SHARING_UPDATES_SUBTITLE =
             "These apps have changed the way they share location data. They may not have shared" +
-                    " it before, or may now share it for advertising or marketing purposes."
+                " it before, or may now share it for advertising or marketing purposes."
         private const val DATA_SHARING_NO_UPDATES_MESSAGE = "No updates at this time"
         private const val UPDATES_IN_LAST_30_DAYS = "Updated within 30 days"
         private const val DATA_SHARING_UPDATES_FOOTER_MESSAGE =
             "The developers of these apps provided info about their data sharing practices and" +
-                    " may update it over time.\n\nData sharing practices may vary based on your" +
-                    " app version, use, region, and age."
+                " may update it over time.\n\nData sharing practices may vary based on your" +
+                " app version, use, region, and age."
         private const val LEARN_ABOUT_DATA_SHARING = "Learn about data sharing"
-        private const val APP_PERMISSIONS = "App permissions"
+        private const val LOCATION_PERMISSION = "Location permission"
         private const val PERMISSION_MANAGER = "Permission manager"
         private const val APP_PACKAGE_NAME_SUBSTRING = "android.permission3"
         private const val SETTINGS_BUTTON_RES_ID =

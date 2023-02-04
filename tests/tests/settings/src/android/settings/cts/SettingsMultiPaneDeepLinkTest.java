@@ -24,6 +24,7 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -57,10 +58,11 @@ public class SettingsMultiPaneDeepLinkTest {
 
     @Before
     public void setUp() throws Exception {
+        Context targetContext = InstrumentationRegistry.getInstrumentation()
+                .getTargetContext();
         boolean isFlagEnabled =
-                FeatureFlagUtils.isEnabled(InstrumentationRegistry.getInstrumentation()
-                        .getTargetContext(), "settings_support_large_screen");
-        boolean isSplitSupported = SplitController.getInstance().isSplitSupported();
+                FeatureFlagUtils.isEnabled(targetContext, "settings_support_large_screen");
+        boolean isSplitSupported = SplitController.getInstance(targetContext).isSplitSupported();
         mIsSplitSupported = isFlagEnabled && isSplitSupported;
         Log.d(TAG, "isFlagEnabled : " + isFlagEnabled);
         Log.d(TAG, "isSplitSupported : " + isSplitSupported);

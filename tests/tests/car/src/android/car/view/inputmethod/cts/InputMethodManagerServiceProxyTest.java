@@ -18,28 +18,22 @@ package android.car.view.inputmethod.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.UserManager;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
-
 import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 
-@RequireVisibleBackgroundUsers(reason = "This service (IMMS Proxy) is only used in this scenario")
+
+// TODO(b/267678351): Mark this test with RequireCheckerRule
 public final class InputMethodManagerServiceProxyTest {
 
-    @Rule
-    @ClassRule
-    public static final DeviceState sDeviceState = new DeviceState();
-
-    protected final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
+    private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
     private UserManager mUserManager;
     private Resources mResources;
@@ -47,6 +41,8 @@ public final class InputMethodManagerServiceProxyTest {
     @Before
     public void setUp() {
         mUserManager = mContext.getSystemService(UserManager.class);
+        assumeTrue(mUserManager.isVisibleBackgroundUsersSupported());
+
         mResources = mContext.getResources();
     }
 

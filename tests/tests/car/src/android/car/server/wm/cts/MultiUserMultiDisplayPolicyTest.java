@@ -16,22 +16,28 @@
 
 package android.car.server.wm.cts;
 
-import androidx.test.runner.AndroidJUnit4;
+import static org.junit.Assume.assumeTrue;
 
-import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
+import android.content.Context;
+import android.os.UserManager;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-@RunWith(AndroidJUnit4.class)
-@RequireVisibleBackgroundUsers(reason = "Because class is testing exactly that")
+// TODO(b/267678351): Mark this test with RequireCheckerRule
 public class MultiUserMultiDisplayPolicyTest {
-    @Rule
-    @ClassRule
-    public static final DeviceState sDeviceState = new DeviceState();
+
+    private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
+
+    private UserManager mUserManager;
+
+    @Before
+    public void setUp() {
+        mUserManager = mContext.getSystemService(UserManager.class);
+        assumeTrue(mUserManager.isVisibleBackgroundUsersSupported());
+    }
 
     @Test
     public void testDriverCanLaunchActivityInDriverDisplay() {

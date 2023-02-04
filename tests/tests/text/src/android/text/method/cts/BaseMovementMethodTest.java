@@ -250,6 +250,7 @@ public class BaseMovementMethodTest {
     private TextView createTextView() {
         final TextView textView = new TextViewNoIme(mActivityRule.getActivity());
         textView.setFocusable(true);
+        textView.setEllipsize(null);
         textView.setMovementMethod(mMovementMethod);
         textView.setTextDirection(View.TEXT_DIRECTION_LTR);
         return textView;

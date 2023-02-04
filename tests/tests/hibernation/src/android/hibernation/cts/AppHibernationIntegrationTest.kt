@@ -36,7 +36,6 @@ import android.provider.DeviceConfig.NAMESPACE_APP_HIBERNATION
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
-import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
 import android.support.test.uiautomator.UiScrollable
 import android.support.test.uiautomator.UiSelector
@@ -331,7 +330,6 @@ class AppHibernationIntegrationTest {
             context.startActivity(intent)
 
             waitForIdle()
-            UiAutomatorUtils.getUiDevice()
 
             val packageManager = context.packageManager
             val settingsPackage = intent.resolveActivity(packageManager).packageName
@@ -341,17 +339,15 @@ class AppHibernationIntegrationTest {
 
             // Settings can have multiple scrollable containers so all of them should be
             // searched.
-            var toggleFound = UiDevice.getInstance(instrumentation)
-                .findObject(UiSelector().text(title))
-                .waitForExists(WAIT_TIME_MS)
+            var toggleFound = UiAutomatorUtils.waitFindObjectOrNull(By.text(title))
             var i = 0
             var scrollableObject = UiScrollable(UiSelector().scrollable(true).instance(i))
-            while (!toggleFound && scrollableObject.waitForExists(WAIT_TIME_MS)) {
-                toggleFound = scrollableObject.scrollTextIntoView(title)
+            while (toggleFound == null && scrollableObject.waitForExists(WAIT_TIME_MS)) {
+                toggleFound = UiAutomatorUtils.waitFindObjectOrNull(By.text(title))
                 scrollableObject = UiScrollable(UiSelector().scrollable(true).instance(++i))
             }
 
-            assertTrue("Remove permissions and free up space toggle not found", toggleFound)
+            assertNotNull("Remove permissions and free up space toggle not found", toggleFound)
         }
     }
 

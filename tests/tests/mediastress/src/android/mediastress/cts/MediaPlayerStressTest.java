@@ -164,7 +164,7 @@ abstract class MediaPlayerStressTest extends InstrumentationTestCase {
         Writer output = new BufferedWriter(new FileWriter(playbackOutput, true));
 
         boolean testResult = true;
-        boolean onCompleteSuccess = false;
+        String failureDiagnostic = "";
 
         Intent intent = new Intent();
 
@@ -175,12 +175,12 @@ abstract class MediaPlayerStressTest extends InstrumentationTestCase {
 
         for (int i = 0; i < repeatCounter; i++) {
             Log.v(TAG, "start playing " + mediaName);
-            onCompleteSuccess =
-                CodecTest.playMediaSample(mediaName);
-            if (!onCompleteSuccess) {
+            String response = CodecTest.playMediaSample(mediaName);
+            if (response != null) {
                 //Don't fail the test right away, print out the failure file.
-                Log.v(TAG, "Failure File : " + mediaName);
+                Log.v(TAG, "Failure '" + response + "' on File: " + mediaName);
                 testResult = false;
+                failureDiagnostic = response;
             }
         }
         Thread.sleep(1000);
@@ -193,7 +193,7 @@ abstract class MediaPlayerStressTest extends InstrumentationTestCase {
 
         writeTestSummary(output);
         output.close();
-        assertTrue("playback " + mediaName, testResult);
+        assertTrue("playback " + mediaName + " (" + failureDiagnostic + ")", testResult);
     }
 
     protected void doTestVideoPlaybackShort(int mediaNumber) throws Exception {

@@ -18,6 +18,7 @@ package android.view.inputmethod.cts;
 
 import static android.view.WindowInsets.CONSUMED;
 import static android.view.WindowInsets.Type.ime;
+import static android.view.WindowInsets.Type.navigationBars;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
@@ -26,7 +27,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import android.app.WindowConfiguration;
-import android.graphics.Point;
 import android.os.Process;
 import android.os.SystemClock;
 import android.util.Pair;
@@ -91,7 +91,7 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
     }
 
     private static final int INITIAL_KEYBOARD_HEIGHT = 200;
-    private static final int NEW_KEYBOARD_HEIGHT = 300;
+    private static final int KEYBOARD_HEIGHT_INCREASE = 100;
 
     @Test
     public void testChangeSizeWhileControlling() throws Exception {
@@ -152,7 +152,9 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
 
             // Change keyboard height, but make sure the insets don't change until the controlling
             // is done.
-            expectCommand(stream, imeSession.callSetHeight(NEW_KEYBOARD_HEIGHT), TIMEOUT);
+            final int newKeyboardHeight =
+                    lastInsets[0].getInsets(ime()).bottom + KEYBOARD_HEIGHT_INCREASE;
+            expectCommand(stream, imeSession.callSetHeight(newKeyboardHeight), TIMEOUT);
 
             SystemClock.sleep(500);
 
@@ -174,8 +176,8 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
             assertEquals(0, insetsLatch.getCount());
 
             // Verify new height
-            assertEquals(getExpectedBottomInsets(NEW_KEYBOARD_HEIGHT, decorView),
-                         lastInsets[0].getInsets(ime()).bottom);
+            assertEquals(getExpectedBottomInsets(newKeyboardHeight, decorView),
+                    lastInsets[0].getInsets(ime()).bottom);
 
             assertFalse(cancelled[0]);
         }
@@ -206,22 +208,10 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
         };
     }
 
-    private int getDisplayHeight(View view) {
-        final Point size = new Point();
-        view.getDisplay().getRealSize(size);
-        return size.y;
-    }
-
-    private int getBottomOfWindow(View decorView) {
-        final int[] viewPos = new int[2];
-        decorView.getLocationOnScreen(viewPos);
-        return decorView.getHeight() + viewPos[1];
-    }
-
     private int getExpectedBottomInsets(int keyboardHeight, View decorView) {
-        return Math.max(
-                0,
-                keyboardHeight
-                        - Math.max(0, getDisplayHeight(decorView) - getBottomOfWindow(decorView)));
+        // IME window is never smaller than navigation bars.
+        final int navBarHeight = decorView.getRootWindowInsets()
+                .getInsetsIgnoringVisibility(navigationBars()).bottom;
+        return Math.max(navBarHeight, keyboardHeight);
     }
 }

@@ -330,6 +330,9 @@ public final class DeviceState extends HarrierRule {
         try {
             Log.d(LOG_TAG, "Preparing state for test " + testName);
 
+            if (mOriginalSwitchedUser == null) {
+                mOriginalSwitchedUser = TestApis.users().current();
+            }
             testApps().snapshot();
             Tags.clearTags();
             Tags.addTag(Tags.USES_DEVICESTATE);
@@ -2322,20 +2325,6 @@ public final class DeviceState extends HarrierRule {
 
         mUsersSetPasswords.clear();
 
-        for (UserReference user : mCreatedUsers) {
-            try {
-                user.remove();
-            } catch (NeneException e) {
-                if (user.exists()) {
-                    // Otherwise it's probably just already removed
-                    throw new NeneException("Could not remove user", e);
-                }
-            }
-
-        }
-
-        mCreatedUsers.clear();
-
         for (RemovedUser removedUser : mRemovedUsers) {
             UserReference user = removedUser.userBuilder.create();
             if (removedUser.isRunning) {
@@ -2359,6 +2348,23 @@ public final class DeviceState extends HarrierRule {
             }
             mOriginalSwitchedUser = null;
         }
+
+        // Make sure to start removing users after switching to the mOriginalSwitchedUser.
+        // Otherwise, if any of the users to be removed had been left as the current foreground user
+        // it won't be possible to remove it and teardown will fail with a NeneException below.
+        for (UserReference user : mCreatedUsers) {
+            try {
+                user.remove();
+            } catch (NeneException e) {
+                if (user.exists()) {
+                    // Otherwise it's probably just already removed
+                    throw new NeneException("Could not remove user", e);
+                }
+            }
+
+        }
+
+        mCreatedUsers.clear();
 
         for (TestAppInstance installedTestApp : mInstalledTestApps) {
             installedTestApp.uninstall();

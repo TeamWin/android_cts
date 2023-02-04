@@ -86,6 +86,7 @@ public class ScrollingMovementMethodTest {
         mTextView = new TextViewNoIme(mActivity);
         mTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         mTextView.setText(THREE_LINES_TEXT, BufferType.EDITABLE);
+        mTextView.setEllipsize(null);
         mSpannable = (Spannable) mTextView.getText();
         mScaledTouchSlop = ViewConfiguration.get(mActivity).getScaledTouchSlop();
     }

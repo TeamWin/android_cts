@@ -25,6 +25,7 @@ import android.os.RemoteException;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.uiautomator.UiDevice;
 import android.view.KeyEvent;
+import android.window.OnBackInvokedCallback;
 import android.window.OnBackInvokedDispatcher;
 
 import androidx.lifecycle.Lifecycle;
@@ -113,13 +114,39 @@ public class BackNavigationTests {
                         activity.mOnBackPressedCalled));
     }
 
+    @Test
+    public void registerCallback_relaunch() {
+        mScenario.moveToState(Lifecycle.State.CREATED)
+                .moveToState(Lifecycle.State.STARTED)
+                .moveToState(Lifecycle.State.RESUMED);
+        CountDownLatch latch1 = registerBackCallback();
+
+        ActivityScenario<BackNavigationActivity> newScenario = mScenario.recreate();
+        newScenario.moveToState(Lifecycle.State.CREATED)
+                .moveToState(Lifecycle.State.STARTED)
+                .moveToState(Lifecycle.State.RESUMED);
+        CountDownLatch latch2 = registerBackCallback(newScenario, true);
+
+        invokeBackAndAssertCallbackIsCalled(latch2);
+        invokeBackAndAssertCallback(latch1, false);
+    }
+
     private void invokeBackAndAssertCallbackIsCalled(CountDownLatch latch) {
+        invokeBackAndAssertCallback(latch, true);
+    }
+
+    private void invokeBackAndAssertCallback(CountDownLatch latch, boolean isCalled) {
         try {
             mInstrumentation.getUiAutomation().waitForIdle(500, 1000);
             UiDevice.getInstance(mInstrumentation).pressKeyCode(
                     KeyEvent.KEYCODE_BACK);
-            assertTrue("OnBackInvokedCallback.onBackInvoked() was not called",
-                    latch.await(500, TimeUnit.MILLISECONDS));
+            if (isCalled) {
+                assertTrue("OnBackInvokedCallback.onBackInvoked() was not called",
+                        latch.await(500, TimeUnit.MILLISECONDS));
+            } else {
+                assertFalse("OnBackInvokedCallback.onBackInvoked() was called",
+                        latch.await(500, TimeUnit.MILLISECONDS));
+            }
         } catch (InterruptedException ex) {
             fail("Application died before invoking the callback.\n" + ex.getMessage());
         } catch (TimeoutException ex) {
@@ -128,11 +155,26 @@ public class BackNavigationTests {
     }
 
     private CountDownLatch registerBackCallback() {
+        return registerBackCallback(mScenario, false);
+    }
+
+    private CountDownLatch registerBackCallback(ActivityScenario<?> scenario,
+            boolean unregisterAfterCalled) {
         CountDownLatch backInvokedLatch = new CountDownLatch(1);
         CountDownLatch backRegisteredLatch = new CountDownLatch(1);
-        mScenario.onActivity(activity -> {
-            activity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
-                    0, backInvokedLatch::countDown);
+        final OnBackInvokedCallback callback = new OnBackInvokedCallback() {
+            @Override
+            public void onBackInvoked() {
+                backInvokedLatch.countDown();
+                if (unregisterAfterCalled) {
+                    scenario.onActivity(activity -> activity.getOnBackInvokedDispatcher()
+                            .unregisterOnBackInvokedCallback(this));
+                }
+            }
+        };
+
+        scenario.onActivity(activity -> {
+            activity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(0, callback);
             backRegisteredLatch.countDown();
         });
         try {

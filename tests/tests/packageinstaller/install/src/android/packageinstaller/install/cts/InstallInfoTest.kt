@@ -19,6 +19,7 @@ package android.packageinstaller.install.cts
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageInstaller
+import android.content.pm.PackageManager
 import android.platform.test.annotations.AppModeFull
 import androidx.test.InstrumentationRegistry
 import java.io.File
@@ -87,6 +88,18 @@ class InstallInfoTest : PackageInstallerTestBase() {
         }
         assertThrows(PackageInstaller.PackageParsingException::class.java) {
             pi.readInstallInfo(apk, 0)
+        }
+    }
+
+    @Test
+    fun testExceptionErrorCodeOfNonApk() {
+        val apk = tempFolder.newFile(NOT_AN_APK).apply {
+            this.writeBytes(Random.nextBytes(ByteArray(10)))
+        }
+        try {
+            pi.readInstallInfo(apk, 0)
+        } catch (e: PackageInstaller.PackageParsingException) {
+            assertEquals(e.errorCode, PackageManager.INSTALL_PARSE_FAILED_NOT_APK)
         }
     }
 }

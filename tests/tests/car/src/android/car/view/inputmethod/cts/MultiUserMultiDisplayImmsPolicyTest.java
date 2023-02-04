@@ -16,19 +16,28 @@
 
 package android.car.view.inputmethod.cts;
 
-import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
+import static org.junit.Assume.assumeTrue;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
+import android.content.Context;
+import android.os.UserManager;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.Before;
 import org.junit.Test;
 
-@RequireVisibleBackgroundUsers(reason = "Policy test for multi-user / multi-display IMMS")
+// TODO(b/267678351): Mark this test with RequireCheckerRule
 public final class MultiUserMultiDisplayImmsPolicyTest {
 
-    @Rule
-    @ClassRule
-    public static final DeviceState sDeviceState = new DeviceState();
+    private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
+
+    private UserManager mUserManager;
+
+    @Before
+    public void setUp() {
+        mUserManager = mContext.getSystemService(UserManager.class);
+        assumeTrue(mUserManager.isVisibleBackgroundUsersSupported());
+    }
 
     @Test
     public void testDriverCanLaunchIMEInDriverDisplay() {

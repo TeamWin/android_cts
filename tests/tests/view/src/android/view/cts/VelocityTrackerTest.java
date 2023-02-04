@@ -30,13 +30,13 @@ import android.view.VelocityTracker;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import java.util.Set;
-import java.util.function.Supplier;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Test {@link VelocityTracker}.
@@ -64,6 +64,9 @@ public class VelocityTrackerTest {
     private float mPx, mPy, mScroll;
     private float mVx, mVy, mVscroll;
     private float mAx, mAy, mAscroll;
+
+    private final StrictMode.ThreadPolicy mOldThreadPolicy = StrictMode.getThreadPolicy();
+    private final StrictMode.VmPolicy mOldVmPolicy = StrictMode.getVmPolicy();
 
     @Before
     public void setup() {
@@ -93,6 +96,8 @@ public class VelocityTrackerTest {
     public void teardown() {
         mPlanarVelocityTracker.recycle();
         mScrollVelocityTracker.recycle();
+        StrictMode.setThreadPolicy(mOldThreadPolicy);
+        StrictMode.setVmPolicy(mOldVmPolicy);
     }
 
     @Test

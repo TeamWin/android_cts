@@ -16,8 +16,8 @@
 
 package android.app.cts;
 
-import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_CAMERA;
+import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_LOCATION;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_MICROPHONE;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NETWORK;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NONE;
@@ -110,6 +110,11 @@ public class ActivityManagerFgsBgStartTest {
             PROCESS_CAPABILITY_FOREGROUND_CAMERA
                     | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
                     | PROCESS_CAPABILITY_NETWORK);
+
+    private static final int PROCESS_CAPABILITY_ALL = PROCESS_CAPABILITY_FOREGROUND_LOCATION
+            | PROCESS_CAPABILITY_FOREGROUND_CAMERA
+            | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
+            | PROCESS_CAPABILITY_NETWORK;
 
     static final int WAITFOR_MSEC = 10000;
 

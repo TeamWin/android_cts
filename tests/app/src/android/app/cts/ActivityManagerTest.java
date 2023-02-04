@@ -15,6 +15,10 @@
  */
 package android.app.cts;
 
+import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_CAMERA;
+import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_LOCATION;
+import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_MICROPHONE;
+import static android.app.ActivityManager.PROCESS_CAPABILITY_NETWORK;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_BACKGROUND;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
@@ -173,6 +177,11 @@ public class ActivityManagerTest {
     public static final int RESULT_PASS = 1;
     public static final int RESULT_FAIL = 2;
     public static final int RESULT_TIMEOUT = 3;
+
+    private static final int PROCESS_CAPABILITY_ALL = PROCESS_CAPABILITY_FOREGROUND_LOCATION
+            | PROCESS_CAPABILITY_FOREGROUND_CAMERA
+            | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
+            | PROCESS_CAPABILITY_NETWORK;
 
     private Context mTargetContext;
     private ActivityManager mActivityManager;
@@ -608,7 +617,7 @@ public class ActivityManagerTest {
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_TOP,
-                    new Integer(ActivityManager.PROCESS_CAPABILITY_ALL));
+                    new Integer(PROCESS_CAPABILITY_ALL));
 
             // Sleep a while to let things go through.
             Thread.sleep(WAIT_TIME);

@@ -20,6 +20,9 @@ import android.os.RemoteException;
 
 import androidx.annotation.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * This class serves as the public fronting API for tests to interact with the CtsTestServer.
  *
@@ -61,6 +64,42 @@ public final class SharedSdkWebServer {
     public void resetRequestState() {
         try {
             mWebServer.resetRequestState();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Sets a response to be returned when a particular request path is passed in (with the option
+     * to specify additional headers).
+     */
+    public String setResponse(
+            String path, String responseString, List<HttpHeader> responseHeaders) {
+        // We can't send a null value as a list
+        // so default to an empty list if null was provided.
+        if (responseHeaders == null) {
+            responseHeaders = Collections.emptyList();
+        }
+        try {
+            return mWebServer.setResponse(path, responseString, responseHeaders);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** Return the absolute URL that refers to a path. */
+    public String getAbsoluteUrl(String path) {
+        try {
+            return mWebServer.getAbsoluteUrl(path);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** Returns a url that will contain the user agent in the header and in the body. */
+    public String getUserAgentUrl() {
+        try {
+            return mWebServer.getUserAgentUrl();
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -111,6 +150,33 @@ public final class SharedSdkWebServer {
         }
     }
 
+    /** Returns the url to the app cache. */
+    public String getAppCacheUrl() {
+        try {
+            return mWebServer.getAppCacheUrl();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** Returns how many requests have been made. */
+    public int getRequestCount() {
+        try {
+            return mWebServer.getRequestCount();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** Returns the request count for a particular path */
+    public int getRequestCount(String path) {
+        try {
+            return mWebServer.getRequestCountWithPath(path);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /** Verify if a resource was requested. */
     public boolean wasResourceRequested(String url) {
         try {
@@ -121,6 +187,15 @@ public final class SharedSdkWebServer {
     }
 
     /** Retrieve the last request to be made on a url. */
+    public HttpRequest getLastRequest(String path) {
+        try {
+            return mWebServer.getLastRequest(path);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** Retrieve the last request for an asset path to be made on a url. */
     public HttpRequest getLastAssetRequest(String url) {
         try {
             return mWebServer.getLastAssetRequest(url);

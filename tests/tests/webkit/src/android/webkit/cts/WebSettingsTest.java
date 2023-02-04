@@ -48,7 +48,6 @@ import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -76,7 +75,7 @@ import java.util.regex.Pattern;
 @AppModeFull
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class WebSettingsTest {
+public class WebSettingsTest extends SharedWebViewTest {
     private static final String LOG_TAG = "WebSettingsTest";
 
     private final String EMPTY_IMAGE_HEIGHT = "0";
@@ -96,23 +95,18 @@ public class WebSettingsTest {
             new ActivityScenarioRule(WebViewCtsActivity.class);
 
     private WebSettings mSettings;
-    private CtsTestServer mWebServer;
+    private SharedSdkWebServer mWebServer;
     private WebViewOnUiThread mOnUiThread;
     private Context mContext;
 
     @Before
     public void setUp() throws Exception {
-        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-
-        mActivityScenarioRule.getScenario().onActivity(activity -> {
-            WebViewCtsActivity webviewCtsActivity = (WebViewCtsActivity) activity;
-            WebView webview = webviewCtsActivity.getWebView();
-            if (webview != null) {
-                mOnUiThread = new WebViewOnUiThread(webview);
-            }
-        });
+        WebView webview = getTestEnvironment().getWebView();
+        if (webview != null) {
+            mOnUiThread = new WebViewOnUiThread(webview);
+        }
         mSettings = mOnUiThread.getSettings();
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext = getTestEnvironment().getContext();
     }
 
 
@@ -124,6 +118,28 @@ public class WebSettingsTest {
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
+    }
+
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+
+        SharedWebViewTestEnvironment.Builder builder = new SharedWebViewTestEnvironment.Builder();
+
+        mActivityScenarioRule
+                .getScenario()
+                .onActivity(
+                        activity -> {
+                            WebView webView = ((WebViewCtsActivity) activity).getWebView();
+                            builder.setHostAppInvoker(
+                                            SharedWebViewTestEnvironment.createHostAppInvoker(
+                                                    activity))
+                                    .setContext(activity)
+                                    .setWebView(webView)
+                                    .setRootLayout(((WebViewCtsActivity) activity).getRootLayout());
+                        });
+
+        return builder.build();
     }
 
     /**
@@ -292,7 +308,7 @@ public class WebSettingsTest {
             String dbPath = mContext.getFilesDir().toString() + "/icons";
             iconDb.open(dbPath);
         });
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        getTestEnvironment().waitForIdleSync();
         Thread.sleep(100); // Wait for open to be received on the icon db thread.
     }
 
@@ -1105,7 +1121,8 @@ public class WebSettingsTest {
      */
     private void startWebServer(boolean secure) throws Exception {
         assertNull(mWebServer);
-        mWebServer = new CtsTestServer(mContext, secure ? SslMode.NO_CLIENT_AUTH : SslMode.INSECURE);
+        mWebServer = getTestEnvironment().getWebServer();
+        mWebServer.start(secure ? SslMode.NO_CLIENT_AUTH : SslMode.INSECURE);
     }
 
     /**

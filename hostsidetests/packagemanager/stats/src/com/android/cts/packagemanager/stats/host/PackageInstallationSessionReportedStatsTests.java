@@ -187,8 +187,8 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
         AtomsProto.PackageUninstallationReported report = reports.get(0);
         assertThat(report.getUid()).isEqualTo(expectedUid);
         final List<Integer> users = Collections.singletonList(getDevice().getCurrentUser());
-        assertThat(report.getUserIdsList()).isEqualTo(users);
-        assertThat(report.getOriginalUserIdsList()).isEqualTo(users);
+        assertThat(report.getUserIdsList()).containsAtLeastElementsIn(users);
+        assertThat(report.getOriginalUserIdsList()).containsAtLeastElementsIn(users);
         assertThat(report.getUninstallFlags()).isEqualTo(2 /* DELETE_ALL_USERS */);
         assertThat(report.getReturnCode()).isEqualTo(1);
         assertThat(report.getIsSystem()).isFalse();

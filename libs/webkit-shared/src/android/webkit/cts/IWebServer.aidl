@@ -17,6 +17,9 @@
 package android.webkit.cts;
 
 import android.webkit.cts.HttpRequest;
+import android.webkit.cts.HttpHeader;
+
+import java.util.List;
 
 interface IWebServer {
     void start(int sslMode, in @nullable byte[] acceptedIssuerDer);
@@ -24,6 +27,13 @@ interface IWebServer {
     void shutdown();
 
     void resetRequestState();
+
+    String setResponse(
+        String path, String responseString, in List<HttpHeader> responseHeaders);
+
+    String getAbsoluteUrl(String path);
+
+    String getUserAgentUrl();
 
     String getDelayedAssetUrl(String path);
 
@@ -35,7 +45,15 @@ interface IWebServer {
 
     String getBinaryUrl(String mimeType, int contentLength);
 
+    String getAppCacheUrl();
+
+    int getRequestCount();
+
+    int getRequestCountWithPath(String path);
+
     boolean wasResourceRequested(String url);
+
+    HttpRequest getLastRequest(String path);
 
     HttpRequest getLastAssetRequest(String url);
 }
