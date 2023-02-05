@@ -64,13 +64,14 @@ _FRONT_CAMERA_ID = '1'
 _ALL_SCENES = [
     'scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b', 'scene2_c',
     'scene2_d', 'scene2_e', 'scene2_f', 'scene3', 'scene4', 'scene5',
-    'scene6', 'sensor_fusion'
+    'scene6', os.path.join('scene_extensions', 'scene_hdr'), 'sensor_fusion'
 ]
 
 # Scenes that can be automated through tablet display
 _AUTO_SCENES = [
     'scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b', 'scene2_c',
-    'scene2_d', 'scene2_e', 'scene2_f', 'scene3', 'scene4', 'scene6'
+    'scene2_d', 'scene2_e', 'scene2_f', 'scene3', 'scene4', 'scene6',
+    os.path.join('scene_extensions', 'scene_hdr')
 ]
 
 # Scenes that are logically grouped and can be called as group
@@ -101,6 +102,12 @@ _SCENE_REQ = {
               'See CameraITS.pdf section 2.3.4 for more details',
     'scene6': 'A grid of black circles on a white background. '
               'See tests/scene6/scene6.png',
+    # Use os.path to avoid confusion on other platforms
+    os.path.join('scene_extensions', 'scene_hdr'): (
+        'A tablet displayed scene with a face on the left '
+        'and a low-contrast QR code on the right. '
+        'See tests/scene_extensions/scene_hdr/scene_hdr.png'
+    ),
     'sensor_fusion': 'A checkerboard pattern for phone to rotate in front of '
                      'in tests/sensor_fusion/checkerboard.pdf\n'
                      'See tests/sensor_fusion/SensorFusion.pdf for detailed '

@@ -85,7 +85,7 @@ public class UiDeviceUtils {
         getDevice().pressMenu();
     }
 
-    static void pressSleepButton() {
+    public static void pressSleepButton() {
         if (DEBUG) Log.d(TAG, "pressSleepButton");
         final PowerManager pm = getInstrumentation()
                 .getContext().getSystemService(PowerManager.class);

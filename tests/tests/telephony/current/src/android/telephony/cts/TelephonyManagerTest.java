@@ -44,9 +44,11 @@ import static org.junit.Assume.assumeTrue;
 import android.Manifest;
 import android.Manifest.permission;
 import android.annotation.NonNull;
+import android.annotation.Nullable;
 import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -59,6 +61,7 @@ import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.PersistableBundle;
@@ -359,6 +362,8 @@ public class TelephonyManagerTest {
     private boolean mIsAllowedNetworkTypeChanged;
     private Map<Integer, Long> mAllowedNetworkTypesList = new HashMap<>();
 
+    private final CountryChangedReceiver mCountryChangedReceiver = new CountryChangedReceiver();
+
     private class CarrierPrivilegeChangeMonitor implements AutoCloseable {
         // CarrierPrivilegesCallback will be triggered upon registration. Filter the first callback
         // here since we really care of the *change* of carrier privileges instead of the content
@@ -399,6 +404,34 @@ public class TelephonyManagerTest {
         }
     }
 
+    private static class CountryChangedReceiver extends BroadcastReceiver {
+        private CountDownLatch mLatch = new CountDownLatch(1);
+
+        @Nullable
+        private Bundle mBundle;
+
+        @Nullable
+        public Bundle getExtras() {
+            return mBundle;
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (TelephonyManager.ACTION_NETWORK_COUNTRY_CHANGED.equals(intent.getAction())) {
+                mLatch.countDown();
+                mBundle = intent.getExtras();
+            }
+        }
+
+        void clearQueue() {
+            mLatch = new CountDownLatch(1);
+        }
+
+        void waitForIntent() throws Exception {
+            mLatch.await(5000, TimeUnit.MILLISECONDS);
+        }
+    }
+
     @Before
     public void setUp() throws Exception {
         mCm = getContext().getSystemService(ConnectivityManager.class);
@@ -421,10 +454,13 @@ public class TelephonyManagerTest {
         Pair<Integer, Integer> simHalVersion =
                 mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
         mConfigHalVersion = makeRadioVersion(simHalVersion.first, simHalVersion.second);
-        IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(android.Manifest.permission.READ_PHONE_STATE);
         saveAllowedNetworkTypesForAllReasons();
+
+        getContext().registerReceiver(mCountryChangedReceiver,
+                new IntentFilter(TelephonyManager.ACTION_NETWORK_COUNTRY_CHANGED),
+                Context.RECEIVER_EXPORTED);
     }
 
     @After
@@ -6091,5 +6127,57 @@ public class TelephonyManagerTest {
     private boolean hasReadContactsPermission(String pkgName) {
         return mPackageManager.checkPermission(Manifest.permission.READ_CONTACTS, pkgName)
                 == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @Test
+    public void testLastKnownCountryIso() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
+
+        ServiceStateRadioStateListener callback = new ServiceStateRadioStateListener(
+                mTelephonyManager.getServiceState(), mTelephonyManager.getRadioPowerState());
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.registerTelephonyCallback(Runnable::run, callback));
+
+        int initialRadioState = mTelephonyManager.getRadioPowerState();
+        try {
+            if (initialRadioState == TelephonyManager.RADIO_POWER_OFF) {
+                Log.i(TAG, "testLastKnownCountryIso:"
+                        + "turning on radio since it is off");
+                turnRadioOn(callback, TelephonyManager.RADIO_POWER_REASON_USER);
+                assertEquals(TelephonyManager.RADIO_POWER_ON, callback.mRadioPowerState);
+            }
+
+            String countryCode = mTelephonyManager.getNetworkCountryIso();
+            if (TextUtils.isEmpty(countryCode)) {
+                Log.i(TAG, "testLastKnownCountryIso: country iso is already known. Not testable.");
+                // Not testable.
+                return;
+            }
+
+            Log.i(TAG, "testLastKnownCountryIso:"
+                    + "turning radio off due to testing last known country ...");
+            turnRadioOff(callback, TelephonyManager.RADIO_POWER_REASON_USER);
+            try {
+                mCountryChangedReceiver.waitForIntent();
+                assertThat(mCountryChangedReceiver.getExtras().getString(
+                        TelephonyManager.EXTRA_NETWORK_COUNTRY)).isEmpty();
+                assertThat(mCountryChangedReceiver.getExtras().getString(
+                        TelephonyManager.EXTRA_LAST_KNOWN_NETWORK_COUNTRY)).isEqualTo(countryCode);
+                Log.i(TAG, "testLastKnownCountryIso: country code \"" + countryCode
+                        + "\" matched.");
+            } catch (Exception e) {
+                fail(e.getMessage());
+            }
+        } finally {
+            if (initialRadioState == TelephonyManager.RADIO_POWER_OFF
+                    && mTelephonyManager.getRadioPowerState() != TelephonyManager.RADIO_POWER_OFF) {
+                Log.i(TAG, "testLastKnownCountryIso: turning radio back off");
+                turnRadioOff(callback, TelephonyManager.RADIO_POWER_REASON_USER);
+            } else if (initialRadioState == TelephonyManager.RADIO_POWER_ON
+                    && mTelephonyManager.getRadioPowerState() != TelephonyManager.RADIO_POWER_ON) {
+                Log.i(TAG, "testLastKnownCountryIso: turning radio back on");
+                turnRadioOn(callback, TelephonyManager.RADIO_POWER_REASON_USER);
+            }
+        }
     }
 }

@@ -33,25 +33,25 @@ public class ActivityOptionsTest extends AndroidTestCase {
 
     public void testGetPendingIntentBackgroundActivityLaunchAllowedDefault() {
         ActivityOptions options = ActivityOptions.makeBasic();
+
         // backwards compatibility
-        assertThat(options.isPendingIntentBackgroundActivityLaunchAllowed()).isTrue();
-        assertThat(options.getPendingIntentBackgroundActivityStartMode()).isEqualTo(
+        checkPendingIntentBackgroundActivityStartModeBeforeAndAfterBundle(options, true,
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_SYSTEM_DEFINED);
     }
 
     public void testGetSetPendingIntentBackgroundActivityLaunchAllowedTrue() {
         ActivityOptions options = ActivityOptions.makeBasic();
         options.setPendingIntentBackgroundActivityLaunchAllowed(true);
-        assertThat(options.isPendingIntentBackgroundActivityLaunchAllowed()).isTrue();
-        assertThat(options.getPendingIntentBackgroundActivityStartMode()).isEqualTo(
+
+        checkPendingIntentBackgroundActivityStartModeBeforeAndAfterBundle(options, true,
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
     }
 
     public void testGetSetPendingIntentBackgroundActivityLaunchAllowedFalse() {
         ActivityOptions options = ActivityOptions.makeBasic();
         options.setPendingIntentBackgroundActivityLaunchAllowed(false);
-        assertThat(options.isPendingIntentBackgroundActivityLaunchAllowed()).isFalse();
-        assertThat(options.getPendingIntentBackgroundActivityStartMode()).isEqualTo(
+
+        checkPendingIntentBackgroundActivityStartModeBeforeAndAfterBundle(options, false,
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED);
     }
 
@@ -59,8 +59,8 @@ public class ActivityOptionsTest extends AndroidTestCase {
         ActivityOptions options = ActivityOptions.makeBasic()
                 .setPendingIntentBackgroundActivityStartMode(
                         ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
-        assertThat(options.isPendingIntentBackgroundActivityLaunchAllowed()).isTrue();
-        assertThat(options.getPendingIntentBackgroundActivityStartMode()).isEqualTo(
+        checkPendingIntentBackgroundActivityStartModeBeforeAndAfterBundle(options, true,
+
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
     }
 
@@ -68,8 +68,66 @@ public class ActivityOptionsTest extends AndroidTestCase {
         ActivityOptions options = ActivityOptions.makeBasic()
                 .setPendingIntentBackgroundActivityStartMode(
                         ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED);
-        assertThat(options.isPendingIntentBackgroundActivityLaunchAllowed()).isFalse();
-        assertThat(options.getPendingIntentBackgroundActivityStartMode()).isEqualTo(
+
+        checkPendingIntentBackgroundActivityStartModeBeforeAndAfterBundle(options, false,
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED);
     }
+
+    private void checkPendingIntentBackgroundActivityStartModeBeforeAndAfterBundle(
+            ActivityOptions options, boolean allowed, int mode) {
+        assertThat(options.isPendingIntentBackgroundActivityLaunchAllowed()).isEqualTo(allowed);
+        assertThat(options.getPendingIntentBackgroundActivityStartMode()).isEqualTo(mode);
+
+        Bundle bundle = options.toBundle();
+
+        String key = "android.pendingIntent.backgroundActivityAllowed";
+        if (mode == ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_SYSTEM_DEFINED) {
+            assertThat(bundle.containsKey(key)).isFalse();
+        } else {
+            assertThat(bundle.containsKey(key)).isTrue();
+            assertThat(bundle.getBoolean(key)).isEqualTo(allowed);
+        }
+    }
+
+    public void testGetPendingIntentCreatorBackgroundActivityLaunchAllowedDefault() {
+        ActivityOptions options = ActivityOptions.makeBasic();
+
+        // backwards compatibility
+        checkPendingIntentCreatorBackgroundActivityStartModeBeforeAndAfterBundle(options,
+                ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_SYSTEM_DEFINED);
+    }
+
+    public void testGetPendingIntentCreatorBackgroundActivityStartModeAllowed() {
+        ActivityOptions options = ActivityOptions.makeBasic()
+                .setPendingIntentCreatorBackgroundActivityStartMode(
+                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
+        checkPendingIntentCreatorBackgroundActivityStartModeBeforeAndAfterBundle(options,
+
+                ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
+    }
+
+    public void testGetPendingIntentCreatorBackgroundActivityStartModeDenied() {
+        ActivityOptions options = ActivityOptions.makeBasic()
+                .setPendingIntentCreatorBackgroundActivityStartMode(
+                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED);
+
+        checkPendingIntentCreatorBackgroundActivityStartModeBeforeAndAfterBundle(options,
+                ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED);
+    }
+
+    private void checkPendingIntentCreatorBackgroundActivityStartModeBeforeAndAfterBundle(
+            ActivityOptions options, int mode) {
+        assertThat(options.getPendingIntentCreatorBackgroundActivityStartMode()).isEqualTo(mode);
+
+        Bundle bundle = options.toBundle();
+
+        String key = "android.activity.pendingIntentCreatorBackgroundActivityStartMode";
+        if (mode == ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_SYSTEM_DEFINED) {
+            assertThat(bundle.containsKey(key)).isFalse();
+        } else {
+            assertThat(bundle.containsKey(key)).isTrue();
+            assertThat(bundle.getInt(key)).isEqualTo(mode);
+        }
+    }
+
 }

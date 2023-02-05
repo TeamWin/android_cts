@@ -69,7 +69,10 @@ SCALE_TELE40_IN_RFOV_BOX = 0.5
 SCALE_TELE25_IN_RFOV_BOX = 0.33
 
 SQUARE_AREA_MIN_REL = 0.05  # Minimum size for square relative to image area
+SQUARE_CROP_MARGIN = 0  # Set to aid detection of QR codes
 SQUARE_TOL = 0.05  # Square W vs H mismatch RTOL
+SQUARISH_RTOL = 0.10
+SQUARISH_AR_RTOL = 0.10
 
 VGA_HEIGHT = 480
 VGA_WIDTH = 640
@@ -566,6 +569,66 @@ def append_circle_center_to_img(circle, img, img_name):
   cv2.putText(img, 'image center', (text_imgct_x, text_imgct_y),
               cv2.FONT_HERSHEY_SIMPLEX, font_size, CV2_RED, line_width)
   image_processing_utils.write_image(img/255, img_name, True)  # [0, 1] values
+
+
+def find_white_square(img, min_area):
+  """Find the white square in the test image.
+
+  Args:
+    img: numpy image array in RGB, with pixel values in [0,255].
+    min_area: float of minimum area of circle to find
+
+  Returns:
+    square = {'left', 'right', 'top', 'bottom', 'width', 'height'}
+  """
+  square = {}
+  num_squares = 0
+  img_size = img.shape
+
+  # convert to gray-scale image
+  img_gray = convert_to_gray(img)
+
+  # otsu threshold to binarize the image
+  img_bw = binarize_image(img_gray)
+
+  # find contours
+  contours = find_all_contours(img_bw)
+
+  # Check each contour and find the square bigger than min_area
+  logging.debug('Initial number of contours: %d', len(contours))
+  min_area = img_size[0]*img_size[1]*min_area
+  logging.debug('min_area: %.3f', min_area)
+  for contour in contours:
+    area = cv2.contourArea(contour)
+    num_pts = len(contour)
+    if (area > min_area and num_pts >= 4):
+      shape = component_shape(contour)
+      squarish = (shape['width'] * shape['height']) / area
+      aspect_ratio = shape['width'] / shape['height']
+      logging.debug('Potential square found. squarish: %.3f, ar: %.3f, pts: %d',
+                    squarish, aspect_ratio, num_pts)
+      if (math.isclose(1.0, squarish, abs_tol=SQUARISH_RTOL) and
+          math.isclose(1.0, aspect_ratio, abs_tol=SQUARISH_AR_RTOL)):
+        # Populate square dictionary
+        angle = cv2.minAreaRect(contour)[-1]
+        if angle < -45:
+          angle += 90
+        square['angle'] = angle
+        square['left'] = shape['left'] - SQUARE_CROP_MARGIN
+        square['right'] = shape['right'] + SQUARE_CROP_MARGIN
+        square['top'] = shape['top'] - SQUARE_CROP_MARGIN
+        square['bottom'] = shape['bottom'] + SQUARE_CROP_MARGIN
+        square['w'] = shape['width'] + 2*SQUARE_CROP_MARGIN
+        square['h'] = shape['height'] + 2*SQUARE_CROP_MARGIN
+        num_squares += 1
+
+  if num_squares == 0:
+    raise AssertionError('No white square detected. '
+                         'Please take pictures according to instructions.')
+  if num_squares > 1:
+    raise AssertionError('More than 1 white square detected. '
+                         'Background of scene may be too complex.')
+  return square
 
 
 def get_angle(input_img):

@@ -51,6 +51,7 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -159,6 +160,7 @@ public class BackgroundRestrictedAlarmsTest {
                 + " times when restrictions were lifted", waitForAlarms(minCount, DEFAULT_WAIT));
     }
 
+    @Ignore("Feature auto_restricted_bucket_on_bg_restricted is disabled right now")
     @Test
     public void testRepeatingAlarmAllowedWhenAutoRestrictedBucketFeatureOn() throws Exception {
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0"); // Test requires app standby

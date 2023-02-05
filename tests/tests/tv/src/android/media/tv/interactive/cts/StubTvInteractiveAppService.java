@@ -18,6 +18,7 @@ package android.media.tv.interactive.cts;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.media.tv.AdBuffer;
 import android.media.tv.AdRequest;
 import android.media.tv.AdResponse;
 import android.media.tv.BroadcastInfoRequest;
@@ -85,6 +86,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mCreateBiIAppCount;
         public int mDestroyBiIAppCount;
         public int mAdResponseCount;
+        public int mAdBufferConsumedCount;
         public int mBroadcastInfoResponseCount;
         public int mSigningResultCount;
         public int mErrorCount;
@@ -106,6 +108,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public AdResponse mAdResponse;
         public BroadcastInfoResponse mBroadcastInfoResponse;
         public String mRecordingId;
+        public AdBuffer mAdBuffer;
         public TvRecordingInfo mTvRecordingInfo;
         public ArrayList<TvRecordingInfo> mTvRecordingInfoList;
 
@@ -131,6 +134,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mErrorCount = 0;
             mRecordingStartedCount = 0;
             mRecordingStoppedCount = 0;
+            mAdBufferConsumedCount = 0;
             mSendTvRecordingInfoCount = 0;
             mSendTvRecordingInfoListCount = 0;
 
@@ -147,6 +151,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mAdResponse = null;
             mBroadcastInfoResponse = null;
             mRecordingId = null;
+            mAdBuffer = null;
             mTvRecordingInfo = null;
             mTvRecordingInfoList = null;
         }
@@ -441,6 +446,13 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             super.onRecordingStopped(recordingId);
             mRecordingStoppedCount++;
             mRecordingId = recordingId;
+        }
+
+        @Override
+        public void onAdBufferConsumed(AdBuffer adBuffer) {
+            super.onAdBufferConsumed(adBuffer);
+            mAdBufferConsumedCount++;
+            mAdBuffer = adBuffer;
         }
 
         @Override

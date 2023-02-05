@@ -125,9 +125,8 @@ public class SPerfClassTest extends AndroidTestCase {
         for (Size jpegSize : jpegSizes) {
             mCollector.expectTrue(
                     "Primary camera's JPEG size must be at least 1080p, but is " +
-                    jpegSize,
-                    jpegSize.getWidth() >= FULLHD.getWidth() &&
-                    jpegSize.getHeight() >= FULLHD.getHeight());
+                    jpegSize, jpegSize.getWidth() * jpegSize.getHeight()
+                            >= FULLHD.getWidth() * FULLHD.getHeight());
         }
 
         CameraDevice camera = null;

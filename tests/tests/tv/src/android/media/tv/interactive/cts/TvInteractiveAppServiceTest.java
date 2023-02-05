@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
+import android.media.tv.AdBuffer;
 import android.media.tv.AdRequest;
 import android.media.tv.AdResponse;
 import android.media.tv.AitInfo;
@@ -60,6 +61,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.ParcelFileDescriptor;
+import android.os.SharedMemory;
 import android.tv.cts.R;
 import android.view.InputEvent;
 import android.view.KeyEvent;
@@ -713,6 +715,44 @@ public class TvInteractiveAppServiceTest {
 
         fd.close();
         tmpFile.delete();
+    }
+
+    @Test
+    public void testAdBufferConsumed() throws Throwable {
+        linkTvView();
+        AdBuffer testAdBuffer = new AdBuffer(0, "mimeType", SharedMemory.create("test", 8), 0, 0, 0,
+                0);
+        mInputSession.notifyAdBufferConsumed(testAdBuffer);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mAdBufferConsumedCount > 0);
+
+        assertThat(mSession.mAdBufferConsumedCount).isEqualTo(1);
+        assertThat(mSession.mAdBuffer.getId()).isEqualTo(testAdBuffer.getId());
+        assertThat(mSession.mAdBuffer.getMimeType()).isEqualTo(testAdBuffer.getMimeType());
+        assertThat(mSession.mAdBuffer.getOffset()).isEqualTo(testAdBuffer.getOffset());
+        assertThat(mSession.mAdBuffer.getLength()).isEqualTo(testAdBuffer.getLength());
+        assertThat(mSession.mAdBuffer.getPresentationTimeUs())
+                .isEqualTo(testAdBuffer.getPresentationTimeUs());
+        assertThat(mSession.mAdBuffer.getFlags()).isEqualTo(testAdBuffer.getFlags());
+    }
+
+    @Test
+    public void testNotifyAdBuffer() throws Throwable {
+        linkTvView();
+        AdBuffer testAdBuffer = new AdBuffer(0, "mimeType", SharedMemory.create("test", 8), 0, 0, 0,
+                0);
+        mSession.notifyAdBuffer(testAdBuffer);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mAdBufferCount > 0);
+
+        assertThat(mInputSession.mAdBufferCount).isEqualTo(1);
+        assertThat(mInputSession.mAdBuffer.getId()).isEqualTo(testAdBuffer.getId());
+        assertThat(mInputSession.mAdBuffer.getMimeType()).isEqualTo(testAdBuffer.getMimeType());
+        assertThat(mInputSession.mAdBuffer.getOffset()).isEqualTo(testAdBuffer.getOffset());
+        assertThat(mInputSession.mAdBuffer.getLength()).isEqualTo(testAdBuffer.getLength());
+        assertThat(mInputSession.mAdBuffer.getPresentationTimeUs())
+                .isEqualTo(testAdBuffer.getPresentationTimeUs());
+        assertThat(mInputSession.mAdBuffer.getFlags()).isEqualTo(testAdBuffer.getFlags());
     }
 
     @Test

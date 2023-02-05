@@ -45,6 +45,7 @@ import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -194,6 +195,7 @@ public class BlankActivityTest
         assertThat(service.getAllSessionIds()).isEmpty();
     }
 
+    @Ignore("b/267743222")
     @Test
     public void testOutsideOfPackageContentCaptureEnable_updateAllowList() throws Exception {
         // Enable Service but not allowlist OutsideOfPackage

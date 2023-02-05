@@ -102,7 +102,7 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
     @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_CREATED"})
     @ApiCheckerRule.SupportedVersionTest(unsupportedVersionTest =
             "testLifecycleUserCreatedListener_unsupportedVersion")
-    @EnsureHasPermission(CREATE_USERS)
+    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testLifecycleUserCreatedListener_supportedVersion() throws Exception {
 
         BlockingUserLifecycleListener listener = BlockingUserLifecycleListener
@@ -112,9 +112,12 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                 .build();
 
         UserHandle newUser = null;
+        boolean isAdded = false;
         try {
             Log.d(TAG, "registering listener: " + listener);
             mCarUserManager.addListener(Runnable::run, listener);
+            // If adding the listener fails, an exception will be thrown.
+            isAdded = true;
             Log.v(TAG, "ok");
 
             newUser = createUser("TestUserToCreate", false);
@@ -130,7 +133,9 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                     .isEqualTo(newUser.getIdentifier());
         } finally {
             Log.d(TAG, "unregistering listener: " + listener);
-            mCarUserManager.removeListener(listener);
+            if (isAdded) {
+                mCarUserManager.removeListener(listener);
+            }
             Log.v(TAG, "ok");
 
             if (newUser != null) {
@@ -144,14 +149,18 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
     @ApiCheckerRule.UnsupportedVersionTest(behavior =
             ApiCheckerRule.UnsupportedVersionTest.Behavior.EXPECT_PASS,
             supportedVersionTest = "testLifecycleUserCreatedListener_supportedVersion")
-    @EnsureHasPermission(CREATE_USERS)
+    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testLifecycleUserCreatedListener_unsupportedVersion() throws Exception {
 
         LifecycleListener listener = new LifecycleListener();
 
         UserHandle newUser = null;
+        boolean isAdded = false;
         try {
+            Log.d(TAG, "registering listener: " + listener);
             mCarUserManager.addListener(Runnable::run, listener);
+            // If adding the listener fails, an exception will be thrown.
+            isAdded = true;
             Log.v(TAG, "ok");
 
             newUser = createUser("TestUserToCreate", false);
@@ -161,7 +170,9 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                     newUser.getIdentifier(), CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED);
         } finally {
             Log.d(TAG, "unregistering listener: " + listener);
-            mCarUserManager.removeListener(listener);
+            if (isAdded) {
+                mCarUserManager.removeListener(listener);
+            }
             Log.v(TAG, "ok");
 
             if (newUser != null) {
@@ -174,7 +185,7 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
     @ApiCheckerRule.SupportedVersionTest(unsupportedVersionTest =
             "testLifecycleUserRemovedListener_unsupportedVersion")
     @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_REMOVED"})
-    @EnsureHasPermission(CREATE_USERS)
+    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testLifecycleUserRemovedListener_supportedVersion() throws Exception {
 
         UserHandle newUser = createUser("TestUserToRemove", false);
@@ -186,9 +197,12 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                 .addExpectedEvent(USER_LIFECYCLE_EVENT_TYPE_REMOVED)
                 .build();
 
+        boolean isAdded = false;
         try {
             Log.d(TAG, "registering listener: " + listener);
+            // If adding the listener fails, an exception will be thrown.
             mCarUserManager.addListener(Runnable::run, listener);
+            isAdded = true;
             Log.v(TAG, "ok");
 
             removeUser(newUser);
@@ -204,7 +218,9 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                     .isEqualTo(newUser.getIdentifier());
         } finally {
             Log.d(TAG, "unregistering listener: " + listener);
-            mCarUserManager.removeListener(listener);
+            if (isAdded) {
+                mCarUserManager.removeListener(listener);
+            }
             Log.v(TAG, "ok");
         }
     }
@@ -214,15 +230,18 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
     @ApiCheckerRule.UnsupportedVersionTest(behavior =
             ApiCheckerRule.UnsupportedVersionTest.Behavior.EXPECT_PASS,
             supportedVersionTest = "testLifecycleUserRemovedListener_supportedVersion")
-    @EnsureHasPermission(CREATE_USERS)
+    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testLifecycleUserRemovedListener_unsupportedVersion() throws Exception {
         UserHandle newUser = createUser("TestUserToRemove", false);
 
         LifecycleListener listener = new LifecycleListener();
 
+        boolean isAdded = false;
         try {
             Log.d(TAG, "registering listener: " + listener);
+            // If adding the listener fails, an exception will be thrown.
             mCarUserManager.addListener(Runnable::run, listener);
+            isAdded = true;
             Log.v(TAG, "ok");
 
             removeUser(newUser);
@@ -232,7 +251,9 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                     newUser.getIdentifier(), CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED);
         } finally {
             Log.d(TAG, "unregistering listener: " + listener);
-            mCarUserManager.removeListener(listener);
+            if (isAdded) {
+                mCarUserManager.removeListener(listener);
+            }
             Log.v(TAG, "ok");
         }
     }

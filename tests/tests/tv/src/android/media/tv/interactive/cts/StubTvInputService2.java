@@ -17,6 +17,7 @@
 package android.media.tv.interactive.cts;
 
 import android.content.Context;
+import android.media.tv.AdBuffer;
 import android.media.tv.AdRequest;
 import android.media.tv.AdResponse;
 import android.media.tv.AitInfo;
@@ -49,9 +50,11 @@ public class StubTvInputService2 extends TvInputService {
     public static class StubSessionImpl2 extends TvInputService.Session {
         public int mAdRequestCount;
         public int mBroadcastInfoRequestCount;
+        public int mAdBufferCount;
 
         public AdRequest mAdRequest;
         public BroadcastInfoRequest mBroadcastInfoRequest;
+        public AdBuffer mAdBuffer;
 
         StubSessionImpl2(Context context) {
             super(context);
@@ -60,9 +63,11 @@ public class StubTvInputService2 extends TvInputService {
         public void resetValues() {
             mAdRequestCount = 0;
             mBroadcastInfoRequestCount = 0;
+            mAdBufferCount = 0;
 
             mAdRequest = null;
             mBroadcastInfoRequest = null;
+            mAdBuffer = null;
         }
 
         @Override
@@ -135,6 +140,13 @@ public class StubTvInputService2 extends TvInputService {
         @Override
         public void notifyTuned(Uri uri) {
             super.notifyTuned(uri);
+        }
+
+        @Override
+        public void onAdBuffer(AdBuffer buffer) {
+            super.onAdBuffer(buffer);
+            mAdBufferCount++;
+            mAdBuffer = buffer;
         }
     }
 }

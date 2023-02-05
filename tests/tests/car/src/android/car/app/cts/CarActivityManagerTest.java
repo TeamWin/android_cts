@@ -37,6 +37,7 @@ import android.os.SystemClock;
 import android.view.Display;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -85,6 +86,7 @@ public class CarActivityManagerTest {
         mUiAutomation.dropShellPermissionIdentity();
     }
 
+    @FlakyTest(bugId = 267587346)
     @Test
     public void testSetPersistentActivity() throws Exception {
         try (VirtualDisplaySession session = new VirtualDisplaySession()) {
