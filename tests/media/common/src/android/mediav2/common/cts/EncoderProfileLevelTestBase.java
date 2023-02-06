@@ -31,12 +31,56 @@ import android.util.Pair;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 
 /**
  * Wrapper class for testing encoders support for profile and level
  */
 public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
     private static final String LOG_TAG = EncoderProfileLevelTestBase.class.getSimpleName();
+    private static final int[] AVC_LEVELS =
+            new int[]{AVCLevel1, AVCLevel1b, AVCLevel11, AVCLevel12, AVCLevel13, AVCLevel2,
+                    AVCLevel21, AVCLevel22, AVCLevel3, AVCLevel31, AVCLevel32, AVCLevel4,
+                    AVCLevel41, AVCLevel42, AVCLevel5, AVCLevel51, AVCLevel52, AVCLevel6,
+                    AVCLevel61, AVCLevel62};
+    private static final int[] MPEG2_LEVELS =
+            new int[]{MPEG2LevelLL, MPEG2LevelML, MPEG2LevelH14, MPEG2LevelHL, MPEG2LevelHP};
+    private static final int[] MPEG4_LEVELS =
+            new int[]{MPEG4Level0, MPEG4Level0b, MPEG4Level1, MPEG4Level2, MPEG4Level3,
+                    MPEG4Level3b, MPEG4Level4, MPEG4Level4a, MPEG4Level5, MPEG4Level6};
+    private static final int[] VP9_LEVELS =
+            new int[]{VP9Level1, VP9Level11, VP9Level2, VP9Level21, VP9Level3, VP9Level31,
+                    VP9Level4, VP9Level41, VP9Level5, VP9Level51, VP9Level52, VP9Level6,
+                    VP9Level61, VP9Level62};
+    private static final int[] H263_LEVELS =
+            new int[]{H263Level10, H263Level20, H263Level30, H263Level40, H263Level45,
+                    H263Level50, H263Level60, H263Level70};
+    private static final int[] AV1_LEVELS =
+            new int[]{AV1Level2, AV1Level21, AV1Level3, AV1Level31, AV1Level4, AV1Level41,
+                    AV1Level5, AV1Level51, AV1Level52, AV1Level53, AV1Level6, AV1Level61,
+                    AV1Level62, AV1Level63};
+    private static final int[] HEVC_LEVELS =
+            new int[]{HEVCMainTierLevel1, HEVCHighTierLevel1, HEVCMainTierLevel2,
+                    HEVCHighTierLevel2, HEVCMainTierLevel21, HEVCHighTierLevel21,
+                    HEVCMainTierLevel3, HEVCHighTierLevel3, HEVCMainTierLevel31,
+                    HEVCHighTierLevel31, HEVCMainTierLevel4, HEVCHighTierLevel4,
+                    HEVCMainTierLevel41, HEVCHighTierLevel41, HEVCMainTierLevel5,
+                    HEVCHighTierLevel5, HEVCMainTierLevel51, HEVCHighTierLevel51,
+                    HEVCMainTierLevel52, HEVCHighTierLevel52, HEVCMainTierLevel6,
+                    HEVCHighTierLevel6, HEVCHighTierLevel61, HEVCHighTierLevel62,
+                    HEVCMainTierLevel61, HEVCMainTierLevel62};
+
+    public static final HashMap<String, int[]> LEVEL_MAP = new HashMap<>();
+
+    static {
+        LEVEL_MAP.put(MediaFormat.MIMETYPE_VIDEO_AVC, AVC_LEVELS);
+        LEVEL_MAP.put(MediaFormat.MIMETYPE_VIDEO_MPEG2, MPEG2_LEVELS);
+        LEVEL_MAP.put(MediaFormat.MIMETYPE_VIDEO_MPEG4, MPEG4_LEVELS);
+        LEVEL_MAP.put(MediaFormat.MIMETYPE_VIDEO_VP9, VP9_LEVELS);
+        LEVEL_MAP.put(MediaFormat.MIMETYPE_VIDEO_H263, H263_LEVELS);
+        LEVEL_MAP.put(MediaFormat.MIMETYPE_VIDEO_HEVC, HEVC_LEVELS);
+        LEVEL_MAP.put(MediaFormat.MIMETYPE_VIDEO_AV1, AV1_LEVELS);
+    }
 
     private static int divUp(int num, int den) {
         return (num + den - 1) / den;
