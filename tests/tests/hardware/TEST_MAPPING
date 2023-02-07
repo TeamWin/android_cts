@@ -14,10 +14,6 @@
           "exclude-filter": "android.hardware.consumerir.cts.ConsumerIrTest#test_transmit"
         },
         {
-          // TODO(b/239687726)
-          "exclude-filter": "android.hardware.input.cts.tests.VirtualMouseTest#sendRelativeEvent"
-        },
-        {
           // TODO(b/221102945)
           "exclude-filter": "android.hardware.input.cts.tests.VirtualTouchscreenTest#sendTouchEvent"
         },

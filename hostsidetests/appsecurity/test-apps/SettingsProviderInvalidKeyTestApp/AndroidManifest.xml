@@ -20,7 +20,7 @@
     <uses-sdk android:targetSdkVersion="22" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
 
-    <application android:label="CtsSettingsProviderInvalidKeyTestApp">
+    <application android:testOnly="true" android:label="CtsSettingsProviderInvalidKeyTestApp">
         <uses-library android:name="android.test.runner" />
     </application>
 

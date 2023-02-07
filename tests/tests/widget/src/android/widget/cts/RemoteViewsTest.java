@@ -827,7 +827,8 @@ public class RemoteViewsTest {
 
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
         PendingIntent pendingIntent =
-                PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE);
+                PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE
+                        | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
         mRemoteViews.setOnClickPendingIntent(R.id.remoteView_image, pendingIntent);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         mActivityRule.runOnUiThread(() -> view.performClick());

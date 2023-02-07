@@ -193,6 +193,8 @@ public class Constants {
     public static final String ACTIVITY_CLASS_DUMMY_ACTIVITY = PKG_BASE + "testapp.DummyActivity";
     public static final String ACTIVITY_CLASS_NOT_EXPORTED =
             PKG_BASE + "testapp.DummyActivityNotExported";
+    public static final String ACTIVITY_CLASS_PERMISSION_PROTECTED =
+            PKG_BASE + "testapp.ActivityPermissionProtected";
 
     public static final String SERVICE_CLASS_DUMMY_SERVICE = PKG_BASE + "testapp.DummyService";
     public static final String SERVICE_CLASS_SYNC_ADAPTER =

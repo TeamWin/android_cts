@@ -17,8 +17,11 @@
 package android.photopicker.cts;
 
 import static android.photopicker.cts.util.PhotoPickerUiUtils.isPhotoPickerVisible;
-import static android.photopicker.cts.util.PhotoPickerUiUtils.verifyActionBarExists;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsActionBarIsVisible;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsActivityIsVisible;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsDescriptionIsVisible;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsFragmentContainerExists;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsTitleIsVisible;
 
 import android.content.Intent;
 import android.os.Build;
@@ -91,7 +94,10 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
         // Verify PhotoPickerSettingsActivity is launched and visible.
         verifySettingsActivityIsVisible(sDevice);
-        verifyActionBarExists();
+        verifySettingsActionBarIsVisible();
+        verifySettingsTitleIsVisible();
+        verifySettingsDescriptionIsVisible();
+        verifySettingsFragmentContainerExists();
     }
 
     private static String getAllowedProvidersDeviceConfig() throws IOException {

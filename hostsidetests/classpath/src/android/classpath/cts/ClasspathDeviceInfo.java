@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.edi.cts;
+
+package android.classpath.cts;
 
 import static android.compat.testing.Classpaths.ClasspathType.BOOTCLASSPATH;
 import static android.compat.testing.Classpaths.ClasspathType.SYSTEMSERVERCLASSPATH;
@@ -24,11 +25,14 @@ import android.compat.testing.Classpaths;
 import android.compat.testing.Classpaths.ClasspathType;
 import android.compat.testing.SharedLibraryInfo;
 
-import com.android.compatibility.common.util.DeviceInfo;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.HostInfoStore;
 import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.invoker.TestInformation;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
 
 import com.google.common.collect.ImmutableList;
@@ -36,21 +40,28 @@ import com.google.common.collect.ImmutableSet;
 
 import org.jf.dexlib2.iface.ClassDef;
 import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.stream.IntStream;
 
 /**
  * Collects information about Java classes present in *CLASSPATH variables and Java shared libraries
- * from the device.
+ * from the device into result file.
  */
-public class ClasspathDeviceInfo extends DeviceInfo {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class ClasspathDeviceInfo extends BaseHostJUnit4Test {
 
     private final Object mStoreLock = new Object();
 
     private ITestDevice mDevice;
     private DeviceSdkLevel mDeviceSdkLevel;
+
+    private static final String REPORT_DIRECTORY = "report-log-files";
+    private static final String REPORT_FILE_NAME = "CtsClasspathDeviceInfoTestCases.reportlog.json";
 
     @Before
     public void before() throws DeviceNotAvailableException {
@@ -59,12 +70,19 @@ public class ClasspathDeviceInfo extends DeviceInfo {
         assumeTrue(mDeviceSdkLevel.isDeviceAtLeastR());
     }
 
-    @Override
-    protected void collectDeviceInfo(HostInfoStore store) throws Exception {
+    @Test
+    public void testCollectClasspathDeviceInfo() throws Exception {
+        TestInformation testInfo = getTestInformation();
+        File resultFile =
+                getMetricsResultsFile(new CompatibilityBuildHelper(testInfo.getBuildInfo()));
+
+        HostInfoStore store = new HostInfoStore(resultFile);
+        store.open();
         store.startArray("jars");
         collectClasspathsJars(store);
         collectSharedLibraries(store);
         store.endArray();
+        store.close();
     }
 
     private void collectClasspathsJars(HostInfoStore store) throws Exception {
@@ -146,6 +164,21 @@ public class ClasspathDeviceInfo extends DeviceInfo {
             store.endGroup();
         }
         store.endArray();
+    }
+
+    private static File getMetricsResultsFile(CompatibilityBuildHelper buildHelper)
+            throws FileNotFoundException, NullPointerException {
+        File resultDir = buildHelper.getResultDir();
+        if (!resultDir.exists()) {
+            resultDir.mkdir();
+        }
+
+        File reportLogDir = new File(resultDir, REPORT_DIRECTORY);
+        if (!reportLogDir.exists()) {
+            reportLogDir.mkdir();
+        }
+
+        return new File(reportLogDir, REPORT_FILE_NAME);
     }
 
     /** Helper class to represent a jar file during stream transformations. */

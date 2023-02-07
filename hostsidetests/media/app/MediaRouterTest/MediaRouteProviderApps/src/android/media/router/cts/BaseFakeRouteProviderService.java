@@ -38,8 +38,9 @@ public abstract class BaseFakeRouteProviderService extends MediaRoute2ProviderSe
     }
 
     protected static MediaRoute2Info createPublicRoute(
-            String id, String name, String... deduplicationIds) {
+            String id, String name, int type, String... deduplicationIds) {
         return new MediaRoute2Info.Builder(id, name)
+                .setType(type)
                 .addFeature(FEATURE_SAMPLE)
                 .setDeduplicationIds(Set.of(deduplicationIds))
                 .setVisibilityPublic()

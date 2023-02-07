@@ -31,6 +31,8 @@ import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_3;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_4;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_5;
 
+import android.media.MediaRoute2Info;
+
 import java.util.Set;
 
 /** Provides fake routes for testing route deduplication. */
@@ -38,14 +40,19 @@ public final class FakeMediaRoute2ProviderService3 extends BaseFakeRouteProvider
 
     public FakeMediaRoute2ProviderService3() {
         super(
-                createPublicRoute(ROUTE_ID_APP_3_ROUTE_1, ROUTE_NAME_1),
+                createPublicRoute(
+                        ROUTE_ID_APP_3_ROUTE_1,
+                        ROUTE_NAME_1,
+                        MediaRoute2Info.TYPE_REMOTE_AUDIO_VIDEO_RECEIVER),
                 createPublicRoute(
                         ROUTE_ID_APP_3_ROUTE_2,
                         ROUTE_NAME_2,
+                        MediaRoute2Info.TYPE_UNKNOWN,
                         /* deduplicationIds...= */ ROUTE_DEDUPLICATION_ID_2),
                 createPublicRoute(
                         ROUTE_ID_APP_3_ROUTE_3,
                         ROUTE_NAME_3,
+                        MediaRoute2Info.TYPE_UNKNOWN,
                         /* deduplicationIds...= */
                         ROUTE_DEDUPLICATION_ID_1,
                         ROUTE_DEDUPLICATION_ID_2,

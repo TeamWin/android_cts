@@ -35,6 +35,9 @@
         <package android:name="com.android.cts.norestart" />
     </queries>
 
+    <permission android:name="android.appenumeration.cts.permission.TEST_PERMISSION"
+                android:protectionLevel="signature" />
+
     <!-- It's merged from Harrier library. Remove it since this test should not hold it. -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:node="remove" />
 

@@ -148,6 +148,33 @@ public class MediaRouter2DeviceTest {
                                 ROUTE_DEDUPLICATION_ID_3));
     }
 
+    @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
+    @Test
+    public void deviceType_propagatesAcrossApps() {
+        RouteDiscoveryPreference preference =
+                new RouteDiscoveryPreference.Builder(
+                                List.of(FEATURE_SAMPLE), /* activeScan= */ true)
+                        .build();
+        Map<String, MediaRoute2Info> routes =
+                waitForAndGetRoutes(
+                        preference,
+                        Set.of(
+                                ROUTE_ID_APP_1_ROUTE_1,
+                                ROUTE_ID_APP_2_ROUTE_1,
+                                ROUTE_ID_APP_3_ROUTE_1));
+        Truth.assertThat(routes.get(ROUTE_ID_APP_1_ROUTE_1).getType())
+                .isEqualTo(MediaRoute2Info.TYPE_REMOTE_TV);
+        Truth.assertThat(routes.get(ROUTE_ID_APP_1_ROUTE_2).getType())
+                .isEqualTo(MediaRoute2Info.TYPE_UNKNOWN);
+        Truth.assertThat(routes.get(ROUTE_ID_APP_2_ROUTE_1).getType())
+                .isEqualTo(MediaRoute2Info.TYPE_REMOTE_SPEAKER);
+        Truth.assertThat(routes.get(ROUTE_ID_APP_3_ROUTE_1).getType())
+                .isEqualTo(MediaRoute2Info.TYPE_REMOTE_AUDIO_VIDEO_RECEIVER);
+        // Verify the default value is TYPE_UNKNOWN:
+        Truth.assertThat(routes.get(ROUTE_ID_APP_3_ROUTE_5).getType())
+                .isEqualTo(MediaRoute2Info.TYPE_UNKNOWN);
+    }
+
     @ApiTest(apis = {"android.media.RouteListingPreference, android.media.MediaRouter2"})
     @Test
     public void setRouteListingPreference_propagatesToManager() {

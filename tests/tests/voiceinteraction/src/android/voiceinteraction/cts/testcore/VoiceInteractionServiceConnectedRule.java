@@ -16,14 +16,11 @@
 
 package android.voiceinteraction.cts.testcore;
 
-import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
-
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-
-import android.content.ContentResolver;
 import android.content.Context;
 import android.provider.Settings;
 import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
+
+import com.android.compatibility.common.util.SettingsUtils;
 
 import org.junit.rules.ExternalResource;
 
@@ -37,13 +34,13 @@ import org.junit.rules.ExternalResource;
  */
 public class VoiceInteractionServiceConnectedRule extends ExternalResource {
 
-    private final ContentResolver mResolver;
+    private final Context mContext;
     private final String mTestVoiceInteractionService;
     private String mOriginalVoiceInteractionService;
 
     public VoiceInteractionServiceConnectedRule(Context context,
             String testVoiceInteractionService) {
-        mResolver = context.getContentResolver();
+        mContext = context;
         mTestVoiceInteractionService = testVoiceInteractionService;
     }
 
@@ -52,16 +49,16 @@ public class VoiceInteractionServiceConnectedRule extends ExternalResource {
         // To avoid onReady() is called before init connect latch, we should set the service
         // after init connect latch
         BaseVoiceInteractionService.initServiceConnectionLatches();
-        mOriginalVoiceInteractionService = Settings.Secure.getString(mResolver,
+        mOriginalVoiceInteractionService = SettingsUtils.get(
                 Settings.Secure.VOICE_INTERACTION_SERVICE);
-        setVoiceInteractionService(mResolver, mTestVoiceInteractionService);
+        setVoiceInteractionService(mTestVoiceInteractionService);
         BaseVoiceInteractionService.waitServiceConnect();
     }
 
     @Override
     protected void after() {
         // Restore to original VoiceInteractionService
-        setVoiceInteractionService(mResolver, mOriginalVoiceInteractionService);
+        setVoiceInteractionService(mOriginalVoiceInteractionService);
         // Wait service onShutdown() called
         try {
             BaseVoiceInteractionService.waitServiceDisconnect();
@@ -71,9 +68,7 @@ public class VoiceInteractionServiceConnectedRule extends ExternalResource {
         }
     }
 
-    private void setVoiceInteractionService(ContentResolver resolver, String service) {
-        runWithShellPermissionIdentity(() ->
-                Settings.Secure.putString(resolver, Settings.Secure.VOICE_INTERACTION_SERVICE,
-                        service), WRITE_SECURE_SETTINGS);
+    private void setVoiceInteractionService(String service) {
+        SettingsUtils.syncSet(mContext, Settings.Secure.VOICE_INTERACTION_SERVICE, service);
     }
 }

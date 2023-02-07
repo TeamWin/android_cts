@@ -26,15 +26,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.hardware.display.DisplayManager;
+import android.os.Build;
 import android.platform.test.annotations.Presubmit;
 import android.view.Display;
 import android.view.DisplayShape;
 import android.view.RoundedCorner;
 import android.view.View;
+
+import com.android.compatibility.common.util.PropertyUtil;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -67,6 +71,11 @@ public class DisplayShapeTests extends WindowManagerTestBase {
 
     @Test
     public void testDisplayShapeConfig() {
+        // Skip the mix build case when the base build < U (e.x. U GSI on T base build) and only
+        // test for U+ base builds.
+        assumeTrue("Test does not apply for vendor image with API level lower than U",
+                PropertyUtil.isVendorApiLevelNewerThan(Build.VERSION_CODES.TIRAMISU));
+
         boolean hasRoundedCorners = false;
         RoundedCorner r;
         for (int i = POSITION_TOP_LEFT; i <= POSITION_BOTTOM_LEFT; i++) {
