@@ -54,6 +54,7 @@ import org.hamcrest.Matchers
 import org.junit.Assert
 import org.junit.Assert.assertThat
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeFalse
 
 private const val BROADCAST_TIMEOUT_MS = 60000L
 
@@ -205,6 +206,10 @@ inline fun <T> withUnusedThresholdMs(threshold: Long, action: () -> T): T {
 }
 
 inline fun <T> withSafetyCenterEnabled(action: () -> T): T {
+    assumeFalse("This test is only supported on phones",
+        hasFeatureWatch() || hasFeatureTV() || hasFeatureAutomotive()
+    )
+
     return withDeviceConfig(
         DeviceConfig.NAMESPACE_PRIVACY, PROPERTY_SAFETY_CENTER_ENABLED,
         true.toString(), action)
@@ -276,6 +281,11 @@ fun hasFeatureTV(): Boolean {
             PackageManager.FEATURE_LEANBACK) ||
             InstrumentationRegistry.getTargetContext().packageManager.hasSystemFeature(
                     PackageManager.FEATURE_TELEVISION)
+}
+
+fun hasFeatureAutomotive(): Boolean {
+    return InstrumentationRegistry.getTargetContext().packageManager.hasSystemFeature(
+        PackageManager.FEATURE_AUTOMOTIVE)
 }
 
 private fun expandNotificationsWatch(uiDevice: UiDevice) {
