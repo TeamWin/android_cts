@@ -16,6 +16,8 @@
 
 package android.media.metrics.cts;
 
+import static android.media.cts.MediaMetricsTestConstants.LOG_SESSION_ID_KEY;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
@@ -545,10 +547,9 @@ public class MediaMetricsAtomHostSideTests {
     }
 
     private void writeSessionIdToFile(String stringId) {
-        Log.i(TAG, "log_session_id=" + stringId);
+        Log.i(TAG, LOG_SESSION_ID_KEY + "=" + stringId);
         Bundle b = new Bundle();
-        // TODO(b/265311058): use a common constant for metrics keys.
-        b.putString("log_session_id", stringId);
+        b.putString(LOG_SESSION_ID_KEY, stringId);
         SendToInstrumentation.sendBundle(InstrumentationRegistry.getInstrumentation(), b);
     }
 }

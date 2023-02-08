@@ -36,14 +36,14 @@ import com.android.cts.verifier.R;
 import java.io.FileNotFoundException;
 
 /**
- * SharesheetTestActivity validates that the media reselection affordance in the sharesheet
+ * SharesheetTestActivity validates that the modify share affordance in the sharesheet
  * is shown when requested and calls back the app.
  */
 public class SharesheetTestActivity extends PassFailButtons.Activity {
-    private static final String CHOOSER_RESELECTION_BROADCAST_ACTION =
-            "com.android.cts.verifier.sharesheet.CHOOSER_RESELECTION_BROADCAST_ACTION";
+    private static final String CHOOSER_MODIFY_SHARE_BROADCAST_ACTION =
+            "com.android.cts.verifier.sharesheet.CHOOSER_MODIFY_SHARE_BROADCAST_ACTION";
 
-    BroadcastReceiver mReselectionActionReceiver = new BroadcastReceiver() {
+    BroadcastReceiver mModifyShareBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             showPassButton();
@@ -59,7 +59,8 @@ public class SharesheetTestActivity extends PassFailButtons.Activity {
         setInfoResources(R.string.sharesheet_test, R.string.sharesheet_test_info, -1);
 
         registerReceiver(
-                mReselectionActionReceiver, new IntentFilter(CHOOSER_RESELECTION_BROADCAST_ACTION));
+                mModifyShareBroadcastReceiver,
+                new IntentFilter(CHOOSER_MODIFY_SHARE_BROADCAST_ACTION));
 
         findViewById(R.id.share).setOnClickListener(v -> share());
         disablePassFail();
@@ -68,20 +69,20 @@ public class SharesheetTestActivity extends PassFailButtons.Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(mReselectionActionReceiver);
+        unregisterReceiver(mModifyShareBroadcastReceiver);
     }
 
     private void share() {
-        PendingIntent reselectionAction = PendingIntent.getBroadcast(
+        PendingIntent modifyShareAction = PendingIntent.getBroadcast(
                 this,
                 1,
-                new Intent(CHOOSER_RESELECTION_BROADCAST_ACTION),
+                new Intent(CHOOSER_MODIFY_SHARE_BROADCAST_ACTION),
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
 
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
         shareIntent.putExtra(Intent.EXTRA_STREAM, getUri(R.raw.letter_a));
-        shareIntent.putExtra(Intent.EXTRA_CHOOSER_PAYLOAD_RESELECTION_ACTION, reselectionAction);
+        shareIntent.putExtra(Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION, modifyShareAction);
         shareIntent.setType("image/png");
         startActivity(Intent.createChooser(shareIntent, null));
         enablePassFail();

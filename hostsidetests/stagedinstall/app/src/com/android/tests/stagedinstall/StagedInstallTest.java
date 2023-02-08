@@ -16,8 +16,6 @@
 
 package com.android.tests.stagedinstall;
 
-import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
-
 import static com.android.cts.install.lib.InstallUtils.assertStatusFailure;
 import static com.android.cts.install.lib.InstallUtils.assertStatusSuccess;
 import static com.android.cts.install.lib.InstallUtils.getPackageInstaller;
@@ -31,10 +29,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
 import android.Manifest;
-import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -42,8 +38,6 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
-import android.content.pm.PackageInstaller.InstallConstraints;
-import android.content.pm.PackageInstaller.InstallConstraintsResult;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -51,7 +45,6 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
@@ -79,14 +72,12 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -116,8 +107,6 @@ import java.util.stream.Collectors;
 public class StagedInstallTest {
 
     private static final String TAG = "StagedInstallTest";
-
-    private static final int MATCH_STATIC_SHARED_AND_SDK_LIBRARIES = 0x04000000;
 
     private File mTestStateFile = new File(
             InstrumentationRegistry.getInstrumentation().getContext().getFilesDir(),
@@ -187,10 +176,6 @@ public class StagedInstallTest {
             /*isApex*/true, "com.android.apex.cts.shim.v3_rebootless.apex");
     private static final TestApp Apex2AsApk = new TestApp("Apex2", SHIM_APEX_PACKAGE_NAME, 2,
             /*isApex*/false, "com.android.apex.cts.shim.v2.apex");
-    private static final TestApp HelloWorldSdk1 = new TestApp("HelloWorldSdk1", "com.test.sdk1_1",
-            1, false, "HelloWorldSdk1.apk");
-    private static final TestApp HelloWorldUsingSdk1 = new TestApp("HelloWorldUsingSdk1",
-            "com.test.sdk.user", 1, false, "HelloWorldUsingSdk1.apk");
 
     @Before
     public void adoptShellPermissions() {
@@ -232,7 +217,7 @@ public class StagedInstallTest {
                 Log.e(TAG, "Failed to abandon session " + sessionInfo.getSessionId(), e);
             }
         }
-        Uninstall.packages(TestApp.A, TestApp.B, TestApp.S);
+        Uninstall.packages(TestApp.A, TestApp.B);
         Files.deleteIfExists(mTestStateFile.toPath());
     }
 
@@ -1431,395 +1416,6 @@ public class StagedInstallTest {
             }
             foundPackages.add(pi.packageName);
         }
-    }
-
-    @Test
-    public void testCheckInstallConstraints_AppIsInteracting() throws Exception {
-        // Skip this test as the current audio focus detection doesn't work on Auto
-        assumeFalse(isAuto());
-
-        Install.single(TestApp.A1).commit();
-        // The app will have audio focus and be considered interactive with the user
-        InstallUtils.requestAudioFocus(TestApp.A);
-
-        var pi = InstallUtils.getPackageInstaller();
-        var constraints = new InstallConstraints.Builder().setAppNotInteractingRequired().build();
-        var future = new CompletableFuture<InstallConstraintsResult>();
-        pi.checkInstallConstraints(
-                Arrays.asList(TestApp.A),
-                constraints,
-                r -> r.run(),
-                result -> future.complete(result));
-        assertThat(future.join().areAllConstraintsSatisfied()).isFalse();
-    }
-
-    @Test
-    public void testCheckInstallConstraints_AppNotInstalled() throws Exception {
-        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
-        var pi = InstallUtils.getPackageInstaller();
-        try {
-            pi.checkInstallConstraints(
-                    Arrays.asList(TestApp.A),
-                    InstallConstraints.GENTLE_UPDATE,
-                    r -> r.run(),
-                    result -> {
-                    });
-            fail();
-        } catch (SecurityException e) {
-            assertThat(e.getMessage()).contains("has no access to package");
-        }
-    }
-
-    @Test
-    public void testCheckInstallConstraints_AppIsTopVisible() throws Exception {
-        Install.single(TestApp.A1).commit();
-        Install.single(TestApp.B1).commit();
-        // We will have a top-visible app
-        startActivity(TestApp.A);
-
-        var pi = InstallUtils.getPackageInstaller();
-        var f1 = new CompletableFuture<InstallConstraintsResult>();
-        var constraints = new InstallConstraints.Builder().setAppNotTopVisibleRequired().build();
-        pi.checkInstallConstraints(
-                Arrays.asList(TestApp.A),
-                constraints,
-                r -> r.run(),
-                result -> f1.complete(result));
-        assertThat(f1.join().areAllConstraintsSatisfied()).isFalse();
-
-        // Test app A is no longer top-visible
-        startActivity(TestApp.B);
-        PollingCheck.waitFor(() -> {
-            var importance = getPackageImportance(TestApp.A);
-            return importance > ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
-        });
-        var f2 = new CompletableFuture<InstallConstraintsResult>();
-        pi.checkInstallConstraints(
-                Arrays.asList(TestApp.A),
-                constraints,
-                r -> r.run(),
-                result -> f2.complete(result));
-        assertThat(f2.join().areAllConstraintsSatisfied()).isTrue();
-    }
-
-    @Test
-    public void testCheckInstallConstraints_AppIsForeground() throws Exception {
-        Install.single(TestApp.A1).commit();
-        Install.single(TestApp.B1).commit();
-        // We will have a foreground app
-        startActivity(TestApp.A);
-
-        var pi = InstallUtils.getPackageInstaller();
-        var f1 = new CompletableFuture<InstallConstraintsResult>();
-        var constraints = new InstallConstraints.Builder().setAppNotForegroundRequired().build();
-        pi.checkInstallConstraints(
-                Arrays.asList(TestApp.A),
-                constraints,
-                r -> r.run(),
-                result -> f1.complete(result));
-        assertThat(f1.join().areAllConstraintsSatisfied()).isFalse();
-
-        // Test app A is no longer foreground
-        startActivity(TestApp.B);
-        PollingCheck.waitFor(() -> {
-            var importance = getPackageImportance(TestApp.A);
-            return importance > ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
-        });
-        var f2 = new CompletableFuture<InstallConstraintsResult>();
-        pi.checkInstallConstraints(
-                Arrays.asList(TestApp.A),
-                constraints,
-                r -> r.run(),
-                result -> f2.complete(result));
-        assertThat(f2.join().areAllConstraintsSatisfied()).isTrue();
-    }
-
-    @Test
-    public void testCheckInstallConstraints_DeviceIsIdle() throws Exception {
-        final String propKey = "debug.pm.gentle_update_test.is_idle";
-
-        Install.single(TestApp.A1).commit();
-
-        // Device is not idle
-        SystemUtil.runShellCommand(" setprop " + propKey + " 0");
-        var pi = InstallUtils.getPackageInstaller();
-        var f1 = new CompletableFuture<InstallConstraintsResult>();
-        var constraints = new InstallConstraints.Builder().setDeviceIdleRequired().build();
-        pi.checkInstallConstraints(
-                Arrays.asList(TestApp.A),
-                constraints,
-                r -> r.run(),
-                result -> f1.complete(result));
-        assertThat(f1.join().areAllConstraintsSatisfied()).isFalse();
-
-        // Device is idle
-        SystemUtil.runShellCommand(" setprop " + propKey + " 1");
-        var f2 = new CompletableFuture<InstallConstraintsResult>();
-        pi.checkInstallConstraints(
-                Arrays.asList(TestApp.A),
-                constraints,
-                r -> r.run(),
-                result -> f2.complete(result));
-        assertThat(f2.join().areAllConstraintsSatisfied()).isTrue();
-    }
-
-    @Test
-    public void testCheckInstallConstraints_DeviceIsInCall() throws Exception {
-        final String propKey = "debug.pm.gentle_update_test.is_in_call";
-
-        Install.single(TestApp.A1).commit();
-
-        // Device is in call
-        SystemUtil.runShellCommand(" setprop " + propKey + " 1");
-        var pi = InstallUtils.getPackageInstaller();
-        var f1 = new CompletableFuture<InstallConstraintsResult>();
-        var constraints = new InstallConstraints.Builder().setNotInCallRequired().build();
-        pi.checkInstallConstraints(
-                Arrays.asList(TestApp.A),
-                constraints,
-                r -> r.run(),
-                result -> f1.complete(result));
-        assertThat(f1.join().areAllConstraintsSatisfied()).isFalse();
-
-        // Device is not in call
-        SystemUtil.runShellCommand(" setprop " + propKey + " 0");
-        var f2 = new CompletableFuture<InstallConstraintsResult>();
-        pi.checkInstallConstraints(
-                Arrays.asList(TestApp.A),
-                constraints,
-                r -> r.run(),
-                result -> f2.complete(result));
-        assertThat(f2.join().areAllConstraintsSatisfied()).isTrue();
-    }
-
-    @Test
-    public void testCheckInstallConstraints_BoundedService() throws Exception {
-        Install.single(TestApp.A1).commit();
-        Install.single(TestApp.B1).commit();
-        Install.single(TestApp.S1).commit();
-        // Start an activity which will bind a service
-        // Test app S is considered foreground as A is foreground
-        startActivity(TestApp.A, "com.android.cts.install.lib.testapp.TestServiceActivity");
-
-        var pi = InstallUtils.getPackageInstaller();
-        var f1 = new CompletableFuture<InstallConstraintsResult>();
-        var constraints = new InstallConstraints.Builder().setAppNotForegroundRequired().build();
-        pi.checkInstallConstraints(
-                Arrays.asList(TestApp.S),
-                constraints,
-                r -> r.run(),
-                result -> f1.complete(result));
-        assertThat(f1.join().areAllConstraintsSatisfied()).isFalse();
-
-        // Test app A is no longer foreground. So is test app S.
-        startActivity(TestApp.B);
-        PollingCheck.waitFor(() -> {
-            var importance = getPackageImportance(TestApp.A);
-            return importance > ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
-        });
-        var f2 = new CompletableFuture<InstallConstraintsResult>();
-        pi.checkInstallConstraints(
-                Arrays.asList(TestApp.S),
-                constraints,
-                r -> r.run(),
-                result -> f2.complete(result));
-        assertThat(f2.join().areAllConstraintsSatisfied()).isTrue();
-    }
-
-    @Test
-    public void testCheckInstallConstraints_UsesLibrary() throws Exception {
-        final String propKey = "debug.pm.uses_sdk_library_default_cert_digest";
-        // Disable package verifier to prevent pop-up during installation
-        final String oldVal = SystemUtil.runShellCommand(
-                "settings get global package_verifier_enable");
-
-        try {
-            Install.single(TestApp.B1).commit();
-            Log.d(TAG, "Install HelloWorldSdk1");
-            Install.single(HelloWorldSdk1).commit();
-            // Override the certificate digest so HelloWorldUsingSdk1 can be installed
-            SystemUtil.runShellCommand("setprop " + propKey + " "
-                    + getPackageCertDigest(HelloWorldSdk1.getPackageName()));
-            Log.d(TAG, "Install HelloWorldUsingSdk1");
-            Install.single(HelloWorldUsingSdk1).commit();
-
-            // HelloWorldSdk1 will be considered foreground as HelloWorldUsingSdk1 is foreground
-            startActivity(HelloWorldUsingSdk1.getPackageName(),
-                    "com.example.helloworld.MainActivityNoExit");
-
-            Log.d(TAG, "checkInstallConstraints");
-            var pi = InstallUtils.getPackageInstaller();
-            var f1 = new CompletableFuture<InstallConstraintsResult>();
-            var constraints =
-                    new InstallConstraints.Builder().setAppNotForegroundRequired().build();
-            pi.checkInstallConstraints(
-                    Arrays.asList(HelloWorldSdk1.getPackageName()),
-                    constraints,
-                    r -> r.run(),
-                    result -> f1.complete(result));
-            assertThat(f1.join().areAllConstraintsSatisfied()).isFalse();
-
-            Log.d(TAG, "Start activity B");
-            // HelloWorldUsingSdk1 is no longer foreground. So is HelloWorldSdk1.
-            startActivity(TestApp.B);
-            PollingCheck.waitFor(() -> {
-                var importance = getPackageImportance(HelloWorldUsingSdk1.getPackageName());
-                return importance > ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
-            });
-
-            Log.d(TAG, "checkInstallConstraints");
-            var f2 = new CompletableFuture<InstallConstraintsResult>();
-            pi.checkInstallConstraints(
-                    Arrays.asList(HelloWorldSdk1.getPackageName()),
-                    constraints,
-                    r -> r.run(),
-                    result -> f2.complete(result));
-            assertThat(f2.join().areAllConstraintsSatisfied()).isTrue();
-        } finally {
-            Log.d(TAG, "finally restore settings");
-            SystemUtil.runShellCommand("setprop " + propKey + " invalid");
-        }
-    }
-
-    @Test
-    public void testWaitForInstallConstraints_AppIsForeground() throws Exception {
-        Install.single(TestApp.A1).commit();
-        Install.single(TestApp.B1).commit();
-        // We will have a foreground app
-        startActivity(TestApp.A);
-
-        var pi = InstallUtils.getPackageInstaller();
-        var inputConstraints =
-                new InstallConstraints.Builder().setAppNotInteractingRequired().build();
-
-        // Timeout == 0, constraints not satisfied
-        var sender = new LocalIntentSender();
-        pi.waitForInstallConstraints(Arrays.asList(TestApp.A), inputConstraints,
-                sender.getIntentSender(), 0);
-        var intent = sender.getResult();
-        var packageNames = intent.getStringArrayExtra(Intent.EXTRA_PACKAGES);
-        var receivedConstraints = intent.getParcelableExtra(
-                PackageInstaller.EXTRA_INSTALL_CONSTRAINTS, InstallConstraints.class);
-        var result = intent.getParcelableExtra(
-                PackageInstaller.EXTRA_INSTALL_CONSTRAINTS_RESULT, InstallConstraintsResult.class);
-        assertThat(packageNames).asList().containsExactly(TestApp.A);
-        assertThat(receivedConstraints).isEqualTo(inputConstraints);
-        assertThat(result.areAllConstraintsSatisfied()).isFalse();
-
-        // Timeout == one day, constraints not satisfied
-        sender = new LocalIntentSender();
-        pi.waitForInstallConstraints(Arrays.asList(TestApp.A), inputConstraints,
-                sender.getIntentSender(), TimeUnit.DAYS.toMillis(1));
-        // Wait for a while and check the callback is not invoked yet
-        intent = sender.pollResult(3, TimeUnit.SECONDS);
-        assertThat(intent).isNull();
-
-        // Test app A is no longer foreground. The callback will be invoked soon.
-        startActivity(TestApp.B);
-        intent = sender.getResult();
-        packageNames = intent.getStringArrayExtra(Intent.EXTRA_PACKAGES);
-        receivedConstraints = intent.getParcelableExtra(
-                PackageInstaller.EXTRA_INSTALL_CONSTRAINTS, InstallConstraints.class);
-        result = intent.getParcelableExtra(
-                PackageInstaller.EXTRA_INSTALL_CONSTRAINTS_RESULT, InstallConstraintsResult.class);
-        assertThat(packageNames).asList().containsExactly(TestApp.A);
-        assertThat(receivedConstraints).isEqualTo(inputConstraints);
-        assertThat(result.areAllConstraintsSatisfied()).isTrue();
-    }
-
-    @Test
-    public void testCommitAfterInstallConstraintsMet_NoTimeout() throws Exception {
-        Install.single(TestApp.A1).commit();
-
-        // Constraints are satisfied. The session will be committed without timeout.
-        var pi = InstallUtils.getPackageInstaller();
-        int sessionId = Install.single(TestApp.A2).createSession();
-        var constraints = new InstallConstraints.Builder().setAppNotForegroundRequired().build();
-        var sender = new LocalIntentSender();
-        pi.commitSessionAfterInstallConstraintsAreMet(sessionId, sender.getIntentSender(),
-                constraints, TimeUnit.MINUTES.toMillis(1));
-        InstallUtils.assertStatusSuccess(sender.getResult());
-        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
-    }
-
-    @Test
-    public void testCommitAfterInstallConstraintsMet_RetryOnTimeout() throws Exception {
-        Install.single(TestApp.A1).commit();
-        Install.single(TestApp.B1).commit();
-        // We will have a foreground app
-        startActivity(TestApp.A);
-
-        // Timeout for constraints not satisfied
-        var pi = InstallUtils.getPackageInstaller();
-        int sessionId = Install.single(TestApp.A2).createSession();
-        var constraints = new InstallConstraints.Builder().setAppNotForegroundRequired().build();
-        var sender = new LocalIntentSender();
-        pi.commitSessionAfterInstallConstraintsAreMet(sessionId, sender.getIntentSender(),
-                constraints, TimeUnit.SECONDS.toMillis(3));
-        InstallUtils.assertStatusFailure(sender.getResult());
-        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
-
-        // Test app A is no longer foreground
-        startActivity(TestApp.B);
-        PollingCheck.waitFor(() -> {
-            var importance = getPackageImportance(TestApp.A);
-            return importance > ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
-        });
-        // Commit will succeed for constraints are satisfied
-        pi.commitSessionAfterInstallConstraintsAreMet(sessionId, sender.getIntentSender(),
-                constraints, TimeUnit.MINUTES.toMillis(1));
-        InstallUtils.assertStatusSuccess(sender.getResult());
-        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
-    }
-
-    private static byte[] computeSha256DigestBytes(byte[] data) {
-        try {
-            var messageDigest = MessageDigest.getInstance("SHA256");
-            messageDigest.update(data);
-            return messageDigest.digest();
-        } catch (Exception ignore) {
-            /* can't happen */
-            return null;
-        }
-    }
-
-    private static String encodeHex(byte[] data) {
-        final var hexDigits = "0123456789abcdef".toCharArray();
-        int len = data.length;
-        StringBuilder result = new StringBuilder(len * 2);
-        for (int i = 0; i < len; i++) {
-            byte b = data[i];
-            result.append(hexDigits[(b >>> 4) & 0x0f]);
-            result.append(hexDigits[b & 0x0f]);
-        }
-        return result.toString();
-    }
-
-    private String getPackageCertDigest(String packageName) throws Exception {
-        final var pm = InstrumentationRegistry.getInstrumentation()
-                .getContext().getPackageManager();
-        var packageInfo = pm.getPackageInfo(packageName,
-                PackageManager.PackageInfoFlags.of(
-                        GET_SIGNING_CERTIFICATES | MATCH_STATIC_SHARED_AND_SDK_LIBRARIES));
-        var signatures = packageInfo.signingInfo.getSigningCertificateHistory();
-        var digest = computeSha256DigestBytes(signatures[0].toByteArray());
-        return encodeHex(digest);
-    }
-
-    private static void startActivity(String packageName) {
-        startActivity(packageName, "com.android.cts.install.lib.testapp.MainActivity");
-    }
-
-    private static void startActivity(String packageName, String className) {
-        // The -W option waits for the activity launch to complete
-        SystemUtil.runShellCommandOrThrow(
-                String.format("am start-activity -W -n %s/%s", packageName, className));
-    }
-
-    private int getPackageImportance(String packageName) {
-        var context = InstrumentationRegistry.getInstrumentation().getContext();
-        var am = context.getSystemService(ActivityManager.class);
-        return am.getPackageImportance(packageName);
     }
 
     // It becomes harder to maintain this variety of install-related helper methods.

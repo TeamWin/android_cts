@@ -79,6 +79,17 @@ public final class ShellCommandUtils {
         return executeCommand(command, /* allowEmptyOutput=*/ false, /* stdInBytes= */ null);
     }
 
+    /**
+     * Wraps executeShellCommandRwe to suppress NewApi warning for this method in isolation.
+     *
+     * This method was changed from TestApi -> public for API 34, so it's safe to call back to
+     * API 29, but the NewApi warning doesn't understand this.
+     */
+    @SuppressWarnings("NewApi") // executeShellCommandRwe was @TestApi back to API 29, now public
+    private static ParcelFileDescriptor[] executeShellCommandRwe(String command) {
+        return uiAutomation().executeShellCommandRwe(command);
+    }
+
     static String executeCommand(String command, boolean allowEmptyOutput, byte[] stdInBytes)
             throws AdbException {
         logCommand(command, allowEmptyOutput, stdInBytes);
@@ -90,7 +101,7 @@ public final class ShellCommandUtils {
         // TODO(scottjonathan): Add argument to force errors to stderr
         try {
 
-            ParcelFileDescriptor[] fds = uiAutomation().executeShellCommandRwe(command);
+            ParcelFileDescriptor[] fds = executeShellCommandRwe(command);
             ParcelFileDescriptor fdOut = fds[OUT_DESCRIPTOR_INDEX];
             ParcelFileDescriptor fdIn = fds[IN_DESCRIPTOR_INDEX];
             ParcelFileDescriptor fdErr = fds[ERR_DESCRIPTOR_INDEX];
@@ -128,7 +139,7 @@ public final class ShellCommandUtils {
         // TODO(scottjonathan): Add argument to force errors to stderr
         try {
 
-            ParcelFileDescriptor[] fds = uiAutomation().executeShellCommandRwe(command);
+            ParcelFileDescriptor[] fds = executeShellCommandRwe(command);
             ParcelFileDescriptor fdOut = fds[OUT_DESCRIPTOR_INDEX];
             ParcelFileDescriptor fdIn = fds[IN_DESCRIPTOR_INDEX];
             ParcelFileDescriptor fdErr = fds[ERR_DESCRIPTOR_INDEX];

@@ -20,6 +20,7 @@ import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.net.wifi.WifiAvailableChannel.OP_MODE_SAP;
 import static android.net.wifi.WifiAvailableChannel.OP_MODE_STA;
+import static android.net.wifi.WifiAvailableChannel.OP_MODE_WIFI_DIRECT_GO;
 import static android.net.wifi.WifiConfiguration.INVALID_NETWORK_ID;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_SOFTAP;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_AWARE;
@@ -5635,10 +5636,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Tests {@link WifiManager#getUsableChannels(int, int))} does not crash.
+     * Tests {@link WifiManager#getUsableChannels(int, int))} does not crash
+     * and returns at least one 2G channel in STA and WFD GO modes (if WFD is supported)
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
-    public void testGetUsableChannels() throws Exception {
+    public void testGetUsableChannelsStaWfdMode() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
@@ -5648,10 +5650,18 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            List<WifiAvailableChannel> usableChannels =
+            List<WifiAvailableChannel> usableStaChannels =
                 mWifiManager.getUsableChannels(WIFI_BAND_24_GHZ, OP_MODE_STA);
-            //There must be at least one usable channel in 2.4GHz band
-            assertFalse(usableChannels.isEmpty());
+            //There must be at least one usable STA channel in 2.4GHz band
+            assertFalse(usableStaChannels.isEmpty());
+
+            if (mWifiManager.isP2pSupported()) {
+                List<WifiAvailableChannel> usableGoChannels =
+                        mWifiManager.getUsableChannels(WIFI_BAND_24_GHZ, OP_MODE_WIFI_DIRECT_GO);
+                //There must be at least one usable P2P channel in 2.4GHz band
+                assertFalse(usableGoChannels.isEmpty());
+            }
+
         } catch (UnsupportedOperationException ex) {
             //expected if the device does not support this API
         } catch (Exception ex) {
@@ -5822,6 +5832,88 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                             == WifiManager.WIFI_MULTI_INTERNET_MODE_MULTI_AP);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    static class TestWifiNetworkStateChangeListener implements
+            WifiManager.WifiNetworkStateChangedListener {
+        final int mCmmRole;
+        private List<Integer> mStateList = new ArrayList<>();
+
+        TestWifiNetworkStateChangeListener(int cmmRole) {
+            mCmmRole = cmmRole;
+        }
+
+        @Override
+        public void onWifiNetworkStateChanged(int cmmRole, int state) {
+            if (cmmRole != mCmmRole) {
+                return;
+            }
+            if (mStateList.contains(state)) {
+                // ignore duplicate state transitions
+                return;
+            }
+            mStateList.add(state);
+        }
+
+        public List<Integer> getStateList() {
+            return mStateList;
+        }
+
+        public void clear() {
+            mStateList.clear();
+        }
+    }
+
+    public void testWifiNetworkStateChangeListener() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        TestWifiNetworkStateChangeListener testListener = new TestWifiNetworkStateChangeListener(
+                WifiManager.WifiNetworkStateChangedListener.WIFI_ROLE_CLIENT_PRIMARY);
+        // Verify permission check
+        assertThrows(SecurityException.class,
+                () -> mWifiManager.addWifiNetworkStateChangedListener(mExecutor, testListener));
+
+        // Disable wifi
+        setWifiEnabled(false);
+        waitForDisconnection();
+
+        try {
+            // Register listener then enable wifi
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.addWifiNetworkStateChangedListener(mExecutor, testListener));
+            setWifiEnabled(true);
+
+            // Trigger a scan & wait for connection to one of the saved networks.
+            mWifiManager.startScan();
+            waitForConnection();
+
+            PollingCheck.check(
+                    "Wifi network state change listener did not receive connected!", 1_000,
+                    () -> testListener.getStateList().contains(
+                            WifiManager.WifiNetworkStateChangedListener
+                                    .WIFI_NETWORK_STATUS_CONNECTED));
+            int firstState = testListener.getStateList().get(0);
+            int lastState = testListener.getStateList().get(testListener.getStateList().size() - 1);
+            assertEquals(WifiManager.WifiNetworkStateChangedListener
+                    .WIFI_NETWORK_STATUS_CONNECTING, firstState);
+            assertEquals(WifiManager.WifiNetworkStateChangedListener
+                    .WIFI_NETWORK_STATUS_CONNECTED, lastState);
+
+            // Disable wifi and verify disconnect is reported.
+            testListener.clear();
+            setWifiEnabled(false);
+            waitForDisconnection();
+            PollingCheck.check(
+                    "Wifi network state change listener did not receive disconnected!", 1_000,
+                    () -> testListener.getStateList().contains(
+                            WifiManager.WifiNetworkStateChangedListener
+                                    .WIFI_NETWORK_STATUS_DISCONNECTED));
+        } finally {
+            mWifiManager.removeWifiNetworkStateChangedListener(testListener);
         }
     }
 

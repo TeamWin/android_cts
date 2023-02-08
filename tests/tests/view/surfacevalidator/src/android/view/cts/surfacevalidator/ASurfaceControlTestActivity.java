@@ -182,7 +182,12 @@ public class ASurfaceControlTestActivity extends Activity {
         mScreenshot.recycle();
 
         int numMatchingPixels = pixelChecker.getNumMatchingPixels(swBitmap);
-        Rect bounds = pixelChecker.getBoundsToCheck(swBitmap);
+
+        int checkedPixels = 0;
+        for (Rect bounds : pixelChecker.getBoundsToCheck(swBitmap)) {
+            checkedPixels += bounds.width() * bounds.height();
+        }
+
         boolean success = pixelChecker.checkPixels(numMatchingPixels, swBitmap.getWidth(),
                 swBitmap.getHeight());
         if (!success) {
@@ -191,7 +196,7 @@ public class ASurfaceControlTestActivity extends Activity {
         swBitmap.recycle();
 
         assertTrue("Actual matched pixels:" + numMatchingPixels
-                + " Bitmap size:" + bounds.width() + "x" + bounds.height(), success);
+                + " Number of pixels checked:" + checkedPixels, success);
     }
 
     public SurfaceView getSurfaceView() {
@@ -206,36 +211,35 @@ public class ASurfaceControlTestActivity extends Activity {
         mTransactionCommittedLatch.countDown();
     }
 
-    public abstract static class MultiRectChecker extends RectChecker {
-        public MultiRectChecker(Rect boundsToCheck) {
-            super(boundsToCheck);
-        }
-
-        public abstract PixelColor getExpectedColor(int x, int y);
-    }
-
     public static class RectChecker extends PixelChecker {
-        private final Rect mBoundsToCheck;
+        private final List<Rect> mBoundsToCheck;
 
-        public RectChecker(Rect boundsToCheck) {
+        public RectChecker(List<Rect> boundsToCheck) {
             super();
             mBoundsToCheck = boundsToCheck;
         }
 
-        public RectChecker(Rect boundsToCheck, int expectedColor) {
-            super(expectedColor);
-            mBoundsToCheck = boundsToCheck;
+        public RectChecker(Rect boundsToCheck) {
+            this(List.of(boundsToCheck));
         }
 
-        public boolean checkPixels(int matchingPixelCount, int width, int height) {
-            int expectedPixelCountMin = mBoundsToCheck.width() * mBoundsToCheck.height() - 100;
-            int expectedPixelCountMax = mBoundsToCheck.width() * mBoundsToCheck.height();
-            return matchingPixelCount > expectedPixelCountMin
-                    && matchingPixelCount <= expectedPixelCountMax;
+        public RectChecker(Rect boundsToCheck, int expectedColor) {
+            super(expectedColor);
+            mBoundsToCheck = List.of(boundsToCheck);
         }
 
         @Override
-        public Rect getBoundsToCheck(Bitmap bitmap) {
+        public boolean checkPixels(int matchingPixelCount, int width, int height) {
+            int expectedPixelCount = 0;
+            for (Rect bounds : mBoundsToCheck) {
+                expectedPixelCount += bounds.width() * bounds.height();
+            }
+            return expectedPixelCount - 100 < matchingPixelCount
+                    && matchingPixelCount <= expectedPixelCount;
+        }
+
+        @Override
+        public List<Rect> getBoundsToCheck(Bitmap bitmap) {
             return mBoundsToCheck;
         }
     }
@@ -260,22 +264,23 @@ public class ASurfaceControlTestActivity extends Activity {
         int getNumMatchingPixels(Bitmap bitmap) {
             int numMatchingPixels = 0;
             int numErrorsLogged = 0;
-            Rect boundsToCheck = getBoundsToCheck(bitmap);
-            for (int x = boundsToCheck.left; x < boundsToCheck.right; x++) {
-                for (int y = boundsToCheck.top; y < boundsToCheck.bottom; y++) {
-                    int color = bitmap.getPixel(x + OFFSET_X, y + OFFSET_Y);
-                    if (getExpectedColor(x, y).matchesColor(color)) {
-                        numMatchingPixels++;
-                    } else if (DEBUG && mLogWhenNoMatch && numErrorsLogged < 100) {
-                        // We don't want to spam the logcat with errors if something is really
-                        // broken. Only log the first 100 errors.
-                        PixelColor expected = getExpectedColor(x, y);
-                        int expectedColor = Color.argb(expected.mAlpha, expected.mRed,
-                                expected.mGreen, expected.mBlue);
-                        Log.e(TAG, String.format(
-                                "Failed to match (%d, %d) color=0x%08X expected=0x%08X", x, y,
-                                color, expectedColor));
-                        numErrorsLogged++;
+            for (Rect boundsToCheck : getBoundsToCheck(bitmap)) {
+                for (int x = boundsToCheck.left; x < boundsToCheck.right; x++) {
+                    for (int y = boundsToCheck.top; y < boundsToCheck.bottom; y++) {
+                        int color = bitmap.getPixel(x + OFFSET_X, y + OFFSET_Y);
+                        if (getExpectedColor(x, y).matchesColor(color)) {
+                            numMatchingPixels++;
+                        } else if (DEBUG && mLogWhenNoMatch && numErrorsLogged < 100) {
+                            // We don't want to spam the logcat with errors if something is really
+                            // broken. Only log the first 100 errors.
+                            PixelColor expected = getExpectedColor(x, y);
+                            int expectedColor = Color.argb(expected.mAlpha, expected.mRed,
+                                    expected.mGreen, expected.mBlue);
+                            Log.e(TAG, String.format(
+                                    "Failed to match (%d, %d) color=0x%08X expected=0x%08X", x, y,
+                                    color, expectedColor));
+                            numErrorsLogged++;
+                        }
                     }
                 }
             }
@@ -284,8 +289,8 @@ public class ASurfaceControlTestActivity extends Activity {
 
         public abstract boolean checkPixels(int matchingPixelCount, int width, int height);
 
-        public Rect getBoundsToCheck(Bitmap bitmap) {
-            return new Rect(1, 1, DEFAULT_LAYOUT_WIDTH - 1, DEFAULT_LAYOUT_HEIGHT - 1);
+        public List<Rect> getBoundsToCheck(Bitmap bitmap) {
+            return List.of(new Rect(1, 1, DEFAULT_LAYOUT_WIDTH - 1, DEFAULT_LAYOUT_HEIGHT - 1));
         }
 
         public PixelColor getExpectedColor(int x, int y) {

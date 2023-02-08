@@ -29,6 +29,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -36,6 +37,9 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCase {
+
+    private static final long RESTRICT_STORAGE_ACCESS_FRAMEWORK = 141600225L;
+    private static final String FEATURE_WATCH = "android.hardware.type.watch";
 
     private static final Set<String> OVERRIDES_ALLOWLIST = ImmutableSet.of(
         // This change id will sometimes remain enabled if an instrumentation test fails.
@@ -149,6 +153,15 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             // Exclude logging only changes from the expected config. See b/155264388.
             if (!change.loggingOnly) {
                 changes.add(change);
+            }
+        }
+
+        // RESTRICT_STORAGE_ACCESS_FRAMEWORK not supported on wear
+        if (getDevice().hasFeature(FEATURE_WATCH)) {
+            for (Iterator<Change> it = changes.iterator(); it.hasNext();) {
+                if (it.next().changeId == RESTRICT_STORAGE_ACCESS_FRAMEWORK) {
+                    it.remove();
+                }
             }
         }
         return changes;

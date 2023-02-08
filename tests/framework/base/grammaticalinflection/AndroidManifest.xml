@@ -30,6 +30,18 @@
       </intent-filter>
     </activity>
 
+    <activity android:name=".TestHandleConfigChangeActivity"
+              android:configChanges="grammaticalGender"
+              android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="any.action"/>
+      </intent-filter>
+    </activity>
+
     <provider android:name="android.server.wm.TestJournalProvider"
               android:authorities="android.server.wm.testjournalprovider"
               android:exported="true" />

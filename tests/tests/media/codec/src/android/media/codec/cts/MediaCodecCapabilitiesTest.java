@@ -747,15 +747,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
             int minFrameRate = Math.max(vcaps.getSupportedFrameRatesFor(minWidth, minHeight)
                     .getLower().intValue(), 1);
             format = MediaFormat.createVideoFormat(mime, minWidth, minHeight);
-            int colorFormat = caps.colorFormats[0];
-            for (int i = 0; i < caps.colorFormats.length; ++i) {
-                colorFormat = caps.colorFormats[i];
-                // Avoid COLOR_FormatSurface as we will be configuring the codec without a surface.
-                if (colorFormat != CodecCapabilities.COLOR_FormatSurface) {
-                    break;
-                }
-            }
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, colorFormat);
+            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, caps.colorFormats[0]);
             format.setInteger(MediaFormat.KEY_BIT_RATE, minBitrate);
             format.setInteger(MediaFormat.KEY_FRAME_RATE, minFrameRate);
             format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);

@@ -18,6 +18,9 @@ package android.server.wm;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.Manifest;
 import android.platform.test.annotations.Presubmit;
 
@@ -71,6 +74,7 @@ public class ActivityCaptureCallbackTests extends WindowManagerTestBase {
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.STATUS_BAR_SERVICE);
         mWm.notifyScreenshotListeners(DEFAULT_DISPLAY);
+        mWm.notifyScreenshotListeners(newDisplay.mId);
         mPrimaryActivity.waitAndAssertCallbackInvokedOnActivity();
         secondaryActivity.waitAndAssertCallbackInvokedOnActivity();
     }
@@ -92,7 +96,6 @@ public class ActivityCaptureCallbackTests extends WindowManagerTestBase {
     /** Test multi-window activities, only registered callback is invoked. */
     @Test
     public void testScreencaptureInvokeCallbackOnRegisteredVisibleActivities() {
-
         mPrimaryActivity.unregisterScreencaptureCallback();
         final WindowManagerState.DisplayContent newDisplay =
                 createManagedExternalDisplaySession().createVirtualDisplay();
@@ -102,6 +105,7 @@ public class ActivityCaptureCallbackTests extends WindowManagerTestBase {
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.STATUS_BAR_SERVICE);
         mWm.notifyScreenshotListeners(DEFAULT_DISPLAY);
+        mWm.notifyScreenshotListeners(newDisplay.mId);
         mPrimaryActivity.waitAndAssertCallbackNotInvoked();
         secondaryActivity.waitAndAssertCallbackInvokedOnActivity();
     }
@@ -150,17 +154,21 @@ public class ActivityCaptureCallbackTests extends WindowManagerTestBase {
 
         void waitAndAssertCallbackInvokedOnActivity() {
             try {
-                mCountDownLatch.await(
+                boolean invoked = mCountDownLatch.await(
                         TIMEOUT_SCREENCAPTURE_CALLBACK_INVOKED, TimeUnit.MILLISECONDS);
+                assertTrue(invoked);
             } catch (InterruptedException e) {
+                // This shouldn't happen
             }
         }
 
         void waitAndAssertCallbackNotInvoked() {
             try {
-                mCountDownLatch.await(
+                boolean invoked = mCountDownLatch.await(
                         TIMEOUT_SCREENCAPTURE_CALLBACK_INVOKED, TimeUnit.MILLISECONDS);
+                assertFalse(invoked);
             } catch (InterruptedException e) {
+                // This shouldn't happen
             }
         }
 

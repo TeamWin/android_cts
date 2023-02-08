@@ -27,6 +27,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ApplicationExitInfo;
@@ -204,6 +205,13 @@ public final class ActivityManagerAppExitInfoTest {
         mHiddenApiSettings.set("*");
         mFreezerTimeout = executeShellCmd(
                 "device_config get activity_manager_native_boot freeze_debounce_timeout");
+
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                android.Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE);
+        mContext.getPackageManager().setApplicationEnabledSetting(
+                STUB_PACKAGE_NAME,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                0);
     }
 
     private void handleMessagePid(Message msg) {
@@ -275,6 +283,8 @@ public final class ActivityManagerAppExitInfoTest {
         executeShellCmd("cmd deviceidle whitelist -" + HEARTBEAT_PACKAGE);
         executeShellCmd("am force-stop " + STUB_PACKAGE_NAME);
         executeShellCmd("am force-stop " + HEARTBEAT_PACKAGE);
+        mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+
         removeTestUserIfNecessary();
         mHandlerThread.quitSafely();
         if (mDataAnrSettings != null) {
@@ -971,6 +981,59 @@ public final class ActivityManagerAppExitInfoTest {
     }
 
     @Test
+    public void testPackageDisabled() throws Exception {
+        // Remove old records to avoid interference with the test.
+        clearHistoricalExitInfo();
+
+        // Start a process and do nothing
+        startService(ACTION_NONE, STUB_SERVICE_NAME, false, false);
+
+        //disable the app and kill it
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                android.Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE);
+        PackageManager packageManager = mContext.getPackageManager();
+        packageManager.setApplicationEnabledSetting(
+                STUB_PACKAGE_NAME,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                0);
+
+        waitForGone(mWatcher);
+
+        List<ApplicationExitInfo> list = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                STUB_PACKAGE_NAME, mStubPackagePid, 1,
+                mActivityManager::getHistoricalProcessExitReasons,
+                android.Manifest.permission.DUMP);
+
+        assertTrue(list != null && list.size() == 1);
+        assertEquals(ApplicationExitInfo.REASON_PACKAGE_STATE_CHANGE, list.get(0).getReason());
+        assertEquals(ApplicationExitInfo.SUBREASON_UNKNOWN, list.get(0).getSubReason());
+    }
+
+    @Test
+    public void testPackageUpdated() throws Exception {
+        // Remove old records to avoid interference with the test.
+        clearHistoricalExitInfo();
+
+        // Start a process and do nothing
+        startService(ACTION_NONE, STUB_SERVICE_NAME, false, false);
+
+        // Update the package
+        executeShellCmd("pm install -r /data/local/tmp/cts/content/CtsSimpleApp.apk");
+
+        waitForGone(mWatcher);
+
+        List<ApplicationExitInfo> list =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        STUB_PACKAGE_NAME, mStubPackagePid, 1,
+                        mActivityManager::getHistoricalProcessExitReasons,
+                        Manifest.permission.DUMP);
+
+        assertTrue(list != null && list.size() == 1);
+        assertEquals(ApplicationExitInfo.REASON_PACKAGE_UPDATED, list.get(0).getReason());
+        assertEquals(ApplicationExitInfo.SUBREASON_UNKNOWN, list.get(0).getSubReason());
+    }
+
+    @Test
     public void testDependencyDied() throws Exception {
         // Remove old records to avoid interference with the test.
         clearHistoricalExitInfo();
@@ -985,7 +1048,7 @@ public final class ActivityManagerAppExitInfoTest {
         while (now < timeout && providerPid < 0) {
             sleep(1000);
             List<RunningAppProcessInfo> list = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                    am, (m) -> m.getRunningAppProcesses(),
+                    am, ActivityManager::getRunningAppProcesses,
                     android.Manifest.permission.REAL_GET_TASKS);
             for (RunningAppProcessInfo info: list) {
                 if (info.processName.equals(STUB_REMOTE_PROCESS_NAME)) {

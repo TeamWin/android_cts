@@ -542,4 +542,12 @@
          android:protectionLevel="signature|privileged"
          android:label="@string/car_permission_label_control_adas_states"
          android:description="@string/car_permission_desc_control_adas_states"/>
+    <permission android:name="android.car.permission.ACCESS_MIRRORED_SURFACE"
+         android:protectionLevel="signature|privileged"
+         android:label="@string/car_permission_label_access_mirrored_surface"
+         android:description="@string/car_permission_desc_access_mirrored_surface"/>
+    <permission android:name="android.car.permission.MIRROR_DISPLAY"
+         android:protectionLevel="signature|privileged"
+         android:label="@string/car_permission_label_mirror_display"
+         android:description="@string/car_permission_desc_mirror_display"/>
 </manifest>

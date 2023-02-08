@@ -1319,6 +1319,19 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testEpochTimeIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.EPOCH_TIME,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Long.class)
+                .addWritePermission(Car.PERMISSION_CAR_EPOCH_TIME)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
     public void testElectronicTollCollectionCardTypeIfSupported() {
         VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.ELECTRONIC_TOLL_COLLECTION_CARD_TYPE,

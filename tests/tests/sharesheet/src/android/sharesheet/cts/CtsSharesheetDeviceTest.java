@@ -55,7 +55,6 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -341,7 +340,6 @@ public class CtsSharesheetDeviceTest {
         }
     }
 
-    @Ignore("b/262587046")
     @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_CUSTOM_ACTIONS")
     public void testCustomAction() {

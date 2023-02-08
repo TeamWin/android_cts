@@ -95,7 +95,6 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
         assertNotNull(mCallback.mAdvertisingSet);
     }
 
-
     public void test_startAdvertisingSetWithDurationCallbackAndHandler()
             throws InterruptedException {
         mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null,
@@ -103,6 +102,15 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
         assertTrue(mCallback.mAdvertisingSetStartedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         assertEquals(ADVERTISE_SUCCESS, mCallback.mAdvertisingSetStartedStatus.get());
         assertNotNull(mCallback.mAdvertisingSet);
+    }
+
+    public void test_getAdvertisingSetId() throws InterruptedException {
+        mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null, 0, 0,
+                mCallback, new Handler(Looper.getMainLooper()));
+        mCallback.mAdvertisingSetStartedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+        assertNotNull(mCallback.mAdvertisingSet);
+        assertTrue(mCallback.mAdvertisingSet.get().getAdvertiserId() >= 0);
     }
 
     private static class TestAdvertisingSetCallback extends AdvertisingSetCallback {
@@ -144,6 +152,5 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
             super.onAdvertisingSetStopped(advertisingSet);
             mAdvertisingSetStoppedLatch.countDown();
         }
-
     }
 }

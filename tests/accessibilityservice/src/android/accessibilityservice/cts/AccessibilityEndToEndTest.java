@@ -1120,7 +1120,7 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
             sUiAutomation.executeAndWaitForEvent(
                     () -> assertTrue(root.findAccessibilityNodeInfosByViewId(adpViewName).get(
                             0).performAction(ACTION_ACCESSIBILITY_FOCUS)),
-                    filterForEventType(TYPE_VIEW_ACCESSIBILITY_FOCUSED),
+                    filterForEventTypeWithResource(TYPE_VIEW_ACCESSIBILITY_FOCUSED, adpViewName),
                     DEFAULT_TIMEOUT_MS);
             assertThat(sUiAutomation.findFocus(
                     AccessibilityNodeInfo.FOCUS_ACCESSIBILITY).getContentDescription()).isEqualTo(
@@ -1130,6 +1130,32 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
                     containerViewName).get(0);
             assertThat(parent.getChildCount()).isEqualTo(1);
             assertThat(parent.getChild(0)).isNotNull();
+        } finally {
+            enableTouchExploration(false);
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.View#isAccessibilityDataPrivate"})
+    public void testAccessibilityDataPrivate_canObserveHoverEvent() throws Throwable {
+        try {
+            setAccessibilityTool(true);
+            enableTouchExploration(true);
+
+            final long time = SystemClock.uptimeMillis();
+            final View view = mActivity.findViewById(R.id.innerView);
+            final int[] viewLocation = new int[2];
+            view.getLocationOnScreen(viewLocation);
+            final int x = viewLocation[0] + view.getWidth() / 2;
+            final int y = viewLocation[1] + view.getHeight() / 2;
+
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> injectHoverEvent(time, true, x, y),
+                    filterForEventTypeWithResource(
+                            AccessibilityEvent.TYPE_VIEW_HOVER_ENTER,
+                            sInstrumentation.getTargetContext().getResources()
+                                    .getResourceName(R.id.innerView)),
+                    DEFAULT_TIMEOUT_MS);
         } finally {
             enableTouchExploration(false);
         }

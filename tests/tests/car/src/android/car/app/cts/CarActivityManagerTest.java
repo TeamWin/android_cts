@@ -37,13 +37,15 @@ import android.os.SystemClock;
 import android.view.Display;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.FlakyTest;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnit4.class)
 public class CarActivityManagerTest {
@@ -86,7 +88,6 @@ public class CarActivityManagerTest {
         mUiAutomation.dropShellPermissionIdentity();
     }
 
-    @FlakyTest(bugId = 267587346)
     @Test
     public void testSetPersistentActivity() throws Exception {
         try (VirtualDisplaySession session = new VirtualDisplaySession()) {
@@ -108,7 +109,8 @@ public class CarActivityManagerTest {
             // launch the activity
             Intent startIntent = Intent.makeMainActivity(mTestActivity)
                     .addFlags(FLAG_ACTIVITY_NEW_TASK);
-            Activity activity = mInstrumentation.startActivitySync(startIntent, /* option */ null);
+            TestActivity activity = (TestActivity) mInstrumentation.startActivitySync(
+                    startIntent, /* option */ null);
 
             // assert the activity is launched into the virtual display
             assertThat(activity.getDisplay().getDisplayId()).isEqualTo(secondaryDisplayId);
@@ -117,15 +119,15 @@ public class CarActivityManagerTest {
             activity.finishAndRemoveTask();
 
             // Wait for the Activity is completely removed.
-            mInstrumentation.getUiAutomation().waitForIdle(
-                    QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE, TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
+            assertThat(activity.waitForDestroyed()).isTrue();
 
             ret = mCarActivityManager.setPersistentActivity(mTestActivity,
                     secondaryDisplayId, FEATURE_UNDEFINED);
             assertThat(ret).isEqualTo(CarActivityManager.RESULT_SUCCESS);
 
             // re-launch again and assert that it is not launched in the secondaryDisplay
-            activity = mInstrumentation.startActivitySync(startIntent, /* option */ null);
+            activity = (TestActivity) mInstrumentation.startActivitySync(
+                    startIntent, /* option */ null);
             assertThat(activity.getDisplay().getDisplayId()).isEqualTo(DEFAULT_DISPLAY);
 
             // tear down
@@ -160,5 +162,16 @@ public class CarActivityManagerTest {
     }
 
     public static final class TestActivity extends Activity {
+        private final CountDownLatch mDestroyed = new CountDownLatch(1);
+
+        @Override
+        protected void onDestroy() {
+            super.onDestroy();
+            mDestroyed.countDown();
+        }
+
+        private boolean waitForDestroyed() throws InterruptedException {
+            return mDestroyed.await(QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE, TimeUnit.MILLISECONDS);
+        }
     }
 }

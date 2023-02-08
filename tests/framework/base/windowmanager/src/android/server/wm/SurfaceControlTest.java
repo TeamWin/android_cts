@@ -16,7 +16,6 @@
 package android.server.wm;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
-import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.MultiRectChecker;
 import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.RectChecker;
 
 import static org.junit.Assert.assertFalse;
@@ -271,7 +270,7 @@ public class SurfaceControlTest {
                 },
 
                 // The rect should be offset by -50 pixels
-                new MultiRectChecker(DEFAULT_RECT) {
+                new RectChecker(DEFAULT_RECT) {
                     final PixelColor mRed = new PixelColor(Color.RED);
                     final PixelColor mBlack = new PixelColor(Color.BLACK);
                     @Override
@@ -304,7 +303,7 @@ public class SurfaceControlTest {
                 },
 
                 // The rect should be offset by 50 pixels
-                new MultiRectChecker(DEFAULT_RECT) {
+                new RectChecker(DEFAULT_RECT) {
                     final PixelColor mRed = new PixelColor(Color.RED);
                     final PixelColor mBlack = new PixelColor(Color.BLACK);
                     @Override

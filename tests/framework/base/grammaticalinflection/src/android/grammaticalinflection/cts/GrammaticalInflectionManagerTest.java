@@ -41,6 +41,9 @@ public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
     private final ComponentName TEST_APP_MAIN_ACTIVITY = new ComponentName(
             TestMainActivity.class.getPackageName(),
             TestMainActivity.class.getCanonicalName());
+    private final ComponentName TEST_APP_HANDLE_CONFIG_CHANGE = new ComponentName(
+            TestHandleConfigChangeActivity.class.getPackageName(),
+            TestHandleConfigChangeActivity.class.getCanonicalName());
 
     private GrammaticalInflectionManager mGrammaticalInflectionManager;
 
@@ -81,6 +84,20 @@ public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
                 Configuration.GRAMMATICAL_GENDER_MASCULINE);
 
         assertActivityLifecycle(TEST_APP_MAIN_ACTIVITY, true /* relaunch */);
+        assertThat(mGrammaticalInflectionManager.getApplicationGrammaticalGender())
+                .isEqualTo(Configuration.GRAMMATICAL_GENDER_MASCULINE);
+    }
+
+    @Test
+    public void testSetApplicationGender_setMasculine_returnMasculineWithoutReCreating() {
+        launchActivity(TEST_APP_HANDLE_CONFIG_CHANGE);
+        TestJournalProvider.TestJournalContainer.start();
+        mWmState.assertVisibility(TEST_APP_HANDLE_CONFIG_CHANGE, /* visible*/ true);
+
+        mGrammaticalInflectionManager.setRequestedApplicationGrammaticalGender(
+                Configuration.GRAMMATICAL_GENDER_MASCULINE);
+
+        assertActivityLifecycle(TEST_APP_HANDLE_CONFIG_CHANGE, false /* relaunch */);
         assertThat(mGrammaticalInflectionManager.getApplicationGrammaticalGender())
                 .isEqualTo(Configuration.GRAMMATICAL_GENDER_MASCULINE);
     }

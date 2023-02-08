@@ -40,8 +40,8 @@ import android.util.Log;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
-import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.MultiRectChecker;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecker;
+import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.RectChecker;
 import android.view.cts.surfacevalidator.PixelColor;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
@@ -481,7 +481,7 @@ public class SurfaceControlTest {
                                 .apply();
                     }
                 },
-                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x >= 10 && x < 50 && y >= 10 && y < 50) {
@@ -510,7 +510,7 @@ public class SurfaceControlTest {
                                 .apply();
                     }
                 },
-                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x >= 10 && x < 50 && y >= 10 && y < 50) {
@@ -539,7 +539,7 @@ public class SurfaceControlTest {
                                 .apply();
                     }
                 },
-                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x >= 10 && x < 50 && y >= 10 && y < 50) {
@@ -719,7 +719,7 @@ public class SurfaceControlTest {
                     }
                 },
 
-                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x >= 10 && x < 30 && y >= 10 && y < 40) {
@@ -747,7 +747,7 @@ public class SurfaceControlTest {
                     }
                 },
 
-                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
@@ -802,7 +802,7 @@ public class SurfaceControlTest {
                     }
                 },
 
-                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
@@ -843,7 +843,7 @@ public class SurfaceControlTest {
                     }
                 },
 
-                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
@@ -877,7 +877,7 @@ public class SurfaceControlTest {
                                 .apply();
                     }
                 },
-                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
@@ -951,6 +951,8 @@ public class SurfaceControlTest {
 
     @Test
     public void testSurfaceTransaction_setTransform_flipH() {
+        int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
+        int halfHeight = DEFAULT_LAYOUT_HEIGHT / 2;
         verifyTest(
                 new BasicSurfaceHolderCallback() {
                     @Override
@@ -965,11 +967,9 @@ public class SurfaceControlTest {
                                 .apply();
                     }
                 },
-                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
-                        int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
-                        int halfHeight = DEFAULT_LAYOUT_HEIGHT / 2;
                         if (x < halfWidth && y < halfHeight) {
                             return BLUE;
                         } else if (x >= halfWidth && y < halfHeight) {

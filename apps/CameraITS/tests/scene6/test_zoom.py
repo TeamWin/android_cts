@@ -104,10 +104,6 @@ def get_test_tols_and_cap_size(cam, props, chart_distance, debug):
   return test_tols, max(common_sizes)
 
 
-def distance(x, y):
-  return math.sqrt(x**2 + y**2)
-
-
 def circle_cropped(circle, size):
   """Determine if a circle is cropped by edge of img.
 
@@ -183,7 +179,7 @@ def find_center_circle(img, img_name, color, min_area, debug):
     logging.debug('circles [x, y, r, pi*r**2/area, area]: %s', str(circles))
 
   # find circle closest to center
-  circles.sort(key=lambda x: distance(x[0] - img_ctr[0], x[1] - img_ctr[1]))
+  circles.sort(key=lambda x: math.hypot(x[0] - img_ctr[0], x[1] - img_ctr[1]))
   circle = circles[0]
 
   # mark image center
@@ -323,8 +319,8 @@ class ZoomTest(its_base_test.ItsBaseTest):
                        (data['circle'][1] - size[1] // 2)]
       else:  # check
         z_ratio = data['z'] / z_init
-        offset_rel = (distance(offset_abs[0], offset_abs[1]) / z_ratio /
-                      distance(offset_init[0], offset_init[1]))
+        offset_rel = (math.hypot(offset_abs[0], offset_abs[1]) / z_ratio /
+                      math.hypot(offset_init[0], offset_init[1]))
         logging.debug('offset_rel: %.3f', offset_rel)
         rel_tol = data['o_tol']
         if (np.linalg.norm(offset_init) < _OFFSET_LOW_VAL and

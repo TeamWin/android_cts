@@ -61,14 +61,14 @@ public class WalletCardTest {
         Intent intent = new Intent(mContext, QuickAccessWalletActivity.class);
         WalletCard card = new WalletCard.Builder(
                 "cardId",
-                WalletCard.CARD_TYPE_VALUABLE,
+                WalletCard.CARD_TYPE_NON_PAYMENT,
                 Icon.createWithBitmap(bitmap),
                 "content description",
                 PendingIntent.getActivity(mContext, 0, intent,
                         PendingIntent.FLAG_IMMUTABLE))
                 .setCardIcon(Icon.createWithResource(mContext, android.R.drawable.ic_dialog_info))
                 .setCardLabel("card label")
-                .setValuableCardSecondaryImage(Icon.createWithBitmap(bitmapSecondary))
+                .setNonPaymentCardSecondaryImage(Icon.createWithBitmap(bitmapSecondary))
                 .build();
 
         Parcel p = Parcel.obtain();
@@ -82,8 +82,8 @@ public class WalletCardTest {
         assertThat(card.getPendingIntent()).isEqualTo(newCard.getPendingIntent());
         compareIcons(mContext, card.getCardIcon(), newCard.getCardIcon());
         assertThat(card.getCardLabel()).isEqualTo(newCard.getCardLabel());
-        compareIcons(mContext, card.getValuableCardSecondaryImage(),
-                newCard.getValuableCardSecondaryImage());
+        compareIcons(mContext, card.getNonPaymentCardSecondaryImage(),
+                newCard.getNonPaymentCardSecondaryImage());
     }
 
     @Test
@@ -110,8 +110,8 @@ public class WalletCardTest {
         assertThat(card.getPendingIntent()).isEqualTo(newCard.getPendingIntent());
         compareIcons(mContext, card.getCardIcon(), card.getCardIcon());
         assertThat(card.getCardLabel()).isEqualTo(newCard.getCardLabel());
-        compareIcons(mContext, card.getValuableCardSecondaryImage(),
-                newCard.getValuableCardSecondaryImage());
+        compareIcons(mContext, card.getNonPaymentCardSecondaryImage(),
+                newCard.getNonPaymentCardSecondaryImage());
     }
 
     @Test
@@ -130,7 +130,7 @@ public class WalletCardTest {
     }
 
     @Test
-    public void testSetValuableCardSecondaryImage_throwsException() {
+    public void testSetNonPaymentCardSecondaryImage_throwsException() {
         Bitmap bitmap = Bitmap.createBitmap(70, 44, Bitmap.Config.ARGB_8888);
         Intent intent = new Intent(mContext, QuickAccessWalletActivity.class);
         assertThrows(IllegalStateException.class, () -> new WalletCard.Builder(
@@ -140,6 +140,6 @@ public class WalletCardTest {
                 "content description",
                 PendingIntent.getActivity(mContext, 0, intent,
                         PendingIntent.FLAG_IMMUTABLE))
-                .setValuableCardSecondaryImage(Icon.createWithBitmap(bitmap)));
+                .setNonPaymentCardSecondaryImage(Icon.createWithBitmap(bitmap)));
     }
 }

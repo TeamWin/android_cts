@@ -176,17 +176,15 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       test_name = os.path.join(self.log_path, _NAME)
 
-      its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance,
-          log_path=self.log_path)
-
       # Determine camera supported extensions
       supported_extensions = cam.get_supported_extensions(self.camera_id)
       logging.debug('Supported extensions: %s', supported_extensions)
 
       # Check SKIP conditions
+      vendor_api_level = its_session_utils.get_vendor_api_level(self.dut.serial)
       camera_properties_utils.skip_unless(
-          _EXTENSION_HDR in supported_extensions)
+          _EXTENSION_HDR in supported_extensions and
+          vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL)
 
       # Establish connection with lighting controller
       arduino_serial_port = lighting_control_utils.lighting_control(
@@ -195,6 +193,26 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
       # Turn OFF lights to darken scene
       lighting_control_utils.set_lighting_state(
           arduino_serial_port, self.lighting_ch, 'OFF')
+
+      # Check that tablet is connected and turn it off to validate lighting
+      if self.tablet:
+        lighting_control_utils.turn_off_device(self.tablet)
+      else:
+        raise AssertionError('Test must be run with tablet.')
+
+      # Validate lighting
+      cam.do_3a()
+      cap = cam.do_capture(
+          capture_request_utils.auto_capture_request(), cam.CAP_YUV)
+      y_plane, _, _ = image_processing_utils.convert_capture_to_planes(cap)
+      its_session_utils.validate_lighting(
+          y_plane, self.scene, state='OFF', log_path=self.log_path)
+
+      lighting_control_utils.turn_on_device(self.tablet)
+
+      its_session_utils.load_scene(
+          cam, props, self.scene, self.tablet, self.chart_distance,
+          log_path=self.log_path)
 
       file_stem = f'{test_name}_{_FMT_NAME}_{_WIDTH}x{_HEIGHT}'
 

@@ -92,6 +92,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mErrorCount;
         public int mRecordingStartedCount;
         public int mRecordingStoppedCount;
+        public int mTvMessageCount;
         public int mSendTvRecordingInfoCount;
         public int mSendTvRecordingInfoListCount;
 
@@ -108,6 +109,8 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public AdResponse mAdResponse;
         public BroadcastInfoResponse mBroadcastInfoResponse;
         public String mRecordingId;
+        public String mTvMessageType;
+        public Bundle mTvMessageData;
         public AdBuffer mAdBuffer;
         public TvRecordingInfo mTvRecordingInfo;
         public ArrayList<TvRecordingInfo> mTvRecordingInfoList;
@@ -134,6 +137,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mErrorCount = 0;
             mRecordingStartedCount = 0;
             mRecordingStoppedCount = 0;
+            mTvMessageCount = 0;
             mAdBufferConsumedCount = 0;
             mSendTvRecordingInfoCount = 0;
             mSendTvRecordingInfoListCount = 0;
@@ -151,6 +155,8 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mAdResponse = null;
             mBroadcastInfoResponse = null;
             mRecordingId = null;
+            mTvMessageData = null;
+            mTvMessageType = null;
             mAdBuffer = null;
             mTvRecordingInfo = null;
             mTvRecordingInfoList = null;
@@ -446,6 +452,13 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             super.onRecordingStopped(recordingId);
             mRecordingStoppedCount++;
             mRecordingId = recordingId;
+        }
+
+        @Override
+        public void onTvMessage(String type, Bundle data) {
+            super.onTvMessage(type, data);
+            mTvMessageCount++;
+            mTvMessageData = data;
         }
 
         @Override

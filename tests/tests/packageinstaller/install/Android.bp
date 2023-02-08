@@ -34,6 +34,7 @@ android_test {
         "androidx.legacy_legacy-support-v4",
         "platform-test-annotations",
         "truth-prebuilt",
+        "cts-install-lib",
     ],
 
     test_suites: [
@@ -44,6 +45,10 @@ android_test {
         ":CtsEmptyTestApp",
         ":CtsEmptyInstallerApp",
         ":CtsEmptyTestApp_NotAllowUpdateOwnership",
+    ],
+    java_resources:  [
+        ":HelloWorldSdk1",
+        ":HelloWorldUsingSdk1",
     ],
     per_testcase_directory: true,
 }

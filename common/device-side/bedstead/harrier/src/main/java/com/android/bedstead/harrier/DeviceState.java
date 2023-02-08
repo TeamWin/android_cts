@@ -2322,8 +2322,19 @@ public final class DeviceState extends HarrierRule {
             }
             user.clearPassword();
         }
-
         mUsersSetPasswords.clear();
+
+        for (UserReference user : mCreatedUsers) {
+            try {
+                user.removeWhenPossible();
+            } catch (NeneException e) {
+                if (user.exists()) {
+                    // Otherwise it's probably just already removed
+                    throw new NeneException("Could not remove user", e);
+                }
+            }
+        }
+        mCreatedUsers.clear();
 
         for (RemovedUser removedUser : mRemovedUsers) {
             UserReference user = removedUser.userBuilder.create();
@@ -2335,8 +2346,8 @@ public final class DeviceState extends HarrierRule {
                 mOriginalSwitchedUser = user;
             }
         }
-
         mRemovedUsers.clear();
+
         if (mOriginalSwitchedUser != null) {
             if (!mOriginalSwitchedUser.exists()) {
                 Log.d(LOG_TAG, "Could not switch back to original user "
@@ -2348,23 +2359,6 @@ public final class DeviceState extends HarrierRule {
             }
             mOriginalSwitchedUser = null;
         }
-
-        // Make sure to start removing users after switching to the mOriginalSwitchedUser.
-        // Otherwise, if any of the users to be removed had been left as the current foreground user
-        // it won't be possible to remove it and teardown will fail with a NeneException below.
-        for (UserReference user : mCreatedUsers) {
-            try {
-                user.remove();
-            } catch (NeneException e) {
-                if (user.exists()) {
-                    // Otherwise it's probably just already removed
-                    throw new NeneException("Could not remove user", e);
-                }
-            }
-
-        }
-
-        mCreatedUsers.clear();
 
         for (TestAppInstance installedTestApp : mInstalledTestApps) {
             installedTestApp.uninstall();

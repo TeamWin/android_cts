@@ -195,18 +195,18 @@ public class TextViewHandwritingGestureTest {
     @Test
     @ApiTest(apis = "android.view.inputmethod.InputConnection#previewHandwritingGesture")
     public void previewSelectGesture_character() {
-        float char1HorizontalCenter = 1.5f * CHAR_WIDTH_PX;
+        float char0HorizontalCenter = 0.5f * CHAR_WIDTH_PX;
         float char2HorizontalCenter = 2.5f * CHAR_WIDTH_PX;
-        // Horizontal range [char1HorizontalCenter - 1f, char2HorizontalCenter + 1f] covers the
-        // centers of characters 1 and 2.
+        // Horizontal range [char0HorizontalCenter - 1f, char2HorizontalCenter + 1f] covers the
+        // centers of characters 0, 1 and 2.
         RectF area = new RectF(
-                char1HorizontalCenter - 1f,
+                char0HorizontalCenter - 1f,
                 mEditText.getLayout().getLineTop(0),
                 char2HorizontalCenter + 1f,
                 mEditText.getLayout().getLineBottom(0));
         previewSelectGesture(area, HandwritingGesture.GRANULARITY_CHARACTER);
 
-        assertSelectGesturePreviewHighlightRange(1, 3);
+        assertSelectGesturePreviewHighlightRange(0, 3);
     }
 
     @Test
@@ -901,7 +901,7 @@ public class TextViewHandwritingGestureTest {
         // The point is (mGestureLineMargin - 1) to the right of line 0.
         performInsertGesture(
                 new PointF(
-                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin - 1f,
+                        mEditText.getLayout().getWidth() + mGestureLineMargin - 1f,
                         mEditText.getLayout().getLineTop(0) + 1f));
 
         assertGestureInsertedText(9, INSERT_TEXT);
@@ -914,7 +914,7 @@ public class TextViewHandwritingGestureTest {
 
         performInsertGesture(
                 new PointF(
-                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin + 5f,
+                        mEditText.getLayout().getWidth() + mGestureLineMargin + 5f,
                         mEditText.getLayout().getLineTop(0) + 1f));
 
         assertFallbackTextInserted(/* initialCursorPosition= */ 6);
@@ -1088,10 +1088,10 @@ public class TextViewHandwritingGestureTest {
         // Both points are to the right of line 0.
         performRemoveSpaceGesture(
                 new PointF(
-                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin + 5f,
+                        mEditText.getLayout().getWidth() + mGestureLineMargin + 5f,
                         mEditText.getLayout().getLineTop(0) + 1f),
                 new PointF(
-                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin + 7f,
+                        mEditText.getLayout().getWidth() + mGestureLineMargin + 7f,
                         mEditText.getLayout().getLineTop(0) + 2f));
 
         assertFallbackTextInserted(/* initialCursorPosition= */ 6);
@@ -1237,7 +1237,7 @@ public class TextViewHandwritingGestureTest {
         // The point is to the right of line 0.
         performJoinOrSplitGesture(
                 new PointF(
-                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin + 5f,
+                        mEditText.getLayout().getWidth() + mGestureLineMargin + 5f,
                         mEditText.getLayout().getLineTop(0) + 1f));
 
         assertFallbackTextInserted(/* initialCursorPosition= */ 6);
@@ -1407,7 +1407,7 @@ public class TextViewHandwritingGestureTest {
         // The point is (mGestureLineMargin - 1) to the right of line 0.
         InsertModeGesture gesture = performInsertModeGesture(
                 new PointF(
-                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin - 1f,
+                        mEditText.getLayout().getWidth() + mGestureLineMargin - 1f,
                         mEditText.getLayout().getLineTop(0) + 1f));
 
         assertGestureInsertMode(/* offset= */ 9);
@@ -1424,7 +1424,7 @@ public class TextViewHandwritingGestureTest {
 
         performInsertModeGesture(
                 new PointF(
-                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin + 5f,
+                        mEditText.getLayout().getWidth() + mGestureLineMargin + 5f,
                         mEditText.getLayout().getLineTop(0) + 1f));
 
         assertFallbackTextInserted(/* initialCursorPosition= */ 6);
@@ -1560,7 +1560,7 @@ public class TextViewHandwritingGestureTest {
         // The point is (mGestureLineMargin - 1) to the right of line 0.
         InsertModeGesture gesture = performInsertModeGesture(
                 new PointF(
-                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin - 1f,
+                        mEditText.getLayout().getWidth() + mGestureLineMargin - 1f,
                         mEditText.getLayout().getLineTop(0) + 1f));
 
         assertGestureInsertMode(/* offset= */ 27);
@@ -1578,7 +1578,7 @@ public class TextViewHandwritingGestureTest {
 
         performInsertModeGesture(
                 new PointF(
-                        mEditText.getLayout().getLineRight(0) + mGestureLineMargin + 5f,
+                        mEditText.getLayout().getWidth() + mGestureLineMargin + 5f,
                         mEditText.getLayout().getLineTop(0) + 1f));
 
         assertFallbackTextInserted(/* initialCursorPosition= */ 6);

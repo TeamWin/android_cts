@@ -170,13 +170,26 @@ public class ActivityManagementTest {
                 eq(virtualDisplay.getDisplay().getDisplayId()),
                 eq(new ComponentName(context, EmptyActivity.class)));
 
-        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(mockExecutor).execute(runnableCaptor.capture());
+        verify(activityListener, never()).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()),
+                eq(new ComponentName(context, EmptyActivity.class)),
+                eq(context.getUserId()));
 
-        runnableCaptor.getValue().run();
-        verify(activityListener).onTopActivityChanged(
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(mockExecutor, timeout(3000).times(2)).execute(runnableCaptor.capture());
+
+        for (Runnable task: runnableCaptor.getAllValues()) {
+            task.run();
+        }
+
+        verify(activityListener, timeout(3000).times(1)).onTopActivityChanged(
                 eq(virtualDisplay.getDisplay().getDisplayId()),
                 eq(new ComponentName(context, EmptyActivity.class)));
+
+        verify(activityListener, timeout(3000).times(1)).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()),
+                eq(new ComponentName(context, EmptyActivity.class)),
+                eq(context.getUserId()));
     }
 
     @Test
@@ -207,6 +220,10 @@ public class ActivityManagementTest {
                 eq(virtualDisplay.getDisplay().getDisplayId()),
                 eq(new ComponentName(context, EmptyActivity.class)));
 
+        verify(activityListener).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()),
+                eq(new ComponentName(context, EmptyActivity.class)),
+                eq(context.getUserId()));
 
         mVirtualDevice.removeActivityListener(activityListener);
         emptyActivity.finish();
@@ -241,6 +258,11 @@ public class ActivityManagementTest {
         verify(activityListener).onTopActivityChanged(
                 eq(virtualDisplay.getDisplay().getDisplayId()),
                 eq(new ComponentName(context, EmptyActivity.class)));
+
+        verify(activityListener).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()),
+                eq(new ComponentName(context, EmptyActivity.class)),
+                eq(context.getUserId()));
 
         emptyActivity.finish();
 

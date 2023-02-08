@@ -33,6 +33,7 @@ import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 import android.test.MoreAsserts;
+import android.text.TextUtils;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -1161,5 +1162,9 @@ public class TestUtils {
 
     public static boolean isAttestationSupported() {
         return Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.O;
+    }
+
+    public static boolean isPropertyEmptyOrUnknown(String property) {
+        return TextUtils.isEmpty(property) || property.equals(Build.UNKNOWN);
     }
 }

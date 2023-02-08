@@ -53,10 +53,11 @@ import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH_LE
 import android.content.pm.PackageManager.FEATURE_TELEPHONY
-import android.content.pm.PackageManager.GET_ATTRIBUTIONS
+import android.content.pm.PackageManager.GET_ATTRIBUTIONS_LONG
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
@@ -86,6 +87,10 @@ import android.util.Size
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil.waitForBroadcasts
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.TimeoutException
 import org.junit.After
 import org.junit.Assert.fail
 import org.junit.Assume.assumeNoException
@@ -93,10 +98,6 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executor
-import java.util.concurrent.TimeUnit.MILLISECONDS
-import java.util.concurrent.TimeoutException
 
 private const val TEST_SERVICE_PKG = "android.app.appops.cts.appthatusesappops"
 private const val TIMEOUT_MILLIS = 10000L
@@ -987,7 +988,7 @@ class AppOpsLoggingTest {
     @Test
     fun checkAttributionsAreUserVisible() {
         val pi = context.packageManager.getPackageInfo(
-                TEST_SERVICE_PKG, GET_ATTRIBUTIONS)
+                TEST_SERVICE_PKG, PackageManager.PackageInfoFlags.of(GET_ATTRIBUTIONS_LONG))
         assertThat(pi.applicationInfo.areAttributionsUserVisible())
     }
 

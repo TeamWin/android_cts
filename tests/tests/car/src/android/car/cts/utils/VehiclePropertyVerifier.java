@@ -22,7 +22,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeThat;
 
 import android.car.VehicleAreaDoor;
 import android.car.VehicleAreaMirror;
@@ -52,6 +52,8 @@ import com.android.internal.annotations.GuardedBy;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+
+import org.hamcrest.Matchers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -266,16 +268,43 @@ public class VehiclePropertyVerifier<T> {
         // This allows updating this variable within a lambda.
         AtomicReference<CarPropertyConfig<T>> savedCarPropertyConfig = new AtomicReference<>();
 
+        ImmutableSet<String> allPermissions = ImmutableSet.<String>builder().addAll(
+                mReadPermissions).addAll(mWritePermissions).build();
+
         runWithShellPermissionIdentity(
                 () -> {
-                    CarPropertyConfig<T> carPropertyConfig = (CarPropertyConfig<T>)
-                            carPropertyManager.getCarPropertyConfig(mPropertyId);
+                    CarPropertyConfig<T> carPropertyConfig =
+                            (CarPropertyConfig<T>) carPropertyManager.getCarPropertyConfig(
+                                    mPropertyId);
+
+                    if (carPropertyConfig == null) {
+                        if (mAccess == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ || mAccess
+                                == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                            assertThrows("Test does not have correct permissions granted for "
+                                            + mPropertyName + ". Requested permissions: "
+                                            + allPermissions,
+                                    IllegalArgumentException.class,
+                                    () -> carPropertyManager.getProperty(mPropertyId, /*areaId=*/
+                                            0));
+                        } else if (mAccess == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
+                            assertThrows("Test does not have correct permissions granted for "
+                                            + mPropertyName + ". Requested permissions: "
+                                            + allPermissions,
+                                    IllegalArgumentException.class,
+                                    () -> carPropertyManager.setProperty(mPropertyType,
+                                            mPropertyId, /*areaId=*/
+                                            0, getDefaultValue(mPropertyType)));
+                        }
+                    }
+
                     if (mRequiredProperty) {
-                        assertWithMessage("Must support " + mPropertyName)
-                                .that(carPropertyConfig)
-                                .isNotNull();
+                        assertWithMessage("Must support " + mPropertyName).that(
+                                carPropertyConfig).isNotNull();
                     } else {
-                        assumeNotNull(carPropertyConfig);
+                        assumeThat("Skipping " + mPropertyName
+                                        + " CTS test because the property is not supported on "
+                                        + "this vehicle",
+                                carPropertyConfig, Matchers.notNullValue());
                     }
 
                     verifyCarPropertyConfig(carPropertyConfig);
@@ -307,11 +336,7 @@ public class VehiclePropertyVerifier<T> {
                         // restoreHvacPower(hvacPowerOnCarPropertyConfig, carPropertyManager,
                         //         hvacPowerStateByAreaId);
                     }
-                },
-                ImmutableSet.<String>builder()
-                        .addAll(mReadPermissions)
-                        .addAll(mWritePermissions)
-                        .build().toArray(new String[0]));
+                }, allPermissions.toArray(new String[0]));
 
         verifyPermissionNotGrantedException(savedCarPropertyConfig.get(), carPropertyManager);
     }

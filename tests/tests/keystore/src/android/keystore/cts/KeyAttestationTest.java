@@ -76,7 +76,6 @@ import android.security.keystore.AttestationUtils;
 import android.security.keystore.DeviceIdAttestationException;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
-import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.Log;
 
@@ -813,11 +812,17 @@ public class KeyAttestationTest {
                                 && KeyStoreException.ERROR_ID_ATTESTATION_FAILURE
                                 == ((KeyStoreException) e.getCause()).getNumericErrorCode();
                 if (devicePropertiesAttestation && isIdAttestationFailure) {
-                    throw new Exception("Unexpected failure while generating key."
+                    if (getContext().getPackageManager().hasSystemFeature(
+                            PackageManager.FEATURE_DEVICE_ID_ATTESTATION)) {
+                        throw new Exception("Unexpected failure while generating key."
                             + "\nIn case of AOSP/GSI builds, system provided properties could be"
                             + " different from provisioned properties in KeyMaster/KeyMint. In"
                             + " such cases, make sure attestation specific properties"
                             + " (Build.*_FOR_ATTESTATION) are configured correctly.", e);
+                    } else {
+                        Log.i(TAG, "key attestation with device IDs not supported; test skipped");
+                        continue;
+                    }
                 }
                 throw new Exception("Failed on key size " + keySize + " challenge [" +
                         new String(challenge) + "], purposes " +
@@ -985,15 +990,18 @@ public class KeyAttestationTest {
         }
 
         if (devicePropertiesAttestation) {
-            final String platformReportedBrand = TextUtils.isEmpty(Build.BRAND_FOR_ATTESTATION)
+            final String platformReportedBrand =
+                    TestUtils.isPropertyEmptyOrUnknown(Build.BRAND_FOR_ATTESTATION)
                     ? Build.BRAND : Build.BRAND_FOR_ATTESTATION;
             assertThat(keyDetailsList.getBrand()).isEqualTo(platformReportedBrand);
             assertEquals(Build.DEVICE, keyDetailsList.getDevice());
-            final String platformReportedProduct = TextUtils.isEmpty(Build.PRODUCT_FOR_ATTESTATION)
+            final String platformReportedProduct =
+                    TestUtils.isPropertyEmptyOrUnknown(Build.PRODUCT_FOR_ATTESTATION)
                     ? Build.PRODUCT : Build.PRODUCT_FOR_ATTESTATION;
             assertThat(keyDetailsList.getProduct()).isEqualTo(platformReportedProduct);
             assertEquals(Build.MANUFACTURER, keyDetailsList.getManufacturer());
-            final String platformReportedModel = TextUtils.isEmpty(Build.MODEL_FOR_ATTESTATION)
+            final String platformReportedModel =
+                    TestUtils.isPropertyEmptyOrUnknown(Build.MODEL_FOR_ATTESTATION)
                     ? Build.MODEL : Build.MODEL_FOR_ATTESTATION;
             assertThat(keyDetailsList.getModel()).isEqualTo(platformReportedModel);
         } else {

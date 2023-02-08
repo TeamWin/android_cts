@@ -53,8 +53,6 @@ android_test_helper_app {
         ":ApexKeyRotationTestV2_SignedBobRotRollback",
         ":ApexKeyRotationTestV3_SignedBob",
         ":ApexKeyRotationTestV3_SignedBobRot",
-        ":HelloWorldSdk1",
-        ":HelloWorldUsingSdk1",
         ":StagedInstallTestApexV1_NotPreInstalled",
         ":StagedInstallTestApexV2_AdditionalFile",
         ":StagedInstallTestApexV2_AdditionalFolder",

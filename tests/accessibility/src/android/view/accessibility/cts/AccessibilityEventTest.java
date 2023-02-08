@@ -286,6 +286,7 @@ public class AccessibilityEventTest {
                 event -> event.getEventType() == AccessibilityEvent.TYPE_VIEW_TARGETED_BY_SCROLL,
                 DEFAULT_TIMEOUT_MS);
         assertThat(awaitedEvent.getAction()).isEqualTo(ACTION_SCROLL_IN_DIRECTION.getId());
+        assertThat(awaitedEvent.getSource()).isEqualTo(mChildView.createAccessibilityNodeInfo());
     }
 
     @Test

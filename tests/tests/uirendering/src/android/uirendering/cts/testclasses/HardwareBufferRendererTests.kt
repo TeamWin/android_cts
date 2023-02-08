@@ -408,15 +408,18 @@ class HardwareBufferRendererTests : ActivityTestBase() {
         }
 
         val latch = CountDownLatch(1)
+        var renderStatus = HardwareBufferRenderer.RenderResult.ERROR_UNKNOWN
         renderer.obtainRenderRequest()
             .setColorSpace(colorSpace)
             .setBufferTransform(transform)
             .draw(mExecutor) { renderResult ->
+                renderStatus = renderResult.status
                 renderResult.fence.awaitForever()
                 latch.countDown()
             }
 
         assertTrue(latch.await(3000, TimeUnit.MILLISECONDS))
+        assertEquals(renderStatus, HardwareBufferRenderer.RenderResult.SUCCESS)
         val bitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace)!!
             .copy(Bitmap.Config.ARGB_8888, false)
 

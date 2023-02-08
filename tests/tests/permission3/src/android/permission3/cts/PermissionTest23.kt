@@ -19,6 +19,7 @@ package android.permission3.cts
 import android.content.pm.PackageManager
 import androidx.test.filters.FlakyTest
 import com.android.compatibility.common.util.SystemUtil
+import com.android.modules.utils.build.SdkLevel
 import org.junit.Assert
 import org.junit.Assume
 import org.junit.Before
@@ -262,9 +263,11 @@ class PermissionTest23 : BaseUsePermissionTest() {
         uiAutomation.grantRuntimePermission(
             APP_PACKAGE_NAME, android.Manifest.permission.BODY_SENSORS
         )
-        uiAutomation.grantRuntimePermission(
-                APP_PACKAGE_NAME, android.Manifest.permission.BODY_SENSORS_WRIST_TEMPERATURE
-        )
+        if (SdkLevel.isAtLeastU()) {
+            uiAutomation.grantRuntimePermission(
+                    APP_PACKAGE_NAME, android.Manifest.permission.BODY_SENSORS_WRIST_TEMPERATURE
+            )
+        }
         uninstallPackage(APP_PACKAGE_NAME)
         installPackage(APP_APK_PATH_23)
 

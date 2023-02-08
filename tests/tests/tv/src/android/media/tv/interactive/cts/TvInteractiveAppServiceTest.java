@@ -477,6 +477,18 @@ public class TvInteractiveAppServiceTest {
     }
 
     @Test
+    public void testNotifyTvMessage() throws Throwable {
+        Bundle testBundle = createTestBundle();
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvIAppView.notifyTvMessage(TvInputManager.TV_MESSAGE_TYPE_WATERMARK, testBundle);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mTvMessageCount > 0);
+        assertThat(mSession.mTvMessageCount).isEqualTo(1);
+        assertThat(mSession.mTvMessageType).isEqualTo(TvInputManager.TV_MESSAGE_TYPE_WATERMARK);
+        assertThat(mSession.mTvMessageData).isEqualTo(testBundle);
+    }
+
+    @Test
     public void testRequestSigning() throws Throwable {
         assertNotNull(mSession);
         mCallback.resetValues();

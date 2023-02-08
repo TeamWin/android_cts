@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import android.app.Instrumentation;
 import android.view.InputDevice;
 import android.view.KeyEvent;
+import android.view.WindowManager;
 import android.view.cts.R;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -110,6 +111,7 @@ public class InputDeviceKeyLayoutMapTest {
     private Instrumentation mInstrumentation;
     private UinputDevice mUinputDevice;
     private InputJsonParser mParser;
+    private WindowManager mWindowManager;
 
     private static native Map<String, Integer> nativeLoadKeyLayout(String genericKeyLayout);
 
@@ -126,6 +128,7 @@ public class InputDeviceKeyLayoutMapTest {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         WindowUtil.waitForFocus(mActivityRule.getActivity());
         mParser = new InputJsonParser(mInstrumentation.getTargetContext());
+        mWindowManager = mInstrumentation.getTargetContext().getSystemService(WindowManager.class);
         mKeyLayout = nativeLoadKeyLayout(mParser.readRegisterCommand(R.raw.Generic));
         mUinputDevice = new UinputDevice(mInstrumentation, DEVICE_ID, GOOGLE_VENDOR_ID,
                 GOOGLE_VIRTUAL_KEYBOARD_ID, InputDevice.SOURCE_KEYBOARD,
@@ -218,9 +221,14 @@ public class InputDeviceKeyLayoutMapTest {
             if (EXCLUDED_KEYS.contains(entry.getKey())) {
                 continue;
             }
+
             String label = LABEL_PREFIX + entry.getKey();
             final int evKey = entry.getValue();
             final int keyCode = KeyEvent.keyCodeFromString(label);
+
+            if (mWindowManager.isGlobalKey(keyCode)) {
+                continue;
+            }
 
             pressKey(evKey);
             assertReceivedKeyEvent(KeyEvent.ACTION_DOWN, keyCode);

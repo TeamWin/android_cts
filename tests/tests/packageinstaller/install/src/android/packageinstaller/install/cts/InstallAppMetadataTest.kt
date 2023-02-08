@@ -15,9 +15,7 @@
  */
 package android.packageinstaller.install.cts
 
-import android.app.PendingIntent
 import android.app.UiAutomation
-import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager.NameNotFoundException
 import android.os.PersistableBundle
@@ -88,14 +86,28 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         val data = createAppMetadata()
         val (sessionId, session) = createSession(0, false, null)
         setAppMetadata(session, data)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context, 0 /* requestCode */,
-            Intent(INSTALL_ACTION_CB), PendingIntent.FLAG_UPDATE_CURRENT
-                    or PendingIntent.FLAG_MUTABLE
-                    or PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT)
-        session.commit(pendingIntent.intentSender)
+        commitSession(session, false)
         val result = getInstallSessionResult()
         assertThat(result.status).isEqualTo(PackageInstaller.STATUS_FAILURE_INVALID)
+    }
+
+    @Test
+    fun resetAppMetadataInSession() {
+        val data = createAppMetadata()
+        val (sessionId, session) = createSession(0, false, null)
+        writeSession(session, TEST_APK_NAME)
+        setAppMetadata(session, data)
+        assertAppMetadata(data.getString(TEST_FIELD), session.getAppMetadata())
+        setAppMetadata(session, null)
+        assertThat(session.getAppMetadata().isEmpty()).isTrue()
+        commitSession(session)
+        clickInstallerUIButton(INSTALL_BUTTON_ID)
+        val result = getInstallSessionResult()
+        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
+
+        uiAutomation.adoptShellPermissionIdentity()
+        assertThat(pm.getAppMetadata(TEST_APK_PACKAGE_NAME).isEmpty()).isTrue()
+        uiAutomation.dropShellPermissionIdentity()
     }
 
     @Test
@@ -130,7 +142,7 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
     }
 
-    private fun setAppMetadata(session: PackageInstaller.Session, data: PersistableBundle) {
+    private fun setAppMetadata(session: PackageInstaller.Session, data: PersistableBundle?) {
         try {
             session.setAppMetadata(data)
         } catch (e: Exception) {

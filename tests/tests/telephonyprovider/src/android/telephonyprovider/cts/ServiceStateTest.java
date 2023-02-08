@@ -111,9 +111,14 @@ public class ServiceStateTest {
 
     /**
      * Verifies that the voice reg state is valid and matches ServiceState#getState().
+     * This test case requires an active subscription.
      */
     @Test
     public void testGetVoiceRegState_query() {
+        if (!isSubscriptionActive(mSubId)) {
+            return;
+        }
+
         try (Cursor cursor = mContentResolver.query(Telephony.ServiceStateTable.CONTENT_URI,
                 new String[]{VOICE_REG_STATE}, null, null)) {
             assertThat(cursor.getCount()).isEqualTo(1);
@@ -163,10 +168,15 @@ public class ServiceStateTest {
     }
 
     /**
-     * Verifies that the data network type is valid and matches ServiceState#getDataNetworkType()
+     * Verifies that the data network type is valid and matches ServiceState#getDataNetworkType().
+     * This test case requires an active subscription.
      */
     @Test
     public void testGetDataNetworkType_query() {
+        if (!isSubscriptionActive(mSubId)) {
+            return;
+        }
+
         try (Cursor cursor = mContentResolver.query(Telephony.ServiceStateTable.CONTENT_URI,
                 new String[]{DATA_NETWORK_TYPE}, null, null)) {
             assertThat(cursor.getCount()).isEqualTo(1);
@@ -231,16 +241,22 @@ public class ServiceStateTest {
 
     /**
      * Verifies that the duplex mode is valid and matches ServiceState#getDuplexMode().
+     * This test case requires an active subscription.
      */
     @Test
     public void testGetDuplexMode_query() {
+        if (!isSubscriptionActive(mSubId)) {
+            return;
+        }
+
         try (Cursor cursor = mContentResolver.query(Telephony.ServiceStateTable.CONTENT_URI,
                 new String[]{DUPLEX_MODE}, null, null)) {
             assertThat(cursor.getCount()).isEqualTo(1);
             cursor.moveToNext();
 
             int duplexMode = cursor.getInt(cursor.getColumnIndex(DUPLEX_MODE));
-            assertThat(duplexMode).isEqualTo(mTelephonyManager.getServiceState().getDuplexMode());
+            assertThat(duplexMode).isEqualTo(
+                    mTelephonyManager.getServiceState().getDuplexMode());
         }
     }
 
@@ -271,9 +287,14 @@ public class ServiceStateTest {
 
     /**
      * Verifies that the data reg state is valid and matches ServiceState#getDataRegState()
+     * This test case requires an active subscription.
      */
     @Test
     public void testGetDataRegState_query() {
+        if (!isSubscriptionActive(mSubId)) {
+            return;
+        }
+
         try (Cursor cursor = mContentResolver.query(Telephony.ServiceStateTable.CONTENT_URI,
                 new String[]{DATA_REG_STATE}, null, null)) {
             assertThat(cursor.getCount()).isEqualTo(1);
@@ -392,6 +413,12 @@ public class ServiceStateTest {
                 () -> mContentResolver.insert(
                         Telephony.ServiceStateTable.getUriForSubscriptionId(mSubId), values),
                 Manifest.permission.MODIFY_PHONE_STATE);
+    }
+
+    private boolean isSubscriptionActive(int subId) {
+        SubscriptionManager sm = getInstrumentation().getContext().getSystemService(
+                SubscriptionManager.class);
+        return sm != null && sm.isActiveSubscriptionId(subId);
     }
 
     // Copied from ServiceStateProvider#getContentValuesForServiceState
