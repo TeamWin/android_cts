@@ -57,7 +57,10 @@ class RevokePermissionTest {
                 packageName = APP_PKG_NAME,
                 permission = CAMERA,
                 throwableType = SecurityException::class.java,
-                throwableMessage = "has not requested permission")
+                throwableMessages = listOf(
+                    "has not requested permission",
+                    "Permission $CAMERA isn't requested by package $APP_PKG_NAME"
+                ))
     }
 
     @Test
@@ -68,7 +71,10 @@ class RevokePermissionTest {
                 packageName = APP_PKG_NAME,
                 permission = fakePermissionName,
                 throwableType = java.lang.IllegalArgumentException::class.java,
-                throwableMessage = "Unknown permission: $fakePermissionName")
+                throwableMessages = listOf(
+                    "Unknown permission: $fakePermissionName",
+                    "Unknown permission $fakePermissionName"
+                ))
     }
 
     @Test
@@ -99,7 +105,10 @@ class RevokePermissionTest {
                 permission = CAMERA,
                 reason = "test reason",
                 throwableType = SecurityException::class.java,
-                throwableMessage = "has not requested permission")
+                throwableMessages = listOf(
+                    "has not requested permission",
+                    "Permission $CAMERA isn't requested by package $APP_PKG_NAME"
+                ))
     }
 
     @Test
@@ -111,7 +120,10 @@ class RevokePermissionTest {
                 permission = fakePermissionName,
                 reason = "test reason",
                 throwableType = java.lang.IllegalArgumentException::class.java,
-                throwableMessage = "Unknown permission: $fakePermissionName")
+                throwableMessages = listOf(
+                    "Unknown permission: $fakePermissionName",
+                    "Unknown permission $fakePermissionName"
+                ))
     }
 
     @Test
@@ -136,7 +148,7 @@ class RevokePermissionTest {
         reason: String? = null,
         isGranted: Boolean = false,
         throwableType: Class<*>? = null,
-        throwableMessage: String = ""
+        throwableMessages: List<String> = listOf("")
     ) {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val pm = context.packageManager
@@ -163,7 +175,7 @@ class RevokePermissionTest {
                     }
                 } catch (t: Throwable) {
                     if (t::class.java.name == throwableType.name &&
-                            t.message!!.contains(throwableMessage)) {
+                        throwableMessages.any { t.message!!.contains(it) }) {
                         return@runWithShellPermissionIdentity
                     }
                     throw RuntimeException("Unexpected throwable", t)
