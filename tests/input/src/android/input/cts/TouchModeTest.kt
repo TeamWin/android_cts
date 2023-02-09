@@ -21,7 +21,12 @@ import android.app.Activity
 import android.app.ActivityOptions
 import android.app.Instrumentation
 import android.content.Context
+import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
+import android.hardware.display.VirtualDisplay
+import android.media.ImageReader
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.support.test.uiautomator.UiDevice
 import android.view.Display
@@ -35,6 +40,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.compatibility.common.util.AdoptShellPermissionsRule
 import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.WindowUtil
@@ -60,6 +66,8 @@ private const val TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS: Long = 5000 // 5 sec
 class TouchModeTest {
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
     private val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
+    private var virtualDisplay: VirtualDisplay? = null
+    private var imageReader: ImageReader? = null
 
     @get:Rule
     val activityRule = ActivityScenarioRule<Activity>(Activity::class.java)
@@ -67,6 +75,11 @@ class TouchModeTest {
     private lateinit var targetContext: Context
     private lateinit var displayManager: DisplayManager
     private var secondScenario: ActivityScenario<Activity>? = null
+
+    @Rule
+    fun permissionsRule() = AdoptShellPermissionsRule(
+        instrumentation.getUiAutomation(), ADD_TRUSTED_DISPLAY_PERMISSION
+    )
 
     @Before
     fun setUp() {
@@ -84,6 +97,14 @@ class TouchModeTest {
         val scenario = secondScenario
         if (scenario != null) {
             scenario.close()
+        }
+        val display = virtualDisplay
+        if (display != null) {
+            display.release()
+        }
+        val reader = imageReader
+        if (reader != null) {
+            reader.close()
         }
     }
 
@@ -167,12 +188,9 @@ class TouchModeTest {
                 targetContext.resources.getBoolean(targetContext.resources.getIdentifier(
                         "config_perDisplayFocusEnabled", "bool", "android")))
 
-        // TODO(b/252813475): Start and use a virtual display if no external display is available.
-        val displayManager =
-                instrumentation.targetContext.getSystemService(DisplayManager::class.java)
-        assumeTrue("This test requires a device with 2 or more displays",
-                displayManager.displays.size > 1)
-
+        if (displayManager.displays.size < 2) {
+            createVirtualDisplay(0)
+        }
         injectMotionEventOnMainDisplay()
 
         assertTrue(isInTouchMode())
@@ -181,7 +199,7 @@ class TouchModeTest {
 
     /**
      * When per-display focus is enabled ({@code config_perDisplayFocusEnabled} is set to true),
-     * touch mode changes affect all displays.
+     * touch mode changes does not affect all displays.
      *
      * In this test, we tap the main display, and ensure that touch mode becomes
      * true on main display only. Touch mode on secondary display must remain false.
@@ -192,12 +210,27 @@ class TouchModeTest {
                 targetContext.resources.getBoolean(targetContext.resources.getIdentifier(
                         "config_perDisplayFocusEnabled", "bool", "android")))
 
-        // TODO(b/252813475): Start and use a virtual display if no external display is available.
-        val displayManager =
-                instrumentation.targetContext.getSystemService(DisplayManager::class.java)
-        assumeTrue("This test requires a device with 2 or more displays",
-                displayManager.displays.size > 1)
+        if (displayManager.displays.size < 2) {
+            createVirtualDisplay(0)
+        }
+        injectMotionEventOnMainDisplay()
 
+        assertTrue(isInTouchMode())
+        assertSecondaryDisplayTouchModeState(/* isInTouch= */ false,
+                /* delayBeforeChecking= */ true)
+    }
+
+    /**
+     * Regardless of the {@code config_perDisplayFocusEnabled} value,
+     * touch mode changes does not affect displays with own focus.
+     *
+     * In this test, we tap the main display, and ensure that touch mode becomes
+     * true n main display only. Touch mode on secondary display must remain false because it
+     * maintains its own focus and touch mode.
+     */
+    @Test
+    fun testTouchModeUpdate_DisplayHasOwnFocus() {
+        createVirtualDisplay(VIRTUAL_DISPLAY_FLAG_OWN_FOCUS or VIRTUAL_DISPLAY_FLAG_TRUSTED)
         injectMotionEventOnMainDisplay()
 
         assertTrue(isInTouchMode())
@@ -220,7 +253,7 @@ class TouchModeTest {
 
     private fun isSecondaryDisplayInTouchMode(): Boolean {
         if (secondScenario == null) {
-            launchsecondScenarioActivity()
+            launchSecondScenarioActivity()
         }
         val scenario = secondScenario
         var inTouch: Boolean? = null
@@ -234,16 +267,19 @@ class TouchModeTest {
         return inTouch == true
     }
 
-    private fun launchsecondScenarioActivity() {
-        // Pick a random external display
-        val externalDisplay = Arrays.stream(displayManager.displays).filter { d ->
-            d.displayId != Display.DEFAULT_DISPLAY && d.type == Display.TYPE_EXTERNAL
-        }.findFirst()
-        assumeTrue("Device with no external display attached", externalDisplay.isPresent())
+    private fun launchSecondScenarioActivity() {
+        // Pick a random external display if there's no virtual one.
+        // A virtual display is only created if the device only has a single (default) display.
+        var displayId: Int? = virtualDisplay?.display?.displayId
+        if (displayId == 0) {
+            val secondaryDisplay = Arrays.stream(displayManager.displays).filter { d ->
+                d.displayId != Display.DEFAULT_DISPLAY && d.type == Display.TYPE_EXTERNAL
+            }.findFirst()
+            displayId = secondaryDisplay.get().displayId
+        }
 
         // Launch activity on the picked display
-        val bundle = ActivityOptions.makeBasic().setLaunchDisplayId(
-                externalDisplay.get().displayId).toBundle()
+        val bundle = ActivityOptions.makeBasic().setLaunchDisplayId(displayId!!).toBundle()
         SystemUtil.runWithShellPermissionIdentity({
             secondScenario = ActivityScenario.launch(Activity::class.java, bundle)
         }, Manifest.permission.INTERNAL_SYSTEM_WINDOW)
@@ -257,4 +293,36 @@ class TouchModeTest {
         event.source = InputDevice.SOURCE_TOUCHSCREEN
         instrumentation.uiAutomation.injectInputEvent(event, /* sync= */ true)
     }
+
+    private fun createVirtualDisplay(flags: Int) {
+        val displayCreated = CountDownLatch(1)
+                displayManager.registerDisplayListener(object : DisplayManager.DisplayListener {
+                    override fun onDisplayAdded(displayId: Int) {}
+                    override fun onDisplayRemoved(displayId: Int) {}
+                    override fun onDisplayChanged(displayId: Int) {
+                        displayCreated.countDown()
+                        displayManager.unregisterDisplayListener(this)
+                    }
+                }, Handler(Looper.getMainLooper()))
+        imageReader = ImageReader.newInstance(WIDTH, HEIGHT, PixelFormat.RGBA_8888, 2)
+        val reader = imageReader
+        virtualDisplay = displayManager.createVirtualDisplay(
+                VIRTUAL_DISPLAY_NAME, WIDTH, HEIGHT, DENSITY, reader!!.surface, flags)
+
+        assertTrue(displayCreated.await(5, TimeUnit.SECONDS))
+        instrumentation.setInTouchMode(false)
+    }
+
+    companion object {
+        const val VIRTUAL_DISPLAY_NAME = "CtsVirtualDisplay"
+        const val WIDTH = 480
+        const val HEIGHT = 800
+        const val DENSITY = 160
+
+        /** See [DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_FOCUS].  */
+        const val VIRTUAL_DISPLAY_FLAG_OWN_FOCUS = 1 shl 14
+        /** See [DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED].  */
+        const val VIRTUAL_DISPLAY_FLAG_TRUSTED = 1 shl 10
+    }
 }
+private val ADD_TRUSTED_DISPLAY_PERMISSION: String = android.Manifest.permission.ADD_TRUSTED_DISPLAY

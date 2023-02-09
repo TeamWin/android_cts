@@ -272,8 +272,7 @@ void OutputManager::updateChecksum(uint8_t* buf, AMediaCodecBufferInfo* info, in
     if (width <= 0 || height <= 0 || stride <= 0) {
         flattenField<int32_t>(flattenInfo, &pos, info->size);
     }
-    flattenField<int32_t>(flattenInfo, &pos,
-                          info->flags & ~AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM);
+    flattenField<int32_t>(flattenInfo, &pos, info->flags & ~AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM);
     flattenField<int64_t>(flattenInfo, &pos, info->presentationTimeUs);
     crc32value = crc32(crc32value, flattenInfo, pos);
     if (width > 0 && height > 0 && stride > 0 && bytesPerSample > 0) {
@@ -361,10 +360,10 @@ float OutputManager::getRmsError(uint8_t* refData, int length) {
     return (float)sqrt(avgErrorSquared);
 }
 
-CodecTestBase::CodecTestBase(const char* mime) {
-    mMime = mime;
-    mIsAudio = strncmp(mime, "audio/", strlen("audio/")) == 0;
-    mIsVideo = strncmp(mime, "video/", strlen("video/")) == 0;
+CodecTestBase::CodecTestBase(const char* mediaType) {
+    mMediaType = mediaType;
+    mIsAudio = strncmp(mediaType, "audio/", strlen("audio/")) == 0;
+    mIsVideo = strncmp(mediaType, "video/", strlen("video/")) == 0;
     mIsCodecInAsyncMode = false;
     mSawInputEOS = false;
     mSawOutputEOS = false;
@@ -664,12 +663,13 @@ int CodecTestBase::getHeight(AMediaFormat* format) {
 }
 
 bool CodecTestBase::isFormatSimilar(AMediaFormat* inpFormat, AMediaFormat* outFormat) {
-    const char *refMime = nullptr, *testMime = nullptr;
-    bool hasRefMime = AMediaFormat_getString(inpFormat, AMEDIAFORMAT_KEY_MIME, &refMime);
-    bool hasTestMime = AMediaFormat_getString(outFormat, AMEDIAFORMAT_KEY_MIME, &testMime);
+    const char *refMediaType = nullptr, *testMediaType = nullptr;
+    bool hasRefMediaType = AMediaFormat_getString(inpFormat, AMEDIAFORMAT_KEY_MIME, &refMediaType);
+    bool hasTestMediaType =
+            AMediaFormat_getString(outFormat, AMEDIAFORMAT_KEY_MIME, &testMediaType);
 
-    if (!hasRefMime || !hasTestMime) return false;
-    if (!strncmp(refMime, "audio/", strlen("audio/"))) {
+    if (!hasRefMediaType || !hasTestMediaType) return false;
+    if (!strncmp(refMediaType, "audio/", strlen("audio/"))) {
         int32_t refSampleRate = -1;
         int32_t testSampleRate = -2;
         int32_t refNumChannels = -1;
@@ -679,14 +679,15 @@ bool CodecTestBase::isFormatSimilar(AMediaFormat* inpFormat, AMediaFormat* outFo
         AMediaFormat_getInt32(inpFormat, AMEDIAFORMAT_KEY_CHANNEL_COUNT, &refNumChannels);
         AMediaFormat_getInt32(outFormat, AMEDIAFORMAT_KEY_CHANNEL_COUNT, &testNumChannels);
         return refNumChannels == testNumChannels && refSampleRate == testSampleRate &&
-               (strncmp(testMime, "audio/", strlen("audio/")) == 0);
-    } else if (!strncmp(refMime, "video/", strlen("video/"))) {
+                (strncmp(testMediaType, "audio/", strlen("audio/")) == 0);
+    } else if (!strncmp(refMediaType, "video/", strlen("video/"))) {
         int32_t refWidth = getWidth(inpFormat);
         int32_t testWidth = getWidth(outFormat);
         int32_t refHeight = getHeight(inpFormat);
         int32_t testHeight = getHeight(outFormat);
         return refWidth != -1 && refHeight != -1 && refWidth == testWidth &&
-               refHeight == testHeight && (strncmp(testMime, "video/", strlen("video/")) == 0);
+                refHeight == testHeight &&
+                (strncmp(testMediaType, "video/", strlen("video/")) == 0);
     }
     return true;
 }

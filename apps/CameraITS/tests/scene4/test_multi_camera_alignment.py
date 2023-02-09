@@ -67,9 +67,8 @@ def convert_cap_and_prep_img(cap, props, fmt, img_name, debug):
   if debug:
     image_processing_utils.write_image(img, img_name)
 
-  # convert to [0, 255] images and cast as uint8
-  img *= 255
-  img = img.astype(np.uint8)
+  # convert [0, 1] image to [0, 255] and cast as uint8
+  img = image_processing_utils.convert_image_to_uint8(img)
 
   # scale to match calibration data if RAW
   if fmt == 'raw':

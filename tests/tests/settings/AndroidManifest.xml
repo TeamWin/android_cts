@@ -25,6 +25,10 @@
     <application>
         <uses-library android:name="android.test.runner"/>
 
+        <property
+            android:name="android.window.PROPERTY_ACTIVITY_EMBEDDING_SPLITS_ENABLED"
+            android:value="true" />
+
         <activity android:name=".RightPaneActivity"
                 android:exported="true">
             <intent-filter>

@@ -40,6 +40,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Paths;
 
 @RunWith(AndroidJUnit4.class)
@@ -95,6 +99,17 @@ public class AppValidationTest {
                 Os.stat(Paths.get(installedAppInfo.installationPath).getParent().toString());
         assertEquals("App parent directory may not be world-readable", 0771, st.st_mode & 0777);
         assertEquals(versionCode, installedAppInfo.versionCode);
+        // Read the whole file to make sure it's streamed.
+        readFullFile(new File(installedAppInfo.installationPath, "base.apk"));
+    }
+
+    private static void readFullFile(File file) throws IOException {
+        try (InputStream inputStream = new FileInputStream(file)) {
+            byte[] buffer = new byte[1024];
+            while (inputStream.read(buffer) != -1) {
+                // ignore
+            }
+        }
     }
 
     private void launchTestApp() throws Exception {

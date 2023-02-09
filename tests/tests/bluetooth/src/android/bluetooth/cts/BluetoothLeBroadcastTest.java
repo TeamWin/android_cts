@@ -34,6 +34,7 @@ import android.bluetooth.BluetoothLeAudioContentMetadata;
 import android.bluetooth.BluetoothLeBroadcast;
 import android.bluetooth.BluetoothLeBroadcastChannel;
 import android.bluetooth.BluetoothLeBroadcastMetadata;
+import android.bluetooth.BluetoothLeBroadcastSettings;
 import android.bluetooth.BluetoothLeBroadcastSubgroup;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothStatusCodes;
@@ -68,6 +69,7 @@ public class BluetoothLeBroadcastTest {
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
 
     private static final String TEST_MAC_ADDRESS = "00:11:22:33:44:55";
+    private static final String TEST_BROADCAST_NAME = "TEST";
     private static final int TEST_BROADCAST_ID = 42;
     private static final int TEST_ADVERTISER_SID = 1234;
     private static final int TEST_PA_SYNC_INTERVAL = 100;
@@ -143,6 +145,8 @@ public class BluetoothLeBroadcastTest {
 
         BluetoothLeBroadcastMetadata.Builder builder = new BluetoothLeBroadcastMetadata.Builder()
                 .setEncrypted(false)
+                .setPublicBroadcast(false)
+                .setBroadcastName(TEST_BROADCAST_NAME)
                 .setSourceDevice(testDevice, BluetoothDevice.ADDRESS_TYPE_RANDOM)
                 .setSourceAdvertisingSid(TEST_ADVERTISER_SID)
                 .setBroadcastId(TEST_BROADCAST_ID)
@@ -519,6 +523,46 @@ public class BluetoothLeBroadcastTest {
     }
 
     @Test
+    public void testStartBroadcastGroup() {
+        if (shouldSkipTest()) {
+            return;
+        }
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcast);
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+        BluetoothLeBroadcastSettings.Builder broadcastSettingsBuilder =
+                new BluetoothLeBroadcastSettings.Builder();
+        mBluetoothLeBroadcast.startBroadcast(broadcastSettingsBuilder.build());
+    }
+
+    @Test
+    @CddTest(requirements = {"3.5/C-0-9"})
+    public void testStartBroadcastGroupWithoutPrivilegedPermission() {
+        if (shouldSkipTest()) {
+            return;
+        }
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcast);
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        BluetoothLeBroadcastSettings.Builder broadcastSettingsBuilder =
+                new BluetoothLeBroadcastSettings.Builder();
+
+        TestUtils.dropPermissionAsShellUid();
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
+
+        // Verify throws SecurityException without permission.BLUETOOTH_PRIVILEGED
+        assertThrows(SecurityException.class,
+                () -> mBluetoothLeBroadcast.startBroadcast(
+                        broadcastSettingsBuilder.build()));
+
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+    }
+
+    @Test
     public void testUpdateBroadcast() {
         if (shouldSkipTest()) {
             return;
@@ -553,6 +597,45 @@ public class BluetoothLeBroadcastTest {
         // Verify throws SecurityException without permission.BLUETOOTH_PRIVILEGED
         assertThrows(SecurityException.class,
                 () -> mBluetoothLeBroadcast.updateBroadcast(1, contentMetadataBuilder.build()));
+
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+    }
+
+    @Test
+    public void testUpdateBroadcastGroup() {
+        if (shouldSkipTest()) {
+            return;
+        }
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcast);
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        BluetoothLeBroadcastSettings.Builder broadcastSettingsBuilder =
+                new BluetoothLeBroadcastSettings.Builder();
+        mBluetoothLeBroadcast.updateBroadcast(1, broadcastSettingsBuilder.build());
+    }
+
+    @Test
+    @CddTest(requirements = {"3.5/C-0-9"})
+    public void testUpdateBroadcastGroupWithoutPrivilegedPermission() {
+        if (shouldSkipTest()) {
+            return;
+        }
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcast);
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        BluetoothLeBroadcastSettings.Builder broadcastSettingsBuilder =
+                new BluetoothLeBroadcastSettings.Builder();
+
+        TestUtils.dropPermissionAsShellUid();
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
+
+        // Verify throws SecurityException without permission.BLUETOOTH_PRIVILEGED
+        assertThrows(SecurityException.class,
+                () -> mBluetoothLeBroadcast.updateBroadcast(1, broadcastSettingsBuilder.build()));
 
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
     }
@@ -691,6 +774,74 @@ public class BluetoothLeBroadcastTest {
         // Verify throws SecurityException without permission.BLUETOOTH_PRIVILEGED
         assertThrows(SecurityException.class,
                 () -> mBluetoothLeBroadcast.getMaximumNumberOfBroadcasts());
+
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+    }
+
+    @Test
+    public void testGetMaximumStreamsPerBroadcast() {
+        if (shouldSkipTest()) {
+            return;
+        }
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcast);
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        assertEquals(1, mBluetoothLeBroadcast.getMaximumStreamsPerBroadcast());
+    }
+
+    @Test
+    @CddTest(requirements = {"3.5/C-0-9"})
+    public void testGetMaximumStreamsPerBroadcastWithoutPrivilegedPermission() {
+        if (shouldSkipTest()) {
+            return;
+        }
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcast);
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        TestUtils.dropPermissionAsShellUid();
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
+
+        // Verify throws SecurityException without permission.BLUETOOTH_PRIVILEGED
+        assertThrows(SecurityException.class,
+                () -> mBluetoothLeBroadcast.getMaximumStreamsPerBroadcast());
+
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+    }
+
+    @Test
+    public void testGetMaximumSubgroupsPerBroadcast() {
+        if (shouldSkipTest()) {
+            return;
+        }
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcast);
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        assertEquals(1, mBluetoothLeBroadcast.getMaximumSubgroupsPerBroadcast());
+    }
+
+    @Test
+    @CddTest(requirements = {"3.5/C-0-9"})
+    public void testGetMaximumSubgroupsPerBroadcastWithoutPrivilegedPermission() {
+        if (shouldSkipTest()) {
+            return;
+        }
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcast);
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        TestUtils.dropPermissionAsShellUid();
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
+
+        // Verify throws SecurityException without permission.BLUETOOTH_PRIVILEGED
+        assertThrows(SecurityException.class,
+                () -> mBluetoothLeBroadcast.getMaximumSubgroupsPerBroadcast());
 
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
     }

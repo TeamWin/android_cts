@@ -234,8 +234,8 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 transition(ResultActivity.class, ON_POST_CREATE),
                 transition(ResultActivity.class, ON_RESUME),
                 transition(ResultActivity.class, ON_TOP_POSITION_GAINED),
-                transition(LaunchForResultActivity.class, ON_STOP),
-                transition(CallbackTrackingActivity.class, ON_STOP));
+                transition(CallbackTrackingActivity.class, ON_STOP),
+                transition(LaunchForResultActivity.class, ON_STOP));
         assertEquals("Double launch sequence must match", expectedTransitions, observedTransitions);
     }
 
@@ -281,9 +281,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 transition(LaunchForResultActivity.class, ON_ACTIVITY_RESULT),
                 transition(LaunchForResultActivity.class, ON_RESUME),
                 transition(LaunchForResultActivity.class, ON_TOP_POSITION_GAINED),
+                transition(CallbackTrackingActivity.class, ON_STOP),
                 transition(TranslucentResultActivity.class, ON_STOP),
-                transition(TranslucentResultActivity.class, ON_DESTROY),
-                transition(CallbackTrackingActivity.class, ON_STOP)),
+                transition(TranslucentResultActivity.class, ON_DESTROY)),
                 getTransitionLog(), "Double launch sequence must match");
     }
 

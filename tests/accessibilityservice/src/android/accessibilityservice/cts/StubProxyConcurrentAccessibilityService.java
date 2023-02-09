@@ -30,6 +30,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class StubProxyConcurrentAccessibilityService extends InstrumentedAccessibilityService {
     private AccessibilityEvent mUnwantedEvent;
     AtomicBoolean mReceivedUnwantedEvent = new AtomicBoolean();
+
+    private AccessibilityEvent mExpectedEvent;
+    AtomicBoolean mReceivedEvent = new AtomicBoolean();
+
     Object mWaitObject = new Object();
 
     @Override
@@ -44,10 +48,21 @@ public class StubProxyConcurrentAccessibilityService extends InstrumentedAccessi
                     mWaitObject.notifyAll();
                 }
             }
+        } else if (mExpectedEvent != null) {
+            if (event.getEventType() == mExpectedEvent.getEventType()) {
+                synchronized (mWaitObject) {
+                    mReceivedEvent.set(true);
+                    mWaitObject.notifyAll();
+                }
+            }
         }
     }
 
     public void setUnwantedEvent(@NonNull AccessibilityEvent event) {
         mUnwantedEvent = event;
+    }
+
+    public void setExpectedEvent(@NonNull AccessibilityEvent event) {
+        mExpectedEvent = event;
     }
 }

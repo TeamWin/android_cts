@@ -1272,13 +1272,12 @@ public class ImsCallingTest extends ImsCallingBase {
 
         //Notify a new media quality status.
         sServiceConnector.getCarrierService().getMmTelFeature()
-                .notifyMediaQualityStatusChanged(new MediaQualityStatus
-                        .Builder(callSessionId,
+                .notifyMediaQualityStatusChanged(new MediaQualityStatus(callSessionId,
                         MediaQualityStatus.MEDIA_SESSION_TYPE_AUDIO,
-                        AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
-                        .setRtpPacketLossRate(TEST_RTP_THRESHOLD_PACKET_LOSS_RATE)
-                        .setRtpJitterMillis(TEST_RTP_THRESHOLD_JITTER_MILLIS)
-                        .setRtpInactivityMillis(TEST_RTP_THRESHOLD_INACTIVITY_TIME_MILLIS).build());
+                        AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
+                        TEST_RTP_THRESHOLD_PACKET_LOSS_RATE,
+                        TEST_RTP_THRESHOLD_JITTER_MILLIS,
+                        TEST_RTP_THRESHOLD_INACTIVITY_TIME_MILLIS));
 
         status = queue.poll(ImsUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         assertNotNull(status);

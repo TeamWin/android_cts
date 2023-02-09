@@ -23,6 +23,7 @@ import static android.incrementalinstall.common.Consts.SupportedComponents.ON_CR
 import static android.incrementalinstall.common.Consts.SupportedComponents.ON_CREATE_COMPONENT_2;
 import static android.incrementalinstall.common.Consts.SupportedComponents.UNCOMPRESSED_NATIVE_COMPONENT;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -261,9 +262,9 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
         getDevice().executeAdbCommand("push",
                 getFilePathFromBuildInfo(TEST_APP_DYNAMIC_CODE_NAME + SIG_SUFFIX),
                 deviceLocalPath);
-        getDevice().executeShellCommand(
+        assertEquals("Success\n", getDevice().executeShellCommand(
                 String.format("pm install-incremental -p %s %s", TEST_APP_PACKAGE_NAME,
-                        deviceLocalPath + TEST_APP_DYNAMIC_CODE_NAME));
+                        deviceLocalPath + TEST_APP_DYNAMIC_CODE_NAME)));
         // Verify still on Incremental.
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V1_VERSION);

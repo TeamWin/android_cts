@@ -221,10 +221,10 @@ public class TestMmTelFeature extends MmTelFeature {
             Log.d(TAG, "queryMediaQualityStatus: no call.");
             return null;
         }
-        MediaQualityStatus status = new MediaQualityStatus.Builder(mCallSession.getCallId(),
+        MediaQualityStatus status = new MediaQualityStatus(mCallSession.getCallId(),
                     MediaQualityStatus.MEDIA_SESSION_TYPE_AUDIO,
-                    AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
-                .setRtpPacketLossRate(0).setRtpJitterMillis(0).setRtpInactivityMillis(0).build();
+                    AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
+                    0 /*packetLossRate*/, 0 /*jitter*/, 0 /*inactivityTime*/);
 
         Log.d(TAG, "queryMediaQualityStatus: current status " + status);
         return status;

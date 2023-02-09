@@ -17,7 +17,6 @@
 package android.packageinstaller.install.cts
 
 import android.app.PendingIntent
-import android.app.PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT
 import android.app.PendingIntent.FLAG_MUTABLE
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.BroadcastReceiver
@@ -231,9 +230,9 @@ open class PackageInstallerTestBase {
             session: Session,
             expectedPrompt: Boolean = true
     ): CompletableFuture<Int> {
+        var intent = Intent(INSTALL_ACTION_CB).setPackage(context.getPackageName())
         val pendingIntent = PendingIntent.getBroadcast(
-                context, 0 /* requestCode */, Intent(INSTALL_ACTION_CB),
-                FLAG_UPDATE_CURRENT or FLAG_MUTABLE or FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT)
+                context, 0 /* requestCode */, intent, FLAG_UPDATE_CURRENT or FLAG_MUTABLE)
 
         if (!expectedPrompt) {
             session.commit(pendingIntent.intentSender)

@@ -27,8 +27,8 @@ int registerAndroidMediaV2CtsDecoderSurfaceTest(JNIEnv* env) {
              "lang/String;IFJLjava/lang/StringBuilder;)Z",
              (void*)nativeTestSimpleDecode},
             {"nativeTestFlush",
-             "(Ljava/lang/String;Landroid/view/Surface;Ljava/lang/String;Ljava/lang/String;ILjava"
-             "/lang/StringBuilder;)Z",
+             "(Ljava/lang/String;Landroid/view/Surface;Ljava/lang/String;Ljava/lang/String;ILjava/"
+             "lang/StringBuilder;)Z",
              (void*)nativeTestFlush},
     };
     jclass c = env->FindClass("android/mediav2/cts/CodecDecoderSurfaceTest");

@@ -433,9 +433,6 @@ public final class AutoFillServiceTestCase {
             // fitting in, IME orientation, etc...
             mUiBot.setScreenOrientation(UiBot.PORTRAIT);
 
-            // Wait until device is idle to avoid flakiness
-            mUiBot.waitForIdle();
-
             // Clear Clipboard
             // TODO(b/117768051): remove try/catch once fixed
             try {

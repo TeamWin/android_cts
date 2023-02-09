@@ -49,4 +49,5 @@ TestBeds:
       rotator_cntl: "arduino"  # Note: only sensor fusion supports manual
       rotator_ch: <controller-channel>
       camera: <camera-id>
+      foldable_device: "False" # set to True if testing a foldable device
 

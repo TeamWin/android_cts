@@ -46,7 +46,7 @@ CIRCLE_MIN_PTS = 20
 CIRCLE_RADIUS_NUMPTS_THRESH = 2  # contour num_pts/radius: empirically ~3x
 CIRCLE_COLOR_ATOL = 0.01  # circle color fill tolerance
 
-CV2_CONTOUR_LINE_THICKNESS = 3  # for drawing contours if multiple circles found
+CV2_LINE_THICKNESS = 3  # line thickness for drawing on images
 CV2_RED = (255, 0, 0)  # color in cv2 to draw lines
 
 FOV_THRESH_TELE25 = 25
@@ -505,7 +505,7 @@ def find_circle(img, img_name, min_area, color):
   if num_circles > 1:
     image_processing_utils.write_image(img/255, img_name, True)
     cv2.drawContours(img, circle_contours, -1, CV2_RED,
-                     CV2_CONTOUR_LINE_THICKNESS)
+                     CV2_LINE_THICKNESS)
     img_name_parts = img_name.split('.')
     image_processing_utils.write_image(
         img/255, f'{img_name_parts[0]}_contours.{img_name_parts[1]}', True)
@@ -513,6 +513,83 @@ def find_circle(img, img_name, min_area, color):
                          'Background of scene may be too complex.')
 
   return circle
+
+
+def find_center_circle(img, img_name, color, circle_ar_rtol, circlish_rtol,
+                       min_circle_pts, min_area, debug):
+  """Find circle closest to image center for scene with multiple circles.
+
+  Finds all contours in the image. Rejects those too small and not enough
+  points to qualify as a circle. The remaining contours must have center
+  point of color=color and are sorted based on distance from the center
+  of the image. The contour closest to the center of the image is returned.
+
+  Note: hierarchy is not used as the hierarchy for black circles changes
+  as the zoom level changes.
+
+  Args:
+    img: numpy img array with pixel values in [0,255].
+    img_name: str file name for saved image
+    color: int 0 --> black, 255 --> white
+    circle_ar_rtol: float aspect ratio relative tolerance
+    circlish_rtol: float contour area vs ideal circle area pi*((w+h)/4)**2
+    min_circle_pts: int minimum number of points to define a circle
+    min_area: int minimum area of circles to screen out
+    debug: bool to save extra data
+
+  Returns:
+    circle: [center_x, center_y, radius]
+  """
+
+  # gray scale & otsu threshold to binarize the image
+  gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+  _, img_bw = cv2.threshold(
+      numpy.uint8(gray), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+  # use OpenCV to find contours (connected components)
+  contours = find_all_contours(255-img_bw)
+
+  # check contours and find the best circle candidates
+  circles = []
+  img_ctr = [gray.shape[1] // 2, gray.shape[0] // 2]
+  for contour in contours:
+    area = cv2.contourArea(contour)
+    if area > min_area and len(contour) >= min_circle_pts:
+      shape = component_shape(contour)
+      radius = (shape['width'] + shape['height']) / 4
+      colour = img_bw[shape['cty']][shape['ctx']]
+      circlish = round((math.pi * radius**2) / area, 4)
+      if (colour == color and
+          math.isclose(1, circlish, rel_tol=circlish_rtol) and
+          math.isclose(shape['width'], shape['height'],
+                       rel_tol=circle_ar_rtol)):
+        circles.append([shape['ctx'], shape['cty'], radius, circlish, area])
+
+  if not circles:
+    raise AssertionError('No circle was detected. Please take pictures '
+                         'according to instructions carefully!')
+
+  if debug:
+    logging.debug('circles [x, y, r, pi*r**2/area, area]: %s', str(circles))
+
+  # find circle closest to center
+  circles.sort(key=lambda x: math.hypot(x[0] - img_ctr[0], x[1] - img_ctr[1]))
+  circle = circles[0]
+
+  # mark image center
+  size = gray.shape
+  m_x, m_y = size[1] // 2, size[0] // 2
+  marker_size = CV2_LINE_THICKNESS * 10
+  cv2.drawMarker(img, (m_x, m_y), CV2_RED, markerType=cv2.MARKER_CROSS,
+                 markerSize=marker_size, thickness=CV2_LINE_THICKNESS)
+
+  # add circle to saved image
+  center_i = (int(round(circle[0], 0)), int(round(circle[1], 0)))
+  radius_i = int(round(circle[2], 0))
+  cv2.circle(img, center_i, radius_i, CV2_RED, CV2_LINE_THICKNESS)
+  image_processing_utils.write_image(img / 255.0, img_name)
+
+  return [circle[0], circle[1], circle[2]]
 
 
 def append_circle_center_to_img(circle, img, img_name):
@@ -569,6 +646,27 @@ def append_circle_center_to_img(circle, img, img_name):
   cv2.putText(img, 'image center', (text_imgct_x, text_imgct_y),
               cv2.FONT_HERSHEY_SIMPLEX, font_size, CV2_RED, line_width)
   image_processing_utils.write_image(img/255, img_name, True)  # [0, 1] values
+
+
+def is_circle_cropped(circle, size):
+  """Determine if a circle is cropped by edge of image.
+
+  Args:
+    circle: list [x, y, radius] of circle
+    size: tuple (x, y) of size of img
+
+  Returns:
+    Boolean True if selected circle is cropped
+  """
+
+  cropped = False
+  circle_x, circle_y = circle[0], circle[1]
+  circle_r = circle[2]
+  x_min, x_max = circle_x - circle_r, circle_x + circle_r
+  y_min, y_max = circle_y - circle_r, circle_y + circle_r
+  if x_min < 0 or y_min < 0 or x_max > size[0] or y_max > size[1]:
+    cropped = True
+  return cropped
 
 
 def find_white_square(img, min_area):

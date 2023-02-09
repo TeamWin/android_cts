@@ -43,6 +43,11 @@ NUM_FRAMES = 4
 TEST_IMG_DIR = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images')
 
 
+def convert_image_to_uint8(image):
+  image *= 255
+  return image.astype(np.uint8)
+
+
 def assert_props_is_not_none(props):
   if not props:
     raise AssertionError('props is None')

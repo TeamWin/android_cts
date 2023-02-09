@@ -24,19 +24,24 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.ManagedSubscriptionsPolicy;
+import android.os.UserHandle;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.ManagedSubscriptions;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.devicepolicy.ProfileOwner;
+import com.android.bedstead.remotedpc.RemoteDpc;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
@@ -105,5 +110,31 @@ public final class ManagedSubscriptionsPolicyTest {
                                 new ManagedSubscriptionsPolicy(
                                         ManagedSubscriptionsPolicy
                                                 .TYPE_ALL_MANAGED_SUBSCRIPTIONS)));
+    }
+
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureHasNoDpc
+    @Postsubmit(reason = "new test")
+    @Test
+    public void setManagedSubscriptionsPolicy_policySet_oemDialerAndSmsAppInstalledInWorkProfile() {
+        try (RemoteDpc dpc = RemoteDpc.createWorkProfile()) {
+            ProfileOwner profileOwner = (ProfileOwner) dpc.devicePolicyController();
+            profileOwner.setIsOrganizationOwned(true);
+            UserHandle managedProfileUserHandle = dpc.user().userHandle();
+
+            assertThat(TestApis.packages().oemDefaultDialerApp().installedOnUser(
+                    managedProfileUserHandle)).isFalse();
+            assertThat(TestApis.packages().oemDefaultSmsApp().installedOnUser(
+                    managedProfileUserHandle)).isFalse();
+
+            dpc.devicePolicyManager().setManagedSubscriptionsPolicy(new ManagedSubscriptionsPolicy(
+                    ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
+
+            assertThat(TestApis.packages().oemDefaultDialerApp().installedOnUser(
+                    managedProfileUserHandle)).isTrue();
+            assertThat(TestApis.packages().oemDefaultSmsApp().installedOnUser(
+                    managedProfileUserHandle)).isTrue();
+        }
     }
 }

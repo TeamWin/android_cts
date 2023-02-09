@@ -195,6 +195,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         mActivityRule.runOnUiThread(() -> {
             final FrameLayout content = new FrameLayout(mActivity);
             mSurfaceView = new MotionConsumingSurfaceView(mActivity);
+            mSurfaceView.setBackgroundColor(Color.BLACK);
             mSurfaceView.setZOrderOnTop(onTop);
             final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                     width, height, Gravity.LEFT | Gravity.TOP);

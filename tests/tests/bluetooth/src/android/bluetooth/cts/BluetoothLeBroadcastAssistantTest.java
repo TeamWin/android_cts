@@ -75,6 +75,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     private static final String TEST_ADDRESS_1 = "EF:11:22:33:44:55";
     private static final String TEST_ADDRESS_2 = "EF:11:22:33:44:66";
+    private static final String TEST_BROADCAST_NAME = "TEST";
     private static final int TEST_BROADCAST_ID = 42;
     private static final int TEST_ADVERTISER_SID = 1234;
     private static final int TEST_PA_SYNC_INTERVAL = 100;
@@ -183,6 +184,8 @@ public class BluetoothLeBroadcastAssistantTest {
 
         BluetoothLeBroadcastMetadata.Builder builder = new BluetoothLeBroadcastMetadata.Builder()
                 .setEncrypted(false)
+                .setPublicBroadcast(false)
+                .setBroadcastName(TEST_BROADCAST_NAME)
                 .setSourceDevice(testSourceDevice, BluetoothDevice.ADDRESS_TYPE_RANDOM)
                 .setSourceAdvertisingSid(TEST_ADVERTISER_SID)
                 .setBroadcastId(TEST_BROADCAST_ID)
@@ -323,6 +326,8 @@ public class BluetoothLeBroadcastAssistantTest {
 
         BluetoothLeBroadcastMetadata.Builder builder = new BluetoothLeBroadcastMetadata.Builder()
                 .setEncrypted(false)
+                .setPublicBroadcast(false)
+                .setBroadcastName(TEST_BROADCAST_NAME)
                 .setSourceDevice(testSourceDevice, BluetoothDevice.ADDRESS_TYPE_RANDOM)
                 .setSourceAdvertisingSid(TEST_ADVERTISER_SID)
                 .setBroadcastId(TEST_BROADCAST_ID)

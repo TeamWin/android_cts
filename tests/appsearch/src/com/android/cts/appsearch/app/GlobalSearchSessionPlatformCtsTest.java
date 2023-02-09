@@ -44,6 +44,7 @@ import android.app.appsearch.observer.ObserverSpec;
 import android.app.appsearch.testutil.AppSearchEmail;
 import android.app.appsearch.testutil.AppSearchSessionShimImpl;
 import android.app.appsearch.testutil.GlobalSearchSessionShimImpl;
+import android.app.appsearch.testutil.SystemUtil;
 import android.app.appsearch.testutil.TestObserverCallback;
 import android.content.ComponentName;
 import android.content.Context;
@@ -56,7 +57,6 @@ import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 
-import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.appsearch.ICommandReceiver;
 
 import com.google.common.collect.ImmutableSet;
@@ -68,7 +68,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -519,7 +518,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                             .build()).get();
 
                     assertThat(nonExistent.isSuccess()).isFalse();
-                    assertThat(nonExistent.getSuccesses()).hasSize(0);
+                    assertThat(nonExistent.getSuccesses()).isEmpty();
                 },
                 READ_GLOBAL_APP_SEARCH_DATA);
     }
@@ -541,7 +540,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                             .addIds("id1")
                                             .build()).get();
                     assertThat(result.isSuccess()).isFalse();
-                    assertThat(result.getSuccesses()).hasSize(0);
+                    assertThat(result.getSuccesses()).isEmpty();
                     assertThat(result.getFailures()).containsKey("id1");
                 },
                 READ_GLOBAL_APP_SEARCH_DATA);
@@ -565,7 +564,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                             .addIds("id1")
                                             .build()).get();
                     assertThat(nonExistentResult.isSuccess()).isFalse();
-                    assertThat(nonExistentResult.getSuccesses()).hasSize(0);
+                    assertThat(nonExistentResult.getSuccesses()).isEmpty();
                     assertThat(nonExistentResult.getFailures()).containsKey("id1");
                     errorMessageNonExistent.set(
                             nonExistentResult.getFailures().get("id1").getErrorMessage());
@@ -587,7 +586,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                             .addIds("id1")
                                             .build()).get();
                     assertThat(unAuthResult.isSuccess()).isFalse();
-                    assertThat(unAuthResult.getSuccesses()).hasSize(0);
+                    assertThat(unAuthResult.getSuccesses()).isEmpty();
                     assertThat(unAuthResult.getFailures()).containsKey("id1");
                     errorMessageUnauth.set(
                             unAuthResult.getFailures().get("id1").getErrorMessage());
@@ -609,7 +608,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                 .addIds("id1")
                                 .build()).get();
         assertThat(noGlobalResult.isSuccess()).isFalse();
-        assertThat(noGlobalResult.getSuccesses()).hasSize(0);
+        assertThat(noGlobalResult.getSuccesses()).isEmpty();
         assertThat(noGlobalResult.getFailures()).containsKey("id1");
 
         // compare error messages
@@ -639,7 +638,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                     List<SearchResult> page = searchResults.getNextPageAsync().get();
                     assertThat(page).hasSize(2);
 
-                    Set<String> actualPackageNames =
+                    ImmutableSet<String> actualPackageNames =
                             ImmutableSet.of(
                                     page.get(0).getPackageName(), page.get(1).getPackageName());
                     assertThat(actualPackageNames).containsExactly(PKG_A, PKG_B);
@@ -1099,7 +1098,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     private void indexGloballySearchableDocument(String pkg, String databaseName, String namespace,
             String id) throws Exception {
-        indexGloballySearchableDocument(pkg, databaseName, namespace, id, Collections.emptySet());
+        indexGloballySearchableDocument(pkg, databaseName, namespace, id, ImmutableSet.of());
     }
 
     private void indexGloballySearchableDocument(String pkg, String databaseName, String namespace,
@@ -1175,8 +1174,7 @@ public class GlobalSearchSessionPlatformCtsTest {
         }
 
         private IBinder getService() throws Exception {
-            IBinder service = mBlockingQueue.poll(TIMEOUT_BIND_SERVICE_SEC, TimeUnit.SECONDS);
-            return service;
+            return mBlockingQueue.poll(TIMEOUT_BIND_SERVICE_SEC, TimeUnit.SECONDS);
         }
 
         public ICommandReceiver getCommandReceiver() throws Exception {

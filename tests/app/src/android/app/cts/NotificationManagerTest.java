@@ -20,6 +20,9 @@ import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
 import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
 import static android.app.Activity.RESULT_OK;
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.AppOpsManager.MODE_DEFAULT;
+import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
 import static android.app.NotificationManager.IMPORTANCE_LOW;
@@ -621,6 +624,40 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
      */
     private void deactivateGracePeriod() {
         UiDevice.getInstance(mInstrumentation).pressHome();
+    }
+
+    private void verifyCanSendFullScreenIntent(int appOpState, boolean canSend) throws Exception {
+        final int previousState = PermissionUtils.getAppOp(STUB_PACKAGE_NAME,
+                Manifest.permission.USE_FULL_SCREEN_INTENT);
+        try {
+            PermissionUtils.setAppOp(STUB_PACKAGE_NAME,
+                    Manifest.permission.USE_FULL_SCREEN_INTENT,
+                    appOpState);
+
+            if (canSend) {
+                assertTrue(mNotificationManager.canSendFullScreenIntent());
+            } else {
+                assertFalse(mNotificationManager.canSendFullScreenIntent());
+            }
+
+        } finally {
+            // Clean up by setting to app op to previous state.
+            PermissionUtils.setAppOp(STUB_PACKAGE_NAME,
+                    Manifest.permission.USE_FULL_SCREEN_INTENT,
+                    previousState);
+        }
+    }
+
+    public void testCanSendFullScreenIntent_modeDefault_returnsTrue() throws Exception {
+        verifyCanSendFullScreenIntent(MODE_DEFAULT, /*canSend=*/ true);
+    }
+
+    public void testCanSendFullScreenIntent_modeAllowed_returnsTrue() throws Exception {
+        verifyCanSendFullScreenIntent(MODE_ALLOWED, /*canSend=*/ true);
+    }
+
+    public void testCanSendFullScreenIntent_modeErrored_returnsFalse() throws Exception {
+        verifyCanSendFullScreenIntent(MODE_ERRORED, /*canSend=*/ false);
     }
 
     public void testConsolidatedNotificationPolicy() throws Exception {

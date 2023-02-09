@@ -96,6 +96,10 @@ public class CameraGPURecordingTest extends Camera2AndroidTestCase {
                         + "TEMPLATE_RECORD for createCaptureRequest");
                 continue;
             }
+            if (mAllStaticInfo.get(id).isExternalCamera()) {
+                Log.i(TAG, "Camera " + id + " does not support CamcorderProfile, skipping");
+                continue;
+            }
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);

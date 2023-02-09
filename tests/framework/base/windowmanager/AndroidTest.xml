@@ -67,6 +67,8 @@
         <option name="teardown-command" value="settings delete global hidden_api_policy" />
         <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.server.wm.app"  />
         <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.server.wm.app" />
+        <!-- ensure lock screen is enabled -->
+        <option name="run-command" value="locksettings set-disabled false" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">

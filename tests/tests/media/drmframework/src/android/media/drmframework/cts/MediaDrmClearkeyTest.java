@@ -25,17 +25,9 @@ import android.media.MediaFormat;
 import android.media.NotProvisionedException;
 import android.media.ResourceBusyException;
 import android.media.UnsupportedSchemeException;
-import android.media.cts.ConnectionStatus;
-import android.media.cts.IConnectionStatus;
-import android.media.cts.InputSurface;
-import android.media.cts.InputSurfaceInterface;
 import android.media.cts.MediaCodecClearKeyPlayer;
 import android.media.cts.MediaCodecPlayerTestBase;
-import android.media.cts.MediaCodecWrapper;
-import android.media.cts.MediaTimeProvider;
 import android.media.cts.MediaStubActivity;
-import android.media.cts.NdkInputSurface;
-import android.media.cts.NdkMediaCodec;
 import android.media.cts.TestUtils.Monitor;
 import android.media.cts.Utils;
 import android.net.Uri;
@@ -44,8 +36,10 @@ import android.os.Looper;
 import android.platform.test.annotations.Presubmit;
 import android.util.Base64;
 import android.util.Log;
-
 import android.view.Surface;
+
+import androidx.annotation.NonNull;
+import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 
@@ -62,10 +56,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
-
-import androidx.annotation.NonNull;
-import androidx.test.filters.SdkSuppress;
-
 
 /**
  * Tests of MediaPlayer streaming capabilities.
@@ -521,7 +511,10 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         mMediaCodecPlayer.setAudioDataSource(audioUrl, null, false);
         mMediaCodecPlayer.setVideoDataSource(videoUrl, null, true);
         mMediaCodecPlayer.start();
-        mMediaCodecPlayer.prepare();
+        if (!mMediaCodecPlayer.prepare()) {
+            Log.i(TAG, "Media Player could not be prepared.");
+            return;
+        }
         mDrmInitData = mMediaCodecPlayer.getDrmInitData();
 
         // Create and store the offline license
@@ -606,7 +599,10 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         mMediaCodecPlayer.setVideoDataSource(
                 Uri.parse(Utils.getMediaPath() + CENC_VIDEO_PATH), null, true);
         mMediaCodecPlayer.start();
-        mMediaCodecPlayer.prepare();
+        if (!mMediaCodecPlayer.prepare()) {
+            Log.i(TAG, "Media Player could not be prepared.");
+            return;
+        }
 
         mDrmInitData = mMediaCodecPlayer.getDrmInitData();
         getKeys(drm, "cenc", mSessionId, mDrmInitData, MediaDrm.KEY_TYPE_STREAMING,
@@ -652,7 +648,10 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         mMediaCodecPlayer.setVideoDataSource(
                 Uri.parse(Utils.getMediaPath() + CENC_VIDEO_PATH), null, true);
         mMediaCodecPlayer.start();
-        mMediaCodecPlayer.prepare();
+        if (!mMediaCodecPlayer.prepare()) {
+            Log.i(TAG, "Media Player could not be prepared.");
+            return;
+        }
 
         try {
             mDrmInitData = mMediaCodecPlayer.getDrmInitData();
@@ -1138,7 +1137,10 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
             mMediaCodecPlayer.setVideoDataSource(
                     Uri.parse(Utils.getMediaPath() + CENC_VIDEO_PATH), null, true);
             mMediaCodecPlayer.start();
-            mMediaCodecPlayer.prepare();
+            if (!mMediaCodecPlayer.prepare()) {
+                Log.i(TAG, "Media Player could not be prepared.");
+                return;
+            }
             mDrmInitData = mMediaCodecPlayer.getDrmInitData();
 
             for (int i = 0; i < NUMBER_OF_SECURE_STOPS; ++i) {

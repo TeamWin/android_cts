@@ -20,6 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import android.app.Instrumentation;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.WindowManager;
@@ -112,6 +115,8 @@ public class InputDeviceKeyLayoutMapTest {
     private UinputDevice mUinputDevice;
     private InputJsonParser mParser;
     private WindowManager mWindowManager;
+    private boolean mIsLeanback;
+    private boolean mVolumeKeysHandledInWindowManager;
 
     private static native Map<String, Integer> nativeLoadKeyLayout(String genericKeyLayout);
 
@@ -127,8 +132,13 @@ public class InputDeviceKeyLayoutMapTest {
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         WindowUtil.waitForFocus(mActivityRule.getActivity());
-        mParser = new InputJsonParser(mInstrumentation.getTargetContext());
-        mWindowManager = mInstrumentation.getTargetContext().getSystemService(WindowManager.class);
+        Context context = mInstrumentation.getTargetContext();
+        mParser = new InputJsonParser(context);
+        mWindowManager = context.getSystemService(WindowManager.class);
+        mIsLeanback = context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+        mVolumeKeysHandledInWindowManager = context.getResources().getBoolean(
+                Resources.getSystem().getIdentifier("config_handleVolumeKeysInWindowManager",
+                        "bool", "android"));
         mKeyLayout = nativeLoadKeyLayout(mParser.readRegisterCommand(R.raw.Generic));
         mUinputDevice = new UinputDevice(mInstrumentation, DEVICE_ID, GOOGLE_VENDOR_ID,
                 GOOGLE_VIRTUAL_KEYBOARD_ID, InputDevice.SOURCE_KEYBOARD,
@@ -215,6 +225,30 @@ public class InputDeviceKeyLayoutMapTest {
         mUinputDevice.injectEvents(Arrays.toString(evCodesUp));
     }
 
+    /**
+     * Whether one key code is a volume key code.
+     * @param keyCode The key code
+     */
+    private static boolean isVolumeKey(int keyCode) {
+        return keyCode == KeyEvent.KEYCODE_VOLUME_UP
+                || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+                || keyCode == KeyEvent.KEYCODE_VOLUME_MUTE;
+    }
+
+    /**
+     * Whether one key code should be forwarded to apps.
+     * @param keyCode The key code
+     */
+    private boolean isForwardedToApps(int keyCode) {
+        if (mWindowManager.isGlobalKey(keyCode)) {
+            return false;
+        }
+        if (isVolumeKey(keyCode) && (mIsLeanback || mVolumeKeysHandledInWindowManager)) {
+            return false;
+        }
+        return true;
+    }
+
     @Test
     public void testLayoutKeyEvents() {
         for (Map.Entry<String, Integer> entry : mKeyLayout.entrySet()) {
@@ -226,7 +260,7 @@ public class InputDeviceKeyLayoutMapTest {
             final int evKey = entry.getValue();
             final int keyCode = KeyEvent.keyCodeFromString(label);
 
-            if (mWindowManager.isGlobalKey(keyCode)) {
+            if (!isForwardedToApps(keyCode)) {
                 continue;
             }
 

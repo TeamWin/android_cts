@@ -95,13 +95,14 @@ template void flattenField<int32_t>(uint8_t* buffer, int* pos, int32_t value);
 template void flattenField<int64_t>(uint8_t* buffer, int* pos, int64_t value);
 
 bool isFormatSimilar(AMediaFormat* refFormat, AMediaFormat* testFormat) {
-    const char *refMime = nullptr, *testMime = nullptr;
+    const char *refMediaType = nullptr, *testMediaType = nullptr;
     int64_t refKeyDuration, testKeyDuration;
-    bool hasRefMime = AMediaFormat_getString(refFormat, AMEDIAFORMAT_KEY_MIME, &refMime);
-    if (!hasRefMime) return false;
-    bool hasTestMime = AMediaFormat_getString(testFormat, AMEDIAFORMAT_KEY_MIME, &testMime);
-    if (!hasTestMime) return false;
-    if (strcmp(refMime, testMime) != 0) return false;
+    bool hasRefMediaType = AMediaFormat_getString(refFormat, AMEDIAFORMAT_KEY_MIME, &refMediaType);
+    if (!hasRefMediaType) return false;
+    bool hasTestMediaType =
+            AMediaFormat_getString(testFormat, AMEDIAFORMAT_KEY_MIME, &testMediaType);
+    if (!hasTestMediaType) return false;
+    if (strcmp(refMediaType, testMediaType) != 0) return false;
     bool hasRefKeyDuration =
             AMediaFormat_getInt64(refFormat, AMEDIAFORMAT_KEY_DURATION, &refKeyDuration);
     if (!hasRefKeyDuration) return false;
@@ -109,13 +110,13 @@ bool isFormatSimilar(AMediaFormat* refFormat, AMediaFormat* testFormat) {
             AMediaFormat_getInt64(testFormat, AMEDIAFORMAT_KEY_DURATION, &testKeyDuration);
     if (!hasTestKeyDuration) return false;
     if (refKeyDuration != testKeyDuration) {
-        ALOGW("Duration mismatches ref / test = %lld / %lld", (long long) refKeyDuration,
-              (long long) testKeyDuration);
+        ALOGW("Duration mismatches ref / test = %lld / %lld", (long long)refKeyDuration,
+              (long long)testKeyDuration);
         // TODO (b/163477410)(b/163478168)
 //        return false;
     }
     if (!isCSDIdentical(refFormat, testFormat)) return false;
-    if (!strncmp(refMime, "audio/", strlen("audio/"))) {
+    if (!strncmp(refMediaType, "audio/", strlen("audio/"))) {
         int32_t refSampleRate, testSampleRate, refNumChannels, testNumChannels;
         bool hasRefSampleRate =
                 AMediaFormat_getInt32(refFormat, AMEDIAFORMAT_KEY_SAMPLE_RATE, &refSampleRate);
@@ -123,7 +124,7 @@ bool isFormatSimilar(AMediaFormat* refFormat, AMediaFormat* testFormat) {
         bool hasTestSampleRate =
                 AMediaFormat_getInt32(testFormat, AMEDIAFORMAT_KEY_SAMPLE_RATE, &testSampleRate);
         if (!hasTestSampleRate) return false;
-        if (refSampleRate != testSampleRate)return false;
+        if (refSampleRate != testSampleRate) return false;
         bool hasRefNumChannels =
                 AMediaFormat_getInt32(refFormat, AMEDIAFORMAT_KEY_CHANNEL_COUNT, &refNumChannels);
         if (!hasRefNumChannels) return false;
@@ -131,7 +132,7 @@ bool isFormatSimilar(AMediaFormat* refFormat, AMediaFormat* testFormat) {
                 AMediaFormat_getInt32(testFormat, AMEDIAFORMAT_KEY_CHANNEL_COUNT, &testNumChannels);
         if (!hasTestNumChannels) return false;
         if (refNumChannels != testNumChannels) return false;
-    } else if (!strncmp(refMime, "video/", strlen("video/"))) {
+    } else if (!strncmp(refMediaType, "video/", strlen("video/"))) {
         int32_t refWidth, testWidth, refHeight, testHeight;
         bool hasRefWidth = AMediaFormat_getInt32(refFormat, AMEDIAFORMAT_KEY_WIDTH, &refWidth);
         if (!hasRefWidth) return false;

@@ -59,7 +59,7 @@ class CodecDecoderTest final : public CodecTestBase {
                         OutputManager* ref, int64_t pts, SeekMode mode);
 
   public:
-    explicit CodecDecoderTest(const char* mime, ANativeWindow* window);
+    explicit CodecDecoderTest(const char* mediaType, ANativeWindow* window);
     ~CodecDecoderTest();
 
     bool testSimpleDecode(const char* decoder, const char* testFile, const char* refFile,
@@ -69,8 +69,8 @@ class CodecDecoderTest final : public CodecTestBase {
     bool testSimpleDecodeQueueCSD(const char* decoder, const char* testFile, int colorFormat);
 };
 
-CodecDecoderTest::CodecDecoderTest(const char* mime, ANativeWindow* window)
-    : CodecTestBase(mime),
+CodecDecoderTest::CodecDecoderTest(const char* mediaType, ANativeWindow* window)
+    : CodecTestBase(mediaType),
       mRefData(nullptr),
       mRefLength(0),
       mExtractor(nullptr),
@@ -125,9 +125,9 @@ bool CodecDecoderTest::setUpExtractor(const char* srcFile, int colorFormat) {
             for (size_t trackID = 0; trackID < AMediaExtractor_getTrackCount(mExtractor);
                  trackID++) {
                 AMediaFormat* currFormat = AMediaExtractor_getTrackFormat(mExtractor, trackID);
-                const char* mime = nullptr;
-                AMediaFormat_getString(currFormat, AMEDIAFORMAT_KEY_MIME, &mime);
-                if (mime && strcmp(mMime, mime) == 0) {
+                const char* mediaType = nullptr;
+                AMediaFormat_getString(currFormat, AMEDIAFORMAT_KEY_MIME, &mediaType);
+                if (mediaType && strcmp(mMediaType, mediaType) == 0) {
                     AMediaExtractor_selectTrack(mExtractor, trackID);
                     if (!mIsAudio) {
                         AMediaFormat_setInt32(currFormat, AMEDIAFORMAT_KEY_COLOR_FORMAT,
@@ -144,7 +144,8 @@ bool CodecDecoderTest::setUpExtractor(const char* srcFile, int colorFormat) {
     }
     if (fp) fclose(fp);
     RETURN_IF_NULL(mInpDecFormat,
-                   StringFormat("No track with media type %s found in file: %s", mMime, srcFile))
+                   StringFormat("No track with media type %s found in file: %s", mMediaType,
+                                srcFile))
     return true;
 }
 
@@ -484,7 +485,7 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile, int 
         if (!doWork(INT32_MAX)) return false;
         if (!queueEOS()) return false;
         if (!waitForAllOutputs()) return false;
-        RETURN_IF_TRUE(isMediaTypeOutputUnAffectedBySeek(mMime) && !ref->equals(test),
+        RETURN_IF_TRUE(isMediaTypeOutputUnAffectedBySeek(mMediaType) && !ref->equals(test),
                        std::string{"Decoder output is not consistent across runs \n"}.append(
                                test->getErrorMsg()))
 
@@ -501,7 +502,7 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile, int 
         RETURN_IF_FAIL(AMediaCodec_stop(mCodec), "AMediaCodec_stop failed")
         RETURN_IF_FAIL(AMediaCodec_delete(mCodec), "AMediaCodec_delete failed")
         mCodec = nullptr;
-        RETURN_IF_TRUE(isMediaTypeOutputUnAffectedBySeek(mMime) && !ref->equals(test),
+        RETURN_IF_TRUE(isMediaTypeOutputUnAffectedBySeek(mMediaType) && !ref->equals(test),
                        std::string{"Decoder output is not consistent across runs \n"}.append(
                                test->getErrorMsg()))
         if (validateFormat && !isOutputFormatOk(mInpDecFormat)) {
@@ -612,17 +613,17 @@ bool CodecDecoderTest::testSimpleDecodeQueueCSD(const char* decoder, const char*
 }
 
 jboolean nativeTestSimpleDecode(JNIEnv* env, jobject, jstring jDecoder, jobject surface,
-                                jstring jMime, jstring jtestFile, jstring jrefFile,
+                                jstring jMediaType, jstring jtestFile, jstring jrefFile,
                                 jint jColorFormat, jfloat jrmsError, jlong jChecksum,
                                 jobject jRetMsg) {
     const char* cDecoder = env->GetStringUTFChars(jDecoder, nullptr);
-    const char* cMime = env->GetStringUTFChars(jMime, nullptr);
+    const char* cMediaType = env->GetStringUTFChars(jMediaType, nullptr);
     const char* cTestFile = env->GetStringUTFChars(jtestFile, nullptr);
     const char* cRefFile = env->GetStringUTFChars(jrefFile, nullptr);
     float cRmsError = jrmsError;
     uLong cChecksum = jChecksum;
     ANativeWindow* window = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
-    auto* codecDecoderTest = new CodecDecoderTest(cMime, window);
+    auto* codecDecoderTest = new CodecDecoderTest(cMediaType, window);
     bool isPass = codecDecoderTest->testSimpleDecode(cDecoder, cTestFile, cRefFile, jColorFormat,
                                                      cRmsError, cChecksum);
     std::string msg = isPass ? std::string{} : codecDecoderTest->getErrorMsg();
@@ -636,18 +637,18 @@ jboolean nativeTestSimpleDecode(JNIEnv* env, jobject, jstring jDecoder, jobject 
         window = nullptr;
     }
     env->ReleaseStringUTFChars(jDecoder, cDecoder);
-    env->ReleaseStringUTFChars(jMime, cMime);
+    env->ReleaseStringUTFChars(jMediaType, cMediaType);
     env->ReleaseStringUTFChars(jtestFile, cTestFile);
     env->ReleaseStringUTFChars(jrefFile, cRefFile);
     return static_cast<jboolean>(isPass);
 }
 
-jboolean nativeTestOnlyEos(JNIEnv* env, jobject, jstring jDecoder, jstring jMime, jstring jtestFile,
-                           jint jColorFormat, jobject jRetMsg) {
+jboolean nativeTestOnlyEos(JNIEnv* env, jobject, jstring jDecoder, jstring jMediaType,
+                           jstring jtestFile, jint jColorFormat, jobject jRetMsg) {
     const char* cDecoder = env->GetStringUTFChars(jDecoder, nullptr);
-    const char* cMime = env->GetStringUTFChars(jMime, nullptr);
+    const char* cMediaType = env->GetStringUTFChars(jMediaType, nullptr);
     const char* cTestFile = env->GetStringUTFChars(jtestFile, nullptr);
-    auto* codecDecoderTest = new CodecDecoderTest(cMime, nullptr);
+    auto* codecDecoderTest = new CodecDecoderTest(cMediaType, nullptr);
     bool isPass = codecDecoderTest->testOnlyEos(cDecoder, cTestFile, jColorFormat);
     std::string msg = isPass ? std::string{} : codecDecoderTest->getErrorMsg();
     delete codecDecoderTest;
@@ -656,18 +657,19 @@ jboolean nativeTestOnlyEos(JNIEnv* env, jobject, jstring jDecoder, jstring jMime
             env->GetMethodID(clazz, "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
     env->CallObjectMethod(jRetMsg, mId, env->NewStringUTF(msg.c_str()));
     env->ReleaseStringUTFChars(jDecoder, cDecoder);
-    env->ReleaseStringUTFChars(jMime, cMime);
+    env->ReleaseStringUTFChars(jMediaType, cMediaType);
     env->ReleaseStringUTFChars(jtestFile, cTestFile);
     return static_cast<jboolean>(isPass);
 }
 
-jboolean nativeTestFlush(JNIEnv* env, jobject, jstring jDecoder, jobject surface, jstring jMime,
-                         jstring jtestFile, jint jColorFormat, jobject jRetMsg) {
+jboolean nativeTestFlush(JNIEnv* env, jobject, jstring jDecoder, jobject surface,
+                         jstring jMediaType, jstring jtestFile, jint jColorFormat,
+                         jobject jRetMsg) {
     const char* cDecoder = env->GetStringUTFChars(jDecoder, nullptr);
-    const char* cMime = env->GetStringUTFChars(jMime, nullptr);
+    const char* cMediaType = env->GetStringUTFChars(jMediaType, nullptr);
     const char* cTestFile = env->GetStringUTFChars(jtestFile, nullptr);
     ANativeWindow* window = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
-    auto* codecDecoderTest = new CodecDecoderTest(cMime, window);
+    auto* codecDecoderTest = new CodecDecoderTest(cMediaType, window);
     bool isPass = codecDecoderTest->testFlush(cDecoder, cTestFile, jColorFormat);
     std::string msg = isPass ? std::string{} : codecDecoderTest->getErrorMsg();
     delete codecDecoderTest;
@@ -680,17 +682,17 @@ jboolean nativeTestFlush(JNIEnv* env, jobject, jstring jDecoder, jobject surface
         window = nullptr;
     }
     env->ReleaseStringUTFChars(jDecoder, cDecoder);
-    env->ReleaseStringUTFChars(jMime, cMime);
+    env->ReleaseStringUTFChars(jMediaType, cMediaType);
     env->ReleaseStringUTFChars(jtestFile, cTestFile);
     return static_cast<jboolean>(isPass);
 }
 
-jboolean nativeTestSimpleDecodeQueueCSD(JNIEnv* env, jobject, jstring jDecoder, jstring jMime,
+jboolean nativeTestSimpleDecodeQueueCSD(JNIEnv* env, jobject, jstring jDecoder, jstring jMediaType,
                                         jstring jtestFile, jint jColorFormat, jobject jRetMsg) {
     const char* cDecoder = env->GetStringUTFChars(jDecoder, nullptr);
-    const char* cMime = env->GetStringUTFChars(jMime, nullptr);
+    const char* cMediaType = env->GetStringUTFChars(jMediaType, nullptr);
     const char* cTestFile = env->GetStringUTFChars(jtestFile, nullptr);
-    auto codecDecoderTest = new CodecDecoderTest(cMime, nullptr);
+    auto codecDecoderTest = new CodecDecoderTest(cMediaType, nullptr);
     bool isPass = codecDecoderTest->testSimpleDecodeQueueCSD(cDecoder, cTestFile, jColorFormat);
     std::string msg = isPass ? std::string{} : codecDecoderTest->getErrorMsg();
     delete codecDecoderTest;
@@ -699,7 +701,7 @@ jboolean nativeTestSimpleDecodeQueueCSD(JNIEnv* env, jobject, jstring jDecoder, 
             env->GetMethodID(clazz, "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
     env->CallObjectMethod(jRetMsg, mId, env->NewStringUTF(msg.c_str()));
     env->ReleaseStringUTFChars(jDecoder, cDecoder);
-    env->ReleaseStringUTFChars(jMime, cMime);
+    env->ReleaseStringUTFChars(jMediaType, cMediaType);
     env->ReleaseStringUTFChars(jtestFile, cTestFile);
     return static_cast<jboolean>(isPass);
 }

@@ -47,6 +47,9 @@
   <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
     <option name="run-command" value="cmd autofill set bind-instant-service-allowed true" />
     <option name="teardown-command" value="cmd autofill set bind-instant-service-allowed false" />
+
+    <!-- Wait for PACKAGE_ADDED broadcasts to be delivered to InputMethodManagerService. -->
+    <option name="run-command" value="am wait-for-broadcast-barrier"  />
   </target_preparer>
 
   <!--  Remove the pushed APK after test is done. -->

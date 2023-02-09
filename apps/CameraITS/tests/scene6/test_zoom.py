@@ -32,8 +32,6 @@ import opencv_processing_utils
 _CIRCLE_COLOR = 0  # [0: black, 255: white]
 _CIRCLE_AR_RTOL = 0.15  # contour width vs height (aspect ratio)
 _CIRCLISH_RTOL = 0.05  # contour area vs ideal circle area pi*((w+h)/4)**2
-_LINE_COLOR = (255, 0, 0)  # red
-_LINE_THICKNESS = 5
 _MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
 _MIN_CIRCLE_PTS = 25
 _MIN_FOCUS_DIST_TOL = 0.80  # allow charts a little closer than min
@@ -104,100 +102,6 @@ def get_test_tols_and_cap_size(cam, props, chart_distance, debug):
   return test_tols, max(common_sizes)
 
 
-def circle_cropped(circle, size):
-  """Determine if a circle is cropped by edge of img.
-
-  Args:
-    circle:  list [x, y, radius] of circle
-    size:    tuple (x, y) of size of img
-
-  Returns:
-    Boolean True if selected circle is cropped
-  """
-
-  cropped = False
-  circle_x, circle_y = circle[0], circle[1]
-  circle_r = circle[2]
-  x_min, x_max = circle_x - circle_r, circle_x + circle_r
-  y_min, y_max = circle_y - circle_r, circle_y + circle_r
-  if x_min < 0 or y_min < 0 or x_max > size[0] or y_max > size[1]:
-    cropped = True
-  return cropped
-
-
-def find_center_circle(img, img_name, color, min_area, debug):
-  """Find the circle closest to the center of the image.
-
-  Finds all contours in the image. Rejects those too small and not enough
-  points to qualify as a circle. The remaining contours must have center
-  point of color=color and are sorted based on distance from the center
-  of the image. The contour closest to the center of the image is returned.
-
-  Note: hierarchy is not used as the hierarchy for black circles changes
-  as the zoom level changes.
-
-  Args:
-    img:       numpy img array with pixel values in [0,255].
-    img_name:  str file name for saved image
-    color:     int 0 --> black, 255 --> white
-    min_area:  int minimum area of circles to screen out
-    debug:     bool to save extra data
-
-  Returns:
-    circle:    [center_x, center_y, radius]
-  """
-
-  # gray scale & otsu threshold to binarize the image
-  gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-  _, img_bw = cv2.threshold(
-      np.uint8(gray), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-  # use OpenCV to find contours (connected components)
-  contours = opencv_processing_utils.find_all_contours(255-img_bw)
-
-  # check contours and find the best circle candidates
-  circles = []
-  img_ctr = [gray.shape[1] // 2, gray.shape[0] // 2]
-  for contour in contours:
-    area = cv2.contourArea(contour)
-    if area > min_area and len(contour) >= _MIN_CIRCLE_PTS:
-      shape = opencv_processing_utils.component_shape(contour)
-      radius = (shape['width'] + shape['height']) / 4
-      colour = img_bw[shape['cty']][shape['ctx']]
-      circlish = round((math.pi * radius**2) / area, 4)
-      if (colour == color and
-          (1 - _CIRCLISH_RTOL <= circlish <= 1 + _CIRCLISH_RTOL) and
-          math.isclose(shape['width'], shape['height'],
-                       rel_tol=_CIRCLE_AR_RTOL)):
-        circles.append([shape['ctx'], shape['cty'], radius, circlish, area])
-
-  if not circles:
-    raise AssertionError('No circle was detected. Please take pictures '
-                         'according to instructions carefully!')
-
-  if debug:
-    logging.debug('circles [x, y, r, pi*r**2/area, area]: %s', str(circles))
-
-  # find circle closest to center
-  circles.sort(key=lambda x: math.hypot(x[0] - img_ctr[0], x[1] - img_ctr[1]))
-  circle = circles[0]
-
-  # mark image center
-  size = gray.shape
-  m_x, m_y = size[1] // 2, size[0] // 2
-  marker_size = _LINE_THICKNESS * 10
-  cv2.drawMarker(img, (m_x, m_y), _LINE_COLOR, markerType=cv2.MARKER_CROSS,
-                 markerSize=marker_size, thickness=_LINE_THICKNESS)
-
-  # add circle to saved image
-  center_i = (int(round(circle[0], 0)), int(round(circle[1], 0)))
-  radius_i = int(round(circle[2], 0))
-  cv2.circle(img, center_i, radius_i, _LINE_COLOR, _LINE_THICKNESS)
-  image_processing_utils.write_image(img / 255.0, img_name)
-
-  return [circle[0], circle[1], circle[2]]
-
-
 class ZoomTest(its_base_test.ItsBaseTest):
   """Test the camera zoom behavior.
   """
@@ -257,17 +161,17 @@ class ZoomTest(its_base_test.ItsBaseTest):
         cap_fl = cap['metadata']['android.lens.focalLength']
         radius_tol, offset_tol = test_tols[cap_fl]
 
-        # convert to [0, 255] images with unsigned integer
-        img *= 255
-        img = img.astype(np.uint8)
+        # convert [0, 1] image to [0, 255] and cast as uint8
+        img = image_processing_utils.convert_image_to_uint8(img)
 
         # Find the center circle in img
         try:
-          circle = find_center_circle(
-              img, img_name, _CIRCLE_COLOR,
+          circle = opencv_processing_utils.find_center_circle(
+              img, img_name, _CIRCLE_COLOR, circle_ar_rtol=_CIRCLE_AR_RTOL,
+              circlish_rtol=_CIRCLISH_RTOL,
               min_area=_MIN_AREA_RATIO * size[0] * size[1] * z * z,
-              debug=debug)
-          if circle_cropped(circle, size):
+              min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
+          if opencv_processing_utils.is_circle_cropped(circle, size):
             logging.debug('zoom %.2f is too large! Skip further captures', z)
             break
         except AssertionError as e:

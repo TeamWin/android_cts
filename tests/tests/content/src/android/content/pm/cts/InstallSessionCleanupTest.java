@@ -16,6 +16,8 @@
 
 package android.content.pm.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
@@ -24,7 +26,7 @@ import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.By;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.UiAutomatorUtils;
@@ -33,7 +35,6 @@ import com.android.cts.install.lib.TestApp;
 import com.android.cts.install.lib.Uninstall;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -87,20 +88,20 @@ public class InstallSessionCleanupTest {
     public void testSessionsDeletedOnInstallerUninstalled() throws Exception {
         adoptShellPermissions();
         Install.single(INSTALLER_APP).commit();
-        Assert.assertEquals(0, getNumSessions(INSTALLER_APP_PACKAGE_NAME));
+        assertThat(getNumSessions(INSTALLER_APP_PACKAGE_NAME)).isEqualTo(0);
         final Intent intent = mPackageManager.getLaunchIntentForPackage(INSTALLER_APP_PACKAGE_NAME);
         intent.putExtra("numSessions", NUM_NEW_SESSIONS);
 
         InstrumentationRegistry
                 .getInstrumentation().getContext().startActivity(intent);
         UiAutomatorUtils.waitFindObject(By.pkg(INSTALLER_APP_PACKAGE_NAME).depth(0));
-        Assert.assertEquals(NUM_NEW_SESSIONS, getNumSessions(INSTALLER_APP_PACKAGE_NAME));
+        assertThat(getNumSessions(INSTALLER_APP_PACKAGE_NAME)).isEqualTo(NUM_NEW_SESSIONS);
         Uninstall.packages(INSTALLER_APP_PACKAGE_NAME);
         // Due to the asynchronous nature of abandoning sessions, sessions don't get deleted
         // immediately after they are abandoned. Briefly wait until all sessions are cleared.
         mCheckSessions = true;
         mCheckSessionsThread.start();
-        Assert.assertTrue(mSessionsCleared.get(1, TimeUnit.SECONDS));
+        assertThat(mSessionsCleared.get(1, TimeUnit.SECONDS)).isTrue();
         dropShellPermissions();
     }
 

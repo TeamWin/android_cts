@@ -127,7 +127,7 @@ public abstract class CodecTestBase {
     public static final String CODEC_PREFIX_KEY = "codec-prefix";
     public static final String MEDIA_TYPE_PREFIX_KEY = "media-type-prefix";
     public static final String MEDIA_TYPE_SEL_KEY = "media-type-sel";
-    public static final Map<String, String> CODEC_SEL_KEY_MIME_MAP = new HashMap<>();
+    public static final Map<String, String> CODEC_SEL_KEY_MEDIA_TYPE_MAP = new HashMap<>();
     public static final Map<String, String> DEFAULT_ENCODERS = new HashMap<>();
     public static final Map<String, String> DEFAULT_DECODERS = new HashMap<>();
     public static final HashMap<String, int[]> PROFILE_MAP = new HashMap<>();
@@ -281,26 +281,26 @@ public abstract class CodecTestBase {
         MEDIA_CODEC_LIST_ALL = new MediaCodecList(MediaCodecList.ALL_CODECS);
         MEDIA_CODEC_LIST_REGULAR = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         IS_HDR_EDITING_SUPPORTED = isHDREditingSupported();
-        CODEC_SEL_KEY_MIME_MAP.put("vp8", MediaFormat.MIMETYPE_VIDEO_VP8);
-        CODEC_SEL_KEY_MIME_MAP.put("vp9", MediaFormat.MIMETYPE_VIDEO_VP9);
-        CODEC_SEL_KEY_MIME_MAP.put("av1", MediaFormat.MIMETYPE_VIDEO_AV1);
-        CODEC_SEL_KEY_MIME_MAP.put("avc", MediaFormat.MIMETYPE_VIDEO_AVC);
-        CODEC_SEL_KEY_MIME_MAP.put("hevc", MediaFormat.MIMETYPE_VIDEO_HEVC);
-        CODEC_SEL_KEY_MIME_MAP.put("mpeg4", MediaFormat.MIMETYPE_VIDEO_MPEG4);
-        CODEC_SEL_KEY_MIME_MAP.put("h263", MediaFormat.MIMETYPE_VIDEO_H263);
-        CODEC_SEL_KEY_MIME_MAP.put("mpeg2", MediaFormat.MIMETYPE_VIDEO_MPEG2);
-        CODEC_SEL_KEY_MIME_MAP.put("vraw", MediaFormat.MIMETYPE_VIDEO_RAW);
-        CODEC_SEL_KEY_MIME_MAP.put("amrnb", MediaFormat.MIMETYPE_AUDIO_AMR_NB);
-        CODEC_SEL_KEY_MIME_MAP.put("amrwb", MediaFormat.MIMETYPE_AUDIO_AMR_WB);
-        CODEC_SEL_KEY_MIME_MAP.put("mp3", MediaFormat.MIMETYPE_AUDIO_MPEG);
-        CODEC_SEL_KEY_MIME_MAP.put("aac", MediaFormat.MIMETYPE_AUDIO_AAC);
-        CODEC_SEL_KEY_MIME_MAP.put("vorbis", MediaFormat.MIMETYPE_AUDIO_VORBIS);
-        CODEC_SEL_KEY_MIME_MAP.put("opus", MediaFormat.MIMETYPE_AUDIO_OPUS);
-        CODEC_SEL_KEY_MIME_MAP.put("g711alaw", MediaFormat.MIMETYPE_AUDIO_G711_ALAW);
-        CODEC_SEL_KEY_MIME_MAP.put("g711mlaw", MediaFormat.MIMETYPE_AUDIO_G711_MLAW);
-        CODEC_SEL_KEY_MIME_MAP.put("araw", MediaFormat.MIMETYPE_AUDIO_RAW);
-        CODEC_SEL_KEY_MIME_MAP.put("flac", MediaFormat.MIMETYPE_AUDIO_FLAC);
-        CODEC_SEL_KEY_MIME_MAP.put("gsm", MediaFormat.MIMETYPE_AUDIO_MSGSM);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("vp8", MediaFormat.MIMETYPE_VIDEO_VP8);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("vp9", MediaFormat.MIMETYPE_VIDEO_VP9);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("av1", MediaFormat.MIMETYPE_VIDEO_AV1);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("avc", MediaFormat.MIMETYPE_VIDEO_AVC);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("hevc", MediaFormat.MIMETYPE_VIDEO_HEVC);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("mpeg4", MediaFormat.MIMETYPE_VIDEO_MPEG4);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("h263", MediaFormat.MIMETYPE_VIDEO_H263);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("mpeg2", MediaFormat.MIMETYPE_VIDEO_MPEG2);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("vraw", MediaFormat.MIMETYPE_VIDEO_RAW);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("amrnb", MediaFormat.MIMETYPE_AUDIO_AMR_NB);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("amrwb", MediaFormat.MIMETYPE_AUDIO_AMR_WB);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("mp3", MediaFormat.MIMETYPE_AUDIO_MPEG);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("aac", MediaFormat.MIMETYPE_AUDIO_AAC);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("vorbis", MediaFormat.MIMETYPE_AUDIO_VORBIS);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("opus", MediaFormat.MIMETYPE_AUDIO_OPUS);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("g711alaw", MediaFormat.MIMETYPE_AUDIO_G711_ALAW);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("g711mlaw", MediaFormat.MIMETYPE_AUDIO_G711_MLAW);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("araw", MediaFormat.MIMETYPE_AUDIO_RAW);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("flac", MediaFormat.MIMETYPE_AUDIO_FLAC);
+        CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("gsm", MediaFormat.MIMETYPE_AUDIO_MSGSM);
 
         android.os.Bundle args = InstrumentationRegistry.getArguments();
         mediaTypeSelKeys = args.getString(MEDIA_TYPE_SEL_KEY);
@@ -750,7 +750,7 @@ public abstract class CodecTestBase {
                 }
             }
         } else {
-            for (Map.Entry<String, String> entry : CODEC_SEL_KEY_MIME_MAP.entrySet()) {
+            for (Map.Entry<String, String> entry : CODEC_SEL_KEY_MEDIA_TYPE_MAP.entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
                 if (mediaTypeSelKeys.contains(key) && !mediaTypes.contains(value)) {

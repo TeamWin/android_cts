@@ -56,6 +56,7 @@ public class BluetoothLeBroadcastMetadataTest {
     private static final int TEST_ADVERTISER_SID = 1234;
     private static final int TEST_PA_SYNC_INTERVAL = 100;
     private static final int TEST_PRESENTATION_DELAY_MS = 345;
+    private static final String TEST_BROADCAST_NAME = "TEST";
 
     private static final int TEST_CODEC_ID = 42;
     private static final BluetoothLeBroadcastChannel[] TEST_CHANNELS = {
@@ -128,6 +129,8 @@ public class BluetoothLeBroadcastMetadataTest {
                 mAdapter.getRemoteLeDevice(TEST_MAC_ADDRESS, BluetoothDevice.ADDRESS_TYPE_RANDOM);
         BluetoothLeBroadcastMetadata.Builder builder = new BluetoothLeBroadcastMetadata.Builder()
                         .setEncrypted(false)
+                        .setPublicBroadcast(false)
+                        .setBroadcastName(TEST_BROADCAST_NAME)
                         .setSourceDevice(testDevice, BluetoothDevice.ADDRESS_TYPE_RANDOM)
                         .setSourceAdvertisingSid(TEST_ADVERTISER_SID)
                         .setBroadcastId(TEST_BROADCAST_ID)
@@ -144,6 +147,8 @@ public class BluetoothLeBroadcastMetadataTest {
         }
         BluetoothLeBroadcastMetadata metadata = builder.build();
         assertFalse(metadata.isEncrypted());
+        assertFalse(metadata.isPublicBroadcast());
+        assertEquals(TEST_BROADCAST_NAME, metadata.getBroadcastName());
         assertEquals(testDevice, metadata.getSourceDevice());
         assertEquals(BluetoothDevice.ADDRESS_TYPE_RANDOM, metadata.getSourceAddressType());
         assertEquals(TEST_ADVERTISER_SID, metadata.getSourceAdvertisingSid());
@@ -167,6 +172,8 @@ public class BluetoothLeBroadcastMetadataTest {
                 mAdapter.getRemoteLeDevice(TEST_MAC_ADDRESS, BluetoothDevice.ADDRESS_TYPE_RANDOM);
         BluetoothLeBroadcastMetadata.Builder builder = new BluetoothLeBroadcastMetadata.Builder()
                 .setEncrypted(false)
+                .setPublicBroadcast(false)
+                .setBroadcastName(TEST_BROADCAST_NAME)
                 .setSourceDevice(testDevice, BluetoothDevice.ADDRESS_TYPE_RANDOM)
                 .setSourceAdvertisingSid(TEST_ADVERTISER_SID)
                 .setBroadcastId(TEST_BROADCAST_ID)
@@ -185,6 +192,8 @@ public class BluetoothLeBroadcastMetadataTest {
         BluetoothLeBroadcastMetadata metadataCopy =
                 new BluetoothLeBroadcastMetadata.Builder(metadata).build();
         assertFalse(metadataCopy.isEncrypted());
+        assertFalse(metadataCopy.isPublicBroadcast());
+        assertEquals(TEST_BROADCAST_NAME, metadataCopy.getBroadcastName());
         assertEquals(testDevice, metadataCopy.getSourceDevice());
         assertEquals(BluetoothDevice.ADDRESS_TYPE_RANDOM, metadataCopy.getSourceAddressType());
         assertEquals(TEST_ADVERTISER_SID, metadataCopy.getSourceAdvertisingSid());

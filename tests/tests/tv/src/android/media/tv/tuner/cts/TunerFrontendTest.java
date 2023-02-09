@@ -47,6 +47,7 @@ import android.media.tv.tuner.frontend.DvbtFrontendSettings;
 import android.media.tv.tuner.frontend.FrontendCapabilities;
 import android.media.tv.tuner.frontend.FrontendInfo;
 import android.media.tv.tuner.frontend.FrontendSettings;
+import android.media.tv.tuner.frontend.IptvFrontendCapabilities;
 import android.media.tv.tuner.frontend.IptvFrontendSettings;
 import android.media.tv.tuner.frontend.IptvFrontendSettingsFec;
 import android.media.tv.tuner.frontend.Isdbs3FrontendCapabilities;
@@ -1173,6 +1174,8 @@ public class TunerFrontendTest {
                 case FrontendSettings.TYPE_DTMB:
                     testDtmbFrontendCapabilities(caps);
                     break;
+                case FrontendSettings.TYPE_IPTV:
+                    testIptvFrontendCapabilities(caps);
                 default:
                     break;
             }
@@ -1272,6 +1275,12 @@ public class TunerFrontendTest {
         dtmbCaps.getCodeRateCapability();
         dtmbCaps.getTransmissionModeCapability();
         dtmbCaps.getGuardIntervalCapability();
+    }
+
+    private void testIptvFrontendCapabilities(FrontendCapabilities caps) throws Exception {
+        assertTrue(caps instanceof IptvFrontendCapabilities);
+        IptvFrontendCapabilities iptvCaps = (IptvFrontendCapabilities) caps;
+        iptvCaps.getProtocolCapability();
     }
 
     private boolean hasTuner() {

@@ -65,7 +65,7 @@ class CodecEncoderTest final : public CodecTestBase {
     void updateBitrate(AMediaFormat* format, int bitrate);
 
   public:
-    CodecEncoderTest(const char* mime, const char* cfgParams, const char* cfgReconfigParams,
+    CodecEncoderTest(const char* mediaType, const char* cfgParams, const char* cfgReconfigParams,
                      const char* separator);
     ~CodecEncoderTest();
 
@@ -76,9 +76,9 @@ class CodecEncoderTest final : public CodecTestBase {
     bool testOnlyEos(const char* encoder);
 };
 
-CodecEncoderTest::CodecEncoderTest(const char* mime, const char* cfgParams,
+CodecEncoderTest::CodecEncoderTest(const char* mediaType, const char* cfgParams,
                                    const char* cfgReconfigParams, const char* separator)
-    : CodecTestBase(mime) {
+    : CodecTestBase(mediaType) {
     mFormats.push_back(deSerializeMediaFormat(cfgParams, separator));
     if (cfgReconfigParams) {
         mFormats.push_back(deSerializeMediaFormat(cfgReconfigParams, separator));
@@ -508,8 +508,7 @@ bool CodecEncoderTest::testOnlyEos(const char* encoder) {
     auto test = mTestBuff;
     const bool boolStates[]{true, false};
     AMediaFormat* format = mFormats[0];
-    RETURN_IF_NULL(format,
-                   std::string{"encountered error during deserialization of media format"})
+    RETURN_IF_NULL(format, std::string{"encountered error during deserialization of media format"})
     int loopCounter = 0;
     for (auto isAsync : boolStates) {
         mOutputBuff = loopCounter == 0 ? ref : test;
@@ -538,13 +537,12 @@ bool CodecEncoderTest::testSetForceSyncFrame(const char* encoder, const char* sr
     setUpSource(srcPath);
     RETURN_IF_NULL(mInputData, StringFormat("unable to open input file %s", srcPath))
     AMediaFormat* format = mFormats[0];
-    RETURN_IF_NULL(format,
-                   std::string{"encountered error during deserialization of media format"})
+    RETURN_IF_NULL(format, std::string{"encountered error during deserialization of media format"})
     RETURN_IF_FALSE(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_FRAME_RATE, &mDefFrameRate),
                     StringFormat("format does not have key %s", AMEDIAFORMAT_KEY_FRAME_RATE))
     // Maximum allowed key frame interval variation from the target value.
     int kMaxKeyFrameIntervalVariation = 3;
-    int kKeyFrameInterval = 2;  // force key frame every 2 seconds.
+    int kKeyFrameInterval = 2; // force key frame every 2 seconds.
     int kKeyFramePos = mDefFrameRate * kKeyFrameInterval;
     int kNumKeyFrameRequests = 7;
     AMediaFormat* params = AMediaFormat_new();
@@ -602,11 +600,10 @@ bool CodecEncoderTest::testAdaptiveBitRate(const char* encoder, const char* srcP
     setUpSource(srcPath);
     RETURN_IF_NULL(mInputData, StringFormat("unable to open input file %s", srcPath))
     AMediaFormat* format = mFormats[0];
-    RETURN_IF_NULL(format,
-                   std::string{"encountered error during deserialization of media format"})
+    RETURN_IF_NULL(format, std::string{"encountered error during deserialization of media format"})
     RETURN_IF_FALSE(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_FRAME_RATE, &mDefFrameRate),
                     StringFormat("format does not have key %s", AMEDIAFORMAT_KEY_FRAME_RATE))
-    int kAdaptiveBitrateInterval = 3;  // change bitrate every 3 seconds.
+    int kAdaptiveBitrateInterval = 3; // change bitrate every 3 seconds.
     int kAdaptiveBitrateDurationFrame = mDefFrameRate * kAdaptiveBitrateInterval;
     int kBitrateChangeRequests = 7;
     // TODO(b/251265293) Reduce the allowed deviation after improving the test conditions
@@ -628,7 +625,7 @@ bool CodecEncoderTest::testAdaptiveBitRate(const char* encoder, const char* srcP
         int expOutSize = 0;
         int bitrate;
         RETURN_IF_FALSE(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_BIT_RATE, &bitrate),
-                       StringFormat("format does not have key %s", AMEDIAFORMAT_KEY_BIT_RATE))
+                        StringFormat("format does not have key %s", AMEDIAFORMAT_KEY_BIT_RATE))
         for (int i = 0; i < kBitrateChangeRequests; i++) {
             if (!doWork(kAdaptiveBitrateDurationFrame)) return false;
             RETURN_IF_TRUE(mSawInputEOS,
@@ -656,14 +653,14 @@ bool CodecEncoderTest::testAdaptiveBitRate(const char* encoder, const char* srcP
 }
 
 static jboolean nativeTestSimpleEncode(JNIEnv* env, jobject, jstring jEncoder, jstring jsrcPath,
-                                       jstring jMime, jstring jCfgParams, jstring jSeparator,
+                                       jstring jMediaType, jstring jCfgParams, jstring jSeparator,
                                        jobject jRetMsg) {
     const char* csrcPath = env->GetStringUTFChars(jsrcPath, nullptr);
-    const char* cmime = env->GetStringUTFChars(jMime, nullptr);
+    const char* cMediaType = env->GetStringUTFChars(jMediaType, nullptr);
     const char* cEncoder = env->GetStringUTFChars(jEncoder, nullptr);
     const char* cCfgParams = env->GetStringUTFChars(jCfgParams, nullptr);
     const char* cSeparator = env->GetStringUTFChars(jSeparator, nullptr);
-    auto codecEncoderTest = new CodecEncoderTest(cmime, cCfgParams, nullptr, cSeparator);
+    auto codecEncoderTest = new CodecEncoderTest(cMediaType, cCfgParams, nullptr, cSeparator);
     bool isPass = codecEncoderTest->testSimpleEncode(cEncoder, csrcPath);
     std::string msg = isPass ? std::string{} : codecEncoderTest->getErrorMsg();
     delete codecEncoderTest;
@@ -674,24 +671,26 @@ static jboolean nativeTestSimpleEncode(JNIEnv* env, jobject, jstring jEncoder, j
     env->ReleaseStringUTFChars(jCfgParams, cCfgParams);
     env->ReleaseStringUTFChars(jSeparator, cSeparator);
     env->ReleaseStringUTFChars(jEncoder, cEncoder);
-    env->ReleaseStringUTFChars(jMime, cmime);
+    env->ReleaseStringUTFChars(jMediaType, cMediaType);
     env->ReleaseStringUTFChars(jsrcPath, csrcPath);
     return static_cast<jboolean>(isPass);
 }
 
 static jboolean nativeTestReconfigure(JNIEnv* env, jobject, jstring jEncoder, jstring jsrcPath,
-                                      jstring jMime, jstring jCfgParams, jstring jReconfigCfgParams,
-                                      jstring jSeparator, jobject jRetMsg) {
+                                      jstring jMediaType, jstring jCfgParams,
+                                      jstring jReconfigCfgParams, jstring jSeparator,
+                                      jobject jRetMsg) {
     bool isPass;
     const char* csrcPath = env->GetStringUTFChars(jsrcPath, nullptr);
-    const char* cmime = env->GetStringUTFChars(jMime, nullptr);
+    const char* cMediaType = env->GetStringUTFChars(jMediaType, nullptr);
     const char* cEncoder = env->GetStringUTFChars(jEncoder, nullptr);
     const char* cCfgParams = env->GetStringUTFChars(jCfgParams, nullptr);
     const char* cReconfigCfgParams = jReconfigCfgParams != nullptr
-                                             ? env->GetStringUTFChars(jReconfigCfgParams, nullptr)
-                                             : nullptr;
+            ? env->GetStringUTFChars(jReconfigCfgParams, nullptr)
+            : nullptr;
     const char* cSeparator = env->GetStringUTFChars(jSeparator, nullptr);
-    auto codecEncoderTest = new CodecEncoderTest(cmime, cCfgParams, cReconfigCfgParams, cSeparator);
+    auto codecEncoderTest =
+            new CodecEncoderTest(cMediaType, cCfgParams, cReconfigCfgParams, cSeparator);
     isPass = codecEncoderTest->testReconfigure(cEncoder, csrcPath);
     std::string msg = isPass ? std::string{} : codecEncoderTest->getErrorMsg();
     delete codecEncoderTest;
@@ -705,20 +704,21 @@ static jboolean nativeTestReconfigure(JNIEnv* env, jobject, jstring jEncoder, js
     }
     env->ReleaseStringUTFChars(jSeparator, cSeparator);
     env->ReleaseStringUTFChars(jEncoder, cEncoder);
-    env->ReleaseStringUTFChars(jMime, cmime);
+    env->ReleaseStringUTFChars(jMediaType, cMediaType);
     env->ReleaseStringUTFChars(jsrcPath, csrcPath);
     return static_cast<jboolean>(isPass);
 }
 
 static jboolean nativeTestSetForceSyncFrame(JNIEnv* env, jobject, jstring jEncoder,
-                                            jstring jsrcPath, jstring jMime, jstring jCfgParams,
-                                            jstring jSeparator, jobject jRetMsg) {
+                                            jstring jsrcPath, jstring jMediaType,
+                                            jstring jCfgParams, jstring jSeparator,
+                                            jobject jRetMsg) {
     const char* csrcPath = env->GetStringUTFChars(jsrcPath, nullptr);
-    const char* cmime = env->GetStringUTFChars(jMime, nullptr);
+    const char* cMediaType = env->GetStringUTFChars(jMediaType, nullptr);
     const char* cEncoder = env->GetStringUTFChars(jEncoder, nullptr);
     const char* cCfgParams = env->GetStringUTFChars(jCfgParams, nullptr);
     const char* cSeparator = env->GetStringUTFChars(jSeparator, nullptr);
-    auto codecEncoderTest = new CodecEncoderTest(cmime, cCfgParams, nullptr, cSeparator);
+    auto codecEncoderTest = new CodecEncoderTest(cMediaType, cCfgParams, nullptr, cSeparator);
     bool isPass = codecEncoderTest->testSetForceSyncFrame(cEncoder, csrcPath);
     std::string msg = isPass ? std::string{} : codecEncoderTest->getErrorMsg();
     delete codecEncoderTest;
@@ -729,20 +729,20 @@ static jboolean nativeTestSetForceSyncFrame(JNIEnv* env, jobject, jstring jEncod
     env->ReleaseStringUTFChars(jCfgParams, cCfgParams);
     env->ReleaseStringUTFChars(jSeparator, cSeparator);
     env->ReleaseStringUTFChars(jEncoder, cEncoder);
-    env->ReleaseStringUTFChars(jMime, cmime);
+    env->ReleaseStringUTFChars(jMediaType, cMediaType);
     env->ReleaseStringUTFChars(jsrcPath, csrcPath);
     return static_cast<jboolean>(isPass);
 }
 
 static jboolean nativeTestAdaptiveBitRate(JNIEnv* env, jobject, jstring jEncoder, jstring jsrcPath,
-                                          jstring jMime, jstring jCfgParams, jstring jSeparator,
-                                          jobject jRetMsg) {
+                                          jstring jMediaType, jstring jCfgParams,
+                                          jstring jSeparator, jobject jRetMsg) {
     const char* csrcPath = env->GetStringUTFChars(jsrcPath, nullptr);
-    const char* cmime = env->GetStringUTFChars(jMime, nullptr);
+    const char* cMediaType = env->GetStringUTFChars(jMediaType, nullptr);
     const char* cEncoder = env->GetStringUTFChars(jEncoder, nullptr);
     const char* cCfgParams = env->GetStringUTFChars(jCfgParams, nullptr);
     const char* cSeparator = env->GetStringUTFChars(jSeparator, nullptr);
-    auto codecEncoderTest = new CodecEncoderTest(cmime, cCfgParams, nullptr, cSeparator);
+    auto codecEncoderTest = new CodecEncoderTest(cMediaType, cCfgParams, nullptr, cSeparator);
     bool isPass = codecEncoderTest->testAdaptiveBitRate(cEncoder, csrcPath);
     std::string msg = isPass ? std::string{} : codecEncoderTest->getErrorMsg();
     delete codecEncoderTest;
@@ -753,18 +753,18 @@ static jboolean nativeTestAdaptiveBitRate(JNIEnv* env, jobject, jstring jEncoder
     env->ReleaseStringUTFChars(jCfgParams, cCfgParams);
     env->ReleaseStringUTFChars(jSeparator, cSeparator);
     env->ReleaseStringUTFChars(jEncoder, cEncoder);
-    env->ReleaseStringUTFChars(jMime, cmime);
+    env->ReleaseStringUTFChars(jMediaType, cMediaType);
     env->ReleaseStringUTFChars(jsrcPath, csrcPath);
     return static_cast<jboolean>(isPass);
 }
 
-static jboolean nativeTestOnlyEos(JNIEnv* env, jobject, jstring jEncoder, jstring jMime,
+static jboolean nativeTestOnlyEos(JNIEnv* env, jobject, jstring jEncoder, jstring jMediaType,
                                   jstring jCfgParams, jstring jSeparator, jobject jRetMsg) {
-    const char* cmime = env->GetStringUTFChars(jMime, nullptr);
+    const char* cMediaType = env->GetStringUTFChars(jMediaType, nullptr);
     const char* cEncoder = env->GetStringUTFChars(jEncoder, nullptr);
     const char* cCfgParams = env->GetStringUTFChars(jCfgParams, nullptr);
     const char* cSeparator = env->GetStringUTFChars(jSeparator, nullptr);
-    auto codecEncoderTest = new CodecEncoderTest(cmime, cCfgParams, nullptr, cSeparator);
+    auto codecEncoderTest = new CodecEncoderTest(cMediaType, cCfgParams, nullptr, cSeparator);
     bool isPass = codecEncoderTest->testOnlyEos(cEncoder);
     std::string msg = isPass ? std::string{} : codecEncoderTest->getErrorMsg();
     delete codecEncoderTest;
@@ -775,7 +775,7 @@ static jboolean nativeTestOnlyEos(JNIEnv* env, jobject, jstring jEncoder, jstrin
     env->ReleaseStringUTFChars(jCfgParams, cCfgParams);
     env->ReleaseStringUTFChars(jSeparator, cSeparator);
     env->ReleaseStringUTFChars(jEncoder, cEncoder);
-    env->ReleaseStringUTFChars(jMime, cmime);
+    env->ReleaseStringUTFChars(jMediaType, cMediaType);
     return static_cast<jboolean>(isPass);
 }
 

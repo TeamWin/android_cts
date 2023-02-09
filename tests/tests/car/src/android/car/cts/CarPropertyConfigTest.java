@@ -73,6 +73,18 @@ public final class CarPropertyConfigTest extends AbstractCarTestCase {
 
     @Test
     public void testGetPropertyId() {
+        List<Integer> expectedPropertyTypes = Arrays.asList(
+                VehiclePropertyType.STRING,
+                VehiclePropertyType.BOOLEAN,
+                VehiclePropertyType.INT32,
+                VehiclePropertyType.INT32_VEC,
+                VehiclePropertyType.INT64,
+                VehiclePropertyType.INT64_VEC,
+                VehiclePropertyType.FLOAT,
+                VehiclePropertyType.FLOAT_VEC,
+                VehiclePropertyType.BYTES,
+                VehiclePropertyType.MIXED);
+
         for (CarPropertyConfig cfg : mConfigs) {
             int propId = cfg.getPropertyId();
 
@@ -81,16 +93,6 @@ public final class CarPropertyConfigTest extends AbstractCarTestCase {
                    (propId & VehiclePropertyGroup.MASK) == VehiclePropertyGroup.SYSTEM;
             Assert.assertTrue(verifyGroup);
 
-            List<Integer> expectedPropertyTypes = Arrays.asList(
-                    VehiclePropertyType.STRING,
-                    VehiclePropertyType.BOOLEAN,
-                    VehiclePropertyType.INT32,
-                    VehiclePropertyType.INT32_VEC,
-                    VehiclePropertyType.INT64_VEC,
-                    VehiclePropertyType.FLOAT,
-                    VehiclePropertyType.FLOAT_VEC,
-                    VehiclePropertyType.BYTES,
-                    VehiclePropertyType.MIXED);
             int propertyType = propId & VehiclePropertyType.MASK;
             assertThat(expectedPropertyTypes).contains(propertyType);
         }

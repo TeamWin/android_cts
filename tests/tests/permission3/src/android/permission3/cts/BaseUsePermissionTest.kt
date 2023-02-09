@@ -610,6 +610,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                         "com.android.permissioncontroller:id/detail_message"
                 )[0]
             }
+            if (!node.isVisibleToUser) {
+                scrollToBottom()
+            }
             assertTrue(node.isVisibleToUser)
             val text = node.text as Spanned
             val clickableSpan = text.getSpans(0, text.length, ClickableSpan::class.java)[0]

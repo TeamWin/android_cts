@@ -112,13 +112,13 @@ static jboolean nativeTestIfInvalidMediaFormatIsRejected(JNIEnv* env, jobject, j
     AMediaFormat* format = AMediaFormat_new();
     bool isPass = true;
     if (AMediaMuxer_addTrack(muxer, format) >= 0) {
-        ALOGE("error: muxer.addTrack succeeds with format that has no mime key");
+        ALOGE("error: muxer.addTrack succeeds with format that has no mediaType key");
         isPass = false;
     }
 
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "text/cea-608");
     if (AMediaMuxer_addTrack(muxer, format) >= 0) {
-        ALOGE("error: muxer.addTrack succeeds with format whose mime is non-compliant");
+        ALOGE("error: muxer.addTrack succeeds with format whose mediaType is non-compliant");
         isPass = false;
     }
     AMediaFormat_delete(format);

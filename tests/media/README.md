@@ -37,12 +37,12 @@ atest CtsMediaV2TestCases -- --module-arg CtsMediaV2TestCases:instrumentation-ar
 ```
 
 #### Select codecs by type
-To select codecs by type, *mime-sel* can be passed to media codec tests to select one or more codecs.
+To select codecs by type, *media-type-sel* can be passed to media codec tests to select one or more codecs.
 
 Example: To limit media codec decoder tests to mp3 and vorbis decoder
 
 ```sh
-atest android.mediav2.cts.CodecDecoderTest -- --module-arg  CtsMediaV2TestCases:instrumentation-arg:mime-sel:=mp3,vorbis
+atest android.mediav2.cts.CodecDecoderTest -- --module-arg  CtsMediaV2TestCases:instrumentation-arg:media-type-sel:=mp3,vorbis
 ```
 
 #### Select extractors by type

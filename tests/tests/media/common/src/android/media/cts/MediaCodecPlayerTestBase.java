@@ -115,7 +115,10 @@ public class MediaCodecPlayerTestBase<T extends Activity> extends ActivityInstru
         mMediaCodecPlayer.setAudioDataSource(audioUrl, null, audioEncrypted);
         mMediaCodecPlayer.setVideoDataSource(videoUrl, null, videoEncrypted);
         mMediaCodecPlayer.start();
-        mMediaCodecPlayer.prepare();
+        if (!mMediaCodecPlayer.prepare()) {
+            Log.i(TAG, "Media Player could not be prepared.");
+            return false;
+        }
         return true;
     }
 

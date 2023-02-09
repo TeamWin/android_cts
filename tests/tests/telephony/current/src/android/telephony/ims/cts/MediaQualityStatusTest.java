@@ -36,12 +36,10 @@ public class MediaQualityStatusTest {
 
     @Test
     public void testBuilderAndGetters() {
-        MediaQualityStatus status = new MediaQualityStatus.Builder(
-                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE)
-                .setRtpPacketLossRate(THRESHOLD_PACKET_LOSS_RATE)
-                .setRtpJitterMillis(THRESHOLD_JITTER_MILLIS)
-                .setRtpInactivityMillis(THRESHOLD_INACTIVITY_TIME_MILLIS)
-                .build();
+        MediaQualityStatus status = new MediaQualityStatus(
+                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE,
+                THRESHOLD_PACKET_LOSS_RATE, THRESHOLD_JITTER_MILLIS,
+                THRESHOLD_INACTIVITY_TIME_MILLIS);
 
         assertEquals(TEST_IMS_CALL_SESSION_ID, status.getCallSessionId());
         assertEquals(TEST_MEDIA_SESSION_TYPE, status.getMediaSessionType());
@@ -53,87 +51,69 @@ public class MediaQualityStatusTest {
 
     @Test
     public void testEquals() {
-        MediaQualityStatus status1 = new MediaQualityStatus.Builder(
-                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE)
-                .setRtpPacketLossRate(THRESHOLD_PACKET_LOSS_RATE)
-                .setRtpJitterMillis(THRESHOLD_JITTER_MILLIS)
-                .setRtpInactivityMillis(THRESHOLD_INACTIVITY_TIME_MILLIS)
-                .build();
-        MediaQualityStatus status2 = new MediaQualityStatus.Builder(
-                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE)
-                .setRtpPacketLossRate(THRESHOLD_PACKET_LOSS_RATE)
-                .setRtpJitterMillis(THRESHOLD_JITTER_MILLIS)
-                .setRtpInactivityMillis(THRESHOLD_INACTIVITY_TIME_MILLIS)
-                .build();
-
+        MediaQualityStatus status1 = new MediaQualityStatus(
+                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE,
+                THRESHOLD_PACKET_LOSS_RATE, THRESHOLD_JITTER_MILLIS,
+                THRESHOLD_INACTIVITY_TIME_MILLIS);
+        MediaQualityStatus status2 = new MediaQualityStatus(
+                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE,
+                THRESHOLD_PACKET_LOSS_RATE, THRESHOLD_JITTER_MILLIS,
+                THRESHOLD_INACTIVITY_TIME_MILLIS);
         assertEquals(status1, status2);
     }
 
     @Test
     public void testNotEquals() {
-        MediaQualityStatus status1 = new MediaQualityStatus.Builder(
-                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE)
-                .setRtpPacketLossRate(THRESHOLD_PACKET_LOSS_RATE)
-                .setRtpJitterMillis(THRESHOLD_JITTER_MILLIS)
-                .setRtpInactivityMillis(THRESHOLD_INACTIVITY_TIME_MILLIS)
-                .build();
-        MediaQualityStatus status2 = new MediaQualityStatus.Builder(
-                TEST_IMS_CALL_SESSION_ID + "TEST", TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE)
-                .setRtpPacketLossRate(THRESHOLD_PACKET_LOSS_RATE)
-                .setRtpJitterMillis(THRESHOLD_JITTER_MILLIS)
-                .setRtpInactivityMillis(THRESHOLD_INACTIVITY_TIME_MILLIS)
-                .build();
+        MediaQualityStatus status1 = new MediaQualityStatus(
+                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE,
+                THRESHOLD_PACKET_LOSS_RATE, THRESHOLD_JITTER_MILLIS,
+                THRESHOLD_INACTIVITY_TIME_MILLIS);
+        MediaQualityStatus status2 = new MediaQualityStatus(
+                TEST_IMS_CALL_SESSION_ID + "TEST",
+                TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE,
+                THRESHOLD_PACKET_LOSS_RATE,
+                THRESHOLD_JITTER_MILLIS,
+                THRESHOLD_INACTIVITY_TIME_MILLIS);
         assertNotEquals(status1, status2);
 
-        status2 = new MediaQualityStatus.Builder(
-                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE + 1, TEST_TRANSPORT_TYPE)
-                .setRtpPacketLossRate(THRESHOLD_PACKET_LOSS_RATE)
-                .setRtpJitterMillis(THRESHOLD_JITTER_MILLIS)
-                .setRtpInactivityMillis(THRESHOLD_INACTIVITY_TIME_MILLIS)
-                .build();
+        status2 = new MediaQualityStatus(
+                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE + 1,
+                TEST_TRANSPORT_TYPE,
+                THRESHOLD_PACKET_LOSS_RATE, THRESHOLD_JITTER_MILLIS,
+                THRESHOLD_INACTIVITY_TIME_MILLIS);
         assertNotEquals(status1, status2);
 
-        status2 = new MediaQualityStatus.Builder(
-                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE + 1)
-                .setRtpPacketLossRate(THRESHOLD_PACKET_LOSS_RATE)
-                .setRtpJitterMillis(THRESHOLD_JITTER_MILLIS)
-                .setRtpInactivityMillis(THRESHOLD_INACTIVITY_TIME_MILLIS)
-                .build();
+        status2 = new MediaQualityStatus(
+                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE + 1,
+                THRESHOLD_PACKET_LOSS_RATE, THRESHOLD_JITTER_MILLIS,
+                THRESHOLD_INACTIVITY_TIME_MILLIS);
         assertNotEquals(status1, status2);
 
-        status2 = new MediaQualityStatus.Builder(
-                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE)
-                .setRtpPacketLossRate(THRESHOLD_PACKET_LOSS_RATE + 10)
-                .setRtpJitterMillis(THRESHOLD_JITTER_MILLIS)
-                .setRtpInactivityMillis(THRESHOLD_INACTIVITY_TIME_MILLIS)
-                .build();
+        status2 = new MediaQualityStatus(
+                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE,
+                THRESHOLD_PACKET_LOSS_RATE + 10, THRESHOLD_JITTER_MILLIS,
+                THRESHOLD_INACTIVITY_TIME_MILLIS);
         assertNotEquals(status1, status2);
 
-        status2 = new MediaQualityStatus.Builder(
-                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE)
-                .setRtpPacketLossRate(THRESHOLD_PACKET_LOSS_RATE)
-                .setRtpJitterMillis(THRESHOLD_JITTER_MILLIS + 10)
-                .setRtpInactivityMillis(THRESHOLD_INACTIVITY_TIME_MILLIS)
-                .build();
+        status2 = new MediaQualityStatus(
+                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE,
+                THRESHOLD_PACKET_LOSS_RATE, THRESHOLD_JITTER_MILLIS + 10,
+                THRESHOLD_INACTIVITY_TIME_MILLIS);
         assertNotEquals(status1, status2);
 
-        status2 = new MediaQualityStatus.Builder(
-                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE)
-                .setRtpPacketLossRate(THRESHOLD_PACKET_LOSS_RATE)
-                .setRtpJitterMillis(THRESHOLD_JITTER_MILLIS)
-                .setRtpInactivityMillis(THRESHOLD_INACTIVITY_TIME_MILLIS + 500)
-                .build();
+        status2 = new MediaQualityStatus(
+                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE,
+                THRESHOLD_PACKET_LOSS_RATE, THRESHOLD_JITTER_MILLIS,
+                THRESHOLD_INACTIVITY_TIME_MILLIS + 500);
         assertNotEquals(status1, status2);
     }
 
     @Test
     public void testParcel() {
-        MediaQualityStatus status = new MediaQualityStatus.Builder(
-                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE)
-                .setRtpPacketLossRate(THRESHOLD_PACKET_LOSS_RATE)
-                .setRtpJitterMillis(THRESHOLD_JITTER_MILLIS)
-                .setRtpInactivityMillis(THRESHOLD_INACTIVITY_TIME_MILLIS)
-                .build();
+        MediaQualityStatus status = new MediaQualityStatus(
+                TEST_IMS_CALL_SESSION_ID, TEST_MEDIA_SESSION_TYPE, TEST_TRANSPORT_TYPE,
+                THRESHOLD_PACKET_LOSS_RATE, THRESHOLD_JITTER_MILLIS,
+                THRESHOLD_INACTIVITY_TIME_MILLIS);
 
         Parcel mediaQualityStatusParcel = Parcel.obtain();
         status.writeToParcel(mediaQualityStatusParcel, 0);

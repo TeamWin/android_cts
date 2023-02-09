@@ -15,8 +15,6 @@
  */
 package android.media.cts;
 
-import static org.junit.Assume.assumeFalse;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.media.AudioManager;
@@ -36,6 +34,8 @@ import android.util.Log;
 import android.view.Surface;
 
 import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -302,7 +302,7 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         }
     }
 
-    private void initCasAndDescrambler(MediaExtractor extractor) throws MediaCasException {
+    private boolean initCasAndDescrambler(MediaExtractor extractor) throws MediaCasException {
         int trackCount = extractor.getTrackCount();
         for (int trackId = 0; trackId < trackCount; trackId++) {
             android.media.MediaFormat format = extractor.getTrackFormat(trackId);
@@ -327,16 +327,21 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                     }
 
                     mMediaCas.provision(sProvisionStr);
-                    // If AIDL CAS service is being used, then setMediaCas will not work.
-                    assumeFalse(mMediaCas.isAidlHal());
+                    if (mMediaCas.isAidlHal()) {
+                        MediaUtils.skipTest(
+                                TAG, "setMediaCas is deprecated and not supported with AIDL HAL");
+                        // If AIDL CAS service is being used, then setMediaCas will not work.
+                        return false;
+                    }
                     extractor.setMediaCas(mMediaCas);
                     break;
                 }
             }
         }
+        return true;
     }
 
-    public void prepare() throws IOException, MediaCryptoException, MediaCasException {
+    public boolean prepare() throws IOException, MediaCryptoException, MediaCasException {
         if (null == mCrypto && (mEncryptedVideo || mEncryptedAudio)) {
             try {
                 byte[] initData = new byte[0];
@@ -355,20 +360,22 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
             mAudioExtractor = new MediaExtractor();
             if (null == mAudioExtractor) {
                 Log.e(TAG, "Cannot create Audio extractor.");
-                return;
+                return false;
             }
         }
         mAudioExtractor.setDataSource(mContext, mAudioUri, mAudioHeaders);
 
         if (mScrambled) {
-            initCasAndDescrambler(mAudioExtractor);
+            if (!initCasAndDescrambler(mAudioExtractor)) {
+                return false;
+            }
             mVideoExtractor = mAudioExtractor;
         } else {
             if (null == mVideoExtractor){
                 mVideoExtractor = new MediaExtractor();
                 if (null == mVideoExtractor) {
                     Log.e(TAG, "Cannot create Video extractor.");
-                    return;
+                    return false;
                 }
             }
             mVideoExtractor.setDataSource(mContext, mVideoUri, mVideoHeaders);
@@ -390,6 +397,7 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         prepareAudio();
 
         mState = STATE_PAUSED;
+        return true;
     }
 
     private void addTrack(int trackIndex, MediaFormat format,
@@ -506,7 +514,10 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
             // Just change state from STATE_IDLE to STATE_PREPARING.
             start();
             // Extract media information from uri asset, and change state to STATE_PAUSED.
-            prepare();
+            if (!prepare()) {
+                Log.d(TAG, "Could not prepare player.");
+                return;
+            }
             // Start CodecState, and change from STATE_PAUSED to STATE_PLAYING.
             start();
         } catch (IOException e) {

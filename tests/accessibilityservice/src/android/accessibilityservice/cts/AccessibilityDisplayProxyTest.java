@@ -52,9 +52,13 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Rect;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.util.SparseArray;
 import android.view.Display;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityDisplayProxy;
 import android.view.accessibility.AccessibilityEvent;
@@ -423,6 +427,74 @@ public class AccessibilityDisplayProxyTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#onAccessibilityEvent"})
+    public void testA11yInputFilter_onProxyDisplay_interactionEventNotReceived() {
+        registerProxyAndWaitForConnection();
+        final AccessibilityEvent touchInteractionEvent = new AccessibilityEvent(
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START);
+        mA11yProxy.setUnwantedEvent(touchInteractionEvent);
+
+        // Try to trigger touch exploration, but fail.
+        final MotionEvent downEvent = getDownMotionEvent(mActivity, mA11yProxy.getWindows());
+        sUiAutomation.injectInputEventToInputFilter(downEvent);
+
+        assertThrows(AssertionError.class, () ->
+                waitOn(mA11yProxy.mWaitObject, ()-> mA11yProxy.mReceivedUnwantedEvent.get(),
+                        TIMEOUT_MS,
+                        "Unwanted event was received within " + TIMEOUT_MS + " ms"));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#onAccessibilityEvent"})
+    public void testA11yInputFilter_onDefaultDisplay_interactionEventReceived() throws Exception {
+        final StubProxyConcurrentAccessibilityService service =
+                mProxyConcurrentServiceRule.enableService();
+        try {
+            registerProxyAndWaitForConnection();
+            // Launch an activity on the default display.
+            final ProxyConcurrentActivity concurrentToProxyActivity =
+                    launchActivityAndWaitForItToBeOnscreen(
+                            sInstrumentation, sUiAutomation,
+                            mConcurrentAccessibilityServiceActivityRule);
+
+            final AccessibilityEvent touchInteractionEvent = new AccessibilityEvent(
+                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_START);
+            service.setExpectedEvent(touchInteractionEvent);
+
+            // Trigger touch exploration.
+            final MotionEvent downEvent = getDownMotionEvent(concurrentToProxyActivity,
+                    service.getWindows());
+            sUiAutomation.injectInputEventToInputFilter(downEvent);
+
+            waitOn(service.mWaitObject, ()-> service.mReceivedEvent.get(), TIMEOUT_MS,
+                    "Expected event was not received within " + TIMEOUT_MS + " ms");
+        } finally {
+            service.disableSelfAndRemove();
+        }
+    }
+
+    private static MotionEvent getDownMotionEvent(Activity activity,
+            List<AccessibilityWindowInfo> windows) {
+        final Rect areaOfActivityWindowOnDisplay = new Rect();
+        final AccessibilityWindowInfo window =
+                findWindowByTitleWithList(getActivityTitle(sInstrumentation, activity), windows);
+        // Validity check: activity window exists.
+        assertThat(window).isNotNull();
+
+        window.getBoundsInScreen(areaOfActivityWindowOnDisplay);
+        final int xOnScreen =
+                areaOfActivityWindowOnDisplay.centerX();
+        final int yOnScreen =
+                areaOfActivityWindowOnDisplay.centerY();
+        final long downEventTime = SystemClock.uptimeMillis();
+        final MotionEvent downEvent = MotionEvent.obtain(downEventTime,
+                downEventTime, MotionEvent.ACTION_DOWN, xOnScreen, yOnScreen, 0);
+        downEvent.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        downEvent.setDisplayId(activity.getDisplayId());
+        return downEvent;
+    }
+
+    @Test
     @ApiTest(apis = {
             "android.view.accessibility.AccessibilityDisplayProxy#setInstalledAndEnabledServices",
             "android.view.accessibility.AccessibilityDisplayProxy#getInstalledAndEnabledServices"})
@@ -589,10 +661,14 @@ public class AccessibilityDisplayProxyTest {
      */
     class MyA11yProxy extends AccessibilityDisplayProxy {
         AtomicBoolean mReceivedEvent = new AtomicBoolean();
+        AtomicBoolean mReceivedUnwantedEvent = new AtomicBoolean();
+
         AtomicBoolean mConnected = new AtomicBoolean();
         AtomicBoolean mInterrupted = new AtomicBoolean();
 
         private AccessibilityEvent mExpectedEvent;
+        private AccessibilityEvent mUnwantedEvent;
+
         Object mWaitObject = new Object();
 
         MyA11yProxy(int displayId, Executor executor, List<AccessibilityServiceInfo> infos) {
@@ -609,6 +685,14 @@ public class AccessibilityDisplayProxyTest {
                     synchronized (mWaitObject) {
                         mReceivedEvent.set(true);
                         mWaitObject.notifyAll();
+                    }
+
+                } else if (mUnwantedEvent != null) {
+                    if (event.getEventType() == mExpectedEvent.getEventType()) {
+                        synchronized (mWaitObject) {
+                            mReceivedUnwantedEvent.set(true);
+                            mWaitObject.notifyAll();
+                        }
                     }
                 }
             }
@@ -631,6 +715,10 @@ public class AccessibilityDisplayProxyTest {
         }
         public void setExpectedEvent(@NonNull AccessibilityEvent event) {
             mExpectedEvent = event;
+        }
+
+        public void setUnwantedEvent(@NonNull AccessibilityEvent event) {
+            mUnwantedEvent = event;
         }
     }
 }

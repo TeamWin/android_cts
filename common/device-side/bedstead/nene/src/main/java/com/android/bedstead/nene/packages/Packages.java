@@ -37,6 +37,7 @@ import android.content.IntentFilter;
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.os.Build;
 import android.util.Log;
 
@@ -597,5 +598,25 @@ public final class Packages {
         return installedForUser(user).stream()
                 .filter(Package::hasSystemFlag)
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * Oem defined default dialer app.
+     */
+    @Experimental
+    public Package oemDefaultDialerApp() {
+        String defaultDialerPackage = TestApis.context().instrumentedContext().getString(
+                Resources.getSystem().getIdentifier("config_defaultDialer", "string", "android"));
+        return TestApis.packages().find(defaultDialerPackage);
+    }
+
+    /**
+     * Oem defined default sms app.
+     */
+    @Experimental
+    public Package oemDefaultSmsApp() {
+        String defaultSmsPackage = TestApis.context().instrumentedContext().getString(
+                Resources.getSystem().getIdentifier("config_defaultSms", "string", "android"));
+        return TestApis.packages().find(defaultSmsPackage);
     }
 }

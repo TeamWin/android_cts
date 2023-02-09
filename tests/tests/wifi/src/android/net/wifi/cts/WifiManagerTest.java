@@ -85,6 +85,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerExecutor;
 import android.os.HandlerThread;
+import android.os.PowerManager;
 import android.os.Process;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -164,7 +165,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private boolean mWasVerboseLoggingEnabled;
     private boolean mWasScanThrottleEnabled;
     private SoftApConfiguration mOriginalSoftApConfig = null;
-
+    private PowerManager mPowerManager;
+    private PowerManager.WakeLock mWakeLock;
     // Please refer to WifiManager
     private static final int MIN_RSSI = -100;
     private static final int MAX_RSSI = -55;
@@ -358,6 +360,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             // skip the test if WiFi is not supported
             return;
         }
+        mPowerManager = mContext.getSystemService(PowerManager.class);
+        mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
         mMySync = new MySync();
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
@@ -430,6 +434,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 () -> mWifiManager.setSoftApConfiguration(mOriginalSoftApConfig));
         Thread.sleep(TEST_WAIT_DURATION_MS);
         super.tearDown();
+        if (mWakeLock.isHeld()) {
+            mWakeLock.release();
+        }
     }
 
     private void setWifiEnabled(boolean enable) throws Exception {
@@ -2562,6 +2569,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     private void turnScreenOnNoDelay() throws Exception {
+        if (mWakeLock.isHeld()) mWakeLock.release();
         mUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
         mUiDevice.executeShellCommand("wm dismiss-keyguard");
     }
@@ -2577,6 +2585,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     private void turnScreenOff() throws Exception {
+        if (!mWakeLock.isHeld()) mWakeLock.acquire();
         turnScreenOffNoDelay();
         // Since the screen on/off intent is ordered, they will not be sent right now.
         Thread.sleep(DURATION_SCREEN_TOGGLE);
