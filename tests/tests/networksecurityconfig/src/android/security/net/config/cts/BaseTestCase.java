@@ -35,7 +35,7 @@ public class BaseTestCase extends AndroidTestCase {
         WifiManager wifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         if (!wifiManager.isWifiEnabled()) {
             SystemUtil.runShellCommand("svc wifi enable"); // toggle wifi on.
-            Thread.sleep(5000); // sleep 5 second for wifi to connect to a network.
+            Thread.sleep(6000); // sleep 6 second for wifi to connect to a network.
         }
     }
 }
