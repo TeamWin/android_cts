@@ -1219,6 +1219,10 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                         previewFrameRate = previewRateMap.get(captureRate);
                         Log.v(TAG, "previewFrameRate: " + previewFrameRate + " captureRate: " +
                                 captureRate);
+
+                        Range<Integer> previewfpsRange =
+                                new Range<Integer>(previewFrameRate, captureRate);
+
                         // Skip the test if the highest recording FPS supported by CamcorderProfile
                         if (fpsRange.getUpper() > getFpsFromHighSpeedProfileForSize(size)) {
                             Log.w(TAG, "high speed recording " + size + "@" + captureRate + "fps"
@@ -1231,7 +1235,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                         // prepare preview surface by using video size.
                         updatePreviewSurfaceWithVideo(size, captureRate);
 
-                        startConstrainedPreview(fpsRange, previewResultListener);
+                        startConstrainedPreview(previewfpsRange, previewResultListener);
 
                         mOutMediaFileName = mDebugFileNameBase + "/test_cslowMo_video_" +
                             captureRate + "fps_" + id + "_" + size.toString() + ".mp4";
@@ -1279,7 +1283,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                         // Stop recording and preview
                         stopRecording(/*useMediaRecorder*/true);
 
-                        startConstrainedPreview(fpsRange, previewResultListener);
+                        startConstrainedPreview(previewfpsRange, previewResultListener);
 
                         // Convert number of frames camera produced into the duration in unit of ms.
                         float frameDurationMs = 1000.0f / videoFrameRate;

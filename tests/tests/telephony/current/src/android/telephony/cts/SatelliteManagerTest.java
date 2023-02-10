@@ -16,24 +16,25 @@
 
 package android.telephony.cts;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
-
-import androidx.test.InstrumentationRegistry;
 
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.telephony.satellite.PointingInfo;
+import android.telephony.satellite.SatelliteCallback;
 import android.telephony.satellite.SatelliteManager;
+import android.telephony.satellite.stub.SatelliteImplBase;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 public class SatelliteManagerTest {
     private static final String TAG = "SatelliteManagerTest";
@@ -46,52 +47,18 @@ public class SatelliteManagerTest {
     public void setUp() throws Exception {
         assumeTrue(getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_TELEPHONY_SATELLITE));
-        mSatelliteManager =
-                (SatelliteManager) getContext().getSystemService(Context.SATELLITE_SERVICE);
+        mSatelliteManager = getContext().getSystemService(SatelliteManager.class);
     }
 
     @Test
     public void testSatellitePositionUpdates() {
-        SatelliteManager.SatellitePositionUpdateCallback callback =
-                new SatelliteManager.SatellitePositionUpdateCallback() {
-                    @Override
-                    public void onSatellitePositionUpdate(PointingInfo pointingInfo) {
-                        Log.d(TAG, "onSatellitePositionUpdate: pointingInfo=" + pointingInfo);
-                    }
-
-                    @Override
-                    public void onMessageTransferStateUpdate(int state) {
-                        Log.d(TAG, "onMessageTransferStateUpdate: state=" + state);
-                    }
-        };
+        SatellitePositionUpdateListenerTest callback =
+                new SatellitePositionUpdateListenerTest();
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
-        assertThrows(SecurityException.class, ()-> mSatelliteManager.startSatellitePositionUpdates(
-                getContext().getMainExecutor(), callback));
-
-        /*
-        grantSatellitePermission();
-        int startResult = mSatelliteManager.startSatellitePositionUpdates(
-                getContext().getMainExecutor(), callback);
-        if (startResult != SatelliteManager.SATELLITE_SERVICE_SUCCESS) {
-            Log.d(TAG, "Failed to start position updates.");
-            assertThrows(IllegalArgumentException.class,
-                    () -> mSatelliteManager.stopSatellitePositionUpdates(callback));
-            return;
-        }
-
-        Log.d(TAG, "Successfully started position updates.");
-        int stopResult = mSatelliteManager.stopSatellitePositionUpdates(callback);
-        if (stopResult == SatelliteManager.SATELLITE_SERVICE_SUCCESS) {
-            Log.d(TAG, "Successfully stopped position updates.");
-            assertThrows(IllegalArgumentException.class,
-                    () -> mSatelliteManager.stopSatellitePositionUpdates(callback));
-        } else {
-            Log.d(TAG, "Failed to stop position updates.");
-        }
-        assertThrows(IllegalArgumentException.class,
-                () -> mSatelliteManager.stopSatellitePositionUpdates(callback));
-         */
+        assertThrows(SecurityException.class,
+                () -> mSatelliteManager.startSatellitePositionUpdates(
+                        getContext().getMainExecutor(), callback));
     }
 
     @Test
@@ -102,14 +69,34 @@ public class SatelliteManagerTest {
         assertThrows(SecurityException.class,
                 ()-> mSatelliteManager.getMaxCharactersPerSatelliteTextMessage(
                         getContext().getMainExecutor(), maxCharResult::offer));
+    }
 
-        /*
-        grantSatellitePermission();
-        mSatelliteManager.getMaxCharactersPerSatelliteTextMessage(
-                getContext().getMainExecutor(), maxCharResult::offer);
-        Integer result = maxCharResult.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        assertNotNull(result);
-         */
+    @Test
+    public void testProvisionSatelliteService() {
+        int[] features = {SatelliteImplBase.FEATURE_EMERGENCY_SMS,
+                SatelliteImplBase.FEATURE_LOCATION_SHARING};
+
+        final LinkedBlockingQueue<Integer> resultQueue1 = new LinkedBlockingQueue<>(1);
+        assertThrows(SecurityException.class,
+                ()-> mSatelliteManager.provisionSatelliteService(
+                features, getContext().getMainExecutor(), resultQueue1::offer, null));
+    }
+
+    @Test
+    public void testRegisterForSatelliteProvisionStateChanged() {
+        SatelliteProvisionStateListenerTest satelliteProvisionStateListener =
+                new SatelliteProvisionStateListenerTest();
+        assertThrows(SecurityException.class,
+                ()-> mSatelliteManager.registerForSatelliteProvisionStateChanged(
+                        getContext().getMainExecutor(), satelliteProvisionStateListener));
+    }
+
+    @Test
+    public void testGetProvisionedSatelliteFeatures() {
+        final LinkedBlockingQueue<int[]> resultQueue = new LinkedBlockingQueue<>();
+        assertThrows(SecurityException.class,
+                ()-> mSatelliteManager.getProvisionedSatelliteFeatures(
+                        getContext().getMainExecutor(), resultQueue::offer));
     }
 
     private Context getContext() {
@@ -119,5 +106,28 @@ public class SatelliteManagerTest {
     private void grantSatellitePermission() {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.SATELLITE_COMMUNICATION);
+    }
+
+    private static class SatellitePositionUpdateListenerTest extends SatelliteCallback
+            implements SatelliteCallback.SatellitePositionUpdateListener {
+        @Override
+        public void onSatellitePositionUpdate(PointingInfo pointingInfo) {
+            Log.d(TAG, "onSatellitePositionUpdate: pointingInfo=" + pointingInfo);
+        }
+
+        @Override
+        public void onMessageTransferStateUpdate(int state) {
+            Log.d(TAG, "onMessageTransferStateUpdate: state=" + state);
+        }
+    }
+
+    private static class SatelliteProvisionStateListenerTest extends SatelliteCallback
+            implements SatelliteCallback.SatelliteProvisionStateListener {
+        @Override
+        public void onSatelliteProvisionStateChanged(int[] features,
+                boolean provisioned) {
+            Log.d(TAG, "onSatelliteProvisionStateChanged: features="
+                    + Arrays.toString(features) + ", provisioned=" + provisioned);
+        }
     }
 }

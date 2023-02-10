@@ -342,6 +342,15 @@ public class BluetoothAdapterTest extends AndroidTestCase {
                 mAdapter.isLeAudioBroadcastAssistantSupported());
     }
 
+    public void test_isDistanceMeasurementSupported() throws IOException {
+        if (!mHasBluetooth) {
+            // Skip the test if bluetooth is not present.
+            return;
+        }
+        assertNotSame(BluetoothStatusCodes.ERROR_UNKNOWN,
+                mAdapter.isDistanceMeasurementSupported());
+    }
+
     public void test_getMaxConnectedAudioDevices() {
         if (!mHasBluetooth) {
             // Skip the test if bluetooth is not present.

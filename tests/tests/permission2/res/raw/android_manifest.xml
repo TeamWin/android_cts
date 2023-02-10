@@ -5583,6 +5583,11 @@
     <permission android:name="android.permission.RECOVER_KEYSTORE"
         android:protectionLevel="signature|privileged" />
 
+    <!-- @SystemApi Allows application to verify lockscreen credentials provided by a remote device.
+         @hide -->
+    <permission android:name="android.permission.CHECK_REMOTE_LOCKSCREEN"
+        android:protectionLevel="signature|privileged" />
+
     <!-- Allows a package to launch the secure full-backup confirmation UI.
          ONLY the system process may hold this permission.
          @hide -->
@@ -6924,7 +6929,13 @@
          <p>Protection level: normal
      -->
     <permission android:name="android.permission.RUN_LONG_JOBS"
-                android:protectionLevel="normal"/>
+      android:protectionLevel="normal"/>
+
+    <!-- Allows browsers to call on behalf of another app by passing in a custom origin.
+	 <p>Protection level: normal
+     -->
+    <permission android:name="android.permission.CREDENTIAL_MANAGER_SET_ORIGIN"
+      android:protectionLevel="normal"/>
 
     <!-- Allows an app to list Credential Manager providers.
          @hide
@@ -6934,14 +6945,16 @@
 
     <!-- Allows a system application to be registered with credential manager without
          having to be enabled by the user.
+	 @SystemApi
          @hide -->
-    <permission android:name="android.permission.SYSTEM_CREDENTIAL_PROVIDER"
+    <permission android:name="android.permission.PROVIDE_DEFAULT_ENABLED_CREDENTIAL_SERVICE"
                 android:protectionLevel="signature|privileged" />
 
     <!-- Allows an application to be able to store and retrieve credentials from a remote
          device.
+	 @SystemApi
          @hide -->
-    <permission android:name="android.permission.HYBRID_CREDENTIAL_PROVIDER"
+    <permission android:name="android.permission.PROVIDE_HYBRID_CREDENTIAL_SERVICE"
                 android:protectionLevel="signature|privileged" />
 
     <!-- Allows an app access to the installer provided app metadata.

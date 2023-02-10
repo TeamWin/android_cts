@@ -78,6 +78,7 @@ public final class TestApp {
     public TestAppInstance install(UserReference user) {
         try {
             pkg().installBytes(user, this::apkBytes);
+            pkg().setAllowTestApiAccess(true);
         } catch (NeneException e) {
             throw new NeneException("Error while installing TestApp " + this, e);
         }

@@ -40,6 +40,7 @@ import static org.mockito.Mockito.verify;
 import android.app.Activity;
 import android.app.WallpaperColors;
 import android.app.WallpaperManager;
+import android.app.cts.wallpapers.util.WallpaperTestUtils;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -134,6 +135,8 @@ public class WallpaperManagerTest {
                 mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isAtLeast(0);
         assertWithMessage("Lock screen wallpaper must be unset after setUp()").that(
                 mWallpaperManager.getWallpaperId(FLAG_LOCK)).isLessThan(0);
+
+        TestWallpaperService.Companion.resetCounts();
     }
 
     @After
@@ -142,6 +145,7 @@ public class WallpaperManagerTest {
             mContext.unregisterReceiver(mBroadcastReceiver);
         }
         TestWallpaperService.Companion.checkAssertions();
+        TestWallpaperService.Companion.resetCounts();
         mWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
     }
 
@@ -1223,6 +1227,43 @@ public class WallpaperManagerTest {
 
         assertWithMessage("Drawables must represent the same image").that(
                 isSimilar(actual, expected)).isTrue();
+    }
+
+    /**
+     * For every possible (state, change) couple, checks that the number of times
+     * {@link TestWallpaperService.FakeEngine#onDestroy} and
+     * {@link TestWallpaperService.FakeEngine#onCreate} are called is correct.
+     */
+    @Test
+    public void testEngineCallbackCounts() throws IOException {
+        assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
+        runWithShellPermissionIdentity(() -> {
+            for (WallpaperTestUtils.State state : WallpaperTestUtils.allPossibleStates()) {
+                WallpaperTestUtils.goToState(mWallpaperManager, state);
+                TestWallpaperService.Companion.resetCounts();
+
+                for (WallpaperTestUtils.WallpaperChange change: state.allPossibleChanges()) {
+                    TestWallpaperService.Companion.resetCounts();
+                    WallpaperTestUtils.performChange(mWallpaperManager, change);
+
+                    int expectedCreateCount = state.expectedNumberOfLiveWallpaperCreate(change);
+                    int actualCreateCount = TestWallpaperService.Companion.getCreateCount();
+                    String createMessage = String.format(
+                            "Expected %s calls to Engine#onCreate, got %s. ",
+                            expectedCreateCount, actualCreateCount);
+                    assertWithMessage(createMessage + "\n" + state.reproduceDescription(change))
+                        .that(actualCreateCount).isEqualTo(expectedCreateCount);
+
+                    int expectedDestroyCount = state.expectedNumberOfLiveWallpaperDestroy(change);
+                    int actualDestroyCount = TestWallpaperService.Companion.getDestroyCount();
+                    String destroyMessage = String.format(
+                            "Expected %s calls to Engine#onDestroy, got %s. ",
+                            expectedDestroyCount, actualDestroyCount);
+                    assertWithMessage(destroyMessage + "\n" + state.reproduceDescription(change))
+                            .that(actualDestroyCount).isEqualTo(expectedDestroyCount);
+                }
+            }
+        });
     }
 
     private void assertBitmapDimensions(Bitmap bitmap) {

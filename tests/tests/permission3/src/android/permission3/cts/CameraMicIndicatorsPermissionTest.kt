@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.permission4.cts
+package android.permission3.cts
 
 import android.Manifest
 import android.app.Instrumentation
@@ -62,14 +62,16 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
+private const val APK_PATH =
+    "/data/local/tmp/cts/permission3/CtsAppThatAccessesMicAndCameraPermission.apk"
 private const val APP_LABEL = "CtsCameraMicAccess"
-private const val APP_PKG = "android.permission4.cts.appthataccessescameraandmic"
+private const val APP_PKG = "android.permission3.cts.appthataccessescameraandmic"
 private const val SHELL_PKG = "com.android.shell"
 private const val USE_CAMERA = "use_camera"
 private const val USE_MICROPHONE = "use_microphone"
 private const val USE_HOTWORD = "use_hotword"
 private const val FINISH_EARLY = "finish_early"
-private const val INTENT_ACTION = "test.action.USE_CAMERA_OR_MIC"
+private const val USE_INTENT_ACTION = "test.action.USE_CAMERA_OR_MIC"
 private const val PRIVACY_CHIP_ID = "com.android.systemui:id/privacy_chip"
 private const val CAR_MIC_PRIVACY_CHIP_ID = "com.android.systemui:id/mic_privacy_chip"
 private const val CAR_CAMERA_PRIVACY_CHIP_ID = "com.android.systemui:id/camera_privacy_chip"
@@ -120,6 +122,16 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
             SAFETY_CENTER_ENABLED, false.toString())!!
     }
 
+    private fun uninstall() {
+        val output = runShellCommand("pm uninstall $APP_PKG").trim()
+        assertEquals("Success", output)
+    }
+
+    private fun install() {
+        val output = runShellCommand("pm install -g $APK_PATH").trim()
+        assertEquals("Success", output)
+    }
+
     @Before
     fun setUp() {
         runWithShellPermissionIdentity {
@@ -144,6 +156,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
         assumeFalse("feature not present on this device", callWithShellPermissionIdentity {
             CompatChanges.isChangeEnabled(PERMISSION_INDICATORS_NOT_PRESENT, Process.SYSTEM_UID)
         })
+        install()
     }
 
     private fun setIndicatorsEnabledStateIfNeeded(shouldBeEnabled: Boolean): Boolean {
@@ -161,6 +174,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
 
     @After
     fun tearDown() {
+        uninstall()
         if (!wasEnabled) {
             setIndicatorsEnabledStateIfNeeded(false)
         }
@@ -186,7 +200,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
         useHotword: Boolean,
         finishEarly: Boolean = false
     ) {
-        context.startActivity(Intent(INTENT_ACTION).apply {
+        context.startActivity(Intent(USE_INTENT_ACTION).apply {
             putExtra(USE_CAMERA, useCamera)
             putExtra(USE_MICROPHONE, useMic)
             putExtra(USE_HOTWORD, useHotword)

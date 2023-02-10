@@ -258,6 +258,10 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("MIRROR_AUTO_FOLD_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.MIRROR_AUTO_TILT_ENABLED))
                 .isEqualTo("MIRROR_AUTO_TILT_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.GLOVE_BOX_DOOR_POS))
+                .isEqualTo("GLOVE_BOX_DOOR_POS");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.GLOVE_BOX_LOCKED))
+                .isEqualTo("GLOVE_BOX_LOCKED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_BACKREST_ANGLE_1_MOVE))
                 .isEqualTo("SEAT_BACKREST_ANGLE_1_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_BACKREST_ANGLE_1_POS))
@@ -340,6 +344,10 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("WINDOW_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WINDOW_POS))
                 .isEqualTo("WINDOW_POS");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WINDSHIELD_WIPERS_PERIOD))
+                .isEqualTo("WINDSHIELD_WIPERS_PERIOD");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WINDSHIELD_WIPERS_STATE))
+                .isEqualTo("WINDSHIELD_WIPERS_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.STEERING_WHEEL_DEPTH_MOVE))
                 .isEqualTo("STEERING_WHEEL_DEPTH_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.STEERING_WHEEL_DEPTH_POS))
@@ -421,6 +429,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("LANE_DEPARTURE_WARNING_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_KEEP_ASSIST_ENABLED))
                 .isEqualTo("LANE_KEEP_ASSIST_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_KEEP_ASSIST_STATE))
+                .isEqualTo("LANE_KEEP_ASSIST_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED))
                 .isEqualTo("LANE_CENTERING_ASSIST_ENABLED");
         assertThat(VehiclePropertyIds.toString(3)).isEqualTo("0x3");

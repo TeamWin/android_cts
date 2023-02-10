@@ -33,6 +33,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import java.nio.FloatBuffer
 import java.nio.ShortBuffer
+import kotlin.test.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -107,20 +108,20 @@ class MeshTest : ActivityTestBase() {
                 simpleAttributeList, 8, simpleVaryingList,
                 simpleVertexShader, simpleFragmentShader,
                 ColorSpace.get(ColorSpace.Named.DISPLAY_P3),
-                MeshSpecification.PREMUL
+                MeshSpecification.ALPHA_TYPE_PREMUL
         )
     }
 
     @Test
     fun testMeshSpecMakeWithUnorderedAttributes() {
-        val attList = mutableListOf(
+        val attList = arrayOf(
                 MeshSpecification.Attribute(
-                        MeshSpecification.FLOAT2,
+                        MeshSpecification.TYPE_FLOAT2,
                         12,
                         "position"
                 ),
                 MeshSpecification.Attribute(
-                        MeshSpecification.FLOAT3,
+                        MeshSpecification.TYPE_FLOAT3,
                         0,
                         "test"
                 )
@@ -141,8 +142,8 @@ class MeshTest : ActivityTestBase() {
 
     @Test
     fun testMeshSpecMakeWithNonEmptyVaryings() {
-        val varyList = mutableListOf(
-                MeshSpecification.Varying(MeshSpecification.FLOAT2, "uv")
+        val varyList = arrayOf(
+                MeshSpecification.Varying(MeshSpecification.TYPE_FLOAT2, "uv")
         )
         MeshSpecification.make(
                 simpleAttributeList, 8, varyList, simpleVertexShader,
@@ -911,14 +912,14 @@ class MeshTest : ActivityTestBase() {
 
     @Test
     fun testDrawMeshWithOutOfOrderAttributes() {
-        val attList = mutableListOf(
+        val attList = arrayOf(
                 MeshSpecification.Attribute(
-                        MeshSpecification.FLOAT,
+                        MeshSpecification.TYPE_FLOAT,
                         8,
                         "offset"
                 ),
                 MeshSpecification.Attribute(
-                        MeshSpecification.FLOAT2,
+                        MeshSpecification.TYPE_FLOAT2,
                         0,
                         "position"
                 )
@@ -961,25 +962,44 @@ class MeshTest : ActivityTestBase() {
         }, true).runWithVerifier(RectVerifier(Color.WHITE, paint.color, rect))
     }
 
+    @Test
+    fun testAttributeParams() {
+        val attribute = MeshSpecification.Attribute(
+            MeshSpecification.TYPE_FLOAT3, 12, "myAttribute")
+        assertEquals(MeshSpecification.TYPE_FLOAT3, attribute.type)
+        assertEquals(12, attribute.offset)
+        assertEquals("myAttribute", attribute.name)
+    }
+
+    @Test
+    fun testVaryingParams() {
+        val varying = MeshSpecification.Varying(
+            MeshSpecification.TYPE_FLOAT2, "myVarying")
+        assertEquals(MeshSpecification.TYPE_FLOAT2, varying.type)
+        assertEquals("myVarying", varying.name)
+    }
+
     // /////////////    Test Values    ///////////////
 
-    val simpleAttributeList: MutableList<MeshSpecification.Attribute> = mutableListOf(
+    private val simpleAttributeList = arrayOf(
             MeshSpecification.Attribute(
-                    MeshSpecification.FLOAT2,
+                    MeshSpecification.TYPE_FLOAT2,
                     0,
                     "position"
             )
     )
 
-    val simpleVaryingList = java.util.ArrayList<MeshSpecification.Varying>()
+    private val simpleVaryingList = arrayOf<MeshSpecification.Varying>()
 
-    val simpleVertexShader = ("Varyings main(const Attributes attributes) { " +
+    private val simpleVertexShader =
+        ("Varyings main(const Attributes attributes) { " +
             "     Varyings varyings;" +
             "     varyings.position = attributes.position;" +
             "     return varyings;" +
             "}")
 
-    val simpleFragmentShader = ("float2 main(const Varyings varyings, out float4 color) {\n" +
+    private val simpleFragmentShader =
+        ("float2 main(const Varyings varyings, out float4 color) {\n" +
             "      color = vec4(1.0, 0.0, 0.0, 1.0);" +
             "      return varyings.position;\n" +
             "}")

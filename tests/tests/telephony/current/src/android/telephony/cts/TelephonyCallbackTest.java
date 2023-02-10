@@ -93,6 +93,7 @@ public class TelephonyCallbackTest {
     private boolean mOnCallStatesChangedCalled;
     private boolean mOnCallDisconnectCauseChangedCalled;
     private boolean mOnImsCallDisconnectCauseChangedCalled;
+    private ImsReasonInfo mImsReasonInfo;
     private EmergencyNumber mOnOutgoingSmsEmergencyNumberChanged;
     private boolean mOnPreciseDataConnectionStateChanged;
     private boolean mOnRadioPowerStateChangedCalled;
@@ -633,6 +634,7 @@ public class TelephonyCallbackTest {
         public void onImsCallDisconnectCauseChanged(ImsReasonInfo imsReason) {
             synchronized (mLock) {
                 mOnImsCallDisconnectCauseChangedCalled = true;
+                mImsReasonInfo = imsReason;
                 mLock.notify();
             }
         }
@@ -654,6 +656,7 @@ public class TelephonyCallbackTest {
         }
 
         assertThat(mOnImsCallDisconnectCauseChangedCalled).isTrue();
+        assertNotNull(mImsReasonInfo);
 
         // Test unregister
         unRegisterTelephonyCallback(mOnImsCallDisconnectCauseChangedCalled,

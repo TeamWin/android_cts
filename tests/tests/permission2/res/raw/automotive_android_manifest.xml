@@ -72,6 +72,10 @@
          android:protectionLevel="signature|privileged"
          android:label="@string/car_permission_label_control_car_mirrors"
          android:description="@string/car_permission_desc_control_car_mirrors"/>
+    <permission android:name="android.car.permission.CONTROL_GLOVE_BOX"
+                android:protectionLevel="signature|privileged"
+                android:label="@string/car_permission_label_control_glove_box"
+                android:description="@string/car_permission_desc_control_glove_box"/>
     <permission android:name="android.car.permission.CONTROL_CAR_SEATS"
          android:protectionLevel="signature|privileged"
          android:label="@string/car_permission_label_control_car_seats"
@@ -550,4 +554,12 @@
          android:protectionLevel="signature|privileged"
          android:label="@string/car_permission_label_mirror_display"
          android:description="@string/car_permission_desc_mirror_display"/>
+    <permission android:name="android.car.permission.READ_WINDSHIELD_WIPERS"
+         android:protectionLevel="signature|privileged"
+         android:label="@string/car_permission_label_read_windshield_wipers"
+         android:description="@string/car_permission_desc_read_windshield_wipers"/>
+    <permission android:name="android.car.permission.CONTROL_WINDSHIELD_WIPERS"
+         android:protectionLevel="signature|privileged"
+         android:label="@string/car_permission_label_control_windshield_wipers"
+         android:description="@string/car_permission_desc_control_windshield_wipers"/>
 </manifest>

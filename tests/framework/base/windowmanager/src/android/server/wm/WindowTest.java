@@ -698,17 +698,20 @@ public class WindowTest {
     @Test
     public void testSetFitsContentForInsets_displayCutoutInsets_areApplied()
             throws Throwable {
-        setMayAffectDisplayRotation();
-        mActivityRule.runOnUiThread(() -> {
-            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-            mWindow.setDecorFitsSystemWindows(true);
-            WindowManager.LayoutParams attrs = mWindow.getAttributes();
-            attrs.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
-            mWindow.setAttributes(attrs);
-        });
-        mInstrumentation.waitForIdleSync();
-        assertEquals(mActivity.getContentView().getRootWindowInsets().getSystemWindowInsets(),
-                mActivity.getAppliedInsets());
+        try (IgnoreOrientationRequestSession session =
+                     new IgnoreOrientationRequestSession(false /* enable */)) {
+            setMayAffectDisplayRotation();
+            mActivityRule.runOnUiThread(() -> {
+                mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                mWindow.setDecorFitsSystemWindows(true);
+                WindowManager.LayoutParams attrs = mWindow.getAttributes();
+                attrs.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+                mWindow.setAttributes(attrs);
+            });
+            mInstrumentation.waitForIdleSync();
+            assertEquals(mActivity.getContentView().getRootWindowInsets().getSystemWindowInsets(),
+                    mActivity.getAppliedInsets());
+        }
     }
 
     @Test

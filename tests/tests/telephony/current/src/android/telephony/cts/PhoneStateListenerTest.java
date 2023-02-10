@@ -88,6 +88,7 @@ public class PhoneStateListenerTest {
     private boolean mOnPreciseCallStateChangedCalled;
     private boolean mOnCallDisconnectCauseChangedCalled;
     private boolean mOnImsCallDisconnectCauseChangedCalled;
+    private ImsReasonInfo mImsReasonInfo;
     private boolean mOnPreciseDataConnectionStateChanged;
     private boolean mOnRadioPowerStateChangedCalled;
     private boolean mVoiceActivationStateChangedCalled;
@@ -472,6 +473,7 @@ public class PhoneStateListenerTest {
                 public void onImsCallDisconnectCauseChanged(ImsReasonInfo imsReason) {
                     synchronized (mLock) {
                         mOnImsCallDisconnectCauseChangedCalled = true;
+                        mImsReasonInfo = imsReason;
                         mLock.notify();
                     }
                 }
@@ -487,6 +489,7 @@ public class PhoneStateListenerTest {
         }
 
         assertThat(mOnImsCallDisconnectCauseChangedCalled).isTrue();
+        assertNotNull(mImsReasonInfo);
     }
 
     @Test

@@ -2653,6 +2653,32 @@ public final class DeviceState extends HarrierRule {
                 }
             }
 
+            // We must remove all non-test users on all devices though
+            // (except for the first 1 if headless and always the system user)
+            int allowedNonTestUsers = TestApis.users().isHeadlessSystemUserMode() ? 1 : 0;
+
+            for (UserReference u : TestApis.users().all()) {
+                if (u.isSystem()) {
+                    continue;
+                }
+                if (u.isForTesting()) {
+                    continue;
+                }
+                if (allowedNonTestUsers > 0) {
+                    allowedNonTestUsers--;
+                    continue;
+                }
+                try {
+                    removeAndRecordUser(u);
+                } catch (NeneException e) {
+                    failOrSkip(
+                            "Error removing user to prepare for DeviceOwner: "
+                                    + e.toString(),
+                            failureMode);
+                }
+            }
+
+
             if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
                 ensureHasNoAccounts(UserType.ANY);
             } else {

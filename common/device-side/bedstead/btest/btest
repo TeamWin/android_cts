@@ -18,6 +18,7 @@ import subprocess
 import re
 import queue
 from threading  import Thread
+import itertools
 
 class CurrentUserState:
     def __init__(self, args):
@@ -101,11 +102,12 @@ class SecondaryUserState:
 
         self.user_id = get_or_create_secondary_user(device_state, self.args)
         execute_shell_command("Test", self.args, ["adb", "shell", "am", "switch-user", str(self.user_id)])
-        execute_shell_command("Test", self.args, ["adb", "shell", "pm", "install-existing", "--user", str(self.user_id), supported_modules[self.args.module][PACKAGE_NAME]])
+        for module in self.args.modules:
+            execute_shell_command("Test", self.args, ["adb", "shell", "pm", "install-existing", "--user", str(self.user_id), supported_modules[module][PACKAGE_NAME]])
 
-        for additional_app in supported_modules[self.args.module].get(ADDITIONAL_APPS, []):
-            command = ["adb", "install-existing", "--user", str(self.user_id), additional_app[PACKAGE_NAME]]
-            execute_shell_command("Test", self.args, command, shell=True, executable="/bin/bash")
+            for additional_app in supported_modules[module].get(ADDITIONAL_APPS, []):
+                command = ["adb", "install-existing", "--user", str(self.user_id), additional_app[PACKAGE_NAME]]
+                execute_shell_command("Test", self.args, command, shell=True, executable="/bin/bash")
 
     def get_user(self):
         return self.user_id
@@ -135,11 +137,12 @@ class AdditionalUserState:
 
         self.user_id = get_or_create_additional_user(device_state, self.args)
         execute_shell_command("Test", self.args, ["adb", "shell", "am", "switch-user", str(self.user_id)])
-        execute_shell_command("Test", self.args, ["adb", "shell", "pm", "install-existing", "--user", str(self.user_id), supported_modules[self.args.module][PACKAGE_NAME]])
+        for module in self.args.modules:
+            execute_shell_command("Test", self.args, ["adb", "shell", "pm", "install-existing", "--user", str(self.user_id), supported_modules[module][PACKAGE_NAME]])
 
-        for additional_app in supported_modules[self.args.module].get(ADDITIONAL_APPS, []):
-            command = ["adb", "install-existing", "--user", str(self.user_id), additional_app[PACKAGE_NAME]]
-            execute_shell_command("Test", self.args, command, shell=True, executable="/bin/bash")
+            for additional_app in supported_modules[module].get(ADDITIONAL_APPS, []):
+                command = ["adb", "install-existing", "--user", str(self.user_id), additional_app[PACKAGE_NAME]]
+                execute_shell_command("Test", self.args, command, shell=True, executable="/bin/bash")
 
     def get_user(self):
         return self.user_id
@@ -175,11 +178,12 @@ class WorkProfileState:
         self.user_id = user["id"]
         execute_shell_command("Test", self.args, ["adb", "shell", "am", "switch-user", str(user["parent"])])
         execute_shell_command("Test", self.args, ["adb", "shell", "am", "start-user ", str(self.user_id)])
-        execute_shell_command("Test", self.args, ["adb", "shell", "pm", "install-existing", "--user", str(self.user_id), supported_modules[self.args.module][PACKAGE_NAME]])
+        for module in self.args.modules:
+            execute_shell_command("Test", self.args, ["adb", "shell", "pm", "install-existing", "--user", str(self.user_id), supported_modules[module][PACKAGE_NAME]])
 
-        for additional_app in supported_modules[self.args.module].get(ADDITIONAL_APPS, []):
-            command = ["adb", "install-existing", "--user", str(self.user_id), additional_app[PACKAGE_NAME]]
-            execute_shell_command("Test", self.args, command, shell=True, executable="/bin/bash")
+            for additional_app in supported_modules[module].get(ADDITIONAL_APPS, []):
+                command = ["adb", "install-existing", "--user", str(self.user_id), additional_app[PACKAGE_NAME]]
+                execute_shell_command("Test", self.args, command, shell=True, executable="/bin/bash")
 
     def _get_or_create_work_profile(self, device_state):
         users = get_users(self.args)
@@ -226,17 +230,18 @@ class CloneProfileState:
 
     def enter(self, device_state):
         debug(self.args, "[Test] Entering state " + self.name())
-        user = self._get_or_create_clone_profile()
+        user = self._get_or_create_clone_profile(device_state)
         self.user_id = user["id"]
         execute_shell_command("Test", self.args, ["adb", "shell", "am", "switch-user", str(user["parent"])])
         execute_shell_command("Test", self.args, ["adb", "shell", "am", "start-user ", str(self.user_id)])
-        execute_shell_command("Test", self.args, ["adb", "shell", "pm", "install-existing", "--user", str(self.user_id), supported_modules[self.args.module][PACKAGE_NAME]])
+        for module in self.args.modules:
+            execute_shell_command("Test", self.args, ["adb", "shell", "pm", "install-existing", "--user", str(self.user_id), supported_modules[module][PACKAGE_NAME]])
 
-        for additional_app in supported_modules[self.args.module].get(ADDITIONAL_APPS, []):
-            command = ["adb", "install-existing", "--user", str(self.user_id), additional_app[PACKAGE_NAME]]
-            execute_shell_command("Test", self.args, command, shell=True, executable="/bin/bash")
+            for additional_app in supported_modules[module].get(ADDITIONAL_APPS, []):
+                command = ["adb", "install-existing", "--user", str(self.user_id), additional_app[PACKAGE_NAME]]
+                execute_shell_command("Test", self.args, command, shell=True, executable="/bin/bash")
 
-    def _get_or_create_clone_profile(self):
+    def _get_or_create_clone_profile(self, device_state):
         users = get_users(self.args)
         for user in users.values():
             if self._is_clone_profile(user):
@@ -244,7 +249,7 @@ class CloneProfileState:
 
         parent_id = 0 # Clone user only supported on system user only as of now.
 
-        clone_profile_id = create_clone_profile(self.args, parent_id)
+        clone_profile_id = create_clone_profile(device_state, self.args, parent_id)
         return {"id": clone_profile_id, "type": "profile.CLONE", "flags": None, "parent": str(parent_id)}
 
     def get_user(self):
@@ -420,7 +425,7 @@ def find_module_for_class_method(class_method):
 def get_args():
     """ Parse command line arguments. """
     parser = argparse.ArgumentParser(description="Run tests during development")
-    parser.add_argument("target", type=str, help="The target to run. This is in the form module:class#method. Method and class are optional")
+    parser.add_argument("targets", nargs="+", type=str, help="The target to run. This is in the form module:class#method. Method and class are optional. Use LAST_PASSES, LAST_FAILURES, LAST_IGNORED, or LAST_ASSUMPTION_FAILED to include the passed/failed/ignored/assumption failed tests from the most recent run.")
     parser.add_argument("-b", "--build", action='store_true', help="Builds test targets. (default)")
     parser.add_argument("-i", "--install", action='store_true', help="Builds test targets. (default)")
     parser.add_argument("-t", "--test", action='store_true', help="Builds test targets. (default)")
@@ -471,41 +476,72 @@ def get_args():
                 print("Instruction " + instruction + " is invalid, must be one of " + str(valid_instructions))
                 sys.exit(1)
 
-    load_module_and_class_method(args)
+    load_module_and_class_methods(args)
 
     return args
 
 def expand_short_target(target):
+    if target == "LAST_FAILURES":
+        out = os.environ["OUT"]
+        with open(out + "/btest_failures.txt", "r") as f:
+            return [t.strip() for t in f.readlines()]
+    if target == "LAST_PASSES":
+        out = os.environ["OUT"]
+        with open(out + "/btest_passes.txt", "r") as f:
+            return [t.strip() for t in f.readlines()]
+    if target == "LAST_IGNORED":
+        out = os.environ["OUT"]
+        with open(out + "/btest_ignored.txt", "r") as f:
+            return [t.strip() for t in f.readlines()]
+    if target == "LAST_ASSUMPTION_FAILED":
+        out = os.environ["OUT"]
+        with open(out + "/btest_assumption_failed.txt", "r") as f:
+            return [t.strip() for t in f.readlines()]
+
     for short in SHORT_PACKAGE_PREFIXES.keys():
         if target.startswith(short):
             target = SHORT_PACKAGE_PREFIXES[short] + target[len(short):]
             break
-    return target
+    return [target]
 
-def load_module_and_class_method(args):
-    """ Parse target from args and load module and class_method. """
-    args.target = expand_short_target(args.target)
+def flatten(list_of_lists):
+    return list(itertools.chain.from_iterable(list_of_lists))
 
+def load_module_and_class_methods(args):
+    """ Parse targets from args and load module and class_method. """
+    args.targets = flatten([expand_short_target(target) for target in args.targets])
 
-    target_parts = args.target.split(":", 1)
-    args.module = target_parts[0]
-    args.class_method = target_parts[1] if len(target_parts) > 1 else None
+    if len(args.targets) == 0:
+        print("No targets to run")
+        sys.exit(0)
 
-    if not args.module in supported_modules:
-        # Let's guess that maybe they ommitted the module
-        args.class_method = args.module
-        args.module = find_module_for_class_method(args.class_method)
-        if not args.module:
-            print("Could not find module or module not supported. btest only supports a small number of test modules.")
-            sys.exit(1)
+    new_targets = []
 
-def build_module(args):
+    for target in args.targets:
+        target_parts = target.split(":", 1)
+        module = target_parts[0]
+        class_method = target_parts[1] if len(target_parts) > 1 else None
+
+        if not module in supported_modules:
+            # Let's guess that maybe they omitted the module
+            class_method = module
+            module = find_module_for_class_method(class_method)
+            if not module:
+                print("Could not find module or module not supported " + class_method + ". btest only supports a small number of test modules.")
+                sys.exit(1)
+        new_targets.append((module, class_method))
+    args.targets = new_targets
+    args.modules = set([t[0] for t in args.targets])
+
+def build_modules(args):
     build_top = os.environ["ANDROID_BUILD_TOP"]
-    # Unfortunately I haven't figured out a way to just import the envsetup so we need to run it each time
-    command = ". " + build_top + "/build/envsetup.sh && m " + args.module
 
-    for target in supported_modules[args.module].get(ADDITIONAL_TARGETS, []):
-        command += " && m " + target
+    targets = args.modules.copy()
+    for t in args.targets:
+        targets.update(supported_modules[t[0]].get(ADDITIONAL_TARGETS, []))
+
+    # Unfortunately I haven't figured out a way to just import the envsetup so we need to run it each time
+    command = ". " + build_top + "/build/envsetup.sh && " + " && ".join(["m " + t for t in targets])
 
     if args.interactive and args.build_interactive:
         command += " && m InteractiveAutomation"
@@ -521,29 +557,34 @@ def build_module(args):
 
 def install(args):
     out = os.environ["OUT"]
+
     if args.install:
-        command = ["adb install --user all -t -g " + out + "/testcases/" + args.module + "/*/" + args.module + ".apk"]
-        execute_shell_command("Install", args, command, shell=True, executable="/bin/bash")
+        for module in args.modules:
+            command = ["adb install --user all -t -g " + out + "/testcases/" + module + "/*/" + module + ".apk"]
+            execute_shell_command("Install", args, command, shell=True, executable="/bin/bash")
 
     if args.interactive and args.install_interactive:
         command = ["adb push " + out + "/system/app/InteractiveAutomation/InteractiveAutomation.apk /sdcard"]
         execute_shell_command("Install", args, command, shell=True, executable="/bin/bash")
 
-    for additional_app in supported_modules[args.module].get(ADDITIONAL_APPS, []):
-        command = ["adb install --user all -t -g " + out + "/testcases/" + additional_app[TARGET_NAME] + "/*/" + additional_app[TARGET_NAME] + ".apk"]
-        execute_shell_command("Install", args, command, shell=True, executable="/bin/bash")
+    for module in args.modules:
+        for additional_app in supported_modules[module].get(ADDITIONAL_APPS, []):
+            command = ["adb install --user all -t -g " + out + "/testcases/" + additional_app[TARGET_NAME] + "/*/" + additional_app[TARGET_NAME] + ".apk"]
+            execute_shell_command("Install", args, command, shell=True, executable="/bin/bash")
 
-    for file in supported_modules[args.module].get(FILES, []):
-        command = ["adb push " + out + "/testcases/*/" + file["from"]  + " " + file["to"]]
-        execute_shell_command("Install", args, command, shell=True, executable="/bin/bash")
+    for module in args.modules:
+        for file in supported_modules[module].get(FILES, []):
+            command = ["adb push " + out + "/testcases/*/" + file["from"]  + " " + file["to"]]
+            execute_shell_command("Install", args, command, shell=True, executable="/bin/bash")
 
 class Test:
 
-    def __init__(self, args, state, btest_run, total_test_count, next_test, include_annotations, exclude_annotations, has_later_states):
+    def __init__(self, args, module, class_methods, state, btest_run, total_test_count, next_test, include_annotations, exclude_annotations, has_later_states):
         self.args = args
         self.state = state
-        self.module_package = supported_modules[args.module][PACKAGE_NAME]
-        self.runner = supported_modules[args.module][RUNNER]
+        self.module_package = supported_modules[module][PACKAGE_NAME]
+        self.runner = supported_modules[module][RUNNER]
+        self.class_methods = class_methods
         self.parameter_colour_codes = {}
         self.available_parameter_colour_codes_pointer = 0
         self.total_test_count = total_test_count
@@ -583,13 +624,17 @@ class Test:
             else:
                 command += " -e ENABLE_AUTOMATION false"
 
-        if self.args.class_method:
-            if self.args.class_method.endswith("*"):
+        if len(self.class_methods) > 0:
+            if any(s.endswith("*") for s in self.class_methods):
+                if len(self.class_methods) > 1:
+                    print("Error. If you use a wildcard target, you can only specify one target")
+                    sys.exit(1)
+                class_method = self.class_methods[0]
                 # We need to escape 3 times to get through the various interpreters
                 # Using regex adds 5 seconds or so to running a single test so has to be opt-in
-                command += " -e tests_regex " + re.escape(re.escape(re.escape(self.args.class_method[:-1]))) + ".*"
+                command += " -e tests_regex " + re.escape(re.escape(re.escape(class_method[:-1]))) + ".*"
             else:
-                command += " -e class " + self.args.class_method
+                command += " -e class " + ",".join(self.class_methods)
 
         command += " -w " + self.module_package + "/" + self.runner
 
@@ -670,7 +715,7 @@ class Test:
         while not self.test_process_queue.empty():
             output = self.test_process_queue.get()
             if "(0 tests)" in output:
-                print("[" + self.state.name() + "] No tests to run")
+                debug(self.args, "[" + self.state.name() + "] No tests to run")
             if "Process crashed before executing the test" in output:
                 print(output)
                 sys.exit(1)
@@ -838,8 +883,14 @@ def create_work_profile(device_state, args, parent_id):
         sys.exit(1)
     return id
 
-def create_clone_profile(args, parent_id):
-    output, err = execute_shell_command("Test", args, ["adb", "shell", "pm", "create-user", "--profileOf", str(parent_id), "--user-type android.os.usertype.profile.CLONE", "user"])
+def create_clone_profile(device_state, args, parent_id):
+    commands = ["adb", "shell", "pm", "create-user", "--profileOf", str(parent_id), "--user-type android.os.usertype.profile.CLONE"]
+    if device_state["sdk_version"] >= 33:
+        commands.append("--for-testing")
+    commands.append("user")
+
+    output, err = execute_shell_command("Test", args, commands)
+
     try:
         id = int(output.rsplit(" ", 1)[1].strip())
     except IndexError:
@@ -883,7 +934,7 @@ def get_current_user(args):
 def main():
     args = get_args()
 
-    build_module(args)
+    build_modules(args)
 
     install(args)
 
@@ -902,7 +953,12 @@ def main():
                 args.states.remove(RUN_ON_CLONE_PROFILE)
 
         # Construct modules with args
-        states = [m(args) for m in supported_modules[args.module][STATES]]
+
+        states = set()
+        for module in args.modules:
+            for m in supported_modules[module][STATES]:
+                states.add(m)
+        states = [s(args) for s in states]
 
         if not args.headless:
             states = [t for t in states if not t.name() == "RUN_ON_ADDITIONAL_USER"]
@@ -946,6 +1002,10 @@ def main():
         states.insert(0, states.pop(states.index(first_state)))
         needs_to_enter_state = False
 
+        instrumented_runs = {}
+        for module in args.modules:
+            instrumented_runs[module] = [target[1] for target in args.targets if target[0] == module and target[1] is not None]
+
         try:
             for i, state in enumerate(states):
                 debug(args, "[Test] Running tests for " + state.name())
@@ -953,10 +1013,13 @@ def main():
                     state.enter(device_state)
                 include_annotations = state.include_annotations(args)
                 exclude_annotations = [x for x in all_include_annotations if not x in state.all_supported_annotations(args)]
-                test = Test(args, state, btest_run, total_test_count, next_test, include_annotations, exclude_annotations, (i < len(states) - 1))
-                test.run()
-                total_test_count = test.total_test_count
-                next_test = test.next_test
+
+
+                for module in instrumented_runs:
+                    test = Test(args, module, instrumented_runs[module], state, btest_run, total_test_count, next_test, include_annotations, exclude_annotations, (i < len(states) - 1))
+                    test.run()
+                    total_test_count = test.total_test_count
+                    next_test = test.next_test
                 needs_to_enter_state = True
         except KeyboardInterrupt:
             # Kill the test process then move on to print the results
@@ -966,6 +1029,20 @@ def main():
             if test is not None:
                 test.test_process.kill()
             raise e
+
+        out = os.environ["OUT"]
+        with open(out + "/btest_passes.txt", "w") as o:
+            for test in btest_run.passed_tests:
+                o.write(test["testName"] + "\n")
+        with open(out + "/btest_failures.txt", "w") as o:
+            for test in btest_run.failed_tests:
+                o.write(test["testName"] + "\n")
+        with open(out + "/btest_ignored.txt", "w") as o:
+            for test in btest_run.ignored_tests:
+                o.write(test["testName"] + "\n")
+        with open(out + "/btest_assumption_failed.txt", "w") as o:
+            for test in btest_run.assumption_failed_tests:
+                o.write(test["testName"] + "\n")
 
         print("\n" + PASSED_CODE + "Passed: " + str(len(btest_run.passed_tests)) + RESET_CODE
               + "," + FAILED_CODE + " Failed: " + str(len(btest_run.failed_tests)) + RESET_CODE

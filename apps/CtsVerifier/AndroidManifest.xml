@@ -3302,6 +3302,9 @@
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
             <meta-data android:name="CddTest" android:value="2.2.3/3.8.3/H-0-1|3.8.3.1/C-1-5|3.8.3.1/C-3-1|3.8.3.1/C-3-2|3.8.3.2/C-0-1|3.8.3.2/C-0-2|3.8.3.2/C-1-1" />
+            <meta-data android:name="ApiTest"
+                android:value="android.service.notification.NotificationListenerService#cancelNotification|
+                android.service.notification.NotificationListenerService#cancelAllNotifications" />
         </activity>
 
         <activity android:name=".notifications.NotificationPrivacyVerifierActivity"

@@ -35,6 +35,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.provider.Telephony;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -305,6 +306,24 @@ public class TestAppInstanceTest {
                     BroadcastReceivedEvent.queryPackage(sTestApp.packageName())
                             .whereIntent().action().isEqualTo(INTENT_ACTION);
             assertThat(logs.poll()).isNotNull();
+        }
+    }
+
+    @Test
+    public void testApi_canCall() {
+        try (TestAppInstance testAppInstance = sTestApp.install()) {
+            // Arbitrary call which does not require specific permissions to confirm no crash
+            testAppInstance.devicePolicyManager()
+                    .isFactoryResetProtectionPolicySupported();
+        }
+    }
+
+    @Test
+    public void systemApi_canCall() {
+        try (TestAppInstance testAppInstance = sTestApp.install()) {
+            // Arbitrary call which does not require specific permissions to confirm no crash
+            testAppInstance.devicePolicyManager()
+                    .createProvisioningIntentFromNfcIntent(new Intent());
         }
     }
 

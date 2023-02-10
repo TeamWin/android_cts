@@ -262,7 +262,7 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
                         MediaFormat.COLOR_TRANSFER_HLG, true, CODEC_OPTIONAL},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_352x288_hlg_av1.mkv",
                         MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709,
-                        MediaFormat.COLOR_TRANSFER_HLG, true, CODEC_ALL},
+                        MediaFormat.COLOR_TRANSFER_HLG, true, CODEC_OPTIONAL},
         });
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }

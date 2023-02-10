@@ -66,7 +66,7 @@ import org.junit.runner.RunWith;
 
 // TODO(b/228016400): replace usages of createAndProvisionManagedProfile with a nene API
 @RunWith(BedsteadJUnit4.class)
-public class DevicePolicyManagementRoleHolderTest {
+public class DevicePolicyManagementRoleHolderTest { // TODO: This is crashing on non-headless - figure it out
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();

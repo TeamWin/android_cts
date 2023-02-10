@@ -602,6 +602,8 @@ public final class PermissionGrantTest {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
                         sTestApp.packageName(), permission);
+        assumeFalse(existingGrantState == PERMISSION_GRANT_STATE_GRANTED);
+
         try {
             boolean wasSet =
                     sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(

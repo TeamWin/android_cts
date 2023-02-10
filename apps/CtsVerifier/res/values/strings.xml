@@ -2574,7 +2574,8 @@ When the buttons are enabled, pass this test if the information in the dialog wa
     <string name="nls_clear_one">Check that service can clear a notification.</string>
     <string name="nls_clear_one_reason">Check that service can clear a notification and receive the correct reason for dismissal.</string>
     <string name="nls_clear_one_stats">Check that service does not receive notification stats.</string>
-    <string name="nls_clear_all">Check that service can clear all notifications.</string>
+    <string name="nls_clear_all">Check that service can clear all notifications that are not ongoing.</string>
+    <string name="nls_clear_ongoing">Check that service cannot clear an ongoing notification.</string>
     <string name="nls_service_stopped">Service should stop once disabled.</string>
     <string name="nls_note_missed">Check that notification was not received.</string>
     <string name="nls_snooze">Check the service can be snoozed.</string>

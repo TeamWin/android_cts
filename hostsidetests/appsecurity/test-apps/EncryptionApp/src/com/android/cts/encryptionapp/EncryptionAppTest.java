@@ -335,6 +335,7 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         assertQuery(2, MATCH_DIRECT_BOOT_AWARE | MATCH_DIRECT_BOOT_UNAWARE);
 
         if (Environment.isExternalStorageEmulated()) {
+            pollForExternalStorageMountedState();
             assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
 
             final File expected = new File(
@@ -356,6 +357,15 @@ public class EncryptionAppTest extends InstrumentationTestCase {
                 new StrictMode.VmPolicy.Builder().detectCredentialProtectedWhileLocked()
                         .penaltyLog().build(),
                 ceFile::exists);
+    }
+
+    private void pollForExternalStorageMountedState() {
+        for (int i = 0; i < 10; i++) {
+            if (Environment.getExternalStorageState().equalsIgnoreCase(Environment.MEDIA_MOUNTED)) {
+                break;
+            }
+            SystemClock.sleep(500);
+        }
     }
 
     private void assertQuery(int count, int flags) throws Exception {

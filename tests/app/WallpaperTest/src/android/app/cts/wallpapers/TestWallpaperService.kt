@@ -46,6 +46,21 @@ open class TestWallpaperService : WallpaperService() {
         private var assertionError: AssertionError? = null
 
         /**
+         * Tracks the number of times [FakeEngine.onCreate] is called
+         */
+        var createCount: Int = 0
+
+        /**
+         * Tracks the number of times [FakeEngine.onDestroy] is called
+         */
+        var destroyCount: Int = 0
+
+        fun resetCounts() {
+            createCount = 0
+            destroyCount = 0
+        }
+
+        /**
          * To be called at the end of tests requiring assertion checks from this class.
          * The first assertion error encountered by this class, if there is any,
          * will be raised when calling this function.
@@ -111,6 +126,7 @@ open class TestWallpaperService : WallpaperService() {
             assertNotCreated()
             assertSurfaceNotCreated()
             mCreated = true
+            createCount++
             super.onCreate(surfaceHolder)
         }
 
@@ -123,10 +139,11 @@ open class TestWallpaperService : WallpaperService() {
         }
 
         override fun onDestroy() {
-            if (DEBUG) Log.d(TAG, "onDestroy")
+            if (DEBUG) Log.d(TAG, "onDestroy, new count=" + (destroyCount + 1))
             assertMainThread()
             assertCreated()
             mCreated = false
+            destroyCount++
             super.onDestroy()
         }
 

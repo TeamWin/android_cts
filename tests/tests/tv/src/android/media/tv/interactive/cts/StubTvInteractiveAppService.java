@@ -95,6 +95,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mTvMessageCount;
         public int mSendTvRecordingInfoCount;
         public int mSendTvRecordingInfoListCount;
+        public int mCurrentVideoBoundsCount;
 
         public Integer mKeyDownCode;
         public Integer mKeyUpCode;
@@ -114,6 +115,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public AdBuffer mAdBuffer;
         public TvRecordingInfo mTvRecordingInfo;
         public ArrayList<TvRecordingInfo> mTvRecordingInfoList;
+        public Rect mCurrentVideoBounds;
 
         StubSessionImpl(Context context) {
             super(context);
@@ -141,6 +143,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mAdBufferConsumedCount = 0;
             mSendTvRecordingInfoCount = 0;
             mSendTvRecordingInfoListCount = 0;
+            mCurrentVideoBoundsCount = 0;
 
             mKeyDownCode = null;
             mKeyUpCode = null;
@@ -160,6 +163,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mAdBuffer = null;
             mTvRecordingInfo = null;
             mTvRecordingInfoList = null;
+            mCurrentVideoBounds = null;
         }
 
         @Override
@@ -363,6 +367,13 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         @Override
         public void onCurrentTvInputId(String id) {
             super.onCurrentTvInputId(id);
+        }
+
+        @Override
+        public void onCurrentVideoBounds(Rect rect) {
+            super.onCurrentVideoBounds(rect);
+            mCurrentVideoBoundsCount++;
+            mCurrentVideoBounds = rect;
         }
 
         @Override

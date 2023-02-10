@@ -376,7 +376,7 @@ public final class ApplicationRestrictionsTest {
     }
 
     @Postsubmit(reason = "New test")
-    @CanSetPolicyTest(policy = ApplicationRestrictions.class, singleTestOnly = true)
+    @CanSetPolicyTest(policy = ApplicationRestrictions.class)
     public void setApplicationRestrictions_invalidPackageName_throwsException() {
         Bundle bundle =
                 createBundle("setApplicationRestrictions_invalidPackageName_throwsException");

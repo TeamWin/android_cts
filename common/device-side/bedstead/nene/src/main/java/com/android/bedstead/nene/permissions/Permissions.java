@@ -20,6 +20,8 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_APP_OPS_MODES;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.Context;

@@ -34,6 +34,10 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 
+import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -115,7 +119,6 @@ import com.android.compatibility.common.util.AmMonitor;
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.ShellIdentityUtils;
-import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -607,7 +610,7 @@ public class ActivityManagerTest {
                 Settings.Secure.getUriFor(Settings.Secure.ANR_SHOW_BACKGROUND),
                 Settings.Secure::getInt, Settings.Secure::putInt);
         try {
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 showOnFirstCrash.set(1);
                 showBackground.set(1);
             });
@@ -647,7 +650,7 @@ public class ActivityManagerTest {
 
             // Shell should have the access.
             final List<ActivityManager.ProcessErrorStateInfo>[] holder = new List[1];
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 holder[0] = mActivityManager.getProcessesInErrorState();
             });
             assertNotNull(holder[0]);
@@ -683,7 +686,7 @@ public class ActivityManagerTest {
                     STUB_PACKAGE_NAME + ":" + crashActivityName);
 
             // Shell should have the access to all of the crash info here.
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 holder[0] = mActivityManager.getProcessesInErrorState();
             });
             assertNotNull(holder[0]);
@@ -703,13 +706,13 @@ public class ActivityManagerTest {
                     app1Info.uid,
                     PACKAGE_NAME_APP1);
         } finally {
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 showOnFirstCrash.close();
                 showBackground.close();
             });
             monitor.finish();
             uid1Watcher.finish();
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
             });
         }
@@ -1012,7 +1015,7 @@ public class ActivityManagerTest {
     @Test
     public void testForceStopPackageWontRestartProcess() throws Exception {
         // Ensure that there are no remaining component records of the test app package.
-        SystemUtil.runWithShellPermissionIdentity(
+        runWithShellPermissionIdentity(
                 () -> mActivityManager.forceStopPackage(SIMPLE_PACKAGE_NAME));
         ActivityReceiverFilter appStartedReceiver = new ActivityReceiverFilter(
                 ACTIVITY_LAUNCHED_ACTION);
@@ -1039,12 +1042,12 @@ public class ActivityManagerTest {
         Predicate<RunningAppProcessInfo> processNamePredicate =
                 runningApp -> testProcess.equals(runningApp.processName);
 
-        List<RunningAppProcessInfo> runningApps = SystemUtil.callWithShellPermissionIdentity(
+        List<RunningAppProcessInfo> runningApps = callWithShellPermissionIdentity(
                 () -> mActivityManager.getRunningAppProcesses());
         assertTrue("Process " + testProcess + " should be found in running process list",
                 runningApps.stream().anyMatch(processNamePredicate));
 
-        runningApps = SystemUtil.callWithShellPermissionIdentity(() -> {
+        runningApps = callWithShellPermissionIdentity(() -> {
             mActivityManager.forceStopPackage(SIMPLE_PACKAGE_NAME);
             // Wait awhile (process starting may be asynchronous) to verify if the process is
             // started again unexpectedly.
@@ -1093,7 +1096,7 @@ public class ActivityManagerTest {
         } finally {
             // clean up
             monitor.finish();
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
             });
         }
@@ -1145,12 +1148,12 @@ public class ActivityManagerTest {
             toggleScreenOn(true);
 
             // Kill the remote process
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 mActivityManager.killProcessesWhenImperceptible(new int[]{remote.pid}, reason);
             });
 
             // Kill the activity process
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 mActivityManager.killProcessesWhenImperceptible(new int[]{proc.pid}, reason);
             });
 
@@ -1204,7 +1207,7 @@ public class ActivityManagerTest {
             if (disabled) {
                 executeAndLogShellCommand("cmd deviceidle disable light");
             }
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 mActivityManager.forceStopPackage(SIMPLE_PACKAGE_NAME);
             });
             executeAndLogShellCommand("am kill " + STUB_PACKAGE_NAME);
@@ -1235,7 +1238,7 @@ public class ActivityManagerTest {
             amSettings.set("power_check_interval=" + powerCheckInterval);
 
             // Make sure we could start activity from background
-            SystemUtil.runShellCommand(mInstrumentation,
+            runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist +" + PACKAGE_NAME_APP1);
 
             // Keep the device awake
@@ -1301,10 +1304,10 @@ public class ActivityManagerTest {
         } finally {
             amSettings.close();
 
-            SystemUtil.runShellCommand(mInstrumentation,
+            runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist -" + PACKAGE_NAME_APP1);
 
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 // force stop test package, where the whole test process group will be killed.
                 mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
             });
@@ -1347,7 +1350,7 @@ public class ActivityManagerTest {
             amSettings.set("power_check_interval=" + powerCheckInterval);
 
             // Reduce the maximum phantom processes allowance
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 int current = DeviceConfig.getInt(namespaceActivityManager,
                         maxPhantomProcesses, -1);
                 currentMax.putInt(keyCurrent, current);
@@ -1357,11 +1360,11 @@ public class ActivityManagerTest {
             });
 
             // Make sure we could start activity from background
-            SystemUtil.runShellCommand(mInstrumentation,
+            runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist +" + PACKAGE_NAME_APP1);
-            SystemUtil.runShellCommand(mInstrumentation,
+            runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist +" + PACKAGE_NAME_APP2);
-            SystemUtil.runShellCommand(mInstrumentation,
+            runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist +" + PACKAGE_NAME_APP3);
 
             // Keep the device awake
@@ -1435,7 +1438,7 @@ public class ActivityManagerTest {
         } finally {
             amSettings.close();
 
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 final int current = currentMax.getInt(keyCurrent);
                 if (current < 0) {
                     // Hm, DeviceConfig doesn't have an API to delete a property,
@@ -1448,14 +1451,14 @@ public class ActivityManagerTest {
                 }
             });
 
-            SystemUtil.runShellCommand(mInstrumentation,
+            runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist -" + PACKAGE_NAME_APP1);
-            SystemUtil.runShellCommand(mInstrumentation,
+            runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist -" + PACKAGE_NAME_APP2);
-            SystemUtil.runShellCommand(mInstrumentation,
+            runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist -" + PACKAGE_NAME_APP3);
 
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 // force stop test package, where the whole test process group will be killed.
                 mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
                 mActivityManager.forceStopPackage(PACKAGE_NAME_APP2);
@@ -1570,11 +1573,11 @@ public class ActivityManagerTest {
         });
         try {
             // Make sure we could start activity from background
-            SystemUtil.runShellCommand(mInstrumentation,
+            runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist +" + PACKAGE_NAME_APP1);
 
             // Override the memory pressure level, force it staying at normal.
-            SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set NORMAL");
+            runShellCommand(mInstrumentation, "am memory-factor set NORMAL");
 
             // Keep the device awake
             toggleScreenOn(true);
@@ -1589,21 +1592,21 @@ public class ActivityManagerTest {
             watcher1.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
 
             // Force the memory pressure to moderate
-            SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set MODERATE");
+            runShellCommand(mInstrumentation, "am memory-factor set MODERATE");
             assertTrue("Failed to wait for the trim memory event",
                     latchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
 
             latchHolder[0] = new CountDownLatch(1);
             expectedLevel[0] = TRIM_MEMORY_RUNNING_LOW;
             // Force the memory pressure to low
-            SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set LOW");
+            runShellCommand(mInstrumentation, "am memory-factor set LOW");
             assertTrue("Failed to wait for the trim memory event",
                     latchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
 
             latchHolder[0] = new CountDownLatch(1);
             expectedLevel[0] = TRIM_MEMORY_RUNNING_CRITICAL;
             // Force the memory pressure to critical
-            SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set CRITICAL");
+            runShellCommand(mInstrumentation, "am memory-factor set CRITICAL");
             assertTrue("Failed to wait for the trim memory event",
                     latchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
 
@@ -1612,7 +1615,7 @@ public class ActivityManagerTest {
                     LocalForegroundService.COMMAND_START_NO_FOREGROUND));
 
             // Reset the memory pressure override
-            SystemUtil.runShellCommand(mInstrumentation, "am memory-factor reset");
+            runShellCommand(mInstrumentation, "am memory-factor reset");
 
             latchHolder[0] = new CountDownLatch(1);
             expectedLevel[0] = TRIM_MEMORY_UI_HIDDEN;
@@ -1646,7 +1649,7 @@ public class ActivityManagerTest {
             testFunc[0] = level -> TRIM_MEMORY_RUNNING_MODERATE <= (int) level
                     && TRIM_MEMORY_RUNNING_CRITICAL >= (int) level;
             // Force the memory pressure to moderate
-            SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set MODERATE");
+            runShellCommand(mInstrumentation, "am memory-factor set MODERATE");
             assertTrue("Failed to wait for the trim memory event",
                     heavyLatchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
 
@@ -1663,12 +1666,12 @@ public class ActivityManagerTest {
                     heavyLatchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
 
         } finally {
-            SystemUtil.runShellCommand(mInstrumentation,
+            runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist -" + PACKAGE_NAME_APP1);
 
-            SystemUtil.runShellCommand(mInstrumentation, "am memory-factor reset");
+            runShellCommand(mInstrumentation, "am memory-factor reset");
 
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
                 mActivityManager.forceStopPackage(PACKAGE_NAME_APP2);
                 mActivityManager.forceStopPackage(CANT_SAVE_STATE_1_PACKAGE_NAME);
@@ -1692,10 +1695,10 @@ public class ActivityManagerTest {
 
         try {
             // Kill all background processes
-            SystemUtil.runShellCommand(mInstrumentation, "am kill-all");
+            runShellCommand(mInstrumentation, "am kill-all");
 
             // Override the memory pressure level, force it staying at normal.
-            SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set NORMAL");
+            runShellCommand(mInstrumentation, "am memory-factor set NORMAL");
 
             List<String> lru;
             // Start a new isolated service once a time, and then check the lru list
@@ -1735,7 +1738,7 @@ public class ActivityManagerTest {
                         }
                         others.add(name);
                     }
-                    SystemUtil.runWithShellPermissionIdentity(() -> {
+                    runWithShellPermissionIdentity(() -> {
                         final List<ActivityManager.RunningAppProcessInfo> procs = mActivityManager
                                 .getRunningAppProcesses();
                         for (ActivityManager.RunningAppProcessInfo info: procs) {
@@ -1759,7 +1762,7 @@ public class ActivityManagerTest {
 
             latchHolder[0] = new CountDownLatch(lru.size());
             // Force the memory pressure to moderate
-            SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set MODERATE");
+            runShellCommand(mInstrumentation, "am memory-factor set MODERATE");
             assertTrue("Failed to wait for the trim memory event",
                     latchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
 
@@ -1777,9 +1780,9 @@ public class ActivityManagerTest {
                 mTargetContext.unbindService(procName2Level.valueAt(i).second);
             }
         } finally {
-            SystemUtil.runShellCommand(mInstrumentation, "am memory-factor reset");
+            runShellCommand(mInstrumentation, "am memory-factor reset");
 
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermissionIdentity(() -> {
                 mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
             });
         }
@@ -1805,7 +1808,7 @@ public class ActivityManagerTest {
 
         try {
             // Make sure we could start activity from background
-            forEach(packageNames, packageName -> SystemUtil.runShellCommand(mInstrumentation,
+            forEach(packageNames, packageName -> runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist +" + packageName));
 
             // Keep the device awake
@@ -1861,11 +1864,11 @@ public class ActivityManagerTest {
         } finally {
             handlerThread.quitSafely();
 
-            forEach(packageNames, packageName -> SystemUtil.runShellCommand(mInstrumentation,
+            forEach(packageNames, packageName -> runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist -" + packageName));
 
             // force stop test package, where the whole test process group will be killed.
-            forEach(packageNames, packageName -> SystemUtil.runWithShellPermissionIdentity(
+            forEach(packageNames, packageName -> runWithShellPermissionIdentity(
                     () -> mActivityManager.forceStopPackage(packageName)));
 
             forEach(watchers, watcher -> watcher.finish());
@@ -1883,11 +1886,11 @@ public class ActivityManagerTest {
 
         try {
             // Set the PACKAGE_NAME_APP1 into rare bucket
-            SystemUtil.runShellCommand(mInstrumentation, "am set-standby-bucket "
+            runShellCommand(mInstrumentation, "am set-standby-bucket "
                     + PACKAGE_NAME_APP1 + " rare");
 
             // Make sure we could start activity from background
-            forEach(packageNames, packageName -> SystemUtil.runShellCommand(mInstrumentation,
+            forEach(packageNames, packageName -> runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist +" + packageName));
 
             // Keep the device awake
@@ -1914,10 +1917,10 @@ public class ActivityManagerTest {
             // Verify the LRU position.
             verifyLruOrders(packageNames, 0, false, (a, b) -> a < b, "%s should be older than %s");
 
-            forEach(packageNames, packageName -> SystemUtil.runShellCommand(mInstrumentation,
+            forEach(packageNames, packageName -> runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist -" + packageName));
             // Restrict the PACKAGE_NAME_APP1
-            SystemUtil.runShellCommand(mInstrumentation, "am set-standby-bucket "
+            runShellCommand(mInstrumentation, "am set-standby-bucket "
                     + PACKAGE_NAME_APP1 + " restricted");
             // Sleep a while to let it take effect.
             Thread.sleep(WAITFOR_MSEC);
@@ -1942,7 +1945,7 @@ public class ActivityManagerTest {
             verifyLruOrders(packageNames, 0, false, (a, b) -> a < b, "%s should be older than %s");
 
             // Set the PACKAGE_NAME_APP1 into rare bucket again.
-            SystemUtil.runShellCommand(mInstrumentation, "am set-standby-bucket "
+            runShellCommand(mInstrumentation, "am set-standby-bucket "
                     + PACKAGE_NAME_APP1 + " rare");
 
             latch[0] = new CountDownLatch(1);
@@ -1954,14 +1957,14 @@ public class ActivityManagerTest {
             // Now its LRU posistion should have been bumped.
             verifyLruOrders(packageNames, 0, true, (a, b) -> a > b, "%s should be newer than %s");
         } finally {
-            forEach(packageNames, packageName -> SystemUtil.runShellCommand(mInstrumentation,
+            forEach(packageNames, packageName -> runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist -" + packageName));
 
-            SystemUtil.runShellCommand(mInstrumentation, "am set-standby-bucket "
+            runShellCommand(mInstrumentation, "am set-standby-bucket "
                     + PACKAGE_NAME_APP1 + " rare");
 
             // force stop test package, where the whole test process group will be killed.
-            forEach(packageNames, packageName -> SystemUtil.runWithShellPermissionIdentity(
+            forEach(packageNames, packageName -> runWithShellPermissionIdentity(
                     () -> mActivityManager.forceStopPackage(packageName)));
 
             forEach(watchers, watcher -> watcher.finish());
@@ -1994,7 +1997,7 @@ public class ActivityManagerTest {
 
             // Verify that calling the API with shell identity (which has
             // INTERACT_ACROSS_USERS_FULL permission) for a uid on a different user works.
-            SystemUtil.runWithShellPermissionIdentity(() -> mActivityManager.getUidProcessState(
+            runWithShellPermissionIdentity(() -> mActivityManager.getUidProcessState(
                     uidFromNewUser));
         } finally {
             if (newUserId != UserHandle.USER_NULL) {
@@ -2033,7 +2036,7 @@ public class ActivityManagerTest {
 
             // Verify that calling the API with shell identity (which has
             // INTERACT_ACROSS_USERS_FULL permission) for a uid on a different user works.
-            SystemUtil.runWithShellPermissionIdentity(() -> mActivityManager.getUidProcessState(
+            runWithShellPermissionIdentity(() -> mActivityManager.getUidProcessState(
                     uidFromNewUser));
         } finally {
             if (newUserId != UserHandle.USER_NULL) {
@@ -2126,6 +2129,35 @@ public class ActivityManagerTest {
         }
     }
 
+    @Test
+    public void testSwitchToSystemUserIsRestrictedWhenItsNotAFullUser() {
+        assumeHeadlessSystemUserMode();
+
+        runWithShellPermissionIdentity(() ->
+                assertFalse(mActivityManager.switchUser(UserHandle.SYSTEM)));
+    }
+
+    @Test
+    public void testSwitchToSystemUserIsAllowedWhenItsAFullUser() {
+        assumeNonHeadlessSystemUserMode();
+
+        runWithShellPermissionIdentity(() ->
+                assertTrue(mActivityManager.switchUser(UserHandle.SYSTEM)));
+
+    }
+
+
+    @Test
+    public void testSwitchToHeadlessSystemUser_whenCanSwitchToHeadlessSystemUserEnabled() {
+        assumeHeadlessSystemUserMode();
+        assumeTrue("Switch to Non-full headless SYSTEM user is only allowed when "
+                        + "config_canSwitchToHeadlessSystemUser is enabled.",
+                canSwitchToHeadlessSystemUser());
+
+        runWithShellPermissionIdentity(() ->
+                assumeTrue(mActivityManager.switchUser(UserHandle.SYSTEM)));
+    }
+
     private CountDownLatch startRemoteActivityAndLinkToDeath(ComponentName activity,
             WatchUidRunner uidWatcher) throws Exception {
         final IBinder[] remoteBinderHolder = new IBinder[1];
@@ -2181,7 +2213,7 @@ public class ActivityManagerTest {
 
     private int createNewUser() throws Exception {
         final UserManager userManager = mTargetContext.getSystemService(UserManager.class);
-        return SystemUtil.runWithShellPermissionIdentity(() -> {
+        return runWithShellPermissionIdentity(() -> {
             final NewUserRequest newUserRequest = new NewUserRequest.Builder()
                     .setName("test_user")
                     .setUserType(UserManager.USER_TYPE_FULL_SECONDARY)
@@ -2284,7 +2316,7 @@ public class ActivityManagerTest {
 
     private List<String> getCachedAppsLru() throws Exception {
         final List<String> lru = new ArrayList<>();
-        final String output = SystemUtil.runShellCommand(mInstrumentation, "dumpsys activity lru");
+        final String output = runShellCommand(mInstrumentation, "dumpsys activity lru");
         final String[] lines = output.split("\n");
         for (String line: lines) {
             if (line == null || line.indexOf(" cch") == -1) {
@@ -2331,7 +2363,7 @@ public class ActivityManagerTest {
 
     private RunningAppProcessInfo getRunningAppProcessInfo(String processName) {
         try {
-            return SystemUtil.callWithShellPermissionIdentity(()-> {
+            return callWithShellPermissionIdentity(()-> {
                 return mActivityManager.getRunningAppProcesses().stream().filter(
                         (ra) -> processName.equals(ra.processName)).findFirst().orElse(null);
             });
@@ -2408,14 +2440,14 @@ public class ActivityManagerTest {
             mPackageManager = mInstrumentation.getContext().getPackageManager();
             mOrigHome = getDefaultHomeComponent();
 
-            SystemUtil.runWithShellPermissionIdentity(
+            runWithShellPermissionIdentity(
                     () -> mPackageManager.setComponentEnabledSetting(mSessionHome,
                             COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP));
             setDefaultHome(mSessionHome);
         }
 
         public void close() throws Exception {
-            SystemUtil.runWithShellPermissionIdentity(
+            runWithShellPermissionIdentity(
                     () -> mPackageManager.setComponentEnabledSetting(mSessionHome,
                             COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP));
             if (mOrigHome != null) {
@@ -2448,5 +2480,31 @@ public class ActivityManagerTest {
         final Context context = mInstrumentation.getTargetContext();
         return context.getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_TELEVISION);
+    }
+
+    /**
+     * Gets the value of {@link com.android.internal.R.bool.config_canSwitchToHeadlessSystemUser}.
+     * @return {@code true} If headless system user is allowed to run in the foreground
+     * even though it is not a full user.
+     */
+    private boolean canSwitchToHeadlessSystemUser() {
+        try {
+            return mTargetContext.getResources().getBoolean(Resources.getSystem()
+                    .getIdentifier("config_canSwitchToHeadlessSystemUser", "bool", "android"));
+        } catch (Resources.NotFoundException e) {
+            // Assume headless system user switch is disabled.
+            Log.w(TAG, "Unable to read system property " + e.getMessage());
+            return false;
+        }
+    }
+
+    private void assumeHeadlessSystemUserMode() {
+        assumeTrue("System user is a FULL user in non-headless system user mode.",
+                UserManager.isHeadlessSystemUserMode());
+    }
+
+    private void assumeNonHeadlessSystemUserMode() {
+        assumeFalse("System user is not a FULL user in headless system user mode.",
+                UserManager.isHeadlessSystemUserMode());
     }
 }

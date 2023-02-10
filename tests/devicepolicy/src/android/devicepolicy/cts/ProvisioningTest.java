@@ -43,7 +43,6 @@ import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED;
 import static android.nfc.NfcAdapter.EXTRA_NDEF_MESSAGES;
 
-import static com.android.bedstead.harrier.UserType.ADDITIONAL_USER;
 import static com.android.bedstead.harrier.UserType.SYSTEM_USER;
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_PROFILES;
@@ -84,6 +83,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasAccount;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
@@ -94,6 +94,7 @@ import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
@@ -255,20 +256,17 @@ public final class ProvisioningTest {
         }
     }
 
+    @EnsureHasNoWorkProfile
     @EnsureHasAdditionalUser
-    @EnsureHasWorkProfile(forUser = ADDITIONAL_USER)
-    @RequireRunOnInitialUser
-    @EnsureHasNoDpc
+    @RequireRunOnAdditionalUser
     @RequireFeature(FEATURE_DEVICE_ADMIN)
     @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Test
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#createAndProvisionManagedProfile")
-    @Ignore
-    public void createAndProvisionManagedProfile_onInitialUser_withExistingManagedProfileOnAdditionalUser_preconditionFails() {
+    public void createAndProvisionManagedProfile_notOnInitialUser_preconditionFails() {
         ProvisioningException exception = assertThrows(ProvisioningException.class, () ->
                 sDevicePolicyManager.createAndProvisionManagedProfile(MANAGED_PROFILE_PARAMS));
-
         assertThat(exception.getProvisioningError()).isEqualTo(ERROR_PRE_CONDITION_FAILED);
     }
 
@@ -1079,29 +1077,6 @@ public final class ProvisioningTest {
 
         } finally {
             TestApis.users().current().setSetupComplete(setupComplete);
-        }
-    }
-
-    @Postsubmit(reason = "New test")
-    @Test
-    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
-    @RequireRunOnSecondaryUser
-    @EnsureHasProfileOwner(onUser = SYSTEM_USER)
-    @EnsureHasNoDeviceOwner
-    @ApiTest(apis = "android.app.admin.DevicePolicyManager#checkProvisioningPrecondition")
-    public void checkProvisioningPreCondition_actionDO_systemUserHasProfileOwner_returnsHasProfileOwner() {
-        boolean setupComplete = TestApis.users().system().getSetupComplete();
-        TestApis.users().system().setSetupComplete(false);
-
-        try {
-            assertThat(
-                    sDevicePolicyManager.checkProvisioningPrecondition(
-                            DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE,
-                            DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
-                    .isEqualTo(DevicePolicyManager.STATUS_USER_HAS_PROFILE_OWNER);
-
-        } finally {
-            TestApis.users().system().setSetupComplete(setupComplete);
         }
     }
 

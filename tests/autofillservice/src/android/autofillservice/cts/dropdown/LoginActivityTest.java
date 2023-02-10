@@ -37,8 +37,10 @@ import static android.autofillservice.cts.testcore.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.testcore.Helper.assertTextOnly;
 import static android.autofillservice.cts.testcore.Helper.assertValue;
 import static android.autofillservice.cts.testcore.Helper.assertViewAutofillState;
+import static android.autofillservice.cts.testcore.Helper.disablePccDetectionFeature;
 import static android.autofillservice.cts.testcore.Helper.disallowOverlays;
 import static android.autofillservice.cts.testcore.Helper.dumpStructure;
+import static android.autofillservice.cts.testcore.Helper.enablePccDetectionFeature;
 import static android.autofillservice.cts.testcore.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.testcore.Helper.getActivityTitle;
@@ -82,6 +84,7 @@ import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.testcore.DismissType;
 import android.autofillservice.cts.testcore.Helper;
+import android.autofillservice.cts.testcore.IdMode;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.testcore.MyAutofillCallback;
@@ -401,6 +404,38 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         HEADER_ONLY,
         FOOTER_ONLY,
         BOTH
+    }
+
+    @Test
+    public void autofillPccDatasetTest() throws Exception {
+        // Set service.
+        enableService();
+        enablePccDetectionFeature(sContext, "username");
+        sReplier.setIdMode(IdMode.PCC_ID);
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "user1")
+                        .setField(ID_PASSWORD, "pass1")
+                        .setPresentation(createPresentation("generic user"))
+                        .build());
+        sReplier.addResponse(builder.build());
+
+        // Trigger auto-fill.
+        requestFocusOnUsernameNoWindowChange();
+
+        final FillRequest request = sReplier.getNextFillRequest();
+        assertThat(request.hints.size()).isEqualTo(1);
+        assertThat(request.hints.get(0)).isEqualTo("username");
+
+        disablePccDetectionFeature(sContext);
+        sReplier.setIdMode(IdMode.RESOURCE_ID);
+
     }
 
     private void autofillOneDatasetTest(BorderType borderType) throws Exception {

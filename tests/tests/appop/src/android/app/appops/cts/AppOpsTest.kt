@@ -445,13 +445,13 @@ class AppOpsTest {
     fun testOnOpNotedListener() {
         val watcher = mock(AppOpsManager.OnOpNotedListener::class.java)
         try {
-            mAppOps.startWatchingNoted(arrayOf<String>(OPSTR_FINE_LOCATION), watcher)
+            mAppOps.startWatchingNoted(arrayOf<String>(OPSTR_WRITE_CALENDAR), watcher)
 
-            mAppOps.noteOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, "testAttribution", null)
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName, "testAttribution", null)
 
             verify(watcher, timeout(TIMEOUT_MS))
                     .onOpNoted(
-                            OPSTR_FINE_LOCATION,
+                            OPSTR_WRITE_CALENDAR,
                             mMyUid,
                             mOpPackageName,
                             "testAttribution",
@@ -460,11 +460,11 @@ class AppOpsTest {
 
             Mockito.reset(watcher)
 
-            mAppOps.noteOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null, null)
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName, null, null)
 
             verify(watcher, timeout(TIMEOUT_MS))
                     .onOpNoted(
-                            OPSTR_FINE_LOCATION,
+                            OPSTR_WRITE_CALENDAR,
                             mMyUid,
                             mOpPackageName,
                             null,
@@ -474,7 +474,7 @@ class AppOpsTest {
             mAppOps.stopWatchingNoted(watcher)
             Mockito.reset(watcher)
 
-            mAppOps.noteOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, "testAttribution", null)
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName, "testAttribution", null)
 
             verifyZeroInteractions(watcher)
         } finally {

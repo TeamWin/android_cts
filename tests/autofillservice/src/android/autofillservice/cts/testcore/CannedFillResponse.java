@@ -195,18 +195,47 @@ public final class CannedFillResponse {
         });
     }
 
+    public FillResponse asFillResponseWithAutofillId(@Nullable List<FillContext> contexts,
+            @NonNull Function<String, AutofillId> autofillIdResolver) {
+        return asFillResponseWithAutofillId(contexts, autofillIdResolver,
+            (cannedDataset) -> {
+                return cannedDataset.asDatasetWithAutofillIdResolver(autofillIdResolver);
+            });
+    }
+
+    private Function<String, AutofillId> getAutofillIdResolver(
+             @NonNull Function<String, ViewNode> nodeResolver) {
+        return (id) -> {
+            ViewNode node = nodeResolver.apply(id);
+            if (node == null) {
+                throw new AssertionError("No node with resource id " + id);
+            }
+            return node.getAutofillId();
+        };
+    }
+
+    public FillResponse asPccFillResponse(@Nullable List<FillContext> contexts) {
+        return asFillResponseWithAutofillId(contexts,
+            (stringId) -> {
+                return null;
+            },
+            (cannedDataset) -> {
+                return cannedDataset.asDatasetForPcc();
+            });
+    }
+
     /**
      * Creates a new response, replacing the dataset field ids by the real ids from the assist
      * structure.
      */
     public FillResponse asFillResponseWithAutofillId(@Nullable List<FillContext> contexts,
-            @NonNull Function<String, AutofillId> autofillIdResolver) {
+            @NonNull Function<String, AutofillId> autofillIdResolver,
+            Function<CannedDataset, Dataset> cannedDatasetToDataset) {
         final FillResponse.Builder builder = new FillResponse.Builder()
                 .setFlags(mFillResponseFlags);
         if (mDatasets != null) {
             for (CannedDataset cannedDataset : mDatasets) {
-                final Dataset dataset =
-                        cannedDataset.asDatasetWithAutofillIdResolver(autofillIdResolver);
+                final Dataset dataset = cannedDatasetToDataset.apply(cannedDataset);
                 assertWithMessage("Cannot create dataset").that(dataset).isNotNull();
                 builder.addDataset(dataset);
             }
@@ -432,6 +461,14 @@ public final class CannedFillResponse {
         public Builder setRequiredSavableIds(int type, String... ids) {
             mSaveType = type;
             mRequiredSavableIds = ids;
+            return this;
+        }
+
+        /**
+         * Sets the valid Save types, for when PCC Detection is enabled
+         */
+        public Builder setSaveTypes(int type) {
+            mSaveType = type;
             return this;
         }
 
@@ -709,6 +746,73 @@ public final class CannedFillResponse {
                 }
                 return node.getAutofillId();
             });
+        }
+
+        public Dataset asDatasetForPcc() {
+            final Presentations.Builder presentationsBuilder = new Presentations.Builder();
+            if (mPresentation != null) {
+                presentationsBuilder.setMenuPresentation(mPresentation);
+            }
+            if (mDialogPresentation != null) {
+                presentationsBuilder.setDialogPresentation(mDialogPresentation);
+            }
+            if (mInlinePresentation != null) {
+                presentationsBuilder.setInlinePresentation(mInlinePresentation);
+            }
+            if (mInlineTooltipPresentation != null) {
+                presentationsBuilder.setInlineTooltipPresentation(mInlineTooltipPresentation);
+            }
+
+            Presentations presentations = null;
+            try {
+                presentations = presentationsBuilder.build();
+            } catch (IllegalStateException e) {
+                // No presentation in presentationsBuilder, do nothing.
+            }
+            final Dataset.Builder builder = presentations != null
+                    ? new Dataset.Builder(presentations)
+                    : new Dataset.Builder();
+            if (mFieldValues != null) {
+                for (Map.Entry<String, AutofillValue> entry : mFieldValues.entrySet()) {
+                    final Field.Builder fieldBuilder = new Field.Builder();
+                    final AutofillValue value = entry.getValue();
+                    final String id = entry.getKey();
+                    if (value != null) {
+                        fieldBuilder.setValue(value);
+                    }
+                    final Presentations.Builder fieldPresentationsBuilder =
+                            new Presentations.Builder();
+                    final RemoteViews presentation = mFieldPresentations.get(id);
+                    if (presentation != null) {
+                        fieldPresentationsBuilder.setMenuPresentation(presentation);
+                    }
+                    final RemoteViews dialogPresentation = mFieldDialogPresentations.get(id);
+                    if (dialogPresentation != null) {
+                        fieldPresentationsBuilder.setDialogPresentation(dialogPresentation);
+                    }
+                    final InlinePresentation inlinePresentation = mFieldInlinePresentations.get(id);
+                    if (inlinePresentation != null) {
+                        fieldPresentationsBuilder.setInlinePresentation(inlinePresentation);
+                    }
+                    final InlinePresentation tooltipPresentation =
+                            mFieldInlineTooltipPresentations.get(id);
+                    if (tooltipPresentation != null) {
+                        fieldPresentationsBuilder.setInlineTooltipPresentation(tooltipPresentation);
+                    }
+                    try {
+                        fieldBuilder.setPresentations(fieldPresentationsBuilder.build());
+                    } catch (IllegalStateException e) {
+                        // no presentation in fieldPresentationsBuilder, nothing
+                    }
+                    final Pair<Boolean, Pattern> filter = mFieldFilters.get(id);
+                    if (filter != null) {
+                        fieldBuilder.setFilter(filter.second);
+                    }
+                    builder.setField(id, fieldBuilder.build());
+                }
+            }
+            builder.setId(mId).setAuthentication(mAuthentication);
+            return builder.build();
         }
 
         /**

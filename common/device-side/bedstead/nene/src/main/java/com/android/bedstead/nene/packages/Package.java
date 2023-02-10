@@ -1018,4 +1018,18 @@ public final class Package {
                 .getSystemService(CrossProfileApps.class)
                 .canConfigureInteractAcrossProfiles(packageName());
     }
+
+    /**
+     * Enable or disable this package from using @TestApis.
+     */
+    @Experimental
+    public void setAllowTestApiAccess(boolean allowed) {
+        ShellCommand.builder("am compat")
+                .addOperand(allowed ? "enable" : "disable")
+                .addOperand("ALLOW_TEST_API_ACCESS")
+                .addOperand(packageName())
+                .validate(s -> s.startsWith(allowed ? "Enabled change" : "Disabled change"))
+                .executeOrThrowNeneException(
+                        "Error allowing/disallowing test api access for " + this);
+    }
 }

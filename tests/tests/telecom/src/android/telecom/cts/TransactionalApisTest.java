@@ -96,7 +96,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         private CallEndpoint mCallEndpoint;
         private List<CallEndpoint> mAvailableEndpoints;
         private boolean mIsMuted = false;
-
+        public boolean mWasMuteStateChangedCalled = false;
 
         TestVoipCall(String id) {
             mCallId = id;
@@ -160,6 +160,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         @Override
         public void onMuteStateChanged(boolean isMuted) {
             mIsMuted = isMuted;
+            mWasMuteStateChangedCalled = true;
         }
 
         public final CallEndpoint getCurrentCallEndpoint() {
@@ -183,6 +184,10 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         public void onCallStreamingFailed(int reason) {
             Log.i(TAG, String.format("onCallStreamingFailed: callId=[%s], reason=[%s]", mCallId,
                     reason));
+        }
+
+        public void resetAllCallbackVerifiers() {
+            mWasMuteStateChangedCalled = false;
         }
     }
 
@@ -659,16 +664,10 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         }
         try {
             cleanup();
+            mCall1.resetAllCallbackVerifiers();
+            assertFalse(mCall1.mWasMuteStateChangedCalled);
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
-
-            // mute call and verify onMuteStateChanged was updated
-            getInCallService().setMuted(true);
-            verifyMuteState(true, mCall1);
-
-            // unmute call and verify onMuteStateChanged was updated
-            getInCallService().setMuted(false);
-            verifyMuteState(false, mCall1);
-
+            verifyMuteStateCallbackWasCalled(true, mCall1);
             callControlAction(DISCONNECT, mCall1);
         } finally {
             cleanup();
@@ -750,7 +749,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, FAIL_MSG_ON_AVAILABLE_ENDPOINTS_UPDATE);
     }
 
-    public void verifyMuteState(boolean expected, TestVoipCall call) {
+    public void verifyMuteStateCallbackWasCalled(boolean expected, TestVoipCall call) {
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
                     @Override
@@ -760,7 +759,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
                     @Override
                     public Object actual() {
-                        return call.isMuted();
+                        return call.mWasMuteStateChangedCalled;
                     }
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, FAIL_MSG_ON_MUTE_STATE_CHANGED);

@@ -134,7 +134,6 @@
     <option name="compatibility:exclude-filter" value="CtsDownloadManagerApi28" />
     <option name="compatibility:exclude-filter" value="CtsAppSearchTestCases" />
     <option name="compatibility:exclude-filter" value="CtsContentCaptureServiceTestCases" />
-    <option name="compatibility:exclude-filter" value="CtsPermission4TestCases" />
     <option name="compatibility:exclude-filter" value="CtsDomainVerificationHostTestCases" />
     <option name="compatibility:exclude-filter" value="CtsSliceTestCases" />
     <option name="compatibility:exclude-filter" value="CtsTranslationTestCases" />

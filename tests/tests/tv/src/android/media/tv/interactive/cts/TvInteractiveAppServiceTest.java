@@ -117,6 +117,7 @@ public class TvInteractiveAppServiceTest {
 
     public static class MockCallback extends TvInteractiveAppView.TvInteractiveAppCallback {
         private int mRequestCurrentChannelUriCount = 0;
+        private int mRequestCurrentVideoBoundsCount = 0;
         private int mStateChangedCount = 0;
         private int mBiIAppCreatedCount = 0;
         private int mRequestSigningCount = 0;
@@ -138,6 +139,7 @@ public class TvInteractiveAppServiceTest {
 
         private void resetValues() {
             mRequestCurrentChannelUriCount = 0;
+            mRequestCurrentVideoBoundsCount = 0;
             mRequestStartRecordingCount = 0;
             mRequestStopRecordingCount = 0;
             mStateChangedCount = 0;
@@ -162,6 +164,12 @@ public class TvInteractiveAppServiceTest {
         public void onRequestCurrentChannelUri(String iAppServiceId) {
             super.onRequestCurrentChannelUri(iAppServiceId);
             mRequestCurrentChannelUriCount++;
+        }
+
+        @Override
+        public void onRequestCurrentVideoBounds(String iAppServiceId) {
+            super.onRequestCurrentVideoBounds(iAppServiceId);
+            mRequestCurrentVideoBoundsCount++;
         }
 
         @Override
@@ -452,6 +460,16 @@ public class TvInteractiveAppServiceTest {
         PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mRequestCurrentChannelUriCount > 0);
 
         assertThat(mCallback.mRequestCurrentChannelUriCount).isEqualTo(1);
+    }
+
+    @Test
+    public void testRequestCurrentVideoBounds() throws Throwable {
+        assertNotNull(mSession);
+        mCallback.resetValues();
+        mSession.requestCurrentVideoBounds();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mRequestCurrentVideoBoundsCount > 0);
+
+        assertThat(mCallback.mRequestCurrentVideoBoundsCount).isEqualTo(1);
     }
 
     @Test
@@ -989,6 +1007,17 @@ public class TvInteractiveAppServiceTest {
     public void testSendTrackInfoList() throws Throwable {
         mTvIAppView.sendTrackInfoList(new ArrayList<TvTrackInfo>());
         mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testSendCurrentVideoBounds() throws Throwable {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        Rect rect = new Rect(1, 2, 6, 7);
+        mTvIAppView.sendCurrentVideoBounds(rect);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mCurrentVideoBoundsCount > 0);
+        assertThat(mSession.mCurrentVideoBoundsCount).isEqualTo(1);
+        assertThat(mSession.mCurrentVideoBounds).isEqualTo(rect);
     }
 
     @Test

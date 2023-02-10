@@ -36,6 +36,8 @@ android_test {
         "modules-utils-build_system",
         "androidx.test.core",
         "permission-test-util-lib",
+        "sts-device-util",
+        "cts-wm-util",
     ],
     data: [
         ":CtsPermissionPolicyApp25",
@@ -65,9 +67,11 @@ android_test {
         ":CtsMediaPermissionApp33WithStorage",
         ":CtsDifferentPkgNameApp",
         ":CtsUsePermissionAppImplicitUserSelectStorage",
+        ":CtsAppThatAccessesMicAndCameraPermission",
     ],
     test_suites: [
         "cts",
+        "sts",
         "general-tests",
         "mts-permission",
         "automotive-tests",

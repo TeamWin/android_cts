@@ -251,6 +251,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         disconnectWifiToConnectToMobile();
 
         kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setContinueAfterStart();
         kTestEnvironment.setExpectedStopped();
         kTestEnvironment.setExpectedNetworkChange();
         mJobScheduler.schedule(

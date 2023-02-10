@@ -86,18 +86,22 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     private String mTag2;
     private String mTag3;
     private String mTag4;
+    private String mTag5;
     private int mIcon1;
     private int mIcon2;
     private int mIcon3;
     private int mIcon4;
+    private int mIcon5;
     private int mId1;
     private int mId2;
     private int mId3;
     private int mId4;
+    private int mId5;
     private long mWhen1;
     private long mWhen2;
     private long mWhen3;
     private long mWhen4;
+    private long mWhen5;
     private int mFlag1;
     private int mFlag2;
     private int mFlag3;
@@ -147,6 +151,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new DismissOneTest());
         tests.add(new DismissOneWithReasonTest());
         tests.add(new DismissOneWithStatsTest());
+        tests.add(new DismissOngoingTest());
         tests.add(new DismissAllTest());
         tests.add(new SnoozeNotificationForTimeTest());
         tests.add(new SnoozeNotificationForTimeCancelTest());
@@ -269,6 +274,31 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                         .setCategory(Notification.CATEGORY_REMINDER)
                         .build();
         mNm.notify(mTag4, mId4, n1);
+    }
+
+    /**
+     * NotificationListener cannot dismiss notifications with FLAG_ONGOING_EVENT
+     */
+    private void sendOngoingNotification() {
+        mTag5 = UUID.randomUUID().toString();
+        Log.d(TAG, "Sending ongoing notif: " + mTag5);
+
+        mWhen5 = System.currentTimeMillis() + 5;
+        mIcon5 = R.drawable.ic_stat_charlie;
+        mId5 = NOTIFICATION_ID + 5;
+        mPackageString = "com.android.cts.verifier";
+
+        Notification n =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setContentTitle("ClearOngoingTest 1")
+                        .setContentText(mTag5)
+                        .setSmallIcon(mIcon5)
+                        .setWhen(mWhen5)
+                        .setDeleteIntent(makeIntent(5, mTag5))
+                        .setOnlyAlertOnce(true)
+                        .setOngoing(true)
+                        .build();
+        mNm.notify(mTag5, mId5, n);
     }
 
     // Tests
@@ -902,6 +932,49 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         }
     }
 
+    private class DismissOngoingTest extends InteractiveTestCase {
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_clear_ongoing);
+        }
+
+        @Override
+        protected void setUp() {
+            createChannels();
+            sendNotifications();
+            sendOngoingNotification();
+            status = READY;
+        }
+
+        @Override
+        protected void test() {
+            if (status == READY) {
+                MockListener.getInstance()
+                        .cancelNotification(MockListener.getInstance().getKeyForTag(mTag5));
+                status = RETEST;
+            } else {
+                List<String> result = new ArrayList<>(MockListener.getInstance().mRemoved);
+                if (result.size() != 0
+                        && !result.contains(mTag1)
+                        && !result.contains(mTag2)
+                        && !result.contains(mTag3)
+                        && !result.contains(mTag5)) {
+                    status = PASS;
+                } else {
+                    logFail();
+                    status = FAIL;
+                }
+            }
+        }
+
+        @Override
+        protected void tearDown() {
+            mNm.cancelAll();
+            deleteChannels();
+            MockListener.getInstance().resetData();
+        }
+    }
+
     private class DismissOneWithReasonTest extends InteractiveTestCase {
         int mRetries = 3;
 
@@ -1031,6 +1104,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         protected void setUp() {
             createChannels();
             sendNotifications();
+            sendOngoingNotification();
             status = READY;
         }
 
@@ -1044,7 +1118,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                 if (result.size() != 0
                         && result.contains(mTag1)
                         && result.contains(mTag2)
-                        && result.contains(mTag3)) {
+                        && result.contains(mTag3)
+                        // NotificationListenerService cannot dismiss ongoing notifications
+                        && !result.contains(mTag5)) {
                     status = PASS;
                 } else {
                     logFail();

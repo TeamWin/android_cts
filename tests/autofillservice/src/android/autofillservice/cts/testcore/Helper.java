@@ -1688,6 +1688,31 @@ public final class Helper {
     }
 
     /**
+     * Enable PCC Detection Feature Hints
+     */
+    public static void enablePccDetectionFeature(@NonNull Context context, String...types) {
+        DeviceConfigStateManager deviceConfigStateManager =
+                new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_AUTOFILL,
+                        AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_PCC_FEATURE_PROVIDER_HINTS);
+        setDeviceConfig(deviceConfigStateManager, TextUtils.join(",", types));
+
+        DeviceConfigStateManager deviceConfigStateManager2 =
+                new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_AUTOFILL,
+                        AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_PCC_CLASSIFICATION_ENABLED);
+        setDeviceConfig(deviceConfigStateManager2, "true");
+    }
+
+    /**
+     * Disable PCC Detection Feature
+     */
+    public static void disablePccDetectionFeature(@NonNull Context context) {
+        DeviceConfigStateManager deviceConfigStateManager2 =
+                new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_AUTOFILL,
+                        AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_PCC_CLASSIFICATION_ENABLED);
+        setDeviceConfig(deviceConfigStateManager2, "false");
+    }
+
+    /**
      * Set hints list for fill dialog
      */
     public static void setFillDialogHints(@NonNull Context context, @Nullable String hints) {

@@ -18,10 +18,13 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.hardware.Camera;
+import android.hardware.Camera.CameraInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -77,6 +80,9 @@ implements OnClickListener, SurfaceHolder.Callback {
     private int mCurrentCameraId = -1;
     private int mState = STATE_OFF;
     private boolean mSizeAdjusted;
+
+    private int mPreviewRotation;
+    private int mPictureRotation;
 
     private StringBuilder mReportBuilder = new StringBuilder();
     private final TreeSet<String> mTestedCombinations = new TreeSet<String>();
@@ -287,11 +293,27 @@ implements OnClickListener, SurfaceHolder.Callback {
 
         // set preview orientation
         int degrees = mPreviewOrientations.get(mNextPreviewOrientation);
-        mCamera.setDisplayOrientation(degrees);
 
-        android.hardware.Camera.CameraInfo info =
-                new android.hardware.Camera.CameraInfo();
-        android.hardware.Camera.getCameraInfo(mCurrentCameraId, info);
+        CameraInfo info = new CameraInfo();
+        Camera.getCameraInfo(mCurrentCameraId, info);
+        int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
+        switch (displayRotation) {
+            case Surface.ROTATION_90: degrees += 90; break;
+            case Surface.ROTATION_180: degrees += 180; break;
+            case Surface.ROTATION_270: degrees += 270; break;
+        }
+        degrees %= 360;
+
+        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            mPictureRotation = (info.orientation + degrees) % 360;
+            mPreviewRotation = (360 - mPictureRotation) % 360;  // compensate the mirror
+        } else {  // back-facing
+            mPictureRotation = (info.orientation - degrees + 360) % 360;
+            mPreviewRotation = mPictureRotation;
+        }
+
+        mCamera.setDisplayOrientation(mPreviewRotation);
+
         if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
             TextView cameraExtraLabel =
                     (TextView) findViewById(R.id.instruction_extra_text);
@@ -484,30 +506,31 @@ implements OnClickListener, SurfaceHolder.Callback {
         @Override
         public void onPreviewFrame(byte[] data, Camera camera) {
             // adjust camera preview to match output image's aspect ratio
-            if(!mSizeAdjusted && mState == STATE_PREVIEW) {
-                int viewWidth = mFormatView.getWidth();
-                int viewHeight = mFormatView.getHeight();
-                int newWidth, newHeight;
+            if (!mSizeAdjusted && mState == STATE_PREVIEW) {
+                int viewWidth = mFormatView.getMeasuredWidth();
+                int viewHeight = mFormatView.getMeasuredHeight();
 
-                if (viewWidth == 0 || viewHeight == 0){
+                if (viewWidth == 0 || viewHeight == 0) {
                     return;
                 }
 
-                if (mPreviewOrientations.get(mNextPreviewOrientation) == 0
-                    || mPreviewOrientations.get(mNextPreviewOrientation) == 180) {
-                    // make preview width same as output image width,
-                    // then calculate height using output image's height/width ratio
-                    newWidth = viewWidth;
-                    newHeight = (int) (viewWidth * ((double) mOptimalPreviewSize.height /
-                            (double) mOptimalPreviewSize.width));
+                Matrix m = new Matrix(Matrix.IDENTITY_MATRIX);
+                RectF previewRect;
+                if (mPreviewRotation == 0 || mPreviewRotation == 180) {
+                    previewRect = new RectF(0, 0, mOptimalPreviewSize.width,
+                            mOptimalPreviewSize.height);
+                } else {
+                    previewRect = new RectF(0, 0, mOptimalPreviewSize.height,
+                            mOptimalPreviewSize.width);
                 }
-                else {
-                    newHeight = viewHeight;
-                    newWidth = (int) (viewHeight * ((double) mOptimalPreviewSize.height /
-                            (double) mOptimalPreviewSize.width));
-                }
+                m.setRectToRect(previewRect,
+                                new RectF(0, 0, viewWidth, viewHeight),
+                                Matrix.ScaleToFit.CENTER);
+                RectF dstRect = new RectF();
+                m.mapRect(dstRect, previewRect);
 
-                LayoutParams layoutParams = new LayoutParams(newWidth, newHeight);
+                LayoutParams layoutParams =
+                        new LayoutParams((int) dstRect.width(), (int) dstRect.height());
                 mCameraView.setLayoutParams(layoutParams);
                 mSizeAdjusted = true;
                 mTakePictureButton.setEnabled(true);
@@ -523,7 +546,6 @@ implements OnClickListener, SurfaceHolder.Callback {
                 Bitmap inputImage;
                 inputImage = BitmapFactory.decodeByteArray(data, 0, data.length);
 
-                int degrees = mPreviewOrientations.get(mNextPreviewOrientation);
                 android.hardware.Camera.CameraInfo info =
                         new android.hardware.Camera.CameraInfo();
                 android.hardware.Camera.getCameraInfo(mCurrentCameraId, info);
@@ -531,7 +553,6 @@ implements OnClickListener, SurfaceHolder.Callback {
                 if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
                     // mirror the image along vertical axis
                     mirrorX = new float[] {-1, 0, 0, 0, 1, 1, 0, 0, 1};
-                    degrees = (360 - degrees) % 360; // compensate the mirror
                 } else {
                     // leave image the same via identity matrix
                     mirrorX = new float[] {1, 0, 0, 0, 1, 0, 0, 0, 1};
@@ -541,7 +562,7 @@ implements OnClickListener, SurfaceHolder.Callback {
                 Matrix matrixMirrorX = new Matrix();
                 matrixMirrorX.setValues(mirrorX);
                 Matrix mat = new Matrix();
-                mat.postRotate(degrees);
+                mat.postRotate(mPictureRotation);
                 mat.postConcat(matrixMirrorX);
 
                 Bitmap inputImageAdjusted = Bitmap.createBitmap(inputImage,

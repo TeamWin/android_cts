@@ -278,8 +278,9 @@ public class DatasetTest {
     @Test
     public void testBuilder_setFieldNullId() {
         final Dataset.Builder builder = new Dataset.Builder(mPresentation);
+        AutofillId nullId = null;
         assertThrows(NullPointerException.class,
-                () -> builder.setField(null, new Field.Builder().build()));
+                () -> builder.setField(nullId, new Field.Builder().build()));
     }
 
     @Test
@@ -292,6 +293,14 @@ public class DatasetTest {
     public void testBuilder_setFieldWithEmptyField() {
         // Just assert that it builds without throwing an exception.
         assertThat(new Dataset.Builder().setField(mId, new Field.Builder().build())).isNotNull();
+    }
+
+    @Test
+    public void testBuilder_setFieldWithType() {
+        Dataset dataset = new Dataset.Builder().setField("username",
+                new Field.Builder().build()).build();
+        assertThat(dataset).isNotNull();
+        assertThat(dataset.getAutofillDatatypes().contains("username")).isTrue();
     }
 
     @Test

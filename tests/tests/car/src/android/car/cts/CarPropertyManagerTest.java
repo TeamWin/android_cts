@@ -51,6 +51,7 @@ import android.car.hardware.property.EvChargeState;
 import android.car.hardware.property.EvRegenerativeBrakingState;
 import android.car.hardware.property.EvStoppingMode;
 import android.car.hardware.property.ForwardCollisionWarningState;
+import android.car.hardware.property.LaneKeepAssistState;
 import android.car.hardware.property.TrailerState;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
@@ -58,6 +59,7 @@ import android.car.hardware.property.VehicleLightState;
 import android.car.hardware.property.VehicleLightSwitch;
 import android.car.hardware.property.VehicleOilLevel;
 import android.car.hardware.property.VehicleTurnSignal;
+import android.car.hardware.property.WindshieldWipersState;
 import android.car.test.ApiCheckerRule.Builder;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
@@ -179,6 +181,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehicleOilLevel.LEVEL_HIGH,
                             VehicleOilLevel.LEVEL_ERROR)
                     .build();
+    private static final ImmutableSet<Integer> WINDSHIELD_WIPERS_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            WindshieldWipersState.OTHER,
+                            WindshieldWipersState.OFF,
+                            WindshieldWipersState.ON,
+                            WindshieldWipersState.SERVICE)
+                    .build();
     private static final ImmutableSet<Integer> EV_STOPPING_MODES =
             ImmutableSet.<Integer>builder().add(EvStoppingMode.STATE_OTHER,
                     EvStoppingMode.STATE_CREEP, EvStoppingMode.STATE_ROLL,
@@ -193,6 +203,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             ErrorState.NOT_AVAILABLE_DISABLED,
                             ErrorState.NOT_AVAILABLE_SPEED_LOW,
                             ErrorState.NOT_AVAILABLE_SPEED_HIGH,
+                            ErrorState.NOT_AVAILABLE_POOR_VISIBILITY,
                             ErrorState.NOT_AVAILABLE_SAFETY)
                     .build();
     private static final ImmutableSet<Integer> AUTOMATIC_EMERGENCY_BRAKING_STATES =
@@ -216,6 +227,15 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             BlindSpotWarningState.OTHER,
                             BlindSpotWarningState.NO_WARNING,
                             BlindSpotWarningState.WARNING)
+                    .build();
+    private static final ImmutableSet<Integer> LANE_KEEP_ASSIST_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            LaneKeepAssistState.OTHER,
+                            LaneKeepAssistState.ENABLED,
+                            LaneKeepAssistState.ACTIVATED_STEER_LEFT,
+                            LaneKeepAssistState.ACTIVATED_STEER_RIGHT,
+                            LaneKeepAssistState.USER_OVERRIDE)
                     .build();
     private static final ImmutableSet<Integer> SINGLE_HVAC_FAN_DIRECTIONS = ImmutableSet.of(
             /*VehicleHvacFanDirection.FACE=*/0x1, /*VehicleHvacFanDirection.FLOOR=*/0x2,
@@ -490,6 +510,16 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.WINDOW_MOVE,
                             VehiclePropertyIds.WINDOW_LOCK)
                     .build();
+    private static final ImmutableList<Integer> PERMISSION_READ_WINDSHIELD_WIPERS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.WINDSHIELD_WIPERS_PERIOD,
+                            VehiclePropertyIds.WINDSHIELD_WIPERS_STATE)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_WINDSHIELD_WIPERS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add()
+                    .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_EXTERIOR_LIGHTS_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
@@ -574,12 +604,19 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .add(
                             VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_STATE,
                             VehiclePropertyIds.FORWARD_COLLISION_WARNING_STATE,
-                            VehiclePropertyIds.BLIND_SPOT_WARNING_STATE)
+                            VehiclePropertyIds.BLIND_SPOT_WARNING_STATE,
+                            VehiclePropertyIds.LANE_KEEP_ASSIST_STATE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add()
                     .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_GLOVE_BOX_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.GLOVE_BOX_DOOR_POS,
+                            VehiclePropertyIds.GLOVE_BOX_LOCKED)
+                  .build();
 
     private static final int VEHICLE_PROPERTY_GROUP_MASK = 0xf0000000;
     private static final int VEHICLE_PROPERTY_GROUP_VENDOR = 0x20000000;
@@ -1816,6 +1853,35 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testWindshieldWipersPeriodIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.WINDSHIELD_WIPERS_PERIOD,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .requireMinMaxValues()
+                .requireMinValuesToBeZero()
+                .addReadPermission(Car.PERMISSION_READ_WINDSHIELD_WIPERS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testWindshieldWipersStateIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.WINDSHIELD_WIPERS_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setAllPossibleEnumValues(WINDSHIELD_WIPERS_STATES)
+                .addReadPermission(Car.PERMISSION_READ_WINDSHIELD_WIPERS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
     public void testSteeringWheelDepthPosIfSupported() {
         VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.STEERING_WHEEL_DEPTH_POS,
@@ -1920,6 +1986,36 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testGloveBoxDoorPosIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.GLOVE_BOX_DOOR_POS,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .requireMinMaxValues()
+                .requireMinValuesToBeZero()
+                .addReadPermission(Car.PERMISSION_CONTROL_GLOVE_BOX)
+                .addWritePermission(Car.PERMISSION_CONTROL_GLOVE_BOX)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testGloveBoxLockedIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.GLOVE_BOX_LOCKED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_CONTROL_GLOVE_BOX)
+                .addWritePermission(Car.PERMISSION_CONTROL_GLOVE_BOX)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
     public void testDistanceDisplayUnitsIfSupported() {
         VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.DISTANCE_DISPLAY_UNITS,
@@ -1932,7 +2028,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addReadPermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
                 .build()
                 .verify(mCarPropertyManager);
     }
@@ -1950,7 +2046,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addReadPermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
                 .build()
                 .verify(mCarPropertyManager);
     }
@@ -2034,7 +2130,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addReadPermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
                 .build()
                 .verify(mCarPropertyManager);
     }
@@ -2052,7 +2148,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addReadPermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
                 .build()
                 .verify(mCarPropertyManager);
     }
@@ -2070,7 +2166,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addReadPermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
                 .build()
                 .verify(mCarPropertyManager);
     }
@@ -2085,7 +2181,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Boolean.class)
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addReadPermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
                 .build()
                 .verify(mCarPropertyManager);
     }
@@ -4792,6 +4888,30 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testLaneKeepAssistStateIfSupported() {
+        ImmutableSet<Integer> combinedCarPropertyValues = ImmutableSet.<Integer>builder()
+                .addAll(LANE_KEEP_ASSIST_STATES)
+                .addAll(ERROR_STATES)
+                .build();
+
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.LANE_KEEP_ASSIST_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setAllPossibleEnumValues(combinedCarPropertyValues)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testLaneKeepAssistStateWithErrorState() {
+        verifyEnumValuesAreDistinct(LANE_KEEP_ASSIST_STATES, ERROR_STATES);
+    }
+
+    @Test
     public void testLaneCenteringAssistEnabledIfSupported() {
         VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED,
@@ -5551,6 +5671,23 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testPermissionControlGloveBoxGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_GLOVE_BOX_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_GLOVE_BOX);
+    }
+
+    @Test
     public void testPermissionControlCarAirbagsGranted() {
         runWithShellPermissionIdentity(
                 () -> {
@@ -5803,6 +5940,40 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     }
                 },
                 Car.PERMISSION_CONTROL_CAR_WINDOWS);
+    }
+
+    @Test
+    public void testPermissionReadWindshieldWipersGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_READ_WINDSHIELD_WIPERS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_READ_WINDSHIELD_WIPERS);
+    }
+
+    @Test
+    public void testPermissionControlWindshieldWipersGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_WINDSHIELD_WIPERS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_WINDSHIELD_WIPERS);
     }
 
     @Test

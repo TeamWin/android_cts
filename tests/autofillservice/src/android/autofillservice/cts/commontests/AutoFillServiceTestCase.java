@@ -326,6 +326,18 @@ public final class AutoFillServiceTestCase {
                         Boolean.toString(true)))
 
                 //
+                // PCC Detection should be off by default
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                        AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_PCC_CLASSIFICATION_ENABLED,
+                        Boolean.toString(false)))
+
+                //
+                // PCC Detection Hints should be empty by default
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                        AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_PCC_FEATURE_PROVIDER_HINTS,
+                        ""))
+
+                //
                 // Finally, let subclasses add their own rules (like ActivityTestRule)
                 .around(getMainTestRule());
 

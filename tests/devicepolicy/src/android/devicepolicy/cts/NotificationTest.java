@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -65,9 +66,9 @@ public final class NotificationTest {
     @CddTest(requirements = "3.9.2/C-1-3")
     @NotFullyAutomated(reason = "DoesTheNotificationTitledNotificationHaveAWorkBadgeStep")
     public void notification_fromPersonalProfile_isNotBadged() throws Exception {
-        try (TestAppInstance primaryUserApp = sTestApp.install(sDeviceState.primaryUser());
-             PermissionContext p = primaryUserApp.permissions().withPermission(POST_NOTIFICATIONS)) {
-            showNotificationWithTitleNotification(primaryUserApp);
+        try (TestAppInstance initialUserApp = sTestApp.install(sDeviceState.initialUser());
+             PermissionContext p = initialUserApp.permissions().withPermission(POST_NOTIFICATIONS)) {
+            showNotificationWithTitleNotification(initialUserApp);
 
             // We must show the instruction before opening the notification shade because steps
             // can't show over the shade

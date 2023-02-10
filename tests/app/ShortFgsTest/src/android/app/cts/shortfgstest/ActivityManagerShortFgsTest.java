@@ -16,7 +16,6 @@
 package android.app.cts.shortfgstest;
 
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.ACTIVITY;
-import static android.app.cts.shortfgstesthelper.ShortFgsHelper.ALL_SERVICES;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.FGS0;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.FGS1;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.FGS2;
@@ -51,6 +50,7 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.AnrMonitor;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.ShellUtils;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.server.am.nano.ServiceRecordProto;
 
 import org.junit.After;
@@ -149,28 +149,23 @@ public class ActivityManagerShortFgsTest {
         updateDeviceConfig("service_start_foreground_timeout_ms",
                 SHORTENED_START_SERVICE_TIMEOUT, /* verify= */ true);
 
-        stopAllServices();
+        forceStopHelperApp();
 
         // We update the start time here, to drop any messages sent before this line.
         // (we drop stale messages in waitForNextMessage()).
         // Before this, the helper app's receiver won't receive messages either.
         sLastTestStartUptime = SystemClock.uptimeMillis();
 
-        killHelperApp();
-
-        // stopAllServices() and killHelperApp() may send back messages, so we clear the queue
-        // after running them.
-        CallProvider.clearMessageQueue();
-
         Log.d(TAG, "setUp() done");
     }
 
     @After
     public void tearDown() throws Exception {
-        Log.d(TAG, "tearDown() started");
         sLastTestEndUptime = SystemClock.uptimeMillis();
 
-        stopAllServices();
+        Log.d(TAG, "tearDown() started");
+
+        forceStopHelperApp();
 
         Log.d(TAG, "tearDown() done");
     }
@@ -205,8 +200,27 @@ public class ActivityManagerShortFgsTest {
         }
     }
 
+    private static void ensureHelperAppNotRunning() throws Exception {
+        // Wait until the process is actually gone.
+        // We need it because 1) kill is async and 2) the ack is sent before the kill anyway
+        waitUntil("Process still running",
+                () -> !DumpProtoUtils.processExists(FGS0.getPackageName()));
+
+    }
+
+    /**
+     * Force-stop the helper app.
+     */
+    private static void forceStopHelperApp() throws Exception {
+        SystemUtil.runShellCommand("am force-stop " + FGS0.getPackageName());
+        ensureHelperAppNotRunning();
+    }
+
     /**
      * Send a "kill self" command to the helper, and wait for the process to go away.
+     *
+     * This is needed when "force-stop"'s side effects are not ideal. (e.g. force-stop will
+     * prevent STICKY FGS from restarting)
      */
     private static void killHelperApp() throws Exception {
         // If we do it outside of a test, the helper app would just ignore the message,
@@ -221,29 +235,7 @@ public class ActivityManagerShortFgsTest {
 
         waitForAckMessage();
 
-        // Wait until the process is actually gone.
-        // We need it because 1) kill is async and 2) the ack is sent before the kill anyway
-        waitUntil("Process still running",
-                () -> !DumpProtoUtils.processExists(FGS0.getPackageName()));
-
-    }
-
-    private static void stopAllServices() throws Exception {
-        // Stop all the services inside the helper app.
-        for (ComponentName cn : ALL_SERVICES) {
-            if (DumpProtoUtils.findServiceRecord(cn) == null) {
-                continue;
-            }
-            Log.w(TAG, "stopAllServices: Stopping " + cn);
-            try {
-                sContext.stopService(new Intent().setComponent(cn));
-            } catch (Throwable th) {
-                // Ignore.
-            }
-
-            waitUntil("Service " + cn + " still running",
-                    () -> DumpProtoUtils.findServiceRecord(cn) == null);
-        }
+        ensureHelperAppNotRunning();
     }
 
     /**

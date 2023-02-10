@@ -64,6 +64,24 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
         super.tearDown();
     }
 
+    public void testCancel_runningJob() throws Exception {
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setExpedited(true)
+                .build();
+
+        kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setContinueAfterStart();
+        kTestEnvironment.setExpectedStopped();
+        kTestEnvironment.setRequestReschedule();
+        mJobScheduler.schedule(jobInfo);
+        assertTrue("Job didn't start", kTestEnvironment.awaitExecution());
+
+        mJobScheduler.cancelAll();
+        assertTrue("Job didn't start", kTestEnvironment.awaitStopped());
+        Thread.sleep(5000); // Give some time for JS to finish its internal processing.
+        assertEquals(0, mJobScheduler.getAllPendingJobs().size());
+    }
+
     public void testCanRunLongJobs() throws Exception {
         final boolean isAppOpPermission = isLongBackgroundTaskPermissionAppOp();
 

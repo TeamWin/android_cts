@@ -20,7 +20,11 @@ import static android.car.Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME;
 import static android.car.media.CarAudioManager.AUDIO_FEATURE_DYNAMIC_ROUTING;
 import static android.car.media.CarAudioManager.AUDIO_FEATURE_VOLUME_GROUP_MUTING;
 import static android.car.media.CarAudioManager.CarVolumeCallback;
+import static android.car.media.CarAudioManager.INVALID_AUDIO_ZONE;
+import static android.car.media.CarAudioManager.INVALID_REQUEST_ID;
 import static android.car.media.CarAudioManager.PRIMARY_AUDIO_ZONE;
+import static android.car.test.mocks.JavaMockitoHelper.await;
+import static android.car.test.mocks.JavaMockitoHelper.silentAwait;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -31,8 +35,12 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
 import android.car.Car;
+import android.car.CarOccupantZoneManager;
+import android.car.CarOccupantZoneManager.OccupantZoneInfo;
 import android.car.media.CarAudioManager;
 import android.car.media.CarVolumeGroupInfo;
+import android.car.media.MediaAudioRequestStatusCallback;
+import android.car.media.PrimaryZoneMediaAudioRequestCallback;
 import android.car.test.ApiCheckerRule.Builder;
 import android.car.test.PermissionsCheckerRule;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
@@ -55,7 +63,8 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,7 +74,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     private static final String TAG = CarAudioManagerTest.class.getSimpleName();
 
-    private static long WAIT_TIMEOUT_SECS = 5;
+    private static final long WAIT_TIMEOUT_MS = 5_000;
 
     @Rule
     public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
@@ -77,6 +86,9 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     private SyncCarVolumeCallback mCallback;
     private int mZoneId = -1;
     private int mVolumeGroupId = -1;
+    private CarOccupantZoneManager mCarOccupantZoneManager;
+    private TestPrimaryZoneMediaAudioRequestStatusCallback mRequestCallback;
+    private long mMediaRequestId = INVALID_REQUEST_ID;
 
     // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
     @Override
@@ -87,7 +99,8 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Before
     public void setUp() throws Exception {
-        mCarAudioManager = (CarAudioManager) getCar().getCarManager(Car.AUDIO_SERVICE);
+        mCarAudioManager = getCar().getCarManager(CarAudioManager.class);
+        mCarOccupantZoneManager = getCar().getCarManager(CarOccupantZoneManager.class);
     }
 
     @After
@@ -96,6 +109,16 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
             // Unregistering the last callback requires PERMISSION_CAR_CONTROL_AUDIO_VOLUME
             runWithCarControlAudioVolumePermission(
                     () -> mCarAudioManager.unregisterCarVolumeCallback(mCallback));
+        }
+
+        if (mMediaRequestId != INVALID_REQUEST_ID) {
+            Log.w(TAG, "Cancelling media request " +  mMediaRequestId);
+            mCarAudioManager.cancelMediaAudioOnPrimaryZone(mMediaRequestId);
+        }
+
+        if (mRequestCallback != null) {
+            Log.w(TAG, "Releasing media request callback");
+            mCarAudioManager.clearPrimaryZoneMediaAudioRequestCallback();
         }
     }
 
@@ -350,6 +373,265 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                 .that(exception).hasMessageThat().contains(PERMISSION_CAR_CONTROL_AUDIO_VOLUME);
     }
 
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#isMediaAudioAllowedInPrimaryZone(OccupantZoneInfo)"})
+    public void isMediaAudioAllowedInPrimaryZone_byDefault() {
+        int passengerAudioZoneId = assumePassengerWithValidAudioZone();
+        OccupantZoneInfo info =
+                        mCarOccupantZoneManager.getOccupantForAudioZoneId(passengerAudioZoneId);
+
+        assertWithMessage("Default media allowed status")
+                .that(mCarAudioManager.isMediaAudioAllowedInPrimaryZone(info)).isFalse();
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#isMediaAudioAllowedInPrimaryZone(OccupantZoneInfo)"})
+    public void isMediaAudioAllowedInPrimaryZone_afterAllowed() throws Exception {
+        int passengerAudioZoneId = assumePassengerWithValidAudioZone();
+        setupMediaAudioRequestCallback();
+        OccupantZoneInfo info =
+                mCarOccupantZoneManager.getOccupantForAudioZoneId(passengerAudioZoneId);
+        requestToPlayMediaInPrimaryZone(info);
+        mRequestCallback.receivedMediaRequest();
+        mCarAudioManager.allowMediaAudioOnPrimaryZone(mMediaRequestId, /* allow= */ true);
+
+        boolean approved = mCarAudioManager.isMediaAudioAllowedInPrimaryZone(info);
+
+        assertWithMessage("Approved media allowed status")
+                .that(approved).isTrue();
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#isMediaAudioAllowedInPrimaryZone(OccupantZoneInfo)"})
+    public void isMediaAudioAllowedInPrimaryZone_afterRejected() throws Exception {
+        int passengerAudioZoneId = assumePassengerWithValidAudioZone();
+        setupMediaAudioRequestCallback();
+        OccupantZoneInfo info =
+                mCarOccupantZoneManager.getOccupantForAudioZoneId(passengerAudioZoneId);
+        requestToPlayMediaInPrimaryZone(info);
+        mRequestCallback.receivedMediaRequest();
+        mCarAudioManager.allowMediaAudioOnPrimaryZone(mMediaRequestId, /* allow= */ false);
+
+        boolean approved = mCarAudioManager.isMediaAudioAllowedInPrimaryZone(info);
+
+        assertWithMessage("Unapproved media allowed status")
+                .that(approved).isFalse();
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#setPrimaryZoneMediaAudioRequestCallback(Executor,"
+            + "PrimaryZoneMediaAudioRequestCallback)"})
+    public void setPrimaryZoneMediaAudioRequestCallback() {
+        assumePassengerWithValidAudioZone();
+        Executor executor = Executors.newFixedThreadPool(1);
+        TestPrimaryZoneMediaAudioRequestStatusCallback
+                requestCallback = new TestPrimaryZoneMediaAudioRequestStatusCallback();
+
+        boolean registered =
+                mCarAudioManager.setPrimaryZoneMediaAudioRequestCallback(executor, requestCallback);
+
+        assertWithMessage("Set status of media request callback")
+                .that(registered).isTrue();
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#requestMediaAudioOnPrimaryZone(OccupantZoneInfo, Executor, "
+            + "MediaAudioRequestStatusCallback)"})
+    public void requestMediaAudioOnPrimaryZone() throws Exception {
+        int passengerAudioZoneId = assumePassengerWithValidAudioZone();
+        setupMediaAudioRequestCallback();
+        OccupantZoneInfo info =
+                mCarOccupantZoneManager.getOccupantForAudioZoneId(passengerAudioZoneId);
+        Executor callbackExecutor = Executors.newFixedThreadPool(1);
+        TestMediaAudioRequestStatusCallback callback = new TestMediaAudioRequestStatusCallback();
+
+        mMediaRequestId =
+                mCarAudioManager.requestMediaAudioOnPrimaryZone(info, callbackExecutor, callback);
+
+        mRequestCallback.receivedMediaRequest();
+        assertWithMessage("Received request id").that(mRequestCallback.mRequestId)
+                .isEqualTo(mMediaRequestId);
+        assertWithMessage("Received occupant info").that(mRequestCallback.mOccupantZoneInfo)
+                .isEqualTo(info);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#requestMediaAudioOnPrimaryZone(OccupantZoneInfo,"
+            + "Executor, MediaAudioRequestStatusCallback)"})
+    public void requestMediaAudioOnPrimaryZone_withoutApprover() throws Exception {
+        int passengerAudioZoneId = assumePassengerWithValidAudioZone();
+        OccupantZoneInfo info =
+                mCarOccupantZoneManager.getOccupantForAudioZoneId(passengerAudioZoneId);
+        Executor callbackExecutor = Executors.newFixedThreadPool(1);
+        TestMediaAudioRequestStatusCallback callback = new TestMediaAudioRequestStatusCallback();
+
+        mMediaRequestId =
+                mCarAudioManager.requestMediaAudioOnPrimaryZone(info, callbackExecutor, callback);
+
+        callback.receivedApproval();
+        assertWithMessage("Request id for rejected request")
+                .that(callback.mRequestId).isEqualTo(mMediaRequestId);
+        assertWithMessage("Rejected request status").that(callback.mStatus)
+                .isEqualTo(CarAudioManager.AUDIO_REQUEST_STATUS_REJECTED);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#allowMediaAudioOnPrimaryZone(long, boolean)"})
+    public void allowMediaAudioOnPrimaryZone() throws Exception {
+        int passengerAudioZoneId = assumePassengerWithValidAudioZone();
+        setupMediaAudioRequestCallback();
+        OccupantZoneInfo info =
+                mCarOccupantZoneManager.getOccupantForAudioZoneId(passengerAudioZoneId);
+        TestMediaAudioRequestStatusCallback callback =
+                requestToPlayMediaInPrimaryZone(info);
+        mRequestCallback.receivedMediaRequest();
+
+        boolean succeeded = mCarAudioManager.allowMediaAudioOnPrimaryZone(mMediaRequestId,
+                /* allow= */ true);
+
+        callback.receivedApproval();
+        assertWithMessage("Approved results for request in primary zone")
+                .that(succeeded).isTrue();
+        assertWithMessage("Approved request id in primary zone")
+                .that(callback.mRequestId).isEqualTo(mMediaRequestId);
+        assertWithMessage("Approved request occuapnt in primary zone")
+                .that(callback.mOccupantZoneInfo).isEqualTo(info);
+        assertWithMessage("Audio status in primary zone").that(callback.mStatus)
+                .isEqualTo(CarAudioManager.AUDIO_REQUEST_STATUS_APPROVED);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#allowMediaAudioOnPrimaryZone(long, boolean)"})
+    public void allowMediaAudioOnPrimaryZone_withReject() throws Exception {
+        int passengerAudioZoneId = assumePassengerWithValidAudioZone();
+        setupMediaAudioRequestCallback();
+        OccupantZoneInfo info =
+                mCarOccupantZoneManager.getOccupantForAudioZoneId(passengerAudioZoneId);
+        TestMediaAudioRequestStatusCallback callback = requestToPlayMediaInPrimaryZone(info);
+        mRequestCallback.receivedMediaRequest();
+
+        boolean succeeded = mCarAudioManager.allowMediaAudioOnPrimaryZone(mMediaRequestId,
+                /* allow= */ false);
+
+        callback.receivedApproval();
+        long tempRequestId = mMediaRequestId;
+        mMediaRequestId = INVALID_REQUEST_ID;
+        assertWithMessage("Unapproved results for request in primary zone")
+                .that(succeeded).isTrue();
+        assertWithMessage("Unapproved request id in primary zone")
+                .that(callback.mRequestId).isEqualTo(tempRequestId);
+        assertWithMessage("Unapproved audio status in primary zone").that(callback.mStatus)
+                .isEqualTo(CarAudioManager.AUDIO_REQUEST_STATUS_REJECTED);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#allowMediaAudioOnPrimaryZone(long, boolean)"})
+    public void allowMediaAudioOnPrimaryZone_withInvalidRequestId() throws Exception {
+        assumePassengerWithValidAudioZone();
+        setupMediaAudioRequestCallback();
+
+        boolean succeeded = mCarAudioManager
+                        .allowMediaAudioOnPrimaryZone(INVALID_REQUEST_ID, /* allow= */ true);
+
+        assertWithMessage("Invalid request id allowed results")
+                .that(succeeded).isFalse();
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#cancelMediaAudioOnPrimaryZone(long)"})
+    public void cancelMediaAudioOnPrimaryZone() throws Exception {
+        int passengerAudioZoneId = assumePassengerWithValidAudioZone();
+        setupMediaAudioRequestCallback();
+        OccupantZoneInfo info =
+                mCarOccupantZoneManager.getOccupantForAudioZoneId(passengerAudioZoneId);
+        TestMediaAudioRequestStatusCallback callback = requestToPlayMediaInPrimaryZone(info);
+        mRequestCallback.receivedMediaRequest();
+
+        mCarAudioManager.cancelMediaAudioOnPrimaryZone(mMediaRequestId);
+
+        mMediaRequestId = INVALID_REQUEST_ID;
+        callback.receivedApproval();
+        assertWithMessage("Cancelled audio status in primary zone")
+                .that(callback.mStatus).isEqualTo(CarAudioManager.AUDIO_REQUEST_STATUS_CANCELLED);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#resetMediaAudioOnPrimaryZone(OccupantZoneInfo)"})
+    public void resetMediaAudioOnPrimaryZone() throws Exception {
+        int passengerAudioZoneId = assumePassengerWithValidAudioZone();
+        setupMediaAudioRequestCallback();
+        OccupantZoneInfo info =
+                mCarOccupantZoneManager.getOccupantForAudioZoneId(passengerAudioZoneId);
+        TestMediaAudioRequestStatusCallback callback = requestToPlayMediaInPrimaryZone(info);
+        mRequestCallback.receivedMediaRequest();
+        mCarAudioManager.allowMediaAudioOnPrimaryZone(mMediaRequestId, /* allow= */ true);
+        callback.receivedApproval();
+        callback.reset();
+
+        mCarAudioManager.resetMediaAudioOnPrimaryZone(info);
+
+        long tempRequestId = mMediaRequestId;
+        mMediaRequestId = INVALID_REQUEST_ID;
+        callback.receivedApproval();
+        assertWithMessage("Reset request id in primary zone")
+                .that(callback.mRequestId).isEqualTo(tempRequestId);
+        assertWithMessage("Reset audio status in primary zone")
+                .that(callback.mStatus).isEqualTo(CarAudioManager.AUDIO_REQUEST_STATUS_STOPPED);
+    }
+
+    private TestMediaAudioRequestStatusCallback requestToPlayMediaInPrimaryZone(
+            OccupantZoneInfo info) {
+        Executor callbackExecutor = Executors.newFixedThreadPool(1);
+        TestMediaAudioRequestStatusCallback callback = new TestMediaAudioRequestStatusCallback();
+        mMediaRequestId =
+                mCarAudioManager.requestMediaAudioOnPrimaryZone(info, callbackExecutor, callback);
+        return callback;
+    }
+
+    private void setupMediaAudioRequestCallback() {
+        Executor requestExecutor = Executors.newFixedThreadPool(1);
+        mRequestCallback = new TestPrimaryZoneMediaAudioRequestStatusCallback();
+        mCarAudioManager.setPrimaryZoneMediaAudioRequestCallback(requestExecutor, mRequestCallback);
+    }
+
+    private int assumePassengerWithValidAudioZone() {
+        int passengerAudioZoneId = getAvailablePassengerAudioZone();
+        assumeTrue("Need passenger with audio zone id to share audio",
+                passengerAudioZoneId != INVALID_AUDIO_ZONE);
+
+        return passengerAudioZoneId;
+    }
+
+    private int getAvailablePassengerAudioZone() {
+        return mCarOccupantZoneManager.getAllOccupantZones().stream()
+                .map(occupant -> mCarOccupantZoneManager.getAudioZoneIdForOccupant(occupant))
+                .filter(audioZoneId -> audioZoneId != INVALID_AUDIO_ZONE
+                        && audioZoneId != PRIMARY_AUDIO_ZONE)
+                .findFirst().orElse(INVALID_AUDIO_ZONE);
+    }
+
     private void assumeDynamicRoutingIsEnabled() {
         assumeTrue(mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING));
     }
@@ -394,16 +676,16 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
         public int zoneId;
         public int groupId;
 
-        boolean receivedGroupVolumeChanged() throws InterruptedException {
-            return mGroupVolumeChangeLatch.await(WAIT_TIMEOUT_SECS, TimeUnit.SECONDS);
+        boolean receivedGroupVolumeChanged() {
+            return silentAwait(mGroupVolumeChangeLatch, WAIT_TIMEOUT_MS);
         }
 
-        boolean receivedGroupMuteChanged() throws InterruptedException {
-            return mGroupMuteChangeLatch.await(WAIT_TIMEOUT_SECS, TimeUnit.SECONDS);
+        boolean receivedGroupMuteChanged() {
+            return silentAwait(mGroupMuteChangeLatch, WAIT_TIMEOUT_MS);
         }
 
-        boolean receivedMasterMuteChanged() throws InterruptedException {
-            return mMasterMuteChangeLatch.await(WAIT_TIMEOUT_SECS, TimeUnit.SECONDS);
+        boolean receivedMasterMuteChanged() {
+            return silentAwait(mMasterMuteChangeLatch, WAIT_TIMEOUT_MS);
         }
 
         @Override
@@ -421,6 +703,62 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
             this.zoneId = zoneId;
             this.groupId = groupId;
             mGroupMuteChangeLatch.countDown();
+        }
+    }
+
+    private static final class TestPrimaryZoneMediaAudioRequestStatusCallback implements
+            PrimaryZoneMediaAudioRequestCallback {
+
+        private final CountDownLatch mRequestAudioLatch = new CountDownLatch(1);
+        private long mRequestId;
+        private OccupantZoneInfo mOccupantZoneInfo;
+
+        @Override
+        public void onRequestMediaOnPrimaryZone(OccupantZoneInfo info, long requestId) {
+            mOccupantZoneInfo = info;
+            mRequestId = requestId;
+            Log.v(TAG, "onRequestMediaOnPrimaryZone info " + info + " request id " + requestId);
+            mRequestAudioLatch.countDown();
+        }
+
+        @Override
+        public void onMediaAudioRequestStatusChanged(OccupantZoneInfo info,
+                long requestId, int status) {
+        }
+
+        void receivedMediaRequest() throws InterruptedException {
+            await(mRequestAudioLatch, WAIT_TIMEOUT_MS);
+        }
+    }
+
+    private static final class TestMediaAudioRequestStatusCallback implements
+            MediaAudioRequestStatusCallback {
+
+        private CountDownLatch mRequestAudioLatch = new CountDownLatch(1);
+        private long mRequestId;
+        private OccupantZoneInfo mOccupantZoneInfo;
+        private int mStatus;
+
+        void receivedApproval() throws InterruptedException {
+            await(mRequestAudioLatch, WAIT_TIMEOUT_MS);
+        }
+
+        void reset() {
+            mRequestAudioLatch = new CountDownLatch(1);
+            mRequestId = INVALID_REQUEST_ID;
+            mOccupantZoneInfo = null;
+            mStatus = 0;
+        }
+
+        @Override
+        public void onMediaAudioRequestStatusChanged(OccupantZoneInfo info,
+                long requestId, int status) {
+            mOccupantZoneInfo = info;
+            mRequestId = requestId;
+            mStatus = status;
+            Log.v(TAG, "onMediaAudioRequestStatusChanged info " + info + " request id "
+                    + requestId + " status " + status);
+            mRequestAudioLatch.countDown();
         }
     }
 }

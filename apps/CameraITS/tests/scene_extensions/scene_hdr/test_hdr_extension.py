@@ -208,7 +208,7 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
       its_session_utils.validate_lighting(
           y_plane, self.scene, state='OFF', log_path=self.log_path)
 
-      lighting_control_utils.turn_on_device(self.tablet)
+      self.setup_tablet()
 
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet, self.chart_distance,

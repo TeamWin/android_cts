@@ -22,6 +22,7 @@ import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.appops.AppOpsMode.DEFAULT;
 import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_SYSTEM_EXEMPT_FROM_APP_STANDBY;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_APP_EXEMPTIONS;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -32,6 +33,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.util.ArrayMap;
+import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;

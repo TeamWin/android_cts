@@ -301,7 +301,7 @@ public class MockJobService extends JobService {
     public boolean onStopJob(JobParameters params) {
         Log.i(TAG, "Received stop callback");
         TestEnvironment.getTestEnvironment().notifyStopped(params);
-        return mWaitingForStop;
+        return mWaitingForStop || TestEnvironment.getTestEnvironment().requestReschedule();
     }
 
     @Override
@@ -441,6 +441,7 @@ public class MockJobService extends JobService {
         private CountDownLatch mNetworkChangeLatch;
         private TestWorkItem[] mExpectedWork;
         private boolean mContinueAfterStart;
+        private boolean mRequestReschedule;
         private JobParameters mExecutedJobParameters;
         private JobParameters mNetworkChangedJobParameters;
         private MockJobService mExecutedJobService;
@@ -611,6 +612,7 @@ public class MockJobService extends JobService {
             mNetworkChangeLatch = null;
             mExpectedWork = null;
             mContinueAfterStart = false;
+            mRequestReschedule = false;
             mExecutedEvents.clear();
             mJobStartNotification = null;
         }
@@ -660,6 +662,14 @@ public class MockJobService extends JobService {
             boolean res = mContinueAfterStart;
             mContinueAfterStart = false;
             return res;
+        }
+
+        public void setRequestReschedule() {
+            mRequestReschedule = true;
+        }
+
+        boolean requestReschedule() {
+            return mRequestReschedule;
         }
 
         /** Called in each testCase#setup */

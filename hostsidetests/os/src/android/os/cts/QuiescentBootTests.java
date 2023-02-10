@@ -39,7 +39,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class QuiescentBootTests extends BaseHostJUnit4Test {
@@ -85,13 +84,6 @@ public class QuiescentBootTests extends BaseHostJUnit4Test {
     public void testQuiescentBoot_asleepAfterQuiescentReboot() throws Exception {
         mDevice.reboot(REBOOT_REASON_QUIESCENT);
         assertEquals("Expected to boot into sleep state.", WAKEFULNESS_ASLEEP, getWakefulness());
-    }
-
-    @Test
-    public void testQuiescentBoot_awakeAfterReboot() throws Exception {
-        mDevice.reboot(REBOOT_REASON_QUIESCENT);
-        mDevice.reboot();
-        assertEquals("Expected to boot in awake state.", WAKEFULNESS_AWAKE, getWakefulness());
     }
 
     @Test

@@ -45,7 +45,7 @@ import org.junit.runner.RunWith;
 
 @RequireNotHeadlessSystemUserMode(reason = "Requires full system user")
 @RunWith(BedsteadJUnit4.class)
-public class CloneProfileTest {
+public final class CloneProfileTest {
     @ClassRule
     @Rule
     public static DeviceState sDeviceState = new DeviceState();
