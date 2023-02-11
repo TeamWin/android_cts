@@ -21,6 +21,7 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
+import com.android.tradefed.util.RunUtil;
 
 import com.google.protobuf.CodedInputStream;
 
@@ -187,7 +188,7 @@ public class CtsGpuProfilingDataTest extends BaseHostJUnit4Test {
             if (countersSourceFound && stagesSourceFound) {
                 break;
             }
-            Thread.sleep(500);
+            RunUtil.getDefault().sleep(500);
         }
 
         Assert.assertTrue("Producer " + STAGES_SOURCE_NAME + " not found", stagesSourceFound);
