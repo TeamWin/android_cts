@@ -1180,6 +1180,16 @@ public class TvInteractiveAppServiceTest {
     }
 
     @Test
+    public void testTimelineRequestWithSelector() throws Throwable {
+        // TODO: verify values
+        linkTvView();
+
+        TimelineRequest request = new TimelineRequest(8, BroadcastInfoRequest.REQUEST_OPTION_REPEAT,
+                8000, "selector");
+        request.getSelector();
+    }
+
+    @Test
     public void testTsResponse() throws Throwable {
         linkTvView();
 
@@ -1362,6 +1372,26 @@ public class TvInteractiveAppServiceTest {
         assertThat(response.getTableUri()).isEqualTo(uri);
         assertThat(response.getVersion()).isEqualTo(777);
         assertThat(response.getSize()).isEqualTo(7777);
+    }
+
+    @Test
+    public void testTableResponseWithByteArray() throws Throwable {
+        // TODO: verify values
+        linkTvView();
+
+        TableResponse response = new TableResponse(7, 77, BroadcastInfoResponse.RESPONSE_RESULT_OK,
+                new byte[5], 777, 7777);
+        response.getTableByteArray();
+    }
+
+    @Test
+    public void testTableResponseWithSharedMemory() throws Throwable {
+        // TODO: verify values
+        linkTvView();
+
+        TableResponse response = new TableResponse(7, 77, BroadcastInfoResponse.RESPONSE_RESULT_OK,
+                SharedMemory.create("test", 8), 777, 7777);
+        response.getTableSharedMemory();
     }
 
     @Test

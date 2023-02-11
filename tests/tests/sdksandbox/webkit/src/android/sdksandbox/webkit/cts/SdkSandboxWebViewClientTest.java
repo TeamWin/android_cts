@@ -16,15 +16,11 @@
 
 package android.sdksandbox.webkit.cts;
 
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
-import com.android.compatibility.common.util.NullWebViewUtils;
-
 import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,11 +44,6 @@ public class SdkSandboxWebViewClientTest {
     @Rule
     public final WebViewSandboxTestRule sdkTester =
             new WebViewSandboxTestRule("android.webkit.cts.WebViewClientTest");
-
-    @Before
-    public void setUp() {
-        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-    }
 
     @Test
     public void testShouldOverrideUrlLoadingDefault() throws Exception {

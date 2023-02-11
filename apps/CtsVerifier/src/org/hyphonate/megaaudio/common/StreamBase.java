@@ -40,7 +40,7 @@ public abstract class StreamBase {
     // System Attributes
     //
     //
-    private static int sSystemBurstFrames = -1;
+    private static int sSystemBurstFrames = 512;
     private static int sSystemSampleRate = 48000;
 
     // Stream attributes

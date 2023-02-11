@@ -122,8 +122,6 @@ public class JavaPlayer extends Player {
         mAudioSource.init(mNumBufferFrames, mChannelCount);
 
         try {
-            int bufferSizeInBytes = mNumBufferFrames * mChannelCount
-                    * sampleSizeInBytes(AudioFormat.ENCODING_PCM_FLOAT);
             mAudioTrack = new AudioTrack.Builder()
                     .setAudioFormat(new AudioFormat.Builder()
                             .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
@@ -133,12 +131,13 @@ public class JavaPlayer extends Player {
                             // StreamBase.channelCountToIndexMask(mChannelCount))
                             .setChannelMask(StreamBase.channelCountToOutPositionMask(mChannelCount))
                             .build())
-                    .setBufferSizeInBytes(bufferSizeInBytes)
                     .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
                     .build();
 
             allocBurstBuffer();
             mAudioTrack.setPreferredDevice(mRouteDevice);
+            // set enough space to double-buffer
+            mAudioTrack.setBufferSizeInFrames(mNumBufferFrames * 2);
         }  catch (UnsupportedOperationException ex) {
             if (LOG) {
                 Log.e(TAG, "Couldn't open AudioTrack: " + ex);

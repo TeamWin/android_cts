@@ -3208,6 +3208,10 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         stopPreviewAndDrain();
         startPreview(requestBuilder, maxPreviewSize, listenerZoom);
         waitForSettingsApplied(listenerZoom, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+        // Wait additional 2 frames, the required minimal zoom improvement, to allow non-overridden
+        // results during startup.
+        final int ZOOM_IN_MIN_IMPROVEMENT_IN_FRAMES = 2;
+        waitForNumResults(listenerZoom, ZOOM_IN_MIN_IMPROVEMENT_IN_FRAMES);
         verifyCaptureResultForKey(CaptureResult.CONTROL_SETTINGS_OVERRIDE,
                 CameraMetadata.CONTROL_SETTINGS_OVERRIDE_ZOOM, listenerZoom, NUM_FRAMES_VERIFIED);
     }

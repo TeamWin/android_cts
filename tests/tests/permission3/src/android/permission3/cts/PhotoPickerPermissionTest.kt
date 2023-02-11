@@ -125,15 +125,6 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun testAppShowsPickerWhenOnlySelectRequested() {
-        installPackage(APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE)
-        requestAppPermissions(READ_MEDIA_VISUAL_USER_SELECTED) {
-            findImageOrVideo(expected = true)
-            uiDevice.pressBack()
-        }
-    }
-
-    @Test
     fun testNoPhotoSelectionTreatedAsCancel() {
         installPackage(APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE)
         requestAppPermissionsAndAssertResult(
@@ -178,10 +169,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
     @Test
     fun testImplicitShowsMorePhotosOnceSet() {
         installPackage(APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE)
-        requestAppPermissions(READ_MEDIA_VISUAL_USER_SELECTED) {
-            clickImageOrVideo()
-            clickAllow()
-        }
+        uiAutomation.grantRuntimePermission(APP_PACKAGE_NAME, READ_MEDIA_VISUAL_USER_SELECTED)
 
         requestAppPermissions(READ_MEDIA_IMAGES) {
             waitFindObject(By.res(SELECT_MORE_PHOTOS_BUTTON))

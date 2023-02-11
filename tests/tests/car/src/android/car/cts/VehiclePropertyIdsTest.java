@@ -427,12 +427,18 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("BLIND_SPOT_WARNING_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_DEPARTURE_WARNING_ENABLED))
                 .isEqualTo("LANE_DEPARTURE_WARNING_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_DEPARTURE_WARNING_STATE))
+                .isEqualTo("LANE_DEPARTURE_WARNING_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_KEEP_ASSIST_ENABLED))
                 .isEqualTo("LANE_KEEP_ASSIST_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_KEEP_ASSIST_STATE))
                 .isEqualTo("LANE_KEEP_ASSIST_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED))
                 .isEqualTo("LANE_CENTERING_ASSIST_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_CENTERING_ASSIST_COMMAND))
+                .isEqualTo("LANE_CENTERING_ASSIST_COMMAND");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_CENTERING_ASSIST_STATE))
+                .isEqualTo("LANE_CENTERING_ASSIST_STATE");
         assertThat(VehiclePropertyIds.toString(3)).isEqualTo("0x3");
         assertThat(VehiclePropertyIds.toString(12)).isEqualTo("0xc");
     }

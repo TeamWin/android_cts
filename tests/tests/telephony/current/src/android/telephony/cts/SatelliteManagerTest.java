@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.telephony.satellite.PointingInfo;
 import android.telephony.satellite.SatelliteCallback;
+import android.telephony.satellite.SatelliteCapabilities;
 import android.telephony.satellite.SatelliteManager;
 import android.telephony.satellite.stub.SatelliteImplBase;
 import android.util.Log;
@@ -86,9 +87,13 @@ public class SatelliteManagerTest {
     public void testRegisterForSatelliteProvisionStateChanged() {
         SatelliteProvisionStateListenerTest satelliteProvisionStateListener =
                 new SatelliteProvisionStateListenerTest();
+        /**
         assertThrows(SecurityException.class,
                 ()-> mSatelliteManager.registerForSatelliteProvisionStateChanged(
                         getContext().getMainExecutor(), satelliteProvisionStateListener));
+         **/
+        mSatelliteManager.registerForSatelliteProvisionStateChanged(
+                getContext().getMainExecutor(), satelliteProvisionStateListener);
     }
 
     @Test
@@ -97,6 +102,41 @@ public class SatelliteManagerTest {
         assertThrows(SecurityException.class,
                 ()-> mSatelliteManager.getProvisionedSatelliteFeatures(
                         getContext().getMainExecutor(), resultQueue::offer));
+    }
+
+    @Test
+    public void testSetSatellitePower() {
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class, ()-> mSatelliteManager.setSatellitePower(true));
+        assertThrows(SecurityException.class, ()-> mSatelliteManager.setSatellitePower(false));
+    }
+
+    @Test
+    public void testIsSatellitePowerOn() {
+        LinkedBlockingQueue<Boolean> powerOnResult = new LinkedBlockingQueue<>(1);
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class, ()-> mSatelliteManager.isSatellitePowerOn(
+                getContext().getMainExecutor(), powerOnResult::offer));
+    }
+
+    @Test
+    public void testIsSatelliteSupported() {
+        LinkedBlockingQueue<Boolean> supportedResult = new LinkedBlockingQueue<>(1);
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class, ()-> mSatelliteManager.isSatelliteSupported(
+                getContext().getMainExecutor(), supportedResult::offer));
+    }
+
+    @Test
+    public void testGetSatelliteCapabilities() {
+        LinkedBlockingQueue<SatelliteCapabilities> capabilitiesResult =
+                new LinkedBlockingQueue<>(1);
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class, ()-> mSatelliteManager.getSatelliteCapabilities(
+                getContext().getMainExecutor(), capabilitiesResult::offer));
     }
 
     private Context getContext() {

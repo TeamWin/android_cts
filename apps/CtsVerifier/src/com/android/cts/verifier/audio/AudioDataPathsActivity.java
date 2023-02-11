@@ -36,6 +36,7 @@ import com.android.cts.verifier.audio.audiolib.WaveScopeView;
 
 // MegaAudio
 import org.hyphonate.megaaudio.common.Globals;
+import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.duplex.DuplexAudioManager;
 import org.hyphonate.megaaudio.player.AudioSource;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
@@ -113,6 +114,10 @@ public class AudioDataPathsActivity
         setContentView(R.layout.audio_datapaths_activity);
 
         super.onCreate(savedInstanceState);
+
+        // MegaAudio Initialization
+        StreamBase.calcNumBurstFrames(this);
+        StreamBase.calcSystemSampleRate(this);
 
         mStartBtn = findViewById(R.id.audio_datapaths_start);
         mStartBtn.setOnClickListener(this);

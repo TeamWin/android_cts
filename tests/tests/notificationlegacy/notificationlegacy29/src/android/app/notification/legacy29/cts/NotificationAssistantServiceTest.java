@@ -219,6 +219,34 @@ public class NotificationAssistantServiceTest {
     }
 
     @Test
+    public void testAdjustNotification_sensitiveContentKey() throws Exception {
+        setUpListeners();
+
+        mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
+        mNotificationManager.allowAssistantAdjustment(Adjustment.KEY_SENSITIVE_CONTENT);
+        mUi.dropShellPermissionIdentity();
+
+        sendNotification(1, ICON_ID);
+        StatusBarNotification sbn = getFirstNotificationFromPackage(TestNotificationListener.PKG);
+        NotificationListenerService.Ranking out = new NotificationListenerService.Ranking();
+        mNotificationListenerService.mRankingMap.getRanking(sbn.getKey(), out);
+
+        assertFalse(out.hasSensitiveContent());
+
+        Bundle signals = new Bundle();
+        signals.putBoolean(Adjustment.KEY_SENSITIVE_CONTENT, true);
+        Adjustment adjustment = new Adjustment(sbn.getPackageName(), sbn.getKey(), signals, "",
+                sbn.getUser());
+
+        mNotificationAssistantService.adjustNotification(adjustment);
+        Thread.sleep(SLEEP_TIME); // wait for adjustment to be processed
+
+        mNotificationListenerService.mRankingMap.getRanking(sbn.getKey(), out);
+
+        assertTrue(out.hasSensitiveContent());
+    }
+
+    @Test
     public void testAdjustNotification_importanceKey() throws Exception {
         setUpListeners();
 

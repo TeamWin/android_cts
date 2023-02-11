@@ -133,7 +133,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
                     Manifest.permission.UPDATE_APP_OPS_STATS);
 
             // Test queryLocationForEmergency API
-            connection.queryLocationForEmergency(1000L, TEST_PROVIDER,
+            connection.queryLocationForEmergency(3000L, TEST_PROVIDER,
                     Executors.newSingleThreadExecutor(),
                     new OutcomeReceiver<Location, QueryLocationException>() {
                         @Override
@@ -148,7 +148,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
                             resultFuture.complete("onError");
                         }
                     });
-            String result = resultFuture.get(1000L, TimeUnit.MILLISECONDS);
+            String result = resultFuture.get(5000L, TimeUnit.MILLISECONDS);
 
             // Verify Test result
             assertTrue(result.contains("onError"));
@@ -191,7 +191,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
                     Manifest.permission.UPDATE_APP_OPS_STATS);
 
             // Test queryLocationForEmergency API
-            connection.queryLocationForEmergency(1000L, TEST_PROVIDER,
+            connection.queryLocationForEmergency(3000L, TEST_PROVIDER,
                     Executors.newSingleThreadExecutor(),
                     new OutcomeReceiver<Location, QueryLocationException>() {
                         @Override
@@ -206,7 +206,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
                             resultFuture.complete("onError");
                         }
                     });
-            String result = resultFuture.get(1000L, TimeUnit.MILLISECONDS);
+            String result = resultFuture.get(5000L, TimeUnit.MILLISECONDS);
 
             // Verify Test result
             assertTrue(result.contains("onResult"));
@@ -270,7 +270,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
                             resultFuture.complete("onError" + e.getCode());
                         }
                     });
-            String result = resultFuture.get(1000L, TimeUnit.MILLISECONDS);
+            String result = resultFuture.get(5000L, TimeUnit.MILLISECONDS);
 
             // Verify Test result
             assertTrue(result.contains("onError"

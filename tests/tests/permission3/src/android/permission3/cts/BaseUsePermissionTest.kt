@@ -21,6 +21,8 @@ import android.app.Activity
 import android.app.Instrumentation
 import android.content.ComponentName
 import android.content.Intent
+import android.content.Intent.ACTION_REVIEW_APP_DATA_SHARING_UPDATES
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -154,6 +156,28 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "com.android.permissioncontroller:id/settings_message"
 
         const val REQUEST_LOCATION_MESSAGE = "permgrouprequest_location"
+
+        const val DATA_SHARING_UPDATES = "Data sharing updates"
+        const val DATA_SHARING_UPDATES_SUBTITLE =
+                "These apps have changed the way they share location data. They may not have" +
+                        " shared it before, or may now share it for advertising or marketing" +
+                        " purposes."
+        const val DATA_SHARING_NO_UPDATES_MESSAGE = "No updates at this time"
+        const val UPDATES_IN_LAST_30_DAYS = "Updated within 30 days"
+        const val DATA_SHARING_UPDATES_FOOTER_MESSAGE =
+                "The developers of these apps provided info about their data sharing practices" +
+                        " and may update it over time.\n\nData sharing practices may vary based" +
+                        " on your app version, use, region, and age."
+        const val LEARN_ABOUT_DATA_SHARING = "Learn about data sharing"
+        const val LOCATION_PERMISSION = "Location permission"
+        const val PERMISSION_MANAGER = "Permission manager"
+        const val APP_PACKAGE_NAME_SUBSTRING = "android.permission3"
+        const val SETTINGS_BUTTON_RES_ID =
+                "com.android.permissioncontroller:id/settings_button"
+        const val PROPERTY_DATA_SHARING_UPDATE_PERIOD_MILLIS =
+                "data_sharing_update_period_millis"
+        const val PROPERTY_MAX_SAFETY_LABELS_PERSISTED_PER_APP =
+                "max_safety_labels_persisted_per_app"
 
         // The highest SDK for which the system will show a "low SDK" warning when launching the app
         const val MAX_SDK_FOR_SDK_WARNING = 27
@@ -746,6 +770,16 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                     putExtra(Intent.EXTRA_USER, Process.myUserHandle())
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 })
+        }
+    }
+
+    /** Starts activity with intent [ACTION_REVIEW_APP_DATA_SHARING_UPDATES]. */
+    fun startAppDataSharingUpdatesActivity() {
+        runWithShellPermissionIdentity {
+            context.startActivity(
+                    Intent(ACTION_REVIEW_APP_DATA_SHARING_UPDATES).apply {
+                        addFlags(FLAG_ACTIVITY_NEW_TASK)
+                    })
         }
     }
 

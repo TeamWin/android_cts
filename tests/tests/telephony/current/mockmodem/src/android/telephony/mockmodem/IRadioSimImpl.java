@@ -425,6 +425,19 @@ public class IRadioSimImpl extends IRadioSim.Stub {
         }
     }
 
+    @Override
+    public void iccCloseLogicalChannelWithSessionInfo(int serial,
+            android.hardware.radio.sim.SessionInfo sessionInfo) {
+        Log.d(mTag, "iccCloseLogicalChannelWithSessionInfo");
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioSimResponse.iccCloseLogicalChannelWithSessionInfoResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(mTag,
+                    "Failed to iccCloseLogicalChannelWithSessionInfo from AIDL. Exception" + ex);
+        }
+    }
+
     private String encodeBcdString(String str) {
         StringBuffer bcdString = new StringBuffer();
 

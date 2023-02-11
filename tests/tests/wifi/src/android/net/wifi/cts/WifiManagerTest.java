@@ -140,6 +140,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -4774,6 +4775,143 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         mWifiManager.setTdlsEnabledWithMacAddress(TEST_MAC_ADDRESS, true);
         Thread.sleep(50);
         mWifiManager.setTdlsEnabledWithMacAddress(TEST_MAC_ADDRESS, false);
+    }
+
+    /**
+     * Verify the usage of {@code WifiManager#isTdlsOperationCurrentlyAvailable}.
+     */
+    public void testIsTdlsOperationCurrentlyAvailable() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        boolean expectedResult = mWifiManager.isTdlsSupported() ? true : false;
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        AtomicBoolean enabled = new AtomicBoolean(false);
+        mWifiManager.isTdlsOperationCurrentlyAvailable(mExecutor,
+                (enabledLocal) -> {
+                    synchronized (mLock) {
+                        enabled.set(enabledLocal);
+                        mLock.notify();
+                    }
+                });
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        assertEquals(expectedResult, enabled.get());
+    }
+
+    /**
+     * Verify the usage of {@code WifiManager#getMaxSupportedConcurrentTdlsSessions}.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    public void testGetMaxSupportedConcurrentTdlsSessions() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        if (!mWifiManager.isTdlsSupported()) {
+            // skip the test if TDLS is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        AtomicInteger maxNumOfTdlsSessions = new AtomicInteger(0);
+        mWifiManager.getMaxSupportedConcurrentTdlsSessions(mExecutor,
+                (maxNumOfTdlsSessionsLocal) -> {
+                    synchronized (mLock) {
+                        maxNumOfTdlsSessions.set(maxNumOfTdlsSessionsLocal);
+                        mLock.notify();
+                    }
+                });
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        // {@code WifiManager#getMaxSupportedConcurrentTdlsSessions} returns -1
+        // if HAL doesn't provide this TDLS capability.
+        assertTrue(maxNumOfTdlsSessions.get() == -1 || maxNumOfTdlsSessions.get() > 0);
+    }
+
+    /**
+     * Verify the usage of
+     * {@link WifiManager#setTdlsEnabled(InetAddress, boolean, Executor, Consumer)}.
+     */
+    public void testSetTdlsEnabledWithIpAddressConsumerModel() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        if (!mWifiManager.isTdlsSupported()) {
+            // skip the test if TDLS is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        InetAddress inetAddress = InetAddress.getByName(TEST_IP_ADDRESS);
+        mWifiManager.setTdlsEnabled(inetAddress, true, mExecutor, (e) -> {});
+        mWifiManager.setTdlsEnabled(inetAddress, false, mExecutor, (e) -> {});
+    }
+
+    /**
+     * Verify the usage of
+     * {@link WifiManager#setTdlsEnabledWithMacAddress(String, boolean, Executor, Consumer)}
+     * and {@link WifiManager#getNumberOfEnabledTdlsSessions(Executor, Consumer)}.
+     */
+    public void testSetTdlsEnabledWithMacAddressConsumerModel() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        if (!mWifiManager.isTdlsSupported()) {
+            // skip the test if TDLS is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        AtomicBoolean enabled = new AtomicBoolean(false);
+        AtomicInteger numOfTdlsSessions = new AtomicInteger(0);
+        Consumer<Integer> listener2 = new Consumer<Integer>() {
+            @Override
+            public void accept(Integer value) {
+                synchronized (mLock) {
+                    numOfTdlsSessions.set(value);
+                    mLock.notify();
+                }
+            }
+        };
+
+        mWifiManager.setTdlsEnabledWithMacAddress(TEST_MAC_ADDRESS, true, mExecutor,
+                (enabledLocal) -> {
+                    synchronized (mLock) {
+                        enabled.set(enabledLocal);
+                        mLock.notify();
+                    }
+                });
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        assertTrue(enabled.get());
+        mWifiManager.getNumberOfEnabledTdlsSessions(mExecutor, listener2);
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        assertEquals(1, numOfTdlsSessions.get());
+
+        mWifiManager.setTdlsEnabledWithMacAddress(TEST_MAC_ADDRESS, false, mExecutor, (e) -> {});
+        mWifiManager.getNumberOfEnabledTdlsSessions(mExecutor, listener2);
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        assertEquals(0, numOfTdlsSessions.get());
     }
 
     /**

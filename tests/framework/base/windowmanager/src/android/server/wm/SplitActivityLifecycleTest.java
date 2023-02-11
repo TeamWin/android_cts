@@ -347,9 +347,12 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
         final IBinder taskFragTokenB = mTaskFragB.getTaskFragToken();
         final TaskFragmentCreationParams paramsC = generateSideTaskFragParams();
         final IBinder taskFragTokenC = paramsC.getFragmentToken();
+        // Calculate the relative bounds in parent coordinate.
+        final Rect primaryRelativeBounds = new Rect(mPrimaryBounds);
+        primaryRelativeBounds.offsetTo(0, 0);
         final WindowContainerTransaction wct = new WindowContainerTransaction()
                 // Move TaskFragment B to the primaryBounds
-                .setBounds(mTaskFragB.getToken(), mPrimaryBounds)
+                .setRelativeBounds(mTaskFragB.getToken(), primaryRelativeBounds)
                 // Create the side TaskFragment for C and launch
                 .createTaskFragment(paramsC)
                 .startActivityInTaskFragment(taskFragTokenC, mOwnerToken, mIntent,
@@ -518,7 +521,7 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
         // Expand top TaskFragment and clear the adjacent TaskFragments to have the two
         // TaskFragment stacked.
         wct = new WindowContainerTransaction()
-                .setBounds(mTaskFragB.getToken(), new Rect())
+                .setRelativeBounds(mTaskFragB.getToken(), new Rect())
                 .setWindowingMode(mTaskFragB.getToken(), WINDOWING_MODE_UNDEFINED)
                 .clearAdjacentTaskFragments(mTaskFragA.getTaskFragToken());
         mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CHANGE,

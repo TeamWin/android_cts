@@ -71,6 +71,9 @@ public class MediaCasTest {
     private static final int API_LEVEL_BEFORE_CAS_SESSION = 28;
     private boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
     private boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
+    //TODO(b/248315681) Remove codenameEquals() check once devices return correct version for U
+    private boolean mIsAtLeastU = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)
+            || ApiLevelUtil.codenameEquals("UpsideDownCake");
 
     // ClearKey CAS/Descrambler test vectors
     private static final String sProvisionStr =
@@ -334,7 +337,7 @@ public class MediaCasTest {
             }
             streamSession.setPrivateData(pvtData);
 
-            if (!descrambler.isAidlHal()) {
+            if (!mIsAtLeastU || !descrambler.isAidlHal()) {
                 // Do not test AIDL descrambler
                 descrambler.setMediaCasSession(session);
 
@@ -373,7 +376,7 @@ public class MediaCasTest {
             session.processEcm(ecmData);
             streamSession.processEcm(ecmData);
 
-            if (!descrambler.isAidlHal()) {
+            if (!mIsAtLeastU || !descrambler.isAidlHal()) {
                 // Do not test AIDL descrambler
                 ByteBuffer outputBuf = descrambleTestInputBuffer(descrambler);
                 ByteBuffer expectedOutputBuf =
@@ -405,7 +408,7 @@ public class MediaCasTest {
             mediaCas = new MediaCas(sClearKeySystemId);
             descrambler = new MediaDescrambler(sClearKeySystemId);
             // Do not test AIDL Descrambler
-            assumeFalse(descrambler.isAidlHal());
+            assumeFalse(mIsAtLeastU && descrambler.isAidlHal());
             mediaCas.provision(sProvisionStr);
 
             Session session = mediaCas.openSession();
@@ -528,7 +531,7 @@ public class MediaCasTest {
                 Log.d(TAG, "processEcm throws " + e.getDiagnosticInfo() + " (as expected)");
             }
 
-            if (!descrambler.isAidlHal()) {
+            if (!mIsAtLeastU || !descrambler.isAidlHal()) {
                 // Do not test AIDL descrambler
                 /*
                  * Test MediaDescrambler exceptions

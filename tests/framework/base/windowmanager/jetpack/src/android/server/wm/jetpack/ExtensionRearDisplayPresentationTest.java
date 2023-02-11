@@ -31,20 +31,25 @@ import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_
 import static com.android.compatibility.common.util.PollingCheck.waitFor;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.res.Resources;
 import android.hardware.devicestate.DeviceStateManager;
 import android.hardware.devicestate.DeviceStateRequest;
+import android.hardware.display.DisplayManager;
 import android.os.PowerManager;
 import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.DeviceStateUtils;
+import android.server.wm.jetpack.utils.TestActivity;
+import android.server.wm.jetpack.utils.TestActivityLauncher;
 import android.server.wm.jetpack.utils.TestRearDisplayActivity;
 import android.server.wm.jetpack.utils.WindowExtensionTestRule;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
@@ -79,7 +84,7 @@ import java.util.Set;
  * of the rear display functionality provided on the device (and only if one is available).
  *
  * Build/Install/Run:
- * atest CtsWindowManagerJetpackTestCases:ExtensionRearDisplayTest
+ * atest CtsWindowManagerJetpackTestCases:ExtensionRearDisplayPresentationTest
  */
 @LargeTest
 @Presubmit
@@ -115,6 +120,10 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
             KeyguardManager.class);
     private final DeviceStateManager mDeviceStateManager = mInstrumentationContext
             .getSystemService(DeviceStateManager.class);
+    private final DisplayManager mDisplayManager = mInstrumentationContext
+            .getSystemService(DisplayManager.class);
+    private final ActivityManager mActivityManager = mInstrumentationContext
+            .getSystemService(ActivityManager.class);
 
     private final Consumer<ExtensionWindowAreaStatus> mStatusListener =
             (status) -> mWindowAreaPresentationStatus = status;
@@ -244,12 +253,16 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
                 == WindowAreaComponent.STATUS_AVAILABLE);
         assumeTrue(mCurrentDeviceState != mRearDisplayPresentationState);
 
+        // Rear displays should only exist after concurrent mode is started
+        assertEquals(0, mDisplayManager.getDisplays(DisplayManager.DISPLAY_CATEGORY_REAR).length);
+
         // Running with CONTROL_DEVICE_STATE permission to bypass educational overlay
         DeviceStateUtils.runWithControlDeviceStatePermission(() ->
                 mWindowAreaComponent.startRearDisplayPresentationSession(mActivity,
                         mSessionStateListener));
         waitAndAssert(() -> mWindowAreaSessionState == SESSION_STATE_ACTIVE);
         assertEquals(mCurrentDeviceState, mRearDisplayPresentationState);
+        assertTrue(mDisplayManager.getDisplays(DisplayManager.DISPLAY_CATEGORY_REAR).length > 0);
 
         ExtensionWindowAreaPresentation presentation =
                 mWindowAreaComponent.getRearDisplayPresentation();
@@ -380,6 +393,41 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
         // Since the non-visible and session ended callbacks happen so fast, we check if
         // the list of values received equal what we expected.
         assertEquals(mSessionStateStatusValues, SESSION_LIFECYCLE_VALUES);
+    }
+
+    @ApiTest(apis = {
+            "androidx.window.extensions.area."
+                    + "WindowAreaComponent#startRearDisplayPresentationSession",
+            "androidx.window.extensions.area."
+                    + "WindowAreaComponent#endRearDisplayPresentationSession"})
+    @Test (expected = SecurityException.class)
+    public void testStartActivityOnRearDisplay_whileRearPresentationSessionStarted()
+            throws Throwable {
+        assumeTrue(mWindowAreaPresentationStatus.getWindowAreaStatus()
+                == WindowAreaComponent.STATUS_AVAILABLE);
+        assumeTrue(mCurrentDeviceState != mRearDisplayPresentationState);
+
+        // Running with CONTROL_DEVICE_STATE permission to bypass educational overlay
+        DeviceStateUtils.runWithControlDeviceStatePermission(() ->
+                mWindowAreaComponent.startRearDisplayPresentationSession(mActivity,
+                        mSessionStateListener));
+        waitAndAssert(() -> mWindowAreaSessionState == SESSION_STATE_ACTIVE);
+        assertEquals(mCurrentDeviceState, mRearDisplayPresentationState);
+
+        Display[] rearDisplays = mDisplayManager.getDisplays(DisplayManager.DISPLAY_CATEGORY_REAR);
+        assertTrue(rearDisplays.length > 0);
+
+        final int rearDisplayId = rearDisplays[0].getDisplayId();
+
+        final TestActivityLauncher<TestActivity> launcher =
+                launcherForNewActivity(TestActivity.class, rearDisplayId);
+
+        final boolean allowed = mActivityManager.isActivityStartAllowedOnDisplay(
+                mInstrumentationContext, rearDisplayId, launcher.getIntent());
+        assertFalse("Should not be allowed to launch", allowed);
+
+        // Should throw SecurityException
+        launcher.launch(mInstrumentation);
     }
 
     @Override

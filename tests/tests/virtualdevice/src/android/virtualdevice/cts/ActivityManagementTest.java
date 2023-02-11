@@ -88,6 +88,7 @@ public class ActivityManagementTest {
 
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
+    private static final int TIMEOUT_MS = 5000;
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -290,9 +291,10 @@ public class ActivityManagementTest {
         mVirtualDevice.launchPendingIntent(virtualDisplay.getDisplay().getDisplayId(),
                 pendingIntent, Runnable::run, mLaunchCompleteListener);
 
-        verify(mOnReceiveResultListener, timeout(5000)).onReceiveResult(
+        verify(mOnReceiveResultListener, timeout(TIMEOUT_MS)).onReceiveResult(
                 eq(Activity.RESULT_OK), nullable(Bundle.class));
-        verify(mLaunchCompleteListener).accept(eq(VirtualDeviceManager.LAUNCH_SUCCESS));
+        verify(mLaunchCompleteListener, timeout(TIMEOUT_MS)).accept(
+                eq(VirtualDeviceManager.LAUNCH_SUCCESS));
     }
 
     @Test
@@ -324,9 +326,9 @@ public class ActivityManagementTest {
                 pendingIntent, Runnable::run,
                 mLaunchCompleteListener);
 
-        verify(mOnReceiveResultListener, timeout(5000)).onReceiveResult(
+        verify(mOnReceiveResultListener, timeout(TIMEOUT_MS)).onReceiveResult(
                 eq(Activity.RESULT_OK), nullable(Bundle.class));
-        verify(mLaunchCompleteListener, timeout(5000)).accept(
+        verify(mLaunchCompleteListener, timeout(TIMEOUT_MS)).accept(
                 eq(VirtualDeviceManager.LAUNCH_SUCCESS));
     }
 
@@ -354,9 +356,10 @@ public class ActivityManagementTest {
                 Runnable::run,
                 mLaunchCompleteListener);
 
-        verify(mOnReceiveResultListener, after(5000).never()).onReceiveResult(
+        verify(mOnReceiveResultListener, after(TIMEOUT_MS).never()).onReceiveResult(
                 eq(Activity.RESULT_OK), nullable(Bundle.class));
-        verify(mLaunchCompleteListener).accept(eq(VirtualDeviceManager.LAUNCH_FAILURE_NO_ACTIVITY));
+        verify(mLaunchCompleteListener, timeout(TIMEOUT_MS)).accept(
+                eq(VirtualDeviceManager.LAUNCH_FAILURE_NO_ACTIVITY));
     }
 
     private IStreamedTestApp getTestAppService() throws Exception {

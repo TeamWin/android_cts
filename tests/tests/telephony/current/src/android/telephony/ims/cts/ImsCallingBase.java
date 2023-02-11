@@ -37,7 +37,7 @@ import android.telephony.cts.InCallServiceStateValidator;
 import android.telephony.cts.InCallServiceStateValidator.InCallServiceCallbacks;
 import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.ims.feature.ImsFeature;
-import android.telephony.ims.feature.MmTelFeature;
+import android.telephony.ims.feature.MmTelFeature.MmTelCapabilities;
 import android.telephony.ims.stub.ImsFeatureConfiguration;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Log;
@@ -53,9 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Base class for ImsCall test.
- */
+/** Base class for ImsCall test. */
 public class ImsCallingBase {
 
     protected static ImsServiceConnector sServiceConnector;
@@ -130,7 +128,7 @@ public class ImsCallingBase {
             }
             complete = latch.await(waitMs, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-             //complete == false
+            // complete == false
         }
         synchronized (mLock) {
             sLatches[latchIndex] = new CountDownLatch(1);
@@ -187,8 +185,8 @@ public class ImsCallingBase {
         }
     }
 
-    protected void waitUntilConditionIsTrueOrTimeout(Condition condition, long timeout,
-            String description) {
+    protected void waitUntilConditionIsTrueOrTimeout(
+            Condition condition, long timeout, String description) {
         final long start = System.currentTimeMillis();
         while (!Objects.equals(condition.expected(), condition.actual())
                 && System.currentTimeMillis() - start < timeout) {
@@ -205,7 +203,8 @@ public class ImsCallingBase {
         sReceiver = new CarrierConfigReceiver(sTestSub);
         IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
         // ACTION_CARRIER_CONFIG_CHANGED is sticky, so we will get a callback right away.
-        InstrumentationRegistry.getInstrumentation().getContext()
+        InstrumentationRegistry.getInstrumentation()
+                .getContext()
                 .registerReceiver(sReceiver, filter);
 
         UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -216,32 +215,41 @@ public class ImsCallingBase {
             // Set dialer as "android.telephony.cts"
             setDefaultDialer(InstrumentationRegistry.getInstrumentation(), PACKAGE_CTS_DIALER);
 
-            sSubscriptionManager = InstrumentationRegistry.getInstrumentation()
-                    .getContext().getSystemService(SubscriptionManager.class);
+            sSubscriptionManager =
+                    InstrumentationRegistry.getInstrumentation()
+                            .getContext()
+                            .getSystemService(SubscriptionManager.class);
             // Get the default Subscription values and save it to restore after test ends.
-            sPreviousOptInStatus = sSubscriptionManager.getLongSubscriptionProperty(sTestSub,
-                        SubscriptionManager.VOIMS_OPT_IN_STATUS, 0, getContext());
-            sPreviousEn4GMode = sSubscriptionManager.getLongSubscriptionProperty(sTestSub,
-                        SubscriptionManager.ENHANCED_4G_MODE_ENABLED, 0, getContext());
+            sPreviousOptInStatus =
+                    sSubscriptionManager.getLongSubscriptionProperty(
+                            sTestSub, SubscriptionManager.VOIMS_OPT_IN_STATUS, 0, getContext());
+            sPreviousEn4GMode =
+                    sSubscriptionManager.getLongSubscriptionProperty(
+                            sTestSub,
+                            SubscriptionManager.ENHANCED_4G_MODE_ENABLED,
+                            0,
+                            getContext());
             // Set the new Sunbscription values
-            sSubscriptionManager.setSubscriptionProperty(sTestSub,
-                    SubscriptionManager.VOIMS_OPT_IN_STATUS, String.valueOf(1));
-            sSubscriptionManager.setSubscriptionProperty(sTestSub,
-                    SubscriptionManager.ENHANCED_4G_MODE_ENABLED, String.valueOf(1));
+            sSubscriptionManager.setSubscriptionProperty(
+                    sTestSub, SubscriptionManager.VOIMS_OPT_IN_STATUS, String.valueOf(1));
+            sSubscriptionManager.setSubscriptionProperty(
+                    sTestSub, SubscriptionManager.ENHANCED_4G_MODE_ENABLED, String.valueOf(1));
 
-            //Override the carrier configurartions
-            CarrierConfigManager configurationManager = InstrumentationRegistry.getInstrumentation()
-                    .getContext().getSystemService(CarrierConfigManager.class);
+            // Override the carrier configurartions
+            CarrierConfigManager configurationManager =
+                    InstrumentationRegistry.getInstrumentation()
+                            .getContext()
+                            .getSystemService(CarrierConfigManager.class);
             PersistableBundle bundle = new PersistableBundle(1);
             bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_VOLTE_AVAILABLE_BOOL, true);
             bundle.putBoolean(CarrierConfigManager.KEY_ENHANCED_4G_LTE_ON_BY_DEFAULT_BOOL, true);
             bundle.putBoolean(CarrierConfigManager.KEY_EDITABLE_ENHANCED_4G_LTE_BOOL, false);
             bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_VOLTE_TTY_SUPPORTED_BOOL, true);
-            bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_IMS_GBA_REQUIRED_BOOL , false);
+            bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_IMS_GBA_REQUIRED_BOOL, false);
 
             sReceiver.clearQueue();
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(configurationManager,
-                    (m) -> m.overrideConfig(sTestSub, bundle));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    configurationManager, (m) -> m.overrideConfig(sTestSub, bundle));
         } finally {
             ui.dropShellPermissionIdentity();
         }
@@ -253,11 +261,14 @@ public class ImsCallingBase {
         try {
             ui.adoptShellPermissionIdentity();
             // Set the default Sunbscription values.
-            sSubscriptionManager.setSubscriptionProperty(sTestSub,
-                    SubscriptionManager.VOIMS_OPT_IN_STATUS, String.valueOf(sPreviousOptInStatus));
-            sSubscriptionManager.setSubscriptionProperty(sTestSub,
-                    SubscriptionManager.ENHANCED_4G_MODE_ENABLED, String.valueOf(
-                    sPreviousEn4GMode));
+            sSubscriptionManager.setSubscriptionProperty(
+                    sTestSub,
+                    SubscriptionManager.VOIMS_OPT_IN_STATUS,
+                    String.valueOf(sPreviousOptInStatus));
+            sSubscriptionManager.setSubscriptionProperty(
+                    sTestSub,
+                    SubscriptionManager.ENHANCED_4G_MODE_ENABLED,
+                    String.valueOf(sPreviousEn4GMode));
             // Set default dialer
             setDefaultDialer(InstrumentationRegistry.getInstrumentation(), sPreviousDefaultDialer);
 
@@ -270,7 +281,8 @@ public class ImsCallingBase {
             overrideCarrierConfig(null);
 
             if (sReceiver != null) {
-                InstrumentationRegistry.getInstrumentation().getContext()
+                InstrumentationRegistry.getInstrumentation()
+                        .getContext()
                         .unregisterReceiver(sReceiver);
                 sReceiver = null;
             }
@@ -279,34 +291,50 @@ public class ImsCallingBase {
         }
     }
 
-    public void bindImsService() throws Exception  {
+    public void bindImsService() throws Exception {
         bindImsService(ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
     }
 
-    public void bindImsService(int radioTech) throws Exception  {
+    public void bindImsService(int radioTech) throws Exception {
+        MmTelCapabilities capabilities =
+                new MmTelCapabilities(MmTelCapabilities.CAPABILITY_TYPE_VOICE);
+        // Set Registered and VoLTE capable
+        bindImsServiceForCapabilities(radioTech, capabilities);
+    }
+
+    public void bindImsServiceForCapabilities(int radioTech, MmTelCapabilities capabilities)
+            throws Exception {
         // Connect to the ImsService with the MmTel feature.
-        assertTrue(sServiceConnector.connectCarrierImsService(new ImsFeatureConfiguration.Builder()
-                .addFeature(sTestSlot, ImsFeature.FEATURE_MMTEL)
-                .addFeature(sTestSlot, ImsFeature.FEATURE_EMERGENCY_MMTEL)
-                .build()));
+        assertTrue(
+                sServiceConnector.connectCarrierImsService(
+                        new ImsFeatureConfiguration.Builder()
+                                .addFeature(sTestSlot, ImsFeature.FEATURE_MMTEL)
+                                .addFeature(sTestSlot, ImsFeature.FEATURE_EMERGENCY_MMTEL)
+                                .build()));
         sIsBound = true;
         // The MmTelFeature is created when the ImsService is bound. If it wasn't created, then the
         // Framework did not call it.
-        sServiceConnector.getCarrierService().waitForLatchCountdown(
-                TestImsService.LATCH_CREATE_MMTEL);
-        assertNotNull("ImsService created, but ImsService#createMmTelFeature was not called!",
+        sServiceConnector
+                .getCarrierService()
+                .waitForLatchCountdown(TestImsService.LATCH_CREATE_MMTEL);
+        assertNotNull(
+                "ImsService created, but ImsService#createMmTelFeature was not called!",
                 sServiceConnector.getCarrierService().getMmTelFeature());
 
-        sServiceConnector.getCarrierService().waitForLatchCountdown(
-                TestImsService.LATCH_MMTEL_CAP_SET);
+        sServiceConnector
+                .getCarrierService()
+                .waitForLatchCountdown(TestImsService.LATCH_MMTEL_CAP_SET);
 
-        MmTelFeature.MmTelCapabilities capabilities = new MmTelFeature.MmTelCapabilities(
-                MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_VOICE);
-        // Set Registered and VoLTE capable
-        sServiceConnector.getCarrierService().getImsService().getRegistrationForSubscription(
-                sTestSlot, sTestSub).onRegistered(radioTech);
+        // Set Registered with given capabilities
+        sServiceConnector
+                .getCarrierService()
+                .getImsService()
+                .getRegistrationForSubscription(sTestSlot, sTestSub)
+                .onRegistered(radioTech);
         sServiceConnector.getCarrierService().getMmTelFeature().setCapabilities(capabilities);
-        sServiceConnector.getCarrierService().getMmTelFeature()
+        sServiceConnector
+                .getCarrierService()
+                .getMmTelFeature()
                 .notifyCapabilitiesStatusChanged(capabilities);
 
         // Wait a second for the notifyCapabilitiesStatusChanged indication to be processed on the
@@ -328,7 +356,9 @@ public class ImsCallingBase {
                         InCallServiceStateValidator inCallService = mServiceCallBack.getService();
                         return (inCallService.isServiceUnBound()) ? true : false;
                     }
-                }, WAIT_FOR_SERVICE_TO_UNBOUND, "Service Unbound");
+                },
+                WAIT_FOR_SERVICE_TO_UNBOUND,
+                "Service Unbound");
     }
 
     public void isCallActive(Call call, TestImsCallSessionImpl callsession) {
@@ -345,10 +375,13 @@ public class ImsCallingBase {
                     @Override
                     public Object actual() {
                         return (callsession.isInCall()
-                                && call.getDetails().getState() == Call.STATE_ACTIVE) ? true
+                                        && call.getDetails().getState() == Call.STATE_ACTIVE)
+                                ? true
                                 : false;
                     }
-                }, WAIT_FOR_CONDITION, "Call Active");
+                },
+                WAIT_FOR_CONDITION,
+                "Call Active");
     }
 
     public void isCallDisconnected(Call call, TestImsCallSessionImpl callsession) {
@@ -365,7 +398,8 @@ public class ImsCallingBase {
                     @Override
                     public Object actual() {
                         return (callsession.isInTerminated()
-                                && call.getDetails().getState() == Call.STATE_DISCONNECTED) ? true
+                                        && call.getDetails().getState() == Call.STATE_DISCONNECTED)
+                                ? true
                                 : false;
                     }
                 }, WAIT_FOR_CONDITION,
@@ -468,31 +502,25 @@ public class ImsCallingBase {
         public void onCallStateChanged(Call call, int state) {
             Log.i(LOG_TAG, "onCallStateChanged " + state + "Call: " + call);
 
-            switch(state) {
-                case Call.STATE_DIALING : {
+            switch (state) {
+                case Call.STATE_DIALING:
                     countDownLatch(LATCH_IS_CALL_DIALING);
                     break;
-                }
-                case Call.STATE_ACTIVE : {
+                case Call.STATE_ACTIVE:
                     countDownLatch(LATCH_IS_CALL_ACTIVE);
                     break;
-                }
-                case Call.STATE_DISCONNECTING : {
+                case Call.STATE_DISCONNECTING:
                     countDownLatch(LATCH_IS_CALL_DISCONNECTING);
                     break;
-                }
-                case Call.STATE_DISCONNECTED : {
+                case Call.STATE_DISCONNECTED:
                     countDownLatch(LATCH_IS_CALL_DISCONNECTED);
                     break;
-                }
-                case Call.STATE_RINGING : {
+                case Call.STATE_RINGING:
                     countDownLatch(LATCH_IS_CALL_RINGING);
                     break;
-                }
-                case Call.STATE_HOLDING : {
+                case Call.STATE_HOLDING:
                     countDownLatch(LATCH_IS_CALL_HOLDING);
                     break;
-                }
                 default:
                     break;
             }
@@ -520,7 +548,6 @@ public class ImsCallingBase {
                 countDownLatch(LATCH_IS_ON_MERGE_COMPLETE);
             }
         }
-
     }
 
     protected static Context getContext() {
@@ -539,23 +566,26 @@ public class ImsCallingBase {
 
     protected static String setDefaultDialer(Instrumentation instrumentation, String packageName)
             throws Exception {
-        String str =  TelephonyUtils.executeShellCommand(instrumentation, COMMAND_SET_DEFAULT_DIALER
-                + packageName);
+        String str =
+                TelephonyUtils.executeShellCommand(
+                        instrumentation, COMMAND_SET_DEFAULT_DIALER + packageName);
         return str;
     }
 
     protected static String getDefaultDialer(Instrumentation instrumentation) throws Exception {
-        String str = TelephonyUtils.executeShellCommand(instrumentation,
-                COMMAND_GET_DEFAULT_DIALER);
+        String str =
+                TelephonyUtils.executeShellCommand(instrumentation, COMMAND_GET_DEFAULT_DIALER);
         return str;
     }
 
     protected static void overrideCarrierConfig(PersistableBundle bundle) throws Exception {
-        CarrierConfigManager carrierConfigManager = InstrumentationRegistry.getInstrumentation()
-                .getContext().getSystemService(CarrierConfigManager.class);
+        CarrierConfigManager carrierConfigManager =
+                InstrumentationRegistry.getInstrumentation()
+                        .getContext()
+                        .getSystemService(CarrierConfigManager.class);
         sReceiver.clearQueue();
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(carrierConfigManager,
-                (m) -> m.overrideConfig(sTestSub, bundle));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                carrierConfigManager, (m) -> m.overrideConfig(sTestSub, bundle));
         sReceiver.waitForChanged();
     }
 }

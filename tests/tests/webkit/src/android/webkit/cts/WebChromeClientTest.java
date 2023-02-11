@@ -41,7 +41,6 @@ import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -61,7 +60,7 @@ import java.util.concurrent.BlockingQueue;
 @AppModeFull
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class WebChromeClientTest {
+public class WebChromeClientTest extends SharedWebViewTest{
     private static final String JAVASCRIPT_UNLOAD = "javascript unload";
     private static final String LISTENER_ADDED = "listener added";
     private static final String TOUCH_RECEIVED = "touch received";
@@ -70,30 +69,21 @@ public class WebChromeClientTest {
     public ActivityScenarioRule mActivityScenarioRule =
             new ActivityScenarioRule(WebViewCtsActivity.class);
 
-    private CtsTestServer mWebServer;
+    private SharedSdkWebServer mWebServer;
     private WebIconDatabase mIconDb;
     private WebViewOnUiThread mOnUiThread;
     private boolean mBlockWindowCreationSync;
     private boolean mBlockWindowCreationAsync;
-    private WebViewCtsActivity mActivity;
 
     @Before
     public void setUp() throws Exception {
-        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-        mActivityScenarioRule.getScenario().onActivity(activity -> {
-            mActivity = (WebViewCtsActivity) activity;
-            WebView webview = mActivity.getWebView();
-            if (webview != null) {
-                mOnUiThread = new WebViewOnUiThread(webview);
-            }
-            try {
-                mWebServer = new CtsTestServer(mActivity);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
+        WebView webview = getTestEnvironment().getWebView();
+        if (webview != null) {
+            mOnUiThread = new WebViewOnUiThread(webview);
+        }
+        mWebServer = getTestEnvironment().getWebServer();
+        mWebServer.start(SslMode.INSECURE);
     }
-
 
     @After
     public void tearDown() throws Exception {
@@ -108,6 +98,30 @@ public class WebChromeClientTest {
             mIconDb.close();
         }
     }
+
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+
+        SharedWebViewTestEnvironment.Builder builder = new SharedWebViewTestEnvironment.Builder();
+
+        mActivityScenarioRule
+                .getScenario()
+                .onActivity(
+                        activity -> {
+                            WebView webView = ((WebViewCtsActivity) activity).getWebView();
+                            builder.setHostAppInvoker(
+                                            SharedWebViewTestEnvironment.createHostAppInvoker(
+                                                    activity))
+                                    .setContext(activity)
+                                    .setWebView(webView)
+                                    .setRootLayout(((WebViewCtsActivity) activity).getRootLayout());
+                        });
+
+        SharedWebViewTestEnvironment environment = builder.build();
+        return environment;
+    }
+
 
     @Test
     public void testOnProgressChanged() {
@@ -153,10 +167,10 @@ public class WebChromeClientTest {
         WebkitUtils.onMainThreadSync(() -> {
             // getInstance must run on the UI thread
             mIconDb = WebIconDatabase.getInstance();
-            String dbPath = mActivity.getFilesDir().toString() + "/icons";
+            String dbPath = getTestEnvironment().getContext().getFilesDir().toString() + "/icons";
             mIconDb.open(dbPath);
         });
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        getTestEnvironment().waitForIdleSync();
         Thread.sleep(100); // Wait for open to be received on the icon db thread.
 
         assertFalse(webChromeClient.hadOnReceivedIcon());
@@ -412,17 +426,17 @@ public class WebChromeClientTest {
         int middleY = location[1] + mOnUiThread.getWebView().getHeight() / 2;
 
         long timeDown = SystemClock.uptimeMillis();
-        InstrumentationRegistry.getInstrumentation().sendPointerSync(
+        getTestEnvironment().sendPointerSync(
                 MotionEvent.obtain(timeDown, timeDown, MotionEvent.ACTION_DOWN,
                         middleX, middleY, 0));
 
         long timeUp = SystemClock.uptimeMillis();
-        InstrumentationRegistry.getInstrumentation().sendPointerSync(
+        getTestEnvironment().sendPointerSync(
                 MotionEvent.obtain(timeUp, timeUp, MotionEvent.ACTION_UP,
                         middleX, middleY, 0));
 
         // Wait for the system to process all events in the queue
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        getTestEnvironment().waitForIdleSync();
     }
 
     private class MockWebChromeClient extends WaitForProgressClient {
@@ -573,12 +587,12 @@ public class WebChromeClientTest {
             if (mBlockWindowCreationAsync) {
                 transport.setWebView(null);
             } else {
-                mChildWebView = new WebView(mActivity);
+                mChildWebView = new WebView(getTestEnvironment().getContext());
                 final WebSettings settings = mChildWebView.getSettings();
                 settings.setJavaScriptEnabled(true);
                 mChildWebView.setWebChromeClient(this);
                 transport.setWebView(mChildWebView);
-                mActivity.addContentView(mChildWebView, new ViewGroup.LayoutParams(
+                getTestEnvironment().addContentView(mChildWebView, new ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             }
             resultMsg.sendToTarget();

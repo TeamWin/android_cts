@@ -29,6 +29,7 @@ import android.graphics.RadialGradient;
 import android.graphics.Rect;
 import android.graphics.Shader;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
+import android.uirendering.cts.bitmapverifiers.AntiAliasBitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
@@ -198,6 +199,39 @@ public class ShaderTests extends ActivityTestBase {
                     }
                 })
                 .runWithVerifier(new ColorVerifier(Color.BLUE));
+    }
+
+    @Test
+    public void testAnisotropicFilteredBitmapShader() {
+        Bitmap bitmap = Bitmap.createBitmap(TEST_WIDTH, TEST_HEIGHT, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(Color.WHITE);
+
+        Paint paint = new Paint();
+        paint.setColor(Color.BLACK);
+        int step = TEST_WIDTH / 10;
+        for (int i = step / 2; i < TEST_WIDTH; i += step) {
+            canvas.drawLine(i, 0, i, TEST_HEIGHT, paint);
+        }
+
+        BitmapShader shader = new BitmapShader(bitmap,
+                Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        shader.setMaxAnisotropy(8);
+        createTest()
+                .addCanvasClient(new CanvasClient() {
+                    Paint mPaint = new Paint();
+                    @Override
+                    public void draw(Canvas canvas, int width, int height) {
+                        if (mPaint.getShader() == null) {
+                            mPaint.setShader(shader);
+                        }
+                        canvas.save();
+                        canvas.rotate(30, TEST_WIDTH / 2f, TEST_HEIGHT / 2f);
+                        canvas.drawRect(0, 0, width, height, mPaint);
+                        canvas.restore();
+                    }
+                })
+                .runWithVerifier(new AntiAliasBitmapVerifier(Color.WHITE, Color.BLACK));
     }
 
     @Test

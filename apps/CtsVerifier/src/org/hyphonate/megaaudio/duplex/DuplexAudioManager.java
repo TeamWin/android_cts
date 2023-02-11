@@ -38,7 +38,7 @@ public class DuplexAudioManager {
     //TODO - explain these constants
     private int mNumPlayerChannels = 2;
     private int mPlayerSampleRate = 48000;
-    private int mNumPlayerBufferFrames;
+    private int mNumPlayerBurstFrames;
 
     private Player mPlayer;
     private AudioSourceProvider mSourceProvider;
@@ -140,7 +140,7 @@ public class DuplexAudioManager {
         // Player
         if ((playerType & BuilderBase.TYPE_MASK) != BuilderBase.TYPE_NONE) {
             try {
-                mNumPlayerBufferFrames = StreamBase.getSystemBurstFrames();
+                mNumPlayerBurstFrames = StreamBase.getSystemBurstFrames();
                 PlayerBuilder builder = new PlayerBuilder()
                         .setPlayerType(playerType)
                         .setSourceProvider(mSourceProvider);
@@ -149,7 +149,7 @@ public class DuplexAudioManager {
                 mPlayer = builder.build();
                 mPlayer.setRouteDevice(mPlayerSelectedDevice);
                 int errorCode = mPlayer.setupStream(
-                        mNumPlayerChannels, mPlayerSampleRate, mNumPlayerBufferFrames);
+                        mNumPlayerChannels, mPlayerSampleRate, mNumPlayerBurstFrames);
                 if (errorCode != StreamBase.OK) {
                     Log.e(TAG, "Player - setupStream() failed code: " + errorCode);
                     return errorCode;

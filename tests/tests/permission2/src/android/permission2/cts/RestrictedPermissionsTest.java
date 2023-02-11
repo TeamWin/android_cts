@@ -53,6 +53,7 @@ import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ThrowingRunnable;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -178,8 +179,14 @@ public class RestrictedPermissionsTest {
     @AppModeFull
     @SystemUserOnly(reason = "Secondary users have the DISALLOW_SMS user restriction")
     public void testDefaultAllRestrictedPermissionsWhitelistedAtInstall22() throws Exception {
+        String bypassLowTargetSdkFlag = "";
+        if (SdkLevel.isAtLeastU()) {
+            bypassLowTargetSdkFlag = " --bypass-low-target-sdk-block";
+        }
+
         // Install with no changes to whitelisted permissions
-        runShellCommand("pm install -g --force-queryable " + APK_USES_SMS_CALL_LOG_22);
+        runShellCommand("pm install" + bypassLowTargetSdkFlag
+                + " -g --force-queryable " + APK_USES_SMS_CALL_LOG_22);
 
         // All restricted permission should be whitelisted.
         assertAllRestrictedPermissionWhitelisted();
@@ -634,9 +641,14 @@ public class RestrictedPermissionsTest {
      */
     private void installApp(@NonNull String app, @Nullable Set<String> whitelistedPermissions,
             @Nullable Set<String> grantedPermissions) throws Exception {
+        String bypassLowTargetSdkFlag = "";
+        if (SdkLevel.isAtLeastU()) {
+            bypassLowTargetSdkFlag = " --bypass-low-target-sdk-block";
+        }
+
         // Install the app and whitelist/grant all permission if requested.
-        String installResult = runShellCommand("pm install -r --force-queryable "
-                + "--restrict-permissions " + app);
+        String installResult = runShellCommand("pm install -r --force-queryable"
+                + bypassLowTargetSdkFlag + " --restrict-permissions " + app);
         assertThat(installResult.trim()).isEqualTo("Success");
 
         final Set<String> adjustedWhitelistedPermissions;

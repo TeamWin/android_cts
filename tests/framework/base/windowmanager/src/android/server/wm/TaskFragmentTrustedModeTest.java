@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.jetpack.second.Components.SECOND_UNTRUSTED_EMBEDDING_ACTIVITY;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assumeActivityEmbeddingSupportedDevice;
@@ -24,8 +25,9 @@ import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_OPEN;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -164,91 +166,41 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
     }
 
     /**
-     * Verifies that when the TaskFragment has embedded activities in untrusted mode, it is
-     * disallowed to set bounds that is outside of its parent bounds.
+     * Verifies that when the TaskFragment has embedded activities in untrusted mode, set relative
+     * bounds outside of its parent bounds will still set the TaskFragment bounds within its parent.
      */
     @Test
-    public void testUntrustedModeTaskFragment_setBoundsOutsideOfParentBounds() {
+    public void testUntrustedModeTaskFragment_setRelativeBoundsOutsideOfParentBounds() {
         final Task parentTask = mWmState.getRootTask(mOwnerTaskId);
         final Rect parentBounds = new Rect(parentTask.getBounds());
         // Create a TaskFragment with activity embedded in untrusted mode.
         final TaskFragmentInfo info = createTaskFragment(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
 
-        // Try to set bounds that is outside of its parent bounds.
+        // Try to set relative bounds that is larger than its parent bounds.
         mTaskFragmentOrganizer.resetLatch();
         final Rect taskFragBounds = new Rect(parentBounds);
         taskFragBounds.right++;
         final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .setBounds(info.getToken(), taskFragBounds);
+                .setRelativeBounds(info.getToken(), taskFragBounds)
+                .setWindowingMode(info.getToken(), WINDOWING_MODE_MULTI_WINDOW);
 
-        // It is disallowed to set TaskFragment bounds to outside of its parent bounds.
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
-    }
+        // It is allowed to set TaskFragment bounds to outside of its parent bounds.
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CHANGE,
+                false /* shouldApplyIndependently */);
 
-    /**
-     * Verifies that when the TaskFragment has embedded activities in untrusted mode, it is
-     * disallowed to set app bounds that is outside of its parent app bounds.
-     */
-    @Test
-    public void testUntrustedModeTaskFragment_setAppBoundsOutsideOfParentAppBounds() {
-        final Task parentTask = mWmState.getRootTask(mOwnerTaskId);
-        final Rect parentAppBounds =
-                new Rect(parentTask.mFullConfiguration.windowConfiguration.getAppBounds());
-        // Create a TaskFragment with activity embedded in untrusted mode.
-        final TaskFragmentInfo info = createTaskFragment(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
+        // Update the windowing mode to make sure the WindowContainerTransaction has been applied.
+        mWmState.waitForWithAmState(amState -> {
+            final WindowManagerState.TaskFragment tf = amState.getTaskFragmentByActivity(
+                    SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
+            return tf != null && tf.getWindowingMode() == WINDOWING_MODE_MULTI_WINDOW;
+        }, "TaskFragment should have WINDOWING_MODE_MULTI_WINDOW");
 
-        // Try to set app bounds that is outside of its parent app bounds.
-        mTaskFragmentOrganizer.resetLatch();
-        final Rect taskFragAppBounds = new Rect(parentAppBounds);
-        taskFragAppBounds.right++;
-        final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .setAppBounds(info.getToken(), taskFragAppBounds);
-
-        // It is disallowed to set TaskFragment app bounds to outside of its parent app bounds.
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
-    }
-
-    /**
-     * Verifies that when the TaskFragment has embedded activities in untrusted mode, it is
-     * disallowed to set screenWidthDp/screenHeightDp/smallestScreenWidthDp greater than parent's.
-     */
-    @Test
-    public void testUntrustedModeTaskFragment_setSetScreenWidthHeightGreaterThanParent() {
-        final Task parentTask = mWmState.getRootTask(mOwnerTaskId);
-        final int screenWidthDp = parentTask.mFullConfiguration.screenWidthDp;
-        final int screenHeightDp = parentTask.mFullConfiguration.screenHeightDp;
-        final int smallestScreenWidthDp = parentTask.mFullConfiguration.smallestScreenWidthDp;
-        // Create a TaskFragment with activity embedded in untrusted mode.
-        final TaskFragmentInfo info = createTaskFragment(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
-
-        // Try to set screenWidthDp greater than parent's.
-        mTaskFragmentOrganizer.resetLatch();
-        final WindowContainerTransaction wct0 = new WindowContainerTransaction()
-                .setScreenSizeDp(info.getToken(), screenWidthDp + 1, screenHeightDp);
-
-        // It is disallowed to set TaskFragment screenWidthDp to be greater than parent's.
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct0,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
-
-        // Try to set screenHeightDp greater than parent's.
-        mTaskFragmentOrganizer.resetLatch();
-        final WindowContainerTransaction wct1 = new WindowContainerTransaction()
-                .setScreenSizeDp(info.getToken(), screenWidthDp, screenHeightDp + 1);
-
-        // It is disallowed to set TaskFragment screenHeightDp to be greater than parent's.
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct1,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
-
-        // Try to set smallestScreenWidthDp greater than parent's.
-        mTaskFragmentOrganizer.resetLatch();
-        final WindowContainerTransaction wct2 = new WindowContainerTransaction()
-                .setSmallestScreenWidthDp(info.getToken(), smallestScreenWidthDp + 1);
-
-        // It is disallowed to set TaskFragment smallestScreenWidthDp to be greater than parent's.
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct2,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
+        // The TaskFragment bounds should remain in its parent bounds.
+        final WindowManagerState.TaskFragment tf = mWmState.getTaskFragmentByActivity(
+                SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
+        assertNotNull(tf);
+        assertEquals(WINDOWING_MODE_MULTI_WINDOW, tf.getWindowingMode());
+        assertEquals(parentBounds, tf.mFullConfiguration.windowConfiguration.getBounds());
     }
 
     /**

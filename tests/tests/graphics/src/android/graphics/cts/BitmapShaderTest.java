@@ -221,4 +221,26 @@ public class BitmapShaderTest {
         ColorUtils.verifyColor("color should be a blue/red mix", Color.valueOf(0.5f, 0.0f, 0.5f),
                 dstBitmap.getColor(0, 0), 0.05f);
     }
+
+    @Test
+    public void testAnisotropicFiltering() {
+        Bitmap bitmap = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888);
+        bitmap.setPixel(0, 0, Color.RED);
+        bitmap.setPixel(1, 0, Color.BLUE);
+        bitmap.setPixel(0, 1, Color.BLUE);
+        bitmap.setPixel(1, 1, Color.RED);
+
+        BitmapShader shader = new BitmapShader(bitmap,
+                Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        shader.setMaxAnisotropy(16);
+        assertEquals(16, shader.getMaxAnisotropy());
+
+        // Configuring the filter mode should override the max anisotropic value
+        shader.setFilterMode(BitmapShader.FILTER_MODE_LINEAR);
+        assertEquals(0, shader.getMaxAnisotropy());
+
+        // Configuring the anisotropic value should override the default filter mode
+        shader.setMaxAnisotropy(4);
+        assertEquals(BitmapShader.FILTER_MODE_DEFAULT, shader.getFilterMode());
+    }
 }

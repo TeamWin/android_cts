@@ -137,8 +137,6 @@ import android.server.wm.settings.SettingsSession;
 import android.util.Log;
 import android.util.Size;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -157,7 +155,6 @@ import java.util.concurrent.TimeUnit;
  * Build/Install/Run:
  * atest CtsWindowManagerDeviceTestCases:PinnedStackTests
  */
-@FlakyTest(bugId = 260910131)
 @Presubmit
 @android.server.wm.annotation.Group2
 public class PinnedStackTests extends ActivityManagerTestBase {

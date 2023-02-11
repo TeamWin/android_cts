@@ -18,8 +18,6 @@ package com.android.cts.packagemanager.stats.device;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertNotNull;
-
 import android.Manifest;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -43,7 +41,7 @@ public class PackageInstallationSessionReportedStatsTestsHelper {
     public void getUserTypeIntegers() {
         final Bundle testArgs = InstrumentationRegistry.getArguments();
         final String userIdsString = testArgs.getString(USER_IDS_ARG);
-        assertNotNull(userIdsString);
+        assertThat(userIdsString).isNotNull();
         String[] userIds = userIdsString.split(",");
         Instrumentation inst = InstrumentationRegistry.getInstrumentation();
         final UserManager userManager = inst.getTargetContext().getSystemService(UserManager.class);

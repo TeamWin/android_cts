@@ -42,6 +42,8 @@ import androidx.test.uiautomator.UiDevice;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.CallbackAsserter;
 import com.android.compatibility.common.util.PollingCheck;
@@ -74,7 +76,6 @@ public class LowPowerStandbyTest {
 
     private Context mContext;
     private PowerManager mPowerManager;
-    private ConnectivityManager mConnectivityManager;
     private boolean mOriginalEnabled;
     private WakeLock mSystemWakeLock;
 
@@ -82,8 +83,12 @@ public class LowPowerStandbyTest {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mPowerManager = mContext.getSystemService(PowerManager.class);
-        mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
         mOriginalEnabled = mPowerManager.isLowPowerStandbyEnabled();
+
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                Manifest.permission.MANAGE_LOW_POWER_STANDBY)) {
+            assumeTrue(mPowerManager.isLowPowerStandbySupported());
+        }
     }
 
     @After
@@ -124,8 +129,6 @@ public class LowPowerStandbyTest {
     @AppModeFull(reason = "Instant apps cannot hold MANAGE_LOW_POWER_STANDBY permission")
     @EnsureHasPermission(Manifest.permission.MANAGE_LOW_POWER_STANDBY)
     public void testSetLowPowerStandbyEnabled_reflectedByIsLowPowerStandbyEnabled() {
-        assumeTrue(mPowerManager.isLowPowerStandbySupported());
-
         mPowerManager.setLowPowerStandbyEnabled(true);
         assertTrue(mPowerManager.isLowPowerStandbyEnabled());
 
@@ -137,8 +140,6 @@ public class LowPowerStandbyTest {
     @AppModeFull(reason = "Instant apps cannot hold MANAGE_LOW_POWER_STANDBY permission")
     @EnsureHasPermission(Manifest.permission.MANAGE_LOW_POWER_STANDBY)
     public void testSetLowPowerStandbyEnabled_sendsBroadcast() throws Exception {
-        assumeTrue(mPowerManager.isLowPowerStandbySupported());
-
         mPowerManager.setLowPowerStandbyEnabled(false);
 
         CallbackAsserter broadcastAsserter = CallbackAsserter.forBroadcast(
@@ -161,7 +162,6 @@ public class LowPowerStandbyTest {
     @EnsureHasPermission({Manifest.permission.MANAGE_LOW_POWER_STANDBY,
             Manifest.permission.DEVICE_POWER})
     public void testLowPowerStandby_wakelockIsDisabled() throws Exception {
-        assumeTrue(mPowerManager.isLowPowerStandbySupported());
         keepSystemAwake();
 
         // Acquire test wakelock, which should be disabled by LPS
@@ -182,8 +182,6 @@ public class LowPowerStandbyTest {
     @EnsureHasPermission({Manifest.permission.MANAGE_LOW_POWER_STANDBY,
             Manifest.permission.DEVICE_POWER})
     public void testSetLowPowerStandbyActiveDuringMaintenance() throws Exception {
-        assumeTrue(mPowerManager.isLowPowerStandbySupported());
-
         // Keep system awake with system wakelock
         WakeLock systemWakeLock = mPowerManager.newWakeLock(PARTIAL_WAKE_LOCK | SYSTEM_WAKELOCK,
                 SYSTEM_WAKE_LOCK_TAG);
@@ -226,7 +224,6 @@ public class LowPowerStandbyTest {
     @EnsureHasPermission({Manifest.permission.MANAGE_LOW_POWER_STANDBY,
             Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.DEVICE_POWER})
     public void testLowPowerStandby_networkIsBlocked() throws Exception {
-        assumeTrue(mPowerManager.isLowPowerStandbySupported());
         keepSystemAwake();
 
         NetworkBlockedStateAsserter asserter = new NetworkBlockedStateAsserter(mContext);

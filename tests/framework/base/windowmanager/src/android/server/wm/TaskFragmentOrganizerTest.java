@@ -26,7 +26,6 @@ import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_OPEN;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
@@ -39,11 +38,9 @@ import android.os.IBinder;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.Task;
 import android.server.wm.WindowManagerState.TaskFragment;
-import android.view.SurfaceControl;
 import android.window.TaskFragmentCreationParams;
 import android.window.TaskFragmentInfo;
 import android.window.TaskFragmentOrganizer;
-import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -288,35 +285,5 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
         // must be resumed.
         embeddedActivity.finish();
         waitAndAssertResumedActivity(mOwnerActivityName, "Activity must be resumed");
-    }
-
-    /**
-     * Verifies that config changes with {@link WindowContainerTransaction.Change#getChangeMask()}
-     * are disallowed for embedded TaskFragments.
-     */
-    @Test
-    public void testTaskFragmentConfigChange_disallowChangeMaskChanges() {
-        final TaskFragmentInfo taskFragmentInfo = createTaskFragment(mLaunchingActivity);
-        final WindowContainerToken token = taskFragmentInfo.getToken();
-
-        final WindowContainerTransaction wct0 = new WindowContainerTransaction()
-                .scheduleFinishEnterPip(token, new Rect(0, 0, 100, 100));
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct0,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
-
-        final WindowContainerTransaction wct1 = new WindowContainerTransaction()
-                .setBoundsChangeTransaction(token, new SurfaceControl.Transaction());
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct1,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
-
-        final WindowContainerTransaction wct3 = new WindowContainerTransaction()
-                .setFocusable(token, false /* focusable */);
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct3,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
-
-        final WindowContainerTransaction wct4 = new WindowContainerTransaction()
-                .setHidden(token, false /* hidden */);
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct4,
-                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
     }
 }

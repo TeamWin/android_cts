@@ -6924,12 +6924,12 @@
                 android:description="@string/permdesc_turnScreenOn"
                 android:protectionLevel="normal|appop" />
 
-    <!-- Allows applications to use the long running jobs APIs. For more details
+    <!-- Allows applications to use the user-initiated jobs API. For more details
          see {@link android.app.job.JobInfo.Builder#setUserInitiated}.
          <p>Protection level: normal
      -->
-    <permission android:name="android.permission.RUN_LONG_JOBS"
-      android:protectionLevel="normal"/>
+    <permission android:name="android.permission.RUN_USER_INITIATED_JOBS"
+                android:protectionLevel="normal"/>
 
     <!-- Allows browsers to call on behalf of another app by passing in a custom origin.
 	 <p>Protection level: normal

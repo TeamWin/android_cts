@@ -60,6 +60,7 @@ import com.android.compatibility.common.util.FutureResultActivity
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.UiAutomatorUtils
+import com.android.modules.utils.build.SdkLevel
 import com.google.common.truth.Truth.assertThat
 import java.io.File
 import java.util.concurrent.CompletableFuture
@@ -255,8 +256,9 @@ abstract class BasePermissionTest {
         installSource: String? = null
     ) {
         val output = runShellCommand(
-            "pm install${if (reinstall) " -r" else ""}${if (grantRuntimePermissions) " -g" else ""
-                }${if (installSource != null) " -i $installSource" else ""} $apkPath"
+            "pm install${if (SdkLevel.isAtLeastU()) " --bypass-low-target-sdk-block" else ""} " +
+                "${if (reinstall) " -r" else ""}${if (grantRuntimePermissions) " -g"
+                else ""}${if (installSource != null) " -i $installSource" else ""} $apkPath"
         ).trim()
         if (expectSuccess) {
             assertEquals("Success", output)

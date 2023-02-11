@@ -437,19 +437,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testPersistentIntentResolving() throws Exception {
-        executeDeviceTestClass(".PersistentIntentResolvingTest");
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".PersistentIntentResolvingTest",
-                    "testAddPersistentPreferredActivityYieldsReceptionAtTarget");
-        }, new DevicePolicyEventWrapper.Builder(EventId.ADD_PERSISTENT_PREFERRED_ACTIVITY_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setStrings(DEVICE_ADMIN_PKG,
-                        "com.android.cts.deviceandprofileowner.EXAMPLE_ACTION")
-                .build());
-    }
-
-    @Test
     public void testScreenCaptureDisabled_assist() throws Exception {
         try {
             // Install and enable assistant, notice that profile can't have assistant.

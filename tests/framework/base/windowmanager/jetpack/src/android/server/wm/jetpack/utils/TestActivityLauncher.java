@@ -65,6 +65,15 @@ public class TestActivityLauncher<T extends Activity> {
         return this;
     }
 
+    public TestActivityLauncher<T> setLaunchDisplayId(int displayId) {
+        mOptions.setLaunchDisplayId(displayId);
+        return this;
+    }
+
+    public Intent getIntent() {
+        return mIntent;
+    }
+
     public T launch(@NonNull Instrumentation instrumentation) {
         return mActivityClass.cast(instrumentation.startActivitySync(mIntent, mOptions.toBundle()));
     }

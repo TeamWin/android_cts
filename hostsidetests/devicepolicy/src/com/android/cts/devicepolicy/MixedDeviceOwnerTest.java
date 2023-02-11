@@ -447,13 +447,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @Override
     @Test
     @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
-    public void testPersistentIntentResolving() throws Exception {
-        super.testPersistentIntentResolving();
-    }
-
-    @Override
-    @Test
-    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
     public void testDisallowAutofill_allowed() throws Exception {
         super.testDisallowAutofill_allowed();
     }

@@ -32,6 +32,7 @@ import com.android.bedstead.nene.location.Locations;
 import com.android.bedstead.nene.notifications.Notifications;
 import com.android.bedstead.nene.packages.Packages;
 import com.android.bedstead.nene.permissions.Permissions;
+import com.android.bedstead.nene.resources.Resources;
 import com.android.bedstead.nene.roles.Roles;
 import com.android.bedstead.nene.settings.Settings;
 import com.android.bedstead.nene.systemproperties.SystemProperties;
@@ -145,6 +146,11 @@ public final class TestApis {
     /** Access Test APIs related to flags. */
     public static Flags flags() {
         return Flags.sInstance;
+    }
+
+    /** Access Test APIs related to resources. */
+    public static Resources resources() {
+        return Resources.sInstance;
     }
 
     /** Access Test APIs related to broadcasts. */

@@ -113,15 +113,23 @@ public class WindowManagerJetpackTestBase {
         return startActivityNewTask(activityClass, null /* activityId */);
     }
 
+    public <T extends Activity> TestActivityLauncher<T> launcherForNewActivity(
+            @NonNull Class<T> activityClass, int launchDisplayId) {
+        return launcherForActivityNewTask(activityClass, null /* activityId */,
+                false /* isFullScreen */, launchDisplayId);
+    }
+
     public <T extends Activity> T startActivityNewTask(@NonNull Class<T> activityClass,
             @Nullable String activityId) {
-        return launcherForActivityNewTask(activityClass, activityId, false /* isFullScreen */)
+        return launcherForActivityNewTask(activityClass, activityId, false /* isFullScreen */,
+                null /* launchDisplayId */)
                 .launch(mInstrumentation);
     }
 
     public <T extends  Activity> T startFullScreenActivityNewTask(@NonNull Class<T> activityClass,
             @Nullable String activityId) {
-        return launcherForActivityNewTask(activityClass, activityId, true/* isFullScreen */)
+        return launcherForActivityNewTask(activityClass, activityId, true/* isFullScreen */,
+                null /* launchDisplayId */)
                 .launch(mInstrumentation);
     }
 
@@ -133,13 +141,18 @@ public class WindowManagerJetpackTestBase {
     }
 
     private <T extends Activity> TestActivityLauncher<T> launcherForActivityNewTask(
-            @NonNull Class<T> activityClass, @Nullable String activityId, boolean isFullScreen) {
+            @NonNull Class<T> activityClass, @Nullable String activityId, boolean isFullScreen,
+            @Nullable Integer launchDisplayId) {
         final int windowingMode = isFullScreen ? WINDOWING_MODE_FULLSCREEN :
                 WINDOWING_MODE_UNDEFINED;
-        return new TestActivityLauncher<>(mContext, activityClass)
+        final TestActivityLauncher launcher = new TestActivityLauncher<>(mContext, activityClass)
                 .addIntentFlag(FLAG_ACTIVITY_NEW_TASK)
                 .setActivityId(activityId)
                 .setWindowingMode(windowingMode);
+        if (launchDisplayId != null) {
+            launcher.setLaunchDisplayId(launchDisplayId);
+        }
+        return launcher;
     }
 
     /**
