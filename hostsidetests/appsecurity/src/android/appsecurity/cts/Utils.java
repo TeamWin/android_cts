@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import com.android.tradefed.util.RunUtil;
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.Log;
@@ -183,11 +184,11 @@ public class Utils {
                 Log.d(LOG_TAG, "Yay, system is ready!");
                 // or is it really ready?
                 // guard against potential USB mode switch weirdness at boot
-                Thread.sleep(10 * 1000);
+                RunUtil.getDefault().sleep(10 * 1000);
                 return;
             }
             Log.d(LOG_TAG, "Waiting for system ready...");
-            Thread.sleep(1000);
+            RunUtil.getDefault().sleep(1000);
         }
         throw new AssertionError("System failed to become ready!");
     }

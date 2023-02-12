@@ -2434,6 +2434,21 @@
         notification. Tap on its action. Verify that the keyguard displays on tap, and that the
         notification text does not update until the passcode is entered. Ensure that the notification
         text does update once the device is unlocked.</string>
+    <string name="nd_test">Notification Dismiss Test</string>
+    <string name="nd_test_info">This test checks if Notifications can only be
+        dismissed, when it is allowed.</string>
+    <string name="nd_notif_title">NotifDismissTest</string>
+    <string name="nd_notif_public_version_title">NotifDismissTest: REDACTED</string>
+    <string name="nd_notif_private_version_title">NotifDismissTest: EXPOSED</string>
+    <string name="dismiss_notif_from_the_shade">Open the shade while the device is unlocked and find the NotifDismissTest notification.\n
+        Swipe it to either side to dismiss it.\n
+        Fail the test if it could\'t be dismissed.</string>
+    <string name="dismiss_notif_from_the_ls">Lock the screen and find the NotifDismissTest notification.\n
+        Swipe it to either side to dismiss it.\n
+        Fail the test if it couldn\'t be dismissed from the lock screen.</string>
+    <string name="non_dismissable_notif_from_the_ls">Lock the screen and find the NotifDismissTest notification.\n
+        Try to dismiss it. Verify that it is non-dismissible.\n
+        Fail the test if it could be dismissed from the lock screen.</string>
     <string name="np_start_channel_settings">Launch Channel Settings</string>
     <string name="np_start_security_settings">Launch Security Settings</string>
     <string name="np_start_notif_settings">Launch Notification Settings</string>
@@ -2463,7 +2478,7 @@
         \nPull down the notification shade and look for the NotifPrivacyTest notification.
         \nFail the test if it can be found without unlocking the device.
         \n\nGo back when ready to Pass/Fail the step.</string>
-    <string name="np_public_version_text">NotifPrivacyTest: REDACTED</string>
+    <string name="np_public_version_text">NotifPrivacyTefst: REDACTED</string>
     <string name="np_private_version_text">NotifPrivacyTest: EXPOSED</string>
     <string name="notif_privacy_test">Notification Privacy Test</string>
     <string name="notif_privacy_info">This test checks that Notification privacy is correctly

@@ -16,6 +16,7 @@
 
 package android.cts.statsdatom.sizecompatrestartbutton;
 
+import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.cts.statsdatom.lib.AtomTestUtils;
@@ -76,7 +77,7 @@ public class SizeCompatRestartButtonStatsTests extends DeviceTestCase implements
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
         DeviceUtils.turnScreenOn(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.SIZE_COMPAT_RESTART_BUTTON_EVENT_REPORTED_FIELD_NUMBER,
                 /*uidInAttributionChain=*/ false);
@@ -115,7 +116,7 @@ public class SizeCompatRestartButtonStatsTests extends DeviceTestCase implements
                 "action.sleep_top")) {
             getDevice().executeShellCommand(
                     String.format(CMD_PUT_DEVICE_STATE_TEMPLATE, DEVICE_STATE_OPENED));
-            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+            RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
         }
 
         Pair<Integer, Integer> displaySizeOpened = getDisplayRealSize(getDevice());

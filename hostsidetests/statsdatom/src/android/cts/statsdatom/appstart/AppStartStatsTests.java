@@ -16,6 +16,7 @@
 
 package android.cts.statsdatom.appstart;
 
+import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.cts.statsdatom.lib.AtomTestUtils;
@@ -59,7 +60,7 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
                 getDevice().executeShellCommand(CMD_GET_STAY_ON).trim());
         getDevice().executeShellCommand(CMD_ENABLE_STAY_ON);
         DeviceUtils.turnScreenOn(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
     @Override
@@ -89,7 +90,7 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
     public void testAppStartOccurredWarm() throws Exception {
         runTestAppStartOccurredCommon(() -> {
             DeviceUtils.executeBackgroundService(getDevice(), "action.end_immediately");
-            Thread.sleep(WAIT_TIME_MS);
+            RunUtil.getDefault().sleep(WAIT_TIME_MS);
         }, atom -> {
             assertThat(atom.getType()).isEqualTo(
                     AtomsProto.AppStartOccurred.TransitionType.WARM);

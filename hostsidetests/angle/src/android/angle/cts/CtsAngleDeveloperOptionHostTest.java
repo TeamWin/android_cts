@@ -15,6 +15,7 @@
  */
 package android.angle.cts;
 
+import com.android.tradefed.util.RunUtil;
 import static android.angle.cts.CtsAngleCommon.*;
 
 import com.android.ddmlib.Log.LogLevel;
@@ -77,7 +78,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
                 installPackage(appName);
                 return;
             } catch (Exception e) {
-                Thread.sleep(REATTEMPT_SLEEP_MSEC);
+                RunUtil.getDefault().sleep(REATTEMPT_SLEEP_MSEC);
             }
         }
     }

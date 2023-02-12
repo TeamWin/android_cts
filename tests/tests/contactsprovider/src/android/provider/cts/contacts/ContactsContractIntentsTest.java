@@ -59,8 +59,12 @@ public class ContactsContractIntentsTest extends AndroidTestCase {
 
     @CddTest(requirements={"3.18/C-2-1"})
     public void testSetDefaultAccount() {
-        Intent intent = new Intent(ContactsContract.Settings.ACTION_SET_DEFAULT_ACCOUNT);
         PackageManager packageManager = getContext().getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            return; // Skip test on watch since the intent is not required.
+        }
+
+        Intent intent = new Intent(ContactsContract.Settings.ACTION_SET_DEFAULT_ACCOUNT);
         List<ResolveInfo> resolveInfoList = packageManager.queryIntentActivities(intent, 0);
         assertNotNull("Missing ResolveInfo", resolveInfoList);
         int handlerCount = 0;

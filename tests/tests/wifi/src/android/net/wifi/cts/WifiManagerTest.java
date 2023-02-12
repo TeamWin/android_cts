@@ -6282,27 +6282,33 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         mWifiManager.isTlsMinimumVersionSupported();
     }
 
+    private void fillQosPolicyParamsList(List<QosPolicyParams> policyParamsList,
+            int size, boolean uniqueIds) {
+        policyParamsList.clear();
+        for (int i = 0; i < size; i++) {
+            int policyId = uniqueIds ? i + 2 : 5;
+            policyParamsList.add(new QosPolicyParams.Builder(
+                    policyId, QosPolicyParams.DIRECTION_DOWNLINK)
+                            .setUserPriority(QosPolicyParams.USER_PRIORITY_VIDEO_LOW)
+                            .build());
+        }
+    }
+
     /**
-     * Tests that {@link WifiManager#addQosPolicy(QosPolicyParams, Executor, Consumer)},
-     * {@link WifiManager#removeQosPolicy(int)}, and
+     * Tests that {@link WifiManager#addQosPolicies(List, Executor, Consumer)},
+     * {@link WifiManager#removeQosPolicies(int[])}, and
      * {@link WifiManager#removeAllQosPolicies()} do not crash.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
-    public void testAddAndRemoveQosPolicy() throws Exception {
+    public void testAddAndRemoveQosPolicies() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
         }
-        final int policyId = 2;
-        final int direction = QosPolicyParams.DIRECTION_DOWNLINK;
-        final int userPriority = QosPolicyParams.USER_PRIORITY_VIDEO_LOW;
-        QosPolicyParams policyParams = new QosPolicyParams.Builder(policyId, direction)
-                .setUserPriority(userPriority)
-                .build();
 
-        Consumer<Integer> listener = new Consumer<Integer>() {
+        Consumer<List<Integer>> listener = new Consumer<List<Integer>>() {
             @Override
-            public void accept(Integer value) {
+            public void accept(List value) {
                 synchronized (mLock) {
                     // TODO: Check status code when implemented.
                     mLock.notify();
@@ -6310,22 +6316,49 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             }
         };
 
-        // Test that invalid inputs trigger an IllegalArgumentException.
+        // Test that invalid inputs trigger an Exception.
+        final List<QosPolicyParams> policyParamsList = new ArrayList<>();
         assertThrows("null executor should trigger exception", NullPointerException.class,
-                () -> mWifiManager.addQosPolicy(policyParams, null, listener));
+                () -> mWifiManager.addQosPolicies(policyParamsList, null, listener));
         assertThrows("null listener should trigger exception", NullPointerException.class,
-                () -> mWifiManager.addQosPolicy(policyParams, mExecutor, null));
+                () -> mWifiManager.addQosPolicies(policyParamsList, mExecutor, null));
+        assertThrows("null policy list should trigger exception", NullPointerException.class,
+                () -> mWifiManager.addQosPolicies(null, mExecutor, listener));
 
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            mWifiManager.addQosPolicy(policyParams, mExecutor, listener);
+
+            // Valid list
+            fillQosPolicyParamsList(policyParamsList, 4, true);
+            mWifiManager.addQosPolicies(policyParamsList, mExecutor, listener);
+
+            // Empty params list
+            assertThrows("empty list should trigger exception", IllegalArgumentException.class,
+                    () -> mWifiManager.addQosPolicies(policyParamsList, mExecutor, listener));
+
+            // More than {@link WifiManager#getMaxNumberOfPoliciesPerQosRequest()}
+            // policies in the list
+            fillQosPolicyParamsList(policyParamsList,
+                    mWifiManager.getMaxNumberOfPoliciesPerQosRequest() + 1, true);
+            assertThrows("large list should trigger exception", IllegalArgumentException.class,
+                    () -> mWifiManager.addQosPolicies(policyParamsList, mExecutor, listener));
+
+            // Params list contains duplicate policy ids
+            fillQosPolicyParamsList(policyParamsList, 4, false);
+            assertThrows("duplicate ids should trigger exception", IllegalArgumentException.class,
+                    () -> mWifiManager.addQosPolicies(policyParamsList, mExecutor, listener));
 
             // sleep to wait for a response from supplicant
             synchronized (mLock) {
                 mLock.wait(TEST_WAIT_DURATION_MS);
             }
-            mWifiManager.removeQosPolicy(policyId);
+
+            int[] policyIds = new int[policyParamsList.size()];
+            for (int i = 0; i < policyParamsList.size(); i++) {
+                policyIds[i] = policyParamsList.get(i).getPolicyId();
+            }
+            mWifiManager.removeQosPolicies(policyIds);
 
             // sleep to wait for a response from supplicant
             synchronized (mLock) {

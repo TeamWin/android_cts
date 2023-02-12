@@ -15,6 +15,7 @@
  */
 package android.gputools.cts;
 
+import com.android.tradefed.util.RunUtil;
 import com.android.compatibility.common.util.CddTest;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -241,7 +242,7 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test {
         while (!scanComplete && ((System.currentTimeMillis() - hostStartTime) < LOG_SEARCH_TIMEOUT_MS)) {
 
             // Give our activity a chance to run and fill the log
-            Thread.sleep(1000);
+            RunUtil.getDefault().sleep(1000);
 
             // Pull the logcat since the app started, filter for tags
             // This command should look something like this:

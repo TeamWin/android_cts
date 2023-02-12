@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import com.android.tradefed.util.RunUtil;
 import static android.appsecurity.cts.Utils.waitForBootCompleted;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -206,14 +207,14 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
             String response = getDevice().executeShellCommand("locksettings set-pin 1234");
             if (!response.contains("1234")) {
                 // This seems to fail occasionally. Try again once, then give up.
-                Thread.sleep(500);
+                RunUtil.getDefault().sleep(500);
                 response = getDevice().executeShellCommand("locksettings set-pin 1234");
                 assumeTrue("Test requires setting a pin, which failed: " + response,
                         response.contains("1234"));
             }
 
             // Give enough time for vold to update keys
-            Thread.sleep(15000);
+            RunUtil.getDefault().sleep(15000);
 
             // Follow DirectBootHostTest, reboot system into known state with keys ejected
             getDevice().rebootUntilOnline();

@@ -545,6 +545,8 @@ public class ItsService extends Service implements SensorEventListener {
             Log.i(TAG, "Unavailable cameras:" + Arrays.asList(mUnavailablePhysicalCameras.toString()));
             mCamera = mBlockingCameraManager.openCamera(cameraId, mCameraListener, mCameraHandler);
             mCameraCharacteristics = mCameraManager.getCameraCharacteristics(cameraId);
+            mCameraExtensionCharacteristics = mCameraManager.getCameraExtensionCharacteristics(
+                    cameraId);
             // The camera should be in available->unavailable state.
             unavailableEventQueue.clear();
             boolean isLogicalCamera = hasCapability(

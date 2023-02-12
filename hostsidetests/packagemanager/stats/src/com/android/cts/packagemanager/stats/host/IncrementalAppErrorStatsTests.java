@@ -16,6 +16,7 @@
 
 package com.android.cts.packagemanager.stats.host;
 
+import com.android.tradefed.util.RunUtil;
 import static com.android.cts.packagemanager.stats.host.Utils.SIGNATURE_FILE_SUFFIX;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -139,7 +140,7 @@ public final class IncrementalAppErrorStatsTests extends DeviceTestCase implemen
 
         DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 "StatsdCtsForegroundActivity", "action", "action.crash");
-        Thread.sleep(METRICS_WAIT_MILLISECONDS);
+        RunUtil.getDefault().sleep(METRICS_WAIT_MILLISECONDS);
         // Sorted list of events in order in which they occurred.
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
@@ -184,10 +185,10 @@ public final class IncrementalAppErrorStatsTests extends DeviceTestCase implemen
 
         try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
                 DeviceUtils.STATSD_ATOM_TEST_PKG, "ANRActivity", null, null)) {
-            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+            RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
             getDevice().executeShellCommand(
                     "am broadcast -a action_anr -p " + DeviceUtils.STATSD_ATOM_TEST_PKG);
-            Thread.sleep(ANR_WAIT_MILLS);
+            RunUtil.getDefault().sleep(ANR_WAIT_MILLS);
         }
 
         // Sorted list of events in order in which they occurred.

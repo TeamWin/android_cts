@@ -16,6 +16,7 @@
 
 package com.android.cts.packagemanager.stats.host;
 
+import com.android.tradefed.util.RunUtil;
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
@@ -55,7 +56,7 @@ public class InstalledIncrementalPackageStatsTests extends PackageManagerStatsTe
         assertTrue(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE2,
                 String.valueOf(getDevice().getCurrentUser())));
         AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
         assertEquals(2, data.size());

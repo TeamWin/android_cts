@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import com.android.tradefed.util.RunUtil;
 import static org.junit.Assume.assumeTrue;
 
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
@@ -101,7 +102,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
         }
 
         // for fuse file system
-        Thread.sleep(10000);
+        RunUtil.getDefault().sleep(10000);
 
         // TODO: remove this once 34723223 is fixed
         getDevice().executeShellCommand("sync");
@@ -263,7 +264,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
         // Try getting all pending events flushed out
         for (int i = 0; i < 4; i++) {
             getDevice().executeShellCommand("am wait-for-broadcast-idle");
-            Thread.sleep(500);
+            RunUtil.getDefault().sleep(500);
         }
     }
 

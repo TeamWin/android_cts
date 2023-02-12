@@ -16,6 +16,7 @@
 
 package android.jdwptunnel.cts;
 
+import com.android.tradefed.util.RunUtil;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -145,7 +146,7 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
                 fail("Unable to find PID of " + packageName + " process!");
             }
             // Wait 1 second and try again.
-            Thread.sleep(1000);
+            RunUtil.getDefault().sleep(1000);
         }
         String port = forwardJdwp(pid);
         assertTrue(!"".equals(port));
@@ -302,7 +303,7 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
         Socket sock = new Socket("localhost", Integer.decode(port).intValue());
         OutputStream os = sock.getOutputStream();
         // Let the test spin a bit. Try to lose any race with the app.
-        Thread.sleep(1000);
+        RunUtil.getDefault().sleep(1000);
         String handshake = "JDWP-Handshake";
         byte[] handshake_bytes = handshake.getBytes("US-ASCII");
         os.write(handshake_bytes);

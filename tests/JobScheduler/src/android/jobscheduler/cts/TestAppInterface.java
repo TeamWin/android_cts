@@ -17,6 +17,7 @@ package android.jobscheduler.cts;
 
 import static android.app.ActivityManager.getCapabilitiesSummary;
 import static android.app.ActivityManager.procStateToString;
+import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.ACTION_JOB_SCHEDULE_RESULT;
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_REQUEST_JOB_UID_STATE;
 import static android.jobscheduler.cts.jobtestapp.TestJobService.ACTION_JOB_STARTED;
 import static android.jobscheduler.cts.jobtestapp.TestJobService.ACTION_JOB_STOPPED;
@@ -71,6 +72,7 @@ class TestAppInterface {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ACTION_JOB_STARTED);
         intentFilter.addAction(ACTION_JOB_STOPPED);
+        intentFilter.addAction(ACTION_JOB_SCHEDULE_RESULT);
         mContext.registerReceiver(mReceiver, intentFilter, Context.RECEIVER_EXPORTED_UNAUDITED);
     }
 
@@ -102,8 +104,8 @@ class TestAppInterface {
                 ));
     }
 
-    void scheduleJob(Map<String, Boolean> booleanExtras, Map<String, Integer> intExtras)
-            throws Exception {
+    private Intent generateScheduleJobIntent(Map<String, Boolean> booleanExtras,
+            Map<String, Integer> intExtras) {
         final Intent scheduleJobIntent = new Intent(TestJobSchedulerReceiver.ACTION_SCHEDULE_JOB);
         scheduleJobIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         if (!intExtras.containsKey(TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY)) {
@@ -112,11 +114,29 @@ class TestAppInterface {
         booleanExtras.forEach(scheduleJobIntent::putExtra);
         intExtras.forEach(scheduleJobIntent::putExtra);
         scheduleJobIntent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
+        return scheduleJobIntent;
+    }
+
+    void scheduleJob(Map<String, Boolean> booleanExtras, Map<String, Integer> intExtras)
+            throws Exception {
+        final Intent scheduleJobIntent = generateScheduleJobIntent(booleanExtras, intExtras);
 
         final CallbackAsserter resultBroadcastAsserter = CallbackAsserter.forBroadcast(
                 new IntentFilter(TestJobSchedulerReceiver.ACTION_JOB_SCHEDULE_RESULT));
         mContext.sendBroadcast(scheduleJobIntent);
         resultBroadcastAsserter.assertCalled("Didn't get schedule job result broadcast",
+                15 /* 15 seconds */);
+    }
+
+    void postUiInitiatingNotification(Map<String, Boolean> booleanExtras,
+            Map<String, Integer> intExtras) throws Exception {
+        final Intent intent = generateScheduleJobIntent(booleanExtras, intExtras);
+        intent.setAction(TestJobSchedulerReceiver.ACTION_POST_UI_INITIATING_NOTIFICATION);
+
+        final CallbackAsserter resultBroadcastAsserter = CallbackAsserter.forBroadcast(
+                new IntentFilter(TestJobSchedulerReceiver.ACTION_NOTIFICATION_POSTED));
+        mContext.sendBroadcast(intent);
+        resultBroadcastAsserter.assertCalled("Didn't get notification posted broadcast",
                 15 /* 15 seconds */);
     }
 
@@ -148,7 +168,16 @@ class TestAppInterface {
     }
 
     void closeActivity() {
+        closeActivity(false);
+    }
+
+    void closeActivity(boolean waitForClose) {
         mContext.sendBroadcast(new Intent(TestActivity.ACTION_FINISH_ACTIVITY));
+        if (waitForClose) {
+            ComponentName testComponentName =
+                    new ComponentName(TEST_APP_PACKAGE, TEST_APP_ACTIVITY);
+            new WindowManagerStateHelper().waitForActivityRemoved(testComponentName);
+        }
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -172,6 +201,16 @@ class TestAppInterface {
                             mTestJobState.oomScoreAdj = intent.getIntExtra(JOB_OOM_SCORE_ADJ_KEY,
                                     INVALID_ADJ);
                         }
+                    }
+                    break;
+                case ACTION_JOB_SCHEDULE_RESULT:
+                    synchronized (mTestJobState) {
+                        mTestJobState.running = false;
+                        mTestJobState.jobId = intent.getIntExtra(
+                                TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, 0);
+                        mTestJobState.params = null;
+                        mTestJobState.scheduleResult = intent.getIntExtra(
+                                TestJobSchedulerReceiver.EXTRA_SCHEDULE_RESULT, -1);
                     }
                     break;
             }
@@ -210,6 +249,14 @@ class TestAppInterface {
         }
     }
 
+    boolean awaitJobScheduleResult(long maxWaitMs, int jobResult) throws Exception {
+        return waitUntilTrue(maxWaitMs, () -> {
+            synchronized (mTestJobState) {
+                return mTestJobState.jobId == mJobId && mTestJobState.scheduleResult == jobResult;
+            }
+        });
+    }
+
     private boolean waitUntilTrue(long maxWait, Condition condition) throws Exception {
         final long deadLine = SystemClock.uptimeMillis() + maxWait;
         do {
@@ -226,6 +273,7 @@ class TestAppInterface {
 
     private static final class TestJobState {
         int jobId;
+        int scheduleResult;
         boolean running;
         int procState;
         int capabilities;
@@ -245,6 +293,7 @@ class TestAppInterface {
             procState = ActivityManager.PROCESS_STATE_NONEXISTENT;
             capabilities = ActivityManager.PROCESS_CAPABILITY_NONE;
             oomScoreAdj = INVALID_ADJ;
+            scheduleResult = -1;
         }
     }
 

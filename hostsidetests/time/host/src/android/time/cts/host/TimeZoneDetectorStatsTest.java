@@ -16,6 +16,7 @@
 
 package android.time.cts.host;
 
+import com.android.tradefed.util.RunUtil;
 import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
 import static android.app.time.cts.shell.DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT;
 
@@ -78,11 +79,11 @@ public class TimeZoneDetectorStatsTest extends BaseHostJUnit4Test {
         // Enable the atom.
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.TIME_ZONE_DETECTOR_STATE_FIELD_NUMBER);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         // This should trigger a pull.
         AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         // Extract and assert about TimeZoneDetectorState.
         List<AtomsProto.Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());

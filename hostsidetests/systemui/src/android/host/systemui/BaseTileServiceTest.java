@@ -14,6 +14,7 @@
 
 package android.host.systemui;
 
+import com.android.tradefed.util.RunUtil;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
 
@@ -128,14 +129,14 @@ public class BaseTileServiceTest extends DeviceTestCase {
         getDevice().executeShellCommand(cmd);
         // All of the status bar commands tend to have animations associated
         // everything seems to be happier if you give them time to finish.
-        Thread.sleep(100);
+        RunUtil.getDefault().sleep(100);
     }
 
     protected boolean waitFor(String str) throws DeviceNotAvailableException, InterruptedException {
         final String searchStr = TEST_PREFIX + str;
         int ct = 0;
         while (!hasLog(searchStr) && (ct++ < CHECK_RETRIES)) {
-            Thread.sleep(CHECK_DELAY);
+            RunUtil.getDefault().sleep(CHECK_DELAY);
         }
         return hasLog(searchStr);
     }

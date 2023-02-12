@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import com.android.tradefed.util.RunUtil;
 import static android.appsecurity.cts.Utils.waitForBootCompleted;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -398,12 +399,12 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
                 + " -c android.intent.category.LAUNCHER com.android.cts.splitapp/.MyActivity");
 
         // Give enough time for PackageManager to persist stopped state
-        Thread.sleep(15000);
+        RunUtil.getDefault().sleep(15000);
 
         runDeviceTestsAsUser("testSetUp", userId);
 
         // Give enough time for vold to update keys
-        Thread.sleep(15000);
+        RunUtil.getDefault().sleep(15000);
     }
 
     private void deviceRequestLskf() throws Exception {
@@ -434,9 +435,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         do {
             if (retry) {
                 CLog.i("Retrying to summon lockscreen...");
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException ignored) {}
+                RunUtil.getDefault().sleep(500);
             }
             runDeviceTestsAsUser("testLockScreen", userId);
             retry = !LockScreenInspector.newInstance(getDevice()).isDisplayedAndNotOccluded();
@@ -511,7 +510,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         getDevice().switchUser(userId);
         HostSideTestUtils.waitUntil("Could not switch users", USER_SWITCH_TIMEOUT_SECONDS,
                 () -> getDevice().getCurrentUser() == userId);
-        Thread.sleep(USER_SWITCH_WAIT);
+        RunUtil.getDefault().sleep(USER_SWITCH_WAIT);
     }
 
     private void stopUserAsync(int userId) throws Exception {

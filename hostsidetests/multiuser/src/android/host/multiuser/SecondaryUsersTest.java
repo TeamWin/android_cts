@@ -15,6 +15,7 @@
  */
 package android.host.multiuser;
 
+import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.host.multiuser.BaseMultiUserTest.SupportsMultiUserRule;
@@ -78,11 +79,11 @@ public final class SecondaryUsersTest extends BaseMultiUserTest {
                 }
                 CLog.v("Sleeping for %d ms as user %d is not a secondary user yet",
                         POLL_INTERVAL_MS, currentUser);
-                Thread.sleep(POLL_INTERVAL_MS);
+                RunUtil.getDefault().sleep(POLL_INTERVAL_MS);
             } catch (Exception e) {
                 CLog.d("Device not available yet (%s); sleeping for %d ms", e,
                         WAIT_FOR_DEVICE_READY_INTERVAL_MS);
-                Thread.sleep(WAIT_FOR_DEVICE_READY_INTERVAL_MS);
+                RunUtil.getDefault().sleep(WAIT_FOR_DEVICE_READY_INTERVAL_MS);
             }
         }
         assertWithMessage("Current user (%s) is a secondary user after boot", currentUser)

@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import com.android.tradefed.util.RunUtil;
 import static android.appsecurity.cts.Utils.waitForBootCompleted;
 
 import static com.android.compatibility.common.util.PropertyUtil.getFirstApiLevel;
@@ -117,12 +118,12 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
                     + " -c android.intent.category.LAUNCHER com.android.cts.splitapp/.MyActivity");
 
             // Give enough time for PackageManager to persist stopped state
-            Thread.sleep(15000);
+            RunUtil.getDefault().sleep(15000);
 
             runDeviceTestsAsCurrentUser(PKG, CLASS, "testSetUp");
 
             // Give enough time for vold to update keys
-            Thread.sleep(15000);
+            RunUtil.getDefault().sleep(15000);
 
             // Reboot system into known state with keys ejected
             getDevice().rebootUntilOnline();

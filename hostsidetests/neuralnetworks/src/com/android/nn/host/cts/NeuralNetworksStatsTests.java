@@ -16,6 +16,7 @@
 
 package com.android.nn.host.cts;
 
+import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.cts.statsdatom.lib.AtomTestUtils;
@@ -51,7 +52,7 @@ public class NeuralNetworksStatsTests extends DeviceTestCase implements IBuildRe
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installTestApp(getDevice(), APP_APK_NAME, APP_PKG_NAME, mCtsBuild);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
     @Override

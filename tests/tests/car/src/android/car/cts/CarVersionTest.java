@@ -41,6 +41,23 @@ public final class CarVersionTest extends AbstractCarLessTestCase {
         expectWithMessage("TIRAMISU_0.minor").that(version.getMinorVersion())
                 .isEqualTo(0);
 
+        // Check against other versions
+        expectWithMessage("isAtLeast(TM_0)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_0))
+                .isTrue();
+        expectWithMessage("isAtLeast(TM_1)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_1))
+                .isFalse();
+        expectWithMessage("isAtLeast(TM_2)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_2))
+                .isFalse();
+        expectWithMessage("isAtLeast(TM_3)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_3))
+                .isFalse();
+        expectWithMessage("isAtLeast(UDC_0)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.UPSIDE_DOWN_CAKE_0))
+                .isFalse();
+
         CarVersion fromEnum = ApiRequirements.CarVersion.TIRAMISU_0.get();
         assertWithMessage("TIRAMISU_0 from enum").that(fromEnum).isNotNull();
         expectWithMessage("TIRAMISU_0 from enum").that(fromEnum).isSameInstanceAs(version);
@@ -72,6 +89,23 @@ public final class CarVersionTest extends AbstractCarLessTestCase {
                 .isEqualTo(TIRAMISU);
         expectWithMessage("TIRAMISU_1.minor").that(version.getMinorVersion())
                 .isEqualTo(1);
+
+        // Check against other versions
+        expectWithMessage("isAtLeast(TM_0)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_0))
+                .isTrue();
+        expectWithMessage("isAtLeast(TM_1)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_1))
+                .isTrue();
+        expectWithMessage("isAtLeast(TM_2)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_2))
+                .isFalse();
+        expectWithMessage("isAtLeast(TM_3)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_3))
+                .isFalse();
+        expectWithMessage("isAtLeast(UDC_0)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.UPSIDE_DOWN_CAKE_0))
+                .isFalse();
 
         CarVersion fromEnum = ApiRequirements.CarVersion.TIRAMISU_1.get();
         assertWithMessage("TIRAMISU_1 from enum").that(fromEnum).isNotNull();
@@ -105,6 +139,23 @@ public final class CarVersionTest extends AbstractCarLessTestCase {
         expectWithMessage("TIRAMISU_2.minor").that(version.getMinorVersion())
                 .isEqualTo(2);
 
+        // Check against other versions
+        expectWithMessage("isAtLeast(TM_0)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_0))
+                .isTrue();
+        expectWithMessage("isAtLeast(TM_1)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_1))
+                .isTrue();
+        expectWithMessage("isAtLeast(TM_2)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_2))
+                .isTrue();
+        expectWithMessage("isAtLeast(TM_3)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_3))
+                .isFalse();
+        expectWithMessage("isAtLeast(UDC_0)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.UPSIDE_DOWN_CAKE_0))
+                .isFalse();
+
         CarVersion fromEnum = ApiRequirements.CarVersion.TIRAMISU_2.get();
         assertWithMessage("TIRAMISU_2 from enum").that(fromEnum).isNotNull();
         expectWithMessage("TIRAMISU_2 from enum").that(fromEnum).isSameInstanceAs(version);
@@ -137,6 +188,23 @@ public final class CarVersionTest extends AbstractCarLessTestCase {
         expectWithMessage("TIRAMISU_3.minor").that(version.getMinorVersion())
                 .isEqualTo(3);
 
+        // Check against other versions
+        expectWithMessage("isAtLeast(TM_0)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_0))
+                .isTrue();
+        expectWithMessage("isAtLeast(TM_1)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_1))
+                .isTrue();
+        expectWithMessage("isAtLeast(TM_2)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_2))
+                .isTrue();
+        expectWithMessage("isAtLeast(TM_3)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_3))
+                .isTrue();
+        expectWithMessage("isAtLeast(UDC_0)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.UPSIDE_DOWN_CAKE_0))
+                .isFalse();
+
         CarVersion fromEnum = ApiRequirements.CarVersion.TIRAMISU_3.get();
         assertWithMessage("TIRAMISU_3 from enum").that(fromEnum).isNotNull();
         expectWithMessage("TIRAMISU_3 from enum").that(fromEnum).isSameInstanceAs(version);
@@ -168,6 +236,23 @@ public final class CarVersionTest extends AbstractCarLessTestCase {
                 .isEqualTo(UPSIDE_DOWN_CAKE);
         expectWithMessage("UPSIDE_DOWN_CAKE_0.minor").that(version.getMinorVersion())
                 .isEqualTo(0);
+
+        // Check against other versions
+        expectWithMessage("isAtLeast(TM_0)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_0))
+                .isTrue();
+        expectWithMessage("isAtLeast(TM_1)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_1))
+                .isTrue();
+        expectWithMessage("isAtLeast(TM_2)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_2))
+                .isTrue();
+        expectWithMessage("isAtLeast(TM_3)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.TIRAMISU_3))
+                .isTrue();
+        expectWithMessage("isAtLeast(UDC_0)")
+                .that(version.isAtLeast(CarVersion.VERSION_CODES.UPSIDE_DOWN_CAKE_0))
+                .isTrue();
 
         CarVersion fromEnum = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0.get();
         assertWithMessage("UPSIDE_DOWN_CAKE_0 from enum").that(fromEnum).isNotNull();

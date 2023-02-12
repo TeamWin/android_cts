@@ -16,6 +16,7 @@
 
 package com.android.tests.hostside.silentupdate;
 
+import com.android.tradefed.util.RunUtil;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -159,7 +160,7 @@ public class SilentUpdateHostsideTests extends BaseHostJUnit4Test {
                 long startTime = System.currentTimeMillis();
         while (System.currentTimeMillis() - startTime < timeout
                 && originalCodePath.equals(getCodePath(packageName))) {
-            Thread.sleep(100);
+            RunUtil.getDefault().sleep(100);
         }
     }
 

@@ -16,6 +16,7 @@
 
 package android.os.cts;
 
+import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -784,7 +785,7 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             // TODO(205779832): There's a maximum two-seconds-delay before SettingsProvider persists
             //  the settings. Waits for 3 seconds before reboot the device to ensure the setting is
             //  persisted.
-            Thread.sleep(3_000);
+            RunUtil.getDefault().sleep(3_000);
             getDevice().reboot();
 
             // Waits for the uninstallation of the unused library to ensure the job has be executed

@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import com.android.tradefed.util.RunUtil;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -288,7 +289,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
             if (System.nanoTime() > deadline) {
                 fail(message);
             }
-            Thread.sleep(1000);
+            RunUtil.getDefault().sleep(1000);
         }
     }
 
@@ -432,7 +433,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         while (getDevice().getCurrentUser() != userId && (--retries) >= 0) {
             // am switch-user can be ignored if a previous user-switching operation
             // is still in progress. In this case, sleep a bit and then retry
-            Thread.sleep(USER_SWITCH_WAIT);
+            RunUtil.getDefault().sleep(USER_SWITCH_WAIT);
             executeShellCommand("am switch-user " + userId);
         }
         assertTrue("Failed to switch user after multiple retries", getDevice().getCurrentUser() == userId);
@@ -527,11 +528,11 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
             CLog.d("stopping and removing user " + userId);
             getDevice().executeShellCommand(stopUserCommand);
             // TODO: Remove both sleeps and USER_REMOVE_WAIT constant when b/114057686 is fixed.
-            Thread.sleep(USER_REMOVE_WAIT);
+            RunUtil.getDefault().sleep(USER_REMOVE_WAIT);
             // Ephemeral users may have already been removed after being stopped.
             if (listUsers().contains(userId)) {
                 assertTrue("Couldn't remove user", getDevice().removeUser(userId));
-                Thread.sleep(USER_REMOVE_WAIT);
+                RunUtil.getDefault().sleep(USER_REMOVE_WAIT);
             }
         }
     }
@@ -1034,7 +1035,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
             long timeoutMillis) throws Exception {
         long epoch = System.currentTimeMillis();
         while (System.currentTimeMillis() - epoch <= timeoutMillis) {
-            Thread.sleep(WAIT_SAMPLE_INTERVAL_MILLIS);
+            RunUtil.getDefault().sleep(WAIT_SAMPLE_INTERVAL_MILLIS);
             if (successCondition.check()) {
                 return;
             }
@@ -1361,7 +1362,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     void sleep(int timeMs) throws InterruptedException {
         CLog.d("Sleeping %d ms", timeMs);
-        Thread.sleep(timeMs);
+        RunUtil.getDefault().sleep(timeMs);
     }
 
     private boolean isSmsCapable() throws Exception {

@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import com.android.tradefed.util.RunUtil;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -106,7 +107,7 @@ public class LauncherAppsSingleUserTest extends BaseLauncherAppsTest {
         installAppAsUser(SIMPLE_APP_APK, mCurrentUserId);
         startCallbackService(mCurrentUserId);
         for (int retry = 0; !isCallbackServiceReady() && retry < 10; retry++) {
-            Thread.sleep(100);
+            RunUtil.getDefault().sleep(100);
         }
         assertTrue(LAUNCHER_TESTS_SUPPORT_COMPONENT + " would not be ready",
                 isCallbackServiceReady());

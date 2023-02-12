@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import com.android.tradefed.util.RunUtil;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -434,7 +435,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             }
 
             // for fuse file system
-            Thread.sleep(10000);
+            RunUtil.getDefault().sleep(10000);
             for (int user : mUsers) {
                 runDeviceTests(READ_PKG, READ_PKG + ".ReadMultiViewTest", "testRWAccess", user);
             }

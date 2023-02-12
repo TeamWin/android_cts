@@ -16,6 +16,7 @@
 
 package android.cts.statsdatom.lib;
 
+import com.android.tradefed.util.RunUtil;
 import com.android.os.AtomsProto.AppBreadcrumbReported;
 import com.android.internal.os.StatsdConfigProto.AtomMatcher;
 import com.android.internal.os.StatsdConfigProto.EventMetric;
@@ -286,7 +287,7 @@ public final class ConfigUtils {
         device.executeShellCommand("rm " + remotePath);
 
         // Sleep for a bit so that statsd receives config before more work is done within the test.
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
     }
 
     /**

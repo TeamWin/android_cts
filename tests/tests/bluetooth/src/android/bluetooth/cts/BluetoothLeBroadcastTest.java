@@ -36,6 +36,7 @@ import android.bluetooth.BluetoothLeBroadcastChannel;
 import android.bluetooth.BluetoothLeBroadcastMetadata;
 import android.bluetooth.BluetoothLeBroadcastSettings;
 import android.bluetooth.BluetoothLeBroadcastSubgroup;
+import android.bluetooth.BluetoothLeBroadcastSubgroupSettings;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothStatusCodes;
 import android.content.Context;
@@ -74,6 +75,7 @@ public class BluetoothLeBroadcastTest {
     private static final int TEST_ADVERTISER_SID = 1234;
     private static final int TEST_PA_SYNC_INTERVAL = 100;
     private static final int TEST_PRESENTATION_DELAY_MS = 345;
+    private static final int TEST_AUDIO_QUALITY_STANDARD = 0x1 << 0;
 
     private static final int TEST_CODEC_ID = 42;
     private static final int TEST_CHANNEL_INDEX = 56;
@@ -81,11 +83,16 @@ public class BluetoothLeBroadcastTest {
     // For BluetoothLeAudioCodecConfigMetadata
     private static final long TEST_AUDIO_LOCATION_FRONT_LEFT = 0x01;
     private static final long TEST_AUDIO_LOCATION_FRONT_RIGHT = 0x02;
+    private static final int TEST_SAMPLE_RATE_16000 = 0x01 << 2;
+    private static final int TEST_FRAME_DURATION_7500 = 0x01 << 0;
+    private static final int TEST_OCTETS_PER_FRAME = 200;
 
     // For BluetoothLeAudioContentMetadata
     private static final String TEST_PROGRAM_INFO = "Test";
     // German language code in ISO 639-3
     private static final String TEST_LANGUAGE = "deu";
+    private static final int TEST_QUALITY =
+            BluetoothLeBroadcastSubgroupSettings.QUALITY_STANDARD;
 
     private static final int TEST_REASON = BluetoothStatusCodes.REASON_LOCAL_STACK_REQUEST;
 
@@ -115,7 +122,11 @@ public class BluetoothLeBroadcastTest {
     BluetoothLeBroadcastSubgroup createBroadcastSubgroup() {
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
                 new BluetoothLeAudioCodecConfigMetadata.Builder()
-                        .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_LEFT).build();
+                        .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_LEFT)
+                        .setSampleRate(TEST_SAMPLE_RATE_16000)
+                        .setFrameDuration(TEST_FRAME_DURATION_7500)
+                        .setOctetsPerFrame(TEST_OCTETS_PER_FRAME)
+                        .build();
         BluetoothLeAudioContentMetadata contentMetadata =
                 new BluetoothLeAudioContentMetadata.Builder()
                         .setProgramInfo(TEST_PROGRAM_INFO).setLanguage(TEST_LANGUAGE).build();
@@ -126,7 +137,11 @@ public class BluetoothLeBroadcastTest {
 
         BluetoothLeAudioCodecConfigMetadata channelCodecMetadata =
                 new BluetoothLeAudioCodecConfigMetadata.Builder()
-                        .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_RIGHT).build();
+                        .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_RIGHT)
+                        .setSampleRate(TEST_SAMPLE_RATE_16000)
+                        .setFrameDuration(TEST_FRAME_DURATION_7500)
+                        .setOctetsPerFrame(TEST_OCTETS_PER_FRAME)
+                        .build();
 
         // builder expect at least one channel
         BluetoothLeBroadcastChannel channel =
@@ -143,6 +158,10 @@ public class BluetoothLeBroadcastTest {
         BluetoothDevice testDevice =
                 mAdapter.getRemoteLeDevice(TEST_MAC_ADDRESS, BluetoothDevice.ADDRESS_TYPE_RANDOM);
 
+        BluetoothLeAudioContentMetadata publicBroadcastMetadata =
+                new BluetoothLeAudioContentMetadata.Builder()
+                        .setProgramInfo(TEST_PROGRAM_INFO).build();
+
         BluetoothLeBroadcastMetadata.Builder builder = new BluetoothLeBroadcastMetadata.Builder()
                 .setEncrypted(false)
                 .setPublicBroadcast(false)
@@ -152,7 +171,9 @@ public class BluetoothLeBroadcastTest {
                 .setBroadcastId(TEST_BROADCAST_ID)
                 .setBroadcastCode(null)
                 .setPaSyncInterval(TEST_PA_SYNC_INTERVAL)
-                .setPresentationDelayMicros(TEST_PRESENTATION_DELAY_MS);
+                .setPresentationDelayMicros(TEST_PRESENTATION_DELAY_MS)
+                .setAudioConfigQuality(TEST_AUDIO_QUALITY_STANDARD)
+                .setPublicBroadcastMetadata(publicBroadcastMetadata);
         // builder expect at least one subgroup
         builder.addSubgroup(createBroadcastSubgroup());
         return builder.build();
@@ -533,6 +554,14 @@ public class BluetoothLeBroadcastTest {
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
         BluetoothLeBroadcastSettings.Builder broadcastSettingsBuilder =
                 new BluetoothLeBroadcastSettings.Builder();
+        BluetoothLeBroadcastSubgroupSettings[] subgroupSettings =
+                new BluetoothLeBroadcastSubgroupSettings[] {
+                    createBroadcastSubgroupSettings()
+                };
+        for (BluetoothLeBroadcastSubgroupSettings setting : subgroupSettings) {
+            broadcastSettingsBuilder.addSubgroupSettings(setting);
+        }
+
         mBluetoothLeBroadcast.startBroadcast(broadcastSettingsBuilder.build());
     }
 
@@ -550,6 +579,13 @@ public class BluetoothLeBroadcastTest {
 
         BluetoothLeBroadcastSettings.Builder broadcastSettingsBuilder =
                 new BluetoothLeBroadcastSettings.Builder();
+        BluetoothLeBroadcastSubgroupSettings[] subgroupSettings =
+                new BluetoothLeBroadcastSubgroupSettings[] {
+                    createBroadcastSubgroupSettings()
+                };
+        for (BluetoothLeBroadcastSubgroupSettings setting : subgroupSettings) {
+            broadcastSettingsBuilder.addSubgroupSettings(setting);
+        }
 
         TestUtils.dropPermissionAsShellUid();
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
@@ -613,6 +649,14 @@ public class BluetoothLeBroadcastTest {
 
         BluetoothLeBroadcastSettings.Builder broadcastSettingsBuilder =
                 new BluetoothLeBroadcastSettings.Builder();
+        BluetoothLeBroadcastSubgroupSettings[] subgroupSettings =
+                new BluetoothLeBroadcastSubgroupSettings[] {
+                    createBroadcastSubgroupSettings()
+                };
+        for (BluetoothLeBroadcastSubgroupSettings setting : subgroupSettings) {
+            broadcastSettingsBuilder.addSubgroupSettings(setting);
+        }
+
         mBluetoothLeBroadcast.updateBroadcast(1, broadcastSettingsBuilder.build());
     }
 
@@ -629,6 +673,13 @@ public class BluetoothLeBroadcastTest {
 
         BluetoothLeBroadcastSettings.Builder broadcastSettingsBuilder =
                 new BluetoothLeBroadcastSettings.Builder();
+        BluetoothLeBroadcastSubgroupSettings[] subgroupSettings =
+                new BluetoothLeBroadcastSubgroupSettings[] {
+                    createBroadcastSubgroupSettings()
+                };
+        for (BluetoothLeBroadcastSubgroupSettings setting : subgroupSettings) {
+            broadcastSettingsBuilder.addSubgroupSettings(setting);
+        }
 
         TestUtils.dropPermissionAsShellUid();
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
@@ -915,5 +966,16 @@ public class BluetoothLeBroadcastTest {
                 mProfileConnectionlock.unlock();
             }
         }
+    }
+
+    static BluetoothLeBroadcastSubgroupSettings createBroadcastSubgroupSettings() {
+        BluetoothLeAudioContentMetadata contentMetadata =
+                new BluetoothLeAudioContentMetadata.Builder()
+                        .setProgramInfo(TEST_PROGRAM_INFO).setLanguage(TEST_LANGUAGE).build();
+        BluetoothLeBroadcastSubgroupSettings.Builder builder =
+                new BluetoothLeBroadcastSubgroupSettings.Builder()
+                .setPreferredQuality(TEST_QUALITY)
+                .setContentMetadata(contentMetadata);
+        return builder.build();
     }
 }

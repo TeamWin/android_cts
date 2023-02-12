@@ -16,6 +16,7 @@
 
 package android.media.session.cts;
 
+import com.android.tradefed.util.RunUtil;
 import static android.media.cts.MediaSessionTestHelperConstants.FLAG_CREATE_MEDIA_SESSION;
 import static android.media.cts.MediaSessionTestHelperConstants.FLAG_CREATE_MEDIA_SESSION2;
 import static android.media.cts.MediaSessionTestHelperConstants.FLAG_SET_MEDIA_SESSION_ACTIVE;
@@ -227,7 +228,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         sendControlCommand(primaryUserId, FLAG_CREATE_MEDIA_SESSION2);
 
         // Wait for a second for framework to recognize media session2.
-        Thread.sleep(TIMEOUT_MS);
+        RunUtil.getDefault().sleep(TIMEOUT_MS);
         runTest("testGetActiveSessions_noMediaSessionFromMediaSessionTestHelper");
     }
 
@@ -247,7 +248,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
                         | FLAG_SET_MEDIA_SESSION_ACTIVE);
 
         // Wait for a second for framework to recognize media session2.
-        Thread.sleep(TIMEOUT_MS);
+        RunUtil.getDefault().sleep(TIMEOUT_MS);
 
         runTest("testGetActiveSessions_hasMediaSessionFromMediaSessionTestHelper");
     }

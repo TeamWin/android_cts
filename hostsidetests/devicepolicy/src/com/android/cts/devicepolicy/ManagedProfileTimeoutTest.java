@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import com.android.tradefed.util.RunUtil;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 
@@ -52,7 +53,7 @@ public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
         setUpWorkProfileTimeout();
 
         startTestActivity(mProfileUserId, false);
-        Thread.sleep(PROFILE_TIMEOUT_DELAY_MS);
+        RunUtil.getDefault().sleep(PROFILE_TIMEOUT_DELAY_MS);
 
         verifyOnlyProfileLocked(true);
     }
@@ -80,7 +81,7 @@ public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
         setUpWorkProfileTimeout();
 
         startTestActivity(mProfileUserId, true);
-        Thread.sleep(PROFILE_TIMEOUT_DELAY_MS);
+        RunUtil.getDefault().sleep(PROFILE_TIMEOUT_DELAY_MS);
 
         verifyOnlyProfileLocked(false);
     }
@@ -109,7 +110,7 @@ public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
         while (System.nanoTime() < endTime) {
             helper.tapScreen();
             // Just in case to prevent busy loop.
-            Thread.sleep(100);
+            RunUtil.getDefault().sleep(100);
         }
     }
 

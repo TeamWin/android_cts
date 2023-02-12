@@ -1016,6 +1016,15 @@ public final class Helper {
     }
 
     /**
+     * Sets the pcc detection service temporarily for 300 seconds.
+     */
+    public static void setAutofillDetectionService(String service) {
+        Log.d(TAG, "setAutofillDetectionService");
+        runShellCommand("cmd autofill set temporary-detection-service 0 %s 30000",
+                service);
+    }
+
+    /**
      * Gets the instrumentation context.
      */
     public static Context getContext() {

@@ -16,6 +16,7 @@
 
 package android.cts.statsdatom.appcompatstate;
 
+import com.android.tradefed.util.RunUtil;
 import static com.android.os.AtomsProto.AppCompatStateChanged.State.LETTERBOXED_FOR_ASPECT_RATIO;
 import static com.android.os.AtomsProto.AppCompatStateChanged.State.LETTERBOXED_FOR_FIXED_ORIENTATION;
 import static com.android.os.AtomsProto.AppCompatStateChanged.State.LETTERBOXED_FOR_SIZE_COMPAT_MODE;
@@ -91,7 +92,7 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
         DeviceUtils.turnScreenOn(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.APP_COMPAT_STATE_CHANGED_FIELD_NUMBER, /*uidInAttributionChain=*/
                 false);
@@ -199,11 +200,11 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
 
         try (AutoCloseable a1 = DeviceUtils.withActivity(getDevice(),
                 DeviceUtils.STATSD_ATOM_TEST_PKG, activity, "action", "action.sleep_top")) {
-            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+            RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
             if (switchToOpened) {
                 getDevice().executeShellCommand(
                         String.format(CMD_PUT_DEVICE_STATE_TEMPLATE, DEVICE_STATE_OPENED));
-                Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+                RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
                 Pair<Integer, Integer> displaySizeOpened = getDisplayRealSize(getDevice());
                 if (displaySizeOpened == null) {
@@ -220,11 +221,11 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
                 try (AutoCloseable a2 = DeviceUtils.withActivity(getDevice(),
                         DeviceUtils.STATSD_ATOM_TEST_PKG, secondActivity, "action",
                         "action.sleep_top")) {
-                    Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+                    RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
                 }
             }
         }
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         assertThat(expectedStatesOptions).asList().contains(
                 getAppCompatStatesForUid(DeviceUtils.getStatsdTestAppUid(getDevice())));

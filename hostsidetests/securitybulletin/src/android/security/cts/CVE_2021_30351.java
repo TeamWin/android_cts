@@ -15,6 +15,7 @@
  */
 package android.security.cts;
 
+import com.android.tradefed.util.RunUtil;
 import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
@@ -56,7 +57,7 @@ public class CVE_2021_30351 extends NonRootSecurityTestCase {
 
             /* Start the application */
             AdbUtils.runCommandLine("am start -n " + packageName + "/.MainActivity", getDevice());
-            Thread.sleep(SLEEP_INTERVAL_MILLISEC);
+            RunUtil.getDefault().sleep(SLEEP_INTERVAL_MILLISEC);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

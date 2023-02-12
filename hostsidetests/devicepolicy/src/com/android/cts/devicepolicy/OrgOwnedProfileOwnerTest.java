@@ -31,6 +31,7 @@ import android.stats.devicepolicy.EventId;
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.util.RunUtil;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -466,12 +467,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         int numWaits = 0;
         final int MAX_NUM_WAITS = 15;
         while (listUsers().contains(userId) && (numWaits < MAX_NUM_WAITS)) {
-            try {
-                Thread.sleep(1000);
-                numWaits += 1;
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            RunUtil.getDefault().sleep(1000);
+            numWaits += 1;
         }
 
         assertThat(listUsers()).doesNotContain(userId);

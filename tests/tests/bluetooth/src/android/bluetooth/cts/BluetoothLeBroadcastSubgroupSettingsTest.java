@@ -20,7 +20,6 @@ import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.bluetooth.BluetoothStatusCodes.FEATURE_SUPPORTED;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.bluetooth.BluetoothAdapter;
@@ -87,9 +86,6 @@ public class BluetoothLeBroadcastSubgroupSettingsTest {
     @After
     public void tearDown() {
         if (mHasBluetooth) {
-            if (mAdapter != null) {
-                assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-            }
             mAdapter = null;
             TestUtils.dropPermissionAsShellUid();
         }
@@ -111,8 +107,6 @@ public class BluetoothLeBroadcastSubgroupSettingsTest {
         BluetoothLeBroadcastSubgroupSettings settings = builder.build();
         assertEquals(TEST_QUALITY, settings.getPreferredQuality());
         assertEquals(contentMetadata, settings.getContentMetadata());
-        // builder expect at least one channel
-        assertThrows(IllegalArgumentException.class, builder::build);
     }
 
     @Test
@@ -132,8 +126,6 @@ public class BluetoothLeBroadcastSubgroupSettingsTest {
                 new BluetoothLeBroadcastSubgroupSettings.Builder(settings).build();
         assertEquals(TEST_QUALITY, settingsCopy.getPreferredQuality());
         assertEquals(contentMetadata, settingsCopy.getContentMetadata());
-        // builder expect at least one channel
-        assertThrows(IllegalArgumentException.class, builder::build);
     }
 
     private boolean shouldSkipTest() {

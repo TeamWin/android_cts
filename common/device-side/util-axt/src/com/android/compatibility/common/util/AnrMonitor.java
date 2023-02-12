@@ -35,6 +35,7 @@ import javax.annotation.concurrent.GuardedBy;
  *
  * Use {@link #start} to create an instance and start monitoring.
  * Use {@link #waitForAnrAndReturnUptime} to wait for an "early ANR", and get the uptime of it.
+ * One an ANR is detected, the target process will be killed.
  */
 public class AnrMonitor implements AutoCloseable {
     private static final String TAG = "AnrMonitor";
@@ -117,7 +118,7 @@ public class AnrMonitor implements AutoCloseable {
         ParcelFileDescriptor[] pfds = null;
         try {
             pfds = mInstrumentation.getUiAutomation()
-                    .executeShellCommandRw("am monitor -s -c -p " + mTargetProcess);
+                    .executeShellCommandRw("am monitor -s -k -p " + mTargetProcess);
             final ParcelFileDescriptor rfd = pfds[0];
             final FileInputStream rfs = new ParcelFileDescriptor.AutoCloseInputStream(rfd);
             final BufferedReader reader = new BufferedReader(new InputStreamReader(rfs));

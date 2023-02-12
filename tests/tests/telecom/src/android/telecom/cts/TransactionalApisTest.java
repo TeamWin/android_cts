@@ -29,6 +29,7 @@ import android.os.OutcomeReceiver;
 import android.telecom.Call;
 import android.telecom.CallAttributes;
 import android.telecom.CallControl;
+import android.telecom.CallControlCallback;
 import android.telecom.CallEndpoint;
 import android.telecom.CallEventCallback;
 import android.telecom.CallException;
@@ -52,8 +53,13 @@ import java.util.function.Consumer;
 
 /**
  * This class tests calls added with the API
- * {@link TelecomManager#addCall(CallAttributes, Executor, OutcomeReceiver, CallEventCallback)}
- * and controlled by {@link CallControl} or {@link CallEventCallback}.
+ * {@link TelecomManager#addCall(CallAttributes,
+ * Executor,
+ * OutcomeReceiver,
+ * CallControlCallback,
+ * CallEventCallback)
+ * }
+ * and controlled by {@link CallControl} or {@link CallControlCallback}.
  */
 public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
@@ -86,20 +92,18 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     // inner classes
 
     /**
-     * simulates a VoIP app construct of a Call object that accepts every CallEventCallback
+     * simulates a VoIP app construct of a Call object that accepts every
+     * {@link CallControlCallback}
      */
-    private static class TestVoipCall implements CallEventCallback {
-        private static final String TAG = "MyVoipCall";
+    private class TelecomCtsVoipCall {
+        private static final String TAG = "TelecomCtsVoipCall";
         private final String mCallId;
         private String mTelecomCallId = "";
         CallControl mCallControl;
-        private CallEndpoint mCallEndpoint;
-        private List<CallEndpoint> mAvailableEndpoints;
-        private boolean mIsMuted = false;
-        public boolean mWasMuteStateChangedCalled = false;
 
-        TestVoipCall(String id) {
+        TelecomCtsVoipCall(String id) {
             mCallId = id;
+            mEvents.mCallId = id;
         }
 
         public String getTelecomCallId() {
@@ -111,35 +115,55 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             mTelecomCallId = callControl.getCallId().toString();
         }
 
-        @Override
-        public void onSetActive(@NonNull Consumer<Boolean> wasCompleted) {
-            Log.i(TAG, String.format("onSetActive: callId=[%s]", mCallId));
-            wasCompleted.accept(Boolean.TRUE);
-        }
+        public CallControlCallback mHandshakes = new CallControlCallback() {
+            @Override
+            public void onSetActive(@NonNull Consumer<Boolean> wasCompleted) {
+                Log.i(TAG, String.format("onSetActive: callId=[%s]", mCallId));
+                wasCompleted.accept(Boolean.TRUE);
+            }
 
-        @Override
-        public void onSetInactive(@NonNull Consumer<Boolean> wasCompleted) {
-            Log.i(TAG, String.format("onSetInactive: callId=[%s]", mCallId));
-            wasCompleted.accept(Boolean.TRUE);
-        }
+            @Override
+            public void onSetInactive(@NonNull Consumer<Boolean> wasCompleted) {
+                Log.i(TAG, String.format("onSetInactive: callId=[%s]", mCallId));
+                wasCompleted.accept(Boolean.TRUE);
+            }
 
-        @Override
-        public void onAnswer(int videoState, @NonNull Consumer<Boolean> wasCompleted) {
-            Log.i(TAG, String.format("onAnswer: callId=[%s]", mCallId));
-            wasCompleted.accept(Boolean.TRUE);
-        }
+            @Override
+            public void onAnswer(int videoState, @NonNull Consumer<Boolean> wasCompleted) {
+                Log.i(TAG, String.format("onAnswer: callId=[%s]", mCallId));
+                wasCompleted.accept(Boolean.TRUE);
+            }
 
-        @Override
-        public void onReject(@NonNull Consumer<Boolean> wasCompleted) {
-            Log.i(TAG, String.format("onReject: callId=[%s]", mCallId));
-            wasCompleted.accept(Boolean.TRUE);
-        }
+            @Override
+            public void onReject(@NonNull Consumer<Boolean> wasCompleted) {
+                Log.i(TAG, String.format("onReject: callId=[%s]", mCallId));
+                wasCompleted.accept(Boolean.TRUE);
+            }
 
-        @Override
-        public void onDisconnect(@NonNull Consumer<Boolean> wasCompleted) {
-            Log.i(TAG, String.format("onDisconnect: callId=[%s]", mCallId));
-            wasCompleted.accept(Boolean.TRUE);
+            @Override
+            public void onDisconnect(@NonNull Consumer<Boolean> wasCompleted) {
+                Log.i(TAG, String.format("onDisconnect: callId=[%s]", mCallId));
+                wasCompleted.accept(Boolean.TRUE);
+            }
+
+            @Override
+            public void onCallStreamingStarted(@NonNull Consumer<Boolean> wasCompleted) {
+                Log.i(TAG, String.format("onCallStreamingStarted: callId=[%s]", mCallId));
+            }
+        };
+        public CallEvent mEvents = new CallEvent();
+
+        public void resetAllCallbackVerifiers() {
+            mEvents.resetAllCallbackVerifiers();
         }
+    }
+
+    public class CallEvent implements CallEventCallback {
+        public String mCallId = "";
+        private CallEndpoint mCallEndpoint;
+        private List<CallEndpoint> mAvailableEndpoints;
+        private boolean mIsMuted = false;
+        public boolean mWasMuteStateChangedCalled = false;
 
         @Override
         public void onCallEndpointChanged(@NonNull CallEndpoint newCallEndpoint) {
@@ -163,23 +187,6 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             mWasMuteStateChangedCalled = true;
         }
 
-        public final CallEndpoint getCurrentCallEndpoint() {
-            return mCallEndpoint;
-        }
-
-        public final List<CallEndpoint> getAvailableEndpoints() {
-            return mAvailableEndpoints;
-        }
-
-        public final boolean isMuted() {
-            return mIsMuted;
-        }
-
-        @Override
-        public void onCallStreamingStarted(@NonNull Consumer<Boolean> wasCompleted) {
-            Log.i(TAG, String.format("onCallStreamingStarted: callId=[%s]", mCallId));
-        }
-
         @Override
         public void onCallStreamingFailed(int reason) {
             Log.i(TAG, String.format("onCallStreamingFailed: callId=[%s], reason=[%s]", mCallId,
@@ -188,6 +195,18 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
         public void resetAllCallbackVerifiers() {
             mWasMuteStateChangedCalled = false;
+        }
+
+        public CallEndpoint getCurrentCallEndpoint() {
+            return mCallEndpoint;
+        }
+
+        public List<CallEndpoint> getAvailableEndpoints() {
+            return mAvailableEndpoints;
+        }
+
+        public boolean isMuted() {
+            return mIsMuted;
         }
     }
 
@@ -235,8 +254,8 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     private static final String OUTGOING_CALL_ID = "1";
     private static final String INCOMING_CALL_ID = "2";
 
-    private final TestVoipCall mCall1 = new TestVoipCall(OUTGOING_CALL_ID);
-    private final TestVoipCall mCall2 = new TestVoipCall(INCOMING_CALL_ID);
+    private final TelecomCtsVoipCall mCall1 = new TelecomCtsVoipCall(OUTGOING_CALL_ID);
+    private final TelecomCtsVoipCall mCall2 = new TelecomCtsVoipCall(INCOMING_CALL_ID);
 
     @Override
     public void setUp() throws Exception {
@@ -297,7 +316,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
                 public void onResult(CallControl result) {
                     fail("test should never execute onResult");
                 }
-            }, mCall1);
+            }, mCall1.mHandshakes, mCall1.mEvents);
             fail("test should have thrown an exception already");
         } catch (Exception e) {
             // test passes
@@ -480,7 +499,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
 
     /**
-     * Ensure {@link CallEventCallback#onReject} is being called and destroying the call.
+     * Ensure {@link CallControlCallback#onReject} is being called and destroying the call.
      */
     public void testAddIncomingCallAndRejectWithCallEventCallback() {
         if (!mShouldTestTelecom) {
@@ -499,7 +518,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
-     * Ensure {@link CallEventCallback#onAnswer(int, OutcomeReceiver)} is being called
+     * Ensure {@link CallControlCallback#onAnswer(int, Consumer)} is being called
      * and setting the call to active.
      */
     public void testAddIncomingCallOnAnswer() {
@@ -626,7 +645,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         }
         try {
             cleanup();
-            assertNull(mCall1.getCurrentCallEndpoint());
+            assertNull(mCall1.mEvents.getCurrentCallEndpoint());
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
             verifyCallEndpointIsNotNull(mCall1);
             callControlAction(DISCONNECT, mCall1);
@@ -645,7 +664,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         }
         try {
             cleanup();
-            assertNull(mCall1.getAvailableEndpoints());
+            assertNull(mCall1.mEvents.getAvailableEndpoints());
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
             verifyOnAvailableEndpointsIsNotNull(mCall1);
             callControlAction(DISCONNECT, mCall1);
@@ -665,7 +684,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         try {
             cleanup();
             mCall1.resetAllCallbackVerifiers();
-            assertFalse(mCall1.mWasMuteStateChangedCalled);
+            assertFalse(mCall1.mEvents.mWasMuteStateChangedCalled);
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
             verifyMuteStateCallbackWasCalled(true, mCall1);
             callControlAction(DISCONNECT, mCall1);
@@ -689,10 +708,10 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             startCallWithAttributesAndVerify(mIncomingCallAttributes, mCall1);
             // verify there is at least one endpoint that is non-null
             verifyCallEndpointIsNotNull(mCall1);
-            int startingEndpointType = mCall1.getCurrentCallEndpoint().getEndpointType();
+            int startingEndpointType = mCall1.mEvents.getCurrentCallEndpoint().getEndpointType();
 
             // query the current endpoints
-            List<CallEndpoint> endpoints = mCall1.getAvailableEndpoints();
+            List<CallEndpoint> endpoints = mCall1.mEvents.getAvailableEndpoints();
             // if another endpoint is available, request a switch
             if (endpoints.size() > 1) {
                 // iterate the other endpoints until an endpoint other than the startingEndpointType
@@ -717,7 +736,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         }
     }
 
-    public void verifyCallEndpointIsNotNull(TestVoipCall call) {
+    public void verifyCallEndpointIsNotNull(TelecomCtsVoipCall call) {
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
                     @Override
@@ -727,13 +746,13 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
                     @Override
                     public Object actual() {
-                        return call.getCurrentCallEndpoint() != null;
+                        return call.mEvents.getCurrentCallEndpoint() != null;
                     }
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, FAIL_MSG_ON_CALL_ENDPOINT_UPDATE);
     }
 
-    public void verifyOnAvailableEndpointsIsNotNull(TestVoipCall call) {
+    public void verifyOnAvailableEndpointsIsNotNull(TelecomCtsVoipCall call) {
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
                     @Override
@@ -743,13 +762,13 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
                     @Override
                     public Object actual() {
-                        return call.getAvailableEndpoints() != null;
+                        return call.mEvents.getAvailableEndpoints() != null;
                     }
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, FAIL_MSG_ON_AVAILABLE_ENDPOINTS_UPDATE);
     }
 
-    public void verifyMuteStateCallbackWasCalled(boolean expected, TestVoipCall call) {
+    public void verifyMuteStateCallbackWasCalled(boolean expected, TelecomCtsVoipCall call) {
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
                     @Override
@@ -759,13 +778,13 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
                     @Override
                     public Object actual() {
-                        return call.mWasMuteStateChangedCalled;
+                        return call.mEvents.mWasMuteStateChangedCalled;
                     }
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, FAIL_MSG_ON_MUTE_STATE_CHANGED);
     }
 
-    public void requestAndAssertEndpointChange(TestVoipCall call, CallEndpoint endpoint) {
+    public void requestAndAssertEndpointChange(TelecomCtsVoipCall call, CallEndpoint endpoint) {
         final CountDownLatch latch = new CountDownLatch(1);
         final LatchedOutcomeReceiver outcome = new LatchedOutcomeReceiver(latch);
 
@@ -794,7 +813,8 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         }
     }
 
-    public String startCallWithAttributesAndVerify(CallAttributes attributes, TestVoipCall call) {
+    public String startCallWithAttributesAndVerify(CallAttributes attributes,
+            TelecomCtsVoipCall call) {
         final CountDownLatch latch = new CountDownLatch(1);
 
         mTelecomManager.addCall(attributes, Runnable::run, new OutcomeReceiver<>() {
@@ -814,7 +834,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             public void onError(CallException exception) {
                 Log.i(TAG, "testRegisterApp: onError");
             }
-        }, call);
+        }, call.mHandshakes, call.mEvents);
 
         assertOnResultWasReceived(latch);
 
@@ -822,7 +842,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     }
 
 
-    public void callControlAction(String action, TestVoipCall call, Object... objects) {
+    public void callControlAction(String action, TelecomCtsVoipCall call, Object... objects) {
         final CountDownLatch latch = new CountDownLatch(1);
         final LatchedOutcomeReceiver outcome = new LatchedOutcomeReceiver(latch);
         DisconnectCause disconnectCause = new DisconnectCause(DisconnectCause.LOCAL);

@@ -16,6 +16,7 @@
 
 package android.cts.statsdatom.lib;
 
+import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -313,7 +314,7 @@ public final class DeviceUtils {
             @Nullable String actionKey, @Nullable String actionValue, long waitTimeMs)
             throws Exception {
         try (AutoCloseable a = withActivity(device, pkgName, activity, actionKey, actionValue)) {
-            Thread.sleep(waitTimeMs);
+            RunUtil.getDefault().sleep(waitTimeMs);
         }
     }
 
@@ -345,7 +346,7 @@ public final class DeviceUtils {
 
         return () -> {
             device.executeShellCommand("am force-stop " + pkgName);
-            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+            RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
         };
     }
 

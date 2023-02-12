@@ -94,9 +94,6 @@ public class BluetoothLeBroadcastSettingsTest {
     @After
     public void tearDown() {
         if (mHasBluetooth) {
-            if (mAdapter != null) {
-                assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-            }
             mAdapter = null;
             TestUtils.dropPermissionAsShellUid();
         }
@@ -107,10 +104,14 @@ public class BluetoothLeBroadcastSettingsTest {
         if (shouldSkipTest()) {
             return;
         }
+        BluetoothLeAudioContentMetadata publicBroadcastMetadata =
+                new BluetoothLeAudioContentMetadata.Builder()
+                        .setProgramInfo(TEST_PROGRAM_INFO).build();
         BluetoothLeBroadcastSettings.Builder builder = new BluetoothLeBroadcastSettings.Builder()
                         .setPublicBroadcast(false)
                         .setBroadcastName(TEST_BROADCAST_NAME)
-                        .setBroadcastCode(null);
+                        .setBroadcastCode(null)
+                        .setPublicBroadcastMetadata(publicBroadcastMetadata);
         // builder expect at least one subgroup
         assertThrows(IllegalArgumentException.class, builder::build);
         BluetoothLeBroadcastSubgroupSettings[] subgroupSettings =
@@ -124,6 +125,7 @@ public class BluetoothLeBroadcastSettingsTest {
         assertFalse(broadcastSettings.isPublicBroadcast());
         assertEquals(TEST_BROADCAST_NAME, broadcastSettings.getBroadcastName());
         assertNull(broadcastSettings.getBroadcastCode());
+        assertEquals(publicBroadcastMetadata, broadcastSettings.getPublicBroadcastMetadata());
         assertArrayEquals(subgroupSettings,
                 broadcastSettings.getSubgroupSettings()
                 .toArray(new BluetoothLeBroadcastSubgroupSettings[0]));
@@ -137,11 +139,15 @@ public class BluetoothLeBroadcastSettingsTest {
         if (shouldSkipTest()) {
             return;
         }
+        BluetoothLeAudioContentMetadata publicBroadcastMetadata =
+                new BluetoothLeAudioContentMetadata.Builder()
+                        .setProgramInfo(TEST_PROGRAM_INFO).build();
         BluetoothLeBroadcastSettings.Builder builder =
                         new BluetoothLeBroadcastSettings.Builder()
                         .setPublicBroadcast(false)
                         .setBroadcastName(TEST_BROADCAST_NAME)
-                        .setBroadcastCode(null);
+                        .setBroadcastCode(null)
+                        .setPublicBroadcastMetadata(publicBroadcastMetadata);
         // builder expect at least one subgroup
         assertThrows(IllegalArgumentException.class, builder::build);
         BluetoothLeBroadcastSubgroupSettings[] subgroupSettings =
@@ -157,6 +163,7 @@ public class BluetoothLeBroadcastSettingsTest {
         assertFalse(broadcastSettingsCopy.isPublicBroadcast());
         assertEquals(TEST_BROADCAST_NAME, broadcastSettingsCopy.getBroadcastName());
         assertNull(broadcastSettingsCopy.getBroadcastCode());
+        assertEquals(publicBroadcastMetadata, broadcastSettingsCopy.getPublicBroadcastMetadata());
         assertArrayEquals(subgroupSettings,
                 broadcastSettingsCopy.getSubgroupSettings()
                 .toArray(new BluetoothLeBroadcastSubgroupSettings[0]));

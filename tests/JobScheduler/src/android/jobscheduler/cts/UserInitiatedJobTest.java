@@ -62,21 +62,30 @@ public class UserInitiatedJobTest {
 
     @Test
     public void testJobUidState() throws Exception {
-        // Turn screen off so any lingering activity close processing from previous tests
-        // don't affect this one.
-        ScreenUtils.setScreenOn(false);
-        mTestAppInterface.scheduleJob(
-                Map.of(
-                        TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true,
-                        TestJobSchedulerReceiver.EXTRA_REQUEST_JOB_UID_STATE, true
-                ),
-                Collections.emptyMap());
-        mTestAppInterface.forceRunJob();
-        assertTrue("Job did not start after scheduling",
-                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
-        mTestAppInterface.assertJobUidState(ActivityManager.PROCESS_STATE_IMPORTANT_FOREGROUND,
-                ActivityManager.PROCESS_CAPABILITY_NETWORK,
-                201 /* ProcessList.PERCEPTIBLE_APP_ADJ + 1 */);
+        // Go through the notification click/BAL route of scheduling the job so the proc state
+        // data comes from being elevated by the running job and not because of the app being
+        // in a higher state.
+        try (TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(
+                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            // Close the activity so the app isn't considered TOP.
+            mTestAppInterface.closeActivity(true);
+            mTestAppInterface.postUiInitiatingNotification(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true,
+                            TestJobSchedulerReceiver.EXTRA_REQUEST_JOB_UID_STATE, true
+                    ),
+                    Collections.emptyMap());
+
+            // Clicking on the notification should put the app into a BAL approved state.
+            notificationHelper.clickNotification();
+
+            assertTrue("Job did not start after scheduling",
+                    mTestAppInterface.awaitJobStart(2 * DEFAULT_WAIT_TIMEOUT_MS));
+            mTestAppInterface.assertJobUidState(ActivityManager.PROCESS_STATE_IMPORTANT_FOREGROUND,
+                    ActivityManager.PROCESS_CAPABILITY_NETWORK,
+                    201 /* ProcessList.PERCEPTIBLE_APP_ADJ + 1 */);
+        }
     }
 
     /** Test that UIJs for the TOP app start immediately and there is no limit on the number. */

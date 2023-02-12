@@ -15,6 +15,7 @@
  */
 package android.host.multiuser;
 
+import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
@@ -210,7 +211,7 @@ public abstract class BaseMultiUserTest extends BaseHostJUnit4Test {
                     return true;
                 }
             }
-            Thread.sleep(LOGCAT_POLL_INTERVAL_MS);
+            RunUtil.getDefault().sleep(LOGCAT_POLL_INTERVAL_MS);
         }
         return false;
     }
@@ -243,7 +244,7 @@ public abstract class BaseMultiUserTest extends BaseHostJUnit4Test {
                 }
                 return true;
             }
-            Thread.sleep(LOGCAT_POLL_INTERVAL_MS);
+            RunUtil.getDefault().sleep(LOGCAT_POLL_INTERVAL_MS);
         }
         return false;
     }

@@ -16,6 +16,7 @@
 
 package android.compilation.cts;
 
+import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
@@ -225,7 +226,7 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
         executeShellCommand(CMD_DELETE_ODEX);
         executeShellCommand(CMD_APP_ACTIVITY_LAUNCH);
         // Give short time to run some code.
-        Thread.sleep(500);
+        RunUtil.getDefault().sleep(500);
     }
 
     private boolean checkDexOptEnabled() throws Exception {
@@ -329,7 +330,7 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
             } catch (TimeoutException e) {
                 // DUMP TIMEOUT has happened. Ignore it as we have to retry.
             }
-            Thread.sleep(POLLING_TIME_SLICE);
+            RunUtil.getDefault().sleep(POLLING_TIME_SLICE);
         }
         fail(message.toString() + getLastStatusDump());
     }

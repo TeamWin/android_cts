@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.notifications;
 
+
 import static android.app.Notification.VISIBILITY_PRIVATE;
 import static android.app.Notification.VISIBILITY_PUBLIC;
 import static android.app.Notification.VISIBILITY_SECRET;
@@ -24,13 +25,11 @@ import static android.app.NotificationManager.VISIBILITY_NO_OVERRIDE;
 import static android.provider.Settings.EXTRA_APP_PACKAGE;
 import static android.provider.Settings.EXTRA_CHANNEL_ID;
 
-import android.annotation.SuppressLint;
 import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -45,26 +44,21 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A verifier test which validates the lockscreen behaviors of notifications under various settings
+ * A verifier test which validates dismissal behaviour of notifications under various settings
  */
-public class NotificationPrivacyVerifierActivity extends InteractiveVerifierActivity
+public class NotificationDismissVerifierActivity extends InteractiveVerifierActivity
         implements Runnable {
-    static final String TAG = "NotifPrivacyVerifier";
+    static final String TAG = "NotifDismissVerifier";
     private static final String NOTIFICATION_CHANNEL_ID = TAG;
 
     @Override
-    protected void onCreate(Bundle savedState) {
-        super.onCreate(savedState);
-    }
-
-    @Override
     protected int getTitleResource() {
-        return R.string.notif_privacy_test;
+        return R.string.nd_test;
     }
 
     @Override
     protected int getInstructionsResource() {
-        return R.string.notif_privacy_info;
+        return R.string.nd_test_info;
     }
 
     private int getChannelVisibility() {
@@ -100,38 +94,34 @@ public class NotificationPrivacyVerifierActivity extends InteractiveVerifierActi
                 Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS, 0) != 0;
     }
 
-
-    // Test Setup
-
     @Override
     protected List<InteractiveTestCase> createTestItems() {
         boolean isAutomotive = getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_AUTOMOTIVE);
         List<InteractiveTestCase> tests = new ArrayList<>();
         if (!isAutomotive) {
+
             // FIRST: set redaction settings
             tests.add(new SetScreenLockEnabledStep());
             tests.add(new SetGlobalVisibilityPublicStep());
             tests.add(new SetChannelLockscreenVisibilityPrivateStep());
-            // NOW TESTING: redacted by channel
-            tests.add(new NotificationWhenLockedShowsRedactedTest());
-            tests.add(new NotificationWhenOccludedShowsRedactedTest());
+
+            // NOW TESTING: Ongoing Notification CAN be dismissed when unlocked
+            tests.add(new CanDismissOngoingNotificationTest());
+
+            // NOW TESTING: Ongoing Notification can NOT be dismissed on lockscreen
+            tests.add(new CannotDismissOngoingNotificationTest());
+
+            // NOW TESTING: Notification redacted by channel CAN be dismissed on the lockscreen
+            tests.add(new CanDismissRegularNotificationTest());
 
             tests.add(new SetChannelLockscreenVisibilityPublicStep());
-            // NOW TESTING: not redacted at all
-            tests.add(new SecureActionOnLockScreenTest());
-            tests.add(new NotificationWhenLockedShowsPrivateTest());
-            tests.add(new NotificationWhenOccludedShowsPrivateTest());
+            // NOW TESTING: Notifications not redacted at all CAN be dismissed on the lockscreen
+            tests.add(new CanDismissRegularNotificationTest());
 
             tests.add(new SetGlobalVisibilityPrivateStep());
-            // NOW TESTING: redacted globally
-            tests.add(new NotificationWhenLockedShowsRedactedTest());
-            tests.add(new NotificationWhenOccludedShowsRedactedTest());
-
-            tests.add(new SetGlobalVisibilitySecretStep());
-            // NOW TESTING: notifications do not appear
-            tests.add(new NotificationWhenLockedIsHiddenTest());
-            tests.add(new NotificationWhenOccludedIsHiddenTest());
+            // NOW TESTING: Notification redacted globally can NOT be dismissed on the lockscreen
+            tests.add(new CannotDismissRegularNotificationTest());
 
             // FINALLY: restore device state
             tests.add(new SetScreenLockDisabledStep());
@@ -149,26 +139,131 @@ public class NotificationPrivacyVerifierActivity extends InteractiveVerifierActi
         mNm.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
     }
 
-    @SuppressLint("NewApi")
-    private void sendNotification() {
+    private void sendOngoingNotification() {
+        String tag = UUID.randomUUID().toString();
+        long when = System.currentTimeMillis();
+        Log.d(TAG, "Sending: tag=" + tag + " when=" + when + " ongoing=true");
+
+        Notification ongoingNotif = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle(getString(R.string.nd_notif_title))
+                .setSmallIcon(R.drawable.ic_stat_alice)
+                .setWhen(when)
+                .setOngoing(true)
+                .build();
+        mNm.notify(tag, NOTIFICATION_ID, ongoingNotif);
+    }
+
+    private void sendNotificationWithPublicVersion() {
         String tag = UUID.randomUUID().toString();
         long when = System.currentTimeMillis();
         Log.d(TAG, "Sending: tag=" + tag + " when=" + when);
 
-        mPackageString = "com.android.cts.verifier";
-
         Notification publicVersion = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle(getString(R.string.np_public_version_text))
+                .setContentTitle(getString(R.string.nd_notif_public_version_title))
                 .setSmallIcon(R.drawable.ic_stat_alice)
                 .setWhen(when)
                 .build();
         Notification privateVersion = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle(getString(R.string.np_private_version_text))
+                .setContentTitle(getString(R.string.nd_notif_private_version_title))
                 .setSmallIcon(R.drawable.ic_stat_alice)
                 .setWhen(when)
                 .setPublicVersion(publicVersion)
                 .build();
+
         mNm.notify(tag, NOTIFICATION_ID, privateVersion);
+    }
+
+    private abstract class NotificationDismissBaseTest extends InteractiveTestCase {
+        private View mView;
+        @StringRes
+        private final int mInstructionRes;
+
+        NotificationDismissBaseTest(@StringRes int instructionRes) {
+            mInstructionRes = instructionRes;
+        }
+
+        @Override
+        protected void setUp() {
+            createChannels();
+            sendNotification();
+            setButtonsEnabled(mView, true);
+            status = READY;
+            next();
+        }
+
+        @Override
+        protected void tearDown() {
+            mNm.cancelAll();
+            deleteChannels();
+            delay();
+        }
+
+        @Override
+        protected View inflate(ViewGroup parent) {
+            mView = createPassFailItem(parent, mInstructionRes);
+            setButtonsEnabled(mView, false);
+            return mView;
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            status = WAIT_FOR_USER;
+            next();
+        }
+
+        protected abstract void sendNotification();
+    }
+
+    private class CanDismissOngoingNotificationTest extends NotificationDismissBaseTest {
+
+        CanDismissOngoingNotificationTest() {
+            super(R.string.dismiss_notif_from_the_shade);
+        }
+
+        @Override
+        protected void sendNotification() {
+            sendOngoingNotification();
+        }
+    }
+
+    private class CannotDismissOngoingNotificationTest extends NotificationDismissBaseTest {
+
+        CannotDismissOngoingNotificationTest() {
+            super(R.string.non_dismissable_notif_from_the_ls);
+        }
+
+        @Override
+        protected void sendNotification() {
+            sendOngoingNotification();
+        }
+    }
+
+    private class CanDismissRegularNotificationTest extends NotificationDismissBaseTest {
+
+        CanDismissRegularNotificationTest() {
+            super(R.string.dismiss_notif_from_the_ls);
+        }
+
+        @Override
+        protected void sendNotification() {
+            sendNotificationWithPublicVersion();
+        }
+    }
+
+    private class CannotDismissRegularNotificationTest extends NotificationDismissBaseTest {
+        CannotDismissRegularNotificationTest() {
+            super(R.string.non_dismissable_notif_from_the_ls);
+        }
+
+        @Override
+        protected void sendNotification() {
+            sendNotificationWithPublicVersion();
+        }
     }
 
     /**
@@ -367,183 +462,6 @@ public class NotificationPrivacyVerifierActivity extends InteractiveVerifierActi
     private class SetGlobalVisibilityPrivateStep extends SetGlobalVisibilityBaseStep {
         private SetGlobalVisibilityPrivateStep() {
             super(R.string.set_global_visibility_private, VISIBILITY_PRIVATE);
-        }
-    }
-
-    private class SetGlobalVisibilitySecretStep extends SetGlobalVisibilityBaseStep {
-        private SetGlobalVisibilitySecretStep() {
-            super(R.string.set_global_visibility_secret, VISIBILITY_SECRET);
-        }
-    }
-
-    private class SecureActionOnLockScreenTest extends InteractiveTestCase {
-        private View mView;
-
-        @Override
-        protected void setUp() {
-            createChannels();
-            ActionTriggeredReceiver.sendNotification(mContext, true);
-            setButtonsEnabled(mView, true);
-            status = READY;
-            next();
-        }
-
-        @Override
-        protected void tearDown() {
-            mNm.cancelAll();
-            deleteChannels();
-            delay();
-        }
-
-        @Override
-        protected View inflate(ViewGroup parent) {
-            mView = createPassFailItem(parent, R.string.secure_action_lockscreen);
-            setButtonsEnabled(mView, false);
-            return mView;
-        }
-
-        @Override
-        boolean autoStart() {
-            return true;
-        }
-
-        @Override
-        protected void test() {
-            status = WAIT_FOR_USER;
-            next();
-        }
-    }
-
-    private abstract class NotificationPrivacyBaseTest extends InteractiveTestCase {
-        private View mView;
-        @StringRes
-        private final int mInstructionRes;
-
-        NotificationPrivacyBaseTest(@StringRes int instructionRes) {
-            mInstructionRes = instructionRes;
-        }
-
-        @Override
-        protected void setUp() {
-            createChannels();
-            sendNotification();
-            setButtonsEnabled(mView, true);
-            status = READY;
-            next();
-        }
-
-        @Override
-        protected void tearDown() {
-            mNm.cancelAll();
-            deleteChannels();
-            delay();
-        }
-
-        @Override
-        protected View inflate(ViewGroup parent) {
-            mView = createPassFailItem(parent, mInstructionRes);
-            setButtonsEnabled(mView, false);
-            return mView;
-        }
-
-        @Override
-        boolean autoStart() {
-            return true;
-        }
-
-        @Override
-        protected void test() {
-            status = WAIT_FOR_USER;
-            next();
-        }
-    }
-
-    private class NotificationWhenLockedShowsRedactedTest extends NotificationPrivacyBaseTest {
-        NotificationWhenLockedShowsRedactedTest() {
-            super(R.string.np_when_locked_see_redacted);
-        }
-    }
-
-    private class NotificationWhenLockedShowsPrivateTest extends NotificationPrivacyBaseTest {
-        NotificationWhenLockedShowsPrivateTest() {
-            super(R.string.np_when_locked_see_private);
-        }
-    }
-
-    private class NotificationWhenLockedIsHiddenTest extends NotificationPrivacyBaseTest {
-        NotificationWhenLockedIsHiddenTest() {
-            super(R.string.np_when_locked_hidden);
-        }
-    }
-
-    private abstract class NotificationWhenOccludedBaseTest extends InteractiveTestCase {
-        private View mView;
-        @StringRes
-        private final int mInstructionRes;
-
-        NotificationWhenOccludedBaseTest(@StringRes int instructionRes) {
-            mInstructionRes = instructionRes;
-        }
-
-        @Override
-        protected void setUp() {
-            createChannels();
-            sendNotification();
-            setButtonsEnabled(mView, true);
-            status = READY;
-            next();
-        }
-
-        @Override
-        protected void tearDown() {
-            mNm.cancelAll();
-            deleteChannels();
-            delay();
-        }
-
-        @Override
-        protected View inflate(ViewGroup parent) {
-            mView = createUserAndPassFailItem(
-                    parent, R.string.np_start_occluding, R.string.np_occluding_instructions);
-            setButtonsEnabled(mView, false);
-            return mView;
-        }
-
-        @Override
-        boolean autoStart() {
-            return true;
-        }
-
-        @Override
-        protected void test() {
-            status = WAIT_FOR_USER;
-            next();
-        }
-
-        @Override
-        protected Intent getIntent() {
-            return ShowWhenLockedActivity.makeActivityIntent(
-                    getApplicationContext(), getString(mInstructionRes));
-        }
-    }
-
-    private class NotificationWhenOccludedShowsRedactedTest extends
-            NotificationWhenOccludedBaseTest {
-        NotificationWhenOccludedShowsRedactedTest() {
-            super(R.string.np_occluding_see_redacted);
-        }
-    }
-
-    private class NotificationWhenOccludedShowsPrivateTest extends
-            NotificationWhenOccludedBaseTest {
-        NotificationWhenOccludedShowsPrivateTest() {
-            super(R.string.np_occluding_see_private);
-        }
-    }
-
-    private class NotificationWhenOccludedIsHiddenTest extends NotificationWhenOccludedBaseTest {
-        NotificationWhenOccludedIsHiddenTest() {
-            super(R.string.np_occluding_hidden);
         }
     }
 }

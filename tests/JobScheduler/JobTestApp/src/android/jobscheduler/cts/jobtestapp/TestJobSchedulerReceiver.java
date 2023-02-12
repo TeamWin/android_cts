@@ -16,6 +16,10 @@
 
 package android.jobscheduler.cts.jobtestapp;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.BroadcastReceiver;
@@ -32,6 +36,7 @@ import android.util.Log;
 public class TestJobSchedulerReceiver extends BroadcastReceiver {
     private static final String TAG = TestJobSchedulerReceiver.class.getSimpleName();
     private static final String PACKAGE_NAME = "android.jobscheduler.cts.jobtestapp";
+    private static final String NOTIFICATION_CHANNEL_ID = TAG + "_channel";
 
     public static final String ACTION_JOB_SCHEDULE_RESULT =
             PACKAGE_NAME + ".action.SCHEDULE_RESULT";
@@ -47,10 +52,15 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
             PACKAGE_NAME + ".extra.REQUEST_JOB_UID_STATE";
     public static final String ACTION_SCHEDULE_JOB = PACKAGE_NAME + ".action.SCHEDULE_JOB";
     public static final String ACTION_CANCEL_JOBS = PACKAGE_NAME + ".action.CANCEL_JOBS";
+    public static final String ACTION_POST_UI_INITIATING_NOTIFICATION =
+            PACKAGE_NAME + ".action.POST_UI_INITIATING_NOTIFICATION";
+    public static final String ACTION_NOTIFICATION_POSTED =
+            PACKAGE_NAME + ".action.NOTIFICATION_POSTED";
     public static final int JOB_INITIAL_BACKOFF = 10_000;
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        Log.d(TAG, "Processing intent: " + intent.getAction());
         final ComponentName jobServiceComponent = new ComponentName(context, TestJobService.class);
         final JobScheduler jobScheduler = context.getSystemService(JobScheduler.class);
         switch (intent.getAction()) {
@@ -85,8 +95,35 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                 }
 
                 final Intent scheduleJobResultIntent = new Intent(ACTION_JOB_SCHEDULE_RESULT);
+                scheduleJobResultIntent.putExtra(EXTRA_JOB_ID_KEY, jobId);
                 scheduleJobResultIntent.putExtra(EXTRA_SCHEDULE_RESULT, result);
                 context.sendBroadcast(scheduleJobResultIntent);
+                break;
+            case ACTION_POST_UI_INITIATING_NOTIFICATION:
+                NotificationManager notificationManager =
+                        context.getSystemService(NotificationManager.class);
+                NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
+                        TestJobSchedulerReceiver.class.getSimpleName(),
+                        NotificationManager.IMPORTANCE_DEFAULT);
+                notificationManager.createNotificationChannel(channel);
+
+                final Intent scheduleJobIntent = new Intent(intent);
+                scheduleJobIntent.setAction(ACTION_SCHEDULE_JOB);
+
+                final PendingIntent scheduleJobPendingIntent = PendingIntent.getBroadcast(
+                        context, 1, scheduleJobIntent,
+                        PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+                Notification notification =
+                        new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
+                                .setContentTitle("Test title")
+                                .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+                                .setContentText("Click to start UI job!")
+                                .setContentIntent(scheduleJobPendingIntent)
+                                .build();
+                notificationManager.notify(0, notification);
+
+                final Intent completionIntent = new Intent(ACTION_NOTIFICATION_POSTED);
+                context.sendBroadcast(completionIntent);
                 break;
             default:
                 Log.e(TAG, "Unknown action " + intent.getAction());

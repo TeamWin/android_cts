@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import com.android.tradefed.util.RunUtil;
 import static android.stats.devicepolicy.EventId.ADD_CROSS_PROFILE_WIDGET_PROVIDER_VALUE;
 import static android.stats.devicepolicy.EventId.REMOVE_CROSS_PROFILE_WIDGET_PROVIDER_VALUE;
 import static android.stats.devicepolicy.EventId.SET_CROSS_PROFILE_CALENDAR_PACKAGES_VALUE;
@@ -209,7 +210,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                     + " --package " + WIDGET_PROVIDER_PKG);
             setIdleAllowlist(WIDGET_PROVIDER_PKG, true);
             startWidgetHostService();
-            Thread.sleep(500);
+            RunUtil.getDefault().sleep(500);
 
             String commandOutput = changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG,
                     "add-cross-profile-widget", mProfileUserId);

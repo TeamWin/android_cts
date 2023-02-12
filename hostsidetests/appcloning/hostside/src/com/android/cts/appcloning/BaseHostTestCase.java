@@ -24,6 +24,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.function.BooleanSupplier;
 
@@ -77,11 +78,7 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
 
     protected static void throwExceptionIfTimeout(long start, long timeoutMillis, Throwable e) {
         if (System.currentTimeMillis() - start < timeoutMillis) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ignored) {
-                throw new RuntimeException(e);
-            }
+            RunUtil.getDefault().sleep(100);
         } else {
             throw new RuntimeException(e);
         }
