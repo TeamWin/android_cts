@@ -231,7 +231,7 @@ public class TestShareIdentityActivity extends Activity {
         } else {
             broadcastIntent.setAction(TEST_BROADCAST_RUNTIME_ACTION);
         }
-        BroadcastOptions broadcastOptions = BroadcastOptions.makeBasic();
+        BroadcastOptions broadcastOptions = new BroadcastOptions();
         broadcastOptions.setShareIdentityEnabled(shareIdentity);
         if (useOptions) {
             if (orderedBroadcast) {
