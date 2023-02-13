@@ -60,7 +60,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
         DeviceConfigStateChangerRule(
             context,
             DeviceConfig.NAMESPACE_PRIVACY,
-            PLACEHOLDER_SAFETY_LABEL_UPDATES_FLAG,
+            PLACEHOLDER_SAFETY_LABEL_UPDATES_ENABLED,
             false.toString())
 
     @get:Rule
@@ -124,7 +124,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     @Test
     fun startActivityWithIntent_featuresEnabled_withPlaceholderData_showUpdates() {
-        setDeviceConfigPrivacyProperty(PLACEHOLDER_SAFETY_LABEL_UPDATES_FLAG, true.toString())
+        setDeviceConfigPrivacyProperty(PLACEHOLDER_SAFETY_LABEL_UPDATES_ENABLED, true.toString())
 
         startAppDataSharingUpdatesActivity()
 
@@ -254,8 +254,8 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     /** Companion object for [AppDataSharingUpdatesTest]. */
     companion object {
-        private const val PLACEHOLDER_SAFETY_LABEL_UPDATES_FLAG =
-            "placeholder_safety_label_updates_flag"
+        private const val PLACEHOLDER_SAFETY_LABEL_UPDATES_ENABLED =
+            "placeholder_safety_label_updates_enabled"
         private const val EXPECTED_HELP_CENTER_URL =
             "https://support.google.com/android?p=data_sharing"
     }

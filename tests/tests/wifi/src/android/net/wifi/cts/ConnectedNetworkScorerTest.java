@@ -343,6 +343,9 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                     int[] links = statsEntry.getLinkIds();
                     if (links != null) {
                         for (int link : links) {
+                            assertThat(statsEntry.getLinkState(link)).isIn(Range.closed(
+                                    WifiUsabilityStatsEntry.LINK_STATE_UNKNOWN,
+                                    WifiUsabilityStatsEntry.LINK_STATE_IN_USE));
                             assertThat(statsEntry.getRssi(link)).isLessThan(0);
                             assertThat(statsEntry.getRadioId(link)).isAtLeast(0);
                             assertThat(statsEntry.getTxLinkSpeedMbps(link)).isAtLeast(0);
