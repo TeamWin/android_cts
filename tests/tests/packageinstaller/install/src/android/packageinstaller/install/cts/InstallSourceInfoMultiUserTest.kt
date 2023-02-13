@@ -83,7 +83,7 @@ class InstallSourceInfoMultiUserTest : PackageInstallerTestBase() {
         // Target InstallSourceInfo should not be null regardless of the current running user
         assertThat(info).isNotNull()
         assertThat(info.installingPackageName).isNull()
-        assertThat(info.initiatingPackageName).isNull()
+        assertThat(info.initiatingPackageName).isEqualTo("com.android.shell")
         assertThat(info.originatingPackageName).isNull()
         assertThat(info.updateOwnerPackageName).isNull()
         assertThat(info.packageSource).isEqualTo(PackageInstaller.PACKAGE_SOURCE_OTHER)
