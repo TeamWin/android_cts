@@ -301,7 +301,8 @@ public class AccessibilityNodeInfoTest {
     private void fullyPopulateAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         // Populate 10 fields
         info.setBoundsInParent(new Rect(1,1,1,1));
-        info.setBoundsInScreen(new Rect(2,2,2,2));
+        info.setBoundsInScreen(new Rect(3, 3, 3, 3));
+        info.setBoundsInWindow(new Rect(2, 2, 2, 2));
         info.setClassName("foo.bar.baz.Class");
         info.setContentDescription("content description");
         info.setStateDescription("state description");
@@ -438,7 +439,7 @@ public class AccessibilityNodeInfoTest {
      */
     public static void assertEqualsAccessibilityNodeInfo(AccessibilityNodeInfo expectedInfo,
             AccessibilityNodeInfo receivedInfo) {
-        // Check 9 fields
+        // Check 10 fields
         Rect expectedBounds = new Rect();
         Rect receivedBounds = new Rect();
         expectedInfo.getBoundsInParent(expectedBounds);
@@ -447,6 +448,9 @@ public class AccessibilityNodeInfoTest {
         expectedInfo.getBoundsInScreen(expectedBounds);
         receivedInfo.getBoundsInScreen(receivedBounds);
         assertEquals("boundsInScreen has incorrect value", expectedBounds, receivedBounds);
+        expectedInfo.getBoundsInWindow(expectedBounds);
+        receivedInfo.getBoundsInWindow(receivedBounds);
+        assertEquals("boundsInWindow has incorrect value", expectedBounds, receivedBounds);
         assertEquals("className has incorrect value", expectedInfo.getClassName(),
                 receivedInfo.getClassName());
         assertEquals("contentDescription has incorrect value", expectedInfo.getContentDescription(),

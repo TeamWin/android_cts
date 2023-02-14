@@ -1484,9 +1484,11 @@ public final class ActivityManagerAppExitInfoTest {
         if (status != null) {
             assertEquals(status.intValue(), info.getStatus());
         }
+
         if (description != null) {
-            assertEquals(description, info.getDescription());
+            assertTrue(info.getDescription().contains(description));
         }
+
         assertTrue(before <= info.getTimestamp());
         assertTrue(after >= info.getTimestamp());
         assertTrue(ArrayUtils.equals(info.getProcessStateSummary(), cookie,

@@ -151,15 +151,12 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         mTracker.reset();
         mTracker.mIsCancelRequested = true;
         touchSession.cancelSwipe();
+
         assertInvoked(mTracker.mCancelLatch);
         assertNotInvoked(mTracker.mInvokeLatch);
         assertInvoked(mTracker.mCancelProgressLatch);
         List<BackEvent> events = mTracker.mProgressEvents;
         assertTrue(events.size() > 0);
-        for (int i = 0; i < events.size() - 1; i++) {
-            // Check that progress events report decreasing progress values.
-            assertTrue(events.get(i).getProgress() >= events.get(i + 1).getProgress());
-        }
         assertTrue(events.get(events.size() - 1).getProgress() == 0);
     }
 

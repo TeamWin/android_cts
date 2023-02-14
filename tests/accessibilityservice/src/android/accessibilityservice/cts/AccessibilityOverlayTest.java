@@ -20,6 +20,7 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchA
 
 import static com.google.common.truth.Truth.assertThat;
 
+
 import static org.junit.Assert.assertTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
@@ -34,6 +35,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.graphics.Rect;
 import android.graphics.Region;
 import android.hardware.display.DisplayManager;
 import android.os.Binder;
@@ -44,6 +46,7 @@ import android.view.Display;
 import android.view.SurfaceControl;
 import android.view.SurfaceControlViewHost;
 import android.view.WindowManager;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
 
@@ -209,7 +212,8 @@ public class AccessibilityOverlayTest {
             // Set up the view that will be an accessibility overlay.
             final String overlayTitle = "App Overlay title";
             final Button button = new Button(mService);
-            button.setText("Button");
+            final String buttonText = "Button";
+            button.setText(buttonText);
             final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
             params.width = 1;
             params.height = 1;
@@ -229,6 +233,10 @@ public class AccessibilityOverlayTest {
                             () -> {
                                 return new SurfaceControlViewHost(context, display, new Binder());
                             });
+
+            // Move the view down and to the right by 5
+            int buttonX = 5;
+            int buttonY = 5;
             sc = viewHost.getSurfacePackage().getSurfaceControl();
             SurfaceControl.Transaction t = new SurfaceControl.Transaction();
             t.setVisibility(sc, true)
@@ -238,6 +246,7 @@ public class AccessibilityOverlayTest {
                             activityRegion.getBounds().centerX(),
                             activityRegion.getBounds().centerY())
                     .apply();
+
             // Place the view inside a SurfaceControlViewHost
             // and attach that object as an accessibility overlay to the activity window.
             sUiAutomation.executeAndWaitForEvent(
@@ -247,6 +256,8 @@ public class AccessibilityOverlayTest {
                                         viewHost.setView(button, params);
                                         mService.attachAccessibilityOverlayToWindow(
                                                 activityWindowInfo.getId(), sc);
+                                        button.setX(buttonX);
+                                        button.setY(buttonY);
                                     }),
                     (event) -> {
                         AccessibilityWindowInfo window =
@@ -256,6 +267,20 @@ public class AccessibilityOverlayTest {
                         }
                         if (window.getType()
                                 == AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY) {
+                            // Confirm the overlay is positioned correctly in terms of the window.
+                            Rect expectedRect =
+                                    new Rect(
+                                            buttonX,
+                                            buttonY,
+                                            buttonX + params.width,
+                                            buttonY + params.height);
+                            Rect receivedRect = new Rect();
+                            AccessibilityNodeInfo node =
+                                    window.getRoot()
+                                            .findAccessibilityNodeInfosByText(buttonText)
+                                            .get(0);
+                            node.getBoundsInWindow(receivedRect);
+                            assertThat(receivedRect).isEqualTo(expectedRect);
                             return true;
                         }
                         return false;

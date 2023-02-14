@@ -16,6 +16,7 @@
 
 package android.os.cts;
 
+import static android.os.PowerManager.LOW_POWER_STANDBY_ALLOWED_REASON_TEMP_POWER_SAVE_ALLOWLIST;
 import static android.os.PowerManager.LOW_POWER_STANDBY_ALLOWED_REASON_VOICE_INTERACTION;
 import static android.os.PowerManager.LOW_POWER_STANDBY_FEATURE_WAKE_ON_LAN;
 import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
@@ -34,6 +35,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.os.PowerExemptionManager;
 import android.os.PowerManager;
 import android.os.PowerManager.LowPowerStandbyPolicy;
 import android.os.PowerManager.WakeLock;
@@ -454,6 +456,40 @@ public class LowPowerStandbyTest {
                 LOW_POWER_STANDBY_FEATURE_WAKE_ON_LAN));
         mPowerManager.setLowPowerStandbyEnabled(true);
         assertTrue(mPowerManager.isAllowedInLowPowerStandby(LOW_POWER_STANDBY_FEATURE_WAKE_ON_LAN));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.PowerManager#setLowPowerStandbyPolicy",
+            "android.os.PowerManager#LOW_POWER_STANDBY_ALLOWED_REASON_TEMP_POWER_SAVE_ALLOWLIST"})
+    @AppModeFull(reason = "Instant apps cannot hold MANAGE_LOW_POWER_STANDBY permission")
+    @EnsureHasPermission(Manifest.permission.MANAGE_LOW_POWER_STANDBY)
+    @EnsureFeatureFlagEnabled(namespace = DEVICE_CONFIG_NAMESPACE,
+            key = DEVICE_CONFIG_FEATURE_FLAG_ENABLE_POLICY)
+    public void testLowPowerStandby_allowedReason_tempPowerSaveAllowlist() throws Exception {
+        WakeLock testWakeLock = mPowerManager.newWakeLock(PARTIAL_WAKE_LOCK, TEST_WAKE_LOCK_TAG);
+        testWakeLock.acquire();
+        PollingCheck.check("Test wakelock disabled", WAKELOCK_STATE_TIMEOUT,
+                () -> !isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
+
+        mPowerManager.forceLowPowerStandbyActive(true);
+        PollingCheck.check("Test wakelock not disabled", WAKELOCK_STATE_TIMEOUT,
+                () -> isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
+
+        mPowerManager.setLowPowerStandbyPolicy(policyWithAllowedReasons(
+                LOW_POWER_STANDBY_ALLOWED_REASON_TEMP_POWER_SAVE_ALLOWLIST));
+        assertTrue("Test wakelock not disabled", isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
+
+        PowerExemptionManager powerExemptionManager =
+                mContext.getSystemService(PowerExemptionManager.class);
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                Manifest.permission.CHANGE_DEVICE_IDLE_TEMP_WHITELIST)) {
+            powerExemptionManager.addToTemporaryAllowList(mContext.getPackageName(),
+                    PowerExemptionManager.REASON_OTHER, "", 5000);
+        }
+        PollingCheck.check("Test wakelock disabled, though UID should be exempt",
+                WAKELOCK_STATE_TIMEOUT, () -> !isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
+
+        testWakeLock.release();
     }
 
     private LowPowerStandbyPolicy emptyPolicy() {

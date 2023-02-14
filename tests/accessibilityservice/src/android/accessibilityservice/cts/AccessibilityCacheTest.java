@@ -310,6 +310,21 @@ public class AccessibilityCacheTest {
         }
     }
 
+    @Test
+    public void testUiAutomation_clearCache_cacheInvalidated() {
+        AccessibilityNodeInfo root = sUiAutomation.getRootInActiveWindow();
+        List<AccessibilityNodeInfo> allNodes = new ArrayList<>();
+        allNodes.add(root);
+        getNodes(allNodes, root);
+
+        assertTrue(sUiAutomation.clearCache());
+
+        for (AccessibilityNodeInfo node : allNodes) {
+            assertFalse("Node " + node.getContentDescription() + " is in cache",
+                    sUiAutomation.isNodeInCache(node));
+        }
+    }
+
     private void getNodes(List<AccessibilityNodeInfo> nodesList, AccessibilityNodeInfo node) {
         // Explicitly not prefetching to avoid a race condition where the cache may be populated
         // after calling clearCachedSubtree

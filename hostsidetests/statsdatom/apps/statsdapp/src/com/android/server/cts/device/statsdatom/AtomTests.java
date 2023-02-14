@@ -251,6 +251,7 @@ public class AtomTests {
                 131);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_BODY_SENSORS_WRIST_TEMPERATURE, 132);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_USE_FULL_SCREEN_INTENT, 133);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_SYSTEM_EXEMPT_FROM_HIBERNATION, 134);
     }
 
     @Test

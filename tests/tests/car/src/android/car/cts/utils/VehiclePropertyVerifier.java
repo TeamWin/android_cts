@@ -35,6 +35,7 @@ import android.car.VehiclePropertyType;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.AreaIdConfig;
+import android.car.hardware.property.CarInternalErrorException;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.GetPropertyCallback;
 import android.car.hardware.property.CarPropertyManager.GetPropertyRequest;
@@ -71,6 +72,8 @@ public class VehiclePropertyVerifier<T> {
     private static final String CAR_PROPERTY_VALUE_SOURCE_GETTER = "Getter";
     private static final String CAR_PROPERTY_VALUE_SOURCE_CALLBACK = "Callback";
     private static final float FLOAT_INEQUALITY_THRESHOLD = 0.00001f;
+    private static final int VENDOR_ERROR_CODE_MINIMUM_VALUE = 0x0;
+    private static final int VENDOR_ERROR_CODE_MAXIMUM_VALUE = 0xffff;
     private static final ImmutableSet<Integer> WHEEL_AREAS = ImmutableSet.of(
             VehicleAreaWheel.WHEEL_LEFT_FRONT, VehicleAreaWheel.WHEEL_LEFT_REAR,
             VehicleAreaWheel.WHEEL_RIGHT_FRONT, VehicleAreaWheel.WHEEL_RIGHT_REAR);
@@ -844,6 +847,9 @@ public class VehiclePropertyVerifier<T> {
                 verifyPropertyNotAvailableException(e);
                 // If the property is not available for getting, continue.
                 continue;
+            } catch (CarInternalErrorException e) {
+                verifyInternalErrorException(e);
+                continue;
             }
 
             verifyCarPropertyValue(carPropertyConfig, carPropertyValue, areaId,
@@ -854,6 +860,15 @@ public class VehiclePropertyVerifier<T> {
     private static void verifyPropertyNotAvailableException(PropertyNotAvailableException e) {
         assertThat(((PropertyNotAvailableException) e).getDetailedErrorCode())
                 .isIn(PROPERTY_NOT_AVAILABLE_ERROR_CODES);
+        int vendorErrorCode = e.getVendorErrorCode();
+        assertThat(vendorErrorCode).isAtLeast(VENDOR_ERROR_CODE_MINIMUM_VALUE);
+        assertThat(vendorErrorCode).isAtMost(VENDOR_ERROR_CODE_MAXIMUM_VALUE);
+    }
+
+    private static void verifyInternalErrorException(CarInternalErrorException e) {
+        int vendorErrorCode = e.getVendorErrorCode();
+        assertThat(vendorErrorCode).isAtLeast(VENDOR_ERROR_CODE_MINIMUM_VALUE);
+        assertThat(vendorErrorCode).isAtMost(VENDOR_ERROR_CODE_MAXIMUM_VALUE);
     }
 
     private void verifyCarPropertyValue(CarPropertyConfig<T> carPropertyConfig,
@@ -1407,8 +1422,9 @@ public class VehiclePropertyVerifier<T> {
         @Override
         public void onFailure(PropertyAsyncError getPropertyError) {
             assertWithMessage("PropertyAsyncError with requestId "
-                    + getPropertyError.getRequestId() + " returned with error code: "
-                    + getPropertyError.getErrorCode()).fail();
+                    + getPropertyError.getRequestId() + " returned with async error code: "
+                    + getPropertyError.getErrorCode() + " and vendor error code: "
+                    + getPropertyError.getVendorErrorCode()).fail();
         }
 
         CarPropertyCallback(int getPropertyResultsCount) {
@@ -1470,6 +1486,9 @@ public class VehiclePropertyVerifier<T> {
             carPropertyManager.setProperty(propertyType, propertyId, areaId, valueToSet);
         } catch (PropertyNotAvailableException e) {
             verifyPropertyNotAvailableException(e);
+            return null;
+        } catch (CarInternalErrorException e) {
+            verifyInternalErrorException(e);
             return null;
         }
 

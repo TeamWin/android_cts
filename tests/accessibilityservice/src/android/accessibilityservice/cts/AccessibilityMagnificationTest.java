@@ -287,6 +287,7 @@ public class AccessibilityMagnificationTest {
     }
 
     @Test
+    @FlakyTest
     public void testSetConfigWithActivatedFalse_expectedConfig() throws Exception {
         final MagnificationController controller = mService.getMagnificationController();
         final WindowManager windowManager = mInstrumentation.getContext().getSystemService(

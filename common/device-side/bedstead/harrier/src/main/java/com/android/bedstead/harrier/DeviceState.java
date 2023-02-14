@@ -330,9 +330,6 @@ public final class DeviceState extends HarrierRule {
         try {
             Log.d(LOG_TAG, "Preparing state for test " + testName);
 
-            if (mOriginalSwitchedUser == null) {
-                mOriginalSwitchedUser = TestApis.users().current();
-            }
             testApps().snapshot();
             Tags.clearTags();
             Tags.addTag(Tags.USES_DEVICESTATE);
@@ -2322,18 +2319,21 @@ public final class DeviceState extends HarrierRule {
             }
             user.clearPassword();
         }
+
         mUsersSetPasswords.clear();
 
         for (UserReference user : mCreatedUsers) {
             try {
-                user.removeWhenPossible();
+                user.remove();
             } catch (NeneException e) {
                 if (user.exists()) {
                     // Otherwise it's probably just already removed
                     throw new NeneException("Could not remove user", e);
                 }
             }
+
         }
+
         mCreatedUsers.clear();
 
         for (RemovedUser removedUser : mRemovedUsers) {
@@ -2346,8 +2346,8 @@ public final class DeviceState extends HarrierRule {
                 mOriginalSwitchedUser = user;
             }
         }
-        mRemovedUsers.clear();
 
+        mRemovedUsers.clear();
         if (mOriginalSwitchedUser != null) {
             if (!mOriginalSwitchedUser.exists()) {
                 Log.d(LOG_TAG, "Could not switch back to original user "

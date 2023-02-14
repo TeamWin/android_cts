@@ -28,6 +28,8 @@ import static android.view.WindowInsets.Type.displayCutout;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.systemBars;
 
+import static android.server.wm.ActivityManagerTestBase.isTablet;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;

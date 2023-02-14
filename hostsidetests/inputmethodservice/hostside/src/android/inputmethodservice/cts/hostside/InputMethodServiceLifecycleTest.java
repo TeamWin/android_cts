@@ -42,6 +42,7 @@ import com.android.compatibility.common.util.FeatureUtil;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
+import com.android.tradefed.util.RunUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -600,7 +601,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
             if (!imeId.equals(shell(ShellCommandUtils.getCurrentIme()))) {
                 break;
             }
-            Thread.sleep(POLLING_INTERVAL);
+            RunUtil.getDefault().sleep(POLLING_INTERVAL);
             timeout -= POLLING_INTERVAL;
         }
     }

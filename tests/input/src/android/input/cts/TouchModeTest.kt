@@ -44,13 +44,11 @@ import com.android.compatibility.common.util.AdoptShellPermissionsRule
 import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.WindowUtil
+import com.google.common.truth.Truth.assertThat
 import java.util.Arrays
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
@@ -116,7 +114,7 @@ class TouchModeTest {
     fun testFocusedWindowOwnerCanChangeTouchMode() {
         instrumentation.setInTouchMode(true)
         PollingCheck.waitFor { isInTouchMode() }
-        assertTrue(isInTouchMode())
+        assertThat(isInTouchMode()).isTrue()
     }
 
     @Test
@@ -128,14 +126,14 @@ class TouchModeTest {
 
         instrumentation.setInTouchMode(newTouchMode)
         try {
-            assertTrue(touchModeChangeListener.countDownLatch.await(
-                    TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS))
+            assertThat(touchModeChangeListener.countDownLatch.await(
+                    TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)).isTrue()
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
             throw RuntimeException(e)
         }
 
-        assertEquals(newTouchMode, touchModeChangeListener.isInTouchMode)
+        assertThat(touchModeChangeListener.isInTouchMode).isEqualTo(newTouchMode)
     }
 
     private class OnTouchModeChangeListenerImpl : ViewTreeObserver.OnTouchModeChangeListener {
@@ -160,7 +158,7 @@ class TouchModeTest {
         instrumentation.setInTouchMode(true)
 
         SystemClock.sleep(TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS)
-        assertFalse(isInTouchMode())
+        assertThat(isInTouchMode()).isFalse()
     }
 
     @Test
@@ -172,7 +170,7 @@ class TouchModeTest {
         val detachedView = View(activity)
 
         // Detached view (view with mAttachInfo null) will just return the default touch mode value
-        assertEquals(defaultInTouchMode, detachedView.isInTouchMode())
+        assertThat(detachedView.isInTouchMode()).isEqualTo(defaultInTouchMode)
     }
 
     /**
@@ -193,7 +191,7 @@ class TouchModeTest {
         }
         injectMotionEventOnMainDisplay()
 
-        assertTrue(isInTouchMode())
+        assertThat(isInTouchMode()).isTrue()
         assertSecondaryDisplayTouchModeState(/* inTouch= */ true)
     }
 
@@ -215,7 +213,7 @@ class TouchModeTest {
         }
         injectMotionEventOnMainDisplay()
 
-        assertTrue(isInTouchMode())
+        assertThat(isInTouchMode()).isTrue()
         assertSecondaryDisplayTouchModeState(/* isInTouch= */ false,
                 /* delayBeforeChecking= */ true)
     }
@@ -233,7 +231,7 @@ class TouchModeTest {
         createVirtualDisplay(VIRTUAL_DISPLAY_FLAG_OWN_FOCUS or VIRTUAL_DISPLAY_FLAG_TRUSTED)
         injectMotionEventOnMainDisplay()
 
-        assertTrue(isInTouchMode())
+        assertThat(isInTouchMode()).isTrue()
         assertSecondaryDisplayTouchModeState(/* isInTouch= */ false,
                 /* delayBeforeChecking= */ true)
     }
@@ -248,7 +246,7 @@ class TouchModeTest {
         PollingCheck.waitFor(TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS) {
             isSecondaryDisplayInTouchMode() == isInTouch
         }
-        assertEquals(isInTouch, isSecondaryDisplayInTouchMode())
+        assertThat(isSecondaryDisplayInTouchMode()).isEqualTo(isInTouch)
     }
 
     private fun isSecondaryDisplayInTouchMode(): Boolean {
@@ -309,7 +307,7 @@ class TouchModeTest {
         virtualDisplay = displayManager.createVirtualDisplay(
                 VIRTUAL_DISPLAY_NAME, WIDTH, HEIGHT, DENSITY, reader!!.surface, flags)
 
-        assertTrue(displayCreated.await(5, TimeUnit.SECONDS))
+        assertThat(displayCreated.await(5, TimeUnit.SECONDS)).isTrue()
         instrumentation.setInTouchMode(false)
     }
 

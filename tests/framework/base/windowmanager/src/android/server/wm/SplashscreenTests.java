@@ -167,6 +167,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         // TODO(b/192431448): Allow Automotive to skip this test until Splash Screen is properly
         // applied insets by system bars in AAOS.
         assumeFalse(isCar());
+        assumeFalse(isLeanBack());
 
         final CommandSession.ActivitySession starter = prepareTestStarter();
         final ActivityOptions noIconOptions = ActivityOptions.makeBasic()
@@ -438,6 +439,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         // TODO(b/192431448): Allow Automotive to skip this test until Splash Screen is properly
         // applied insets by system bars in AAOS.
         assumeFalse(isCar());
+        assumeFalse(isLeanBack());
 
         final CommandSession.ActivitySession starter = prepareTestStarter();
         final ActivityOptions noIconOptions = ActivityOptions.makeBasic()
@@ -506,6 +508,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         // TODO(b/192431448): Allow Automotive to skip this test until Splash Screen is properly
         // applied insets by system bars in AAOS.
         assumeFalse(isCar());
+        assumeFalse(isLeanBack());
 
         final LauncherApps launcherApps = mContext.getSystemService(LauncherApps.class);
         final ShortcutManager shortcutManager = mContext.getSystemService(ShortcutManager.class);

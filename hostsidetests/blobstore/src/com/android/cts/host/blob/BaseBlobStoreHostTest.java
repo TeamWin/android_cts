@@ -23,6 +23,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 import com.android.tradefed.util.Pair;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -167,7 +168,7 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
                 break;
             }
             // Wait and try again.
-            Thread.sleep(5000);
+            RunUtil.getDefault().sleep(5000);
         }
     }
 

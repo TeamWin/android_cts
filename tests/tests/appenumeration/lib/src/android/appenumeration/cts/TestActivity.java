@@ -298,7 +298,8 @@ public class TestActivity extends Activity {
                         .getParcelable(EXTRA_ACCOUNT, Account.class);
                 final String authority = intent.getBundleExtra(EXTRA_DATA)
                         .getString(EXTRA_AUTHORITY);
-                requestPeriodicSync(remoteCallback, account, authority);
+                awaitRequestPeriodicSync(remoteCallback, account, authority,
+                        TimeUnit.SECONDS.toMillis(15));
             } else if (Constants.ACTION_SET_SYNC_AUTOMATICALLY.equals(action)) {
                 final Account account = intent.getBundleExtra(EXTRA_DATA)
                         .getParcelable(EXTRA_ACCOUNT, Account.class);
@@ -856,12 +857,34 @@ public class TestActivity extends Activity {
         finish();
     }
 
-    private void requestPeriodicSync(RemoteCallback remoteCallback, Account account,
-            String authority) {
+    private void awaitRequestPeriodicSync(RemoteCallback remoteCallback, Account account,
+            String authority, long timeoutMs) {
         ContentResolver.addPeriodicSync(account, authority, Bundle.EMPTY,
                 TimeUnit.HOURS.toSeconds(1));
-        remoteCallback.sendResult(null);
-        finish();
+        final Object token = new Object();
+        final Bundle result = new Bundle();
+        final Runnable pollingPeriodicSync = new Runnable() {
+            @Override
+            public void run() {
+                if (!ContentResolver.getPeriodicSyncs(account, authority).stream()
+                        .anyMatch(sync -> sync.authority.equals(authority))) {
+                    mainHandler.postDelayed(this, 100 /* delayMillis */);
+                    return;
+                }
+                mainHandler.removeCallbacksAndMessages(token);
+                result.putBoolean(EXTRA_RETURN_RESULT, true);
+                remoteCallback.sendResult(result);
+                finish();
+            }
+        };
+
+        mainHandler.post(pollingPeriodicSync);
+        mainHandler.postDelayed(() -> {
+            mainHandler.removeCallbacks(pollingPeriodicSync);
+            result.putBoolean(EXTRA_RETURN_RESULT, false);
+            remoteCallback.sendResult(result);
+            finish();
+        }, token, timeoutMs);
     }
 
     private void setSyncAutomatically(RemoteCallback remoteCallback, Account account,

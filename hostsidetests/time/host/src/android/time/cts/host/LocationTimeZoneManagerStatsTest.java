@@ -41,6 +41,7 @@ import com.android.os.StatsLog;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.util.RunUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -226,9 +227,9 @@ public class LocationTimeZoneManagerStatsTest extends BaseHostJUnit4Test {
 
         // Turn the location detection algorithm on and off, twice.
         for (int i = 0; i < 2; i++) {
-            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+            RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
             mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(true);
-            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+            RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
             mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(false);
         }
 

@@ -19,6 +19,7 @@ package android.appsearch.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.util.RunUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -75,7 +76,7 @@ public class AppSearchPackageTest extends AppSearchHostTestBase {
                 return;
             } catch (AssertionError e) {
                 // The package hasn't uninstalled yet, sleeping 1s before polling again.
-                Thread.sleep(1000);
+                RunUtil.getDefault().sleep(1000);
             }
         }
         throw new AssertionError("Failed to prune package data after 5 seconds");

@@ -219,8 +219,7 @@ public class UsbManagerApiTest {
             };
         };
 
-        assertTrue(mUsbManagerSys.registerDisplayPortAltModeInfoListener(mExecutor,
-                displayPortListener));
+        mUsbManagerSys.registerDisplayPortAltModeInfoListener(mExecutor, displayPortListener);
 
         // Drop MANAGE_USB permission.
         mUiAutomation.dropShellPermissionIdentity();
@@ -245,8 +244,7 @@ public class UsbManagerApiTest {
         final LatchedDisplayPortAltModeInfoListener displayPortListener =
                 new LatchedDisplayPortAltModeInfoListener(notifiedForCtsPort);
 
-        assertTrue(mUsbManagerSys.registerDisplayPortAltModeInfoListener(mExecutor,
-                displayPortListener));
+        mUsbManagerSys.registerDisplayPortAltModeInfoListener(mExecutor, displayPortListener);
 
         SystemUtil.runShellCommand("dumpsys usb add-port " + portIdTestString
                 + " dual --displayport");
@@ -281,8 +279,7 @@ public class UsbManagerApiTest {
         for (int i = 0; i < numListeners; i++) {
             final LatchedDisplayPortAltModeInfoListener listener =
                     new LatchedDisplayPortAltModeInfoListener(notifiedForCtsPort);
-            Assert.assertTrue(mUsbManagerSys.registerDisplayPortAltModeInfoListener(mExecutor,
-                    listener));
+            mUsbManagerSys.registerDisplayPortAltModeInfoListener(mExecutor, listener);
             listeners.add(listener);
         }
 

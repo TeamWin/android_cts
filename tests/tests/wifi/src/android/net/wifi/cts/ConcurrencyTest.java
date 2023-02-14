@@ -47,6 +47,9 @@ import android.net.wifi.p2p.WifiP2pWfdInfo;
 import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pUpnpServiceInfo;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerExecutor;
+import android.os.HandlerThread;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.util.Log;
@@ -64,7 +67,9 @@ import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
@@ -74,6 +79,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         static final int P2P_STATE = 1;
         static final int DISCOVERY_STATE = 2;
         static final int NETWORK_INFO = 3;
+        static final int LISTEN_STATE = 4;
 
         public BitSet pendingSync = new BitSet();
 
@@ -81,6 +87,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         public int expectedP2pState;
         public int expectedDiscoveryState;
         public NetworkInfo expectedNetworkInfo;
+        public int expectedListenState;
     }
 
     private class MyResponse {
@@ -90,6 +97,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         public int failureReason;
         public int p2pState;
         public int discoveryState;
+        public int listenState;
         public NetworkInfo networkInfo;
         public WifiP2pInfo p2pInfo;
         public String deviceName;
@@ -165,6 +173,14 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                             + mMySync.expectedNetworkInfo);
                     mMySync.notify();
                 }
+            } else if (action.equals(WifiP2pManager.ACTION_WIFI_P2P_LISTEN_STATE_CHANGED)) {
+                synchronized (mMySync) {
+                    mMySync.pendingSync.set(MySync.LISTEN_STATE);
+                    mMySync.expectedListenState = intent.getIntExtra(
+                            WifiP2pManager.EXTRA_LISTEN_STATE,
+                            WifiP2pManager.WIFI_P2P_LISTEN_STOPPED);
+                    mMySync.notify();
+                }
             }
         }
     };
@@ -191,6 +207,13 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         }
     };
 
+    private final HandlerThread mHandlerThread = new HandlerThread("WifiP2pConcurrencyTest");
+    protected final Executor mExecutor;
+    {
+        mHandlerThread.start();
+        mExecutor = new HandlerExecutor(new Handler(mHandlerThread.getLooper()));
+    }
+
     @Override
     protected void setUp() throws Exception {
        super.setUp();
@@ -205,6 +228,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+        mIntentFilter.addAction(WifiP2pManager.ACTION_WIFI_P2P_LISTEN_STATE_CHANGED);
 
         mContext.registerReceiver(mReceiver, mIntentFilter);
         mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
@@ -225,6 +249,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mMySync.expectedP2pState = WifiP2pManager.WIFI_P2P_STATE_DISABLED;
         mMySync.expectedDiscoveryState = WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED;
         mMySync.expectedNetworkInfo = null;
+        mMySync.expectedListenState = WifiP2pManager.WIFI_P2P_LISTEN_STOPPED;
 
         // for general connect command
         mTestWifiP2pPeerConfig = new WifiP2pConfig();
@@ -1112,5 +1137,49 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             assertTrue(waitForServiceResponse(mMyResponse));
             assertTrue(mMyResponse.success);
         });
+    }
+
+    /**
+     * Tests {@link WifiP2pManager#getListenState(Channel, Executor, Consumer<Integer>)}
+     */
+    public void testGetListenState() throws Exception {
+        if (!setupWifiP2p()) {
+            return;
+        }
+
+        Consumer<Integer> testListenStateListener = new Consumer<Integer>() {
+            @Override
+            public void accept(Integer state) {
+                synchronized (mMyResponse) {
+                    mMyResponse.valid = true;
+                    mMyResponse.listenState = state.intValue();
+                    mMyResponse.notify();
+                }
+            }
+        };
+
+        mWifiP2pManager.getListenState(mWifiP2pChannel, mExecutor, testListenStateListener);
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STOPPED, mMyResponse.listenState);
+
+        resetResponse(mMyResponse);
+        mWifiP2pManager.startListening(mWifiP2pChannel, mActionListener);
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertTrue(waitForBroadcasts(MySync.LISTEN_STATE));
+
+        resetResponse(mMyResponse);
+        mWifiP2pManager.getListenState(mWifiP2pChannel, mExecutor, testListenStateListener);
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STARTED, mMyResponse.listenState);
+
+        resetResponse(mMyResponse);
+        mWifiP2pManager.stopListening(mWifiP2pChannel, mActionListener);
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertTrue(waitForBroadcasts(MySync.LISTEN_STATE));
+
+        resetResponse(mMyResponse);
+        mWifiP2pManager.getListenState(mWifiP2pChannel, mExecutor, testListenStateListener);
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STOPPED, mMyResponse.listenState);
     }
 }

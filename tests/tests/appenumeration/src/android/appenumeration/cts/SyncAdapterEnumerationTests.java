@@ -64,7 +64,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -219,15 +218,14 @@ public class SyncAdapterEnumerationTests extends AppEnumerationTestsBase {
 
     @Test
     public void queriesNothing_getPeriodicSyncs_cannotSeeSyncAdapterTarget() throws Exception {
-        requestPeriodicSync(TARGET_SYNCADAPTER, ACCOUNT_SYNCADAPTER);
+        assertThat(requestPeriodicSync(TARGET_SYNCADAPTER, ACCOUNT_SYNCADAPTER), is(true));
         assertThat(getPeriodicSyncs(QUERIES_NOTHING, ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER),
                 not(hasItemInArray(TARGET_SYNCADAPTER_AUTHORITY)));
     }
 
-    @Ignore("b/265100724")
     @Test
     public void queriesPackage_getPeriodicSyncs_canSeeSyncAdapterTarget() throws Exception {
-        requestPeriodicSync(TARGET_SYNCADAPTER, ACCOUNT_SYNCADAPTER);
+        assertThat(requestPeriodicSync(TARGET_SYNCADAPTER, ACCOUNT_SYNCADAPTER), is(true));
         assertThat(getPeriodicSyncs(QUERIES_PACKAGE, ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER),
                 hasItemInArray(TARGET_SYNCADAPTER_AUTHORITY));
     }
@@ -277,14 +275,15 @@ public class SyncAdapterEnumerationTests extends AppEnumerationTestsBase {
         return response.getParcelable(Intent.EXTRA_RETURN_RESULT, PendingIntent.class);
     }
 
-
-    private void requestPeriodicSync(String providerPackageName, Account account) throws Exception {
+    private boolean requestPeriodicSync(String providerPackageName, Account account)
+            throws Exception {
         final String authority = providerPackageName + AUTHORITY_SUFFIX;
         final Bundle extraData = new Bundle();
         extraData.putParcelable(EXTRA_ACCOUNT, account);
         extraData.putString(EXTRA_AUTHORITY, authority);
-        sendCommandBlocking(providerPackageName, null /* targetPackageName */, extraData,
-                ACTION_REQUEST_PERIODIC_SYNC);
+        final Bundle response = sendCommandBlocking(providerPackageName,
+                null /* targetPackageName */, extraData, ACTION_REQUEST_PERIODIC_SYNC);
+        return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 
     private void setSyncAutomatically(String providerPackageName, Account account)
