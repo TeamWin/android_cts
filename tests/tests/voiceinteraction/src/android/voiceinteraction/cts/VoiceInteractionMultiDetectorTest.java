@@ -143,9 +143,10 @@ public class VoiceInteractionMultiDetectorTest {
                 () -> alwaysOnHotwordDetector.updateState(null, null));
         assertThrows(IllegalStateException.class, () ->
                 alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(/* status */ 0,
-                        /* soundModelHandle */ 100, /* captureAvailable */ true,
-                        /* captureSession */ 101, /* captureDelayMs */ 1000,
-                        /* capturePreambleMs */ 1001, /* triggerInData */ true,
+                        /* soundModelHandle */ 100, /* halEventReceivedMillis */ 12345,
+                        /* captureAvailable */ true, /* captureSession */ 101,
+                        /* captureDelayMs */ 1000, /* capturePreambleMs */ 1001,
+                        /* triggerInData */ true,
                         new AudioFormat.Builder()
                                 .setSampleRate(32000)
                                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)

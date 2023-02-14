@@ -245,7 +245,8 @@ public class HotwordDetectionServiceBasicTest {
             throws Throwable {
         mService.initDetectRejectLatch();
         alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
-                /* status= */ 0, /* soundModelHandle= */ 100, /* captureAvailable= */ true,
+                /* status= */ 0, /* soundModelHandle= */ 100,
+                /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
                 /* captureSession= */ 101, /* captureDelayMs= */ 1000,
                 /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
                 Helper.createFakeAudioFormat(), new byte[1024],
@@ -342,7 +343,8 @@ public class HotwordDetectionServiceBasicTest {
             runWithShellPermissionIdentity(() -> {
                 // pass null data parameter
                 alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
-                        /* status= */ 0, /* soundModelHandle= */ 100, /* captureAvailable= */ true,
+                        /* status= */ 0, /* soundModelHandle= */ 100,
+                        /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
                         /* captureSession= */ 101, /* captureDelayMs= */ 1000,
                         /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
                         Helper.createFakeAudioFormat(), null,
@@ -380,7 +382,8 @@ public class HotwordDetectionServiceBasicTest {
 
             mService.initOnErrorLatch();
             alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
-                    /* status= */ 0, /* soundModelHandle= */ 100, /* captureAvailable= */ true,
+                    /* status= */ 0, /* soundModelHandle= */ 100,
+                    /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
                     /* captureSession= */ 101, /* captureDelayMs= */ 1000,
                     /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
                     Helper.createFakeAudioFormat(), new byte[1024],
@@ -414,7 +417,8 @@ public class HotwordDetectionServiceBasicTest {
             assertThrows(IllegalStateException.class, () -> {
                 // Can no longer use the detector because it is in an invalid state
                 alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
-                        /* status= */ 0, /* soundModelHandle= */ 100, /* captureAvailable= */ true,
+                        /* status= */ 0, /* soundModelHandle= */ 100,
+                        /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
                         /* captureSession= */ 101, /* captureDelayMs= */ 1000,
                         /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
                         Helper.createFakeAudioFormat(), new byte[1024],
