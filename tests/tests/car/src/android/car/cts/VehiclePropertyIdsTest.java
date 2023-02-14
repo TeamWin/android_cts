@@ -109,6 +109,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("INFO_VIN");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EPOCH_TIME))
                 .isEqualTo("EPOCH_TIME");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LOCATION_CHARACTERIZATION))
+                .isEqualTo("LOCATION_CHARACTERIZATION");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.PERF_ODOMETER))
                 .isEqualTo("PERF_ODOMETER");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.PERF_REAR_STEERING_ANGLE))
