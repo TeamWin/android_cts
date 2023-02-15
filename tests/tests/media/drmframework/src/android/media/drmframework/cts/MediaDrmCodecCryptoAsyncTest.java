@@ -92,6 +92,26 @@ public class MediaDrmCodecCryptoAsyncTest {
                 (Boolean secure) -> runClearKeyVideoUsingCodec(secure /*secure*/), true);
     }
 
+    @Presubmit
+    @SmallTest
+    @RequiresDevice
+    @Test
+    public void testShortEncryptedVideoUsingSecureCodecInBlockModel() throws InterruptedException {
+        Assume.assumeTrue("Test needs Android 14", IS_AT_LEAST_U);
+        MediaCodecAsyncHelper.runThread(
+                (Boolean secure) -> runClearKeyVideoUsingBlockModel(secure /*secure*/), true);
+    }
+
+    @Presubmit
+    @SmallTest
+    @RequiresDevice
+    @Test
+    public void testShortEncryptedVideoUsingNonSecureCodecInBlockModel() throws InterruptedException {
+        Assume.assumeTrue("Test needs Android 14", IS_AT_LEAST_U);
+        MediaCodecAsyncHelper.runThread(
+                (Boolean secure) -> runClearKeyVideoUsingBlockModel(secure /*secure*/), false);
+    }
+
     private static final UUID CLEARKEY_SCHEME_UUID =
             new UUID(0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL);
     private static final byte[] CLEAR_KEY_CENC = convert(new int[] {
@@ -125,38 +145,86 @@ public class MediaDrmCodecCryptoAsyncTest {
         return byteArray;
     }
 
-    private void runClearKeyVideoUsingCodec(boolean secure) {
-        MediaExtractor extractor = new MediaExtractor();
-        MediaCrypto crypto = null;
-        try (final MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID)) {
-            Uri uri = Uri.parse(Utils.getMediaPath() + "/clearkey/llama_h264_main_720p_8000.mp4");
-            extractor.setDataSource(uri.toString(), null);
-            extractor.selectTrack(0);
-            extractor.seekTo(ENCRYPTED_CONTENT_FIRST_BUFFER_TIMESTAMP_US,
-                MediaExtractor.SEEK_TO_CLOSEST_SYNC);
-            drm.setOnEventListener(
-                    (MediaDrm mediaDrm, byte[] sessionId, int event, int extra, byte[] data) -> {
-                        if (event == MediaDrm.EVENT_KEY_REQUIRED
-                                || event == MediaDrm.EVENT_KEY_EXPIRED) {
-                            MediaDrmClearkeyTest.retrieveKeys(
-                                    mediaDrm, "cenc", sessionId, DRM_INIT_DATA,
-                                    MediaDrm.KEY_TYPE_STREAMING,
-                                    new byte[][] { CLEAR_KEY_CENC });
-                        }
-                    });
-            byte[] sessionId = drm.openSession();
-            MediaDrmClearkeyTest.retrieveKeys(
-                    drm, "cenc", sessionId, DRM_INIT_DATA, MediaDrm.KEY_TYPE_STREAMING,
-                    new byte[][] { CLEAR_KEY_CENC });
+    static class ClearKeyDrmSession implements AutoCloseable {
+        private MediaDrm mDrm;
+        private byte[] mSessionId;
+        private UUID mUUID;
 
-            if (sessionId != null) {
-                crypto = new MediaCrypto(CLEARKEY_SCHEME_UUID, new byte[0] /* initData */);
-                crypto.setMediaDrmSession(sessionId);
+        ClearKeyDrmSession(UUID uuid, byte[] drmInitData, byte[] clearKey)
+                throws Exception {
+            mUUID = uuid;
+            mDrm = new MediaDrm(mUUID);
+            mDrm.setOnEventListener(
+            (MediaDrm mediaDrm, byte[] sessionId,
+            int event, int extra, byte[] data) -> {
+                if (event == MediaDrm.EVENT_KEY_REQUIRED
+                        || event == MediaDrm.EVENT_KEY_EXPIRED) {
+                    MediaDrmClearkeyTest.retrieveKeys(
+                            mediaDrm, "cenc", sessionId, drmInitData,
+                            MediaDrm.KEY_TYPE_STREAMING,
+                            new byte[][] { clearKey });
+                }
+            });
+            mSessionId = mDrm.openSession();
+            MediaDrmClearkeyTest.retrieveKeys(
+                    mDrm, "cenc", mSessionId, drmInitData, MediaDrm.KEY_TYPE_STREAMING,
+                    new byte[][] { clearKey });
+        }
+
+        public MediaCrypto getCrypto()
+                throws Exception {
+            MediaCrypto crypto = null;
+            if (mSessionId != null) {
+                crypto = new MediaCrypto(mUUID, mSessionId);
             }
-                MediaCodecCryptoAsyncHelper.runDecodeShortClearKeyVideo(extractor,
-                secure /*secure*/, ENCRYPTED_CONTENT_LAST_BUFFER_TIMESTAMP_US,
-                crypto);
-            drm.closeSession(sessionId);
+            return crypto;
+        }
+
+        @Override
+        public void close() {
+            mDrm.close();
+        }
+    }
+
+    private MediaExtractor setupExtractor(String filePath) throws Exception {
+        MediaExtractor extractor = new MediaExtractor();
+        Uri uri = Uri.parse(Utils.getMediaPath() + filePath);
+        extractor.setDataSource(uri.toString(), null);
+        extractor.selectTrack(0);
+        extractor.seekTo(
+                ENCRYPTED_CONTENT_FIRST_BUFFER_TIMESTAMP_US,
+                MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+        return extractor;
+    }
+
+    /* tests */
+    private void runClearKeyVideoUsingCodec(boolean secure) {
+        try (ClearKeyDrmSession drmSession = new ClearKeyDrmSession(
+                CLEARKEY_SCHEME_UUID, DRM_INIT_DATA, CLEAR_KEY_CENC)) {
+            MediaExtractor extractor = setupExtractor("/clearkey/llama_h264_main_720p_8000.mp4");
+            MediaCrypto crypto = drmSession.getCrypto();
+
+            MediaCodecCryptoAsyncHelper.runDecodeShortClearKeyVideo(extractor,
+                    secure /*secure*/, ENCRYPTED_CONTENT_LAST_BUFFER_TIMESTAMP_US,
+                    crypto);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /* tests */
+    private void runClearKeyVideoUsingBlockModel(boolean secure) {
+        try (ClearKeyDrmSession drmSession = new ClearKeyDrmSession(
+                CLEARKEY_SCHEME_UUID, DRM_INIT_DATA, CLEAR_KEY_CENC)) {
+            MediaExtractor extractor = setupExtractor("/clearkey/llama_h264_main_720p_8000.mp4");
+            MediaCrypto crypto = drmSession.getCrypto();
+
+            MediaCodecCryptoAsyncHelper.runDecodeShortVideoUsingBlockModel(
+                    extractor,
+                    secure /*secure*/,
+                    ENCRYPTED_CONTENT_LAST_BUFFER_TIMESTAMP_US,
+                    crypto,
+                    false);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
