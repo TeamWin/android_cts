@@ -87,6 +87,13 @@ class InputInjectionActivity : Activity() {
         }
     }
 
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            callbacks.onWindowFocused()
+        }
+    }
+
     /**
      * Attempt to inject input events from this application into the system, and report the result
      * to the test process through the [callbacks]. Since this method synchronously injects events,
