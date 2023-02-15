@@ -43,6 +43,7 @@ import android.view.autofill.AutofillId;
 import android.widget.EditText;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -103,6 +104,7 @@ public class DuplicateIdActivityTest
         return viewNodes;
     }
 
+    @FlakyTest(bugId = 259873363) // TODO: find out why this test fails
     @Test
     public void testDoNotRestoreDuplicateAutofillIds() throws Exception {
         assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
