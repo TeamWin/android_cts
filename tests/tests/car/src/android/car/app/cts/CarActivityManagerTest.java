@@ -33,10 +33,15 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.Display;
 
+import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
 import org.junit.Before;
@@ -161,13 +166,55 @@ public class CarActivityManagerTest {
                         mFakedTestActivity, Display.DEFAULT_DISPLAY, FEATURE_UNDEFINED));
     }
 
+    @Test
+    @ApiTest(apis = {"android.car.app.CarActivityManager#moveRootTaskToDisplay(int,int)",
+            "android.car.builtin.app.ActivityManagerHelper#moveRootTaskToDisplay(int,int)"})
+    public void testMoveRootTaskToDisplay() throws Exception {
+        try (VirtualDisplaySession session = new VirtualDisplaySession()) {
+            // create a secondary virtual display
+            Display secondaryDisplay = session.createDisplay(mContext,
+                    /* width= */ 400, /* height= */ 300, /* density= */ 120, /* private= */ true);
+            assertThat(secondaryDisplay).isNotNull();
+            int secondaryDisplayId = secondaryDisplay.getDisplayId();
+
+            // launch the activity
+            Intent startIntent = Intent.makeMainActivity(mTestActivity)
+                    .addFlags(FLAG_ACTIVITY_NEW_TASK);
+            TestActivity activity = (TestActivity) mInstrumentation.startActivitySync(
+                    startIntent, /* option */ null);
+
+            // assert the activity is launched into the default display
+            assertThat(activity.getDisplay().getDisplayId()).isEqualTo(DEFAULT_DISPLAY);
+
+            mCarActivityManager.moveRootTaskToDisplay(activity.getTaskId(), secondaryDisplayId);
+
+            // The activity will be recreated since the moved display has the different geometry.
+            assertThat(activity.waitForDestroyed()).isTrue();
+
+            // Wait for the new Activity is created.
+            PollingCheck.waitFor(() -> TestActivity.sInstance != null
+                    && activity != TestActivity.sInstance);
+
+            assertThat(TestActivity.sInstance.getDisplay().getDisplayId())
+                    .isEqualTo(secondaryDisplayId);
+        }
+    }
+
     public static final class TestActivity extends Activity {
+        private static TestActivity sInstance;
         private final CountDownLatch mDestroyed = new CountDownLatch(1);
+
+        @Override
+        protected void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            sInstance = this;
+        }
 
         @Override
         protected void onDestroy() {
             super.onDestroy();
             mDestroyed.countDown();
+            sInstance = null;
         }
 
         private boolean waitForDestroyed() throws InterruptedException {
