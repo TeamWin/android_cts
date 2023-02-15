@@ -16,8 +16,8 @@
 
 package com.android.bedstead.nene.flags;
 
-import static com.android.bedstead.nene.permissions.CommonPermissions.ALLOWLISTED_WRITE_DEVICE_CONFIG;
 import static com.android.bedstead.nene.permissions.CommonPermissions.READ_DEVICE_CONFIG;
+import static com.android.bedstead.nene.permissions.CommonPermissions.WRITE_DEVICE_CONFIG;
 
 import android.provider.DeviceConfig;
 
@@ -79,8 +79,7 @@ public final class Flags {
      * replaced by a bulk update.
      */
     public void set(String namespace, String key, @Nullable String value) {
-        try (PermissionContext p = TestApis.permissions()
-            .withPermission(ALLOWLISTED_WRITE_DEVICE_CONFIG)) {
+        try (PermissionContext p = TestApis.permissions().withPermission(WRITE_DEVICE_CONFIG)) {
             DeviceConfig.setProperty(namespace, key, value, /* makeDefault= */ false);
         }
     }

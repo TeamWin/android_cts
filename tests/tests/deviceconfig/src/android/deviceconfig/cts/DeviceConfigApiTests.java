@@ -92,14 +92,11 @@ public final class DeviceConfigApiTests {
     private final Object mLock = new Object();
 
 
-    private static final String ALLOWLISTED_WRITE_DEVICE_CONFIG_PERMISSION =
-            "android.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG";
+    private static final String WRITE_DEVICE_CONFIG_PERMISSION =
+            "android.permission.WRITE_DEVICE_CONFIG";
 
     private static final String READ_DEVICE_CONFIG_PERMISSION =
             "android.permission.READ_DEVICE_CONFIG";
-
-    private static final String READ_WRITE_SYNC_DISABLED_MODE_CONFIG_PERMISSION =
-            "android.permission.READ_WRITE_SYNC_DISABLED_MODE_CONFIG";
 
     private static final String MONITOR_DEVICE_CONFIG_ACCESS =
             "android.permission.MONITOR_DEVICE_CONFIG_ACCESS";
@@ -123,8 +120,8 @@ public final class DeviceConfigApiTests {
         }
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
-                ALLOWLISTED_WRITE_DEVICE_CONFIG_PERMISSION, READ_DEVICE_CONFIG_PERMISSION,
-                MONITOR_DEVICE_CONFIG_ACCESS, READ_WRITE_SYNC_DISABLED_MODE_CONFIG_PERMISSION);
+                WRITE_DEVICE_CONFIG_PERMISSION, READ_DEVICE_CONFIG_PERMISSION,
+                MONITOR_DEVICE_CONFIG_ACCESS);
     }
 
     @Before

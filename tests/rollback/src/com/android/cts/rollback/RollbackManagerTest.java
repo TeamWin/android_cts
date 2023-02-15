@@ -75,7 +75,7 @@ public class RollbackManagerTest {
                     Manifest.permission.MANAGE_ROLLBACKS,
                     Manifest.permission.TEST_MANAGE_ROLLBACKS,
                     Manifest.permission.READ_DEVICE_CONFIG,
-                    Manifest.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG,
+                    Manifest.permission.WRITE_DEVICE_CONFIG,
                     Manifest.permission.FORCE_STOP_PACKAGES,
                     Manifest.permission.SET_TIME);
 
