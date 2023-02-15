@@ -33,7 +33,8 @@ public class MockSimService {
     public static final int MOCK_SIM_PROFILE_ID_DEFAULT = 0; // SIM Absent
     public static final int MOCK_SIM_PROFILE_ID_TWN_CHT = 1;
     public static final int MOCK_SIM_PROFILE_ID_TWN_FET = 2;
-    public static final int MOCK_SIM_PROFILE_ID_MAX = 3;
+    public static final int MOCK_SIM_PROFILE_ID_US_FI = 3;
+    public static final int MOCK_SIM_PROFILE_ID_MAX = 4;
 
     /* Type of SIM IO command */
     public static final int COMMAND_READ_BINARY = 0xb0;
@@ -355,6 +356,9 @@ public class MockSimService {
                     break;
                 case MOCK_SIM_PROFILE_ID_TWN_FET:
                     mSimProfileInfoList[idx].setXmlFile("mock_sim_tw_fet.xml");
+                    break;
+                case MOCK_SIM_PROFILE_ID_US_FI:
+                    mSimProfileInfoList[idx].setXmlFile("mock_sim_us_fi.xml");
                     break;
                 default:
                     break;
