@@ -18,11 +18,11 @@ package android.virtualdevice.cts;
 
 import static android.Manifest.permission.ACTIVITY_EMBEDDING;
 import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
+import static android.Manifest.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.READ_CLIPBOARD_IN_BACKGROUND;
 import static android.Manifest.permission.READ_DEVICE_CONFIG;
 import static android.Manifest.permission.WAKE_LOCK;
-import static android.Manifest.permission.WRITE_DEVICE_CONFIG;
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.companion.virtual.VirtualDeviceManager.DEVICE_ID_DEFAULT;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
@@ -78,16 +78,18 @@ import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.MotionEvent;
-import android.virtualdevice.cts.util.FakeAssociationRule;
+import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.util.VirtualDeviceTestUtils;
 
 import androidx.annotation.NonNull;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
@@ -102,6 +104,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -109,6 +112,8 @@ import org.mockito.MockitoAnnotations;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+@RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class StreamedAppClipboardTest {
     private static final String TAG = "StreamedAppClipboardTest";
 
@@ -128,7 +133,7 @@ public class StreamedAppClipboardTest {
             CREATE_VIRTUAL_DEVICE,
             READ_CLIPBOARD_IN_BACKGROUND,
             READ_DEVICE_CONFIG,
-            WRITE_DEVICE_CONFIG,
+            ALLOWLISTED_WRITE_DEVICE_CONFIG,
             WRITE_SECURE_SETTINGS,
             WAKE_LOCK);
 

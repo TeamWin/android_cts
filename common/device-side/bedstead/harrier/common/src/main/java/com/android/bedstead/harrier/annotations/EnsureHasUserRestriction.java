@@ -41,6 +41,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(EnsureHasUserRestrictionGroup.class)
 public @interface EnsureHasUserRestriction {
+
+    int ENSURE_HAS_USER_RESTRICTION_WEIGHT = LATE;
+
     /** The restriction to be set. */
     String value();
 
@@ -57,5 +60,5 @@ public @interface EnsureHasUserRestriction {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default LATE;
+    int weight() default ENSURE_HAS_USER_RESTRICTION_WEIGHT;
 }

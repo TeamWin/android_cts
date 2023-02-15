@@ -20,14 +20,8 @@ package {
 
 android_test_helper_app {
     name: "CtsAppThatAccessesMicAndCameraPermission",
-    defaults: ["cts_defaults"],
-    sdk_version: "test_current",
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "vts10",
-        "general-tests",
-    ],
+    defaults: ["mts-target-sdk-version-current"],
+    min_sdk_version: "31",
 
     static_libs: [
         "androidx.test.rules",

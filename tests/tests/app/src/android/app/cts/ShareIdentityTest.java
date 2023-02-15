@@ -579,7 +579,8 @@ public class ShareIdentityTest {
     private static Intent getTestIntent(int testId, int testCase) {
         Intent intent = new Intent();
         intent.setComponent(TEST_COMPONENT);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT
+                | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
         intent.putExtra(TEST_ID_KEY, testId);
         intent.putExtra(TEST_CASE_KEY, testCase);
         return intent;

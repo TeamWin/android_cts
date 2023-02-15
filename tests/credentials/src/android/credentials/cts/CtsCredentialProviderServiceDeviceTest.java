@@ -202,7 +202,7 @@ public class CtsCredentialProviderServiceDeviceTest {
         CountDownLatch latch = new CountDownLatch(1);
         Bundle empty = new Bundle();
         CreateCredentialRequest request = new CreateCredentialRequest("PASSWORD", empty, empty,
-                false);
+                /*isSystemProviderRequired=*/ false, /*alwaysSendAppInfoToProvider=*/ true);
         OutcomeReceiver<CreateCredentialResponse, CreateCredentialException> callback =
                 new OutcomeReceiver<>() {
                     @Override

@@ -26,22 +26,26 @@ import java.nio.charset.StandardCharsets;
 public class BleAdvertisingPacket {
     private static final String TAG = BleAdvertisingPacket.class.getName();
 
-    public static final int ADVERTISING_PACKET_LENGTH = 11;
+    public static final int ADVERTISING_PACKET_LENGTH = 12;
     public static final int MAX_REFERENCE_DEVICE_NAME_LENGTH = 10;
 
     private final String referenceDeviceName;
 
     private final byte randomDeviceId;
+    private final byte rssiMedianFromReferenceDevice;
 
-    public BleAdvertisingPacket(String referenceDeviceName, byte randomDeviceId) {
+    public BleAdvertisingPacket(String referenceDeviceName, byte randomDeviceId,
+            byte rssiMedianFromReferenceDevice) {
         this.referenceDeviceName = referenceDeviceName;
         this.randomDeviceId = randomDeviceId;
+        this.rssiMedianFromReferenceDevice = rssiMedianFromReferenceDevice;
     }
 
     public byte[] toBytes() {
         return ByteBuffer.allocate(ADVERTISING_PACKET_LENGTH)
                 .put(referenceDeviceName.getBytes(StandardCharsets.UTF_8))
                 .put(MAX_REFERENCE_DEVICE_NAME_LENGTH, randomDeviceId)
+                .put(MAX_REFERENCE_DEVICE_NAME_LENGTH + 1, rssiMedianFromReferenceDevice)
                 .array();
     }
 
@@ -51,6 +55,10 @@ public class BleAdvertisingPacket {
 
     public byte getRandomDeviceId() {
         return randomDeviceId;
+    }
+
+    public byte getRssiMedianFromReferenceDevice() {
+        return rssiMedianFromReferenceDevice;
     }
 
     @Nullable
@@ -63,6 +71,9 @@ public class BleAdvertisingPacket {
                 ByteBuffer.wrap(packet, 0, MAX_REFERENCE_DEVICE_NAME_LENGTH - 1).array(),
                 StandardCharsets.UTF_8);
         byte randomDeviceId = ByteBuffer.wrap(packet, MAX_REFERENCE_DEVICE_NAME_LENGTH, 1).get();
-        return new BleAdvertisingPacket(referenceDeviceName, randomDeviceId);
+        byte rssiMedianFromReferenceDevice = ByteBuffer.wrap(packet,
+                MAX_REFERENCE_DEVICE_NAME_LENGTH + 1, 1).get();
+        return new BleAdvertisingPacket(referenceDeviceName, randomDeviceId,
+                rssiMedianFromReferenceDevice);
     }
 }

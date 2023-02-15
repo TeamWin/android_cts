@@ -106,4 +106,14 @@ public class WifiScannerTest extends WifiJUnit3TestBase {
                 WifiScanner.ScanSettings.CREATOR.createFromParcel(parcel).getVendorIes()).isEqualTo(
                 requestSettings.getVendorIes());
     }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    public void testPnoSettings() throws Exception {
+        android.net.wifi.nl80211.PnoSettings pnoSettings =
+                new android.net.wifi.nl80211.PnoSettings();
+        pnoSettings.setScanIterations(3);
+        pnoSettings.setScanIntervalMultiplier(4);
+        assertEquals(3, pnoSettings.getScanIterations());
+        assertEquals(4, pnoSettings.getScanIntervalMultiplier());
+    }
 }

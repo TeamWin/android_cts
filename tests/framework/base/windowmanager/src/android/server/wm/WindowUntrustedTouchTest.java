@@ -47,6 +47,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.hardware.input.InputManager;
+import android.hardware.input.InputSettings;
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Handler;
@@ -1010,7 +1011,7 @@ public class WindowUntrustedTouchTest {
     private float setMaximumObscuringOpacityForTouch(float opacity) throws Exception {
         return SystemUtil.callWithShellPermissionIdentity(() -> {
             float previous = mInputManager.getMaximumObscuringOpacityForTouch();
-            mInputManager.setMaximumObscuringOpacityForTouch(opacity);
+            InputSettings.setMaximumObscuringOpacityForTouch(mContext, opacity);
             return previous;
         });
     }

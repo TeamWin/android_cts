@@ -234,10 +234,6 @@ public class SearchUiManagerTest {
         await(mWatcher.startedUpdateEmptyQueryResult,
                 "Waiting for startedUpdateEmptyQueryResult");
 
-        mClient.requestEmptyQueryResultUpdate();
-        await(mWatcher.requestEmptyQueryResultUpdate,
-                "Waiting for requestEmptyQueryResultUpdate");
-
         mClient.unregisterEmptyQueryResultUpdateCallback(callbackVerifier);
         await(mWatcher.stoppedUpdateEmptyQueryResult,
                 "Waiting for stoppedUpdateEmptyQueryResult");

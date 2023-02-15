@@ -99,6 +99,7 @@ public class JobParametersTest extends BaseJobSchedulerTest {
     }
 
     public void testUserInitiated() throws Exception {
+        startAndKeepTestActivity();
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setUserInitiated(true)
                 .build();

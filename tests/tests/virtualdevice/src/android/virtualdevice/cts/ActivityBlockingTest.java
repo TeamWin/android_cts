@@ -57,8 +57,8 @@ import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
+import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.util.EmptyActivity;
-import android.virtualdevice.cts.util.FakeAssociationRule;
 import android.virtualdevice.cts.util.TestAppHelper;
 import android.virtualdevice.cts.util.VirtualDeviceTestUtils.OnReceiveResultListener;
 

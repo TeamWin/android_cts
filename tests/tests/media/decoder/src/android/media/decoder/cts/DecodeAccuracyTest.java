@@ -24,11 +24,14 @@ import android.graphics.Bitmap;
 import android.media.MediaFormat;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.TestArgs;
+import android.media.cts.TestUtils;
+import android.os.Build;
 import android.os.Environment;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.View;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.After;
@@ -52,6 +55,10 @@ import java.util.regex.Pattern;
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "There should be no instant apps specific behavior related to accuracy")
 public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
+
+    private static final boolean IS_AT_LEAST_U = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)
+            || ApiLevelUtil.codenameEquals("UpsideDownCake");
+    private static final boolean IS_BEFORE_U = !IS_AT_LEAST_U;
 
     private static final String TAG = DecodeAccuracyTest.class.getSimpleName();
     private static final Field[] fields = R.raw.class.getFields();
@@ -270,7 +277,7 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
         final int golden = getGoldenId(vf.getDescription(), vf.getOriginalSize());
         assertTrue("No golden found.", golden != 0);
         decodeVideo(vf, videoViewFactory, decoderName);
-        validateResult(vf, videoViewFactory.getVideoViewSnapshot(), golden);
+        validateResult(vf, videoViewFactory.getVideoViewSnapshot(), golden, decoderName);
     }
 
     private void decodeVideo(VideoFormat videoFormat, VideoViewFactory videoViewFactory,
@@ -282,12 +289,24 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
     }
 
     private void validateResult(
-            VideoFormat videoFormat, VideoViewSnapshot videoViewSnapshot, int goldenId) {
+            VideoFormat videoFormat, VideoViewSnapshot videoViewSnapshot, int goldenId,
+            String decoderName) {
         final Bitmap result = checkNotNull("The expected bitmap from snapshot is null",
                 getHelper().generateBitmapFromVideoViewSnapshot(videoViewSnapshot));
         final Bitmap golden = getHelper().generateBitmapFromImageResourceId(goldenId);
+
+        int ignorePixels = 0;
+        if (IS_BEFORE_U && TestUtils.isMtsMode()) {
+            if (TestUtils.isMainlineCodec(decoderName)) {
+                // some older systems don't give proper behavior at the edges (in system code).
+                // while we can't fix the behavior at the edges, we can verify that the rest
+                // of the image is within tolerance. b/256807044
+                ignorePixels = 1;
+            }
+        }
         final BitmapCompare.Difference difference = BitmapCompare.computeMinimumDifference(
-                result, golden, videoFormat.getOriginalWidth(), videoFormat.getOriginalHeight());
+                result, golden, ignorePixels, videoFormat.getOriginalWidth(),
+                videoFormat.getOriginalHeight());
 
         if (difference.greatestPixelDifference > ALLOWED_GREATEST_PIXEL_DIFFERENCE) {
             /* save failing file */

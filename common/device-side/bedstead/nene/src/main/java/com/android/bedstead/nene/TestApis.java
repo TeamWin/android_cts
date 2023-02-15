@@ -38,6 +38,7 @@ import com.android.bedstead.nene.settings.Settings;
 import com.android.bedstead.nene.systemproperties.SystemProperties;
 import com.android.bedstead.nene.ui.Ui;
 import com.android.bedstead.nene.users.Users;
+import com.android.bedstead.nene.wifi.Wifi;
 
 /**
  * Entry point to Nene Test APIs.
@@ -111,6 +112,11 @@ public final class TestApis {
     @Experimental
     public static Bluetooth bluetooth() {
         return Bluetooth.sInstance;
+    }
+
+    /** Access Test APIs related to wifi. */
+    public static Wifi wifi() {
+        return Wifi.sInstance;
     }
 
     /** Access Test APIs related to input methods. */

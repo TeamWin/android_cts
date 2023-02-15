@@ -185,6 +185,8 @@ public class TvInteractiveAppManagerTest {
                     && info.getSupportedTypes()
                     == (TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV
                             | TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_GINGA)) {
+                // TODO: verify extra types
+                info.getCustomSupportedTypes();
                 return;
             }
         }
@@ -192,6 +194,12 @@ public class TvInteractiveAppManagerTest {
                 "getTvInteractiveAppServiceList() doesn't contain valid "
                         + "TvInteractiveAppServiceInfo: "
                         + StubTvInteractiveAppService.class.getName());
+    }
+
+    @Test
+    public void testGetAppLinkInfoList() {
+        // TODO: verify values.
+        mManager.getTvInteractiveAppServiceList();
     }
 
     @Test

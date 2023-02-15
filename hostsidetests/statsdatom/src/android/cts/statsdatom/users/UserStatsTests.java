@@ -27,6 +27,7 @@ import android.cts.statsdatom.lib.ReportUtils;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +47,7 @@ public abstract class UserStatsTests<T> extends DeviceTestCase implements IBuild
         assertThat(mCtsBuild).isNotNull();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
-        Thread.sleep(WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(WAIT_TIME_LONG);
         getDevice().executeShellCommand("adb logcat -c");
     }
 
@@ -59,7 +60,7 @@ public abstract class UserStatsTests<T> extends DeviceTestCase implements IBuild
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         super.tearDown();
-        Thread.sleep(WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(WAIT_TIME_LONG);
     }
 
     @Override
@@ -71,7 +72,7 @@ public abstract class UserStatsTests<T> extends DeviceTestCase implements IBuild
         uploadConfigForPushedAtom();
         int userId = getDevice().createUser(userName, isGuest, false /* ephemeral */);
         mUsersToRemove.add(userId);
-        Thread.sleep(WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(WAIT_TIME_LONG);
         return userId;
     }
 
@@ -82,7 +83,7 @@ public abstract class UserStatsTests<T> extends DeviceTestCase implements IBuild
         uploadConfigForPushedAtom();
         getDevice().removeUser(userId);
         mUsersToRemove.clear();
-        Thread.sleep(WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(WAIT_TIME_LONG);
         return userId;
     }
 
@@ -93,7 +94,7 @@ public abstract class UserStatsTests<T> extends DeviceTestCase implements IBuild
         getDevice().switchUser(userId);
         // Timeout 2 minutes
         waitUntilDispatchUserSwitchComplete(120000);
-        Thread.sleep(WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(WAIT_TIME_LONG);
         return userId;
     }
 
@@ -105,7 +106,7 @@ public abstract class UserStatsTests<T> extends DeviceTestCase implements IBuild
 
         while ((adbSwitchFinished == null || adbSwitchFinished.isEmpty())
                 && timeElapsed < timeoutInMillis) {
-            Thread.sleep(WAIT_TIME_LONG);
+            RunUtil.getDefault().sleep(WAIT_TIME_LONG);
             adbSwitchFinished = getDevice()
                     .executeShellCommand("adb logcat | grep  -E \"SystemServerTiming: "
                             + "dispatchUserSwitchComplete-|SystemServerTiming: "

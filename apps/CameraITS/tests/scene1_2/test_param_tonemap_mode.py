@@ -85,7 +85,8 @@ class ParamTonemapModeTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       camera_properties_utils.skip_unless(
           camera_properties_utils.compute_target_exposure(props) and
-          camera_properties_utils.per_frame_control(props))
+          camera_properties_utils.per_frame_control(props) and
+          camera_properties_utils.tonemap_mode(props, 0))
       log_path = self.log_path
       name_with_log_path = os.path.join(log_path, _NAME)
 

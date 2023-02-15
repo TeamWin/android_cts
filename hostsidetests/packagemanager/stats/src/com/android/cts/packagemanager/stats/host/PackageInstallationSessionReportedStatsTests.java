@@ -27,6 +27,7 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,12 +58,12 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
     public void testPackageInstallationSessionReportedForApkSuccessWithReplace() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.PACKAGE_INSTALLATION_SESSION_REPORTED_FIELD_NUMBER);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
         DeviceUtils.installTestApp(getDevice(), TEST_INSTALL_APK, TEST_INSTALL_PACKAGE, mCtsBuild);
         assertThat(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE,
                 String.valueOf(getDevice().getCurrentUser()))).isTrue();
         installPackageUsingIncremental(new String[]{TEST_INSTALL_APK_V2});
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
         List<AtomsProto.PackageInstallationSessionReported> reports = new ArrayList<>();
         for (StatsLog.EventMetricData data : ReportUtils.getEventMetricDataList(getDevice())) {
             if (data.getAtom().hasPackageInstallationSessionReported()) {
@@ -168,7 +169,7 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
     public void testPackageUninstalledReported() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.PACKAGE_UNINSTALLATION_REPORTED_FIELD_NUMBER);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
         DeviceUtils.installTestApp(getDevice(), TEST_INSTALL_APK, TEST_INSTALL_PACKAGE, mCtsBuild);
         assertThat(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE,
                 String.valueOf(getDevice().getCurrentUser()))).isTrue();
@@ -176,7 +177,7 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
         DeviceUtils.uninstallTestApp(getDevice(), TEST_INSTALL_PACKAGE);
         assertThat(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE,
                 String.valueOf(getDevice().getCurrentUser()))).isFalse();
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
         List<AtomsProto.PackageUninstallationReported> reports = new ArrayList<>();
         for (StatsLog.EventMetricData data : ReportUtils.getEventMetricDataList(getDevice())) {
             if (data.getAtom().hasPackageUninstallationReported()) {
@@ -198,7 +199,7 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
     public void testPackageInstallationFailedVersionDowngradeReported() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.PACKAGE_INSTALLATION_SESSION_REPORTED_FIELD_NUMBER);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
         DeviceUtils.installTestApp(getDevice(), TEST_INSTALL_APK_V2, TEST_INSTALL_PACKAGE,
                 mCtsBuild);
         assertThat(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE,
@@ -209,7 +210,7 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
                 /*reinstall=*/true, /*grantPermissions=*/true);
         assertThat(result).isNotNull();
 
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
         List<AtomsProto.PackageInstallationSessionReported> reports = new ArrayList<>();
         for (StatsLog.EventMetricData data : ReportUtils.getEventMetricDataList(getDevice())) {
             if (data.getAtom().hasPackageInstallationSessionReported()) {

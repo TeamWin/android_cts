@@ -592,6 +592,24 @@ void SurfaceTransaction_setFrameTimeline(JNIEnv* /*env*/, jclass, jlong surfaceT
                                          vsyncId);
 }
 
+void SurfaceTransaction_setExtendedRangeBrightness(JNIEnv* /*env*/, jclass, jlong surfaceControl,
+                                                   jlong surfaceTransaction, jfloat currentRatio,
+                                                   jfloat desiredRatio) {
+    ASurfaceTransaction_setExtendedRangeBrightness(reinterpret_cast<ASurfaceTransaction*>(
+                                                           surfaceTransaction),
+                                                   reinterpret_cast<ASurfaceControl*>(
+                                                           surfaceControl),
+                                                   currentRatio, desiredRatio);
+}
+
+void SurfaceTransaction_setDataSpace(JNIEnv* /*env*/, jclass, jlong surfaceControl,
+                                     jlong surfaceTransaction, jint dataspace) {
+    ASurfaceTransaction_setBufferDataSpace(reinterpret_cast<ASurfaceTransaction*>(
+                                                   surfaceTransaction),
+                                           reinterpret_cast<ASurfaceControl*>(surfaceControl),
+                                           static_cast<ADataSpace>(dataspace));
+}
+
 static struct {
     jclass clazz;
     jmethodID constructor;
@@ -710,6 +728,9 @@ static const JNINativeMethod JNI_METHODS[] = {
          (void*)SurfaceTransaction_setOnCommitCallbackWithoutContext},
         {"nSurfaceTransaction_setFrameTimeline", "(JJ)V",
          (void*)SurfaceTransaction_setFrameTimeline},
+        {"nSurfaceTransaction_setExtendedRangeBrightness", "(JJFF)V",
+         (void*)SurfaceTransaction_setExtendedRangeBrightness},
+        {"nSurfaceTransaction_setDataSpace", "(JJI)V", (void*)SurfaceTransaction_setDataSpace},
         {"getSolidBuffer", "(III)Landroid/hardware/HardwareBuffer;", (void*)Utils_getSolidBuffer},
         {"getQuadrantBuffer", "(IIIIII)Landroid/hardware/HardwareBuffer;",
          (void*)Utils_getQuadrantBuffer},

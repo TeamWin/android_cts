@@ -15,6 +15,8 @@
  */
 package android.jobscheduler.cts;
 
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
+
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import android.annotation.CallSuper;
@@ -27,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.jobscheduler.MockJobService;
+import android.jobscheduler.TestActivity;
 import android.jobscheduler.TriggerContentJobService;
 import android.net.Uri;
 import android.os.Bundle;
@@ -35,6 +38,7 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
+import android.server.wm.WindowManagerStateHelper;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -76,6 +80,7 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     ClipData mSecondClipData;
 
     boolean mStorageStateChanged;
+    boolean mActivityStarted;
 
     private String mInitialBatteryStatsConstants;
 
@@ -143,6 +148,10 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
                 "cmd jobscheduler reset-execution-quota -u current "
                         + kJobServiceComponent.getPackageName());
         mDeviceConfigStateHelper.restoreOriginalValues();
+
+        if (mActivityStarted) {
+            closeActivity();
+        }
 
         // The super method should be called at the end.
         super.tearDown();
@@ -212,6 +221,21 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         } while ((SystemClock.elapsedRealtime() - startTime) < 10_000);
 
         fail("Timed out waiting for job scheduler: expected seq=" + seq + ", cur=" + curSeq);
+    }
+
+    void startAndKeepTestActivity() {
+        final Intent testActivity = new Intent();
+        testActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        ComponentName testComponentName = new ComponentName(mContext, TestActivity.class);
+        testActivity.setComponent(testComponentName);
+        mContext.startActivity(testActivity);
+        new WindowManagerStateHelper().waitForActivityState(testComponentName, STATE_RESUMED);
+        mActivityStarted = true;
+    }
+
+    void closeActivity() {
+        mContext.sendBroadcast(new Intent(TestActivity.ACTION_FINISH_ACTIVITY));
+        mActivityStarted = false;
     }
 
     String getJobState(int jobId) throws Exception {

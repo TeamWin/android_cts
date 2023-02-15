@@ -116,6 +116,14 @@ public class ASurfaceControlTestUtils {
         applyAndDeleteSurfaceTransaction(surfaceTransaction);
     }
 
+    public static void setExtendedRangeBrightness(long surfaceControl, float currentRatio,
+            float desiredRatio) {
+        long surfaceTransaction = createSurfaceTransaction();
+        nSurfaceTransaction_setExtendedRangeBrightness(surfaceControl, surfaceTransaction,
+                currentRatio, desiredRatio);
+        applyAndDeleteSurfaceTransaction(surfaceTransaction);
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Native function prototypes
     ///////////////////////////////////////////////////////////////////////////
@@ -178,6 +186,10 @@ public class ASurfaceControlTestUtils {
             long surfaceTransaction, TransactionCompleteListener listener);
     public static native void nSurfaceTransaction_setFrameTimeline(long surfaceTransaction,
             long vsyncId);
+    public static native void nSurfaceTransaction_setExtendedRangeBrightness(
+            long surfaceControl, long surfaceTransaction, float currentRatio, float desiredRatio);
+    public static native void nSurfaceTransaction_setDataSpace(
+            long surfaceControl, long surfaceTransaction, int dataspace);
 
     public static native HardwareBuffer getSolidBuffer(int width, int height, int color);
     public static native HardwareBuffer getQuadrantBuffer(int width, int height,

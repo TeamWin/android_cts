@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
+import android.media.PlaybackParams;
 import android.media.tv.AdBuffer;
 import android.media.tv.AdRequest;
 import android.media.tv.AdResponse;
@@ -134,6 +135,7 @@ public class TvInteractiveAppServiceTest {
         private String mBiIAppId = null;
         private Uri mProgramUri = null;
         private String mRecordingId = null;
+        private String mRequestId = null;
         private TvRecordingInfo mTvRecordingInfo = null;
         private Integer mRecordingType = null;
 
@@ -156,6 +158,7 @@ public class TvInteractiveAppServiceTest {
             mBiIAppId = null;
             mProgramUri = null;
             mRecordingId = null;
+            mRequestId = null;
             mTvRecordingInfo = null;
             mRecordingType = null;
         }
@@ -234,10 +237,11 @@ public class TvInteractiveAppServiceTest {
         }
 
         @Override
-        public void onRequestStartRecording(String id, Uri programUri) {
-            super.onRequestStartRecording(id, programUri);
+        public void onRequestStartRecording(String requestId, String inputId, Uri programUri) {
+            super.onRequestStartRecording(requestId, inputId, programUri);
             mRequestStartRecordingCount++;
             mProgramUri = programUri;
+            mRequestId = requestId;
         }
 
         @Override
@@ -477,10 +481,12 @@ public class TvInteractiveAppServiceTest {
         final String recordingId = "testRecording";
         assertNotNull(mSession);
         mSession.resetValues();
-        mTvIAppView.notifyRecordingStarted(recordingId);
+        mTvIAppView.notifyRecordingStarted(recordingId, "request_1");
         PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mRecordingStartedCount > 0);
         assertThat(mSession.mRecordingStartedCount).isEqualTo(1);
         assertThat(mSession.mRecordingId).isEqualTo(recordingId);
+        assertThat(mSession.mRequestId).isEqualTo("request_1");
+        // TODO: test schedule recording
     }
 
     @Test
@@ -492,6 +498,76 @@ public class TvInteractiveAppServiceTest {
         PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mRecordingStoppedCount > 0);
         assertThat(mSession.mRecordingStoppedCount).isEqualTo(1);
         assertThat(mSession.mRecordingId).isEqualTo(recordingId);
+    }
+
+    @Test
+    public void testSendTimeShiftMode() throws Throwable {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvIAppView.sendTimeShiftMode(TvInputManager.TIME_SHIFT_MODE_AUTO);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mTimeShiftModeCount > 0);
+        assertThat(mSession.mTimeShiftModeCount).isEqualTo(1);
+        assertThat(mSession.mTimeShiftMode).isEqualTo(TvInputManager.TIME_SHIFT_MODE_AUTO);
+    }
+
+    @Test
+    public void testSendAvailableSpeeds() throws Throwable {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        final float[] testSpeeds = new float[] {1.0f, 0.0f, 1.5f};
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mAvailableSpeedsCount > 0);
+        assertThat(mSession.mAvailableSpeedsCount).isEqualTo(1);
+        assertThat(mSession.mAvailableSpeeds).isEqualTo(testSpeeds);
+    }
+
+    @Test
+    public void testNotifyTimeShiftPlaybackParams() throws Throwable {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        final PlaybackParams testParams = new PlaybackParams().setSpeed(2.0f)
+                .setAudioFallbackMode(PlaybackParams.AUDIO_FALLBACK_MODE_DEFAULT);
+        mTvIAppView.notifyTimeShiftPlaybackParams(testParams);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mPlaybackParamCount > 0);
+        assertThat(mSession.mPlaybackParamCount).isEqualTo(1);
+        assertThat(mSession.mPlaybackParams).isEqualTo(testParams);
+    }
+
+    @Test
+    public void testNotifyTimeShiftStatusChanged() throws Throwable {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        String testInputId = "TestInput";
+        mTvIAppView.notifyTimeShiftStatusChanged(testInputId,
+                TvInputManager.TIME_SHIFT_STATUS_AVAILABLE);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mTimeShiftStatusCount > 0);
+        assertThat(mSession.mTimeShiftStatus).isEqualTo(TvInputManager.TIME_SHIFT_STATUS_AVAILABLE);
+        assertThat(mSession.mInputId).isEqualTo(testInputId);
+    }
+
+    @Test
+    public void testNotifyTimeShiftStartPositionChanged() throws Throwable {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        long testPosition = 1010;
+        String testInputId = "TestInput";
+        mTvIAppView.notifyTimeShiftStartPositionChanged(testInputId, testPosition);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mTimeShiftStartPositionCount > 0);
+        assertThat(mSession.mTimeShiftStartPositionCount).isEqualTo(1);
+        assertThat(mSession.mTimeShiftStartPosition).isEqualTo(testPosition);
+        assertThat(mSession.mInputId).isEqualTo(testInputId);
+    }
+
+    @Test
+    public void testNotifyTimeShiftCurrentPositionChanged() throws Throwable {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        long testPosition = 1010;
+        String testInputId = "TestInput";
+        mTvIAppView.notifyTimeShiftCurrentPositionChanged(testInputId, testPosition);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mTimeShiftCurrentPositionCount > 0);
+        assertThat(mSession.mTimeShiftCurrentPositionCount).isEqualTo(1);
+        assertThat(mSession.mTimeShiftCurrentPosition).isEqualTo(testPosition);
+        assertThat(mSession.mInputId).isEqualTo(testInputId);
     }
 
     @Test
@@ -872,13 +948,14 @@ public class TvInteractiveAppServiceTest {
     @Test
     public void testRequestStartRecording() throws Throwable {
         final Uri testUri = createTestUri();
-        mSession.requestStartRecording(testUri);
+        mSession.requestStartRecording("request_id1", testUri);
         mCallback.resetValues();
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mRequestStartRecordingCount > 0);
 
         assertThat(mCallback.mRequestStartRecordingCount).isEqualTo(1);
         assertThat(mCallback.mProgramUri).isEqualTo(testUri);
+        assertThat(mCallback.mRequestId).isEqualTo("request_id1");
     }
 
     @Test

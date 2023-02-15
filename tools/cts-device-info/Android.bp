@@ -69,6 +69,7 @@ genrule {
         " -a com.android.compatibility.common.deviceinfo.AppStandbyDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.ClientIdDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.ConfigurationDeviceInfo " +
+        " -a com.android.compatibility.common.deviceinfo.ConnectivityDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.CpuDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.FeatureDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.GenericDeviceInfo " +

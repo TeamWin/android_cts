@@ -31,6 +31,7 @@ import com.android.os.adpf.PerformanceHintSessionReported;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.List;
 
@@ -51,7 +52,7 @@ public class PerformanceHintManagerStatsTests extends DeviceTestCase implements 
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
     @Override
@@ -76,7 +77,7 @@ public class PerformanceHintManagerStatsTests extends DeviceTestCase implements 
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(),
                 ".AtomTests", "testCreateHintSession");
 
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
@@ -101,7 +102,7 @@ public class PerformanceHintManagerStatsTests extends DeviceTestCase implements 
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.ADPF_SYSTEM_COMPONENT_INFO_FIELD_NUMBER);
         AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
         assertThat(data.size()).isAtLeast(1);

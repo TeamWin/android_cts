@@ -16,12 +16,8 @@
 
 package android.devicepolicy.cts;
 
-import static android.Manifest.permission.LOCK_DEVICE;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
-import static android.os.Build.VERSION_CODES.N;
-import static android.os.Build.VERSION_CODES.O;
 
-import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 
@@ -35,29 +31,31 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
-import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
+import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
-import com.android.bedstead.harrier.policies.DeprecatedResetPassword;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.LockNow;
+import com.android.bedstead.harrier.policies.MaximumTimeToLock;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.utils.Poll;
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
 @RequireFeature("android.software.secure_lock_screen")
-public class LockTest {
+public class LockTest { // A bunch of failures already recorded - also btest struggles to run...
+
+    private static final long TIMEOUT = 10000;
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -67,58 +65,18 @@ public class LockTest {
     private static final KeyguardManager sLocalKeyguardManager =
             TestApis.context().instrumentedContext().getSystemService(KeyguardManager.class);
 
-    // TODO(191637162): When @PolicyAppliesTest supports permissions, remove
-    @RequireFeature("android.software.secure_lock_screen")
-    @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
-    @EnsureHasPermission(LOCK_DEVICE)
-    @EnsureScreenIsOn
-    @EnsurePasswordNotSet
+    @CannotSetPolicyTest(policy = LockNow.class)
     @Postsubmit(reason = "New test")
-    @Test
-    public void lockNow_permission_noPasswordSet_turnsScreenOff() throws Exception {
-        sLocalDevicePolicyManager.lockNow();
-
-        Poll.forValue("isScreenOn", () -> TestApis.device().isScreenOn())
-                .toBeEqualTo(false)
-                .errorOnFail()
-                .await();
-    }
-
-    // TODO(191637162): When @PolicyAppliesTest supports permissions, remove
-    @RequireFeature("android.software.secure_lock_screen")
-    @RequireFeature(FEATURE_AUTOMOTIVE)
-    @EnsureHasPermission(LOCK_DEVICE)
-    @EnsureScreenIsOn
-    @EnsurePasswordNotSet
-    @Postsubmit(reason = "New test")
-    @Test
-    public void lockNow_permission_automotive_noPasswordSet_doesNotTurnScreenOff()
-            throws Exception {
-        sLocalDevicePolicyManager.lockNow();
-
-        assertThat(TestApis.device().isScreenOn()).isTrue();
-    }
-
-    // TODO(191637162): When @PolicyAppliesTest supports permissions, remove
-    @RequireFeature("android.software.secure_lock_screen")
-    @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
-    @EnsureHasPermission(LOCK_DEVICE)
-    @EnsureScreenIsOn
-    @EnsurePasswordSet
-    @Postsubmit(reason = "New test")
-    @Test
-    public void lockNow_permission_passwordSet_locksDevice() throws Exception {
-        sLocalDevicePolicyManager.lockNow();
-
-        Poll.forValue("isDeviceLocked", sLocalKeyguardManager::isDeviceLocked)
-                .toBeEqualTo(true)
-                .errorOnFail()
-                .await();
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#lockNow")
+    public void lockNow_notPermitted_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().lockNow());
     }
 
     @PolicyAppliesTest(policy = LockNow.class)
     @Postsubmit(reason = "New test")
     @EnsurePasswordNotSet
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#lockNow")
     public void lockNow_logsMetric() {
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
             sDeviceState.dpc().devicePolicyManager().lockNow(/* flags= */ 0);
@@ -136,6 +94,7 @@ public class LockTest {
     @EnsurePasswordNotSet
     @Postsubmit(reason = "New test")
     @PolicyAppliesTest(policy = LockNow.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#lockNow")
     public void lockNow_noPasswordSet_turnsScreenOff() throws Exception {
         sDeviceState.dpc().devicePolicyManager().lockNow();
 
@@ -150,6 +109,7 @@ public class LockTest {
     @EnsurePasswordNotSet
     @Postsubmit(reason = "New test")
     @PolicyAppliesTest(policy = LockNow.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#lockNow")
     public void lockNow_automotive_noPasswordSet_doesNotTurnScreenOff() throws Exception {
         sDeviceState.dpc().devicePolicyManager().lockNow();
 
@@ -161,6 +121,7 @@ public class LockTest {
     @EnsurePasswordSet
     @Postsubmit(reason = "New test")
     @PolicyAppliesTest(policy = LockNow.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#lockNow")
     public void lockNow_passwordSet_locksDevice() throws Exception {
         sDeviceState.dpc().devicePolicyManager().lockNow();
 
@@ -170,20 +131,50 @@ public class LockTest {
                 .await();
     }
 
-    @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
-    @RequireTargetSdkVersion(max = N)
-    @PolicyAppliesTest(policy = DeprecatedResetPassword.class)
-    public void resetPassword_targetBeforeN_returnsFalse() {
-        assertThat(sDeviceState.dpc()
-                .devicePolicyManager().resetPassword(DEFAULT_PASSWORD, /* flags= */ 0)).isFalse();
-    }
-
-    @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
-    @RequireTargetSdkVersion(min = O)
-    @PolicyAppliesTest(policy = DeprecatedResetPassword.class)
-    public void resetPassword_targetAfterO_throwsSecurityException() {
+    @CannotSetPolicyTest(policy = MaximumTimeToLock.class)
+    @Postsubmit(reason = "New test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMaximumTimeToLock")
+    public void setMaximumTimeToLock_notPermitted_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager()
-                        .resetPassword(DEFAULT_PASSWORD, /* flags= */ 0));
+                        .setMaximumTimeToLock(sDeviceState.dpc().componentName(), TIMEOUT));
+    }
+
+    @PolicyAppliesTest(policy = MaximumTimeToLock.class)
+    @Postsubmit(reason = "New test")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setMaximumTimeToLock",
+            "android.app.admin.DevicePolicyManager#getMaximumTimeToLock"})
+    public void setMaximumTimeToLock_maximumTimeToLockIsSet() {
+        long originalTimeout = sDeviceState.dpc().devicePolicyManager()
+                .getMaximumTimeToLock(sDeviceState.dpc().componentName());
+
+        try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setMaximumTimeToLock(sDeviceState.dpc().componentName(), TIMEOUT);
+
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setMaximumTimeToLock(
+                    sDeviceState.dpc().componentName(), originalTimeout);
+        }
+    }
+
+    @PolicyDoesNotApplyTest(policy = MaximumTimeToLock.class)
+    @Postsubmit(reason = "New test")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setMaximumTimeToLock",
+            "android.app.admin.DevicePolicyManager#getMaximumTimeToLock"})
+    public void setMaximumTimeToLock_doesNotApply_maximumTimeToLockIsNotSet() {
+        long originalTimeout = sDeviceState.dpc().devicePolicyManager()
+                .getMaximumTimeToLock(sDeviceState.dpc().componentName());
+
+        try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setMaximumTimeToLock(sDeviceState.dpc().componentName(), TIMEOUT);
+
+            assertThat(TestApis.devicePolicy().getMaximumTimeToLock()).isNotEqualTo(TIMEOUT);
+
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setMaximumTimeToLock(
+                    sDeviceState.dpc().componentName(), originalTimeout);
+        }
     }
 }

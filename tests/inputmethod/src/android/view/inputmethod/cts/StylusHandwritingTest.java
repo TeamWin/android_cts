@@ -97,6 +97,7 @@ import java.util.function.Predicate;
 public class StylusHandwritingTest extends EndToEndImeTestBase {
     private static final long TIMEOUT_IN_SECONDS = 5;
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(TIMEOUT_IN_SECONDS);
+    private static final long TIMEOUT_6_S = TimeUnit.SECONDS.toMillis(6);
     private static final long TIMEOUT_1_S = TimeUnit.SECONDS.toMillis(1);
     private static final long NOT_EXPECT_TIMEOUT_IN_SECONDS = 1;
     private static final long NOT_EXPECT_TIMEOUT =
@@ -708,7 +709,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             expectEvent(
                     stream,
                     editorMatcher("onFinishStylusHandwriting", marker),
-                    TIMEOUT);
+                    // BlastSyncEngine has a 5s timeout when launcher fails to sync its
+                    // transaction, exceeding it avoids flakes when that happens.
+                    TIMEOUT_6_S);
         }
     }
 

@@ -224,7 +224,6 @@ public final class TestApp {
     public String toString() {
         return "TestApp{"
                 + "packageName=" + packageName()
-                + ", details=" + mDetails
                 + "}";
     }
 

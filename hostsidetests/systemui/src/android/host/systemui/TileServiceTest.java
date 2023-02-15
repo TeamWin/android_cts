@@ -14,6 +14,8 @@
 
 package android.host.systemui;
 
+import com.android.tradefed.util.RunUtil;
+
 import com.android.compatibility.common.util.ApiTest;
 
 /**
@@ -222,7 +224,7 @@ public class TileServiceTest extends BaseTileServiceTest {
         // Set the pending intent with a valid activity
         setActivityForLaunch();
         assertTrue(waitFor("handleSetPendingIntent"));
-        Thread.sleep(500);
+        RunUtil.getDefault().sleep(500);
 
         // Collapse the shade and make sure the listening ends.
         collapse();
@@ -254,12 +256,12 @@ public class TileServiceTest extends BaseTileServiceTest {
         // Set the pending intent with a valid activity
         setActivityForLaunch();
         assertTrue(waitFor("handleSetPendingIntent"));
-        Thread.sleep(500);
+        RunUtil.getDefault().sleep(500);
 
         // Set null or "delete" the current pending intent
         setNullPendingIntent();
         assertTrue(waitFor("handleSetPendingIntent"));
-        Thread.sleep(500);
+        RunUtil.getDefault().sleep(500);
 
         // Click on the tile and verify the onClick is called.
         clickTile();

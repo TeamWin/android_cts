@@ -594,6 +594,20 @@ def edge_mode(props, mode):
       'android.edge.availableEdgeModes']
 
 
+def tonemap_mode(props, mode):
+    """Returns whether a device supports the tonemap mode.
+
+    Args:
+        props: Camera properties object.
+        mode: Integer, indicating the tonemap mode to check for availability.
+
+    Return:
+        Boolean.
+    """
+    return 'android.edge.availableToneMapModes' in props and mode in props[
+        'android.tonemap.availableToneMapModes']
+
+
 def yuv_reprocess(props):
   """Returns whether a device supports YUV reprocessing.
 

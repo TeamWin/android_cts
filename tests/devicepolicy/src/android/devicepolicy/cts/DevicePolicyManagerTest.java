@@ -60,16 +60,6 @@ public final class DevicePolicyManagerTest {
             "android.permission.MANAGE_PROFILE_AND_DEVICE_OWNERS";
     private static final String MANAGE_DEVICE_ADMINS = "android.permission.MANAGE_DEVICE_ADMINS";
 
-    // TODO: Move into policy test when keyguardDisabledFeatures is in bedstead
-    @EnsureHasDeviceOwner
-    @Test
-    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getKeyguardDisabledFeatures")
-    public void getKeyguardDisabledFeatures_adminPassedDoesNotBelongToCaller_throwsException() {
-        assertThrows(SecurityException.class,
-                () -> sDevicePolicyManager.getKeyguardDisabledFeatures(
-                        sDeviceState.deviceOwner().componentName()));
-    }
-
     @EnsureHasDeviceOwner
     @EnsureDoesNotHavePermission(MANAGE_DEVICE_ADMINS)
     @Test

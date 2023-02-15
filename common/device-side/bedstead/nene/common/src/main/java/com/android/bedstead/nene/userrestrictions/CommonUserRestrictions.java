@@ -21,221 +21,227 @@ public final class CommonUserRestrictions {
 
     private CommonUserRestrictions() {}
 
-    /** See {@code Manifest#DISALLOW_CONFIG_WIFI} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_WIFI} */
     public static final String DISALLOW_CONFIG_WIFI = "no_config_wifi";
 
-    /** See {@code Manifest#DISALLOW_CONFIG_LOCALE} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_LOCALE} */
     public static final String DISALLOW_CONFIG_LOCALE = "no_config_locale";
 
-    /** See {@code Manifest#DISALLOW_MODIFY_ACCOUNTS} */
+    /** See {@code android.os.UserManager#DISALLOW_MODIFY_ACCOUNTS} */
     public static final String DISALLOW_MODIFY_ACCOUNTS = "no_modify_accounts";
 
-    /** See {@code Manifest#DISALLOW_INSTALL_APPS} */
+    /** See {@code android.os.UserManager#DISALLOW_INSTALL_APPS} */
     public static final String DISALLOW_INSTALL_APPS = "no_install_apps";
 
-    /** See {@code Manifest#DISALLOW_UNINSTALL_APPS} */
+    /** See {@code android.os.UserManager#DISALLOW_UNINSTALL_APPS} */
     public static final String DISALLOW_UNINSTALL_APPS = "no_uninstall_apps";
 
-    /** See {@code Manifest#DISALLOW_SHARE_LOCATION} */
+    /** See {@code android.os.UserManager#DISALLOW_SHARE_LOCATION} */
     public static final String DISALLOW_SHARE_LOCATION = "no_share_location";
 
-    /** See {@code Manifest#DISALLOW_INSTALL_UNKNOWN_SOURCES} */
+    /** See {@code android.os.UserManager#DISALLOW_INSTALL_UNKNOWN_SOURCES} */
     public static final String DISALLOW_INSTALL_UNKNOWN_SOURCES = "no_install_unknown_sources";
 
-    /** See {@code Manifest#DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY} */
+    /** See {@code android.os.UserManager#DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY} */
     public static final String DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY =
             "no_install_unknown_sources_globally";
 
-    /** See {@code Manifest#DISALLOW_CONFIG_BLUETOOTH} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_BLUETOOTH} */
     public static final String DISALLOW_CONFIG_BLUETOOTH = "no_config_bluetooth";
 
-    /** See {@code Manifest#DISALLOW_BLUETOOTH} */
+    /** See {@code android.os.UserManager#DISALLOW_BLUETOOTH} */
     public static final String DISALLOW_BLUETOOTH = "no_bluetooth";
 
-    /** See {@code Manifest#DISALLOW_BLUETOOTH_SHARING} */
+    /** See {@code android.os.UserManager#DISALLOW_BLUETOOTH_SHARING} */
     public static final String DISALLOW_BLUETOOTH_SHARING = "no_bluetooth_sharing";
 
-    /** See {@code Manifest#DISALLOW_USB_FILE_TRANSFER} */
+    /** See {@code android.os.UserManager#DISALLOW_USB_FILE_TRANSFER} */
     public static final String DISALLOW_USB_FILE_TRANSFER = "no_usb_file_transfer";
 
-    /** See {@code Manifest#DISALLOW_CONFIG_CREDENTIALS} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_CREDENTIALS} */
     public static final String DISALLOW_CONFIG_CREDENTIALS = "no_config_credentials";
 
-    /** See {@code Manifest#DISALLOW_REMOVE_USER} */
+    /** See {@code android.os.UserManager#DISALLOW_REMOVE_USER} */
     public static final String DISALLOW_REMOVE_USER = "no_remove_user";
 
-    /** See {@code Manifest#DISALLOW_REMOVE_MANAGED_PROFILE} */
+    /** See {@code android.os.UserManager#DISALLOW_REMOVE_MANAGED_PROFILE} */
     public static final String DISALLOW_REMOVE_MANAGED_PROFILE = "no_remove_managed_profile";
 
-    /** See {@code Manifest#DISALLOW_DEBUGGING_FEATURES} */
+    /** See {@code android.os.UserManager#DISALLOW_DEBUGGING_FEATURES} */
     public static final String DISALLOW_DEBUGGING_FEATURES = "no_debugging_features";
 
-    /** See {@code Manifest#DISALLOW_CONFIG_VPN} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_VPN} */
     public static final String DISALLOW_CONFIG_VPN = "no_config_vpn";
 
-    /** See {@code Manifest#DISALLOW_CONFIG_DATE_TIME} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_DATE_TIME} */
     public static final String DISALLOW_CONFIG_DATE_TIME = "no_config_date_time";
 
-    /** See {@code Manifest#DISALLOW_CONFIG_TETHERING} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_TETHERING} */
     public static final String DISALLOW_CONFIG_TETHERING = "no_config_tethering";
 
-    /** See {@code Manifest#DISALLOW_NETWORK_RESET} */
+    /** See {@code android.os.UserManager#DISALLOW_NETWORK_RESET} */
     public static final String DISALLOW_NETWORK_RESET = "no_network_reset";
 
-    /** See {@code Manifest#DISALLOW_FACTORY_RESET} */
+    /** See {@code android.os.UserManager#DISALLOW_FACTORY_RESET} */
     public static final String DISALLOW_FACTORY_RESET = "no_factory_reset";
 
-    /** See {@code Manifest#DISALLOW_ADD_USER} */
+    /** See {@code android.os.UserManager#DISALLOW_ADD_USER} */
     public static final String DISALLOW_ADD_USER = "no_add_user";
 
-    /** See {@code Manifest#DISALLOW_ADD_MANAGED_PROFILE} */
+    /** See {@code android.os.UserManager#DISALLOW_ADD_MANAGED_PROFILE} */
     public static final String DISALLOW_ADD_MANAGED_PROFILE = "no_add_managed_profile";
 
-    /** See {@code Manifest#DISALLOW_ADD_CLONE_PROFILE} */
+    /** See {@code android.os.UserManager#DISALLOW_ADD_CLONE_PROFILE} */
     public static final String DISALLOW_ADD_CLONE_PROFILE = "no_add_clone_profile";
 
-    /** See {@code Manifest#ENSURE_VERIFY_APPS} */
+    /** See {@code android.os.UserManager#ENSURE_VERIFY_APPS} */
     public static final String ENSURE_VERIFY_APPS = "ensure_verify_apps";
 
-    /** See {@code Manifest#DISALLOW_CONFIG_CELL_BROADCASTS} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_CELL_BROADCASTS} */
     public static final String DISALLOW_CONFIG_CELL_BROADCASTS = "no_config_cell_broadcasts";
 
-    /** See {@code Manifest#DISALLOW_CONFIG_MOBILE_NETWORKS} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_MOBILE_NETWORKS} */
     public static final String DISALLOW_CONFIG_MOBILE_NETWORKS = "no_config_mobile_networks";
 
-    /** See {@code Manifest#DISALLOW_APPS_CONTROL} */
+    /** See {@code android.os.UserManager#DISALLOW_APPS_CONTROL} */
     public static final String DISALLOW_APPS_CONTROL = "no_control_apps";
 
-    /** See {@code Manifest#DISALLOW_MOUNT_PHYSICAL_MEDIA} */
+    /** See {@code android.os.UserManager#DISALLOW_MOUNT_PHYSICAL_MEDIA} */
     public static final String DISALLOW_MOUNT_PHYSICAL_MEDIA = "no_physical_media";
 
-    /** See {@code Manifest#DISALLOW_UNMUTE_MICROPHONE} */
+    /** See {@code android.os.UserManager#DISALLOW_UNMUTE_MICROPHONE} */
     public static final String DISALLOW_UNMUTE_MICROPHONE = "no_unmute_microphone";
 
-    /** See {@code Manifest#DISALLOW_ADJUST_VOLUME} */
+    /** See {@code android.os.UserManager#DISALLOW_ADJUST_VOLUME} */
     public static final String DISALLOW_ADJUST_VOLUME = "no_adjust_volume";
 
-    /** See {@code Manifest#DISALLOW_OUTGOING_CALLS} */
+    /** See {@code android.os.UserManager#DISALLOW_OUTGOING_CALLS} */
     public static final String DISALLOW_OUTGOING_CALLS = "no_outgoing_calls";
 
-    /** See {@code Manifest#DISALLOW_SMS} */
+    /** See {@code android.os.UserManager#DISALLOW_SMS} */
     public static final String DISALLOW_SMS = "no_sms";
 
-    /** See {@code Manifest#DISALLOW_FUN} */
+    /** See {@code android.os.UserManager#DISALLOW_FUN} */
     public static final String DISALLOW_FUN = "no_fun";
 
-    /** See {@code Manifest#DISALLOW_CREATE_WINDOWS} */
+    /** See {@code android.os.UserManager#DISALLOW_CREATE_WINDOWS} */
     public static final String DISALLOW_CREATE_WINDOWS = "no_create_windows";
 
-    /** See {@code Manifest#DISALLOW_SYSTEM_ERROR_DIALOGS} */
+    /** See {@code android.os.UserManager#DISALLOW_SYSTEM_ERROR_DIALOGS} */
     public static final String DISALLOW_SYSTEM_ERROR_DIALOGS = "no_system_error_dialogs";
 
-    /** See {@code Manifest#DISALLOW_CROSS_PROFILE_COPY_PASTE} */
+    /** See {@code android.os.UserManager#DISALLOW_CROSS_PROFILE_COPY_PASTE} */
     public static final String DISALLOW_CROSS_PROFILE_COPY_PASTE = "no_cross_profile_copy_paste";
 
-    /** See {@code Manifest#DISALLOW_OUTGOING_BEAM} */
+    /** See {@code android.os.UserManager#DISALLOW_OUTGOING_BEAM} */
     public static final String DISALLOW_OUTGOING_BEAM = "no_outgoing_beam";
 
-    /** See {@code Manifest#DISALLOW_WALLPAPER} */
+    /** See {@code android.os.UserManager#DISALLOW_WALLPAPER} */
     public static final String DISALLOW_WALLPAPER = "no_wallpaper";
 
-    /** See {@code Manifest#DISALLOW_SET_WALLPAPER} */
+    /** See {@code android.os.UserManager#DISALLOW_SET_WALLPAPER} */
     public static final String DISALLOW_SET_WALLPAPER = "no_set_wallpaper";
 
-    /** See {@code Manifest#DISALLOW_SAFE_BOOT} */
+    /** See {@code android.os.UserManager#DISALLOW_SAFE_BOOT} */
     public static final String DISALLOW_SAFE_BOOT = "no_safe_boot";
 
-    /** See {@code Manifest#DISALLOW_RECORD_AUDIO} */
+    /** See {@code android.os.UserManager#DISALLOW_RECORD_AUDIO} */
     public static final String DISALLOW_RECORD_AUDIO = "no_record_audio";
 
-    /** See {@code Manifest#DISALLOW_RUN_IN_BACKGROUND} */
+    /** See {@code android.os.UserManager#DISALLOW_RUN_IN_BACKGROUND} */
     public static final String DISALLOW_RUN_IN_BACKGROUND = "no_run_in_background";
 
-    /** See {@code Manifest#DISALLOW_CAMERA} */
+    /** See {@code android.os.UserManager#DISALLOW_CAMERA} */
     public static final String DISALLOW_CAMERA = "no_camera";
 
-    /** See {@code Manifest#DISALLOW_UNMUTE_DEVICE} */
+    /** See {@code android.os.UserManager#DISALLOW_UNMUTE_DEVICE} */
     public static final String DISALLOW_UNMUTE_DEVICE = "disallow_unmute_device";
 
-    /** See {@code Manifest#DISALLOW_DATA_ROAMING} */
+    /** See {@code android.os.UserManager#DISALLOW_DATA_ROAMING} */
     public static final String DISALLOW_DATA_ROAMING = "no_data_roaming";
 
-    /** See {@code Manifest#DISALLOW_SET_USER_ICON} */
+    /** See {@code android.os.UserManager#DISALLOW_SET_USER_ICON} */
     public static final String DISALLOW_SET_USER_ICON = "no_set_user_icon";
 
-    /** See {@code Manifest#DISALLOW_OEM_UNLOCK} */
+    /** See {@code android.os.UserManager#DISALLOW_OEM_UNLOCK} */
     public static final String DISALLOW_OEM_UNLOCK = "no_oem_unlock";
 
-    /** See {@code Manifest#DISALLOW_UNIFIED_PASSWORD} */
+    /** See {@code android.os.UserManager#DISALLOW_UNIFIED_PASSWORD} */
     public static final String DISALLOW_UNIFIED_PASSWORD = "no_unified_password";
 
-    /** See {@code Manifest#ALLOW_PARENT_PROFILE_APP_LINKING} */
+    /** See {@code android.os.UserManager#ALLOW_PARENT_PROFILE_APP_LINKING} */
     public static final String ALLOW_PARENT_PROFILE_APP_LINKING =
             "allow_parent_profile_app_linking";
 
-    /** See {@code Manifest#DISALLOW_AUTOFILL} */
+    /** See {@code android.os.UserManager#DISALLOW_AUTOFILL} */
     public static final String DISALLOW_AUTOFILL = "no_autofill";
 
-    /** See {@code Manifest#DISALLOW_CONTENT_CAPTURE} */
+    /** See {@code android.os.UserManager#DISALLOW_CONTENT_CAPTURE} */
     public static final String DISALLOW_CONTENT_CAPTURE = "no_content_capture";
 
-    /** See {@code Manifest#DISALLOW_CONTENT_SUGGESTIONS} */
+    /** See {@code android.os.UserManager#DISALLOW_CONTENT_SUGGESTIONS} */
     public static final String DISALLOW_CONTENT_SUGGESTIONS = "no_content_suggestions";
 
-    /** See {@code Manifest#DISALLOW_USER_SWITCH} */
+    /** See {@code android.os.UserManager#DISALLOW_USER_SWITCH} */
     public static final String DISALLOW_USER_SWITCH = "no_user_switch";
 
-    /** See {@code Manifest#DISALLOW_SHARE_INTO_MANAGED_PROFILE} */
+    /** See {@code android.os.UserManager#DISALLOW_SHARE_INTO_MANAGED_PROFILE} */
     public static final String DISALLOW_SHARE_INTO_MANAGED_PROFILE = "no_sharing_into_profile";
 
-    /** See {@code Manifest#DISALLOW_PRINTING} */
+    /** See {@code android.os.UserManager#DISALLOW_PRINTING} */
     public static final String DISALLOW_PRINTING = "no_printing";
 
-    /** See {@code Manifest#DISALLOW_CONFIG_PRIVATE_DNS} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_PRIVATE_DNS} */
     public static final String DISALLOW_CONFIG_PRIVATE_DNS =
             "disallow_config_private_dns";
 
-    /** See {@code Manifest#DISALLOW_MICROPHONE_TOGGLE} */
+    /** See {@code android.os.UserManager#DISALLOW_MICROPHONE_TOGGLE} */
     public static final String DISALLOW_MICROPHONE_TOGGLE =
             "disallow_microphone_toggle";
 
-    /** See {@code Manifest#DISALLOW_CAMERA_TOGGLE} */
+    /** See {@code android.os.UserManager#DISALLOW_CAMERA_TOGGLE} */
     public static final String DISALLOW_CAMERA_TOGGLE =
             "disallow_camera_toggle";
 
-    /** See {@code Manifest#DISALLOW_BIOMETRIC} */
+    /** See {@code android.os.UserManager#DISALLOW_BIOMETRIC} */
     public static final String DISALLOW_BIOMETRIC = "disallow_biometric";
 
-    /** See {@code Manifest#DISALLOW_CHANGE_WIFI_STATE} */
+    /** See {@code android.os.UserManager#DISALLOW_CHANGE_WIFI_STATE} */
     public static final String DISALLOW_CHANGE_WIFI_STATE = "no_change_wifi_state";
 
-    /** See {@code Manifest#DISALLOW_WIFI_TETHERING} */
+    /** See {@code android.os.UserManager#DISALLOW_WIFI_TETHERING} */
     public static final String DISALLOW_WIFI_TETHERING = "no_wifi_tethering";
 
-    /** See {@code Manifest#DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI} */
+    /** See {@code android.os.UserManager#DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI} */
     public static final String DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI =
             "no_sharing_admin_configured_wifi";
 
-    /** See {@code Manifest#DISALLOW_WIFI_DIRECT} */
+    /** See {@code android.os.UserManager#DISALLOW_WIFI_DIRECT} */
     public static final String DISALLOW_WIFI_DIRECT = "no_wifi_direct";
 
-    /** See {@code Manifest#DISALLOW_ADD_WIFI_CONFIG} */
+    /** See {@code android.os.UserManager#DISALLOW_ADD_WIFI_CONFIG} */
     public static final String DISALLOW_ADD_WIFI_CONFIG = "no_add_wifi_config";
 
-    /** See {@code Manifest#DISALLOW_CONFIG_LOCATION} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_LOCATION} */
     public static final String DISALLOW_CONFIG_LOCATION = "no_config_location";
 
-    /** See {@code Manifest#DISALLOW_AIRPLANE_MODE} */
+    /** See {@code android.os.UserManager#DISALLOW_AIRPLANE_MODE} */
     public static final String DISALLOW_AIRPLANE_MODE = "no_airplane_mode";
 
-    /** See {@code Manifest#DISALLOW_CONFIG_BRIGHTNESS} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_BRIGHTNESS} */
     public static final String DISALLOW_CONFIG_BRIGHTNESS = "no_config_brightness";
 
-    /** See {@code Manifest#DISALLOW_AMBIENT_DISPLAY} */
+    /** See {@code android.os.UserManager#DISALLOW_AMBIENT_DISPLAY} */
     public static final String DISALLOW_AMBIENT_DISPLAY = "no_ambient_display";
 
-    /** See {@code Manifest#DISALLOW_CONFIG_SCREEN_TIMEOUT} */
+    /** See {@code android.os.UserManager#DISALLOW_CONFIG_SCREEN_TIMEOUT} */
     public static final String DISALLOW_CONFIG_SCREEN_TIMEOUT = "no_config_screen_timeout";
+
+    /** See {@code android.os.UserManager#DISALLOW_CELLULAR_2G} */
+    public static final String DISALLOW_CELLULAR_2G = "no_cellular_2g";
+
+    /** See {@code android.os.UserManager#DISALLOW_ULTRA_WIDEBAND_RADIO} */
+    public static final String DISALLOW_ULTRA_WIDEBAND_RADIO = "no_ultra_wideband_radio";
 
     /** See {@code Manifest#ACTION_USER_RESTRICTIONS_CHANGED} */
     public static final String ACTION_USER_RESTRICTIONS_CHANGED =
@@ -311,6 +317,8 @@ public final class CommonUserRestrictions {
             DISALLOW_WIFI_TETHERING,
             DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI,
             DISALLOW_WIFI_DIRECT,
-            DISALLOW_ADD_WIFI_CONFIG
+            DISALLOW_ADD_WIFI_CONFIG,
+            DISALLOW_CELLULAR_2G,
+            DISALLOW_ULTRA_WIDEBAND_RADIO
     };
 }

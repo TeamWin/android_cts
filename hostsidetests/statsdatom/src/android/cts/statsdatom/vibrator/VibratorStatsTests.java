@@ -32,6 +32,7 @@ import com.android.os.StatsLog.EventMetricData;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -50,7 +51,7 @@ public class VibratorStatsTests extends DeviceTestCase implements IBuildReceiver
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
     @Override
@@ -148,7 +149,7 @@ public class VibratorStatsTests extends DeviceTestCase implements IBuildReceiver
 
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".VibratorTests", testMethodName);
 
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         // Sorted list of events in order in which they occurred.
         return ReportUtils.getEventMetricDataList(getDevice());

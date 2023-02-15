@@ -54,8 +54,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.platform.test.annotations.AppModeFull;
 import android.view.Display;
+import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.util.EmptyActivity;
-import android.virtualdevice.cts.util.FakeAssociationRule;
 import android.virtualdevice.cts.util.TestService;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;

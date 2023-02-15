@@ -30,6 +30,7 @@ import com.android.os.AtomsProto.MultiUserInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.List;
 
@@ -46,7 +47,7 @@ public class MultiUserInfoStatsTests extends DeviceTestCase implements IBuildRec
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
-        Thread.sleep(WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(WAIT_TIME_LONG);
     }
 
     @Override
@@ -68,7 +69,7 @@ public class MultiUserInfoStatsTests extends DeviceTestCase implements IBuildRec
         // Atoms are collected only if isUserSwitcher is enabled
         uploadConfigForPulledAtom();
         AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
         List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
         if (isUserSwitcherEnabled) {
             assertThat(data).isNotEmpty();

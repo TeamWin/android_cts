@@ -19,8 +19,12 @@ package com.android.bedstead.harrier.annotations.parameterized;
 import static com.android.bedstead.harrier.UserType.ANY;
 import static com.android.bedstead.harrier.UserType.SYSTEM_USER;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_COEXISTENCE_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
+import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
@@ -39,6 +43,14 @@ import java.lang.annotation.Target;
 @RequireRunOnSecondaryUser
 @EnsureHasNoDpc(onUser = ANY)
 @EnsureHasDevicePolicyManagerRoleHolder(onUser = SYSTEM_USER, isPrimary = true)
+@EnsureFeatureFlagEnabled(
+        namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
+        key = ENABLE_COEXISTENCE_FLAG
+)
+@EnsureFeatureFlagEnabled(
+        namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
+        key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG
+)
 public @interface IncludeRunOnDevicePolicyManagementRoleHolderSecondaryUser {
     /**
      * Weight sets the order that annotations will be resolved.

@@ -739,7 +739,7 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG,
                 "android.media.metrics.cts.MediaMetricsAtomHostSideTests", "testMidiMetrics",
                 new LogSessionIdListener());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         List<AtomsProto.MediametricsMidiDeviceCloseReported> eventList = toMyAtoms(data,

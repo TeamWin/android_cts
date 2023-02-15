@@ -30,6 +30,7 @@ import com.android.os.AtomsProto.UserInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +46,7 @@ public class UserInfoStatsTests extends DeviceTestCase implements IBuildReceiver
         assertThat(mCtsBuild).isNotNull();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
-        Thread.sleep(WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(WAIT_TIME_LONG);
     }
 
     @Override
@@ -57,7 +58,7 @@ public class UserInfoStatsTests extends DeviceTestCase implements IBuildReceiver
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         super.tearDown();
-        Thread.sleep(WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(WAIT_TIME_LONG);
     }
 
     @Override
@@ -72,7 +73,7 @@ public class UserInfoStatsTests extends DeviceTestCase implements IBuildReceiver
 
             uploadConfigForPulledAtom();
             AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+            RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
             List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
 
             assertThat(data).isNotEmpty();
@@ -98,7 +99,7 @@ public class UserInfoStatsTests extends DeviceTestCase implements IBuildReceiver
 
             uploadConfigForPulledAtom();
             AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+            RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
             List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
 
             assertThat(data).isNotEmpty();
@@ -128,7 +129,7 @@ public class UserInfoStatsTests extends DeviceTestCase implements IBuildReceiver
     private int userCreate(String userName, boolean isGuest) throws Exception {
         int userId = getDevice().createUser(userName, isGuest, false /* ephemeral */);
         mUsersToRemove.add(userId);
-        Thread.sleep(WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(WAIT_TIME_LONG);
         return userId;
     }
 

@@ -56,18 +56,18 @@ class AssociateTest : CoreTestBase() {
     }
 
     @Test
-    fun test_setContextSyncEnabled() = with(targetApp) {
+    fun test_systemDataSyncForTypes() = with(targetApp) {
         associate(MAC_ADDRESS_A)
 
         var associations = cdm.myAssociations
         assertEquals(FLAG_CALL_METADATA,
             associations[0].systemDataSyncFlags and FLAG_CALL_METADATA)
 
-        cdm.disableSystemDataSync(associations[0].id, FLAG_CALL_METADATA)
+        cdm.disableSystemDataSyncForTypes(associations[0].id, FLAG_CALL_METADATA)
         associations = cdm.myAssociations
         assertEquals(0, associations[0].systemDataSyncFlags and FLAG_CALL_METADATA)
 
-        cdm.enableSystemDataSync(associations[0].id, FLAG_CALL_METADATA)
+        cdm.enableSystemDataSyncForTypes(associations[0].id, FLAG_CALL_METADATA)
         associations = cdm.myAssociations
         assertEquals(FLAG_CALL_METADATA,
             associations[0].systemDataSyncFlags and FLAG_CALL_METADATA)

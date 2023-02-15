@@ -333,10 +333,10 @@ public final class Packages {
             throw new NullPointerException();
         }
 
-        if (!user.exists() || !user.isUnlocked()) {
-            throw new NeneException("Packages can not be installed in non-unlocked users "
-                    + "(Trying to install into user " + user + ")");
-        }
+//        if (!user.exists() || !user.isUnlocked()) {
+//            throw new NeneException("Packages can not be installed in non-unlocked users "
+//                    + "(Trying to install into user " + user + ")");
+//        }
 
         if (TestApis.packages().instrumented().isInstantApp()) {
             // We should install using stdin with the byte array

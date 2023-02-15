@@ -1,3 +1,4 @@
+# Bug component: 36137
 # Bug component: 36137 = per-file ApplicationVisibilityTest.java
 # Bug component: 36137 = per-file BaseInstallMultiple.java
 # Bug component: 568761 = per-file CorruptApkTests.java
@@ -37,7 +38,7 @@ per-file ExternalStorageHostTest.java = zezeozue@google.com
 per-file KeySetHostTest.java = cbrubaker@google.com
 per-file ListeningPortsTest.java = cbrubaker@google.com
 per-file PermissionsHostTest.java = ashfall@google.com
-per-file PkgInstallSignatureVerificationTest.java = cbrubaker@google.com
+per-file PkgInstallSignatureVerificationTest.java = cbrubaker@google.com,mpgroover@google.com
 per-file RequestsOnlyCalendarApp22.java = ashfall@google.com
 per-file UseEmbeddedDexTest.java = victorhsieh@google.com
 # Package Manager

@@ -1032,4 +1032,18 @@ public final class Package {
                 .executeOrThrowNeneException(
                         "Error allowing/disallowing test api access for " + this);
     }
+
+    /**
+     * True if the given package is suspended in the given user.
+     */
+    @Experimental
+    public boolean isSuspended(UserReference user) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            return TestApis.context().androidContextAsUser(user).getPackageManager()
+                    .isPackageSuspended(mPackageName);
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new NeneException("Package " + mPackageName + " not found for user " + user);
+        }
+    }
 }

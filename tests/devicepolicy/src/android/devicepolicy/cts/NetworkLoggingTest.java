@@ -26,6 +26,7 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
@@ -76,7 +77,7 @@ public final class NetworkLoggingTest {
 
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = NetworkLogging.class)
-    @EnsureHasNoSecondaryUser
+    @EnsureHasNoAdditionalUser
     public void isNetworkLoggingEnabled_networkLoggingIsEnabled_returnsTrue() throws Exception {
         try {
             sDeviceState.dpc().devicePolicyManager().setNetworkLoggingEnabled(

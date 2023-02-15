@@ -75,6 +75,7 @@ public class BleScanner {
                             deviceName,
                             packet.getReferenceDeviceName(),
                             packet.getRandomDeviceId(),
+                            packet.getRssiMedianFromReferenceDevice(),
                             scanResult.getRssi());
                 }
 
@@ -123,6 +124,7 @@ public class BleScanner {
                 @Nullable String deviceName,
                 String referenceDeviceName,
                 byte randomDeviceId,
+                byte rssiMedian,
                 int rawRssi);
     }
 }

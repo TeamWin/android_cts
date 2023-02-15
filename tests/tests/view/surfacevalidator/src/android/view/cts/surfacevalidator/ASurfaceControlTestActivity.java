@@ -143,11 +143,16 @@ public class ASurfaceControlTestActivity extends Activity {
         verifyScreenshot(pixelChecker, name);
     }
 
-    public void createSurface(SurfaceHolderCallback surfaceHolderCallback) {
+    public void awaitReadyState() {
         try {
-            mReadyToStart.await(5, TimeUnit.SECONDS);
+            assertTrue(mReadyToStart.await(5, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
+    }
+
+    public void createSurface(SurfaceHolderCallback surfaceHolderCallback) {
+        awaitReadyState();
 
         mHandler.post(() -> {
             mSurfaceView.getHolder().addCallback(surfaceHolderCallback);

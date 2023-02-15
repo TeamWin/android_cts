@@ -15,6 +15,7 @@
  */
 package android.security.cts;
 
+import static com.android.sts.common.CommandUtil.runAndCheck;
 import static org.junit.Assert.fail;
 
 import android.platform.test.annotations.AsbSecurityTest;
@@ -28,6 +29,7 @@ import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CVE_2022_20611 extends NonRootSecurityTestCase {
+    final String PROTECTED_PKG = "com.google.android.apps.work.oobconfig";
     /**
      * CVE-2022-20611
      */
@@ -35,11 +37,12 @@ public class CVE_2022_20611 extends NonRootSecurityTestCase {
     @Test
     public void testPocCVE_2022_20611() throws Exception {
         ITestDevice device = getDevice();
+        runAndCheck(device, "pm list packages " + PROTECTED_PKG + " | grep " + PROTECTED_PKG);
         CommandStatus ret = device.executeShellV2Command(
-                "pm uninstall -k --user 0 com.google.android.apps.work.oobconfig").getStatus();
+                "pm uninstall -k --user 0 " + PROTECTED_PKG).getStatus();
         if (ret == CommandStatus.SUCCESS) {
             device.executeShellV2Command(
-                    "pm install-existing --user 0 com.google.android.apps.work.oobconfig");
+                    "pm install-existing --user 0 " + PROTECTED_PKG);
             fail("Was able to uninstall protected package. Vulnerable to b/242994180");
         }
     }

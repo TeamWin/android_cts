@@ -30,7 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-public class BluetoothTest {
+public final class BluetoothTest {
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();

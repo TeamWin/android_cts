@@ -27,6 +27,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
 
+import android.content.AttributionSource;
 import android.content.Intent;
 import android.os.RemoteException;
 import android.speech.RecognitionService;
@@ -100,17 +101,22 @@ public class CtsRecognitionService extends RecognitionService {
     @Override
     public void onCheckRecognitionSupport(
             @NonNull Intent recognizerIntent,
+            @NonNull AttributionSource attributionSource,
             @NonNull SupportCallback supportCallback) {
         Consumer<SupportCallback> consumer = sConsumerQueue.poll();
         if (consumer == null) {
             supportCallback.onError(SpeechRecognizer.ERROR_CANNOT_CHECK_SUPPORT);
         } else {
+            assertThat(attributionSource.getUid()).isEqualTo(android.os.Process.myUid());
             consumer.accept(supportCallback);
         }
     }
 
     @Override
-    public void onTriggerModelDownload(@NonNull Intent recognizerIntent) {
+    public void onTriggerModelDownload(
+            @NonNull Intent recognizerIntent,
+            @NonNull AttributionSource attributionSource) {
+        assertThat(attributionSource.getUid()).isEqualTo(android.os.Process.myUid());
         sDownloadTriggers.add(recognizerIntent);
     }
 

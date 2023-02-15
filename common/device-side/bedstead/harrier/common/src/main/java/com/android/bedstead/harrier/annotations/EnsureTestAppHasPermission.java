@@ -42,6 +42,9 @@ public @interface EnsureTestAppHasPermission {
     /** The maximum version where this permission is required. */
     int maxVersion() default Integer.MAX_VALUE;
 
+    /** The action to be taken if the permission cannot be granted. */
+    FailureMode failureMode() default FailureMode.FAIL;
+
     /**
      * Weight sets the order that annotations will be resolved.
      *

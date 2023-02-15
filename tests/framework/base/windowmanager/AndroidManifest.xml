@@ -467,7 +467,7 @@
 
         <activity android:name="android.server.wm.ActivityTransitionTests$TransitionActivity"/>
 
-        <activity android:name="android.server.wm.ActivityTransitionTests$OverridePendingTransitionActivity"/>
+        <activity android:name="android.server.wm.ActivityTransitionTests$CustomBackgroundTransitionActivity"/>
 
         <activity android:name="android.server.wm.ActivityTransitionTests$TransitionActivityWithWhiteBackground"
             android:theme="@style/Theme.WhiteBackground"

@@ -96,16 +96,6 @@ public class CtsSearchUiService extends SearchUiService {
     }
 
     @Override
-    public void onRequestEmptyQueryResultUpdate(SearchSessionId sessionId) {
-        super.onRequestEmptyQueryResultUpdate(sessionId);
-        if (sWatcher.searchTargets != null) {
-            super.updateEmptyQueryResult(sessionId, sWatcher.searchTargets);
-        }
-        sWatcher.requestEmptyQueryResultUpdate.countDown();
-        sWatcher.verifier.onRequestEmptyQueryResultUpdate(sessionId);
-    }
-
-    @Override
     public void onStartUpdateEmptyQueryResult() {
         super.onStartUpdateEmptyQueryResult();
         sWatcher.startedUpdateEmptyQueryResult.countDown();

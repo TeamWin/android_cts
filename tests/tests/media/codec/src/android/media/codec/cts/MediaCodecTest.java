@@ -132,6 +132,7 @@ public class MediaCodecTest {
 
     private static boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
     private static boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
+    private static boolean mIsAtLeastU = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU);
 
     /**
      * Tests:
@@ -278,6 +279,16 @@ public class MediaCodecTest {
             logMediaCodecException(e);
         } catch (IllegalStateException e) {
             fail("configure should not return IllegalStateException when improperly configured");
+        }
+        if (mIsAtLeastU) {
+            try {
+                int flags = MediaCodec.CONFIGURE_FLAG_USE_CRYPTO_ASYNC |
+                        (isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
+                codec.configure(format, null /* surface */, null /* crypto */, flags /* flags */);
+                fail("At the minimum, CONFIGURE_FLAG_USE_CRYPTO_ASYNC requires setting callback");
+            } catch(IllegalStateException e) { //expected
+                // Need to set callbacks
+            }
         }
         // correct
         codec.configure(format, null /* surface */, null /* crypto */,

@@ -106,7 +106,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
 
         // Launch the primary activity and verify that the placeholder activity was not launched and
         // the primary activity fills the task.
-        Activity primaryActivity = startActivityNewTask(TestActivityWithId.class,
+        Activity primaryActivity = startFullScreenActivityNewTask(TestActivityWithId.class,
                 PRIMARY_ACTIVITY_ID);
         waitAndAssertNotResumed(PLACEHOLDER_ACTIVITY_ID);
         verifyFillsTask(primaryActivity);
@@ -227,7 +227,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
 
         // Launch activity and verify that it fills the task and that a placeholder activity is
         // not launched
-        Activity primaryActivity = startActivityNewTask(TestActivityWithId.class,
+        Activity primaryActivity = startFullScreenActivityNewTask(TestActivityWithId.class,
                 PRIMARY_ACTIVITY_ID);
         verifyFillsTask(primaryActivity);
         waitAndAssertNotResumed(PLACEHOLDER_ACTIVITY_ID);
@@ -359,7 +359,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
             @NonNull String primaryActivityId, @NonNull String placeholderActivityId,
             @NonNull SplitPlaceholderRule splitPlaceholderRule) {
         // Launch the primary activity
-        startActivityNewTask(TestActivityWithId.class, primaryActivityId);
+        startFullScreenActivityNewTask(TestActivityWithId.class, primaryActivityId);
         // Get primary activity
         waitAndAssertResumed(primaryActivityId);
         Activity primaryActivity = getResumedActivityById(primaryActivityId);

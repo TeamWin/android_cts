@@ -36,6 +36,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Build;
+import android.os.PersistableBundle;
 import android.os.UserHandle;
 import android.util.Log;
 
@@ -668,6 +669,109 @@ public final class DevicePolicy {
         try (PermissionContext p =
                      TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
             return devicePolicyManager(user).getUserProvisioningState();
+        }
+    }
+
+    /**
+     * Get password expiration timeout for the instrumented user.
+     */
+    @Experimental
+    public long getPasswordExpirationTimeout() {
+        return getPasswordExpirationTimeout(TestApis.users().instrumented());
+    }
+
+    /**
+     * See {@link DevicePolicyManager#getPasswordExpirationTimeout}.
+     */
+    @Experimental
+    public long getPasswordExpirationTimeout(UserReference user) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
+            return devicePolicyManager(user)
+                    .getPasswordExpirationTimeout(/* componentName= */ null);
+        }
+    }
+
+    /**
+     * Get maximum time to lock for the instrumented user.
+     */
+    @Experimental
+    public long getMaximumTimeToLock() {
+        return getMaximumTimeToLock(TestApis.users().instrumented());
+    }
+
+    /**
+     * See {@link DevicePolicyManager#getMaximumTimeToLock}.
+     */
+    @Experimental
+    public long getMaximumTimeToLock(UserReference user) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
+            return devicePolicyManager(user)
+                    .getMaximumTimeToLock(/* componentName= */ null);
+        }
+    }
+
+    /**
+     * Get strong auth timeout for the instrumented user.
+     */
+    @Experimental
+    public long getRequiredStrongAuthTimeout() {
+        return getRequiredStrongAuthTimeout(TestApis.users().instrumented());
+    }
+
+    /**
+     * See {@link DevicePolicyManager#getRequiredStrongAuthTimeout}.
+     */
+    @Experimental
+    public long getRequiredStrongAuthTimeout(UserReference user) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
+            return devicePolicyManager(user)
+                    .getRequiredStrongAuthTimeout(/* componentName= */ null);
+        }
+    }
+
+    // TODO: Consider wrapping keyguard disabled features with a bedstead concept instead of flags
+
+    /**
+     * Get keyguard disabled features for the instrumented user.
+     */
+    @Experimental
+    public int getKeyguardDisabledFeatures() {
+        return getKeyguardDisabledFeatures(TestApis.users().instrumented());
+    }
+
+    /**
+     * See {@link DevicePolicyManager#getKeyguardDisabledFeatures}.
+     */
+    @Experimental
+    public int getKeyguardDisabledFeatures(UserReference user) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
+            return devicePolicyManager(user)
+                    .getKeyguardDisabledFeatures(/* componentName= */ null);
+        }
+    }
+
+    /**
+     * Get keyguard disabled features for the instrumented user.
+     */
+    @Experimental
+    public Set<PersistableBundle> getTrustAgentConfiguration(ComponentName trustAgent) {
+        return getTrustAgentConfiguration(trustAgent, TestApis.users().instrumented());
+    }
+
+    /**
+     * See {@link DevicePolicyManager#getTrustAgentConfiguration}.
+     */
+    @Experimental
+    public Set<PersistableBundle> getTrustAgentConfiguration(
+            ComponentName trustAgent, UserReference user) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
+            return Set.copyOf(devicePolicyManager(user)
+                    .getTrustAgentConfiguration(/* componentName= */ null, trustAgent));
         }
     }
 }

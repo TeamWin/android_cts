@@ -23,15 +23,23 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.HardwareBufferRenderer;
 import android.graphics.Rect;
+import android.graphics.RenderNode;
+import android.hardware.HardwareBuffer;
+import android.os.Handler;
+import android.os.Looper;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
 import android.uirendering.cts.testinfrastructure.DrawActivity;
+import android.uirendering.cts.testinfrastructure.Tracer;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
+import android.uirendering.cts.util.BitmapAsserter;
 import android.view.Gravity;
 import android.view.PixelCopy;
+import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -45,14 +53,20 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class SurfaceViewTests extends ActivityTestBase {
+
+    @Rule
+    public final Tracer name = new Tracer();
 
     static final CanvasCallback sGreenCanvasCallback =
             new CanvasCallback((canvas, width, height) -> canvas.drawColor(Color.GREEN));
@@ -473,6 +487,79 @@ public class SurfaceViewTests extends ActivityTestBase {
             });
             activity.waitForRedraw();
             assertTrue(helper.hasSurface());
+        } finally {
+            activity.reset();
+        }
+    }
+
+    @Test
+    public void surfaceViewAppliesTransactionsToFrame()
+            throws InterruptedException {
+        SurfaceControl blueLayer = new SurfaceControl.Builder()
+                .setName("SurfaceViewTests")
+                .setHidden(false)
+                .build();
+        SurfaceViewHelper helper = new SurfaceViewHelper((canvas, width, height) -> {
+            Assert.assertNotNull(canvas);
+            canvas.drawColor(Color.RED);
+        });
+
+        DrawActivity activity = getActivity();
+        try {
+            TestPositionInfo testInfo = activity
+                    .enqueueRenderSpecAndWait(R.layout.frame_layout, null, helper, true, false);
+            assertTrue(helper.hasSurface());
+            helper.getFence().await(3, TimeUnit.SECONDS);
+            CountDownLatch latch = new CountDownLatch(1);
+            activity.runOnUiThread(() -> {
+                SurfaceControl.Transaction transaction = new SurfaceControl.Transaction()
+                        .reparent(blueLayer, helper.getSurfaceView().getSurfaceControl())
+                        .setLayer(blueLayer, 1);
+
+                int width = helper.getSurfaceView().getWidth();
+                int height = helper.getSurfaceView().getHeight();
+                long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE
+                        | HardwareBuffer.USAGE_GPU_COLOR_OUTPUT
+                        | HardwareBuffer.USAGE_COMPOSER_OVERLAY;
+                HardwareBuffer buffer = HardwareBuffer.create(
+                        width, height, HardwareBuffer.RGBA_8888, 1, usage);
+                HardwareBufferRenderer renderer = new HardwareBufferRenderer(buffer);
+                RenderNode node = new RenderNode("content");
+                node.setPosition(0, 0, width, height);
+                Canvas canvas = node.beginRecording();
+                canvas.drawColor(Color.BLUE);
+                node.endRecording();
+                renderer.setContentRoot(node);
+                Handler handler = new Handler(Looper.getMainLooper());
+                renderer.obtainRenderRequest().draw(Executors.newSingleThreadExecutor(), result -> {
+                    handler.post(() -> {
+                        transaction.setBuffer(blueLayer, buffer);
+                        helper.getSurfaceView().applyTransactionToFrame(transaction);
+                        latch.countDown();
+                    });
+                });
+            });
+
+            latch.await(5, TimeUnit.SECONDS);
+            // Wait for an additional second to ensure that the transaction reparenting the blue
+            // layer is not applied.
+            TimeUnit.SECONDS.sleep(1);
+            Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
+            BitmapAsserter asserter =
+                    new BitmapAsserter(this.getClass().getSimpleName(), name.getMethodName());
+            asserter.assertBitmapIsVerified(
+                    screenshot, new ColorVerifier(Color.RED, 0), getName(), "");
+            activity.runOnUiThread(() -> {
+                SurfaceHolder holder = helper.getSurfaceView().getHolder();
+                Canvas canvas = holder.lockHardwareCanvas();
+                canvas.drawColor(Color.GREEN);
+                holder.unlockCanvasAndPost(canvas);
+            });
+            activity.waitForRedraw();
+            screenshot = mScreenshotter.takeScreenshot(testInfo);
+            // Now that a new frame was drawn, the blue layer should be overlaid now.
+            asserter.assertBitmapIsVerified(
+                    screenshot, new ColorVerifier(Color.BLUE, 0), getName(), "");
         } finally {
             activity.reset();
         }

@@ -27,10 +27,18 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.companion.virtual.VirtualDeviceParams;
+import android.companion.virtual.sensor.VirtualSensor;
+import android.companion.virtual.sensor.VirtualSensorCallback;
 import android.companion.virtual.sensor.VirtualSensorConfig;
 import android.content.ComponentName;
+import android.os.Binder;
+import android.os.Parcel;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.TestAppHelper;
@@ -38,10 +46,15 @@ import android.virtualdevice.cts.util.TestAppHelper;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.internal.os.BackgroundThread;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 
@@ -51,6 +64,55 @@ public class VirtualDeviceParamsTest {
 
     private static final String VIRTUAL_DEVICE_NAME = "VirtualDeviceName";
     private static final String SENSOR_NAME = "VirtualSensorName";
+    private static final String SENSOR_VENDOR = "VirtualSensorVendor";
+    private static final int PLAYBACK_SESSION_ID = 42;
+    private static final int RECORDING_SESSION_ID = 77;
+
+    @Mock
+    private VirtualSensorCallback mVirtualSensorCallback;
+
+    @Before
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @Test
+    public void parcelable_shouldRecreateSuccessfully() {
+        VirtualDeviceParams originalParams = new VirtualDeviceParams.Builder()
+                .setLockState(VirtualDeviceParams.LOCK_STATE_ALWAYS_UNLOCKED)
+                .setUsersWithMatchingAccounts(Set.of(UserHandle.of(123), UserHandle.of(456)))
+                .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                .setDevicePolicy(POLICY_TYPE_AUDIO, DEVICE_POLICY_CUSTOM)
+                .setAudioPlaybackSessionId(PLAYBACK_SESSION_ID)
+                .setAudioRecordingSessionId(RECORDING_SESSION_ID)
+                .addVirtualSensorConfig(
+                        new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, SENSOR_NAME)
+                                .setVendor(SENSOR_VENDOR)
+                                .build())
+                .setVirtualSensorCallback(BackgroundThread.getExecutor(), mVirtualSensorCallback)
+                .build();
+        Parcel parcel = Parcel.obtain();
+        originalParams.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+
+        VirtualDeviceParams params = VirtualDeviceParams.CREATOR.createFromParcel(parcel);
+        assertThat(params).isEqualTo(originalParams);
+        assertThat(params.getLockState()).isEqualTo(VirtualDeviceParams.LOCK_STATE_ALWAYS_UNLOCKED);
+        assertThat(params.getUsersWithMatchingAccounts())
+                .containsExactly(UserHandle.of(123), UserHandle.of(456));
+        assertThat(params.getDevicePolicy(POLICY_TYPE_SENSORS)).isEqualTo(DEVICE_POLICY_CUSTOM);
+        assertThat(params.getDevicePolicy(POLICY_TYPE_AUDIO)).isEqualTo(DEVICE_POLICY_CUSTOM);
+        assertThat(params.getAudioPlaybackSessionId()).isEqualTo(PLAYBACK_SESSION_ID);
+        assertThat(params.getAudioRecordingSessionId()).isEqualTo(RECORDING_SESSION_ID);
+        assertThat(params.getVirtualSensorCallback()).isNotNull();
+
+        List<VirtualSensorConfig> sensorConfigs = params.getVirtualSensorConfigs();
+        assertThat(sensorConfigs).hasSize(1);
+        VirtualSensorConfig sensorConfig = sensorConfigs.get(0);
+        assertThat(sensorConfig.getType()).isEqualTo(TYPE_ACCELEROMETER);
+        assertThat(sensorConfig.getName()).isEqualTo(SENSOR_NAME);
+        assertThat(sensorConfig.getVendor()).isEqualTo(SENSOR_VENDOR);
+    }
 
     @Test
     public void setAllowedAndBlockedCrossTaskNavigations_shouldThrowException() {
@@ -212,6 +274,19 @@ public class VirtualDeviceParamsTest {
                         .addVirtualSensorConfig(new VirtualSensorConfig.Builder(
                                 TYPE_ACCELEROMETER, SENSOR_NAME)
                                 .build())
+                        .setVirtualSensorCallback(
+                                BackgroundThread.getExecutor(), mVirtualSensorCallback)
+                        .build());
+    }
+
+    @Test
+    public void virtualSensorConfigs_withoutVirtualSensorCallback_throwsException() {
+        assertThrows(
+                IllegalArgumentException.class, () -> new VirtualDeviceParams.Builder()
+                        .addVirtualSensorConfig(new VirtualSensorConfig.Builder(
+                                TYPE_ACCELEROMETER, SENSOR_NAME)
+                                .build())
+                        .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
                         .build());
     }
 
@@ -239,6 +314,7 @@ public class VirtualDeviceParamsTest {
                 .addVirtualSensorConfig(
                         new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, secondSensorName)
                                 .build())
+                .setVirtualSensorCallback(BackgroundThread.getExecutor(), mVirtualSensorCallback)
                 .build();
 
         List<VirtualSensorConfig> virtualSensorConfigs = params.getVirtualSensorConfigs();
@@ -246,6 +322,29 @@ public class VirtualDeviceParamsTest {
         for (int i = 0; i < virtualSensorConfigs.size(); ++i) {
             assertThat(virtualSensorConfigs.get(i).getType()).isEqualTo(TYPE_ACCELEROMETER);
         }
+    }
+
+    @Test
+    public void virtualSensorConfigs_virtualSensorCallbackInvocation() throws Exception {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .addVirtualSensorConfig(
+                        new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, SENSOR_NAME).build())
+                .setVirtualSensorCallback(BackgroundThread.getExecutor(), mVirtualSensorCallback)
+                .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                .build();
+
+        final Duration samplingPeriod = Duration.ofMillis(123);
+        final Duration batchLatency = Duration.ofMillis(456);
+
+        VirtualSensor virtualSensor = new VirtualSensor(
+                0, TYPE_ACCELEROMETER, SENSOR_NAME, null, new Binder(SENSOR_NAME));
+
+        params.getVirtualSensorCallback().onConfigurationChanged(virtualSensor, true,
+                (int) MILLISECONDS.toMicros(samplingPeriod.toMillis()),
+                (int) MILLISECONDS.toMicros(batchLatency.toMillis()));
+
+        verify(mVirtualSensorCallback, timeout(1000)).onConfigurationChanged(
+                virtualSensor, true, samplingPeriod, batchLatency);
     }
 
     @Test

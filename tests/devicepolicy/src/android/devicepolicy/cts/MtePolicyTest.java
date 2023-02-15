@@ -30,6 +30,7 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.policies.MteForceOff;
@@ -57,7 +58,8 @@ public final class MtePolicyTest {
     }
 
     @CanSetPolicyTest(policy = MteForceOn.class)
-    @ApiTest(apis = "android.app.manager.DevicePolicyManager#setMtePolicy")
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMtePolicy")
     public void setMtePolicy_MTE_ENABLED_applies() {
         skipIfUnsupported();
         int originalValue = sDeviceState.dpc().devicePolicyManager().getMtePolicy();
@@ -72,7 +74,8 @@ public final class MtePolicyTest {
     }
 
     @CanSetPolicyTest(policy = MteForceOn.class)
-    @ApiTest(apis = "android.app.manager.DevicePolicyManager#setMtePolicy")
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMtePolicy")
     public void setMtePolicy_MTE_ENABLED_logsEvent() {
         skipIfUnsupported();
         int originalValue = sDeviceState.dpc().devicePolicyManager().getMtePolicy();
@@ -93,7 +96,8 @@ public final class MtePolicyTest {
     }
 
     @CanSetPolicyTest(policy = MteForceOff.class)
-    @ApiTest(apis = "android.app.manager.DevicePolicyManager#setMtePolicy")
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setMtePolicy", "android.app.admin.DevicePolicyManager#getMtePolicy"})
     public void setMtePolicy_MTE_DISABLED_applies() {
         skipIfUnsupported();
         int originalValue = sDeviceState.dpc().devicePolicyManager().getMtePolicy();
@@ -108,7 +112,8 @@ public final class MtePolicyTest {
     }
 
     @CanSetPolicyTest(policy = MteForceOff.class)
-    @ApiTest(apis = "android.app.manager.DevicePolicyManager#setMtePolicy")
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMtePolicy")
     public void setMtePolicy_MTE_DISABLED_logsEvent() {
         skipIfUnsupported();
         int originalValue = sDeviceState.dpc().devicePolicyManager().getMtePolicy();
@@ -128,8 +133,17 @@ public final class MtePolicyTest {
         }
     }
 
+    @CanSetPolicyTest(policy = MteForceOn.class) // TODO: Remove
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMtePolicy")
+    public void setMtePolicy_MTE_ENABLED_doesNotThrow() {
+        skipIfUnsupported();
+        sDeviceState.dpc().devicePolicyManager().setMtePolicy(MTE_ENABLED);
+    }
+
     @CannotSetPolicyTest(policy = MteForceOn.class)
-    @ApiTest(apis = "android.app.manager.DevicePolicyManager#setMtePolicy")
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMtePolicy")
     public void setMtePolicy_MTE_ENABLED_throwsException() {
         skipIfUnsupported();
         assertThrows(
@@ -137,8 +151,17 @@ public final class MtePolicyTest {
                 () -> sDeviceState.dpc().devicePolicyManager().setMtePolicy(MTE_ENABLED));
     }
 
+    @CanSetPolicyTest(policy = MteForceOff.class) // TODO: Remove
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMtePolicy")
+    public void setMtePolicy_MTE_DISABLED_doesNotThrow() {
+        skipIfUnsupported();
+        sDeviceState.dpc().devicePolicyManager().setMtePolicy(MTE_DISABLED);
+    }
+
     @CannotSetPolicyTest(policy = MteForceOff.class)
-    @ApiTest(apis = "android.app.manager.DevicePolicyManager#setMtePolicy")
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMtePolicy")
     public void setMtePolicy_MTE_DISABLED_throwsException() {
         skipIfUnsupported();
         assertThrows(

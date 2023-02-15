@@ -55,7 +55,6 @@ public final class OrganizationOwnedProfileOwnerTest {
     @EnsureHasWorkProfile(isOrganizationOwned = true)
     @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     @Test
-    @Ignore // TODO(260200162): Re-enable
     public void organizationOwnedProfileOwner_parentCannotBeRemoved() {
         assertThat(TestApis.context().instrumentedContext().getSystemService(UserManager.class)
                 .removeUser(sDeviceState.workProfile().parent().userHandle())).isFalse();

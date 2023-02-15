@@ -23,6 +23,7 @@ import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 
 import static com.android.bedstead.harrier.UserType.ADDITIONAL_USER;
 import static com.android.bedstead.harrier.UserType.ANY;
+import static com.android.bedstead.harrier.UserType.SYSTEM_USER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_ROLE_HOLDERS;
 
@@ -66,7 +67,7 @@ import org.junit.runner.RunWith;
 
 // TODO(b/228016400): replace usages of createAndProvisionManagedProfile with a nene API
 @RunWith(BedsteadJUnit4.class)
-public class DevicePolicyManagementRoleHolderTest { // TODO: This is crashing on non-headless - figure it out
+public class DevicePolicyManagementRoleHolderTest { // TODO: This is crashing on non-headless - figure it out - on headless it d't run with btest so follow up....
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -109,7 +110,7 @@ public class DevicePolicyManagementRoleHolderTest { // TODO: This is crashing on
     @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasDeviceOwner
     @RequireMultiUserSupport
-    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = SYSTEM_USER)
     @Test
     @CddTest(requirements = {"3.9.4/C-3-1"})
     public void createAndManageUser_roleHolderIsInManagedUser() {

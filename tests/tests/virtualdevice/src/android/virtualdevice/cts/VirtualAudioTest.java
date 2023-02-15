@@ -82,7 +82,7 @@ import android.media.AudioFormat;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.ActivityResultReceiver;
 import android.virtualdevice.cts.common.AudioHelper;
-import android.virtualdevice.cts.util.FakeAssociationRule;
+import android.virtualdevice.cts.common.FakeAssociationRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;

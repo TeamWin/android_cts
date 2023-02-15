@@ -244,7 +244,6 @@ public class VideoEncoderDecoderTest {
                                     new Object[]{type, mediaType, widths[i], heights[i], encoder,
                                             maxBFrame});
                         }
-                        break;
                     }
                 }
             }

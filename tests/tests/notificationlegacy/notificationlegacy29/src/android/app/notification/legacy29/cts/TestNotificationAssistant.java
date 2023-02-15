@@ -27,6 +27,7 @@ import android.service.notification.StatusBarNotification;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class TestNotificationAssistant extends NotificationAssistantService {
     public static final String TAG = "TestNotificationAssistant";
@@ -35,7 +36,7 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     private static TestNotificationAssistant sNotificationAssistantInstance = null;
     boolean isConnected;
     boolean isPanelOpen = false;
-    public List<String> currentCapabilities;
+    public List<String> allowedAdjustments;
     boolean notificationVisible = false;
     int notificationId = 1357;
     int notificationSeenCount = 0;
@@ -44,7 +45,6 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     int notificationFeedback = 0;
     String snoozedKey;
     String snoozedUntilContext;
-    private NotificationManager mNotificationManager;
 
     public Map<String, Integer> mRemoved = new HashMap<>();
 
@@ -61,7 +61,9 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     @Override
     public void onCreate() {
         super.onCreate();
-        mNotificationManager = getSystemService(NotificationManager.class);
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        allowedAdjustments = Objects.requireNonNull(
+                notificationManager).getAllowedAssistantAdjustments();
     }
 
     @Override
@@ -102,11 +104,6 @@ public class TestNotificationAssistant extends NotificationAssistantService {
         signals.putInt(Adjustment.KEY_USER_SENTIMENT, Ranking.USER_SENTIMENT_POSITIVE);
         return new Adjustment(sbn.getPackageName(), sbn.getKey(), signals, "",
                 sbn.getUser());
-    }
-
-    @Override
-    public void onAllowedAdjustmentsChanged() {
-        currentCapabilities = mNotificationManager.getAllowedAssistantAdjustments();
     }
 
     void resetNotificationVisibilityCounts() {

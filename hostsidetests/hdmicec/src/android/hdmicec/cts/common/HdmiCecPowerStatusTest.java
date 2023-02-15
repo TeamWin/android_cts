@@ -461,10 +461,12 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             TimeUnit.SECONDS.sleep(waitSeconds);
             waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
 
-            // Send <UCP> [Power]. DUT should go to standby.
+            // Send <UCP> [Power]. DUT should remain in ON state.
             hdmiCecClient.sendUserControlPressAndRelease(
                     source, HdmiCecConstants.CEC_KEYCODE_POWER, false);
-            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+
+            sendDeviceToSleep();
 
             // Send <UCP> [Power]. DUT should wakeup.
             hdmiCecClient.sendUserControlPressAndRelease(

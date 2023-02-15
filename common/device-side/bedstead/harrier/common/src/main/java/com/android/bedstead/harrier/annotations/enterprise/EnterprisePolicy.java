@@ -63,11 +63,17 @@ public @interface EnterprisePolicy {
     /** A policy which applies to affiliated other users. */
     int APPLIES_TO_AFFILIATED_OTHER_USERS = 1 << 2;
     /** A policy which applies to unaffiliated profiles of the user of the package which applied the policy. */
-    int APPLIES_TO_UNAFFILIATED_CHILD_PROFILES = 1 << 3;
+    int APPLIES_TO_UNAFFILIATED_CHILD_PROFILES_WITHOUT_INHERITANCE = 1 << 3;
+
+    /** A policy that is inherited by child profiles if applied on parent. */
+    int INHERITABLE = 1 << 4;
+
+    int APPLIES_TO_UNAFFILIATED_CHILD_PROFILES = APPLIES_TO_UNAFFILIATED_CHILD_PROFILES_WITHOUT_INHERITANCE | INHERITABLE;
+
     /** A policy which applies to affiliated profiles of the user of the package which applied the policy. */
-    int APPLIES_TO_AFFILIATED_CHILD_PROFILES = 1 << 4;
+    int APPLIES_TO_AFFILIATED_CHILD_PROFILES = 1 << 5;
     /** A policy that applies to the parent of the profile of the package which applied the policy. */
-    int APPLIES_TO_PARENT = 1 << 5;
+    int APPLIES_TO_PARENT = 1 << 6;
 
     /** A policy that applies to affiliated or unaffiliate profiles of the package which applied the policy. */
     int APPLIES_TO_CHILD_PROFILES =
@@ -83,13 +89,13 @@ public @interface EnterprisePolicy {
     // Applied by
 
     /** A policy that can be applied by a device owner. */
-    int APPLIED_BY_DEVICE_OWNER = 1 << 6;
+    int APPLIED_BY_DEVICE_OWNER = 1 << 7;
     /** A policy that can be applied by a profile owner of an unaffiliated profile. */
-    int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE = 1 << 7;
+    int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE = 1 << 8;
     /** A policy that can be applied by a profile owner of an affiliated profile */
-    int APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE = 1 << 8;
+    int APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE = 1 << 9;
     /** A policy that can be applied by a profile owner of an organization owned profile */
-    int APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE = 1 << 9;
+    int APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE = 1 << 10;
 
     /** A policy that can be applied by a profile owner of an affiliated or unaffiliated profile. */
     int APPLIED_BY_PROFILE_OWNER_PROFILE =
@@ -100,18 +106,18 @@ public @interface EnterprisePolicy {
      * A policy that can be applied by a Profile Owner for a User (not Profile) with no Device
      * Owner.
      */
-    int APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO = 1 << 10;
+    int APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO = 1 << 11;
     /**
      * A policy that can be applied by an unaffiliated Profile Owner for a User (not Profile) with
      * a Device Owner.
      */
-    int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER_WITH_DO = 1 << 11;
+    int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER_WITH_DO = 1 << 12;
     /** A policy that can be applied by a profile owner of an unaffiliated user. */
     int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER =
             APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO
                     | APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER_WITH_DO;
     /** A policy that can be applied by a profile owner of an affiliated user. */
-    int APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER = 1 << 12;
+    int APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER = 1 << 13;
     /** A policy that can be applied by an affiliated or unaffiliated profile owner on a User (not Profile). */
     int APPLIED_BY_PROFILE_OWNER_USER =
             APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER | APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER;
@@ -122,19 +128,13 @@ public @interface EnterprisePolicy {
             APPLIED_BY_PROFILE_OWNER_PROFILE
             | APPLIED_BY_PROFILE_OWNER_USER;
 
-    int APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE = 1 << 13;
-    int APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE = 1 << 14;
+    int APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE = 1 << 14;
+    int APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE = 1 << 15;
 
     int APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_PROFILE =
             APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE;
 
-    int APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_USER = 1 << 15;
-
-    int APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER =
-            APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_USER
-                    | APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_PROFILE;
-
-    /** A policy that has not yet been migrated to allow for DPM Role holder access. */
+    /** A policy that the DPM Role Holder has permission access to */
     int APPLIED_BY_DPM_ROLE_HOLDER = 1 << 16;
 
     // Modifiers
@@ -170,9 +170,6 @@ public @interface EnterprisePolicy {
 
     /** A policy that has not yet been migrated to allow for DPM Role holder access. */
     int CANNOT_BE_APPLIED_BY_ROLE_HOLDER = 1 << 22;
-
-    /** A policy that is inherited by child profiles if applied on parent. */
-    int INHERITABLE = 1 << 22;
 
     /** Flags indicating DPC states which can set the policy. */
     int[] dpc() default {};

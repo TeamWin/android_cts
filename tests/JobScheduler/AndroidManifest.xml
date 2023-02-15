@@ -41,6 +41,8 @@
     <application android:requestLegacyExternalStorage="true">
         <uses-library android:name="android.test.runner" />
 
+        <activity android:name="android.jobscheduler.TestActivity" />
+
         <service android:name="android.jobscheduler.MockJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name="android.jobscheduler.TriggerContentJobService"

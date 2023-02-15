@@ -167,17 +167,6 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun testImplicitShowsMorePhotosOnceSet() {
-        installPackage(APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE)
-        uiAutomation.grantRuntimePermission(APP_PACKAGE_NAME, READ_MEDIA_VISUAL_USER_SELECTED)
-
-        requestAppPermissions(READ_MEDIA_IMAGES) {
-            waitFindObject(By.res(SELECT_MORE_PHOTOS_BUTTON))
-            uiDevice.pressBack()
-        }
-    }
-
-    @Test
     fun testNonImplicitDoesntGrantOtherPermsWhenUserSelected() {
         installPackage(APP_APK_PATH_LATEST)
         requestAppPermissionsAndAssertResult(

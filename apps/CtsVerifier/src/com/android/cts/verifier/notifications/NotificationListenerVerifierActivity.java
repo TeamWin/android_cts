@@ -137,14 +137,16 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new IsEnabledTest());
         tests.add(new ServiceStartedTest());
         tests.add(new NotificationReceivedTest());
-        /*
-        // TODO (b/200701618): re-enable tests if conditions in 3.8.3.1 change to MUST
         if (!isAutomotive) {
             tests.add(new SendUserToChangeFilter());
             tests.add(new AskIfFilterChanged());
             tests.add(new NotificationTypeFilterTest());
-            tests.add(new ResetChangeFilter());
-        }*/
+            tests.add(new ResetTypeFilterAddAppFilter());
+            tests.add(new AskIfReadyToProceed());
+            tests.add(new NotificationAppFilterTest());
+            tests.add(new ResetAppFilter());
+            tests.add(new AskIfReadyToProceed());
+        }
         tests.add(new LongMessageTest());
         tests.add(new DataIntactTest());
         tests.add(new AudiblyAlertedTest());
@@ -1674,8 +1676,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     }
 
     /**
-     * Tests that conversation notifications appear at the top of the shade, if the device supports
-     * a separate conversation section
+     * Tests that conversation notifications appear at the top of the shade
      */
     private class ConversationOrderingTest extends InteractiveTestCase {
         private static final String SHARE_SHORTCUT_ID = "shareShortcut";
@@ -1897,6 +1898,42 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         }
     }
 
+    /**
+     * Sends an alerting notification and makes sure this listener cannot see it.
+     */
+    private class NotificationAppFilterTest extends InteractiveTestCase {
+        int mRetries = 3;
+
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_confirm_notification_not_visible);
+        }
+
+        @Override
+        protected void setUp() {
+            createChannels();
+            sendNoisyNotification();
+            status = READY;
+        }
+
+        @Override
+        protected void tearDown() {
+            mNm.cancelAll();
+            MockListener.getInstance().resetData();
+            deleteChannels();
+        }
+
+        @Override
+        protected void test() {
+            if (MockListener.getInstance().getPosted(mTag4) != null) {
+                logFail("Found" + mTag4);
+                status = FAIL;
+            } else {
+                status = PASS;
+            }
+        }
+    }
+
     protected class SendUserToChangeFilter extends InteractiveTestCase {
         @Override
         protected View inflate(ViewGroup parent) {
@@ -1949,11 +1986,19 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         }
     }
 
-    protected class ResetChangeFilter extends SendUserToChangeFilter {
+    protected class ResetTypeFilterAddAppFilter extends SendUserToChangeFilter {
         @Override
         protected View inflate(ViewGroup parent) {
             return createUserItem(
-                    parent, R.string.cp_start_settings, R.string.nls_reset_type_filter);
+                    parent, R.string.cp_start_settings, R.string.nls_reset_type_add_app_filter);
+        }
+    }
+
+    protected class ResetAppFilter extends SendUserToChangeFilter {
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createUserItem(
+                    parent, R.string.cp_start_settings, R.string.nls_reset_app_filter);
         }
     }
 
@@ -1961,6 +2006,24 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected View inflate(ViewGroup parent) {
             return createPassFailItem(parent, R.string.nls_original_filter_verification);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            status = WAIT_FOR_USER;
+            next();
+        }
+    }
+
+    protected class AskIfReadyToProceed extends InteractiveTestCase {
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createPassFailItem(parent, R.string.nls_confirm_filter_selection);
         }
 
         @Override

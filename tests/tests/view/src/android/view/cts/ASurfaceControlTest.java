@@ -21,6 +21,7 @@ import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.Rect
 import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.WAIT_TIMEOUT_S;
 import static android.view.cts.util.ASurfaceControlTestUtils.applyAndDeleteSurfaceTransaction;
 import static android.view.cts.util.ASurfaceControlTestUtils.createSurfaceTransaction;
+import static android.view.cts.util.ASurfaceControlTestUtils.getSolidBuffer;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_acquire;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_create;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_createFromWindow;
@@ -32,7 +33,9 @@ import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_fromJava;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_releaseBuffer;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setDamageRegion;
+import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setDataSpace;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setDesiredPresentTime;
+import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setExtendedRangeBrightness;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setFrameTimeline;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setOnCommitCallback;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setOnCommitCallbackWithoutContext;
@@ -56,16 +59,20 @@ import static android.view.cts.util.FrameCallbackData.nGetFrameTimelines;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.hardware.DataSpace;
+import android.hardware.HardwareBuffer;
 import android.os.SystemClock;
 import android.os.Trace;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
+import android.view.Display;
 import android.view.Surface;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
@@ -80,6 +87,8 @@ import androidx.annotation.NonNull;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.WidgetTestUtils;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -93,6 +102,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
@@ -2244,5 +2254,112 @@ public class ASurfaceControlTest {
         // Validate we got callbacks.
         assertEquals(0, onCompleteCallback.mLatch.getCount());
         assertTrue(onCompleteCallback.mCallbackTime > 0);
+    }
+
+    @Test
+    public void testSetExtendedRangeBrightness() throws Exception {
+        mActivity.awaitReadyState();
+        Display display = mActivity.getDisplay();
+        if (!display.isHdrSdrRatioAvailable()) {
+            assertEquals(1.0f, display.getHdrSdrRatio(), 0.0001f);
+        }
+        // Set something super low so that if hdr/sdr ratio is available, we'll get some level
+        // of HDR probably
+        mActivity.getWindow().getAttributes().screenBrightness = 0.01f;
+        // Wait for the screenBrightness to be picked up by VRI
+        WidgetTestUtils.runOnMainAndDrawSync(mActivity.getParentFrameLayout(), () -> {});
+        CountDownLatch hdrReady = new CountDownLatch(1);
+        Exception[] listenerErrors = new Exception[1];
+        if (display.isHdrSdrRatioAvailable()) {
+            display.registerHdrSdrRatioChangedListener(Runnable::run, new Consumer<Display>() {
+                boolean mIsRegistered = true;
+
+                @Override
+                public void accept(Display updatedDisplay) {
+                    try {
+                        assertEquals(display.getDisplayId(), updatedDisplay.getDisplayId());
+                        assertTrue(mIsRegistered);
+                        if (display.getHdrSdrRatio() > 2.f) {
+                            hdrReady.countDown();
+                            display.unregisterHdrSdrRatioChangedListener(this);
+                            mIsRegistered = false;
+                        }
+                    } catch (Exception e) {
+                        synchronized (mActivity) {
+                            listenerErrors[0] = e;
+                            hdrReady.countDown();
+                        }
+                    }
+                }
+            });
+        } else {
+            assertThrows(IllegalStateException.class, () ->
+                    display.registerHdrSdrRatioChangedListener(Runnable::run, ignored -> {}));
+        }
+
+        final int extendedDataspace = DataSpace.pack(DataSpace.STANDARD_BT709,
+                DataSpace.TRANSFER_SRGB, DataSpace.RANGE_EXTENDED);
+        final HardwareBuffer buffer = getSolidBuffer(DEFAULT_LAYOUT_WIDTH,
+                DEFAULT_LAYOUT_HEIGHT, Color.RED);
+
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceTransaction = nSurfaceTransaction_create();
+                        long surfaceControl = createFromWindow(holder.getSurface());
+                        setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
+                        nSurfaceTransaction_setDataSpace(surfaceControl, surfaceTransaction,
+                                extendedDataspace);
+                        nSurfaceTransaction_setExtendedRangeBrightness(surfaceControl,
+                                surfaceTransaction, 1.f, 3.f);
+                        nSurfaceTransaction_apply(surfaceTransaction);
+                        nSurfaceTransaction_delete(surfaceTransaction);
+                    }
+                },
+                new PixelChecker(Color.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+
+        // This isn't actually an error if it never happens, it's not _required_ that there's HDR
+        // headroom available...
+        if (display.isHdrSdrRatioAvailable()) {
+            hdrReady.await(1, TimeUnit.SECONDS);
+        }
+
+        if (display.getHdrSdrRatio() > 2.f) {
+            verifyTest(
+                    new BasicSurfaceHolderCallback() {
+                        @Override
+                        public void surfaceCreated(SurfaceHolder holder) {
+                            long surfaceTransaction = nSurfaceTransaction_create();
+                            long surfaceControl = createFromWindow(holder.getSurface());
+                            setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
+                                    DEFAULT_LAYOUT_HEIGHT, Color.RED);
+                            nSurfaceTransaction_setDataSpace(surfaceControl, surfaceTransaction,
+                                    extendedDataspace);
+                            nSurfaceTransaction_setExtendedRangeBrightness(surfaceControl,
+                                    surfaceTransaction, 2.f, 3.f);
+                            nSurfaceTransaction_apply(surfaceTransaction);
+                            nSurfaceTransaction_delete(surfaceTransaction);
+                        }
+                    },
+                    new PixelChecker(Color.RED) { //10000
+                        @Override
+                        public boolean checkPixels(int pixelCount, int width, int height) {
+                            return pixelCount > 9000 && pixelCount < 11000;
+                        }
+                    });
+        }
+
+        synchronized (mActivity) {
+            if (listenerErrors[0] != null) {
+                throw listenerErrors[0];
+            }
+        }
     }
 }

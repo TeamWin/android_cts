@@ -93,8 +93,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "com.android.permissioncontroller:id/permission_allow_all_photos_button"
         const val SELECT_PHOTOS_BUTTON =
             "com.android.permissioncontroller:id/permission_allow_selected_photos_button"
-        const val SELECT_MORE_PHOTOS_BUTTON =
-            "com.android.permissioncontroller:id/permission_allow_more_selected_photos_button"
         const val ALLOW_BUTTON =
                 "com.android.permissioncontroller:id/permission_allow_button"
         const val ALLOW_FOREGROUND_BUTTON =
@@ -157,17 +155,17 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
         const val REQUEST_LOCATION_MESSAGE = "permgrouprequest_location"
 
-        const val DATA_SHARING_UPDATES = "Data sharing updates"
+        const val DATA_SHARING_UPDATES = "Data sharing updates for location"
         const val DATA_SHARING_UPDATES_SUBTITLE =
-                "These apps have changed the way they share location data. They may not have" +
-                        " shared it before, or may now share it for advertising or marketing" +
+                "These apps have changed the way they may share your location data. They may not" +
+                        " have shared it before, or may now share it for advertising or marketing" +
                         " purposes."
         const val DATA_SHARING_NO_UPDATES_MESSAGE = "No updates at this time"
         const val UPDATES_IN_LAST_30_DAYS = "Updated within 30 days"
         const val DATA_SHARING_UPDATES_FOOTER_MESSAGE =
                 "The developers of these apps provided info about their data sharing practices" +
-                        " and may update it over time.\n\nData sharing practices may vary based" +
-                        " on your app version, use, region, and age."
+                        " to an app store. They may update it over time.\n\nData sharing" +
+                        " practices may vary based on your app version, use, region, and age."
         const val LEARN_ABOUT_DATA_SHARING = "Learn about data sharing"
         const val LOCATION_PERMISSION = "Location permission"
         const val PERMISSION_MANAGER = "Permission manager"

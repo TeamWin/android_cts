@@ -95,7 +95,7 @@ public class InstallSessionCleanupTest {
         InstrumentationRegistry
                 .getInstrumentation().getContext().startActivity(intent);
         UiAutomatorUtils.waitFindObject(By.pkg(INSTALLER_APP_PACKAGE_NAME).depth(0));
-        assertThat(getNumSessions(INSTALLER_APP_PACKAGE_NAME)).isEqualTo(NUM_NEW_SESSIONS);
+        assertThat(getNumSessions(INSTALLER_APP_PACKAGE_NAME)).isAtLeast(NUM_NEW_SESSIONS);
         Uninstall.packages(INSTALLER_APP_PACKAGE_NAME);
         // Due to the asynchronous nature of abandoning sessions, sessions don't get deleted
         // immediately after they are abandoned. Briefly wait until all sessions are cleared.

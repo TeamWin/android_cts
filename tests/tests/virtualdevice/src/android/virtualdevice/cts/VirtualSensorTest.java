@@ -26,6 +26,7 @@ import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -35,6 +36,7 @@ import android.annotation.Nullable;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
 import android.companion.virtual.sensor.VirtualSensor;
+import android.companion.virtual.sensor.VirtualSensorCallback;
 import android.companion.virtual.sensor.VirtualSensorConfig;
 import android.companion.virtual.sensor.VirtualSensorEvent;
 import android.content.Context;
@@ -44,7 +46,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.platform.test.annotations.AppModeFull;
-import android.virtualdevice.cts.util.FakeAssociationRule;
+import android.virtualdevice.cts.common.FakeAssociationRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -57,6 +59,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -64,7 +67,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -97,8 +99,7 @@ public class VirtualSensorTest {
     private SensorManager mVirtualDeviceSensorManager;
     private VirtualSensor mVirtualSensor;
     @Mock
-    private VirtualSensor.SensorStateChangeCallback mVirtualSensorStateChangeCallback;
-    private Executor mVirtualSensorStateChangeCallbackExecutor = BackgroundThread.getExecutor();
+    private VirtualSensorCallback mVirtualSensorCallback;
     private VirtualSensorEventListener mSensorEventListener = new VirtualSensorEventListener();
 
     @Before
@@ -118,7 +119,10 @@ public class VirtualSensorTest {
                 .setDevicePolicy(VirtualDeviceParams.POLICY_TYPE_SENSORS,
                         VirtualDeviceParams.DEVICE_POLICY_CUSTOM);
         if (sensorConfig != null) {
-            builder = builder.addVirtualSensorConfig(sensorConfig);
+            builder = builder
+                    .addVirtualSensorConfig(sensorConfig)
+                    .setVirtualSensorCallback(
+                            BackgroundThread.getExecutor(), mVirtualSensorCallback);
         }
         mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
                 mFakeAssociationRule.getAssociationInfo().getId(), builder.build());
@@ -128,7 +132,7 @@ public class VirtualSensorTest {
         if (sensorConfig == null) {
             return null;
         } else {
-            return mVirtualDevice.getVirtualSensor(sensorConfig.getType(), sensorConfig.getName());
+            return mVirtualDevice.getVirtualSensorList().get(0);
         }
     }
 
@@ -166,6 +170,7 @@ public class VirtualSensorTest {
 
         assertThat(mVirtualSensor.getType()).isEqualTo(TYPE_ACCELEROMETER);
         assertThat(mVirtualSensor.getName()).isEqualTo(VIRTUAL_SENSOR_NAME);
+        assertThat(mVirtualSensor.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
 
         Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
         List<Sensor> sensors = mVirtualDeviceSensorManager.getSensorList(TYPE_ACCELEROMETER);
@@ -225,10 +230,7 @@ public class VirtualSensorTest {
     @Test
     public void registerListener_triggersVirtualSensorCallback() {
         mVirtualSensor = setUpVirtualSensor(
-                new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME)
-                        .setStateChangeCallback(mVirtualSensorStateChangeCallbackExecutor,
-                                mVirtualSensorStateChangeCallback)
-                        .build());
+                new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME).build());
 
         Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
 
@@ -242,15 +244,20 @@ public class VirtualSensorTest {
         final Duration expectedReportLatency =
                 Duration.ofNanos(MICROSECONDS.toNanos(maxReportLatencyMicros));
 
-        verify(mVirtualSensorStateChangeCallback, after(SENSOR_TIMEOUT_MILLIS).times(1))
-                .onStateChanged(true, expectedSamplingPeriod, expectedReportLatency);
+        ArgumentCaptor<VirtualSensor> virtualSensor = ArgumentCaptor.forClass(VirtualSensor.class);
+        verify(mVirtualSensorCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
+                .onConfigurationChanged(virtualSensor.capture(), eq(true),
+                        eq(expectedSamplingPeriod), eq(expectedReportLatency));
+        assertThat(virtualSensor.getValue().getHandle()).isEqualTo(mVirtualSensor.getHandle());
 
         mVirtualDeviceSensorManager.unregisterListener(mSensorEventListener);
 
-        verify(mVirtualSensorStateChangeCallback, after(SENSOR_TIMEOUT_MILLIS).times(1))
-                .onStateChanged(eq(false), any(Duration.class), any(Duration.class));
+        verify(mVirtualSensorCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
+                .onConfigurationChanged(virtualSensor.capture(), eq(false), any(Duration.class),
+                        any(Duration.class));
+        assertThat(virtualSensor.getValue().getHandle()).isEqualTo(mVirtualSensor.getHandle());
 
-        verifyNoMoreInteractions(mVirtualSensorStateChangeCallback);
+        verifyNoMoreInteractions(mVirtualSensorCallback);
     }
 
     @Test

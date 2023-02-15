@@ -18,6 +18,7 @@ package android.media.tv.interactive.cts;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.media.PlaybackParams;
 import android.media.tv.AdBuffer;
 import android.media.tv.AdRequest;
 import android.media.tv.AdResponse;
@@ -36,7 +37,6 @@ import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -92,6 +92,12 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mErrorCount;
         public int mRecordingStartedCount;
         public int mRecordingStoppedCount;
+        public int mPlaybackParamCount;
+        public int mTimeShiftModeCount;
+        public int mAvailableSpeedsCount;
+        public int mTimeShiftStatusCount;
+        public int mTimeShiftStartPositionCount;
+        public int mTimeShiftCurrentPositionCount;
         public int mTvMessageCount;
         public int mSendTvRecordingInfoCount;
         public int mSendTvRecordingInfoListCount;
@@ -110,11 +116,19 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public AdResponse mAdResponse;
         public BroadcastInfoResponse mBroadcastInfoResponse;
         public String mRecordingId;
+        public String mRequestId;
+        public PlaybackParams mPlaybackParams;
+        public Integer mTimeShiftMode;
+        public float[] mAvailableSpeeds;
+        public Integer mTimeShiftStatus;
+        public String mInputId;
+        public Long mTimeShiftStartPosition;
+        public Long mTimeShiftCurrentPosition;
         public String mTvMessageType;
         public Bundle mTvMessageData;
         public AdBuffer mAdBuffer;
         public TvRecordingInfo mTvRecordingInfo;
-        public ArrayList<TvRecordingInfo> mTvRecordingInfoList;
+        public List<TvRecordingInfo> mTvRecordingInfoList;
         public Rect mCurrentVideoBounds;
 
         StubSessionImpl(Context context) {
@@ -139,6 +153,12 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mErrorCount = 0;
             mRecordingStartedCount = 0;
             mRecordingStoppedCount = 0;
+            mPlaybackParamCount = 0;
+            mTimeShiftModeCount = 0;
+            mAvailableSpeedsCount = 0;
+            mTimeShiftStatusCount = 0;
+            mTimeShiftCurrentPositionCount = 0;
+            mTimeShiftStartPositionCount = 0;
             mTvMessageCount = 0;
             mAdBufferConsumedCount = 0;
             mSendTvRecordingInfoCount = 0;
@@ -158,6 +178,14 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mAdResponse = null;
             mBroadcastInfoResponse = null;
             mRecordingId = null;
+            mRequestId = null;
+            mPlaybackParams = null;
+            mTimeShiftMode = null;
+            mAvailableSpeeds = new float[]{};
+            mTimeShiftStatus = null;
+            mInputId = null;
+            mTimeShiftCurrentPosition = null;
+            mTimeShiftStartPosition = null;
             mTvMessageData = null;
             mTvMessageType = null;
             mAdBuffer = null;
@@ -452,10 +480,11 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         }
 
         @Override
-        public void onRecordingStarted(String recordingId) {
-            super.onRecordingStarted(recordingId);
+        public void onRecordingStarted(String recordingId, String requestId) {
+            super.onRecordingStarted(recordingId, requestId);
             mRecordingStartedCount++;
             mRecordingId = recordingId;
+            mRequestId = requestId;
         }
 
         @Override
@@ -466,9 +495,55 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         }
 
         @Override
+        public void onTimeShiftPlaybackParams(PlaybackParams params) {
+            super.onTimeShiftPlaybackParams(params);
+            mPlaybackParamCount++;
+            mPlaybackParams = params;
+        }
+
+        @Override
+        public void onTimeShiftMode(int mode) {
+            super.onTimeShiftMode(mode);
+            mTimeShiftMode = mode;
+            mTimeShiftModeCount++;
+        }
+
+        @Override
+        public void onAvailableSpeeds(float[] availableSpeeds) {
+            super.onAvailableSpeeds(availableSpeeds);
+            mAvailableSpeedsCount++;
+            mAvailableSpeeds = availableSpeeds;
+        }
+
+        @Override
+        public void onTimeShiftStartPositionChanged(String inputId, long timeMs) {
+            super.onTimeShiftStartPositionChanged(inputId, timeMs);
+            mTimeShiftStartPosition = timeMs;
+            mInputId = inputId;
+            mTimeShiftStartPositionCount++;
+        }
+
+        @Override
+        public void onTimeShiftCurrentPositionChanged(String inputId, long timeMs) {
+            super.onTimeShiftCurrentPositionChanged(inputId, timeMs);
+            mTimeShiftCurrentPosition = timeMs;
+            mTimeShiftCurrentPositionCount++;
+            mInputId = inputId;
+        }
+
+        @Override
+        public void onTimeShiftStatusChanged(String inputId, int status) {
+            super.onTimeShiftStatusChanged(inputId, status);
+            mTimeShiftStatusCount++;
+            mTimeShiftStatus = status;
+            mInputId = inputId;
+        }
+
+        @Override
         public void onTvMessage(String type, Bundle data) {
             super.onTvMessage(type, data);
             mTvMessageCount++;
+            mTvMessageType = type;
             mTvMessageData = data;
         }
 
@@ -484,6 +559,13 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             super.onTvRecordingInfo(tvRecordingInfo);
             mSendTvRecordingInfoCount++;
             mTvRecordingInfo = tvRecordingInfo;
+        }
+
+        @Override
+        public void onTvRecordingInfoList(List<TvRecordingInfo> recordingInfoList) {
+            super.onTvRecordingInfoList(recordingInfoList);
+            mSendTvRecordingInfoListCount++;
+            mTvRecordingInfoList = recordingInfoList;
         }
     }
 }

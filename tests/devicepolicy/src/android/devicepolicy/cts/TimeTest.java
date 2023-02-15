@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_CONFIG_DATE_TIME;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
@@ -27,6 +29,8 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
+import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -34,15 +38,18 @@ import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.AutoTime;
 import com.android.bedstead.harrier.policies.AutoTimeRequired;
+import com.android.bedstead.harrier.policies.DisallowConfigDateTime;
 import com.android.bedstead.harrier.policies.Time;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.ApiTest;
+import com.android.interactive.annotations.Interactive;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.TimeZone;
@@ -252,7 +259,6 @@ public final class TimeTest {
                     sDeviceState.dpc().componentName(), originalValue);
         }
     }
-
 
     @Postsubmit(reason = "New test")
     @CannotSetPolicyTest(policy = AutoTime.class, includeNonDeviceAdminStates = false)
@@ -564,5 +570,65 @@ public final class TimeTest {
             sDeviceState.dpc().devicePolicyManager().setAutoTimeZoneEnabled(
                     sDeviceState.dpc().componentName(), originalAutoTimeZoneEnabledValue);
         }
+    }
+
+    @CannotSetPolicyTest(policy = DisallowConfigDateTime.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_DATE_TIME")
+    public void setUserRestriction_disallowConfigDateTime_cannotSet_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                        sDeviceState.dpc().componentName(), DISALLOW_CONFIG_DATE_TIME));
+    }
+
+    @PolicyAppliesTest(policy = DisallowConfigDateTime.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_DATE_TIME")
+    public void setUserRestriction_disallowConfigDateTime_isSet() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_CONFIG_DATE_TIME);
+
+            assertThat(TestApis.devicePolicy().userRestrictions().isSet(DISALLOW_CONFIG_DATE_TIME))
+                    .isTrue();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_CONFIG_DATE_TIME);
+        }
+    }
+
+    @PolicyDoesNotApplyTest(policy = DisallowConfigDateTime.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_DATE_TIME")
+    public void setUserRestriction_disallowConfigDateTime_isNotSet() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_CONFIG_DATE_TIME);
+
+            assertThat(TestApis.devicePolicy().userRestrictions().isSet(DISALLOW_CONFIG_DATE_TIME))
+                    .isFalse();
+        } finally {
+
+            sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_CONFIG_DATE_TIME);
+        }
+    }
+
+    @EnsureDoesNotHaveUserRestriction(DISALLOW_CONFIG_DATE_TIME)
+    @Test
+    @Postsubmit(reason = "new test")
+    @Interactive
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_DATE_TIME")
+    public void disallowConfigDateTimeIsNotSet_todo() throws Exception {
+        // TODO: Test
+    }
+
+    @EnsureHasUserRestriction(DISALLOW_CONFIG_DATE_TIME)
+    @Test
+    @Postsubmit(reason = "new test")
+    @Interactive
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_DATE_TIME")
+    public void disallowConfigDateTimeIsSet_todo() throws Exception {
+        // TODO: Test
     }
 }

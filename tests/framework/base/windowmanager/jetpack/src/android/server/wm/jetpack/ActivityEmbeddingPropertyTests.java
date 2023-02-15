@@ -48,7 +48,8 @@ public class ActivityEmbeddingPropertyTests extends WindowManagerJetpackTestBase
     @Before
     public void setUp() {
         super.setUp();
-        mTestActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        mTestActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
         mPackageManager = mTestActivity.getPackageManager();
     }
 

@@ -213,10 +213,23 @@ public class WidgetTestUtils {
      */
     public static void runOnMainAndDrawSync(@NonNull final ActivityTestRule activityTestRule,
             @NonNull final View view, @Nullable final Runnable runner) {
+        runOnMainAndDrawSync(view, runner);
+    }
+
+    /**
+     * Runs the specified {@link Runnable} on the main thread and ensures that the specified
+     * {@link View}'s tree is drawn before returning.
+     *
+     * @param view the view whose tree should be drawn before returning
+     * @param runner the runnable to run on the main thread, or {@code null} to
+     *               simply force invalidation and a draw pass
+     */
+    public static void runOnMainAndDrawSync(@NonNull final View view,
+            @Nullable final Runnable runner) {
         final CountDownLatch latch = new CountDownLatch(1);
 
         try {
-            activityTestRule.runOnUiThread(() -> {
+            view.post(() -> {
                 final OnDrawListener listener = new OnDrawListener() {
                     @Override
                     public void onDraw() {
@@ -242,6 +255,7 @@ public class WidgetTestUtils {
             throw new RuntimeException(t);
         }
     }
+
 
     /**
      * Runs the specified Runnable on the main thread and ensures that the activity's view tree is

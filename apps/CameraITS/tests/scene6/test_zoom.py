@@ -32,6 +32,7 @@ import opencv_processing_utils
 _CIRCLE_COLOR = 0  # [0: black, 255: white]
 _CIRCLE_AR_RTOL = 0.15  # contour width vs height (aspect ratio)
 _CIRCLISH_RTOL = 0.05  # contour area vs ideal circle area pi*((w+h)/4)**2
+_JPEG_STR = 'jpg'
 _MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
 _MIN_CIRCLE_PTS = 25
 _MIN_FOCUS_DIST_TOL = 0.80  # allow charts a little closer than min
@@ -43,6 +44,7 @@ _OFFSET_RTOL_LOW_OFFSET = 0.20
 _OFFSET_RTOL_MIN_FD = 0.30
 _RADIUS_RTOL = 0.10
 _RADIUS_RTOL_MIN_FD = 0.15
+_TEST_FORMATS = ['yuv']  # list so can be appended for newer Android versions
 _ZOOM_MAX_THRESH = 10.0
 _ZOOM_MIN_THRESH = 2.0
 
@@ -107,7 +109,6 @@ class ZoomTest(its_base_test.ItsBaseTest):
   """
 
   def test_zoom(self):
-    test_data = {}
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
@@ -144,95 +145,116 @@ class ZoomTest(its_base_test.ItsBaseTest):
       logging.debug('capture size: %s', str(size))
       logging.debug('test TOLs: %s', str(test_tols))
 
+      # determine vendor API level and test_formats to test
+      test_formats = _TEST_FORMATS
+      vendor_api_level = its_session_utils.get_vendor_api_level(self.dut.serial)
+      if vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL:
+        test_formats.append(_JPEG_STR)
+
       # do captures over zoom range and find circles with cv2
+      img_name_stem = f'{os.path.join(self.log_path, _NAME)}'
       req = capture_request_utils.auto_capture_request()
-      for i, z in enumerate(z_list):
-        logging.debug('zoom ratio: %.2f', z)
-        req['android.control.zoomRatio'] = z
-        cam.do_3a()
-        cap = cam.do_capture(
-            req, {'format': 'yuv', 'width': size[0], 'height': size[1]})
-        img = image_processing_utils.convert_capture_to_rgb_image(
-            cap, props=props)
-        img_name = f'{os.path.join(self.log_path, _NAME)}_{round(z, 2)}.jpg'
-        image_processing_utils.write_image(img, img_name)
+      test_failed = False
+      for fmt in test_formats:
+        logging.debug('testing %s format', fmt)
+        test_data = {}
+        for i, z in enumerate(z_list):
+          logging.debug('zoom ratio: %.2f', z)
+          req['android.control.zoomRatio'] = z
+          cam.do_3a()
+          cap = cam.do_capture(
+              req, {'format': fmt, 'width': size[0], 'height': size[1]})
+          img = image_processing_utils.convert_capture_to_rgb_image(
+              cap, props=props)
+          img_name = f'{img_name_stem}_{fmt}_{round(z, 2)}.{JPEG_STR}'
+          image_processing_utils.write_image(img, img_name)
 
-        # determine radius tolerance of capture
-        cap_fl = cap['metadata']['android.lens.focalLength']
-        radius_tol, offset_tol = test_tols[cap_fl]
+          # determine radius tolerance of capture
+          cap_fl = cap['metadata']['android.lens.focalLength']
+          radius_tol, offset_tol = test_tols[cap_fl]
 
-        # convert [0, 1] image to [0, 255] and cast as uint8
-        img = image_processing_utils.convert_image_to_uint8(img)
+          # convert [0, 1] image to [0, 255] and cast as uint8
+          img = image_processing_utils.convert_image_to_uint8(img)
 
-        # Find the center circle in img
-        try:
-          circle = opencv_processing_utils.find_center_circle(
-              img, img_name, _CIRCLE_COLOR, circle_ar_rtol=_CIRCLE_AR_RTOL,
-              circlish_rtol=_CIRCLISH_RTOL,
-              min_area=_MIN_AREA_RATIO * size[0] * size[1] * z * z,
-              min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
-          if opencv_processing_utils.is_circle_cropped(circle, size):
-            logging.debug('zoom %.2f is too large! Skip further captures', z)
-            break
-        except AssertionError as e:
-          if z/z_list[0] >= _ZOOM_MAX_THRESH:
-            break
-          else:
-            raise AssertionError(
-                f'No circle was detected for zoom ratio <= {_ZOOM_MAX_THRESH}. '
-                'Take pictures according to instructions carefully!') from e
-        test_data[i] = {'z': z, 'circle': circle, 'r_tol': radius_tol,
-                        'o_tol': offset_tol, 'fl': cap_fl}
+          # Find the center circle in img
+          try:
+            circle = opencv_processing_utils.find_center_circle(
+                img, img_name, _CIRCLE_COLOR, circle_ar_rtol=_CIRCLE_AR_RTOL,
+                circlish_rtol=_CIRCLISH_RTOL,
+                min_area=_MIN_AREA_RATIO * size[0] * size[1] * z * z,
+                min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
+            if opencv_processing_utils.is_circle_cropped(circle, size):
+              logging.debug('zoom %.2f is too large! Skip further captures', z)
+              break
+          except AssertionError as e:
+            if z/z_list[0] >= _ZOOM_MAX_THRESH:
+              break
+            else:
+              raise AssertionError(
+                  f'No circle detected for zoom ratio <= {_ZOOM_MAX_THRESH}. '
+                  'Take pictures according to instructions carefully!') from e
+          test_data[i] = {'z': z, 'circle': circle, 'r_tol': radius_tol,
+                          'o_tol': offset_tol, 'fl': cap_fl}
 
-    # assert some range is tested before circles get too big
-    zoom_max_thresh = _ZOOM_MAX_THRESH
-    z_max_ratio = z_max / z_min
-    if z_max_ratio < _ZOOM_MAX_THRESH:
-      zoom_max_thresh = z_max_ratio
-    test_data_max_z = (test_data[max(test_data.keys())]['z'] /
-                       test_data[min(test_data.keys())]['z'])
-    logging.debug('test zoom ratio max: %.2f', test_data_max_z)
-    if test_data_max_z < zoom_max_thresh:
-      raise AssertionError(f'Max zoom ratio tested: {test_data_max_z:.4f}, '
-                           f'range advertised min: {z_min}, max: {z_max} '
-                           f'THRESH: {zoom_max_thresh}')
+        # assert some range is tested before circles get too big
+        zoom_max_thresh = _ZOOM_MAX_THRESH
+        z_max_ratio = z_max / z_min
+        if z_max_ratio < _ZOOM_MAX_THRESH:
+          zoom_max_thresh = z_max_ratio
+        test_data_max_z = (test_data[max(test_data.keys())]['z'] /
+                           test_data[min(test_data.keys())]['z'])
+        logging.debug('test zoom ratio max: %.2f', test_data_max_z)
+        if test_data_max_z < zoom_max_thresh:
+          test_failed = True
+          e_msg = (f'Max zoom ratio tested: {test_data_max_z:.4f}, '
+                   f'range advertised min: {z_min}, max: {z_max} '
+                   f'THRESH: {zoom_max_thresh}')
+          logging.error(e_msg)
 
-    # initialize relative size w/ zoom[0] for diff zoom ratio checks
-    radius_0 = float(test_data[0]['circle'][2])
-    z_0 = float(test_data[0]['z'])
+        # initialize relative size w/ zoom[0] for diff zoom ratio checks
+        radius_0 = float(test_data[0]['circle'][2])
+        z_0 = float(test_data[0]['z'])
 
-    for i, data in test_data.items():
-      logging.debug('Zoom: %.2f, fl: %.2f', data['z'], data['fl'])
-      offset_abs = [(data['circle'][0] - size[0] // 2),
-                    (data['circle'][1] - size[1] // 2)]
-      logging.debug('Circle r: %.1f, center offset x, y: %d, %d',
-                    data['circle'][2], offset_abs[0], offset_abs[1])
-      z_ratio = data['z'] / z_0
+        for i, data in test_data.items():
+          logging.debug('Zoom: %.2f, fl: %.2f', data['z'], data['fl'])
+          offset_abs = [(data['circle'][0] - size[0] // 2),
+                        (data['circle'][1] - size[1] // 2)]
+          logging.debug('Circle r: %.1f, center offset x, y: %d, %d',
+                        data['circle'][2], offset_abs[0], offset_abs[1])
+          z_ratio = data['z'] / z_0
 
-      # check relative size against zoom[0]
-      radius_ratio = data['circle'][2] / radius_0
-      logging.debug('r ratio req: %.3f, measured: %.3f', z_ratio, radius_ratio)
-      if not math.isclose(z_ratio, radius_ratio, rel_tol=data['r_tol']):
-        raise AssertionError(f'zoom: {z_ratio:.2f}, radius ratio: '
-                             f"{radius_ratio:.2f}, RTOL: {data['r_tol']}")
+          # check relative size against zoom[0]
+          radius_ratio = data['circle'][2] / radius_0
+          logging.debug('r ratio req: %.3f, measured: %.3f',
+                        z_ratio, radius_ratio)
+          if not math.isclose(z_ratio, radius_ratio, rel_tol=data['r_tol']):
+            test_failed = True
+            e_msg = (f'zoom: {z_ratio:.2f}, radius ratio:  {radius_ratio:.2f}, '
+                     f"RTOL: {data['r_tol']}")
+            logging.error(e_msg)
 
-      # check relative offset against init vals w/ no focal length change
-      if i == 0 or test_data[i-1]['fl'] != data['fl']:  # set init values
-        z_init = float(data['z'])
-        offset_init = [(data['circle'][0] - size[0] // 2),
-                       (data['circle'][1] - size[1] // 2)]
-      else:  # check
-        z_ratio = data['z'] / z_init
-        offset_rel = (math.hypot(offset_abs[0], offset_abs[1]) / z_ratio /
-                      math.hypot(offset_init[0], offset_init[1]))
-        logging.debug('offset_rel: %.3f', offset_rel)
-        rel_tol = data['o_tol']
-        if (np.linalg.norm(offset_init) < _OFFSET_LOW_VAL and
-            rel_tol == _OFFSET_RTOL):
-          rel_tol = _OFFSET_RTOL_LOW_OFFSET
-        if not math.isclose(offset_rel, 1.0, rel_tol=rel_tol):
-          raise AssertionError(f"zoom: {data['z']:.2f}, offset(rel to 1): "
-                               f'{offset_rel:.4f}, RTOL: {rel_tol}')
+          # check relative offset against init vals w/ no focal length change
+          if i == 0 or test_data[i-1]['fl'] != data['fl']:  # set init values
+            z_init = float(data['z'])
+            offset_init = [(data['circle'][0] - size[0] // 2),
+                           (data['circle'][1] - size[1] // 2)]
+          else:  # check
+            z_ratio = data['z'] / z_init
+            offset_rel = (math.hypot(offset_abs[0], offset_abs[1]) / z_ratio /
+                          math.hypot(offset_init[0], offset_init[1]))
+            logging.debug('offset_rel: %.3f', offset_rel)
+            rel_tol = data['o_tol']
+            if (np.linalg.norm(offset_init) < _OFFSET_LOW_VAL and
+                rel_tol == _OFFSET_RTOL):
+              rel_tol = _OFFSET_RTOL_LOW_OFFSET
+            if not math.isclose(offset_rel, 1.0, rel_tol=rel_tol):
+              test_failed = True
+              e_msg = (f"zoom: {data['z']:.2f}, offset(rel to 1): "
+                       f'{offset_rel:.4f}, RTOL: {rel_tol}')
+              logging.error(e_msg)
+
+    if test_failed:
+      raise AssertionError(f'{_NAME} failed! Check logging for errors')
 
 if __name__ == '__main__':
   test_runner.main()

@@ -136,6 +136,9 @@ public class TvInputServiceTest {
         private int mContentBlockedCount;
         private int mTimeShiftStatusChangedCount;
         private int mAitInfoUpdatedCount;
+        private int mTimeShiftModeCount;
+        private int mTimeShiftSpeedsCount;
+        private int mCueingMessageAvailabilityCount;
         private int mTvMessageCount;
 
         private Uri mChannelRetunedUri;
@@ -149,6 +152,9 @@ public class TvInputServiceTest {
         private TvContentRating mContentBlockedRating;
         private Integer mTimeShiftStatusChangedStatus;
         private AitInfo mAitInfo;
+        private Integer mTimeShiftMode;
+        private float[] mTimeShiftSpeeds;
+        private Boolean mCueingMessageAvailable;
         private String mTvMessageType;
         private Bundle mTvMessageData;
 
@@ -224,6 +230,24 @@ public class TvInputServiceTest {
         }
 
         @Override
+        public void onTimeShiftMode(String inputId, int mode) {
+            mTimeShiftModeCount++;
+            mTimeShiftMode = mode;
+        }
+
+        @Override
+        public void onAvailableSpeeds(String inputId, float[] speeds) {
+            mTimeShiftSpeedsCount++;
+            mTimeShiftSpeeds = new float[]{};
+        }
+
+        @Override
+        public void onCueingMessageAvailability(String inputId, boolean available) {
+            mCueingMessageAvailabilityCount++;
+            mCueingMessageAvailable = available;
+        }
+
+        @Override
         public void onTvMessage(String inputId, String type, Bundle data) {
             super.onTvMessage(inputId, type, data);
             mTvMessageCount++;
@@ -243,6 +267,9 @@ public class TvInputServiceTest {
             mContentBlockedCount = 0;
             mTimeShiftStatusChangedCount = 0;
             mAitInfoUpdatedCount = 0;
+            mTimeShiftModeCount = 0;
+            mTimeShiftSpeedsCount = 0;
+            mCueingMessageAvailabilityCount = 0;
             mTvMessageCount = 0;
         }
 
@@ -258,6 +285,9 @@ public class TvInputServiceTest {
             mContentBlockedRating = null;
             mTimeShiftStatusChangedStatus = null;
             mAitInfo = null;
+            mTimeShiftMode = null;
+            mTimeShiftSpeeds = null;
+            mCueingMessageAvailable = null;
             mTvMessageData = null;
             mTvMessageType = null;
         }
@@ -962,6 +992,47 @@ public class TvInputServiceTest {
         assertThat(mCallback.mAitInfo.getType())
                 .isEqualTo(TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
         assertThat(mCallback.mAitInfo.getVersion()).isEqualTo(2);
+    }
+
+    @Test
+    public void verifyCallbackTimeShiftMode() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+
+        session.notifyTimeShiftMode(TvInputManager.TIME_SHIFT_MODE_AUTO);
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mTimeShiftModeCount > 0);
+
+        assertThat(mCallback.mTimeShiftModeCount).isEqualTo(1);
+        assertThat(mCallback.mTimeShiftMode).isEqualTo(TvInputManager.TIME_SHIFT_MODE_AUTO);
+    }
+
+    @Test
+    public void verifyCallbackAvailableSpeeds() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+
+        float[] testSpeeds = new float[] {1.0f, 0.0f, 1.5f};
+
+        session.notifyAvailableSpeeds(testSpeeds);
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mTimeShiftSpeedsCount > 0);
+
+        assertThat(mCallback.mTimeShiftSpeedsCount).isEqualTo(1);
+        assertThat(mCallback.mTimeShiftSpeeds).isEqualTo(testSpeeds);
+    }
+
+    @Test
+    public void verifyCallbackCueingMessageAvailability() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+
+        session.notifyCueingMessageAvailability(true);
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mCueingMessageAvailabilityCount > 0);
+
+        assertThat(mCallback.mCueingMessageAvailabilityCount).isEqualTo(1);
+        assertThat(mCallback.mCueingMessageAvailable).isEqualTo(true);
     }
 
     @Test

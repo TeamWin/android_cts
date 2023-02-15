@@ -25,6 +25,7 @@ import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,15 +35,15 @@ public class SettingsProviderSettingChangedStatsTests extends PackageManagerStat
     public void testSettingsChanged() throws Throwable {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.SETTINGS_PROVIDER_SETTING_CHANGED_FIELD_NUMBER);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
         putSetting(getDevice(), "secure", "test_setting1", "100");
         putSetting(getDevice(), "system", "test_setting2", "200");
         putSetting(getDevice(), "global", "test_setting3", "300");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
         deleteSetting(getDevice(), "secure", "test_setting1");
         deleteSetting(getDevice(), "system", "test_setting2");
         deleteSetting(getDevice(), "global", "test_setting3");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<AtomsProto.SettingsProviderSettingChanged> reports = new ArrayList<>();
         for (StatsLog.EventMetricData data : ReportUtils.getEventMetricDataList(getDevice())) {

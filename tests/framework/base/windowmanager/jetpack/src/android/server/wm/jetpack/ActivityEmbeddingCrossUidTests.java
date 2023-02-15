@@ -76,7 +76,8 @@ public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testCrossUidActivityEmbeddingIsNotAllowed() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         // Only the primary activity can be in a split with another activity
         final Predicate<Pair<Activity, Activity>> activityActivityPredicate =
@@ -100,7 +101,8 @@ public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testCrossUidActivityEmbeddingIsNotAllowedWithoutPermission() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         // Only the primary activity can be in a split with another activity
         final Predicate<Pair<Activity, Activity>> activityActivityPredicate =
@@ -141,7 +143,8 @@ public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testUntrustedCrossUidActivityEmbeddingIsAllowedWithOptIn() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         // Only the primary activity can be in a split with another activity
         final Predicate<Pair<Activity, Activity>> activityActivityPredicate =
@@ -165,7 +168,8 @@ public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testUntrustedCrossUidActivityEmbedding_notAllowedForNonEmbeddable() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         // Only the primary activity can be in a split with another activity
         final Predicate<Pair<Activity, Activity>> activityActivityPredicate =

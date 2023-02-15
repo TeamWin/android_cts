@@ -529,6 +529,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
     }
 
     public void testRunUserInitiatedJobsPermissionRequirement() throws Exception {
+        startAndKeepTestActivity();
         final boolean isAppOpPermission = isRunUserInitiatedJobsPermissionAppOp();
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setUserInitiated(true)

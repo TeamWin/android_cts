@@ -126,6 +126,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
                 deviceName,
                 referenceDeviceName,
                 deviceId,
+                rssiMedian,
                 rawRssi) -> {
 
             if (deviceId != Byte.parseByte(mReferenceDeviceIdInput.getText().toString())) {
@@ -156,8 +157,8 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         // Calculate range at 95th percentile
         int rssiRange = data.get(975) - data.get(25);
         if (rssiRange <= MAX_RSSI_RANGE_DBM) {
-            getPassButton().performClick();
             makeToast("Test passed! Rssi range is: " + rssiRange);
+            getPassButton().performClick();
             mTestPassed = true;
         } else {
             makeToast("Test failed! Rssi range is: " + rssiRange);
@@ -192,7 +193,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
             packetDeviceName = DEVICE_NAME;
         }
         mBleAdvertiser.startAdvertising(
-                new BleAdvertisingPacket(packetDeviceName, randomAdvertiserDeviceId).toBytes());
+                new BleAdvertisingPacket(packetDeviceName, randomAdvertiserDeviceId, (byte)0).toBytes());
         mStartAdvertisingButton.setEnabled(false);
         mStopAdvertisingButton.setEnabled(true);
     }

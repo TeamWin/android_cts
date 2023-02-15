@@ -110,7 +110,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSecondaryActivityLaunch_replacing() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
                 TestConfigChangeHandlingActivity.class, true /* shouldClearTop */);
@@ -150,7 +151,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSecondaryActivityLaunch_nonReplacing() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
                 TestConfigChangeHandlingActivity.class, false /* shouldClearTop */);
@@ -189,7 +191,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSecondaryActivityLaunch_multiSplit() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
                 TestConfigChangeHandlingActivity.class, false /* shouldClearTop */);
@@ -231,7 +234,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSplitFinish_secondaryOnly() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
                 TestConfigChangeHandlingActivity.class, false /* shouldClearTop */);
@@ -256,7 +260,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSplitFinish_secondaryWithDependent() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRuleBuilderWithPrimaryActivityClass(
                 TestConfigChangeHandlingActivity.class, false /* shouldClearTop */)
@@ -292,7 +297,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSplitFinish_primaryOnly() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRuleBuilderWithPrimaryActivityClass(
                 TestConfigChangeHandlingActivity.class, false /* shouldClearTop */)
@@ -320,7 +326,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSplitFinish_primaryWithDependent() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRuleBuilderWithPrimaryActivityClass(
                 TestConfigChangeHandlingActivity.class, false /* shouldClearTop */)
@@ -354,7 +361,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSplitFinish_lastMultiSplit() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
                 TestConfigChangeHandlingActivity.class, false /* shouldClearTop */);
@@ -391,7 +399,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSplitFinish_midMultiSplitOnly_noSplitRule() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
                 TestConfigChangeHandlingActivity.class, false /* shouldClearTop */);
@@ -437,7 +446,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSplitFinish_midMultiSplitOnly_withSplitRule() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRule(false /* shouldClearTop */);
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
@@ -476,7 +486,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSplitFinish_midMultiSplitWithDependents() {
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         // Launch a secondary activity to side
         SplitPairRule splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(

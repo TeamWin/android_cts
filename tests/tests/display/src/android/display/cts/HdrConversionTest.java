@@ -25,10 +25,13 @@ import android.Manifest;
 import android.content.Context;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.HdrConversionMode;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.view.Display.HdrCapabilities;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
@@ -42,9 +45,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 @RunWith(AndroidJUnit4.class)
 public class HdrConversionTest {
@@ -52,11 +61,17 @@ public class HdrConversionTest {
 
     private HdrConversionMode mOriginalHdrConversionModeSettings;
 
+    private HdrConversionTestActivity mHdrConversionTestActivity;
+
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
             Manifest.permission.HDMI_CEC,
             Manifest.permission.MODIFY_HDR_CONVERSION_MODE);
+
+    @Rule
+    public ActivityScenarioRule<HdrConversionTestActivity> mActivityRule =
+            new ActivityScenarioRule<>(HdrConversionTestActivity.class);
 
     @Before
     public void setUp() throws Exception {
@@ -101,7 +116,7 @@ public class HdrConversionTest {
         HdrConversionMode hdrConversionMode = new HdrConversionMode(
                 HdrConversionMode.HDR_CONVERSION_SYSTEM);
         mDisplayManager.setHdrConversionMode(hdrConversionMode);
-        assertEquals(hdrConversionMode, mDisplayManager.getHdrConversionMode());
+        assertEquals(hdrConversionMode, mDisplayManager.getHdrConversionModeSetting());
         int currentHdrConversionMode = Settings.Global.getInt(context.getContentResolver(),
                 Settings.Global.HDR_CONVERSION_MODE, invalidHdrConversionMode);
         assertEquals(hdrConversionMode.getConversionMode(), currentHdrConversionMode);
@@ -109,7 +124,7 @@ public class HdrConversionTest {
         hdrConversionMode = new HdrConversionMode(
                 HdrConversionMode.HDR_CONVERSION_PASSTHROUGH);
         mDisplayManager.setHdrConversionMode(hdrConversionMode);
-        assertEquals(hdrConversionMode, mDisplayManager.getHdrConversionMode());
+        assertEquals(hdrConversionMode, mDisplayManager.getHdrConversionModeSetting());
         currentHdrConversionMode = Settings.Global.getInt(context.getContentResolver(),
                 Settings.Global.HDR_CONVERSION_MODE, invalidHdrConversionMode);
         assertEquals(hdrConversionMode.getConversionMode(), currentHdrConversionMode);
@@ -118,7 +133,7 @@ public class HdrConversionTest {
                 HdrConversionMode.HDR_CONVERSION_FORCE,
                 HdrCapabilities.HDR_TYPE_DOLBY_VISION);
         mDisplayManager.setHdrConversionMode(hdrConversionMode);
-        assertEquals(hdrConversionMode, mDisplayManager.getHdrConversionMode());
+        assertEquals(hdrConversionMode, mDisplayManager.getHdrConversionModeSetting());
         currentHdrConversionMode = Settings.Global.getInt(context.getContentResolver(),
                 Settings.Global.HDR_CONVERSION_MODE, invalidHdrConversionMode);
         assertEquals(hdrConversionMode.getConversionMode(), currentHdrConversionMode);
@@ -143,8 +158,47 @@ public class HdrConversionTest {
         }
     }
 
+    @Test
+    public void testGetSupportedHdrOutputTypesWithAppOverride() throws Throwable {
+        mActivityRule.getScenario().onActivity(activity -> mHdrConversionTestActivity = activity);
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        HdrConversionMode hdrConversionMode = new HdrConversionMode(
+                HdrConversionMode.HDR_CONVERSION_SYSTEM);
+
+        mDisplayManager.setHdrConversionMode(hdrConversionMode);
+        assertEquals(hdrConversionMode.getConversionMode(),
+                mDisplayManager.getHdrConversionMode().getConversionMode());
+
+        mHdrConversionTestActivity.runOnUiThread(() ->
+                mHdrConversionTestActivity.disableHdrConversion(true));
+        waitUntil(mDisplayManager -> mDisplayManager.getHdrConversionMode().getConversionMode()
+                        == HdrConversionMode.HDR_CONVERSION_PASSTHROUGH, Duration.ofSeconds(2));
+        assertEquals(HdrConversionMode.HDR_CONVERSION_PASSTHROUGH,
+                mDisplayManager.getHdrConversionMode().getConversionMode());
+
+        mHdrConversionTestActivity.runOnUiThread(() ->
+                mHdrConversionTestActivity.disableHdrConversion(false));
+        waitUntil(mDisplayManager -> mDisplayManager.getHdrConversionMode().getConversionMode()
+                == hdrConversionMode.getConversionMode(), Duration.ofSeconds(2));
+        assertEquals(hdrConversionMode.getConversionMode(),
+                mDisplayManager.getHdrConversionMode().getConversionMode());
+
+        mHdrConversionTestActivity.runOnUiThread(() ->
+                mHdrConversionTestActivity.disableHdrConversion(true));
+        waitUntil(mDisplayManager -> mDisplayManager.getHdrConversionMode().getConversionMode()
+                == HdrConversionMode.HDR_CONVERSION_PASSTHROUGH, Duration.ofSeconds(2));
+        assertEquals(HdrConversionMode.HDR_CONVERSION_PASSTHROUGH,
+                mDisplayManager.getHdrConversionMode().getConversionMode());
+
+        mActivityRule.getScenario().close();
+        waitUntil(mDisplayManager -> mDisplayManager.getHdrConversionMode().getConversionMode()
+                == hdrConversionMode.getConversionMode(), Duration.ofSeconds(2));
+        assertEquals(hdrConversionMode.getConversionMode(),
+                mDisplayManager.getHdrConversionMode().getConversionMode());
+    }
+
     private void cacheOriginalHdrConversionModeSetting() {
-        mOriginalHdrConversionModeSettings = mDisplayManager.getHdrConversionMode();
+        mOriginalHdrConversionModeSettings = mDisplayManager.getHdrConversionModeSetting();
     }
 
     private void restoreOriginalHdrConversionModeSettings() {
@@ -154,5 +208,40 @@ public class HdrConversionTest {
         }
         mDisplayManager.setHdrConversionMode(
                 new HdrConversionMode(mOriginalHdrConversionModeSettings.getConversionMode()));
+    }
+
+    private void waitUntil(Predicate<DisplayManager> pred, Duration maxWait)
+            throws Exception {
+        final Lock lock = new ReentrantLock();
+        final Condition displayChanged = lock.newCondition();
+        DisplayManager.DisplayListener listener = new DisplayManager.DisplayListener() {
+            @Override
+            public void onDisplayChanged(int displayId) {
+                lock.lock();
+                try {
+                    displayChanged.signal();
+                } finally {
+                    lock.unlock();
+                }
+            }
+            @Override
+            public void onDisplayAdded(int displayId) {}
+            @Override
+            public void onDisplayRemoved(int displayId) {}
+        };
+        Handler handler = new Handler(Looper.getMainLooper());
+        mDisplayManager.registerDisplayListener(listener, handler);
+        long remainingNanos = maxWait.toNanos();
+        lock.lock();
+        try {
+            while (!pred.test(mDisplayManager)) {
+                if (remainingNanos <= 0L) {
+                    throw new TimeoutException();
+                }
+                remainingNanos = displayChanged.awaitNanos(remainingNanos);
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 }

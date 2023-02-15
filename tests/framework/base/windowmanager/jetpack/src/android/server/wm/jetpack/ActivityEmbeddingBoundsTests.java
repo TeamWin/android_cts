@@ -67,7 +67,7 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
     @Test
     public void testParentWindowMetricsPredicate() {
         // Launch primary activity
-        final Activity primaryActivity = startActivityNewTask(
+        final Activity primaryActivity = startFullScreenActivityNewTask(
                 TestConfigChangeHandlingActivity.class);
 
         // Set split pair rule such that if the parent bounds is any smaller than it is now, then
@@ -121,7 +121,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
 
         // Start activities in a split and verify that the layout direction is LTR, which is
         // checked in {@link ActivityEmbeddingUtil#startActivityAndVerifySplit}.
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
         startActivityAndVerifySplit(primaryActivity, TestActivityWithId.class, splitPairRule,
                 "secondaryActivityId", mSplitInfoConsumer);
     }
@@ -139,7 +140,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
 
         // Start activities in a split and verify that the layout direction is RTL, which is
         // checked in {@link ActivityEmbeddingUtil#startActivityAndVerifySplit}.
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
         startActivityAndVerifySplit(primaryActivity, TestActivityWithId.class, splitPairRule,
                 "secondaryActivityId", mSplitInfoConsumer);
     }
@@ -157,7 +159,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
 
         // Start activities in a split and verify that the layout direction is the device locale,
         // which is checked in {@link ActivityEmbeddingUtil#startActivityAndVerifySplit}.
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
         startActivityAndVerifySplit(primaryActivity, TestActivityWithId.class, splitPairRule,
                 "secondaryActivityId", mSplitInfoConsumer);
     }
@@ -197,7 +200,7 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
 
         // Launch the activity A and B split and verify that the split ratio is 0.37 in
         // {@link ActivityEmbeddingUtil#startActivityAndVerifySplit}.
-        Activity activityA = startActivityNewTask(TestActivityWithId.class, activityAId);
+        Activity activityA = startFullScreenActivityNewTask(TestActivityWithId.class, activityAId);
         Activity activityB = startActivityAndVerifySplit(activityA, TestActivityWithId.class,
                 splitPairRuleAB, activityBId, mSplitInfoConsumer);
 

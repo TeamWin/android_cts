@@ -536,23 +536,30 @@ def load_module_and_class_methods(args):
 def build_modules(args):
     build_top = os.environ["ANDROID_BUILD_TOP"]
 
-    targets = args.modules.copy()
-    for t in args.targets:
-        targets.update(supported_modules[t[0]].get(ADDITIONAL_TARGETS, []))
-
     # Unfortunately I haven't figured out a way to just import the envsetup so we need to run it each time
-    command = ". " + build_top + "/build/envsetup.sh && " + " && ".join(["m " + t for t in targets])
+    must_build = False
+    command = ". " + build_top + "/build/envsetup.sh"
+
+    if args.build:
+        must_build = True
+        targets = args.modules.copy()
+        for t in args.targets:
+            targets.update(supported_modules[t[0]].get(ADDITIONAL_TARGETS, []))
+
+        command += " &&" + " && ".join(["m " + t for t in targets])
 
     if args.interactive and args.build_interactive:
+        must_build = True
         command += " && m InteractiveAutomation"
 
-    debug(args, "[Build] Executing '" + command + "'")
+    if must_build:
+        debug(args, "[Build] Executing '" + command + "'")
 
-    # TODO: We should also stream the output
-    output, err = execute_shell_command("BUILD", args, [command], shell=True, executable="/bin/bash")
-    print(output)
-    if "failed to build some targets" in output:
-        sys.exit(1)
+        # TODO: We should also stream the output
+        output, err = execute_shell_command("BUILD", args, [command], shell=True, executable="/bin/bash")
+        print(output)
+        if "failed to build some targets" in output:
+            sys.exit(1)
 
 
 def install(args):
@@ -863,11 +870,17 @@ def create_user(device_state, args):
     commands.append("user")
 
     output, err = execute_shell_command("Test", args, commands)
-    id = int(output.rsplit(" ", 1)[1].strip())
+    try:
+        id = int(output.rsplit(" ", 1)[1].strip())
+    except IndexError:
+        print("Error parsing user id. Output: " + output + ", err: " + err)
+        sys.exit(1)
     execute_shell_command("Test", args, ["adb", "shell", "am start-user " + str(id)])
     return id
 
 def create_work_profile(device_state, args, parent_id):
+    ensure_no_device_owner(device_state, args)
+
     commands = ["adb", "shell", "pm", "create-user", "--managed", "--profileOf", str(parent_id)]
 
     if device_state["sdk_version"] >= 33:
@@ -901,7 +914,10 @@ def create_clone_profile(device_state, args, parent_id):
 def gather_device_state(args):
     current_user = get_current_user(args)
     users = get_users(args)
-    return {"current_user": current_user, "users": users, "sdk_version": get_sdk_version(args)}
+    return {"current_user": current_user, "users": users, "sdk_version": get_sdk_version(args), "features": get_features(args)}
+
+def get_features(args):
+    return [n[8:].strip() for n in execute_shell_command("", args, ["adb", "shell", "pm", "list", "features"])[0].split("\n")]
 
 def get_sdk_version(args):
     return int(execute_shell_command("", args, ["adb", "shell", "getprop", "ro.build.version.sdk"])[0].strip())
@@ -929,7 +945,24 @@ def get_users(args):
     return users
 
 def get_current_user(args):
-    return int(execute_shell_command("Test", args, ["adb", "shell", "am", "get-current-user"])[0].strip())
+    output = execute_shell_command("Test", args, ["adb", "shell", "am", "get-current-user"])[0]
+    try:
+        return int(output.strip())
+    except IndexError:
+        print("Error parsing current user. Output: " + output)
+        sys.exit(1)
+
+def ensure_no_device_owner(device_state, args):
+    device_policy_output = execute_shell_command("", args, ["adb", "shell", "dumpsys", "device_policy"])[0]
+    if "Device Owner: \n" not in device_policy_output:
+        return
+
+    try:
+        admin_name = device_policy_output.split("Device Owner: \n", 1)[1].split("admin=ComponentInfo{", 1)[1].split("}", 1)[0]
+    except IndexError:
+        print("Error parsing admin name. Output: " + device_policy_output)
+        sys.exit(1)
+    execute_shell_command("", args, ["adb", "shell", "dpm", "remove-active-admin", admin_name])
 
 def main():
     args = get_args()
@@ -962,6 +995,15 @@ def main():
 
         if not args.headless:
             states = [t for t in states if not t.name() == "RUN_ON_ADDITIONAL_USER"]
+
+        if not "android.software.device_admin" in device_state["features"]:
+            filtered_states = []
+            for t in states:
+                if t.name() == "RUN_ON_WORK_PROFILE":
+                    print("device_admin not supported, skipping work profile state")
+                    continue
+                filtered_states.append(t)
+            states = filtered_states
 
         if "i" in args.states:
             args.states.remove("i")

@@ -34,6 +34,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.UserTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
@@ -153,6 +154,7 @@ public final class DeviceOwnerTest {
     @EnsureHasAdditionalUser
     @EnsureHasNoDpc
     @EnsureHasNoAccounts(onUser = UserType.ANY)
+    @RequireNotHeadlessSystemUserMode(reason = "No non-testonly dpc which supports headless")
     @Test
     public void setDeviceOwnerViaAdb_noAccounts_notTestOnly_sets() throws Exception {
         try (TestAppInstance dpcApp = NOT_TEST_ONLY_DPC.install(TestApis.users().system())) {

@@ -52,6 +52,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.provider.Settings;
+import android.view.contentcapture.ContentCaptureManager;
 
 import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
@@ -88,6 +89,8 @@ import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
+import com.android.bedstead.harrier.annotations.EnsureWifiDisabled;
+import com.android.bedstead.harrier.annotations.EnsureWifiEnabled;
 import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireAospBuild;
 import com.android.bedstead.harrier.annotations.RequireCnGmsBuild;
@@ -117,6 +120,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
+import com.android.bedstead.harrier.annotations.RequireSystemServiceAvailable;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
 import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsersOnDefaultDisplay;
@@ -1391,5 +1395,24 @@ public class DeviceStateTest {
     @Test
     public void ensureDoesNotHaveUserRestrictionAnnotation_differentUser_userRestrictionIsNotSet() {
         assertThat(TestApis.devicePolicy().userRestrictions().isSet(USER_RESTRICTION)).isFalse();
+    }
+
+    @EnsureWifiEnabled
+    @Test
+    public void ensureWifiEnabledAnnotation_wifiIsEnabled() {
+        assertThat(TestApis.wifi().isEnabled()).isTrue();
+    }
+
+    @EnsureWifiDisabled
+    @Test
+    public void ensureWifiDisabledAnnotation_wifiIsNotEnabled() {
+        assertThat(TestApis.wifi().isEnabled()).isFalse();
+    }
+
+    @RequireSystemServiceAvailable(ContentCaptureManager.class)
+    @Test
+    public void requireSystemServiceAvailable_systemServiceIsAvailable() {
+        assertThat(TestApis.context().instrumentedContext()
+                .getSystemService(ContentCaptureManager.class)).isNotNull();
     }
 }

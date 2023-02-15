@@ -34,6 +34,7 @@ import com.android.os.agif.GameModeInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -55,7 +56,7 @@ public class GameManagerStatsTests extends DeviceTestCase implements IBuildRecei
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
         mStatsdAtomTestUid = DeviceUtils.getAppUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG);
     }
 
@@ -76,7 +77,7 @@ public class GameManagerStatsTests extends DeviceTestCase implements IBuildRecei
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.GAME_STATE_CHANGED_FIELD_NUMBER);
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testGameState");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data.size()).isAtLeast(1);
@@ -94,7 +95,7 @@ public class GameManagerStatsTests extends DeviceTestCase implements IBuildRecei
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.GAME_MODE_CHANGED_FIELD_NUMBER);
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSetGameMode");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         assertThat(data.size()).isAtLeast(2);
@@ -114,7 +115,7 @@ public class GameManagerStatsTests extends DeviceTestCase implements IBuildRecei
                 AtomsProto.Atom.GAME_MODE_CONFIGURATION_CHANGED_FIELD_NUMBER);
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests",
                 "testUpdateCustomGameModeConfiguration");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         assertThat(data.size()).isAtLeast(2);
@@ -144,9 +145,9 @@ public class GameManagerStatsTests extends DeviceTestCase implements IBuildRecei
         DeviceUtils.putDeviceConfigFeature(getDevice(), "game_overlay",
                 DeviceUtils.STATSD_ATOM_TEST_PKG,
                 " mode=2,downscaleFactor=1.0,fps=90:mode=3,downscaleFactor=0.1,fps=30");
-        Thread.sleep(2000);
+        RunUtil.getDefault().sleep(2000);
         AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
         assertThat(data.size()).isAtLeast(1);
@@ -173,9 +174,9 @@ public class GameManagerStatsTests extends DeviceTestCase implements IBuildRecei
         DeviceUtils.putDeviceConfigFeature(getDevice(), "game_overlay",
                 DeviceUtils.STATSD_ATOM_TEST_PKG,
                 "mode=4:mode=2,downscaleFactor=0.7,fps=90:mode=3,downscaleFactor=0.1,fps=30");
-        Thread.sleep(2000);
+        RunUtil.getDefault().sleep(2000);
         AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
         assertThat(data.size()).isAtLeast(2);

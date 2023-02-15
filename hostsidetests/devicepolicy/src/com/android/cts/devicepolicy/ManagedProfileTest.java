@@ -15,7 +15,6 @@
  */
 package com.android.cts.devicepolicy;
 
-import com.android.tradefed.util.RunUtil;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
 import static org.junit.Assert.assertFalse;
@@ -31,6 +30,8 @@ import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.util.RunInterruptedException;
+import com.android.tradefed.util.RunUtil;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -598,8 +599,8 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 return;
             }
             try {
-                Thread.sleep(100);
-            } catch (InterruptedException e){
+                RunUtil.getDefault().sleep(100);
+            } catch (RunInterruptedException e){
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
             }

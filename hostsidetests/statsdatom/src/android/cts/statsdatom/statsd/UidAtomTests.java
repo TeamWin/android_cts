@@ -54,6 +54,7 @@ import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.Pair;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,7 +94,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
     @Override
@@ -161,7 +162,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
             // Sorted list of events in order in which they occurred.
             List<LmkKillOccurred> atoms = null;
             for (int i = 0; i < 60; ++i) {
-                Thread.sleep(1_000);
+                RunUtil.getDefault().sleep(1_000);
                 atoms = ReportUtils.getEventMetricDataList(getDevice()).stream()
                         .map(EventMetricData::getAtom)
                         .filter(Atom::hasLmkKillOccurred)
@@ -266,7 +267,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
 
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
         // Sorted list of events in order in which they occurred.
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         List<Integer> atomStates = data.stream().map(
@@ -321,11 +322,11 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
                 Atom.DEVICE_CALCULATED_POWER_USE_FIELD_NUMBER);
         DeviceUtils.unplugDevice(getDevice());
 
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSimpleCpu");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
         AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         Atom atom = ReportUtils.getGaugeMetricAtoms(getDevice()).get(0);
         assertThat(atom.getDeviceCalculatedPowerUse().getComputedPowerNanoAmpSecs())
@@ -593,7 +594,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         boolean isInitialManual = isScreenBrightnessModeManual();
         setScreenBrightnessMode(true);
         setScreenBrightness(150);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         final int atomTag = Atom.SCREEN_BRIGHTNESS_CHANGED_FIELD_NUMBER;
 
@@ -681,10 +682,10 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
                 DeviceUtils.STATSD_ATOM_TEST_PKG, "ANRActivity", null, null)) {
-            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG * 2);
+            RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG * 2);
             getDevice().executeShellCommand(
                     "am broadcast -a action_anr -p " + DeviceUtils.STATSD_ATOM_TEST_PKG);
-            Thread.sleep(20_000);
+            RunUtil.getDefault().sleep(20_000);
         }
 
         // Sorted list of events in order in which they occurred.
@@ -711,7 +712,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWriteRawTestAtom");
 
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
         // Sorted list of events in order in which they occurred.
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).hasSize(4);
@@ -847,19 +848,19 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         List<Set<Integer>> stateSet = Arrays.asList(onStates, offStates); // state sets, in order
         createAndUploadConfig(Atom.APP_USAGE_EVENT_OCCURRED_FIELD_NUMBER, false);
-        Thread.sleep(WAIT_TIME_FOR_CONFIG_UPDATE_MS);
+        RunUtil.getDefault().sleep(WAIT_TIME_FOR_CONFIG_UPDATE_MS);
 
         getDevice().executeShellCommand(String.format(
                 "am start -n '%s' -e %s %s",
                 "com.android.server.cts.device.statsd/.StatsdCtsForegroundActivity",
                 "action", ACTION_LONG_SLEEP_WHILE_TOP));
         final int waitTime = EXTRA_WAIT_TIME_MS + 5_000;
-        Thread.sleep(waitTime);
+        RunUtil.getDefault().sleep(waitTime);
 
         getDevice().executeShellCommand(String.format(
                 "am force-stop %s",
                 "com.android.server.cts.device.statsd/.StatsdCtsForegroundActivity"));
-        Thread.sleep(waitTime + STATSD_REPORT_WAIT_TIME_MS);
+        RunUtil.getDefault().sleep(waitTime + STATSD_REPORT_WAIT_TIME_MS);
 
         List<EventMetricData> data = getEventMetricDataList();
         Function<Atom, Integer> appUsageStateFunction =

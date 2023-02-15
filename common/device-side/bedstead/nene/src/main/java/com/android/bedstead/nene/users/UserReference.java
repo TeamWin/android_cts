@@ -182,7 +182,12 @@ public final class UserReference implements AutoCloseable {
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
 
-            Poll.forValue("User running unlocked", () -> isRunning() && isUnlocked())
+            Poll.forValue("User running", this::isRunning)
+                    .toBeEqualTo(true)
+                    .errorOnFail()
+                    .timeout(Duration.ofMinutes(1))
+                    .await();
+            Poll.forValue("User unlocked", this::isUnlocked)
                     .toBeEqualTo(true)
                     .errorOnFail()
                     .timeout(Duration.ofMinutes(1))
@@ -447,7 +452,9 @@ public final class UserReference implements AutoCloseable {
             return;
         }
 
-        if (TestApis.users().system().equals(this) && TestApis.users().isHeadlessSystemUserMode()) {
+        if (TestApis.users().system().equals(this)
+                && !TestApis.users().instrumented().equals(this)
+                && TestApis.users().isHeadlessSystemUserMode()) {
             // We should also copy the setup status onto the instrumented user as DO provisioning
             // depends on both
             TestApis.users().instrumented().setSetupComplete(complete);
@@ -659,9 +666,15 @@ public final class UserReference implements AutoCloseable {
             return true;
         }
 
-        try (PermissionContext p = TestApis.permissions().withPermission(MODIFY_QUIET_MODE)) {
+        UserReference parent = parent();
+        if (parent == null) {
+            throw new NeneException("Can't set quiet mode, no parent for user " + this);
+        }
+
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                MODIFY_QUIET_MODE, INTERACT_ACROSS_USERS_FULL)) {
             BlockingBroadcastReceiver r = BlockingBroadcastReceiver.create(
-                            TestApis.context().instrumentedContext(),
+                            TestApis.context().androidContextAsUser(parent),
                             enabled
                                     ? ACTION_MANAGED_PROFILE_UNAVAILABLE
                                     : ACTION_MANAGED_PROFILE_AVAILABLE)

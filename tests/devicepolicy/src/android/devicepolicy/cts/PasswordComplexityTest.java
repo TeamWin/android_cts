@@ -36,6 +36,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.policies.PasswordComplexity;
+import com.android.bedstead.harrier.policies.RequiredPasswordComplexity;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.utils.IgnoreExceptions;
 import com.android.compatibility.common.util.ApiTest;
@@ -49,19 +50,81 @@ import com.android.interactive.steps.settings.password.SetPin15911591Step;
 import com.android.interactive.steps.settings.password.SetPin1591Step;
 import com.android.interactive.steps.settings.password.SetPin4444Step;
 
-import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-public final class PasswordComplexityTest {
+public final class PasswordComplexityTest { // Skipped checking on headless because of known password bugs
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
+    private static final int PASSWORD_COMPLEXITY = PASSWORD_COMPLEXITY_HIGH;
+
+    @CanSetPolicyTest(policy = RequiredPasswordComplexity.class) // TODO: Remove
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getRequiredPasswordComplexity")
+    public void getRequiredPasswordComplexity_doesNotThrowException() {
+        sDeviceState.dpc().devicePolicyManager().getRequiredPasswordComplexity();
+    }
+
+    @CannotSetPolicyTest(policy = RequiredPasswordComplexity.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getRequiredPasswordComplexity")
+    public void getRequiredPasswordComplexity_notPermitted_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().getRequiredPasswordComplexity());
+    }
+
+    @CanSetPolicyTest(policy = RequiredPasswordComplexity.class) // TODO: Remove
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
+    public void setRequiredPasswordComplexity_doesNotThrowException() {
+        sDeviceState.dpc().devicePolicyManager()
+                .setRequiredPasswordComplexity(PASSWORD_COMPLEXITY);
+    }
+
+    @CannotSetPolicyTest(policy = RequiredPasswordComplexity.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
+    public void setRequiredPasswordComplexity_notPermitted_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager()
+                        .setRequiredPasswordComplexity(PASSWORD_COMPLEXITY));
+    }
+
+    // Because shell doesn't currently hold the MANAGE_DEVICE_POLICY_LOCK_CREDENTIALS permission
+    // we can't test the local receiver so we can only use a cansetpolicy test - once we add the
+    // permission to shell we can create policy applies + policy does not apply tests.
+    @CanSetPolicyTest(policy = RequiredPasswordComplexity.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
+    public void setRequiredPasswordComplexity_requiredComplexityIsSet() {
+        int originalRequiredPasswordComplexity = sDeviceState.dpc().devicePolicyManager()
+                .getRequiredPasswordComplexity();
+        try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setRequiredPasswordComplexity(PASSWORD_COMPLEXITY);
+
+            assertThat(sDeviceState.dpc().devicePolicyManager()
+                    .getRequiredPasswordComplexity()).isEqualTo(PASSWORD_COMPLEXITY);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    originalRequiredPasswordComplexity);
+        }
+    }
+
+    @CanSetPolicyTest(policy = PasswordComplexity.class) // TODO: Remove
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
+    public void getPasswordComplexity_doesNotThrowSecurityException() {
+        sDeviceState.dpc().devicePolicyManager().getPasswordComplexity();
+    }
+
     @CannotSetPolicyTest(policy = PasswordComplexity.class)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_noPermission_throwsSecurityException() {
         assertThrows(SecurityException.class, () ->
                 sDeviceState.dpc().devicePolicyManager().getPasswordComplexity());
@@ -69,6 +132,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_noPassword_returnsPasswordComplexityNone() {
         assertThat(sDeviceState.dpc().devicePolicyManager().getPasswordComplexity())
                 .isEqualTo(PASSWORD_COMPLEXITY_NONE);
@@ -76,6 +140,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_patternLength4_returnsPasswordComplexityLow() {
         try {
             sDeviceState.dpc().user().setPattern("1234");
@@ -88,6 +153,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_patternLength8_returnsPasswordComplexityLow() {
         try {
             sDeviceState.dpc().user().setPattern("13246587");
@@ -100,6 +166,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_pinOrderedLength4_returnsPasswordComplexityLow() {
         try {
             sDeviceState.dpc().user().setPin("1234");
@@ -112,6 +179,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_pinOrderedLength8_returnsPasswordComplexityLow() {
         try {
             sDeviceState.dpc().user().setPin("12345678");
@@ -124,6 +192,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_pinNotOrderedLength4_returnsPasswordComplexityMedium() {
         try {
             sDeviceState.dpc().user().setPin("1238");
@@ -136,6 +205,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_pinNotOrderedLength7_returnsPasswordComplexityMedium() {
         try {
             sDeviceState.dpc().user().setPin("1238964");
@@ -148,6 +218,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_alphabeticLength4_returnsPasswordComplexityMedium() {
         try {
             sDeviceState.dpc().user().setPassword("c!qw");
@@ -160,6 +231,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_alphabeticLength5_returnsPasswordComplexityMedium() {
         try {
             sDeviceState.dpc().user().setPassword("bc!qw");
@@ -172,6 +244,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_alphanumericLength4_returnsPasswordComplexityMedium() {
         try {
             sDeviceState.dpc().user().setPassword("c!23");
@@ -184,6 +257,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_alphanumericLength5_returnsPasswordComplexityMedium() {
         try {
             sDeviceState.dpc().user().setPassword("bc!23");
@@ -196,6 +270,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_pinNotOrderedLength8_returnsPasswordComplexityHigh() {
         try {
             sDeviceState.dpc().user().setPin("12389647");
@@ -208,6 +283,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_alphabeticLength6_returnsPasswordComplexityHigh() {
         try {
             sDeviceState.dpc().user().setPassword("abc!qw");
@@ -220,6 +296,7 @@ public final class PasswordComplexityTest {
 
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
     public void getPasswordComplexity_alphanumericLength6_returnsPasswordComplexityHigh() {
         try {
             sDeviceState.dpc().user().setPassword("abc!23");
@@ -235,9 +312,9 @@ public final class PasswordComplexityTest {
                     .addFlags(FLAG_ACTIVITY_NEW_TASK);
 
 
-    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @CanSetPolicyTest(policy = RequiredPasswordComplexity.class)
     @Interactive
-    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
     public void setRequiredPasswordComplexity_none_canSetNone() throws Exception {
         assumeFalse("NONE is not supported on profiles",
                 TestApis.users().instrumented().isProfile());
@@ -255,9 +332,9 @@ public final class PasswordComplexityTest {
                 .isEqualTo(PASSWORD_COMPLEXITY_NONE);
     }
 
-    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @CanSetPolicyTest(policy = RequiredPasswordComplexity.class)
     @Interactive
-    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
     public void setRequiredPasswordComplexity_low_cannotSetNone() throws Exception {
         try {
             sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
@@ -274,9 +351,9 @@ public final class PasswordComplexityTest {
         }
     }
 
-    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @CanSetPolicyTest(policy = RequiredPasswordComplexity.class)
     @Interactive
-    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
     public void setRequiredPasswordComplexity_low_canSetLowComplexity() throws Exception {
         try {
             sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
@@ -298,9 +375,9 @@ public final class PasswordComplexityTest {
         }
     }
 
-    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @CanSetPolicyTest(policy = RequiredPasswordComplexity.class)
     @Interactive
-    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
     public void setRequiredPasswordComplexity_medium_cannotSetLowComplexity() throws Exception {
         try {
             sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
@@ -320,9 +397,9 @@ public final class PasswordComplexityTest {
         }
     }
 
-    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @CanSetPolicyTest(policy = RequiredPasswordComplexity.class)
     @Interactive
-    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
     public void setRequiredPasswordComplexity_medium_canSetMediumComplexity() throws Exception {
         try {
             sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
@@ -344,9 +421,9 @@ public final class PasswordComplexityTest {
         }
     }
 
-    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @CanSetPolicyTest(policy = RequiredPasswordComplexity.class)
     @Interactive
-    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
     public void setRequiredPasswordComplexity_high_cannotSetMediumComplexity() throws Exception {
         try {
             sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
@@ -366,9 +443,9 @@ public final class PasswordComplexityTest {
         }
     }
 
-    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @CanSetPolicyTest(policy = RequiredPasswordComplexity.class)
     @Interactive
-    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
     public void setRequiredPasswordComplexity_high_canSetHighComplexity() throws Exception {
         try {
             sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(

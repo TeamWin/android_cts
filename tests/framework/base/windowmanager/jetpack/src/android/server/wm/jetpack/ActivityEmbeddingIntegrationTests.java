@@ -78,7 +78,7 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
      */
     @Test
     public void testDisplayFeaturesWithEmbedding() throws Exception {
-        TestConfigChangeHandlingActivity primaryActivity = startActivityNewTask(
+        TestConfigChangeHandlingActivity primaryActivity = startFullScreenActivityNewTask(
                 TestConfigChangeHandlingActivity.class);
         WindowLayoutInfo windowLayoutInfo = getExtensionWindowLayoutInfo(primaryActivity);
         assumeHasDisplayFeatures(windowLayoutInfo);
@@ -126,7 +126,7 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
     public void testClearSplitInfoCallback() throws Exception {
         assumeVendorApiLevelAtLeast(2); // TODO(b/244450254): harden the requirement in U.
         mActivityEmbeddingComponent.clearSplitInfoCallback();
-        TestConfigChangeHandlingActivity primaryActivity = startActivityNewTask(
+        TestConfigChangeHandlingActivity primaryActivity = startFullScreenActivityNewTask(
                 TestConfigChangeHandlingActivity.class);
 
         // Launch a second activity in a split. Use a very small split ratio, so that the secondary
@@ -154,7 +154,7 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
     @Test
     public void testDisplayFeaturesWithEmbedding_differentPackage() throws Exception {
         // Start an activity to collect the window layout info.
-        TestConfigChangeHandlingActivity initialActivity = startActivityNewTask(
+        TestConfigChangeHandlingActivity initialActivity = startFullScreenActivityNewTask(
                 TestConfigChangeHandlingActivity.class);
         WindowLayoutInfo windowLayoutInfo = getExtensionWindowLayoutInfo(initialActivity);
         assumeHasDisplayFeatures(windowLayoutInfo);

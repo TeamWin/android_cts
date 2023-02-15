@@ -60,7 +60,8 @@ public final class DeviceConfigStateManager implements StateManager<String> {
     public void set(@Nullable String value) {
         debug("set", "new value is %s", value);
         runWithShellPermissionIdentity(() -> setWithPermissionsGranted(value),
-                "android.permission.READ_DEVICE_CONFIG", "android.permission.WRITE_DEVICE_CONFIG");
+                "android.permission.READ_DEVICE_CONFIG",
+                "android.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG");
     }
 
     private void setWithPermissionsGranted(@Nullable String value) {

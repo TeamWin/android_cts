@@ -72,7 +72,8 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
         SplitPairRule splitPairRule = createWildcardSplitPairRule();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
-        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
         TestActivity secondaryActivity = (TestActivity) startActivityAndVerifySplit(primaryActivity,
                 TestActivityWithId.class, splitPairRule, "secondaryActivity", mSplitInfoConsumer);
 
@@ -97,7 +98,8 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
         SplitPairRule splitPairRule = createWildcardSplitPairRule();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
-        TestActivity primaryActivity = startActivityNewTask(TestActivityWithId.class);
+        TestActivity primaryActivity = startFullScreenActivityNewTask(
+                TestActivityWithId.class);
         TestActivity secondaryActivity = (TestActivity) startActivityAndVerifySplit(primaryActivity,
                 TestActivityWithId.class, splitPairRule, "secondaryActivity", mSplitInfoConsumer);
 
@@ -358,7 +360,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
             mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
             // Launch the two activities
-            TestActivity primaryActivity = startActivityNewTask(
+            TestActivity primaryActivity = startFullScreenActivityNewTask(
                     TestConfigChangeHandlingActivity.class);
             TestActivity secondaryActivity;
             if (mShouldPreventSideBySideActivities) {
