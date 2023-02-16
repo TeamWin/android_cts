@@ -1,5 +1,4 @@
-# Bug component: 24950
-
+# Bug component: 25692
 per-file *Vibrat* = file:platform/frameworks/base:/services/core/java/com/android/server/vibrator/OWNERS
 per-file *Sntp* = file:platform/frameworks/base:/services/core/java/com/android/server/timezonedetector/OWNERS
 per-file *LowPowerStandby* = file:platform/frameworks/base:/services/core/java/com/android/server/power/OWNERS
