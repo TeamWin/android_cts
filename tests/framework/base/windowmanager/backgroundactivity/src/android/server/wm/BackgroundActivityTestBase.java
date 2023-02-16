@@ -70,7 +70,8 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
     static final String ASM_RESTRICTIONS_ENABLED =
             "ActivitySecurity__asm_restrictions_enabled";
     static final String ENABLE_DEFAULT_RESCIND_BAL_PRIVILEGES_FROM_PENDING_INTENT_SENDER =
-            "enable_default_rescind_bal_privileges_from_pending_intent_sender";
+            "DefaultRescindBalPrivilegesFromPendingIntentSender__"
+                    + "enable_default_rescind_bal_privileges_from_pending_intent_sender";
     final DeviceConfigStateHelper mDeviceConfig =
             new DeviceConfigStateHelper(NAMESPACE_WINDOW_MANAGER);
 
