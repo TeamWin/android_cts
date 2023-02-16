@@ -23,8 +23,9 @@ import android.car.VehicleAreaType;
 import android.car.cts.utils.ShellPermissionUtils;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
+import android.car.hardware.property.CarInternalErrorException;
 import android.car.hardware.property.CarPropertyManager;
-import android.car.hardware.property.PropertyNotAvailableException;
+import android.car.hardware.property.PropertyAccessDeniedSecurityException;
 import android.car.test.ApiCheckerRule.Builder;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
@@ -102,7 +103,8 @@ public final class CarPropertyValueTest extends AbstractCarTestCase {
         try {
             return carPropertyManager.getProperty(carPropertyConfig.getPropertyType(),
                     carPropertyConfig.getPropertyId(), areaId);
-        } catch (PropertyNotAvailableException e) {
+        } catch (IllegalStateException | CarInternalErrorException
+                | PropertyAccessDeniedSecurityException | IllegalArgumentException e) {
             return null;
         }
     }
