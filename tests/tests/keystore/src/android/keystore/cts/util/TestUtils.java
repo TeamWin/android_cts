@@ -1167,4 +1167,9 @@ public class TestUtils {
     public static boolean isPropertyEmptyOrUnknown(String property) {
         return TextUtils.isEmpty(property) || property.equals(Build.UNKNOWN);
     }
+
+    public static boolean hasSecureLockScreen(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return (pm != null && pm.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN));
+    }
 }
