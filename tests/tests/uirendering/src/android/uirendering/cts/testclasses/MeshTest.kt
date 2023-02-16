@@ -108,7 +108,17 @@ class MeshTest : ActivityTestBase() {
                 simpleAttributeList, 8, simpleVaryingList,
                 simpleVertexShader, simpleFragmentShader,
                 ColorSpace.get(ColorSpace.Named.DISPLAY_P3),
-                MeshSpecification.ALPHA_TYPE_PREMUL
+                MeshSpecification.ALPHA_TYPE_PREMULTIPLIED
+        )
+    }
+
+    @Test
+    fun testMeshSpecWithUnpremultipliedAlphaType() {
+        MeshSpecification.make(
+            simpleAttributeList, 8, simpleVaryingList,
+            simpleVertexShader, simpleFragmentShader,
+            ColorSpace.get(ColorSpace.Named.DISPLAY_P3),
+            MeshSpecification.ALPHA_TYPE_UNPREMULTIPLIED
         )
     }
 
