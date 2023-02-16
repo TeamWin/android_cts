@@ -32,6 +32,8 @@ import android.content.pm.PackageManager;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import com.google.common.truth.Expect;
 
 import org.junit.After;
@@ -58,7 +60,7 @@ public class OverlayManagerTransactionTest {
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mOverlayManager = mContext.getSystemService(OverlayManager.class);
 
         mOverlayName = testName.getMethodName();
@@ -72,72 +74,63 @@ public class OverlayManagerTransactionTest {
     }
 
     @Test
-    public void new_withValidOverlayManager_shouldSucceed() {
-        assertThat(new OverlayManagerTransaction(mOverlayManager)).isNotNull();
+    public void newInstance_shouldSucceed() {
+        assertThat(OverlayManagerTransaction.newInstance()).isNotNull();
     }
 
-    @Test
-    public void new_withNullOverlayManager_shouldFail() {
-        assertThrows(NullPointerException.class,
-                () -> new OverlayManagerTransaction(null /* overlayManager */));
-    }
-
+    @ApiTest(apis = {"android.content.om.OverlayManagerTransaction#registerFabricatedOverlay"})
     @Test
     public void registerFabricatedOverlay_withNull_shouldFail() {
-        final OverlayManagerTransaction transaction =
-                new OverlayManagerTransaction(mOverlayManager);
+        final OverlayManagerTransaction transaction = OverlayManagerTransaction.newInstance();
 
         assertThrows(NullPointerException.class, () -> transaction.registerFabricatedOverlay(null));
     }
 
+    @ApiTest(apis = {"android.content.om.OverlayManagerTransaction#unregisterFabricatedOverlay"})
     @Test
     public void unregisterFabricatedOverlay_withNull_shouldFail() {
-        final OverlayManagerTransaction transaction =
-                new OverlayManagerTransaction(mOverlayManager);
+        final OverlayManagerTransaction transaction = OverlayManagerTransaction.newInstance();
 
         assertThrows(NullPointerException.class,
                 () -> transaction.unregisterFabricatedOverlay(null));
     }
 
+    @ApiTest(apis = {"android.content.om.OverlayManager#commit"})
     @Test
     public void commit_withNullOverlayable_shouldFail() {
-        final OverlayManagerTransaction transaction =
-                new OverlayManagerTransaction(mOverlayManager);
+        final OverlayManagerTransaction transaction = OverlayManagerTransaction.newInstance();
         transaction.registerFabricatedOverlay(
                 mFacilitator.prepare("hello_overlay1", null /* overlayableName */));
 
-        assertThrows(IllegalArgumentException.class, transaction::commit);
+        assertThrows(IllegalArgumentException.class, () -> mOverlayManager.commit(transaction));
     }
 
+    @ApiTest(apis = {"android.content.om.OverlayManager#commit"})
     @Test
     public void commit_withEmptyOverlayable_shouldFail() {
-        final OverlayManagerTransaction transaction =
-                new OverlayManagerTransaction(mOverlayManager);
+        final OverlayManagerTransaction transaction = OverlayManagerTransaction.newInstance();
         transaction.registerFabricatedOverlay(
                 mFacilitator.prepare("hello_overlay1", "" /* overlayableName */));
 
-        assertThrows(IllegalArgumentException.class, transaction::commit);
+        assertThrows(IllegalArgumentException.class, () -> mOverlayManager.commit(transaction));
     }
 
     @Test
     public void commit_withNonExistOverlayable_shouldFail() {
-        final OverlayManagerTransaction transaction =
-                new OverlayManagerTransaction(mOverlayManager);
+        final OverlayManagerTransaction transaction = OverlayManagerTransaction.newInstance();
         transaction.registerFabricatedOverlay(
                 mFacilitator.prepare("hello_overlay1", "not_exist"));
 
-        assertThrows(IOException.class, transaction::commit);
+        assertThrows(RuntimeException.class, () -> mOverlayManager.commit(transaction));
     }
 
     @Test
-    public void commit_withValidOverlayable_shouldSucceed()
-            throws PackageManager.NameNotFoundException, IOException {
-        final OverlayManagerTransaction transaction =
-                new OverlayManagerTransaction(mOverlayManager);
+    public void commit_withValidOverlayable_shouldSucceed() {
+        final OverlayManagerTransaction transaction = OverlayManagerTransaction.newInstance();
         transaction.registerFabricatedOverlay(
                 mFacilitator.prepare("hello_overlay1", OVERLAYABLE_NAME));
 
-        transaction.commit();
+        mOverlayManager.commit(transaction);
 
         final List<OverlayInfo> overlayInfoList =
                 mOverlayManager.getOverlayInfosForTarget(mContext.getPackageName());
@@ -145,29 +138,27 @@ public class OverlayManagerTransactionTest {
     }
 
     @Test
-    public void commit_multipleRequests_shouldSucceed()
-            throws PackageManager.NameNotFoundException, IOException {
-        final OverlayManagerTransaction transaction =
-                new OverlayManagerTransaction(mOverlayManager);
+    public void commit_multipleRequests_shouldSucceed() {
+        final OverlayManagerTransaction transaction = OverlayManagerTransaction.newInstance();
         transaction.registerFabricatedOverlay(
                 mFacilitator.prepare("hello_overlay1", OVERLAYABLE_NAME));
         transaction.registerFabricatedOverlay(
                 mFacilitator.prepare("hello_overlay2", OVERLAYABLE_NAME));
         transaction.registerFabricatedOverlay(
                 mFacilitator.prepare("hello_overlay3", OVERLAYABLE_NAME));
-        transaction.commit();
+        mOverlayManager.commit(transaction);
         List<OverlayInfo> overlayInfos =
                 mOverlayManager.getOverlayInfosForTarget(mContext.getPackageName());
         final int numberOfOverlaysWhenStart = overlayInfos.size();
 
         final OverlayManagerTransaction modifyingTransaction =
-                new OverlayManagerTransaction(mOverlayManager);
+                OverlayManagerTransaction.newInstance();
         for (OverlayInfo overlayInfo : overlayInfos) {
             modifyingTransaction.unregisterFabricatedOverlay(overlayInfo.getOverlayIdentifier());
         }
         modifyingTransaction.registerFabricatedOverlay(
                 mFacilitator.prepare("hello_overlay", OVERLAYABLE_NAME));
-        modifyingTransaction.commit();
+        mOverlayManager.commit(modifyingTransaction);
 
         overlayInfos = mOverlayManager.getOverlayInfosForTarget(mContext.getPackageName());
         expect.that(numberOfOverlaysWhenStart).isEqualTo(3);
@@ -180,54 +171,34 @@ public class OverlayManagerTransactionTest {
     }
 
     @Test
-    public void commit_notSelfTargetOverlay_beginTransaction_shouldSucceed()
-            throws PackageManager.NameNotFoundException, IOException {
+    public void commit_notSelfTargetOverlay_isSelfTargetingTransaction_shouldSucceed() {
         final FabricatedOverlay fabricatedOverlay =
                 mFacilitator.prepare(mOverlayName, OVERLAYABLE_NAME, false /* isSelfTarget */);
         final OverlayManager overlayManager = mContext.getSystemService(OverlayManager.class);
-        final OverlayManagerTransaction transaction = new OverlayManagerTransaction(overlayManager);
+        final OverlayManagerTransaction transaction = OverlayManagerTransaction.newInstance();
         transaction.registerFabricatedOverlay(fabricatedOverlay);
 
-        transaction.commit();
+        overlayManager.commit(transaction);
 
         List<OverlayInfo> overlayInfoList =
                 mOverlayManager.getOverlayInfosForTarget(mContext.getPackageName());
         assertThat(overlayInfoList.size()).isEqualTo(1);
     }
 
+    @ApiTest(apis = {"android.content.om.OverlayManager#commit"})
     @Test
-    public void commit_selfTargetOverlay_beginTransaction_shouldSucceed()
+    public void commit_selfTargetOverlay_isSelfTargetingTransaction_shouldSucceed()
             throws PackageManager.NameNotFoundException, IOException {
         final FabricatedOverlay fabricatedOverlay =
                 mFacilitator.prepare(mOverlayName, OVERLAYABLE_NAME, true /* isSelfTarget */);
         final OverlayManager overlayManager = mContext.getSystemService(OverlayManager.class);
-        final OverlayManagerTransaction transaction = new OverlayManagerTransaction(overlayManager);
+        final OverlayManagerTransaction transaction = OverlayManagerTransaction.newInstance();
         transaction.registerFabricatedOverlay(fabricatedOverlay);
 
-        transaction.commit();
+        overlayManager.commit(transaction);
 
         List<OverlayInfo> overlayInfoList =
                 mOverlayManager.getOverlayInfosForTarget(mContext.getPackageName());
         assertThat(overlayInfoList.size()).isEqualTo(1);
-    }
-
-    @Test
-    public void commit_notSelfTargetOverlay_notBeginTransaction_shouldFail() {
-        final FabricatedOverlay fabricatedOverlay =
-                mFacilitator.prepare(mOverlayName, OVERLAYABLE_NAME, false /* isSelfTarget */);
-        final OverlayManagerTransaction transaction = new OverlayManagerTransaction.Builder()
-                .registerFabricatedOverlay(fabricatedOverlay).build();
-
-        assertThrows(NullPointerException.class, transaction::commit);
-    }
-
-    @Test
-    public void commit_selfTargetOverlay_notBeginTransaction_shouldFail() {
-        final FabricatedOverlay fabricatedOverlay =
-                mFacilitator.prepare(mOverlayName, OVERLAYABLE_NAME, false /* isSelfTarget */);
-        final OverlayManagerTransaction transaction = new OverlayManagerTransaction.Builder()
-                .registerFabricatedOverlay(fabricatedOverlay).build();
-
-        assertThrows(NullPointerException.class, transaction::commit);
     }
 }

@@ -23,7 +23,6 @@ import android.os.Build
 import android.permission3.cts.AppMetadata.createAppMetadataWithLocationSharingNoAds
 import android.permission3.cts.AppMetadata.createAppMetadataWithNoSharing
 import android.provider.DeviceConfig
-import android.safetylabel.SafetyLabelConstants.PERMISSION_RATIONALE_ENABLED
 import android.safetylabel.SafetyLabelConstants.SAFETY_LABEL_CHANGE_NOTIFICATIONS_ENABLED
 import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
@@ -64,11 +63,6 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
             false.toString())
 
     @get:Rule
-    val deviceConfigPermissionRationaleEnabled =
-        DeviceConfigStateChangerRule(
-            context, DeviceConfig.NAMESPACE_PRIVACY, PERMISSION_RATIONALE_ENABLED, true.toString())
-
-    @get:Rule
     val deviceConfigDataSharingUpdatesPeriod =
         DeviceConfigStateChangerRule(
             context,
@@ -105,7 +99,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun startActivityWithIntent_featuresEnabled_whenAppHasLocationGranted_showUpdates() {
+    fun startActivityWithIntent_featureEnabled_whenAppHasLocationGranted_showUpdates() {
         grantLocationPermission(APP_PACKAGE_NAME)
 
         startAppDataSharingUpdatesActivity()
@@ -123,7 +117,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun startActivityWithIntent_featuresEnabled_withPlaceholderData_showUpdates() {
+    fun startActivityWithIntent_featureEnabled_withPlaceholderData_showUpdates() {
         setDeviceConfigPrivacyProperty(PLACEHOLDER_SAFETY_LABEL_UPDATES_ENABLED, true.toString())
 
         startAppDataSharingUpdatesActivity()
@@ -182,7 +176,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun startActivityWithIntent_featuresEnabled_whenAppDoesntHaveLocationGranted_showsNoUpdates() {
+    fun startActivityWithIntent_featureEnabled_whenAppDoesntHaveLocationGranted_showsNoUpdates() {
         startAppDataSharingUpdatesActivity()
 
         try {
@@ -199,26 +193,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun startActivityWithIntent_permissionRationaleDisabled_doesNotOpenDataSharingUpdatesPage() {
-        setDeviceConfigPrivacyProperty(PERMISSION_RATIONALE_ENABLED, false.toString())
-
-        startAppDataSharingUpdatesActivity()
-
-        findView(By.descContains(DATA_SHARING_UPDATES), false)
-    }
-
-    @Test
-    fun startActivityWithIntent_safetyLabelChangesDisabled_doesNotOpenDataSharingUpdatesPage() {
-        setDeviceConfigPrivacyProperty(SAFETY_LABEL_CHANGE_NOTIFICATIONS_ENABLED, false.toString())
-
-        startAppDataSharingUpdatesActivity()
-
-        findView(By.descContains(DATA_SHARING_UPDATES), false)
-    }
-
-    @Test
-    fun startActivityWithIntent_bothFeaturesDisabled_doesNotOpenDataSharingUpdatesPage() {
-        setDeviceConfigPrivacyProperty(PERMISSION_RATIONALE_ENABLED, false.toString())
+    fun startActivityWithIntent_featureDisabled_doesNotOpenDataSharingUpdatesPage() {
         setDeviceConfigPrivacyProperty(SAFETY_LABEL_CHANGE_NOTIFICATIONS_ENABLED, false.toString())
 
         startAppDataSharingUpdatesActivity()

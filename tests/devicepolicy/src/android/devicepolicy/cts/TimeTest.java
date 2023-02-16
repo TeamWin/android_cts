@@ -572,7 +572,7 @@ public final class TimeTest {
         }
     }
 
-    @CannotSetPolicyTest(policy = DisallowConfigDateTime.class)
+    @CannotSetPolicyTest(policy = DisallowConfigDateTime.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_DATE_TIME")
     public void setUserRestriction_disallowConfigDateTime_cannotSet_throwsException() {

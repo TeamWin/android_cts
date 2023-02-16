@@ -27,6 +27,7 @@ import android.hardware.radio.config.PhoneCapability;
 import android.hardware.radio.config.SimPortInfo;
 import android.hardware.radio.config.SimSlotStatus;
 import android.hardware.radio.config.SlotPortMapping;
+import android.hardware.radio.modem.ImeiInfo;
 import android.hardware.radio.sim.CardStatus;
 import android.hardware.radio.voice.CdmaSignalInfoRecord;
 import android.hardware.radio.voice.LastCallFailCauseInfo;
@@ -73,6 +74,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     private String[] mImeiSv;
     private String[] mEsn;
     private String[] mMeid;
+    private int[] mImeiType;
     private int mRadioState = MockModemConfigInterface.DEFAULT_RADIO_STATE;
     private byte mNumOfLiveModem = MockModemConfigInterface.DEFAULT_NUM_OF_LIVE_MODEM;
     private PhoneCapability mPhoneCapability = new PhoneCapability();
@@ -98,6 +100,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     // ***** IRadioModem RegistrantLists
     private RegistrantList mBasebandVersionChangedRegistrants = new RegistrantList();
     private RegistrantList[] mDeviceIdentityChangedRegistrants;
+    private RegistrantList[] mDeviceImeiInfoChangedRegistrants;
     private RegistrantList mRadioStateChangedRegistrants = new RegistrantList();
 
     // ***** IRadioSim RegistrantLists
@@ -130,6 +133,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         // Registrants initialization
         // IRadioModem registrants
         mDeviceIdentityChangedRegistrants = new RegistrantList[mNumOfPhone];
+        mDeviceImeiInfoChangedRegistrants = new RegistrantList[mNumOfPhone];
         // IRadioSim registrants
         mCardStatusChangedRegistrants = new RegistrantList[mNumOfPhone];
         mSimAppDataChangedRegistrants = new RegistrantList[mNumOfPhone];
@@ -147,6 +151,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         mImeiSv = new String[mNumOfPhone];
         mEsn = new String[mNumOfPhone];
         mMeid = new String[mNumOfPhone];
+        mImeiType = new int[mNumOfPhone];
 
         // IRadioSim caches
         mCardStatus = new CardStatus[mNumOfSim];
@@ -172,6 +177,11 @@ public class MockModemConfigBase implements MockModemConfigInterface {
             if (mDeviceIdentityChangedRegistrants != null
                     && mDeviceIdentityChangedRegistrants[i] == null) {
                 mDeviceIdentityChangedRegistrants[i] = new RegistrantList();
+            }
+
+            if (mDeviceImeiInfoChangedRegistrants != null
+                    && mDeviceImeiInfoChangedRegistrants[i] == null) {
+                mDeviceImeiInfoChangedRegistrants[i] = new RegistrantList();
             }
 
             if (mCardStatusChangedRegistrants != null && mCardStatusChangedRegistrants[i] == null) {
@@ -270,6 +280,16 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                         break;
                 }
                 mMeid[i] = meid;
+            }
+
+            if (mImeiType != null) {
+                int imeiType;
+                if (i == 0) {
+                    imeiType = ImeiInfo.ImeiType.PRIMARY;
+                } else {
+                    imeiType = ImeiInfo.ImeiType.SECONDARY;
+                }
+                mImeiType[i] = imeiType;
             }
 
             if (mCardStatus != null && mCardStatus[i] == null) {
@@ -494,18 +514,21 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                         mImeiSv[i] = MockModemConfigInterface.DEFAULT_PHONE1_IMEISV;
                         mEsn[i] = MockModemConfigInterface.DEFAULT_PHONE1_ESN;
                         mMeid[i] = MockModemConfigInterface.DEFAULT_PHONE1_MEID;
+                        mImeiType[i] = MockModemConfigInterface.DEFAULT_PHONE1_IMEITYPE;
                         break;
                     case 1:
                         mImei[i] = MockModemConfigInterface.DEFAULT_PHONE2_IMEI;
                         mImeiSv[i] = MockModemConfigInterface.DEFAULT_PHONE2_IMEISV;
                         mEsn[i] = MockModemConfigInterface.DEFAULT_PHONE2_ESN;
                         mMeid[i] = MockModemConfigInterface.DEFAULT_PHONE2_MEID;
+                        mImeiType[i] = MockModemConfigInterface.DEFAULT_PHONE2_IMEITYPE;
                         break;
                     default:
                         mImei[i] = MockModemConfigInterface.DEFAULT_PHONE1_IMEI;
                         mImeiSv[i] = MockModemConfigInterface.DEFAULT_PHONE1_IMEISV;
                         mEsn[i] = MockModemConfigInterface.DEFAULT_PHONE1_ESN;
                         mMeid[i] = MockModemConfigInterface.DEFAULT_PHONE1_MEID;
+                        mImeiType[i] = MockModemConfigInterface.DEFAULT_PHONE1_IMEITYPE;
                         break;
                 }
 
@@ -706,6 +729,19 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         mDeviceIdentityChangedRegistrants[logicalSlotId].notifyRegistrants(ar);
     }
 
+    private void notifyDeviceImeiTypeChangedRegistrants(int logicalSlotId) {
+        int physicalSlotId = getSimLogicalSlotId(logicalSlotId);
+        android.hardware.radio.modem.ImeiInfo imeiInfo =
+                new android.hardware.radio.modem.ImeiInfo();
+        synchronized (mConfigAccess[physicalSlotId]) {
+            imeiInfo.type = mImeiType[physicalSlotId];
+            imeiInfo.imei = mImei[physicalSlotId];
+            imeiInfo.svn = mImeiSv[physicalSlotId];
+        }
+        AsyncResult ar = new AsyncResult(null, imeiInfo, null);
+        mDeviceImeiInfoChangedRegistrants[logicalSlotId].notifyRegistrants(ar);
+    }
+
     // ***** MockModemConfigInterface implementation
     @Override
     public void destroy() {
@@ -746,6 +782,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
             synchronized (mConfigAccess[physicalSlotId]) {
                 // IRadioModem
                 notifyDeviceIdentityChangedRegistrants(i);
+                notifyDeviceImeiTypeChangedRegistrants(i);
 
                 // IRadioSim
                 mCardStatusChangedRegistrants[i].notifyRegistrants(
@@ -806,6 +843,12 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     public void registerForDeviceIdentityChanged(
             int logicalSlotId, Handler h, int what, Object obj) {
         mDeviceIdentityChangedRegistrants[logicalSlotId].addUnique(h, what, obj);
+    }
+
+    @Override
+    public void registerForDeviceImeiInfoChanged(
+            int logicalSlotId, Handler h, int what, Object obj) {
+        mDeviceImeiInfoChangedRegistrants[logicalSlotId].addUnique(h, what, obj);
     }
 
     @Override

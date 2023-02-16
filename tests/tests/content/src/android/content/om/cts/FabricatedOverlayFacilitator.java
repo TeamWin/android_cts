@@ -40,13 +40,13 @@ public class FabricatedOverlayFacilitator {
 
     public void removeAllOverlays() throws Exception {
         final OverlayManager overlayManager = mContext.getSystemService(OverlayManager.class);
-        final OverlayManagerTransaction transaction = new OverlayManagerTransaction(overlayManager);
+        final OverlayManagerTransaction transaction = OverlayManagerTransaction.newInstance();
         final List<OverlayInfo> overlayInfoList =
                 overlayManager.getOverlayInfosForTarget(mContext.getPackageName());
         for (OverlayInfo overlayInfo : overlayInfoList) {
             transaction.unregisterFabricatedOverlay(overlayInfo.getOverlayIdentifier());
         }
-        transaction.commit();
+        overlayManager.commit(transaction);
     }
 
     public FabricatedOverlay prepare(String overlayName, String overlayableName) {

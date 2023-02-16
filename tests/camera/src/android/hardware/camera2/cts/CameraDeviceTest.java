@@ -1027,7 +1027,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             imageReader.setOnImageAvailableListener(imageListener, mHandler);
 
             // To check the state leak condition, we need a capture request that has
-            // at least one session pararameter value difference from the initial session
+            // at least one session parameter value difference from the initial session
             // parameters configured above. Scan all available template types for the
             // required delta.
             CaptureRequest.Builder requestBuilder = null;

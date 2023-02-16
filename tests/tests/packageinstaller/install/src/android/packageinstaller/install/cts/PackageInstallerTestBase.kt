@@ -26,6 +26,7 @@ import android.content.Intent.EXTRA_INTENT
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
+import android.content.pm.PackageInfo
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageInstaller.EXTRA_PRE_APPROVAL
 import android.content.pm.PackageInstaller.EXTRA_STATUS
@@ -36,7 +37,6 @@ import android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION
 import android.content.pm.PackageInstaller.Session
 import android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
 import android.content.pm.PackageManager
-import android.icu.util.ULocale
 import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
@@ -65,10 +65,6 @@ open class PackageInstallerTestBase {
         const val CANCEL_BUTTON_ID = "button2"
 
         const val TEST_APK_NAME = "CtsEmptyTestApp.apk"
-        const val TEST_APK_NAME_PL = "CtsEmptyTestApp_pl.apk"
-        const val TEST_APP_LABEL = "Empty Test App"
-        const val TEST_APP_LABEL_PL = "Empty Test App Polish"
-        const val TEST_FAKE_APP_LABEL = "Fake Test App"
         const val TEST_APK_PACKAGE_NAME = "android.packageinstaller.emptytestapp.cts"
         const val TEST_APK_LOCATION = "/data/local/tmp/cts/packageinstaller"
 
@@ -88,19 +84,19 @@ open class PackageInstallerTestBase {
         const val TIMEOUT = 60000L
         const val INSTALL_INSTANT_APP = 0x00000800
         const val INSTALL_REQUEST_UPDATE_OWNERSHIP = 0x02000000
+
+        val context: Context = InstrumentationRegistry.getTargetContext()
     }
 
     @get:Rule
     val installDialogStarter = ActivityTestRule(FutureResultActivity::class.java)
 
-    protected val context: Context = InstrumentationRegistry.getTargetContext()
     protected val pm: PackageManager = context.packageManager
     protected val pi = pm.packageInstaller
     protected val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     private val apkFile = File(context.filesDir, TEST_APK_NAME)
-    private val apkFile_pl = File(context.filesDir, TEST_APK_NAME_PL)
 
-    data class SessionResult(val status: Int?, val preapproval: Boolean?)
+    data class SessionResult(val status: Int?, val preapproval: Boolean?, val message: String?)
 
     /** If a status was received the value of the status, otherwise null */
     private var installSessionResult = LinkedBlockingQueue<SessionResult>()
@@ -118,14 +114,13 @@ open class PackageInstallerTestBase {
                 installDialogStarter.activity.startActivityForResult(activityIntent)
             }
 
-            installSessionResult.offer(SessionResult(status, preapproval))
+            installSessionResult.offer(SessionResult(status, preapproval, msg))
         }
     }
 
     @Before
     fun copyTestApk() {
         File(TEST_APK_LOCATION, TEST_APK_NAME).copyTo(target = apkFile, overwrite = true)
-        File(TEST_APK_LOCATION, TEST_APK_NAME_PL).copyTo(target = apkFile_pl, overwrite = true)
     }
 
     @Before
@@ -161,18 +156,7 @@ open class PackageInstallerTestBase {
      */
     protected fun getInstallSessionResult(timeout: Long = TIMEOUT): SessionResult {
         return installSessionResult.poll(timeout, TimeUnit.MILLISECONDS)
-                ?: SessionResult(null /* status */, null /* preapproval */)
-    }
-
-    /**
-     * Start an installation via a session
-     */
-    protected fun startInstallationViaSession(): CompletableFuture<Int> {
-        return startInstallationViaSession(0 /* installFlags */)
-    }
-
-    protected fun startInstallationViaSession(installFlags: Int): CompletableFuture<Int> {
-        return startInstallationViaSession(installFlags, TEST_APK_NAME)
+            ?: SessionResult(null /* status */, null /* preapproval */, "Fail to poll result")
     }
 
     protected fun startInstallationViaSessionNoPrompt(): CompletableFuture<Int> {
@@ -193,6 +177,7 @@ open class PackageInstallerTestBase {
         installFlags: Int,
         isMultiPackage: Boolean,
         packageSource: Int?,
+        paramsBlock: (PackageInstaller.SessionParams) -> Unit = {},
     ): Pair<Int, Session> {
         // Create session
         val sessionParam = PackageInstaller.SessionParams(MODE_FULL_INSTALL)
@@ -209,6 +194,8 @@ open class PackageInstallerTestBase {
         if (packageSource != null) {
             sessionParam.setPackageSource(packageSource)
         }
+
+        paramsBlock(sessionParam)
 
         val sessionId = pi.createSession(sessionParam)
         val session = pi.openSession(sessionId)!!
@@ -279,19 +266,13 @@ open class PackageInstallerTestBase {
     }
 
     protected fun startInstallationViaSession(
-        installFlags: Int,
-        apkName: String
+        installFlags: Int = 0,
+        apkName: String = TEST_APK_NAME,
+        packageSource: Int? = null,
+        expectedPrompt: Boolean = true,
+        paramsBlock: (PackageInstaller.SessionParams) -> Unit = {}
     ): CompletableFuture<Int> {
-        return startInstallationViaSession(installFlags, apkName, null)
-    }
-
-    protected fun startInstallationViaSession(
-        installFlags: Int,
-        apkName: String,
-        packageSource: Int?,
-        expectedPrompt: Boolean = true
-    ): CompletableFuture<Int> {
-        val (sessionId, session) = createSession(installFlags, false, packageSource)
+        val (_, session) = createSession(installFlags, false, packageSource, paramsBlock)
         writeSession(session, apkName)
         return commitSession(session, expectedPrompt)
     }
@@ -343,14 +324,16 @@ open class PackageInstallerTestBase {
         session.commit(pendingIntent.intentSender)
     }
 
-    fun assertInstalled() {
+    fun assertInstalled(
+        flags: PackageManager.PackageInfoFlags = PackageManager.PackageInfoFlags.of(0)
+    ): PackageInfo {
         // Throws exception if package is not installed.
-        pm.getPackageInfo(TEST_APK_PACKAGE_NAME, 0)
+        return pm.getPackageInfo(TEST_APK_PACKAGE_NAME, flags)
     }
 
     fun assertNotInstalled() {
         try {
-            pm.getPackageInfo(TEST_APK_PACKAGE_NAME, 0)
+            pm.getPackageInfo(TEST_APK_PACKAGE_NAME, PackageManager.PackageInfoFlags.of(0))
             Assert.fail("Package should not be installed")
         } catch (expected: PackageManager.NameNotFoundException) {
         }
@@ -423,29 +406,5 @@ open class PackageInstallerTestBase {
             DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PACKAGE_MANAGER_SERVICE, name, value,
                     false /* makeDefault */)
         }
-    }
-
-    protected fun preparePreapprovalDetails(): PreapprovalDetails {
-        return preparePreapprovalDetails(TEST_APP_LABEL, ULocale.US, TEST_APK_PACKAGE_NAME)
-    }
-
-    protected fun preparePreapprovalDetailsInPl(): PreapprovalDetails {
-        return preparePreapprovalDetails(TEST_APP_LABEL_PL, ULocale("pl"), TEST_APK_PACKAGE_NAME)
-    }
-
-    protected fun prepareWrongPreapprovalDetails(): PreapprovalDetails {
-        return preparePreapprovalDetails(TEST_FAKE_APP_LABEL, ULocale.US, TEST_APK_PACKAGE_NAME)
-    }
-
-    private fun preparePreapprovalDetails(
-        appLabel: String,
-        locale: ULocale,
-        appPackageName: String
-    ): PreapprovalDetails {
-        return PreapprovalDetails.Builder()
-                .setLabel(appLabel)
-                .setLocale(locale)
-                .setPackageName(appPackageName)
-                .build()
     }
 }

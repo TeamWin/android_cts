@@ -770,8 +770,9 @@ public final class DevicePolicy {
             ComponentName trustAgent, UserReference user) {
         try (PermissionContext p =
                      TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
-            return Set.copyOf(devicePolicyManager(user)
-                    .getTrustAgentConfiguration(/* componentName= */ null, trustAgent));
+            List<PersistableBundle> configurations = devicePolicyManager(user)
+                    .getTrustAgentConfiguration(/* componentName= */ null, trustAgent);
+            return configurations == null ? Set.of() : Set.copyOf(configurations);
         }
     }
 }

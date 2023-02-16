@@ -52,7 +52,7 @@ import java.util.Map;
 /**
  * Common functions to interact with the test app.
  */
-class TestAppInterface {
+class TestAppInterface implements AutoCloseable {
     private static final String TAG = TestAppInterface.class.getSimpleName();
 
     static final String TEST_APP_PACKAGE = "android.jobscheduler.cts.jobtestapp";
@@ -84,6 +84,11 @@ class TestAppInterface {
         closeActivity();
         mContext.unregisterReceiver(mReceiver);
         mTestJobState.reset();
+    }
+
+    @Override
+    public void close() {
+        cleanup();
     }
 
     void scheduleJob(boolean allowWhileIdle, int requiredNetworkType, boolean asExpeditedJob)

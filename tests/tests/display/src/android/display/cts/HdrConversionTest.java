@@ -95,9 +95,9 @@ public class HdrConversionTest {
                 "Preferred HDR output type should not be set if the conversion mode is "
                         + "PASSTHROUGH or SYSTEM",
                 IllegalArgumentException.class,
-                () -> new HdrConversionMode(
+                () -> mDisplayManager.setHdrConversionMode(new HdrConversionMode(
                         HdrConversionMode.HDR_CONVERSION_SYSTEM,
-                        HdrCapabilities.HDR_TYPE_DOLBY_VISION));
+                        HdrCapabilities.HDR_TYPE_DOLBY_VISION)));
 
         assertThrows(
                 "Preferred HDR output type should not be set if the conversion mode is "

@@ -239,6 +239,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     }
 
     @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     fun testChainUsageWithOtherUsage() {
         // TV has only the mic icon
         assumeFalse(isTv)

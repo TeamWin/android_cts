@@ -30,6 +30,7 @@ import android.util.Log;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.LocalPresubmit;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -90,6 +91,7 @@ public final class PermitInputMethodsTest {
     @Postsubmit(reason = "New test")
     @PolicyAppliesTest(policy = PermittedInputMethods.class)
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, QUERY_ADMIN_POLICY})
+    @LocalPresubmit
     public void setPermittedInputMethods_allPermitted() {
         assertThat(sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
                 sDeviceState.dpc().componentName(), /* packageNames= */ null)).isTrue();
@@ -104,6 +106,7 @@ public final class PermitInputMethodsTest {
     @CanSetPolicyTest(
             policy = PermittedInputMethods.class)
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, QUERY_ADMIN_POLICY})
+    @LocalPresubmit
     public void setPermittedInputMethods_doesNotThrowException() {
         sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
                 sDeviceState.dpc().componentName(), /* packageNames= */ null);

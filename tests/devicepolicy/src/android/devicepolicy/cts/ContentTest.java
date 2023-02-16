@@ -55,7 +55,7 @@ public final class ContentTest {
 
     private static final Context sContext = TestApis.context().instrumentedContext();
 
-    @CannotSetPolicyTest(policy = DisallowContentCapture.class)
+    @CannotSetPolicyTest(policy = DisallowContentCapture.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONTENT_CAPTURE")
     public void setUserRestriction_disallowContentCapture_cannotSet_throwsException() {
@@ -118,7 +118,7 @@ public final class ContentTest {
         assertThat(sContext.getSystemService(ContentCaptureManager.class)).isNull();
     }
 
-    @CannotSetPolicyTest(policy = DisallowContentSuggestions.class)
+    @CannotSetPolicyTest(policy = DisallowContentSuggestions.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONTNET_SUGGESTIONS")
     public void setUserRestriction_disallowContentSuggestions_cannotSet_throwsException() {

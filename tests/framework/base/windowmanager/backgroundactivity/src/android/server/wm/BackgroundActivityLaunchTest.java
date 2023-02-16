@@ -333,30 +333,43 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 143522449)
     public void testActivityBlockedWhenLaunchedAfterHomePress() throws Exception {
+        int backgroundStartDelayMs = 4000;
+
         Intent intent = new Intent();
         intent.setComponent(APP_A.FOREGROUND_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(APP_A.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_BACKGROUND_ACTIVITY, true);
         intent.putExtra(APP_A.FOREGROUND_ACTIVITY_EXTRA.START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS,
-                2000);
+                backgroundStartDelayMs);
         intent.putExtra(APP_A.FOREGROUND_ACTIVITY_EXTRA.START_ACTIVITY_FROM_FG_ACTIVITY_NEW_TASK,
                 true);
+        long t0 = System.currentTimeMillis();
         mContext.startActivity(intent);
-        boolean result = waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS,
-                APP_A.FOREGROUND_ACTIVITY);
-        assertTrue("Not able to launch background activity", result);
+        assertActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, APP_A.FOREGROUND_ACTIVITY);
         assertTaskStack(new ComponentName[]{APP_A.FOREGROUND_ACTIVITY}, APP_A.FOREGROUND_ACTIVITY);
 
         // We can't resume app switching after pressing home button, otherwise the grace period
         // will allow the starts.
-        pressHomeAndWaitHomeResumed();
+        pressHomeAndWaitHomeResumed(backgroundStartDelayMs - 500);
+        long t1 = System.currentTimeMillis();
 
-        result = waitForActivityFocused(APP_A.FOREGROUND_ACTIVITY);
-        assertFalse("FG activity shouldn't be visible", result);
-        result = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
-        assertFalse("BG activity shouldn't be visible", result);
+        long executionTime = t1 - t0;
+        // if going to the home screen takes too long we might run into race conditions because
+        // the background activities may be started before the home press action was finished.
+        assertThat(executionTime).isAtMost(backgroundStartDelayMs - 500);
+        // make sure there is enough time left to start the background activities - this puts an
+        // upper limit on backgroundStartDelay
+        assertThat(executionTime).isAtMost(
+                ACTIVITY_BG_START_GRACE_PERIOD_MS - backgroundStartDelayMs);
+
+        // wait to allow background starts (give 500ms extra time)
+        assertActivityNotFocused(backgroundStartDelayMs + 500, APP_A.FOREGROUND_ACTIVITY,
+                "FG activity shouldn't be visible");
+        // we already either failed or waited before - use short timeout
+        assertActivityNotFocused(100, APP_A.BACKGROUND_ACTIVITY,
+                "BG activity shouldn't be visible");
+
         assertTaskStack(new ComponentName[]{APP_A.FOREGROUND_ACTIVITY}, APP_A.FOREGROUND_ACTIVITY);
         assertTaskStack(null, APP_A.BACKGROUND_ACTIVITY);
     }
@@ -987,6 +1000,11 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         mWmState.waitForHomeActivityVisible();
     }
 
+    private void pressHomeAndWaitHomeResumed(int timeoutMs) {
+        pressHomeButton();
+        assertActivityFocused(timeoutMs, mWmState.getHomeActivityName());
+    }
+
     private boolean checkPackageResumed(String pkg) {
         WindowManagerStateHelper helper = new WindowManagerStateHelper();
         helper.computeState();
@@ -1059,14 +1077,6 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         } else {
             assertTaskStack(null, appA.BACKGROUND_ACTIVITY);
         }
-    }
-
-    private void assertActivityFocused(ComponentName componentName) {
-        assertActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
-    }
-
-    private void assertActivityNotFocused(ComponentName componentName) {
-        assertActivityNotFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
     }
 
     private void setupPendingIntentService(Components appA) throws Exception {

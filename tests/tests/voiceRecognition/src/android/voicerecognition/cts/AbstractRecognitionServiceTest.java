@@ -18,6 +18,7 @@ package android.voicerecognition.cts;
 
 import static android.voicerecognition.cts.CallbackMethod.CALLBACK_METHOD_END_SEGMENTED_SESSION;
 import static android.voicerecognition.cts.CallbackMethod.CALLBACK_METHOD_ERROR;
+import static android.voicerecognition.cts.CallbackMethod.CALLBACK_METHOD_LANGUAGE_DETECTION;
 import static android.voicerecognition.cts.CallbackMethod.CALLBACK_METHOD_RESULTS;
 import static android.voicerecognition.cts.CallbackMethod.CALLBACK_METHOD_SEGMENTS_RESULTS;
 import static android.voicerecognition.cts.CallbackMethod.CALLBACK_METHOD_UNSPECIFIED;
@@ -38,6 +39,7 @@ import static org.junit.Assert.fail;
 import android.content.Intent;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.speech.ModelDownloadListener;
 import android.speech.RecognitionService;
 import android.speech.RecognitionSupport;
 import android.speech.RecognitionSupportCallback;
@@ -218,6 +220,59 @@ abstract class AbstractRecognitionServiceTest {
     }
 
     @Test
+    public void testCanSetModelDownloadListener() throws Throwable {
+        mUiDevice.waitForIdle();
+        SpeechRecognizer recognizer = mActivity.getRecognizerInfoDefault().mRecognizer;
+        assertThat(recognizer).isNotNull();
+        setCurrentRecognizer(recognizer, IN_PACKAGE_RECOGNITION_SERVICE);
+
+        mUiDevice.waitForIdle();
+        CtsRecognitionService.sDownloadTriggers.clear();
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        List<String> callbackCalls = new ArrayList<>();
+        ModelDownloadListener listener = new ModelDownloadListener() {
+            @Override
+            public void onProgress(int completedPercent) {
+                callbackCalls.add("progress");
+            }
+
+            @Override
+            public void onSuccess() {
+                callbackCalls.add("success");
+            }
+
+            @Override
+            public void onScheduled() {
+                callbackCalls.add("scheduled");
+            }
+
+            @Override
+            public void onError(int error) {
+                callbackCalls.add("error");
+            }
+        };
+        mActivity.setModelDownloadListenerDefault(intent, listener);
+        mActivity.triggerModelDownloadDefault(intent);
+        PollingCheck.waitFor(SEQUENCE_TEST_WAIT_TIMEOUT_MS,
+                () -> CtsRecognitionService.sDownloadTriggers.size() > 0);
+        PollingCheck.waitFor(SEQUENCE_TEST_WAIT_TIMEOUT_MS,
+                () -> callbackCalls.size() > 0);
+        assertThat(callbackCalls)
+                .containsExactly("progress", "scheduled", "success", "error")
+                .inOrder();
+
+        CtsRecognitionService.sDownloadTriggers.clear();
+        callbackCalls.clear();
+        assertThat(callbackCalls).isEmpty();
+        mActivity.setModelDownloadListenerDefault(intent, listener);
+        mActivity.clearModelDownloadListenerDefault(intent);
+        mActivity.triggerModelDownloadDefault(intent);
+        PollingCheck.waitFor(SEQUENCE_TEST_WAIT_TIMEOUT_MS,
+                () -> CtsRecognitionService.sDownloadTriggers.size() > 0);
+        assertThat(callbackCalls).isEmpty();
+    }
+
+    @Test
     @Parameters(method = "singleScenarios")
     @TestCaseName("{method}_{0}")
     public void sequenceTest(SequenceExecutionInfo.Scenario scenario) {
@@ -236,7 +291,8 @@ abstract class AbstractRecognitionServiceTest {
                 SequenceExecutionInfo.Scenario.START_START,
                 SequenceExecutionInfo.Scenario.START_STOP_CANCEL,
                 SequenceExecutionInfo.Scenario.START_ERROR_CANCEL,
-                SequenceExecutionInfo.Scenario.START_ERROR_DESTROY};
+                SequenceExecutionInfo.Scenario.START_ERROR_DESTROY,
+                SequenceExecutionInfo.Scenario.START_DETECTION_STOP_RESULTS};
     }
 
     @Test
@@ -260,7 +316,8 @@ abstract class AbstractRecognitionServiceTest {
                 SequenceExecutionInfo.Scenario.START_SEGMENT_ENDOFSESSION,
                 SequenceExecutionInfo.Scenario.START_CANCEL,
                 SequenceExecutionInfo.Scenario.START_START,
-                SequenceExecutionInfo.Scenario.START_STOP_CANCEL);
+                SequenceExecutionInfo.Scenario.START_STOP_CANCEL,
+                SequenceExecutionInfo.Scenario.START_DETECTION_STOP_RESULTS);
 
         List<Object[]> scenarios = new ArrayList<>();
         for (int i = 0; i < concurrencyObservableScenarios.size(); i++) {
@@ -518,6 +575,7 @@ abstract class AbstractRecognitionServiceTest {
             START_STOP_CANCEL,
             START_ERROR_CANCEL,
             START_ERROR_DESTROY,
+            START_DETECTION_STOP_RESULTS,
 
             // TODO(kiridza): Investigate why these scenarios are flaky (5-10% failure).
             START_STOP_DESTROY,
@@ -704,6 +762,21 @@ abstract class AbstractRecognitionServiceTest {
                             true,
                             false),
                             /* expected callback methods invoked: */ ImmutableList.of(),
+                            /* expected error codes received: */ ImmutableList.of());
+                case START_DETECTION_STOP_RESULTS:
+                    return new SequenceExecutionInfo(
+                            /* service methods to call: */ ImmutableList.of(
+                            RECOGNIZER_METHOD_START_LISTENING,
+                            RECOGNIZER_METHOD_STOP_LISTENING),
+                            /* callback methods to call: */ ImmutableList.of(
+                            CALLBACK_METHOD_LANGUAGE_DETECTION,
+                            CALLBACK_METHOD_RESULTS),
+                            /* expected service methods propagated: */ ImmutableList.of(
+                            true,
+                            true),
+                            /* expected callback methods invoked: */ ImmutableList.of(
+                            CALLBACK_METHOD_LANGUAGE_DETECTION,
+                            CALLBACK_METHOD_RESULTS),
                             /* expected error codes received: */ ImmutableList.of());
 
                 // Sad scenarios.

@@ -38,6 +38,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureWifiEnabled;
+import com.android.bedstead.harrier.annotations.LocalPresubmit;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -93,7 +94,7 @@ public final class WifiTest {
                 sDeviceState.dpc().componentName(), DISALLOW_CONFIG_WIFI);
     }
 
-    @CannotSetPolicyTest(policy = DisallowConfigWifi.class)
+    @CannotSetPolicyTest(policy = DisallowConfigWifi.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_WIFI")
     public void setUserRestriction_disallowConfigWifi_cannotSet_throwsException() {
@@ -169,7 +170,7 @@ public final class WifiTest {
     }
 
     @CannotSetPolicyTest(
-            policy = DisallowChangeWifiState.class)
+            policy = DisallowChangeWifiState.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CHANGE_WIFI_STATE")
     public void setUserRestriction_disallowChangeWifiState_cannotSet_throwsException() {
@@ -247,7 +248,7 @@ public final class WifiTest {
                 sDeviceState.dpc().componentName(), DISALLOW_WIFI_TETHERING);
     }
 
-    @CannotSetPolicyTest(policy = DisallowWifiTethering.class)
+    @CannotSetPolicyTest(policy = DisallowWifiTethering.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_WIFI_TETHERING")
     public void setUserRestriction_disallowWifiTethering_cannotSet_throwsException() {
@@ -330,7 +331,7 @@ public final class WifiTest {
     }
 
     @CannotSetPolicyTest(
-            policy = DisallowConfigTethering.class)
+            policy = DisallowConfigTethering.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_TETHERING")
     public void setUserRestriction_disallowConfigTethering_cannotSet_throwsException() {
@@ -399,7 +400,7 @@ public final class WifiTest {
                 sDeviceState.dpc().componentName(), DISALLOW_WIFI_DIRECT);
     }
 
-    @CannotSetPolicyTest(policy = DisallowWifiDirect.class)
+    @CannotSetPolicyTest(policy = DisallowWifiDirect.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_WIFI_DIRECT")
     public void setUserRestriction_disallowWifiDirect_cannotSet_throwsException() {
@@ -477,7 +478,7 @@ public final class WifiTest {
                 sDeviceState.dpc().componentName(), DISALLOW_ADD_WIFI_CONFIG);
     }
 
-    @CannotSetPolicyTest(policy = DisallowAddWifiConfig.class)
+    @CannotSetPolicyTest(policy = DisallowAddWifiConfig.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_ADD_WIFI_CONFIG")
     public void setUserRestriction_disallowAddWifiConfig_cannotSet_throwsException() {
@@ -617,6 +618,7 @@ public final class WifiTest {
     }
 
     @CanSetPolicyTest(policy = Wifi.class) // TODO: Remove
+    @LocalPresubmit
     public void setWifiSsidPolicy_doesNotThrowException() {
         sDeviceState.dpc().devicePolicyManager()
                 .setWifiSsidPolicy(WIFI_SSID_POLICY);

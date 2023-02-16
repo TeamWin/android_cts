@@ -58,7 +58,7 @@ public final class TelephonyTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    @CannotSetPolicyTest(policy = DisallowConfigCellBroadcasts.class)
+    @CannotSetPolicyTest(policy = DisallowConfigCellBroadcasts.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_CELL_BROADCASTS")
     public void setUserRestriction_disallowConfigCellBroadcasts_cannotSet_throwsException() {
@@ -118,7 +118,7 @@ public final class TelephonyTest {
         // TODO: Test
     }
 
-    @CannotSetPolicyTest(policy = DisallowConfigMobileNetworks.class)
+    @CannotSetPolicyTest(policy = DisallowConfigMobileNetworks.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_MOBILE_NETWORKS")
     public void setUserRestriction_disallowConfigMobileNetworks_cannotSet_throwsException() {
@@ -178,7 +178,7 @@ public final class TelephonyTest {
         // TODO: Test
     }
 
-    @CannotSetPolicyTest(policy = DisallowOutgoingCalls.class)
+    @CannotSetPolicyTest(policy = DisallowOutgoingCalls.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_OUTGOING_CALLS")
     public void setUserRestriction_disallowOutgoingCalls_cannotSet_throwsException() {
@@ -238,7 +238,7 @@ public final class TelephonyTest {
         // TODO: Test
     }
 
-    @CannotSetPolicyTest(policy = DisallowSms.class)
+    @CannotSetPolicyTest(policy = DisallowSms.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SMS")
     public void setUserRestriction_disallowSms_cannotSet_throwsException() {
@@ -298,7 +298,7 @@ public final class TelephonyTest {
         // TODO: Test
     }
 
-    @CannotSetPolicyTest(policy = DisallowDataRoaming.class)
+    @CannotSetPolicyTest(policy = DisallowDataRoaming.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_DATA_ROAMING")
     public void setUserRestriction_disallowDataRoaming_cannotSet_throwsException() {
@@ -358,7 +358,7 @@ public final class TelephonyTest {
         // TODO: Test
     }
 
-    @CannotSetPolicyTest(policy = DisallowCellular2g.class)
+    @CannotSetPolicyTest(policy = DisallowCellular2g.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CELLULAR_2G")
     public void setUserRestriction_disallowCellular2g_cannotSet_throwsException() {
@@ -418,7 +418,7 @@ public final class TelephonyTest {
         // TODO: Test
     }
 
-    @CannotSetPolicyTest(policy = DisallowUltraWidebandRadio.class)
+    @CannotSetPolicyTest(policy = DisallowUltraWidebandRadio.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_ULTRA_WIDEBAND_RADIO")
     public void setUserRestriction_disallowUltraWidebandRadio_cannotSet_throwsException() {

@@ -25,6 +25,8 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
+import com.android.tradefed.util.RunInterruptedException;
+import com.android.tradefed.util.RunUtil;
 
 
 abstract class BaseHostTestCase extends BaseHostJUnit4Test {
@@ -62,8 +64,8 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
             } catch (Throwable e) {
                 if (System.currentTimeMillis() - start < timeoutMillis) {
                     try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ignored) {
+                        RunUtil.getDefault().sleep(100);
+                    } catch (RunInterruptedException ignored) {
                         throw new RuntimeException(e);
                     }
                 } else {

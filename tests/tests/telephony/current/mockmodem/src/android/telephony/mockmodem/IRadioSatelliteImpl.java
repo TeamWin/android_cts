@@ -27,7 +27,6 @@ import android.hardware.radio.satellite.SatelliteFeature;
 import android.hardware.radio.satellite.SatelliteMode;
 import android.os.RemoteException;
 import android.telephony.satellite.PointingInfo;
-import android.telephony.satellite.stub.SatelliteImplBase;
 import android.util.Log;
 
 import com.android.internal.telephony.RILUtils;
@@ -459,7 +458,7 @@ public class IRadioSatelliteImpl extends IRadioSatellite.Stub {
      *
      * @param mode The current mode of the satellite modem.
      */
-    void sendSatelliteModeChanged(@SatelliteImplBase.Mode int mode) {
+    void sendSatelliteModeChanged(int mode) {
         Log.d(mTag, "onSatelliteModeChanged");
 
         if (mRadioSatelliteIndication != null) {
@@ -502,8 +501,7 @@ public class IRadioSatelliteImpl extends IRadioSatellite.Stub {
      *
      * @param technology The current technology of the satellite modem.
      */
-    public void sendSatelliteRadioTechnologyChanged(
-            @SatelliteImplBase.NTRadioTechnology int technology) {
+    public void sendSatelliteRadioTechnologyChanged(int technology) {
         Log.d(mTag, "onSatelliteRadioTechnologyChanged");
 
         if (mRadioSatelliteIndication != null) {

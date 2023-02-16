@@ -22,6 +22,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
+import android.app.job.JobService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -50,6 +51,9 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
     public static final String EXTRA_AS_USER_INITIATED = PACKAGE_NAME + ".extra.AS_USER_INITIATED";
     public static final String EXTRA_REQUEST_JOB_UID_STATE =
             PACKAGE_NAME + ".extra.REQUEST_JOB_UID_STATE";
+    public static final String EXTRA_SET_NOTIFICATION = PACKAGE_NAME + ".extra.SET_NOTIFICATION";
+    public static final String EXTRA_SET_NOTIFICATION_JOB_END_POLICY =
+            PACKAGE_NAME + ".extra.SET_NOTIFICATION_JOB_END_POLICY";
     public static final String ACTION_SCHEDULE_JOB = PACKAGE_NAME + ".action.SCHEDULE_JOB";
     public static final String ACTION_CANCEL_JOBS = PACKAGE_NAME + ".action.CANCEL_JOBS";
     public static final String ACTION_POST_UI_INITIATING_NOTIFICATION =
@@ -80,6 +84,11 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                         EXTRA_REQUEST_JOB_UID_STATE, false);
                 final Bundle extras = new Bundle();
                 extras.putBoolean(EXTRA_REQUEST_JOB_UID_STATE, requestJobUidState);
+                extras.putBoolean(EXTRA_SET_NOTIFICATION,
+                        intent.getBooleanExtra(EXTRA_SET_NOTIFICATION, false));
+                extras.putInt(EXTRA_SET_NOTIFICATION_JOB_END_POLICY,
+                        intent.getIntExtra(EXTRA_SET_NOTIFICATION_JOB_END_POLICY,
+                                JobService.JOB_END_NOTIFICATION_POLICY_REMOVE));
                 JobInfo.Builder jobBuilder = new JobInfo.Builder(jobId, jobServiceComponent)
                         .setBackoffCriteria(JOB_INITIAL_BACKOFF, JobInfo.BACKOFF_POLICY_LINEAR)
                         .setTransientExtras(extras)

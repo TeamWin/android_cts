@@ -15,12 +15,13 @@
  */
 package com.android.compatibility.common.util;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import android.app.Instrumentation;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.util.Log;
-
-import org.junit.Assert;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -35,10 +36,13 @@ import javax.annotation.concurrent.GuardedBy;
  *
  * Use {@link #start} to create an instance and start monitoring.
  * Use {@link #waitForAnrAndReturnUptime} to wait for an "early ANR", and get the uptime of it.
- * One an ANR is detected, the target process will be killed.
+ * ANR monitoring is single-shot, so once an ANR is detected,
+ * the target process will be killed and the AnrMonitor instance will be unusable.
  */
 public class AnrMonitor implements AutoCloseable {
     private static final String TAG = "AnrMonitor";
+
+    public static final long NO_ANR = -1L;
 
     private final Instrumentation mInstrumentation;
     private final String mTargetProcess;
@@ -87,6 +91,30 @@ public class AnrMonitor implements AutoCloseable {
      * Fails if an ANR doesn't happen before the timeout.
      */
     public long waitForAnrAndReturnUptime(long timeoutMillis) {
+        return waitForAnrAndReturnUptime(true, timeoutMillis);
+    }
+
+    /**
+     * Asserts that no ANR occurs within the specified timeframe.
+     */
+    public void assertNoAnr(long timeoutMillis) {
+        assertEquals(NO_ANR, waitForAnrAndReturnUptime(false, timeoutMillis));
+    }
+
+    /**
+     * Waits for an ANR for the target process.
+     * If an ANR is expected, the uptime when an ANR event occurred will be returned, or the
+     * method will fail.
+     * If no ANR is expected, the method will fail if an ANR is seen, or it will return
+     * {@link #NO_ANR} after the timeout.
+     */
+    private long waitForAnrAndReturnUptime(boolean expectAnr, long timeoutMillis) {
+        if (timeoutMillis <= 0) {
+            fail("Timeout must be positive");
+        }
+        if (mStop) {
+            fail("Monitor has been closed");
+        }
         try {
             final long timeoutUptime = SystemClock.uptimeMillis() + timeoutMillis;
             synchronized (mEventQueue) {
@@ -94,7 +122,11 @@ public class AnrMonitor implements AutoCloseable {
                     final long waitTime = timeoutUptime - SystemClock.uptimeMillis();
                     if (waitTime <= 0) {
                         // Timed out
-                        Assert.fail("Timeout waiting for an ANR event from `am monitor`");
+                        if (expectAnr) {
+                            fail("Timeout waiting for an ANR event from `am monitor`");
+                        } else {
+                            return NO_ANR;
+                        }
                     }
                     try {
                         mEventQueue.wait(waitTime);
@@ -105,6 +137,9 @@ public class AnrMonitor implements AutoCloseable {
                     if (uptime == null) {
                         // Empty
                         continue;
+                    }
+                    if (!expectAnr) {
+                        fail("App had unexpected ANR");
                     }
                     return uptime;
                 }
@@ -153,7 +188,7 @@ public class AnrMonitor implements AutoCloseable {
         } catch (Throwable th) {
             if (!mStop) {
                 Log.e(TAG, "BG thread dying unexpectedly", th);
-                Assert.fail("Unexpected exception detected: " + th.getMessage() + "\n"
+                fail("Unexpected exception detected: " + th.getMessage() + "\n"
                         + Log.getStackTraceString(th));
             }
         } finally {

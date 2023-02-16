@@ -22,6 +22,8 @@ import android.accounts.RemoteAccountManagerWrapper;
 import android.app.NotificationManager;
 import android.app.RemoteNotificationManager;
 import android.app.RemoteNotificationManagerWrapper;
+import android.content.RemoteRestrictionsManager;
+import android.content.RemoteRestrictionsManagerWrapper;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManagerWrapper;
@@ -53,6 +55,8 @@ import android.os.UserManager;
 import android.security.KeyChain;
 import android.security.RemoteKeyChain;
 import android.security.RemoteKeyChainWrapper;
+import android.telecom.RemoteTelecomManager;
+import android.telecom.RemoteTelecomManagerWrapper;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -411,6 +415,24 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      */
     public RemoteNotificationManager notificationManager() {
         return new RemoteNotificationManagerWrapper(mConnector);
+    }
+
+    /**
+     * Access the {@link TelecomManager} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
+    public RemoteTelecomManager telecomManager() {
+        return new RemoteTelecomManagerWrapper(mConnector);
+    }
+
+    /**
+     * Access the {@link android.content.RestrictionsManager} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
+    public RemoteRestrictionsManager restrictionsManager() {
+        return new RemoteRestrictionsManagerWrapper(mConnector);
     }
 
     /**

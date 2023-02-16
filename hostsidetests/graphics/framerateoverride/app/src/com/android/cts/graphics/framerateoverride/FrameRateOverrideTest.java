@@ -127,23 +127,18 @@ public final class FrameRateOverrideTest {
         });
     }
 
-    private static boolean areEqual(float a, float b) {
-        return Math.abs(a - b) <= REFRESH_RATE_TOLERANCE;
-    }
-
     // Find refresh rates with the same resolution. If FrameRateOverride is only enabled for
     // native refresh rates, then this function returns refresh rates which natively supports
     // half that rate with the same resolution (for example, a 120Hz mode when the device also
     // supports a 60Hz mode).
     private List<Display.Mode> getModesToTest() {
-        List<Display.Mode> modesToTest = new ArrayList<>();
+        List<Display.Mode> modesWithSameResolution = new ArrayList<>();
         if (!SurfaceFlingerProperties.enable_frame_rate_override().orElse(true)) {
             Log.i(TAG, "Frame rate override is not enabled, skipping");
-            return modesToTest;
+            return modesWithSameResolution;
         }
 
         Display.Mode[] modes = mActivityRule.getActivity().getDisplay().getSupportedModes();
-        List<Display.Mode> modesWithSameResolution = new ArrayList<>();
         Display.Mode currentMode = mActivityRule.getActivity().getDisplay().getMode();
         final long currentDisplayHeight = currentMode.getPhysicalHeight();
         final long currentDisplayWidth = currentMode.getPhysicalWidth();
@@ -155,28 +150,7 @@ public final class FrameRateOverrideTest {
             }
         }
 
-        final boolean overrideForNativeRates = SurfaceFlingerProperties
-                        .frame_rate_override_for_native_rates().orElse(false);
-        if (overrideForNativeRates) {
-            for (Display.Mode mode : modesWithSameResolution) {
-                for (Display.Mode otherMode : modesWithSameResolution) {
-                    if (mode.getModeId() == otherMode.getModeId()) {
-                        continue;
-                    }
-
-                    // only add if this refresh rate is a multiple of the other
-                    if (areEqual(mode.getRefreshRate(), 2 * otherMode.getRefreshRate())) {
-                        modesToTest.add(mode);
-                        continue;
-                    }
-                }
-            }
-        }
-        else {
-            modesToTest = modesWithSameResolution;
-        }
-
-        return modesToTest;
+        return modesWithSameResolution;
     }
 
     // Use WindowManager.LayoutParams#preferredMinDisplayRefreshRate and
@@ -186,13 +160,7 @@ public final class FrameRateOverrideTest {
     private void testGlobalFrameRateOverride(FrameRateObserver frameRateObserver)
             throws InterruptedException, IOException {
         FrameRateOverrideTestActivity activity = mActivityRule.getActivity();
-        if (!SurfaceFlingerProperties.frame_rate_override_global().orElse(true)) {
-            Log.i(TAG, "Global frame rate override is not enabled, skipping");
-            return;
-        }
-
         for (Display.Mode mode : getModesToTest()) {
-            //setPreferredRefreshRate(mode.getRefreshRate());
             setMode(mode);
             activity.testFrameRateOverride(
                     activity.new PreferredRefreshRateFrameTest(),

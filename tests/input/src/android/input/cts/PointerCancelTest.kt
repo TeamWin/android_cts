@@ -16,9 +16,7 @@
 package android.input.cts
 
 import android.graphics.PointF
-import android.os.SystemClock
 import android.view.Gravity
-import android.view.InputDevice
 import android.view.InputEvent
 import android.view.MotionEvent
 import android.view.View
@@ -28,12 +26,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
 
 private fun getViewCenterOnScreen(v: View): PointF {
     val location = IntArray(2)
@@ -51,6 +49,7 @@ class PointerCancelTest {
     private lateinit var activity: CaptureEventActivity
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private lateinit var verifier: EventVerifier
+    private val touchInjector = TouchInjector(instrumentation)
 
     @Before
     fun setUp() {
@@ -67,29 +66,15 @@ class PointerCancelTest {
      */
     @Test
     fun testPointerCancelMotion() {
-        val downTime = SystemClock.uptimeMillis()
         val pointerInDecorView = getViewCenterOnScreen(activity.window.decorView)
+        val secondPointer = PointF(pointerInDecorView.x + 1, pointerInDecorView.y + 1)
 
         // Start a valid touch stream
-        sendEvent(downTime, MotionEvent.ACTION_DOWN, pointerInDecorView, true /*sync*/)
+        touchInjector.sendMultiTouchEvent(arrayOf(pointerInDecorView, secondPointer), true)
         verifier.assertReceivedDown()
-
-        pointerInDecorView.offset(0f, 1f)
-        sendEvent(downTime, MotionEvent.ACTION_MOVE, pointerInDecorView, true /*sync*/)
         verifier.assertReceivedMove()
-
-        val secondPointer = PointF(pointerInDecorView.x + 1, pointerInDecorView.y + 1)
-        sendPointersEvent(downTime, ACTION_POINTER_1_DOWN,
-                arrayOf(pointerInDecorView, secondPointer),
-                0 /*flags*/, true /*sync*/)
         verifier.assertReceivedPointerDown(1)
-
-        sendPointersEvent(downTime, ACTION_POINTER_1_UP,
-                arrayOf(pointerInDecorView, secondPointer),
-                MotionEvent.FLAG_CANCELED, true /*sync*/)
         verifier.assertReceivedPointerCancel(1)
-
-        sendEvent(downTime, MotionEvent.ACTION_UP, pointerInDecorView, true /*sync*/)
         verifier.assertReceivedUp()
     }
 
@@ -97,7 +82,6 @@ class PointerCancelTest {
     fun testPointerCancelForSplitTouch() {
         val view = addFloatingWindow()
         val pointerInFloating = getViewCenterOnScreen(view)
-        val downTime = SystemClock.uptimeMillis()
         val pointerOutsideFloating = PointF(pointerInFloating.x + view.width / 2 + 1,
                 pointerInFloating.y + view.height / 2 + 1)
 
@@ -107,70 +91,24 @@ class PointerCancelTest {
         }
         val verifierForFloating = EventVerifier { eventsInFloating.poll(5, TimeUnit.SECONDS) }
 
+        touchInjector.sendMultiTouchEvent(arrayOf(pointerInFloating, pointerOutsideFloating), true)
+
         // First finger down (floating window)
-        sendEvent(downTime, MotionEvent.ACTION_DOWN, pointerInFloating, true /*sync*/)
         verifierForFloating.assertReceivedDown()
 
         // First finger move (floating window)
-        pointerInFloating.offset(0f, 1f)
-        sendEvent(downTime, MotionEvent.ACTION_MOVE, pointerInFloating, true /*sync*/)
         verifierForFloating.assertReceivedMove()
 
         // Second finger down (activity window)
-        sendPointersEvent(downTime, ACTION_POINTER_1_DOWN,
-                arrayOf(pointerInFloating, pointerOutsideFloating),
-                0 /*flags*/, true /*sync*/)
         verifier.assertReceivedDown()
         verifierForFloating.assertReceivedMove()
 
         // ACTION_CANCEL with cancel flag (activity window)
-        sendPointersEvent(downTime, ACTION_POINTER_1_UP,
-                arrayOf(pointerInFloating, pointerOutsideFloating),
-                MotionEvent.FLAG_CANCELED, true /*sync*/)
         verifier.assertReceivedCancel()
         verifierForFloating.assertReceivedMove()
 
         // First finger up (floating window)
-        sendEvent(downTime, MotionEvent.ACTION_UP, pointerInFloating, true /*sync*/)
         verifierForFloating.assertReceivedUp()
-    }
-
-    private fun sendEvent(downTime: Long, action: Int, pt: PointF, sync: Boolean) {
-        val eventTime = when (action) {
-            MotionEvent.ACTION_DOWN -> downTime
-            else -> SystemClock.uptimeMillis()
-        }
-        val event = MotionEvent.obtain(downTime, eventTime, action, pt.x, pt.y, 0 /*metaState*/)
-        event.source = InputDevice.SOURCE_TOUCHSCREEN
-        instrumentation.uiAutomation.injectInputEvent(event, sync)
-    }
-
-    private fun sendPointersEvent(
-        downTime: Long,
-        action: Int,
-        pointers: Array<PointF>,
-        flags: Int,
-        sync: Boolean
-    ) {
-        val eventTime = SystemClock.uptimeMillis()
-        val pointerCount = pointers.size
-        val properties = arrayOfNulls<MotionEvent.PointerProperties>(pointerCount)
-        val coords = arrayOfNulls<MotionEvent.PointerCoords>(pointerCount)
-
-        for (i in 0 until pointerCount) {
-            properties[i] = MotionEvent.PointerProperties()
-            properties[i]!!.id = i
-            properties[i]!!.toolType = MotionEvent.TOOL_TYPE_FINGER
-            coords[i] = MotionEvent.PointerCoords()
-            coords[i]!!.x = pointers[i].x
-            coords[i]!!.y = pointers[i].y
-        }
-
-        val event = MotionEvent.obtain(downTime, eventTime, action, pointerCount,
-                properties, coords, 0 /*metaState*/, 0 /*buttonState*/,
-                0f /*xPrecision*/, 0f /*yPrecision*/, 0 /*deviceId*/, 0 /*edgeFlags*/,
-                InputDevice.SOURCE_TOUCHSCREEN, flags)
-        instrumentation.uiAutomation.injectInputEvent(event, sync)
     }
 
     private fun addFloatingWindow(): View {
@@ -195,12 +133,5 @@ class PointerCancelTest {
         }
         instrumentation.uiAutomation.syncInputTransactions()
         return view
-    }
-
-    companion object {
-        const val ACTION_POINTER_1_DOWN = (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT) or
-                MotionEvent.ACTION_POINTER_DOWN
-        const val ACTION_POINTER_1_UP = (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT) or
-                MotionEvent.ACTION_POINTER_UP
     }
 }

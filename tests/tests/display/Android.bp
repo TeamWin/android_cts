@@ -40,4 +40,6 @@ android_test {
         "sts",
     ],
     sdk_version: "test_current",
+    data: [":CtsAppTestStubs"],
+    per_testcase_directory: true,
 }

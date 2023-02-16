@@ -150,8 +150,7 @@ public class AccessibilityServicesTest {
     //TODO: re-enable this test when the permission check is added to
     // set/getPermittedAccessibilityServices.
     @Ignore
-    @CannotSetPolicyTest(policy = PermittedAccessibilityServices.class,
-            includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = PermittedAccessibilityServices.class)
     @Postsubmit(reason = "new test")
     public void setPermittedAccessibilityServices_nullPackageName_throwsSecurityException() {
         assertThrows(SecurityException.class, () ->

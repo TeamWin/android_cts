@@ -79,7 +79,8 @@ public final class Flags {
      * replaced by a bulk update.
      */
     public void set(String namespace, String key, @Nullable String value) {
-        try (PermissionContext p = TestApis.permissions().withPermission(WRITE_DEVICE_CONFIG)) {
+        try (PermissionContext p = TestApis.permissions()
+                .withPermission(WRITE_DEVICE_CONFIG)) {
             DeviceConfig.setProperty(namespace, key, value, /* makeDefault= */ false);
         }
     }

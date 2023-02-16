@@ -17,6 +17,7 @@
 package android.telephony.mockmodem;
 
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_DEFAULT;
+
 import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
 
 import android.content.Context;
@@ -29,7 +30,6 @@ import android.telephony.ims.feature.ConnectionFailureInfo;
 import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.telephony.satellite.PointingInfo;
-import android.telephony.satellite.stub.SatelliteImplBase;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -1046,7 +1046,7 @@ public class MockModemManager {
      * @param slotId which slot would insert.
      * @param mode The current mode of the satellite modem.
      */
-    public boolean sendSatelliteModeChanged(int slotId, @SatelliteImplBase.Mode int mode) {
+    public boolean sendSatelliteModeChanged(int slotId, int mode) {
         Log.d(TAG, "sendSatelliteModeChanged[" + slotId
                 + "] mode(" + mode + ")");
 
@@ -1089,8 +1089,7 @@ public class MockModemManager {
      * @param slotId which slot would insert.
      * @param technology The current technology of the satellite modem.
      */
-    public boolean sendSatelliteRadioTechnologyChanged(
-            int slotId, @SatelliteImplBase.NTRadioTechnology int technology) {
+    public boolean sendSatelliteRadioTechnologyChanged(int slotId, int technology) {
         Log.d(TAG, "sendSatelliteRadioTechnologyChanged[" + slotId
                 + "] technology(" + technology + ")");
 

@@ -23,7 +23,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
 import android.app.Instrumentation;
-import android.app.UiAutomation;
 import android.os.SystemClock;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -77,21 +76,19 @@ public final class CtsMouseUtil {
     public static void emulateHoverOnView(Instrumentation instrumentation, View anchor, int offsetX,
             int offsetY) {
         final long downTime = SystemClock.uptimeMillis();
-        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
         final int[] screenPos = new int[2];
         anchor.getLocationOnScreen(screenPos);
         final int x = screenPos[0] + offsetX;
         final int y = screenPos[1] + offsetY;
-
-        injectHoverEvent(uiAutomation, downTime, x, y);
+        injectHoverEvent(instrumentation, downTime, x, y);
     }
 
-    private static void injectHoverEvent(UiAutomation uiAutomation, long downTime, int xOnScreen,
-            int yOnScreen) {
+    private static void injectHoverEvent(Instrumentation instrumentation, long downTime,
+            int xOnScreen, int yOnScreen) {
         MotionEvent event = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_HOVER_MOVE,
                 xOnScreen, yOnScreen, 0);
         event.setSource(InputDevice.SOURCE_MOUSE);
-        uiAutomation.injectInputEvent(event, true);
+        instrumentation.sendPointerSync(event);
         event.recycle();
     }
 

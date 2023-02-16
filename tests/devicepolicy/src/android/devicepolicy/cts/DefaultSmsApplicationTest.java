@@ -17,6 +17,10 @@
 package android.devicepolicy.cts;
 
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
+import static com.android.queryable.queries.ActivityQuery.activity;
+import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
@@ -26,15 +30,17 @@ import android.app.admin.RemoteDevicePolicyManager;
 import android.app.role.RoleManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.provider.Telephony;
 import android.telephony.TelephonyManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.DefaultSmsApplication;
 import com.android.bedstead.nene.TestApis;
@@ -57,9 +63,9 @@ public final class DefaultSmsApplicationTest {
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final TestApp sSmsApp = sDeviceState.testApps()
             .query()
-            .wherePackageName()
-            // TODO(b/198420874): Query for the intent filters relevant to the SMS tests
-            .isEqualTo("com.android.bedstead.testapp.SmsApp")
+            .whereActivities().contains(
+                    activity().where().intentFilters().contains(
+                            intentFilter().where().actions().contains(Intent.ACTION_SENDTO)))
             .get();
     private static final String FAKE_SMS_APP_NAME = "FakeSmsAppName";
 
@@ -79,14 +85,13 @@ public final class DefaultSmsApplicationTest {
 
     // TODO(b/198588696): Add support is @RequireSmsCapable and @RequireNotSmsCapable
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = DefaultSmsApplication.class)
+    @CanSetPolicyTest(policy = DefaultSmsApplication.class)
     public void setDefaultSmsApplication_works() {
         assumeTrue(mTelephonyManager.isSmsCapable()
                 || (mRoleManager != null && mRoleManager.isRoleAvailable(RoleManager.ROLE_SMS)));
         String previousSmsAppName = getDefaultSmsPackage();
         try (TestAppInstance smsApp = sSmsApp.install()) {
             mDpm.setDefaultSmsApplication(mAdmin, smsApp.packageName());
-
             assertThat(getDefaultSmsPackage()).isEqualTo(smsApp.packageName());
         } finally {
             mDpm.setDefaultSmsApplication(mAdmin, previousSmsAppName);
@@ -96,16 +101,19 @@ public final class DefaultSmsApplicationTest {
     // TODO(b/198588696): Add support is @RequireSmsCapable and @RequireNotSmsCapable
     @Postsubmit(reason = "new test")
     @PolicyDoesNotApplyTest(policy = DefaultSmsApplication.class)
+    @EnsureHasPermission(INTERACT_ACROSS_USERS)
     public void setDefaultSmsApplication_unchanged() {
         assumeTrue(mTelephonyManager.isSmsCapable()
                 || (mRoleManager != null && mRoleManager.isRoleAvailable(RoleManager.ROLE_SMS)));
-        String previousSmsAppName = getDefaultSmsPackage();
-        try (TestAppInstance smsApp = sSmsApp.install()) {
+        String previousSmsAppInTest = getDefaultSmsPackage();
+        String previousSmsAppInDpc = getDefaultSmsPackageInDpc();
+        try (TestAppInstance smsApp = sSmsApp.install(sDeviceState.dpc().user())) {
             mDpm.setDefaultSmsApplication(mAdmin, smsApp.packageName());
 
-            assertThat(getDefaultSmsPackage()).isEqualTo(previousSmsAppName);
+            assertThat(Telephony.Sms.getDefaultSmsPackage(sContext))
+                    .isEqualTo(previousSmsAppInTest);
         } finally {
-            mDpm.setDefaultSmsApplication(mAdmin, previousSmsAppName);
+            mDpm.setDefaultSmsApplication(mAdmin, previousSmsAppInDpc);
         }
     }
 
@@ -146,7 +154,6 @@ public final class DefaultSmsApplicationTest {
         String previousSmsAppName = getDefaultSmsPackage();
         try (TestAppInstance smsApp = sSmsApp.install()) {
             mDpm.setDefaultSmsApplication(mAdmin, smsApp.packageName());
-
             assertThat(getDefaultSmsPackage()).isEqualTo(previousSmsAppName);
         } finally {
             mDpm.setDefaultSmsApplication(mAdmin, previousSmsAppName);
@@ -166,5 +173,18 @@ public final class DefaultSmsApplicationTest {
 
     private String getDefaultSmsPackage() {
         return Telephony.Sms.getDefaultSmsPackage(sContext);
+    }
+
+    private String getDefaultSmsPackageInDpc() {
+        // TODO(268461966): Make the call via the dpc
+        try {
+            return Telephony.Sms.getDefaultSmsPackage(
+                    sContext.createPackageContextAsUser(
+                            sDeviceState.dpc().packageName(),
+                            /* flags= */ 0,
+                            sDeviceState.dpc().user().userHandle()));
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

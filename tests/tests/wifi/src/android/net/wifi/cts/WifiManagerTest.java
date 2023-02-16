@@ -215,6 +215,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private static final String TEST_DOM_SUBJECT_MATCH = "domSubjectMatch";
     private static final int TEST_SUB_ID = 2;
     private static final int EID_VSA = 221; // Copied from ScanResult.InformationElement
+
+    private static final int TEST_LINK_LAYER_STATS_POLLING_INTERVAL_MS = 1000;
     private static final List<ScanResult.InformationElement> TEST_VENDOR_ELEMENTS =
             new ArrayList<>(Arrays.asList(
                     new ScanResult.InformationElement(221, 0, new byte[]{ 1, 2, 3, 4 }),
@@ -6369,6 +6371,69 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             // Expected if the feature is disabled by the feature flag.
         } catch (Exception e) {
             fail("addAndRemoveQosPolicy unexpected Exception " + e);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Verifies when the link layer stats polling interval is overridden by
+     * {@link WifiManager#setLinkLayerStatsPollingInterval(int)},
+     * the new interval is set correctly by checking
+     * {@link WifiManager#getLinkLayerStatsPollingInterval(Executor, Consumer)}
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testSetAndGetLinkLayerStatsPollingInterval() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        AtomicInteger currentInterval = new AtomicInteger(-1);
+        Consumer<Integer> listener = new Consumer<Integer>() {
+            @Override
+            public void accept(Integer value) {
+                synchronized (mLock) {
+                    currentInterval.set(value);
+                    mLock.notify();
+                }
+            }
+        };
+
+        // SecurityException
+        assertThrows(SecurityException.class,
+                () -> mWifiManager.setLinkLayerStatsPollingInterval(
+                        TEST_LINK_LAYER_STATS_POLLING_INTERVAL_MS));
+        assertThrows(SecurityException.class,
+                () -> mWifiManager.getLinkLayerStatsPollingInterval(mExecutor, listener));
+        // null executor
+        assertThrows("null executor should trigger exception", NullPointerException.class,
+                () -> mWifiManager.getLinkLayerStatsPollingInterval(null, listener));
+        // null listener
+        assertThrows("null listener should trigger exception", NullPointerException.class,
+                () -> mWifiManager.getLinkLayerStatsPollingInterval(mExecutor, null));
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            assertThrows(IllegalArgumentException.class,
+                    () -> mWifiManager.setLinkLayerStatsPollingInterval(
+                            -TEST_LINK_LAYER_STATS_POLLING_INTERVAL_MS));
+            mWifiManager.setLinkLayerStatsPollingInterval(
+                    TEST_LINK_LAYER_STATS_POLLING_INTERVAL_MS);
+            mWifiManager.getLinkLayerStatsPollingInterval(mExecutor, listener);
+            synchronized (mLock) {
+                mLock.wait(TEST_WAIT_DURATION_MS);
+            }
+            assertEquals(TEST_LINK_LAYER_STATS_POLLING_INTERVAL_MS, currentInterval.get());
+            // set the interval to automatic handling after the test
+            mWifiManager.setLinkLayerStatsPollingInterval(0);
+        } catch (UnsupportedOperationException ex) {
+            // Expected if the device does not support this API
+        } catch (Exception e) {
+            fail("setLinkLayerStatsPollingInterval / getLinkLayerStatsPollingInterval "
+                    + "unexpected Exception " + e);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }

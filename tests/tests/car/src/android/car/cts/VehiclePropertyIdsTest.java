@@ -53,13 +53,32 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
         assertThat(VehiclePropertyIds.toString(
                 VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_ENABLED))
                 .isEqualTo("EMERGENCY_LANE_KEEP_ASSIST_ENABLED");
-        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_ENABLED))
-                .isEqualTo("ADAPTIVE_CRUISE_CONTROL_ENABLED");
+        assertThat(VehiclePropertyIds.toString(
+                VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_STATE))
+                .isEqualTo("EMERGENCY_LANE_KEEP_ASSIST_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.CRUISE_CONTROL_ENABLED))
+                .isEqualTo("CRUISE_CONTROL_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.CRUISE_CONTROL_TYPE))
+                .isEqualTo("CRUISE_CONTROL_TYPE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.CRUISE_CONTROL_STATE))
+                .isEqualTo("CRUISE_CONTROL_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.CRUISE_CONTROL_COMMAND))
+                .isEqualTo("CRUISE_CONTROL_COMMAND");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED))
                 .isEqualTo("HANDS_ON_DETECTION_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HANDS_ON_DETECTION_DRIVER_STATE))
+                .isEqualTo("HANDS_ON_DETECTION_DRIVER_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HANDS_ON_DETECTION_WARNING))
+                .isEqualTo("HANDS_ON_DETECTION_WARNING");
         assertThat(
                 VehiclePropertyIds.toString(VehiclePropertyIds.DRIVER_ATTENTION_MONITORING_ENABLED))
                 .isEqualTo("DRIVER_ATTENTION_MONITORING_ENABLED");
+        assertThat(
+                VehiclePropertyIds.toString(VehiclePropertyIds.DRIVER_ATTENTION_MONITORING_STATE))
+                .isEqualTo("DRIVER_ATTENTION_MONITORING_STATE");
+        assertThat(
+                VehiclePropertyIds.toString(VehiclePropertyIds.DRIVER_ATTENTION_MONITORING_WARNING))
+                .isEqualTo("DRIVER_ATTENTION_MONITORING_WARNING");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.IGNITION_STATE))
                 .isEqualTo("IGNITION_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.INFO_DRIVER_SEAT))

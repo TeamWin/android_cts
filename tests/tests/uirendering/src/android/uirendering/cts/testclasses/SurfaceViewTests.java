@@ -533,7 +533,7 @@ public class SurfaceViewTests extends ActivityTestBase {
                 Handler handler = new Handler(Looper.getMainLooper());
                 renderer.obtainRenderRequest().draw(Executors.newSingleThreadExecutor(), result -> {
                     handler.post(() -> {
-                        transaction.setBuffer(blueLayer, buffer);
+                        transaction.setBuffer(blueLayer, buffer, result.getFence());
                         helper.getSurfaceView().applyTransactionToFrame(transaction);
                         latch.countDown();
                     });

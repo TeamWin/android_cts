@@ -897,9 +897,10 @@ public class TelephonyManagerTestOnMockModem {
      */
     @Test
     public void testGetPrimaryImei() {
+        assumeTrue(sTelephonyManager.getActiveModemCount() > 0);
         String primaryImei = ShellIdentityUtils.invokeMethodWithShellPermissions(sTelephonyManager,
                 (tm) -> tm.getPrimaryImei());
         assertNotNull(primaryImei);
-        assertEquals(MockModemConfigInterface.DEFAULT_PHONE2_IMEI, primaryImei);
+        assertEquals(MockModemConfigInterface.DEFAULT_PHONE1_IMEI, primaryImei);
     }
 }

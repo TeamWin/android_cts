@@ -247,8 +247,22 @@ fun openUnusedAppsNotification() {
         // In wear os, notification has one additional button to open it
         waitFindObject(uiAutomation, By.text("Open")).click()
     } else {
-        runShellCommandOrThrow(CMD_EXPAND_NOTIFICATIONS)
-        waitFindNotification(notifSelector, NOTIF_FIND_TIMEOUT).click()
+        val permissionPkg: String = InstrumentationRegistry.getTargetContext()
+            .packageManager.permissionControllerPackageName
+        eventually({
+            // Eventually clause because clicking is sometimes inconsistent if the screen is
+            // scrolling
+            runShellCommandOrThrow(CMD_EXPAND_NOTIFICATIONS)
+            waitFindNotification(notifSelector, NOTIF_FIND_TIMEOUT).click()
+            wrappingExceptions({ cause: Throwable? -> UiDumpUtils.wrapWithUiDump(cause) }) {
+                assertTrue(
+                    "Unused apps page did not open after tapping notification.",
+                    UiAutomatorUtils.getUiDevice().wait(
+                        Until.hasObject(By.pkg(permissionPkg).depth(0)), VIEW_WAIT_TIMEOUT
+                    )
+                )
+            }
+        }, NOTIF_FIND_TIMEOUT)
     }
 }
 

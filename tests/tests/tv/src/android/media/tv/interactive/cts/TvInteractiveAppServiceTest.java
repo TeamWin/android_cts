@@ -515,6 +515,7 @@ public class TvInteractiveAppServiceTest {
         assertNotNull(mSession);
         mSession.resetValues();
         final float[] testSpeeds = new float[] {1.0f, 0.0f, 1.5f};
+        mTvIAppView.sendAvailableSpeeds(testSpeeds);
         PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mAvailableSpeedsCount > 0);
         assertThat(mSession.mAvailableSpeedsCount).isEqualTo(1);
         assertThat(mSession.mAvailableSpeeds).isEqualTo(testSpeeds);
@@ -525,11 +526,19 @@ public class TvInteractiveAppServiceTest {
         assertNotNull(mSession);
         mSession.resetValues();
         final PlaybackParams testParams = new PlaybackParams().setSpeed(2.0f)
-                .setAudioFallbackMode(PlaybackParams.AUDIO_FALLBACK_MODE_DEFAULT);
+                .setAudioFallbackMode(PlaybackParams.AUDIO_FALLBACK_MODE_DEFAULT)
+                .setPitch(0.5f)
+                .setAudioStretchMode(PlaybackParams.AUDIO_STRETCH_MODE_VOICE);
         mTvIAppView.notifyTimeShiftPlaybackParams(testParams);
         PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mPlaybackParamCount > 0);
         assertThat(mSession.mPlaybackParamCount).isEqualTo(1);
-        assertThat(mSession.mPlaybackParams).isEqualTo(testParams);
+        assertThat(mSession.mPlaybackParams.getSpeed()).isEqualTo(testParams.getSpeed());
+        assertThat(mSession.mPlaybackParams.getAudioFallbackMode())
+                .isEqualTo(testParams.getAudioFallbackMode());
+        assertThat(mSession.mPlaybackParams.getPitch())
+                .isEqualTo(testParams.getPitch());
+        assertThat(mSession.mPlaybackParams.getAudioStretchMode())
+                .isEqualTo(testParams.getAudioStretchMode());
     }
 
     @Test
@@ -579,7 +588,7 @@ public class TvInteractiveAppServiceTest {
         PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mTvMessageCount > 0);
         assertThat(mSession.mTvMessageCount).isEqualTo(1);
         assertThat(mSession.mTvMessageType).isEqualTo(TvInputManager.TV_MESSAGE_TYPE_WATERMARK);
-        assertThat(mSession.mTvMessageData).isEqualTo(testBundle);
+        assertBundlesAreEqual(mSession.mTvMessageData, testBundle);
     }
 
     @Test

@@ -197,7 +197,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
     /**
      * <p>
-     * Test basic video stabilitzation camera recording.
+     * Test basic video stabilization camera recording.
      * </p>
      * <p>
      * This test covers the typical basic use case of camera recording with video

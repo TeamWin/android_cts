@@ -320,7 +320,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
                     reprocessResult = submitCaptureRequest(
                             getReprocessOutputImageReader().getSurface(), result);
                     fail("Camera " + id + ": should get IllegalArgumentException for cross " +
-                            "session reprocess captrue.");
+                            "session reprocess capture.");
                 } catch (IllegalArgumentException e) {
                     // expected
                     if (DEBUG) {

@@ -30,6 +30,7 @@ import com.android.os.StatsLog;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -52,7 +53,7 @@ public class StatsdNotificationAtomTest extends DeviceTestCase implements IBuild
         assertThat(mCtsBuild).isNotNull();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
     @Override
@@ -79,7 +80,7 @@ public class StatsdNotificationAtomTest extends DeviceTestCase implements IBuild
 
         DeviceUtils.runActivity(getDevice(), NOTIFICATION_TEST_PKG,
                 TEST_NOTIFICATION_ACTIVITY, ACTION_KEY, ACTION_VALUE);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Sorted list of events in order in which they occurred.
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());

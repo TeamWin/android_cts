@@ -762,9 +762,6 @@ public class CameraTestUtils extends Assert {
                             image = mLastReader.acquireLatestImage();
                             if (VERBOSE) Log.v(TAG, "acquireLatestImage from "
                                     + mLastReader.toString() + " produces " + image);
-                            if (image == null) {
-                                return null;
-                            }
                         } else {
                             fail("invalid image reader");
                         }
@@ -773,7 +770,7 @@ public class CameraTestUtils extends Assert {
                 } else {
                     fail("wait for image available time out after " + timeoutMs + "ms");
                 }
-                return new ImageAndMultiResStreamInfo(image,
+                return image == null ? null : new ImageAndMultiResStreamInfo(image,
                         mOwner.getStreamInfoForImageReader(mLastReader));
             } else {
                 ImageAndMultiResStreamInfo imageAndInfo = mQueue.poll(timeoutMs,

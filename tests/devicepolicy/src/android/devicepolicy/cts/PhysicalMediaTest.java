@@ -47,7 +47,7 @@ public final class PhysicalMediaTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    @CannotSetPolicyTest(policy = DisallowMountPhysicalMedia.class)
+    @CannotSetPolicyTest(policy = DisallowMountPhysicalMedia.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_MOUNT_PHYSICAL_MEDIA")
     public void setUserRestriction_disallowMountPhysicalMedia_cannotSet_throwsException() {

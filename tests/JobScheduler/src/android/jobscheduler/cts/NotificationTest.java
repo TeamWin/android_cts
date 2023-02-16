@@ -16,7 +16,11 @@
 
 package android.jobscheduler.cts;
 
+import static android.jobscheduler.cts.TestAppInterface.TEST_APP_PACKAGE;
+
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
+
+import static org.junit.Assert.assertTrue;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -24,7 +28,15 @@ import android.app.NotificationManager;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.app.job.JobService;
+import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.service.notification.StatusBarNotification;
+
+import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.AnrMonitor;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Tests related to attaching notifications to jobs via
@@ -32,6 +44,7 @@ import android.service.notification.StatusBarNotification;
  */
 public class NotificationTest extends BaseJobSchedulerTest {
     private static final int JOB_ID = NotificationTest.class.hashCode();
+    private static final long DEFAULT_WAIT_TIMEOUT_MS = 2_000;
     private static final String NOTIFICATION_CHANNEL_ID =
             NotificationTest.class.getSimpleName() + "_channel";
 
@@ -127,5 +140,87 @@ public class NotificationTest extends BaseJobSchedulerTest {
                     // Notification should be gone
                     return mNotificationManager.getActiveNotifications().length == 0;
                 });
+    }
+
+    /**
+     * Test that an ANR happens if the app is required to show a notification
+     * but doesn't provide one.
+     */
+    public void testNotification_userInitiated_anrWhenNotProvided() throws Exception {
+        try (TestAppInterface testAppInterface = new TestAppInterface(mContext, JOB_ID);
+             AnrMonitor monitor = AnrMonitor.start(InstrumentationRegistry.getInstrumentation(),
+                     TEST_APP_PACKAGE);
+             TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(mContext, TEST_APP_PACKAGE)) {
+
+            testAppInterface.postUiInitiatingNotification(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true,
+                            TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION, false
+                    ),
+                    Collections.emptyMap());
+
+            // Clicking on the notification should put the app into a BAL approved state.
+            notificationHelper.clickNotification();
+
+            assertTrue("Job did not start after scheduling",
+                    testAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
+
+            // Confirm ANR
+            monitor.waitForAnrAndReturnUptime(30_000);
+        }
+    }
+
+    /**
+     * Test that no ANR happens if the app is required to show a notification and it provides one.
+     */
+    public void testNotification_userInitiated_noAnrWhenProvided() throws Exception {
+        try (TestAppInterface testAppInterface = new TestAppInterface(mContext, JOB_ID);
+             AnrMonitor monitor = AnrMonitor.start(InstrumentationRegistry.getInstrumentation(),
+                     TEST_APP_PACKAGE);
+             TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(mContext, TEST_APP_PACKAGE)) {
+
+            testAppInterface.postUiInitiatingNotification(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true,
+                            TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION, true
+                    ),
+                    Collections.emptyMap());
+
+            // Clicking on the notification should put the app into a BAL approved state.
+            notificationHelper.clickNotification();
+
+            assertTrue("Job did not start after scheduling",
+                    testAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
+
+            // Confirm no ANR
+            monitor.assertNoAnr(30_000);
+        }
+    }
+
+    /**
+     * Test that no ANR happens if the app is not required to show a notification
+     * and it doesn't provide one.
+     */
+    public void testNotification_regular_noAnrWhenNotProvided() throws Exception {
+        try (TestAppInterface testAppInterface = new TestAppInterface(mContext, JOB_ID);
+             AnrMonitor monitor = AnrMonitor.start(InstrumentationRegistry.getInstrumentation(),
+                     TEST_APP_PACKAGE);
+             TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(mContext, TEST_APP_PACKAGE)) {
+
+            testAppInterface.postUiInitiatingNotification(
+                    Map.of(TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION, false),
+                    Collections.emptyMap());
+
+            notificationHelper.clickNotification();
+
+            assertTrue("Job did not start after scheduling",
+                    testAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
+
+            // Confirm no ANR
+            monitor.assertNoAnr(30_000);
+        }
     }
 }

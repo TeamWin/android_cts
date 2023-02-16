@@ -1018,6 +1018,72 @@ public class RoleManagerTest {
                 sRoleManager.isBypassingRoleQualification())).isFalse();
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @Test
+    public void cannotGetDefaultApplicationWithoutPermission() throws Exception {
+        assertThrows(SecurityException.class, ()->
+                sRoleManager.getDefaultApplication(
+                        RoleManager.ROLE_SMS));
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @Test
+    public void getDefaultApplicationChecksRoles() throws Exception {
+        runWithShellPermissionIdentity(() ->
+                assertThrows(IllegalArgumentException.class, () ->
+                        sRoleManager.getDefaultApplication(
+                                RoleManager.ROLE_SYSTEM_ACTIVITY_RECOGNIZER)));
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @Test
+    public void getDefaultApplicationReadsRole() throws Exception {
+        assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_SMS));
+
+        addRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
+        runWithShellPermissionIdentity(() -> {
+            assertThat(sRoleManager.getDefaultApplication(RoleManager.ROLE_SMS))
+                    .isEqualTo(APP_PACKAGE_NAME);
+        });
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @Test
+    public void cannotSetDefaultApplicationWithoutPermission() throws Exception {
+        CallbackFuture future = new CallbackFuture();
+        assertThrows(SecurityException.class, ()->
+                sRoleManager.setDefaultApplication(
+                        RoleManager.ROLE_SMS, APP_PACKAGE_NAME, 0,
+                        sContext.getMainExecutor(), future));
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @Test
+    public void setDefaultApplicationChecksRoles() throws Exception {
+        CallbackFuture future = new CallbackFuture();
+        runWithShellPermissionIdentity(() ->
+                assertThrows(IllegalArgumentException.class, () ->
+                          sRoleManager.setDefaultApplication(
+                                RoleManager.ROLE_SYSTEM_ACTIVITY_RECOGNIZER, APP_PACKAGE_NAME, 0,
+                                sContext.getMainExecutor(), future)));
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @Test
+    public void setDefaultApplicationSetsRole() throws Exception {
+        assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_SMS));
+
+        CallbackFuture future = new CallbackFuture();
+        runWithShellPermissionIdentity(() -> {
+            sRoleManager.setDefaultApplication(
+                    RoleManager.ROLE_SMS, APP_PACKAGE_NAME, 0,
+                    sContext.getMainExecutor(), future);
+            assertThat(future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(sRoleManager.getRoleHolders(RoleManager.ROLE_SMS))
+                    .containsExactly(APP_PACKAGE_NAME);
+        });
+    }
+
     @NonNull
     private List<String> getRoleHolders(@NonNull String roleName) throws Exception {
         return callWithShellPermissionIdentity(() -> sRoleManager.getRoleHolders(roleName));

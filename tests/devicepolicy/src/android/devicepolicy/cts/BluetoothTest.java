@@ -255,7 +255,7 @@ public final class BluetoothTest {
         }
     }
 
-    @CannotSetPolicyTest(policy = DisallowBluetoothSharing.class)
+    @CannotSetPolicyTest(policy = DisallowBluetoothSharing.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_BLUETOOTH_SHARING")
     public void setUserRestriction_disallowBluetoothSharing_cannotSet_throwsException() {
@@ -339,7 +339,7 @@ public final class BluetoothTest {
         assertThat(resolveInfosContainsActivity(resolveInfos, OPP_LAUNCHER_COMPONENT)).isFalse();
     }
 
-    @CannotSetPolicyTest(policy = DisallowBluetooth.class)
+    @CannotSetPolicyTest(policy = DisallowBluetooth.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_BLUETOOTH")
     public void setUserRestriction_disallowBluetooth_cannotSet_throwsException() {
@@ -375,7 +375,7 @@ public final class BluetoothTest {
                         && r.activityInfo.getComponentName().equals(activity));
     }
 
-    @CannotSetPolicyTest(policy = DisallowConfigBluetooth.class)
+    @CannotSetPolicyTest(policy = DisallowConfigBluetooth.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_BLUETOOTH")
     public void setUserRestriction_disallowConfigBluetooth_cannotSet_throwsException() {

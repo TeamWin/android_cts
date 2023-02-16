@@ -25,9 +25,19 @@ import static android.app.admin.DevicePolicyIdentifiers.PERMISSION_GRANT_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.PERSISTENT_PREFERRED_ACTIVITY_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.RESET_PASSWORD_TOKEN_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.USER_CONTROL_DISABLED_PACKAGES_POLICY;
+import static android.app.admin.DevicePolicyIdentifiers.getIdentifierForUserRestriction;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_DENIED;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;
+import static android.app.admin.PolicyUpdateReceiver.ACTION_DEVICE_POLICY_SET_RESULT;
+import static android.app.admin.PolicyUpdateReceiver.EXTRA_POLICY_BUNDLE_KEY;
+import static android.app.admin.PolicyUpdateReceiver.EXTRA_POLICY_KEY;
+import static android.app.admin.PolicyUpdateReceiver.EXTRA_POLICY_TARGET_USER_ID;
+import static android.app.admin.PolicyUpdateReceiver.EXTRA_POLICY_UPDATE_RESULT_KEY;
+import static android.app.admin.TargetUser.GLOBAL_USER_ID;
+import static android.app.admin.TargetUser.LOCAL_USER_ID;
+import static android.os.UserManager.DISALLOW_MODIFY_ACCOUNTS;
+import static android.os.UserManager.DISALLOW_WIFI_DIRECT;
 import static android.provider.DeviceConfig.NAMESPACE_DEVICE_POLICY_MANAGER;
 
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
@@ -48,9 +58,12 @@ import android.app.admin.PackagePermissionPolicyKey;
 import android.app.admin.PackagePolicyKey;
 import android.app.admin.PolicyKey;
 import android.app.admin.PolicyState;
+import android.app.admin.PolicyUpdateReceiver;
+import android.app.admin.PolicyUpdateResult;
 import android.app.admin.RoleAuthority;
 import android.app.admin.StringSetUnion;
 import android.app.admin.TopPriority;
+import android.app.admin.UserRestrictionPolicyKey;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -62,6 +75,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
+import com.android.bedstead.harrier.annotations.LocalPresubmit;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
@@ -75,11 +89,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
+@LocalPresubmit
 public final class DeviceManagementCoexistenceTests {
     @ClassRule
     @Rule
@@ -95,6 +111,10 @@ public final class DeviceManagementCoexistenceTests {
             "android.app.role.SYSTEM_FINANCED_DEVICE_CONTROLLER";
 
     private static final List<Boolean> TRUE_MORE_RESTRICTIVE = List.of(true, false);
+
+    private static final String LOCAL_USER_RESTRICTION = DISALLOW_MODIFY_ACCOUNTS;
+
+    private static final String GLOBAL_USER_RESTRICTION = DISALLOW_WIFI_DIRECT;
 
     private static final TestApp sTestApp = sDeviceState.testApps().query().get();
 
@@ -321,7 +341,6 @@ public final class DeviceManagementCoexistenceTests {
     @EnsureHasDevicePolicyManagerRoleHolder
     @EnsureHasDeviceOwner
     @Postsubmit(reason = "new test")
-    @Ignore("Disable until we fix the managed profile issue")
     public void getDevicePolicyState_resetPasswordTokenSet_returnsPolicy() {
         try {
             sDeviceState.dpc().devicePolicyManager().setResetPasswordToken(
@@ -342,6 +361,62 @@ public final class DeviceManagementCoexistenceTests {
             assertThat(token).isNotEqualTo(0);
         } finally {
             sDeviceState.dpc().devicePolicyManager().clearResetPasswordToken(DPC_COMPONENT_NAME);
+        }
+    }
+
+    @Test
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void getDevicePolicyState_addUserRestriction_returnsPolicy() {
+        boolean hasRestrictionOriginally = sDeviceState.dpc()
+                .userManager().hasUserRestriction(LOCAL_USER_RESTRICTION);
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), LOCAL_USER_RESTRICTION);
+
+            PolicyState<Boolean> policyState = getBooleanPolicyState(
+                    new UserRestrictionPolicyKey(
+                            getIdentifierForUserRestriction(LOCAL_USER_RESTRICTION),
+                            LOCAL_USER_RESTRICTION),
+                    sDeviceState.dpc().user().userHandle());
+
+            assertThat(policyState.getCurrentResolvedPolicy()).isTrue();
+        } finally {
+            if (!hasRestrictionOriginally) {
+                sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                        sDeviceState.dpc().componentName(), LOCAL_USER_RESTRICTION);
+            }
+        }
+    }
+
+    @Test
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void getDevicePolicyState_addUserRestrictionGlobally_returnsPolicy() {
+        boolean hasRestrictionOriginally = sDeviceState.dpc()
+                .userManager().hasUserRestriction(GLOBAL_USER_RESTRICTION);
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
+                    GLOBAL_USER_RESTRICTION);
+
+            PolicyState<Boolean> policyState = getBooleanPolicyState(
+                    new UserRestrictionPolicyKey(
+                            getIdentifierForUserRestriction(GLOBAL_USER_RESTRICTION),
+                            GLOBAL_USER_RESTRICTION),
+                    UserHandle.ALL);
+
+            assertThat(policyState.getCurrentResolvedPolicy()).isTrue();
+        } finally {
+            if (!hasRestrictionOriginally) {
+                sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                        sDeviceState.dpc().componentName(), GLOBAL_USER_RESTRICTION);
+            }
         }
     }
 
@@ -481,8 +556,7 @@ public final class DeviceManagementCoexistenceTests {
                     sDeviceState.dpc().user().userHandle());
 
             assertThat(getMostRestrictiveBooleanMechanism(policyState)
-                    .getMostToLeastRestrictiveValues())
-                    .isEqualTo(TRUE_MORE_RESTRICTIVE);
+                    .getMostToLeastRestrictiveValues()).isEqualTo(TRUE_MORE_RESTRICTIVE);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUninstallBlocked(
                     sDeviceState.dpc().componentName(),
@@ -520,6 +594,251 @@ public final class DeviceManagementCoexistenceTests {
             sDeviceState.dpc().devicePolicyManager().clearPackagePersistentPreferredActivities(
                     sDeviceState.dpc().componentName(),
                     sDeviceState.dpc().packageName());
+        }
+    }
+
+    @Test
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void getDevicePolicyState_addUserRestriction_returnsCorrectResolutionMechanism() {
+        boolean hasRestrictionOriginally = sDeviceState.dpc()
+                .userManager().hasUserRestriction(LOCAL_USER_RESTRICTION);
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), LOCAL_USER_RESTRICTION);
+
+            PolicyState<Boolean> policyState = getBooleanPolicyState(
+                    new UserRestrictionPolicyKey(
+                            getIdentifierForUserRestriction(LOCAL_USER_RESTRICTION),
+                            LOCAL_USER_RESTRICTION),
+                    sDeviceState.dpc().user().userHandle());
+
+            assertThat(getMostRestrictiveBooleanMechanism(policyState)
+                    .getMostToLeastRestrictiveValues()).isEqualTo(TRUE_MORE_RESTRICTIVE);
+        } finally {
+            if (!hasRestrictionOriginally) {
+                sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                        sDeviceState.dpc().componentName(), LOCAL_USER_RESTRICTION);
+            }
+        }
+    }
+
+    @Test
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void policyUpdateReceiver_autoTimezoneSet_receivedPolicySetBroadcast() {
+        boolean originalValue = sDeviceState.dpc().devicePolicyManager()
+                .getAutoTimeZoneEnabled(sDeviceState.dpc().componentName());
+        try {
+            sDeviceState.dpc().devicePolicyManager().setAutoTimeZoneEnabled(
+                    sDeviceState.dpc().componentName(), true);
+
+            assertPolicySetResultReceived(AUTO_TIMEZONE_POLICY, PolicyUpdateResult.RESULT_SUCCESS,
+                    GLOBAL_USER_ID, new Bundle());
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setAutoTimeZoneEnabled(
+                    sDeviceState.dpc().componentName(), originalValue);
+        }
+    }
+
+    @Test
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    @Ignore("figure out why it's failing")
+    public void policyUpdateReceiver_permissionGrantStateSet_receivedPolicySetBroadcast() {
+        Bundle bundle = new Bundle();
+        bundle.putString(PolicyUpdateReceiver.EXTRA_PACKAGE_NAME, sTestApp.packageName());
+        bundle.putString(PolicyUpdateReceiver.EXTRA_PERMISSION_NAME, GRANTABLE_PERMISSION);
+        int existingGrantState = sDeviceState.dpc().devicePolicyManager()
+                .getPermissionGrantState(sDeviceState.dpc().componentName(),
+                        sTestApp.packageName(), GRANTABLE_PERMISSION);
+        try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setPermissionGrantState(
+                            sDeviceState.dpc().componentName(), sTestApp.packageName(),
+                            GRANTABLE_PERMISSION, PERMISSION_GRANT_STATE_GRANTED);
+
+            assertPolicySetResultReceived(
+                    PERMISSION_GRANT_POLICY, PolicyUpdateResult.RESULT_SUCCESS, LOCAL_USER_ID,
+                    bundle);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
+                    sDeviceState.dpc().componentName(), sTestApp.packageName(),
+                    GRANTABLE_PERMISSION, existingGrantState);
+        }
+    }
+
+    @Test
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void policyUpdateReceiver_lockTaskPolicySet_receivedPolicySetBroadcast() {
+        String[] originalLockTaskPackages = sDeviceState.dpc().devicePolicyManager()
+                .getLockTaskPackages(DPC_COMPONENT_NAME);
+        try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{PACKAGE_NAME});
+
+            assertPolicySetResultReceived(
+                    LOCK_TASK_POLICY, PolicyUpdateResult.RESULT_SUCCESS, LOCAL_USER_ID,
+                    new Bundle());
+        } finally {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void policyUpdateReceiver_userControlDisabledPackagesSet_receivedPolicySetBroadcast() {
+        List<String> originalDisabledPackages =
+                sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
+                        DPC_COMPONENT_NAME);
+        try {
+            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+                    DPC_COMPONENT_NAME,
+                    Arrays.asList(sTestApp.packageName()));
+
+            assertPolicySetResultReceived(
+                    USER_CONTROL_DISABLED_PACKAGES_POLICY,
+                    PolicyUpdateResult.RESULT_SUCCESS, GLOBAL_USER_ID, new Bundle());
+
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+                    DPC_COMPONENT_NAME,
+                    originalDisabledPackages);
+        }
+    }
+
+    @Test
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void policyUpdateReceiver_uninstallBlockedSet_receivedPolicySetBroadcast() {
+        Bundle bundle = new Bundle();
+        bundle.putString(PolicyUpdateReceiver.EXTRA_PACKAGE_NAME, sTestApp.packageName());
+        try {
+            sDeviceState.dpc().devicePolicyManager().setUninstallBlocked(
+                    sDeviceState.dpc().componentName(),
+                    sTestApp.packageName(), /* uninstallBlocked= */ true);
+
+            assertPolicySetResultReceived(
+                    PACKAGE_UNINSTALL_BLOCKED_POLICY,
+                    PolicyUpdateResult.RESULT_SUCCESS, LOCAL_USER_ID, bundle);
+
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setUninstallBlocked(
+                    sDeviceState.dpc().componentName(),
+                    sTestApp.packageName(), /* uninstallBlocked= */ false);
+        }
+    }
+
+    @Test
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    @Ignore("figure out why it's failing")
+    public void policyUpdateReceiver_persistentPreferredActivitySet_receivedPolicySetBroadcast() {
+        IntentFilter intentFilter = new IntentFilter(Intent.ACTION_MAIN);
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(PolicyUpdateReceiver.EXTRA_INTENT_FILTER, intentFilter);
+        try {
+            sDeviceState.dpc().devicePolicyManager().addPersistentPreferredActivity(
+                    sDeviceState.dpc().componentName(),
+                    intentFilter,
+                    sDeviceState.dpc().componentName());
+
+            assertPolicySetResultReceived(
+                    PERSISTENT_PREFERRED_ACTIVITY_POLICY,
+                    PolicyUpdateResult.RESULT_SUCCESS, LOCAL_USER_ID, bundle);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().clearPackagePersistentPreferredActivities(
+                    sDeviceState.dpc().componentName(),
+                    sDeviceState.dpc().packageName());
+        }
+    }
+
+    @Test
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void policyUpdateReceiver_addUserRestriction_receivedPolicySetBroadcast() {
+        boolean hasRestrictionOriginally = sDeviceState.dpc()
+                .userManager().hasUserRestriction(LOCAL_USER_RESTRICTION);
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), LOCAL_USER_RESTRICTION);
+
+            assertPolicySetResultReceived(
+                    getIdentifierForUserRestriction(LOCAL_USER_RESTRICTION),
+                    PolicyUpdateResult.RESULT_SUCCESS, LOCAL_USER_ID, new Bundle());
+        } finally {
+            if (!hasRestrictionOriginally) {
+                sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                        sDeviceState.dpc().componentName(), LOCAL_USER_RESTRICTION);
+            }
+        }
+    }
+
+    @Test
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void policyUpdateReceiver_addUserRestrictionGlobally_receivedPolicySetBroadcast() {
+        boolean hasRestrictionOriginally = sDeviceState.dpc()
+                .userManager().hasUserRestriction(GLOBAL_USER_RESTRICTION);
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
+                    GLOBAL_USER_RESTRICTION);
+
+            assertPolicySetResultReceived(
+                    getIdentifierForUserRestriction(GLOBAL_USER_RESTRICTION),
+                    PolicyUpdateResult.RESULT_SUCCESS, GLOBAL_USER_ID, new Bundle());
+        } finally {
+            if (!hasRestrictionOriginally) {
+                sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                        sDeviceState.dpc().componentName(), GLOBAL_USER_RESTRICTION);
+            }
+        }
+    }
+
+    private void assertPolicySetResultReceived(
+            String policyIdentifier, int resultKey, int targetUser, Bundle policyExtraBundle) {
+
+        final Intent receivedIntent = sDeviceState.dpc().events().broadcastReceived()
+                .whereIntent().action()
+                .isEqualTo(ACTION_DEVICE_POLICY_SET_RESULT)
+                .poll(Duration.ofMinutes(1)).intent();
+        assertThat(receivedIntent).isNotNull();
+
+        assertThat(receivedIntent.getStringExtra(EXTRA_POLICY_KEY)).isEqualTo(policyIdentifier);
+        assertThat(receivedIntent.getIntExtra(EXTRA_POLICY_UPDATE_RESULT_KEY, /* default= */ -100))
+                .isEqualTo(resultKey);
+        assertThat(receivedIntent.getIntExtra(EXTRA_POLICY_TARGET_USER_ID, /* default= */ -100))
+                .isEqualTo(targetUser);
+
+        // TODO: add checks on bundle values.
+        for (String key : policyExtraBundle.keySet()) {
+            assertThat(receivedIntent.getBundleExtra(EXTRA_POLICY_BUNDLE_KEY).containsKey(key))
+                    .isTrue();
         }
     }
 

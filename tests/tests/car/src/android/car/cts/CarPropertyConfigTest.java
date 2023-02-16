@@ -229,16 +229,25 @@ public final class CarPropertyConfigTest extends AbstractCarTestCase {
                     if (areaIdConfig.getMinValue() != null) {
                         assertThat((Integer) areaIdConfig.getMaxValue()).isAtLeast(
                                 (Integer) areaIdConfig.getMinValue());
+                        if (((Integer) areaIdConfig.getMinValue()).equals(0)) {
+                            assertThat((Integer) areaIdConfig.getMaxValue()).isNotEqualTo(0);
+                        }
                     }
                 } else if (cfg.getPropertyType().equals(Long.class)) {
                     if (areaIdConfig.getMinValue() != null) {
                         assertThat((Long) areaIdConfig.getMaxValue()).isAtLeast(
                                 (Long) areaIdConfig.getMinValue());
+                        if (((Long) areaIdConfig.getMinValue()).equals(0L)) {
+                            assertThat((Long) areaIdConfig.getMaxValue()).isNotEqualTo(0L);
+                        }
                     }
                 } else if (cfg.getPropertyType().equals(Float.class)) {
                     if (areaIdConfig.getMinValue() != null) {
                         assertThat((Float) areaIdConfig.getMaxValue()).isAtLeast(
                                 (Float) areaIdConfig.getMinValue());
+                        if (((Float) areaIdConfig.getMinValue()).equals(0F)) {
+                            assertThat((Float) areaIdConfig.getMaxValue()).isNotEqualTo(0F);
+                        }
                     }
                 } else {
                     assertThat(areaIdConfig.getMinValue()).isNull();

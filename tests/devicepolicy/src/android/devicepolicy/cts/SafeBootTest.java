@@ -50,7 +50,7 @@ public final class SafeBootTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    @CannotSetPolicyTest(policy = DisallowSafeBoot.class)
+    @CannotSetPolicyTest(policy = DisallowSafeBoot.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SAFE_BOOT")
     public void setUserRestriction_disallowSafeBoot_cannotSet_throwsException() {

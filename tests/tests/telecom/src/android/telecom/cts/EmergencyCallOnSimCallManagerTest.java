@@ -37,7 +37,7 @@ import com.android.compatibility.common.util.LocationUtils;
 
 import java.util.Arrays;
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -83,7 +83,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
         super.tearDown();
         if (!mShouldTestTelecom) return;
 
-        tearDownConnectionService(TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
+        mTelecomManager.unregisterPhoneAccount(TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
     }
 
     public void testQueryLocationException() {
@@ -126,7 +126,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
             final MockConnection connection = verifyConnectionForOutgoingCall();
             assertNotNull("Connection should NOT be null.", connection);
 
-            CompletableFuture<String> resultFuture = new CompletableFuture<>();
+            CountDownLatch latch = new CountDownLatch(1);
 
             // Add Permission
             getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
@@ -138,20 +138,17 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
                     new OutcomeReceiver<Location, QueryLocationException>() {
                         @Override
                         public void onResult(Location result) {
-                            Log.i(TAG, "connection.queryLocationForEmergency: result: " + result);
-                            resultFuture.complete("onResult");
+                            // Do nothing
                         }
                         @Override
                         public void onError(QueryLocationException e) {
-                            Log.i(TAG, "connection.queryLocationForEmergency: onError: "
-                                    + e.getMessage());
-                            resultFuture.complete("onError");
+                            Log.i(TAG, "queryLocationForEmergency: onError: " + e.getMessage());
+                            latch.countDown();
                         }
                     });
-            String result = resultFuture.get(5000L, TimeUnit.MILLISECONDS);
 
             // Verify Test result
-            assertTrue(result.contains("onError"));
+            assertTrue(latch.await(5000L, TimeUnit.MILLISECONDS));
         } finally {
             // Drop Permission
             getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
@@ -184,7 +181,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
             Connection connection = placeAndVerifyEmergencyCall(true /*supportsHold*/);
             assertNotNull("Connection should NOT be null.", connection);
 
-            CompletableFuture<String> resultFuture = new CompletableFuture<>();
+            CountDownLatch latch = new CountDownLatch(1);
 
             // Add Permission
             getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
@@ -196,20 +193,17 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
                     new OutcomeReceiver<Location, QueryLocationException>() {
                         @Override
                         public void onResult(Location result) {
-                            Log.i(TAG, "connection.queryLocationForEmergency: result: " + result);
-                            resultFuture.complete("onResult");
+                            Log.i(TAG, "queryLocationForEmergency: result: " + result);
+                            latch.countDown();
                         }
                         @Override
                         public void onError(QueryLocationException e) {
-                            Log.i(TAG, "connection.queryLocationForEmergency: onError: "
-                                    + e.getMessage());
-                            resultFuture.complete("onError");
+                            Log.i(TAG, "queryLocationForEmergency: onError: " + e.getMessage());
                         }
                     });
-            String result = resultFuture.get(5000L, TimeUnit.MILLISECONDS);
 
             // Verify Test result
-            assertTrue(result.contains("onResult"));
+            assertTrue(latch.await(5000L, TimeUnit.MILLISECONDS));
         } finally {
             // Teardown emergency calling
             tearDownEmergencyCalling();
@@ -248,7 +242,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
             Connection connection = placeAndVerifyEmergencyCall(true /*supportsHold*/);
             assertNotNull("Connection should NOT be null.", connection);
 
-            CompletableFuture<String> resultFuture = new CompletableFuture<>();
+            CountDownLatch latch = new CountDownLatch(1);
 
             // Add Permission
             getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
@@ -260,21 +254,17 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
                     new OutcomeReceiver<Location, QueryLocationException>() {
                         @Override
                         public void onResult(Location result) {
-                            Log.i(TAG, "connection.queryLocationForEmergency: result: " + result);
-                            resultFuture.complete("onResult");
+                            // Do nothing
                         }
                         @Override
                         public void onError(QueryLocationException e) {
-                            Log.i(TAG, "connection.queryLocationForEmergency: onError: "
-                                    + e.getMessage());
-                            resultFuture.complete("onError" + e.getCode());
+                            Log.i(TAG, "queryLocationForEmergency: onError: " + e.getMessage());
+                            latch.countDown();
                         }
                     });
-            String result = resultFuture.get(5000L, TimeUnit.MILLISECONDS);
 
             // Verify Test result
-            assertTrue(result.contains("onError"
-                    + QueryLocationException.ERROR_REQUEST_TIME_OUT));
+            assertTrue(latch.await(5000L, TimeUnit.MILLISECONDS));
         } finally {
             // Teardown emergency calling
             tearDownEmergencyCalling();

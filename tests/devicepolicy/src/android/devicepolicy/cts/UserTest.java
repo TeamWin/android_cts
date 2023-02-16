@@ -46,7 +46,7 @@ public final class UserTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    @CannotSetPolicyTest(policy = DisallowRemoveUser.class)
+    @CannotSetPolicyTest(policy = DisallowRemoveUser.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_REMOVE_USER")
     public void setUserRestriction_disallowRemoveUser_cannotSet_throwsException() {

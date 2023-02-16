@@ -49,7 +49,7 @@ public final class DnsTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    @CannotSetPolicyTest(policy = DisallowConfigPrivateDns.class)
+    @CannotSetPolicyTest(policy = DisallowConfigPrivateDns.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_PRIVATE_DNS")
     public void setUserRestriction_disallowConfigPrivateDns_cannotSet_throwsException() {

@@ -35,7 +35,6 @@ import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.provider.Telephony;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -518,6 +517,13 @@ public class TestAppInstanceTest {
                 assertThrows(NullPointerException.class,
                         () -> testApp.devicePolicyManager().hasGrantedPolicy(null, 0));
             }
+        }
+    }
+
+    @Test
+    public void telecomManager_returnsUsableInstance() {
+        try (TestAppInstance testAppInstance = sTestApp.install()) {
+            testAppInstance.telecomManager().getSystemDialerPackage();
         }
     }
 }

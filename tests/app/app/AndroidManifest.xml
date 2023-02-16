@@ -602,6 +602,10 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".DisplayEventActivity"
+            android:launchMode="singleInstance"
+            android:exported="true" />
+
     </application>
 
 </manifest>

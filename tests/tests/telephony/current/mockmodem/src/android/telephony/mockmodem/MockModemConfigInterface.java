@@ -16,6 +16,7 @@
 
 package android.telephony.mockmodem;
 
+import android.hardware.radio.modem.ImeiInfo;
 import android.hardware.radio.voice.CdmaSignalInfoRecord;
 import android.hardware.radio.voice.LastCallFailCauseInfo;
 import android.hardware.radio.voice.UusInfo;
@@ -38,11 +39,14 @@ public interface MockModemConfigInterface {
     String DEFAULT_PHONE1_IMEISV = "01";
     String DEFAULT_PHONE1_ESN = "123456789";
     String DEFAULT_PHONE1_MEID = "123456789012345";
+    int DEFAULT_PHONE1_IMEITYPE = ImeiInfo.ImeiType.PRIMARY;
     // PHONE2
     String DEFAULT_PHONE2_IMEI = "987654321543210";
     String DEFAULT_PHONE2_IMEISV = "02";
     String DEFAULT_PHONE2_ESN = "987654321";
     String DEFAULT_PHONE2_MEID = "987654321543210";
+    int DEFAULT_PHONE2_IMEITYPE = ImeiInfo.ImeiType.SECONDARY;
+
     int DEFAULT_RADIO_STATE = RADIO_STATE_UNAVAILABLE;
     int DEFAULT_NUM_OF_LIVE_MODEM = 1; // Should <= MAX_NUM_OF_MODEM
     int DEFAULT_MAX_ACTIVE_DATA = 2;
@@ -83,6 +87,9 @@ public interface MockModemConfigInterface {
 
     /** Register/unregister notification handler for device identity changed */
     void registerForDeviceIdentityChanged(int logicalSlotId, Handler h, int what, Object obj);
+
+    /** Register/unregister notification handler for device ImeiInfo changed */
+    void registerForDeviceImeiInfoChanged(int logicalSlotId, Handler h, int what, Object obj);
 
     void unregisterForDeviceIdentityChanged(int logicalSlotId, Handler h);
 

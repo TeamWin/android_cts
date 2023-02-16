@@ -23,31 +23,25 @@ import static android.Manifest.permission.WAKE_LOCK;
 import static android.companion.virtual.VirtualDeviceManager.DEVICE_ID_DEFAULT;
 import static android.companion.virtual.VirtualDeviceManager.DEVICE_ID_INVALID;
 import static android.view.Display.DEFAULT_DISPLAY;
-import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 import static android.virtualdevice.cts.util.VirtualDeviceTestUtils.createActivityOptions;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.annotation.Nullable;
 import android.app.Activity;
-import android.app.ActivityThread;
 import android.app.Service;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.os.Bundle;
@@ -79,7 +73,6 @@ import java.util.function.IntConsumer;
 
 @RunWith(AndroidJUnit4.class)
 @ApiTest(apis = {"android.content.Context#updateDeviceId",
-        "android.content.Context#isDeviceContext",
         "android.content.Context#unregisterDeviceIdChangeListener",
         "android.content.Context#registerDeviceIdChangeListener"}
 )
@@ -193,105 +186,6 @@ public class DeviceAssociationTest {
 
         assertThat(context.getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
         verifyNoMoreInteractions(mDeviceChangeListener);
-    }
-
-    @Test
-    @ApiTest(apis = {"android.content.Context#isDeviceContext"})
-    public void isDeviceContext_appContext_returnsFalse() {
-        final Context appContext = getApplicationContext();
-
-        assertThat(appContext.isDeviceContext()).isFalse();
-    }
-
-    @Test
-    @ApiTest(apis = {"android.content.Context#isDeviceContext"})
-    public void isDeviceContext_systemContext_returnsTrue() {
-        final Context systemContext =
-                ActivityThread.currentActivityThread().getSystemContext();
-
-        assertThat(systemContext.isDeviceContext()).isTrue();
-    }
-
-    @Test
-    @ApiTest(apis = {"android.content.Context#isDeviceContext"})
-    public void isDeviceContext_systemUiContext_returnsTrue() {
-        final Context systemUiContext =
-                ActivityThread.currentActivityThread().getSystemUiContext();
-
-        assertThat(systemUiContext.isDeviceContext()).isTrue();
-    }
-
-    @Test
-    @ApiTest(apis = {"android.content.Context#isDeviceContext"})
-    public void isDeviceContext_displayContext_returnsTrue() {
-        final Context displayContext =
-                getApplicationContext().createDisplayContext(mDefaultDisplay);
-
-        assertThat(displayContext.isDeviceContext()).isTrue();
-    }
-
-    @Test
-    @ApiTest(apis = {"android.content.Context#isDeviceContext"})
-    public void isDeviceContext_activityContext_returnsTrue() {
-        Context activity = startActivity(DEFAULT_DISPLAY);
-
-        assertThat(activity.isDeviceContext()).isTrue();
-    }
-
-    @Test
-    @ApiTest(apis = {"android.content.Context#isDeviceContext"})
-    public void isDeviceContext_windowContext_returnsTrue() {
-        final Context windowContext = getApplicationContext()
-                .createWindowContext(mDefaultDisplay, TYPE_APPLICATION, null);
-
-        assertThat(windowContext.isDeviceContext()).isTrue();
-    }
-
-    @Test
-    @ApiTest(apis = {"android.content.Context#isDeviceContext"})
-    public void isDeviceContext_ContextWrapper_isTrueIfBaseIsDeviceContext() {
-        Context appContext = getApplicationContext();
-        Context deviceContext = appContext.createDeviceContext(mVirtualDevice.getDeviceId());
-        ContextWrapper wrapper = new ContextWrapper(appContext);
-
-        assertFalse(wrapper.isDeviceContext());
-        assertThat(wrapper.getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
-
-        wrapper = new ContextWrapper(deviceContext);
-
-        assertTrue(wrapper.isDeviceContext());
-        assertThat(wrapper.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
-    }
-
-    @Test
-    @ApiTest(apis = {"android.content.Context#isDeviceContext"})
-    public void isDeviceContext_derivedContext_returnsTrue() {
-        Context appContext = getApplicationContext();
-        Context deviceContext = appContext.createDeviceContext(mVirtualDevice.getDeviceId());
-
-        Context derivedContext = deviceContext.createConfigurationContext(Configuration.EMPTY);
-
-        assertTrue(derivedContext.isDeviceContext());
-        assertThat(derivedContext.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
-    }
-
-    @Test
-    @ApiTest(apis = {"android.content.Context#isDeviceContext"})
-    public void isDeviceContext_deviceContext_returnsTrue() {
-        final Context appContext = getApplicationContext();
-        Context deviceContext = appContext.createDeviceContext(DEVICE_ID_DEFAULT);
-
-        assertTrue(deviceContext.isDeviceContext());
-    }
-
-    @Test
-    @ApiTest(apis = {"android.content.Context#isDeviceContext"})
-    public void isDeviceContext_deviceContextAndDeviceIsClosed_returnsFalse() {
-        final Context appContext = getApplicationContext();
-        Context deviceContext = appContext.createDeviceContext(mVirtualDevice.getDeviceId());
-        mVirtualDevice.close();
-
-        assertFalse(deviceContext.isDeviceContext());
     }
 
     @Test

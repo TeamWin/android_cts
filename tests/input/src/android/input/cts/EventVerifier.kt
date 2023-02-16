@@ -16,6 +16,7 @@
 
 package android.input.cts
 
+import android.graphics.PointF
 import android.view.InputEvent
 import android.view.MotionEvent
 import org.junit.Assert.assertEquals
@@ -34,31 +35,51 @@ class EventVerifier(val getInputEvent: () -> InputEvent?) {
         assertEquals(MotionEvent.FLAG_CANCELED, event.flags and MotionEvent.FLAG_CANCELED)
     }
 
-    fun assertReceivedDown() {
+    fun assertReceivedDown(pt: PointF? = null) {
         val event = getInputEvent() as MotionEvent
         assertEquals(MotionEvent.ACTION_DOWN, event.actionMasked)
+        pt?.let {
+            assertEquals(pt.x, event.x)
+            assertEquals(pt.y, event.y)
+        }
     }
 
-    fun assertReceivedPointerDown(index: Int) {
+    fun assertReceivedPointerDown(index: Int, pt: PointF? = null) {
         val event = getInputEvent() as MotionEvent
         assertEquals(MotionEvent.ACTION_POINTER_DOWN, event.actionMasked)
         assertEquals(index, event.actionIndex)
+        pt?.let {
+            assertEquals(pt.x, event.getX(index))
+            assertEquals(pt.y, event.getY(index))
+        }
     }
 
-    fun assertReceivedPointerUp(index: Int) {
+    fun assertReceivedPointerUp(index: Int, pt: PointF? = null) {
         val event = getInputEvent() as MotionEvent
         assertEquals(MotionEvent.ACTION_POINTER_UP, event.actionMasked)
         assertEquals(0, event.flags and MotionEvent.FLAG_CANCELED)
         assertEquals(index, event.actionIndex)
+        pt?.let {
+            assertEquals(pt.x, event.getX(index))
+            assertEquals(pt.y, event.getY(index))
+        }
     }
 
-    fun assertReceivedMove() {
+    fun assertReceivedMove(pt: PointF? = null) {
         val event = getInputEvent() as MotionEvent
         assertEquals(MotionEvent.ACTION_MOVE, event.actionMasked)
+        pt?.let {
+            assertEquals(pt.x, event.x)
+            assertEquals(pt.y, event.y)
+        }
     }
 
-    fun assertReceivedUp() {
+    fun assertReceivedUp(pt: PointF? = null) {
         val event = getInputEvent() as MotionEvent
         assertEquals(MotionEvent.ACTION_UP, event.actionMasked)
+        pt?.let {
+            assertEquals(pt.x, event.x)
+            assertEquals(pt.y, event.y)
+        }
     }
 }

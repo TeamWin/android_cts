@@ -36,6 +36,16 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".BaseTestAppPolicyUpdateReceiver"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <intent-filter>
+                <action android:name="android.app.admin.action.DEVICE_POLICY_SET_RESULT" />
+                <action android:name="android.app.admin.action.DEVICE_POLICY_CHANGED" />
+            </intent-filter>
+        </receiver>
+
         <!-- This activity is used to show "Work Policy Info" in Settings for Managed Devices -->
         <activity android:name=".WorkPolicyInfoActivity"
                   android:exported="true"

@@ -23,6 +23,7 @@ import android.graphics.Bitmap;
 import android.graphics.ColorSpace;
 import android.graphics.Gainmap;
 import android.graphics.ImageDecoder;
+import android.os.Parcel;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -116,5 +117,43 @@ public class GainmapTest {
         assertAre(3.1f, 3.2f, 3.3f, gainmap.getRatioMax());
         assertAre(0.1f, 0.2f, 0.3f, gainmap.getEpsilonSdr());
         assertAre(0.01f, 0.02f, 0.03f, gainmap.getEpsilonHdr());
+    }
+
+    @Test
+    public void testWriteToParcel() throws Exception {
+        Bitmap bitmap = ImageDecoder.decodeBitmap(
+                ImageDecoder.createSource(sContext.getResources(), R.raw.jpegr),
+                (decoder, info, source) -> decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE));
+        assertNotNull(bitmap);
+
+        Gainmap gainmap = bitmap.getGainmap();
+        assertNotNull(gainmap);
+        Bitmap gainmapData = gainmap.getGainmapContents();
+        assertNotNull(gainmapData);
+
+        Parcel p = Parcel.obtain();
+        gainmap.writeToParcel(p, 0);
+        p.setDataPosition(0);
+
+        Gainmap unparceledGainmap = Gainmap.CREATOR.createFromParcel(p);
+        assertNotNull(unparceledGainmap);
+        Bitmap unparceledGainmapData = unparceledGainmap.getGainmapContents();
+        assertNotNull(unparceledGainmapData);
+
+        assertTrue(gainmapData.sameAs(unparceledGainmapData));
+        assertEquals(gainmapData.getConfig(), unparceledGainmapData.getConfig());
+        assertEquals(gainmapData.getColorSpace(), unparceledGainmapData.getColorSpace());
+
+        assertArrayEquals(gainmap.getEpsilonSdr(), unparceledGainmap.getEpsilonSdr(), 0f);
+        assertArrayEquals(gainmap.getEpsilonHdr(), unparceledGainmap.getEpsilonHdr(), 0f);
+        assertArrayEquals(gainmap.getGamma(), unparceledGainmap.getGamma(), 0f);
+        assertEquals(gainmap.getMinDisplayRatioForHdrTransition(),
+                unparceledGainmap.getMinDisplayRatioForHdrTransition(), 0f);
+
+        assertArrayEquals(gainmap.getRatioMax(), unparceledGainmap.getRatioMax(), 0f);
+        assertArrayEquals(gainmap.getRatioMin(), unparceledGainmap.getRatioMin(), 0f);
+        assertEquals(gainmap.getDisplayRatioForFullHdr(),
+                unparceledGainmap.getDisplayRatioForFullHdr(), 0f);
+        p.recycle();
     }
 }

@@ -82,27 +82,22 @@ struct VsyncCallback : Callback {
     void populate(const AChoreographerFrameCallbackData* callbackData) {
         size_t index = AChoreographerFrameCallbackData_getPreferredFrameTimelineIndex(callbackData);
         preferredFrameTimelineIndex = index;
-
         size_t length = AChoreographerFrameCallbackData_getFrameTimelinesLength(callbackData);
-        {
-            std::lock_guard<std::mutex> _l{gLock};
-            ASSERT(length >= 1, "Frame timelines should not be empty");
-            ASSERT(index < length, "Frame timeline index must be less than length");
-        }
-        timeline.reserve(length);
+        ASSERT(index < length, "Preferred frame timeline index out of bounds");
+        timelines.reserve(length);
 
         for (int i = 0; i < length; i++) {
-            timeline.push_back(FrameTime(callbackData, i));
+            timelines.push_back(FrameTime(callbackData, i));
         }
     }
 
     size_t getPreferredFrameTimelineIndex() const { return preferredFrameTimelineIndex; }
-    const std::vector<FrameTime>& getTimeline() const { return timeline; }
+    const std::vector<FrameTime>& getTimeline() const { return timelines; }
 
 private:
     JNIEnv* env;
     size_t preferredFrameTimelineIndex{std::numeric_limits<size_t>::max()};
-    std::vector<FrameTime> timeline;
+    std::vector<FrameTime> timelines;
 };
 
 static void vsyncCallback(int64_t frameTimeNanos, void* data) {
@@ -141,8 +136,8 @@ static void verifyCallback(JNIEnv* env, const Callback& cb, int expectedCount,
     ASSERT(cb.count == expectedCount, "Choreographer failed to invoke '%s' %d times - actual: %d",
            cb.name.c_str(), expectedCount, cb.count);
     if (maxTime > ZERO) {
-        auto duration = cb.frameTime - startTime;
-        ASSERT(duration < maxTime, "Callback '%s' has incorrect frame time in invocation %d",
-               cb.name.c_str(), expectedCount);
+        ASSERT(cb.frameTime - startTime < maxTime,
+               "Callback '%s' has incorrect frame time in invocation %d", cb.name.c_str(),
+               expectedCount);
     }
 }

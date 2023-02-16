@@ -33,11 +33,12 @@ import org.junit.Test;
 import java.util.Objects;
 
 /**
- * Tests for using the VoiceInteractionService without a basic HotwordDetectionService.
+ * Tests for using the VoiceInteractionService without a basic HotwordDetectionService
+ * or VisualQueryDetectionService.
  */
 @AppModeFull(reason = "No real ue case for instant mode hotword detection service")
-public final class HotwordDetectionServiceNonExistenceTest {
-    private static final String TAG = "HotwordDetectionServiceNonExistenceTest";
+public final class SandboxedDetectionServiceNonExistenceTest {
+    private static final String TAG = "SandboxedDetectionServiceNonExistenceTest";
     private static final String SERVICE_COMPONENT =
             "android.voiceinteraction.cts.services.CtsMainVoiceInteractionService";
 
@@ -64,6 +65,25 @@ public final class HotwordDetectionServiceNonExistenceTest {
 
         // Create alwaysOnHotwordDetector
         service.createAlwaysOnHotwordDetector();
+
+        // Wait the result and verify expected result
+        service.waitSandboxedDetectionServiceInitializedCalledOrException();
+        // Verify IllegalStateException throws
+        assertThat(service.isCreateDetectorIllegalStateExceptionThrow()).isTrue();
+    }
+
+    @Test
+    public void testVisualQueryDetectionService_noVisualQueryDetectionComponentName_triggerFailure()
+            throws Throwable {
+        // VoiceInteractionServiceConnectedRule handles the service connected, we should be able
+        // to get service.
+        CtsMainVoiceInteractionService service =
+                (CtsMainVoiceInteractionService) CtsMainVoiceInteractionService.getService();
+        // Check we can get the service, we need service object to call the service provided method
+        Objects.requireNonNull(service);
+
+        // Create VisualQueryDetector
+        service.createVisualQueryDetector();
 
         // Wait the result and verify expected result
         service.waitSandboxedDetectionServiceInitializedCalledOrException();

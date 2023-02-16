@@ -46,11 +46,19 @@ import android.car.hardware.property.AutomaticEmergencyBrakingState;
 import android.car.hardware.property.BlindSpotWarningState;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback;
+import android.car.hardware.property.CruiseControlCommand;
+import android.car.hardware.property.CruiseControlState;
+import android.car.hardware.property.CruiseControlType;
+import android.car.hardware.property.DriverAttentionMonitoringState;
+import android.car.hardware.property.DriverAttentionMonitoringWarning;
+import android.car.hardware.property.EmergencyLaneKeepAssistState;
 import android.car.hardware.property.ErrorState;
 import android.car.hardware.property.EvChargeState;
 import android.car.hardware.property.EvRegenerativeBrakingState;
 import android.car.hardware.property.EvStoppingMode;
 import android.car.hardware.property.ForwardCollisionWarningState;
+import android.car.hardware.property.HandsOnDetectionDriverState;
+import android.car.hardware.property.HandsOnDetectionWarning;
 import android.car.hardware.property.LaneCenteringAssistCommand;
 import android.car.hardware.property.LaneCenteringAssistState;
 import android.car.hardware.property.LaneDepartureWarningState;
@@ -199,6 +207,73 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     private static final ImmutableSet<Integer> HVAC_TEMPERATURE_DISPLAY_UNITS =
             ImmutableSet.<Integer>builder().add(VehicleUnit.CELSIUS,
                     VehicleUnit.FAHRENHEIT).build();
+    private static final ImmutableSet<Integer> EMERGENCY_LANE_KEEP_ASSIST_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            EmergencyLaneKeepAssistState.OTHER,
+                            EmergencyLaneKeepAssistState.ENABLED,
+                            EmergencyLaneKeepAssistState.WARNING_LEFT,
+                            EmergencyLaneKeepAssistState.WARNING_RIGHT,
+                            EmergencyLaneKeepAssistState.ACTIVATED_STEER_LEFT,
+                            EmergencyLaneKeepAssistState.ACTIVATED_STEER_RIGHT,
+                            EmergencyLaneKeepAssistState.USER_OVERRIDE)
+                    .build();
+    private static final ImmutableSet<Integer> CRUISE_CONTROL_TYPES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            CruiseControlType.OTHER,
+                            CruiseControlType.STANDARD,
+                            CruiseControlType.ADAPTIVE,
+                            CruiseControlType.PREDICTIVE)
+                    .build();
+    private static final ImmutableSet<Integer> CRUISE_CONTROL_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            CruiseControlState.OTHER,
+                            CruiseControlState.ENABLED,
+                            CruiseControlState.ACTIVATED,
+                            CruiseControlState.USER_OVERRIDE,
+                            CruiseControlState.SUSPENDED,
+                            CruiseControlState.FORCED_DEACTIVATION_WARNING)
+                    .build();
+    private static final ImmutableSet<Integer> CRUISE_CONTROL_COMMANDS =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            CruiseControlCommand.ACTIVATE,
+                            CruiseControlCommand.SUSPEND,
+                            CruiseControlCommand.INCREASE_TARGET_SPEED,
+                            CruiseControlCommand.DECREASE_TARGET_SPEED,
+                            CruiseControlCommand.INCREASE_TARGET_TIME_GAP,
+                            CruiseControlCommand.DECREASE_TARGET_TIME_GAP)
+                    .build();
+    private static final ImmutableSet<Integer> HANDS_ON_DETECTION_DRIVER_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            HandsOnDetectionDriverState.OTHER,
+                            HandsOnDetectionDriverState.HANDS_ON,
+                            HandsOnDetectionDriverState.HANDS_OFF)
+                    .build();
+    private static final ImmutableSet<Integer> HANDS_ON_DETECTION_WARNINGS =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            HandsOnDetectionWarning.OTHER,
+                            HandsOnDetectionWarning.NO_WARNING,
+                            HandsOnDetectionWarning.WARNING)
+                    .build();
+    private static final ImmutableSet<Integer> DRIVER_ATTENTION_MONITORING_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            DriverAttentionMonitoringState.OTHER,
+                            DriverAttentionMonitoringState.DISTRACTED,
+                            DriverAttentionMonitoringState.NOT_DISTRACTED)
+                    .build();
+    private static final ImmutableSet<Integer> DRIVER_ATTENTION_MONITORING_WARNINGS =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            DriverAttentionMonitoringWarning.OTHER,
+                            DriverAttentionMonitoringWarning.NO_WARNING,
+                            DriverAttentionMonitoringWarning.WARNING)
+                    .build();
     private static final ImmutableSet<Integer> ERROR_STATES =
             ImmutableSet.<Integer>builder()
                     .add(
@@ -287,7 +362,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .build();
     private static final ImmutableList<Integer>
             PERMISSION_READ_DRIVER_MONITORING_STATES_PROPERTIES = ImmutableList.<Integer>builder()
-                    .add()
+                    .add(
+                            VehiclePropertyIds.HANDS_ON_DETECTION_DRIVER_STATE,
+                            VehiclePropertyIds.HANDS_ON_DETECTION_WARNING,
+                            VehiclePropertyIds.DRIVER_ATTENTION_MONITORING_STATE,
+                            VehiclePropertyIds.DRIVER_ATTENTION_MONITORING_WARNING)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CAR_ENERGY_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -612,7 +691,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.LANE_KEEP_ASSIST_ENABLED,
                             VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED,
                             VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_ENABLED,
-                            VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_ENABLED)
+                            VehiclePropertyIds.CRUISE_CONTROL_ENABLED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_SETTINGS_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -624,7 +703,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.LANE_KEEP_ASSIST_ENABLED,
                             VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED,
                             VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_ENABLED,
-                            VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_ENABLED)
+                            VehiclePropertyIds.CRUISE_CONTROL_ENABLED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_READ_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -634,12 +713,17 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.BLIND_SPOT_WARNING_STATE,
                             VehiclePropertyIds.LANE_DEPARTURE_WARNING_STATE,
                             VehiclePropertyIds.LANE_KEEP_ASSIST_STATE,
-                            VehiclePropertyIds.LANE_CENTERING_ASSIST_STATE)
+                            VehiclePropertyIds.LANE_CENTERING_ASSIST_STATE,
+                            VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_STATE,
+                            VehiclePropertyIds.CRUISE_CONTROL_TYPE,
+                            VehiclePropertyIds.CRUISE_CONTROL_STATE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
-                            VehiclePropertyIds.LANE_CENTERING_ASSIST_COMMAND)
+                            VehiclePropertyIds.LANE_CENTERING_ASSIST_COMMAND,
+                            VehiclePropertyIds.CRUISE_CONTROL_TYPE,
+                            VehiclePropertyIds.CRUISE_CONTROL_COMMAND)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_GLOVE_BOX_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -848,6 +932,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
                 .requireProperty()
+                .setAllPossibleEnumValues(VEHICLE_GEARS)
                 .setPossibleConfigArrayValues(VEHICLE_GEARS)
                 .requirePropertyValueTobeInConfigArray()
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
@@ -937,15 +1022,102 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    public void testAdaptiveCruiseControlEnabledIfSupported() {
+    public void testEmergencyLaneKeepAssistStateIfSupported() {
+        ImmutableSet<Integer> possibleEnumValues = ImmutableSet.<Integer>builder()
+                .addAll(EMERGENCY_LANE_KEEP_ASSIST_STATES)
+                .addAll(ERROR_STATES)
+                .build();
+
         VehiclePropertyVerifier.newBuilder(
-                        VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_ENABLED,
+                        VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setAllPossibleEnumValues(possibleEnumValues)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testEmergencyLaneKeepAssistStateAndErrorStateDontIntersect() {
+        verifyEnumValuesAreDistinct(EMERGENCY_LANE_KEEP_ASSIST_STATES, ERROR_STATES);
+    }
+
+    @Test
+    public void testCruiseControlEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testCruiseControlTypeIfSupported() {
+        ImmutableSet<Integer> possibleEnumValues = ImmutableSet.<Integer>builder()
+                .addAll(CRUISE_CONTROL_TYPES)
+                .addAll(ERROR_STATES)
+                .build();
+
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.CRUISE_CONTROL_TYPE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setAllPossibleEnumValues(possibleEnumValues)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
+                .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testCruiseControlTypeAndErrorStateDontIntersect() {
+        verifyEnumValuesAreDistinct(CRUISE_CONTROL_TYPES, ERROR_STATES);
+    }
+
+    @Test
+    public void testCruiseControlStateIfSupported() {
+        ImmutableSet<Integer> possibleEnumValues = ImmutableSet.<Integer>builder()
+                .addAll(CRUISE_CONTROL_STATES)
+                .addAll(ERROR_STATES)
+                .build();
+
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.CRUISE_CONTROL_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setAllPossibleEnumValues(possibleEnumValues)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testCruiseControlStateAndErrorStateDontIntersect() {
+        verifyEnumValuesAreDistinct(CRUISE_CONTROL_STATES, ERROR_STATES);
+    }
+
+    @Test
+    public void testCruiseControlCommandIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.CRUISE_CONTROL_COMMAND,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setAllPossibleEnumValues(CRUISE_CONTROL_COMMANDS)
+                .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .build()
                 .verify(mCarPropertyManager);
     }
@@ -965,6 +1137,54 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testHandsOnDetectionDriverStateIfSupported() {
+        ImmutableSet<Integer> possibleEnumValues = ImmutableSet.<Integer>builder()
+                .addAll(HANDS_ON_DETECTION_DRIVER_STATES)
+                .addAll(ERROR_STATES)
+                .build();
+
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.HANDS_ON_DETECTION_DRIVER_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setAllPossibleEnumValues(possibleEnumValues)
+                .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testHandsOnDetectionDriverStateAndErrorStateDontIntersect() {
+        verifyEnumValuesAreDistinct(HANDS_ON_DETECTION_DRIVER_STATES, ERROR_STATES);
+    }
+
+    @Test
+    public void testHandsOnDetectionWarningIfSupported() {
+        ImmutableSet<Integer> possibleEnumValues = ImmutableSet.<Integer>builder()
+                .addAll(HANDS_ON_DETECTION_WARNINGS)
+                .addAll(ERROR_STATES)
+                .build();
+
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.HANDS_ON_DETECTION_WARNING,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setAllPossibleEnumValues(possibleEnumValues)
+                .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testHandsOnDetectionWarningAndErrorStateDontIntersect() {
+        verifyEnumValuesAreDistinct(HANDS_ON_DETECTION_WARNINGS, ERROR_STATES);
+    }
+
+    @Test
     public void testDriverAttentionMonitoringEnabledIfSupported() {
         VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.DRIVER_ATTENTION_MONITORING_ENABLED,
@@ -976,6 +1196,54 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addWritePermission(Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS)
                 .build()
                 .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testDriverAttentionMonitoringStateIfSupported() {
+        ImmutableSet<Integer> possibleEnumValues = ImmutableSet.<Integer>builder()
+                .addAll(DRIVER_ATTENTION_MONITORING_STATES)
+                .addAll(ERROR_STATES)
+                .build();
+
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.DRIVER_ATTENTION_MONITORING_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setAllPossibleEnumValues(possibleEnumValues)
+                .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testDriverAttentionMonitoringStateAndErrorStateDontIntersect() {
+        verifyEnumValuesAreDistinct(DRIVER_ATTENTION_MONITORING_WARNINGS, ERROR_STATES);
+    }
+
+    @Test
+    public void testDriverAttentionMonitoringWarningIfSupported() {
+        ImmutableSet<Integer> possibleEnumValues = ImmutableSet.<Integer>builder()
+                .addAll(DRIVER_ATTENTION_MONITORING_WARNINGS)
+                .addAll(ERROR_STATES)
+                .build();
+
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.DRIVER_ATTENTION_MONITORING_WARNING,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setAllPossibleEnumValues(possibleEnumValues)
+                .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testDriverAttentionMonitoringWarningAndErrorStateDontIntersect() {
+        verifyEnumValuesAreDistinct(DRIVER_ATTENTION_MONITORING_WARNINGS, ERROR_STATES);
     }
 
     @Test
@@ -1486,6 +1754,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
+                .setAllPossibleEnumValues(VEHICLE_GEARS)
                 .setPossibleConfigArrayValues(VEHICLE_GEARS)
                 .requirePropertyValueTobeInConfigArray()
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
@@ -2097,6 +2366,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
+                .setAllPossibleEnumValues(DISTANCE_DISPLAY_UNITS)
                 .setPossibleConfigArrayValues(DISTANCE_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
@@ -2115,6 +2385,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
+                .setAllPossibleEnumValues(VOLUME_DISPLAY_UNITS)
                 .setPossibleConfigArrayValues(VOLUME_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
@@ -2199,6 +2470,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
+                .setAllPossibleEnumValues(PRESSURE_DISPLAY_UNITS)
                 .setPossibleConfigArrayValues(PRESSURE_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
@@ -2217,6 +2489,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
+                .setAllPossibleEnumValues(BATTERY_DISPLAY_UNITS)
                 .setPossibleConfigArrayValues(BATTERY_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
@@ -2235,6 +2508,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
+                .setAllPossibleEnumValues(SPEED_DISPLAY_UNITS)
                 .setPossibleConfigArrayValues(SPEED_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
@@ -4215,6 +4489,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
+                .setAllPossibleEnumValues(HVAC_TEMPERATURE_DISPLAY_UNITS)
                 .setPossibleConfigArrayValues(HVAC_TEMPERATURE_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
@@ -6539,6 +6814,29 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         assertThat(request.getValue()).isEqualTo(new String("1234"));
         assertWithMessage("generateSetPropertyRequest must generate unique IDs").that(requestId1)
                 .isNotEqualTo(requestId2);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getProperty(int, int)"})
+    public void testGetProperty_multipleRequestsAtOnce_mustNotThrowException() throws Exception {
+        runWithShellPermissionIdentity(
+                () -> {
+                    // We only allow 16 sync operations at once at car service. The client will
+                    // try to issue 32 requests at the same time, but 16 of them will be bounced
+                    // back and will be retried later.
+                    Executor executor = Executors.newFixedThreadPool(32);
+                    CountDownLatch cd = new CountDownLatch(1000);
+                    for (int i = 0; i < 1000; i++) {
+                        executor.execute(() -> {
+                            mCarPropertyManager.getProperty(
+                                                VehiclePropertyIds.PERF_VEHICLE_SPEED,
+                                                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+                            cd.countDown();
+                        });
+                    }
+                    cd.await(ASYNC_WAIT_TIMEOUT_IN_SEC, TimeUnit.SECONDS);
+                },
+                Car.PERMISSION_SPEED);
     }
 
     private int getCounterBySampleRate(float maxSampleRateHz) {

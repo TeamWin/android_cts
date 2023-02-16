@@ -52,14 +52,6 @@ import org.junit.Test
 class SafetyLabelChangesJobServiceTest : BaseUsePermissionTest() {
 
     @get:Rule
-    val permissionRationaleEnabledConfig =
-        DeviceConfigStateChangerRule(
-            context,
-            DeviceConfig.NAMESPACE_PRIVACY,
-            SafetyLabelConstants.PERMISSION_RATIONALE_ENABLED,
-            true.toString())
-
-    @get:Rule
     val safetyLabelChangeNotificationsEnabledConfig =
         DeviceConfigStateChangerRule(
             context,

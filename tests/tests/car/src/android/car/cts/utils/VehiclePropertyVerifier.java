@@ -455,14 +455,17 @@ public class VehiclePropertyVerifier<T> {
                             (T) Integer.valueOf(availableHvacFanDirection));
                 }
             }
-        } else if (mVerifySetterWithConfigArrayValues) {
+            return;
+        }
+        if (mVerifySetterWithConfigArrayValues) {
             verifySetterWithValues((CarPropertyConfig<T>) carPropertyConfig, carPropertyManager,
                     (Collection<T>) carPropertyConfig.getConfigArray());
-        } else if (!mAllPossibleEnumValues.isEmpty()) {
+        }
+        if (!mAllPossibleEnumValues.isEmpty()) {
             for (AreaIdConfig<?> areaIdConfig : carPropertyConfig.getAreaIdConfigs()) {
                 for (T valueToSet : (List<T>) areaIdConfig.getSupportedEnumValues()) {
-                    verifySetProperty((CarPropertyConfig<T>) carPropertyConfig, carPropertyManager,
-                            areaIdConfig.getAreaId(), valueToSet);
+                    verifySetProperty((CarPropertyConfig<T>) carPropertyConfig,
+                            carPropertyManager, areaIdConfig.getAreaId(), valueToSet);
                 }
             }
         } else {
@@ -746,6 +749,15 @@ public class VehiclePropertyVerifier<T> {
                                 + "'s max value must be >= min value")
                         .that(verifyMaxAndMin(areaIdMinValue, areaIdMaxValue))
                         .isTrue();
+            }
+
+            if (mRequirePropertyValueToBeInConfigArray) {
+                List<?> supportedEnumValues = carPropertyConfig.getAreaIdConfig(
+                        areaId).getSupportedEnumValues();
+                assertWithMessage(mPropertyName + " - areaId: " + areaId
+                        + "'s supported enum values must match the values in the config array.")
+                        .that(carPropertyConfig.getConfigArray())
+                        .containsExactlyElementsIn(supportedEnumValues);
             }
 
             if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE

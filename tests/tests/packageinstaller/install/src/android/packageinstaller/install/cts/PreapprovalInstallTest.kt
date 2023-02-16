@@ -17,17 +17,38 @@
 package android.packageinstaller.install.cts
 
 import android.content.pm.PackageInstaller
+import android.icu.util.ULocale
 import android.platform.test.annotations.AppModeFull
 import androidx.test.runner.AndroidJUnit4
+import java.io.File
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @AppModeFull(reason = "Instant apps cannot create installer sessions")
 @RunWith(AndroidJUnit4::class)
 class PreapprovalInstallTest : PackageInstallerTestBase() {
+
+    companion object {
+        const val TEST_APK_NAME_PL = "CtsEmptyTestApp_pl.apk"
+        const val TEST_APK_NAME_V2 = "CtsEmptyTestAppV2.apk"
+        const val TEST_APP_LABEL = "Empty Test App"
+        const val TEST_APP_LABEL_PL = "Empty Test App Polish"
+        const val TEST_APP_LABEL_V2 = "Empty Test App V2"
+        const val TEST_FAKE_APP_LABEL = "Fake Test App"
+    }
+
+    private val apkFile_pl = File(context.filesDir, TEST_APK_NAME_PL)
+    private val apkFile_v2 = File(context.filesDir, TEST_APK_NAME_V2)
+
+    @Before
+    fun copyOtherTestApks() {
+        File(TEST_APK_LOCATION, TEST_APK_NAME_PL).copyTo(target = apkFile_pl, overwrite = true)
+        File(TEST_APK_LOCATION, TEST_APK_NAME_V2).copyTo(target = apkFile_v2, overwrite = true)
+    }
 
     /**
      * Clean up all sessions created by this test.
@@ -148,13 +169,37 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
 
         val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
                 null /* packageSource */)
+        startRequestUserPreapproval(session, preparePreapprovalDetailsV2())
+        clickInstallerUIButton(INSTALL_BUTTON_ID)
+
+        // request should have succeeded
+        getInstallSessionResult()
+
+        writeSession(session, TEST_APK_NAME_V2)
+        startInstallationViaPreapprovalSession(session)
+        // No need to click installer UI here.
+        val result = getInstallSessionResult()
+        assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
+    }
+
+    /**
+     * Check that we can update an app with current app label even if the given label is
+     * different from the label from the APK file.
+     */
+    @Test
+    fun commitPreapprovalSession_updateUsingCurrentLabel_success() {
+        installTestPackage()
+        assertInstalled()
+
+        val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
+                null /* packageSource */)
         startRequestUserPreapproval(session, preparePreapprovalDetails())
         clickInstallerUIButton(INSTALL_BUTTON_ID)
 
         // request should have succeeded
         getInstallSessionResult()
 
-        writeSession(session, TEST_APK_NAME)
+        writeSession(session, TEST_APK_NAME_V2)
         startInstallationViaPreapprovalSession(session)
         // No need to click installer UI here.
         val result = getInstallSessionResult()
@@ -293,5 +338,33 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         } finally {
             setDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE, config)
         }
+    }
+
+    private fun preparePreapprovalDetails(): PackageInstaller.PreapprovalDetails {
+        return preparePreapprovalDetails(TEST_APP_LABEL, ULocale.US, TEST_APK_PACKAGE_NAME)
+    }
+
+    private fun preparePreapprovalDetailsV2(): PackageInstaller.PreapprovalDetails {
+        return preparePreapprovalDetails(TEST_APP_LABEL_V2, ULocale.US, TEST_APK_PACKAGE_NAME)
+    }
+
+    private fun preparePreapprovalDetailsInPl(): PackageInstaller.PreapprovalDetails {
+        return preparePreapprovalDetails(TEST_APP_LABEL_PL, ULocale("pl"), TEST_APK_PACKAGE_NAME)
+    }
+
+    private fun prepareWrongPreapprovalDetails(): PackageInstaller.PreapprovalDetails {
+        return preparePreapprovalDetails(TEST_FAKE_APP_LABEL, ULocale.US, TEST_APK_PACKAGE_NAME)
+    }
+
+    private fun preparePreapprovalDetails(
+            appLabel: String,
+            locale: ULocale,
+            appPackageName: String
+    ): PackageInstaller.PreapprovalDetails {
+        return PackageInstaller.PreapprovalDetails.Builder()
+                .setLabel(appLabel)
+                .setLocale(locale)
+                .setPackageName(appPackageName)
+                .build()
     }
 }

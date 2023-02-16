@@ -4108,12 +4108,15 @@ public class ViewTest {
 
         event.setAction(MotionEvent.ACTION_DOWN);
         mInstrumentation.sendPointerSync(event);
+        event.setAction(MotionEvent.ACTION_UP);
+        mInstrumentation.sendPointerSync(event);
         assertTrue(fitWindowsView.isInTouchMode());
 
         mInstrumentation.sendKeySync(keyEvent);
         assertFalse(fitWindowsView.isInTouchMode());
 
         // Stylus events should trigger touch mode.
+        event.setAction(MotionEvent.ACTION_DOWN);
         event.setSource(InputDevice.SOURCE_STYLUS);
         mInstrumentation.sendPointerSync(event);
         assertTrue(fitWindowsView.isInTouchMode());

@@ -51,7 +51,7 @@ public final class LocationTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    @CannotSetPolicyTest(policy = DisallowShareLocation.class)
+    @CannotSetPolicyTest(policy = DisallowShareLocation.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SHARE_LOCATION")
     public void setUserRestriction_disallowShareLocation_cannotSet_throwsException() {
@@ -117,7 +117,7 @@ public final class LocationTest {
         assertThat(Step.execute(CanYouEnableLocationSharingStep.class)).isFalse();
     }
 
-    @CannotSetPolicyTest(policy = DisallowConfigLocation.class)
+    @CannotSetPolicyTest(policy = DisallowConfigLocation.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_LOCATION")
     public void setUserRestriction_disallowConfigLocation_cannotSet_throwsException() {

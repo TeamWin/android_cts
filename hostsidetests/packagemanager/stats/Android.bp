@@ -38,6 +38,8 @@ java_test_host {
         ":CtsStatsdAtomEmptyApp",
         ":CtsStatsdAtomEmptyAppV2",
         ":CtsStatsdAtomEmptyApp2",
+        ":CtsStatsdAtomStaticSharedLibProviderV1",
+        ":CtsStatsdAtomStaticSharedLibProviderV2",
         ":CtsStatsdAtomEmptySplitApp",
         ":CtsStatsdAtomApp",
         ":PackageManagerStatsTestsHelper",

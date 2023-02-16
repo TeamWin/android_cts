@@ -263,9 +263,12 @@ public class SatelliteManagerTest {
 
     @Test
     public void testPollPendingSatelliteDatagrams() throws Exception {
+        LinkedBlockingQueue<Integer> resultListener = new LinkedBlockingQueue<>(1);
+
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class,
-                ()-> mSatelliteManager.pollPendingSatelliteDatagrams());
+                ()-> mSatelliteManager.pollPendingSatelliteDatagrams(
+                        getContext().getMainExecutor(), resultListener::offer));
     }
 
     @Test
@@ -370,8 +373,8 @@ public class SatelliteManagerTest {
         }
 
         @Override
-        public void onPendingMessageCount(int count) {
-            Log.d(TAG, "onPendingMessageCount: count=" + count);
+        public void onPendingDatagramCount(int count) {
+            Log.d(TAG, "onPendingDatagramCount: count=" + count);
         }
     }
 

@@ -51,4 +51,15 @@ public class CtsMainVoiceInteractionService extends BaseVoiceInteractionService 
             callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback);
         }, MANAGE_HOTWORD_DETECTION));
     }
+
+    /**
+     * Create a VisualQueryDetector. This is used to verify case if the VoiceInteractionService
+     * doesn't define a VisualQueryDetector.
+     */
+    public void createVisualQueryDetector() {
+        mServiceTriggerLatch = new CountDownLatch(1);
+        mHandler.post(() -> runWithShellPermissionIdentity(() -> {
+            callCreateVisualQueryDetector(mNoOpVisualQueryDetectorCallback);
+        }, MANAGE_HOTWORD_DETECTION));
+    }
 }

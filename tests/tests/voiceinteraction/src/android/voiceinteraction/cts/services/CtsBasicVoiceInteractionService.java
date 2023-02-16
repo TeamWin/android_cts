@@ -25,6 +25,7 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetector;
@@ -68,77 +69,154 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         mHandler = Handler.createAsync(handlerThread.getLooper());
     }
 
+    public void createAlwaysOnHotwordDetectorNoHotwordDetectionService(boolean useExecutor,
+            boolean runOnMainThread) {
+        Log.i(TAG, "createAlwaysOnHotwordDetectorNoHotwordDetectionService");
+        mServiceTriggerLatch = new CountDownLatch(1);
+
+        AlwaysOnHotwordDetector.Callback callback = new AlwaysOnHotwordDetector.Callback() {
+            @Override
+            public void onAvailabilityChanged(int status) {
+                Log.i(TAG, "onAvailabilityChanged(" + status + ")");
+                mAvailabilityStatus = status;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mAvailabilityChangeLatch != null) {
+                    mAvailabilityChangeLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
+                // no-op
+            }
+
+            @Override
+            public void onRejected(@NonNull HotwordRejectedResult result) {
+                // no-op
+            }
+
+            @Override
+            public void onError() {
+                // no-op
+            }
+
+            @Override
+            public void onRecognitionPaused() {
+                // no-op
+            }
+
+            @Override
+            public void onRecognitionResumed() {
+                // no-op
+            }
+
+            @Override
+            public void onHotwordDetectionServiceInitialized(int status) {
+                // no-op
+            }
+
+            @Override
+            public void onHotwordDetectionServiceRestarted() {
+                // no-op
+            }
+        };
+
+        final Handler handler = runOnMainThread ? new Handler(Looper.getMainLooper()) : mHandler;
+        handler.post(() -> runWithShellPermissionIdentity(() -> {
+            mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetectorNoHotwordDetectionService(
+                    callback, useExecutor);
+            if (mServiceTriggerLatch != null) {
+                mServiceTriggerLatch.countDown();
+            }
+        }, MANAGE_HOTWORD_DETECTION));
+    }
+
     /**
      * Create AlwaysOnHotwordDetector.
      */
     public void createAlwaysOnHotwordDetector() {
+        createAlwaysOnHotwordDetector(/* useExecutor= */ false, /* runOnMainThread= */ false);
+    }
+
+    /**
+     * Create AlwaysOnHotwordDetector.
+     */
+    public void createAlwaysOnHotwordDetector(boolean useExecutor, boolean runOnMainThread) {
         Log.i(TAG, "createAlwaysOnHotwordDetector!!!!");
         mServiceTriggerLatch = new CountDownLatch(1);
-        mHandler.post(() -> runWithShellPermissionIdentity(() -> {
-            AlwaysOnHotwordDetector.Callback callback = new AlwaysOnHotwordDetector.Callback() {
-                @Override
-                public void onAvailabilityChanged(int status) {
-                    Log.i(TAG, "onAvailabilityChanged(" + status + ")");
-                    mAvailabilityStatus = status;
-                    if (mAvailabilityChangeLatch != null) {
-                        mAvailabilityChangeLatch.countDown();
-                    }
-                }
 
-                @Override
-                public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
-                    Log.i(TAG, "onDetected");
-                    mDetectedResult = eventPayload;
-                    if (mOnDetectRejectLatch != null) {
-                        mOnDetectRejectLatch.countDown();
-                    }
+        final AlwaysOnHotwordDetector.Callback callback = new AlwaysOnHotwordDetector.Callback() {
+            @Override
+            public void onAvailabilityChanged(int status) {
+                Log.i(TAG, "onAvailabilityChanged(" + status + ")");
+                mAvailabilityStatus = status;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mAvailabilityChangeLatch != null) {
+                    mAvailabilityChangeLatch.countDown();
                 }
+            }
 
-                @Override
-                public void onRejected(@NonNull HotwordRejectedResult result) {
-                    Log.i(TAG, "onRejected");
-                    mRejectedResult = result;
-                    if (mOnDetectRejectLatch != null) {
-                        mOnDetectRejectLatch.countDown();
-                    }
+            @Override
+            public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
+                Log.i(TAG, "onDetected");
+                mDetectedResult = eventPayload;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnDetectRejectLatch != null) {
+                    mOnDetectRejectLatch.countDown();
                 }
+            }
 
-                @Override
-                public void onError() {
-                    Log.i(TAG, "onError");
-                    if (mOnErrorLatch != null) {
-                        mOnErrorLatch.countDown();
-                    }
+            @Override
+            public void onRejected(@NonNull HotwordRejectedResult result) {
+                Log.i(TAG, "onRejected");
+                mRejectedResult = result;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnDetectRejectLatch != null) {
+                    mOnDetectRejectLatch.countDown();
                 }
+            }
 
-                @Override
-                public void onRecognitionPaused() {
-                    Log.i(TAG, "onRecognitionPaused");
+            @Override
+            public void onError() {
+                Log.i(TAG, "onError");
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnErrorLatch != null) {
+                    mOnErrorLatch.countDown();
                 }
+            }
 
-                @Override
-                public void onRecognitionResumed() {
-                    Log.i(TAG, "onRecognitionResumed");
-                }
+            @Override
+            public void onRecognitionPaused() {
+                Log.i(TAG, "onRecognitionPaused");
+            }
 
-                @Override
-                public void onHotwordDetectionServiceInitialized(int status) {
-                    Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
-                    if (status != HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
-                        return;
-                    }
-                    mInitializedStatus = status;
-                    if (mServiceTriggerLatch != null) {
-                        mServiceTriggerLatch.countDown();
-                    }
-                }
+            @Override
+            public void onRecognitionResumed() {
+                Log.i(TAG, "onRecognitionResumed");
+            }
 
-                @Override
-                public void onHotwordDetectionServiceRestarted() {
-                    Log.i(TAG, "onHotwordDetectionServiceRestarted");
+            @Override
+            public void onHotwordDetectionServiceInitialized(int status) {
+                Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
+                if (status != HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
+                    return;
                 }
-            };
-            mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector(callback);
+                mInitializedStatus = status;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mServiceTriggerLatch != null) {
+                    mServiceTriggerLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onHotwordDetectionServiceRestarted() {
+                Log.i(TAG, "onHotwordDetectionServiceRestarted");
+            }
+        };
+
+        final Handler handler = runOnMainThread ? new Handler(Looper.getMainLooper()) : mHandler;
+        handler.post(() -> runWithShellPermissionIdentity(() -> {
+            mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector(callback, useExecutor);
         }, MANAGE_HOTWORD_DETECTION));
     }
 
@@ -163,61 +241,80 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     }
 
     public void createSoftwareHotwordDetector() {
+        createSoftwareHotwordDetector(/* useExecutor= */ false, /* runOnMainThread= */ false);
+    }
+
+    public void createSoftwareHotwordDetector(boolean useExecutor, boolean runOnMainThread) {
         mServiceTriggerLatch = new CountDownLatch(1);
-        mHandler.post(() -> runWithShellPermissionIdentity(() -> {
-            HotwordDetector.Callback callback = new HotwordDetector.Callback() {
-                @Override
-                public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
-                    Log.i(TAG, "onDetected");
-                    mDetectedResult = eventPayload;
-                    if (mOnDetectRejectLatch != null) {
-                        mOnDetectRejectLatch.countDown();
-                    }
-                }
 
-                @Override
-                public void onError() {
-                    Log.i(TAG, "onError");
+        final HotwordDetector.Callback callback = new HotwordDetector.Callback() {
+            @Override
+            public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
+                Log.i(TAG, "onDetected");
+                mDetectedResult = eventPayload;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnDetectRejectLatch != null) {
+                    mOnDetectRejectLatch.countDown();
                 }
+            }
 
-                @Override
-                public void onRecognitionPaused() {
-                    Log.i(TAG, "onRecognitionPaused");
-                }
+            @Override
+            public void onError() {
+                Log.i(TAG, "onError");
+            }
 
-                @Override
-                public void onRecognitionResumed() {
-                    Log.i(TAG, "onRecognitionResumed");
-                }
+            @Override
+            public void onRecognitionPaused() {
+                Log.i(TAG, "onRecognitionPaused");
+            }
 
-                @Override
-                public void onRejected(HotwordRejectedResult result) {
-                    Log.i(TAG, "onRejected");
-                    mRejectedResult = result;
-                    if (mOnDetectRejectLatch != null) {
-                        mOnDetectRejectLatch.countDown();
-                    }
-                }
+            @Override
+            public void onRecognitionResumed() {
+                Log.i(TAG, "onRecognitionResumed");
+            }
 
-                @Override
-                public void onHotwordDetectionServiceInitialized(int status) {
-                    Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
-                    if (status != HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
-                        return;
-                    }
-                    mInitializedStatus = status;
-                    if (mServiceTriggerLatch != null) {
-                        mServiceTriggerLatch.countDown();
-                    }
+            @Override
+            public void onRejected(HotwordRejectedResult result) {
+                Log.i(TAG, "onRejected");
+                mRejectedResult = result;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnDetectRejectLatch != null) {
+                    mOnDetectRejectLatch.countDown();
                 }
+            }
 
-                @Override
-                public void onHotwordDetectionServiceRestarted() {
-                    Log.i(TAG, "onHotwordDetectionServiceRestarted");
+            @Override
+            public void onHotwordDetectionServiceInitialized(int status) {
+                Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
+                if (status != HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
+                    return;
                 }
-            };
-            mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector(callback);
+                mInitializedStatus = status;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mServiceTriggerLatch != null) {
+                    mServiceTriggerLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onHotwordDetectionServiceRestarted() {
+                Log.i(TAG, "onHotwordDetectionServiceRestarted");
+            }
+        };
+
+        final Handler handler = runOnMainThread ? new Handler(Looper.getMainLooper()) : mHandler;
+        handler.post(() -> runWithShellPermissionIdentity(() -> {
+            mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector(callback, useExecutor);
         }, MANAGE_HOTWORD_DETECTION));
+    }
+
+    /**
+     * Create a VisualQueryDetector but doesn't hold MANAGE_HOTWORD_DETECTION
+     */
+    public void createVisualQueryDetectorWithoutManageHotwordDetectionPermission() {
+        mServiceTriggerLatch = new CountDownLatch(1);
+        mHandler.post(() -> runWithShellPermissionIdentity(
+                () -> callCreateVisualQueryDetector(mNoOpVisualQueryDetectorCallback)));
     }
 
     /**
@@ -287,7 +384,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 }
             };
             mVisualQueryDetector = callCreateVisualQueryDetector(callback);
-        }, MANAGE_HOTWORD_DETECTION)); //Permission placeholder - Don't really need any
+        }, MANAGE_HOTWORD_DETECTION));
     }
 
     /**

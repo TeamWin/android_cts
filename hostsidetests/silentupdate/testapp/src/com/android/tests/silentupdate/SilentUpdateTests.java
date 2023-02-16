@@ -69,8 +69,8 @@ import java.util.function.Supplier;
 @RunWith(JUnit4.class)
 public class SilentUpdateTests {
     private static final String CURRENT_APK = "SilentInstallCurrent.apk";
-    private static final String Q_APK = "SilentInstallQ.apk";
     private static final String R_APK = "SilentInstallR.apk";
+    private static final String S_APK = "SilentInstallS.apk";
     private static final String INSTALLER_PACKAGE_NAME = "com.android.tests.silentupdate";
     static final long SILENT_UPDATE_THROTTLE_TIME_SECOND = 10;
 
@@ -133,17 +133,17 @@ public class SilentUpdateTests {
     }
 
     @Test
-    public void updatePreRApp_RequiresUserAction() throws Exception {
-        Assert.assertEquals("Updating to a pre-R app should require user action",
+    public void updatePreSApp_RequiresUserAction() throws Exception {
+        Assert.assertEquals("Updating to a pre-S app should require user action",
                 PackageInstaller.STATUS_PENDING_USER_ACTION,
-                silentInstallResource(Q_APK));
+                silentInstallResource(R_APK));
     }
 
     @Test
-    public void updateRApp_RequiresNoUserAction() throws Exception {
-        Assert.assertEquals("Updating to an R app should not require user action",
+    public void updateSApp_RequiresNoUserAction() throws Exception {
+        Assert.assertEquals("Updating to an S app should not require user action",
                 PackageInstaller.STATUS_SUCCESS,
-                silentInstallResource(R_APK));
+                silentInstallResource(S_APK));
     }
 
     @Test

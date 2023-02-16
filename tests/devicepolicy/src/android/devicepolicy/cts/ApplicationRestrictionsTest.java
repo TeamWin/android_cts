@@ -17,8 +17,10 @@ package android.devicepolicy.cts;
 
 import static android.content.Context.RECEIVER_EXPORTED;
 import static android.content.Intent.ACTION_APPLICATION_RESTRICTIONS_CHANGED;
+import static android.provider.DeviceConfig.NAMESPACE_DEVICE_POLICY_MANAGER;
 
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -33,6 +35,7 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -47,6 +50,8 @@ import com.android.bedstead.testapp.TestAppInstance;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
+
+import java.util.List;
 
 @RunWith(BedsteadJUnit4.class)
 public final class ApplicationRestrictionsTest {
@@ -358,5 +363,38 @@ public final class ApplicationRestrictionsTest {
         assertThrows(IllegalArgumentException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().setApplicationRestrictions(
                         sDeviceState.dpc().componentName(), "/../blah", bundle));
+    }
+
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
+    @Postsubmit(reason = "New test")
+    @CanSetPolicyTest(policy = ApplicationRestrictions.class)
+    public void getApplicationRestrictionsPerAdmin_restrictionsSetForOneAdmin_returnsApplicationRestrictions() {
+        Bundle originalApplicationRestrictions =
+                sDeviceState.dpc().devicePolicyManager()
+                        .getApplicationRestrictions(
+                                sDeviceState.dpc().componentName(), sTestApp.packageName());
+        Bundle bundle = BundleUtils.createBundle(
+                "getApplicationRestrictionsPerAdmin_applicationRestrictionsAreSetForOneAdmin"
+                        + "_returnsApplicationRestrictions");
+
+        try (TestAppInstance testApp = sTestApp.install()) {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setApplicationRestrictions(
+                            sDeviceState.dpc().componentName(), sTestApp.packageName(),
+                            bundle);
+
+            List<Bundle> restrictions = testApp.restrictionsManager()
+                    .getApplicationRestrictionsPerAdmin();
+            assertThat(restrictions.size()).isEqualTo(1);
+            BundleUtils.assertEqualToBundle("getApplicationRestrictionsPerAdmin"
+                            + "_applicationRestrictionsAreSetForOneAdmin"
+                            + "_returnsApplicationRestrictions",
+                    restrictions.get(0));
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setApplicationRestrictions(
+                    sDeviceState.dpc().componentName(),
+                    sTestApp.packageName(), originalApplicationRestrictions);
+        }
     }
 }

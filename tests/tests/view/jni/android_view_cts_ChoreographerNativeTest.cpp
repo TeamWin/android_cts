@@ -196,13 +196,17 @@ static void android_view_cts_ChoreographerNativeTest_testFrameCallbackDataDeadli
 
     verifyCallback(env, cb1, 1, start, NOMINAL_VSYNC_PERIOD * 3);
     std::lock_guard<std::mutex> _l{gLock};
-    for (auto [i, lastValue] = std::tuple{0, cb1.frameTime}; i < cb1.getTimeline().size(); i++) {
-        auto deadline = std::chrono::nanoseconds{cb1.getTimeline()[i].deadline};
+    std::vector<VsyncCallback::FrameTime> frameTimelines = cb1.getTimeline();
+    for (auto [i, lastValue] = std::tuple{0, cb1.frameTime}; i < frameTimelines.size(); i++) {
+        auto deadline = std::chrono::nanoseconds{frameTimelines[i].deadline};
         ASSERT(deadline > std::chrono::nanoseconds{start}, "Deadline must be after start time");
         ASSERT(deadline > cb1.frameTime, "Deadline must be after frame time");
         ASSERT(deadline > lastValue, "Deadline must be greater than last frame deadline");
         lastValue = deadline;
     }
+    ASSERT(std::chrono::nanoseconds{frameTimelines[frameTimelines.size() - 1].deadline} >
+                   start + std::chrono::nanoseconds{50ms},
+           "Not enough later choices for frame timelines");
 }
 
 static void

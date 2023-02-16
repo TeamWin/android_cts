@@ -17,8 +17,13 @@
 package android.jobscheduler.cts.jobtestapp;
 
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_REQUEST_JOB_UID_STATE;
+import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION;
+import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION_JOB_END_POLICY;
 
 import android.app.ActivityManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.job.JobParameters;
 import android.app.job.JobService;
 import android.content.Intent;
@@ -56,6 +61,21 @@ public class TestJobService extends JobService {
             reportJobStartIntent.putExtras(getJobUidStateExtras());
         }
         sendBroadcast(reportJobStartIntent);
+        if (transientExtras.getBoolean(EXTRA_SET_NOTIFICATION)) {
+            final NotificationManager notificationManager =
+                    getSystemService(NotificationManager.class);
+            final NotificationChannel channel =
+                    new NotificationChannel(TAG , TAG, NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+            final Notification notification = new Notification.Builder(this, TAG)
+                    .setContentTitle("Test")
+                    .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+                    .setContentText(TAG)
+                    .build();
+            setNotification(params, params.getJobId(), notification,
+                    transientExtras.getInt(EXTRA_SET_NOTIFICATION_JOB_END_POLICY,
+                            JobService.JOB_END_NOTIFICATION_POLICY_REMOVE));
+        }
         return true;
     }
 

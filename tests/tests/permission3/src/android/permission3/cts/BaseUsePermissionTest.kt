@@ -847,9 +847,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                             if (showsForegroundOnlyButton(permission)) {
                                 By.text(getPermissionControllerString(
                                         "app_permission_button_allow_foreground"))
-                            } else if (showsAllowPhotosButton(permission)) {
-                                By.text(getPermissionControllerString(
-                                        "app_permission_button_allow_all_photos"))
                             } else {
                                 By.text(getPermissionControllerString(
                                     "app_permission_button_allow"))
