@@ -37,6 +37,6 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
                 //| APPLIED_BY_DPM_ROLE_HOLDER
                 | APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO | APPLIES_TO_OWN_USER
                 | CANNOT_BE_APPLIED_BY_ROLE_HOLDER
-}, permissions = @EnterprisePolicy.Permission(appliedWith = MANAGE_DEVICE_POLICY_USB_FILE_TRANSFER, appliesTo = APPLIES_TO_OWN_USER))
+})//), permissions = @EnterprisePolicy.Permission(appliedWith = MANAGE_DEVICE_POLICY_USB_FILE_TRANSFER, appliesTo = APPLIES_TO_OWN_USER))
 public final class DisallowUsbFileTransfer {
 }

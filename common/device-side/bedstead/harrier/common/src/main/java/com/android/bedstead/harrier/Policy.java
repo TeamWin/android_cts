@@ -41,6 +41,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_UNAFFILIATED_OTHER_USERS;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DO_NOT_APPLY_TO_CANNOT_SET_POLICY_TESTS;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.INHERITABLE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.NO;
@@ -60,6 +61,7 @@ import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PE
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
+import com.android.bedstead.harrier.annotations.EnsureFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
@@ -377,6 +379,11 @@ public final class Policy {
         return new AutoAnnotation_Policy_ensureFeatureFlagEnabled(namespace, key);
     }
 
+    @AutoAnnotation
+    private static EnsureFeatureFlagNotEnabled ensureFeatureFlagNotEnabled(String namespace, String key) {
+        return new AutoAnnotation_Policy_ensureFeatureFlagNotEnabled(namespace, key);
+    }
+
     private static Function<EnterprisePolicy, Set<Annotation>> singleAnnotation(
             Annotation annotation) {
         return (i) -> ImmutableSet.of(annotation);
@@ -583,6 +590,12 @@ public final class Policy {
                         continue;
                     }
                 }
+
+                if (hasFlag(appliedByFlag.getKey(),
+                        DO_NOT_APPLY_TO_CANNOT_SET_POLICY_TESTS, /* nonMatchingFlag= */ NO)) {
+                    continue;
+                }
+
                 if ((appliedByFlag.getKey() & allFlags) == 0) {
                     annotations.addAll(appliedByFlag.getValue().apply(enterprisePolicy));
                 }
@@ -620,12 +633,13 @@ public final class Policy {
                         existingAnnotations.length + 3);
                 newAnnotations[newAnnotations.length - 3] = ensureHasDelegate(
                         EnsureHasDelegate.AdminType.PRIMARY, scopes, /* isPrimary= */ true);
-                newAnnotations[newAnnotations.length - 2] = ensureFeatureFlagEnabled(
+                newAnnotations[newAnnotations.length - 2] = ensureFeatureFlagNotEnabled(
                         NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
-                newAnnotations[newAnnotations.length - 1] = ensureFeatureFlagEnabled(
+                newAnnotations[newAnnotations.length - 1] = ensureFeatureFlagNotEnabled(
                         NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
                 annotations.add(
-                        new DynamicParameterizedAnnotation("DelegateWithoutValidScope", newAnnotations));
+                        new DynamicParameterizedAnnotation("DelegateWithoutValidScope",
+                                newAnnotations));
             }
         }
 

@@ -22,16 +22,23 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.app.admin.DevicePolicyManager;
+
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
+import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
+import com.android.bedstead.harrier.annotations.enterprise.ForceCoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.DisallowAirplaneMode;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.flags.CommonFlags;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.interactive.Step;
 import com.android.interactive.annotations.Interactive;
@@ -41,6 +48,7 @@ import com.android.interactive.steps.settings.CanYouTurnOnAirplaneModeStep;
 import com.android.interactive.steps.settings.IsThereTextExplainingThatAnITAdminHasLimitedThisFunctionalityStep;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,7 +62,7 @@ public final class AirplaneModeTest {
     @CannotSetPolicyTest(policy = DisallowAirplaneMode.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
-    public void setUserRestriction_disallowAirplaneMode_cannotSet_throwsException() {
+    public void addUserRestriction_disallowAirplaneMode_cannotSet_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().addUserRestriction(
                         sDeviceState.dpc().componentName(), DISALLOW_AIRPLANE_MODE));
@@ -63,7 +71,8 @@ public final class AirplaneModeTest {
     @PolicyAppliesTest(policy = DisallowAirplaneMode.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
-    public void setUserRestriction_disallowAirplaneMode_isSet() {
+    @Ignore // Needs RemoteDPC targetSdkVersion < U
+    public void addUserRestriction_disallowAirplaneMode_targetLessThanU_isSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
                     sDeviceState.dpc().componentName(), DISALLOW_AIRPLANE_MODE);
@@ -76,18 +85,56 @@ public final class AirplaneModeTest {
         }
     }
 
-    @PolicyDoesNotApplyTest(policy = DisallowAirplaneMode.class)
+    @PolicyAppliesTest(policy = DisallowAirplaneMode.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
-    public void setUserRestriction_disallowAirplaneMode_isNotSet() {
-        try {
+    // TODO: Add restriction for target U+
+    @CoexistenceFlagsOn
+    public void addUserRestriction_disallowAirplaneMode_targetAtLeastU_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_AIRPLANE_MODE);
+        });
+    }
+
+    @CanSetPolicyTest(policy = DisallowAirplaneMode.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
+    // TODO: Add restriction for target U+
+    // TODO: Test that this is actually global
+    @CoexistenceFlagsOn
+    @Ignore
+    public void addUserRestrictionGlobally_disallowAirplaneMode_isSet() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
+                    DISALLOW_AIRPLANE_MODE);
+
+            assertThat(TestApis.devicePolicy().userRestrictions().isSet(DISALLOW_AIRPLANE_MODE))
+                    .isTrue();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_AIRPLANE_MODE);
+        }
+    }
+
+    @CanSetPolicyTest(policy = DisallowAirplaneMode.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
+    // TODO: Add restriction for target U+
+    // TODO: Test that this is actually global
+    @CoexistenceFlagsOn
+    @Ignore
+    public void clearUserRestriction_disallowAirplaneMode_isNotSet() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
+                    DISALLOW_AIRPLANE_MODE);
+
+            sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
                     sDeviceState.dpc().componentName(), DISALLOW_AIRPLANE_MODE);
 
             assertThat(TestApis.devicePolicy().userRestrictions().isSet(DISALLOW_AIRPLANE_MODE))
                     .isFalse();
         } finally {
-
             sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
                     sDeviceState.dpc().componentName(), DISALLOW_AIRPLANE_MODE);
         }
