@@ -19,7 +19,6 @@ package android.jobscheduler.cts;
 import static android.app.job.JobInfo.NETWORK_TYPE_ANY;
 import static android.app.job.JobInfo.NETWORK_TYPE_NONE;
 import static android.jobscheduler.cts.TestAppInterface.TEST_APP_PACKAGE;
-import static android.os.PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED;
 
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
@@ -32,10 +31,7 @@ import static org.junit.Assume.assumeTrue;
 import android.app.AppOpsManager;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.os.PowerManager;
@@ -92,8 +88,8 @@ public class JobThrottlingTest {
     private PowerManager mPowerManager;
     private int mTestJobId;
     private int mTestPackageUid;
-    private boolean mDeviceInDoze;
     private boolean mDeviceIdleEnabled;
+    private boolean mDeviceLightIdleEnabled;
     private boolean mAppStandbyEnabled;
     private String mInitialDisplayTimeout;
     private String mInitialRestrictedBucketEnabled;
@@ -106,23 +102,13 @@ public class JobThrottlingTest {
     private DeviceConfigStateHelper mActivityManagerDeviceConfigStateHelper;
     private DeviceConfigStateHelper mTareDeviceConfigStateHelper;
 
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "Received action " + intent.getAction());
-            switch (intent.getAction()) {
-                case ACTION_DEVICE_IDLE_MODE_CHANGED:
-                    synchronized (JobThrottlingTest.this) {
-                        mDeviceInDoze = mPowerManager.isDeviceIdleMode();
-                        Log.d(TAG, "mDeviceInDoze: " + mDeviceInDoze);
-                    }
-                    break;
-            }
-        }
-    };
-
     private static boolean isDeviceIdleEnabled(UiDevice uiDevice) throws Exception {
         final String output = uiDevice.executeShellCommand("cmd deviceidle enabled deep").trim();
+        return Integer.parseInt(output) != 0;
+    }
+
+    private static boolean isDeviceLightIdleEnabled(UiDevice uiDevice) throws Exception {
+        final String output = uiDevice.executeShellCommand("cmd deviceidle enabled light").trim();
         return Integer.parseInt(output) != 0;
     }
 
@@ -133,16 +119,17 @@ public class JobThrottlingTest {
         mNetworkingHelper =
                 new NetworkingHelper(InstrumentationRegistry.getInstrumentation(), mContext);
         mPowerManager = mContext.getSystemService(PowerManager.class);
-        mDeviceInDoze = mPowerManager.isDeviceIdleMode();
         mTestPackageUid = mContext.getPackageManager().getPackageUid(TEST_APP_PACKAGE, 0);
         mTestJobId = (int) (SystemClock.uptimeMillis() / 1000);
         mTestAppInterface = new TestAppInterface(mContext, mTestJobId);
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ACTION_DEVICE_IDLE_MODE_CHANGED);
-        mContext.registerReceiver(mReceiver, intentFilter);
         assertFalse("Test package already in temp whitelist", isTestAppTempWhitelisted());
         makeTestPackageIdle();
         mDeviceIdleEnabled = isDeviceIdleEnabled(mUiDevice);
+        mDeviceLightIdleEnabled = isDeviceLightIdleEnabled(mUiDevice);
+        if (mDeviceIdleEnabled || mDeviceLightIdleEnabled) {
+            // Make sure the device isn't dozing since it will affect execution of regular jobs
+            toggleDozeState(false);
+        }
         mAppStandbyEnabled = AppStandbyUtils.isAppStandbyEnabled();
         if (mAppStandbyEnabled) {
             setTestPackageStandbyBucket(Bucket.ACTIVE);
@@ -1237,8 +1224,8 @@ public class JobThrottlingTest {
         AppOpsUtils.reset(TEST_APP_PACKAGE);
         // Lock thermal service to not throttling
         ThermalUtils.overrideThermalNotThrottling();
-        if (mDeviceIdleEnabled) {
-            toggleDozeState(false);
+        if (mDeviceIdleEnabled || mDeviceLightIdleEnabled) {
+            resetDozeState();
         }
         mTestAppInterface.cleanup();
         mUiDevice.executeShellCommand("cmd jobscheduler monitor-battery off");
@@ -1292,16 +1279,27 @@ public class JobThrottlingTest {
         mTestAppInterface.scheduleJob(allowWhileIdle, NETWORK_TYPE_NONE, false);
     }
 
+    private void resetDozeState() throws Exception {
+        mUiDevice.executeShellCommand("cmd deviceidle unforce");
+    }
+
     private void toggleDozeState(final boolean idle) throws Exception {
-        mUiDevice.executeShellCommand("cmd deviceidle " + (idle ? "force-idle" : "unforce"));
-        if (!idle) {
-            // Make sure the device doesn't stay idle, even after unforcing.
-            mUiDevice.executeShellCommand("cmd deviceidle motion");
+        final String changeCommand;
+        if (idle) {
+            changeCommand = "force-idle " + (mDeviceIdleEnabled ? "deep" : "light");
+        } else {
+            changeCommand = "force-active";
         }
+        mUiDevice.executeShellCommand("cmd deviceidle " + changeCommand);
         assertTrue("Could not change device idle state to " + idle,
                 waitUntilTrue(SHELL_TIMEOUT, () -> {
-                    synchronized (JobThrottlingTest.this) {
-                        return mDeviceInDoze == idle;
+                    if (idle) {
+                        return mDeviceIdleEnabled
+                                ? mPowerManager.isDeviceIdleMode()
+                                : mPowerManager.isDeviceLightIdleMode();
+                    } else {
+                        return !mPowerManager.isDeviceIdleMode()
+                                && !mPowerManager.isDeviceLightIdleMode();
                     }
                 }));
     }
