@@ -26,7 +26,7 @@ import com.google.common.collect.ImmutableSet;
 public final class AudioVolumeBehaviorCompatHostTest extends CompatChangeGatingTestCase {
 
     private static final String TEST_APK = "CtsAudioHostTestApp.apk";
-    private static final String TEST_PKG = "android.media.audio.cts";
+    private static final String TEST_PKG = "android.media.audio.app";
 
     // AudioManager#RETURN_DEVICE_VOLUME_BEHAVIOR_ABSOLUTE_ADJUST_ONLY
     private static final long CHANGE_ID = 240663182L;

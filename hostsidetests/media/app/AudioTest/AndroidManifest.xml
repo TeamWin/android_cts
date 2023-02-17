@@ -15,12 +15,12 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.media.audio.cts">
+    package="android.media.audio.app">
 
     <application>
         <uses-library android:name="android.test.runner" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="android.media.audio.cts" />
+        android:targetPackage="android.media.audio.app" />
 </manifest>

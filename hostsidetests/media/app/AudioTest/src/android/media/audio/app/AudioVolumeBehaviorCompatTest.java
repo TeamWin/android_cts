@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.audio.cts;
+package android.media.audio.app;
 
 import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 import static android.Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED;
