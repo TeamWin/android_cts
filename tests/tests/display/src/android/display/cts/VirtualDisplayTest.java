@@ -281,9 +281,6 @@ public class VirtualDisplayTest {
                 + "holding the permission ADD_TRUSTED_DISPLAY.");
     }
 
-    // sync with android.hardware.display.DisplayManager
-    private static final boolean ENABLE_VIRTUAL_DISPLAY_REFRESH_RATE = false;
-
     /**
      * Ensures that an application can create a private virtual display with a requested
      * refresh rate and show its own windows on it.
@@ -292,11 +289,6 @@ public class VirtualDisplayTest {
     public void testVirtualDisplayWithRequestedRefreshRate() throws Exception {
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, REQUESTED_REFRESH_RATE, mSurface, 0);
-        if (!ENABLE_VIRTUAL_DISPLAY_REFRESH_RATE) {
-            assertNull(virtualDisplay);
-            return;
-        }
-
         assertNotNull("virtual display must not be null", virtualDisplay);
         Display display = virtualDisplay.getDisplay();
         try {
