@@ -33,12 +33,12 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * Policy used for {@code DevicePolicyManager#setKeyguardDisabledFeatures} with
  * {@code DevicePolicyManager#KEYGUARD_DISABLE_WIDGETS_ALL}
  */
-@EnterprisePolicy(dpc = {
+@EnterprisePolicy(dpc = { // APPLIED_BY_DPM_ROLE_HOLDER
         // applies to parent only counts if there is no separate work challenge
-        APPLIED_BY_DEVICE_OWNER | APPLIED_BY_FINANCED_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | APPLIED_BY_AFFILIATED_PROFILE_OWNER | APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE | APPLIED_BY_DPM_ROLE_HOLDER | APPLIES_TO_OWN_USER | CANNOT_BE_APPLIED_BY_ROLE_HOLDER | INHERITABLE
-}, permissions = {
-        @EnterprisePolicy.Permission(appliedWith = MANAGE_DEVICE_POLICY_KEYGUARD, appliesTo = APPLIES_TO_OWN_USER)
-})
+        APPLIED_BY_DEVICE_OWNER | APPLIED_BY_FINANCED_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | APPLIED_BY_AFFILIATED_PROFILE_OWNER | APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER | CANNOT_BE_APPLIED_BY_ROLE_HOLDER | INHERITABLE
+})//, permissions = {
+//        @EnterprisePolicy.Permission(appliedWith = MANAGE_DEVICE_POLICY_KEYGUARD, appliesTo = APPLIES_TO_OWN_USER)
+//})
 // TODO: Add USES_POLICY_DISABLE_KEYGUARD_FEATURES device admin
 public final class KeyguardDisableWidgetsAll {
 }

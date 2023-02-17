@@ -37,11 +37,11 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  */
 // TODO(b/201753989):  Update the profileOwner flag once the behaviour of setCameraDisabled
 //  is properly defined on secondary user POs.
-@EnterprisePolicy(dpc = {
+@EnterprisePolicy(dpc = { // | APPLIED_BY_DPM_ROLE_HOLDER
         APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO | APPLIES_GLOBALLY,
-        APPLIED_BY_PROFILE_OWNER_PROFILE | APPLIED_BY_DPM_ROLE_HOLDER | APPLIES_TO_OWN_USER
+        APPLIED_BY_PROFILE_OWNER_PROFILE  | APPLIES_TO_OWN_USER
                 | CANNOT_BE_APPLIED_BY_ROLE_HOLDER | INHERITABLE
-}, permissions = @EnterprisePolicy.Permission(
-        appliedWith = MANAGE_DEVICE_POLICY_CAMERA, appliesTo = APPLIES_TO_OWN_USER))
+})//, permissions = @EnterprisePolicy.Permission(
+//        appliedWith = MANAGE_DEVICE_POLICY_CAMERA, appliesTo = APPLIES_TO_OWN_USER))
 public class CameraPolicy {
 }
