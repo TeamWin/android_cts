@@ -17,8 +17,12 @@
 package com.android.bedstead.harrier.annotations.enterprise;
 
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner.DO_PO_WEIGHT;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
+import com.android.bedstead.harrier.annotations.EnsureFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 
 import java.lang.annotation.ElementType;
@@ -37,6 +41,14 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 // TODO(b/206441366): Add instant app support
 @RequireNotInstantApp(reason = "Instant Apps cannot run Enterprise Tests")
+@EnsureFeatureFlagNotEnabled(
+        namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
+        key = ENABLE_DEVICE_POLICY_ENGINE_FLAG
+)
+@EnsureFeatureFlagNotEnabled(
+        namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
+        key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG
+)
 public @interface EnsureHasDelegate {
 
     int ENSURE_HAS_DELEGATE_WEIGHT = DO_PO_WEIGHT + 1; // Should run after setting DO/PO

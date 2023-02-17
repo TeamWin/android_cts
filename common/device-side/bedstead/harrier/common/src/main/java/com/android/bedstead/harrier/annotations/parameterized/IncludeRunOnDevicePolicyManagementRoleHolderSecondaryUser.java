@@ -19,7 +19,7 @@ package com.android.bedstead.harrier.annotations.parameterized;
 import static com.android.bedstead.harrier.UserType.ANY;
 import static com.android.bedstead.harrier.UserType.SYSTEM_USER;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
-import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_COEXISTENCE_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 
@@ -45,7 +45,7 @@ import java.lang.annotation.Target;
 @EnsureHasDevicePolicyManagerRoleHolder(onUser = SYSTEM_USER, isPrimary = true)
 @EnsureFeatureFlagEnabled(
         namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
-        key = ENABLE_COEXISTENCE_FLAG
+        key = ENABLE_DEVICE_POLICY_ENGINE_FLAG
 )
 @EnsureFeatureFlagEnabled(
         namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
