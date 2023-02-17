@@ -4475,18 +4475,18 @@
             </intent-filter>
         </activity-alias>
 
-        <activity-alias
-            android:name=".CtsInteractiveContinueActivity"
-            android:label="Continue Test"
-            android:exported="true"
-            android:targetActivity=".CtsInteractiveActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+<!--        <activity-alias-->
+<!--            android:name=".CtsInteractiveContinueActivity"-->
+<!--            android:label="Continue Test"-->
+<!--            android:exported="true"-->
+<!--            android:targetActivity=".CtsInteractiveActivity">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
 
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />-->
+<!--            </intent-filter>-->
+<!--        </activity-alias>-->
 
         <!-- remove comment from the next activity to see the sample test surfacing in the app -->
         <!-- activity android:name=".sample.SampleTestActivity"
