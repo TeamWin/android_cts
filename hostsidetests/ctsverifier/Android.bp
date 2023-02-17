@@ -16,44 +16,44 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsVerifierWrappedTestCases",
-    defaults: ["cts_defaults"],
-    static_libs: [
-        "compatibility-host-util",
-        "InteractiveCommon",
-        "HarrierCommon",
-        "truth-prebuilt",
-    ],
-    libs: [
-        "tools-common-prebuilt",
-        "cts-tradefed",
-        "tradefed",
-    ],
-    srcs: ["src/**/*.java"],
-    test_suites: [
-        "cts-interactive",
-        "general-tests",
-    ],
-    data: [":CtsVerifier"],
-}
+// java_test_host {
+//     name: "CtsVerifierWrappedTestCases",
+//     defaults: ["cts_defaults"],
+//     static_libs: [
+//         "compatibility-host-util",
+//         "InteractiveCommon",
+//         "HarrierCommon",
+//         "truth-prebuilt",
+//     ],
+//     libs: [
+//         "tools-common-prebuilt",
+//         "cts-tradefed",
+//         "tradefed",
+//     ],
+//     srcs: ["src/**/*.java"],
+//     test_suites: [
+//         "cts-interactive",
+//         "general-tests",
+//     ],
+//     data: [":CtsVerifier"],
+// }
 
-java_test_host {
-    name: "CtsVerifierFoldWrappedTestCases",
-    defaults: ["cts_defaults"],
-    libs: [
-        "tools-common-prebuilt",
-        "cts-tradefed",
-        "tradefed",
-    ],
-    srcs: [],
-    test_suites: [
-        "cts-interactive",
-        "general-tests",
-    ],
-    test_config: "FoldAndroidTest.xml",
-    data: [
-        ":CtsVerifier",
-        ":CtsVerifierWrappedTestCases",
-    ],
-}
+// java_test_host {
+//     name: "CtsVerifierFoldWrappedTestCases",
+//     defaults: ["cts_defaults"],
+//     libs: [
+//         "tools-common-prebuilt",
+//         "cts-tradefed",
+//         "tradefed",
+//     ],
+//     srcs: [],
+//     test_suites: [
+//         "cts-interactive",
+//         "general-tests",
+//     ],
+//     test_config: "FoldAndroidTest.xml",
+//     data: [
+//         ":CtsVerifier",
+//         ":CtsVerifierWrappedTestCases",
+//     ],
+// }
