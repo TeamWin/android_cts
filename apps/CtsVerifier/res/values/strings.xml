@@ -5414,14 +5414,33 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="midi_test">MIDI Test</string>
     <string name="midi_java_test">Java MIDI Test</string>
     <string name="midi_native_test">Native MIDI Test</string>
+
     <string name="midi_info">
-       For the USB MIDI interface test, connect a supported USB Audio Peripheral device that has
-       standard MIDI 5-pin, DIN (round) connectors and a standard MIDI cable. The cable must be
-       connected to the MIDI input and output plugs on the peripheral.
-       \nFor the USB Bluetooth test it is required that you connect a Yamaha MD-BT01 to the
-       correct MIDI plugs on the USB peripheral, the BT01 output jack to the USB interface
-       input jack and BT01 input plug to the USB interface output jack.
-       \nThe Virtual MIDI test does not require any MIDI interface hardware.
+        Tests for basic MIDI functionality.
+        \n\n1. Test Setup - USB MIDI:
+        \nConnect a supported USB Audio Peripheral device that has standard MIDI 5-pin, DIN (round)
+        connectors and a standard MIDI cable. The cable must be connected to the MIDI input and
+        output jacks on the peripheral.
+        \n\n2. Test Setup - Bluetooth MIDI:
+        \na. Download and install the "MIDI+BTLE" app from the Play Store.
+        \nb. Connect a supported USB Audio Peripheral device that has standard MIDI 5-pin, DIN (round)
+        connectors and connect the MIDI ports to a Bluetooth MIDI adapter (such as the Yamaha
+        MD-BT01). Be sure to connect the MD-BT01 so that the arrow on the MD-BT01 plug points away
+        from the Output jack on the USB peripheral. The other plug should have an arrow pointing
+        towards the Input jack.
+        \nc. Run the \"MIDI+BTLE\" app, click on "Bluetooth Scan" and select the Bluetooth MIDI adapter
+        connected to the USB Audio Peripheral. Note that the \"Test Bluetooth MIDI Interface\"
+        button will be enabled.
+        \n\n2. Test Setup - Virtual MIDI:
+        \nThe Virtual MIDI test does not require any MIDI interface hardware.
+        \n\nTest Process:
+        \n1. Follow instructions for \"Test Setup - USB MIDI\"
+        \n2. Press the \"Test US MIDI Interface\" button. Note test results.
+        \n3. Press the \"Test Virtual MIDI Interface\" button. Note test results.
+        \n4. Follow instructions for \"Test Setup - Bluetooth MIDI\"
+        \n5. Press the \"Test Bluetooth MIDI Interface\" button. Note test results.
+        \n\nTest Criteria:
+        \nAll sub-tests must pass for this test to pass.
     </string>
     <string name="analog_headset_test_info_tv">This test tests the following functionality with respect to wired analog headsets.\n
         1. Correct audio playback.\n
@@ -5438,7 +5457,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="usb_midi_audio_info">
        Connect a supported USB Audio Peripheral device that has standard MIDI 5-pin, DIN (round)
        connectors and a standard MIDI cable. The cable must be connected to the MIDI input and
-       output plugs on the peripheral.
+       output jacks on the peripheral.
        \nPlease attach a wired headset with a 3.5mm jack to the audio output of this peripheral.
        \nTest the USB MIDI interface first. Then, press the PLAY to button test audio. Verify
        that a tone is correctly played.
