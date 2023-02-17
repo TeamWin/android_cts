@@ -67,6 +67,9 @@ public class NullBindingCallScreeningServiceTest extends BaseTelecomTestWithMock
     }
 
     public void testNullBindingOnIncomingCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         Uri testNumber = createRandomTestNumber();
         Bundle extras = new Bundle();
         extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, testNumber);
@@ -82,9 +85,14 @@ public class NullBindingCallScreeningServiceTest extends BaseTelecomTestWithMock
     }
 
     public void testNullBindingOnOutgoingCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         Uri testNumber = createRandomTestNumber();
         Bundle extras = new Bundle();
         extras.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, TEST_OUTGOING_NUMBER);
+        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
+                TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
 
         // Verify that binding latch counts are reset for testing
         assertBindLatchInit();
