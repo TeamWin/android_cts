@@ -16,12 +16,17 @@
 
 package com.android.bedstead.nene.logcat;
 
+import static org.testng.Assert.fail;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.nene.TestApis;
+import com.android.interactive.annotations.Interactive;
+
+import com.google.common.truth.Truth;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -34,12 +39,25 @@ public final class LogcatTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    // TODO: temp Test - replace with better ones
-    @Test
-    public void test() {
-        DevicePolicyManager devicePolicyManager = TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
+    private static final DevicePolicyManager sDevicePolicyManager =
+            TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
 
-        devicePolicyManager.getPasswordExpirationTimeout(new ComponentName("A.B", "C"));
+    @Test
+    @Interactive
+    public void throwsException_exceptionContainsActualServerSideInformation() {
+        // TODO: Ask the user to enable Binder.LOG_RUNTIME_EXCEPTION
+        try {
+            sDevicePolicyManager.getPasswordExpirationTimeout(
+                    new ComponentName("A.B", "C"));
+
+            fail("Expected SecurityException");
+        } catch (SecurityException expected) {
+            SystemServerException systemServerException =
+                    TestApis.logcat().findSystemServerException(expected);
+
+            Truth.assertThat(systemServerException).hasMessageThat().contains("does not exist");
+            Truth.assertThat(systemServerException).hasCauseThat().isInstanceOf(SecurityException.class);
+        }
     }
 
 }
