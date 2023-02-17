@@ -33,6 +33,7 @@ import android.jobscheduler.TestActivity;
 import android.jobscheduler.TriggerContentJobService;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.os.Process;
 import android.os.SystemClock;
 import android.os.UserHandle;
@@ -82,6 +83,9 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     boolean mStorageStateChanged;
     boolean mActivityStarted;
 
+    private boolean mDeviceIdleEnabled;
+    private boolean mDeviceLightIdleEnabled;
+
     private String mInitialBatteryStatsConstants;
 
     @Override
@@ -125,6 +129,13 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         kTriggerTestEnvironment.setUp();
         mJobScheduler.cancelAll();
 
+        mDeviceIdleEnabled = isDeviceIdleEnabled();
+        mDeviceLightIdleEnabled = isDeviceLightIdleEnabled();
+        if (mDeviceIdleEnabled || mDeviceLightIdleEnabled) {
+            // Make sure the device isn't dozing since it will affect execution of regular jobs
+            setDeviceIdleState(false);
+        }
+
         mInitialBatteryStatsConstants = Settings.Global.getString(mContext.getContentResolver(),
                 Settings.Global.BATTERY_STATS_CONSTANTS);
         // Make sure ACTION_CHARGING is sent immediately.
@@ -151,6 +162,10 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
 
         if (mActivityStarted) {
             closeActivity();
+        }
+
+        if (mDeviceIdleEnabled || mDeviceLightIdleEnabled) {
+            resetDeviceIdleState();
         }
 
         // The super method should be called at the end.
@@ -182,6 +197,20 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
                 fail("Timed out waiting for permission revoke");
             }
         }
+    }
+
+    boolean isDeviceIdleFeatureEnabled() throws Exception {
+        return mDeviceIdleEnabled || mDeviceLightIdleEnabled;
+    }
+
+    static boolean isDeviceIdleEnabled() throws Exception {
+        final String output = SystemUtil.runShellCommand("cmd deviceidle enabled deep").trim();
+        return Integer.parseInt(output) != 0;
+    }
+
+    static boolean isDeviceLightIdleEnabled() throws Exception {
+        final String output = SystemUtil.runShellCommand("cmd deviceidle enabled light").trim();
+        return Integer.parseInt(output) != 0;
     }
 
     /** Returns the current storage-low state, as believed by JobScheduler. */
@@ -268,6 +297,10 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         Thread.sleep(2_000);
     }
 
+    void resetDeviceIdleState() throws Exception {
+        SystemUtil.runShellCommand("cmd deviceidle unforce");
+    }
+
     void setBatteryState(boolean plugged, int level) throws Exception {
         SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery on");
         if (plugged) {
@@ -297,6 +330,28 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
                             SystemUtil.runShellCommand(getInstrumentation(),
                                     "cmd jobscheduler get-battery-charging").trim());
                     return curSeq >= seq && curCharging == plugged;
+                });
+    }
+
+    void setDeviceIdleState(final boolean idle) throws Exception {
+        final String changeCommand;
+        if (idle) {
+            changeCommand = "force-idle " + (mDeviceIdleEnabled ? "deep" : "light");
+        } else {
+            changeCommand = "force-active";
+        }
+        SystemUtil.runShellCommand("cmd deviceidle " + changeCommand);
+        waitUntil("Could not change device idle state to " + idle, 15 /* seconds */,
+                () -> {
+                    PowerManager powerManager = getContext().getSystemService(PowerManager.class);
+                    if (idle) {
+                        return mDeviceIdleEnabled
+                                ? powerManager.isDeviceIdleMode()
+                                : powerManager.isDeviceLightIdleMode();
+                    } else {
+                        return !powerManager.isDeviceIdleMode()
+                                && !powerManager.isDeviceLightIdleMode();
+                    }
                 });
     }
 

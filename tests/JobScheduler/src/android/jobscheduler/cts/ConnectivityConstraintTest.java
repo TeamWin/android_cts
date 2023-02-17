@@ -19,8 +19,6 @@ import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
 
-import static com.android.compatibility.common.util.TestUtils.waitUntil;
-
 import static org.junit.Assert.assertNotEquals;
 
 import android.annotation.TargetApi;
@@ -33,7 +31,6 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
-import android.os.PowerManager;
 import android.platform.test.annotations.RequiresDevice;
 import android.provider.Settings;
 import android.util.Log;
@@ -106,10 +103,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mJobScheduler.cancel(CONNECTIVITY_JOB_ID);
 
         BatteryUtils.runDumpsysBatteryReset();
-
-        if (isDeviceIdleFeatureEnabled()) {
-            toggleDozeState(false);
-        }
 
         // Restore initial restricted bucket setting.
         Settings.Global.putString(mContext.getContentResolver(),
@@ -463,7 +456,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mTestAppInterface.scheduleJob(false,  JobInfo.NETWORK_TYPE_ANY, true);
 
         toggleScreenOn(false);
-        toggleDozeState(true);
+        setDeviceIdleState(true);
         if (mHasWifi) {
             setWifiMeteredState(true);
         } else if (checkDeviceSupportsMobileData()) {
@@ -616,7 +609,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mTestAppInterface.scheduleJob(false,  JobInfo.NETWORK_TYPE_ANY, false, true);
 
         toggleScreenOn(false);
-        toggleDozeState(true);
+        setDeviceIdleState(true);
         if (mHasWifi) {
             setWifiMeteredState(true);
         } else if (checkDeviceSupportsMobileData()) {
@@ -1003,20 +996,5 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      */
     private void setDataSaverEnabled(boolean enabled) throws Exception {
         mNetworkingHelper.setDataSaverEnabled(enabled);
-    }
-
-    private static boolean isDeviceIdleFeatureEnabled() throws Exception {
-        final String output = SystemUtil.runShellCommand("cmd deviceidle enabled deep").trim();
-        return Integer.parseInt(output) != 0;
-    }
-
-    private void toggleDozeState(final boolean idle) throws Exception {
-        SystemUtil.runShellCommand("cmd deviceidle " + (idle ? "force-idle" : "unforce"));
-        if (!idle) {
-            // Make sure the device doesn't stay idle, even after unforcing.
-            SystemUtil.runShellCommand("cmd deviceidle motion");
-        }
-        waitUntil("Could not change device idle state to " + idle, 15 /* seconds */,
-                () -> getContext().getSystemService(PowerManager.class).isDeviceIdleMode() == idle);
     }
 }
