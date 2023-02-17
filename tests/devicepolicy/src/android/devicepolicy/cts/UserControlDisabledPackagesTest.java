@@ -67,6 +67,16 @@ public final class UserControlDisabledPackagesTest {
 
     private static final String PACKAGE_NAME = "com.android.foo.bar.baz";
 
+    @CannotSetPolicyTest(policy = UserControlDisabledPackages.class, includeNonDeviceAdminStates = false)
+    @Postsubmit(reason = "New test")
+    public void setUserControlDisabledPackages_notPermitted_throwsException() {
+        assertThrows(SecurityException.class, () -> {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setUserControlDisabledPackages(DPC_COMPONENT_NAME,
+                            Arrays.asList(PACKAGE_NAME));
+        });
+    }
+
     @CanSetPolicyTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "New test")
     public void setUserControlDisabledPackages_verifyMetricIsLogged() {

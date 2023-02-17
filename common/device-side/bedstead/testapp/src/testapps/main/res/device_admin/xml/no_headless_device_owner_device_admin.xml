@@ -25,5 +25,6 @@
         <force-lock />
         <limit-password />
         <disable-camera />
+        <expire-password />
     </uses-policies>
 </device-admin>

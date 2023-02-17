@@ -317,11 +317,15 @@ public class BuildTest extends TestCase {
                 "First SDK version " + Build.VERSION.DEVICE_INITIAL_SDK_INT
                         + " is invalid; must be at least VERSION_CODES.BASE",
                 Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.BASE);
-        assertTrue(
-                "Current SDK version " + Build.VERSION.SDK_INT
-                        + " must be at least first SDK version "
-                        + Build.VERSION.DEVICE_INITIAL_SDK_INT,
-                Build.VERSION.SDK_INT >= Build.VERSION.DEVICE_INITIAL_SDK_INT);
+
+        // During development of a new release SDK_INT is less than DEVICE_INITIAL_SDK_INT
+        if (Build.VERSION.CODENAME.equals("REL")) {
+            assertTrue(
+                    "Current SDK version " + Build.VERSION.SDK_INT
+                            + " must be at least first SDK version "
+                            + Build.VERSION.DEVICE_INITIAL_SDK_INT,
+                    Build.VERSION.SDK_INT >= Build.VERSION.DEVICE_INITIAL_SDK_INT);
+        }
     }
 
     /**

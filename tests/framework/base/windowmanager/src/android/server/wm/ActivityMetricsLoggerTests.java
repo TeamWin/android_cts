@@ -162,6 +162,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     }
 
     private void assertTransitionIsStartingWindow(LogMaker log) {
+        if (isLeanBack()) return;
         assertEquals("transition should be started because of starting window",
                 1 /* APP_TRANSITION_STARTING_WINDOW */, log.getSubtype());
         assertNotNull("log should have starting window delay",

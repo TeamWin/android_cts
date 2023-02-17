@@ -105,7 +105,6 @@ public final class WipeDataTest {
     @RequireRunOnSystemUser
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#wipeData")
     public void wipeData_systemUser_throwsSecurityException() {
-
         assertThrows("System user should not be removed",
                 SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().wipeData(/* flags= */ 0));

@@ -40,6 +40,7 @@ import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ThrowingRunnable;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.After;
 import org.junit.Test;
@@ -687,8 +688,14 @@ public class RestrictedStoragePermissionTest {
             @NonNull String app,
             @Nullable Set<String> whitelistedPermissions)
             throws Exception {
+        String bypassLowTargetSdkFlag = "";
+        if (SdkLevel.isAtLeastU()) {
+            bypassLowTargetSdkFlag = " --bypass-low-target-sdk-block";
+        }
+
         // Install the app and whitelist/grant all permission if requested.
-        String installResult = runShellCommand("pm install -r --restrict-permissions " + app);
+        String installResult = runShellCommand("pm install"
+                + bypassLowTargetSdkFlag + " -t -r --restrict-permissions " + app);
         assertThat(installResult.trim()).isEqualTo("Success");
 
         final Set<String> adjustedWhitelistedPermissions;

@@ -83,7 +83,8 @@ public @interface EnterprisePolicy {
             APPLIES_TO_UNAFFILIATED_OTHER_USERS | APPLIES_TO_AFFILIATED_OTHER_USERS;
 
     /** A policy that applies to all users on the device. */
-    int APPLIES_GLOBALLY = APPLIES_TO_OWN_USER | APPLIES_TO_OTHER_USERS | APPLIES_TO_CHILD_PROFILES;
+    int APPLIES_GLOBALLY = APPLIES_TO_OWN_USER | APPLIES_TO_OTHER_USERS
+            | APPLIES_TO_CHILD_PROFILES | APPLIES_TO_PARENT;
 
 
     // Applied by

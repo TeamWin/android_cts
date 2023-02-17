@@ -16,6 +16,7 @@
 
 package android.os.cts;
 
+import static android.os.PowerManager.LOW_POWER_STANDBY_ALLOWED_REASON_ONGOING_CALL;
 import static android.os.PowerManager.LOW_POWER_STANDBY_ALLOWED_REASON_TEMP_POWER_SAVE_ALLOWLIST;
 import static android.os.PowerManager.LOW_POWER_STANDBY_ALLOWED_REASON_VOICE_INTERACTION;
 import static android.os.PowerManager.LOW_POWER_STANDBY_FEATURE_WAKE_ON_LAN;
@@ -37,6 +38,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ServiceInfo;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.os.PowerExemptionManager;
@@ -89,7 +91,7 @@ public class LowPowerStandbyTest {
     private static final long LOW_POWER_STANDBY_ACTIVATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
     private static final String SYSTEM_WAKE_LOCK_TAG = "LowPowerStandbyTest:KeepSystemAwake";
-    private static final String TEST_WAKE_LOCK_TAG = "LowPowerStandbyTest:TestWakeLock";
+    public static final String TEST_WAKE_LOCK_TAG = "LowPowerStandbyTest:TestWakeLock";
     private static final LowPowerStandbyPortDescription PORT_DESC_1 =
             new LowPowerStandbyPortDescription(PROTOCOL_UDP, MATCH_PORT_REMOTE, 1234);
 
@@ -500,6 +502,53 @@ public class LowPowerStandbyTest {
                 WAKELOCK_STATE_TIMEOUT, () -> !isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
 
         testWakeLock.release();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.PowerManager#setLowPowerStandbyPolicy",
+            "android.os.PowerManager#LOW_POWER_STANDBY_ALLOWED_REASON_ONGOING_CALL"})
+    @AppModeFull(reason = "Instant apps cannot hold MANAGE_LOW_POWER_STANDBY permission")
+    @EnsureHasPermission(Manifest.permission.MANAGE_LOW_POWER_STANDBY)
+    @EnsureFeatureFlagEnabled(namespace = DEVICE_CONFIG_NAMESPACE,
+            key = DEVICE_CONFIG_FEATURE_FLAG_ENABLE_POLICY)
+    public void testLowPowerStandby_allowedReason_ongoingCall_phoneCallServiceExempt()
+            throws Exception {
+        Intent intent = LowPowerStandbyForegroundService.createIntentWithForegroundServiceType(
+                mContext, ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL);
+        mContext.startForegroundService(intent);
+
+        mPowerManager.forceLowPowerStandbyActive(true);
+        PollingCheck.check("Test wakelock not disabled", WAKELOCK_STATE_TIMEOUT,
+                () -> isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
+
+        mPowerManager.setLowPowerStandbyPolicy(
+                policyWithAllowedReasons(LOW_POWER_STANDBY_ALLOWED_REASON_ONGOING_CALL));
+        PollingCheck.check("Test wakelock disabled, though UID should be exempt",
+                WAKELOCK_STATE_TIMEOUT, () -> !isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
+
+        mContext.stopService(intent);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.PowerManager#setLowPowerStandbyPolicy",
+            "android.os.PowerManager#LOW_POWER_STANDBY_ALLOWED_REASON_ONGOING_CALL"})
+    @AppModeFull(reason = "Instant apps cannot hold MANAGE_LOW_POWER_STANDBY permission")
+    @EnsureHasPermission(Manifest.permission.MANAGE_LOW_POWER_STANDBY)
+    @EnsureFeatureFlagEnabled(namespace = DEVICE_CONFIG_NAMESPACE,
+            key = DEVICE_CONFIG_FEATURE_FLAG_ENABLE_POLICY)
+    public void testLowPowerStandby_allowedReason_ongoingCall_otherFgsServiceNotExempt()
+            throws Exception {
+        Intent intent = LowPowerStandbyForegroundService.createIntentWithForegroundServiceType(
+                mContext, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+        mContext.startForegroundService(intent);
+        mPowerManager.setLowPowerStandbyPolicy(
+                policyWithAllowedReasons(LOW_POWER_STANDBY_ALLOWED_REASON_ONGOING_CALL));
+        mPowerManager.forceLowPowerStandbyActive(true);
+
+        PollingCheck.check("Test wakelock not disabled", WAKELOCK_STATE_TIMEOUT,
+                () -> isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
+
+        mContext.stopService(intent);
     }
 
     @Test

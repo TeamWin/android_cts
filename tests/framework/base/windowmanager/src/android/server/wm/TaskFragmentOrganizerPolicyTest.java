@@ -37,6 +37,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -56,7 +57,9 @@ import android.window.TaskFragmentOrganizer;
 import android.window.TaskOrganizer;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
+import android.window.WindowContainerTransactionCallback;
 
+import androidx.annotation.NonNull;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -819,6 +822,31 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             });
         }
     }
+
+    /**
+     * Verifies that {@link TaskFragmentOrganizer#applySyncTransaction} is not allowed.
+     */
+    @Test
+    @ApiTest(apis = {"android.window.TaskFragmentOrganizer#applySyncTransaction"})
+    public void testApplySyncTransaction_disallowed() {
+        final Activity activity = startNewActivity();
+        final TaskFragmentInfo taskFragmentInfo = createOrganizedTaskFragment(
+                mTaskFragmentOrganizer, activity);
+
+        final WindowContainerTransaction wct = new WindowContainerTransaction()
+                .deleteTaskFragment(taskFragmentInfo.getFragmentToken());
+        final WindowContainerTransactionCallback callback =
+                new WindowContainerTransactionCallback() {
+                    @Override
+                    public void onTransactionReady(int id, @NonNull SurfaceControl.Transaction t) {
+                        fail("Transaction shouldn't be executed");
+                    }
+                };
+
+        assertThrows(SecurityException.class,
+                () -> mTaskFragmentOrganizer.applySyncTransaction(wct, callback));
+    }
+
     /**
      * Creates and registers a {@link TaskFragmentOrganizer} that will be unregistered in
      * {@link #tearDown()}.

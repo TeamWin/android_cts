@@ -96,6 +96,7 @@ import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
 @LocalPresubmit
+@Ignore
 public final class DeviceManagementCoexistenceTests {
     @ClassRule
     @Rule

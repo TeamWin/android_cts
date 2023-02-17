@@ -159,4 +159,27 @@ public class VcnGatewayConnectionConfigTest extends VcnTestBase {
         } catch (IllegalArgumentException e) {
         }
     }
+
+    @Test
+    public void testBuilderSetMinUdpPort4500NatTimeout() {
+        final int natTimeoutSeconds = 600;
+        final VcnGatewayConnectionConfig gatewayConnConfig = buildVcnGatewayConnectionConfigBase()
+                .setMinUdpPort4500NatTimeoutSeconds(600).build();
+        assertEquals(natTimeoutSeconds, gatewayConnConfig.getMinUdpPort4500NatTimeoutSeconds());
+    }
+
+    @Test
+    public void testBuilderSetMinUdpPort4500NatTimeout_invalidValues() {
+        try {
+            buildVcnGatewayConnectionConfigBase().setMinUdpPort4500NatTimeoutSeconds(-1);
+            fail("Expected exception due to invalid timeout range");
+        } catch (IllegalArgumentException e) {
+        }
+
+        try {
+            buildVcnGatewayConnectionConfigBase().setMinUdpPort4500NatTimeoutSeconds(119);
+            fail("Expected exception due to invalid timeout range");
+        } catch (IllegalArgumentException e) {
+        }
+    }
 }

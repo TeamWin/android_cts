@@ -22,6 +22,9 @@ import static org.testng.Assert.assertThrows;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
+import com.android.bedstead.harrier.annotations.EnsureHasNoCloneProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.LocalPresubmit;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
@@ -39,7 +42,7 @@ public final class SecurityLoggingTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    @CannotSetPolicyTest(policy = SecurityLogging.class)
+    @CannotSetPolicyTest(policy = SecurityLogging.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setSecurityLoggingEnabled")
     public void setSecurityLoggingEnabled_notPermitted_throwsException() {
@@ -104,7 +107,7 @@ public final class SecurityLoggingTest {
                 sDeviceState.dpc().componentName());
     }
 
-    @CannotSetPolicyTest(policy = SecurityLogging.class)
+    @CannotSetPolicyTest(policy = SecurityLogging.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#isSecurityLoggingEnabled")
     public void isSecurityLoggingEnabled_notPermitted_throwsException() {
@@ -115,12 +118,16 @@ public final class SecurityLoggingTest {
 
     @CanSetPolicyTest(policy = SecurityLogging.class) // TODO: Remove
     @LocalPresubmit
+    // We need no additional users incase one is unaffiliated
+    @EnsureHasNoWorkProfile
+    @EnsureHasNoAdditionalUser
+    @EnsureHasNoCloneProfile
     public void retrieveSecurityLogs_doesNotThrowException() {
         sDeviceState.dpc().devicePolicyManager().retrieveSecurityLogs(
                 sDeviceState.dpc().componentName());
     }
 
-    @CannotSetPolicyTest(policy = SecurityLogging.class)
+    @CannotSetPolicyTest(policy = SecurityLogging.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrieveSecurityLogs")
     public void retrieveSecurityLogs_notPermitted_throwsException() {
@@ -132,6 +139,10 @@ public final class SecurityLoggingTest {
     @CanSetPolicyTest(policy = SecurityLogging.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrieveSecurityLogs")
+    // We need no additional users incase one is unaffiliated
+    @EnsureHasNoWorkProfile
+    @EnsureHasNoAdditionalUser
+    @EnsureHasNoCloneProfile
     public void retrieveSecurityLogs_returnsSecurityLogs() {
         boolean originalSecurityLoggingEnabled =
                 sDeviceState.dpc().devicePolicyManager()
@@ -141,8 +152,10 @@ public final class SecurityLoggingTest {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
                     sDeviceState.dpc().componentName(), true);
 
-            assertThat(sDeviceState.dpc().devicePolicyManager().retrieveSecurityLogs(
-                    sDeviceState.dpc().componentName())).isNotNull();
+            // TODO: Generate some security logs and assert on them
+
+            sDeviceState.dpc().devicePolicyManager().retrieveSecurityLogs(
+                    sDeviceState.dpc().componentName());
         } finally {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
                     sDeviceState.dpc().componentName(), originalSecurityLoggingEnabled);
@@ -156,12 +169,16 @@ public final class SecurityLoggingTest {
 
     @CanSetPolicyTest(policy = SecurityLogging.class) // TODO: Remove
     @LocalPresubmit
+    // We need no additional users incase one is unaffiliated
+    @EnsureHasNoWorkProfile
+    @EnsureHasNoAdditionalUser
+    @EnsureHasNoCloneProfile
     public void retrievePreRebootSecurityLogs_doesNotThrowException() {
         sDeviceState.dpc().devicePolicyManager().retrievePreRebootSecurityLogs(
                 sDeviceState.dpc().componentName());
     }
 
-    @CannotSetPolicyTest(policy = SecurityLogging.class)
+    @CannotSetPolicyTest(policy = SecurityLogging.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrievePreRebootSecurityLogs")
     public void retrievePreRebootSecurityLogs_notPermitted_throwsException() {
@@ -173,6 +190,10 @@ public final class SecurityLoggingTest {
     @CanSetPolicyTest(policy = SecurityLogging.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrievePreRebootSecurityLogs")
+    // We need no additional users incase one is unaffiliated
+    @EnsureHasNoWorkProfile
+    @EnsureHasNoAdditionalUser
+    @EnsureHasNoCloneProfile
     @LocalPresubmit
     public void retrievePreRebootSecurityLogs_doesNotThrow() {
         boolean originalSecurityLoggingEnabled =

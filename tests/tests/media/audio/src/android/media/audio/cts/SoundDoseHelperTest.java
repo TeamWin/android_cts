@@ -108,7 +108,7 @@ public class SoundDoseHelperTest extends CtsAndroidTestCase {
         Log.e("SoundDoseHelperTest", "Calling setUp");
         mContext = getContext();
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
-                Manifest.permission.MODIFY_AUDIO_SYSTEM_SETTINGS,
+                Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED,
                 Manifest.permission.STATUS_BAR_SERVICE);
     }
 

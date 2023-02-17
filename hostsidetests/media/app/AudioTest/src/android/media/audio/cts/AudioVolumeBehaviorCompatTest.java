@@ -17,7 +17,7 @@
 package android.media.audio.cts;
 
 import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
-import static android.Manifest.permission.MODIFY_AUDIO_SYSTEM_SETTINGS;
+import static android.Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -72,7 +72,7 @@ public class AudioVolumeBehaviorCompatTest {
                 .getSystemService(Context.AUDIO_DEVICE_VOLUME_SERVICE);
 
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        uiAutomation.adoptShellPermissionIdentity(MODIFY_AUDIO_SYSTEM_SETTINGS,
+        uiAutomation.adoptShellPermissionIdentity(MODIFY_AUDIO_SETTINGS_PRIVILEGED,
                 BLUETOOTH_PRIVILEGED);
     }
 

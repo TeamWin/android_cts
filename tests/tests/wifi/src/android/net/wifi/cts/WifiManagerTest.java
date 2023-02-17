@@ -35,6 +35,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.annotation.NonNull;
 import android.app.UiAutomation;
@@ -113,6 +114,8 @@ import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.modules.utils.build.SdkLevel;
 import com.android.net.module.util.MacAddressUtils;
+
+import com.google.common.collect.Range;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -1203,6 +1206,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         mWifiManager.isMakeBeforeBreakWifiSwitchingSupported();
         mWifiManager.isStaBridgedApConcurrencySupported();
         mWifiManager.isDualBandSimultaneousSupported();
+        mWifiManager.isTidToLinkMappingNegotiationSupported();
     }
 
     /**
@@ -6437,5 +6441,88 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
+    }
+
+    /**
+     * Tests {@link WifiManager#setLinkMode} and {@link WifiManager#getLinkMode} works
+     */
+    public void testMloMode() {
+        // Skip the test if Wifi is not supported.
+        if (!WifiFeature.isWifiSupported(getContext())) return;
+        // Need elevated permission.
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity();
+        // Get listener.
+        AtomicInteger getMode = new AtomicInteger();
+        Consumer<Integer> getListener = new Consumer<Integer>() {
+            @Override
+            public void accept(Integer value) {
+                synchronized (mLock) {
+                    getMode.set(value);
+                    mLock.notify();
+                }
+            }
+        };
+        // Set listener.
+        AtomicBoolean setStatus = new AtomicBoolean();
+        Consumer<Boolean> setListener = new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean value) {
+                synchronized (mLock) {
+                    setStatus.set(value);
+                    mLock.notify();
+                }
+            }
+        };
+        // Test that invalid inputs trigger an exception.
+        assertThrows("null executor should trigger exception", NullPointerException.class,
+                () -> mWifiManager.setMloMode(WifiManager.MLO_MODE_DEFAULT, null, setListener));
+        assertThrows("null listener should trigger exception", NullPointerException.class,
+                () -> mWifiManager.setMloMode(WifiManager.MLO_MODE_DEFAULT, mExecutor, null));
+        assertThrows("null executor should trigger exception", NullPointerException.class,
+                () -> mWifiManager.getMloMode(null, getListener));
+        assertThrows("null listener should trigger exception", NullPointerException.class,
+                () -> mWifiManager.getMloMode(mExecutor, null));
+
+        // Test that invalid inputs trigger an IllegalArgumentException.
+        assertThrows("Invalid mode", IllegalArgumentException.class,
+                () -> mWifiManager.setMloMode(-1, mExecutor, setListener));
+        assertThrows("Invalid mode", IllegalArgumentException.class,
+                () -> mWifiManager.setMloMode(1000, mExecutor, setListener));
+        // Test set if supported.
+        try {
+            // Check getMloMode() returns values in range.
+            mWifiManager.getMloMode(mExecutor, getListener);
+            assertThat(getMode.get()).isIn(Range.closed(WifiManager.MLO_MODE_DEFAULT,
+                    WifiManager.MLO_MODE_LOW_POWER));
+            // Try to set default MLO mode and get.
+            mWifiManager.setMloMode(WifiManager.MLO_MODE_DEFAULT, mExecutor, setListener);
+            if (setStatus.get()) {
+                mWifiManager.getMloMode(mExecutor, getListener);
+                assertTrue(getMode.get() == WifiManager.MLO_MODE_DEFAULT);
+            }
+            // Try to set low latency MLO mode and get.
+            mWifiManager.setMloMode(WifiManager.MLO_MODE_LOW_LATENCY, mExecutor, setListener);
+            if (setStatus.get()) {
+                mWifiManager.getMloMode(mExecutor, getListener);
+                assertTrue(getMode.get() == WifiManager.MLO_MODE_LOW_LATENCY);
+            }
+            // Try to set high throughput MLO mode and get.
+            mWifiManager.setMloMode(WifiManager.MLO_MODE_HIGH_THROUGHPUT, mExecutor, setListener);
+            if (setStatus.get()) {
+                mWifiManager.getMloMode(mExecutor, getListener);
+                assertTrue(getMode.get() == WifiManager.MLO_MODE_DEFAULT);
+            }
+            // Try to set low power MLO mode and get.
+            mWifiManager.setMloMode(WifiManager.MLO_MODE_LOW_POWER, mExecutor, setListener);
+            if (setStatus.get()) {
+                mWifiManager.getMloMode(mExecutor, getListener);
+                assertTrue(getMode.get() == WifiManager.MLO_MODE_DEFAULT);
+            }
+        } catch (UnsupportedOperationException e) {
+            // Skip the set method if not supported.
+        }
+        // Drop the permission.
+        uiAutomation.dropShellPermissionIdentity();
     }
 }

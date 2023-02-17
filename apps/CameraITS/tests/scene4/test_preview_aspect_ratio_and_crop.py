@@ -137,9 +137,7 @@ class PreviewAspectRatioAndCropTest(its_base_test.ItsBaseTest):
 
   def test_preview_aspect_ratio_and_crop(self):
     log_path = self.log_path
-    # Get ffmpeg version being used.
-    ffmpeg_version = video_processing_utils.get_ffmpeg_version()
-    logging.debug('ffmpeg_version: %s', ffmpeg_version)
+    video_processing_utils.log_ffmpeg_version()
 
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,

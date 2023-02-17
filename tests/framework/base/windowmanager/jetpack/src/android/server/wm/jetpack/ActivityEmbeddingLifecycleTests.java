@@ -40,6 +40,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.net.Uri;
 import android.os.Bundle;
+import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestActivityWithId2;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
@@ -66,6 +67,7 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:ActivityEmbeddingLifecycleTests
  */
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
     private static final String TEST_OWNER = "TEST_OWNER";

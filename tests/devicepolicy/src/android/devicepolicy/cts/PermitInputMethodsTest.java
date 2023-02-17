@@ -114,7 +114,7 @@ public final class PermitInputMethodsTest {
 
     @Postsubmit(reason = "New test")
     @CannotSetPolicyTest(
-            policy = PermittedInputMethods.class)
+            policy = PermittedInputMethods.class, includeNonDeviceAdminStates = false)
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, QUERY_ADMIN_POLICY})
     public void setPermittedInputMethods_canNotSet_throwsException() {
         assertThrows(SecurityException.class, () -> {

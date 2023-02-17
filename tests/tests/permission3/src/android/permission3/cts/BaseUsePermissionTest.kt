@@ -170,8 +170,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val LOCATION_PERMISSION = "Location permission"
         const val PERMISSION_MANAGER = "Permission manager"
         const val APP_PACKAGE_NAME_SUBSTRING = "android.permission3"
-        const val SETTINGS_BUTTON_RES_ID =
-                "com.android.permissioncontroller:id/settings_button"
         const val PROPERTY_DATA_SHARING_UPDATE_PERIOD_MILLIS =
                 "data_sharing_update_period_millis"
         const val PROPERTY_MAX_SAFETY_LABELS_PERSISTED_PER_APP =

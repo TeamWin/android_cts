@@ -70,7 +70,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         sDeviceState.dpc().devicePolicyManager().getRequiredPasswordComplexity();
     }
 
-    @CannotSetPolicyTest(policy = RequiredPasswordComplexity.class)
+    @CannotSetPolicyTest(policy = RequiredPasswordComplexity.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getRequiredPasswordComplexity")
     public void getRequiredPasswordComplexity_notPermitted_throwsException() {
@@ -87,7 +87,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
                 .setRequiredPasswordComplexity(PASSWORD_COMPLEXITY);
     }
 
-    @CannotSetPolicyTest(policy = RequiredPasswordComplexity.class)
+    @CannotSetPolicyTest(policy = RequiredPasswordComplexity.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
     public void setRequiredPasswordComplexity_notPermitted_throwsException() {

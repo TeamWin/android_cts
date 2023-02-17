@@ -36,6 +36,7 @@ import android.hardware.biometrics.SessionTypeEnum;
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,7 +58,7 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
         assertThat(mCtsBuild).isNotNull();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
     @Override
@@ -251,7 +252,7 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
                 TEST_PKG,
                 TEST_PKG + TEST_CLASS,
                 methodName);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
         return ReportUtils.getEventMetricDataList(getDevice());
     }
 

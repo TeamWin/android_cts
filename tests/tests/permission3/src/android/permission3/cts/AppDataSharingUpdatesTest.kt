@@ -155,7 +155,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun clickSettingsGearInUpdate_opensAppLocationPermissionPage() {
+    fun clickUpdate_opensAppLocationPermissionPage() {
         grantLocationPermission(APP_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
@@ -165,7 +165,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
             findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), true)
             waitForIdle()
 
-            click(By.res(SETTINGS_BUTTON_RES_ID))
+            click(By.textContains(APP_PACKAGE_NAME_SUBSTRING))
 
             findView(By.descContains(LOCATION_PERMISSION), true)
             findView(By.textContains(APP_PACKAGE_NAME), true)

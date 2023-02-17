@@ -180,6 +180,7 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
         wifiInfo.getIpAddress();
         wifiInfo.getHiddenSSID();
         wifiInfo.getScore();
+        wifiInfo.isApTidToLinkMappingNegotiationSupported();
 
         // null for saved networks
         assertThat(wifiInfo.getRequestingPackageName()).isNull();
@@ -240,6 +241,7 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
             assertFalse(info1.isOemPrivate());
             assertFalse(info1.isCarrierMerged());
         }
+        assertFalse(info1.isApTidToLinkMappingNegotiationSupported());
 
         WifiInfo info2 = builder
                 .setNetworkId(TEST_NETWORK_ID2)
@@ -259,6 +261,7 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
         assertThat(info2.getBSSID()).isEqualTo(TEST_BSSID);
         assertThat(info2.getRssi()).isEqualTo(TEST_RSSI);
         assertThat(info2.getNetworkId()).isEqualTo(TEST_NETWORK_ID2);
+        assertFalse(info1.isApTidToLinkMappingNegotiationSupported());
     }
 
     /**
@@ -302,6 +305,6 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
         assertTrue(wifiInfo.getAffiliatedMloLinks().isEmpty());
         assertNotNull(wifiInfo.getAssociatedMloLinks());
         assertTrue(wifiInfo.getAssociatedMloLinks().isEmpty());
-
+        assertFalse(wifiInfo.isApTidToLinkMappingNegotiationSupported());
     }
 }

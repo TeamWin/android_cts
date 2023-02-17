@@ -124,9 +124,15 @@ public class MultiResolutionImageReaderTest extends Camera2AndroidTestCase {
                     isLogicalCamera || isUltraHighResCamera);
 
             for (int format : multiResolutionOutputFormats) {
-                assertTrue(String.format("Camera %s: multi-resolution output format %d "
-                        + "isn't a supported format", id, format),
-                        CameraTestUtils.contains(outputFormats, format));
+                // Multi-resolution output format must be one of the supports stream configuration
+                // map formats, with the exception of RAW. It's valid for the camera device not to
+                // support RAW, but the multi-resolution ImageReader does.
+                if (format != ImageFormat.RAW_SENSOR && format != ImageFormat.RAW10
+                        && format != ImageFormat.RAW12 && format != ImageFormat.RAW_PRIVATE) {
+                    assertTrue(String.format("Camera %s: multi-resolution output format %d "
+                            + "isn't a supported format", id, format),
+                            CameraTestUtils.contains(outputFormats, format));
+                }
 
                 Collection<MultiResolutionStreamInfo> multiResolutionStreams =
                         multiResolutionMap.getOutputInfo(format);

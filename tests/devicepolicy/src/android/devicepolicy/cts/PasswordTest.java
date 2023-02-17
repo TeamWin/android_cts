@@ -62,7 +62,7 @@ public final class PasswordTest {
                 .setPasswordExpirationTimeout(sDeviceState.dpc().componentName(), TIMEOUT);
     }
 
-    @CannotSetPolicyTest(policy = PasswordExpirationTimeout.class)
+    @CannotSetPolicyTest(policy = PasswordExpirationTimeout.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setPasswordExpirationTimeout")
     public void setPasswordExpirationTimeout_notPermitted_throwsException() {
@@ -113,7 +113,7 @@ public final class PasswordTest {
 
     // TODO: Test effect of PasswordExpirationTimeout
 
-    @CannotSetPolicyTest(policy = FailedPasswordAttempts.class)
+    @CannotSetPolicyTest(policy = FailedPasswordAttempts.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getCurrentFailedPasswordAttempts")
     public void getCurrentFailedPasswordAttempts_notPermitted_throwsException() {
@@ -138,7 +138,7 @@ public final class PasswordTest {
                 .setRequiredStrongAuthTimeout(sDeviceState.dpc().componentName(), TIMEOUT);
     }
 
-    @CannotSetPolicyTest(policy = StrongAuthTimeout.class)
+    @CannotSetPolicyTest(policy = StrongAuthTimeout.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredStrongAuthTimeout")
     public void setRequiredStrongAuthTimeout_notPermitted_throwsException() {

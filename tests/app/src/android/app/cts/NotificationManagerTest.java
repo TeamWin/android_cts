@@ -55,6 +55,7 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BA
 import static android.app.cts.android.app.cts.tools.NotificationHelper.MAX_WAIT_TIME;
 import static android.app.cts.android.app.cts.tools.NotificationHelper.SHORT_WAIT_TIME;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
+import static android.service.notification.NotificationListenerService.META_DATA_DEFAULT_AUTOBIND;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
@@ -83,6 +84,7 @@ import android.content.OperationApplicationException;
 import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -124,7 +126,9 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingSupplier;
+import com.android.test.notificationlistener.INLSControlService;
 import com.android.test.notificationlistener.INotificationUriAccessService;
+
 
 import com.google.common.base.Preconditions;
 
@@ -179,6 +183,18 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             new ComponentName(TRAMPOLINE_APP_API_32,
                     "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
 
+    private static final ComponentName URI_ACCESS_SERVICE = new ComponentName(
+            "com.android.test.notificationlistener",
+            "com.android.test.notificationlistener.NotificationUriAccessService");
+
+    private static final ComponentName NLS_CONTROL_SERVICE = new ComponentName(
+            "com.android.test.notificationlistener",
+            "com.android.test.notificationlistener.NLSControlService");
+
+    private static final ComponentName NO_AUTOBIND_NLS = new ComponentName(
+            "com.android.test.notificationlistener",
+            "com.android.test.notificationlistener.TestNotificationListenerNoAutobind");
+
     private static final String STUB_PACKAGE_NAME = "android.app.stubs";
 
     private static final long TIMEOUT_LONG_MS = 10000;
@@ -203,6 +219,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     private String mId;
     private INotificationUriAccessService mNotificationUriAccessService;
+    private INLSControlService mNLSControlService;
     private FutureServiceConnection mTrampolineConnection;
 
     @Nullable
@@ -2958,13 +2975,24 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
-            mNotificationUriAccessService = INotificationUriAccessService.Stub.asInterface(service);
+            if (URI_ACCESS_SERVICE.equals(className)) {
+                mNotificationUriAccessService = INotificationUriAccessService.Stub.asInterface(
+                        service);
+            }
+            if (NLS_CONTROL_SERVICE.equals(className)) {
+                mNLSControlService = INLSControlService.Stub.asInterface(service);
+            }
             mSemaphore.release();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName className) {
-            mNotificationUriAccessService = null;
+            if (URI_ACCESS_SERVICE.equals(className)) {
+                mNotificationUriAccessService = null;
+            }
+            if (NLS_CONTROL_SERVICE.equals(className)) {
+                mNLSControlService = null;
+            }
         }
 
         public void waitForService() {
@@ -2986,8 +3014,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // permissions granted to a second app, so that we show that permissions aren't being
         // revoked too broadly.
         final Intent intent = new Intent();
-        intent.setComponent(new ComponentName("com.android.test.notificationlistener",
-                "com.android.test.notificationlistener.NotificationUriAccessService"));
+        intent.setComponent(URI_ACCESS_SERVICE);
         NotificationListenerConnection connection = new NotificationListenerConnection();
         mContext.bindService(intent, connection, Context.BIND_AUTO_CREATE);
         connection.waitForService();
@@ -3042,6 +3069,53 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             toggleExternalListenerAccess(new ComponentName("com.android.test.notificationlistener",
                     "com.android.test.notificationlistener.TestNotificationListener"), false);
         }
+    }
+
+    public void testNotificationListenerRequestUnbind() throws Exception {
+        final Intent intent = new Intent();
+        intent.setComponent(NLS_CONTROL_SERVICE);
+        NotificationListenerConnection connection = new NotificationListenerConnection();
+        mContext.bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        connection.waitForService();
+
+        // Give the NotificationListener app access to notifications, and validate that.
+        toggleExternalListenerAccess(NO_AUTOBIND_NLS, true);
+        Thread.sleep(500);
+
+        // Give the test app access to notifications, and get that listener
+        toggleListenerAccess(true);
+        Thread.sleep(500); // wait for listener to be allowed
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        try {
+            // Check that the listener service is not auto-bound (manifest meta-data)
+            assertFalse(mNLSControlService.isNotificationListenerConnected());
+
+            // Request bind NLS
+            mNLSControlService.requestRebindComponent();
+            Thread.sleep(500);
+            assertTrue(mNLSControlService.isNotificationListenerConnected());
+
+            // Request unbind NLS
+            mNLSControlService.requestUnbindComponent();
+            Thread.sleep(500);
+            assertFalse(mNLSControlService.isNotificationListenerConnected());
+        } finally {
+            // Clean Up -- Make sure the external listener is has access revoked
+            toggleExternalListenerAccess(NO_AUTOBIND_NLS, false);
+        }
+    }
+
+    public void testNotificationListenerAutobindMetaData() throws Exception {
+        final ServiceInfo info = mPackageManager.getServiceInfo(NO_AUTOBIND_NLS,
+                PackageManager.GET_META_DATA
+                        | PackageManager.MATCH_DIRECT_BOOT_AWARE
+                        | PackageManager.MATCH_DIRECT_BOOT_UNAWARE);
+
+        assertNotNull(info);
+        assertTrue(info.metaData.containsKey(META_DATA_DEFAULT_AUTOBIND));
+        assertFalse(info.metaData.getBoolean(META_DATA_DEFAULT_AUTOBIND, true));
     }
 
     private void assertAccessible(Uri uri)

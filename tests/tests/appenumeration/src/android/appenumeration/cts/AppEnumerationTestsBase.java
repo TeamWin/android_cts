@@ -154,7 +154,9 @@ public class AppEnumerationTestsBase {
         final RemoteCallback readyCallback = new RemoteCallback(bundle -> latchForReady.open(),
                 sResponseHandler);
         intent.putExtra(EXTRA_REMOTE_READY_CALLBACK, readyCallback);
-        sContext.startActivity(intent);
+        final ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+        sContext.startActivity(intent, options.toBundle());
         if (!latchForReady.block(DEFAULT_TIMEOUT_MS)) {
             throw new TimeoutException(
                     "Latch timed out while awaiting a response from command " + intent.getAction());

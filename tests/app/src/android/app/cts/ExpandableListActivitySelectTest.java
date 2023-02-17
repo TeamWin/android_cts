@@ -29,6 +29,7 @@ import androidx.test.annotation.UiThreadTest;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.After;
@@ -37,6 +38,8 @@ import org.junit.Rule;
 import org.junit.Test;
 
 public final class ExpandableListActivitySelectTest {
+
+    private static final long TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS = 5_000;
 
     @Rule
     public ActivityScenarioRule<ExpandableListTestActivity> mActivityRule =
@@ -52,6 +55,8 @@ public final class ExpandableListActivitySelectTest {
         WindowUtil.waitForFocus(mActivity);
         // Make sure the touch mode is disabled since selection doesn't work in touch mode.
         mInstrumentation.setInTouchMode(false);
+        PollingCheck.waitFor(TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS,
+                () -> !mActivity.getWindow().getDecorView().isInTouchMode());
     }
 
     @After

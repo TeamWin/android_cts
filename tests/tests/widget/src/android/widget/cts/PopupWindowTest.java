@@ -31,8 +31,10 @@ import static org.mockito.Mockito.when;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
+import android.app.ActivityOptions;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -42,6 +44,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
+import android.server.wm.SetRequestedOrientationRule;
 import android.transition.Fade;
 import android.transition.Transition;
 import android.transition.Transition.TransitionListener;
@@ -49,6 +52,7 @@ import android.transition.TransitionListenerAdapter;
 import android.transition.TransitionValues;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Pair;
 import android.util.Range;
 import android.view.Display;
 import android.view.Gravity;
@@ -77,15 +81,16 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @FlakyTest
 @SmallTest
@@ -100,6 +105,10 @@ public class PopupWindowTest {
     private PopupWindowCtsActivity mActivity;
     private PopupWindow mPopupWindow;
     private TextView mTextView;
+
+    @ClassRule
+    public static SetRequestedOrientationRule mSetRequestedOrientationRule =
+            new SetRequestedOrientationRule();
 
     @Rule
     public ActivityTestRule<PopupWindowCtsActivity> mActivityRule =
@@ -1754,41 +1763,46 @@ public class PopupWindowTest {
         if (hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)) {
             orientations.add(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
-        // if device support both orientations and current is landscape, test portrait first
-        int currentOrientation = mActivity.getResources().getConfiguration().orientation;
-        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE && orientations.size() > 1) {
-            Collections.swap(orientations, 0, 1);
-        }
 
-        for (int orientation : orientations) {
-            mActivity.runOnUiThread(() ->
-                    mActivity.setRequestedOrientation(orientation));
-            mActivity.waitForConfigurationChanged();
-            // Wait for main thread to be idle to make sure layout and draw have been performed
-            // before continuing.
-            mInstrumentation.waitForIdleSync();
+        try (AutoCloseable toFinishActivity = relaunchActivityInFullscreen()) {
+            // if device support both orientations and current is landscape, test portrait first
+            int currentOrientation = mActivity.getResources().getConfiguration().orientation;
+            if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE
+                    && orientations.size() > 1) {
+                Collections.swap(orientations, 0, 1);
+            }
 
-            View parentWindowView = mActivity.getWindow().getDecorView();
-            int parentWidth = parentWindowView.getMeasuredWidth();
-            int parentHeight = parentWindowView.getMeasuredHeight();
+            for (int orientation : orientations) {
+                mActivity.runOnUiThread(() ->
+                        mActivity.setRequestedOrientation(orientation));
+                mActivity.waitForConfigurationChanged();
+                // Wait for main thread to be idle to make sure layout and draw have been performed
+                // before continuing.
+                mInstrumentation.waitForIdleSync();
 
-            mPopupWindow = createPopupWindow(createPopupContent(parentWidth*2, parentHeight*2));
-            mPopupWindow.setWidth(WindowManager.LayoutParams.MATCH_PARENT);
-            mPopupWindow.setHeight(WindowManager.LayoutParams.MATCH_PARENT);
-            mPopupWindow.setIsClippedToScreen(true);
+                View parentWindowView = mActivity.getWindow().getDecorView();
+                int parentWidth = parentWindowView.getMeasuredWidth();
+                int parentHeight = parentWindowView.getMeasuredHeight();
 
-            showPopup(R.id.anchor_upper_left);
+                mPopupWindow = createPopupWindow(
+                        createPopupContent(parentWidth * 2, parentHeight * 2));
+                mPopupWindow.setWidth(WindowManager.LayoutParams.MATCH_PARENT);
+                mPopupWindow.setHeight(WindowManager.LayoutParams.MATCH_PARENT);
+                mPopupWindow.setIsClippedToScreen(true);
 
-            View popupRoot = mPopupWindow.getContentView().getRootView();
-            int measuredWidth  = popupRoot.getMeasuredWidth();
-            int measuredHeight = popupRoot.getMeasuredHeight();
+                showPopup(R.id.anchor_upper_left);
 
-            // The visible frame will not include the insets.
-            Rect visibleFrame = new Rect();
-            parentWindowView.getWindowVisibleDisplayFrame(visibleFrame);
+                View popupRoot = mPopupWindow.getContentView().getRootView();
+                int measuredWidth = popupRoot.getMeasuredWidth();
+                int measuredHeight = popupRoot.getMeasuredHeight();
 
-            assertEquals(measuredWidth, visibleFrame.width());
-            assertEquals(measuredHeight, visibleFrame.height());
+                // The visible frame will not include the insets.
+                Rect visibleFrame = new Rect();
+                parentWindowView.getWindowVisibleDisplayFrame(visibleFrame);
+
+                assertEquals(measuredWidth, visibleFrame.width());
+                assertEquals(measuredHeight, visibleFrame.height());
+            }
         }
     }
 
@@ -1991,38 +2005,39 @@ public class PopupWindowTest {
 
     @Test
     public void testFocusAfterOrientation() throws Throwable {
-        int[] orientationValues = {ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
-                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT};
-        int currentOrientation = mActivity.getResources().getConfiguration().orientation;
-        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-            orientationValues[0] = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
-            orientationValues[1] = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
-        }
+        try (AutoCloseable toFinishActivity = relaunchActivityInFullscreen()) {
+            int[] orientationValues = {ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
+                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT};
+            int currentOrientation = mActivity.getResources().getConfiguration().orientation;
+            if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+                orientationValues[0] = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                orientationValues[1] = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+            }
 
-        View content = createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP);
-        content.setFocusable(true);
-        mPopupWindow = createPopupWindow(content);
-        mPopupWindow.setFocusable(true);
-        mPopupWindow.setWidth(WindowManager.LayoutParams.MATCH_PARENT);
-        mPopupWindow.setHeight(WindowManager.LayoutParams.MATCH_PARENT);
-        showPopup(R.id.anchor_upper_left);
-        mInstrumentation.waitForIdleSync();
-        assertTrue(content.isFocused());
-
-        if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)) {
-            return;
-        }
-
-
-        for (int i = 0; i < 2; i++) {
-            final int orientation = orientationValues[i];
-            mActivity.runOnUiThread(() ->
-                    mActivity.setRequestedOrientation(orientation));
-            mActivity.waitForConfigurationChanged();
-            // Wait for main thread to be idle to make sure layout and draw have been performed
-            // before continuing.
+            View content = createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP);
+            content.setFocusable(true);
+            mPopupWindow = createPopupWindow(content);
+            mPopupWindow.setFocusable(true);
+            mPopupWindow.setWidth(WindowManager.LayoutParams.MATCH_PARENT);
+            mPopupWindow.setHeight(WindowManager.LayoutParams.MATCH_PARENT);
+            showPopup(R.id.anchor_upper_left);
             mInstrumentation.waitForIdleSync();
             assertTrue(content.isFocused());
+
+            if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)) {
+                return;
+            }
+
+            for (int i = 0; i < 2; i++) {
+                final int orientation = orientationValues[i];
+                mActivity.runOnUiThread(() ->
+                        mActivity.setRequestedOrientation(orientation));
+                mActivity.waitForConfigurationChanged();
+                // Wait for main thread to be idle to make sure layout and draw have been performed
+                // before continuing.
+                mInstrumentation.waitForIdleSync();
+                assertTrue(content.isFocused());
+            }
         }
     }
 
@@ -2165,5 +2180,15 @@ public class PopupWindowTest {
             mPopupWindow.dismiss();
         });
         mInstrumentation.waitForIdleSync();
+    }
+
+    private AutoCloseable relaunchActivityInFullscreen() {
+        mInstrumentation.runOnMainSync(mActivity::finish);
+        final Pair<Intent, ActivityOptions> args =
+                SetRequestedOrientationRule.buildFullScreenLaunchArgs(PopupWindowCtsActivity.class);
+        mActivity =
+                (PopupWindowCtsActivity) mInstrumentation.startActivitySync(
+                        args.first, args.second.toBundle());
+        return () -> mInstrumentation.runOnMainSync(mActivity::finish);
     }
 }

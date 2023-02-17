@@ -24,14 +24,11 @@ import android.app.admin.FactoryResetProtectionPolicy;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.LocalPresubmit;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.policies.FactoryResetProtection;
 import com.android.compatibility.common.util.ApiTest;
-
-import com.google.common.truth.Truth;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -60,7 +57,7 @@ public final class FactoryResetProtectionTest {
                         FACTORY_RESET_PROTECTION_POLICY);
     }
 
-    @CannotSetPolicyTest(policy = FactoryResetProtection.class)
+    @CannotSetPolicyTest(policy = FactoryResetProtection.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setFactoryResetProtectionPolicy")
     public void setFactoryResetProtectionPolicy_notPermitted_throwsException() {

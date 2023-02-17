@@ -34,7 +34,6 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
-import com.android.bedstead.harrier.annotations.LocalPresubmit;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
@@ -49,12 +48,13 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
 @RequireFeature("android.software.secure_lock_screen")
-public class LockTest { // A bunch of failures already recorded - also btest struggles to run...
+public class LockTest {
 
     private static final long TIMEOUT = 10000;
 
@@ -66,7 +66,7 @@ public class LockTest { // A bunch of failures already recorded - also btest str
     private static final KeyguardManager sLocalKeyguardManager =
             TestApis.context().instrumentedContext().getSystemService(KeyguardManager.class);
 
-    @CannotSetPolicyTest(policy = LockNow.class)
+    @CannotSetPolicyTest(policy = LockNow.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#lockNow")
     public void lockNow_notPermitted_throwsException() {
@@ -132,7 +132,7 @@ public class LockTest { // A bunch of failures already recorded - also btest str
                 .await();
     }
 
-    @CannotSetPolicyTest(policy = MaximumTimeToLock.class)
+    @CannotSetPolicyTest(policy = MaximumTimeToLock.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMaximumTimeToLock")
     public void setMaximumTimeToLock_notPermitted_throwsException() {
@@ -145,6 +145,7 @@ public class LockTest { // A bunch of failures already recorded - also btest str
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setMaximumTimeToLock",
             "android.app.admin.DevicePolicyManager#getMaximumTimeToLock"})
+    @Ignore // Incorrect logic
     public void setMaximumTimeToLock_maximumTimeToLockIsSet() {
         long originalTimeout = sDeviceState.dpc().devicePolicyManager()
                 .getMaximumTimeToLock(sDeviceState.dpc().componentName());

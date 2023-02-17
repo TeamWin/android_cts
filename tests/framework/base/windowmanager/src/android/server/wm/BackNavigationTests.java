@@ -74,15 +74,12 @@ public class BackNavigationTests {
     public void registerCallback_created() {
         mScenario.moveToState(Lifecycle.State.CREATED);
         CountDownLatch latch = registerBackCallback();
-        mScenario.moveToState(Lifecycle.State.STARTED);
         mScenario.moveToState(Lifecycle.State.RESUMED);
         invokeBackAndAssertCallbackIsCalled(latch);
     }
 
     @Test
     public void registerCallback_resumed() {
-        mScenario.moveToState(Lifecycle.State.CREATED);
-        mScenario.moveToState(Lifecycle.State.STARTED);
         mScenario.moveToState(Lifecycle.State.RESUMED);
         CountDownLatch latch = registerBackCallback();
         invokeBackAndAssertCallbackIsCalled(latch);
@@ -104,9 +101,7 @@ public class BackNavigationTests {
 
     @Test
     public void onBackPressedNotCalled() {
-        mScenario.moveToState(Lifecycle.State.CREATED)
-                .moveToState(Lifecycle.State.STARTED)
-                .moveToState(Lifecycle.State.RESUMED);
+        mScenario.moveToState(Lifecycle.State.RESUMED);
         CountDownLatch latch = registerBackCallback();
         invokeBackAndAssertCallbackIsCalled(latch);
         mScenario.onActivity((activity) ->
@@ -116,15 +111,11 @@ public class BackNavigationTests {
 
     @Test
     public void registerCallback_relaunch() {
-        mScenario.moveToState(Lifecycle.State.CREATED)
-                .moveToState(Lifecycle.State.STARTED)
-                .moveToState(Lifecycle.State.RESUMED);
+        mScenario.moveToState(Lifecycle.State.RESUMED);
         CountDownLatch latch1 = registerBackCallback();
 
         ActivityScenario<BackNavigationActivity> newScenario = mScenario.recreate();
-        newScenario.moveToState(Lifecycle.State.CREATED)
-                .moveToState(Lifecycle.State.STARTED)
-                .moveToState(Lifecycle.State.RESUMED);
+        newScenario.moveToState(Lifecycle.State.RESUMED);
         CountDownLatch latch2 = registerBackCallback(newScenario, true);
 
         invokeBackAndAssertCallbackIsCalled(latch2);

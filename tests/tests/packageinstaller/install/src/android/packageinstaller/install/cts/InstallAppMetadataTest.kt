@@ -17,12 +17,15 @@ package android.packageinstaller.install.cts
 
 import android.app.UiAutomation
 import android.content.pm.PackageInstaller
+import android.content.pm.PackageManager
 import android.content.pm.PackageManager.NameNotFoundException
 import android.os.PersistableBundle
 import android.platform.test.annotations.AppModeFull
 import androidx.test.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import java.io.File
+import java.io.FileNotFoundException
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -124,6 +127,17 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         uiAutomation.adoptShellPermissionIdentity()
         assertThat(pm.getAppMetadata(TEST_APK_PACKAGE_NAME).isEmpty()).isTrue()
         uiAutomation.dropShellPermissionIdentity()
+    }
+
+    @Test(expected = FileNotFoundException::class)
+    fun readAppMetadataFileShouldFail() {
+        val data = createAppMetadata()
+        installTestApp(data)
+
+        val appInfo = pm.getApplicationInfo(TEST_APK_PACKAGE_NAME,
+            PackageManager.ApplicationInfoFlags.of(0))
+        val file = File(File(appInfo.publicSourceDir).getParentFile(), "app.metadata")
+        PersistableBundle.readFromStream(file.inputStream())
     }
 
     private fun installTestApp(data: PersistableBundle?) {

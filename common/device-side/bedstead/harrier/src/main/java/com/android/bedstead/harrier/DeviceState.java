@@ -40,8 +40,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
-import android.os.RemoteException;
-import android.os.UserManager;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -2252,6 +2250,13 @@ public final class DeviceState extends HarrierRule {
             mPermissionContext = null;
         }
 
+        for (Map.Entry<String, Map<String, String>> namespace : mOriginalFlagValues.entrySet()) {
+            for (Map.Entry<String, String> key : namespace.getValue().entrySet()) {
+                TestApis.flags().set(namespace.getKey(), key.getKey(), key.getValue());
+            }
+        }
+        mOriginalFlagValues.clear();
+
         mAnnotationExecutors.values().forEach(AnnotationExecutor::teardownNonShareableState);
     }
 
@@ -2409,13 +2414,6 @@ public final class DeviceState extends HarrierRule {
             TestApis.settings().global().putString(s.getKey(), s.getValue());
         }
         mOriginalGlobalSettings.clear();
-
-        for (Map.Entry<String, Map<String, String>> namespace : mOriginalFlagValues.entrySet()) {
-            for (Map.Entry<String, String> key : namespace.getValue().entrySet()) {
-                TestApis.flags().set(namespace.getKey(), key.getKey(), key.getValue());
-            }
-        }
-        mOriginalFlagValues.clear();
 
         TestApis.activities().clearAllActivities();
         mAnnotationExecutors.values().forEach(AnnotationExecutor::teardownShareableState);

@@ -1683,6 +1683,7 @@ public class WindowManagerState {
         float minAspectRatio;
         boolean providesMaxBounds;
         int procId = -1;
+        boolean isAnimating;
         public boolean translucent;
         private WindowContainer mParent;
         private boolean mEnableRecentsScreenshot;
@@ -1700,6 +1701,7 @@ public class WindowManagerState {
             if (proto.procId != 0) {
                 procId = proto.procId;
             }
+            isAnimating = proto.isAnimating;
             translucent = proto.translucent;
             mEnableRecentsScreenshot = proto.enableRecentsScreenshot;
             mLastDropInputMode = proto.lastDropInputMode;
@@ -1732,6 +1734,10 @@ public class WindowManagerState {
 
         public boolean inSizeCompatMode() {
             return inSizeCompatMode;
+        }
+
+        public boolean isAnimating() {
+            return isAnimating;
         }
 
         public float getMinAspectRatio() {

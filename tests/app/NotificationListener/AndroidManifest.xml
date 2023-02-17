@@ -35,5 +35,20 @@
             </intent-filter>
         </service>
 
+        <service android:name=".NLSControlService"
+            android:exported="true"/>
+
+        <service android:name=".TestNotificationListenerNoAutobind"
+            android:exported="true"
+            android:label="TestNotificationListener"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.service.notification.default_autobind_listenerservice"
+                android:value="false" />
+        </service>
+
     </application>
 </manifest>

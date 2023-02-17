@@ -357,7 +357,8 @@ public class TestActivity extends Activity {
                         targetUid);
             } else if (Constants.ACTION_TAKE_PERSISTABLE_URI_PERMISSION.equals(action)) {
                 final Uri uri = intent.getData();
-                final int modeFlags = intent.getFlags();
+                final int modeFlags = intent.getFlags() & (Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 if (uri != null) {
                     getContentResolver().takePersistableUriPermission(uri, modeFlags);
                 }
@@ -697,7 +698,9 @@ public class TestActivity extends Activity {
     private void sendError(RemoteCallback remoteCallback, Exception failure) {
         Bundle result = new Bundle();
         result.putSerializable(EXTRA_ERROR, failure);
-        remoteCallback.sendResult(result);
+        if (remoteCallback != null) {
+            remoteCallback.sendResult(result);
+        }
         finish();
     }
 

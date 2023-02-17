@@ -127,10 +127,7 @@ public final class FrameRateOverrideTest {
         });
     }
 
-    // Find refresh rates with the same resolution. If FrameRateOverride is only enabled for
-    // native refresh rates, then this function returns refresh rates which natively supports
-    // half that rate with the same resolution (for example, a 120Hz mode when the device also
-    // supports a 60Hz mode).
+    // Find refresh rates with the same resolution.
     private List<Display.Mode> getModesToTest() {
         List<Display.Mode> modesWithSameResolution = new ArrayList<>();
         if (!SurfaceFlingerProperties.enable_frame_rate_override().orElse(true)) {

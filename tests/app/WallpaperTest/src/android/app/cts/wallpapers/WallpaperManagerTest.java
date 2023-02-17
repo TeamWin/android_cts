@@ -1237,12 +1237,12 @@ public class WallpaperManagerTest {
     @Test
     public void testEngineCallbackCounts() throws IOException {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
+        ArrayList<String> errorMessages = new ArrayList<>();
         runWithShellPermissionIdentity(() -> {
             for (WallpaperTestUtils.State state : WallpaperTestUtils.allPossibleStates()) {
-                WallpaperTestUtils.goToState(mWallpaperManager, state);
-                TestWallpaperService.Companion.resetCounts();
 
                 for (WallpaperTestUtils.WallpaperChange change: state.allPossibleChanges()) {
+                    WallpaperTestUtils.goToState(mWallpaperManager, state);
                     TestWallpaperService.Companion.resetCounts();
                     WallpaperTestUtils.performChange(mWallpaperManager, change);
 
@@ -1251,19 +1251,25 @@ public class WallpaperManagerTest {
                     String createMessage = String.format(
                             "Expected %s calls to Engine#onCreate, got %s. ",
                             expectedCreateCount, actualCreateCount);
-                    assertWithMessage(createMessage + "\n" + state.reproduceDescription(change))
-                        .that(actualCreateCount).isEqualTo(expectedCreateCount);
+                    if (actualCreateCount != expectedCreateCount) {
+                        errorMessages.add(
+                                createMessage + "\n" + state.reproduceDescription(change));
+                    }
 
                     int expectedDestroyCount = state.expectedNumberOfLiveWallpaperDestroy(change);
                     int actualDestroyCount = TestWallpaperService.Companion.getDestroyCount();
                     String destroyMessage = String.format(
                             "Expected %s calls to Engine#onDestroy, got %s. ",
                             expectedDestroyCount, actualDestroyCount);
-                    assertWithMessage(destroyMessage + "\n" + state.reproduceDescription(change))
-                            .that(actualDestroyCount).isEqualTo(expectedDestroyCount);
+                    if (actualDestroyCount != expectedDestroyCount) {
+                        errorMessages.add(
+                                destroyMessage + "\n" + state.reproduceDescription(change));
+                    }
                 }
             }
         });
+        assertWithMessage(String.join("\n\n", errorMessages))
+                .that(errorMessages.size()).isEqualTo(0);
     }
 
     private void assertBitmapDimensions(Bitmap bitmap) {

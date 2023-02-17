@@ -63,4 +63,13 @@
       <item name="android:taskCloseEnterAnimation">@anim/alpha</item>
       <item name="android:taskCloseExitAnimation">@anim/alpha</item>
     </style>
+    <style name="Floating" parent="@android:style/Theme.DeviceDefault">
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+    <style name="Floating.NoMove">
+        <item name="android:windowNoMoveAnimation">true</item>
+    </style>
  </resources>

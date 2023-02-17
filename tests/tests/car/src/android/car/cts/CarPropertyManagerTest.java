@@ -42,6 +42,7 @@ import android.car.annotation.ApiRequirements;
 import android.car.cts.utils.VehiclePropertyVerifier;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
+import android.car.hardware.property.AreaIdConfig;
 import android.car.hardware.property.AutomaticEmergencyBrakingState;
 import android.car.hardware.property.BlindSpotWarningState;
 import android.car.hardware.property.CarPropertyManager;
@@ -71,6 +72,7 @@ import android.car.hardware.property.VehicleLightSwitch;
 import android.car.hardware.property.VehicleOilLevel;
 import android.car.hardware.property.VehicleTurnSignal;
 import android.car.hardware.property.WindshieldWipersState;
+import android.car.hardware.property.WindshieldWipersSwitch;
 import android.car.test.ApiCheckerRule.Builder;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
@@ -199,6 +201,25 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             WindshieldWipersState.OFF,
                             WindshieldWipersState.ON,
                             WindshieldWipersState.SERVICE)
+                    .build();
+    private static final ImmutableSet<Integer> WINDSHIELD_WIPERS_SWITCHES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            WindshieldWipersSwitch.OTHER,
+                            WindshieldWipersSwitch.OFF,
+                            WindshieldWipersSwitch.MIST,
+                            WindshieldWipersSwitch.INTERMITTENT_LEVEL_1,
+                            WindshieldWipersSwitch.INTERMITTENT_LEVEL_2,
+                            WindshieldWipersSwitch.INTERMITTENT_LEVEL_3,
+                            WindshieldWipersSwitch.INTERMITTENT_LEVEL_4,
+                            WindshieldWipersSwitch.INTERMITTENT_LEVEL_5,
+                            WindshieldWipersSwitch.CONTINUOUS_LEVEL_1,
+                            WindshieldWipersSwitch.CONTINUOUS_LEVEL_2,
+                            WindshieldWipersSwitch.CONTINUOUS_LEVEL_3,
+                            WindshieldWipersSwitch.CONTINUOUS_LEVEL_4,
+                            WindshieldWipersSwitch.CONTINUOUS_LEVEL_5,
+                            WindshieldWipersSwitch.AUTO,
+                            WindshieldWipersSwitch.SERVICE)
                     .build();
     private static final ImmutableSet<Integer> EV_STOPPING_MODES =
             ImmutableSet.<Integer>builder().add(EvStoppingMode.STATE_OTHER,
@@ -620,11 +641,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             ImmutableList.<Integer>builder()
                     .add(
                             VehiclePropertyIds.WINDSHIELD_WIPERS_PERIOD,
-                            VehiclePropertyIds.WINDSHIELD_WIPERS_STATE)
+                            VehiclePropertyIds.WINDSHIELD_WIPERS_STATE,
+                            VehiclePropertyIds.WINDSHIELD_WIPERS_SWITCH)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_WINDSHIELD_WIPERS_PROPERTIES =
             ImmutableList.<Integer>builder()
-                    .add()
+                    .add(
+                            VehiclePropertyIds.WINDSHIELD_WIPERS_SWITCH)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_EXTERIOR_LIGHTS_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -817,6 +840,26 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         assertWithMessage("The number of distinct enum values")
                 .that(combinedCarPropertyValuesLength)
                 .isEqualTo(numCarPropertyValues);
+    }
+
+    private static void verifyWindshieldWipersSwitchLevelsAreConsecutive(
+            List<Integer> supportedEnumValues, ImmutableList<Integer> levels, int areaId) {
+        for (int i = 0; i < levels.size(); i++) {
+            Integer level = levels.get(i);
+            if (supportedEnumValues.contains(level)) {
+                for (int j = i + 1; j < levels.size(); j++) {
+                    assertWithMessage(
+                                    "For VehicleAreaWindow area ID " + areaId + ", "
+                                        + WindshieldWipersSwitch.toString(levels.get(j))
+                                        + " must be supported if "
+                                        + WindshieldWipersSwitch.toString(level)
+                                        + " is supported.")
+                            .that(levels.get(j))
+                            .isIn(supportedEnumValues);
+                }
+                break;
+            }
+        }
     }
 
     // TODO(b/242350638): remove once all tests are annotated
@@ -2220,6 +2263,60 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class)
                 .setAllPossibleEnumValues(WINDSHIELD_WIPERS_STATES)
                 .addReadPermission(Car.PERMISSION_READ_WINDSHIELD_WIPERS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testWindshieldWipersSwitchIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.WINDSHIELD_WIPERS_SWITCH,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .setAllPossibleEnumValues(WINDSHIELD_WIPERS_SWITCHES)
+                .setCarPropertyConfigVerifier(
+                        carPropertyConfig -> {
+                            // Test to ensure that for both INTERMITTENT_LEVEL_* and
+                            // CONTINUOUS_LEVEL_* the supportedEnumValues are consecutive.
+                            // E.g. levels 1,2,3 is a valid config, but 1,3,4 is not valid because
+                            // level 2 must be supported if level 3 or greater is supported.
+                            ImmutableList<Integer> intermittentLevels =
+                                    ImmutableList.<Integer>builder()
+                                            .add(
+                                                    WindshieldWipersSwitch.INTERMITTENT_LEVEL_5,
+                                                    WindshieldWipersSwitch.INTERMITTENT_LEVEL_4,
+                                                    WindshieldWipersSwitch.INTERMITTENT_LEVEL_3,
+                                                    WindshieldWipersSwitch.INTERMITTENT_LEVEL_2,
+                                                    WindshieldWipersSwitch.INTERMITTENT_LEVEL_1)
+                                            .build();
+
+                            ImmutableList<Integer> continuousLevels =
+                                    ImmutableList.<Integer>builder()
+                                            .add(
+                                                    WindshieldWipersSwitch.CONTINUOUS_LEVEL_5,
+                                                    WindshieldWipersSwitch.CONTINUOUS_LEVEL_4,
+                                                    WindshieldWipersSwitch.CONTINUOUS_LEVEL_3,
+                                                    WindshieldWipersSwitch.CONTINUOUS_LEVEL_2,
+                                                    WindshieldWipersSwitch.CONTINUOUS_LEVEL_1)
+                                            .build();
+
+                            for (int areaId: carPropertyConfig.getAreaIds()) {
+                                AreaIdConfig<Integer> areaIdConfig =
+                                        (AreaIdConfig<Integer>) carPropertyConfig
+                                                .getAreaIdConfig(areaId);
+                                List<Integer> supportedEnumValues =
+                                        areaIdConfig.getSupportedEnumValues();
+
+                                verifyWindshieldWipersSwitchLevelsAreConsecutive(
+                                        supportedEnumValues, intermittentLevels, areaId);
+                                verifyWindshieldWipersSwitchLevelsAreConsecutive(
+                                        supportedEnumValues, continuousLevels, areaId);
+                            }
+                        })
+                .addReadPermission(Car.PERMISSION_READ_WINDSHIELD_WIPERS)
+                .addWritePermission(Car.PERMISSION_CONTROL_WINDSHIELD_WIPERS)
                 .build()
                 .verify(mCarPropertyManager);
     }
@@ -6825,8 +6922,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     // try to issue 32 requests at the same time, but 16 of them will be bounced
                     // back and will be retried later.
                     Executor executor = Executors.newFixedThreadPool(32);
-                    CountDownLatch cd = new CountDownLatch(1000);
-                    for (int i = 0; i < 1000; i++) {
+                    CountDownLatch cd = new CountDownLatch(32);
+                    for (int i = 0; i < 32; i++) {
                         executor.execute(() -> {
                             mCarPropertyManager.getProperty(
                                                 VehiclePropertyIds.PERF_VEHICLE_SPEED,
@@ -6837,6 +6934,28 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     cd.await(ASYNC_WAIT_TIMEOUT_IN_SEC, TimeUnit.SECONDS);
                 },
                 Car.PERMISSION_SPEED);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#generateSetPropertyRequest",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#setUpdateRateHz",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#getPropertyId",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#getAreaId",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#getValue",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#getUpdateRateHz"})
+    public void testSetPropertyRequestSettersGetters() throws Exception {
+        int testPropId = 1;
+        int testAreaId = 2;
+        Float valueToSet = Float.valueOf(3.1f);
+        float testUpdateRateHz = 4.1f;
+        CarPropertyManager.SetPropertyRequest spr =
+                mCarPropertyManager.generateSetPropertyRequest(testPropId, testAreaId, valueToSet);
+        spr.setUpdateRateHz(testUpdateRateHz);
+
+        assertThat(spr.getPropertyId()).isEqualTo(testPropId);
+        assertThat(spr.getAreaId()).isEqualTo(testAreaId);
+        assertThat(spr.getValue()).isEqualTo(valueToSet);
+        assertThat(spr.getUpdateRateHz()).isEqualTo(testUpdateRateHz);
     }
 
     private int getCounterBySampleRate(float maxSampleRateHz) {

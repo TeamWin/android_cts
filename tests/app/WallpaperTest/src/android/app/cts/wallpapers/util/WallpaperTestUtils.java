@@ -284,10 +284,11 @@ public class WallpaperTestUtils {
             if (change.mWallpaper.isStatic()) return 0;
             switch (change.mDestination) {
                 case FLAG_SYSTEM | FLAG_LOCK:
-                case FLAG_SYSTEM:
                     return change.mWallpaper != mHomeWallpaper ? 1 : 0;
+                case FLAG_SYSTEM:
+                    return mSingleEngine || (change.mWallpaper != mHomeWallpaper) ? 1 : 0;
                 case FLAG_LOCK:
-                    return change.mWallpaper != mLockWallpaper ? 1 : 0;
+                    return mSingleEngine || (change.mWallpaper != mLockWallpaper) ? 1 : 0;
                 default:
                     throw new IllegalArgumentException();
             }
@@ -306,10 +307,11 @@ public class WallpaperTestUtils {
                         && change.mDestination == (FLAG_LOCK | FLAG_SYSTEM) ? 1 : 0;
             }
 
-            boolean systemReplaced = (change.mDestination & FLAG_SYSTEM) != 0
-                    && change.mWallpaper != mHomeWallpaper;
-            boolean lockReplaced = (change.mDestination & FLAG_LOCK) != 0
-                    && change.mWallpaper != mLockWallpaper;
+            boolean changeSystem = (change.mDestination & FLAG_SYSTEM) != 0;
+            boolean changeLock = (change.mDestination & FLAG_LOCK) != 0;
+            boolean systemReplaced = changeSystem && change.mWallpaper != mHomeWallpaper;
+            boolean lockReplaced =
+                    changeLock && (change.mWallpaper != mLockWallpaper || changeSystem);
 
             int result = 0;
             if (systemReplaced && mHomeWallpaper.isLive()) result += 1;
@@ -339,7 +341,7 @@ public class WallpaperTestUtils {
         private String changeDescription(WallpaperChange change) {
             String newWallpaperDescription =
                     change.mWallpaper == mHomeWallpaper || change.mWallpaper == mLockWallpaper
-                    ? String.format("the same %s wallpaper than %s screen",
+                    ? String.format("the same %s wallpaper as %s screen",
                             change.mWallpaper.type(),
                             change.mWallpaper == mHomeWallpaper ? "home" : "lock")
                     : String.format("a different %s wallpaper", change.mWallpaper.type());

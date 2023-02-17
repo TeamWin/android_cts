@@ -34,6 +34,7 @@ android_test {
         "CtsMockInputMethodLib",
         "androidx.test.uiautomator_uiautomator",
         "androidx.test.espresso.core",
+        "cts-wm-util",
     ],
 
     libs: ["android.test.runner"],

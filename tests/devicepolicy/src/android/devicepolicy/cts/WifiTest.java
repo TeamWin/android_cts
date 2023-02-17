@@ -624,7 +624,7 @@ public final class WifiTest {
                 .setWifiSsidPolicy(WIFI_SSID_POLICY);
     }
 
-    @CannotSetPolicyTest(policy = Wifi.class)
+    @CannotSetPolicyTest(policy = Wifi.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setWifiSsidPolicy")
     public void setWifiSsidPolicy_notPermitted_throwsException() {
@@ -659,7 +659,7 @@ public final class WifiTest {
                         sDeviceState.dpc().componentName(), /* lockdown= */ true);
     }
 
-    @CannotSetPolicyTest(policy = Wifi.class)
+    @CannotSetPolicyTest(policy = Wifi.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setConfiguredNetworksLockdownState")
     public void setConfiguredNetworksLockdownState_notPermitted_throwsException() {

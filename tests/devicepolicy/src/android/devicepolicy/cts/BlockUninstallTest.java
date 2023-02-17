@@ -65,6 +65,7 @@ public class BlockUninstallTest {
         sTestApp.uninstallFromAllUsers();
     }
 
+
     @Postsubmit(reason = "new test")
     @CannotSetPolicyTest(policy = BlockUninstall.class)
     public void setUninstallBlocked_notAllowed_throwsException() {

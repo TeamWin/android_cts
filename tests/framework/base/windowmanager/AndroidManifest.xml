@@ -628,6 +628,15 @@
                   android:exported="true"
                   android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
 
+        <activity android:name="android.server.wm.MoveAnimationTests$FloatingActivity"
+                  android:exported="true"
+                  android:noHistory="true"
+                  android:theme="@style/Floating"/>
+        <activity android:name="android.server.wm.MoveAnimationTests$FloatingActivity$NoMove"
+                  android:exported="true"
+                  android:noHistory="true"
+                  android:theme="@style/Floating.NoMove"/>
+
         <service android:name="android.server.wm.scvh.EmbeddedSCVHService"
             android:process="com.android.server.wm.scvh.embedded_process" />
     </application>

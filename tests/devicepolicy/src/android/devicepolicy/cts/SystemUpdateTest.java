@@ -26,8 +26,8 @@ import android.app.admin.SystemUpdatePolicy;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.LocalPresubmit;
-import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
@@ -59,7 +59,7 @@ public final class SystemUpdateTest {
                         sDeviceState.dpc().componentName(), SYSTEM_UPDATE_POLICY);
     }
 
-    @CannotSetPolicyTest(policy = SystemUpdate.class)
+    @CannotSetPolicyTest(policy = SystemUpdate.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setSystemUpdatePolicy"})
     public void setSystemUpdatePolicy_notPermitted_throwsException() {

@@ -19,6 +19,8 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.CommandResult;
+import com.android.tradefed.util.RunInterruptedException;
+import com.android.tradefed.util.RunUtil;
 
 /**
  * Helper class to command this test's DPC (Device Policy Controller) app.
@@ -116,8 +118,8 @@ public final class DpcCommander {
                 return;
             }
             try {
-                Thread.sleep(sleepTime);
-            } catch (InterruptedException e) {
+                RunUtil.getDefault().sleep(sleepTime);
+            } catch (RunInterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Interrupted waiting for ping request");
             }

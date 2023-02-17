@@ -23,6 +23,7 @@ android_test_helper_app {
         "**/*.java",
         "**/*.kt",
         "src/com/android/test/notificationlistener/INotificationUriAccessService.aidl",
+        "src/com/android/test/notificationlistener/INLSControlService.aidl",
     ],
     // Tag this module as a cts test artifact
     test_suites: [

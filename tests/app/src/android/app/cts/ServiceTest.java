@@ -2117,4 +2117,36 @@ public class ServiceTest extends ActivityTestsBase {
             }
         }
     }
+
+
+    /**
+     * Test bindService() flags can be 64 bits long.
+     * @throws Exception
+     */
+    public void testBindServiceLongFlags() throws Exception {
+        long flags = Context.BIND_AUTO_CREATE;
+        testBindServiceFlagsLongInternal(flags);
+        flags = 0x0000_1111_0000_0000L | Context.BIND_AUTO_CREATE;
+        testBindServiceFlagsLongInternal(flags);
+        flags = 0x0fff_ffff_0000_0000L | Context.BIND_AUTO_CREATE;
+        testBindServiceFlagsLongInternal(flags);
+    }
+
+    private void testBindServiceFlagsLongInternal(long flags) throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final LatchedConnection connection = new LatchedConnection(latch);
+        try {
+            assertTrue(mContext.bindService(mLocalService, connection,
+                    Context.BindServiceFlags.of(flags)));
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            final String dumpCommand = "dumpsys activity services " + "android.app.stubs"
+                    + "/android.app.stubs.LocalService";
+            String[] dumpLines = CtsAppTestUtils.executeShellCmd(
+                    InstrumentationRegistry.getInstrumentation(), dumpCommand).split("\n");
+            assertNotNull(CtsAppTestUtils.findLine(dumpLines,
+                    "flags=0x" + Long.toHexString(flags)));
+        } finally {
+            mContext.unbindService(connection);
+        }
+    }
 }

@@ -31,15 +31,21 @@ import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.invoker.TestInformation;
+import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.result.FileInputStreamSource;
+import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner.TestLogData;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
+import com.android.tradefed.util.StreamUtil;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import org.jf.dexlib2.iface.ClassDef;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -61,7 +67,13 @@ public class ClasspathDeviceInfo extends BaseHostJUnit4Test {
     private DeviceSdkLevel mDeviceSdkLevel;
 
     private static final String REPORT_DIRECTORY = "report-log-files";
-    private static final String REPORT_FILE_NAME = "CtsClasspathDeviceInfoTestCases.reportlog.json";
+    private static final String REPORT_NAME = "CtsClasspathDeviceInfoTestCases";
+    private static final String REPORT_SUFFIX = ".reportlog.json";
+    private static final String REPORT_FILE_NAME = REPORT_NAME + REPORT_SUFFIX;
+
+
+    @Rule
+    public TestLogData mLogger = new TestLogData();
 
     @Before
     public void before() throws DeviceNotAvailableException {
@@ -72,17 +84,36 @@ public class ClasspathDeviceInfo extends BaseHostJUnit4Test {
 
     @Test
     public void testCollectClasspathDeviceInfo() throws Exception {
-        TestInformation testInfo = getTestInformation();
-        File resultFile =
-                getMetricsResultsFile(new CompatibilityBuildHelper(testInfo.getBuildInfo()));
-
-        HostInfoStore store = new HostInfoStore(resultFile);
-        store.open();
-        store.startArray("jars");
-        collectClasspathsJars(store);
-        collectSharedLibraries(store);
-        store.endArray();
-        store.close();
+        File jsonFile = null;
+        FileInputStreamSource source = null;
+        try {
+            jsonFile = FileUtil.createTempFile(REPORT_NAME, REPORT_SUFFIX);
+            HostInfoStore store = new HostInfoStore(jsonFile);
+            store.open();
+            store.startArray("jars");
+            collectClasspathsJars(store);
+            collectSharedLibraries(store);
+            store.endArray();
+            store.close();
+            try {
+                TestInformation testInfo = getTestInformation();
+                File resultFile =
+                        getMetricsResultsFile(
+                            new CompatibilityBuildHelper(testInfo.getBuildInfo()));
+                FileUtil.copyFile(jsonFile, resultFile);
+            } catch (FileNotFoundException | NullPointerException e) {
+                CLog.w(String.format("Unable to get result directory: %s", e.getMessage()));
+                CLog.i(String.format("Write %s to log directory", REPORT_NAME));
+                source = new FileInputStreamSource(jsonFile);
+                mLogger.addTestLog(REPORT_FILE_NAME, LogDataType.TEXT, source);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(String.format(
+                "Failed to collect %s: %s", REPORT_NAME, e.getMessage()));
+        } finally {
+            FileUtil.deleteFile(jsonFile);
+            StreamUtil.close(source);
+        }
     }
 
     private void collectClasspathsJars(HostInfoStore store) throws Exception {

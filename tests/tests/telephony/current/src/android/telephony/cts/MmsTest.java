@@ -32,6 +32,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.SystemClock;
+import android.platform.test.annotations.RequiresDevice;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.util.DefaultSmsAppHelper;
@@ -211,6 +212,7 @@ public class MmsTest {
         DefaultSmsAppHelper.stopBeingDefaultSmsApp();
     }
 
+    @RequiresDevice
     @Test(timeout = 30000) // b/232461746: reduce test timeout to 30s for CF
     @ApiTest(apis = "android.telephony.SmsManager#sendMultimediaMessage")
     public void testSendMmsMessage() {
@@ -241,6 +243,7 @@ public class MmsTest {
         DefaultSmsAppHelper.stopBeingDefaultSmsApp();
     }
 
+    @RequiresDevice
     @Test(timeout = 30000) // b/232461746: reduce test timeout to 30s for CF
     @ApiTest(apis = "android.telephony.SmsManager#sendMultimediaMessage")
     public void testSendMmsMessageWithMessageId() {

@@ -352,7 +352,7 @@ public class ApplicationHiddenTest {
                 SYSTEM_PACKAGE.packageName(), true);
     }
 
-    @CannotSetPolicyTest(policy = ApplicationHidden.class)
+    @CannotSetPolicyTest(policy = ApplicationHidden.class, includeNonDeviceAdminStates = false)
     public void setApplicationHidden_systemApp_notAllowed_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().setApplicationHidden(

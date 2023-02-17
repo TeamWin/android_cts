@@ -1111,17 +1111,18 @@ public class MediaRouter2Test {
     }
 
     @Test
-    public void testShowSystemOutputSwitcherNotThrowingException() throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
-        mRouter2.showSystemOutputSwitcher();
+    public void testShowSystemOutputSwitcherReturnsTrue() throws InterruptedException {
+        boolean isDialogShown = mRouter2.showSystemOutputSwitcher();
 
         // Wait for the dialog to show before dismissing it.
-        latch.await(WAIT_MS, TimeUnit.MILLISECONDS);
+        Thread.sleep(WAIT_MS);
 
         // Dismiss the system output switcher dialog in order to clean up, leaving the device in
         // the same state as it was when the test started.
         InstrumentationRegistry.getInstrumentation().getContext().sendBroadcast(
                 new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
+
+        assertThat(isDialogShown).isTrue();
     }
 
     // Helper for getting routes easily. Uses original ID as a key

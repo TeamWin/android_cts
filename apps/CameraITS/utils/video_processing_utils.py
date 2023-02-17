@@ -50,8 +50,8 @@ LOWEST_RES_TESTED_AREA = {
 }
 
 
-def get_ffmpeg_version():
-  """Returns the ffmpeg version being used."""
+def log_ffmpeg_version():
+  """Logs the ffmpeg version being used."""
 
   ffmpeg_version_cmd = ('ffmpeg -version')
   p = subprocess.Popen(ffmpeg_version_cmd, shell=True, stdout=subprocess.PIPE)
@@ -59,7 +59,7 @@ def get_ffmpeg_version():
   if p.poll() != 0:
     raise error_util.CameraItsError('Error running ffmpeg version cmd.')
   decoded_output = output.decode('utf-8')
-  return decoded_output.split(' ')[2]
+  logging.debug('ffmpeg version: %s', decoded_output.split(' ')[2])
 
 
 def extract_key_frames_from_video(log_path, video_file_name):

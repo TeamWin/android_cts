@@ -403,6 +403,50 @@ public class ExternalServiceTest extends AndroidTestCase {
         getContext().unbindService(creatorConnection);
     }
 
+    /**
+     * Test when the flag BIND_EXTERNAL_SERVICE(0x80000000) is set in 64 bits long flags,
+     * an IllegalArgumentException is thrown. The reason is that integer 0x80000000 is
+     * automatically converted to long 0xffff_ffff_8000_000, it is not a correct flag any more.
+     * In 64 bits long flags, use BIND_EXTERNAL_SERVICE_LONG(0x8000_0000_0000_0000L) instead.
+     */
+    public void testFailBindExternalServiceLongFlags() {
+        // Start the service and wait for connection.
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName(sServicePackage, sServicePackage+".ExternalService"));
+
+        mCondition.close();
+
+        long longFlags = Context.BIND_EXTERNAL_SERVICE | Context.BIND_AUTO_CREATE;
+        try {
+            getContext().bindService(intent, mConnection,
+                    Context.BindServiceFlags.of(longFlags)/* 64 bits long flag */);
+            fail("Context.BIND_EXTERNAL_SERVICE can not be used in 64 bits bindService() flags");
+        } catch (IllegalArgumentException e) {
+            // expect an IllegalArgumentException when BIND_EXTERNAL_SERVICE is used in 64 bits
+            // flags.
+        }
+    }
+
+    /**
+     * Test 64 bits long flag BIND_EXTERNAL_SERVICE_LONG(0x8000_0000_0000_0000L), it deprecates
+     * 32 bits flag BIND_EXTERNAL_SERVICE(0x80000000) when 64 bits long flags is used.
+     */
+    public void testBindExternalServiceLongFlags() {
+        // Start the service and wait for connection.
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName(sServicePackage, sServicePackage+".ExternalService"));
+
+        mCondition.close();
+
+        long longFlags = Context.BIND_EXTERNAL_SERVICE_LONG | Context.BIND_AUTO_CREATE;
+
+        assertTrue(getContext().bindService(intent, mConnection,
+                Context.BindServiceFlags.of(longFlags)/* 64 bits long flag */));
+        assertTrue(mCondition.block(CONDITION_TIMEOUT));
+        assertEquals(getContext().getPackageName(), mConnection.name.getPackageName());
+        assertNotSame(sServicePackage, mConnection.name.getPackageName());
+    }
+
     /** Given a Messenger, this will message the service to retrieve its UID, PID, and package name.
      * On success, returns a RunningServiceInfo. On failure, returns null. */
     private RunningServiceInfo identifyService(Messenger service) {

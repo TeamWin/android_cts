@@ -151,9 +151,8 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
           'First API level should be {} or higher. Found {}.'.format(
               its_session_utils.ANDROID13_API_LEVEL, first_api_level))
 
-      # Get ffmpeg version being used.
-      ffmpeg_version = video_processing_utils.get_ffmpeg_version()
-      logging.debug('ffmpeg_version: %s', ffmpeg_version)
+      # Log ffmpeg version being used
+      video_processing_utils.log_ffmpeg_version()
 
       supported_stabilization_modes = props[
           'android.control.availableVideoStabilizationModes'

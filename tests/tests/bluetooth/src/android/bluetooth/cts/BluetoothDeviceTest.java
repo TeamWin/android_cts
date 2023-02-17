@@ -31,9 +31,9 @@ import static org.junit.Assert.assertThrows;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothAudioPolicy;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothSinkAudioPolicy;
 import android.bluetooth.BluetoothStatusCodes;
 import android.bluetooth.OobData;
 import android.content.AttributionSource;
@@ -465,18 +465,19 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         assertEquals(ACCESS_REJECTED, mFakeDevice.getSimAccessPermission());
     }
 
-    public void test_getAudioPolicyRemoteSupported() {
+    public void test_isRequestAudioPolicyAsSinkSupported() {
         if (!mHasBluetooth || !mHasCompanionDevice) {
             // Skip the test if bluetooth or companion device are not present.
             return;
         }
 
-        assertThrows(SecurityException.class, () -> mFakeDevice.getAudioPolicyRemoteSupported());
+        assertThrows(SecurityException.class,
+                () -> mFakeDevice.isRequestAudioPolicyAsSinkSupported());
 
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
 
-        assertEquals(BluetoothAudioPolicy.FEATURE_UNCONFIGURED_BY_REMOTE,
-                mFakeDevice.getAudioPolicyRemoteSupported());
+        assertEquals(BluetoothStatusCodes.FEATURE_NOT_CONFIGURED,
+                mFakeDevice.isRequestAudioPolicyAsSinkSupported());
     }
 
     public void test_setGetAudioPolicy() {
@@ -485,31 +486,33 @@ public class BluetoothDeviceTest extends AndroidTestCase {
             return;
         }
 
-        BluetoothAudioPolicy demoAudioPolicy = new BluetoothAudioPolicy.Builder().build();
+        BluetoothSinkAudioPolicy demoAudioPolicy = new BluetoothSinkAudioPolicy.Builder().build();
 
         // This should throw a SecurityException because no BLUETOOTH_PRIVILEGED permission
-        assertThrows(SecurityException.class, () -> mFakeDevice.setAudioPolicy(demoAudioPolicy));
-        assertThrows(SecurityException.class, () -> mFakeDevice.getAudioPolicy());
+        assertThrows(SecurityException.class,
+                () -> mFakeDevice.requestAudioPolicyAsSink(demoAudioPolicy));
+        assertThrows(SecurityException.class, () -> mFakeDevice.getRequestedAudioPolicyAsSink());
 
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
 
         assertEquals(BluetoothStatusCodes.ERROR_DEVICE_NOT_BONDED,
-                mFakeDevice.setAudioPolicy(demoAudioPolicy));
-        assertNull(mFakeDevice.getAudioPolicy());
+                mFakeDevice.requestAudioPolicyAsSink(demoAudioPolicy));
+        assertNull(mFakeDevice.getRequestedAudioPolicyAsSink());
 
-        BluetoothAudioPolicy newPolicy = new BluetoothAudioPolicy.Builder(demoAudioPolicy)
-                .setCallEstablishPolicy(BluetoothAudioPolicy.POLICY_ALLOWED)
-                .setConnectingTimePolicy(BluetoothAudioPolicy.POLICY_NOT_ALLOWED)
-                .setInBandRingtonePolicy(BluetoothAudioPolicy.POLICY_ALLOWED)
+        BluetoothSinkAudioPolicy newPolicy = new BluetoothSinkAudioPolicy.Builder(demoAudioPolicy)
+                .setCallEstablishPolicy(BluetoothSinkAudioPolicy.POLICY_ALLOWED)
+                .setActiveDevicePolicyAfterConnection(BluetoothSinkAudioPolicy.POLICY_NOT_ALLOWED)
+                .setInBandRingtonePolicy(BluetoothSinkAudioPolicy.POLICY_ALLOWED)
                 .build();
 
         assertEquals(BluetoothStatusCodes.ERROR_DEVICE_NOT_BONDED,
-                mFakeDevice.setAudioPolicy(newPolicy));
-        assertNull(mFakeDevice.getAudioPolicy());
+                mFakeDevice.requestAudioPolicyAsSink(newPolicy));
+        assertNull(mFakeDevice.getRequestedAudioPolicyAsSink());
 
-        assertEquals(BluetoothAudioPolicy.POLICY_ALLOWED, newPolicy.getCallEstablishPolicy());
-        assertEquals(BluetoothAudioPolicy.POLICY_NOT_ALLOWED, newPolicy.getConnectingTimePolicy());
-        assertEquals(BluetoothAudioPolicy.POLICY_ALLOWED, newPolicy.getInBandRingtonePolicy());
+        assertEquals(BluetoothSinkAudioPolicy.POLICY_ALLOWED, newPolicy.getCallEstablishPolicy());
+        assertEquals(BluetoothSinkAudioPolicy.POLICY_NOT_ALLOWED,
+                newPolicy.getActiveDevicePolicyAfterConnection());
+        assertEquals(BluetoothSinkAudioPolicy.POLICY_ALLOWED, newPolicy.getInBandRingtonePolicy());
     }
 
     private byte[] convertPinToBytes(String pin) {

@@ -25,6 +25,6 @@
 
     <uses-sdk android:minSdkVersion="22" android:targetSdkVersion="22"/>
 
-    <application android:label="CtsStoragePermissionsUserDefaultSdk22" />
+    <application android:testOnly="true" android:label="CtsStoragePermissionsUserDefaultSdk22" />
 
 </manifest>

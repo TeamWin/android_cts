@@ -126,9 +126,8 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
       # Calculate camera FoV and convert from string to float
       camera_fov = float(cam.calc_camera_fov(props))
 
-      # Get ffmpeg version being used
-      ffmpeg_version = video_processing_utils.get_ffmpeg_version()
-      logging.debug('ffmpeg_version: %s', ffmpeg_version)
+      # Log ffmpeg version being used
+      video_processing_utils.log_ffmpeg_version()
 
       # Raise error if not FRONT or REAR facing camera
       facing = props['android.lens.facing']
