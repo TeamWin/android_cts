@@ -64,6 +64,14 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("CRUISE_CONTROL_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.CRUISE_CONTROL_COMMAND))
                 .isEqualTo("CRUISE_CONTROL_COMMAND");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.CRUISE_CONTROL_TARGET_SPEED))
+                .isEqualTo("CRUISE_CONTROL_TARGET_SPEED");
+        assertThat(VehiclePropertyIds.toString(
+                VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP))
+                .isEqualTo("ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP");
+        assertThat(VehiclePropertyIds.toString(
+                VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE))
+                .isEqualTo("ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED))
                 .isEqualTo("HANDS_ON_DETECTION_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HANDS_ON_DETECTION_DRIVER_STATE))
