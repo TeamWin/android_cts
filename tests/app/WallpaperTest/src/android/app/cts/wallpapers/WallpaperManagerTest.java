@@ -1244,7 +1244,7 @@ public class WallpaperManagerTest {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         ArrayList<String> errorMessages = new ArrayList<>();
         runWithShellPermissionIdentity(() -> {
-            for (WallpaperTestUtils.State state : WallpaperTestUtils.allPossibleStates()) {
+            for (WallpaperTestUtils.WallpaperState state : WallpaperTestUtils.allPossibleStates()) {
 
                 for (WallpaperTestUtils.WallpaperChange change: state.allPossibleChanges()) {
                     WallpaperTestUtils.goToState(mWallpaperManager, state);
