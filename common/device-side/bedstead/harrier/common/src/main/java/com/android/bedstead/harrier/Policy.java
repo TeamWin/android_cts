@@ -683,7 +683,11 @@ public final class Policy {
                             DELEGATE_PACKAGE_NAME, UserType.INSTRUMENTED_USER,
                             /* isPrimary= */ true),
                     ensureTestAppHasPermission(
-                            DELEGATE_KEY, new String[]{permission.appliedWith()}, FailureMode.SKIP)
+                            DELEGATE_KEY, new String[]{permission.appliedWith()}, FailureMode.SKIP),
+                    ensureFeatureFlagEnabled(
+                            NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG),
+                    ensureFeatureFlagEnabled(
+                            NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
             };
             annotations.add(
                     new DynamicParameterizedAnnotation(

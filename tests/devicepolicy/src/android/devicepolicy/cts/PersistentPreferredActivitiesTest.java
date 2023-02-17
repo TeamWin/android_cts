@@ -28,6 +28,7 @@ import android.util.Log;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.PersistentPreferredActivities;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
@@ -43,6 +44,7 @@ import com.android.queryable.info.ActivityInfo;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
+import org.testng.Assert;
 
 @RunWith(BedsteadJUnit4.class)
 public final class PersistentPreferredActivitiesTest {
@@ -74,6 +76,40 @@ public final class PersistentPreferredActivitiesTest {
                     .where().activityClass().className()
                     .isNotEqualTo(PREFERRED_ACTIVITY.className())
                     .get();
+
+    @CannotSetPolicyTest(policy = PersistentPreferredActivities.class)
+    @ApiTest(apis="android.admin.app.DevicePolicyManager#addPersistentPreferredActivity")
+    @Postsubmit(reason = "new test")
+    public void addPersistentPreferredActivity_notPermitted_throwsException() {
+        try (TestAppInstance testAppInstance = sTestAppWithMultipleActivities.install()) {
+            IntentFilter intentFilter = new IntentFilter(TEST_ACTION);
+            intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+            Assert.assertThrows(SecurityException.class, () -> {
+                sDeviceState.dpc().devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                sDeviceState.dpc().componentName(),
+                                intentFilter,
+                                new ComponentName(testAppInstance.packageName(),
+                                        PREFERRED_ACTIVITY.className()));
+                });
+        }
+    }
+
+    @CannotSetPolicyTest(policy = PersistentPreferredActivities.class)
+    @ApiTest(apis="android.admin.app.DevicePolicyManager#clearPackagePersistentPreferredActivities")
+    @Postsubmit(reason = "new test")
+    public void clearPackagePersistentPreferredActivities_notPermitted_throwsException() {
+        try (TestAppInstance testAppInstance = sTestAppWithMultipleActivities.install()) {
+            IntentFilter intentFilter = new IntentFilter(TEST_ACTION);
+            intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+            Assert.assertThrows(SecurityException.class, () -> {
+                sDeviceState.dpc().devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                sDeviceState.dpc().componentName(),
+                                testAppInstance.packageName());
+            });
+        }
+    }
 
     @PolicyAppliesTest(policy = PersistentPreferredActivities.class)
     @Postsubmit(reason = "new test")
@@ -149,7 +185,7 @@ public final class PersistentPreferredActivitiesTest {
                                 .whereType().isEqualTo(
                                         EventId.ADD_PERSISTENT_PREFERRED_ACTIVITY_VALUE)
                                 .whereAdminPackageName().isEqualTo(
-                                        sDeviceState.dpc().componentName().getPackageName())
+                                        sDeviceState.dpc().packageName())
                                 .whereStrings().contains(testAppInstance.packageName()))
                         .wasLogged();
             } finally {

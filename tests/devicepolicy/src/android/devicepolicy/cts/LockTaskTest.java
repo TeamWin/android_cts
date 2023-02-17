@@ -32,7 +32,6 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
-import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -56,7 +55,10 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.ForceCoexistenceFlagsOff;
+import com.android.bedstead.harrier.annotations.enterprise.ForceCoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.annotations.enterprise.RequireHasPolicyExemptApps;
@@ -129,18 +131,18 @@ public final class LockTaskTest {
     public void setLockTaskPackages_lockTaskPackagesIsSet() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
 
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{PACKAGE_NAME});
+                .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{PACKAGE_NAME});
 
         try {
             assertThat(sDeviceState.dpc().devicePolicyManager()
-                    .getLockTaskPackages(DPC_COMPONENT_NAME)).asList()
+                    .getLockTaskPackages(sDeviceState.dpc().componentName())).asList()
                     .containsExactly(PACKAGE_NAME);
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -149,12 +151,12 @@ public final class LockTaskTest {
     public void startLockTask_recordsMetric() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create();
              TestAppInstance testApp = sTestApp.install()) {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{sTestApp.packageName()});
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()});
             Activity<TestAppActivity> activity = testApp.activities().any().start();
 
             try {
@@ -162,7 +164,7 @@ public final class LockTaskTest {
 
                 assertThat(metrics.query()
                         .whereType().isEqualTo(EventId.SET_LOCKTASK_MODE_ENABLED_VALUE)
-                        .whereAdminPackageName().isEqualTo(DPC_COMPONENT_NAME.getPackageName())
+                        .whereAdminPackageName().isEqualTo(sDeviceState.dpc().componentName().getPackageName())
                         .whereBoolean().isTrue()
                         .whereStrings().contains(sTestApp.packageName())
                 ).wasLogged();
@@ -171,7 +173,7 @@ public final class LockTaskTest {
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -179,7 +181,7 @@ public final class LockTaskTest {
     public void getLockTaskPackages_policyIsNotAllowedToBeFetched_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME));
+                        .getLockTaskPackages(sDeviceState.dpc().componentName()));
     }
 
     @PolicyAppliesTest(policy = LockTaskFinance.class)
@@ -187,18 +189,18 @@ public final class LockTaskTest {
     public void setLockTaskPackages_empty_lockTaskPackagesIsSet() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
 
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{});
+                .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{});
 
         try {
             assertThat(sDeviceState.dpc().devicePolicyManager()
-                    .getLockTaskPackages(DPC_COMPONENT_NAME)).asList()
+                    .getLockTaskPackages(sDeviceState.dpc().componentName())).asList()
                     .isEmpty();
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -209,19 +211,19 @@ public final class LockTaskTest {
         Set<String> policyExemptApps = TestApis.devicePolicy().getPolicyExemptApps();
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
         String policyExemptApp = policyExemptApps.iterator().next();
 
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{policyExemptApp});
+                .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{policyExemptApp});
 
         try {
             assertThat(sDeviceState.dpc().devicePolicyManager()
-                    .getLockTaskPackages(DPC_COMPONENT_NAME)).asList()
+                    .getLockTaskPackages(sDeviceState.dpc().componentName())).asList()
                     .containsExactly(policyExemptApp);
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -229,7 +231,7 @@ public final class LockTaskTest {
     public void setLockTaskPackages_policyIsNotAllowedToBeSet_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager()
-                        .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{}));
+                        .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{}));
     }
 
     @PolicyAppliesTest(policy = LockTaskFinance.class)
@@ -237,16 +239,16 @@ public final class LockTaskTest {
     public void isLockTaskPermitted_lockTaskPackageIsSet_returnsTrue() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
 
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{PACKAGE_NAME});
+                .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{PACKAGE_NAME});
 
         try {
             assertThat(sLocalDevicePolicyManager.isLockTaskPermitted(PACKAGE_NAME)).isTrue();
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -255,16 +257,16 @@ public final class LockTaskTest {
     public void isLockTaskPermitted_lockTaskPackageIsSet_policyDoesntApply_returnsFalse() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
 
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{PACKAGE_NAME});
+                .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{PACKAGE_NAME});
 
         try {
             assertThat(sLocalDevicePolicyManager.isLockTaskPermitted(PACKAGE_NAME)).isFalse();
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -273,16 +275,16 @@ public final class LockTaskTest {
     public void isLockTaskPermitted_lockTaskPackageIsNotSet_returnsFalse() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
 
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{});
+                .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{});
 
         try {
             assertThat(sLocalDevicePolicyManager.isLockTaskPermitted(PACKAGE_NAME)).isFalse();
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -293,11 +295,11 @@ public final class LockTaskTest {
         Set<String> policyExemptApps = TestApis.devicePolicy().getPolicyExemptApps();
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{});
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{});
 
             for (String app : policyExemptApps) {
                 assertWithMessage("isLockTaskPermitted(%s)", app)
@@ -305,90 +307,120 @@ public final class LockTaskTest {
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
-    @PolicyAppliesTest(policy = LockTask.class)
+    // TODO: Remove the breaking requirement to set features before packages...
+
+    @CanSetPolicyTest(policy = LockTask.class)
     // TODO(b/188893663): Support additional parameterization for cases like this
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskFeatures_individuallySettableFlag_setsFeature(
             @IndividuallySettableFlagTestParameter int flag) {
         int originalLockTaskFeatures =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskFeatures(DPC_COMPONENT_NAME);
+                        .getLockTaskFeatures(sDeviceState.dpc().componentName());
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager()
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskFeatures(DPC_COMPONENT_NAME, flag);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()});
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskFeatures(sDeviceState.dpc().componentName(), flag);
 
             assertThat(sDeviceState.dpc().devicePolicyManager()
-                    .getLockTaskFeatures(DPC_COMPONENT_NAME))
+                    .getLockTaskFeatures(sDeviceState.dpc().componentName()))
                     .isEqualTo(flag);
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskFeatures(DPC_COMPONENT_NAME, originalLockTaskFeatures);
+                    .setLockTaskFeatures(sDeviceState.dpc().componentName(), originalLockTaskFeatures);
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
 
-    @PolicyAppliesTest(policy = LockTask.class)
+    @CanSetPolicyTest(policy = LockTask.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskFeatures_overviewFeature_throwsException() {
         // Overview can only be used in combination with home
         int originalLockTaskFeatures =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskFeatures(DPC_COMPONENT_NAME);
+                        .getLockTaskFeatures(sDeviceState.dpc().componentName());
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager()
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()});
             assertThrows(IllegalArgumentException.class, () -> {
                 sDeviceState.dpc().devicePolicyManager()
-                        .setLockTaskFeatures(DPC_COMPONENT_NAME, LOCK_TASK_FEATURE_OVERVIEW);
+                        .setLockTaskFeatures(sDeviceState.dpc().componentName(), LOCK_TASK_FEATURE_OVERVIEW);
             });
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskFeatures(DPC_COMPONENT_NAME, originalLockTaskFeatures);
+                    .setLockTaskFeatures(sDeviceState.dpc().componentName(), originalLockTaskFeatures);
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
-    @PolicyAppliesTest(policy = LockTask.class)
+    @CanSetPolicyTest(policy = LockTask.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskFeatures_notificationsFeature_throwsException() {
         // Notifications can only be used in combination with home
         int originalLockTaskFeatures =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskFeatures(DPC_COMPONENT_NAME);
+                        .getLockTaskFeatures(sDeviceState.dpc().componentName());
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager()
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()});
             assertThrows(IllegalArgumentException.class, () -> {
                 sDeviceState.dpc().devicePolicyManager()
-                        .setLockTaskFeatures(DPC_COMPONENT_NAME, LOCK_TASK_FEATURE_NOTIFICATIONS);
+                        .setLockTaskFeatures(sDeviceState.dpc().componentName(), LOCK_TASK_FEATURE_NOTIFICATIONS);
             });
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskFeatures(DPC_COMPONENT_NAME, originalLockTaskFeatures);
+                    .setLockTaskFeatures(sDeviceState.dpc().componentName(), originalLockTaskFeatures);
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
-    @PolicyAppliesTest(policy = LockTask.class)
+    @CanSetPolicyTest(policy = LockTask.class)
     // TODO(b/188893663): Support additional parameterization for cases like this
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskFeatures_multipleFeatures_setsFeatures(
             @SettableWithHomeFlagTestParameter int flag) {
         int originalLockTaskFeatures =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskFeatures(DPC_COMPONENT_NAME);
+                        .getLockTaskFeatures(sDeviceState.dpc().componentName());
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager()
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskFeatures(DPC_COMPONENT_NAME, LOCK_TASK_FEATURE_HOME | flag);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()});
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskFeatures(sDeviceState.dpc().componentName(), LOCK_TASK_FEATURE_HOME | flag);
 
             assertThat(sDeviceState.dpc().devicePolicyManager()
-                    .getLockTaskFeatures(DPC_COMPONENT_NAME))
+                    .getLockTaskFeatures(sDeviceState.dpc().componentName()))
                     .isEqualTo(LOCK_TASK_FEATURE_HOME | flag);
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskFeatures(DPC_COMPONENT_NAME, originalLockTaskFeatures);
+                    .setLockTaskFeatures(sDeviceState.dpc().componentName(), originalLockTaskFeatures);
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -396,14 +428,14 @@ public final class LockTaskTest {
     public void setLockTaskFeatures_policyIsNotAllowedToBeSet_throwsException() {
         assertThrows(SecurityException.class, () ->
                 sDeviceState.dpc().devicePolicyManager()
-                        .setLockTaskFeatures(DPC_COMPONENT_NAME, LOCK_TASK_FEATURE_NONE));
+                        .setLockTaskFeatures(sDeviceState.dpc().componentName(), LOCK_TASK_FEATURE_NONE));
     }
 
     @CannotSetPolicyTest(policy = LockTaskFinance.class)
     public void getLockTaskFeatures_policyIsNotAllowedToBeFetched_throwsException() {
         assertThrows(SecurityException.class, () ->
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskFeatures(DPC_COMPONENT_NAME));
+                        .getLockTaskFeatures(sDeviceState.dpc().componentName()));
     }
 
     @PolicyAppliesTest(policy = LockTaskFinance.class)
@@ -411,9 +443,9 @@ public final class LockTaskTest {
     public void startLockTask_includedInLockTaskPackages_taskIsLocked() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{sTestApp.packageName()});
+                .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()});
         try (TestAppInstance testApp = sTestApp.install()) {
             Activity<TestAppActivity> activity = testApp.activities().any().start();
 
@@ -429,7 +461,7 @@ public final class LockTaskTest {
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -438,9 +470,9 @@ public final class LockTaskTest {
     public void startLockTask_notIncludedInLockTaskPackages_taskIsNotLocked() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{});
+                .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{});
         try (TestAppInstance testApp = sTestApp.install()) {
             Activity<TestAppActivity> activity = testApp.activities().any().start();
 
@@ -456,7 +488,7 @@ public final class LockTaskTest {
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -464,9 +496,9 @@ public final class LockTaskTest {
     public void startLockTask_includedInLockTaskPackages_policyShouldNotApply_taskIsNotLocked() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{sTestApp.packageName()});
+                .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()});
         try (TestAppInstance testApp = sTestApp.install()) {
             Activity<TestAppActivity> activity = testApp.activities().any().start();
 
@@ -482,7 +514,7 @@ public final class LockTaskTest {
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -491,9 +523,9 @@ public final class LockTaskTest {
     public void finish_isLocked_doesNotFinish() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{sTestApp.packageName()});
+                .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()});
         try (TestAppInstance testApp = sTestApp.install()) {
             Activity<TestAppActivity> activity = testApp.activities().any().start();
             activity.startLockTask();
@@ -512,7 +544,7 @@ public final class LockTaskTest {
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -521,9 +553,9 @@ public final class LockTaskTest {
     public void finish_hasStoppedLockTask_doesFinish() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{sTestApp.packageName()});
+                .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()});
         try (TestAppInstance testApp = sTestApp.install()) {
             Activity<TestAppActivity> activity = testApp.activities().any().start();
             activity.startLockTask();
@@ -536,7 +568,7 @@ public final class LockTaskTest {
                     activity.activity().component());
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -545,22 +577,22 @@ public final class LockTaskTest {
     public void setLockTaskPackages_removingCurrentlyLockedTask_taskFinishes() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{sTestApp.packageName()});
+                .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()});
         try (TestAppInstance testApp = sTestApp.install()) {
             Activity<TestAppActivity> activity = testApp.activities().any().start();
             activity.startLockTask();
 
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{});
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{});
 
             assertThat(activity.activity().events().activityDestroyed()).eventOccurred();
             assertThat(TestApis.activities().foregroundActivity()).isNotEqualTo(
                     activity.activity().component());
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -569,9 +601,9 @@ public final class LockTaskTest {
     public void setLockTaskPackages_removingCurrentlyLockedTask_otherLockedTasksRemainLocked() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
         sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(DPC_COMPONENT_NAME,
+                .setLockTaskPackages(sDeviceState.dpc().componentName(),
                         new String[]{sTestApp.packageName(), sSecondTestApp.packageName()});
         try (TestAppInstance testApp = sTestApp.install();
              TestAppInstance testApp2 = sSecondTestApp.install()) {
@@ -582,7 +614,7 @@ public final class LockTaskTest {
 
             try {
                 sDeviceState.dpc().devicePolicyManager()
-                        .setLockTaskPackages(DPC_COMPONENT_NAME,
+                        .setLockTaskPackages(sDeviceState.dpc().componentName(),
                                 new String[]{sTestApp.packageName()});
 
                 assertThat(activity2.activity().events().activityDestroyed()).eventOccurred();
@@ -595,7 +627,7 @@ public final class LockTaskTest {
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -604,11 +636,11 @@ public final class LockTaskTest {
     public void startActivity_withinSameTask_startsActivity() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
         try (TestAppInstance testApp = sTestApp.install();
              TestAppInstance testApp2 = sSecondTestApp.install()) {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{sTestApp.packageName()});
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()});
             Activity<TestAppActivity> firstActivity = testApp.activities().any().start();
             TestAppActivityReference secondActivity = testApp2.activities().any();
             Intent secondActivityIntent = new Intent();
@@ -623,7 +655,7 @@ public final class LockTaskTest {
                     .isEqualTo(secondActivity.component());
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -632,18 +664,18 @@ public final class LockTaskTest {
     public void startActivity_withinSameTask_blockStartInTask_doesNotStart() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
         int originalLockTaskFeatures =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskFeatures(DPC_COMPONENT_NAME);
+                        .getLockTaskFeatures(sDeviceState.dpc().componentName());
         try (TestAppInstance testApp = sTestApp.install();
              TestAppInstance testApp2 = sSecondTestApp.install()) {
             try {
                 sDeviceState.dpc().devicePolicyManager()
-                        .setLockTaskPackages(DPC_COMPONENT_NAME,
+                        .setLockTaskPackages(sDeviceState.dpc().componentName(),
                                 new String[]{sTestApp.packageName()});
                 sDeviceState.dpc().devicePolicyManager()
-                        .setLockTaskFeatures(DPC_COMPONENT_NAME,
+                        .setLockTaskFeatures(sDeviceState.dpc().componentName(),
                                 LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK);
                 Activity<TestAppActivity> firstActivity = testApp.activities().any().start();
                 firstActivity.startLockTask();
@@ -659,10 +691,10 @@ public final class LockTaskTest {
                         .errorOnFail()
                         .await();
             } finally {
-                sDeviceState.dpc().devicePolicyManager()
-                        .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
                 sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(
-                        DPC_COMPONENT_NAME, originalLockTaskFeatures);
+                        sDeviceState.dpc().componentName(), originalLockTaskFeatures);
+                sDeviceState.dpc().devicePolicyManager()
+                        .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
             }
         }
     }
@@ -672,19 +704,19 @@ public final class LockTaskTest {
     public void startActivity_inNewTask_blockStartInTask_doesNotStart() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskPackages(DPC_COMPONENT_NAME);
+                        .getLockTaskPackages(sDeviceState.dpc().componentName());
         int originalLockTaskFeatures =
                 sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskFeatures(DPC_COMPONENT_NAME);
+                        .getLockTaskFeatures(sDeviceState.dpc().componentName());
         try (TestAppInstance testApp = sTestApp.install();
              TestAppInstance testApp2 = sSecondTestApp.install()) {
             try {
                 sDeviceState.dpc().devicePolicyManager()
-                        .setLockTaskPackages(DPC_COMPONENT_NAME,
+                        .setLockTaskPackages(sDeviceState.dpc().componentName(),
                                 new String[]{sTestApp.packageName()});
                 sDeviceState.dpc().devicePolicyManager()
                         .setLockTaskFeatures(
-                                DPC_COMPONENT_NAME, LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK);
+                                sDeviceState.dpc().componentName(), LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK);
                 Activity<TestAppActivity> firstActivity = testApp.activities().any().start();
                 firstActivity.startLockTask();
                 TestAppActivityReference secondActivity = testApp2.activities().any();
@@ -700,10 +732,10 @@ public final class LockTaskTest {
                         .errorOnFail()
                         .await();
             } finally {
-                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
-                        originalLockTaskPackages);
                 sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(
-                        DPC_COMPONENT_NAME, originalLockTaskFeatures);
+                        sDeviceState.dpc().componentName(), originalLockTaskFeatures);
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
+                        originalLockTaskPackages);
             }
         }
     }
@@ -712,12 +744,12 @@ public final class LockTaskTest {
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_fromPermittedPackage_newTask_starts() {
         String[] originalLockTaskPackages =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try (TestAppInstance testApp = sTestApp.install();
              TestAppInstance testApp2 = sSecondTestApp.install()) {
             try {
-                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                         new String[]{sTestApp.packageName(), sSecondTestApp.packageName()});
                 Activity<TestAppActivity> firstActivity = testApp.activities().any().start();
                 firstActivity.startLockTask();
@@ -731,7 +763,7 @@ public final class LockTaskTest {
                 assertThat(TestApis.activities().foregroundActivity())
                         .isEqualTo(secondActivity.component());
             } finally {
-                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                         originalLockTaskPackages);
             }
         }
@@ -741,12 +773,12 @@ public final class LockTaskTest {
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_fromNonPermittedPackage_newTask_doesNotStart() {
         String[] originalLockTaskPackages =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try (TestAppInstance testApp = sTestApp.install();
              TestAppInstance testApp2 = sSecondTestApp.install()) {
             try {
-                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                         new String[]{sTestApp.packageName()});
                 Activity<TestAppActivity> firstActivity = testApp.activities().any().start();
                 firstActivity.startLockTask();
@@ -760,7 +792,7 @@ public final class LockTaskTest {
                 assertThat(TestApis.activities().foregroundActivity())
                         .isEqualTo(firstActivity.activity().component());
             } finally {
-                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                         originalLockTaskPackages);
             }
         }
@@ -770,11 +802,11 @@ public final class LockTaskTest {
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_lockTaskEnabledOption_startsInLockTaskMode() {
         String[] originalLockTaskPackages =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try (TestAppInstance testApp = sTestApp.install()) {
             try {
-                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                         new String[]{sTestApp.packageName()});
                 Bundle options = ActivityOptions.makeBasic().setLockTaskEnabled(true).toBundle();
                 Activity<TestAppActivity> activity = testApp.activities().any().start(options);
@@ -788,7 +820,7 @@ public final class LockTaskTest {
                     activity.stopLockTask();
                 }
             } finally {
-                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                         originalLockTaskPackages);
             }
         }
@@ -798,11 +830,11 @@ public final class LockTaskTest {
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_lockTaskEnabledOption_notAllowedPackage_throwsException() {
         String[] originalLockTaskPackages =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try (TestAppInstance testApp = sTestApp.install()) {
             try {
-                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                         new String[]{});
                 Bundle options = ActivityOptions.makeBasic().setLockTaskEnabled(true).toBundle();
 
@@ -810,7 +842,7 @@ public final class LockTaskTest {
                     testApp.activities().any().start(options);
                 });
             } finally {
-                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                         originalLockTaskPackages);
             }
         }
@@ -820,10 +852,10 @@ public final class LockTaskTest {
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_ifWhitelistedActivity_startsInLockTaskMode() {
         String[] originalLockTaskPackages =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try (TestAppInstance testApp = sLockTaskTestApp.install()) {
-            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                     new String[]{sLockTaskTestApp.packageName()});
             Activity<TestAppActivity> activity = testApp.activities().query()
                     .whereActivity().activityClass().simpleName().isEqualTo("ifwhitelistedactivity")
@@ -840,7 +872,7 @@ public final class LockTaskTest {
                 activity.stopLockTask();
             }
         } finally {
-            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                     originalLockTaskPackages);
         }
     }
@@ -849,10 +881,10 @@ public final class LockTaskTest {
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_ifWhitelistedActivity_notWhitelisted_startsNotInLockTaskMode() {
         String[] originalLockTaskPackages =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try (TestAppInstance testApp = sLockTaskTestApp.install()) {
-            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                     new String[]{});
             Activity<TestAppActivity> activity = testApp.activities().query()
                     .whereActivity().activityClass().simpleName().isEqualTo("ifwhitelistedactivity")
@@ -869,7 +901,7 @@ public final class LockTaskTest {
                 activity.stopLockTask();
             }
         } finally {
-            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                     originalLockTaskPackages);
         }
     }
@@ -878,10 +910,10 @@ public final class LockTaskTest {
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void finish_ifWhitelistedActivity_doesNotFinish() {
         String[] originalLockTaskPackages =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try (TestAppInstance testApp = sLockTaskTestApp.install()) {
-            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                     new String[]{sLockTaskTestApp.packageName()});
             Activity<TestAppActivity> activity = testApp.activities().query()
                     .whereActivity().activityClass().simpleName().isEqualTo("ifwhitelistedactivity")
@@ -902,7 +934,7 @@ public final class LockTaskTest {
                 activity.stopLockTask();
             }
         } finally {
-            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                     originalLockTaskPackages);
         }
     }
@@ -911,10 +943,10 @@ public final class LockTaskTest {
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskPackages_removingExistingIfWhitelistedActivity_stopsTask() {
         String[] originalLockTaskPackages =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(sDeviceState.dpc().componentName());
 
         try (TestAppInstance testApp = sLockTaskTestApp.install()) {
-            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                     new String[]{sLockTaskTestApp.packageName()});
             Activity<TestAppActivity> activity = testApp.activities().query()
                     .whereActivity().activityClass().simpleName().isEqualTo("ifwhitelistedactivity")
@@ -922,7 +954,7 @@ public final class LockTaskTest {
                     //  this so we just get a fixed package which contains a fixed activity
                     .get().start();
 
-            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                     new String[]{});
 
             assertThat(activity.activity().events().activityDestroyed()).eventOccurred();
@@ -930,7 +962,7 @@ public final class LockTaskTest {
                     activity.activity().component());
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
-                    DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -940,12 +972,12 @@ public final class LockTaskTest {
     // Tests that the default dialer doesn't crash or otherwise misbehave in lock task mode
     public void launchDefaultDialerInLockTaskMode_launches() {
         String[] originalLockTaskPackages =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(sDeviceState.dpc().componentName());
         TelecomManager telecomManager =
                 TestApis.context().instrumentedContext().getSystemService(TelecomManager.class);
         String dialerPackage = telecomManager.getSystemDialerPackage();
         try {
-            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                     new String[]{dialerPackage});
 
             Bundle options = ActivityOptions.makeBasic().setLockTaskEnabled(true).toBundle();
@@ -968,7 +1000,7 @@ public final class LockTaskTest {
                     .await();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
-                    DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -977,16 +1009,16 @@ public final class LockTaskTest {
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void launchEmergencyDialerInLockTaskMode_notWhitelisted_noKeyguardFeature_doesNotLaunch() {
         String[] originalLockTaskPackages =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(sDeviceState.dpc().componentName());
         int originalLockTaskFeatures =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures(sDeviceState.dpc().componentName());
         String emergencyDialerPackageName = getEmergencyDialerPackageName();
         assumeFalse(emergencyDialerPackageName == null);
         try (TestAppInstance testApp = sLockTaskTestApp.install()) {
-            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME,
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(sDeviceState.dpc().componentName(),
                     new String[]{sLockTaskTestApp.packageName()});
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskFeatures(DPC_COMPONENT_NAME, 0);
+                    .setLockTaskFeatures(sDeviceState.dpc().componentName(), 0);
             Activity<TestAppActivity> activity = testApp.activities().any().start();
 
             try {
@@ -1004,10 +1036,10 @@ public final class LockTaskTest {
                 activity.stopLockTask();
             }
         } finally {
-            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
-                    DPC_COMPONENT_NAME, originalLockTaskPackages);
-            sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(DPC_COMPONENT_NAME,
+            sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(sDeviceState.dpc().componentName(),
                     originalLockTaskFeatures);
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -1016,15 +1048,15 @@ public final class LockTaskTest {
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void launchEmergencyDialerInLockTaskMode_notWhitelisted_keyguardFeature_launches() {
         String[] originalLockTaskPackages =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(sDeviceState.dpc().componentName());
         int originalLockTaskFeatures =
-                sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures(DPC_COMPONENT_NAME);
+                sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures(sDeviceState.dpc().componentName());
         String emergencyDialerPackageName = getEmergencyDialerPackageName();
         assumeFalse(emergencyDialerPackageName == null);
         try (TestAppInstance testApp = sLockTaskTestApp.install()) {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
-                    DPC_COMPONENT_NAME, new String[]{sLockTaskTestApp.packageName()});
-            sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(), new String[]{sLockTaskTestApp.packageName()});
+            sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(sDeviceState.dpc().componentName(),
                     LOCK_TASK_FEATURE_KEYGUARD);
             Activity<TestAppActivity> activity = testApp.activities().any().start();
             try {
@@ -1043,9 +1075,9 @@ public final class LockTaskTest {
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
-                    DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    sDeviceState.dpc().componentName(), originalLockTaskPackages);
             sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(
-                    DPC_COMPONENT_NAME, originalLockTaskFeatures);
+                    sDeviceState.dpc().componentName(), originalLockTaskFeatures);
         }
     }
 
