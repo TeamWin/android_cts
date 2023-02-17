@@ -16,4 +16,12 @@
 
 package android.app.cts.wallpapers;
 
-public class TestLiveWallpaper extends TestWallpaperService { }
+import android.graphics.Color;
+
+public class TestLiveWallpaper extends TestWallpaperService {
+
+    @Override
+    protected int getColor() {
+        return Color.CYAN;
+    }
+}
