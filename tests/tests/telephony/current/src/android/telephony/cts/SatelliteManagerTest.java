@@ -30,6 +30,7 @@ import android.telephony.satellite.PointingInfo;
 import android.telephony.satellite.SatelliteCapabilities;
 import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteDatagramCallback;
+import android.telephony.satellite.ISatelliteDatagramReceiverAck;
 import android.telephony.satellite.SatelliteManager;
 import android.telephony.satellite.SatellitePositionUpdateCallback;
 import android.telephony.satellite.SatelliteProvisionStateCallback;
@@ -72,7 +73,7 @@ public class SatelliteManagerTest {
     }
 
     @Test
-    public void testRequestMaxCharactersPerSatelliteTextMessage() {
+    public void testRequestMaxSizePerSendingDatagram() {
         final AtomicReference<Integer> maxCharacters = new AtomicReference<>();
         final AtomicReference<Integer> errorCode = new AtomicReference<>();
         OutcomeReceiver<Integer, SatelliteManager.SatelliteException> receiver =
@@ -90,7 +91,7 @@ public class SatelliteManagerTest {
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class,
-                () -> mSatelliteManager.requestMaxCharactersPerSatelliteTextMessage(
+                () -> mSatelliteManager.requestMaxSizePerSendingDatagram(
                         getContext().getMainExecutor(), receiver));
     }
 
@@ -255,7 +256,7 @@ public class SatelliteManagerTest {
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class, ()-> mSatelliteManager
-                .registerForSatelliteDatagram(SatelliteManager.DATAGRAM_TYPE_SOS_SMS,
+                .registerForSatelliteDatagram(SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE,
                         getContext().getMainExecutor(), callback));
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
@@ -275,16 +276,30 @@ public class SatelliteManagerTest {
 
     @Test
     public void testSendSatelliteDatagram() {
-        LinkedBlockingQueue<Integer> resultListener = new LinkedBlockingQueue<>(1);
+        final AtomicReference<Long> datagramId = new AtomicReference<>();
+        final AtomicReference<Integer> errorCode = new AtomicReference<>();
+        OutcomeReceiver<Long, SatelliteManager.SatelliteException> receiver =
+                new OutcomeReceiver<>() {
+                    @Override
+                    public void onResult(Long result) {
+                        datagramId.set(result);
+                    }
+
+                    @Override
+                    public void onError(SatelliteManager.SatelliteException exception) {
+                        errorCode.set(exception.getErrorCode());
+                    }
+                };
+
 
         String mText = "This is a test datagram message";
         SatelliteDatagram datagram = new SatelliteDatagram(mText.getBytes());
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class,
-                ()-> mSatelliteManager.sendSatelliteDatagram(
-                        SatelliteManager.DATAGRAM_TYPE_SOS_SMS, datagram,
-                        getContext().getMainExecutor(), resultListener::offer));
+                ()-> mSatelliteManager.sendSatelliteDatagram(0,
+                        SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE, datagram,
+                        getContext().getMainExecutor(), receiver));
     }
 
     @Test
@@ -379,7 +394,8 @@ public class SatelliteManagerTest {
 
     private static class SatelliteDatagramCallbackTest extends SatelliteDatagramCallback {
         @Override
-        public void onSatelliteDatagrams(SatelliteDatagram[] datagrams) {
+        public void onSatelliteDatagramReceived(long datagramId, SatelliteDatagram datagram,
+                int pendingCount, ISatelliteDatagramReceiverAck callback) {
             Log.d(TAG, "onSatelliteDatagram");
         }
     }
