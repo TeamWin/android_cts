@@ -231,6 +231,14 @@
                 <action android:name="android.service.autofill.AutofillService"/>
             </intent-filter>
         </service>
+        <service android:name=".testcore.InstrumentedFieldClassificationService"
+            android:label="InstrumentedFieldClassificationService"
+            android:permission="android.permission.BIND_FIELD_CLASSIFICATION_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.assist.classification.FieldClassificationService"/>
+            </intent-filter>
+        </service>
 
     </application>
 
