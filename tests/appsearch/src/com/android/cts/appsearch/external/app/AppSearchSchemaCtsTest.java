@@ -245,6 +245,7 @@ public class AppSearchSchemaCtsTest {
                                         .setJoinableValueType(
                                                 StringPropertyConfig
                                                         .JOINABLE_VALUE_TYPE_QUALIFIED_ID)
+                                        .setDeletionPropagation(true)
                                         .build())
                         .addProperty(
                                 new AppSearchSchema.StringPropertyConfig.Builder("qualifiedId2")
@@ -309,6 +310,8 @@ public class AppSearchSchemaCtsTest {
                 .isEqualTo(PropertyConfig.CARDINALITY_OPTIONAL);
         assertThat(((StringPropertyConfig) properties.get(7)).getJoinableValueType())
                 .isEqualTo(StringPropertyConfig.JOINABLE_VALUE_TYPE_QUALIFIED_ID);
+        assertThat(((StringPropertyConfig) properties.get(7)).getDeletionPropagation())
+                .isEqualTo(true);
 
         assertThat(properties.get(8).getName()).isEqualTo("qualifiedId2");
         assertThat(properties.get(8).getCardinality())
@@ -620,6 +623,36 @@ public class AppSearchSchemaCtsTest {
                         new StringPropertyConfig.Builder("qualifiedId")
                                 .setJoinableValueType(-1)
                                 .build());
+    }
+
+    @Test
+    public void testStringPropertyConfig_setJoinableProperty_deletePropagation() {
+        StringPropertyConfig spc = new StringPropertyConfig.Builder("entityId").build();
+        assertThat(spc.getDeletionPropagation()).isFalse();
+        spc =
+                new StringPropertyConfig.Builder("entityId")
+                        .setJoinableValueType(StringPropertyConfig.JOINABLE_VALUE_TYPE_QUALIFIED_ID)
+                        .setDeletionPropagation(false)
+                        .build();
+        assertThat(spc.getDeletionPropagation()).isFalse();
+        spc =
+                new StringPropertyConfig.Builder("entityId")
+                        .setJoinableValueType(StringPropertyConfig.JOINABLE_VALUE_TYPE_QUALIFIED_ID)
+                        .setDeletionPropagation(true)
+                        .build();
+        assertThat(spc.getDeletionPropagation()).isTrue();
+    }
+
+    @Test
+    public void testStringPropertyConfig_setJoinableProperty_deletePropagationError() {
+        final StringPropertyConfig.Builder builder =
+                new StringPropertyConfig.Builder("qualifiedId")
+                        .setCardinality(PropertyConfig.CARDINALITY_REPEATED)
+                        .setDeletionPropagation(true);
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> builder.build());
+        assertThat(e)
+                .hasMessageThat()
+                .contains("Cannot set deletion propagation without setting a joinable value type");
     }
 
     @Test
