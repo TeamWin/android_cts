@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier.audio;
 
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
 import android.graphics.Color;
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
@@ -35,12 +38,10 @@ import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
 import com.android.cts.verifier.audio.audiolib.WaveScopeView;
 
 // MegaAudio
-import org.hyphonate.megaaudio.common.Globals;
 import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.duplex.DuplexAudioManager;
 import org.hyphonate.megaaudio.player.AudioSource;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
-import org.hyphonate.megaaudio.player.JavaSourceProxy;
 import org.hyphonate.megaaudio.player.NativeAudioSource;
 import org.hyphonate.megaaudio.player.sources.NoiseAudioSourceProvider;
 import org.hyphonate.megaaudio.player.sources.SilenceAudioSourceProvider;
@@ -56,9 +57,6 @@ import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
-import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
-
 /**
  * CtsVerifier test for audio data paths.
  */
@@ -66,21 +64,6 @@ public class AudioDataPathsActivity
         extends AudioMultiApiActivity
         implements View.OnClickListener, AppCallback {
     private static final String TAG = "AudioDataPathsActivity";
-
-    // JNI load
-    static {
-        try {
-            System.loadLibrary("megaaudio_jni");
-            JavaSourceProxy.initN();
-            Globals.setOboeWorkaroundsEnabled(false);
-        } catch (UnsatisfiedLinkError e) {
-            Log.e(TAG, "Error loading MegaAudio JNI library");
-            Log.e(TAG, "e: " + e);
-            e.printStackTrace();
-        }
-
-        /* TODO: gracefully fail/notify if the library can't be loaded */
-    }
 
     // ReportLog Schema
     private static final String SECTION_AUDIO_DATAPATHS = "audio_datapaths";
@@ -116,8 +99,7 @@ public class AudioDataPathsActivity
         super.onCreate(savedInstanceState);
 
         // MegaAudio Initialization
-        StreamBase.calcNumBurstFrames(this);
-        StreamBase.calcSystemSampleRate(this);
+        StreamBase.setup(this);
 
         mStartBtn = findViewById(R.id.audio_datapaths_start);
         mStartBtn.setOnClickListener(this);

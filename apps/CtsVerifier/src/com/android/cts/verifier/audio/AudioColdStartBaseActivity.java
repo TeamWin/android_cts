@@ -27,24 +27,12 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
 import org.hyphonate.megaaudio.common.BuilderBase;
+import org.hyphonate.megaaudio.common.StreamBase;
 
 public abstract class AudioColdStartBaseActivity
         extends PassFailButtons.Activity
         implements View.OnClickListener {
     private static final String TAG = "AudioColdStartBaseActivity";
-
-    // JNI load
-    static {
-        try {
-            System.loadLibrary("megaaudio_jni");
-        } catch (UnsatisfiedLinkError e) {
-            Log.e(TAG, "Error loading MegaAudio JNI library");
-            Log.e(TAG, "e: " + e);
-            e.printStackTrace();
-        }
-
-        /* TODO: gracefully fail/notify if the library can't be loaded */
-    }
 
     // Test State
     protected boolean mIsTestRunning;
@@ -134,6 +122,9 @@ public abstract class AudioColdStartBaseActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // MegaAudio Initialization
+        StreamBase.setup(this);
 
         ((RadioButton) findViewById(R.id.audioJavaApiBtn)).setOnClickListener(this);
         RadioButton nativeApiRB = findViewById(R.id.audioNativeApiBtn);

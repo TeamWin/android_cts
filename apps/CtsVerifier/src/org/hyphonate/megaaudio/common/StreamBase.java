@@ -21,11 +21,29 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.util.Log;
 
+// For initialization
+import org.hyphonate.megaaudio.player.JavaSourceProxy;
+
 public abstract class StreamBase {
     @SuppressWarnings("unused")
     private static final String TAG = StreamBase.class.getSimpleName();
     @SuppressWarnings("unused")
     private static final boolean LOG = false;
+
+    static {
+        Log.i(TAG, "Loading MegaAudio Library...");
+        try {
+            System.loadLibrary("megaaudio_jni");
+            JavaSourceProxy.initN();
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "Error loading MegaAudio JNI library");
+            Log.e(TAG, "e: " + e);
+            e.printStackTrace();
+        }
+
+        /* TODO: gracefully fail/notify if the library can't be loaded */
+    }
+
     //
     // Error Codes
     // These values must be kept in sync with the equivalent symbols in
@@ -53,6 +71,19 @@ public abstract class StreamBase {
 
     // the thread on which the underlying Android AudioTrack/AudioRecord will run
     protected Thread mStreamThread = null;
+
+    //
+    // Initialization
+    //
+
+    /**
+     * Performs initialization. MUST be called before any Streams are created.
+     * @param context
+     */
+    public static void setup(Context context) {
+        calcNumBurstFrames(context);
+        calcSystemSampleRate(context);
+    }
 
     //
     // Attributes
