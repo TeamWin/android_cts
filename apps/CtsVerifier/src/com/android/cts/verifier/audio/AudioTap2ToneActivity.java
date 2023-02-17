@@ -47,7 +47,6 @@ import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.duplex.DuplexAudioManager;
 import org.hyphonate.megaaudio.player.AudioSource;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
-import org.hyphonate.megaaudio.player.JavaSourceProxy;
 import org.hyphonate.megaaudio.recorder.AudioSinkProvider;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallback;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
@@ -61,20 +60,6 @@ public class AudioTap2ToneActivity
         extends PassFailButtons.Activity
         implements View.OnClickListener, AppCallback {
     private static final String TAG = "AudioTap2ToneActivity";
-
-    // JNI load
-    static {
-        try {
-            System.loadLibrary("megaaudio_jni");
-            JavaSourceProxy.initN();
-        } catch (UnsatisfiedLinkError e) {
-            Log.e(TAG, "Error loading MegaAudio JNI library");
-            Log.e(TAG, "e: " + e);
-            e.printStackTrace();
-        }
-
-        /* TODO: gracefully fail/notify if the library can't be loaded */
-    }
 
     private boolean mIsRecording;
 
@@ -267,10 +252,7 @@ public class AudioTap2ToneActivity
         mInputBuffer = new CircularBufferFloat(numBufferSamples);
 
         // MegaAudio Initialization
-        StreamBase.calcNumBurstFrames(this);
-        StreamBase.calcSystemSampleRate(this);
-
-        JavaSourceProxy.initN();
+        StreamBase.setup(this);
 
         calculateTestPass();
     }

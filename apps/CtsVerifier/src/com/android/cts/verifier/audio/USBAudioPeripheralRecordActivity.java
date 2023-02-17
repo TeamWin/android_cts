@@ -24,7 +24,6 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.android.compatibility.common.util.CddTest;
-
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.audiolib.AudioSystemParams;
 import com.android.cts.verifier.audio.audiolib.WaveScopeView;
@@ -39,19 +38,6 @@ import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
 @CddTest(requirement = "7.8.2.2/H-1-1|7.7.2/C-2-1,C-2-2")
 public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralActivity {
     private static final String TAG = "USBAudioPeripheralRecordActivity";
-
-    // JNI load
-    static {
-        try {
-            System.loadLibrary("megaaudio_jni");
-        } catch (UnsatisfiedLinkError e) {
-            Log.e(TAG, "Error loading MegaAudio JNI library");
-            Log.e(TAG, "e: " + e);
-            e.printStackTrace();
-        }
-
-        /* TODO: gracefully fail/notify if the library can't be loaded */
-    }
 
     // MegaAudio
     private static final int NUM_CHANNELS = 2;
@@ -126,6 +112,9 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.uap_record_panel);
+
+        // MegaAudio Initialization
+        StreamBase.setup(this);
 
         connectPeripheralStatusWidgets();
 

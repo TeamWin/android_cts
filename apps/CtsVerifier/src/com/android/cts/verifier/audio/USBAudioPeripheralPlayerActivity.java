@@ -43,6 +43,9 @@ public abstract class USBAudioPeripheralPlayerActivity extends USBAudioPeriphera
     }
 
     protected void setupPlayer() {
+        // MegaAudio Initialization
+        StreamBase.setup(this);
+
         AudioSystemParams audioSystemParams = new AudioSystemParams();
         audioSystemParams.init(this);
 
