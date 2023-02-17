@@ -201,8 +201,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
         @JvmStatic
         protected fun isPhotoPickerPermissionPromptEnabled(): Boolean {
-            return SystemUtil.callWithShellPermissionIdentity { DeviceConfig.getBoolean(
-                DeviceConfig.NAMESPACE_PRIVACY, PICKER_ENABLED_SETTING, true)
+            return SdkLevel.isAtLeastU() && SystemUtil.callWithShellPermissionIdentity {
+                DeviceConfig.getBoolean(
+                    DeviceConfig.NAMESPACE_PRIVACY, PICKER_ENABLED_SETTING, true)
             }
         }
     }
