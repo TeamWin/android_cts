@@ -36,7 +36,7 @@ java_defaults {
         "android.test.runner.stubs",
         "android.test.base.stubs",
     ],
-    target_sdk_version: "current"
+    target_sdk_version: "current",
 }
 
 android_test_helper_app {
@@ -141,10 +141,16 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsSplitAppRevisionA",
     defaults: ["CtsSplitAppDefaults"],
-    srcs: ["src/**/*.java", "revision_a/src/**/*.java"],
-    resource_dirs: ["res", "revision_a/res"],
+    srcs: [
+        "src/**/*.java",
+        "revision_a/src/**/*.java",
+    ],
+    resource_dirs: [
+        "res",
+        "revision_a/res",
+    ],
     asset_dirs: ["revision_a/assets"],
-    manifest : "revision_a/AndroidManifest.xml",
+    manifest: "revision_a/AndroidManifest.xml",
     package_splits: ["v7"],
     certificate: ":cts-testkey1",
     aaptflags: [
@@ -164,7 +170,7 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsSplitInstantApp",
     defaults: ["CtsSplitAppDefaults"],
-    manifest : "instantapp/AndroidManifest.xml",
+    manifest: "instantapp/AndroidManifest.xml",
     certificate: ":cts-testkey1",
     aaptflags: [
         "--version-code 100",

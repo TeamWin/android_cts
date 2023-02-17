@@ -69,6 +69,6 @@ android_test_helper_app {
         // Assign a unique package ID to this feature split. Since these are
         // isolated splits, it must only be unique across a dependency chain.
         "--package-id 0x80",
-        "--revision-code 10"
+        "--revision-code 10",
     ],
 }

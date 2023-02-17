@@ -44,11 +44,12 @@ import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.os.storage.StorageManager;
 import android.provider.Settings;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiScrollable;
-import android.support.test.uiautomator.UiSelector;
 import android.test.InstrumentationTestCase;
+
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObjectNotFoundException;
+import androidx.test.uiautomator.UiScrollable;
+import androidx.test.uiautomator.UiSelector;
 
 import java.io.File;
 import java.io.IOException;
@@ -117,7 +118,7 @@ public class StorageTest extends InstrumentationTestCase {
     }
 
     private void clearSpaceGeneric(UiDevice device) throws UiObjectNotFoundException {
-        int i = device.findObjects(android.support.test.uiautomator.By.scrollable(true)).size();
+        int i = device.findObjects(androidx.test.uiautomator.By.scrollable(true)).size();
         for (int j = 0; j < i; j++) {
             UiScrollable localObject = new UiScrollable(new UiSelector().scrollable(true).instance(j));
             ((UiScrollable) localObject).setMaxSearchSwipes(10);
@@ -165,7 +166,7 @@ public class StorageTest extends InstrumentationTestCase {
 
     private void clearSpaceCar(UiDevice device) throws UiObjectNotFoundException {
         String storageString = "internal storage";
-        int i = device.findObjects(android.support.test.uiautomator.By.scrollable(true)).size();
+        int i = device.findObjects(androidx.test.uiautomator.By.scrollable(true)).size();
         for (int j = 0; j < i; j++) {
             UiScrollable localObject = new UiScrollable(new UiSelector().scrollable(true).instance(j));
             localObject.setMaxSearchSwipes(10);

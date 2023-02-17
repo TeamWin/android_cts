@@ -34,12 +34,13 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.write
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
-import android.support.test.uiautomator.UiDevice;
 import android.system.Os;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
 import androidx.core.os.BuildCompat;
+import androidx.test.uiautomator.UiDevice;
+
 import com.android.cts.externalstorageapp.CommonExternalStorageTest;
 
 import java.io.File;

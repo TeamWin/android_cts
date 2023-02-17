@@ -18,13 +18,6 @@ package com.android.cts.documentclient;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import com.android.cts.documentclient.MyActivity.Result;
-
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -34,12 +27,20 @@ import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetFileDescriptor.AutoCloseInputStream;
 import android.database.Cursor;
 import android.net.Uri;
-import android.support.test.uiautomator.Configurator;
-import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.MotionEvent;
+
+import androidx.test.uiautomator.Configurator;
+import androidx.test.uiautomator.UiDevice;
+
+import com.android.cts.documentclient.MyActivity.Result;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Base class for DocumentsUI test cases.

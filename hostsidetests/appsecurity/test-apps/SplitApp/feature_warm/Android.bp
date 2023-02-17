@@ -74,10 +74,16 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsSplitAppFeatureWarmRevisionA",
     defaults: ["CtsSplitAppFeatureWarmDefaults"],
-    srcs: ["src/**/*.java", "revision_a/src/**/*.java"],
-    resource_dirs: ["res", "revision_a/res"],
+    srcs: [
+        "src/**/*.java",
+        "revision_a/src/**/*.java",
+    ],
+    resource_dirs: [
+        "res",
+        "revision_a/res",
+    ],
     asset_dirs: ["revision_a/assets"],
-    manifest : "revision_a/AndroidManifest.xml",
+    manifest: "revision_a/AndroidManifest.xml",
     package_splits: ["v7"],
     certificate: ":cts-testkey1",
     aaptflags: [

@@ -23,7 +23,7 @@ android_test_import {
     test_suites: [
         "cts",
         "general-tests",
-    ]
+    ],
 }
 
 android_test_import {
@@ -33,7 +33,7 @@ android_test_import {
     test_suites: [
         "cts",
         "general-tests",
-    ]
+    ],
 }
 
 android_test_import {
@@ -43,5 +43,5 @@ android_test_import {
     test_suites: [
         "cts",
         "general-tests",
-    ]
+    ],
 }
