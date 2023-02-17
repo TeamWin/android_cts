@@ -40,6 +40,8 @@ import android.app.Instrumentation;
 import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.app.cts.android.app.cts.tools.NotificationHelper;
+import android.app.cts.android.app.cts.tools.NotificationHelper.SEARCH_TYPE;
 import android.app.stubs.BubbledActivity;
 import android.app.stubs.BubblesTestService;
 import android.app.stubs.R;
@@ -372,7 +374,8 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         assertNotNull(mListener);
 
         sendNotification(1, R.drawable.black);
-        sleep(); // wait for notification listener to receive notification
+        // wait for notification listener to receive notification
+        mNotificationHelper.findPostedNotification(null, 1, SEARCH_TYPE.POSTED);
         NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
         NotificationListenerService.Ranking outRanking =
                 new NotificationListenerService.Ranking();
@@ -947,7 +950,8 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             mListener.resetData();
 
             // Bubble should have suppressed flag
-            StatusBarNotification sbn = findPostedNotification(notifId, true);
+            StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, notifId,
+                    SEARCH_TYPE.LISTENER);
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
         } finally {
@@ -990,7 +994,8 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             assertTrue(mListener.mPosted.isEmpty());
 
             // Bubble should not be suppressed
-            StatusBarNotification sbn = findPostedNotification(BUBBLE_NOTIF_ID, true);
+            StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null,
+                    BUBBLE_NOTIF_ID, SEARCH_TYPE.LISTENER);
             assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
             assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
         } finally {
@@ -1032,7 +1037,8 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             assertTrue(mListener.mPosted.isEmpty());
 
             // Bubble should not be suppressed
-            StatusBarNotification sbn = findPostedNotification(BUBBLE_NOTIF_ID, true);
+            StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null,
+                    BUBBLE_NOTIF_ID, SEARCH_TYPE.LISTENER);
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
             assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
         } finally {
@@ -1076,7 +1082,8 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             assertTrue(mListener.mPosted.isEmpty());
 
             // Bubble should not be suppressed & not have a locusId
-            StatusBarNotification sbn = findPostedNotification(BUBBLE_NOTIF_ID, true);
+            StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null,
+                    BUBBLE_NOTIF_ID, SEARCH_TYPE.LISTENER);
             assertNull(sbn.getNotification().getLocusId());
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
             assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
@@ -1110,7 +1117,8 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             verifyNotificationBubbleState(notifId, true);
             mListener.resetData();
 
-            StatusBarNotification sbn = findPostedNotification(notifId, true);
+            StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, notifId,
+                    SEARCH_TYPE.LISTENER);
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
             assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
 
@@ -1126,7 +1134,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             mListener.resetData();
 
             // Bubble should have suppressed flag
-            sbn = findPostedNotification(notifId, true);
+            sbn = mNotificationHelper.findPostedNotification(null, notifId, SEARCH_TYPE.LISTENER);
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
 
@@ -1136,7 +1144,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             verifyNotificationBubbleState(notifId, true /* shouldBeBubble */);
             mListener.resetData();
 
-            sbn = findPostedNotification(notifId, true);
+            sbn = mNotificationHelper.findPostedNotification(null, notifId, SEARCH_TYPE.LISTENER);
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
             assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
         } finally {
