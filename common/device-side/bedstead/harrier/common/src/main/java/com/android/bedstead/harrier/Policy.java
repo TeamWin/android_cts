@@ -55,7 +55,7 @@ import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATI
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_PACKAGE_ACCESS;
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_PERMISSION_GRANT;
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_SECURITY_LOGGING;
-import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_COEXISTENCE_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 
@@ -488,7 +488,7 @@ public final class Policy {
                     ensureTestAppHasPermission(DELEGATE_KEY,
                             new String[]{permission.appliedWith()}, FailureMode.SKIP),
                     ensureFeatureFlagEnabled(
-                            NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_COEXISTENCE_FLAG),
+                            NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG),
                     ensureFeatureFlagEnabled(
                             NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
             };
@@ -621,7 +621,7 @@ public final class Policy {
                 newAnnotations[newAnnotations.length - 3] = ensureHasDelegate(
                         EnsureHasDelegate.AdminType.PRIMARY, scopes, /* isPrimary= */ true);
                 newAnnotations[newAnnotations.length - 2] = ensureFeatureFlagEnabled(
-                        NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_COEXISTENCE_FLAG);
+                        NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
                 newAnnotations[newAnnotations.length - 1] = ensureFeatureFlagEnabled(
                         NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
                 annotations.add(
