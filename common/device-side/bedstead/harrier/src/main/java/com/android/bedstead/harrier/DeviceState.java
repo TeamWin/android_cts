@@ -132,6 +132,7 @@ import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.flags.Flags;
+import com.android.bedstead.nene.logcat.SystemServerException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
@@ -315,8 +316,10 @@ public final class DeviceState extends HarrierRule {
                     if (t != null) {
                         if (t.getStackTrace().length > 0) {
                             if (t.getStackTrace()[0].getMethodName().equals("createExceptionOrNull")) {
-                                TestApis.logcat().findSystemServerException(t);
-                                // TODO: Replace exception
+                                SystemServerException s = TestApis.logcat().findSystemServerException(t);
+                                if (s != null) {
+                                    throw s;
+                                }
                             }
                         }
 
