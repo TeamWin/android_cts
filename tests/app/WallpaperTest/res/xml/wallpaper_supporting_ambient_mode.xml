@@ -16,7 +16,7 @@
   -->
 <wallpaper
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:thumbnail="@drawable/icon_red"
+    android:thumbnail="@drawable/robot"
     android:author="@string/wallpaper_collection"
     android:description="@string/wallpaper_description"
     android:supportsAmbientMode="true"
