@@ -173,7 +173,7 @@ class ZoomTest(its_base_test.ItsBaseTest):
               req, {'format': fmt, 'width': size[0], 'height': size[1]})
           img = image_processing_utils.convert_capture_to_rgb_image(
               cap, props=props)
-          img_name = f'{img_name_stem}_{fmt}_{round(z, 2)}.{JPEG_STR}'
+          img_name = f'{img_name_stem}_{fmt}_{round(z, 2)}.{_JPEG_STR}'
           image_processing_utils.write_image(img, img_name)
 
           # determine radius tolerance of capture
