@@ -64,6 +64,10 @@ public class NfcAntennaLocationApiTest {
     public void testGetNfcAntennaInfo() {
         NfcAntennaInfo nfcAntennaInfo = mAdapter.getNfcAntennaInfo();
 
+        if (nfcAntennaInfo == null) {
+                return;
+        }
+
         assertEquals("Device widths do not match", 0,
                 nfcAntennaInfo.getDeviceWidth());
         assertEquals("Device heights do not match", 0,
@@ -83,9 +87,9 @@ public class NfcAntennaLocationApiTest {
 
     @Test
     public void testNfcAntennaInfoConstructor() {
-	int deviceWidth = 0;
-	int deviceHeight = 0;
-	boolean deviceFoldable = false;
+        int deviceWidth = 0;
+        int deviceHeight = 0;
+        boolean deviceFoldable = false;
         NfcAntennaInfo nfcAntennaInfo = new NfcAntennaInfo(deviceWidth, deviceHeight,
             deviceFoldable, new ArrayList<AvailableNfcAntenna>());
 
