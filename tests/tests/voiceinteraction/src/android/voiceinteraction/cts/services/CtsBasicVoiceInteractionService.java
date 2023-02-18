@@ -27,6 +27,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.service.voice.AlwaysOnHotwordDetector;
+import android.service.voice.DetectorFailure;
 import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
@@ -379,8 +380,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 }
 
                 @Override
-                public void onError() {
-                    Log.i(TAG, "onError");
+                public void onFailure(@NonNull DetectorFailure detectorFailure) {
+                    Log.i(TAG, "onFailure");
                 }
             };
             mVisualQueryDetector = callCreateVisualQueryDetector(callback);
