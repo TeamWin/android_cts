@@ -181,7 +181,7 @@ public class WallpaperTestUtils {
     public static class WallpaperChange {
         TestWallpaper mWallpaper;
         int mDestination;
-        WallpaperChange(
+        public WallpaperChange(
                 TestWallpaper wallpaper, int destination) {
             this.mWallpaper = wallpaper;
             this.mDestination = destination;
@@ -192,7 +192,7 @@ public class WallpaperTestUtils {
      * Class representing a state in which our WallpaperManager may be during our tests.
      * A state is fully represented by the wallpaper that are present on home and lock screen.
      */
-    public static class State {
+    public static class WallpaperState {
         private final TestWallpaper mHomeWallpaper;
         private final TestWallpaper mLockWallpaper;
 
@@ -203,7 +203,7 @@ public class WallpaperTestUtils {
          */
         private final boolean mSingleEngine;
 
-        private State(
+        public WallpaperState(
                 TestWallpaper homeWallpaper, TestWallpaper lockWallpaper, boolean singleEngine) {
             mHomeWallpaper = homeWallpaper;
             mLockWallpaper = lockWallpaper;
@@ -214,7 +214,7 @@ public class WallpaperTestUtils {
         private TestWallpaper pickUnused(List<TestWallpaper> choices) {
             return choices.stream()
                     .filter(wallpaper -> wallpaper != mHomeWallpaper && wallpaper != mLockWallpaper)
-                    .findFirst().get();
+                    .findFirst().orElseThrow();
         }
 
         private TestWallpaper pickUnusedStatic() {
@@ -223,13 +223,6 @@ public class WallpaperTestUtils {
 
         private TestWallpaper pickUnusedLive() {
             return pickUnused(allLiveTestWallpapers());
-        }
-
-        /**
-         * @return true if there is at least one live wallpaper in this state
-         */
-        public boolean hasAtLeastOneLiveWallpaper() {
-            return mHomeWallpaper.isLive() || mLockWallpaper.isLive();
         }
 
         /**
@@ -243,8 +236,7 @@ public class WallpaperTestUtils {
             TestWallpaper unusedLive = pickUnusedLive();
 
             // one can always add a new wallpaper, either static or live, at any destination
-            List<WallpaperChange> result = new ArrayList<>(List.of(unusedStatic, unusedLive)
-                    .stream()
+            List<WallpaperChange> result = new ArrayList<>(Stream.of(unusedStatic, unusedLive)
                     .flatMap(newWallpaper -> Stream
                             .of(FLAG_LOCK, FLAG_SYSTEM, FLAG_LOCK | FLAG_SYSTEM)
                             .map(destination -> new WallpaperChange(newWallpaper, destination)))
@@ -296,7 +288,7 @@ public class WallpaperTestUtils {
 
 
         /**
-         * Given a change, return the number of times we expect a engine.onDestroy operation
+         * Given a change, return the number of times we expect an engine.onDestroy operation
          * of a live wallpaper from this state
          */
         public int expectedNumberOfLiveWallpaperDestroy(WallpaperChange change) {
@@ -335,7 +327,7 @@ public class WallpaperTestUtils {
                             mSingleEngine ? "sharing the same engine" : "each using its own engine")
                     : String.format(" - a %s wallpaper on home screen\n"
                             + " - %s %s wallpaper on lock screen",
-                            homeType, homeType == lockType ? "another" : "a", lockType);
+                            homeType, homeType.equals(lockType) ? "another" : "a", lockType);
         }
 
         private String changeDescription(WallpaperChange change) {
@@ -389,14 +381,14 @@ public class WallpaperTestUtils {
      *   - put the home wallpaper on lock and home screens <br>
      *   - put the lock wallpaper on lock screen, if it is different from the home screen wallpaper
      */
-    public static void goToState(WallpaperManager wallpaperManager, State state)
+    public static void goToState(WallpaperManager wallpaperManager, WallpaperState state)
             throws IOException {
         WallpaperChange change1 = new WallpaperChange(
                 state.mHomeWallpaper, FLAG_SYSTEM | FLAG_LOCK);
         performChange(wallpaperManager, change1);
 
         WallpaperChange change2 = new WallpaperChange(state.mLockWallpaper, FLAG_LOCK);
-        if (state.mLockWallpaper != state.mHomeWallpaper) performChange(wallpaperManager, change2);
+        if (!state.mSingleEngine) performChange(wallpaperManager, change2);
     }
 
     /**
@@ -408,16 +400,16 @@ public class WallpaperTestUtils {
      *   - home screen and lock screen share the same engine <br>
      *  is different between the two states.
      */
-    public static List<State> allPossibleStates() {
+    public static List<WallpaperState> allPossibleStates() {
         return List.of(
-                new State(TestWallpaper.LIVE1, TestWallpaper.LIVE1, true),
-                new State(TestWallpaper.LIVE1, TestWallpaper.LIVE1, false),
-                new State(TestWallpaper.LIVE1, TestWallpaper.LIVE2, false),
-                new State(TestWallpaper.LIVE1, TestWallpaper.STATIC1, false),
-                new State(TestWallpaper.STATIC1, TestWallpaper.STATIC1, true),
-                new State(TestWallpaper.STATIC1, TestWallpaper.STATIC1, false),
-                new State(TestWallpaper.STATIC1, TestWallpaper.STATIC2, false),
-                new State(TestWallpaper.STATIC1, TestWallpaper.LIVE1, false)
+                new WallpaperState(TestWallpaper.LIVE1, TestWallpaper.LIVE1, true),
+                new WallpaperState(TestWallpaper.LIVE1, TestWallpaper.LIVE1, false),
+                new WallpaperState(TestWallpaper.LIVE1, TestWallpaper.LIVE2, false),
+                new WallpaperState(TestWallpaper.LIVE1, TestWallpaper.STATIC1, false),
+                new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.STATIC1, true),
+                new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.STATIC1, false),
+                new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.STATIC2, false),
+                new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.LIVE1, false)
         );
     }
 }

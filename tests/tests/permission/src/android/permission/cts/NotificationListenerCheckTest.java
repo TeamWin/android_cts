@@ -34,6 +34,8 @@ import android.service.notification.StatusBarNotification;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.modules.utils.build.SdkLevel;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -205,7 +207,7 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
 
         // Verify content intent
         PendingIntent contentIntent = currentNotification.getNotification().contentIntent;
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
+        if (SdkLevel.isAtLeastU()) {
             contentIntent.send(null, 0, null, null, null, null,
                     ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
                             ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle());

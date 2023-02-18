@@ -33,10 +33,10 @@ import org.junit.runner.RunWith;
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxWebViewTest {
-    // TODO(b/260196711): We are not able to inject input events
-    // from the SDK Runtime.SdkSandbox
+    // TODO(b/230340812): IME does not currently work correctly in the SDK RUntime. We should enable
+    // impacted tests once this is fixed.
     // This prevents some tests from running.
-    private static final boolean CAN_INJECT_INPUT_EVENTS = false;
+    private static final boolean CAN_INJECT_KEY_EVENTS = false;
 
     @ClassRule
     public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
@@ -386,19 +386,18 @@ public class SdkSandboxWebViewTest {
 
     @Test
     public void testRequestFocusNodeHref() throws Exception {
-        Assume.assumeTrue(CAN_INJECT_INPUT_EVENTS);
+        Assume.assumeTrue(CAN_INJECT_KEY_EVENTS);
         sdkTester.assertSdkTestRunPasses("testRequestFocusNodeHref");
     }
 
     @Test
     public void testRequestImageRef() throws Exception {
-        Assume.assumeTrue(CAN_INJECT_INPUT_EVENTS);
         sdkTester.assertSdkTestRunPasses("testRequestImageRef");
     }
 
     @Test
     public void testGetHitTestResult() throws Exception {
-        Assume.assumeTrue(CAN_INJECT_INPUT_EVENTS);
+        Assume.assumeTrue(CAN_INJECT_KEY_EVENTS);
         sdkTester.assertSdkTestRunPasses("testGetHitTestResult");
     }
 }

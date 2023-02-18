@@ -45,6 +45,7 @@ import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.modules.utils.build.SdkLevel
 import org.junit.After
 import org.junit.Assert
 import org.junit.Assume
@@ -238,7 +239,7 @@ class AccessibilityPrivacySourceTest {
             getNotification(permissionControllerPackage, ACCESSIBILITY_NOTIFICATION_ID)
         Assert.assertNotNull(statusBarNotification)
         val contentIntent = statusBarNotification!!.notification.contentIntent
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
+        if (SdkLevel.isAtLeastU()) {
             val options = ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
             )

@@ -554,6 +554,14 @@
          android:protectionLevel="signature|privileged"
          android:label="@string/car_permission_label_mirror_display"
          android:description="@string/car_permission_desc_mirror_display"/>
+    <permission android:name="android.car.permission.REGISTER_CAR_SYSTEM_UI_PROXY"
+        android:protectionLevel="signature|privileged"
+        android:label="@string/car_permission_label_register_car_system_ui_proxy"
+        android:description="@string/car_permission_desc_register_car_system_ui_proxy"/>
+    <permission android:name="android.car.permission.MANAGE_CAR_SYSTEM_UI"
+        android:protectionLevel="signature|privileged"
+        android:label="@string/car_permission_label_manage_car_system_ui"
+        android:description="@string/car_permission_desc_manage_car_system_ui"/>
     <permission android:name="android.car.permission.READ_WINDSHIELD_WIPERS"
          android:protectionLevel="signature|privileged"
          android:label="@string/car_permission_label_read_windshield_wipers"

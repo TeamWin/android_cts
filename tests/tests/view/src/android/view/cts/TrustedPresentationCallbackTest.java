@@ -28,6 +28,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.HardwareBuffer;
 import android.os.Bundle;
+import android.platform.test.annotations.Presubmit;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Size;
@@ -51,6 +52,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
+@Presubmit
 public class TrustedPresentationCallbackTest {
     static {
         System.loadLibrary("ctsview_jni");

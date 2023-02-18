@@ -16,7 +16,6 @@
 package android.app.cts.wallpapers
 
 import android.app.WallpaperColors
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Looper
 import android.service.wallpaper.WallpaperService
@@ -37,7 +36,7 @@ import com.google.common.truth.Truth.assertWithMessage
  * For example, many methods should only be called after [WallpaperService.Engine.onSurfaceCreated],
  * which itself should only be called after [WallpaperService.Engine.onCreate].
  */
-open class TestWallpaperService : WallpaperService() {
+abstract class TestWallpaperService : WallpaperService() {
 
     private val mainThread: Thread = Looper.getMainLooper().thread
     companion object {
@@ -85,7 +84,7 @@ open class TestWallpaperService : WallpaperService() {
 
         private fun draw(holder: SurfaceHolder) {
             val c = holder.lockCanvas()
-            c.drawColor(Color.RED)
+            c.drawColor(getColor())
             holder.unlockCanvasAndPost(c)
         }
 
@@ -279,4 +278,9 @@ open class TestWallpaperService : WallpaperService() {
             assertionError = assertionError ?: error
         }
     }
+
+    /**
+     * The color that this test wallpaper should draw, for debug purposes.
+     */
+    protected abstract fun getColor(): Int
 }

@@ -237,8 +237,15 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
       debug = self.debug_mode
 
       # Converge 3A.
-      cam.do_3a()
-      req = capture_request_utils.auto_capture_request()
+      if camera_properties_utils.manual_sensor(props):
+        logging.debug('Manual sensor, using manual capture request')
+        s, e, _, _, f_d = cam.do_3a(get_results=True)
+        req = capture_request_utils.manual_capture_request(
+            s, e, f_distance=f_d)
+      else:
+        logging.debug('Using auto capture request')
+        cam.do_3a()
+        req = capture_request_utils.auto_capture_request()
 
       # For main camera: if RAW available, use it as ground truth, else JPEG
       # For physical sub-camera: if RAW available, only use if not 4:3 or 16:9
@@ -287,7 +294,6 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
                           'format': fmt_iter}]
           out_surface.append({'width': w_cmpr, 'height': h_cmpr,
                               'format': fmt_cmpr})
-          cam.do_3a()
           cap = cam.do_capture(req, out_surface)[0]
           _check_basic_correctness(cap, fmt_iter, w_iter, h_iter)
           logging.debug('Captured %s with %s %dx%d. Compared size: %dx%d',

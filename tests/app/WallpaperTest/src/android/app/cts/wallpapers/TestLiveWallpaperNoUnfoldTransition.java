@@ -16,4 +16,12 @@
 
 package android.app.cts.wallpapers;
 
-public class TestLiveWallpaperNoUnfoldTransition extends TestWallpaperService { }
+import android.graphics.Color;
+
+public class TestLiveWallpaperNoUnfoldTransition extends TestWallpaperService {
+
+    @Override
+    protected int getColor() {
+        return Color.MAGENTA;
+    }
+}

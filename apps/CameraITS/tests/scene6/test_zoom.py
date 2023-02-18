@@ -153,7 +153,15 @@ class ZoomTest(its_base_test.ItsBaseTest):
 
       # do captures over zoom range and find circles with cv2
       img_name_stem = f'{os.path.join(self.log_path, _NAME)}'
-      req = capture_request_utils.auto_capture_request()
+      if camera_properties_utils.manual_sensor(props):
+        logging.debug('Manual sensor, using manual capture request')
+        s, e, _, _, f_d = cam.do_3a(get_results=True)
+        req = capture_request_utils.manual_capture_request(
+            s, e, f_distance=f_d)
+      else:
+        logging.debug('Using auto capture request')
+        cam.do_3a()
+        req = capture_request_utils.auto_capture_request()
       test_failed = False
       for fmt in test_formats:
         logging.debug('testing %s format', fmt)
@@ -161,12 +169,11 @@ class ZoomTest(its_base_test.ItsBaseTest):
         for i, z in enumerate(z_list):
           logging.debug('zoom ratio: %.2f', z)
           req['android.control.zoomRatio'] = z
-          cam.do_3a()
           cap = cam.do_capture(
               req, {'format': fmt, 'width': size[0], 'height': size[1]})
           img = image_processing_utils.convert_capture_to_rgb_image(
               cap, props=props)
-          img_name = f'{img_name_stem}_{fmt}_{round(z, 2)}.{JPEG_STR}'
+          img_name = f'{img_name_stem}_{fmt}_{round(z, 2)}.{_JPEG_STR}'
           image_processing_utils.write_image(img, img_name)
 
           # determine radius tolerance of capture

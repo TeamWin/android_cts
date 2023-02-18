@@ -324,6 +324,12 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             setUpSource(mActiveRawRes.mFileName);
         }
 
+        /* TODO(b/181126614, b/268175825) */
+        if (MediaUtils.isPc()) {
+            Log.d(LOG_TAG, "test skipped due to b/181126614, b/268175825");
+            return;
+        }
+
         {
             mSaveToMem = true;
             mOutputBuff = new OutputManager();

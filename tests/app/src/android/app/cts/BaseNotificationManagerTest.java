@@ -32,6 +32,7 @@ import android.app.PendingIntent;
 import android.app.Person;
 import android.app.UiAutomation;
 import android.app.cts.android.app.cts.tools.NotificationHelper;
+import android.app.cts.android.app.cts.tools.NotificationHelper.SEARCH_TYPE;
 import android.app.role.RoleManager;
 import android.app.stubs.BubbledActivity;
 import android.app.stubs.R;
@@ -50,10 +51,8 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Telephony;
-import android.service.notification.StatusBarNotification;
 import android.test.AndroidTestCase;
 import android.util.ArraySet;
-import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -75,6 +74,10 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
     protected static final String SHARE_SHORTCUT_CATEGORY =
             "android.app.stubs.SHARE_SHORTCUT_CATEGORY";
     protected static final String SHARE_SHORTCUT_ID = "shareShortcut";
+    // Constants for GetResultActivity and return codes from MatchesCallFilterTestActivity
+    // the permitted/not permitted values need to stay the same as in the test activity.
+    protected static final int REQUEST_CODE = 42;
+    protected static final String TEST_APP = "com.android.test.notificationapp";
 
     private static final String TAG = BaseNotificationManagerTest.class.getSimpleName();
 
@@ -128,7 +131,7 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         // clear the deck so that our getActiveNotifications results are predictable
         mNotificationManager.cancelAll();
 
-        assertEquals("Previous test left system in a bad state",
+        assertEquals("Previous test left system in a bad state ",
                 0, mNotificationManager.getActiveNotifications().length);
 
         mNotificationManager.createNotificationChannel(new NotificationChannel(
@@ -187,10 +190,6 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    protected StatusBarNotification findPostedNotification(int id, boolean all) {
-        return mNotificationHelper.findPostedNotification(id, all);
-    }
-
     protected void setUpNotifListener() {
         try {
             toggleListenerAccess(true);
@@ -201,30 +200,11 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    protected boolean checkNotificationExistence(int id, boolean shouldExist) {
-        // notification is a bit asynchronous so it may take a few ms to appear in
-        // getActiveNotifications()
-        // we will check for it for up to 300ms before giving up
-        boolean found = false;
-        for (int tries = 3; tries-- > 0; ) {
-            // Need reset flag.
-            found = false;
-            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
-            for (StatusBarNotification sbn : sbns) {
-                Log.d(TAG, "Found " + sbn.getKey());
-                if (sbn.getId() == id) {
-                    found = true;
-                    break;
-                }
-            }
-            if (found == shouldExist) break;
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ex) {
-                // pass
-            }
-        }
-        return found == shouldExist;
+    protected void toggleExternalListenerAccess(ComponentName listenerComponent, boolean on)
+            throws IOException {
+        String command = " cmd notification " + (on ? "allow_listener " : "disallow_listener ")
+                + listenerComponent.flattenToString();
+        runCommand(command, InstrumentationRegistry.getInstrumentation());
     }
 
     protected void toggleListenerAccess(boolean on) throws IOException {
@@ -325,6 +305,17 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
                 .setSmallIcon(android.R.drawable.sym_def_app_icon);
     }
 
+    protected void cancelAndPoll(int id) {
+        mNotificationManager.cancel(id);
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException ex) {
+            // pass
+        }
+        assertTrue(mNotificationHelper.isNotificationGone(id, SEARCH_TYPE.APP));
+    }
+
     protected void sendNotification(final int id,
             final int icon) throws Exception {
         sendNotification(id, null, icon);
@@ -369,9 +360,7 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         final Notification notification = nb.build();
         mNotificationManager.notify(id, notification);
 
-        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
-            fail("couldn't find posted notification id=" + id);
-        }
+        assertNotNull(mNotificationHelper.findPostedNotification(null, id, SEARCH_TYPE.APP));
     }
 
     protected void setEnableServiceNotificationRateLimit(boolean enable) throws IOException {

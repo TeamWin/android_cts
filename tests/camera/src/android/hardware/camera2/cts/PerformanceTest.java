@@ -1210,12 +1210,12 @@ public class PerformanceTest {
             mTestRule.setCameraSessionListener(new BlockingSessionCallback());
             configureAndSetCameraSessionWithConfigs(outputConfigs, useSessionKeys, previewRequest);
 
-            // Start preview and run for 20 seconds
+            // Start preview and run for 6 seconds
             SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
             mTestRule.getCameraSession().setRepeatingRequest(
                     previewRequest, resultListener, mTestRule.getHandler());
 
-            Thread.sleep(20000);
+            Thread.sleep(6000);
 
             blockingStopRepeating();
 

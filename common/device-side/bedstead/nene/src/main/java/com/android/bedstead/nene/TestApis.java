@@ -29,6 +29,7 @@ import com.android.bedstead.nene.flags.Flags;
 import com.android.bedstead.nene.inputmethods.InputMethods;
 import com.android.bedstead.nene.instrumentation.Instrumentation;
 import com.android.bedstead.nene.location.Locations;
+import com.android.bedstead.nene.logcat.Logcat;
 import com.android.bedstead.nene.notifications.Notifications;
 import com.android.bedstead.nene.packages.Packages;
 import com.android.bedstead.nene.permissions.Permissions;
@@ -164,10 +165,16 @@ public final class TestApis {
         return Broadcasts.sInstance;
     }
 
-    /** Access Test  APIs related to telecom */
+    /** Access Test APIs related to telecom */
     @Experimental
     public static Telecom telecom() {
         return Telecom.sInstance;
+    }
+
+    /** Access Test APIs related to logcat */
+    @Experimental
+    public static Logcat logcat() {
+        return Logcat.sInstance;
     }
 
     /** @deprecated Use statically */

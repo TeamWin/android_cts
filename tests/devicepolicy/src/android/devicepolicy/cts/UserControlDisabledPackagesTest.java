@@ -72,7 +72,7 @@ public final class UserControlDisabledPackagesTest {
     public void setUserControlDisabledPackages_notPermitted_throwsException() {
         assertThrows(SecurityException.class, () -> {
             sDeviceState.dpc().devicePolicyManager()
-                    .setUserControlDisabledPackages(DPC_COMPONENT_NAME,
+                    .setUserControlDisabledPackages(sDeviceState.dpc().componentName(),
                             Arrays.asList(PACKAGE_NAME));
         });
     }
@@ -82,21 +82,21 @@ public final class UserControlDisabledPackagesTest {
     public void setUserControlDisabledPackages_verifyMetricIsLogged() {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                        DPC_COMPONENT_NAME);
+                        sDeviceState.dpc().componentName());
 
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(),
                     Arrays.asList(PACKAGE_NAME));
 
             assertThat(metrics.query()
                     .whereType().isEqualTo(EventId.SET_USER_CONTROL_DISABLED_PACKAGES_VALUE)
                     .whereAdminPackageName().isEqualTo(
-                            sDeviceState.dpc().componentName().getPackageName())
+                            sDeviceState.dpc().packageName())
                     .whereStrings().contains(PACKAGE_NAME)).wasLogged();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(),
                     originalDisabledPackages);
         }
     }
@@ -106,17 +106,17 @@ public final class UserControlDisabledPackagesTest {
     public void setUserControlDisabledPackages_toOneProtectedPackage() {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                        DPC_COMPONENT_NAME);
+                        sDeviceState.dpc().componentName());
 
-        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
+        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(sDeviceState.dpc().componentName(),
                 Arrays.asList(PACKAGE_NAME));
         try {
             assertThat(sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME))
+                    sDeviceState.dpc().componentName()))
                     .containsExactly(PACKAGE_NAME);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(),
                     originalDisabledPackages);
         }
     }
@@ -126,17 +126,17 @@ public final class UserControlDisabledPackagesTest {
     public void setUserControlDisabledPackages_toEmptyProtectedPackages() {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                        DPC_COMPONENT_NAME);
+                        sDeviceState.dpc().componentName());
 
-        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
+        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(sDeviceState.dpc().componentName(),
                 Collections.emptyList());
         try {
             assertThat(
                     sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                            DPC_COMPONENT_NAME)).isEmpty();
+                            sDeviceState.dpc().componentName())).isEmpty();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(),
                     originalDisabledPackages);
         }
     }
@@ -145,7 +145,7 @@ public final class UserControlDisabledPackagesTest {
     public void setUserControlDisabledPackages_notAllowedToSetProtectedPackages_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                        DPC_COMPONENT_NAME,
+                        sDeviceState.dpc().componentName(),
                         Collections.emptyList()));
     }
 
@@ -156,7 +156,7 @@ public final class UserControlDisabledPackagesTest {
         // This is testing the default state of the device so the disabled packages returned should
         // be empty.
         assertThat(sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                DPC_COMPONENT_NAME))
+                sDeviceState.dpc().componentName()))
                 .isEmpty();
     }
 
@@ -165,7 +165,7 @@ public final class UserControlDisabledPackagesTest {
     getUserControlDisabledPackages_notAllowedToRetrieveProtectedPackages_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                        DPC_COMPONENT_NAME));
+                        sDeviceState.dpc().componentName()));
     }
 
     @EnsureHasPermission(value = permission.FORCE_STOP_PACKAGES)
@@ -175,12 +175,12 @@ public final class UserControlDisabledPackagesTest {
             throws Exception {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                        DPC_COMPONENT_NAME);
+                        sDeviceState.dpc().componentName());
         String testAppPackageName = sTestApp.packageName();
 
         try (TestAppInstance instance = sTestApp.install()) {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME, Arrays.asList(testAppPackageName));
+                    sDeviceState.dpc().componentName(), Arrays.asList(testAppPackageName));
 
             instance.activities().any().start();
             int processIdBeforeStopping = instance.process().pid();
@@ -194,7 +194,7 @@ public final class UserControlDisabledPackagesTest {
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(),
                     originalDisabledPackages);
         }
     }
@@ -206,12 +206,12 @@ public final class UserControlDisabledPackagesTest {
             throws Exception {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                        DPC_COMPONENT_NAME);
+                        sDeviceState.dpc().componentName());
         String testAppPackageName = sTestApp.packageName();
 
         try (TestAppInstance instance = sTestApp.install()) {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME, Arrays.asList(testAppPackageName));
+                    sDeviceState.dpc().componentName(), Arrays.asList(testAppPackageName));
 
             instance.activities().any().start();
             int processIdBeforeStopping = instance.process().pid();
@@ -225,13 +225,13 @@ public final class UserControlDisabledPackagesTest {
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(),
                     originalDisabledPackages);
         }
     }
 
     private void stopPackage(Package pkg) throws Exception {
-        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
+        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(sDeviceState.dpc().componentName(),
                 Collections.emptyList());
 
         pkg.forceStop();

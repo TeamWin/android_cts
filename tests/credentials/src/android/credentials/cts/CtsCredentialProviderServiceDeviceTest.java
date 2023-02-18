@@ -39,7 +39,6 @@ import android.credentials.GetCredentialRequest;
 import android.credentials.GetCredentialResponse;
 import android.credentials.cts.testcore.DeviceConfigStateRequiredRule;
 import android.os.Build.VERSION;
-import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.OutcomeReceiver;
 import android.os.UserHandle;
@@ -50,12 +49,15 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.os.BuildCompat;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateManager;
 import com.android.compatibility.common.util.RequiredFeatureRule;
+import com.android.compatibility.common.util.SettingsUtils;
+import com.android.compatibility.common.util.Timeout;
 
 import org.junit.After;
 import org.junit.Before;
@@ -63,6 +65,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -73,15 +78,18 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CtsCredentialProviderServiceDeviceTest {
     public static final String CTS_PACKAGE_NAME =
             CtsNoOpCredentialProviderService.class.getPackage().getName();
-    public static final String CREDENTIAL_SERVICE = "credential_service";
-    private static final String NAMESPACE_CREDENTIAL_MANAGER = "credential_manager";
-    private static final String CTS_SERVICE_NAME = CTS_PACKAGE_NAME + "/" + CTS_PACKAGE_NAME + "/"
+    private static final String CTS_SERVICE_NAME = CTS_PACKAGE_NAME + "/" + CTS_PACKAGE_NAME + "."
             + CtsNoOpCredentialProviderService.class.getSimpleName();
     private static final int USER_ID = UserHandle.myUserId();
-    private static final int TEMPORARY_SERVICE_DURATION = 10000;
     private static final String TAG = "CtsCredentialProviderServiceDeviceTest";
     public static final String DEVICE_CONFIG_ENABLE_CREDENTIAL_MANAGER =
             "enable_credential_manager";
+    private static final String PASSWORD_CREDENTIAL_TYPE =
+            "android.credentials.TYPE_PASSWORD_CREDENTIAL";
+    private static final String CREDENTIAL_SERVICE = "credential_service";
+    private static final Timeout CONNECTION_TIMEOUT = new Timeout(
+            "CONNECTION_TIMEOUT", 1500, 2F, 1500);
+
 
     private CredentialManager mCredentialManager;
     private final Context mContext = getInstrumentation().getContext();
@@ -102,23 +110,24 @@ public class CtsCredentialProviderServiceDeviceTest {
 
     @Before
     public void setUp() {
-
         Log.i(TAG, "Enabling service from scratch for " + CTS_SERVICE_NAME);
         Log.i(TAG, "Enabling CredentialManager flags as well...");
         enableCredentialManagerDeviceFeature(mContext);
         mCredentialManager = (CredentialManager) mContext.getSystemService(
                 Context.CREDENTIAL_SERVICE);
-        assumeTrue("VERSION.SDK_INT=" + VERSION.SDK_INT,
-                VERSION.SDK_INT >= VERSION_CODES.UPSIDE_DOWN_CAKE);
-        clearTestableCredentialProviderService();
+        assumeTrue("VERSION.SDK_INT=" + VERSION.SDK_INT, BuildCompat.isAtLeastU());
+        clearAllTestCredentialProviderServices();
         bindToTestService();
     }
 
     @After
     public void tearDown() {
         Log.i(TAG, "Disabling credman services and device feature flag");
-        //disableCredentialManagerDeviceFeature(mContext);
-        clearTestableCredentialProviderService();
+        clearAllTestCredentialProviderServices();
+    }
+
+    private void clearAllTestCredentialProviderServices() {
+        SettingsUtils.set("secure", CREDENTIAL_SERVICE, null);
     }
 
     @Test
@@ -135,14 +144,14 @@ public class CtsCredentialProviderServiceDeviceTest {
     // TODO for all 'valid success' cases, mock credential manager the current success case
     // TODO (rightly) flips an error bit since we have test inputs
     @Test
-    public void testGetCredentialRequest_serviceNotSetUp_onErrorInvoked()
+    public void testGetPasswordCredentialRequest_serviceSetUp_onErrorInvokedForEmptyResponse()
             throws InterruptedException {
         AtomicReference<GetCredentialException> loadedResult = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
         Bundle empty = new Bundle();
         GetCredentialRequest request = new GetCredentialRequest.Builder(empty)
                 .addCredentialOption(new CredentialOption(
-                "type", empty, empty, false)).build();
+                PASSWORD_CREDENTIAL_TYPE, empty, empty, false)).build();
         OutcomeReceiver<GetCredentialResponse, GetCredentialException> callback =
                 new OutcomeReceiver<>() {
                     @Override
@@ -165,8 +174,11 @@ public class CtsCredentialProviderServiceDeviceTest {
         });
 
         latch.await(100L, TimeUnit.MILLISECONDS);
+        assertThat(loadedResult.get()).isNotNull();
         assertThat(loadedResult.get().getClass()).isEqualTo(
                 GetCredentialException.class);
+        assertThat(loadedResult.get().getType()).isEqualTo(
+                GetCredentialException.TYPE_NO_CREDENTIAL);
         // TODO add a null check for the case when the feature exists but remains false
     }
 
@@ -196,12 +208,13 @@ public class CtsCredentialProviderServiceDeviceTest {
     }
 
     @Test
-    public void testCreatePasswordCredentialRequest_serviceNotSetUp_onErrorInvoked()
+    public void testCreatePasswordCredentialRequest_serviceSetUp_onErrorInvokedForEmptyResponse()
             throws InterruptedException {
         AtomicReference<CreateCredentialException> loadedResult = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
         Bundle empty = new Bundle();
-        CreateCredentialRequest request = new CreateCredentialRequest("PASSWORD", empty, empty,
+        CreateCredentialRequest request = new CreateCredentialRequest(
+                PASSWORD_CREDENTIAL_TYPE, empty, empty,
                 /*isSystemProviderRequired=*/ false, /*alwaysSendAppInfoToProvider=*/ true);
         OutcomeReceiver<CreateCredentialResponse, CreateCredentialException> callback =
                 new OutcomeReceiver<>() {
@@ -225,8 +238,11 @@ public class CtsCredentialProviderServiceDeviceTest {
         });
 
         latch.await(100L, TimeUnit.MILLISECONDS);
+        assertThat(loadedResult.get()).isNotNull();
         assertThat(loadedResult.get().getClass()).isEqualTo(
                 CreateCredentialException.class);
+        assertThat(loadedResult.get().getType()).isEqualTo(
+                CreateCredentialException.TYPE_NO_CREATE_OPTIONS);
     }
 
     @Test
@@ -255,9 +271,9 @@ public class CtsCredentialProviderServiceDeviceTest {
     }
 
     @Test
-    public void testClearCredentialRequest_serviceNotSetUp_onErrorInvoked()
+    public void testClearCredentialRequest_serviceSetUp_onResponseInvoked()
             throws InterruptedException {
-        AtomicReference<ClearCredentialStateException> loadedResult = new AtomicReference<>();
+        AtomicReference<Boolean> loadedResult = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
         Bundle empty = new Bundle();
         ClearCredentialStateRequest request = new ClearCredentialStateRequest(empty);
@@ -265,13 +281,13 @@ public class CtsCredentialProviderServiceDeviceTest {
                 new OutcomeReceiver<>() {
                     @Override
                     public void onResult(@NonNull Void response) {
-                        // Do nothing
+                        loadedResult.set(true);
+                        latch.countDown();
                     }
 
                     @Override
                     public void onError(@NonNull ClearCredentialStateException e) {
-                        loadedResult.set(e);
-                        latch.countDown();
+                        // Do nothing
                     }
                 };
 
@@ -283,8 +299,8 @@ public class CtsCredentialProviderServiceDeviceTest {
         });
 
         latch.await(100L, TimeUnit.MILLISECONDS);
-        assertThat(loadedResult.get().getClass()).isEqualTo(
-                ClearCredentialStateException.class);
+	assertThat(loadedResult.get()).isNotNull();
+        assertThat(loadedResult.get()).isTrue();
     }
 
     @Test
@@ -337,29 +353,84 @@ public class CtsCredentialProviderServiceDeviceTest {
             Log.v(TAG, "No changed in config: " + deviceConfigStateManager);
             return;
         }
-
         deviceConfigStateManager.set(value);
     }
 
     private void bindToTestService() {
         // On Manager, bind to test service
-        assertThat(getCredentialProviderServiceComponent()).isNotEqualTo(CTS_SERVICE_NAME);
         setTestableCredentialProviderService(CTS_SERVICE_NAME);
-        assertThat(CTS_SERVICE_NAME).contains(getCredentialProviderServiceComponent());
+        assertThat(getCredentialProviderServiceComponent()).contains(CTS_SERVICE_NAME);
     }
 
     private String getCredentialProviderServiceComponent() {
-        return runShellCommand("cmd credential_manager get-bound-package %d", USER_ID);
+        return runShellCommand("settings get secure credential_service %d", USER_ID);
     }
 
-    private void setTestableCredentialProviderService(String service) {
-        // TODO: should support multiple services when ready.
-        runShellCommand("cmd credential_manager set-temporary-service %d %s %d",
-                USER_ID, service, TEMPORARY_SERVICE_DURATION);
+    private void setTestableCredentialProviderService(@NonNull String serviceName) {
+        if (isCredentialProviderServiceEnabled(serviceName)) return;
+
+        String settingOutput = readCredentialManagerProviderSetting();
+        settingOutput = settingOutput == null ? "" : settingOutput;
+        if (settingOutput.length() > 0) {
+            settingOutput += ";" + serviceName;
+        } else {
+            settingOutput += serviceName;
+        }
+        // Guaranteed to not be null now since the NoOp service exists at a minimum
+        Log.i(TAG, "Enabled services: " + settingOutput);
+        SettingsUtils.set("secure", CREDENTIAL_SERVICE, settingOutput);
+
+        // Waits until the service is actually enabled.
+        try {
+            String finalSettingOutput = settingOutput;
+            CONNECTION_TIMEOUT.run("Enabling Credman service", () ->
+                    isCredentialProviderServiceEnabled(serviceName) ? serviceName : null);
+            Log.i(TAG, "Done! We connected to the new setting service : " + finalSettingOutput);
+        } catch (Exception e) {
+            Log.i(TAG, "Failure... " + e.getLocalizedMessage());
+            throw new AssertionError("Enabling Credman service failed.");
+        }
     }
 
-    private void clearTestableCredentialProviderService() {
-        runShellCommand("cmd credential_manager set-temporary-service %d", USER_ID);
+    /**
+     * Checks whether the given service is set as the credential service for the default user.
+     */
+    private boolean isCredentialProviderServiceEnabled(String serviceName) {
+        final String actualNames = readCredentialManagerProviderSetting();
+        if (actualNames == null) {
+            return false;
+        }
+        return containsName(actualNames, serviceName);
+
+    }
+
+    private boolean containsName(@NonNull String serviceNames, @NonNull String name) {
+        Set<String> services = new LinkedHashSet<>(List.of(serviceNames.split(";")));
+        return services.contains(name);
+    }
+
+    /**
+     * Gets then name of the credential service for the default user.
+     */
+    private String readCredentialManagerProviderSetting() {
+        String serviceNames = SettingsUtils.get(CREDENTIAL_SERVICE);
+        return serviceNames;
+    }
+
+    /**
+     * Uses Settings to disable the given autofill service for the default user, and waits until
+     * the setting is deleted.
+     */
+    private void disableCredentialProviderService(@NonNull Context context, String service) {
+        final String currentService = SettingsUtils.get(CREDENTIAL_SERVICE);
+        if (currentService == null) {
+            return;
+        }
+        // remove same instance in order, including duplicates
+        Set<String> services = new LinkedHashSet<>(List.of(currentService.split(";")));
+        services.remove(service);
+        String originalString = String.join(";", services);
+        SettingsUtils.set("secure", CREDENTIAL_SERVICE, originalString);
     }
 }
 

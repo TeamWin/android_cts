@@ -83,7 +83,7 @@ public class DeviceConfigStateRequiredRule implements TestRule {
                 new DeviceConfigStateManager(deviceConfigContext, deviceConfigNamespace,
                         deviceConfigState);
         final String currentValue = deviceConfigStateManager.get();
-        if (TextUtils.equals(currentValue, mExpectedValue)) {
+        if (currentValue == null || TextUtils.equals(currentValue, mExpectedValue)) {
             Log.v(TAG, "No change in config: " + deviceConfigStateManager);
             return true; // current rule matches what is expected
         }

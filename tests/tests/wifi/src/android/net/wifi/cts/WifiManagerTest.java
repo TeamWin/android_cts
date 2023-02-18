@@ -18,6 +18,7 @@ package android.net.wifi.cts;
 
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
+import static android.net.wifi.SoftApCapability.SOFTAP_FEATURE_ACS_OFFLOAD;
 import static android.net.wifi.WifiAvailableChannel.OP_MODE_SAP;
 import static android.net.wifi.WifiAvailableChannel.OP_MODE_STA;
 import static android.net.wifi.WifiAvailableChannel.OP_MODE_WIFI_DIRECT_GO;
@@ -2995,6 +2996,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     () -> mWifiManager.isWifiEnabled() == true);
                 turnOffWifiAndTetheredHotspotIfEnabled();
                 verifyRegisterSoftApCallback(executor, callback);
+                if (!callback.getCurrentSoftApCapability()
+                        .areFeaturesSupported(SOFTAP_FEATURE_ACS_OFFLOAD)) {
+                    return;
+                }
                 int[] testBands = {SoftApConfiguration.BAND_2GHZ,
                         SoftApConfiguration.BAND_5GHZ};
                 int[] expectedBands = {SoftApConfiguration.BAND_2GHZ,

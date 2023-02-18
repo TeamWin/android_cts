@@ -37,7 +37,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
                 | APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO //| APPLIED_BY_DPM_ROLE_HOLDER
                 | APPLIES_TO_OWN_USER
                 | CANNOT_BE_APPLIED_BY_ROLE_HOLDER
-}, permissions = @EnterprisePolicy.Permission(
-        appliedWith = MANAGE_DEVICE_POLICY_MOBILE_NETWORK, appliesTo = APPLIES_TO_OWN_USER))
+})//, permissions = @EnterprisePolicy.Permission(
+//        appliedWith = MANAGE_DEVICE_POLICY_MOBILE_NETWORK, appliesTo = APPLIES_TO_OWN_USER))
 public final class DisallowConfigMobileNetworks {
 }

@@ -47,7 +47,6 @@ import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.duplex.DuplexAudioManager;
 import org.hyphonate.megaaudio.player.AudioSource;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
-import org.hyphonate.megaaudio.player.JavaSourceProxy;
 import org.hyphonate.megaaudio.recorder.AudioSinkProvider;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallback;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
@@ -61,20 +60,6 @@ public class AudioTap2ToneActivity
         extends PassFailButtons.Activity
         implements View.OnClickListener, AppCallback {
     private static final String TAG = "AudioTap2ToneActivity";
-
-    // JNI load
-    static {
-        try {
-            System.loadLibrary("megaaudio_jni");
-            JavaSourceProxy.initN();
-        } catch (UnsatisfiedLinkError e) {
-            Log.e(TAG, "Error loading MegaAudio JNI library");
-            Log.e(TAG, "e: " + e);
-            e.printStackTrace();
-        }
-
-        /* TODO: gracefully fail/notify if the library can't be loaded */
-    }
 
     private boolean mIsRecording;
 
@@ -185,14 +170,15 @@ public class AudioTap2ToneActivity
                 .setText(claimsLowLatencyAudio ? yesString : noString);
 
         String mediaPerformanceClassString;
-        if (Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.TIRAMISU) {
+        int mpc = Build.VERSION.MEDIA_PERFORMANCE_CLASS;
+        if (mpc == Build.VERSION_CODES.TIRAMISU) {
             mediaPerformanceClassString = "T";
-        } else if (Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.S)  {
+        } else if (mpc == Build.VERSION_CODES.S)  {
             mediaPerformanceClassString = "S";
-        } else if (Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.R) {
+        } else if (mpc == Build.VERSION_CODES.R) {
             mediaPerformanceClassString = "R";
         } else {
-            mediaPerformanceClassString = "none";
+            mediaPerformanceClassString = "none [" + mpc + "]";
         }
         ((TextView) findViewById(R.id.audio_t2t_mpc)).setText(mediaPerformanceClassString);
 
@@ -204,11 +190,10 @@ public class AudioTap2ToneActivity
         if (claimsLowLatencyAudio) {
             mMaxRequiredLatency = Math.min(mMaxRequiredLatency, MAX_TAP_2_TONE_LATENCY_LOW);
         }
-        if (Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.TIRAMISU) {
+        if (mpc == Build.VERSION_CODES.TIRAMISU) {
             mMaxRequiredLatency = Math.min(mMaxRequiredLatency, MAX_TAP_2_TONE_LATENCY_T);
         }
-        if (Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.R
-                || Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.S) {
+        if (mpc == Build.VERSION_CODES.R || mpc == Build.VERSION_CODES.S) {
             mMaxRequiredLatency = Math.min(mMaxRequiredLatency, MAX_TAP_2_TONE_LATENCY_RS);
         }
 
@@ -267,10 +252,7 @@ public class AudioTap2ToneActivity
         mInputBuffer = new CircularBufferFloat(numBufferSamples);
 
         // MegaAudio Initialization
-        StreamBase.calcNumBurstFrames(this);
-        StreamBase.calcSystemSampleRate(this);
-
-        JavaSourceProxy.initN();
+        StreamBase.setup(this);
 
         calculateTestPass();
     }

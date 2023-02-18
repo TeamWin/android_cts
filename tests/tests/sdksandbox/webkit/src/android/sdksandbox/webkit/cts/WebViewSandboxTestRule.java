@@ -40,10 +40,11 @@ import org.junit.runners.model.Statement;
 public class WebViewSandboxTestRule extends SdkSandboxScenarioRule {
 
     public WebViewSandboxTestRule(String webViewTestClassName) {
-        super("com.android.cts.sdk.webviewsandboxtest",
+        super(
+                "com.android.cts.sdk.webviewsandboxtest",
                 getSetupParams(webViewTestClassName),
                 SharedWebViewTestEnvironment.createHostAppInvoker(
-                        ApplicationProvider.getApplicationContext()),
+                        ApplicationProvider.getApplicationContext(), true),
                 ENABLE_LIFE_CYCLE_ANNOTATIONS);
     }
 

@@ -17,18 +17,20 @@
 package android.cts.statsdatom.performancehintmanager;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.TruthJUnit.assume;
 
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 
+import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
 import com.android.os.adpf.ADPFSystemComponentInfo;
 import com.android.os.adpf.PerformanceHintSessionReported;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.result.TestDescription;
+import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.RunUtil;
@@ -72,17 +74,30 @@ public class PerformanceHintManagerStatsTests extends DeviceTestCase implements 
         final int androidSApiLevel = 31; // android.os.Build.VERSION_CODES.S
         final int firstApiLevel = Integer.parseInt(
                 DeviceUtils.getProperty(getDevice(), "ro.product.first_api_level"));
+        final TestDescription testCreateHintSessionDescription = TestDescription.fromString(
+                "com.android.server.cts.device.statsdatom.AtomTests#testCreateHintSession");
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.PERFORMANCE_HINT_SESSION_REPORTED_FIELD_NUMBER);
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(),
+        TestRunResult testRunResult = DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(),
                 ".AtomTests", "testCreateHintSession");
 
         RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
+        TestStatus testCreateHintSessionStatus =
+                testRunResult.getTestResults().get(testCreateHintSessionDescription).getStatus();
+        assertThat(testCreateHintSessionStatus).isNotEqualTo(TestStatus.FAILURE);
+        if (testCreateHintSessionStatus == TestStatus.ASSUMPTION_FAILURE) {
+            // test requirement does not meet, the device does not support
+            // ADPF hint session, skipping the test
+            return;
+        }
+
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
-        if (firstApiLevel < androidSApiLevel) {
-            assume().that(data.size()).isEqualTo(0);
+        if (firstApiLevel < androidSApiLevel && data.size() == 0) {
+            // test requirement does not meet, the device does not support
+            // ADPF hint session, skipping the test
+            return;
         }
 
         assertThat(data.size()).isAtLeast(1);

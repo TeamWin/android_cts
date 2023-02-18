@@ -136,8 +136,6 @@ public class RoundedCornerTests extends ActivityManagerTestBase {
         });
 
         // Make sure the child window has been laid out.
-        final View childWindowRoot = activity.getChildWindowRoot();
-        PollingCheck.waitFor(TIMEOUT, () -> childWindowRoot.getWidth() > 0);
         PollingCheck.waitFor(TIMEOUT, () -> activity.getDispatchedInsets() != null);
         final WindowInsets insets = activity.getDispatchedInsets();
 

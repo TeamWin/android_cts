@@ -16,7 +16,8 @@
 
 package com.android.bedstead.harrier.annotations.enterprise;
 
-import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_COEXISTENCE_FLAG;
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LAST;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 
@@ -28,10 +29,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-
 @EnsureFeatureFlagEnabled(
         namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
-        key = ENABLE_COEXISTENCE_FLAG,
+        key = ENABLE_DEVICE_POLICY_ENGINE_FLAG,
         weight = AnnotationRunPrecedence.LATE
 )
 @EnsureFeatureFlagEnabled(
@@ -42,4 +42,15 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ForceCoexistenceFlagsOn {
+    /**
+     * Weight sets the order that annotations will be resolved.
+     *
+     * <p>Annotations with a lower weight will be resolved before annotations with a higher weight.
+     *
+     * <p>If there is an order requirement between annotations, ensure that the weight of the
+     * annotation which must be resolved first is lower than the one which must be resolved later.
+     *
+     * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
+     */
+    int weight() default LAST;
 }

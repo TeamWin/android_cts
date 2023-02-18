@@ -430,6 +430,7 @@ def get_args():
     parser.add_argument("-i", "--install", action='store_true', help="Builds test targets. (default)")
     parser.add_argument("-t", "--test", action='store_true', help="Builds test targets. (default)")
     parser.add_argument("-d", "--debug", action="store_true", help="Include debug output.")
+    parser.add_argument("-c", "--coexistence", action="store", default="?", help="Force device policy coexistence on or off (ignoring bedstead test preferences)")
     parser.add_argument("-s", "--states", help="Specify states which should be included. Options are (c)urrent (s)ystem secondar(y), (w)ork profile, c(l)one (i)nitial, (a)dditional. Defaults to all states.")
     parser.add_argument("-n", "--interactive", action='store', nargs='?', default="disabled", help="Run interactive tests. This will exclude non-interactive tests and will enable manual testing. Pass 'bi' to build and install automations, 't' to use automations (default) and m to enable manual interaction (default)")
     args = parser.parse_args()
@@ -630,6 +631,11 @@ class Test:
                 command += " -e ENABLE_AUTOMATION true"
             else:
                 command += " -e ENABLE_AUTOMATION false"
+
+        if self.args.coexistence == "yes":
+            command += " -e COEXISTENCE true"
+        elif self.args.coexistence == "no":
+            command += " -e COEXISTENCE false"
 
         if len(self.class_methods) > 0:
             if any(s.endswith("*") for s in self.class_methods):

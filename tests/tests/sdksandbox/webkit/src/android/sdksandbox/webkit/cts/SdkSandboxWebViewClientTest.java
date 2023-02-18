@@ -28,10 +28,10 @@ import org.junit.runner.RunWith;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxWebViewClientTest {
-    // TODO(b/260196711): We are not able to inject input events
-    // from the SDK Runtime.
+    // TODO(b/260196711): IME does not currently work correctly in the SDK RUntime. We should enable
+    // impacted tests once this is fixed.
     // This prevents some tests from running.
-    private static final boolean CAN_INJECT_INPUT_EVENTS = false;
+    private static final boolean CAN_INJECT_KEY_EVENTS = false;
 
     // TODO(b/266051278): Uncomment this when we work out why preserving
     // the SDK sandbox manager between tests cases {@link testOnRenderProcessGone}
@@ -107,7 +107,7 @@ public class SdkSandboxWebViewClientTest {
 
     @Test
     public void testOnUnhandledKeyEvent() throws Exception {
-        Assume.assumeTrue(CAN_INJECT_INPUT_EVENTS);
+        Assume.assumeTrue(CAN_INJECT_KEY_EVENTS);
         sdkTester.assertSdkTestRunPasses("testOnUnhandledKeyEvent");
     }
 

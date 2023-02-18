@@ -41,7 +41,8 @@ public class CtsNoOpCredentialProviderService extends CredentialProviderService 
             CancellationSignal cancellationSignal,
             OutcomeReceiver<
                     BeginGetCredentialResponse, GetCredentialException> callback) {
-        Log.d(TAG, "onBeginGetCredential()");
+        Log.i(TAG, "onBeginGetCredential() final service");
+        callback.onResult(new BeginGetCredentialResponse());
     }
 
     @Override
@@ -49,13 +50,15 @@ public class CtsNoOpCredentialProviderService extends CredentialProviderService 
             CancellationSignal cancellationSignal,
             OutcomeReceiver<BeginCreateCredentialResponse,
                     CreateCredentialException> callback) {
-        Log.d(TAG, "onBeginCreateCredential()");
+        Log.i(TAG, "onBeginCreateCredential() final service");
+        callback.onResult(new BeginCreateCredentialResponse());
     }
 
     @Override
     public void onClearCredentialState(ClearCredentialStateRequest request,
             CancellationSignal cancellationSignal,
             OutcomeReceiver<Void, ClearCredentialStateException> callback) {
-        Log.d(TAG, "onClearCredentialState()");
+        Log.i(TAG, "onClearCredentialState() final service");
+        callback.onResult(null);
     }
 }

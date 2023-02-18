@@ -528,7 +528,7 @@ public class ServiceTest extends ActivityTestsBase {
         getNotificationManager().cancel(id);
     }
 
-    private void assertNotification(int id, String expectedTitle) {
+    private void assertNotification(int id, String expectedTitle, boolean shouldHaveFgsFlag) {
         String packageName = getContext().getPackageName();
         String errorMessage = null;
         for (int i = 1; i<=2; i++) {
@@ -536,10 +536,17 @@ public class ServiceTest extends ActivityTestsBase {
             StatusBarNotification[] sbns = getNotificationManager().getActiveNotifications();
             for (StatusBarNotification sbn : sbns) {
                 if (sbn.getId() == id && sbn.getPackageName().equals(packageName)) {
-                    String actualTitle =
-                            sbn.getNotification().extras.getString(Notification.EXTRA_TITLE);
+                    Notification n = sbn.getNotification();
+                    // check title first to make sure the update has propagated
+                    String actualTitle = n.extras.getString(Notification.EXTRA_TITLE);
                     if (expectedTitle.equals(actualTitle)) {
-                        return;
+                        // make sure notification and service state is in sync
+                        if (shouldHaveFgsFlag ==
+                                ((n.flags & Notification.FLAG_FOREGROUND_SERVICE) != 0)) {
+                            return;
+                        }
+                        fail(String.format("Wrong flag for notification #%d: "
+                                + " actual '%d'", id, n.flags));
                     }
                     // It's possible the notification hasn't been updated yet, so save the error
                     // message to only fail after retrying.
@@ -961,6 +968,33 @@ public class ServiceTest extends ActivityTestsBase {
     }
 
     @MediumTest
+    public void testForegroundService_canUpdateNotification() throws Exception {
+        boolean success = false;
+        try {
+            // Start service as foreground - it should show notification #1
+            mExpectedServiceState = STATE_START_1;
+            startForegroundService(COMMAND_START_FOREGROUND);
+            waitForResultOrThrow(DELAY, "service to start first time");
+            assertNotification(1, LocalForegroundService.getNotificationTitle(1), true);
+
+            // Sends another notification reusing the same notification id.
+            String newTitle = "YODA I AM";
+            sendNotification(1, newTitle);
+            assertNotification(1, newTitle, true);
+
+            success = true;
+        } finally {
+            if (!success) {
+                mContext.stopService(mLocalForegroundService);
+            }
+        }
+        mExpectedServiceState = STATE_DESTROY;
+        mContext.stopService(mLocalForegroundService);
+        waitForResultOrThrow(DELAY, "service to be destroyed");
+        assertNoNotification(1);
+    }
+
+    @MediumTest
     public void testForegroundService_dontRemoveNotificationOnStop() throws Exception {
         boolean success = false;
         try {
@@ -968,25 +1002,25 @@ public class ServiceTest extends ActivityTestsBase {
             mExpectedServiceState = STATE_START_1;
             startForegroundService(COMMAND_START_FOREGROUND);
             waitForResultOrThrow(DELAY, "service to start first time");
-            assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+            assertNotification(1, LocalForegroundService.getNotificationTitle(1), true);
 
             // Stop foreground without removing notification - it should still show notification #1
             mExpectedServiceState = STATE_START_2;
             startForegroundService(COMMAND_STOP_FOREGROUND_DONT_REMOVE_NOTIFICATION);
             waitForResultOrThrow(DELAY, "service to stop foreground");
-            assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+            assertNotification(1, LocalForegroundService.getNotificationTitle(1), false);
 
             // Sends another notification reusing the same notification id.
             String newTitle = "YODA I AM";
             sendNotification(1, newTitle);
-            assertNotification(1, newTitle);
+            assertNotification(1, newTitle, false);
 
             // Start service as foreground again - it should kill notification #1 and show #2
             mExpectedServiceState = STATE_START_3;
             startForegroundService(COMMAND_START_FOREGROUND);
             waitForResultOrThrow(DELAY, "service to start foreground 2nd time");
             assertNoNotification(1);
-            assertNotification(2, LocalForegroundService.getNotificationTitle(2));
+            assertNotification(2, LocalForegroundService.getNotificationTitle(2), true);
 
             success = true;
         } finally {
@@ -1020,7 +1054,7 @@ public class ServiceTest extends ActivityTestsBase {
             mExpectedServiceState = STATE_START_1;
             startForegroundService(COMMAND_START_FOREGROUND);
             waitForResultOrThrow(DELAY, "service to start first time");
-            assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+            assertNotification(1, LocalForegroundService.getNotificationTitle(1), true);
 
             // Stop foreground removing notification
             Log.d(TAG, "Expecting second start state...");
@@ -1039,7 +1073,7 @@ public class ServiceTest extends ActivityTestsBase {
             mExpectedServiceState = STATE_START_3;
             startForegroundService(COMMAND_START_FOREGROUND);
             waitForResultOrThrow(DELAY, "service to start as foreground 2nd time");
-            assertNotification(2, LocalForegroundService.getNotificationTitle(2));
+            assertNotification(2, LocalForegroundService.getNotificationTitle(2), true);
 
             success = true;
         } finally {
@@ -1118,26 +1152,26 @@ public class ServiceTest extends ActivityTestsBase {
             mExpectedServiceState = STATE_START_1;
             startForegroundService(COMMAND_START_FOREGROUND);
             waitForResultOrThrow(DELAY, "service to start first time");
-            assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+            assertNotification(1, LocalForegroundService.getNotificationTitle(1), true);
 
             // Detaching notification
             mExpectedServiceState = STATE_START_2;
             startForegroundService(COMMAND_STOP_FOREGROUND_DETACH_NOTIFICATION);
             waitForResultOrThrow(DELAY, "service to stop foreground");
-            assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+            assertNotification(1, LocalForegroundService.getNotificationTitle(1), false);
 
             // Sends another notification reusing the same notification id.
             newTitle = "YODA I AM";
             sendNotification(1, newTitle);
-            assertNotification(1, newTitle);
+            assertNotification(1, newTitle, false);
 
             // Start service as foreground again - it should show notification #2..
             mExpectedServiceState = STATE_START_3;
             startForegroundService(COMMAND_START_FOREGROUND);
             waitForResultOrThrow(DELAY, "service to start as foreground 2nd time");
-            assertNotification(2, LocalForegroundService.getNotificationTitle(2));
+            assertNotification(2, LocalForegroundService.getNotificationTitle(2), true);
             //...but keeping notification #1
-            assertNotification(1, newTitle);
+            assertNotification(1, newTitle, false);
 
             success = true;
         } finally {
@@ -1151,7 +1185,7 @@ public class ServiceTest extends ActivityTestsBase {
         if (newTitle == null) {
             assertNoNotification(1);
         } else {
-            assertNotification(1, newTitle);
+            assertNotification(1, newTitle, false);
             cancelNotification(1);
             assertNoNotification(1);
         }
@@ -1165,7 +1199,7 @@ public class ServiceTest extends ActivityTestsBase {
         mExpectedServiceState = STATE_START_1;
         startForegroundService(COMMAND_START_FOREGROUND);
         waitForResultOrThrow(DELAY, "service to start first time");
-        assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+        assertNotification(1, LocalForegroundService.getNotificationTitle(1), true);
 
         try {
             final String channel = LocalForegroundService.NOTIFICATION_CHANNEL_ID;
@@ -1214,7 +1248,7 @@ public class ServiceTest extends ActivityTestsBase {
         startForegroundService(mLocalPhoneCallService,
                 COMMAND_START_FOREGROUND_DEFER_NOTIFICATION);
         waitForResultOrThrow(DELAY, "phoneCall service to start");
-        assertNotification(1, LocalPhoneCallService.getNotificationTitle(1));
+        assertNotification(1, LocalPhoneCallService.getNotificationTitle(1), true);
 
         mExpectedServiceState = STATE_DESTROY;
         mContext.stopService(mLocalPhoneCallService);
@@ -1240,7 +1274,7 @@ public class ServiceTest extends ActivityTestsBase {
 
         // Wait ten seconds and verify that the notification is now visible
         waitMillis(10_000L);
-        assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+        assertNotification(1, LocalForegroundService.getNotificationTitle(1), true);
 
         mExpectedServiceState = STATE_DESTROY;
         mContext.stopService(mLocalForegroundService);
@@ -1255,7 +1289,7 @@ public class ServiceTest extends ActivityTestsBase {
                 NotificationManager.IMPORTANCE_DEFAULT));
         Notification.Builder builder =
                 new Notification.Builder(mContext, channelId)
-                        .setContentTitle(LocalForegroundService.getNotificationTitle(1))
+                        .setContentTitle("Before FGS")
                         .setSmallIcon(R.drawable.black);
         nm.notify(1, builder.build());
 
@@ -1265,7 +1299,7 @@ public class ServiceTest extends ActivityTestsBase {
 
         // Normally deferred but should display immediately because the notification
         // was already showing
-        assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+        assertNotification(1, LocalForegroundService.getNotificationTitle(1), true);
 
         mExpectedServiceState = STATE_DESTROY;
         mContext.stopService(mLocalForegroundService);
@@ -1293,7 +1327,7 @@ public class ServiceTest extends ActivityTestsBase {
         nm.notify(1, builder.build());
 
         // Verify that the notification is immediately shown with the new content
-        assertNotification(1, notificationTitle);
+        assertNotification(1, notificationTitle, true);
 
         mExpectedServiceState = STATE_DESTROY;
         mContext.stopService(mLocalForegroundService);
@@ -1328,7 +1362,7 @@ public class ServiceTest extends ActivityTestsBase {
         // (updated) title.
         assertNoNotification(1);
         waitMillis(10_000L);
-        assertNotification(1, notificationTitle);
+        assertNotification(1, notificationTitle, true);
 
         mExpectedServiceState = STATE_DESTROY;
         mContext.stopService(mLocalForegroundService);
@@ -1346,7 +1380,7 @@ public class ServiceTest extends ActivityTestsBase {
         mExpectedServiceState = STATE_START_2;
         startForegroundService(COMMAND_STOP_FOREGROUND_DONT_REMOVE_NOTIFICATION);
         waitForResultOrThrow(DELAY, "service to stop foreground");
-        assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+        assertNotification(1, LocalForegroundService.getNotificationTitle(1), false);
 
         mExpectedServiceState = STATE_DESTROY;
         mContext.stopService(mLocalForegroundService);

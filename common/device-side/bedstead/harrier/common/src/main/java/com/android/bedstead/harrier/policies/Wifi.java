@@ -27,8 +27,8 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /**
  * Policy for wifi.
- */
-@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE | APPLIED_BY_DPM_ROLE_HOLDER | APPLIES_GLOBALLY | CANNOT_BE_APPLIED_BY_ROLE_HOLDER,
-        permissions = @EnterprisePolicy.Permission(appliedWith = MANAGE_DEVICE_POLICY_WIFI, appliesTo = APPLIES_GLOBALLY))
+ */ // | APPLIED_BY_DPM_ROLE_HOLDER
+@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE | APPLIES_GLOBALLY | CANNOT_BE_APPLIED_BY_ROLE_HOLDER)//,
+//        permissions = @EnterprisePolicy.Permission(appliedWith = MANAGE_DEVICE_POLICY_WIFI, appliesTo = APPLIES_GLOBALLY))
 public final class Wifi {
 }

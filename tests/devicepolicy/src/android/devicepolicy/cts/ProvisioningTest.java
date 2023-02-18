@@ -917,6 +917,7 @@ public final class ProvisioningTest {
     @Postsubmit(reason = "New test")
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @RequireFeature(FEATURE_MANAGED_USERS)
     @RequireDoesNotHaveFeature(FEATURE_DEVICE_ADMIN)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#checkProvisioningPrecondition")
     public void checkProvisioningPreCondition_withoutDeviceAdminFeature_returnsDeviceAdminNotSupported() {

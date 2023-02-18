@@ -19,6 +19,7 @@ package android.webkit.cts;
 import static org.junit.Assert.*;
 
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.os.RemoteException;
 import android.os.StrictMode;
@@ -184,12 +185,27 @@ public final class SharedWebViewTestEnvironment {
     }
 
     /**
+     * UiAutomation sends events at device level which lets us get around issues with sending
+     * instrumented events to the SDK Runtime but we don't want this for the regular tests. If
+     * something like a dialog pops up while an input event is being sent, the instrumentation would
+     * treat that as an issue while the UiAutomation input event would just send it through.
+     *
+     * <p>So by default, we disable this use and only use it in the SDK Sandbox.
+     *
+     * <p>This API is used for regular activity based tests.
+     */
+    public static IHostAppInvoker.Stub createHostAppInvoker(Context applicationContext) {
+        return createHostAppInvoker(applicationContext, false);
+    }
+    /**
      * This will generate a new {@link IHostAppInvoker} binder node. This should be called from
      * wherever the activity exists for test cases.
      */
-    public static IHostAppInvoker.Stub createHostAppInvoker(Context applicationContext) {
+    public static IHostAppInvoker.Stub createHostAppInvoker(
+            Context applicationContext, boolean allowUiAutomation) {
         return new IHostAppInvoker.Stub() {
             private Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
+            private UiAutomation mUiAutomation;
 
             public void waitForIdleSync() {
                 mInstrumentation.waitForIdleSync();
@@ -200,7 +216,11 @@ public final class SharedWebViewTestEnvironment {
             }
 
             public void sendPointerSync(MotionEvent event) {
-                mInstrumentation.sendPointerSync(event);
+                if (allowUiAutomation) {
+                    sendPointerSyncWithUiAutomation(event);
+                } else {
+                    sendPointerSyncWithInstrumentation(event);
+                }
             }
 
             public byte[] getEncodingBytes(String data, String charset) {
@@ -216,11 +236,15 @@ public final class SharedWebViewTestEnvironment {
                         final X509Certificate[] acceptedIssuerCerts;
                         if (acceptedIssuerDer != null) {
                             try {
-                                CertificateFactory certFactory = CertificateFactory.getInstance(
-                                        "X.509");
-                                acceptedIssuerCerts = new X509Certificate[]{
-                                        (X509Certificate) certFactory.generateCertificate(
-                                                new ByteArrayInputStream(acceptedIssuerDer))};
+                                CertificateFactory certFactory =
+                                        CertificateFactory.getInstance("X.509");
+                                acceptedIssuerCerts =
+                                        new X509Certificate[] {
+                                            (X509Certificate)
+                                                    certFactory.generateCertificate(
+                                                            new ByteArrayInputStream(
+                                                                    acceptedIssuerDer))
+                                        };
                             } catch (CertificateException e) {
                                 // Throw manually, because compiler does not understand that fail()
                                 // does not return.
@@ -231,14 +255,15 @@ public final class SharedWebViewTestEnvironment {
                             acceptedIssuerCerts = null;
                         }
                         try {
-                            X509TrustManager trustManager = new CtsTestServer.CtsTrustManager() {
-                                @Override
-                                public X509Certificate[] getAcceptedIssuers() {
-                                    return acceptedIssuerCerts;
-                                }
-                            };
-                            mWebServer = new CtsTestServer(applicationContext, sslMode,
-                                    trustManager);
+                            X509TrustManager trustManager =
+                                    new CtsTestServer.CtsTrustManager() {
+                                        @Override
+                                        public X509Certificate[] getAcceptedIssuers() {
+                                            return acceptedIssuerCerts;
+                                        }
+                                    };
+                            mWebServer =
+                                    new CtsTestServer(applicationContext, sslMode, trustManager);
                         } catch (Exception e) {
                             fail("Failed to launch CtsTestServer");
                         }
@@ -343,6 +368,24 @@ public final class SharedWebViewTestEnvironment {
                         return new HttpRequest(url, apacheRequest);
                     }
                 };
+            }
+
+            private void sendPointerSyncWithInstrumentation(MotionEvent event) {
+                mInstrumentation.sendPointerSync(event);
+            }
+
+            private void sendPointerSyncWithUiAutomation(MotionEvent event) {
+                if (mUiAutomation == null) {
+                    mUiAutomation = mInstrumentation.getUiAutomation();
+
+                    if (mUiAutomation == null) {
+                        fail("Could not retrieve UI automation");
+                    }
+                }
+
+                if (!mUiAutomation.injectInputEvent(event, true)) {
+                    fail("Could not inject motion event");
+                }
             }
         };
     }

@@ -77,6 +77,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.mainline.MainlineModule;
 import com.android.compatibility.common.util.mainline.ModuleDetector;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -822,7 +823,7 @@ public class LocationAccessCheckTest {
 
         // Verify content intent
         PendingIntent contentIntent = currentNotification.getNotification().contentIntent;
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
+        if (SdkLevel.isAtLeastU()) {
             contentIntent.send(null, 0, null, null, null, null,
                     ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
                             ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle());

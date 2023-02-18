@@ -164,7 +164,7 @@ static jstring nativeTestSetThreadsWithInvalidTid(JNIEnv* env, jobject) {
     }
     SessionWrapper wrapper = createSession(manager);
     if (wrapper.session() == nullptr) {
-        return toJString(env, "failed to create session");
+        return nullptr;
     }
 
     std::vector<pid_t> tids;

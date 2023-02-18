@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -1243,6 +1244,12 @@ public class AtomTests {
         PerformanceHintManager phm = context.getSystemService(PerformanceHintManager.class);
 
         assertNotNull(phm);
+
+        // If the device does not support ADPF hint session,
+        // getPreferredUpdateRateNanos() returns -1.
+        // We only test the devices supporting it and will check
+        // if assumption fails in PerformanceHintManagerStatsTests#testCreateHintSessionStatsd
+        assumeTrue(phm.getPreferredUpdateRateNanos() != -1);
 
         PerformanceHintManager.Session session =
                 phm.createHintSession(new int[]{Process.myPid()}, targetNs);

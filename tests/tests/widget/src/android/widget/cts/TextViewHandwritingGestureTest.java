@@ -39,6 +39,7 @@ import android.os.CancellationSignal;
 import android.text.InputFilter;
 import android.text.Layout;
 import android.text.method.DigitsKeyListener;
+import android.text.method.PasswordTransformationMethod;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -93,6 +94,7 @@ public class TextViewHandwritingGestureTest {
     // The placeholder text used in insert mode.
     private static final String PLACEHOLDER_TEXT_MULTI_LINE = "\n\n";
     private static final String PLACEHOLDER_TEXT_SINGLE_LINE = "\uFFFD";
+    private static final String DOT = "\u2022";
 
     private int mGestureLineMargin;
     private EditText mEditText;
@@ -1665,6 +1667,67 @@ public class TextViewHandwritingGestureTest {
         assertNoInsertMode();
     }
 
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_setTransformationMethod() {
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(3 * CHAR_WIDTH_PX, mEditText.getLayout().getLineTop(0) - 1f),
+                /* setFallbackText= */ false);
+
+        int expectedOffset = 3;
+        assertGestureInsertMode(expectedOffset);
+
+        // Set PasswordTransformation, which will replace all character to DOT.
+        mEditText.setTransformationMethod(new PasswordTransformationMethod());
+
+        String placeholder = PLACEHOLDER_TEXT_MULTI_LINE;
+        String expectedText = DOT.repeat(expectedOffset) + placeholder
+                + DOT.repeat(DEFAULT_TEXT.length() - expectedOffset);
+        String displayText = mEditText.getLayout().getText().toString();
+
+        assertThat(displayText).isEqualTo(expectedText);
+        assertCursorOffset(expectedOffset);
+        assertGestureInsertModeHighlightRange(expectedOffset,
+                expectedOffset + placeholder.length());
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertModeHighlight();
+        assertThat(mEditText.getLayout().getText().toString())
+                .isEqualTo(DOT.repeat(DEFAULT_TEXT.length()));
+        assertCursorOffset(expectedOffset);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_setTransformationMethod_singleLine() {
+        setEditTextSingleLine();
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(3 * CHAR_WIDTH_PX, mEditText.getLayout().getLineTop(0) - 1f),
+                /* setFallbackText= */ false);
+
+        int expectedOffset = 3;
+        assertGestureInsertMode(expectedOffset);
+
+        // Set PasswordTransformation, which will replace all character to DOT.
+        mEditText.setTransformationMethod(new PasswordTransformationMethod());
+
+        String placeholder = PLACEHOLDER_TEXT_SINGLE_LINE;
+        String expectedText = DOT.repeat(expectedOffset) + placeholder
+                + DOT.repeat(DEFAULT_TEXT.length() - expectedOffset);
+        String displayText = mEditText.getLayout().getText().toString();
+
+        assertThat(displayText).isEqualTo(expectedText);
+        assertCursorOffset(expectedOffset);
+        assertGestureInsertModeHighlightRange(expectedOffset,
+                expectedOffset + placeholder.length());
+
+        gesture.getCancellationSignal().cancel();
+        assertNoInsertModeHighlight();
+        assertThat(mEditText.getLayout().getText().toString())
+                .isEqualTo(DOT.repeat(DEFAULT_TEXT.length()));
+        assertCursorOffset(expectedOffset);
+    }
+
     private void setEditTextSingleLine() {
         mEditText.setSingleLine(true);
         mEditText.measure(
@@ -1892,13 +1955,17 @@ public class TextViewHandwritingGestureTest {
         assertGestureInsertModeHighlightRange(offset, offset + placeholder.length());
     }
 
+    private void assertNoInsertModeHighlight() {
+        final Canvas canvas = prepareMockCanvas();
+        mEditText.draw(canvas);
+        verify(canvas, never()).drawRect(anyFloat(), anyFloat(), anyFloat(), anyFloat(), any());
+    }
+
     private void assertNoInsertMode() {
         // There is no API to directly check if the editText is in insert mode.
         // Here we check that 1) no highlight is draw 2) the display text doesn't contain the
         // placeholder text from the insert mode.
-        final Canvas canvas = prepareMockCanvas();
-        mEditText.draw(canvas);
-        verify(canvas, never()).drawRect(anyFloat(), anyFloat(), anyFloat(), anyFloat(), any());
+        assertNoInsertModeHighlight();
 
         String expectedDisplayText = mEditText.getText().toString();
         if (mEditText.isSingleLine()) {

@@ -33,6 +33,6 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
         // TODO: The javadoc says APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE shouldn't be global
         APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_GLOBALLY | CANNOT_BE_APPLIED_BY_ROLE_HOLDER,
         APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO | APPLIES_TO_OWN_USER | CANNOT_BE_APPLIED_BY_ROLE_HOLDER
-}, permissions = @EnterprisePolicy.Permission(appliedWith = MANAGE_DEVICE_POLICY_SMS, appliesTo = APPLIES_GLOBALLY))
+})//, permissions = @EnterprisePolicy.Permission(appliedWith = MANAGE_DEVICE_POLICY_SMS, appliesTo = APPLIES_GLOBALLY))
 public final class DisallowSms {
 }

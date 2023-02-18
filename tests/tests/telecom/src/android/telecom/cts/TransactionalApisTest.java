@@ -706,14 +706,17 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         try {
             cleanup();
             startCallWithAttributesAndVerify(mIncomingCallAttributes, mCall1);
-            // verify there is at least one endpoint that is non-null
-            verifyCallEndpointIsNotNull(mCall1);
-            int startingEndpointType = mCall1.mEvents.getCurrentCallEndpoint().getEndpointType();
 
             // query the current endpoints
             List<CallEndpoint> endpoints = mCall1.mEvents.getAvailableEndpoints();
+
             // if another endpoint is available, request a switch
             if (endpoints.size() > 1) {
+                // verify there is at least one endpoint that is non-null
+                verifyCallEndpointIsNotNull(mCall1);
+                int startingEndpointType = mCall1.mEvents
+                        .getCurrentCallEndpoint().getEndpointType();
+
                 // iterate the other endpoints until an endpoint other than the startingEndpointType
                 // is found
                 CallEndpoint anotherEndpoint = null;

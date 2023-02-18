@@ -61,9 +61,9 @@ public class GainmapTest {
     }
 
     @Test
-    public void testJpegR() throws Exception {
+    public void testDecodeGainmap() throws Exception {
         Bitmap bitmap = ImageDecoder.decodeBitmap(
-                ImageDecoder.createSource(sContext.getResources(), R.raw.jpegr),
+                ImageDecoder.createSource(sContext.getResources(), R.raw.gainmap),
                 (decoder, info, source) -> decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE));
         assertNotNull(bitmap);
         assertTrue("Missing gainmap", bitmap.hasGainmap());
@@ -73,18 +73,16 @@ public class GainmapTest {
         assertNotNull(gainmap);
         Bitmap gainmapData = gainmap.getGainmapContents();
         assertNotNull(gainmapData);
-        assertEquals(Bitmap.Config.ALPHA_8, gainmapData.getConfig());
-        assertNull(gainmapData.getColorSpace());
+        assertEquals(Bitmap.Config.ARGB_8888, gainmapData.getConfig());
 
         assertAllAre(0.f, gainmap.getEpsilonSdr());
         assertAllAre(0.f, gainmap.getEpsilonHdr());
         assertAllAre(1.f, gainmap.getGamma());
         assertEquals(1.f, gainmap.getMinDisplayRatioForHdrTransition(), EPSILON);
 
-        final float ratioScalingFactor = 10.6643f;
-        assertAllAre(ratioScalingFactor, gainmap.getRatioMax());
-        assertAllAre(1.0f / ratioScalingFactor, gainmap.getRatioMin());
-        assertEquals(ratioScalingFactor, gainmap.getDisplayRatioForFullHdr(), EPSILON);
+        assertAllAre(4f, gainmap.getRatioMax());
+        assertAllAre(1.0f, gainmap.getRatioMin());
+        assertEquals(5f, gainmap.getDisplayRatioForFullHdr(), EPSILON);
     }
 
     @Test
@@ -122,7 +120,7 @@ public class GainmapTest {
     @Test
     public void testWriteToParcel() throws Exception {
         Bitmap bitmap = ImageDecoder.decodeBitmap(
-                ImageDecoder.createSource(sContext.getResources(), R.raw.jpegr),
+                ImageDecoder.createSource(sContext.getResources(), R.raw.gainmap),
                 (decoder, info, source) -> decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE));
         assertNotNull(bitmap);
 

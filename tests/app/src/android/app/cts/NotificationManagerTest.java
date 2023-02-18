@@ -23,37 +23,13 @@ import static android.app.Activity.RESULT_OK;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_DEFAULT;
 import static android.app.AppOpsManager.MODE_ERRORED;
+import static android.app.Notification.FLAG_FOREGROUND_SERVICE;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
 import static android.app.NotificationManager.IMPORTANCE_LOW;
 import static android.app.NotificationManager.IMPORTANCE_MIN;
 import static android.app.NotificationManager.IMPORTANCE_NONE;
 import static android.app.NotificationManager.IMPORTANCE_UNSPECIFIED;
-import static android.app.NotificationManager.INTERRUPTION_FILTER_ALARMS;
-import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
-import static android.app.NotificationManager.INTERRUPTION_FILTER_NONE;
-import static android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY;
-import static android.app.NotificationManager.Policy.CONVERSATION_SENDERS_ANYONE;
-import static android.app.NotificationManager.Policy.CONVERSATION_SENDERS_NONE;
-import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS;
-import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_CALLS;
-import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_CONVERSATIONS;
-import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_EVENTS;
-import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA;
-import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_MESSAGES;
-import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_REMINDERS;
-import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_REPEAT_CALLERS;
-import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM;
-import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT;
-import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
-import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_LIGHTS;
-import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_NOTIFICATION_LIST;
-import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_PEEK;
-import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_OFF;
-import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON;
-import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
-import static android.app.cts.android.app.cts.tools.NotificationHelper.MAX_WAIT_TIME;
-import static android.app.cts.android.app.cts.tools.NotificationHelper.SHORT_WAIT_TIME;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.service.notification.NotificationListenerService.META_DATA_DEFAULT_AUTOBIND;
 
@@ -61,36 +37,30 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 
 import android.Manifest;
-import android.app.AutomaticZenRule;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
-import android.app.NotificationManager.Policy;
 import android.app.PendingIntent;
 import android.app.cts.android.app.cts.tools.FutureServiceConnection;
+import android.app.cts.android.app.cts.tools.NotificationHelper.SEARCH_TYPE;
 import android.app.role.RoleManager;
-import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.GetResultActivity;
 import android.app.stubs.R;
 import android.app.stubs.TestNotificationAssistant;
 import android.app.stubs.TestNotificationListener;
 import android.content.ComponentName;
-import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.OperationApplicationException;
 import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.content.res.AssetFileDescriptor;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
 import android.media.AudioAttributes;
-import android.media.AudioManager;
 import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Build;
@@ -99,21 +69,13 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.RemoteException;
 import android.os.UserHandle;
 import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.provider.ContactsContract;
-import android.provider.ContactsContract.CommonDataKinds.Email;
-import android.provider.ContactsContract.CommonDataKinds.Phone;
-import android.provider.ContactsContract.CommonDataKinds.StructuredName;
-import android.provider.ContactsContract.Data;
 import android.provider.Settings;
-import android.service.notification.Condition;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
-import android.service.notification.ZenPolicy;
 import android.support.test.uiautomator.UiDevice;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -141,7 +103,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -160,12 +121,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     final String TAG = NotificationManagerTest.class.getSimpleName();
     final boolean DEBUG = false;
 
-    private static final String TEST_APP = "com.android.test.notificationapp";
     private static final String DELEGATE_POST_CLASS = TEST_APP + ".NotificationDelegateAndPost";
     private static final String REVOKE_CLASS = TEST_APP + ".NotificationRevoker";
-    private static final String MATCHES_CALL_FILTER_CLASS =
-            TEST_APP + ".MatchesCallFilterTestActivity";
-    private static final String MINIMAL_LISTENER_CLASS = TEST_APP + ".TestNotificationListener";
 
     private static final String TRAMPOLINE_APP =
             "com.android.test.notificationtrampoline.current";
@@ -202,20 +159,6 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     private static final int MESSAGE_BROADCAST_NOTIFICATION = 1;
     private static final int MESSAGE_SERVICE_NOTIFICATION = 2;
     private static final int MESSAGE_CLICK_NOTIFICATION = 3;
-
-    // Constants for creating contacts
-    private static final String ALICE = "Alice";
-    private static final String ALICE_PHONE = "+16175551212";
-    private static final String ALICE_EMAIL = "alice@_foo._bar";
-    private static final String BOB = "Bob";
-    private static final String BOB_PHONE = "+16175553434";
-    private static final String BOB_EMAIL = "bob@_foo._bar";
-
-    // Constants for GetResultActivity and return codes from MatchesCallFilterTestActivity
-    // the permitted/not permitted values need to stay the same as in the test activity.
-    private static final int REQUEST_CODE = 42;
-    private static final int MATCHES_CALL_FILTER_NOT_PERMITTED = 0;
-    private static final int MATCHES_CALL_FILTER_PERMITTED = 1;
 
     private String mId;
     private INotificationUriAccessService mNotificationUriAccessService;
@@ -277,116 +220,6 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         PermissionUtils.revokePermission(NOTIFICATIONPROVIDER, POST_NOTIFICATIONS);
     }
 
-    private void assertNotificationCancelled(int id, boolean all) {
-        for (long totalWait = 0; totalWait < MAX_WAIT_TIME; totalWait += SHORT_WAIT_TIME) {
-            StatusBarNotification sbn = findNotificationNoWait(id, all);
-            if (sbn == null) return;
-            try {
-                Thread.sleep(SHORT_WAIT_TIME);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        assertNull(findNotificationNoWait(id, all));
-    }
-
-    private void insertSingleContact(String name, String phone, String email, boolean starred) {
-        final ArrayList<ContentProviderOperation> operationList =
-                new ArrayList<ContentProviderOperation>();
-        ContentProviderOperation.Builder builder =
-                ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI);
-        builder.withValue(ContactsContract.RawContacts.STARRED, starred ? 1 : 0);
-        operationList.add(builder.build());
-
-        builder = ContentProviderOperation.newInsert(Data.CONTENT_URI);
-        builder.withValueBackReference(StructuredName.RAW_CONTACT_ID, 0);
-        builder.withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE);
-        builder.withValue(StructuredName.DISPLAY_NAME, name);
-        operationList.add(builder.build());
-
-        if (phone != null) {
-            builder = ContentProviderOperation.newInsert(Data.CONTENT_URI);
-            builder.withValueBackReference(Phone.RAW_CONTACT_ID, 0);
-            builder.withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE);
-            builder.withValue(Phone.TYPE, Phone.TYPE_MOBILE);
-            builder.withValue(Phone.NUMBER, phone);
-            builder.withValue(Phone.NORMALIZED_NUMBER, phone);
-            builder.withValue(Data.IS_PRIMARY, 1);
-            operationList.add(builder.build());
-        }
-        if (email != null) {
-            builder = ContentProviderOperation.newInsert(Data.CONTENT_URI);
-            builder.withValueBackReference(Email.RAW_CONTACT_ID, 0);
-            builder.withValue(Data.MIMETYPE, Email.CONTENT_ITEM_TYPE);
-            builder.withValue(Email.TYPE, Email.TYPE_HOME);
-            builder.withValue(Email.DATA, email);
-            operationList.add(builder.build());
-        }
-
-        try {
-            mContext.getContentResolver().applyBatch(ContactsContract.AUTHORITY, operationList);
-        } catch (RemoteException e) {
-            Log.e(TAG, String.format("%s: %s", e.toString(), e.getMessage()));
-        } catch (OperationApplicationException e) {
-            Log.e(TAG, String.format("%s: %s", e.toString(), e.getMessage()));
-        }
-    }
-
-    private void deleteSingleContact(Uri uri) {
-        final ArrayList<ContentProviderOperation> operationList =
-                new ArrayList<ContentProviderOperation>();
-        operationList.add(ContentProviderOperation.newDelete(uri).build());
-        try {
-            mContext.getContentResolver().applyBatch(ContactsContract.AUTHORITY, operationList);
-        } catch (RemoteException e) {
-            Log.e(TAG, String.format("%s: %s", e.toString(), e.getMessage()));
-        } catch (OperationApplicationException e) {
-            Log.e(TAG, String.format("%s: %s", e.toString(), e.getMessage()));
-        }
-    }
-
-    private Uri lookupContact(String phone) {
-        Cursor c = null;
-        try {
-            Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                    Uri.encode(phone));
-            String[] projection = new String[]{ContactsContract.Contacts._ID,
-                    ContactsContract.Contacts.LOOKUP_KEY};
-            c = mContext.getContentResolver().query(phoneUri, projection, null, null, null);
-            if (c != null && c.getCount() > 0) {
-                c.moveToFirst();
-                int lookupIdx = c.getColumnIndex(ContactsContract.Contacts.LOOKUP_KEY);
-                int idIdx = c.getColumnIndex(ContactsContract.Contacts._ID);
-                String lookupKey = c.getString(lookupIdx);
-                long contactId = c.getLong(idIdx);
-                return ContactsContract.Contacts.getLookupUri(contactId, lookupKey);
-            }
-        } catch (Throwable t) {
-            Log.w(TAG, "Problem getting content resolver or performing contacts query.", t);
-        } finally {
-            if (c != null) {
-                c.close();
-            }
-        }
-        return null;
-    }
-
-    // Simple helper function to take a phone number's string representation and make a tel: uri
-    private Uri makePhoneUri(String phone) {
-        return new Uri.Builder()
-                .scheme("tel")
-                .encodedOpaquePart(phone)  // don't re-encode anything passed in
-                .build();
-    }
-
-    private StatusBarNotification findNotificationNoWait(int id, boolean all) {
-        return mNotificationHelper.findNotificationNoWait(id, all);
-    }
-
-    private StatusBarNotification[] getActiveNotifications(boolean all) {
-        return mNotificationHelper.getActiveNotifications(all);
-    }
-
     private PendingIntent getPendingIntent() {
         return PendingIntent.getActivity(
                 getContext(), 0, new Intent(getContext(), this.getClass()),
@@ -442,19 +275,6 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             }
             // all notis should be in the same group
             assertEquals(expectedGroupKey, sbn.getGroupKey());
-        }
-    }
-
-    private void cancelAndPoll(int id) {
-        mNotificationManager.cancel(id);
-
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException ex) {
-            // pass
-        }
-        if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
-            fail("canceled notification was still alive, id=" + id);
         }
     }
 
@@ -532,65 +352,6 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(expected.getConversationId(), actual.getConversationId());
         assertEquals(expected.getParentChannelId(), actual.getParentChannelId());
         assertEquals(expected.isDemoted(), actual.isDemoted());
-    }
-
-    private void toggleExternalListenerAccess(ComponentName listenerComponent, boolean on)
-            throws IOException {
-        String command = " cmd notification " + (on ? "allow_listener " : "disallow_listener ")
-                + listenerComponent.flattenToString();
-        runCommand(command, InstrumentationRegistry.getInstrumentation());
-    }
-
-    private boolean hasReadContactsPermission(String pkgName) {
-        return mPackageManager.checkPermission(
-                Manifest.permission.READ_CONTACTS, pkgName)
-                == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void toggleReadContactsPermission(String pkgName, boolean on) {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            if (on) {
-                mInstrumentation.getUiAutomation().grantRuntimePermission(pkgName,
-                        "android.permission.READ_CONTACTS");
-            } else {
-                mInstrumentation.getUiAutomation().revokeRuntimePermission(pkgName,
-                        "android.permission.READ_CONTACTS");
-            }
-        });
-    }
-
-    private boolean areRulesSame(AutomaticZenRule a, AutomaticZenRule b) {
-        return a.isEnabled() == b.isEnabled()
-                && Objects.equals(a.getName(), b.getName())
-                && a.getInterruptionFilter() == b.getInterruptionFilter()
-                && Objects.equals(a.getConditionId(), b.getConditionId())
-                && Objects.equals(a.getOwner(), b.getOwner())
-                && Objects.equals(a.getZenPolicy(), b.getZenPolicy())
-                && Objects.equals(a.getConfigurationActivity(), b.getConfigurationActivity());
-    }
-
-    private AutomaticZenRule createRule(String name, int filter) {
-        return new AutomaticZenRule(name, null,
-                new ComponentName(mContext, AutomaticZenRuleActivity.class),
-                new Uri.Builder().scheme("scheme")
-                        .appendPath("path")
-                        .appendQueryParameter("fake_rule", "fake_value")
-                        .build(), null, filter, true);
-    }
-
-    private AutomaticZenRule createRule(String name) {
-        return createRule(name, INTERRUPTION_FILTER_PRIORITY);
-    }
-
-    // Creates a GetResultActivity into which one can call startActivityForResult with
-    // in order to test the outcome of an activity that returns a result code.
-    private GetResultActivity setUpGetResultActivity() {
-        final Intent intent = new Intent(mContext, GetResultActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        GetResultActivity activity = (GetResultActivity) mInstrumentation.startActivitySync(intent);
-        mInstrumentation.waitForIdleSync();
-        activity.clearResult();
-        return activity;
     }
 
     private void sendTrampolineMessage(ComponentName component, int message,
@@ -675,186 +436,6 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     public void testCanSendFullScreenIntent_modeErrored_returnsFalse() throws Exception {
         verifyCanSendFullScreenIntent(MODE_ERRORED, /*canSend=*/ false);
-    }
-
-    public void testConsolidatedNotificationPolicy() throws Exception {
-        final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        try {
-            toggleNotificationPolicyAccess(mContext.getPackageName(),
-                    InstrumentationRegistry.getInstrumentation(), true);
-
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA,
-                    0, 0));
-            // turn on manual DND
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
-            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
-
-            // no custom ZenPolicy, so consolidatedPolicy should equal the default notif policy
-            assertEquals(mNotificationManager.getConsolidatedNotificationPolicy(),
-                    mNotificationManager.getNotificationPolicy());
-
-            // turn off manual DND
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
-            assertExpectedDndState(INTERRUPTION_FILTER_ALL);
-
-            // setup custom ZenPolicy for an automatic rule
-            AutomaticZenRule rule = createRule("test_consolidated_policy",
-                    INTERRUPTION_FILTER_PRIORITY);
-            rule.setZenPolicy(new ZenPolicy.Builder()
-                    .allowReminders(true)
-                    .build());
-            String id = mNotificationManager.addAutomaticZenRule(rule);
-            mRuleIds.add(id);
-            // set condition of the automatic rule to TRUE
-            Condition condition = new Condition(rule.getConditionId(), "summary",
-                    Condition.STATE_TRUE);
-            mNotificationManager.setAutomaticZenRuleState(id, condition);
-            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
-
-            NotificationManager.Policy consolidatedPolicy =
-                    mNotificationManager.getConsolidatedNotificationPolicy();
-
-            // alarms and media are allowed from default notification policy
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS) != 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
-
-            // reminders is allowed from the automatic rule's custom ZenPolicy
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_REMINDERS) != 0);
-
-            // other sounds aren't allowed
-            assertTrue((consolidatedPolicy.priorityCategories
-                    & PRIORITY_CATEGORY_CONVERSATIONS) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) == 0);
-        } finally {
-            mNotificationManager.setInterruptionFilter(originalFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
-    }
-
-    public void testConsolidatedNotificationPolicyMultiRules() throws Exception {
-        final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        try {
-            toggleNotificationPolicyAccess(mContext.getPackageName(),
-                    InstrumentationRegistry.getInstrumentation(), true);
-
-            // default allows no sounds
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_ALARMS, 0, 0));
-
-            // setup custom ZenPolicy for two automatic rules
-            AutomaticZenRule rule1 = createRule("test_consolidated_policyq",
-                    INTERRUPTION_FILTER_PRIORITY);
-            rule1.setZenPolicy(new ZenPolicy.Builder()
-                    .allowReminders(false)
-                    .allowAlarms(false)
-                    .allowSystem(true)
-                    .build());
-            AutomaticZenRule rule2 = createRule("test_consolidated_policy2",
-                    INTERRUPTION_FILTER_PRIORITY);
-            rule2.setZenPolicy(new ZenPolicy.Builder()
-                    .allowReminders(true)
-                    .allowMedia(true)
-                    .build());
-            String id1 = mNotificationManager.addAutomaticZenRule(rule1);
-            String id2 = mNotificationManager.addAutomaticZenRule(rule2);
-            Condition onCondition1 = new Condition(rule1.getConditionId(), "summary",
-                    Condition.STATE_TRUE);
-            Condition onCondition2 = new Condition(rule2.getConditionId(), "summary",
-                    Condition.STATE_TRUE);
-            mNotificationManager.setAutomaticZenRuleState(id1, onCondition1);
-            mNotificationManager.setAutomaticZenRuleState(id2, onCondition2);
-
-            Thread.sleep(300); // wait for rules to be applied - it's done asynchronously
-
-            mRuleIds.add(id1);
-            mRuleIds.add(id2);
-            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
-
-            NotificationManager.Policy consolidatedPolicy =
-                    mNotificationManager.getConsolidatedNotificationPolicy();
-
-            // reminders aren't allowed from rule1 overriding rule2
-            // (not allowed takes precedence over allowed)
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_REMINDERS) == 0);
-
-            // alarms aren't allowed from rule1
-            // (rule's custom zenPolicy overrides default policy)
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS) == 0);
-
-            // system is allowed from rule1, media is allowed from rule2
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) != 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
-
-            // other sounds aren't allowed (from default policy)
-            assertTrue((consolidatedPolicy.priorityCategories
-                    & PRIORITY_CATEGORY_CONVERSATIONS) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) == 0);
-        } finally {
-            mNotificationManager.setInterruptionFilter(originalFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
-    }
-
-    public void testPostPCanToggleAlarmsMediaSystemTest() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-
-        NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        try {
-            if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
-                // Post-P can toggle alarms, media, system
-                // toggle on alarms, media, system:
-                mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                        PRIORITY_CATEGORY_ALARMS
-                                | PRIORITY_CATEGORY_MEDIA
-                                | PRIORITY_CATEGORY_SYSTEM, 0, 0));
-                NotificationManager.Policy policy = mNotificationManager.getNotificationPolicy();
-                assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_ALARMS) != 0);
-                assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
-                assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) != 0);
-
-                // toggle off alarms, media, system
-                mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
-                policy = mNotificationManager.getNotificationPolicy();
-                assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_ALARMS) == 0);
-                assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_MEDIA) == 0);
-                assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) == 0);
-            }
-        } finally {
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
-    }
-
-    public void testPostRCanToggleConversationsTest() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-
-        NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
-
-        try {
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    0, 0, 0, 0));
-            NotificationManager.Policy policy = mNotificationManager.getNotificationPolicy();
-            assertEquals(0, (policy.priorityCategories & PRIORITY_CATEGORY_CONVERSATIONS));
-            assertEquals(CONVERSATION_SENDERS_NONE, policy.priorityConversationSenders);
-
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_CONVERSATIONS, 0, 0, 0, CONVERSATION_SENDERS_ANYONE));
-            policy = mNotificationManager.getNotificationPolicy();
-            assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_CONVERSATIONS) != 0);
-            assertEquals(CONVERSATION_SENDERS_ANYONE, policy.priorityConversationSenders);
-
-        } finally {
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
     }
 
     public void testCreateChannelGroup() throws Exception {
@@ -1365,82 +946,6 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
-    public void testGetSuppressedVisualEffectsOff_ranking() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
-        assertNotNull(mListener);
-
-        final int notificationId = 1;
-        sendNotification(notificationId, R.drawable.black);
-        Thread.sleep(500); // wait for notification listener to receive notification
-
-        NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
-        NotificationListenerService.Ranking outRanking =
-                new NotificationListenerService.Ranking();
-
-        for (String key : rankingMap.getOrderedKeys()) {
-            if (key.contains(mListener.getPackageName())) {
-                rankingMap.getRanking(key, outRanking);
-
-                // check notification key match
-                assertEquals(0, outRanking.getSuppressedVisualEffects());
-            }
-        }
-    }
-
-    public void testGetSuppressedVisualEffects_ranking() throws Exception {
-        final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
-        NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        try {
-            toggleListenerAccess(true);
-            Thread.sleep(500); // wait for listener to be allowed
-
-            mListener = TestNotificationListener.getInstance();
-            assertNotNull(mListener);
-
-            toggleNotificationPolicyAccess(mContext.getPackageName(),
-                    InstrumentationRegistry.getInstrumentation(), true);
-            if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
-                mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0,
-                        SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_PEEK));
-            } else {
-                mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0,
-                        SUPPRESSED_EFFECT_SCREEN_ON));
-            }
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
-
-            final int notificationId = 1;
-            // update notification
-            sendNotification(notificationId, R.drawable.black);
-            Thread.sleep(500); // wait for notification listener to receive notification
-
-            NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
-            NotificationListenerService.Ranking outRanking =
-                    new NotificationListenerService.Ranking();
-
-            for (String key : rankingMap.getOrderedKeys()) {
-                if (key.contains(mListener.getPackageName())) {
-                    rankingMap.getRanking(key, outRanking);
-
-                    if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
-                        assertEquals(SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_PEEK,
-                                outRanking.getSuppressedVisualEffects());
-                    } else {
-                        assertEquals(SUPPRESSED_EFFECT_SCREEN_ON,
-                                outRanking.getSuppressedVisualEffects());
-                    }
-                }
-            }
-        } finally {
-            // reset notification policy
-            mNotificationManager.setInterruptionFilter(originalFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
-
-    }
-
     public void testKeyChannelGroupOverrideImportanceExplanation_ranking() throws Exception {
         toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -1456,7 +961,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         NotificationListenerService.Ranking outRanking =
                 new NotificationListenerService.Ranking();
 
-        StatusBarNotification sbn = findPostedNotification(notificationId, false);
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, notificationId,
+                SEARCH_TYPE.POSTED);
 
         // check that the key and channel ids are the same in the ranking as the posted notification
         for (String key : rankingMap.getOrderedKeys()) {
@@ -1495,9 +1001,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .build();
         mNotificationManager.notify(id, notification);
 
-        if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
-            fail("found unexpected notification id=" + id);
-        }
+        assertTrue(mNotificationHelper.isNotificationGone(id, SEARCH_TYPE.APP));
     }
 
     public void testCancel() throws Exception {
@@ -1510,9 +1014,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
         mNotificationManager.cancel(id);
 
-        if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
-            fail("canceled notification was still alive, id=" + id);
-        }
+        assertTrue(mNotificationHelper.isNotificationGone(id, SEARCH_TYPE.APP));
     }
 
     public void testCancelAll() throws Exception {
@@ -1531,9 +1033,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         mNotificationManager.cancelAll();
 
         for (int id = 1; id <= 3; id++) {
-            if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
-                fail("Failed to cancel notification id=" + id);
-            }
+            assertTrue(mNotificationHelper.isNotificationGone(id, SEARCH_TYPE.APP));
         }
 
     }
@@ -1552,16 +1052,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .build();
         mNotificationManager.notify(id, notification);
 
-        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
-            fail("couldn't find posted notification id=" + id);
-        }
+        assertNotNull(mNotificationHelper.findPostedNotification(null, id, SEARCH_TYPE.APP));
 
         try {
             Thread.sleep(timeout);
         } catch (InterruptedException ex) {
             // pass
         }
-        checkNotificationExistence(id, false);
+        assertTrue(mNotificationHelper.isNotificationGone(id, SEARCH_TYPE.APP));
     }
 
     public void testStyle() throws Exception {
@@ -1637,9 +1135,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .build();
         mNotificationManager.notify(id, notification);
 
-        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
-            fail("couldn't find posted notification id=" + id);
-        }
+        assertNotNull(mNotificationHelper.findPostedNotification(null, id, SEARCH_TYPE.APP));
     }
 
     public void testInboxStyle() {
@@ -1661,9 +1157,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .build();
         mNotificationManager.notify(id, notification);
 
-        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
-            fail("couldn't find posted notification id=" + id);
-        }
+        assertNotNull(mNotificationHelper.findPostedNotification(null, id, SEARCH_TYPE.APP));
     }
 
     public void testBigTextStyle() {
@@ -1687,9 +1181,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .build();
         mNotificationManager.notify(id, notification);
 
-        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
-            fail("couldn't find posted notification id=" + id);
-        }
+        assertNotNull(mNotificationHelper.findPostedNotification(null, id, SEARCH_TYPE.APP));
     }
 
     public void testBigPictureStyle() {
@@ -1716,9 +1208,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .build();
         mNotificationManager.notify(id, notification);
 
-        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
-            fail("couldn't find posted notification id=" + id);
-        }
+        assertNotNull(mNotificationHelper.findPostedNotification(null, id, SEARCH_TYPE.APP));
     }
 
     public void testAutogrouping() throws Exception {
@@ -1822,311 +1312,6 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertOnlySomeNotificationsAutogrouped(postedIds);
     }
 
-    public void testTotalSilenceOnlyMuteStreams() throws Exception {
-        final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        try {
-            toggleNotificationPolicyAccess(mContext.getPackageName(),
-                    InstrumentationRegistry.getInstrumentation(), true);
-
-            // ensure volume is not muted/0 to start test
-            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
-            // exception for presidential alert
-            //mAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 1, 0);
-            mAudioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 1, 0);
-            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, 0);
-
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
-            AutomaticZenRule rule = createRule("test_total_silence", INTERRUPTION_FILTER_NONE);
-            String id = mNotificationManager.addAutomaticZenRule(rule);
-            mRuleIds.add(id);
-            Condition condition =
-                    new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
-            mNotificationManager.setAutomaticZenRuleState(id, condition);
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
-
-            // delay for streams to get into correct mute states
-            Thread.sleep(1000);
-            assertTrue("Music (media) stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
-            assertTrue("System stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_SYSTEM));
-            // exception for presidential alert
-            //assertTrue("Alarm stream should be muted",
-            //        mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
-
-            // Test requires that the phone's default state has no channels that can bypass dnd
-            // which we can't currently guarantee (b/169267379)
-            // assertTrue("Ringer stream should be muted",
-            //        mAudioManager.isStreamMute(AudioManager.STREAM_RING));
-        } finally {
-            mNotificationManager.setInterruptionFilter(originalFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
-    }
-
-    public void testAlarmsOnlyMuteStreams() throws Exception {
-        final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        try {
-            toggleNotificationPolicyAccess(mContext.getPackageName(),
-                    InstrumentationRegistry.getInstrumentation(), true);
-
-            // ensure volume is not muted/0 to start test
-            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
-            mAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 1, 0);
-            mAudioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 1, 0);
-            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, 0);
-
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
-            AutomaticZenRule rule = createRule("test_alarms", INTERRUPTION_FILTER_ALARMS);
-            String id = mNotificationManager.addAutomaticZenRule(rule);
-            mRuleIds.add(id);
-            Condition condition =
-                    new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
-            mNotificationManager.setAutomaticZenRuleState(id, condition);
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
-
-            // delay for streams to get into correct mute states
-            Thread.sleep(1000);
-            assertFalse("Music (media) stream should not be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
-            assertTrue("System stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_SYSTEM));
-            assertFalse("Alarm stream should not be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
-
-            // Test requires that the phone's default state has no channels that can bypass dnd
-            // which we can't currently guarantee (b/169267379)
-            // assertTrue("Ringer stream should be muted",
-            //  mAudioManager.isStreamMute(AudioManager.STREAM_RING));
-        } finally {
-            mNotificationManager.setInterruptionFilter(originalFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
-    }
-
-    public void testAddAutomaticZenRule_configActivity() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-
-        AutomaticZenRule ruleToCreate = createRule("Rule");
-        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-
-        assertNotNull(id);
-        mRuleIds.add(id);
-        assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
-    }
-
-    public void testUpdateAutomaticZenRule_configActivity() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-
-        AutomaticZenRule ruleToCreate = createRule("Rule");
-        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-        ruleToCreate.setEnabled(false);
-        mNotificationManager.updateAutomaticZenRule(id, ruleToCreate);
-
-        assertNotNull(id);
-        mRuleIds.add(id);
-        assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
-    }
-
-    public void testRemoveAutomaticZenRule_configActivity() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-
-        AutomaticZenRule ruleToCreate = createRule("Rule");
-        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-
-        assertNotNull(id);
-        mRuleIds.add(id);
-        mNotificationManager.removeAutomaticZenRule(id);
-
-        assertNull(mNotificationManager.getAutomaticZenRule(id));
-        assertEquals(0, mNotificationManager.getAutomaticZenRules().size());
-    }
-
-    public void testSetAutomaticZenRuleState() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-
-        AutomaticZenRule ruleToCreate = createRule("Rule");
-        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-        mRuleIds.add(id);
-
-        // make sure DND is off
-        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
-
-        // enable DND
-        Condition condition =
-                new Condition(ruleToCreate.getConditionId(), "summary", Condition.STATE_TRUE);
-        mNotificationManager.setAutomaticZenRuleState(id, condition);
-
-        assertExpectedDndState(ruleToCreate.getInterruptionFilter());
-    }
-
-    public void testSetAutomaticZenRuleState_turnOff() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-
-        AutomaticZenRule ruleToCreate = createRule("Rule");
-        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-        mRuleIds.add(id);
-
-        // make sure DND is off
-        // make sure DND is off
-        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
-
-        // enable DND
-        Condition condition =
-                new Condition(ruleToCreate.getConditionId(), "on", Condition.STATE_TRUE);
-        mNotificationManager.setAutomaticZenRuleState(id, condition);
-
-        assertExpectedDndState(ruleToCreate.getInterruptionFilter());
-
-        // disable DND
-        condition = new Condition(ruleToCreate.getConditionId(), "off", Condition.STATE_FALSE);
-
-        mNotificationManager.setAutomaticZenRuleState(id, condition);
-
-        // make sure DND is off
-        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
-    }
-
-    public void testSetAutomaticZenRuleState_deletedRule() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-
-        AutomaticZenRule ruleToCreate = createRule("Rule");
-        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-        mRuleIds.add(id);
-
-        // make sure DND is off
-        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
-
-        // enable DND
-        Condition condition =
-                new Condition(ruleToCreate.getConditionId(), "summary", Condition.STATE_TRUE);
-        mNotificationManager.setAutomaticZenRuleState(id, condition);
-
-        assertExpectedDndState(ruleToCreate.getInterruptionFilter());
-
-        mNotificationManager.removeAutomaticZenRule(id);
-
-        // make sure DND is off
-        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
-    }
-
-    public void testSetAutomaticZenRuleState_multipleRules() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-
-        AutomaticZenRule ruleToCreate = createRule("Rule");
-        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-        mRuleIds.add(id);
-
-        AutomaticZenRule secondRuleToCreate = createRule("Rule 2");
-        secondRuleToCreate.setInterruptionFilter(INTERRUPTION_FILTER_NONE);
-        String secondId = mNotificationManager.addAutomaticZenRule(secondRuleToCreate);
-        mRuleIds.add(secondId);
-
-        // make sure DND is off
-        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
-
-        // enable DND
-        Condition condition =
-                new Condition(ruleToCreate.getConditionId(), "summary", Condition.STATE_TRUE);
-        mNotificationManager.setAutomaticZenRuleState(id, condition);
-        Condition secondCondition =
-                new Condition(secondRuleToCreate.getConditionId(), "summary", Condition.STATE_TRUE);
-        mNotificationManager.setAutomaticZenRuleState(secondId, secondCondition);
-
-        // the second rule has a 'more silent' DND filter, so the system wide DND should be
-        // using its filter
-        assertExpectedDndState(secondRuleToCreate.getInterruptionFilter());
-
-        // remove intense rule, system should fallback to other rule
-        mNotificationManager.removeAutomaticZenRule(secondId);
-        assertExpectedDndState(ruleToCreate.getInterruptionFilter());
-    }
-
-    public void testSetNotificationPolicy_P_setOldFields() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        try {
-            if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
-                NotificationManager.Policy appPolicy = new NotificationManager.Policy(0, 0, 0,
-                        SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_SCREEN_OFF);
-                mNotificationManager.setNotificationPolicy(appPolicy);
-
-                int expected = SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_SCREEN_OFF
-                        | SUPPRESSED_EFFECT_PEEK | SUPPRESSED_EFFECT_AMBIENT
-                        | SUPPRESSED_EFFECT_LIGHTS | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
-
-                assertEquals(expected,
-                        mNotificationManager.getNotificationPolicy().suppressedVisualEffects);
-            }
-        } finally {
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
-    }
-
-    public void testSetNotificationPolicy_P_setNewFields() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        try {
-            if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
-                NotificationManager.Policy appPolicy = new NotificationManager.Policy(0, 0, 0,
-                        SUPPRESSED_EFFECT_NOTIFICATION_LIST | SUPPRESSED_EFFECT_AMBIENT
-                                | SUPPRESSED_EFFECT_LIGHTS | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT);
-                mNotificationManager.setNotificationPolicy(appPolicy);
-
-                int expected = SUPPRESSED_EFFECT_NOTIFICATION_LIST | SUPPRESSED_EFFECT_SCREEN_OFF
-                        | SUPPRESSED_EFFECT_AMBIENT | SUPPRESSED_EFFECT_LIGHTS
-                        | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
-                assertEquals(expected,
-                        mNotificationManager.getNotificationPolicy().suppressedVisualEffects);
-            }
-        } finally {
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
-    }
-
-    public void testSetNotificationPolicy_P_setOldNewFields() throws Exception {
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        try {
-            if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
-
-                NotificationManager.Policy appPolicy = new NotificationManager.Policy(0, 0, 0,
-                        SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_STATUS_BAR);
-                mNotificationManager.setNotificationPolicy(appPolicy);
-
-                int expected = SUPPRESSED_EFFECT_STATUS_BAR;
-                assertEquals(expected,
-                        mNotificationManager.getNotificationPolicy().suppressedVisualEffects);
-
-                appPolicy = new NotificationManager.Policy(0, 0, 0,
-                        SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_AMBIENT
-                                | SUPPRESSED_EFFECT_LIGHTS | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT);
-                mNotificationManager.setNotificationPolicy(appPolicy);
-
-                expected = SUPPRESSED_EFFECT_SCREEN_OFF | SUPPRESSED_EFFECT_AMBIENT
-                        | SUPPRESSED_EFFECT_LIGHTS | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
-                assertEquals(expected,
-                        mNotificationManager.getNotificationPolicy().suppressedVisualEffects);
-            }
-        } finally {
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
-    }
-
     public void testPostFullScreenIntent_permission() {
         int id = 6000;
 
@@ -2140,40 +1325,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .build();
         mNotificationManager.notify(id, notification);
 
-        StatusBarNotification n = findPostedNotification(id, false);
+        StatusBarNotification n = mNotificationHelper.findPostedNotification(
+                null, id, SEARCH_TYPE.APP);
         assertNotNull(n);
         assertEquals(notification.fullScreenIntent, n.getNotification().fullScreenIntent);
-    }
-
-    public void testNotificationPolicyVisualEffectsEqual() {
-        NotificationManager.Policy policy = new NotificationManager.Policy(0, 0, 0,
-                SUPPRESSED_EFFECT_SCREEN_ON);
-        NotificationManager.Policy policy2 = new NotificationManager.Policy(0, 0, 0,
-                SUPPRESSED_EFFECT_PEEK);
-        assertTrue(policy.equals(policy2));
-        assertTrue(policy2.equals(policy));
-
-        policy = new NotificationManager.Policy(0, 0, 0,
-                SUPPRESSED_EFFECT_SCREEN_ON);
-        policy2 = new NotificationManager.Policy(0, 0, 0,
-                0);
-        assertFalse(policy.equals(policy2));
-        assertFalse(policy2.equals(policy));
-
-        policy = new NotificationManager.Policy(0, 0, 0,
-                SUPPRESSED_EFFECT_SCREEN_OFF);
-        policy2 = new NotificationManager.Policy(0, 0, 0,
-                SUPPRESSED_EFFECT_FULL_SCREEN_INTENT | SUPPRESSED_EFFECT_AMBIENT
-                        | SUPPRESSED_EFFECT_LIGHTS);
-        assertTrue(policy.equals(policy2));
-        assertTrue(policy2.equals(policy));
-
-        policy = new NotificationManager.Policy(0, 0, 0,
-                SUPPRESSED_EFFECT_SCREEN_OFF);
-        policy2 = new NotificationManager.Policy(0, 0, 0,
-                SUPPRESSED_EFFECT_LIGHTS);
-        assertFalse(policy.equals(policy2));
-        assertFalse(policy2.equals(policy));
     }
 
     public void testNotificationDelegate_grantAndPost() throws Exception {
@@ -2198,7 +1353,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 .build();
         mNotificationManager.notifyAsPackage(TEST_APP, "tag", 0, n);
 
-        assertNotNull(findPostedNotification(0, false));
+        assertNotNull(mNotificationHelper.findPostedNotification("tag", 0, SEARCH_TYPE.APP));
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
         activity.startActivityForResult(revokeIntent, REQUEST_CODE);
@@ -2226,9 +1381,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 .setSmallIcon(android.R.drawable.ic_media_play)
                 .build();
         mNotificationManager.notifyAsPackage(TEST_APP, "toBeCanceled", 10000, n);
-        assertNotNull(findPostedNotification(10000, false));
+        assertNotNull(mNotificationHelper.findPostedNotification("toBeCanceled", 10000,
+                SEARCH_TYPE.APP));
         mNotificationManager.cancelAsPackage(TEST_APP, "toBeCanceled", 10000);
-        assertNotificationCancelled(10000, false);
+        assertTrue(mNotificationHelper.isNotificationGone(10000, SEARCH_TYPE.APP));
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
         activity.startActivityForResult(revokeIntent, REQUEST_CODE);
@@ -2256,7 +1412,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         activity.startActivityForResult(activityIntent, REQUEST_CODE);
         assertEquals(RESULT_OK, activity.getResult().resultCode);
 
-        assertNotNull(findPostedNotification(9, true));
+        assertNotNull(mNotificationHelper.findPostedNotification(null, 9, SEARCH_TYPE.LISTENER));
 
         try {
             mNotificationManager.cancelAsPackage(TEST_APP, null, 9);
@@ -2266,7 +1422,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
 
         // double check that the notification does still exist
-        assertNotNull(findPostedNotification(9, true));
+        assertNotNull(mNotificationHelper.findPostedNotification(null, 9, SEARCH_TYPE.LISTENER));
 
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
@@ -2390,7 +1546,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .build();
         mNotificationManager.notify(id, notification);
 
-        StatusBarNotification n = findPostedNotification(id, false);
+        StatusBarNotification n = mNotificationHelper.findPostedNotification(
+                null, id, SEARCH_TYPE.APP);
         assertNotNull(n);
     }
 
@@ -2406,427 +1563,6 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         Thread.sleep(500);
         // no exception this time
         mNotificationManager.shouldHideSilentStatusBarIcons();
-    }
-
-    public void testMatchesCallFilter_noPermissions() {
-        // make sure we definitely don't have contacts access
-        boolean hadReadPerm = hasReadContactsPermission(TEST_APP);
-        try {
-            toggleReadContactsPermission(TEST_APP, false);
-
-            // start an activity that has no permissions, which will run matchesCallFilter on
-            // a meaningless uri. The result code indicates whether or not the method call was
-            // permitted.
-            final Intent mcfIntent = new Intent();
-            mcfIntent.setPackage(TEST_APP);
-            mcfIntent.setClassName(TEST_APP, MATCHES_CALL_FILTER_CLASS);
-            GetResultActivity grActivity = setUpGetResultActivity();
-            grActivity.startActivityForResult(mcfIntent, REQUEST_CODE);
-            UiDevice.getInstance(mInstrumentation).waitForIdle();
-
-            // with no permissions, this call should not have been permitted
-            GetResultActivity.Result result = grActivity.getResult();
-            assertEquals(REQUEST_CODE, result.requestCode);
-            assertEquals(MATCHES_CALL_FILTER_NOT_PERMITTED, result.resultCode);
-            grActivity.finishActivity(REQUEST_CODE);
-        } finally {
-            toggleReadContactsPermission(TEST_APP, hadReadPerm);
-        }
-    }
-
-    public void testMatchesCallFilter_listenerPermissionOnly() throws Exception {
-        boolean hadReadPerm = hasReadContactsPermission(TEST_APP);
-        // minimal listener service so that it can be given listener permissions
-        final ComponentName listenerComponent =
-                new ComponentName(TEST_APP, MINIMAL_LISTENER_CLASS);
-        try {
-            // make surethat we don't for some reason have contacts access
-            toggleReadContactsPermission(TEST_APP, false);
-
-            // grant the notification app package notification listener access;
-            // give it time to succeed
-            toggleExternalListenerAccess(listenerComponent, true);
-            Thread.sleep(500);
-
-            // set up & run intent
-            final Intent mcfIntent = new Intent();
-            mcfIntent.setPackage(TEST_APP);
-            mcfIntent.setClassName(TEST_APP, MATCHES_CALL_FILTER_CLASS);
-            GetResultActivity grActivity = setUpGetResultActivity();
-            grActivity.startActivityForResult(mcfIntent, REQUEST_CODE);
-            UiDevice.getInstance(mInstrumentation).waitForIdle();
-
-            // with just listener permissions, this call should have been permitted
-            GetResultActivity.Result result = grActivity.getResult();
-            assertEquals(REQUEST_CODE, result.requestCode);
-            assertEquals(MATCHES_CALL_FILTER_PERMITTED, result.resultCode);
-            grActivity.finishActivity(REQUEST_CODE);
-        } finally {
-            // clean up listener access, reset read contacts access
-            toggleExternalListenerAccess(listenerComponent, false);
-            toggleReadContactsPermission(TEST_APP, hadReadPerm);
-        }
-    }
-
-    public void testMatchesCallFilter_contactsPermissionOnly() throws Exception {
-        // grant the notification app package contacts read access
-        boolean hadReadPerm = hasReadContactsPermission(TEST_APP);
-        try {
-            toggleReadContactsPermission(TEST_APP, true);
-
-            // set up & run intent
-            final Intent mcfIntent = new Intent();
-            mcfIntent.setPackage(TEST_APP);
-            mcfIntent.setClassName(TEST_APP, MATCHES_CALL_FILTER_CLASS);
-            GetResultActivity grActivity = setUpGetResultActivity();
-            grActivity.startActivityForResult(mcfIntent, REQUEST_CODE);
-            UiDevice.getInstance(mInstrumentation).waitForIdle();
-
-            // with just contacts read permissions, this call should have been permitted
-            GetResultActivity.Result result = grActivity.getResult();
-            assertEquals(REQUEST_CODE, result.requestCode);
-            assertEquals(MATCHES_CALL_FILTER_PERMITTED, result.resultCode);
-            grActivity.finishActivity(REQUEST_CODE);
-        } finally {
-            // clean up contacts access
-            toggleReadContactsPermission(TEST_APP, hadReadPerm);
-        }
-    }
-
-    public void testMatchesCallFilter_zenOff() throws Exception {
-        // zen mode is not on so nothing is filtered; matchesCallFilter should always pass
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
-        try {
-            // allowed from anyone: nothing is filtered, and make sure change went through
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
-            assertExpectedDndState(INTERRUPTION_FILTER_ALL);
-
-            // create a phone URI from which to receive a call
-            Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                    Uri.encode("+16175551212"));
-            assertTrue(mNotificationManager.matchesCallFilter(phoneUri));
-        } finally {
-            mNotificationManager.setInterruptionFilter(origFilter);
-        }
-    }
-
-    public void testMatchesCallFilter_noCallInterruptions() throws Exception {
-        // when no call interruptions are allowed at all, or only alarms, matchesCallFilter
-        // should always fail
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        try {
-            // create a phone URI from which to receive a call
-            Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                    Uri.encode("+16175551212"));
-
-            // no interruptions allowed at all
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_NONE);
-            assertExpectedDndState(INTERRUPTION_FILTER_NONE);
-            assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
-
-            // only alarms
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALARMS);
-            assertExpectedDndState(INTERRUPTION_FILTER_ALARMS);
-            assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
-
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_MESSAGES, 0, 0));
-            // turn on manual DND
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
-            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
-            assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
-        } finally {
-            mNotificationManager.setInterruptionFilter(origFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
-    }
-
-    public void testMatchesCallFilter_someCallers() throws Exception {
-        // zen mode is active; check various configurations where some calls, but not all calls,
-        // are allowed
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-
-        // for storing lookup URIs for deleting the contacts afterwards
-        Uri aliceUri = null;
-        Uri bobUri = null;
-        try {
-            // set up phone numbers: one starred, one regular, one unknown number
-            // starred contact from whom to receive a call
-            insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
-            aliceUri = lookupContact(ALICE_PHONE);
-            Uri alicePhoneUri = makePhoneUri(ALICE_PHONE);
-
-            // non-starred contact from whom to also receive a call
-            insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
-            bobUri = lookupContact(BOB_PHONE);
-            Uri bobPhoneUri = makePhoneUri(BOB_PHONE);
-
-            // non-contact phone URI
-            Uri phoneUri = makePhoneUri("+16175555656");
-
-            // set up: any contacts are allowed to call.
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_CALLS,
-                    NotificationManager.Policy.PRIORITY_SENDERS_CONTACTS, 0));
-
-            // turn on manual DND
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
-            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
-
-            // in this case Alice and Bob should get through but not the unknown number.
-            assertTrue(mNotificationManager.matchesCallFilter(alicePhoneUri));
-            assertTrue(mNotificationManager.matchesCallFilter(bobPhoneUri));
-            assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
-
-            // set up: only starred contacts are allowed to call.
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_CALLS,
-                    NotificationManager.Policy.PRIORITY_SENDERS_STARRED, 0));
-            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
-
-            // now only Alice should be allowed to get through
-            assertTrue(mNotificationManager.matchesCallFilter(alicePhoneUri));
-            assertFalse(mNotificationManager.matchesCallFilter(bobPhoneUri));
-            assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
-        } finally {
-            mNotificationManager.setInterruptionFilter(origFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-            if (aliceUri != null) {
-                // delete the contact
-                deleteSingleContact(aliceUri);
-            }
-            if (bobUri != null) {
-                deleteSingleContact(bobUri);
-            }
-        }
-    }
-
-    public void testMatchesCallFilter_repeatCallers() throws Exception {
-        // if repeat callers are allowed, an unknown number calling twice should go through
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        long startTime = System.currentTimeMillis();
-        try {
-            // create phone URIs from which to receive a call; one US, one non-US,
-            // both fully specified
-            Uri phoneUri = makePhoneUri("+16175551212");
-            Uri phoneUri2 = makePhoneUri("+81 75 350 6006");
-
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_REPEAT_CALLERS, 0, 0));
-            // turn on manual DND
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
-            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
-
-            // not repeat callers yet, so it shouldn't be allowed
-            assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
-            assertFalse(mNotificationManager.matchesCallFilter(phoneUri2));
-
-            // register a call from number 1, then cancel the notification, which is when
-            // a call is actually recorded.
-            sendNotification(1, null, R.drawable.blue, true, phoneUri);
-            cancelAndPoll(1);
-
-            // now this number should count as a repeat caller
-            assertTrue(mNotificationManager.matchesCallFilter(phoneUri));
-            assertFalse(mNotificationManager.matchesCallFilter(phoneUri2));
-
-            // also, any other variants of this phone number should also count as a repeat caller
-            Uri[] variants = { makePhoneUri(Uri.encode("+1-617-555-1212")),
-                    makePhoneUri("+1 (617) 555-1212") };
-            for (int i = 0; i < variants.length; i++) {
-                assertTrue("phone variant " + variants[i] + " should still match",
-                        mNotificationManager.matchesCallFilter(variants[i]));
-            }
-
-            // register call 2
-            sendNotification(2, null, R.drawable.blue, true, phoneUri2);
-            cancelAndPoll(2);
-
-            // now this should be a repeat caller
-            assertTrue(mNotificationManager.matchesCallFilter(phoneUri2));
-
-            Uri[] variants2 = { makePhoneUri(Uri.encode("+81 75 350 6006")),
-                    makePhoneUri("+81753506006")};
-            for (int j = 0; j < variants2.length; j++) {
-                assertTrue("phone variant " + variants2[j] + " should still match",
-                        mNotificationManager.matchesCallFilter(variants2[j]));
-            }
-        } finally {
-            mNotificationManager.setInterruptionFilter(origFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-
-            // make sure we clean up the recent call, otherwise future runs of this will fail
-            // and we'll have a fake call still kicking around somewhere.
-            SystemUtil.runWithShellPermissionIdentity(() ->
-                    mNotificationManager.cleanUpCallersAfter(startTime));
-        }
-    }
-
-    public void testMatchesCallFilter_repeatCallers_fromContact() throws Exception {
-        // set up such that only repeat callers (and not any individuals) are allowed; make sure
-        // that a call registered with a contact's lookup URI will return the correct info
-        // when matchesCallFilter is called with their phone number
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        Uri aliceUri = null;
-        long startTime = System.currentTimeMillis();
-        try {
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_REPEAT_CALLERS, 0, 0));
-            // turn on manual DND
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
-            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
-
-            insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, false);
-            aliceUri = lookupContact(ALICE_PHONE);
-            Uri alicePhoneUri = makePhoneUri(ALICE_PHONE);
-
-            // no one has called; matchesCallFilter should return false for both URIs
-            assertFalse(mNotificationManager.matchesCallFilter(aliceUri));
-            assertFalse(mNotificationManager.matchesCallFilter(alicePhoneUri));
-
-            assertTrue(aliceUri.toString()
-                    .startsWith(ContactsContract.Contacts.CONTENT_LOOKUP_URI.toString()));
-
-            // register a call from Alice via the contact lookup URI, then cancel so the call is
-            // recorded accordingly.
-            sendNotification(1, null, R.drawable.blue, true, aliceUri);
-            // wait for contact lookup of number to finish; this can take a while because it runs
-            // in the background, so give it a fair bit of time
-            Thread.sleep(3000);
-            cancelAndPoll(1);
-
-            // now a phone call from Alice's phone number should match the repeat callers list
-            assertTrue(mNotificationManager.matchesCallFilter(alicePhoneUri));
-        } finally {
-            mNotificationManager.setInterruptionFilter(origFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-            if (aliceUri != null) {
-                // delete the contact
-                deleteSingleContact(aliceUri);
-            }
-
-            // clean up the recorded calls
-            SystemUtil.runWithShellPermissionIdentity(() ->
-                    mNotificationManager.cleanUpCallersAfter(startTime));
-        }
-    }
-
-    public void testRepeatCallers_repeatCallNotIntercepted_contactAfterPhone() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-        mListener = TestNotificationListener.getInstance();
-        assertNotNull(mListener);
-
-        // if a call is recorded with just phone number info (not a contact's uri), which may
-        // happen when the same contact calls across multiple apps (or if the contact uri provided
-        // is otherwise inconsistent), check for the contact's phone number
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        Uri aliceUri = null;
-        long startTime = System.currentTimeMillis();
-        try {
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_REPEAT_CALLERS, 0, 0));
-            // turn on manual DND
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
-            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
-
-            insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, false);
-            aliceUri = lookupContact(ALICE_PHONE);
-            Uri alicePhoneUri = makePhoneUri(ALICE_PHONE);
-
-            // no one has called; matchesCallFilter should return false for both URIs
-            assertFalse(mNotificationManager.matchesCallFilter(aliceUri));
-            assertFalse(mNotificationManager.matchesCallFilter(alicePhoneUri));
-
-            // register a call from Alice via just the phone number
-            sendNotification(1, null, R.drawable.blue, true, alicePhoneUri);
-            Thread.sleep(1000); // give the listener some time to receive info
-
-            // check that the first notification is intercepted
-            StatusBarNotification sbn = findPostedNotification(1, false);
-            assertNotNull(sbn);
-            assertTrue(mListener.mIntercepted.containsKey(sbn.getKey()));
-            assertTrue(mListener.mIntercepted.get(sbn.getKey()));  // should be intercepted
-
-            // cancel first notification
-            cancelAndPoll(1);
-
-            // now send a call with only Alice's contact Uri as the info
-            // Note that this is a test of the repeat caller check, not matchesCallFilter itself
-            sendNotification(2, null, R.drawable.blue, true, aliceUri);
-            // wait for contact lookup, which may take a while
-            Thread.sleep(3000);
-
-            // now check that the second notification is not intercepted
-            StatusBarNotification sbn2 = findPostedNotification(2, true);
-            assertTrue(mListener.mIntercepted.containsKey(sbn2.getKey()));
-            assertFalse(mListener.mIntercepted.get(sbn2.getKey()));  // should not be intercepted
-
-            // cancel second notification
-            cancelAndPoll(2);
-        } finally {
-            mNotificationManager.setInterruptionFilter(origFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-            if (aliceUri != null) {
-                // delete the contact
-                deleteSingleContact(aliceUri);
-            }
-
-            // clean up the recorded calls
-            SystemUtil.runWithShellPermissionIdentity(() ->
-                    mNotificationManager.cleanUpCallersAfter(startTime));
-        }
-    }
-
-    public void testMatchesCallFilter_allCallers() throws Exception {
-        // allow all callers
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
-        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
-        Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        Uri aliceUri = null;  // for deletion after the test is done
-        try {
-            NotificationManager.Policy currPolicy = mNotificationManager.getNotificationPolicy();
-            NotificationManager.Policy newPolicy = new NotificationManager.Policy(
-                    NotificationManager.Policy.PRIORITY_CATEGORY_CALLS
-                            | PRIORITY_CATEGORY_REPEAT_CALLERS,
-                    NotificationManager.Policy.PRIORITY_SENDERS_ANY,
-                    currPolicy.priorityMessageSenders,
-                    currPolicy.suppressedVisualEffects);
-            mNotificationManager.setNotificationPolicy(newPolicy);
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
-            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
-
-            insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, false);
-            aliceUri = lookupContact(ALICE_PHONE);
-
-            Uri alicePhoneUri = makePhoneUri(ALICE_PHONE);
-            assertTrue(mNotificationManager.matchesCallFilter(alicePhoneUri));
-        } finally {
-            mNotificationManager.setInterruptionFilter(origFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-            if (aliceUri != null) {
-                // delete the contact
-                deleteSingleContact(aliceUri);
-            }
-        }
     }
 
     /* Confirm that the optional methods of TestNotificationListener still exist and
@@ -2877,7 +1613,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             performNotificationProviderAction("send-7");
 
             assertEquals(background7Uri, getNotificationBackgroundImageUri(7));
-            assertNotificationCancelled(8, true);
+            assertTrue(mNotificationHelper.isNotificationGone(8, SEARCH_TYPE.LISTENER));
             assertAccessible(background7Uri);
             assertInaccessible(background8Uri);
 
@@ -2892,7 +1628,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             // Cancel #7
             performNotificationProviderAction("cancel-7");
 
-            assertNotificationCancelled(7, true);
+            assertTrue(mNotificationHelper.isNotificationGone(7, SEARCH_TYPE.LISTENER));
             assertEquals(background8Uri, getNotificationBackgroundImageUri(8));
             assertInaccessible(background7Uri);
             assertAccessible(background8Uri);
@@ -2900,8 +1636,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             // Cancel #8
             performNotificationProviderAction("cancel-8");
 
-            assertNotificationCancelled(7, true);
-            assertNotificationCancelled(8, true);
+            assertTrue(mNotificationHelper.isNotificationGone(7, SEARCH_TYPE.LISTENER));
+            assertTrue(mNotificationHelper.isNotificationGone(8, SEARCH_TYPE.LISTENER));
             assertInaccessible(background7Uri);
             assertInaccessible(background8Uri);
 
@@ -3140,7 +1876,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     @NonNull
     private Uri getNotificationBackgroundImageUri(int notificationId) {
-        StatusBarNotification sbn = findPostedNotification(notificationId, true);
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, notificationId,
+                SEARCH_TYPE.LISTENER);
         assertNotNull(sbn);
         String imageUriString = sbn.getNotification().extras
                 .getString(Notification.EXTRA_BACKGROUND_IMAGE_URI);
@@ -3169,8 +1906,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         sendNotification(notificationId2, R.drawable.black);
         Thread.sleep(500); // wait for notification listener to receive notification
 
-        StatusBarNotification sbn1 = findPostedNotification(notificationId1, false);
-        StatusBarNotification sbn2 = findPostedNotification(notificationId2, false);
+        StatusBarNotification sbn1 = mNotificationHelper.findPostedNotification(
+                null, notificationId1, SEARCH_TYPE.LISTENER);
+        StatusBarNotification sbn2 = mNotificationHelper.findPostedNotification(
+                null, notificationId2, SEARCH_TYPE.LISTENER);
         mListener.setNotificationsShown(new String[]{sbn1.getKey()});
 
         toggleListenerAccess(false);
@@ -3244,8 +1983,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         sendNotification(notificationId2, R.drawable.black);
         Thread.sleep(500); // wait for notification listener to receive notification
 
-        StatusBarNotification sbn1 = findPostedNotification(notificationId1, false);
-        StatusBarNotification sbn2 = findPostedNotification(notificationId2, false);
+        StatusBarNotification sbn1 = mNotificationHelper.findPostedNotification(
+                null, notificationId1, SEARCH_TYPE.LISTENER);
+        StatusBarNotification sbn2 = mNotificationHelper.findPostedNotification(
+                null, notificationId2, SEARCH_TYPE.LISTENER);
         StatusBarNotification[] notifs =
                 mListener.getActiveNotifications(new String[]{sbn2.getKey(), sbn1.getKey()});
         assertEquals(sbn2.getKey(), notifs[0].getKey());
@@ -3282,20 +2023,17 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         sendNotification(notificationId, R.drawable.black);
         Thread.sleep(500); // wait for notification listener to receive notification
 
-        StatusBarNotification sbn = findPostedNotification(notificationId, false);
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, notificationId,
+                SEARCH_TYPE.LISTENER);
 
         mListener.cancelNotification(sbn.getPackageName(), sbn.getTag(), sbn.getId());
         if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.LOLLIPOP) {
-            if (!checkNotificationExistence(notificationId, /*shouldExist=*/ true)) {
-                fail("Notification shouldn't have been cancelled. "
-                        + "cancelNotification(String, String, int) shouldn't cancel notif for L+");
-            }
+            assertNotNull(mNotificationHelper.findPostedNotification(null, notificationId,
+                    SEARCH_TYPE.LISTENER));
         } else {
             // Tested in LegacyNotificationManager20Test
-            if (!checkNotificationExistence(notificationId, /*shouldExist=*/ false)) {
-                fail("Notification should have been cancelled for targetSdk below L.  targetSdk="
-                        + mContext.getApplicationInfo().targetSdkVersion);
-            }
+            assertTrue(mNotificationHelper.isNotificationGone(
+                    notificationId, SEARCH_TYPE.LISTENER));
         }
 
         mListener.cancelNotifications(new String[]{sbn.getKey()});
@@ -3316,7 +2054,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         sendNotification(notificationId, R.drawable.black);
         Thread.sleep(500); // wait for notification listener to receive notification
 
-        StatusBarNotification sbn = findPostedNotification(notificationId, false);
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, notificationId,
+                SEARCH_TYPE.APP);
 
         mAssistant.cancelNotifications(new String[]{sbn.getKey()});
         int gotReason = getAssistantCancellationReason(sbn.getKey());
@@ -3414,9 +2153,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         createDynamicShortcut();
         mNotificationManager.notify(177, getConversationNotification().build());
 
-        if (!checkNotificationExistence(177, /*shouldExist=*/ true)) {
-            fail("couldn't find posted notification id=" + 177);
-        }
+        assertNotNull(mNotificationHelper.findPostedNotification(null, 177, SEARCH_TYPE.LISTENER));
         Thread.sleep(500); // wait for notification listener to receive notification
         assertEquals(1, mListener.mPosted.size());
 
@@ -3473,9 +2210,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         mNotificationManager.notify(177, getConversationNotification().build());
 
-        if (!checkNotificationExistence(177, /*shouldExist=*/ true)) {
-            fail("couldn't find posted notification id=" + 177);
-        }
+        assertNotNull(mNotificationHelper.findPostedNotification(null, 177, SEARCH_TYPE.LISTENER));
         Thread.sleep(500); // wait for notification listener to receive notification
         assertEquals(1, mListener.mPosted.size());
 
@@ -3522,7 +2257,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_BROADCAST_NOTIFICATION, notificationId,
                 callback);
-        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
+                null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
         statusBarNotification.getNotification().contentIntent.send();
 
@@ -3542,7 +2278,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_SERVICE_NOTIFICATION, notificationId,
                 callback);
-        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
+                null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
         statusBarNotification.getNotification().contentIntent.send();
 
@@ -3562,7 +2299,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE_API_30, MESSAGE_BROADCAST_NOTIFICATION,
                 notificationId, callback);
-        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
+                null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
         statusBarNotification.getNotification().contentIntent.send();
 
@@ -3582,7 +2320,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE_API_30, MESSAGE_SERVICE_NOTIFICATION,
                 notificationId, callback);
-        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
+                null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
         statusBarNotification.getNotification().contentIntent.send();
 
@@ -3604,7 +2343,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_BROADCAST_NOTIFICATION, notificationId,
                 callback);
-        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
+                null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
         statusBarNotification.getNotification().contentIntent.send();
 
@@ -3626,7 +2366,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE_API_32, MESSAGE_BROADCAST_NOTIFICATION,
                 notificationId, callback);
-        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
+                null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
         statusBarNotification.getNotification().contentIntent.send();
 
@@ -3648,7 +2389,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_SERVICE_NOTIFICATION, notificationId,
                 callback);
-        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
+                null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
         statusBarNotification.getNotification().contentIntent.send();
 
@@ -3670,7 +2412,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE_API_32, MESSAGE_SERVICE_NOTIFICATION,
                 notificationId, callback);
-        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
+                null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
         statusBarNotification.getNotification().contentIntent.send();
 
@@ -3747,7 +2490,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .build();
         mNotificationManager.notify(id, notification);
 
-        StatusBarNotification sbn = findPostedNotification(id, false);
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, id,
+                SEARCH_TYPE.APP);
         assertNotNull(sbn);
 
         assertFalse(sbn.getNotification().extras
@@ -3774,7 +2518,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             mNotificationManager.notify(id, notification);
         }, android.Manifest.permission.MEDIA_CONTENT_CONTROL);
 
-        StatusBarNotification sbn = findPostedNotification(id, false);
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(
+                null, id, SEARCH_TYPE.APP);
         assertNotNull(sbn);
         assertEquals(deviceName, sbn.getNotification().extras
                 .getString(Notification.EXTRA_MEDIA_REMOTE_DEVICE));
@@ -3800,8 +2545,68 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .build();
         mNotificationManager.notify(id, notification);
 
-        StatusBarNotification sbn = findPostedNotification(id, false);
-        assertNull(sbn);
+        assertTrue(mNotificationHelper.isNotificationGone(id, SEARCH_TYPE.APP));
+    }
+
+    public void testIsAmbient() throws Exception {
+        toggleListenerAccess(true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        NotificationChannel lowChannel = new NotificationChannel(
+                "testIsAmbientLOW", "testIsAmbientLOW", IMPORTANCE_LOW);
+        NotificationChannel minChannel = new NotificationChannel(
+                "testIsAmbientMIN", "testIsAmbientMIN", IMPORTANCE_MIN);
+        mNotificationManager.createNotificationChannel(lowChannel);
+        mNotificationManager.createNotificationChannel(minChannel);
+
+        final Notification lowN =
+                new Notification.Builder(mContext, lowChannel.getId())
+                        .setSmallIcon(R.drawable.black)
+                        .build();
+        final Notification minN =
+                new Notification.Builder(mContext, minChannel.getId())
+                        .setSmallIcon(R.drawable.black)
+                        .build();
+        mNotificationManager.notify("lowN", 1, lowN);
+        mNotificationManager.notify("minN", 1, minN);
+
+        StatusBarNotification lowSbn = mNotificationHelper.findPostedNotification("lowN", 1,
+                SEARCH_TYPE.POSTED);
+        StatusBarNotification minSbn = mNotificationHelper.findPostedNotification("minN", 1,
+                SEARCH_TYPE.POSTED);
+
+        NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
+        NotificationListenerService.Ranking outRanking = new NotificationListenerService.Ranking();
+
+        rankingMap.getRanking(lowSbn.getKey(), outRanking);
+        assertFalse(outRanking.isAmbient());
+
+        rankingMap.getRanking(minSbn.getKey(), outRanking);
+        assertEquals(outRanking.getKey(), IMPORTANCE_MIN, outRanking.getChannel().getImportance());
+        assertTrue(outRanking.isAmbient());
+    }
+
+    public void testFlagForegroundServiceNeedsRealFgs() throws Exception {
+        toggleListenerAccess(true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        final Notification n =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setFlag(FLAG_FOREGROUND_SERVICE, true)
+                        .build();
+        mNotificationManager.notify("testFlagForegroundServiceNeedsRealFgs", 1, n);
+
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(
+                "testFlagForegroundServiceNeedsRealFgs", 1, SEARCH_TYPE.POSTED);
+
+        assertEquals(0, (sbn.getNotification().flags & FLAG_FOREGROUND_SERVICE));
     }
 
     private static class EventCallback extends Handler {

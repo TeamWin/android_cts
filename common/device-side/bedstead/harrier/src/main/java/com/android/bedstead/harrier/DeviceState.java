@@ -25,6 +25,9 @@ import static com.android.bedstead.harrier.AnnotationExecutorUtil.failOrSkip;
 import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
 import static com.android.bedstead.harrier.annotations.EnsureHasAccount.DEFAULT_ACCOUNT_KEY;
 import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DEFAULT_TEST_APP_KEY;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
@@ -129,6 +132,7 @@ import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.flags.Flags;
+import com.android.bedstead.nene.logcat.SystemServerException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
@@ -199,7 +203,6 @@ import java.util.stream.Collectors;
  */
 public final class DeviceState extends HarrierRule {
     private static final ComponentName REMOTE_DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
-
     private static final String SWITCHED_TO_USER = "switchedToUser";
     private static final String SWITCHED_TO_PARENT_USER = "switchedToParentUser";
     public static final String INSTALL_INSTRUMENTED_APP = "installInstrumentedApp";
@@ -311,6 +314,15 @@ public final class DeviceState extends HarrierRule {
                 try {
                     Throwable t = future.get(MAX_TEST_DURATION.getSeconds(), TimeUnit.SECONDS);
                     if (t != null) {
+                        if (t.getStackTrace().length > 0) {
+                            if (t.getStackTrace()[0].getMethodName().equals("createExceptionOrNull")) {
+                                SystemServerException s = TestApis.logcat().findSystemServerException(t);
+                                if (s != null) {
+                                    throw s;
+                                }
+                            }
+                        }
+
                         throw t;
                     }
                 } catch (TimeoutException e) {
@@ -348,6 +360,14 @@ public final class DeviceState extends HarrierRule {
             mMinSdkVersionCurrentTest = mMinSdkVersion;
             List<Annotation> annotations = getAnnotations(description);
             applyAnnotations(annotations, /* isTest= */ true);
+            String coexistenceOption = TestApis.instrumentation().arguments().getString("COEXISTENCE", "?");
+            if (coexistenceOption.equals("true")) {
+                ensureFeatureFlagEnabled(NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
+                ensureFeatureFlagEnabled(NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
+            } else if (coexistenceOption.equals("false")) {
+                ensureFeatureFlagNotEnabled(NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
+                ensureFeatureFlagEnabled(NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
+            }
 
             Log.d(LOG_TAG, "Finished preparing state for test " + testName);
 

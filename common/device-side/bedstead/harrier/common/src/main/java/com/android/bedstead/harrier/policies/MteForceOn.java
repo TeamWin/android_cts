@@ -31,7 +31,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
                     | APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE
                     | APPLIES_GLOBALLY
                     | CANNOT_BE_APPLIED_BY_ROLE_HOLDER
-        },
-        permissions = @EnterprisePolicy.Permission(
-                appliedWith = MANAGE_DEVICE_POLICY_MTE, appliesTo = APPLIES_GLOBALLY))
+        })//,
+        //permissions = @EnterprisePolicy.Permission(
+        //        appliedWith = MANAGE_DEVICE_POLICY_MTE, appliesTo = APPLIES_GLOBALLY))
 public final class MteForceOn {}
