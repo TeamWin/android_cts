@@ -23,6 +23,7 @@ import static android.app.Activity.RESULT_OK;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_DEFAULT;
 import static android.app.AppOpsManager.MODE_ERRORED;
+import static android.app.Notification.FLAG_FOREGROUND_SERVICE;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
 import static android.app.NotificationManager.IMPORTANCE_LOW;
@@ -2586,6 +2587,26 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         rankingMap.getRanking(minSbn.getKey(), outRanking);
         assertEquals(outRanking.getKey(), IMPORTANCE_MIN, outRanking.getChannel().getImportance());
         assertTrue(outRanking.isAmbient());
+    }
+
+    public void testFlagForegroundServiceNeedsRealFgs() throws Exception {
+        toggleListenerAccess(true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        final Notification n =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setFlag(FLAG_FOREGROUND_SERVICE, true)
+                        .build();
+        mNotificationManager.notify("testFlagForegroundServiceNeedsRealFgs", 1, n);
+
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(
+                "testFlagForegroundServiceNeedsRealFgs", 1, SEARCH_TYPE.POSTED);
+
+        assertEquals(0, (sbn.getNotification().flags & FLAG_FOREGROUND_SERVICE));
     }
 
     private static class EventCallback extends Handler {
