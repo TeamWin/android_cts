@@ -21,6 +21,7 @@ import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 import android.os.Bundle;
 import android.os.Looper;
 import android.service.voice.AlwaysOnHotwordDetector;
+import android.service.voice.DetectorFailure;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
 import android.service.voice.VisualQueryDetector;
@@ -148,7 +149,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
         }
 
         @Override
-        public void onError() {
+        public void onFailure(@NonNull DetectorFailure detectorFailure) {
             //No-op
         }
     };
