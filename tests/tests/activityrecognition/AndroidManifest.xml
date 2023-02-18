@@ -39,9 +39,6 @@
         android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.activityrecognition.cts"
         android:label="CTS activity recognition tests">
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>

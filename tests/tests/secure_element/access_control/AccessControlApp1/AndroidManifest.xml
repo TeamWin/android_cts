@@ -26,8 +26,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:label="CTS tests for Open Mobile API"
                      android:targetPackage="android.omapi.accesscontrol1.cts">
-        <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
 </manifest>

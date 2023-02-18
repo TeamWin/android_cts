@@ -29,7 +29,5 @@
   <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                    android:targetPackage="android.security.net.config.cts.CtsNetSecConfigPrePCleartextTrafficTestCases"
                    android:label="">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>

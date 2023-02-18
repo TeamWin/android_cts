@@ -28,7 +28,5 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
             android:targetPackage="android.media.mediaparser.cts"
             android:label="Tests for MediaParser.">
-        <meta-data android:name="listener"
-                android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>

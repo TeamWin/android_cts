@@ -27,8 +27,6 @@
   <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                    android:targetPackage="android.admin.app"
                    android:label="Tests for the admin APIs.">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>

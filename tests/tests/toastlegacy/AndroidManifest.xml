@@ -27,8 +27,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.widget.toast.legacy.cts"
         android:label="CTS tests for legacy toast windows">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>

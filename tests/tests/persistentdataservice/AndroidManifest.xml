@@ -25,8 +25,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.persistentdata.cts"
                      android:label="CTS tests of PersistentDataBlockManager">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
     <uses-sdk android:minSdkVersion="15" android:targetSdkVersion="17"></uses-sdk>

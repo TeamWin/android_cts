@@ -35,7 +35,5 @@
     </application>
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.content.cts.nonexportedcomponentstest">
-        <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>
