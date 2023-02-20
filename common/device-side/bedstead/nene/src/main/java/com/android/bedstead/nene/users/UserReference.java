@@ -208,20 +208,19 @@ public final class UserReference implements AutoCloseable {
         try {
             // Expects no output on success or failure - stderr output on failure
             ShellCommand.builder("am stop-user")
+                    .addOperand("-w") // Wait for stop-user to complete
+                    .withTimeout(Duration.ofMinutes(1))
                     .addOperand("-f") // Force stop
                     .addOperand(mId)
                     .allowEmptyOutput(true)
                     .validate(String::isEmpty)
                     .execute();
-
-            Poll.forValue("User running", this::isRunning)
-                    .toBeEqualTo(false)
-                    // TODO(b/203630556): Replace stopping with something faster
-                    .timeout(Duration.ofMinutes(10))
-                    .errorOnFail()
-                    .await();
         } catch (AdbException e) {
             throw new NeneException("Could not stop user " + this, e);
+        }
+        if (isRunning()) {
+            // This should never happen
+            throw new NeneException("Failed to stop user " + this);
         }
 
         return this;
