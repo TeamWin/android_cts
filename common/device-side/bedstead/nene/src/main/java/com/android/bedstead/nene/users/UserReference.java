@@ -149,18 +149,17 @@ public final class UserReference implements AutoCloseable {
         try {
             // Expected success string is "Success: removed user"
             ShellCommand.builder("pm remove-user")
+                    .addOperand("-w") // Wait for remove-user to complete
+                    .withTimeout(Duration.ofMinutes(1))
                     .addOperand(mId)
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
-
-            Poll.forValue("User exists", this::exists)
-                    .toBeEqualTo(false)
-                    // TODO(b/203630556): Reduce timeout once we have a faster way of removing users
-                    .timeout(Duration.ofMinutes(1))
-                    .errorOnFail()
-                    .await();
         } catch (AdbException e) {
             throw new NeneException("Could not remove user " + this, e);
+        }
+        if (exists()) {
+            // This should never happen
+            throw new NeneException("Failed to remove user " + this);
         }
     }
 
