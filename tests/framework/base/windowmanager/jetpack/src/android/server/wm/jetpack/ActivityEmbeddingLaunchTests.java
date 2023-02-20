@@ -32,6 +32,7 @@ import android.content.Intent;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivityWithId;
+import android.server.wm.jetpack.utils.TestActivityWithId2;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.util.Pair;
 
@@ -242,8 +243,10 @@ public class ActivityEmbeddingLaunchTests extends ActivityEmbeddingTestBase {
         Predicate<Activity> activityPredicate = activity ->
                 activity instanceof TestActivityWithId
                         && alwaysExpandedActivityId.equals(((TestActivityWithId) activity).getId());
+        Predicate<Intent> intentPredicate = intent -> intent.getComponent() != null
+                && TestActivityWithId.class.getName().equals(intent.getComponent().getClassName());
         ActivityRule expandActivityRule = new ActivityRule.Builder(activityPredicate,
-                intent -> true /* intentPredicate */).setShouldAlwaysExpand(true).build();
+                intentPredicate).setShouldAlwaysExpand(true).build();
 
         // Register wildcard split pair rule and always-expanded activity rule
         SplitPairRule splitPairRule = createWildcardSplitPairRule();
@@ -254,8 +257,8 @@ public class ActivityEmbeddingLaunchTests extends ActivityEmbeddingTestBase {
         Activity primaryActivity = startFullScreenActivityNewTask(
                 TestConfigChangeHandlingActivity.class);
         Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
-                TestActivityWithId.class, splitPairRule, "secondaryActivity" /* secondActivityId */,
-                mSplitInfoConsumer);
+                TestActivityWithId2.class, splitPairRule,
+                "secondaryActivity" /* secondActivityId */, mSplitInfoConsumer);
 
         // Launch always expanded activity from the primary activity
         startActivityFromActivity(primaryActivity, TestActivityWithId.class,
@@ -285,8 +288,10 @@ public class ActivityEmbeddingLaunchTests extends ActivityEmbeddingTestBase {
         Predicate<Activity> activityPredicate = activity ->
                 activity instanceof TestActivityWithId
                         && alwaysExpandedActivityId.equals(((TestActivityWithId) activity).getId());
+        Predicate<Intent> intentPredicate = intent -> intent.getComponent() != null
+                && TestActivityWithId.class.getName().equals(intent.getComponent().getClassName());
         ActivityRule expandActivityRule = new ActivityRule.Builder(activityPredicate,
-                intent -> true /* intentPredicate */).setShouldAlwaysExpand(true).build();
+                intentPredicate).setShouldAlwaysExpand(true).build();
 
         // Register wildcard split pair rule and always-expanded activity rule
         SplitPairRule splitPairRule = createWildcardSplitPairRule();
@@ -297,8 +302,8 @@ public class ActivityEmbeddingLaunchTests extends ActivityEmbeddingTestBase {
         Activity primaryActivity = startFullScreenActivityNewTask(
                 TestConfigChangeHandlingActivity.class);
         Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
-                TestActivityWithId.class, splitPairRule, "secondaryActivity" /* secondActivityId */,
-                mSplitInfoConsumer);
+                TestActivityWithId2.class, splitPairRule,
+                "secondaryActivity" /* secondActivityId */, mSplitInfoConsumer);
 
         // Launch always expanded activity from the secondary activity
         startActivityFromActivity(secondaryActivity, TestActivityWithId.class,
