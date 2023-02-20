@@ -36,6 +36,8 @@ android_test {
         "truth-prebuilt",
         "cts-install-lib",
         "kotlin-test",
+        "Nene",
+        "Harrier",
     ],
 
     test_suites: [
