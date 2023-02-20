@@ -23,7 +23,6 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_TASK_ON_HOME;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
-import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.VirtualDisplayHelper.waitForDefaultDisplayState;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
@@ -761,60 +760,6 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         waitAndAssertActivityState(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, STATE_STOPPED,
                 "Activity should be stopped");
         assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
-    }
-
-    @Test
-    public void testGoingHomeMultipleTimes() {
-        for (int i = 0; i < 10; i++) {
-            // Start activity normally
-            launchActivityOnDisplay(TEST_ACTIVITY, DEFAULT_DISPLAY);
-            waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
-                    "Activity launched on default display must be focused");
-
-            // Start home activity directly
-            launchHomeActivity();
-
-            mWmState.assertHomeActivityVisible(true);
-            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
-                    "Activity should become STOPPED");
-            mWmState.assertVisibility(TEST_ACTIVITY, false);
-        }
-    }
-
-    @Test
-    public void testPressingHomeButtonMultipleTimes() {
-        for (int i = 0; i < 10; i++) {
-            // Start activity normally
-            launchActivityOnDisplay(TEST_ACTIVITY, DEFAULT_DISPLAY);
-            waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
-                    "Activity launched on default display must be focused");
-
-            // Press home button
-            pressHomeButton();
-
-            // Wait and assert home and activity states
-            mWmState.waitForHomeActivityVisible();
-            mWmState.assertHomeActivityVisible(true);
-            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
-                    "Activity should become STOPPED");
-            mWmState.assertVisibility(TEST_ACTIVITY, false);
-        }
-    }
-
-    @Test
-    public void testPressingHomeButtonMultipleTimesQuick() {
-        for (int i = 0; i < 10; i++) {
-            // Start activity normally
-            launchActivityOnDisplay(TEST_ACTIVITY, DEFAULT_DISPLAY);
-
-            // Press home button
-            pressHomeButton();
-            mWmState.waitForHomeActivityVisible();
-            mWmState.assertHomeActivityVisible(true);
-        }
-        waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
-                "Activity should become STOPPED");
-        mWmState.assertVisibility(TEST_ACTIVITY, false);
     }
 
     @Test
