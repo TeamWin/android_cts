@@ -41,7 +41,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 import libcore.util.EmptyArray
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -54,8 +57,17 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class SystemDataTransferTest : UiAutomationTestBase(null, null) {
     companion object {
-        private const val SYSTEM_DATA_TRANSFER_RESPONSE_DELAY = 5_000L // Wait 5 seconds
         private const val SYSTEM_DATA_TRANSFER_TIMEOUT = 10_000L // 10 seconds
+    }
+
+    @Before
+    fun disableSecureTransport() {
+        cdm.enableSecureTransport(false)
+    }
+
+    @After
+    fun enableSecureTransport() {
+        cdm.enableSecureTransport(true)
     }
 
     @Test
@@ -203,7 +215,7 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
      */
     private fun associate(): AssociationInfo {
         sendRequestAndLaunchConfirmation()
-        callback.assertInvokedByActions {
+        callback.assertInvokedByActions(3.seconds) {
             confirmationUi.waitAndClickOnFirstFoundDevice()
         }
         // Wait until the Confirmation UI goes away.
