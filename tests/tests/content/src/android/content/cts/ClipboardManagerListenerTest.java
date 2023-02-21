@@ -20,7 +20,10 @@ import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.ClipboardManager.OnPrimaryClipChangedListener;
 import android.net.Uri;
+import android.support.test.uiautomator.UiDevice;
 import android.test.ActivityInstrumentationTestCase2;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -39,6 +42,11 @@ public class ClipboardManagerListenerTest
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        // Clear any dialogs as focus is needed to access clipboard.
+        UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        uiDevice.pressHome();
+        uiDevice.pressBack();
+
         mActivity = getActivity();
         mListener = new CountingClipChangedListener();
     }
