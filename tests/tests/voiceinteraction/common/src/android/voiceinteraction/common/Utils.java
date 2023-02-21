@@ -169,6 +169,10 @@ public class Utils {
     public static final String VOICE_INTERACTION_DIRECT_ACTIONS_KEY_ACTION = "action";
     public static final String VOICE_INTERACTION_KEY_ARGUMENTS = "arguments";
     public static final String VOICE_INTERACTION_KEY_CLASS = "class";
+
+    public static final String VOICE_INTERACTION_KEY_REMOTE_CALLBACK_FOR_NEW_SESSION =
+            "remoteCallbackForNewSession";
+    public static final String VOICE_INTERACTION_KEY_USE_ACTIVITY_OPTIONS = "useActivityOptions";
     public static final String VOICE_INTERACTION_SESSION_CMD_FINISH = "hide";
     public static final String VOICE_INTERACTION_ACTIVITY_CMD_FINISH = "finish";
     public static final String VOICE_INTERACTION_ACTIVITY_CMD_CRASH = "crash";
