@@ -216,6 +216,12 @@
              android:authorities="android.server.wm.testjournalprovider"
              android:exported="true"/>
 
+        <!--compat tests-->
+        <activity android:name="android.server.wm.CompatChangeTests$TestPortraitActivityWithView"
+            android:maxAspectRatio="1.5"
+            android:resizeableActivity="false"
+            android:screenOrientation="portrait"/>
+
         <!--intent tests-->
         <activity android:name="android.server.wm.intent.Activities$RegularActivity"/>
         <activity android:name="android.server.wm.intent.Activities$SingleTopActivity"
