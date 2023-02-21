@@ -24,7 +24,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Bundle;
 
 public class MultiWindowFullscreenActivity extends Activity {
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -44,17 +43,17 @@ public class MultiWindowFullscreenActivity extends Activity {
     };
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onStart() {
+        super.onStart();
         final IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_REQUEST_FULLSCREEN);
         filter.addAction(ACTION_RESTORE_FREEFORM);
-        registerReceiver(mReceiver, filter);
+        registerReceiver(mReceiver, filter, RECEIVER_EXPORTED);
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onStop() {
+        super.onStop();
         unregisterReceiver(mReceiver);
     }
 }
