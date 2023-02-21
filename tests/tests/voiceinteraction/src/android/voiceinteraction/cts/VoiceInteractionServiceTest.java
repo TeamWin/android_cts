@@ -24,12 +24,16 @@ import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.RESUMED;
+
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.Application;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
@@ -40,14 +44,18 @@ import android.service.voice.VoiceInteractionService;
 import android.service.voice.VoiceInteractionSession;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
+import android.voiceinteraction.cts.activities.EmptyActivity;
 import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.Helper;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ActivitiesWatcher;
+import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.After;
@@ -57,6 +65,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tests for {@link VoiceInteractionService} APIs.
@@ -98,6 +109,51 @@ public class VoiceInteractionServiceTest {
         mService = null;
     }
 
+    @Test
+    public void testVoiceInteractionSession_startAssistantActivityWithActivityOptions()
+            throws Exception {
+        startSessionForStartAssistantActivity(/* useActivityOptions= */ true);
+    }
+
+    @Test
+    public void testVoiceInteractionSession_startAssistantActivityWithoutActivityOptions()
+            throws Exception {
+        startSessionForStartAssistantActivity(/* useActivityOptions= */ false);
+    }
+
+    private void startSessionForStartAssistantActivity(boolean useActivityOptions)
+            throws Exception {
+        // Start an ActivityWatcher to wait target test Activity
+        ActivitiesWatcher activitiesWatcher = new ActivitiesWatcher(5_000);
+        final Application app = ApplicationProvider.getApplicationContext();
+        app.registerActivityLifecycleCallbacks(activitiesWatcher);
+        ActivityWatcher watcher = activitiesWatcher.watch(EmptyActivity.class);
+
+        try {
+            // Request to show session
+            final Bundle args = new Bundle();
+            args.putInt(KEY_SHOW_SESSION_TEST, 100);
+            final int flags = VoiceInteractionSession.SHOW_WITH_ASSIST;
+            final CountDownLatch latch = new CountDownLatch(1);
+            final RemoteCallback onNewSessionCalled = new RemoteCallback((b) -> latch.countDown());
+            args.putParcelable(Utils.VOICE_INTERACTION_KEY_REMOTE_CALLBACK_FOR_NEW_SESSION,
+                    onNewSessionCalled);
+            args.putString(Utils.VOICE_INTERACTION_KEY_COMMAND, "startAssistantActivity");
+            args.putBoolean(Utils.VOICE_INTERACTION_KEY_USE_ACTIVITY_OPTIONS, useActivityOptions);
+            mService.showSession(args, flags);
+
+            // Wait the VoiceInteractionSessionService onNewSession called
+            if (!latch.await(Utils.OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                throw new TimeoutException(
+                        "result not received in " + Utils.OPERATION_TIMEOUT_MS + "ms");
+            }
+
+            // Wait target Activity can be started by startAssistantActivity
+            watcher.waitFor(RESUMED);
+        } finally {
+            app.unregisterActivityLifecycleCallbacks(activitiesWatcher);
+        }
+    }
     @Test
     public void testShowSession_onPrepareToShowSessionCalled() throws Exception {
         final Bundle args = new Bundle();
