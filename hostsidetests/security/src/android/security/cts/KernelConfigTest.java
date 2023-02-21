@@ -207,7 +207,7 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
                     break;
                 }
                 /* Samsung Exynos SoCs */
-                else if (line.startsWith("EXYNOS") || line.startsWith("S5E")) {
+                else if (line.startsWith("EXYNOS")) {
                     hardware = line;
                     break;
                 }
@@ -237,8 +237,6 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
         result.put("EXYNOS7872", null);
         result.put("EXYNOS7885", null);
         result.put("EXYNOS9610", null);
-        result.put("S5E8825", null);
-        result.put("S5E9925", null);
         result.put("Kirin980", null);
         result.put("Kirin970", null);
         result.put("Kirin810", null);
