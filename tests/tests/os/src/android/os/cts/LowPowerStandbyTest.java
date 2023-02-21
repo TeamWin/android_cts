@@ -16,10 +16,10 @@
 
 package android.os.cts;
 
+import static android.os.PowerManager.FEATURE_WAKE_ON_LAN_IN_LOW_POWER_STANDBY;
 import static android.os.PowerManager.LOW_POWER_STANDBY_ALLOWED_REASON_ONGOING_CALL;
 import static android.os.PowerManager.LOW_POWER_STANDBY_ALLOWED_REASON_TEMP_POWER_SAVE_ALLOWLIST;
 import static android.os.PowerManager.LOW_POWER_STANDBY_ALLOWED_REASON_VOICE_INTERACTION;
-import static android.os.PowerManager.LOW_POWER_STANDBY_FEATURE_WAKE_ON_LAN;
 import static android.os.PowerManager.LowPowerStandbyPortDescription.MATCH_PORT_REMOTE;
 import static android.os.PowerManager.LowPowerStandbyPortDescription.PROTOCOL_UDP;
 import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
@@ -437,7 +437,8 @@ public class LowPowerStandbyTest {
     @EnsureHasPermission(Manifest.permission.MANAGE_LOW_POWER_STANDBY)
     public void testLowPowerStandby_isAllowedFeature_trueIfDisabled() throws Exception {
         mPowerManager.setLowPowerStandbyEnabled(false);
-        assertTrue(mPowerManager.isAllowedInLowPowerStandby(LOW_POWER_STANDBY_FEATURE_WAKE_ON_LAN));
+        assertTrue(
+                mPowerManager.isAllowedInLowPowerStandby(FEATURE_WAKE_ON_LAN_IN_LOW_POWER_STANDBY));
     }
 
     @Test
@@ -452,7 +453,7 @@ public class LowPowerStandbyTest {
         mPowerManager.setLowPowerStandbyPolicy(emptyPolicy());
         mPowerManager.setLowPowerStandbyEnabled(true);
         assertFalse(mPowerManager.isAllowedInLowPowerStandby(
-                LOW_POWER_STANDBY_FEATURE_WAKE_ON_LAN));
+                FEATURE_WAKE_ON_LAN_IN_LOW_POWER_STANDBY));
     }
 
     @Test
@@ -465,9 +466,10 @@ public class LowPowerStandbyTest {
             key = DEVICE_CONFIG_FEATURE_FLAG_ENABLE_POLICY)
     public void testLowPowerStandby_isAllowedFeature_trueIfAllowed() throws Exception {
         mPowerManager.setLowPowerStandbyPolicy(policyWithAllowedFeatures(
-                LOW_POWER_STANDBY_FEATURE_WAKE_ON_LAN));
+                FEATURE_WAKE_ON_LAN_IN_LOW_POWER_STANDBY));
         mPowerManager.setLowPowerStandbyEnabled(true);
-        assertTrue(mPowerManager.isAllowedInLowPowerStandby(LOW_POWER_STANDBY_FEATURE_WAKE_ON_LAN));
+        assertTrue(
+                mPowerManager.isAllowedInLowPowerStandby(FEATURE_WAKE_ON_LAN_IN_LOW_POWER_STANDBY));
     }
 
     @Test
