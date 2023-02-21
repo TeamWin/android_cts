@@ -54,7 +54,7 @@ def draw_lsc_plot(lsc_map_w, lsc_map_h, lsc_map, name, log_path):
   """Creates Lens Shading Correction plot."""
   for ch in range(4):
     fig = matplotlib.pyplot.figure()
-    ax = fig.gca(projection='3d')
+    ax = fig.add_subplot(projection='3d')
     xs = np.array([range(lsc_map_w)] * lsc_map_h).reshape(lsc_map_h, lsc_map_w)
     ys = np.array([[i]*lsc_map_w for i in range(lsc_map_h)]).reshape(
         lsc_map_h, lsc_map_w)
