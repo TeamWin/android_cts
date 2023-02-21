@@ -31,6 +31,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.AppOpsManager;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.pm.PackageManager;
@@ -70,6 +71,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link HotwordDetectionService}.
@@ -82,6 +85,18 @@ public class HotwordDetectionServiceBasicTest {
     // The VoiceInteractionService used by this test
     private static final String SERVICE_COMPONENT =
             "android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService";
+
+    private final CountDownLatch mLatch = new CountDownLatch(1);
+    private final AppOpsManager mAppOpsManager = sInstrumentation.getContext()
+            .getSystemService(AppOpsManager.class);
+
+    private final AppOpsManager.OnOpNotedListener mOnOpNotedListener =
+            (op, uid, pkgName, attributionTag, flags, result) -> {
+                Log.d(TAG, "Get OnOpNotedListener callback op = " + op);
+                if (AppOpsManager.OPSTR_RECORD_AUDIO.equals(op)) {
+                    mLatch.countDown();
+                }
+            };
 
     private CtsBasicVoiceInteractionService mService;
 
@@ -295,13 +310,14 @@ public class HotwordDetectionServiceBasicTest {
         softwareHotwordDetector.destroy();
 
         // Create AlwaysOnHotwordDetector
+        startWatchingNoted();
         AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
         try {
             adoptShellPermissionIdentityForHotword();
 
             verifyOnDetectFromDspSuccess(alwaysOnHotwordDetector);
-            // Verify microphone indicator
-            verifyMicrophoneChip(/* shouldBePresent= */ true);
+            // Verify RECORD_AUDIO noted
+            verifyRecordAudioNote(/* shouldNote= */ true);
 
             // destroy detector
             alwaysOnHotwordDetector.destroy();
@@ -309,20 +325,22 @@ public class HotwordDetectionServiceBasicTest {
             // Drop identity adopted.
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
+            stopWatchingNoted();
         }
     }
 
     @Test
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromDsp_success() throws Throwable {
+        startWatchingNoted();
         // Create AlwaysOnHotwordDetector
         AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
         try {
             adoptShellPermissionIdentityForHotword();
 
             verifyOnDetectFromDspSuccess(alwaysOnHotwordDetector);
-            // Verify microphone indicator
-            verifyMicrophoneChip(/* shouldBePresent= */ true);
+            // Verify RECORD_AUDIO noted
+            verifyRecordAudioNote(/* shouldNote= */ true);
 
             // destroy detector
             alwaysOnHotwordDetector.destroy();
@@ -330,12 +348,14 @@ public class HotwordDetectionServiceBasicTest {
             // Drop identity adopted.
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
+            stopWatchingNoted();
         }
     }
 
     @Test
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromDsp_rejection() throws Throwable {
+        startWatchingNoted();
         // Create AlwaysOnHotwordDetector
         AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
         try {
@@ -357,17 +377,19 @@ public class HotwordDetectionServiceBasicTest {
 
             assertThat(rejectedResult).isEqualTo(Helper.REJECTED_RESULT);
 
-            // Verify microphone indicator
-            verifyMicrophoneChip(/* shouldBePresent= */ false);
+            // Verify RECORD_AUDIO does not note
+            verifyRecordAudioNote(/* shouldNote= */ false);
         } finally {
             // destroy detector
             alwaysOnHotwordDetector.destroy();
+            stopWatchingNoted();
         }
     }
 
     @Test
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromDsp_timeout() throws Throwable {
+        startWatchingNoted();
         // Create AlwaysOnHotwordDetector
         AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
         // Update HotwordDetectionService options to delay detection, to cause a timeout
@@ -392,8 +414,8 @@ public class HotwordDetectionServiceBasicTest {
             // wait onError() called and verify the result
             mService.waitOnErrorCalled();
 
-            // Verify microphone indicator
-            verifyMicrophoneChip(/* shouldBePresent= */ false);
+            // Verify RECORD_AUDIO does not note
+            verifyRecordAudioNote(/* shouldNote= */ false);
 
             // destroy detector
             alwaysOnHotwordDetector.destroy();
@@ -401,6 +423,7 @@ public class HotwordDetectionServiceBasicTest {
             // Drop identity adopted.
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
+            stopWatchingNoted();
         }
     }
 
@@ -433,6 +456,7 @@ public class HotwordDetectionServiceBasicTest {
 
     @Test
     public void testHotwordDetectionService_onDetectFromExternalSource_success() throws Throwable {
+        startWatchingNoted();
         // Create AlwaysOnHotwordDetector
         AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
         try {
@@ -451,8 +475,8 @@ public class HotwordDetectionServiceBasicTest {
 
             Helper.verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
 
-            // Verify microphone indicator
-            verifyMicrophoneChip(/* shouldBePresent= */ true);
+            // Verify RECORD_AUDIO noted
+            verifyRecordAudioNote(/* shouldNote= */ true);
 
             // destroy detector
             alwaysOnHotwordDetector.destroy();
@@ -460,12 +484,14 @@ public class HotwordDetectionServiceBasicTest {
             // Drop identity adopted.
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
+            stopWatchingNoted();
         }
     }
 
     @Test
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromMic_success() throws Throwable {
+        startWatchingNoted();
         // Create SoftwareHotwordDetector
         HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector();
         try {
@@ -481,14 +507,15 @@ public class HotwordDetectionServiceBasicTest {
 
             Helper.verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
 
-            // Verify microphone indicator
-            verifyMicrophoneChip(/* shouldBePresent= */ true);
+            // Verify RECORD_AUDIO noted
+            verifyRecordAudioNote(/* shouldNote= */ true);
 
             softwareHotwordDetector.destroy();
         } finally {
             // Drop identity adopted.
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
+            stopWatchingNoted();
         }
     }
 
@@ -669,7 +696,24 @@ public class HotwordDetectionServiceBasicTest {
         uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
     }
 
-    private void verifyMicrophoneChip(boolean shouldBePresent) throws Exception {
+    private void startWatchingNoted() {
+        runWithShellPermissionIdentity(() -> {
+            if (mAppOpsManager != null) {
+                mAppOpsManager.startWatchingNoted(new String[]{AppOpsManager.OPSTR_RECORD_AUDIO},
+                        mOnOpNotedListener);
+            }
+        });
+    }
+
+    private void stopWatchingNoted() {
+        runWithShellPermissionIdentity(() -> {
+            if (mAppOpsManager != null) {
+                mAppOpsManager.stopWatchingNoted(mOnOpNotedListener);
+            }
+        });
+    }
+
+    private void verifyRecordAudioNote(boolean shouldNote) throws Exception {
         if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
             // TODO: test TV indicator
         } else if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
@@ -677,7 +721,8 @@ public class HotwordDetectionServiceBasicTest {
         } else if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             // The privacy chips/indicators are not implemented on Wear
         } else {
-            Helper.verifyMicrophoneChipHandheld(shouldBePresent);
+            boolean isNoted = mLatch.await(Helper.CLEAR_CHIP_MS, TimeUnit.MILLISECONDS);
+            assertThat(isNoted).isEqualTo(shouldNote);
         }
     }
 }
