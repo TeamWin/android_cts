@@ -2359,10 +2359,6 @@
         press the send button.</string>
     <string name="shortcut_reset_check_result">Check ShortcutManager rate-limit has been reset.</string>
 
-    <string name="attention_test">Notification Attention Management Test</string>
-    <string name="attention_info">This test checks that the NotificationManagerService is
-        respecting user preferences about notification ranking and filtering.
-    </string>
     <string name="ringer_mode_tests">Ringer Mode Tests</string>
     <string name="ringer_mode_info">This test checks that Audio manager functionality that requires
         particular ringer mode states works properly.
