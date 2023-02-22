@@ -23,6 +23,7 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
@@ -197,6 +198,7 @@ public class CtsCredentialProviderServiceDeviceTest {
                     }
                 };
 
+
         ActivityScenario<TestCredentialActivity> activityScenario =
                 ActivityScenario.launch(TestCredentialActivity.class);
         activityScenario.onActivity(activity -> {
@@ -359,7 +361,7 @@ public class CtsCredentialProviderServiceDeviceTest {
     private void bindToTestService() {
         // On Manager, bind to test service
         setTestableCredentialProviderService(CTS_SERVICE_NAME);
-        assertThat(getCredentialProviderServiceComponent()).contains(CTS_SERVICE_NAME);
+        assertTrue(isCredentialProviderServiceEnabled(CTS_SERVICE_NAME));
     }
 
     private String getCredentialProviderServiceComponent() {
@@ -377,15 +379,13 @@ public class CtsCredentialProviderServiceDeviceTest {
             settingOutput += serviceName;
         }
         // Guaranteed to not be null now since the NoOp service exists at a minimum
-        Log.i(TAG, "Enabled services: " + settingOutput);
+        Log.i(TAG, "Attempting to set services: " + settingOutput);
         SettingsUtils.set("secure", CREDENTIAL_SERVICE, settingOutput);
 
         // Waits until the service is actually enabled.
         try {
-            String finalSettingOutput = settingOutput;
-            CONNECTION_TIMEOUT.run("Enabling Credman service", () ->
-                    isCredentialProviderServiceEnabled(serviceName) ? serviceName : null);
-            Log.i(TAG, "Done! We connected to the new setting service : " + finalSettingOutput);
+            CONNECTION_TIMEOUT.run("Checking if service enabled", () ->
+                    isCredentialProviderServiceEnabled(serviceName));
         } catch (Exception e) {
             Log.i(TAG, "Failure... " + e.getLocalizedMessage());
             throw new AssertionError("Enabling Credman service failed.");
@@ -397,7 +397,9 @@ public class CtsCredentialProviderServiceDeviceTest {
      */
     private boolean isCredentialProviderServiceEnabled(String serviceName) {
         final String actualNames = readCredentialManagerProviderSetting();
-        if (actualNames == null) {
+        Log.i(TAG, "actual names in setting: " + actualNames + " ,serviceName being "
+                + "checked : " + serviceName);
+	if (actualNames == null) {
             return false;
         }
         return containsName(actualNames, serviceName);
