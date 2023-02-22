@@ -8,5 +8,15 @@
         }
       ]
     }
-  ]
+  ],
+  "mainline-presubmit": [
+        {
+            "name": "CtsPermission3TestCases[com.google.android.permission.apex]",
+            "options": [
+                {
+                    "exclude-annotation": "android.platform.test.annotations.FlakyTest"
+                }
+            ]
+        }
+    ]
 }
