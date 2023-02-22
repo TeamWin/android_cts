@@ -33,8 +33,6 @@ import static android.view.RoundedCorner.POSITION_TOP_LEFT;
 import static android.view.RoundedCorner.POSITION_TOP_RIGHT;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
-
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -57,7 +55,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
 import android.server.wm.cts.R;
+import android.server.wm.settings.SettingsSession;
 import android.util.Range;
 import android.view.RoundedCorner;
 import android.view.View;
@@ -71,6 +71,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -119,17 +120,36 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     public static DisableImmersiveModeConfirmationRule mDisableImmersiveModeConfirmationRule =
             new DisableImmersiveModeConfirmationRule();
 
+    @ClassRule
+    public static final TestRule enableWindowAnimationRule = SettingsSession.overrideForTest(
+            Settings.Global.getUriFor(Settings.Global.WINDOW_ANIMATION_SCALE),
+            Settings.Global::getFloat,
+            Settings.Global::putFloat,
+            1.0f);
+
+    @ClassRule
+    public static final TestRule enableTransitionAnimationRule = SettingsSession.overrideForTest(
+            Settings.Global.getUriFor(Settings.Global.TRANSITION_ANIMATION_SCALE),
+            Settings.Global::getFloat,
+            Settings.Global::putFloat,
+            1.0f);
+
+    @ClassRule
+    public static final TestRule enableAnimatorDurationRule = SettingsSession.overrideForTest(
+            Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE),
+            Settings.Global::getFloat,
+            Settings.Global::putFloat,
+            1.0f);
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        setDefaultAnimationScale();
         mWmState.setSanityCheckWithFocusedWindow(false);
         mWmState.waitForDisplayUnfrozen();
     }
 
     @After
     public void tearDown() {
-        restoreAnimationScale();
         mWmState.setSanityCheckWithFocusedWindow(true);
     }
 
@@ -751,44 +771,6 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         }
 
         return AssertionResult.SUCCESS;
-    }
-
-    private void setDefaultAnimationScale() {
-        mInitialWindowAnimationScale =
-                runShellCommandSafe("settings get global window_animation_scale");
-        mInitialTransitionAnimationScale =
-                runShellCommandSafe("settings get global transition_animation_scale");
-        mInitialAnimatorDurationScale =
-                runShellCommandSafe("settings get global animator_duration_scale");
-
-        if (!mInitialWindowAnimationScale.equals("1")
-                || !mInitialTransitionAnimationScale.equals("1")
-                || !mInitialAnimatorDurationScale.equals("1")) {
-            mAnimationScaleResetRequired = true;
-            runShellCommandSafe("settings put global window_animation_scale 1");
-            runShellCommandSafe("settings put global transition_animation_scale 1");
-            runShellCommandSafe("settings put global animator_duration_scale 1");
-        }
-    }
-
-    private void restoreAnimationScale() {
-        if (mAnimationScaleResetRequired) {
-            runShellCommandSafe("settings put global window_animation_scale "
-                    + mInitialWindowAnimationScale);
-            runShellCommandSafe("settings put global transition_animation_scale "
-                    + mInitialTransitionAnimationScale);
-            runShellCommandSafe("settings put global animator_duration_scale "
-                    + mInitialAnimatorDurationScale);
-        }
-    }
-
-    private static String runShellCommandSafe(String cmd) {
-        try {
-            return runShellCommand(androidx.test.InstrumentationRegistry.getInstrumentation(), cmd);
-        } catch (IOException e) {
-            fail("Failed reading command output: " + e);
-            return "";
-        }
     }
 
     private static void addTestMethodToExtras(int apiType, int transitionType, Bundle extras) {
