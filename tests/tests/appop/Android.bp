@@ -59,7 +59,10 @@ cc_test_library {
 
 android_test {
     name: "CtsAppOpsTestCases",
-
+    defaults: [
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
     compile_multilib: "both",
 
     srcs: ["src/**/*.kt"],
