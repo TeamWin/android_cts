@@ -45,7 +45,9 @@ import android.os.PersistableBundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
+import android.service.voice.DetectorFailure;
 import android.service.voice.HotwordDetectionService;
+import android.service.voice.HotwordDetectionServiceFailure;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordDetector.IllegalDetectorStateException;
 import android.service.voice.HotwordRejectedResult;
@@ -224,7 +226,8 @@ public class HotwordDetectionServiceBasicTest {
         assumeTrue("Not support multiple hotword detectors", enableMultipleHotwordDetectors);
 
         // Create first AlwaysOnHotwordDetector, it's fine.
-        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
 
         // Create second AlwaysOnHotwordDetector, it will get the IllegalStateException due to
         // the previous AlwaysOnHotwordDetector is not destroy.
@@ -279,7 +282,10 @@ public class HotwordDetectionServiceBasicTest {
     @Test
     public void testHotwordDetectionService_processDied_triggerOnError() throws Throwable {
         // Create first AlwaysOnHotwordDetector
-        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
+
+        mService.initOnErrorLatch();
 
         // Use AlwaysOnHotwordDetector to test process died of HotwordDetectionService
         runWithShellPermissionIdentity(() -> {
@@ -290,6 +296,45 @@ public class HotwordDetectionServiceBasicTest {
                     persistableBundle,
                     Helper.createFakeSharedMemoryData());
         }, MANAGE_HOTWORD_DETECTION);
+
+        mService.waitOnErrorCalled();
+
+        // ActivityManager will schedule a timer to restart the HotwordDetectionService due to
+        // we crash the service in this test case. It may impact the other test cases when
+        // ActivityManager restarts the HotwordDetectionService again. Add the sleep time to wait
+        // ActivityManager to restart the HotwordDetectionService, so that the service can be
+        // destroyed after finishing this test case.
+        Thread.sleep(5000);
+
+        alwaysOnHotwordDetector.destroy();
+    }
+
+    @Test
+    public void testHotwordDetectionService_processDied_triggerOnFailure() throws Throwable {
+        // Create alwaysOnHotwordDetector with onFailure callback
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ true);
+
+        mService.initOnFailureLatch();
+
+        // Use AlwaysOnHotwordDetector to test process died of HotwordDetectionService
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle persistableBundle = new PersistableBundle();
+            persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                    Helper.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH);
+            alwaysOnHotwordDetector.updateState(
+                    persistableBundle,
+                    Helper.createFakeSharedMemoryData());
+        }, MANAGE_HOTWORD_DETECTION);
+
+        mService.waitOnFailureCalled();
+
+        DetectorFailure detectorFailure = mService.getDetectorFailure();
+
+        assertThat(detectorFailure).isNotNull();
+        assertThat(detectorFailure).isInstanceOf(HotwordDetectionServiceFailure.class);
+        assertThat(((HotwordDetectionServiceFailure) detectorFailure).getErrorCode()).isEqualTo(
+                HotwordDetectionServiceFailure.ERROR_CODE_BINDING_DIED);
 
         // ActivityManager will schedule a timer to restart the HotwordDetectionService due to
         // we crash the service in this test case. It may impact the other test cases when
@@ -312,7 +357,8 @@ public class HotwordDetectionServiceBasicTest {
 
         // Create AlwaysOnHotwordDetector
         startWatchingNoted();
-        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
         try {
             adoptShellPermissionIdentityForHotword();
 
@@ -335,7 +381,8 @@ public class HotwordDetectionServiceBasicTest {
     public void testHotwordDetectionService_onDetectFromDsp_success() throws Throwable {
         startWatchingNoted();
         // Create AlwaysOnHotwordDetector
-        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
         try {
             adoptShellPermissionIdentityForHotword();
 
@@ -358,7 +405,8 @@ public class HotwordDetectionServiceBasicTest {
     public void testHotwordDetectionService_onDetectFromDsp_rejection() throws Throwable {
         startWatchingNoted();
         // Create AlwaysOnHotwordDetector
-        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
         try {
             mService.initDetectRejectLatch();
             runWithShellPermissionIdentity(() -> {
@@ -392,7 +440,8 @@ public class HotwordDetectionServiceBasicTest {
     public void testHotwordDetectionService_onDetectFromDsp_timeout() throws Throwable {
         startWatchingNoted();
         // Create AlwaysOnHotwordDetector
-        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
         // Update HotwordDetectionService options to delay detection, to cause a timeout
         runWithShellPermissionIdentity(() -> {
             PersistableBundle options = Helper.createFakePersistableBundleData();
@@ -432,7 +481,8 @@ public class HotwordDetectionServiceBasicTest {
     public void testHotwordDetectionService_destroyDspDetector_activeDetectorRemoved()
             throws Throwable {
         // Create AlwaysOnHotwordDetector
-        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
         // destroy detector
         alwaysOnHotwordDetector.destroy();
         try {
@@ -459,7 +509,8 @@ public class HotwordDetectionServiceBasicTest {
     public void testHotwordDetectionService_onDetectFromExternalSource_success() throws Throwable {
         startWatchingNoted();
         // Create AlwaysOnHotwordDetector
-        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
         try {
             adoptShellPermissionIdentityForHotword();
 
@@ -617,7 +668,8 @@ public class HotwordDetectionServiceBasicTest {
                 Helper.isEnableMultipleDetectors());
 
         // Create AlwaysOnHotwordDetector
-        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
 
         // Create SoftwareHotwordDetector
         HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector();
@@ -644,7 +696,8 @@ public class HotwordDetectionServiceBasicTest {
     @Test
     public void testHotwordDetectionService_onHotwordDetectionServiceRestarted() throws Throwable {
         // Create AlwaysOnHotwordDetector
-        createAlwaysOnHotwordDetector();
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
 
         mService.initOnHotwordDetectionServiceRestartedLatch();
         // force re-start by shell command
@@ -652,6 +705,9 @@ public class HotwordDetectionServiceBasicTest {
 
         // wait onHotwordDetectionServiceRestarted() called
         mService.waitOnHotwordDetectionServiceRestartedCalled();
+
+        // Destroy the always on detector
+        alwaysOnHotwordDetector.destroy();
     }
 
     private void verifySoftwareDetectorDetectSuccess(HotwordDetector softwareHotwordDetector)
@@ -687,9 +743,15 @@ public class HotwordDetectionServiceBasicTest {
     /**
      * Create AlwaysOnHotwordDetector and wait for ready
      */
-    private AlwaysOnHotwordDetector createAlwaysOnHotwordDetector() throws Throwable {
+    private AlwaysOnHotwordDetector createAlwaysOnHotwordDetector(boolean useOnFailure)
+            throws Throwable {
         // Create AlwaysOnHotwordDetector and wait ready.
-        mService.createAlwaysOnHotwordDetector();
+        if (useOnFailure) {
+            mService.createAlwaysOnHotwordDetectorWithOnFailureCallback(/* useExecutor= */
+                    false, /* runOnMainThread= */ false);
+        } else {
+            mService.createAlwaysOnHotwordDetector();
+        }
 
         mService.waitSandboxedDetectionServiceInitializedCalledOrException();
 
