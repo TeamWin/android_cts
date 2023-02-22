@@ -528,22 +528,25 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         return pinBytes;
     }
 
-    public void test_getCreateBondCaller() {
+    public void test_getPackageNameOfBondingApplication() {
         if (!mHasBluetooth || !mHasCompanionDevice) {
             // Skip the test if bluetooth or companion device are not present.
             return;
         }
 
         mUiAutomation.dropShellPermissionIdentity();
-        assertThrows(SecurityException.class, () -> mFakeDevice.getCreateBondCaller());
+        assertThrows(SecurityException.class,
+                () -> mFakeDevice.getPackageNameOfBondingApplication());
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
-        assertThrows(SecurityException.class, () -> mFakeDevice.getCreateBondCaller());
+        assertThrows(SecurityException.class,
+                () -> mFakeDevice.getPackageNameOfBondingApplication());
 
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_PRIVILEGED, BLUETOOTH_CONNECT);
         // Since no application actually start bonding with this device, this should return null
-        assertNull(mFakeDevice.getCreateBondCaller());
+        assertNull(mFakeDevice.getPackageNameOfBondingApplication());
 
         mFakeDevice.createBond();
-        assertEquals(getContext().getPackageName(), mFakeDevice.getCreateBondCaller());
+        assertEquals(getContext().getPackageName(),
+                mFakeDevice.getPackageNameOfBondingApplication());
     }
 }
