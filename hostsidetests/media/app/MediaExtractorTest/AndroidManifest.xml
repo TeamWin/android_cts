@@ -24,7 +24,5 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
             android:targetPackage="android.media.cts"
             android:label="Device test app for MediaExtractor host side tests.">
-        <meta-data android:name="listener"
-                android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>

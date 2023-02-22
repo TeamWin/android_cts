@@ -23,9 +23,6 @@
         android:targetPackage="android.companion.cts.noservices"
         android:label="CompanionDeviceManager No-CompanionDeviceServices CTS tests">
 
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
     <application>

@@ -25,8 +25,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.apievolution.cts"
                      android:label="CTS tests for required method signatures on device">
-        <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>
