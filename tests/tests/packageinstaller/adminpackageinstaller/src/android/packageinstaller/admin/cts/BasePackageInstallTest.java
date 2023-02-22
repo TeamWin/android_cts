@@ -28,8 +28,9 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
-import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
+
+import androidx.test.uiautomator.UiDevice;
 
 import java.io.BufferedReader;
 import java.io.File;

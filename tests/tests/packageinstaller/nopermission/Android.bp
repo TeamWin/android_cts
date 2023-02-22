@@ -23,7 +23,7 @@ java_library_static {
     srcs: ["src/**/*.kt"],
 
     static_libs: [
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "androidx.legacy_legacy-support-v4",
