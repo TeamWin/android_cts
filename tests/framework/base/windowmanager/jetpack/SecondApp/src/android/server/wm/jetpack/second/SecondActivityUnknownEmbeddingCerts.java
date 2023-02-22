@@ -22,5 +22,5 @@ import android.app.Activity;
  * A test activity that requests trusted host certificates for embedding that does not match the
  * certificate of the host in CTS tests from 'android.server.wm.jetpack'.
  */
-public class SecondActivityKnownEmbeddingCerts extends Activity {
+public class SecondActivityUnknownEmbeddingCerts extends Activity {
 }
