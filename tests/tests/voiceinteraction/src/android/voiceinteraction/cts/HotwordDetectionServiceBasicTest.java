@@ -24,6 +24,7 @@ import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -638,6 +639,19 @@ public class HotwordDetectionServiceBasicTest {
 
         // Destroy the software detector
         softwareHotwordDetector.destroy();
+    }
+
+    @Test
+    public void testHotwordDetectionService_onHotwordDetectionServiceRestarted() throws Throwable {
+        // Create AlwaysOnHotwordDetector
+        createAlwaysOnHotwordDetector();
+
+        mService.initOnHotwordDetectionServiceRestartedLatch();
+        // force re-start by shell command
+        runShellCommand("cmd voiceinteraction restart-detection");
+
+        // wait onHotwordDetectionServiceRestarted() called
+        mService.waitOnHotwordDetectionServiceRestartedCalled();
     }
 
     private void verifySoftwareDetectorDetectSuccess(HotwordDetector softwareHotwordDetector)
