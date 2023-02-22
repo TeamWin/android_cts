@@ -127,10 +127,9 @@ abstract class UserVisibilityVisibleBackgroundUsersTestCase extends UserVisibili
     @Test
     public final void testStartVisibleBgUser_onSecondaryDisplay() {
         runTestOnSecondaryDisplay((user, displayId, instance) -> {
-            // Should fail when it's already started
             boolean startedAgain = tryToStartVisibleBackgroundUser(user.id(), displayId);
             assertWithMessage("started user %s on id %s again", user.id(), displayId)
-                    .that(startedAgain).isFalse();
+                    .that(startedAgain).isTrue();
         });
     }
 

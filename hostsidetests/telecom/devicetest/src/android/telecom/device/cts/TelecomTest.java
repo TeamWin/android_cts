@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,29 @@
  * limitations under the License.
  */
 
-package android.voiceinteraction.cts.activities;
+package android.telecom.device.cts;
 
-import android.app.Activity;
-import android.util.Log;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
-/**
- * Empty activity
- */
-public final class EmptyActivity extends Activity {
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-    @Override
-    protected void onResume() {
-        Log.d("EmptyActivity", "onResume!");
-        super.onResume();
-    }
+@RunWith(AndroidJUnit4.class)
+public class TelecomTest {
+
+  //place holder class to hold utility methods that run on the device
+  //and can be invoked from host side test.
+
+  @Before
+  public void setUp() {
+  }
+
+  @After
+  public void tearDown() {
+  }
+
+
 }

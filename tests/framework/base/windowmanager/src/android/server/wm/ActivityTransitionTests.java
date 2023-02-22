@@ -537,13 +537,12 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
 
     private void runAndAssertActivityTransition(Function<Bitmap, AssertionResult> assertFunction) {
         // Busy wait until we are running the transition to capture the screenshot
-        boolean isTransitioning;
-        do {
-            getWmState().computeState();
-            isTransitioning = getWmState().getDefaultDisplayAppTransitionState()
-                            .equals("APP_STATE_RUNNING");
-            SystemClock.sleep(10);
-        } while (!isTransitioning);
+        // Set a limited time to wait for transition start since there can still miss the state.
+        Condition.waitFor(new Condition<>("Wait for transition running", () -> {
+            mWmState.computeState();
+            return WindowManagerState.APP_STATE_RUNNING.equals(
+                    mWmState.getDisplay(DEFAULT_DISPLAY).getAppTransitionState());
+        }).setRetryIntervalMs(15).setRetryLimit(200));
 
         // Because of differences in timing between devices we try the given assert function
         // by taking multiple screenshots approximately to ensure we capture at least one screenshot
