@@ -176,8 +176,8 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
      * new task fragment.
      */
     TaskFragmentInfo createTaskFragment(@Nullable ComponentName componentName,
-            @NonNull Rect bounds) {
-        return createTaskFragment(componentName, bounds, new WindowContainerTransaction());
+            @NonNull Rect relativeBounds) {
+        return createTaskFragment(componentName, relativeBounds, new WindowContainerTransaction());
     }
 
     /**
@@ -185,8 +185,8 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
      * {@link WindowContainerTransaction} to use.
      */
     TaskFragmentInfo createTaskFragment(@Nullable ComponentName componentName,
-            @NonNull Rect bounds, @NonNull WindowContainerTransaction wct) {
-        final TaskFragmentCreationParams params = generateTaskFragCreationParams(bounds);
+            @NonNull Rect relativeBounds, @NonNull WindowContainerTransaction wct) {
+        final TaskFragmentCreationParams params = generateTaskFragCreationParams(relativeBounds);
         final IBinder taskFragToken = params.getFragmentToken();
         wct.createTaskFragment(params);
         if (componentName != null) {
@@ -210,8 +210,8 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
     }
 
     @NonNull
-    TaskFragmentCreationParams generateTaskFragCreationParams(@NonNull Rect bounds) {
-        return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken, bounds,
+    TaskFragmentCreationParams generateTaskFragCreationParams(@NonNull Rect relativeBounds) {
+        return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken, relativeBounds,
                 WINDOWING_MODE_UNDEFINED);
     }
 
@@ -284,16 +284,16 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
 
         @NonNull
         public TaskFragmentCreationParams generateTaskFragParams(@NonNull IBinder ownerToken,
-                @NonNull Rect bounds, int windowingMode) {
-            return generateTaskFragParams(new Binder(), ownerToken, bounds, windowingMode);
+                @NonNull Rect relativeBounds, int windowingMode) {
+            return generateTaskFragParams(new Binder(), ownerToken, relativeBounds, windowingMode);
         }
 
         @NonNull
         public TaskFragmentCreationParams generateTaskFragParams(@NonNull IBinder fragmentToken,
-                @NonNull IBinder ownerToken, @NonNull Rect bounds, int windowingMode) {
+                @NonNull IBinder ownerToken, @NonNull Rect relativeBounds, int windowingMode) {
             return new TaskFragmentCreationParams.Builder(getOrganizerToken(), fragmentToken,
                     ownerToken)
-                    .setInitialBounds(bounds)
+                    .setInitialRelativeBounds(relativeBounds)
                     .setWindowingMode(windowingMode)
                     .build();
         }

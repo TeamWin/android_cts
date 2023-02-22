@@ -75,7 +75,7 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
         final TaskFragmentInfo tf = createTaskFragment(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
 
         // Start a translucent activity over the TaskFragment.
-        createTaskFragment(mTranslucentActivity, partialOverlayBounds(tf));
+        createTaskFragment(mTranslucentActivity, partialOverlayRelativeBounds(tf));
         waitAndAssertResumedActivity(mTranslucentActivity, "Translucent activity must be resumed.");
 
         // The task fragment must be made invisible when there is an overlay activity in it.
@@ -217,9 +217,10 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
 
         // We check if the TaskFragment bounds is in its parent bounds before launching activity in
         // untrusted mode.
-        final Rect taskFragBounds = new Rect(parentBounds);
-        taskFragBounds.right++;
-        createTaskFragment(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY, taskFragBounds, wct);
+        final Rect taskFragRelativeBounds = new Rect(parentBounds);
+        taskFragRelativeBounds.offsetTo(0, 0);
+        taskFragRelativeBounds.right++;
+        createTaskFragment(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY, taskFragRelativeBounds, wct);
 
         // It is disallowed to start activity to TaskFragment with bounds outside of its parent
         // in untrusted mode.
@@ -227,13 +228,14 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
     }
 
     /**
-     * Creates bounds for a container that would appear on top and partially occlude the provided
-     * one.
+     * Creates relative bounds for a container that would appear on top and partially occlude the
+     * provided one.
      */
     @NonNull
-    private Rect partialOverlayBounds(@NonNull TaskFragmentInfo info) {
+    private Rect partialOverlayRelativeBounds(@NonNull TaskFragmentInfo info) {
         final Rect baseBounds = info.getConfiguration().windowConfiguration.getBounds();
         final Rect result = new Rect(baseBounds);
+        result.offsetTo(0, 0);
         result.inset(50 /* left */, 50 /* top */, 50 /* right */, 50 /* bottom */);
         return result;
     }
