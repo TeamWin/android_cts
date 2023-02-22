@@ -149,14 +149,11 @@ public class CallDomainSelectionTestOnMockModem extends ImsCallingBase {
 
         sTestSub = ImsUtils.getPreferredActiveSubId();
 
-        int[] subs = SubscriptionManager.getSubId(sTestSlot);
-        for (int sub : subs) {
-            if (SubscriptionManager.isValidSubscriptionId(sub)) {
-                sTestSub = sub;
-                beforeAllTestsBase();
-                Log.d(TAG, "beforeAllTestsBase called with valid subscription");
-                break;
-            }
+        int sub = SubscriptionManager.getSubscriptionId(sTestSlot);
+        if (SubscriptionManager.isValidSubscriptionId(sub)) {
+            sTestSub = sub;
+            beforeAllTestsBase();
+            Log.d(TAG, "beforeAllTestsBase called with valid subscription");
         }
     }
 
