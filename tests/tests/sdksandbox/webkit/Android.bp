@@ -18,6 +18,7 @@ package {
 
 android_test {
     name: "CtsSdkSandboxWebkitTestCases",
+    resource_dirs: ["res"],
     defaults: ["cts_defaults"],
     libs: [
         "android.test.runner",

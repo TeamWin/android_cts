@@ -39,13 +39,14 @@ public final class SharedSdkWebServer {
 
     /** Starts the web server. */
     public void start(@SslMode int sslMode) {
-        start(new Config().setSslMode(sslMode));
+        start(sslMode, null, 0, 0);
     }
 
-    /** Starts the web server using the provided {@link Config}. */
-    public void start(Config config) {
+    /** Starts the web server using the provided parameters}. */
+    public void start(@SslMode int sslMode, @Nullable byte[] acceptedIssuerDer,
+            int keyResId, int certResId) {
         try {
-            mWebServer.start(config.mSslMode, config.mAcceptedIssuerDer);
+            mWebServer.start(sslMode, acceptedIssuerDer, keyResId, certResId);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -117,7 +118,7 @@ public final class SharedSdkWebServer {
     /** Get a url that will redirect for a path. */
     public String getRedirectingAssetUrl(String path) {
         try {
-            return mWebServer.getAssetUrl(path);
+            return mWebServer.getRedirectingAssetUrl(path);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -204,34 +205,33 @@ public final class SharedSdkWebServer {
         }
     }
 
-    /** Configuration options for starting a SharedSdkWebServer */
-    public static class Config {
-        private @SslMode int mSslMode;
-        private @Nullable byte[] mAcceptedIssuerDer;
-
-        public Config() {
-            mSslMode = SslMode.INSECURE;
-            mAcceptedIssuerDer = null;
+    /** Returns a url that will contain the path as a cookie. */
+    public String getCookieUrl(String path) {
+        try {
+            return mWebServer.getCookieUrl(path);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
         }
+    }
 
-        /** Set the server's SslMode */
-        public Config setSslMode(@SslMode int sslMode) {
-            mSslMode = sslMode;
-            return this;
+    /**
+     * Returns a URL that attempts to set the cookie
+     * "key=value" with the given list of attributes when fetched.
+    */
+    public String getSetCookieUrl(String path, String key, String value, String attributes) {
+        try {
+            return mWebServer.getSetCookieUrl(path, key, value, attributes);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
         }
+    }
 
-        /**
-         * Configures the server's TrustManager to contain a given accepted issuer certificate
-         * (specified as DER bytes).
-         *
-         * Note that this does not enforce that certificates are issued from this issuer - as with
-         * the default CTS trust manager, all certificates are always considered valid. Supplying an
-         * acceptedIssuer merely affects the issuer DNs contained in the certificate request sent to
-         * the client in the TLS handshake.
-         */
-        public Config setAcceptedIssuer(@Nullable byte[] acceptedIssuerDer) {
-            mAcceptedIssuerDer = acceptedIssuerDer;
-            return this;
+    /** Returns a URL for a page with a script tag where src equals the URL passed in. */
+    public String getLinkedScriptUrl(String path, String url) {
+        try {
+            return mWebServer.getLinkedScriptUrl(path, url);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
         }
     }
 }
