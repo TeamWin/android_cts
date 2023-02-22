@@ -119,7 +119,6 @@ public class VehiclePropertyVerifier<T> {
                     PropertyNotAvailableErrorCode.NOT_AVAILABLE_POOR_VISIBILITY,
                     PropertyNotAvailableErrorCode.NOT_AVAILABLE_SAFETY);
 
-
     private final int mPropertyId;
     private final String mPropertyName;
     private final int mAccess;
@@ -133,6 +132,7 @@ public class VehiclePropertyVerifier<T> {
     private final Optional<CarPropertyConfigVerifier> mCarPropertyConfigVerifier;
     private final ImmutableSet<Integer> mPossibleConfigArrayValues;
     private final ImmutableSet<T> mAllPossibleEnumValues;
+    private final ImmutableSet<T> mAllPossibleUnwritableValues;
     private final boolean mRequirePropertyValueToBeInConfigArray;
     private final boolean mVerifySetterWithConfigArrayValues;
     private final boolean mRequireMinMaxValues;
@@ -155,6 +155,7 @@ public class VehiclePropertyVerifier<T> {
             Optional<CarPropertyConfigVerifier> carPropertyConfigVerifier,
             ImmutableSet<Integer> possibleConfigArrayValues,
             ImmutableSet<T> allPossibleEnumValues,
+            ImmutableSet<T> allPossibleUnwritableValues,
             boolean requirePropertyValueToBeInConfigArray,
             boolean verifySetterWithConfigArrayValues,
             boolean requireMinMaxValues,
@@ -176,6 +177,7 @@ public class VehiclePropertyVerifier<T> {
         mCarPropertyConfigVerifier = carPropertyConfigVerifier;
         mPossibleConfigArrayValues = possibleConfigArrayValues;
         mAllPossibleEnumValues = allPossibleEnumValues;
+        mAllPossibleUnwritableValues = allPossibleUnwritableValues;
         mRequirePropertyValueToBeInConfigArray = requirePropertyValueToBeInConfigArray;
         mVerifySetterWithConfigArrayValues = verifySetterWithConfigArrayValues;
         mRequireMinMaxValues = requireMinMaxValues;
@@ -508,8 +510,20 @@ public class VehiclePropertyVerifier<T> {
         if (!mAllPossibleEnumValues.isEmpty()) {
             for (AreaIdConfig<?> areaIdConfig : carPropertyConfig.getAreaIdConfigs()) {
                 for (T valueToSet : (List<T>) areaIdConfig.getSupportedEnumValues()) {
-                    verifySetProperty((CarPropertyConfig<T>) carPropertyConfig,
-                            carPropertyManager, areaIdConfig.getAreaId(), valueToSet);
+                    if (!mAllPossibleUnwritableValues.isEmpty()
+                            && mAllPossibleUnwritableValues.contains(valueToSet)) {
+                        assertThrows("Trying to set an unwritable value: " + valueToSet
+                                + " to property: " + mPropertyId + " should throw an "
+                                + "IllegalArgumentException",
+                                IllegalArgumentException.class,
+                                () -> setPropertyAndWaitForChange(
+                                        carPropertyManager, mPropertyId,
+                                        carPropertyConfig.getPropertyType(),
+                                        areaIdConfig.getAreaId(), valueToSet));
+                    } else {
+                        verifySetProperty((CarPropertyConfig<T>) carPropertyConfig,
+                                carPropertyManager, areaIdConfig.getAreaId(), valueToSet);
+                    }
                 }
             }
         } else {
@@ -1223,6 +1237,7 @@ public class VehiclePropertyVerifier<T> {
         private Optional<CarPropertyConfigVerifier> mCarPropertyConfigVerifier = Optional.empty();
         private ImmutableSet<Integer> mPossibleConfigArrayValues = ImmutableSet.of();
         private ImmutableSet<T> mAllPossibleEnumValues = ImmutableSet.of();
+        private ImmutableSet<T> mAllPossibleUnwritableValues = ImmutableSet.of();
         private boolean mRequirePropertyValueToBeInConfigArray = false;
         private boolean mVerifySetterWithConfigArrayValues = false;
         private boolean mRequireMinMaxValues = false;
@@ -1280,6 +1295,12 @@ public class VehiclePropertyVerifier<T> {
             return this;
         }
 
+        public Builder<T> setAllPossibleUnwritableValues(
+                ImmutableSet<T> allPossibleUnwritableValues) {
+            mAllPossibleUnwritableValues = allPossibleUnwritableValues;
+            return this;
+        }
+
         public Builder<T> requirePropertyValueTobeInConfigArray() {
             mRequirePropertyValueToBeInConfigArray = true;
             return this;
@@ -1334,6 +1355,7 @@ public class VehiclePropertyVerifier<T> {
                     mCarPropertyConfigVerifier,
                     mPossibleConfigArrayValues,
                     mAllPossibleEnumValues,
+                    mAllPossibleUnwritableValues,
                     mRequirePropertyValueToBeInConfigArray,
                     mVerifySetterWithConfigArrayValues,
                     mRequireMinMaxValues,

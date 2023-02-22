@@ -41,6 +41,7 @@ import android.car.VehiclePropertyIds;
 import android.car.VehicleUnit;
 import android.car.annotation.ApiRequirements;
 import android.car.cts.utils.VehiclePropertyVerifier;
+import android.car.hardware.CarHvacFanDirection;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.AreaIdConfig;
@@ -384,6 +385,28 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     private static final ImmutableSet<Integer> VEHICLE_SEAT_OCCUPANCY_STATES = ImmutableSet.of(
             /*VehicleSeatOccupancyState.UNKNOWN=*/0, /*VehicleSeatOccupancyState.VACANT=*/1,
             /*VehicleSeatOccupancyState.OCCUPIED=*/2);
+    private static final ImmutableSet<Integer> CAR_HVAC_FAN_DIRECTION_UNWRITABLE_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            CarHvacFanDirection.UNKNOWN)
+                    .build();
+    private static final ImmutableSet<Integer> CRUISE_CONTROL_TYPE_UNWRITABLE_STATES =
+            ImmutableSet.<Integer>builder()
+                    .addAll(ERROR_STATES)
+                    .add(
+                            CruiseControlType.OTHER)
+                    .build();
+    private static final ImmutableSet<Integer> EV_STOPPING_MODE_UNWRITABLE_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            EvStoppingMode.STATE_OTHER)
+                    .build();
+    private static final ImmutableSet<Integer> WINDSHIELD_WIPERS_SWITCH_UNWRITABLE_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            WindshieldWipersSwitch.OTHER)
+                    .build();
+
     private static final ImmutableList<Integer>
             PERMISSION_READ_DRIVER_MONITORING_SETTINGS_PROPERTIES = ImmutableList.<Integer>builder()
                     .add(
@@ -1154,6 +1177,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
                 .setAllPossibleEnumValues(possibleEnumValues)
+                .setAllPossibleUnwritableValues(CRUISE_CONTROL_TYPE_UNWRITABLE_STATES)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .build()
@@ -2013,6 +2037,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
                 .setAllPossibleEnumValues(EV_STOPPING_MODES)
+                .setAllPossibleUnwritableValues(EV_STOPPING_MODE_UNWRITABLE_STATES)
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
                 .addWritePermission(Car.PERMISSION_CONTROL_POWERTRAIN)
                 .build()
@@ -2425,6 +2450,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
                 .setAllPossibleEnumValues(WINDSHIELD_WIPERS_SWITCHES)
+                .setAllPossibleUnwritableValues(WINDSHIELD_WIPERS_SWITCH_UNWRITABLE_STATES)
                 .setCarPropertyConfigVerifier(
                         carPropertyConfig -> {
                             // Test to ensure that for both INTERMITTENT_LEVEL_* and
@@ -5007,6 +5033,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                     hvacFanDirectionAvailableCarPropertyValue
                                                             .getValue()));
                         })
+                .setAllPossibleUnwritableValues(CAR_HVAC_FAN_DIRECTION_UNWRITABLE_STATES)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
