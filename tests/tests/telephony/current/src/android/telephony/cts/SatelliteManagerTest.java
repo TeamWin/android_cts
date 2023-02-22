@@ -26,11 +26,11 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.OutcomeReceiver;
+import android.telephony.satellite.ISatelliteDatagramReceiverAck;
 import android.telephony.satellite.PointingInfo;
 import android.telephony.satellite.SatelliteCapabilities;
 import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteDatagramCallback;
-import android.telephony.satellite.ISatelliteDatagramReceiverAck;
 import android.telephony.satellite.SatelliteManager;
 import android.telephony.satellite.SatellitePositionUpdateCallback;
 import android.telephony.satellite.SatelliteProvisionStateCallback;
@@ -238,16 +238,16 @@ public class SatelliteManagerTest {
     }
 
     @Test
-    public void testSatelliteModemStateChanges() throws Exception {
+    public void testSatelliteModemStateChanged() throws Exception {
         SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class, ()-> mSatelliteManager
-                .registerForSatelliteModemStateChange(getContext().getMainExecutor(), callback));
+                .registerForSatelliteModemStateChanged(getContext().getMainExecutor(), callback));
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class, ()-> mSatelliteManager
-                .unregisterForSatelliteModemStateChange(callback));
+                .unregisterForSatelliteModemStateChanged(callback));
     }
 
     @Test
@@ -359,14 +359,14 @@ public class SatelliteManagerTest {
     private static class SatellitePositionUpdateCallbackTest extends
             SatellitePositionUpdateCallback {
         @Override
-        public void onSatellitePositionUpdate(PointingInfo pointingInfo) {
-            Log.d(TAG, "onSatellitePositionUpdate: pointingInfo=" + pointingInfo);
+        public void onSatellitePositionChanged(PointingInfo pointingInfo) {
+            Log.d(TAG, "onSatellitePositionChanged: pointingInfo=" + pointingInfo);
         }
 
         @Override
-        public void onDatagramTransferStateUpdate(int state, int sendPendingCount,
+        public void onDatagramTransferStateChanged(int state, int sendPendingCount,
                 int receivePendingCount, int errorCode) {
-            Log.d(TAG, "onDatagramTransferStateUpdate: state=" + state + ", sendPendingCount="
+            Log.d(TAG, "onSatellitePositionChanged: state=" + state + ", sendPendingCount="
                     + sendPendingCount + ", receivePendingCount=" + receivePendingCount
                     + ", errorCode=" + errorCode);
         }
@@ -382,8 +382,8 @@ public class SatelliteManagerTest {
 
     private static class SatelliteStateCallbackTest extends SatelliteStateCallback {
         @Override
-        public void onSatelliteModemStateChange(int state) {
-            Log.d(TAG, "onSatelliteModemStateChange: state=" + state);
+        public void onSatelliteModemStateChanged(int state) {
+            Log.d(TAG, "onSatelliteModemStateChanged: state=" + state);
         }
 
         @Override
@@ -396,7 +396,8 @@ public class SatelliteManagerTest {
         @Override
         public void onSatelliteDatagramReceived(long datagramId, SatelliteDatagram datagram,
                 int pendingCount, ISatelliteDatagramReceiverAck callback) {
-            Log.d(TAG, "onSatelliteDatagram");
+            Log.d(TAG, "onSatelliteDatagramReceived: datagramId=" + datagramId + ", datagram="
+                    + datagram + ", pendingCount=" + pendingCount);
         }
     }
 }
