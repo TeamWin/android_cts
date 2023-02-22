@@ -41,7 +41,7 @@ public final class Versions {
     public static final int ANY = -1;
 
     private static final ImmutableSet<String> DEVELOPMENT_CODENAMES =
-            ImmutableSet.of("UpsideDownCake");
+            ImmutableSet.of("UpsideDownCake", "VanillaIceCream");
 
     private Versions() {
 
