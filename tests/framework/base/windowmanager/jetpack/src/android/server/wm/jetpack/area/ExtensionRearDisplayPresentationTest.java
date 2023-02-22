@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack;
+package android.server.wm.jetpack.area;
 
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.UiDeviceUtils.pressSleepButton;
