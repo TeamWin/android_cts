@@ -19,13 +19,11 @@ package android.server.wm.jetpack.embedding;
 import static android.server.wm.jetpack.signed.Components.SIGNED_EMBEDDING_ACTIVITY;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EMBEDDED_ACTIVITY_ID;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilderWithJava8Predicate;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifyNoCallback;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeHasDisplayFeatures;
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeVendorApiLevelAtLeast;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLayoutComponent;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLayoutInfo;
 
@@ -41,6 +39,7 @@ import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.window.extensions.embedding.SplitAttributes;
 import androidx.window.extensions.embedding.SplitPairRule;
 import androidx.window.extensions.layout.WindowLayoutComponent;
 import androidx.window.extensions.layout.WindowLayoutInfo;
@@ -63,6 +62,8 @@ import java.util.Collections;
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase {
     private WindowLayoutComponent mWindowLayoutComponent;
+    private static final SplitAttributes TEST_SPLIT_ATTRS = new SplitAttributes.Builder()
+            .setSplitType(new SplitAttributes.SplitType.RatioSplitType(0.1f)).build();
 
     @Before
     @Override
@@ -85,12 +86,12 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
 
         // Launch a second activity in a split. Use a very small split ratio, so that the secondary
         // activity occupies most of the screen.
-        SplitPairRule splitPairRule = createSplitPairRuleBuilderWithJava8Predicate(
+        SplitPairRule splitPairRule = createSplitPairRuleBuilder(
                 activityActivityPair -> true,
                 activityIntentPair -> true,
                 windowMetrics -> true
         )
-                .setSplitRatio(0.1f)
+                .setDefaultSplitAttributes(TEST_SPLIT_ATTRS)
                 .build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
@@ -124,7 +125,6 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
      */
     @Test
     public void testClearSplitInfoCallback() throws Exception {
-        assumeVendorApiLevelAtLeast(2); // TODO(b/244450254): harden the requirement in U.
         mActivityEmbeddingComponent.clearSplitInfoCallback();
         TestConfigChangeHandlingActivity primaryActivity = startFullScreenActivityNewTask(
                 TestConfigChangeHandlingActivity.class);
@@ -136,7 +136,7 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
                 activityIntentPair -> true,
                 windowMetrics -> true
         )
-                .setSplitRatio(0.1f)
+                .setDefaultSplitAttributes(TEST_SPLIT_ATTRS)
                 .build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 

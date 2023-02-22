@@ -21,7 +21,7 @@ import static android.server.wm.jetpack.second.Components.SECOND_ACTIVITY;
 import static android.server.wm.jetpack.second.Components.SECOND_ACTIVITY_UNKNOWN_EMBEDDING_CERTS;
 import static android.server.wm.jetpack.second.Components.SECOND_UNTRUSTED_EMBEDDING_ACTIVITY;
 import static android.server.wm.jetpack.signed.Components.SIGNED_EMBEDDING_ACTIVITY;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_RATIO;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EMBEDDED_ACTIVITY_ID;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityCrossUidInSplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityCrossUidInSplit_expectFail;
@@ -86,7 +86,7 @@ public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
         SplitPairRule splitPairRule = new SplitPairRule.Builder(
                 activityActivityPredicate, activityIntentPair -> true /* activityIntentPredicate */,
                 parentWindowMetrics -> true /* parentWindowMetricsPredicate */)
-                .setSplitRatio(DEFAULT_SPLIT_RATIO).build();
+                .setDefaultSplitAttributes(DEFAULT_SPLIT_ATTRS).build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch an activity from a different UID and verify that it is not split with the primary
@@ -111,7 +111,7 @@ public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
         SplitPairRule splitPairRule = new SplitPairRule.Builder(
                 activityActivityPredicate, activityIntentPair -> true /* activityIntentPredicate */,
                 parentWindowMetrics -> true /* parentWindowMetricsPredicate */)
-                .setSplitRatio(DEFAULT_SPLIT_RATIO).build();
+                .setDefaultSplitAttributes(DEFAULT_SPLIT_ATTRS).build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch an activity from a different UID and verify that it is not split with the primary
@@ -153,7 +153,7 @@ public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
         SplitPairRule splitPairRule = new SplitPairRule.Builder(
                 activityActivityPredicate, activityIntentPair -> true /* activityIntentPredicate */,
                 parentWindowMetrics -> true /* parentWindowMetricsPredicate */)
-                .setSplitRatio(DEFAULT_SPLIT_RATIO).build();
+                .setDefaultSplitAttributes(DEFAULT_SPLIT_ATTRS).build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch an embeddable activity from a different UID and verify that it is split with the
@@ -178,7 +178,7 @@ public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
         SplitPairRule splitPairRule = new SplitPairRule.Builder(
                 activityActivityPredicate, activityIntentPair -> true /* activityIntentPredicate */,
                 parentWindowMetrics -> true /* parentWindowMetricsPredicate */)
-                .setSplitRatio(DEFAULT_SPLIT_RATIO).build();
+                .setDefaultSplitAttributes(DEFAULT_SPLIT_ATTRS).build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // First launch an embeddable activity to setup a split

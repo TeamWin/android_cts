@@ -17,7 +17,7 @@
 package android.server.wm.jetpack.embedding;
 
 
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_RATIO;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifyNotSplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplit;
@@ -121,7 +121,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests that when finishPrimaryWithSecondary is set to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_NEVER} when the activities are
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_NEVER} when the activities are
      * stacked, then finishing the secondary activity does not cause the primary activity to finish.
      */
     @Test
@@ -136,7 +136,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests that when finishPrimaryWithSecondary is set to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_ADJACENT} when the activities
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_ADJACENT} when the activities
      * are stacked, then finishing the secondary activity does not cause the primary activity to
      * finish because the activities were not adjacent.
      */
@@ -152,7 +152,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests that when finishPrimaryWithSecondary is set to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS} when the activities are
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_ALWAYS} when the activities are
      * stacked, then finishing the secondary activity causes the primary activity to finish even
      * though the activities are stacked.
      */
@@ -168,7 +168,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests that when finishPrimaryWithSecondary is set to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_NEVER} when the activities are
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_NEVER} when the activities are
      * split, then finishing the secondary activity does not cause the primary activity to finish.
      */
     @Test
@@ -185,7 +185,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests that when finishPrimaryWithSecondary is set to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_ADJACENT} when the activities
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_ADJACENT} when the activities
      * are split, then finishing the secondary activity causes the primary activity to finish
      * because the activities were in a split.
      */
@@ -201,7 +201,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests that when finishPrimaryWithSecondary is set to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS} when the activities are
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_ALWAYS} when the activities are
      * split, then finishing the secondary activity causes the primary activity to finish.
      */
     @Test
@@ -216,7 +216,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests that when finishSecondaryWithPrimary is set to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_NEVER} when the activities are
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_NEVER} when the activities are
      * stacked, then finishing the primary activity does not cause the secondary activity to finish.
      */
     @Test
@@ -231,7 +231,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests that when finishSecondaryWithPrimary is set to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_ADJACENT} when the activities
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_ADJACENT} when the activities
      * are stacked, then finishing the primary activity does not cause the secondary activity to
      * finish because the activities were not adjacent.
      */
@@ -247,7 +247,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests that when finishSecondaryWithPrimary is set to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS} when the activities are
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_ALWAYS} when the activities are
      * stacked, then finishing the primary activity causes the secondary activity to finish even
      * though the activities are stacked.
      */
@@ -263,7 +263,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests that when finishSecondaryWithPrimary is set to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_NEVER} when the activities are
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_NEVER} when the activities are
      * split, then finishing the primary activity does not cause the secondary activity to finish.
      */
     @Test
@@ -280,7 +280,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests that when finishSecondaryWithPrimary is set to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_ADJACENT} when the activities
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_ADJACENT} when the activities
      * are split, then finishing the primary activity causes the secondary activity to finish
      * because the activities were in a split.
      */
@@ -296,7 +296,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests that when finishSecondaryWithPrimary is set to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS} when the activities are
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_ALWAYS} when the activities are
      * split, then finishing the primary activity causes the secondary activity to finish.
      */
     @Test
@@ -347,7 +347,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
             SplitPairRule.Builder splitPairRuleBuilder = new SplitPairRule.Builder(
                     activityActivityPair -> true /* any two activities can be split */,
                     activityIntentPair -> true /* any intent will put an activity into a split */,
-                    parentWindowMetricsPredicate).setSplitRatio(DEFAULT_SPLIT_RATIO);
+                    parentWindowMetricsPredicate).setDefaultSplitAttributes(DEFAULT_SPLIT_ATTRS);
             // Only set paired finish behavior if an explicit value is set, otherwise use the
             // default library implementation.
             if (mFinishPrimaryWithSecondary != UNSET_PAIRED_FINISH_BEHAVIOR) {

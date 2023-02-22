@@ -16,7 +16,7 @@
 
 package android.server.wm.jetpack.embedding;
 
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_RATIO;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assertValidSplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.verifyFillsTask;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertFinishing;
@@ -39,6 +39,7 @@ import android.view.WindowMetrics;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.window.extensions.embedding.ActivityEmbeddingComponent;
 import androidx.window.extensions.embedding.SplitPlaceholderRule;
 
 import org.junit.Ignore;
@@ -115,7 +116,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
     /**
      * Tests that when the placeholder activity is finished, then the activity it launched with is
      * also finished because the default value for finishPrimaryWithSecondary is
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS}.
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_ALWAYS}.
      */
     @Test
     public void testFinishingPlaceholderFinishesPrimaryActivity() {
@@ -139,7 +140,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
     /**
      * Tests that when a placeholder activity that is created from a rule that sets
      * finishPrimaryWithSecondary to
-     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_NEVER} is finished, then the
+     * {@link androidx.window.extensions.embedding.SplitRule#FINISH_NEVER} is finished, then the
      * activity it launched with is not finished.
      */
     @Test
@@ -331,9 +332,8 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
                                     .getId()) /* activityPredicate */,
                             intent -> mPrimaryActivityId.equals(
                                     intent.getStringExtra(KEY_ACTIVITY_ID)
-                            )/* intentPredicate */,
-                    mParentWindowMetricsPredicate)
-                    .setSplitRatio(DEFAULT_SPLIT_RATIO);
+                            )/* intentPredicate */, mParentWindowMetricsPredicate)
+                            .setDefaultSplitAttributes(DEFAULT_SPLIT_ATTRS);
 
             // Only set finishPrimaryWithSecondary if an explicit value is present
             if (mFinishPrimaryWithSecondary.isPresent()) {
