@@ -30,7 +30,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.os.SystemClock;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.safetycenter.SafetyCenterManager;
@@ -40,11 +39,13 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SettingsStateChangerRule;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -82,8 +83,6 @@ public final class RecognitionServiceMicIndicatorTest {
     private static final String CTS_VOICE_RECOGNITION_SERVICE =
             "android.recognitionservice.service/android.recognitionservice.service"
                     + ".CtsVoiceRecognitionService";
-    private static final long INDICATOR_DISMISS_TIMEOUT = 5000L;
-    private static final long UI_WAIT_TIMEOUT = 1000L;
 
     protected final Context mContext = InstrumentationRegistry.getTargetContext();
     private final String mOriginalVoiceRecognizer = Settings.Secure.getString(
@@ -134,7 +133,7 @@ public final class RecognitionServiceMicIndicatorTest {
 
         setIndicatorsEnabledState(Boolean.toString(true));
         // Wait for any privacy indicator to disappear to avoid the test becoming flaky.
-        SystemClock.sleep(INDICATOR_DISMISS_TIMEOUT);
+        waitForNoIndicator(chipId());
     }
 
     @After
@@ -143,6 +142,7 @@ public final class RecognitionServiceMicIndicatorTest {
         mUiDevice.pressHome();
         // Restore original value.
         setIndicatorsEnabledState(mOriginalIndicatorsState);
+        waitForNoIndicator(chipId());
     }
 
     private void prepareDevice() {
@@ -232,19 +232,18 @@ public final class RecognitionServiceMicIndicatorTest {
                 "Waiting for the mic indicator window to come up");
     }
 
-    private void assertPrivacyChipAndIndicatorsPresent(boolean trustVoiceService) {
+    private void assertPrivacyChipAndIndicatorsPresent(boolean trustVoiceService) throws Exception {
         // Open notification and verify the privacy indicator is shown
         mUiDevice.openQuickSettings();
-        SystemClock.sleep(UI_WAIT_TIMEOUT);
 
-        String chipId = isCar() ? CAR_MIC_PRIVACY_CHIP_ID : PRIVACY_CHIP_ID;
+        String chipId = chipId();
         final UiObject2 privacyChip =
-                mUiDevice.findObject(By.res(PRIVACY_CHIP_PACKAGE_NAME, chipId));
-        assertWithMessage("Can not find mic indicator").that(privacyChip).isNotNull();
-
-        // Click the privacy indicator and verify the calling app name display status in the dialog.
-        privacyChip.click();
-        SystemClock.sleep(UI_WAIT_TIMEOUT);
+                SystemUtil.getEventually(() -> {
+                    final UiObject2 foundChip =
+                            mUiDevice.findObject(By.res(PRIVACY_CHIP_PACKAGE_NAME, chipId));
+                    assertWithMessage("Can not find mic indicator").that(foundChip).isNotNull();
+                    return foundChip;
+                });
 
         // Make sure dialog is shown
         String dialogPackageName =
@@ -257,10 +256,17 @@ public final class RecognitionServiceMicIndicatorTest {
         } else {
             contentId = PRIVACY_DIALOG_CONTENT_ID;
         }
-        List<UiObject2> recognitionCallingAppLabels = mUiDevice.findObjects(
-                By.res(dialogPackageName, contentId));
-        assertWithMessage("No permission dialog shown after clicking  privacy chip.").that(
-                recognitionCallingAppLabels).isNotEmpty();
+
+        // Click the privacy indicator and verify the calling app name display status in the dialog.
+        privacyChip.click();
+        List<UiObject2> recognitionCallingAppLabels =
+                SystemUtil.getEventually(() -> {
+                    List<UiObject2> labels = mUiDevice.findObjects(
+                            By.res(dialogPackageName, contentId));
+                    assertWithMessage("No permission dialog shown after clicking privacy chip.")
+                            .that(labels).isNotEmpty();
+                    return labels;
+                });
 
         // get dialog content
         String dialogDescription;
@@ -302,7 +308,20 @@ public final class RecognitionServiceMicIndicatorTest {
         }
 
         // Wait for the privacy indicator to disappear to avoid the test becoming flaky.
-        SystemClock.sleep(INDICATOR_DISMISS_TIMEOUT);
+        waitForNoIndicator(chipId);
+    }
+
+    @NonNull
+    private String chipId() {
+        return isCar() ? CAR_MIC_PRIVACY_CHIP_ID : PRIVACY_CHIP_ID;
+    }
+
+    private void waitForNoIndicator(String chipId) {
+        SystemUtil.eventually(() -> {
+            final UiObject2 foundChip =
+                    mUiDevice.findObject(By.res(PRIVACY_CHIP_PACKAGE_NAME, chipId));
+            assertWithMessage("Chip still visible.").that(foundChip).isNull();
+        });
     }
 
     private boolean isTv() {
