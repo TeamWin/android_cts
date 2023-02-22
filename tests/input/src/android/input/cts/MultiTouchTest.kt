@@ -17,6 +17,8 @@ package android.input.cts
 
 import android.content.pm.ActivityInfo
 import android.graphics.PointF
+import android.server.wm.WindowManagerStateHelper
+import android.view.Display.DEFAULT_DISPLAY
 import android.view.View
 import android.view.WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
 import androidx.test.ext.junit.rules.ActivityScenarioRule
@@ -58,8 +60,11 @@ class MultiTouchTest {
             activity.setRequestedOrientation(orientation)
         }
         PollingCheck.waitFor { activity.hasWindowFocus() }
-        instrumentation.uiAutomation.syncInputTransactions()
         verifier = EventVerifier(activity::getInputEvent)
+
+        WindowManagerStateHelper().waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY)
+        instrumentation.uiAutomation.syncInputTransactions()
+        instrumentation.waitForIdleSync()
     }
 
     /**
