@@ -764,6 +764,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     @Test
     @SystemUserOnly(reason = "Device owner must be SYSTEM user")
     public void testDeviceOwner() throws Exception {
+        Assume.assumeFalse("Headless system user doesn't launch activities",
+                UserManager.isHeadlessSystemUserMode());
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A
         if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN)) {
