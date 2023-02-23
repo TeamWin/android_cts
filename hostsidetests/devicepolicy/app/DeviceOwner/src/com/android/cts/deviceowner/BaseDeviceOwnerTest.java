@@ -27,11 +27,11 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.support.test.uiautomator.UiDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
 import com.android.compatibility.common.util.WifiConfigCreator;

@@ -29,8 +29,9 @@ import android.net.Uri;
 import android.os.Process;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
-import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
+
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
 

@@ -43,8 +43,9 @@ import android.security.KeyChainException;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.StrongBoxUnavailableException;
-import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
+
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
 
