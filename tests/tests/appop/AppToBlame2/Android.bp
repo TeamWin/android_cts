@@ -18,10 +18,11 @@ package {
 
 android_test_helper_app {
     name: "CtsAppToBlame2",
-
+    target_sdk_version: "29",
+    min_sdk_version: "29",
     test_suites: [
         "cts",
         "general-tests",
         "mts",
-    ]
+    ],
 }

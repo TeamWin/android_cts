@@ -16,33 +16,41 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_test_library  {
+cc_test_library {
     name: "libAppThatUsesAppOps_jni",
+    defaults: [
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
     sdk_version: "current",
     stl: "c++_static",
 
     srcs: [
-        "jni/**/*.cpp"
+        "jni/**/*.cpp",
     ],
 
     cflags: [
         "-Wall",
         "-Werror",
-        "-Wno-unused-parameter"
+        "-Wno-unused-parameter",
     ],
 
     shared_libs: [
         "liblog",
-        "libbinder_ndk"
+        "libbinder_ndk",
     ],
 
     static_libs: [
-        "AppOpsUserServiceAidlNative-ndk"
-    ]
+        "AppOpsUserServiceAidlNative-ndk",
+    ],
 }
 
 android_test_helper_app {
     name: "CtsAppThatUsesAppOps",
+    defaults: [
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
 
     compile_multilib: "both",
 
@@ -56,12 +64,12 @@ android_test_helper_app {
     ],
 
     jni_libs: [
-        "libAppThatUsesAppOps_jni"
+        "libAppThatUsesAppOps_jni",
     ],
 
     test_suites: [
         "cts",
         "general-tests",
         "mts",
-    ]
+    ],
 }

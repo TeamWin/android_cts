@@ -18,10 +18,13 @@ package {
 
 android_test_helper_app {
     name: "AppInBackground",
-
+    defaults: [
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
     test_suites: [
         "cts",
         "general-tests",
         "mts",
-    ]
+    ],
 }
