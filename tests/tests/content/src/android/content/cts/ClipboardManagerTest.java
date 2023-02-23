@@ -67,6 +67,10 @@ public class ClipboardManagerTest {
         mClipboardManager = mContext.getSystemService(ClipboardManager.class);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mUiDevice.wakeUp();
+
+        // Clear any dialogs and launch an activity as focus is needed to access clipboard.
+        mUiDevice.pressHome();
+        mUiDevice.pressBack();
         launchActivity(MockActivity.class);
     }
 
