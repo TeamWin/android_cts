@@ -164,6 +164,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         private List<CallEndpoint> mAvailableEndpoints;
         private boolean mIsMuted = false;
         public boolean mWasMuteStateChangedCalled = false;
+        public boolean mWasOnEventCalled = false;
 
         @Override
         public void onCallEndpointChanged(@NonNull CallEndpoint newCallEndpoint) {
@@ -193,8 +194,15 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
                     reason));
         }
 
+        @Override
+        public void onEvent(String event, Bundle extras) {
+            Log.i(TAG, String.format("onEvent: callId=[%s], event=[%s]", mCallId, event));
+            mWasOnEventCalled = true;
+        }
+
         public void resetAllCallbackVerifiers() {
             mWasMuteStateChangedCalled = false;
+            mWasOnEventCalled = false;
         }
 
         public CallEndpoint getCurrentCallEndpoint() {
@@ -694,6 +702,59 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
+     * Ensure {@link CallControl#sendEvent(String, Bundle)} does not throw an exception when given
+     * an event without a Bundle value.
+     */
+    public void testSendCallEvent() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        try {
+            cleanup();
+            startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
+            mCall1.mCallControl.sendEvent(Connection.EVENT_CALL_HOLD_FAILED, new Bundle());
+            callControlAction(DISCONNECT, mCall1);
+        } finally {
+            cleanup();
+        }
+    }
+
+    /**
+     * Ensure {@link CallEventCallback#onEvent(String, Bundle)} is called when an InCallService
+     * creates a new event.
+     */
+    public void testOnCallEvent() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        try {
+            cleanup();
+            assertFalse(mCall1.mEvents.mWasOnEventCalled);
+            startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
+            assertNumCalls(getInCallService(), 1);
+            // simulate an InCallService sending a call event
+            getLastAddedCall().sendCallEvent(Connection.EVENT_CALL_HOLD_FAILED, new Bundle());
+            // wait for the onEvent to be called
+            waitUntilConditionIsTrueOrTimeout(
+                    new Condition() {
+                        @Override
+                        public Object expected() {
+                            return true;
+                        }
+
+                        @Override
+                        public Object actual() {
+                            return mCall1.mEvents.mWasOnEventCalled;
+                        }
+                    },
+                    WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "onEvent was never called");
+
+        } finally {
+            cleanup();
+        }
+    }
+
+    /**
      * test {@link CallControl#requestCallEndpointChange(CallEndpoint, Executor, OutcomeReceiver)}
      * can switch {@link CallEndpoint}s if there is another endpoint available.  This test will not
      * request an endpoint change if the device only has a single endpoint.
@@ -915,6 +976,8 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
                 mInCallCallbacks.getService().clearCallList();
             }
             TestUtils.executeShellCommand(getInstrumentation(), TEL_CLEAN_STUCK_CALLS_CMD);
+            mCall1.resetAllCallbackVerifiers();
+            mCall2.resetAllCallbackVerifiers();
         } catch (Exception e) {
             Log.i(TAG, FAIL_MSG_DURING_CLEANUP);
         }
