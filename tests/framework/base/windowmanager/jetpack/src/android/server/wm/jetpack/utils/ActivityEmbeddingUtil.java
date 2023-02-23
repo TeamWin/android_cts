@@ -32,6 +32,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
@@ -39,7 +40,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.util.LayoutDirection;
 import android.util.Log;
 import android.util.Pair;
 import android.view.WindowMetrics;
@@ -48,6 +48,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.window.extensions.core.util.function.Predicate;
 import androidx.window.extensions.embedding.ActivityEmbeddingComponent;
+import androidx.window.extensions.embedding.SplitAttributes;
+import androidx.window.extensions.embedding.SplitAttributes.LayoutDirection;
+import androidx.window.extensions.embedding.SplitAttributes.SplitType;
 import androidx.window.extensions.embedding.SplitInfo;
 import androidx.window.extensions.embedding.SplitPairRule;
 import androidx.window.extensions.embedding.SplitRule;
@@ -66,21 +69,20 @@ public class ActivityEmbeddingUtil {
 
     public static final String TAG = "ActivityEmbeddingTests";
     public static final long WAIT_FOR_LIFECYCLE_TIMEOUT_MS = 3000;
-    public static final float DEFAULT_SPLIT_RATIO = 0.5f;
-    public static final float UNEVEN_CONTAINERS_DEFAULT_SPLIT_RATIO = 0.7f;
+    public static final SplitAttributes DEFAULT_SPLIT_ATTRS = new SplitAttributes.Builder().build();
     public static final String EMBEDDED_ACTIVITY_ID = "embedded_activity_id";
 
     @NonNull
     public static SplitPairRule createWildcardSplitPairRule(boolean shouldClearTop) {
         // Build the split pair rule
-        return createSplitPairRuleBuilderWithJava8Predicate(
+        return createSplitPairRuleBuilder(
                 // Any activity be split with any activity
                 activityActivityPair -> true,
                 // Any activity can launch any split intent
                 activityIntentPair -> true,
                 // Allow any parent bounds to show the split containers side by side
                 windowMetrics -> true)
-                .setSplitRatio(DEFAULT_SPLIT_RATIO)
+                .setDefaultSplitAttributes(DEFAULT_SPLIT_ATTRS)
                 .setShouldClearTop(shouldClearTop)
                 .build();
     }
@@ -96,39 +98,20 @@ public class ActivityEmbeddingUtil {
     public static SplitPairRule.Builder createWildcardSplitPairRuleBuilderWithPrimaryActivityClass(
             Class<? extends Activity> activityClass, boolean shouldClearTop) {
         // Build the split pair rule
-        return createSplitPairRuleBuilderWithJava8Predicate(
+        return createSplitPairRuleBuilder(
                 // The specified activity be split any activity
                 activityActivityPair -> activityActivityPair.first.getClass().equals(activityClass),
                 // The specified activity can launch any split intent
                 activityIntentPair -> activityIntentPair.first.getClass().equals(activityClass),
                 // Allow any parent bounds to show the split containers side by side
                 windowMetrics -> true)
-                .setSplitRatio(DEFAULT_SPLIT_RATIO)
+                .setDefaultSplitAttributes(DEFAULT_SPLIT_ATTRS)
                 .setShouldClearTop(shouldClearTop);
     }
 
     @NonNull
     public static SplitPairRule createWildcardSplitPairRule() {
         return createWildcardSplitPairRule(false /* shouldClearTop */);
-    }
-
-    // TODO(b/264377844): Migrate the usages to use new APIs
-    /**
-     * A wrapper to create {@link SplitPairRule} builder with Java 8 Predicate to prevent ambiguous
-     * issue when using lambda expressions.
-     * <p>
-     * It should only be used if
-     * {@link #createSplitPairRuleBuilder(Predicate, Predicate, Predicate)} cannot be called prior
-     * to {@link ExtensionUtil#EXTENSION_VERSION_2}.
-     */
-    @NonNull
-    public static SplitPairRule.Builder createSplitPairRuleBuilderWithJava8Predicate(
-            @NonNull java.util.function.Predicate<Pair<Activity, Activity>> activitiesPairPredicate,
-            @NonNull java.util.function.Predicate<Pair<Activity, Intent>>
-                    activityIntentPairPredicate,
-            @NonNull java.util.function.Predicate<WindowMetrics> windowMetricsPredicate) {
-        return new SplitPairRule.Builder(activitiesPairPredicate, activityIntentPairPredicate,
-                windowMetricsPredicate);
     }
 
     /**
@@ -327,29 +310,18 @@ public class ActivityEmbeddingUtil {
                 ? Arrays.asList(primaryActivity, secondaryActivity)
                 : Collections.singletonList(primaryActivity));
 
-        // Compute the layout direction
-        int layoutDir = splitRule.getLayoutDirection();
-        if (layoutDir == LayoutDirection.LOCALE) {
-            layoutDir = primaryActivity.getResources().getConfiguration().getLayoutDirection();
-        }
-
-        // Compute the expected bounds
-        final float splitRatio = splitRule.getSplitRatio();
-        final Rect parentBounds = getMaximumActivityBounds(primaryActivity);
-        final Rect expectedPrimaryActivityBounds = new Rect();
-        final Rect expectedSecondaryActivityBounds = new Rect();
-        getExpectedPrimaryAndSecondaryBounds(layoutDir, splitRatio, parentBounds,
-                expectedPrimaryActivityBounds, expectedSecondaryActivityBounds);
+        final Pair<Rect, Rect> expectedBoundsPair = getExpectedBoundsPair(primaryActivity,
+                splitRule.getDefaultSplitAttributes());
 
         final ActivityEmbeddingComponent activityEmbeddingComponent = getWindowExtensions()
                 .getActivityEmbeddingComponent();
 
         // Verify that both activities are embedded and that the bounds are correct
         assertTrue(activityEmbeddingComponent.isActivityEmbedded(primaryActivity));
-        assertEquals(expectedPrimaryActivityBounds, getActivityBounds(primaryActivity));
+        assertEquals(expectedBoundsPair.first, getActivityBounds(primaryActivity));
         if (secondaryActivity != null) {
             assertTrue(activityEmbeddingComponent.isActivityEmbedded(secondaryActivity));
-            assertEquals(expectedSecondaryActivityBounds, getActivityBounds(secondaryActivity));
+            assertEquals(expectedBoundsPair.second, getActivityBounds(secondaryActivity));
         }
     }
 
@@ -466,38 +438,86 @@ public class ActivityEmbeddingUtil {
         return secondaryActivityStack.get(secondaryActivityStack.size() - 1);
     }
 
-    public static void getExpectedPrimaryAndSecondaryBounds(int layoutDir, float splitRatio,
-            @NonNull Rect inParentBounds, @NonNull Rect outPrimaryActivityBounds,
-            @NonNull Rect outSecondaryActivityBounds) {
-        assertTrue(layoutDir == LayoutDirection.LTR || layoutDir == LayoutDirection.RTL);
+    /** Returns the expected bounds of the primary and secondary containers */
+    @NonNull
+    private static Pair<Rect, Rect> getExpectedBoundsPair(@NonNull Activity primaryActivity,
+            @NonNull SplitAttributes splitAttributes) {
+        final SplitType splitType = splitAttributes.getSplitType();
+        // TODO(b/241043377): add test to verify HingeSplitType
+        assumeFalse(splitType instanceof SplitType.HingeSplitType);
 
-        // Normalize the split ratio so that parent left + (parent width * split ratio) is always
-        // the position of the split divider in the parent.
-        if (layoutDir == LayoutDirection.RTL) {
+        final Rect parentBounds = getMaximumActivityBounds(primaryActivity);
+        if (splitType instanceof SplitType.ExpandContainersSplitType) {
+            return new Pair<>(new Rect(parentBounds), new Rect(parentBounds));
+        }
+
+        // At this point, splitType must be RatioSplitType.
+        assertTrue(splitType instanceof SplitType.RatioSplitType);
+
+        int layoutDir = (splitAttributes.getLayoutDirection() == LayoutDirection.LOCALE)
+                ? primaryActivity.getResources().getConfiguration().getLayoutDirection()
+                : splitAttributes.getLayoutDirection();
+        final boolean isPrimaryRightOrBottomContainer = isPrimaryRightOrBottomContainer(layoutDir);
+
+        float splitRatio = ((SplitType.RatioSplitType) splitType).getRatio();
+        // Normalize the split ratio so that parent start + (parent dimension * split ratio) is
+        // always the position of the split divider in the parent.
+        if (isPrimaryRightOrBottomContainer) {
             splitRatio = 1 - splitRatio;
         }
 
-        // Create the left and right container bounds
-        final Rect leftContainerBounds = new Rect(inParentBounds.left, inParentBounds.top,
-                (int) (inParentBounds.left + inParentBounds.width() * splitRatio),
-                inParentBounds.bottom);
-        final Rect rightContainerBounds = new Rect(
-                (int) (inParentBounds.left + inParentBounds.width() * splitRatio),
-                inParentBounds.top, inParentBounds.right, inParentBounds.bottom);
+        // Calculate the container bounds
+        final boolean isHorizontal = isHorizontal(layoutDir);
+        final Rect leftOrTopContainerBounds = isHorizontal
+                ? new Rect(
+                        parentBounds.left,
+                        parentBounds.top,
+                        parentBounds.right,
+                        (int) (parentBounds.top + parentBounds.height() * splitRatio)
+                ) : new Rect(
+                        parentBounds.left,
+                        parentBounds.top,
+                        (int) (parentBounds.left + parentBounds.width() * splitRatio),
+                        parentBounds.bottom);
+
+        final Rect rightOrBottomContainerBounds = isHorizontal
+                ? new Rect(
+                        parentBounds.left,
+                        (int) (parentBounds.top + parentBounds.height() * splitRatio),
+                        parentBounds.right,
+                        parentBounds.bottom
+                ) : new Rect(
+                        (int) (parentBounds.left + parentBounds.width() * splitRatio),
+                        parentBounds.top,
+                        parentBounds.right,
+                        parentBounds.bottom);
 
         // Assign the primary and secondary bounds depending on layout direction
-        if (layoutDir == LayoutDirection.LTR) {
-            /*******************|*********************
-             * primary activity | secondary activity *
-             *******************|*********************/
-            outPrimaryActivityBounds.set(leftContainerBounds);
-            outSecondaryActivityBounds.set(rightContainerBounds);
+        if (isPrimaryRightOrBottomContainer) {
+            return new Pair<>(rightOrBottomContainerBounds, leftOrTopContainerBounds);
         } else {
-            /*********************|*******************
-             * secondary activity | primary activity *
-             *********************|*******************/
-            outPrimaryActivityBounds.set(rightContainerBounds);
-            outSecondaryActivityBounds.set(leftContainerBounds);
+            return new Pair<>(leftOrTopContainerBounds, rightOrBottomContainerBounds);
+        }
+    }
+
+    private static boolean isHorizontal(int layoutDirection) {
+        switch (layoutDirection) {
+            case LayoutDirection.TOP_TO_BOTTOM:
+            case LayoutDirection.BOTTOM_TO_TOP:
+                return true;
+            default :
+                return false;
+        }
+    }
+
+    /** Indicates that whether the primary container is at right or bottom or not. */
+    private static boolean isPrimaryRightOrBottomContainer(int layoutDirection) {
+        switch (layoutDirection) {
+            case LayoutDirection.RIGHT_TO_LEFT:
+            case LayoutDirection.BOTTOM_TO_TOP:
+                return true;
+            default:
+                return false;
         }
     }
 

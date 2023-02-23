@@ -143,16 +143,14 @@ public class ExtensionUtil {
         }
         TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
                 new TestValueCountConsumer<>();
-        JavaConsumerAdapter<WindowLayoutInfo> javaConsumerAdapter =
-                new JavaConsumerAdapter<>(windowLayoutInfoConsumer);
-        windowLayoutComponent.addWindowLayoutInfoListener(activity, javaConsumerAdapter);
+        windowLayoutComponent.addWindowLayoutInfoListener(activity, windowLayoutInfoConsumer);
         WindowLayoutInfo info = windowLayoutInfoConsumer.waitAndGet();
 
         // The default implementation only allows a single listener per activity. Since we are using
         // a local windowLayoutInfoConsumer within this function, we must remember to clean up.
         // Otherwise, subsequent calls to addWindowLayoutInfoListener with the same activity will
         // fail to have its callback registered.
-        windowLayoutComponent.removeWindowLayoutInfoListener(javaConsumerAdapter);
+        windowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);
         return info;
     }
 

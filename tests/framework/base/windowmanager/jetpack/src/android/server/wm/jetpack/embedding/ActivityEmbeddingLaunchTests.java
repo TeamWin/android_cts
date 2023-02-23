@@ -16,7 +16,7 @@
 
 package android.server.wm.jetpack.embedding;
 
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_RATIO;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assertValidSplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.getPrimaryStackTopActivity;
@@ -81,7 +81,7 @@ public class ActivityEmbeddingLaunchTests extends ActivityEmbeddingTestBase {
         SplitPairRule splitPairRule = new SplitPairRule.Builder(
                 activityActivityPredicate, activityIntentPair -> true /* activityIntentPredicate */,
                 parentWindowMetrics -> true /* parentWindowMetricsPredicate */)
-                .setSplitRatio(DEFAULT_SPLIT_RATIO).build();
+                .setDefaultSplitAttributes(DEFAULT_SPLIT_ATTRS).build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch multiple activities from the primary activity and verify that they all
@@ -338,7 +338,7 @@ public class ActivityEmbeddingLaunchTests extends ActivityEmbeddingTestBase {
         final SplitPairRule splitPairRule = new SplitPairRule.Builder(
                 activityPair -> true /* activityPairPredicate */, activityIntentPredicate,
                 parentWindowMetrics -> true /* parentWindowMetricsPredicate */)
-                .setSplitRatio(DEFAULT_SPLIT_RATIO).build();
+                .setDefaultSplitAttributes(DEFAULT_SPLIT_ATTRS).build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
