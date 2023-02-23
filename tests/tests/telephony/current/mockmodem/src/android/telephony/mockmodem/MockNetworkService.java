@@ -246,6 +246,7 @@ public class MockNetworkService {
         mContext = context;
         loadMockModemCell("mock_network_tw_cht.xml");
         loadMockModemCell("mock_network_tw_fet.xml");
+        loadMockModemCell("mock_network_us_fi.xml");
         for (int i = 0; i < LATCH_MAX; i++) {
             mLatches[i] = new CountDownLatch(1);
         }

@@ -33,7 +33,8 @@ public class MockSimService {
     public static final int MOCK_SIM_PROFILE_ID_DEFAULT = 0; // SIM Absent
     public static final int MOCK_SIM_PROFILE_ID_TWN_CHT = 1;
     public static final int MOCK_SIM_PROFILE_ID_TWN_FET = 2;
-    public static final int MOCK_SIM_PROFILE_ID_MAX = 3;
+    public static final int MOCK_SIM_PROFILE_ID_US_FI = 3;
+    public static final int MOCK_SIM_PROFILE_ID_MAX = 4;
 
     /* Type of SIM IO command */
     public static final int COMMAND_READ_BINARY = 0xb0;
@@ -42,6 +43,7 @@ public class MockSimService {
     /* EF Id definition */
     public static final int EF_ICCID = 0x2FE2;
     public static final int EF_IMSI = 0x6F07;
+    public static final int EF_GID1 = 0x6F3E;
 
     /* SIM profile XML TAG definition */
     private static final String MOCK_SIM_TAG = "MockSim";
@@ -138,6 +140,7 @@ public class MockSimService {
         private String mMnc;
         private String mMsin;
         private String[] mIccid;
+        private String[] mGid1;
 
         private void initSimAppData(int simappid, String aid, String path, boolean status) {
             mSimAppId = simappid;
@@ -145,6 +148,7 @@ public class MockSimService {
             mIsCurrentActive = status;
             mPath = path;
             mIccid = new String[2];
+            mGid1 = new String[2];
         }
 
         public SimAppData(int simappid, String aid, String path) {
@@ -235,6 +239,22 @@ public class MockSimService {
 
         public void setIccid(String iccid) {
             mIccid[EF_BINARY_DATA] = iccid;
+        }
+
+        public String getGid1Info() {
+            return mGid1[EF_INFO_DATA];
+        }
+
+        public void setGid1Info(String info) {
+            mGid1[EF_INFO_DATA] = info;
+        }
+
+        public String getGid1() {
+            return mGid1[EF_BINARY_DATA];
+        }
+
+        public void setGid1(String gid1) {
+            mGid1[EF_BINARY_DATA] = gid1;
         }
     }
 
@@ -336,6 +356,9 @@ public class MockSimService {
                     break;
                 case MOCK_SIM_PROFILE_ID_TWN_FET:
                     mSimProfileInfoList[idx].setXmlFile("mock_sim_tw_fet.xml");
+                    break;
+                case MOCK_SIM_PROFILE_ID_US_FI:
+                    mSimProfileInfoList[idx].setXmlFile("mock_sim_us_fi.xml");
                     break;
                 default:
                     break;
@@ -569,6 +592,18 @@ public class MockSimService {
                     mSimAppList.get(getSimAppDataIndexByAid(aid)).setIccidInfo(value[0]);
                 } else {
                     Log.e(mTag, "No valid Iccid data found");
+                    result = false;
+                }
+                break;
+            case "EF_GID1":
+                if (command.length() > 2
+                        && Integer.parseInt(command.substring(2), 16) == COMMAND_READ_BINARY) {
+                    mSimAppList.get(getSimAppDataIndexByAid(aid)).setGid1(value[0]);
+                } else if (command.length() > 2
+                        && Integer.parseInt(command.substring(2), 16) == COMMAND_GET_RESPONSE) {
+                    mSimAppList.get(getSimAppDataIndexByAid(aid)).setGid1Info(value[0]);
+                } else {
+                    Log.e(mTag, "No valid GID1 found");
                     result = false;
                 }
                 break;
