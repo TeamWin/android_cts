@@ -80,29 +80,26 @@ class KeyboardLayoutTest {
 
     @Test
     fun testKeyboardLayoutType_CorrectlyInitialized() {
-        val englishQwertyLayoutId = getKeyboardLayoutId(keyboard, "english_us_qwerty")
-        val englishUndefinedLayoutId = getKeyboardLayoutId(keyboard, "english_us_undefined")
+        val englishQwertyLayoutDesc = getKeyboardLayoutDescriptor(keyboard, "english_us_qwerty")
+        val englishUndefinedLayoutDesc =
+                getKeyboardLayoutDescriptor(keyboard, "english_us_undefined")
 
-        assertNotEquals("English qwerty layout should not be empty", "", englishQwertyLayoutId)
+        assertNotEquals("English qwerty layout should not be empty", "", englishQwertyLayoutDesc)
         assertNotEquals(
                 "English undefined layout should not be empty",
                 "",
-                englishUndefinedLayoutId
+                englishUndefinedLayoutDesc
         )
 
         assertEquals(
                 "Layout type should be qwerty",
                 "qwerty",
-                englishQwertyLayoutId?.let {
-                    inputManager.getKeyboardLayoutTypeForLayoutDescriptor(it)
-                }
+                getKeyboardLayoutTypeForLayoutDescriptor(englishQwertyLayoutDesc!!)
         )
         assertEquals(
                 "Layout type should be undefined",
                 "undefined",
-                englishUndefinedLayoutId?.let {
-                    inputManager.getKeyboardLayoutTypeForLayoutDescriptor(it)
-                }
+                getKeyboardLayoutTypeForLayoutDescriptor(englishUndefinedLayoutDesc!!)
         )
     }
 
@@ -114,7 +111,7 @@ class KeyboardLayoutTest {
      * @param language The language to query for.
      * @return The first matching keyboard layout descriptor or an empty string if none was found.
      */
-    private fun getKeyboardLayoutId(device: InputDevice, language: String): String? {
+    private fun getKeyboardLayoutDescriptor(device: InputDevice, language: String): String? {
         return SystemUtil.runWithShellPermissionIdentity<String>({
             for (kl in inputManager.getKeyboardLayoutDescriptorsForInputDevice(device)) {
                 if (kl.endsWith(language)) {
@@ -123,6 +120,15 @@ class KeyboardLayoutTest {
             }
             fail("Failed to get keyboard layout for language $language")
             ""
+        }, Manifest.permission.INTERACT_ACROSS_USERS)
+    }
+
+    /**
+     * @return the layout type for layout with provided layout descriptor
+     */
+    private fun getKeyboardLayoutTypeForLayoutDescriptor(descriptor: String): String? {
+        return SystemUtil.runWithShellPermissionIdentity<String>({
+            inputManager.getKeyboardLayoutTypeForLayoutDescriptor(descriptor)
         }, Manifest.permission.INTERACT_ACROSS_USERS)
     }
 
