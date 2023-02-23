@@ -197,7 +197,7 @@ public class VibratorTest {
         mVibrator.addVibratorStateListener(mStateListener);
         // Adding a listener to the Vibrator should trigger the callback once with the current
         // vibrator state, so reset mocks to clear it for tests.
-        assertVibratorState(false);
+        assertVibratorStateChangesTo(false);
         clearInvocations(mStateListener);
     }
 
@@ -241,13 +241,13 @@ public class VibratorTest {
     public void getDefaultVibrationIntensity_returnsValidIntensityForAllUsages() {
         for (int usage : VIBRATION_USAGES) {
             int intensity = mVibrator.getDefaultVibrationIntensity(usage);
-            assertWithMessage("Default intensity invalid for usage " + usage)
+            assertWithMessage("Expected default intensity for usage %s within valid range", usage)
                     .that(intensity)
                     .isIn(Range.closed(
                             Vibrator.VIBRATION_INTENSITY_OFF, Vibrator.VIBRATION_INTENSITY_HIGH));
         }
 
-        assertWithMessage("Invalid usage expected to have same default as USAGE_UNKNOWN")
+        assertWithMessage("Expected invalid usage -1 to have same default as USAGE_UNKNOWN")
                 .that(mVibrator.getDefaultVibrationIntensity(-1))
                 .isEqualTo(
                     mVibrator.getDefaultVibrationIntensity(VibrationAttributes.USAGE_UNKNOWN));
@@ -334,7 +334,11 @@ public class VibratorTest {
         assertStartsVibrating();
 
         SystemClock.sleep(2000);
-        assertIsVibrating(true);
+        if (mVibrator.hasVibrator()) {
+            assertWithMessage(
+                    "Expected repeating waveform to continue vibrating after initial duration")
+                    .that(mVibrator.isVibrating()).isTrue();
+        }
 
         mVibrator.cancel();
         assertStopsVibrating();
@@ -391,7 +395,7 @@ public class VibratorTest {
         for (int i = 0; i < PREDEFINED_EFFECTS.length; i++) {
             mVibrator.vibrate(VibrationEffect.createPredefined(PREDEFINED_EFFECTS[i]));
             if (supported[i] == Vibrator.VIBRATION_EFFECT_SUPPORT_YES) {
-                assertStartsVibrating();
+                assertStartsVibrating("predefined effect id=" + PREDEFINED_EFFECTS[i]);
             }
         }
     }
@@ -407,7 +411,8 @@ public class VibratorTest {
                     .addPrimitive(PRIMITIVE_EFFECTS[i], 0.8f, 10)
                     .compose());
             if (supported[i]) {
-                assertStartsThenStopsVibrating(durations[i] * 3 + 10);
+                assertStartsThenStopsVibrating(
+                        durations[i] * 3 + 10, "primitive id=" + PRIMITIVE_EFFECTS[i]);
             }
         }
     }
@@ -463,8 +468,8 @@ public class VibratorTest {
     public void testVibratorPrimitivesAreSupported() {
         // Just make sure it doesn't crash when this is called;
         // We don't really have a way to test if the device supports each effect or not.
-        assertThat(mVibrator.arePrimitivesSupported(PRIMITIVE_EFFECTS)).hasLength(
-                PRIMITIVE_EFFECTS.length);
+        assertThat(mVibrator.arePrimitivesSupported(PRIMITIVE_EFFECTS))
+                .hasLength(PRIMITIVE_EFFECTS.length);
         assertThat(mVibrator.arePrimitivesSupported()).isEmpty();
     }
 
@@ -483,12 +488,12 @@ public class VibratorTest {
         assertThat(durations).hasLength(PRIMITIVE_EFFECTS.length);
         for (int i = 0; i < durations.length; i++) {
             if (supported[i]) {
-                assertWithMessage("Supported primitive " + PRIMITIVE_EFFECTS[i]
-                        + " should have positive duration")
+                assertWithMessage(
+                        "Expected duration > 0 for supported primitive %s", PRIMITIVE_EFFECTS[i])
                         .that(durations[i]).isGreaterThan(0);
             } else {
-                assertWithMessage("Unsupported primitive " + PRIMITIVE_EFFECTS[i]
-                        + " should have zero duration")
+                assertWithMessage(
+                        "Expected duration == 0 for unsupported primitive %s", PRIMITIVE_EFFECTS[i])
                         .that(durations[i]).isEqualTo(0);
 
             }
@@ -564,15 +569,21 @@ public class VibratorTest {
 
         // There should be at least 3 points for a valid profile: min, center and max frequencies.
         assertThat(measurements.length).isAtLeast(3);
-        assertThat(minFrequencyHz + ((measurements.length - 1) * measurementIntervalHz))
+        assertWithMessage(
+                "Expected measurements.length %s to match given min/max/interval"
+                        + " frequency values of %s/%s/%s Hz",
+                measurements.length, minFrequencyHz, maxFrequencyHz, measurementIntervalHz)
+                .that(minFrequencyHz + ((measurements.length - 1) * measurementIntervalHz))
                 .isWithin(TEST_TOLERANCE).of(maxFrequencyHz);
 
         boolean hasPositiveMeasurement = false;
-        for (float measurement : measurements) {
-            assertThat(measurement).isIn(Range.closed(0f, 1f));
-            hasPositiveMeasurement |= measurement > 0;
+        for (int i = 0; i < measurements.length; i++) {
+            assertWithMessage("Expected measurements[%s] value %s within range", i, measurements[i])
+                    .that(measurements[i]).isIn(Range.closed(0f, 1f));
+            hasPositiveMeasurement |= measurements[i] > 0;
         }
-        assertThat(hasPositiveMeasurement).isTrue();
+        assertWithMessage("Expected at least one measurements entry to be > 0")
+                .that(hasPositiveMeasurement).isTrue();
     }
 
     @Test
@@ -595,11 +606,16 @@ public class VibratorTest {
     public void testVibratorVibratesNoLongerThanDuration() {
         assumeTrue(mVibrator.hasVibrator());
 
-        mVibrator.vibrate(1000);
+        long durationMs = 1000;
+        mVibrator.vibrate(durationMs);
         assertStartsVibrating();
 
-        SystemClock.sleep(1500);
-        assertThat(mVibrator.isVibrating()).isFalse();
+        long timeoutMs = durationMs + 500;
+        SystemClock.sleep(timeoutMs);
+        assertWithMessage(
+                "Expected vibration to finish within requested duration %s ms, vibration not "
+                        + "finished after %s ms", durationMs, timeoutMs)
+                .that(mVibrator.isVibrating()).isFalse();
     }
 
     @LargeTest
@@ -613,14 +629,15 @@ public class VibratorTest {
         mVibrator.addVibratorStateListener(Executors.newSingleThreadExecutor(), listener1);
         // Add listener2 on main thread.
         mVibrator.addVibratorStateListener(listener2);
-        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
-        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
+        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS)).onVibratorStateChanged(false);
+        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS)).onVibratorStateChanged(false);
 
         mVibrator.vibrate(10);
         assertStartsVibrating();
 
-        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(true);
-        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(true);
+        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS)).onVibratorStateChanged(true);
+        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS)).onVibratorStateChanged(true);
+
         // The state changes back to false after vibration ends.
         verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(2)).onVibratorStateChanged(false);
         verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(2)).onVibratorStateChanged(false);
@@ -637,8 +654,8 @@ public class VibratorTest {
         mVibrator.addVibratorStateListener(Executors.newSingleThreadExecutor(), listener1);
         // Add listener2 on main thread.
         mVibrator.addVibratorStateListener(listener2);
-        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
-        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
+        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS)).onVibratorStateChanged(false);
+        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS)).onVibratorStateChanged(false);
 
         // Remove listener1 & listener2
         mVibrator.removeVibratorStateListener(listener1);
@@ -670,29 +687,47 @@ public class VibratorTest {
 
     private void assertStartsThenStopsVibrating(long duration) {
         if (mVibrator.hasVibrator()) {
-            assertVibratorState(true);
+            assertStartsVibrating();
             SystemClock.sleep(duration);
-            assertVibratorState(false);
+            assertStopsVibrating();
         }
     }
 
-    private void assertIsVibrating(boolean expectedIsVibrating) {
+    private void assertStartsThenStopsVibrating(long duration, String vibrateDescription) {
         if (mVibrator.hasVibrator()) {
-            assertThat(mVibrator.isVibrating()).isEqualTo(expectedIsVibrating);
+            assertStartsVibrating(vibrateDescription);
+            SystemClock.sleep(duration);
+            assertStopsVibrating(vibrateDescription);
         }
     }
 
     private void assertStartsVibrating() {
-        assertVibratorState(true);
+        assertStartsVibrating(null);
+    }
+
+    private void assertStartsVibrating(String vibrateDescription) {
+        assertVibratorStateChangesTo(true, vibrateDescription);
     }
 
     private void assertStopsVibrating() {
-        assertVibratorState(false);
+        assertStopsVibrating(null);
     }
 
-    private void assertVibratorState(boolean expected) {
+    private void assertStopsVibrating(String vibrateDescription) {
+        assertVibratorStateChangesTo(false, vibrateDescription);
+    }
+
+    private void assertVibratorStateChangesTo(boolean expected) {
+        assertVibratorStateChangesTo(expected, null);
+    }
+
+    private void assertVibratorStateChangesTo(boolean expected, String vibrateDescription) {
         if (mVibrator.hasVibrator()) {
-            verify(mStateListener, timeout(CALLBACK_TIMEOUT_MILLIS).atLeastOnce())
+            verify(mStateListener,
+                    timeout(CALLBACK_TIMEOUT_MILLIS).atLeastOnce().description(
+                            String.format("Vibrator expected to turn %s %s",
+                                    expected ? "on" : "off",
+                                    vibrateDescription != null ? "for " + vibrateDescription : "")))
                     .onVibratorStateChanged(eq(expected));
         }
     }

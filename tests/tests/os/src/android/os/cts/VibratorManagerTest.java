@@ -20,6 +20,7 @@ import static android.os.VibrationEffect.VibrationParameter.targetAmplitude;
 import static android.os.VibrationEffect.VibrationParameter.targetFrequency;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.eq;
@@ -71,8 +72,6 @@ public class VibratorManagerTest {
     @Rule
     public final MockitoRule mMockitoRule = MockitoJUnit.rule();
 
-    private static final float TEST_TOLERANCE = 1e-5f;
-
     private static final long CALLBACK_TIMEOUT_MILLIS = 5_000;
     private static final VibrationAttributes VIBRATION_ATTRIBUTES =
             new VibrationAttributes.Builder()
@@ -99,7 +98,7 @@ public class VibratorManagerTest {
             mStateListeners.put(vibratorId, listener);
             // Adding a listener to the Vibrator should trigger the callback once with the current
             // vibrator state, so reset mocks to clear it for tests.
-            assertVibratorState(vibratorId, false);
+            assertVibratorStateChangesTo(vibratorId, false);
             clearInvocations(listener);
         }
     }
@@ -212,7 +211,10 @@ public class VibratorManagerTest {
         SystemClock.sleep(2000);
         int[] vibratorIds = mVibratorManager.getVibratorIds();
         for (int vibratorId : vibratorIds) {
-            assertThat(mVibratorManager.getVibrator(vibratorId).isVibrating()).isTrue();
+            assertWithMessage(
+                    "Expected repeating parallel waveform to continue vibrating on vibrator %s"
+                            + " after initial duration", vibratorId)
+                    .that(mVibratorManager.getVibrator(vibratorId).isVibrating()).isTrue();
         }
 
         mVibratorManager.cancel();
@@ -276,7 +278,10 @@ public class VibratorManagerTest {
 
             for (int otherVibratorId : vibratorIds) {
                 if (otherVibratorId != vibratorId) {
-                    assertThat(mVibratorManager.getVibrator(otherVibratorId).isVibrating())
+                    assertWithMessage(
+                            "Expected vibrator %s not vibrating when combined vibration started"
+                                    + " on vibrator %s", otherVibratorId, vibratorId)
+                            .that(mVibratorManager.getVibrator(otherVibratorId).isVibrating())
                             .isFalse();
                 }
             }
@@ -288,37 +293,40 @@ public class VibratorManagerTest {
 
     private void assertStartsThenStopsVibrating(long duration) {
         for (int i = 0; i < mStateListeners.size(); i++) {
-            assertVibratorState(mStateListeners.keyAt(i), true);
+            assertStartsVibrating(mStateListeners.keyAt(i));
         }
         SystemClock.sleep(duration);
-        assertVibratorState(false);
+        assertStopsVibrating();
     }
 
     private void assertStartsVibrating() {
-        assertVibratorState(true);
+        assertVibratorStateChangesTo(true);
     }
 
     private void assertStartsVibrating(int vibratorId) {
-        assertVibratorState(vibratorId, true);
+        assertVibratorStateChangesTo(vibratorId, true);
     }
 
     private void assertStopsVibrating() {
-        assertVibratorState(false);
+        assertVibratorStateChangesTo(false);
     }
 
     private void assertStopsVibrating(int vibratorId) {
-        assertVibratorState(vibratorId, false);
+        assertVibratorStateChangesTo(vibratorId, false);
     }
 
-    private void assertVibratorState(boolean expected) {
+    private void assertVibratorStateChangesTo(boolean expected) {
         for (int i = 0; i < mStateListeners.size(); i++) {
-            assertVibratorState(mStateListeners.keyAt(i), expected);
+            assertVibratorStateChangesTo(mStateListeners.keyAt(i), expected);
         }
     }
 
-    private void assertVibratorState(int vibratorId, boolean expected) {
+    private void assertVibratorStateChangesTo(int vibratorId, boolean expected) {
         OnVibratorStateChangedListener listener = mStateListeners.get(vibratorId);
-        verify(listener, timeout(CALLBACK_TIMEOUT_MILLIS).atLeastOnce())
+        verify(listener,
+                timeout(CALLBACK_TIMEOUT_MILLIS).atLeastOnce().description(
+                        "Vibrator " + vibratorId + " expected to turn "
+                                + (expected ? "on" : "off")))
                 .onVibratorStateChanged(eq(expected));
     }
 }
