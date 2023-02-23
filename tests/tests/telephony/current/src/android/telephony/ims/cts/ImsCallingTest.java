@@ -88,7 +88,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -105,7 +105,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @AfterClass
     public static void afterAllTests() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -114,7 +114,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Before
     public void beforeTest() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
         TelephonyManager tm = (TelephonyManager) InstrumentationRegistry.getInstrumentation()
@@ -131,7 +131,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @After
     public void afterTest() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -157,7 +157,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testOutGoingCall() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -192,7 +192,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testOutGoingCallStartFailed() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -240,7 +240,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testIncomingCall() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
         bindImsService();
@@ -326,7 +326,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testOutGoingCallForExecutor() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -363,7 +363,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testOutGoingCallHoldResume() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -407,7 +407,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testOutGoingCallHoldFailure() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -450,7 +450,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testOutGoingCallResumeFailure() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -545,7 +545,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testOutGoingIncomingMultiCall() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -613,7 +613,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testOutGoingIncomingMultiCallAcceptTerminate() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -744,7 +744,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testOutGoingCallSwap() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -792,7 +792,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testOutGoingCallSwapFail() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
 
@@ -842,7 +842,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testConferenceCall() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
         Log.i(LOG_TAG, "testConference ");
@@ -864,7 +864,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
     @Test
     public void testConferenceCallFailure() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
         Log.i(LOG_TAG, "testConferenceCallFailure ");

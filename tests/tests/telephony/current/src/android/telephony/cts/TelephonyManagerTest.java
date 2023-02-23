@@ -2401,7 +2401,7 @@ public class TelephonyManagerTest {
 
         List<String> plmns = mTelephonyManager.getEquivalentHomePlmns();
 
-        if (mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_GSM) {
+        if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
             assertEquals(0, plmns.size());
         } else {
             for (String plmn : plmns) {
