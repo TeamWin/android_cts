@@ -642,6 +642,8 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
         AtomTestUtils.assertStatesOccurredInOrder(directionList, data, 0,
                 atom -> atom.getMediametricsAaudiostreamReported().getDirection().getNumber());
 
+        int appUid = DeviceUtils.getAppUid(getDevice(), TEST_PKG);
+
         for (StatsLog.EventMetricData event : data) {
             AtomsProto.MediametricsAAudioStreamReported atom =
                     event.getAtom().getMediametricsAaudiostreamReported();
@@ -651,6 +653,7 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
             assertThat(atom.getBufferSize()).isAtMost(atom.getBufferCapacity());
             assertThat(atom.getFramesPerBurst()).isGreaterThan(0);
             assertThat(atom.getFramesPerBurst()).isLessThan(atom.getBufferCapacity());
+            assertThat(atom.getUid()).isEqualTo(appUid);
         }
     }
 
