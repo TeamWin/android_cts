@@ -260,25 +260,6 @@ public class HotwordDetectionServiceBasicTest {
         softwareHotwordDetector.destroy();
     }
 
-    private void verifyOnDetectFromDspSuccess(AlwaysOnHotwordDetector alwaysOnHotwordDetector)
-            throws Throwable {
-        mService.initDetectRejectLatch();
-        alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
-                /* status= */ 0, /* soundModelHandle= */ 100,
-                /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
-                /* captureSession= */ 101, /* captureDelayMs= */ 1000,
-                /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
-                Helper.createFakeAudioFormat(), new byte[1024],
-                Helper.createFakeKeyphraseRecognitionExtraList());
-
-        // wait onDetected() called and verify the result
-        mService.waitOnDetectOrRejectCalled();
-        AlwaysOnHotwordDetector.EventPayload detectResult =
-                mService.getHotwordServiceOnDetectedResult();
-
-        Helper.verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
-    }
-
     @Test
     public void testHotwordDetectionService_processDied_triggerOnError() throws Throwable {
         // Create first AlwaysOnHotwordDetector
@@ -315,35 +296,79 @@ public class HotwordDetectionServiceBasicTest {
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
                 createAlwaysOnHotwordDetector(/* useOnFailure= */ true);
 
-        mService.initOnFailureLatch();
+        try {
+            mService.initOnFailureLatch();
 
-        // Use AlwaysOnHotwordDetector to test process died of HotwordDetectionService
-        runWithShellPermissionIdentity(() -> {
-            PersistableBundle persistableBundle = new PersistableBundle();
-            persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
-                    Helper.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH);
-            alwaysOnHotwordDetector.updateState(
-                    persistableBundle,
-                    Helper.createFakeSharedMemoryData());
-        }, MANAGE_HOTWORD_DETECTION);
+            // Use AlwaysOnHotwordDetector to test process died of HotwordDetectionService
+            runWithShellPermissionIdentity(() -> {
+                PersistableBundle persistableBundle = new PersistableBundle();
+                persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                        Helper.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH);
+                alwaysOnHotwordDetector.updateState(
+                        persistableBundle,
+                        Helper.createFakeSharedMemoryData());
+            }, MANAGE_HOTWORD_DETECTION);
 
-        mService.waitOnFailureCalled();
+            mService.waitOnFailureCalled();
 
-        DetectorFailure detectorFailure = mService.getDetectorFailure();
+            verifyHotwordDetectionServiceFailure(mService.getDetectorFailure(),
+                    HotwordDetectionServiceFailure.ERROR_CODE_BINDING_DIED);
 
-        assertThat(detectorFailure).isNotNull();
-        assertThat(detectorFailure).isInstanceOf(HotwordDetectionServiceFailure.class);
-        assertThat(((HotwordDetectionServiceFailure) detectorFailure).getErrorCode()).isEqualTo(
-                HotwordDetectionServiceFailure.ERROR_CODE_BINDING_DIED);
+            // ActivityManager will schedule a timer to restart the HotwordDetectionService due to
+            // we crash the service in this test case. It may impact the other test cases when
+            // ActivityManager restarts the HotwordDetectionService again. Add the sleep time to
+            // wait
+            // ActivityManager to restart the HotwordDetectionService, so that the service can be
+            // destroyed after finishing this test case.
+            Thread.sleep(5000);
+        } finally {
+            // destroy detector
+            alwaysOnHotwordDetector.destroy();
+        }
+    }
 
-        // ActivityManager will schedule a timer to restart the HotwordDetectionService due to
-        // we crash the service in this test case. It may impact the other test cases when
-        // ActivityManager restarts the HotwordDetectionService again. Add the sleep time to wait
-        // ActivityManager to restart the HotwordDetectionService, so that the service can be
-        // destroyed after finishing this test case.
-        Thread.sleep(5000);
+    @Test
+    @RequiresDevice
+    public void testHotwordDetectionService_onDetectFromDspTimeout_triggerOnFailure()
+            throws Throwable {
+        // Create alwaysOnHotwordDetector with onFailure callback
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ true);
 
-        alwaysOnHotwordDetector.destroy();
+        try {
+            // Update HotwordDetectionService options to delay detection, to cause a timeout
+            runWithShellPermissionIdentity(() -> {
+                PersistableBundle options = Helper.createFakePersistableBundleData();
+                options.putInt(Utils.KEY_DETECTION_DELAY_MS, 5000);
+                alwaysOnHotwordDetector.updateState(options,
+                        Helper.createFakeSharedMemoryData());
+            });
+
+            adoptShellPermissionIdentityForHotword();
+
+            mService.initOnFailureLatch();
+
+            alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
+                    /* status= */ 0, /* soundModelHandle= */ 100,
+                    /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
+                    /* captureSession= */ 101, /* captureDelayMs= */ 1000,
+                    /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
+                    Helper.createFakeAudioFormat(), new byte[1024],
+                    Helper.createFakeKeyphraseRecognitionExtraList());
+
+            // wait onFailure() called and verify the result
+            mService.waitOnFailureCalled();
+
+            verifyHotwordDetectionServiceFailure(mService.getDetectorFailure(),
+                    HotwordDetectionServiceFailure.ERROR_CODE_DETECT_TIMEOUT);
+        } finally {
+            // destroy detector
+            alwaysOnHotwordDetector.destroy();
+
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
     }
 
     @Test
@@ -710,6 +735,25 @@ public class HotwordDetectionServiceBasicTest {
         alwaysOnHotwordDetector.destroy();
     }
 
+    private void verifyOnDetectFromDspSuccess(AlwaysOnHotwordDetector alwaysOnHotwordDetector)
+            throws Throwable {
+        mService.initDetectRejectLatch();
+        alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
+                /* status= */ 0, /* soundModelHandle= */ 100,
+                /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
+                /* captureSession= */ 101, /* captureDelayMs= */ 1000,
+                /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
+                Helper.createFakeAudioFormat(), new byte[1024],
+                Helper.createFakeKeyphraseRecognitionExtraList());
+
+        // wait onDetected() called and verify the result
+        mService.waitOnDetectOrRejectCalled();
+        AlwaysOnHotwordDetector.EventPayload detectResult =
+                mService.getHotwordServiceOnDetectedResult();
+
+        Helper.verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
+    }
+
     private void verifySoftwareDetectorDetectSuccess(HotwordDetector softwareHotwordDetector)
             throws Exception {
         mService.initDetectRejectLatch();
@@ -720,6 +764,14 @@ public class HotwordDetectionServiceBasicTest {
         AlwaysOnHotwordDetector.EventPayload detectResult =
                 mService.getHotwordServiceOnDetectedResult();
         Helper.verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
+    }
+
+    private void verifyHotwordDetectionServiceFailure(DetectorFailure detectorFailure,
+            int errorCode) throws Throwable {
+        assertThat(detectorFailure).isNotNull();
+        assertThat(detectorFailure).isInstanceOf(HotwordDetectionServiceFailure.class);
+        assertThat(((HotwordDetectionServiceFailure) detectorFailure).getErrorCode()).isEqualTo(
+                errorCode);
     }
 
     /**
