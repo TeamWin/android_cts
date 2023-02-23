@@ -298,7 +298,7 @@ public class SatelliteManagerTest {
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class,
                 ()-> mSatelliteManager.sendSatelliteDatagram(0,
-                        SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE, datagram,
+                        SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE, datagram, true,
                         getContext().getMainExecutor(), receiver));
     }
 
