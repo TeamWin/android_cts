@@ -22,7 +22,7 @@ import android.webkit.cts.HttpHeader;
 import java.util.List;
 
 interface IWebServer {
-    void start(int sslMode, in @nullable byte[] acceptedIssuerDer);
+    void start(int sslMode, in @nullable byte[] acceptedIssuerDer, int keyResId, int certResId);
 
     void shutdown();
 
@@ -56,4 +56,10 @@ interface IWebServer {
     HttpRequest getLastRequest(String path);
 
     HttpRequest getLastAssetRequest(String url);
+
+    String getCookieUrl(String path);
+
+    String getSetCookieUrl(String path, String key, String value, String attributes);
+
+    String getLinkedScriptUrl(String path, String url);
 }

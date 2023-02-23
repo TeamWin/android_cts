@@ -58,6 +58,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     private CountDownLatch mOnErrorLatch;
     // The CountDownLatch waits for vqds
     private CountDownLatch mOnQueryFinishRejectLatch;
+    // The CountDownLatch waits for a service onHotwordDetectionServiceRestarted called
+    private CountDownLatch mOnHotwordDetectionServiceRestartedLatch;
 
     private AlwaysOnHotwordDetector.EventPayload mDetectedResult;
     private HotwordRejectedResult mRejectedResult;
@@ -212,6 +214,9 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             @Override
             public void onHotwordDetectionServiceRestarted() {
                 Log.i(TAG, "onHotwordDetectionServiceRestarted");
+                if (mOnHotwordDetectionServiceRestartedLatch != null) {
+                    mOnHotwordDetectionServiceRestartedLatch.countDown();
+                }
             }
         };
 
@@ -389,6 +394,13 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     }
 
     /**
+     * Create a CountDownLatch that is used to wait for onHotwordDetectionServiceRestarted() called
+     */
+    public void initOnHotwordDetectionServiceRestartedLatch() {
+        mOnHotwordDetectionServiceRestartedLatch = new CountDownLatch(1);
+    }
+
+    /**
      * Create a CountDownLatch that is used to wait for availability change
      */
     public void initAvailabilityChangeLatch() {
@@ -435,6 +447,19 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public ArrayList<String> getStreamedQueriesResult() {
         return mStreamedQueries;
+    }
+
+    public void waitOnHotwordDetectionServiceRestartedCalled() throws InterruptedException {
+        Log.d(TAG, "waitOnHotwordDetectionServiceRestartedCalled(), latch="
+                + mOnHotwordDetectionServiceRestartedLatch);
+        if (mOnHotwordDetectionServiceRestartedLatch == null
+                || !mOnHotwordDetectionServiceRestartedLatch.await(WAIT_TIMEOUT_IN_MS,
+                TimeUnit.MILLISECONDS)) {
+            mOnHotwordDetectionServiceRestartedLatch = null;
+            throw new AssertionError(
+                    "HotwordDetectionService onHotwordDetectionServiceRestarted not called.");
+        }
+        mOnHotwordDetectionServiceRestartedLatch = null;
     }
 
     /**

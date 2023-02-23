@@ -164,12 +164,9 @@ public class CrossSimRedialingTestOnMockModem extends ImsCallingBase {
 
         sTestSub = ImsUtils.getPreferredActiveSubId();
 
-        int[] subs = SubscriptionManager.getSubId(sTestSlot);
-        for (int sub : subs) {
-            if (SubscriptionManager.isValidSubscriptionId(sub)) {
-                sTestSub = sub;
-                break;
-            }
+        int sub = SubscriptionManager.getSubscriptionId(sTestSlot);
+        if (SubscriptionManager.isValidSubscriptionId(sub)) {
+            sTestSub = sub;
         }
 
         assertTrue(sMockModemManager.changeNetworkService(sTestSlot, 310260, true));

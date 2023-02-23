@@ -52,6 +52,8 @@ import android.window.TaskFragmentInfo;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
+import androidx.annotation.NonNull;
+
 import org.junit.Test;
 
 /**
@@ -67,8 +69,12 @@ import org.junit.Test;
  */
 @Presubmit
 public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
+    /** The bounds should only be updated through {@link #updateSplitBounds(Rect)}. */
     private final Rect mPrimaryBounds = new Rect();
+    private final Rect mPrimaryRelativeBounds = new Rect();
     private final Rect mSideBounds = new Rect();
+    private final Rect mSideRelativeBounds = new Rect();
+
     private TaskFragmentRecord mTaskFragA;
     private TaskFragmentRecord mTaskFragB;
     private final ComponentName mActivityA = new ComponentName(mContext, ActivityA.class);
@@ -102,7 +108,7 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     private void initializeSplitActivities(boolean showWhenLocked) {
         final Rect activityBounds = mOwnerActivity.getWindowManager().getCurrentWindowMetrics()
                 .getBounds();
-        activityBounds.splitVertically(mPrimaryBounds, mSideBounds);
+        updateSplitBounds(activityBounds);
 
         final TaskFragmentCreationParams paramsA = generatePrimaryTaskFragParams();
         final TaskFragmentCreationParams paramsB = generateSideTaskFragParams();
@@ -142,6 +148,20 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
         waitAndAssertResumedActivity(mActivityB, "Activity B must still be resumed.");
 
         mTaskFragmentOrganizer.resetLatch();
+    }
+
+    /**
+     * Splits the {@code parentBounds} vertically to {@link #mPrimaryBounds} and
+     * {@link #mSideBounds}. {@link #mPrimaryRelativeBounds} and {@link #mSideRelativeBounds} will
+     * also be updated to the corresponding relative bounds in parent coordinate.
+     */
+    private void updateSplitBounds(@NonNull Rect parentBounds) {
+        parentBounds.splitVertically(mPrimaryBounds, mSideBounds);
+        mPrimaryRelativeBounds.set(mPrimaryBounds);
+        mPrimaryRelativeBounds.offsetTo(0, 0);
+        mSideRelativeBounds.set(mSideBounds);
+        mSideRelativeBounds.offsetTo(mSideBounds.left - mPrimaryBounds.left,
+                mSideBounds.top - mPrimaryBounds.top);
     }
 
     /**
@@ -303,10 +323,10 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
 
         final IBinder taskFragTokenA = mTaskFragA.getTaskFragToken();
         // TaskFragment C is not fully occluding TaskFragment B.
-        final Rect partialOccludingSideBounds = new Rect(mSideBounds);
-        partialOccludingSideBounds.left += 50;
+        final Rect partialOccludingRelativeSideBounds = new Rect(mSideRelativeBounds);
+        partialOccludingRelativeSideBounds.left += 50;
         final TaskFragmentCreationParams paramsC = mTaskFragmentOrganizer.generateTaskFragParams(
-                mOwnerToken, partialOccludingSideBounds, WINDOWING_MODE_MULTI_WINDOW);
+                mOwnerToken, partialOccludingRelativeSideBounds, WINDOWING_MODE_MULTI_WINDOW);
         final IBinder taskFragTokenC = paramsC.getFragmentToken();
         final WindowContainerTransaction wct = new WindowContainerTransaction()
                 // Create the side TaskFragment for C and launch
@@ -347,12 +367,9 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
         final IBinder taskFragTokenB = mTaskFragB.getTaskFragToken();
         final TaskFragmentCreationParams paramsC = generateSideTaskFragParams();
         final IBinder taskFragTokenC = paramsC.getFragmentToken();
-        // Calculate the relative bounds in parent coordinate.
-        final Rect primaryRelativeBounds = new Rect(mPrimaryBounds);
-        primaryRelativeBounds.offsetTo(0, 0);
         final WindowContainerTransaction wct = new WindowContainerTransaction()
                 // Move TaskFragment B to the primaryBounds
-                .setRelativeBounds(mTaskFragB.getToken(), primaryRelativeBounds)
+                .setRelativeBounds(mTaskFragB.getToken(), mPrimaryRelativeBounds)
                 // Create the side TaskFragment for C and launch
                 .createTaskFragment(paramsC)
                 .startActivityInTaskFragment(taskFragTokenC, mOwnerToken, mIntent,
@@ -549,8 +566,7 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
 
         // Create two adjacent TaskFragments, making ActivityB and TranslucentActivity
         // displayed side-by-side (ActivityB|TranslucentActivity).
-        mOwnerActivity.getWindowManager().getCurrentWindowMetrics().getBounds()
-                .splitVertically(mPrimaryBounds, mSideBounds);
+        updateSplitBounds(mOwnerActivity.getWindowManager().getCurrentWindowMetrics().getBounds());
         final TaskFragmentCreationParams primaryParams = generatePrimaryTaskFragParams();
         final TaskFragmentCreationParams secondaryParams = generateSideTaskFragParams();
         IBinder primaryToken = primaryParams.getFragmentToken();
@@ -632,12 +648,12 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     }
 
     private TaskFragmentCreationParams generatePrimaryTaskFragParams() {
-        return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken, mPrimaryBounds,
+        return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken, mPrimaryRelativeBounds,
                 WINDOWING_MODE_MULTI_WINDOW);
     }
 
     private TaskFragmentCreationParams generateSideTaskFragParams() {
-        return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken, mSideBounds,
+        return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken, mSideRelativeBounds,
                 WINDOWING_MODE_MULTI_WINDOW);
     }
 

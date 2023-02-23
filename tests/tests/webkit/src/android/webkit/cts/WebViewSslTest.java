@@ -36,6 +36,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 
+import androidx.annotation.Nullable;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
@@ -506,13 +507,14 @@ public class WebViewSslTest extends SharedWebViewTest {
     }
 
     private void startWebServer(@SslMode int sslMode) throws Exception {
-        startWebServer(new SharedSdkWebServer.Config().setSslMode(sslMode));
+        startWebServer(sslMode, null);
     }
 
-    private void startWebServer(SharedSdkWebServer.Config config) throws Exception {
+    private void startWebServer(@SslMode int sslMode,
+            @Nullable byte[] acceptedIssuerDer) throws Exception {
         assertNull(mWebServer);
         mWebServer = getTestEnvironment().getWebServer();
-        mWebServer.start(config);
+        mWebServer.start(sslMode, acceptedIssuerDer, 0, 0);
     }
 
     private void stopWebServer() throws Exception {
@@ -917,10 +919,7 @@ public class WebViewSslTest extends SharedWebViewTest {
 
     @Test
     public void testClientCertIssuersReceivedCorrectly() throws Throwable {
-
-        startWebServer(new SharedSdkWebServer.Config()
-                .setSslMode(SslMode.NEEDS_CLIENT_AUTH)
-                .setAcceptedIssuer(FAKE_RSA_CA_1));
+        startWebServer(SslMode.NEEDS_CLIENT_AUTH, FAKE_RSA_CA_1);
         final String url = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
         final ClientCertWebViewClient webViewClient = new ClientCertWebViewClient(mOnUiThread);
         mOnUiThread.setWebViewClient(webViewClient);

@@ -407,17 +407,6 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
-        <activity android:name="android.server.wm.SurfaceViewCtsActivity"
-             android:screenOrientation="locked"
-             android:turnScreenOn="true"
-             android:showWhenLocked="true"
-             android:label="SurfaceViewCtsActivity"
-             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
-            </intent-filter>
-        </activity>
         <activity android:name="android.view.cts.surfacevalidator.CapturedActivity"
              android:screenOrientation="locked"
              android:theme="@style/WhiteBackgroundTheme"

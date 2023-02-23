@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
 import android.webkit.CookieManager;
 import android.webkit.ValueCallback;
@@ -32,7 +31,6 @@ import android.webkit.WebView;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -54,12 +52,12 @@ import java.util.regex.Pattern;
 @AppModeFull
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class CookieManagerTest {
+public class CookieManagerTest extends SharedWebViewTest {
     private static final int TEST_TIMEOUT = 5000;
 
     private CookieManager mCookieManager;
     private WebViewOnUiThread mOnUiThread;
-    private CtsTestServer mServer;
+    private SharedSdkWebServer mWebServer;
 
     @Rule
     public ActivityScenarioRule mActivityScenarioRule =
@@ -67,15 +65,13 @@ public class CookieManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-        mActivityScenarioRule.getScenario().onActivity(activity -> {
-            CookieSyncManagerCtsActivity cookieSyncManagerCtsActivity =
-                    (CookieSyncManagerCtsActivity) activity;
-            WebView webView = cookieSyncManagerCtsActivity.getWebView();
-            if (webView != null) {
-                mOnUiThread = new WebViewOnUiThread(webView);
-            }
-        });
+        WebView webView = getTestEnvironment().getWebView();
+        if (webView == null) {
+            return;
+        }
+
+        mOnUiThread = new WebViewOnUiThread(webView);
+
         mCookieManager = CookieManager.getInstance();
         assertNotNull(mCookieManager);
 
@@ -88,30 +84,46 @@ public class CookieManagerTest {
         assertFalse(mCookieManager.acceptCookie());
     }
 
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+
+        SharedWebViewTestEnvironment.Builder builder = new SharedWebViewTestEnvironment.Builder();
+
+        mActivityScenarioRule
+                .getScenario()
+                .onActivity(
+                        activity -> {
+                            WebView webView = ((CookieSyncManagerCtsActivity) activity)
+                                        .getWebView();
+                            builder.setHostAppInvoker(
+                                            SharedWebViewTestEnvironment.createHostAppInvoker(
+                                                activity))
+                                    .setWebView(webView);
+                        });
+
+        return builder.build();
+    }
+
     @After
     public void tearDown() throws Exception {
-        if (mServer != null) {
-            mServer.shutdown();
+        if (mWebServer != null) {
+            mWebServer.shutdown();
         }
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
     }
 
-    private CtsTestServer createWebServer() throws Exception {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        return new CtsTestServer(context);
+    private SharedSdkWebServer setupWebServer(@SslMode int sslMode) throws Exception {
+        return setupWebServer(sslMode, 0, 0);
     }
 
-    private CtsTestServer createWebServer(@SslMode int sslMode) throws Exception {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        return new CtsTestServer(context, sslMode);
-    }
-
-    private CtsTestServer createWebServer(@SslMode int sslMode, int keyResId, int certResId)
-            throws Exception {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        return new CtsTestServer(context, sslMode, keyResId, certResId);
+    private SharedSdkWebServer setupWebServer(@SslMode int sslMode, int keyResId,
+                int certResI) throws Exception {
+        SharedSdkWebServer webServer = getTestEnvironment().getWebServer();
+        webServer.start(sslMode, null, keyResId, certResI);
+        return webServer;
     }
 
     @Test
@@ -133,8 +145,8 @@ public class CookieManagerTest {
         mCookieManager.setAcceptCookie(false);
         assertFalse(mCookieManager.acceptCookie());
 
-        mServer = createWebServer(SslMode.INSECURE);
-        String url = mServer.getCookieUrl("conquest.html");
+        mWebServer = setupWebServer(SslMode.INSECURE);
+        String url = mWebServer.getCookieUrl("conquest.html");
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals("0", mOnUiThread.getTitle()); // no cookies passed
         Thread.sleep(500);
@@ -143,7 +155,7 @@ public class CookieManagerTest {
         mCookieManager.setAcceptCookie(true);
         assertTrue(mCookieManager.acceptCookie());
 
-        url = mServer.getCookieUrl("war.html");
+        url = mWebServer.getCookieUrl("war.html");
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals("0", mOnUiThread.getTitle()); // no cookies passed
         waitForCookie(url);
@@ -155,7 +167,7 @@ public class CookieManagerTest {
         assertTrue(m.matches());
         assertEquals("0", m.group(1));
 
-        url = mServer.getCookieUrl("famine.html");
+        url = mWebServer.getCookieUrl("famine.html");
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals("1|count=0", mOnUiThread.getTitle()); // outgoing cookie
         waitForCookie(url);
@@ -165,7 +177,7 @@ public class CookieManagerTest {
         assertTrue(m.matches());
         assertEquals("1", m.group(1)); // value got incremented
 
-        url = mServer.getCookieUrl("death.html");
+        url = mWebServer.getCookieUrl("death.html");
         mCookieManager.setCookie(url, "count=41");
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals("1|count=41", mOnUiThread.getTitle()); // outgoing cookie
@@ -348,7 +360,7 @@ public class CookieManagerTest {
         // port. Instead we cheat making some of the urls come from localhost and some
         // from 127.0.0.1 which count (both in theory and pratice) as having different
         // origins.
-        mServer = createWebServer();
+        mWebServer = setupWebServer(SslMode.INSECURE);
 
         // Turn on Javascript (otherwise <script> aren't fetched spoiling the test).
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
@@ -364,9 +376,10 @@ public class CookieManagerTest {
         // ...we can't set third party cookies.
         // First on the third party server we get a url which tries to set a cookie.
         String cookieUrl = toThirdPartyUrl(
-                mServer.getSetCookieUrl("/cookie_1.js", "test1", "value1", "SameSite=None; Secure"));
+                mWebServer.getSetCookieUrl("/cookie_1.js", "test1", "value1",
+                        "SameSite=None; Secure"));
         // Then we create a url on the first party server which links to the first url.
-        String url = mServer.getLinkedScriptUrl("/content_1.html", cookieUrl);
+        String url = mWebServer.getLinkedScriptUrl("/content_1.html", cookieUrl);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertNull(mCookieManager.getCookie(cookieUrl));
 
@@ -376,8 +389,8 @@ public class CookieManagerTest {
 
         // ...we can set third party cookies.
         cookieUrl = toThirdPartyUrl(
-                mServer.getSetCookieUrl("/cookie_2.js", "test2", "value2", "SameSite=None; Secure"));
-        url = mServer.getLinkedScriptUrl("/content_2.html", cookieUrl);
+            mWebServer.getSetCookieUrl("/cookie_2.js", "test2", "value2", "SameSite=None; Secure"));
+        url = mWebServer.getLinkedScriptUrl("/content_2.html", cookieUrl);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         waitForCookie(cookieUrl);
         String cookie = mCookieManager.getCookie(cookieUrl);
@@ -387,7 +400,7 @@ public class CookieManagerTest {
 
     @Test
     public void testSameSiteLaxByDefault() throws Throwable {
-        mServer = createWebServer();
+        mWebServer = setupWebServer(SslMode.INSECURE);
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
         mCookieManager.setAcceptCookie(true);
         mOnUiThread.setAcceptThirdPartyCookies(true);
@@ -395,40 +408,41 @@ public class CookieManagerTest {
         // Verify that even with third party cookies enabled, cookies that don't explicitly
         // specify SameSite=none are treated as SameSite=lax and not set in a 3P context.
         String cookieUrl = toThirdPartyUrl(
-                mServer.getSetCookieUrl("/cookie_1.js", "test1", "value1"));
-        String url = mServer.getLinkedScriptUrl("/content_1.html", cookieUrl);
+                mWebServer.getSetCookieUrl("/cookie_1.js", "test1", "value1", null));
+        String url = mWebServer.getLinkedScriptUrl("/content_1.html", cookieUrl);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertNull(mCookieManager.getCookie(cookieUrl));
     }
 
     @Test
     public void testSameSiteNoneRequiresSecure() throws Throwable {
-        mServer = createWebServer();
+        mWebServer = setupWebServer(SslMode.INSECURE);
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
         mCookieManager.setAcceptCookie(true);
 
         // Verify that cookies with SameSite=none are ignored when the cookie is not also Secure.
         String cookieUrl =
-                mServer.getSetCookieUrl("/cookie_1.js", "test1", "value1", "SameSite=None");
-        String url = mServer.getLinkedScriptUrl("/content_1.html", cookieUrl);
+                mWebServer.getSetCookieUrl("/cookie_1.js", "test1", "value1", "SameSite=None");
+        String url = mWebServer.getLinkedScriptUrl("/content_1.html", cookieUrl);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertNull(mCookieManager.getCookie(cookieUrl));
     }
 
     @Test
     public void testSchemefulSameSite() throws Throwable {
-        mServer = createWebServer();
+        mWebServer = setupWebServer(SslMode.INSECURE);
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
         mCookieManager.setAcceptCookie(true);
         mOnUiThread.setAcceptThirdPartyCookies(true);
 
         // Verify that two servers with different schemes on the same host are not considered
         // same-site to each other.
-        CtsTestServer secureServer = createWebServer(SslMode.NO_CLIENT_AUTH, R.raw.trustedkey,
-                R.raw.trustedcert);
+        SharedSdkWebServer secureServer = setupWebServer(SslMode.NO_CLIENT_AUTH,
+                R.raw.trustedkey, R.raw.trustedcert);
         try {
-            String cookieUrl = secureServer.getSetCookieUrl("/cookie_1.js", "test1", "value1");
-            String url = mServer.getLinkedScriptUrl("/content_1.html", cookieUrl);
+            String cookieUrl = secureServer.getSetCookieUrl("/cookie_1.js", "test1",
+                    "value1", null);
+            String url = mWebServer.getLinkedScriptUrl("/content_1.html", cookieUrl);
             mOnUiThread.loadUrlAndWaitForCompletion(url);
             assertNull(mCookieManager.getCookie(cookieUrl));
         } finally {

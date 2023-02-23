@@ -75,7 +75,7 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
         final int windowingMode = WINDOWING_MODE_MULTI_WINDOW;
         final TaskFragmentCreationParams params = new TaskFragmentCreationParams.Builder(
                 mTaskFragmentOrganizer.getOrganizerToken(), taskFragToken, mOwnerToken)
-                .setInitialBounds(bounds)
+                .setInitialRelativeBounds(bounds)
                 .setWindowingMode(windowingMode)
                 .build();
         final WindowContainerTransaction wct = new WindowContainerTransaction()

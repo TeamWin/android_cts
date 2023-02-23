@@ -59,6 +59,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Collections;
+import java.util.Map;
+
 /**
  * Tests related to job throttling -- device idle, app standby and battery saver.
  */
@@ -959,11 +962,22 @@ public class JobThrottlingTest {
         assumeFalse("not testable in leanback device", mLeanbackOnly);
         BatteryUtils.assumeBatterySaverFeature();
 
-        setChargingState(false);
-        BatteryUtils.enableBatterySaver(true);
-        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, false, true);
-        assertTrue("New user-initiated job failed to start with battery saver ON",
-                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        try (TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(
+                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            setChargingState(false);
+            BatteryUtils.enableBatterySaver(true);
+
+            mTestAppInterface.postUiInitiatingNotification(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true
+                    ),
+                    Collections.emptyMap());
+            notificationHelper.clickNotification();
+
+            assertTrue("New user-initiated job failed to start with battery saver ON",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        }
     }
 
     @Test
@@ -972,39 +986,72 @@ public class JobThrottlingTest {
         assumeFalse("not testable in leanback device", mLeanbackOnly);
         BatteryUtils.assumeBatterySaverFeature();
 
-        setChargingState(false);
-        BatteryUtils.enableBatterySaver(false);
-        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, false, true);
-        assertTrue("New user-initiated job failed to start with battery saver ON",
-                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
-        BatteryUtils.enableBatterySaver(true);
-        assertFalse("Job stopped when battery saver turned on",
-                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        try (TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(
+                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            setChargingState(false);
+            BatteryUtils.enableBatterySaver(false);
+
+            mTestAppInterface.postUiInitiatingNotification(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true
+                    ),
+                    Collections.emptyMap());
+            notificationHelper.clickNotification();
+
+            assertTrue("New user-initiated job failed to start with battery saver ON",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+            BatteryUtils.enableBatterySaver(true);
+            assertFalse("Job stopped when battery saver turned on",
+                    mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        }
     }
 
     @Test
     public void testUserInitiatedJobBypassesDeviceIdle() throws Exception {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
 
-        toggleDozeState(true);
-        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, false, true);
-        runJob();
-        assertTrue("Job did not start after scheduling",
-                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        try (TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(
+                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            toggleDozeState(true);
+
+            mTestAppInterface.postUiInitiatingNotification(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true
+                    ),
+                    Collections.emptyMap());
+            notificationHelper.clickNotification();
+
+            assertTrue("Job did not start after scheduling",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        }
     }
 
     @Test
     public void testUserInitiatedJobBypassesDeviceIdle_toggling() throws Exception {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
 
-        toggleDozeState(false);
-        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, false, true);
-        runJob();
-        assertTrue("Job did not start after scheduling",
-                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
-        toggleDozeState(true);
-        assertFalse("Job stopped when device enabled turned on",
-                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        try (TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(
+                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            toggleDozeState(false);
+
+            mTestAppInterface.postUiInitiatingNotification(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true
+                    ),
+                    Collections.emptyMap());
+            notificationHelper.clickNotification();
+
+            assertTrue("Job did not start after scheduling",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+            toggleDozeState(true);
+            assertFalse("Job stopped when device enabled turned on",
+                    mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        }
     }
 
     @Test

@@ -25,7 +25,6 @@ import static org.junit.Assert.assertTrue;
 import android.app.Instrumentation;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.backlegacyapp.Components;
-import android.support.test.uiautomator.UiDevice;
 import android.view.KeyEvent;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -39,8 +38,6 @@ import org.junit.Test;
 public class BackNavigationLegacyTest extends ActivityManagerTestBase {
     private Instrumentation mInstrumentation;
 
-    private UiDevice mUiDevice;
-
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -53,8 +50,9 @@ public class BackNavigationLegacyTest extends ActivityManagerTestBase {
         launchActivity(BACK_LEGACY);
         mWmState.assertActivityDisplayed(BACK_LEGACY);
         waitAndAssertActivityState(BACK_LEGACY, STATE_RESUMED, "Activity should be resumed");
-        mUiDevice = UiDevice.getInstance(mInstrumentation);
-        mUiDevice.pressKeyCode(KeyEvent.KEYCODE_BACK);
+        mInstrumentation.waitForIdleSync();
+        mInstrumentation.getUiAutomation().syncInputTransactions();
+        TouchHelper.injectKey(KeyEvent.KEYCODE_BACK, false /* longpress */, true /* sync */);
         waitAndAssertActivityState(BACK_LEGACY, STATE_STOPPED, "Activity should be stopped");
         assertTrue("OnBackPressed should have been called",
                 TestJournalContainer.get(BACK_LEGACY).extras.getBoolean(

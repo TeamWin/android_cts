@@ -108,14 +108,12 @@ public class ImsServiceTestOnMockModem {
 
         sTestSub = ImsUtils.getPreferredActiveSubId();
 
-        int[] subs = SubscriptionManager.getSubId(sTestSlot);
-        for (int sub : subs) {
+        int sub = SubscriptionManager.getSubscriptionId(sTestSlot);
+        if (SubscriptionManager.isValidSubscriptionId(sub)) {
             if (VDBG) Log.i(LOG_TAG, "beforeAllTests sub=" + sub);
-            if (SubscriptionManager.isValidSubscriptionId(sub)) {
-                sTestSub = sub;
-                break;
-            }
+            sTestSub = sub;
         }
+
         if (VDBG) Log.i(LOG_TAG, "sTestSub=" + sTestSub);
 
         sServiceConnector = new ImsServiceConnector(InstrumentationRegistry.getInstrumentation());

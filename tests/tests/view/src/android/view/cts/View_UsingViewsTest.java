@@ -392,15 +392,17 @@ public class View_UsingViewsTest {
         CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mActivityRule, mEditText);
         verify(onLongClickListener, within(1000)).onLongClick(mEditText);
 
+        // Wait for the UI Thread to become idle.
+        final UiDevice device = UiDevice.getInstance(mInstrumentation);
+
         // click the Cancel button
         mActivityRule.runOnUiThread(() -> mEditText.setText("Germany"));
         mInstrumentation.waitForIdleSync();
+        device.waitForIdle();
 
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonCancel);
         assertEquals("", mEditText.getText().toString());
 
-        // Wait for the UI Thread to become idle.
-        final UiDevice device = UiDevice.getInstance(mInstrumentation);
         mInstrumentation.waitForIdleSync();
         device.waitForIdle();
 

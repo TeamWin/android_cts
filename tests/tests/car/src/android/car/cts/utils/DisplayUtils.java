@@ -43,6 +43,33 @@ public class DisplayUtils {
         private ImageReader mReader;
 
         /**
+         * Creates a virtual display with the given parameters.
+         * @param context
+         * @param width
+         * @param height
+         * @param density
+         * @param isPrivate true if this display is a private display.
+         * @return a virtual display
+         * @throws IllegalStateException if tries to create multiple virtual displays within
+         *     a session.
+         */
+        public Display createDisplay(Context context, int width, int height, int density,
+                                     boolean isPrivate) {
+            if (mReader != null) {
+                throw new IllegalStateException(
+                        "Only one display can be created during this session.");
+            }
+            mReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888,
+                    1 /* maxImages */);
+            int flags = isPrivate ? 0
+                    : (VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY | VIRTUAL_DISPLAY_FLAG_PUBLIC);
+            DisplayManager displayManager = context.getSystemService(DisplayManager.class);
+            mVirtualDisplay = displayManager.createVirtualDisplay(CONTEXT_HELPER_CTS_DISPLAY_NAME,
+                    width, height, density, mReader.getSurface(), flags);
+            return mVirtualDisplay.getDisplay();
+        }
+
+        /**
          * Creates a virtual display having same size with default display and waits until it's
          * in display list. The density of the virtual display is based on
          * {@link DisplayMetrics#xdpi} so that the threshold of gesture detection is same as

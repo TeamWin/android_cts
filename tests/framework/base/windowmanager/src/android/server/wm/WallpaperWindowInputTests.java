@@ -26,7 +26,9 @@ import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeTrue;
 
+import android.app.WallpaperManager;
 import android.graphics.Rect;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -38,6 +40,7 @@ import com.android.compatibility.common.util.PollingCheck;
 
 import junit.framework.AssertionFailedError;
 
+import org.junit.Before;
 import org.junit.Test;
 
 
@@ -52,6 +55,13 @@ public class WallpaperWindowInputTests extends ActivityManagerTestBase {
     private static final String TAG = "WallpaperWindowInputTests";
 
     private MotionEvent mLastMotionEvent;
+
+    @Before
+    public void setup() {
+        WallpaperManager wallpaperManager = WallpaperManager.getInstance(mContext);
+        assumeTrue("Device does not support wallpapers",
+                wallpaperManager.isWallpaperSupported());
+    }
 
     @Test
     public void testShowWallpaper_withTouchEnabled() {
