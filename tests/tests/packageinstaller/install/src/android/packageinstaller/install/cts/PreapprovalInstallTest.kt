@@ -16,6 +16,11 @@
 
 package android.packageinstaller.install.cts
 
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageInstaller
 import android.icu.util.ULocale
 import android.platform.test.annotations.AppModeFull
@@ -112,6 +117,61 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
             startRequestUserPreapproval(session, details)
             fail("Cannot request user preapproval on an approved/rejected session again")
         } catch (expected: IllegalStateException) {
+        }
+    }
+
+    /**
+     * Check that we cannot commit a session that has been declined by the user when
+     * requesting user preapproval.
+     */
+    @Test
+    fun requestUserPreapproval_userCancel_cannotCommitAgain() {
+        val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
+                null /* packageSource */)
+        startRequestUserPreapproval(session, preparePreapprovalDetails())
+        clickInstallerUIButton(CANCEL_BUTTON_ID)
+
+        getInstallSessionResult()
+        try {
+            commitSession(session)
+            fail("Cannot commit an rejected session again")
+        } catch (expected: SecurityException) {
+        }
+    }
+
+    /**
+     * Request a user pre-approval, but don't resolve it.
+     * Check that we can install via commit this session later.
+     */
+    @Test
+    fun requestUserPreapproval_doNothingAndCommitLater_installSuccessfully() {
+        val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
+                null /* packageSource */)
+
+        val dummyReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                // Do nothing
+            }
+        }
+
+        try {
+            val action = "PreapprovalInstallTest.install_cb"
+            context.registerReceiver(dummyReceiver, IntentFilter(action),
+                    Context.RECEIVER_EXPORTED)
+
+            val pendingIntent = PendingIntent.getBroadcast(context, 0 /* requestCode */,
+                    Intent(action).setPackage(context.packageName),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
+            session.requestUserPreapproval(preparePreapprovalDetails(), pendingIntent.intentSender)
+
+            writeAndCommitSession(TEST_APK_NAME, session)
+            clickInstallerUIButton(INSTALL_BUTTON_ID)
+
+            val result = getInstallSessionResult()
+            assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
+            assertInstalled()
+        } finally {
+            context.unregisterReceiver(dummyReceiver)
         }
     }
 
@@ -291,6 +351,9 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         assertInstalled()
     }
 
+    /**
+     * Check that we receive the expected status when requesting user pre-approval isn't available.
+     */
     @Test
     fun requestUserPreapproval_featureDisabled_statusFailureBlocked() {
         val config = getDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE)
@@ -309,6 +372,10 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         }
     }
 
+    /**
+     * Request a user pre-approval, but this feature is currently not available.
+     * Check that we can still install via commit this session.
+     */
     @Test
     fun requestUserPreapproval_featureDisabled_couldUseCommitInstead() {
         val config = getDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE)
