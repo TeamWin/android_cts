@@ -68,6 +68,13 @@ public class ImsUtils {
         return hasTelephony && hasIms;
     }
 
+    public static boolean shouldTestImsCall() {
+        final PackageManager pm = InstrumentationRegistry.getInstrumentation().getContext()
+                .getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_IMS)
+                && pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_CALLING);
+    }
+
     public static boolean shouldTestImsSingleRegistration() {
         final PackageManager pm = InstrumentationRegistry.getInstrumentation().getContext()
                 .getPackageManager();
