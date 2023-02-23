@@ -32,6 +32,7 @@ import android.media.MediaSyncEvent;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
+import android.service.voice.DetectedPhrase;
 import android.service.voice.HotwordAudioStream;
 import android.service.voice.HotwordDetectedResult;
 import android.voiceinteraction.common.Utils;
@@ -63,8 +64,7 @@ public class HotwordDetectedResultTest {
         final int bitsForHotwordDetectionPersonalized = 1;
         final int bitsForScore = Utils.bitCount(HotwordDetectedResult.getMaxScore());
         final int bitsForPersonalizedScore = Utils.bitCount(HotwordDetectedResult.getMaxScore());
-        final int bitsForHotwordPhraseId = Utils.bitCount(
-                HotwordDetectedResult.getMaxHotwordPhraseId());
+        final int bitsForHotwordPhraseId = Utils.bitCount(Integer.MAX_VALUE);
 
         final int totalSize =
                 bitsForConfidenceLevel + bitsForHotwordOffsetMillis + bitsForHotwordDurationMillis
@@ -91,7 +91,7 @@ public class HotwordDetectedResultTest {
 
     @Test
     public void testHotwordDetectedResult_getMaxHotwordPhraseId() throws Exception {
-        assertThat(HotwordDetectedResult.getMaxHotwordPhraseId() >= 63).isTrue();
+        assertThat(HotwordDetectedResult.getMaxHotwordPhraseId() >= Integer.MAX_VALUE).isTrue();
     }
 
     @Test
@@ -181,9 +181,12 @@ public class HotwordDetectedResultTest {
                             /* hotwordDetectionPersonalized= */ true,
                             /* score= */ 100,
                             /* personalizedScore= */ 100,
-                            /* hotwordPhraseId= */ 1,
                             audioStreams,
-                            new PersistableBundle());
+                            new PersistableBundle(),
+                            new DetectedPhrase.Builder()
+                                    .setId(1)
+                                    .setPhrase("Test Phrase")
+                                    .build());
 
             assertHotwordDetectedResult(hotwordDetectedResult);
             HotwordAudioStream result = hotwordDetectedResult.getAudioStreams().get(0);
@@ -214,9 +217,12 @@ public class HotwordDetectedResultTest {
                             /* hotwordDetectionPersonalized= */ true,
                             /* score= */ 100,
                             /* personalizedScore= */ 100,
-                            /* hotwordPhraseId= */ 1,
                             audioStreams,
-                            new PersistableBundle());
+                            new PersistableBundle(),
+                            new DetectedPhrase.Builder()
+                                    .setId(1)
+                                    .setPhrase("Test Phrase")
+                                    .build());
 
             final Parcel p = Parcel.obtain();
             hotwordDetectedResult.writeToParcel(p, 0);
@@ -244,9 +250,9 @@ public class HotwordDetectedResultTest {
             boolean hotwordDetectionPersonalized,
             int score,
             int personalizedScore,
-            int hotwordPhraseId,
             List<HotwordAudioStream> audioStreams,
-            PersistableBundle extras) {
+            PersistableBundle extras,
+            DetectedPhrase detectedPhrase) {
         return new HotwordDetectedResult.Builder()
                 .setConfidenceLevel(confidenceLevel)
                 .setMediaSyncEvent(mediaSyncEvent)
@@ -256,9 +262,9 @@ public class HotwordDetectedResultTest {
                 .setHotwordDetectionPersonalized(hotwordDetectionPersonalized)
                 .setScore(score)
                 .setPersonalizedScore(personalizedScore)
-                .setHotwordPhraseId(hotwordPhraseId)
                 .setAudioStreams(audioStreams)
                 .setExtras(extras)
+                .setDetectedPhrase(detectedPhrase)
                 .build();
     }
 
@@ -272,7 +278,8 @@ public class HotwordDetectedResultTest {
         assertThat(hotwordDetectedResult.isHotwordDetectionPersonalized()).isTrue();
         assertThat(hotwordDetectedResult.getScore()).isEqualTo(100);
         assertThat(hotwordDetectedResult.getPersonalizedScore()).isEqualTo(100);
-        assertThat(hotwordDetectedResult.getHotwordPhraseId()).isEqualTo(1);
+        assertThat(hotwordDetectedResult.getDetectedPhrase().getId()).isEqualTo(1);
+        assertThat(hotwordDetectedResult.getDetectedPhrase().getPhrase()).isEqualTo("Test Phrase");
         assertThat(hotwordDetectedResult.getAudioStreams()).isNotNull();
         assertThat(hotwordDetectedResult.getExtras()).isNotNull();
     }
