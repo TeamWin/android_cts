@@ -295,6 +295,7 @@ public class TextureViewTest {
 
         // paint surfaceView layer
         SurfaceView surfaceView = activity.getSurfaceView();
+        final CountDownLatch latch = new CountDownLatch(1);
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
@@ -303,18 +304,32 @@ public class TextureViewTest {
                         .setHardwareBufferFormat(PixelFormat.RGBA_8888)
                         .setDataSpace(dataSpace)
                         .build();
-                Image image = writer.dequeueInputImage();
-                assertEquals(dataSpace, image.getDataSpace());
-                Image.Plane plane = image.getPlanes()[0];
-                Bitmap bitmap = Bitmap.createBitmap(plane.getRowStride() / 4, image.getHeight(),
-                        Bitmap.Config.ARGB_8888, true, ColorSpace.getFromDataSpace(dataSpace));
-                Canvas canvas = new Canvas(bitmap);
-                Paint paint = new Paint();
-                paint.setAntiAlias(false);
-                paint.setColor(converted);
-                canvas.drawRect(0f, 0f, width, height, paint);
-                bitmap.copyPixelsToBuffer(plane.getBuffer());
-                writer.queueInputImage(image);
+                // spawn a thread here to iterate 10 times from image dequeue to queue
+                // so that we can be stalled until the first frame has been displayed.
+                new Thread(() -> {
+                    Bitmap bitmap = null;
+                    for (int i = 0; i < 10; i++) {
+                        Image image = writer.dequeueInputImage();
+                        assertEquals(dataSpace, image.getDataSpace());
+                        Image.Plane plane = image.getPlanes()[0];
+                        // only make bitmap the first time to improve the performation
+                        // if the bitmap is large.
+                        if (bitmap == null) {
+                            bitmap = Bitmap.createBitmap(plane.getRowStride() / 4,
+                                image.getHeight(),
+                                Bitmap.Config.ARGB_8888, true,
+                                ColorSpace.getFromDataSpace(dataSpace));
+                            Canvas canvas = new Canvas(bitmap);
+                            Paint paint = new Paint();
+                            paint.setAntiAlias(false);
+                            paint.setColor(converted);
+                            canvas.drawRect(0f, 0f, width, height, paint);
+                        }
+                        bitmap.copyPixelsToBuffer(plane.getBuffer());
+                        writer.queueInputImage(image);
+                    }
+                    latch.countDown();
+                }).start();
             }
 
             @Override
@@ -329,9 +344,8 @@ public class TextureViewTest {
             activity.setContentView(surfaceView);
         });
 
-        // wait here to ensure SF has latched the buffer that has been queued in
-        // this is the easiest way to solve copy failure but sacrifice the performance.
-        Thread.sleep(100);
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
+
         Bitmap surfaceViewScreenshot = mInstrumentation
                 .getUiAutomation()
                 .takeScreenshot(activity.getWindow());
