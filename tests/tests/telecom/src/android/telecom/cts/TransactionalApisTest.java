@@ -100,6 +100,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         private final String mCallId;
         private String mTelecomCallId = "";
         CallControl mCallControl;
+        public boolean mWasOnDisconnectCalled = false;
 
         TelecomCtsVoipCall(String id) {
             mCallId = id;
@@ -114,6 +115,8 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             mCallControl = callControl;
             mTelecomCallId = callControl.getCallId().toString();
         }
+
+        public CallEvent mEvents = new CallEvent();
 
         public CallControlCallback mHandshakes = new CallControlCallback() {
             @Override
@@ -135,15 +138,11 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             }
 
             @Override
-            public void onReject(@NonNull Consumer<Boolean> wasCompleted) {
-                Log.i(TAG, String.format("onReject: callId=[%s]", mCallId));
-                wasCompleted.accept(Boolean.TRUE);
-            }
-
-            @Override
-            public void onDisconnect(@NonNull Consumer<Boolean> wasCompleted) {
+            public void onDisconnect(@NonNull DisconnectCause cause,
+                    @NonNull Consumer<Boolean> wasCompleted) {
                 Log.i(TAG, String.format("onDisconnect: callId=[%s]", mCallId));
                 wasCompleted.accept(Boolean.TRUE);
+                mWasOnDisconnectCalled = true;
             }
 
             @Override
@@ -151,10 +150,9 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
                 Log.i(TAG, String.format("onCallStreamingStarted: callId=[%s]", mCallId));
             }
         };
-        public CallEvent mEvents = new CallEvent();
 
         public void resetAllCallbackVerifiers() {
-            mEvents.resetAllCallbackVerifiers();
+            mWasOnDisconnectCalled = false;
         }
     }
 
@@ -507,7 +505,8 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
 
     /**
-     * Ensure {@link CallControlCallback#onReject} is being called and destroying the call.
+     * Ensure {@link CallControlCallback#onDisconnect(DisconnectCause, Consumer)}
+     * is being called and destroying the call.
      */
     public void testAddIncomingCallAndRejectWithCallEventCallback() {
         if (!mShouldTestTelecom) {
@@ -515,11 +514,14 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         }
         try {
             cleanup();
+            mCall1.resetAllCallbackVerifiers();
+            assertFalse(mCall1.mWasOnDisconnectCalled);
             startCallWithAttributesAndVerify(mIncomingCallAttributes, mCall1);
             assertNumCalls(getInCallService(), 1);
             Call call = getLastAddedCall();
             call.reject(Call.REJECT_REASON_DECLINED);
             assertNumCalls(getInCallService(), 0);
+            assertTrue(mCall1.mWasOnDisconnectCalled);
         } finally {
             cleanup();
         }
