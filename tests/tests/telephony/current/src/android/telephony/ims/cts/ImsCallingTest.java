@@ -1565,6 +1565,9 @@ public class ImsCallingTest extends ImsCallingBase {
     private void resetCallSessionObjects() {
         mCall1 = mCall2 = mCall3 = mConferenceCall = null;
         mCallSession1 = mCallSession2 = mCallSession3 = mConfCallSession = null;
+        if (sServiceConnector.getCarrierService().getMmTelFeature() == null) {
+            return;
+        }
         ConferenceHelper confHelper = sServiceConnector.getCarrierService().getMmTelFeature()
                 .getConferenceHelper();
         if (confHelper != null) {
