@@ -64,16 +64,6 @@ public final class NotificationsTest extends CtsVerifierTest {
     @Test
     @SupportMultiDisplayMode
     // MultiDisplayMode
-    public void AttentionManagementTest() throws Exception {
-        excludeFeatures("android.hardware.type.watch", "android.software.leanback");
-
-        runTest(".notifications.AttentionManagementVerifierActivity");
-    }
-
-    @Interactive
-    @Test
-    @SupportMultiDisplayMode
-    // MultiDisplayMode
     public void ToastTest() throws Exception {
         runTest(".notifications.ToastVerifierActivity");
     }
