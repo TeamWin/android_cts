@@ -249,6 +249,22 @@ def decompress_jpeg_to_rgb_image(jpeg_buffer):
   return numpy.array(img).reshape((h, w, 3)) / 255.0
 
 
+def decompress_jpeg_to_yuv_image(jpeg_buffer):
+  """Decompress a JPEG-compressed image, returning as a YUV image.
+
+  Args:
+    jpeg_buffer: The JPEG stream.
+
+  Returns:
+     A numpy array for the YUV image, with pixels in [0,1].
+  """
+  img = Image.open(io.BytesIO(jpeg_buffer))
+  img = img.convert('YCbCr')
+  w = img.size[0]
+  h = img.size[1]
+  return numpy.array(img).reshape((h, w, 3)) / 255.0
+
+
 def extract_luma_from_patch(cap, patch_x, patch_y, patch_w, patch_h):
   """Extract luma from capture."""
   y, _, _ = convert_capture_to_planes(cap)
@@ -485,13 +501,13 @@ def convert_y8_to_rgb_image(y_plane, w, h):
   return rgb.astype(numpy.float32) / 255.0
 
 
-def write_image(img, fname, apply_gamma=False):
+def write_image(img, fname, apply_gamma=False, is_yuv=False):
   """Save a float-3 numpy array image to a file.
 
   Supported formats: PNG, JPEG, and others; see PIL docs for more.
 
-  Image can be 3-channel, which is interpreted as RGB, or can be 1-channel,
-  which is greyscale.
+  Image can be 3-channel, which is interpreted as RGB or YUV, or can be
+  1-channel, which is greyscale.
 
   Can optionally specify that the image should be gamma-encoded prior to
   writing it out; this should be done if the image contains linear pixel
@@ -506,7 +522,10 @@ def write_image(img, fname, apply_gamma=False):
     img = apply_lut_to_image(img, DEFAULT_GAMMA_LUT)
   (h, w, chans) = img.shape
   if chans == 3:
-    Image.fromarray((img * 255.0).astype(numpy.uint8), 'RGB').save(fname)
+    if not is_yuv:
+      Image.fromarray((img * 255.0).astype(numpy.uint8), 'RGB').save(fname)
+    else:
+      Image.fromarray((img * 255.0).astype(numpy.uint8), 'YCbCr').save(fname)
   elif chans == 1:
     img3 = (img * 255.0).astype(numpy.uint8).repeat(3).reshape(h, w, 3)
     Image.fromarray(img3, 'RGB').save(fname)
@@ -873,3 +892,18 @@ def compute_image_rms_difference_3d(rgb_x, rgb_y):
         mean_square_sum += pow(rgb_x[i][j][k] - rgb_y[i][j][k], 2.0)
   return (math.sqrt(mean_square_sum /
                     (shape_rgb_x[0] * shape_rgb_x[1] * shape_rgb_x[2])))
+
+
+def compute_image_sad(img_x, img_y):
+  """Calculate the sum of absolute differences between 2 images.
+
+  Args:
+    img_x: image array in the form of w * h * channels
+    img_y: image array in the form of w * h * channels
+
+  Returns:
+    sad
+  """
+  img_x = img_x[:, :, 1:].ravel()
+  img_y = img_y[:, :, 1:].ravel()
+  return numpy.sum(numpy.abs(numpy.subtract(img_x, img_y, dtype=float)))
