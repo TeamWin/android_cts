@@ -739,7 +739,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.LANE_CENTERING_ASSIST_STATE,
                             VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_STATE,
                             VehiclePropertyIds.CRUISE_CONTROL_TYPE,
-                            VehiclePropertyIds.CRUISE_CONTROL_STATE)
+                            VehiclePropertyIds.CRUISE_CONTROL_STATE,
+                            VehiclePropertyIds.CRUISE_CONTROL_TARGET_SPEED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1161,6 +1162,30 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class)
                 .setAllPossibleEnumValues(CRUISE_CONTROL_COMMANDS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testCruiseControlTargetSpeedIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.CRUISE_CONTROL_TARGET_SPEED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Float.class)
+                .requireMinMaxValues()
+                .setCarPropertyConfigVerifier(
+                        carPropertyConfig -> {
+                            List<? extends AreaIdConfig<?>> areaIdConfigs = carPropertyConfig
+                                    .getAreaIdConfigs();
+                            for (AreaIdConfig<?> areaIdConfig : areaIdConfigs) {
+                                assertWithMessage("Min/Max values must be non-negative")
+                                        .that((Float) areaIdConfig.getMinValue())
+                                        .isAtLeast(0F);
+                            }
+                        })
+                .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
                 .verify(mCarPropertyManager);
     }
