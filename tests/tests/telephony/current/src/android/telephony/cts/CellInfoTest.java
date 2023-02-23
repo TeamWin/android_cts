@@ -22,6 +22,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 import static org.junit.Assert.fail;
 
 import android.annotation.Nullable;
@@ -253,8 +254,10 @@ public class CellInfoTest {
 
     @Before
     public void setUp() throws Exception {
-        mTm = (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mPm = getContext().getPackageManager();
+        assumeTrue(mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
+
+        mTm = (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         Pair<Integer, Integer> verPair =
                 mTm.getHalVersion(TelephonyManager.HAL_SERVICE_NETWORK);
         mNetworkHalVersion = makeRadioVersion(verPair.first, verPair.second);
@@ -267,8 +270,6 @@ public class CellInfoTest {
      */
     @Test
     public void testPhoneStateListenerCallback() throws Throwable {
-        if (!mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return;
-
         CellInfoResultsCallback resultsCallback = new CellInfoResultsCallback();
         // Prime the system by requesting a CellInfoUpdate
         mTm.requestCellInfoUpdate(mSimpleExecutor, resultsCallback);
@@ -316,11 +317,6 @@ public class CellInfoTest {
 
     @Test
     public void testCellInfo() throws Throwable {
-        if(!(mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY))) {
-            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
-            return;
-        }
-
         if (!isCamped()) fail("Device is not camped to a cell");
 
         // Make a blocking call to requestCellInfoUpdate for results (for simplicity of test).
