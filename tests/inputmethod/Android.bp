@@ -35,6 +35,7 @@ android_test {
         "cts-mock-a11y-ime-client",
         "ctstestrunner-axt",
         "CtsMockInputMethodLib",
+        "CtsInputMethodStandaloneTestLib",
         "CtsMockSpellCheckerLib",
         "CtsLegacyImeClientTestLib",
         "testng",

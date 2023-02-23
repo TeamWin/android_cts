@@ -78,6 +78,12 @@ public final class MockTestActivityUtil {
      */
     public static final String EXTRA_SHOW_SOFT_INPUT = "extra_show_soft_input";
 
+    /**
+     * Can be passed to {@link #sendBroadcastAction(String)} to declare editor as
+     * {@link android.view.View#setIsHandwritingDelegate(boolean) handwriting delegator}.
+     */
+    public static final String EXTRA_HANDWRITING_DELEGATE = "extra_handwriting_delegator";
+
     @NonNull
     private static Uri formatStringIntentParam(@NonNull Uri uri, Map<String, String> extras) {
         if (extras == null) {
