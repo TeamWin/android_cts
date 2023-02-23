@@ -83,9 +83,9 @@ public class Utils {
     // slower.
 
     /** Timeout for getting back assist context */
-    public static final int TIMEOUT_MS = 4 * 1_000;
+    public static final int TIMEOUT_MS = 6 * 1_000;
     /** Timeout for an activity to resume */
-    public static final int ACTIVITY_ONRESUME_TIMEOUT_MS = 8 * 1_000;
+    public static final int ACTIVITY_ONRESUME_TIMEOUT_MS = 12 * 1_000;
 
     public static final String EXTRA_REGISTER_RECEIVER = "register_receiver";
 
