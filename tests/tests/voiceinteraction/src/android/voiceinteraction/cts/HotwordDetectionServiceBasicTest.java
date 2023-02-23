@@ -247,7 +247,8 @@ public class HotwordDetectionServiceBasicTest {
         assumeTrue("Not support multiple hotword detectors", enableMultipleHotwordDetectors);
 
         // Create first SoftwareHotwordDetector and wait the HotwordDetectionService ready
-        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector();
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                false);
 
         // Create second SoftwareHotwordDetector, it will get the IllegalStateException due to
         // the previous SoftwareHotwordDetector is not destroy.
@@ -373,10 +374,93 @@ public class HotwordDetectionServiceBasicTest {
 
     @Test
     @RequiresDevice
+    public void testHotwordDetectionService_onDetectFromDspSecurityException_onFailure()
+            throws Throwable {
+        // Create alwaysOnHotwordDetector with onFailure callback
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ true);
+
+        try {
+            mService.initOnFailureLatch();
+
+            runWithShellPermissionIdentity(() -> {
+                alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
+                        /* status= */ 0, /* soundModelHandle= */ 100,
+                        /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
+                        /* captureSession= */ 101, /* captureDelayMs= */ 1000,
+                        /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
+                        Helper.createFakeAudioFormat(), new byte[1024],
+                        Helper.createFakeKeyphraseRecognitionExtraList());
+            });
+
+            mService.waitOnFailureCalled();
+
+            verifyHotwordDetectionServiceFailure(mService.getDetectorFailure(),
+                    HotwordDetectionServiceFailure.ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
+        } finally {
+            // destroy detector
+            alwaysOnHotwordDetector.destroy();
+        }
+    }
+
+    @Test
+    public void testHotwordDetectionService_onDetectFromExternalSourceSecurityException_onFailure()
+            throws Throwable {
+        // Create alwaysOnHotwordDetector with onFailure callback
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ true);
+
+        try {
+            mService.initOnFailureLatch();
+
+            runWithShellPermissionIdentity(() -> {
+                alwaysOnHotwordDetector.startRecognition(Helper.createFakeAudioStream(),
+                        Helper.createFakeAudioFormat(), Helper.createFakePersistableBundleData());
+            });
+
+            mService.waitOnFailureCalled();
+
+            verifyHotwordDetectionServiceFailure(mService.getDetectorFailure(),
+                    HotwordDetectionServiceFailure.ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
+        } finally {
+            // destroy detector
+            alwaysOnHotwordDetector.destroy();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void testHotwordDetectionService_onDetectFromMicSecurityException_onFailure()
+            throws Throwable {
+        // Create SoftwareHotwordDetector with onFailure callback
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                true);
+
+        try {
+            mService.initOnFailureLatch();
+
+            runWithShellPermissionIdentity(() -> {
+                softwareHotwordDetector.startRecognition();
+            });
+
+            // wait onFailure() called and verify the result
+            mService.waitOnFailureCalled();
+
+            verifyHotwordDetectionServiceFailure(mService.getDetectorFailure(),
+                    HotwordDetectionServiceFailure.ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
+        } finally {
+            // destroy detector
+            softwareHotwordDetector.destroy();
+        }
+    }
+
+    @Test
+    @RequiresDevice
     public void testHotwordDetectionService_createDetectorTwiceQuickly_triggerSuccess()
             throws Throwable {
         // Create SoftwareHotwordDetector
-        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector();
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                false);
         // destroy software hotword detector
         softwareHotwordDetector.destroy();
 
@@ -570,7 +654,8 @@ public class HotwordDetectionServiceBasicTest {
     public void testHotwordDetectionService_onDetectFromMic_success() throws Throwable {
         startWatchingNoted();
         // Create SoftwareHotwordDetector
-        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector();
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                false);
         try {
             adoptShellPermissionIdentityForHotword();
 
@@ -600,7 +685,8 @@ public class HotwordDetectionServiceBasicTest {
     public void testHotwordDetectionService_destroySoftwareDetector_activeDetectorRemoved()
             throws Throwable {
         // Create SoftwareHotwordDetector
-        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector();
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                false);
 
         // Destroy SoftwareHotwordDetector
         softwareHotwordDetector.destroy();
@@ -621,7 +707,8 @@ public class HotwordDetectionServiceBasicTest {
     @RequiresDevice
     public void testHotwordDetectionService_onStopDetection() throws Throwable {
         // Create SoftwareHotwordDetector
-        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector();
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                false);
         try {
             adoptShellPermissionIdentityForHotword();
 
@@ -650,7 +737,8 @@ public class HotwordDetectionServiceBasicTest {
     @RequiresDevice
     public void testHotwordDetectionService_concurrentCapture() throws Throwable {
         // Create SoftwareHotwordDetector
-        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector();
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                false);
 
         SystemUtil.runWithShellPermissionIdentity(() -> {
             AudioRecord record =
@@ -697,7 +785,8 @@ public class HotwordDetectionServiceBasicTest {
                 createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
 
         // Create SoftwareHotwordDetector
-        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector();
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                false);
 
         try {
             adoptShellPermissionIdentityForHotword();
@@ -777,9 +866,14 @@ public class HotwordDetectionServiceBasicTest {
     /**
      * Create software hotword detector and wait for ready
      */
-    private HotwordDetector createSoftwareHotwordDetector() throws Throwable {
+    private HotwordDetector createSoftwareHotwordDetector(boolean useOnFailure) throws Throwable {
         // Create SoftwareHotwordDetector
-        mService.createSoftwareHotwordDetector();
+        if (useOnFailure) {
+            mService.createSoftwareHotwordDetectorWithOnFailureCallback(/* useExecutor= */
+                    false, /* runOnMainThread= */ false);
+        } else {
+            mService.createSoftwareHotwordDetector();
+        }
 
         mService.waitSandboxedDetectionServiceInitializedCalledOrException();
 
