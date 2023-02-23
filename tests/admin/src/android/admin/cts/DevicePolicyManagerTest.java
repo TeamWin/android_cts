@@ -93,12 +93,20 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             "VcUyQ1/e7WQgOaBHi9TefUJi+4PSVSluOXon\n" +
             "-----END CERTIFICATE-----";
 
+    static ComponentName getReceiverComponent() {
+        return new ComponentName("android.admin.app", "android.admin.app.CtsDeviceAdminReceiver");
+    }
+
+    static ComponentName getProfileOwnerComponent() {
+        return new ComponentName("android.admin.app", "android.admin.app.CtsDeviceAdminProfileOwner");
+    }
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
-        mComponent = DeviceAdminInfoTest.getReceiverComponent();
+        mComponent = getReceiverComponent();
         mNotificationManager =
                     (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         mPackageManager = mContext.getPackageManager();
@@ -329,7 +337,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             Log.w(TAG, "Skipping testSetSecureSetting_failForInstallNonMarketApps");
             return;
         }
-        ComponentName profileOwner = DeviceAdminInfoTest.getProfileOwnerComponent();
+        ComponentName profileOwner = getProfileOwnerComponent();
         try {
             mDevicePolicyManager.setSecureSetting(profileOwner,
                     Settings.Secure.INSTALL_NON_MARKET_APPS, "0");
@@ -1054,14 +1062,5 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         } catch (SecurityException e) {
             assertProfileOwnerMessage(e.getMessage());
         }
-    }
-
-    private void setProfileOwnerAndWaitForSuccess(String componentName)
-            throws InterruptedException, AdbException {
-        ShellCommand.builder("dpm set-profile-owner")
-            .addOperand("--user cur")
-            .addOperand(componentName)
-            .validate(ShellCommandUtils::startsWithSuccess)
-            .executeUntilValid();
     }
 }
