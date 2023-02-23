@@ -17,6 +17,9 @@
 package android.mediav2.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ALL;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -28,6 +31,7 @@ import android.mediav2.common.cts.CodecDecoderTestBase;
 import android.mediav2.common.cts.CodecTestBase;
 import android.mediav2.common.cts.OutputManager;
 import android.opengl.GLES20;
+import android.opengl.GLES30;
 import android.util.Log;
 
 import androidx.test.filters.LargeTest;
@@ -108,6 +112,20 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
             {170, 82, 96},
     };
 
+    private static final int[][] COLOR_BARS_YUV_10BIT = new int[][]{
+            {504, 764, 920},
+            {392, 416, 816},
+            {720, 80, 672},
+            {484, 436, 240},
+            {456, 716, 688},
+            {532, 552, 472},
+            {732, 372, 612},
+            {812, 80, 132},
+            {588, 524, 732},
+            {160, 708, 808},
+            {680, 328, 384},
+    };
+
     // Reference RGB values for 601 Limited Range
     private static final int[][] COLOR_BARS_601LR = new int[][]{
             {255, 17, 252},
@@ -122,6 +140,22 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
             {148, 0, 126},
             {127, 219, 82},
     };
+
+    // Reference RGB values for 601 Limited Range 10BIT
+    private static final int[][] COLOR_BARS_601LR_10BIT = new int[][]{
+            {1023, 82, 1023},
+            {870, 173, 189},
+            {1022, 805, 0},
+            {55, 742, 337},
+            {740, 234, 871},
+            {483, 564, 628},
+            {940, 754, 497},
+            {265, 1023, 0},
+            {964, 428, 636},
+            {586, 0, 509},
+            {515, 896, 347},
+    };
+
     // Reference RGB values for 601 Full Range
     private static final int[][] COLOR_BARS_601FR = new int[][]{
             {255, 31, 237},
@@ -136,6 +170,22 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
             {143, 0, 126},
             {125, 208, 88},
     };
+
+    // Reference RGB values for 601 Full Range 10BIT
+    private static final int[][] COLOR_BARS_601FR_10BIT = new int[][]{
+            {1023, 126, 951},
+            {818, 208, 222},
+            {944, 754, 0},
+            {103, 704, 349},
+            {703, 260, 818},
+            {476, 547, 603},
+            {872, 709, 484},
+            {279, 1023, 46},
+            {897, 427, 609},
+            {575, 0, 507},
+            {501, 835, 354},
+    };
+
     // Reference RGB values for 709 Limited Range
     private static final int[][] COLOR_BARS_709LR = new int[][]{
             {255, 57, 255},
@@ -151,6 +201,51 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
             {120, 202, 78},
     };
 
+    // Reference RGB values for 709 Limited Range 10BIT
+    private static final int[][] COLOR_BARS_709LR_10BIT = new int[][]{
+            {1023, 242, 1023},
+            {930, 241, 180},
+            {1023, 773, 0},
+            {2, 652, 330},
+            {774, 320, 890},
+            {475, 559, 631},
+            {960, 757, 484},
+            {190, 1023, 0},
+            {1008, 492, 637},
+            {644, 0, 527},
+            {489, 827, 330},
+    };
+
+    // Reference RGB values for 2020 Limited Range
+    private static final int[][] COLOR_BARS_2020LR = new int[][]{
+            {1023, 201, 1023},
+            {895, 203, 177},
+            {1023, 743, 0},
+            {33, 682, 327},
+            {754, 305, 896},
+            {479, 565, 633},
+            {949, 741, 479},
+            {234, 1023, 0},
+            {982, 466, 638},
+            {610, 0, 533},
+            {504, 837, 324},
+    };
+
+    // Reference RGB values for 2020 Full Range
+    private static final int[][] COLOR_BARS_2020FR = new int[][]{
+            {1023, 229, 978},
+            {840, 234, 211},
+            {956, 700, 0},
+            {83, 652, 341},
+            {716, 322, 840},
+            {473, 548, 607},
+            {879, 698, 469},
+            {252, 1023, 0},
+            {912, 460, 611},
+            {596, 0, 529},
+            {491, 783, 334},
+    };
+
     // The test videos were generated with the above color bars. Each bar is of width 16.
     private static final int COLOR_BAR_WIDTH = 16;
     private static final int COLOR_BAR_OFFSET_X = 8;
@@ -160,6 +255,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
     private final int mStandard;
     private final int mTransferCurve;
     private final boolean mUseYuvSampling;
+    private final boolean mUseHighBitDepth;
 
     private int[][] mColorBars;
     private int mWidth;
@@ -168,29 +264,37 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
     private int mBadFrames = 0;
 
     public DecodeGlAccuracyTest(String decoder, String mediaType, String fileName, int range,
-            int standard, int transfer, boolean useYuvSampling, String allTestParams) {
+            int standard, int transfer, boolean useHighBitDepth, boolean useYuvSampling,
+            String allTestParams) {
         super(decoder, mediaType, MEDIA_DIR + fileName, allTestParams);
         mRange = range;
         mStandard = standard;
         mTransferCurve = transfer;
         mUseYuvSampling = useYuvSampling;
+        mUseHighBitDepth = useHighBitDepth;
 
         if (!mUseYuvSampling) {
             mColorBars = COLOR_BARS_601LR;
-            if ((mStandard == MediaFormat.COLOR_STANDARD_BT601_NTSC) &&
-                    (mRange == MediaFormat.COLOR_RANGE_LIMITED)) {
-                mColorBars = COLOR_BARS_601LR;
-            } else if ((mStandard == MediaFormat.COLOR_STANDARD_BT601_NTSC) &&
-                    (mRange == MediaFormat.COLOR_RANGE_FULL)) {
-                mColorBars = COLOR_BARS_601FR;
-            } else if ((mStandard == MediaFormat.COLOR_STANDARD_BT709) &&
-                    (mRange == MediaFormat.COLOR_RANGE_LIMITED)) {
-                mColorBars = COLOR_BARS_709LR;
+            if ((mStandard == MediaFormat.COLOR_STANDARD_BT601_NTSC) && (mRange
+                    == MediaFormat.COLOR_RANGE_LIMITED)) {
+                mColorBars = mUseHighBitDepth ? COLOR_BARS_601LR_10BIT : COLOR_BARS_601LR;
+            } else if ((mStandard == MediaFormat.COLOR_STANDARD_BT601_NTSC) && (mRange
+                    == MediaFormat.COLOR_RANGE_FULL)) {
+                mColorBars = mUseHighBitDepth ? COLOR_BARS_601FR_10BIT : COLOR_BARS_601FR;
+            } else if ((mStandard == MediaFormat.COLOR_STANDARD_BT709) && (mRange
+                    == MediaFormat.COLOR_RANGE_LIMITED)) {
+                mColorBars = mUseHighBitDepth ? COLOR_BARS_709LR_10BIT : COLOR_BARS_709LR;
+            } else if ((mStandard == MediaFormat.COLOR_STANDARD_BT2020) && (mRange
+                    == MediaFormat.COLOR_RANGE_LIMITED)) {
+                mColorBars = COLOR_BARS_2020LR;
+            } else if ((mStandard == MediaFormat.COLOR_STANDARD_BT2020) && (mRange
+                    == MediaFormat.COLOR_RANGE_FULL)) {
+                mColorBars = COLOR_BARS_2020FR;
             } else {
                 Log.e(LOG_TAG, "Unsupported Color Aspects.");
             }
         } else {
-            mColorBars = COLOR_BARS_YUV;
+            mColorBars = mUseHighBitDepth ? COLOR_BARS_YUV_10BIT : COLOR_BARS_YUV;
         }
     }
 
@@ -203,81 +307,145 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{3}_{4}_{5}_{6})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{3}_{4}_{5}_{6}_{7})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = false;
         final boolean needVideo = true;
 
         final List<Object[]> argsList = Arrays.asList(new Object[][]{
-                // mediaType, asset, range, standard, transfer
+                // mediaType, asset, range, standard, transfer, mUseHighBitDepth
                 // 601LR
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "color_bands_176x176_h264_8bit.mp4",
                         MediaFormat.COLOR_RANGE_LIMITED,
                         MediaFormat.COLOR_STANDARD_BT601_NTSC,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, "color_bands_176x176_hevc_8bit.mp4",
                         MediaFormat.COLOR_RANGE_LIMITED,
                         MediaFormat.COLOR_STANDARD_BT601_NTSC,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
                 {MediaFormat.MIMETYPE_VIDEO_VP8, "color_bands_176x176_vp8_8bit.webm",
                         MediaFormat.COLOR_RANGE_LIMITED,
                         MediaFormat.COLOR_STANDARD_BT601_NTSC,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, "color_bands_176x176_vp9_8bit.webm",
                         MediaFormat.COLOR_RANGE_LIMITED,
                         MediaFormat.COLOR_STANDARD_BT601_NTSC,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "color_bands_176x176_av1_8bit.webm",
                         MediaFormat.COLOR_RANGE_LIMITED,
                         MediaFormat.COLOR_STANDARD_BT601_NTSC,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, "color_bands_176x176_hevc_10bit.mp4",
+                        MediaFormat.COLOR_RANGE_LIMITED,
+                        MediaFormat.COLOR_STANDARD_BT601_NTSC,
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, true},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, "color_bands_176x176_vp9_10bit.webm",
+                        MediaFormat.COLOR_RANGE_LIMITED,
+                        MediaFormat.COLOR_STANDARD_BT601_NTSC,
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, true},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, "color_bands_176x176_av1_10bit.webm",
+                        MediaFormat.COLOR_RANGE_LIMITED,
+                        MediaFormat.COLOR_STANDARD_BT601_NTSC,
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, true},
 
                 // 601FR
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "color_bands_176x176_h264_8bit_fr.mp4",
                         MediaFormat.COLOR_RANGE_FULL,
                         MediaFormat.COLOR_STANDARD_BT601_NTSC,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, "color_bands_176x176_hevc_8bit_fr.mp4",
                         MediaFormat.COLOR_RANGE_FULL,
                         MediaFormat.COLOR_STANDARD_BT601_NTSC,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
                 {MediaFormat.MIMETYPE_VIDEO_VP8, "color_bands_176x176_vp8_8bit_fr.webm",
                         MediaFormat.COLOR_RANGE_FULL,
                         MediaFormat.COLOR_STANDARD_BT601_NTSC,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, "color_bands_176x176_vp9_8bit_fr.webm",
                         MediaFormat.COLOR_RANGE_FULL,
                         MediaFormat.COLOR_STANDARD_BT601_NTSC,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "color_bands_176x176_av1_8bit_fr.webm",
                         MediaFormat.COLOR_RANGE_FULL,
                         MediaFormat.COLOR_STANDARD_BT601_NTSC,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, "color_bands_176x176_hevc_10bit_fr.mp4",
+                        MediaFormat.COLOR_RANGE_FULL,
+                        MediaFormat.COLOR_STANDARD_BT601_NTSC,
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, true},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, "color_bands_176x176_vp9_10bit_fr.webm",
+                        MediaFormat.COLOR_RANGE_FULL,
+                        MediaFormat.COLOR_STANDARD_BT601_NTSC,
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, true},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, "color_bands_176x176_av1_10bit_fr.webm",
+                        MediaFormat.COLOR_RANGE_FULL,
+                        MediaFormat.COLOR_STANDARD_BT601_NTSC,
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, true},
 
                 // 709LR
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "color_bands_176x176_h264_8bit.mp4",
                         MediaFormat.COLOR_RANGE_LIMITED,
                         MediaFormat.COLOR_STANDARD_BT709,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, "color_bands_176x176_hevc_8bit.mp4",
                         MediaFormat.COLOR_RANGE_LIMITED,
                         MediaFormat.COLOR_STANDARD_BT709,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
                 {MediaFormat.MIMETYPE_VIDEO_VP8, "color_bands_176x176_vp8_8bit.webm",
                         MediaFormat.COLOR_RANGE_LIMITED,
                         MediaFormat.COLOR_STANDARD_BT709,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, "color_bands_176x176_vp9_8bit.webm",
                         MediaFormat.COLOR_RANGE_LIMITED,
                         MediaFormat.COLOR_STANDARD_BT709,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "color_bands_176x176_av1_8bit.webm",
                         MediaFormat.COLOR_RANGE_LIMITED,
                         MediaFormat.COLOR_STANDARD_BT709,
-                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
-
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, false},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, "color_bands_176x176_hevc_10bit.mp4",
+                        MediaFormat.COLOR_RANGE_LIMITED,
+                        MediaFormat.COLOR_STANDARD_BT709,
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, true},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, "color_bands_176x176_vp9_10bit.webm",
+                        MediaFormat.COLOR_RANGE_LIMITED,
+                        MediaFormat.COLOR_STANDARD_BT709,
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, true},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, "color_bands_176x176_av1_10bit.webm",
+                        MediaFormat.COLOR_RANGE_LIMITED,
+                        MediaFormat.COLOR_STANDARD_BT709,
+                        MediaFormat.COLOR_TRANSFER_SDR_VIDEO, true},
                 // Note: OpenGL is not required to support 709 FR. So we are not testing it.
+
+                // BT2020LR
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, "color_bands_176x176_hevc_10bit.mp4",
+                        MediaFormat.COLOR_RANGE_LIMITED,
+                        MediaFormat.COLOR_STANDARD_BT2020,
+                        MediaFormat.COLOR_TRANSFER_ST2084, true},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, "color_bands_176x176_vp9_10bit.webm",
+                        MediaFormat.COLOR_RANGE_LIMITED,
+                        MediaFormat.COLOR_STANDARD_BT2020,
+                        MediaFormat.COLOR_TRANSFER_ST2084, true},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, "color_bands_176x176_av1_10bit.webm",
+                        MediaFormat.COLOR_RANGE_LIMITED,
+                        MediaFormat.COLOR_STANDARD_BT2020,
+                        MediaFormat.COLOR_TRANSFER_ST2084, true},
+
+                // BT2020FR
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, "color_bands_176x176_hevc_10bit_fr.mp4",
+                        MediaFormat.COLOR_RANGE_FULL,
+                        MediaFormat.COLOR_STANDARD_BT2020,
+                        MediaFormat.COLOR_TRANSFER_ST2084, true},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, "color_bands_176x176_vp9_10bit_fr.webm",
+                        MediaFormat.COLOR_RANGE_FULL,
+                        MediaFormat.COLOR_STANDARD_BT2020,
+                        MediaFormat.COLOR_TRANSFER_ST2084, true},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, "color_bands_176x176_av1_10bit_fr.webm",
+                        MediaFormat.COLOR_RANGE_FULL,
+                        MediaFormat.COLOR_STANDARD_BT2020,
+                        MediaFormat.COLOR_TRANSFER_ST2084, true},
+
         });
         final List<Object[]> exhaustiveArgsList = new ArrayList<>();
         for (Object[] arg : argsList) {
@@ -305,10 +473,19 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
         for (int i = 0; i < mColorBars.length; i++) {
             int x = COLOR_BAR_WIDTH * i + COLOR_BAR_OFFSET_X;
             int y = COLOR_BAR_OFFSET_Y;
-            GLES20.glReadPixels(x, y, 1, 1, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, pixelBuf);
-            int r = pixelBuf.get(0) & 0xff;
-            int g = pixelBuf.get(1) & 0xff;
-            int b = pixelBuf.get(2) & 0xff;
+            int r, g, b;
+            if (mUseHighBitDepth) {
+                GLES20.glReadPixels(x, y, 1, 1, GL10.GL_RGBA, GLES30.GL_UNSIGNED_INT_2_10_10_10_REV,
+                        pixelBuf);
+                r = (pixelBuf.get(1) & 0x03) << 8 | (pixelBuf.get(0) & 0xFF);
+                g = (pixelBuf.get(2) & 0x0F) << 6 | ((pixelBuf.get(1) >> 2) & 0x3F);
+                b = (pixelBuf.get(3) & 0x3F) << 4 | ((pixelBuf.get(2) >> 4) & 0x0F);
+            } else {
+                GLES20.glReadPixels(x, y, 1, 1, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, pixelBuf);
+                r = pixelBuf.get(0) & 0xff;
+                g = pixelBuf.get(1) & 0xff;
+                b = pixelBuf.get(2) & 0xff;
+            }
             if (!(isColorClose(r, mColorBars[i][0]) &&
                     isColorClose(g, mColorBars[i][1]) &&
                     isColorClose(b, mColorBars[i][2]))) {
@@ -355,8 +532,24 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testDecodeGlAccuracyRGB() throws IOException, InterruptedException {
-        if (mRange != MediaFormat.COLOR_RANGE_LIMITED
-                || mStandard != MediaFormat.COLOR_STANDARD_BT601_NTSC) {
+        if (mUseHighBitDepth && !isVendorCodec(mCodecName)) {
+            if (hasSupportForColorFormat(mCodecName, mMediaType, COLOR_FormatYUVP010)) {
+                if (!mUseYuvSampling) {
+                    // TODO (b/219748700): Android software codecs work only with BT2020 FR.
+                    assumeTrue("Skipping " + mCodecName + " for color range " + mRange
+                                    + " and color standard " + mStandard,
+                            mRange == MediaFormat.COLOR_RANGE_FULL
+                                    && mStandard == MediaFormat.COLOR_STANDARD_BT2020);
+                }
+            } else {
+                // TODO (b/259321347): Skip yuv sampling in high bit depth cases for software codecs
+                assumeTrue("Skipping " + mCodecName + " for high bit depth YUV sampling tests "
+                        + "when codec doesn't support P010", !mUseYuvSampling);
+            }
+        }
+
+        if (!mUseHighBitDepth && (mRange != MediaFormat.COLOR_RANGE_LIMITED
+                || mStandard != MediaFormat.COLOR_STANDARD_BT601_NTSC)) {
             // This test was added in Android T, but some upgrading devices fail the test. Hence
             // limit the test to devices launching with T
             assumeTrue("Skipping color range " + mRange + " and color standard " + mStandard +
@@ -381,7 +574,16 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
 
         mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
         mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
-        mEGLWindowOutSurface = new OutputSurface(mWidth, mHeight, false, mUseYuvSampling);
+        if (mUseHighBitDepth) {
+            SupportClass supportRequirements =
+                    mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_AV1) ? CODEC_ALL : CODEC_OPTIONAL;
+            ArrayList<MediaFormat> formatList = new ArrayList<>();
+            formatList.add(format);
+            checkFormatSupport(mCodecName, mMediaType, false, formatList, null,
+                    supportRequirements);
+        }
+        mEGLWindowOutSurface =
+                new OutputSurface(mWidth, mHeight, mUseHighBitDepth, mUseYuvSampling);
 
         // If device supports HDR editing, then GL_EXT_YUV_target extension support is mandatory
         if (mUseYuvSampling) {
