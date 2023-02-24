@@ -155,9 +155,9 @@ class PreviewAspectRatioAndCropTest(its_base_test.ItsBaseTest):
       name_with_log_path = f'{os.path.join(self.log_path, _NAME)}'
 
       # Check SKIP conditions
-      vendor_api_level = its_session_utils.get_vendor_api_level(self.dut.serial)
+      first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       camera_properties_utils.skip_unless(
-          vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL)
+          first_api_level >= its_session_utils.ANDROID14_API_LEVEL)
 
       # Load scene
       its_session_utils.load_scene(cam, props, self.scene,
