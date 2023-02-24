@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-package android.os.cts;
+package android.app.time.cts;
+
+import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
+import static android.app.time.cts.shell.DeviceConfigKeys.TimeDetector.KEY_TIME_DETECTOR_LOWER_BOUND_MILLIS_OVERRIDE;
+import static android.app.time.cts.shell.DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
+import android.app.time.cts.shell.DeviceConfigShellHelper;
 import android.app.time.cts.shell.DeviceShellCommandExecutor;
 import android.app.time.cts.shell.NetworkTimeUpdateServiceShellHelper;
 import android.app.time.cts.shell.TimeDetectorShellHelper;
@@ -36,6 +42,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.ThrowingSupplier;
 
 import org.junit.After;
@@ -44,13 +51,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.net.URI;
-import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 
 @RunWith(AndroidJUnit4.class)
-public class SystemClockSntpTest {
-    // Mocked server response. Refer to SntpClientTest.
+public class NetworkTimeUpdateServiceSntpTest {
+    /** Mocked server response. Refer to {@link android.net.SntpClientTest}. */
     private static final String MOCKED_NTP_RESPONSE =
             "240206ec"
                     + "00000165"
@@ -60,34 +66,49 @@ public class SystemClockSntpTest {
                     + "d9ca9451938a3771"
                     + "d9ca945194bd3fff"
                     + "d9ca945194bd4001";
-    // The midpoint between d9ca945194bd3fff and d9ca945194bd4001, d9ca9451.94bd4000 represents
-    // (decimal) 1444943313.581012726 seconds in the Unix epoch, which is
-    // ~2015-10-15 21:08:33.581 UTC.
-    private static long MOCKED_NTP_TIMESTAMP = 1444943313581L;
-    private static long TEST_NTP_TIMEOUT_MILLIS = 300L;
+
+    /**
+     * The midpoint between d9ca945194bd3fff and d9ca945194bd4001, d9ca9451.94bd4000 represents
+     * (decimal) 1444943313.581012726 seconds in the Unix epoch, which is
+     * ~2015-10-15 21:08:33.581 UTC.
+     */
+    private static final long MOCKED_NTP_TIMESTAMP = 1444943313581L;
+
+    /**
+     * A system clock lower bound override value that ensures {@link #MOCKED_NTP_TIMESTAMP} will be
+     * accepted by services that observe the lower bound threshold. The value is arbitrary except
+     * it must be before {@link #MOCKED_NTP_TIMESTAMP}.
+     */
+    private static final long SYSTEM_LOWER_TIME_BOUND =
+            MOCKED_NTP_TIMESTAMP - (24 * 60 * 60 * 1000);
+    private static final long TEST_NTP_TIMEOUT_MILLIS = 300L;
 
     private DeviceShellCommandExecutor mShellCommandExecutor;
     private NetworkTimeUpdateServiceShellHelper mNetworkTimeUpdateServiceShellHelper;
     private TimeDetectorShellHelper mTimeDetectorShellHelper;
+    private DeviceConfigShellHelper mDeviceConfigShellHelper;
+    private DeviceConfigShellHelper.PreTestState mPreTestDeviceConfigState;
     private Instant mSetupInstant;
     private long mSetupElapsedRealtimeMillis;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         mSetupInstant = Instant.now();
         mSetupElapsedRealtimeMillis = SystemClock.elapsedRealtime();
         mShellCommandExecutor = new InstrumentationShellCommandExecutor(
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
         mNetworkTimeUpdateServiceShellHelper =
                 new NetworkTimeUpdateServiceShellHelper(mShellCommandExecutor);
-        mTimeDetectorShellHelper =
-                new TimeDetectorShellHelper(mShellCommandExecutor);
+        mTimeDetectorShellHelper = new TimeDetectorShellHelper(mShellCommandExecutor);
+        mDeviceConfigShellHelper = new DeviceConfigShellHelper(mShellCommandExecutor);
+        mPreTestDeviceConfigState = mDeviceConfigShellHelper.setSyncModeForTest(
+                SYNC_DISABLED_MODE_UNTIL_REBOOT, NAMESPACE_SYSTEM_TIME);
     }
 
     @After
     public void tearDown() throws Exception {
         mNetworkTimeUpdateServiceShellHelper.resetServerConfigForTests();
-        mNetworkTimeUpdateServiceShellHelper.clearTime();
+        mTimeDetectorShellHelper.clearNetworkTime();
         mNetworkTimeUpdateServiceShellHelper.forceRefresh();
 
         // If the system clock has been set to a time before or significantly after mSetupInstant as
@@ -110,11 +131,24 @@ public class SystemClockSntpTest {
             mShellCommandExecutor.executeToTrimmedString(
                     "cmd alarm set-time " + newNow.toEpochMilli());
         }
+        mDeviceConfigShellHelper.restoreDeviceConfigStateForTest(mPreTestDeviceConfigState);
     }
 
+    /**
+     * Tests that the network_time_update_service operates as expected. The test pokes the
+     * service via command line commands and has it communicate with a simulated NTP server to
+     * refresh the device's latest network time information. The absence of a reachable NTP server
+     * is also tested.
+     *
+     * <p>Network time can be required for automatic time detection (depending on a partner's device
+     * configuration) and also for the {@link android.os.SystemClock#currentNetworkTimeClock} API.
+     * This test primarily confirms the interaction between the network_time_update_service and
+     * other system server components like the time_detector service.
+     */
+    @ApiTest(apis = {"android.os.SystemClock#currentNetworkTimeClock"}) // Indirectly
     @AppModeFull(reason = "Cannot bind socket in instant app mode")
     @Test
-    public void testCurrentNetworkTimeClock() throws Exception {
+    public void testNetworkTimeUpdate() throws Exception {
         // If you have to adjust this logic: consider that the public SDK
         // SystemClock.currentNetworkTimeClock() method currently requires
         // network_time_update_service to be present to work.
@@ -125,6 +159,12 @@ public class SystemClockSntpTest {
         }
         mNetworkTimeUpdateServiceShellHelper.assumeNetworkTimeUpdateServiceIsPresent();
 
+        // Set the device's lower bound for acceptable system clock time to avoid the canned test
+        // NTP response being rejected.
+        mDeviceConfigShellHelper.put(
+                NAMESPACE_SYSTEM_TIME, KEY_TIME_DETECTOR_LOWER_BOUND_MILLIS_OVERRIDE,
+                Long.toString(SYSTEM_LOWER_TIME_BOUND));
+
         // Start a local SNTP test server. But does not setup a fake response.
         // So the server will not reply to any request.
         SntpTestServer server = runWithShellPermissionIdentity(SntpTestServer::new);
@@ -134,47 +174,44 @@ public class SystemClockSntpTest {
                 null, null, null);
         mNetworkTimeUpdateServiceShellHelper.setServerConfigForTests(uri, TEST_NTP_TIMEOUT_MILLIS);
 
-        // Verify the case where the device hasn't made a network time request yet.
-        // Clear the current network time value and verify it throws an exception.
-        mNetworkTimeUpdateServiceShellHelper.clearTime();
-        assertThrows(DateTimeException.class, () -> SystemClock.currentNetworkTimeClock().millis());
+        // Verify the case where the device hasn't been able to make a successful network time
+        // request.
+        {
+            // Clear the latest network time received by the time detector.
+            mTimeDetectorShellHelper.clearNetworkTime();
+            assertNull(mTimeDetectorShellHelper.getNetworkTime());
 
-        // Trigger a network time refresh.
-        assertFalse(mNetworkTimeUpdateServiceShellHelper.forceRefresh());
+            // Trigger a network time refresh.
+            assertFalse(mNetworkTimeUpdateServiceShellHelper.forceRefresh());
 
-        // Verify the returned clock throws since there is still no previous network time fix.
-        assertThrows(DateTimeException.class, () -> SystemClock.currentNetworkTimeClock().millis());
+            // Verify the returned network time is null as there is no previous network time fix.
+            assertNull(mTimeDetectorShellHelper.getNetworkTime());
+        }
 
-        // Setup fake responses (Refer to SntpClientTest). And trigger time server refresh.
-        server.setServerReply(HexEncoding.decode(MOCKED_NTP_RESPONSE));
+        // Verify the case where there is now a network time request.
+        {
+            // Setup fake responses (Refer to SntpClientTest). And trigger time server refresh.
+            server.setServerReply(HexEncoding.decode(MOCKED_NTP_RESPONSE));
 
-        // After force_refresh, network_time_update_service should have associated
-        // MOCKED_NTP_TIMESTAMP with an elapsedRealtime() value between
-        // beforeRefreshElapsedMillis and afterRefreshElapsedMillis.
-        final long beforeRefreshElapsedMillis = SystemClock.elapsedRealtime();
-        assertTrue(mNetworkTimeUpdateServiceShellHelper.forceRefresh());
-        final long afterRefreshElapsedMillis = SystemClock.elapsedRealtime();
+            // After force_refresh, network_time_update_service should have associated
+            // MOCKED_NTP_TIMESTAMP with an elapsedRealtime() value between
+            // beforeRefreshElapsedMillis and afterRefreshElapsedMillis.
+            final long beforeRefreshElapsedMillis = SystemClock.elapsedRealtime();
+            assertTrue(mNetworkTimeUpdateServiceShellHelper.forceRefresh());
+            final long afterRefreshElapsedMillis = SystemClock.elapsedRealtime();
 
-        assertNetworkTimeIsUsed(MOCKED_NTP_TIMESTAMP, beforeRefreshElapsedMillis,
-                afterRefreshElapsedMillis);
+            assertTimeDetectorLatestNetworkTimeInBounds(
+                    MOCKED_NTP_TIMESTAMP, beforeRefreshElapsedMillis, afterRefreshElapsedMillis);
 
-        // Simulate some time passing and verify that SystemClock returns an updated time
-        // using the same network time value.
-        final long PASSED_DURATION_MS = 100L;
-        Thread.sleep(PASSED_DURATION_MS);
+            // Remove fake server response and trigger a network time refresh to simulate a failed
+            // refresh.
+            server.setServerReply(null);
+            assertFalse(mNetworkTimeUpdateServiceShellHelper.forceRefresh());
 
-        // Verify the same network time value is being used.
-        assertNetworkTimeIsUsed(MOCKED_NTP_TIMESTAMP, beforeRefreshElapsedMillis,
-                afterRefreshElapsedMillis);
-
-        // Remove fake server response and trigger a network time refresh to simulate a failed
-        // refresh.
-        server.setServerReply(null);
-        assertFalse(mNetworkTimeUpdateServiceShellHelper.forceRefresh());
-
-        // Verify the same network time value is being used.
-        assertNetworkTimeIsUsed(MOCKED_NTP_TIMESTAMP, beforeRefreshElapsedMillis,
-                afterRefreshElapsedMillis);
+            // Verify the same network time value is being used.
+            assertTimeDetectorLatestNetworkTimeInBounds(
+                    MOCKED_NTP_TIMESTAMP, beforeRefreshElapsedMillis, afterRefreshElapsedMillis);
+        }
     }
 
     private static <T> T runWithShellPermissionIdentity(ThrowingSupplier<T> command)
@@ -196,45 +233,20 @@ public class SystemClockSntpTest {
                 range.contains(value));
     }
 
-    /**
-     * Asserts that a time of {@code unixEpochMillis} received between {@code
-     * beforeRefreshElapsedMillis} and {@code afterRefreshElapsedMillis} is being used by the
-     * platform for various operations.
-     */
-    private void assertNetworkTimeIsUsed(long unixEpochMillis,
-            long beforeRefreshElapsedMillis, long afterRefreshElapsedMillis) throws Exception {
-        assertTimeDetectorLatestNetworkTimeInBounds(
-                unixEpochMillis, beforeRefreshElapsedMillis, afterRefreshElapsedMillis);
-
-        assertCurrentNetworkTimeClockInBounds(
-                unixEpochMillis, beforeRefreshElapsedMillis, afterRefreshElapsedMillis);
-    }
-
     /** Asserts the latest network time held by the time detector is as expected. */
     private void assertTimeDetectorLatestNetworkTimeInBounds(
             long expectedUnixEpochMillis, long beforeRefreshElapsedMillis,
             long afterRefreshElapsedMillis) throws Exception {
         TestNetworkTime networkTime = mTimeDetectorShellHelper.getNetworkTime();
+
+        // This could happen if the time is rejected by the time_detector for being in the past.
+        // That shouldn't happen because the lower bound is overridden by this test.
+        assertNotNull("Expected network time but it is null", networkTime);
+
         assertEquals(expectedUnixEpochMillis, networkTime.unixEpochTime.unixEpochTimeMillis);
         assertInRange("Latest network time elapsed realtime",
                 networkTime.unixEpochTime.elapsedRealtimeMillis,
                 beforeRefreshElapsedMillis, afterRefreshElapsedMillis);
-    }
-
-    /** Asserts SystemClock.currentNetworkTimeClock() returns the expected value. */
-    private static void assertCurrentNetworkTimeClockInBounds(long expectedUnixEpochMillis,
-            long beforeRefreshElapsedMillis, long afterRefreshElapsedMillis) {
-        final long beforeQueryElapsedMillis = SystemClock.elapsedRealtime();
-        final long networkEpochMillis = SystemClock.currentNetworkTimeClock().millis();
-        final long afterQueryElapsedMillis = SystemClock.elapsedRealtime();
-
-        // Calculate the lower/upper bound base on the elapsed time of refreshing.
-        final long lowerBoundNetworkEpochMillis =
-                expectedUnixEpochMillis + (beforeQueryElapsedMillis - afterRefreshElapsedMillis);
-        final long upperBoundNetworkEpochMillis =
-                expectedUnixEpochMillis + (afterQueryElapsedMillis - beforeRefreshElapsedMillis);
-        assertInRange("Current network time", networkEpochMillis, lowerBoundNetworkEpochMillis,
-                upperBoundNetworkEpochMillis);
     }
 
     private boolean isWatch() {
