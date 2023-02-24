@@ -16,7 +16,6 @@
 
 package android.cts.statsdatom.lib;
 
-import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -38,7 +37,9 @@ import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.util.Pair;
+import com.android.tradefed.util.RunUtil;
 
+import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
@@ -211,6 +212,7 @@ public final class DeviceUtils {
      *
      * @param device Device to run cmd on
      * @param parser Protobuf parser object, which can be retrieved by running MyProto.parser()
+     * @param extensionRegistry ExtensionRegistry containing extensions that should be parsed
      * @param cmd The adb shell command to run (e.g. "cmd stats update config")
      *
      * @throws DeviceNotAvailableException
@@ -219,16 +221,22 @@ public final class DeviceUtils {
      * @return Proto of specified type
      */
     public static <T extends MessageLite> T getShellCommandOutput(@Nonnull ITestDevice device,
-            Parser<T> parser, String cmd)
+            Parser<T> parser, ExtensionRegistry extensionRegistry, String cmd)
             throws DeviceNotAvailableException, InvalidProtocolBufferException {
         final CollectingByteOutputReceiver receiver = new CollectingByteOutputReceiver();
         device.executeShellCommand(cmd, receiver);
         try {
-            return parser.parseFrom(receiver.getOutput());
+            return parser.parseFrom(receiver.getOutput(), extensionRegistry);
         } catch (Exception ex) {
             CLog.d("Error parsing " + parser.getClass().getCanonicalName() + " for cmd " + cmd);
             throw ex;
         }
+    }
+
+    public static <T extends MessageLite> T getShellCommandOutput(
+            @Nonnull ITestDevice device, Parser<T> parser, String cmd)
+            throws DeviceNotAvailableException, InvalidProtocolBufferException {
+        return getShellCommandOutput(device, parser, ExtensionRegistry.getEmptyRegistry(), cmd);
     }
 
     /**
