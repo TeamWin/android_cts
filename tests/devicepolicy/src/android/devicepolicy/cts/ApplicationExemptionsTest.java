@@ -16,6 +16,7 @@
 
 package android.devicepolicy.cts;
 
+import static android.app.admin.DevicePolicyManager.EXEMPT_FROM_POWER_RESTRICTIONS;
 import static android.app.admin.DevicePolicyManager.EXEMPT_FROM_SUSPENSION;
 import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 
@@ -29,6 +30,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
+import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.util.ArrayMap;
@@ -203,6 +205,23 @@ public class ApplicationExemptionsTest {
             assertThat(sTestApp.pkg().appOps()
                     .get(APPLICATION_EXEMPTION_CONSTANTS_TO_APP_OPS.get(EXEMPT_FROM_SUSPENSION)))
                     .isEqualTo(DEFAULT);
+        }
+    }
+
+    @Test
+    @EnsureHasPermission(MANAGE_DEVICE_POLICY_APP_EXEMPTIONS)
+    @Postsubmit(reason = "new test")
+    public void setApplicationExemptions_powerRestrictionExemption_exemptedAppStandbyBucket()
+            throws NameNotFoundException {
+        Set<Integer> exemptionSet = new HashSet<>(List.of(EXEMPT_FROM_POWER_RESTRICTIONS));
+
+        try (TestAppInstance testApp = sTestApp.install()) {
+            sLocalDevicePolicyManager.setApplicationExemptions(
+                    sTestApp.packageName(),
+                    exemptionSet);
+
+            assertThat(sTestApp.pkg().getAppStandbyBucket()).isEqualTo(
+                    UsageStatsManager.STANDBY_BUCKET_EXEMPTED);
         }
     }
 }
