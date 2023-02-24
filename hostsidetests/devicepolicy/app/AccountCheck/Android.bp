@@ -30,7 +30,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.legacy_legacy-support-v4",
         "ctstestrunner-axt",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "androidx.test.rules",
     ],
     sdk_version: "current",
@@ -51,7 +51,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.legacy_legacy-support-v4",
         "ctstestrunner-axt",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "androidx.test.rules",
     ],
     sdk_version: "current",
@@ -72,7 +72,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.legacy_legacy-support-v4",
         "ctstestrunner-axt",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "androidx.test.rules",
     ],
     sdk_version: "current",

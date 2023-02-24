@@ -17,11 +17,11 @@ package com.android.cts.delegate;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
-import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 /**
  * Superclass for {@code JUnit 3} based tests in this package.

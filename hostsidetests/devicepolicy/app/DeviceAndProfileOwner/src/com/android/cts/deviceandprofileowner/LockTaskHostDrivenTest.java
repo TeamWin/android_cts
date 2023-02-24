@@ -16,26 +16,17 @@
 package com.android.cts.deviceandprofileowner;
 
 import android.app.ActivityManager;
-import android.app.ActivityOptions;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.SystemClock;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.Until;
-import android.telecom.TelecomManager;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
-import java.time.Duration;
 import com.android.compatibility.common.util.PollingCheck;
 
 /**
