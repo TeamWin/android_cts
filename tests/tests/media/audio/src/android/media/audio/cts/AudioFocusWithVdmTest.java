@@ -39,6 +39,7 @@ import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -56,6 +57,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Virtual device manager cannot be accessed by instant apps")
 public class AudioFocusWithVdmTest {
 
     private static final VirtualDeviceParams VIRTUAL_DEVICE_PARAMS_DEFAULT =
