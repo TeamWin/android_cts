@@ -19,11 +19,14 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import static java.util.Map.entry;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony.Carriers;
@@ -99,16 +102,21 @@ public class ApnPermissionTest {
     private static final String[] TEST_APN_PROJECTION =
             APN_MAP.keySet().toArray(new String[APN_MAP.size()]);
 
+    private Context mContext;
     private ContentResolver mContentResolver;
 
     @Before
     public void setUp() throws Exception {
-        mContentResolver =
-                InstrumentationRegistry.getInstrumentation().getContext().getContentResolver();
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
+
+        mContentResolver = mContext.getContentResolver();
     }
 
     @After
     public void tearDown() throws Exception {
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
+
         // Ensures APNs are deleted in case a test threw.
         InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation()
