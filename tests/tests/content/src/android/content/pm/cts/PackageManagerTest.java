@@ -62,6 +62,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.annotation.NonNull;
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.ActivityThread;
 import android.app.Instrumentation;
 import android.app.PendingIntent;
@@ -2057,8 +2058,7 @@ public class PackageManagerTest {
             assertThat(intentSender.getCreatorPackage()).isEqualTo(PACKAGE_NAME);
             assertThat(intentSender.getCreatorUid()).isEqualTo(mContext.getApplicationInfo().uid);
 
-            intentSender.sendIntent(mContext, 0 /* code */, null /* intent */,
-                    null /* onFinished */, null /* handler */);
+            sendIntent(intentSender);
             final Activity activity = monitor.waitForActivityWithTimeout(TIMEOUT_MS);
             assertThat(activity).isNotNull();
             activity.finish();
@@ -2083,8 +2083,7 @@ public class PackageManagerTest {
         assertThat(intentSender.getCreatorPackage()).isEqualTo(PACKAGE_NAME);
         assertThat(intentSender.getCreatorUid()).isEqualTo(mContext.getApplicationInfo().uid);
 
-        intentSender.sendIntent(mContext, 0 /* code */, null /* intent */,
-                null /* onFinished */, null /* handler */);
+        sendIntent(intentSender);
     }
 
     @Test(expected = IntentSender.SendIntentException.class)
@@ -2100,8 +2099,7 @@ public class PackageManagerTest {
         assertThat(intentSender.getCreatorPackage()).isEqualTo(PACKAGE_NAME);
         assertThat(intentSender.getCreatorUid()).isEqualTo(mContext.getApplicationInfo().uid);
 
-        intentSender.sendIntent(mContext, 0 /* code */, null /* intent */,
-                null /* onFinished */, null /* handler */);
+        sendIntent(intentSender);
     }
 
     @Test
@@ -2564,5 +2562,12 @@ public class PackageManagerTest {
         }, DELETE_PACKAGES);
 
         assertEquals(true, mPackageManager.canUserUninstall(PACKAGE_NAME, CURRENT));
+    }
+
+    private void sendIntent(IntentSender intentSender) throws IntentSender.SendIntentException {
+        intentSender.sendIntent(mContext, 0 /* code */, null /* intent */,
+                null /* onFinished */, null /* handler */, null /* requiredPermission */,
+                ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
+                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle());
     }
 }
