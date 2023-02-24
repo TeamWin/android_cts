@@ -23,6 +23,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_HOME;
@@ -366,6 +367,11 @@ public abstract class ActivityManagerTestBase {
                         .append(" -f 0x")
                         .append(toHexString(FLAG_ACTIVITY_NO_USER_ACTION)),
                 extras);
+    }
+
+    protected static String getAmStartCmdWithWindowingMode(
+            final ComponentName activityName, int windowingMode) {
+        return getAmStartCmdInNewTask(activityName) + " --windowingMode " + windowingMode;
     }
 
     protected WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
@@ -919,6 +925,12 @@ public abstract class ActivityManagerTestBase {
     protected void launchActivityWithNoUserAction(final ComponentName activityName,
             final CliIntentExtra... extras) {
         executeShellCommand(getAmStartCmdWithNoUserAction(activityName, extras));
+        mWmState.waitForValidState(activityName);
+    }
+
+    protected void launchActivityInFullscreen(final ComponentName activityName) {
+        executeShellCommand(
+                getAmStartCmdWithWindowingMode(activityName, WINDOWING_MODE_FULLSCREEN));
         mWmState.waitForValidState(activityName);
     }
 

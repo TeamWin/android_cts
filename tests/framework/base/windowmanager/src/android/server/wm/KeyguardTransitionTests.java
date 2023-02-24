@@ -180,7 +180,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     @Test
     public void testNewActivityDuringOccludedWithAttr() {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        launchActivity(SHOW_WHEN_LOCKED_ATTR_NO_PREVIEW_ACTIVITY);
+        launchActivityInFullscreen(SHOW_WHEN_LOCKED_ATTR_NO_PREVIEW_ACTIVITY);
         lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_ATTR_NO_PREVIEW_ACTIVITY);
         launchActivity(SHOW_WHEN_LOCKED_WITH_DIALOG_NO_PREVIEW_ACTIVITY);
         mWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_NO_PREVIEW_ACTIVITY);
