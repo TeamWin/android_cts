@@ -509,7 +509,9 @@ public class CommandReceiver extends BroadcastReceiver {
     private static Intent makeIntent(int command, String sourcePackage,
             String targetPackage, int flags, Bundle extras) {
         Intent intent = new Intent();
-        if (command == COMMAND_BIND_SERVICE || command == COMMAND_START_FOREGROUND_SERVICE) {
+        if (command == COMMAND_BIND_SERVICE || command == COMMAND_START_FOREGROUND_SERVICE
+                || command == COMMAND_STOP_FOREGROUND_SERVICE || command == COMMAND_START_ACTIVITY
+                || command == COMMAND_START_FOREGROUND_SERVICE_LOCATION || command == COMMAND_UNBIND_SERVICE) {
             intent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         }
         intent.setComponent(new ComponentName(sourcePackage, "android.app.stubs.CommandReceiver"));
