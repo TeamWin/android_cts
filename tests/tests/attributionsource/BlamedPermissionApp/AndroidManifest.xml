@@ -18,29 +18,20 @@
 
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.permission5.cts">
+    package="android.attributionsource.cts.blamed">
 
-    <attribution android:tag="accessor_attribution_tag" android:label="@string/foo_label" />
+    <attribution android:tag="receiver_attribution_tag" android:label="@string/foo_label" />
 
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
-    <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
-    <uses-permission android:name="android.permission.WRITE_CALL_LOG" />
+    <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <application>
-        <uses-library android:name="android.test.runner" />
-        <activity android:name=".NoOpActivity"/>
+        <activity android:name=".BringToForegroundActivity" android:exported="true"/>
     </application>
-
-    <instrumentation
-        android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="android.permission5.cts"
-        android:label="CTS permission attribution tests">
-    </instrumentation>
 
 </manifest>

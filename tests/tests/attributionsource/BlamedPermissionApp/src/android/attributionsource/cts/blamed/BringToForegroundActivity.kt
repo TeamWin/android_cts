@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.permission5.cts.blamed
+package android.attributionsource.cts.blamed
 
 import android.app.Activity
 import android.content.AttributionSource
@@ -22,7 +22,6 @@ import android.content.ContextParams
 import android.content.Intent
 import android.os.Bundle
 import android.os.RemoteCallback
-import android.util.ArraySet
 
 class BringToForegroundActivity : Activity() {
 
@@ -53,7 +52,7 @@ class BringToForegroundActivity : Activity() {
     companion object {
         val REMOTE_CALLBACK = "remote_callback"
         val ATTRIBUTION_SOURCE = "attribution_source"
-        val RECEIVER2_PACKAGE_NAME = "android.permission5.cts.blamed2"
+        val RECEIVER2_PACKAGE_NAME = "android.attributionsource.cts.blamed2"
         val RECEIVER_ATTRIBUTION_TAG = "receiver_attribution_tag"
         val RECEIVER2_ATTRIBUTION_TAG = "receiver2_attribution_tag"
     }

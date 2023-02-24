@@ -19,7 +19,7 @@ package {
 }
 
 android_test {
-    name: "CtsPermission5TestCases",
+    name: "CtsAttributionSourceTestCases",
     defaults: [
         "mts-target-sdk-version-current",
     ],

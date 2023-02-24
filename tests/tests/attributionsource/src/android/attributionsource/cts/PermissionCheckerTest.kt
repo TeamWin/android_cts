@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.permission5.cts
+package android.attributionsource.cts
 
 import android.app.AppOpsManager
 import android.content.AttributionSource
@@ -151,7 +151,7 @@ class PermissionCheckerTest {
     }
 
     companion object {
-        private const val HELPER_PACKAGE_NAME = "android.permission5.cts.blamed"
+        private const val HELPER_PACKAGE_NAME = "android.attributionsource.cts.blamed"
         private const val HELPER_PERMISSION_NAME = android.Manifest.permission.READ_CALENDAR
         private const val HELPER_APP_OP_NAME = AppOpsManager.OPSTR_READ_CALENDAR
     }

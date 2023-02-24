@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.permission5.cts
+package android.attributionsource.cts
 
 import android.Manifest
 import android.app.Activity
@@ -32,80 +32,89 @@ import android.util.ArraySet
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.junit.function.ThrowingRunnable
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
-import java.util.concurrent.atomic.AtomicReference
 
 class RenouncedPermissionsTest {
 
     @Test
     @Throws(Exception::class)
-    @AppModeFull(reason="Instant apps cannot hold READ_CALENDAR/READ_CONTACTS permissions")
+    @AppModeFull(reason = "Instant apps cannot hold READ_CALENDAR/READ_CONTACTS permissions")
     fun testRenouncePermissionsChain() {
         val receiverAttributionSource = getShellAttributionSourceWithRenouncedPermissions()
         val activity = createActivityWithAttributionContext(receiverAttributionSource)
 
         // Out app has the permissions
         assertThat(activity.checkSelfPermission(Manifest.permission.READ_CALENDAR))
-                .isEqualTo(PackageManager.PERMISSION_GRANTED)
+            .isEqualTo(PackageManager.PERMISSION_GRANTED)
         assertThat(activity.checkSelfPermission(Manifest.permission.READ_CONTACTS))
-                .isEqualTo(PackageManager.PERMISSION_GRANTED)
+            .isEqualTo(PackageManager.PERMISSION_GRANTED)
 
         // Accessing the data should also fail (for us and next in the data flow)
-        assertThrows(SecurityException::class.java, ThrowingRunnable{
-            activity.contentResolver.query(CalendarContract.Calendars.CONTENT_URI,
-                    null, null, null)!!.close()
-        })
-        assertThrows(SecurityException::class.java, ThrowingRunnable{
-            activity.contentResolver.query(ContactsContract.Contacts.CONTENT_URI,
-                    null, null, null)!!.close()
-        })
+        assertThrows(
+            SecurityException::class.java,
+            ThrowingRunnable {
+                activity.contentResolver
+                    .query(CalendarContract.Calendars.CONTENT_URI, null, null, null)!!
+                    .close()
+            })
+        assertThrows(
+            SecurityException::class.java,
+            ThrowingRunnable {
+                activity.contentResolver
+                    .query(ContactsContract.Contacts.CONTENT_URI, null, null, null)!!
+                    .close()
+            })
     }
 
     @Test(expected = SecurityException::class)
     fun testCannotRenouncePermissionsWithoutPermission() {
         val renouncedPermissions = ArraySet<String>()
-        renouncedPermissions.add(Manifest.permission.READ_CONTACTS);
+        renouncedPermissions.add(Manifest.permission.READ_CONTACTS)
 
         // Trying to renounce permissions with no permission throws
-        createActivityWithAttributionContext(/*receiverAttributionSource*/ null,
-                renouncedPermissions)
+        createActivityWithAttributionContext(
+            /*receiverAttributionSource*/ null, renouncedPermissions)
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun testCannotRequestRenouncePermissions() {
         val renouncedPermissions = ArraySet<String>()
-        renouncedPermissions.add(Manifest.permission.READ_CONTACTS);
-        val activity = createActivityWithAttributionSource(AttributionSource(Process.myUid(),
-                context.packageName, null, renouncedPermissions, null))
+        renouncedPermissions.add(Manifest.permission.READ_CONTACTS)
+        val activity =
+            createActivityWithAttributionSource(
+                AttributionSource(
+                    Process.myUid(), context.packageName, null, renouncedPermissions, null))
 
         // Requesting renounced permissions throws
         activity.requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), 1)
     }
 
-    fun createActivityWithAttributionContext(receiverAttributionSource: AttributionSource?,
-            renouncedPermissions: Set<String>? = null) : Activity {
-        val contextParams = ContextParams.Builder()
+    fun createActivityWithAttributionContext(
+        receiverAttributionSource: AttributionSource?,
+        renouncedPermissions: Set<String>? = null
+    ): Activity {
+        val contextParams =
+            ContextParams.Builder()
                 .setRenouncedPermissions(renouncedPermissions)
                 .setNextAttributionSource(receiverAttributionSource)
                 .build()
         return createActivityWithContextParams(contextParams)
     }
 
-    fun createActivityWithAttributionSource(attributionSource: AttributionSource) : Activity {
+    fun createActivityWithAttributionSource(attributionSource: AttributionSource): Activity {
         val mockActivity = Mockito.mock(Activity::class.java)
         `when`(mockActivity.getAttributionSource()).thenReturn(attributionSource)
         return mockActivity
     }
 
-    fun createActivityWithContextParams(contextParams: ContextParams) : Activity {
+    fun createActivityWithContextParams(contextParams: ContextParams): Activity {
         val activityReference = AtomicReference<NoOpActivity>()
-        instrumentation.runOnMainSync {
-            activityReference.set(NoOpActivity())
-        }
+        instrumentation.runOnMainSync { activityReference.set(NoOpActivity()) }
         val activity = activityReference.get()
         activity.attachBaseContext(context.createContext(contextParams))
         return activity
@@ -113,29 +122,31 @@ class RenouncedPermissionsTest {
 
     companion object {
         private val context: Context
-            get () = InstrumentationRegistry.getInstrumentation().getContext()
+            get() = InstrumentationRegistry.getInstrumentation().getContext()
 
         private val instrumentation: Instrumentation
-            get () = InstrumentationRegistry.getInstrumentation()
+            get() = InstrumentationRegistry.getInstrumentation()
 
-        fun getShellAttributionSourceWithRenouncedPermissions() : AttributionSource {
+        fun getShellAttributionSourceWithRenouncedPermissions(): AttributionSource {
             // Let's cook up an attribution source for the shell with its cooperation
-            val renouncedPermissionsSet = ArraySet<String>();
+            val renouncedPermissionsSet = ArraySet<String>()
             renouncedPermissionsSet.add(Manifest.permission.READ_CONTACTS)
             renouncedPermissionsSet.add(Manifest.permission.READ_CALENDAR)
 
             // Calculate the shellUid to account for running this from a secondary user.
-            val shellUid = UserHandle.getUid(Process.myUserHandle().identifier,
-                UserHandle.getAppId(Process.SHELL_UID))
-            var shellAttributionSource = AttributionSource.Builder(shellUid)
+            val shellUid =
+                UserHandle.getUid(
+                    Process.myUserHandle().identifier, UserHandle.getAppId(Process.SHELL_UID))
+            var shellAttributionSource =
+                AttributionSource.Builder(shellUid)
                     .setPackageName("com.android.shell")
                     .setRenouncedPermissions(renouncedPermissionsSet)
                     .build()
 
             SystemUtil.runWithShellPermissionIdentity {
                 val permissionManager = context.getSystemService(PermissionManager::class.java)!!
-                shellAttributionSource = permissionManager.registerAttributionSource(
-                        shellAttributionSource)
+                shellAttributionSource =
+                    permissionManager.registerAttributionSource(shellAttributionSource)
             }
 
             return shellAttributionSource
