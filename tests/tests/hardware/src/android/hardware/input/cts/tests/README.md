@@ -2,7 +2,7 @@ How to add a test for a new HID device
 ======================================
 
 1. Connect the device of interest to Android.
-2. Open `adb shell`.
+2. Ensure you have root access (`adb root`), and open `adb shell`.
 3. Ensure debugfs is mounted by checking that you have access to the `/sys/kernel/debug/hid`
 directory. If not, it can be mounted using `mount -t debugfs none /sys/kernel/debug`.
 4. Go to `/sys/kernel/debug/hid/<identifier>`, where the identifier has the form
