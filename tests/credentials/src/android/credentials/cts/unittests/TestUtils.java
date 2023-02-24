@@ -19,6 +19,7 @@ package android.credentials.cts.unittests;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.slice.Slice;
+import android.credentials.CredentialDescription;
 import android.credentials.CredentialOption;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -39,6 +40,13 @@ public class TestUtils {
         assertEquals(a.getCredentialRetrievalData(), b.getCredentialRetrievalData());
         assertThat(a.isSystemProviderRequired()).isEqualTo(b.isSystemProviderRequired());
     }
+
+    public static void assertEquals(CredentialDescription a, CredentialDescription b) {
+        assertThat(a.getType()).isEqualTo(b.getType());
+        assertThat(a.getFlattenedRequestString()).isEqualTo(b.getFlattenedRequestString());
+        assertThat(a.getCredentialEntries()).isSameInstanceAs(b.getCredentialEntries());
+    }
+
     public static void assertEquals(Slice a, Slice b) {
         assertThat(a.getUri()).isEqualTo(b.getUri());
     }
