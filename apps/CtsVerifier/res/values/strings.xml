@@ -5596,9 +5596,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_loopback_headsetpath_instructions">Insert the loopback plug in the
     headset jack.  Press the Start button and allow the test to proceed.</string>
 
-    <string name="audio_loopback_usbpath_instructions">Connect the USB port to an appropriate
-        USB audio test peripheral with loopback set up. Press the Start button and
-        allow the test to proceed.</string>
+    <string name="audio_loopback_usbpath_instructions">Plug in the appropriate USB audio test
+        peripheral with loopback setup into the USB port. Press the start button and allow the
+        test to proceed.</string>
 
     <string name="audio_loopback_failure">FAILURE - Could not allocate analyzer thread.</string>
 
