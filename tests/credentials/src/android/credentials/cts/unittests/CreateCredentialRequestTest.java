@@ -42,21 +42,60 @@ public class CreateCredentialRequestTest {
     @Test
     public void testConstructor_nullType() {
         assertThrows(IllegalArgumentException.class,
-                () -> new CreateCredentialRequest(null, Bundle.EMPTY, Bundle.EMPTY, false, false));
+                () -> new CreateCredentialRequest.Builder(Bundle.EMPTY, Bundle.EMPTY)
+                .setType(null)
+                .setIsSystemProviderRequired(false)
+                .setAlwaysSendAppInfoToProvider(false)
+                .build());
     }
 
     @Test
     public void testConstructor_nullRetrievalData() {
         assertThrows(NullPointerException.class,
-                () -> new CreateCredentialRequest(Credential.TYPE_PASSWORD_CREDENTIAL, null,
-                        Bundle.EMPTY, false, false));
+                () -> new CreateCredentialRequest.Builder(Bundle.EMPTY, null)
+                    .setType(Credential.TYPE_PASSWORD_CREDENTIAL)
+                    .setIsSystemProviderRequired(false)
+                    .setAlwaysSendAppInfoToProvider(false)
+                    .build());
     }
 
     @Test
     public void testConstructor_nullQueryData() {
         assertThrows(NullPointerException.class,
-                () -> new CreateCredentialRequest(Credential.TYPE_PASSWORD_CREDENTIAL, Bundle.EMPTY,
-                        null, false, false));
+                () -> new CreateCredentialRequest.Builder(null, Bundle.EMPTY)
+                    .setType(Credential.TYPE_PASSWORD_CREDENTIAL)
+                    .setIsSystemProviderRequired(false)
+                    .setAlwaysSendAppInfoToProvider(false)
+                    .build());
+    }
+
+    @Test
+    public void testConstructor_setOrigin() {
+        final String type = Credential.TYPE_PASSWORD_CREDENTIAL;
+        final Bundle data = new Bundle();
+        data.putString("foo", "bar");
+
+        final Bundle query = new Bundle();
+        query.putString("bar", "baz");
+
+        final boolean isSystemProviderRequired = true;
+        final boolean alwaysSendAppInfo = true;
+        final String origin = "origin";
+
+        final CreateCredentialRequest req = new CreateCredentialRequest.Builder(data, query)
+                .setType(type)
+                .setIsSystemProviderRequired(isSystemProviderRequired)
+                .setAlwaysSendAppInfoToProvider(alwaysSendAppInfo)
+                .setOrigin(origin)
+                .build();
+
+        // TODO: Add a test to check permission on extracting the ORIGIN
+        assertThat(req.getType()).isEqualTo(type);
+        assertThat(req.getCredentialData()).isEqualTo(data);
+        assertThat(req.getCandidateQueryData()).isEqualTo(query);
+        assertThat(req.isSystemProviderRequired()).isEqualTo(isSystemProviderRequired);
+        assertThat(req.alwaysSendAppInfoToProvider()).isEqualTo(alwaysSendAppInfo);
+        assertThat(req.getOrigin()).isEqualTo(origin);
     }
 
     @Test
@@ -71,8 +110,11 @@ public class CreateCredentialRequestTest {
         final boolean isSystemProviderRequired = true;
         final boolean alwaysSendAppInfo = true;
 
-        final CreateCredentialRequest req = new CreateCredentialRequest(type, data, query,
-                isSystemProviderRequired, alwaysSendAppInfo);
+        final CreateCredentialRequest req = new CreateCredentialRequest.Builder(data, query)
+                .setType(type)
+                .setIsSystemProviderRequired(isSystemProviderRequired)
+                .setAlwaysSendAppInfoToProvider(alwaysSendAppInfo)
+                .build();
 
         assertThat(req.getType()).isEqualTo(type);
         assertThat(req.getCredentialData()).isEqualTo(data);
@@ -89,8 +131,12 @@ public class CreateCredentialRequestTest {
         final Bundle queryData = new Bundle();
         queryData.putString("baz", "foo");
 
-        final CreateCredentialRequest req1 = new CreateCredentialRequest(
-                Credential.TYPE_PASSWORD_CREDENTIAL, credData, queryData, true, true);
+        final CreateCredentialRequest req1 = new CreateCredentialRequest.Builder(credData,
+                queryData)
+                .setType(Credential.TYPE_PASSWORD_CREDENTIAL)
+                .setIsSystemProviderRequired(true)
+                .setAlwaysSendAppInfoToProvider(true)
+                .build();
 
         final CreateCredentialRequest req2 = TestUtils.cloneParcelable(req1);
         assertThat(req2.getType()).isEqualTo(req1.getType());
