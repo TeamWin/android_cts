@@ -296,7 +296,7 @@ class CaptureSessionListener {
 
     void incPendingPrepared(ANativeWindow *anw) {
         std::lock_guard<std::mutex> lock(mMutex);
-        if (!(mPendingPreparedCbs.find(anw) == mPendingPreparedCbs.end())) {
+        if ((mPendingPreparedCbs.find(anw) == mPendingPreparedCbs.end())) {
             mPendingPreparedCbs[anw] = 1;
             return;
         }
@@ -3312,15 +3312,21 @@ bool nativeCameraDeviceTestPrepareSurface(
             goto cleanup;
         }
 
-        if (chars != nullptr) {
-            ACameraMetadata_free(chars);
-            chars = nullptr;
-        }
-        chars = testCase.getCameraChars(i);
+        chars = testCase.getCameraChars(cameraId);
         if (chars == nullptr) {
             LOG_ERROR(errorString, "Get camera %s characteristics failure", cameraId);
             goto cleanup;
         }
+        StaticInfo staticInfo(chars);
+        if (!staticInfo.isColorOutputSupported()) {
+            ALOGI("%s: camera %s does not support color output. skipping",
+                    __FUNCTION__, cameraId);
+            ACameraMetadata_free(chars);
+            chars = nullptr;
+            continue;
+        }
+        ACameraMetadata_free(chars);
+        chars = nullptr;
 
         ret = testCase.openCamera(cameraId);
         if (ret != ACAMERA_OK) {

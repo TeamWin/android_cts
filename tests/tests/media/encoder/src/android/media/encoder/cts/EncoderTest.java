@@ -16,6 +16,10 @@
 
 package android.media.encoder.cts;
 
+import static android.media.MediaCodecInfo.CodecProfileLevel.AACObjectELD;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AACObjectHE;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AACObjectLC;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -86,10 +90,10 @@ public class EncoderTest {
 
     private final String mEncoderName;
     private final String mMime;
-    private final int[] mProfiles;
-    private final int[] mBitrates;
-    private final int[] mSampleRates;
-    private final int[] mChannelCounts;
+    private final int mProfile;
+    private final int mBitrate;
+    private final int mSampleRate;
+    private final int mChannelCount;
     private ArrayList<MediaFormat> mFormats;
 
     static boolean isDefaultCodec(String codecName, String mime)
@@ -102,6 +106,34 @@ public class EncoderTest {
         mDefaultEncoders.put(mime, codec.getName());
         codec.release();
         return isDefault;
+    }
+
+    private static List<Object[]> flattenParams(List<Object[]> params) {
+        List<Object[]> argsList = new ArrayList<>();
+        for (Object[] param : params) {
+            String mediaType = (String) param[0];
+            int[] profiles = (int[]) param[1];
+            int[] bitRates = (int[]) param[2];
+            int[] sampleRates = (int[]) param[3];
+            int[] channelCounts = (int[]) param[4];
+            for (int profile : profiles) {
+                for (int bitrate : bitRates) {
+                    for (int channelCount : channelCounts) {
+                        for (int sampleRate : sampleRates) {
+                            if (mediaType.equals(MediaFormat.MIMETYPE_AUDIO_AAC)
+                                    && profile == AACObjectHE && sampleRate < 22050) {
+                                // Is this right? HE does not support sample rates < 22050Hz?
+                                continue;
+                            }
+                            argsList.add(
+                                    new Object[]{mediaType, profile, bitrate, sampleRate,
+                                            channelCount});
+                        }
+                    }
+                }
+            }
+        }
+        return argsList;
     }
 
     static private List<Object[]> prepareParamList(List<Object[]> exhaustiveArgsList) {
@@ -126,12 +158,13 @@ public class EncoderTest {
         return argsList;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{4}_{5})")
     public static Collection<Object[]> input() {
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Audio - CodecMime, arrays of profiles, bit-rates, sample rates, channel counts
-                {MediaFormat.MIMETYPE_AUDIO_AAC, new int[]{2, 5, 39}, new int[]{64000, 128000},
-                        new int[]{8000, 11025, 22050, 44100, 48000}, new int[]{1, 2}},
+                {MediaFormat.MIMETYPE_AUDIO_AAC, new int[]{AACObjectLC, AACObjectHE,
+                        AACObjectELD}, new int[]{64000, 128000}, new int[]{8000, 11025, 22050,
+                        44100, 48000}, new int[]{1, 2}},
                 {MediaFormat.MIMETYPE_AUDIO_OPUS, new int[]{-1}, new int[]{8000, 12000, 16000,
                         24000, 48000}, new int[]{16000}, new int[]{1, 2}},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_NB, new int[]{-1}, new int[]{4750, 5150, 5900, 6700
@@ -139,41 +172,34 @@ public class EncoderTest {
                 {MediaFormat.MIMETYPE_AUDIO_AMR_WB, new int[]{-1}, new int[]{6600, 8850, 12650,
                         14250, 15850, 18250, 19850, 23050, 23850}, new int[]{16000}, new int[]{1}},
         });
-        return prepareParamList(exhaustiveArgsList);
+        List<Object[]> argsList = flattenParams(exhaustiveArgsList);
+        return prepareParamList(argsList);
     }
 
-    public EncoderTest(String encodername, String mime, int[] profiles, int[] bitrates,
-            int samplerates[], int channelcounts[]) {
+    public EncoderTest(String encodername, String mime, int profile, int bitrate,
+            int samplerate, int channelcount) {
         mEncoderName = encodername;
         mMime = mime;
-        mProfiles = profiles;
-        mBitrates = bitrates;
-        mSampleRates = samplerates;
-        mChannelCounts = channelcounts;
+        mProfile = profile;
+        mBitrate = bitrate;
+        mSampleRate = samplerate;
+        mChannelCount = channelcount;
     }
 
     private void setUpFormats() {
         mFormats = new ArrayList<MediaFormat>();
-        // TODO(b/218887182) Explore parameterizing based on the following loop params as well
-        for (int profile : mProfiles) {
-            for (int rate : mSampleRates) {
-                if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC) && profile == 5 && rate < 22050) {
-                    // Is this right? HE does not support sample rates < 22050Hz?
-                    continue;
-                }
-                for (int bitrate : mBitrates) {
-                    for (int channels : mChannelCounts) {
-                        MediaFormat format = new MediaFormat();
-                        format.setString(MediaFormat.KEY_MIME, mMime);
-                        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, rate);
-                        format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, channels);
-                        format.setInteger(MediaFormat.KEY_AAC_PROFILE, profile);
-                        format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
-                        mFormats.add(format);
-                    }
-                }
+        MediaFormat format = new MediaFormat();
+        format.setString(MediaFormat.KEY_MIME, mMime);
+        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, mSampleRate);
+        format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, mChannelCount);
+        if (mProfile >= 0) {
+            format.setInteger(MediaFormat.KEY_PROFILE, mProfile);
+            if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
+                format.setInteger(MediaFormat.KEY_AAC_PROFILE, mProfile);
             }
         }
+        format.setInteger(MediaFormat.KEY_BIT_RATE, mBitrate);
+        mFormats.add(format);
     }
 
     @Test
@@ -217,7 +243,7 @@ public class EncoderTest {
                 return;
             }
         }
-        final int ThreadPoolCount = 3;
+        final int ThreadPoolCount = 1;
         int instances = ThreadPoolCount;
         MediaCodec codec = null;
         try {

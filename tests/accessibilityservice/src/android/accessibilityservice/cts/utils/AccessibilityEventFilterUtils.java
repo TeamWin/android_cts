@@ -100,6 +100,50 @@ public class AccessibilityEventFilterUtils {
         };
     }
 
+    /**
+     * Returns a matcher for a display id from getDisplayId().
+     * @param displayId the display id to match.
+     * @return a matcher for comparing display ids.
+     */
+    public static TypeSafeMatcher<AccessibilityEvent> matcherForDisplayId(int displayId) {
+        final TypeSafeMatcher<AccessibilityEvent> matchAction =
+                new PropertyMatcher<>(
+                        displayId, "Display id",
+                        (event, expect) -> event.getDisplayId() == displayId);
+        return matchAction;
+    }
+
+    /**
+     * Returns a matcher for a class name from getClassName().
+     * @param className the class name to match.
+     * @return a matcher for comparing class names.
+     */
+    public static TypeSafeMatcher<AccessibilityEvent> matcherForClassName(CharSequence className) {
+        final TypeSafeMatcher<AccessibilityEvent> matchAction =
+                new PropertyMatcher<>(
+                        className, "Class name",
+                        (event, expect) -> event.getClassName().equals(className));
+        return matchAction;
+    }
+
+    /**
+     * Returns a matcher for the first text instance from getText().
+     * @param text the text to match.
+     * @return a matcher for comparing first text instances.
+     */
+    public static TypeSafeMatcher<AccessibilityEvent> matcherForFirstText(CharSequence text) {
+        final TypeSafeMatcher<AccessibilityEvent> matchAction =
+                new PropertyMatcher<>(
+                        text, "Text",
+                        (event, expect) -> {
+                            if (event.getText() != null && event.getText().size() > 0) {
+                                return event.getText().get(0).equals(text);
+                            }
+                            return false;
+                        });
+        return matchAction;
+    }
+
     public static class AccessibilityEventTypeMatcher extends TypeSafeMatcher<AccessibilityEvent> {
         private int mType;
 

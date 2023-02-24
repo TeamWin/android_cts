@@ -986,6 +986,28 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
         unsolEmergencyNetworkScanResult(EUTRAN);
     }
 
+    @Test
+    public void testNrEpsImsRegisteredEmcOffEmsOnScanLtePreferred() throws Exception {
+        // Setup pre-condition
+        PersistableBundle bundle = getDefaultPersistableBundle();
+        // NR has higher priority than LTE in configuration.
+        bundle.putIntArray(
+                KEY_EMERGENCY_OVER_IMS_SUPPORTED_3GPP_NETWORK_TYPES_INT_ARRAY,
+                new int[] { NGRAN, EUTRAN });
+        overrideCarrierConfig(bundle);
+
+        // EMC=0, EMF=1, expect EPS fallback
+        MockEmergencyRegResult regResult = getEmergencyRegResult(NGRAN, REGISTRATION_STATE_HOME,
+                NetworkRegistrationInfo.DOMAIN_PS,
+                true, false, 0, 1, "", "");
+        sMockModemManager.setEmergencyRegResult(sTestSlot, regResult);
+
+        bindImsService();
+
+        // LTE should have higher priority in scan list to trigger EPS fallback.
+        verifyScanPsPreferred();
+    }
+
     private void verifyCsDialed() throws Exception {
         placeOutgoingCall(TEST_EMERGENCY_NUMBER);
         assertTrue(isCsDialing());

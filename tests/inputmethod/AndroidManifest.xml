@@ -36,6 +36,11 @@
         <uses-library android:name="android.test.runner"/>
 
         <!-- TestActivity etc are merged from util/AndroidManifest.xml -->
+        <activity
+            android:name="android.view.inputmethod.ctstestapp.MainActivity"
+            android:exported="true"
+            android:label="CtsInputMethodStandaloneTestActivity"
+            android:windowSoftInputMode="stateAlwaysHidden"/>
 
         <service android:name="android.view.inputmethod.cts.inprocime.InProcIme"
                  android:label="In-Process Test IME"

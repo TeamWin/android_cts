@@ -18,6 +18,9 @@ package android.jobscheduler.cts;
 
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -27,9 +30,6 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.ScreenUtils;
 import com.android.compatibility.common.util.SystemUtil;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -152,6 +152,20 @@ public class TestNotificationListener extends NotificationListenerService {
             ScreenUtils.setScreenOn(true);
         }
 
+        public void assertNotificationsRemoved() throws Exception {
+            waitUntil("Notification wasn't removed", 15 /* seconds */,
+                    () -> {
+                        StatusBarNotification[] activeNotifications =
+                                mNotificationListener.getActiveNotifications();
+                        for (StatusBarNotification sbn : activeNotifications) {
+                            if (sbn.getPackageName().equals(mTestPackage)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    });
+        }
+
         public void clickNotification() throws Exception {
             StatusBarNotification sbn =
                     mNotificationListener.getFirstNotificationFromPackage(mTestPackage);
@@ -161,6 +175,10 @@ public class TestNotificationListener extends NotificationListenerService {
 
         public void close() throws Exception {
             TestNotificationListener.toggleListenerAccess(mContext, false);
+        }
+
+        public StatusBarNotification getNotification() throws Exception {
+            return mNotificationListener.getFirstNotificationFromPackage(mTestPackage);
         }
     }
 }
