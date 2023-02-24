@@ -25,9 +25,8 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActi
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.supportsMultiDisplay;
-import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
-import static android.accessibilityservice.cts.utils.DisplayUtils.getStatusBarHeight;
+import static android.accessibilityservice.cts.utils.WindowCreationUtils.TOP_WINDOW_TITLE;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOWS_CHANGED;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED;
@@ -53,6 +52,7 @@ import android.accessibilityservice.cts.activities.AccessibilityWindowReportingA
 import android.accessibilityservice.cts.activities.NonDefaultDisplayActivity;
 import android.accessibilityservice.cts.activities.NotTouchableWindowTestActivity;
 import android.accessibilityservice.cts.utils.DisplayUtils;
+import android.accessibilityservice.cts.utils.WindowCreationUtils;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -98,9 +98,6 @@ import java.util.concurrent.TimeoutException;
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilityWindowReportingTest {
     private static final int TIMEOUT_ASYNC_PROCESSING = 5000;
-    private static final CharSequence TOP_WINDOW_TITLE =
-            "android.accessibilityservice.cts.AccessibilityWindowReportingTest.TOP_WINDOW_TITLE";
-
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
     private Activity mActivity;
@@ -164,13 +161,15 @@ public class AccessibilityWindowReportingTest {
     @Test
     @Presubmit
     public void testWindowAddedMovedAndRemoved_generatesEventsForAllThree() throws Exception {
-        final WindowManager.LayoutParams paramsForTop = layoutParmsForWindowOnTop();
+        final WindowManager.LayoutParams paramsForTop =
+                WindowCreationUtils.layoutParamsForWindowOnTop(
+                sInstrumentation, mActivity, TOP_WINDOW_TITLE);
         final WindowManager.LayoutParams paramsForBottom = layoutParmsForWindowOnBottom();
         final Button button = new Button(mActivity);
         button.setText(R.string.button1);
 
-        addWindowAndWaitForEvent(button, paramsForTop,
-                        filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED));
+        WindowCreationUtils.addWindowAndWaitForEvent(sUiAutomation, sInstrumentation, mActivity,
+                button, paramsForTop, filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED));
 
         // Move window from top to bottom
         sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
@@ -510,7 +509,7 @@ public class AccessibilityWindowReportingTest {
                                 findWindowByTitleAndDisplay(sUiAutomation,
                                         NotTouchableWindowTestActivity.TITLE, 0);
                         return window != null;
-                    }, DEFAULT_TIMEOUT_MS);
+                    }, TIMEOUT_ASYNC_PROCESSING);
         }, Manifest.permission.INTERNAL_SYSTEM_WINDOW);
     }
 
@@ -541,54 +540,24 @@ public class AccessibilityWindowReportingTest {
     }
 
     private View showTopWindowAndWaitForItToShowUp() throws TimeoutException {
-        final WindowManager.LayoutParams paramsForTop = layoutParmsForWindowOnTop();
+        final WindowManager.LayoutParams paramsForTop =
+                WindowCreationUtils.layoutParamsForWindowOnTop(
+                sInstrumentation, mActivity, TOP_WINDOW_TITLE);
         final Button button = new Button(mActivity);
         button.setText(R.string.button1);
-        addWindowAndWaitForEvent(button, paramsForTop, (event) -> {
-            return (event.getEventType() == TYPE_WINDOWS_CHANGED)
-                    && (findWindowByTitle(sUiAutomation, mActivityTitle) != null)
-                    && (findWindowByTitle(sUiAutomation, TOP_WINDOW_TITLE) != null);
-        });
+
+        WindowCreationUtils.addWindowAndWaitForEvent(sUiAutomation, sInstrumentation, mActivity,
+                button, paramsForTop, (event) -> (event.getEventType() == TYPE_WINDOWS_CHANGED)
+                        && (findWindowByTitle(sUiAutomation, mActivityTitle) != null)
+                        && (findWindowByTitle(sUiAutomation, TOP_WINDOW_TITLE) != null));
         return button;
     }
 
-    private WindowManager.LayoutParams layoutParmsForWindowOnTop() {
-        final WindowManager.LayoutParams params = layoutParmsForTestWindow();
-        params.gravity = Gravity.TOP;
-        params.setTitle(TOP_WINDOW_TITLE);
-        sInstrumentation.runOnMainSync(() -> {
-            params.y = getStatusBarHeight(mActivity);
-        });
-        return params;
-    }
-
     private WindowManager.LayoutParams layoutParmsForWindowOnBottom() {
-        final WindowManager.LayoutParams params = layoutParmsForTestWindow();
+        final WindowManager.LayoutParams params = WindowCreationUtils.layoutParamsForTestWindow(
+                sInstrumentation, mActivity);
         params.gravity = Gravity.BOTTOM;
         return params;
-    }
-
-    private WindowManager.LayoutParams layoutParmsForTestWindow() {
-        final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
-        params.width = WindowManager.LayoutParams.MATCH_PARENT;
-        params.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        params.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
-        params.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
-        sInstrumentation.runOnMainSync(() -> {
-            params.token = mActivity.getWindow().getDecorView().getWindowToken();
-        });
-        return params;
-    }
-
-    private void addWindowAndWaitForEvent(View view, WindowManager.LayoutParams params,
-            UiAutomation.AccessibilityEventFilter filter)
-            throws TimeoutException {
-        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
-                () -> mActivity.getWindowManager().addView(view, params)),
-                filter,
-                TIMEOUT_ASYNC_PROCESSING);
     }
 
     private void sendIntentAndWaitForEvent(Intent intent,
