@@ -40,6 +40,7 @@ import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_PROVIDER;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_SERVICE;
+import static android.appenumeration.cts.Constants.ACTION_MANIFEST_UNEXPORTED_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTION_PENDING_INTENT_GET_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTION_PENDING_INTENT_GET_CREATOR_PACKAGE;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
@@ -814,7 +815,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
             Assert.assertEquals(TARGET_FILTERS,
                     Uri.parse(result.await().getString(EXTRA_DATA)).getSchemeSpecificPart());
         } catch (MissingBroadcastException e) {
-            fail();
+            fail(e.getMessage());
         }
     }
 
@@ -842,7 +843,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
             Assert.assertEquals(TARGET_FILTERS,
                     Uri.parse(result.await().getString(EXTRA_DATA)).getSchemeSpecificPart());
         } catch (MissingBroadcastException e) {
-            fail();
+            fail(e.getMessage());
         }
     }
 
@@ -1546,29 +1547,29 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
     private void startExplicitIntentViaComponent(String sourcePackage, String targetPackage)
             throws Exception {
         sendCommandBlocking(sourcePackage, targetPackage,
-                new Intent().setComponent(new ComponentName(targetPackage,
-                        ACTIVITY_CLASS_DUMMY_ACTIVITY)),
+                new Intent(ACTION_MANIFEST_ACTIVITY)
+                        .setClassName(targetPackage, ACTIVITY_CLASS_DUMMY_ACTIVITY),
                 ACTION_START_DIRECTLY);
     }
     private void startExplicitIntentNotExportedViaComponent(
             String sourcePackage, String targetPackage) throws Exception {
         sendCommandBlocking(sourcePackage, targetPackage,
-                new Intent().setComponent(new ComponentName(targetPackage,
-                        ACTIVITY_CLASS_NOT_EXPORTED)),
+                new Intent(ACTION_MANIFEST_UNEXPORTED_ACTIVITY)
+                        .setClassName(targetPackage, ACTIVITY_CLASS_NOT_EXPORTED),
                 ACTION_START_DIRECTLY);
     }
     private void startExplicitIntentViaPackageName(String sourcePackage, String targetPackage)
             throws Exception {
         sendCommandBlocking(sourcePackage, targetPackage,
-                new Intent().setPackage(targetPackage),
+                new Intent(ACTION_MANIFEST_ACTIVITY).setPackage(targetPackage),
                 ACTION_START_DIRECTLY);
     }
 
     private void startExplicitPermissionProtectedIntentViaComponent(
             String sourcePackage, String targetPackage) throws Exception {
         sendCommandBlocking(sourcePackage, targetPackage,
-                new Intent().setComponent(new ComponentName(targetPackage,
-                        ACTIVITY_CLASS_PERMISSION_PROTECTED)),
+                new Intent(ACTION_MANIFEST_ACTIVITY)
+                        .setClassName(targetPackage, ACTIVITY_CLASS_PERMISSION_PROTECTED),
                 ACTION_START_DIRECTLY);
     }
 

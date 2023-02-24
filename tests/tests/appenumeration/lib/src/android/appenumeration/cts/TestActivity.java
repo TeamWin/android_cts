@@ -24,6 +24,7 @@ import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
 import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
+import static android.appenumeration.cts.Constants.ACTION_MANIFEST_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_MEDIA_SESSION_MANAGER_IS_TRUSTED_FOR_MEDIA_CONTROL;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
@@ -1219,7 +1220,7 @@ public class TestActivity extends Activity {
     }
 
     private void bindService(RemoteCallback remoteCallback, String packageName) {
-        final Intent intent = new Intent();
+        final Intent intent = new Intent(ACTION_MANIFEST_SERVICE);
         intent.setClassName(packageName, SERVICE_CLASS_DUMMY_SERVICE);
         final ServiceConnection serviceConnection = new ServiceConnection() {
             @Override

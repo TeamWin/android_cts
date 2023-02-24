@@ -204,6 +204,8 @@ public class Constants {
             PKG_BASE + "cts.TestPmComponentDiscoveryService";
 
     public static final String ACTION_MANIFEST_ACTIVITY = PKG_BASE + "action.ACTIVITY";
+    public static final String ACTION_MANIFEST_UNEXPORTED_ACTIVITY =
+            PKG_BASE + "action.ACTIVITY_UNEXPORTED";
     public static final String ACTION_MANIFEST_SERVICE = PKG_BASE + "action.SERVICE";
     public static final String ACTION_MANIFEST_PROVIDER = PKG_BASE + "action.PROVIDER";
     public static final String ACTION_SEND_RESULT = PKG_BASE + "cts.action.SEND_RESULT";
