@@ -16,6 +16,7 @@
 
 package android.jobscheduler.cts;
 
+import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 import static android.net.NetworkCapabilities.TRANSPORT_ETHERNET;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 
@@ -193,7 +194,9 @@ public class NetworkingHelper {
         }
         final NetworkCapabilities networkCapabilities =
                 mConnectivityManager.getNetworkCapabilities(network);
-        return networkCapabilities != null && networkCapabilities.hasTransport(TRANSPORT_WIFI);
+        return networkCapabilities != null
+                && networkCapabilities.hasTransport(TRANSPORT_WIFI)
+                && networkCapabilities.hasCapability(NET_CAPABILITY_VALIDATED);
     }
 
     boolean isWifiEnabled() {
@@ -300,6 +303,7 @@ public class NetworkingHelper {
             NetworkRequest nr = new NetworkRequest.Builder().clearCapabilities().build();
             NetworkCapabilities nc = new NetworkCapabilities.Builder()
                     .addTransportType(TRANSPORT_WIFI)
+                    .addCapability(NET_CAPABILITY_VALIDATED)
                     .build();
             NetworkTracker tracker = new NetworkTracker(nc, enable, mConnectivityManager);
             mConnectivityManager.registerNetworkCallback(nr, tracker);
