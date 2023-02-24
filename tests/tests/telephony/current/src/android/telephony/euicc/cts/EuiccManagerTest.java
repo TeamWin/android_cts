@@ -636,6 +636,10 @@ public class EuiccManagerTest {
 
     @Test
     public void testTransferEmbeddedSubscriptionsAction() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
         Intent testActionIntent =
                 new Intent(EuiccManager.ACTION_TRANSFER_EMBEDDED_SUBSCRIPTIONS);
         testActionIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -644,6 +648,10 @@ public class EuiccManagerTest {
 
     @Test
     public void testConvertToEmbeddedSubscriptionAction() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
         Intent testActionIntent =
                 new Intent(EuiccManager.ACTION_CONVERT_TO_EMBEDDED_SUBSCRIPTION);
         testActionIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
