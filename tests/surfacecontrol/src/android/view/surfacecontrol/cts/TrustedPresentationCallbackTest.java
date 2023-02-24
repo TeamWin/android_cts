@@ -336,6 +336,77 @@ public class TrustedPresentationCallbackTest {
         assertTrue(mResult[0]);
     }
 
+    @Test
+    public void testSetTrustedPresentationListenerAfterThreshold() throws InterruptedException {
+        SurfaceControl rootSc = mActivity.getSurfaceControl();
+        SurfaceControl sc = createChildSc(rootSc);
+        registerTrustedPresentationCallback(sc);
+
+        // Ensure received tpc callback so we know it's ready.
+        synchronized (mResult) {
+            setBuffer(sc, mActivity.mSvSize.getWidth(), mActivity.mSvSize.getHeight());
+            mResult.wait(WAIT_TIME_MS);
+            assertTrue(mResult[0]);
+        }
+
+        // Register a new trusted presentation listener to make sure we get a callback if we
+        // registered after already in the trusted presented state. We'll need to wait the full
+        // time again.
+        synchronized (mResult) {
+            mResult[0] = false;
+            registerTrustedPresentationCallback(sc);
+            long startTime = System.currentTimeMillis();
+            mResult.wait(WAIT_TIME_MS);
+            assertTrue(System.currentTimeMillis() - startTime >= STABILITY_REQUIREMENT_MS);
+            assertTrue(mResult[0]);
+        }
+    }
+
+    @Test
+    public void testSetTrustedPresentationListenerAfterClearing() throws InterruptedException {
+        SurfaceControl rootSc = mActivity.getSurfaceControl();
+        SurfaceControl sc = createChildSc(rootSc);
+        registerTrustedPresentationCallback(sc);
+
+        // Ensure received tpc callback so we know it's ready.
+        synchronized (mResult) {
+            setBuffer(sc, mActivity.mSvSize.getWidth(), mActivity.mSvSize.getHeight());
+            mResult.wait(WAIT_TIME_MS);
+            assertTrue(mResult[0]);
+        }
+
+
+        // Register a new trusted presentation listener to make sure we get a callback if we
+        // registered after already in the trusted presented state. We'll need to wait the full
+        // time again.
+        synchronized (mResult) {
+            mResult[0] = false;
+            // Use a long stability requirement so we don't accidentally trigger it too early.
+            TrustedPresentationThresholds thresholds = new TrustedPresentationThresholds(
+                    1 /* minAlpha */, 1 /* minFractionRendered */, 20000);
+            SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+            t.setTrustedPresentationCallback(sc, thresholds, mActivity.mExecutor,
+                    inTrustedPresentationState -> {
+                        synchronized (mResult) {
+                            mResult[0] = inTrustedPresentationState;
+                            mResult.notify();
+                        }
+                    }).apply();
+        }
+
+
+        new SurfaceControl.Transaction().clearTrustedPresentationCallback(sc).apply();
+        synchronized (mResult) {
+            assertFalse(mResult[0]);
+            registerTrustedPresentationCallback(sc);
+            long startTime = System.currentTimeMillis();
+            mResult.wait(WAIT_TIME_MS);
+            assertTrue(System.currentTimeMillis() - startTime >= STABILITY_REQUIREMENT_MS);
+            assertTrue(mResult[0]);
+        }
+    }
+
+
     public static class TestActivity extends Activity implements SurfaceHolder.Callback {
         private final Executor mExecutor = Runnable::run;
 
