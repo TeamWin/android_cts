@@ -30,6 +30,7 @@ import android.server.wm.jetpack.utils.ExtensionUtil;
 import android.server.wm.jetpack.utils.SidecarUtil;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 import android.view.Display;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
@@ -63,18 +64,21 @@ public class SdkAvailabilityTest extends WindowManagerJetpackTestBase {
     @Override
     public void setUp() {
         super.setUp();
-        assumeSmallestScreenWidthAtLeast600dp();
+        assumeSmallestScreenWidthAtLeast600dpOrExtensionEnabled();
         assumeMultiWindowSupported();
     }
 
     /**
      * MUST implement the latest available stable version of the extensions API
-     * to be used by Window Manager Jetpack library.
+     * to be used by Window Manager Jetpack library, and declares the window extension
+     * is enabled.
      */
     @Test
     public void testWindowExtensionsAvailability() {
         assertTrue("WindowExtension version is not latest",
                 ExtensionUtil.isExtensionVersionLatest());
+        assertTrue("Device must declared that the WindowExtension is enabled",
+                WindowManager.hasWindowExtensionsEnabled());
     }
 
     /**
@@ -100,13 +104,13 @@ public class SdkAvailabilityTest extends WindowManagerJetpackTestBase {
         assertTrue("Sidecar is not available", SidecarUtil.isSidecarVersionValid());
     }
 
-    private void assumeSmallestScreenWidthAtLeast600dp() {
+    private void assumeSmallestScreenWidthAtLeast600dpOrExtensionEnabled() {
         final DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
         boolean hasDisplayScreenWidth600dp = Arrays.stream(displayManager.getDisplays())
                 .filter(display -> display.getType() == Display.TYPE_INTERNAL)
                 .anyMatch(this::isSmallestScreenWidthAtLeast600dp);
         assumeTrue("Device does not has a minimum screen dimension greater than or equal to 600dp",
-                hasDisplayScreenWidth600dp);
+                hasDisplayScreenWidth600dp || WindowManager.hasWindowExtensionsEnabled());
     }
 
     private void assumeMultiWindowSupported() {
