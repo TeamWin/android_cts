@@ -16,8 +16,11 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.view.Display.DEFAULT_DISPLAY;
+
 import static org.junit.Assert.assertThrows;
 
+import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualNavigationTouchpad;
 import android.hardware.input.VirtualNavigationTouchpadConfig;
 import android.hardware.input.VirtualTouchEvent;
@@ -44,15 +47,20 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
 
     @Override
     void onSetUpVirtualInputDevice() {
+        mVirtualNavigationTouchpad = createVirtualNavigationTouchpad(
+                mVirtualDisplay.getDisplay().getDisplayId());
+    }
+
+    VirtualNavigationTouchpad createVirtualNavigationTouchpad(int displayId) {
         final VirtualNavigationTouchpadConfig navigationTouchpadConfig =
                 new VirtualNavigationTouchpadConfig.Builder(TOUCHPAD_WIDTH, TOUCHPAD_HEIGHT)
                         .setVendorId(VENDOR_ID)
                         .setProductId(PRODUCT_ID)
                         .setInputDeviceName(DEVICE_NAME)
-                        .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
+                        .setAssociatedDisplayId(displayId)
                         .build();
 
-        mVirtualNavigationTouchpad = mVirtualDevice.createVirtualNavigationTouchpad(
+        return mVirtualDevice.createVirtualNavigationTouchpad(
                 navigationTouchpadConfig);
     }
 
@@ -146,5 +154,19 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
                 /* flags= */ 0);
         event.setDisplayId(mVirtualDisplay.getDisplay().getDisplayId());
         return event;
+    }
+
+    @Test
+    public void createVirtualNavigationTouchpad_defaultDisplay_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> createVirtualNavigationTouchpad(DEFAULT_DISPLAY));
+    }
+
+    @Test
+    public void createVirtualNavigationTouchpad_unownedDisplay_throwsException() {
+        VirtualDisplay unownedDisplay = createUnownedVirtualDisplay();
+        assertThrows(SecurityException.class,
+                () -> createVirtualNavigationTouchpad(unownedDisplay.getDisplay().getDisplayId()));
+        unownedDisplay.release();
     }
 }

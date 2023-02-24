@@ -16,8 +16,11 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.view.Display.DEFAULT_DISPLAY;
+
 import static org.junit.Assert.assertThrows;
 
+import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualDpad;
 import android.hardware.input.VirtualDpadConfig;
 import android.hardware.input.VirtualKeyEvent;
@@ -41,14 +44,18 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
 
     @Override
     void onSetUpVirtualInputDevice() {
+        mVirtualDpad = createVirtualDpad(mVirtualDisplay.getDisplay().getDisplayId());
+    }
+
+    VirtualDpad createVirtualDpad(int displayId) {
         final VirtualDpadConfig dpadConfig =
                 new VirtualDpadConfig.Builder()
                         .setVendorId(VENDOR_ID)
                         .setProductId(PRODUCT_ID)
                         .setInputDeviceName(DEVICE_NAME)
-                        .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
+                        .setAssociatedDisplayId(displayId)
                         .build();
-        mVirtualDpad = mVirtualDevice.createVirtualDpad(dpadConfig);
+        return mVirtualDevice.createVirtualDpad(dpadConfig);
     }
 
     @Override
@@ -154,5 +161,18 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
                                         .setKeyCode(KeyEvent.KEYCODE_Q)
                                         .setAction(VirtualKeyEvent.ACTION_DOWN)
                                         .build()));
+    }
+
+    @Test
+    public void createVirtualDpad_defaultDisplay_throwsException() {
+        assertThrows(SecurityException.class, () -> createVirtualDpad(DEFAULT_DISPLAY));
+    }
+
+    @Test
+    public void createVirtualDpad_unownedDisplay_throwsException() {
+        VirtualDisplay unownedDisplay = createUnownedVirtualDisplay();
+        assertThrows(SecurityException.class,
+                () -> createVirtualDpad(unownedDisplay.getDisplay().getDisplayId()));
+        unownedDisplay.release();
     }
 }

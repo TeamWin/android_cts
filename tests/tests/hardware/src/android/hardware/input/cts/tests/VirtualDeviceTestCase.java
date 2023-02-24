@@ -31,6 +31,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
+import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.InputManager;
 import android.os.Bundle;
@@ -239,5 +240,15 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         view.getLocationOnScreen(location);
         return new Point(location[0] + view.getWidth() / 2,
                 location[1] + view.getHeight() / 2);
+    }
+
+    public VirtualDisplay createUnownedVirtualDisplay() {
+        return DisplayManager.createVirtualDisplay(
+                "test",
+                /* width= */ DISPLAY_WIDTH,
+                /* height= */ DISPLAY_HEIGHT,
+                /* displayIdToMirror= */ 50,
+                /* surface= */ null
+            );
     }
 }
