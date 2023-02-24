@@ -157,6 +157,18 @@ class TestAppInterface implements AutoCloseable {
                 + " -u " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE + " " + mJobId);
     }
 
+    void stopJob(int stopReason, int internalStopReason) throws Exception {
+        SystemUtil.runShellCommand("cmd jobscheduler stop"
+                + " -u " + UserHandle.myUserId()
+                + " -s " + stopReason + " -i " + internalStopReason
+                + " " + TEST_APP_PACKAGE + " " + mJobId);
+    }
+
+    void forceStopApp() {
+        SystemUtil.runShellCommand("am force-stop"
+                + " --user " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE);
+    }
+
     void startAndKeepTestActivity() {
         startAndKeepTestActivity(false);
     }

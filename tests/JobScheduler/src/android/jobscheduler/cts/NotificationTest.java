@@ -68,7 +68,7 @@ public class NotificationTest extends BaseJobSchedulerTest {
         super.tearDown();
     }
 
-    public void testNotificationDetachOnJobStop() throws Exception {
+    public void testNotificationJobEndDetach() throws Exception {
         mNotificationManager.cancelAll();
         final int notificationId = 123;
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
@@ -105,7 +105,7 @@ public class NotificationTest extends BaseJobSchedulerTest {
         assertEquals(notificationId, activeNotifications[0].getId());
     }
 
-    public void testNotificationRemovedOnJobStop() throws Exception {
+    public void testNotificationJobEndRemove() throws Exception {
         mNotificationManager.cancelAll();
         final int notificationId = 123;
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
@@ -140,6 +140,64 @@ public class NotificationTest extends BaseJobSchedulerTest {
                     // Notification should be gone
                     return mNotificationManager.getActiveNotifications().length == 0;
                 });
+    }
+
+    public void testNotificationRemovedOnForceStop() throws Exception {
+        try (TestAppInterface mTestAppInterface = new TestAppInterface(mContext, JOB_ID);
+             TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(
+                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            mTestAppInterface.startAndKeepTestActivity(true);
+            mTestAppInterface.scheduleJob(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true,
+                            TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION, true
+                    ),
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION_JOB_END_POLICY,
+                            JobService.JOB_END_NOTIFICATION_POLICY_DETACH
+                    ));
+
+            assertTrue("Job did not start after scheduling",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
+
+            StatusBarNotification jobNotification = notificationHelper.getNotification();
+            assertNotNull(jobNotification);
+
+            mTestAppInterface.forceStopApp();
+
+            notificationHelper.assertNotificationsRemoved();
+        }
+    }
+
+    public void testNotificationRemovedOnTaskManagerStop() throws Exception {
+        try (TestAppInterface mTestAppInterface = new TestAppInterface(mContext, JOB_ID);
+             TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(
+                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            mTestAppInterface.startAndKeepTestActivity(true);
+            mTestAppInterface.scheduleJob(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true,
+                            TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION, true
+                    ),
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION_JOB_END_POLICY,
+                            JobService.JOB_END_NOTIFICATION_POLICY_DETACH
+                    ));
+
+            assertTrue("Job did not start after scheduling",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
+
+            StatusBarNotification jobNotification = notificationHelper.getNotification();
+            assertNotNull(jobNotification);
+
+            // Use the same stop reasons as a Task Manager stop.
+            mTestAppInterface.stopJob(JobParameters.STOP_REASON_USER,
+                    JobParameters.INTERNAL_STOP_REASON_USER_UI_STOP);
+
+            notificationHelper.assertNotificationsRemoved();
+        }
     }
 
     /**

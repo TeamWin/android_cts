@@ -65,7 +65,7 @@ public class TestJobService extends JobService {
             final NotificationManager notificationManager =
                     getSystemService(NotificationManager.class);
             final NotificationChannel channel =
-                    new NotificationChannel(TAG , TAG, NotificationManager.IMPORTANCE_DEFAULT);
+                    new NotificationChannel(TAG, TAG, NotificationManager.IMPORTANCE_DEFAULT);
             notificationManager.createNotificationChannel(channel);
             final Notification notification = new Notification.Builder(this, TAG)
                     .setContentTitle("Test")
