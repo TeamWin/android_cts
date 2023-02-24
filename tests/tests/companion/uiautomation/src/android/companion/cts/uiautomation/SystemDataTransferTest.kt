@@ -16,6 +16,7 @@
 
 package android.companion.cts.uiautomation
 
+import android.annotation.CallSuper
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
 import android.companion.AssociationInfo
@@ -43,8 +44,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import libcore.util.EmptyArray
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -60,14 +59,16 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         private const val SYSTEM_DATA_TRANSFER_TIMEOUT = 10_000L // 10 seconds
     }
 
-    @Before
-    fun disableSecureTransport() {
+    @CallSuper
+    override fun setUp() {
+        super.setUp()
         cdm.enableSecureTransport(false)
     }
 
-    @After
-    fun enableSecureTransport() {
+    @CallSuper
+    override fun tearDown() {
         cdm.enableSecureTransport(true)
+        super.tearDown()
     }
 
     @Test
