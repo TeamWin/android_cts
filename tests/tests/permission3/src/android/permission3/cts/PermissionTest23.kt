@@ -277,8 +277,10 @@ class PermissionTest23 : BaseUsePermissionTest() {
 
     @Test
     fun testNullPermissionRequest() {
+        val permissions: Array<String?> = arrayOf(null)
+        val results: Array<Pair<String?, Boolean>> = arrayOf()
         // Go through normal grant flow
-        requestAppPermissionsAndAssertResult(null to false) {}
+        requestAppPermissionsAndAssertResult(permissions, results) {}
     }
 
     @Test
@@ -290,10 +292,14 @@ class PermissionTest23 : BaseUsePermissionTest() {
         // Request the permission and allow it
         // Expect the permission are granted
         requestAppPermissionsAndAssertResult(
-            null to false,
-            android.Manifest.permission.WRITE_CONTACTS to true,
-            null to false,
-            android.Manifest.permission.RECORD_AUDIO to true,
+            arrayOf(
+                android.Manifest.permission.WRITE_CONTACTS,
+                null,
+                android.Manifest.permission.RECORD_AUDIO,
+                null),
+            arrayOf(
+                android.Manifest.permission.WRITE_CONTACTS to true,
+                android.Manifest.permission.RECORD_AUDIO to true)
         ) {
             clickPermissionRequestAllowForegroundButton()
             clickPermissionRequestAllowButton()
