@@ -37,11 +37,6 @@ public final class SharedSdkWebServer {
         mWebServer = webServer;
     }
 
-    /** Starts the web server. */
-    public void start(@SslMode int sslMode) {
-        start(sslMode, null, 0, 0);
-    }
-
     /** Starts the web server using the provided parameters}. */
     public void start(@SslMode int sslMode, @Nullable byte[] acceptedIssuerDer,
             int keyResId, int certResId) {

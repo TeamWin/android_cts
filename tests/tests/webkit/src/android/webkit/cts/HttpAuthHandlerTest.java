@@ -64,8 +64,7 @@ public class HttpAuthHandlerTest extends SharedWebViewTest {
             mOnUiThread = new WebViewOnUiThread(webview);
         }
 
-        mWebServer = getTestEnvironment().getWebServer();
-        mWebServer.start(SslMode.INSECURE);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
     }
 
     @After
