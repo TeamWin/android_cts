@@ -69,7 +69,7 @@ import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = " cannot be accessed by instant apps")
-public class CreateVirtualDisplayTest {
+public class VirtualDisplayTest {
     private static final int DISPLAY_WIDTH = 640;
     private static final int DISPLAY_HEIGHT = 480;
     private static final int DISPLAY_DPI = 420;
