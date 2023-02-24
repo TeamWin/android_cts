@@ -130,6 +130,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.ActivityTaskManager;
+import android.app.DreamManager;
 import android.app.Instrumentation;
 import android.app.KeyguardManager;
 import android.app.WallpaperManager;
@@ -671,11 +672,14 @@ public abstract class ActivityManagerTestBase {
     public static void wakeUpAndUnlock(Context context) {
         final KeyguardManager keyguardManager = context.getSystemService(KeyguardManager.class);
         final PowerManager powerManager = context.getSystemService(PowerManager.class);
+        final DreamManager dreamManager = context.getSystemService(DreamManager.class);
         if (keyguardManager == null || powerManager == null) {
             return;
         }
 
-        if (keyguardManager.isKeyguardLocked() || !powerManager.isInteractive()) {
+        if (keyguardManager.isKeyguardLocked() || !powerManager.isInteractive()
+                || (dreamManager != null
+                && SystemUtil.runWithShellPermissionIdentity(dreamManager::isDreaming))) {
             pressWakeupButton();
             pressUnlockButton();
         }
