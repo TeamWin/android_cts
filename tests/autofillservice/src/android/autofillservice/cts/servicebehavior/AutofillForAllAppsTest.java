@@ -15,8 +15,8 @@
  */
 package android.autofillservice.cts.servicebehavior;
 
-import static android.autofillservice.cts.testcore.Helper.ID_IMEACTION_TEXT;
 import static android.autofillservice.cts.testcore.Helper.ID_IMEACTION_LABEL;
+import static android.autofillservice.cts.testcore.Helper.ID_IMEACTION_TEXT;
 import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME_LABEL;
@@ -108,7 +108,6 @@ public class AutofillForAllAppsTest extends
     @Test
     public void testUnimportantViewNotTriggerFillRequestWhenActivityInDenylist() throws Exception {
         enableService();
-        // enableHeuristic(sContext);
         setDenyListFlagValue(
                 TEST_CTS_PACKAGE_NAME + ":" + TEST_NOT_IMPORTANT_FOR_AUTOFILL_ACTIVITY_NAME + ";");
         sReplier.addResponse(mLoginResponseBuilder.build());
@@ -123,6 +122,29 @@ public class AutofillForAllAppsTest extends
 
         // assert no fill request is triggered since the package is on deny list.
         sReplier.assertOnFillRequestNotCalled();
+    }
+
+    @Test
+    public void testUnimportantViewTriggerFillRequestWhenDenylistIsWronglyFormatted()
+            throws Exception {
+        enableService();
+        // Left out ";" in the end to make the denylist wrongly formatted
+        setDenyListFlagValue(
+                TEST_CTS_PACKAGE_NAME + ":" + TEST_NOT_IMPORTANT_FOR_AUTOFILL_ACTIVITY_NAME);
+        sReplier.addResponse(mLoginResponseBuilder.build());
+        // Start login activity.
+        startActivity();
+        mUiBot.waitForIdleSync();
+        sReplier.assertNoUnhandledFillRequests();
+
+        // Click on username field
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+        // assert fill request is still triggered since the activity in denylist is wrongly
+        // formatted
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        sReplier.assertNoUnhandledFillRequests();
     }
 
     @Test
