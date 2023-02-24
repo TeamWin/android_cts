@@ -44,6 +44,8 @@ public class GetCredentialRequestTest {
             new CredentialOption("type2", createTestBundle(), createTestBundle(), false),
             new CredentialOption("type3", createTestBundle(), createTestBundle(), true));
 
+    private static final String ORIGIN = "origin";
+
     @Test
     public void testConstructor_nullData() {
         assertThrows(NullPointerException.class, () -> new GetCredentialRequest.Builder(null));
@@ -84,6 +86,19 @@ public class GetCredentialRequestTest {
 
         final GetCredentialRequest req = builder.build();
         assertThat(req.getCredentialOptions()).isEqualTo(sCredOptions);
+        assertThat(req.getData()).isSameInstanceAs(dataBundle);
+    }
+
+    @Test
+    public void testSetOrigin_build() {
+        final Bundle dataBundle = createTestBundle();
+        final GetCredentialRequest.Builder builder = new GetCredentialRequest.Builder(dataBundle);
+
+        builder.setOrigin(ORIGIN);
+
+        // TODO: Add a test to check permission on extracting the ORIGIN
+        final GetCredentialRequest req = builder.build();
+        assertThat(req.getOrigin()).isEqualTo(ORIGIN);
         assertThat(req.getData()).isSameInstanceAs(dataBundle);
     }
 

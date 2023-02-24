@@ -15,12 +15,15 @@
  */
 package android.os.cts.batterysaving;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -47,7 +50,20 @@ public class ActionChargingTest extends BatterySavingTestBase {
     private static final long DELIVER_DELAY_ALLOWANCE_MILLIS = 5000;
     private static final long CHARGING_DELAY_MILLIS = 5000;
 
+    // Battery usage date: check the range from 2020-12-01 to 2038-01-19
+    private static final long BATTERY_USAGE_DATE_IN_EPOCH_MIN = 1606780800;
+    private static final long BATTERY_USAGE_DATE_IN_EPOCH_MAX = 2147472000;
+
+    // Battery state_of_health: value must be in the range 0 to 100
+    private static final int BATTERY_STATE_OF_HEALTH_MIN = 0;
+    private static final int BATTERY_STATE_OF_HEALTH_MAX = 100;
+
+    // ChargingPolicy
+    private static final int CHARGING_POLICY_DEFAULT = 1;
+
     private BatteryManager mBatteryManager;
+
+    private UiAutomation mAutomation;
 
     private class ActionChargingListener extends BroadcastReceiver {
         private final CountDownLatch mLatch = new CountDownLatch(1);
@@ -176,6 +192,111 @@ public class ActionChargingTest extends BatterySavingTestBase {
     public void testSetChargingStateUpdateDelayMillis_noPermission() {
         try {
             mBatteryManager.setChargingStateUpdateDelayMillis(1);
+        } catch (SecurityException expected) {
+            return;
+        }
+        fail("Didn't throw SecurityException");
+    }
+
+    @Test
+    public void testManufacturingDate_dataInRange() {
+        mAutomation = getInstrumentation().getUiAutomation();
+        mAutomation.adoptShellPermissionIdentity(android.Manifest.permission.BATTERY_STATS);
+        final long manufacturingDate = mBatteryManager.getLongProperty(BatteryManager
+                .BATTERY_PROPERTY_MANUFACTURING_DATE);
+
+        assertThat(manufacturingDate).isAtLeast(BATTERY_USAGE_DATE_IN_EPOCH_MIN);
+        assertThat(manufacturingDate).isLessThan(BATTERY_USAGE_DATE_IN_EPOCH_MAX + 1);
+
+        mAutomation.dropShellPermissionIdentity();
+    }
+
+    @Test
+    public void testFirstUsageDate_dataInRange() {
+        mAutomation = getInstrumentation().getUiAutomation();
+        mAutomation.adoptShellPermissionIdentity(android.Manifest.permission.BATTERY_STATS);
+        final long firstUsageDate = mBatteryManager.getLongProperty(BatteryManager
+                .BATTERY_PROPERTY_FIRST_USAGE_DATE);
+
+        assertThat(firstUsageDate).isAtLeast(BATTERY_USAGE_DATE_IN_EPOCH_MIN);
+        assertThat(firstUsageDate).isLessThan(BATTERY_USAGE_DATE_IN_EPOCH_MAX + 1);
+
+        mAutomation.dropShellPermissionIdentity();
+    }
+
+    @Test
+    public void testChargingPolicy_dataInRange() {
+        mAutomation = getInstrumentation().getUiAutomation();
+        mAutomation.adoptShellPermissionIdentity(android.Manifest.permission.BATTERY_STATS);
+        final int chargingPolicy = mBatteryManager.getIntProperty(BatteryManager
+                .BATTERY_PROPERTY_CHARGING_POLICY);
+
+        assertThat(chargingPolicy).isAtLeast(CHARGING_POLICY_DEFAULT);
+
+        mAutomation.dropShellPermissionIdentity();
+    }
+
+    @Test
+    public void testBatteryStateOfHealth_dataInRange() {
+        mAutomation = getInstrumentation().getUiAutomation();
+        mAutomation.adoptShellPermissionIdentity(android.Manifest.permission.BATTERY_STATS);
+        final int stateOfHealth = mBatteryManager.getIntProperty(BatteryManager
+                .BATTERY_PROPERTY_STATE_OF_HEALTH);
+
+        assertThat(stateOfHealth).isAtLeast(BATTERY_STATE_OF_HEALTH_MIN);
+        assertThat(stateOfHealth).isLessThan(BATTERY_STATE_OF_HEALTH_MAX + 1);
+
+        mAutomation.dropShellPermissionIdentity();
+    }
+
+    @Test
+    public void testBatteryCycleCount_dataInRange() {
+        final Intent batteryInfo = getContext().registerReceiver(null,
+                                    new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        final int batteryCycleCount = batteryInfo.getIntExtra(BatteryManager
+                .EXTRA_CYCLE_COUNT, -1);
+
+        assertThat(batteryCycleCount).isAtLeast(0);
+    }
+
+    @Test
+    public void testManufacturingDate_noPermission() {
+        try {
+            final long manufacturingDate = mBatteryManager.getLongProperty(BatteryManager
+                    .BATTERY_PROPERTY_MANUFACTURING_DATE);
+        } catch (SecurityException expected) {
+            return;
+        }
+        fail("Didn't throw SecurityException");
+    }
+
+    @Test
+    public void testFirstUsageDate_noPermission() {
+        try {
+            final long firstUsageDate = mBatteryManager.getLongProperty(BatteryManager
+                    .BATTERY_PROPERTY_FIRST_USAGE_DATE);
+        } catch (SecurityException expected) {
+            return;
+        }
+        fail("Didn't throw SecurityException");
+    }
+
+    @Test
+    public void testChargingPolicy_noPermission() {
+        try {
+            final int chargingPolicy = mBatteryManager.getIntProperty(BatteryManager
+                    .BATTERY_PROPERTY_CHARGING_POLICY);
+        } catch (SecurityException expected) {
+            return;
+        }
+        fail("Didn't throw SecurityException");
+    }
+
+    @Test
+    public void testBatteryStateOfHealth_noPermission() {
+        try {
+            final int stateOfHealth = mBatteryManager.getIntProperty(BatteryManager
+                    .BATTERY_PROPERTY_STATE_OF_HEALTH);
         } catch (SecurityException expected) {
             return;
         }
