@@ -21,6 +21,7 @@ import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
 import static android.Manifest.permission.RECORD_AUDIO;
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
+import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -73,8 +74,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -451,6 +456,73 @@ public class HotwordDetectionServiceBasicTest {
         } finally {
             // destroy detector
             softwareHotwordDetector.destroy();
+        }
+    }
+
+    @Test
+    public void testHotwordDetectionService_onDetectFromExternalSourceAudioBroken_onFailure()
+            throws Throwable {
+        // Create alwaysOnHotwordDetector with onFailure callback
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ true);
+
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            // Create the ParcelFileDescriptor to read/write audio stream
+            final ParcelFileDescriptor[] parcelFileDescriptors = ParcelFileDescriptor.createPipe();
+
+            // After the client calls the startRecognition method, the system side will start to
+            // read the audio stream. When no data is read, the system side will normally end the
+            // process. If the client closes the audio stream when the system is still reading the
+            // audio stream, the system will get the IOException and use the onFailure callback to
+            // inform the client.
+            // In order to simulate the IOException case, it would be better to write 5 * 10 * 1024
+            // bytes data first before calling startRecognition to avoid the timing issue that no
+            // data is read from the system and make sure to close the audio stream during system
+            // is still reading the audio stream.
+            final CountDownLatch writeAudioStreamLatch = new CountDownLatch(5);
+
+            Executors.newCachedThreadPool().execute(() -> {
+                try (OutputStream fos = new ParcelFileDescriptor.AutoCloseOutputStream(
+                        parcelFileDescriptors[1])) {
+                    byte[] largeData = new byte[10 * 1024];
+                    int count = 1000;
+                    while (count-- > 0) {
+                        Random random = new Random();
+                        random.nextBytes(largeData);
+                        fos.write(largeData, 0, 10 * 1024);
+                        writeAudioStreamLatch.countDown();
+                    }
+                } catch (IOException e) {
+                    Log.w(TAG, "Failed to pipe audio data : ", e);
+                }
+            });
+
+            writeAudioStreamLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+
+            mService.initOnFailureLatch();
+
+            alwaysOnHotwordDetector.startRecognition(parcelFileDescriptors[0],
+                    Helper.createFakeAudioFormat(), Helper.createFakePersistableBundleData());
+
+            // Close the parcelFileDescriptors to cause the IOException when reading audio
+            // stream in the system side.
+            parcelFileDescriptors[0].close();
+            parcelFileDescriptors[1].close();
+
+            // wait onFailure() called and verify the result
+            mService.waitOnFailureCalled();
+
+            verifyHotwordDetectionServiceFailure(mService.getDetectorFailure(),
+                    HotwordDetectionServiceFailure.ERROR_CODE_COPY_AUDIO_DATA_FAILURE);
+        } finally {
+            // destroy detector
+            alwaysOnHotwordDetector.destroy();
+
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
         }
     }
 
