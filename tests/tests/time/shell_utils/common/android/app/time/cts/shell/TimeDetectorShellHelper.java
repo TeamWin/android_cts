@@ -33,7 +33,7 @@ public final class TimeDetectorShellHelper {
         public final long elapsedRealtimeMillis;
         public final long unixEpochTimeMillis;
 
-        private TestUnixEpochTime(long elapsedRealtimeMillis, long unixEpochTimeMillis) {
+        public TestUnixEpochTime(long elapsedRealtimeMillis, long unixEpochTimeMillis) {
             this.elapsedRealtimeMillis = elapsedRealtimeMillis;
             this.unixEpochTimeMillis = unixEpochTimeMillis;
         }
@@ -97,7 +97,7 @@ public final class TimeDetectorShellHelper {
         public final TestUnixEpochTime unixEpochTime;
         public final int uncertaintyMillis;
 
-        private TestNetworkTime(TestUnixEpochTime unixEpochTime, int uncertaintyMillis) {
+        public TestNetworkTime(TestUnixEpochTime unixEpochTime, int uncertaintyMillis) {
             this.unixEpochTime = Objects.requireNonNull(unixEpochTime);
             this.uncertaintyMillis = uncertaintyMillis;
         }
@@ -138,7 +138,7 @@ public final class TimeDetectorShellHelper {
             Pattern pattern = Pattern.compile("NetworkTimeSuggestion\\{"
                     + "mUnixEpochTime=(UnixEpochTime\\{[^}]+\\})"
                     + ", mUncertaintyMillis=([^,]+)"
-                    + ", mDebugInfo=[^}]+"
+                    + ", mDebugInfo=\\[.+\\]"
                     + "\\}"
             );
             Matcher matcher = pattern.matcher(value);
@@ -173,6 +173,20 @@ public final class TimeDetectorShellHelper {
      */
     private static final String SHELL_COMMAND_CLEAR_NETWORK_TIME = "clear_network_time";
 
+    /**
+     * A shell command that clears the network time signal used by {@link
+     * android.os.SystemClock#currentNetworkTimeClock()}.
+     */
+    private static final String SHELL_COMMAND_CLEAR_SYSTEM_CLOCK_NETWORK_TIME =
+            "clear_system_clock_network_time";
+
+    /**
+     * A shell command that sets the network time signal used by {@link
+     * android.os.SystemClock#currentNetworkTimeClock()}.
+     */
+    private static final String SHELL_COMMAND_SET_SYSTEM_CLOCK_NETWORK_TIME =
+            "set_system_clock_network_time";
+
     private static final String SHELL_CMD_PREFIX = "cmd " + SERVICE_NAME + " ";
 
     private final DeviceShellCommandExecutor mShellCommandExecutor;
@@ -205,5 +219,27 @@ public final class TimeDetectorShellHelper {
     public void clearNetworkTime() throws Exception {
         mShellCommandExecutor.executeToTrimmedString(
                 SHELL_CMD_PREFIX + SHELL_COMMAND_CLEAR_NETWORK_TIME);
+    }
+
+    // TODO(b/222295093) Remove these "system_clock" commands when
+    //  SystemClock.currentNetworkTimeClock() is guaranteed to use the latest network
+    //  suggestion. Then, commands above can be used instead (though they are async so some
+    //  adjustment will be required).
+    public void setSystemClockNetworkTime(TestNetworkTime networkTime) throws Exception {
+        mShellCommandExecutor.executeToTrimmedString(
+                SHELL_CMD_PREFIX + SHELL_COMMAND_SET_SYSTEM_CLOCK_NETWORK_TIME
+                        + " --elapsed_realtime " + networkTime.unixEpochTime.elapsedRealtimeMillis
+                        + " --unix_epoch_time " + networkTime.unixEpochTime.unixEpochTimeMillis
+                        + " --uncertainty_millis " + networkTime.uncertaintyMillis
+        );
+    }
+
+    // TODO(b/222295093) Remove these "system_clock" commands when
+    //  SystemClock.currentNetworkTimeClock() is guaranteed to use the latest network
+    //  suggestion. Then, commands above can be used instead (though they are async so some
+    //  adjustment will be required).
+    public void clearSystemClockNetworkTime() throws Exception {
+        mShellCommandExecutor.executeToTrimmedString(
+                SHELL_CMD_PREFIX + SHELL_COMMAND_CLEAR_SYSTEM_CLOCK_NETWORK_TIME);
     }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.os.cts;
+package android.app.time.cts;
 
 import android.util.Log;
 
@@ -29,8 +29,8 @@ import java.util.Arrays;
  * Simple Sntp Server implementation for testing purpose.
  * This is copied from {@code SntpClientTest}.
  */
-public class SntpTestServer {
-    private final static String TAG = SntpTestServer.class.getSimpleName();
+class SntpTestServer {
+    private static final String TAG = SntpTestServer.class.getSimpleName();
     private static final int ORIGINATE_TIME_OFFSET = 24;
     private static final int TRANSMIT_TIME_OFFSET = 40;
 
@@ -42,9 +42,9 @@ public class SntpTestServer {
     private boolean mGenerateValidOriginateTimestamp = true;
     private int mRcvd;
     private int mSent;
-    private Thread mListeningThread;
+    private final Thread mListeningThread;
 
-    public SntpTestServer() {
+    SntpTestServer() {
         mSocket = makeSocket();
         mAddress = mSocket.getLocalAddress();
         mPort = mSocket.getLocalPort();
@@ -63,7 +63,9 @@ public class SntpTestServer {
                     }
                     synchronized (mLock) {
                         mRcvd++;
-                        if (mReply == null) { continue; }
+                        if (mReply == null) {
+                            continue;
+                        }
                         if (mGenerateValidOriginateTimestamp) {
                             // Copy the transmit timestamp into originate timestamp: This is
                             // validated by well-behaved clients.
@@ -97,7 +99,7 @@ public class SntpTestServer {
             socket = new DatagramSocket(0, InetAddress.getLoopbackAddress());
         } catch (SocketException e) {
             Log.e(TAG, "Failed to create test server socket: " + e);
-            return null;
+            throw new RuntimeException("Failed to create test server socket", e);
         }
         return socket;
     }
@@ -124,8 +126,23 @@ public class SntpTestServer {
         }
     }
 
-    public InetAddress getAddress() { return mAddress; }
-    public int getPort() { return mPort; }
-    public int numRequestsReceived() { synchronized (mLock) { return mRcvd; } }
-    public int numRepliesSent() { synchronized (mLock) { return mSent; } }
+    public InetAddress getAddress() {
+        return mAddress;
+    }
+
+    public int getPort() {
+        return mPort;
+    }
+
+    public int numRequestsReceived() {
+        synchronized (mLock) {
+            return mRcvd;
+        }
+    }
+
+    public int numRepliesSent() {
+        synchronized (mLock) {
+            return mSent;
+        }
+    }
 }
