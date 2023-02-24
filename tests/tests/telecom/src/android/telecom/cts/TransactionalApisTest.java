@@ -72,6 +72,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
     // CallControl
     private static final String SET_ACTIVE = "SetActive";
+    private static final String ANSWER = "Answer";
     private static final String SET_INACTIVE = "SetInactive";
     private static final String DISCONNECT = "Disconnect";
 
@@ -352,9 +353,9 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
     /**
      * Ensure the state transitions of a successful incoming call are correct.
-     * State Transitions:  New -> * Ringing * -> Active -> Disconnecting -> Disconnected
+     * State Transitions:  New -> * Ringing -> Active * -> Disconnecting -> Disconnected
      */
-    public void testAddIncomingCall() {
+    public void testAddIncomingCallAndSetActive() {
         if (!mShouldTestTelecom) {
             return;
         }
@@ -364,6 +365,26 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             callControlAction(SET_ACTIVE, mCall1);
             assertNumCalls(getInCallService(), 1);
             assertEquals(Call.STATE_ACTIVE, getLastAddedCall().getState());
+            callControlAction(DISCONNECT, mCall1);
+            assertNumCalls(getInCallService(), 0);
+        } finally {
+            cleanup();
+        }
+    }
+
+    /**
+     * Ensure the state transitions of a successful incoming call are correct.
+     * State Transitions:  New -> * Ringing -> Answered* -> Disconnecting -> Disconnected
+     */
+    public void testAddIncomingCallAndAnswer() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        try {
+            cleanup();
+            startCallWithAttributesAndVerify(mIncomingCallAttributes, mCall1);
+            callControlAction(ANSWER, mCall1, AUDIO_CALL);
+            assertNumCalls(getInCallService(), 1);
             callControlAction(DISCONNECT, mCall1);
             assertNumCalls(getInCallService(), 0);
         } finally {
@@ -910,7 +931,6 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         return call.mCallControl.getCallId().toString();
     }
 
-
     public void callControlAction(String action, TelecomCtsVoipCall call, Object... objects) {
         final CountDownLatch latch = new CountDownLatch(1);
         final LatchedOutcomeReceiver outcome = new LatchedOutcomeReceiver(latch);
@@ -922,13 +942,20 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        if (objects != null && objects.length >= 1) {
+        if (isArgumentAvailable(objects)) {
             disconnectCause = new DisconnectCause((int) objects[0]);
         }
 
         switch (action) {
             case SET_ACTIVE:
                 call.mCallControl.setActive(Runnable::run, outcome);
+                break;
+            case ANSWER:
+                int videoState = AUDIO_CALL;
+                if (isArgumentAvailable(objects)) {
+                    videoState = (int) objects[0];
+                }
+                call.mCallControl.answer(videoState, Runnable::run, outcome);
                 break;
             case SET_INACTIVE:
                 call.mCallControl.setInactive(Runnable::run, outcome);
@@ -941,6 +968,10 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         }
 
         assertOnResultWasReceived(latch);
+    }
+
+    private boolean isArgumentAvailable(Object... objects) {
+        return objects != null && objects.length >= 1;
     }
 
     @NonNull
