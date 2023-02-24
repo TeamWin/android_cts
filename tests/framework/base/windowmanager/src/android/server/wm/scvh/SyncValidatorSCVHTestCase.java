@@ -40,6 +40,7 @@ import android.view.WindowManager;
 import android.view.cts.surfacevalidator.ISurfaceValidatorTestCase;
 import android.view.cts.surfacevalidator.PixelChecker;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.window.SurfaceSyncGroup;
 
 import androidx.annotation.NonNull;
@@ -73,6 +74,8 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
                 svParams.width = size.x;
                 svParams.height = size.y;
                 mSurfaceView.setLayoutParams(svParams);
+
+                mTextView.setText(size.x + "x" + size.y);
             };
 
             Runnable embeddedResizeRunnable = () -> {
@@ -100,6 +103,8 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
 
     private Handler mHandler;
     private SurfaceView mSurfaceView;
+
+    private TextView mTextView;
 
     private final CountDownLatch mReadyLatch = new CountDownLatch(1);
     private boolean mSurfaceCreated;
@@ -218,6 +223,14 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
                 mSizes[0].y);
         layoutParams.gravity = Gravity.CENTER;
         parent.addView(mSurfaceView, layoutParams);
+
+        mTextView = new TextView(context);
+        mTextView.setTextColor(Color.GREEN);
+        mTextView.setText(mSizes[0].x + "x" + mSizes[0].y);
+        FrameLayout.LayoutParams txtParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        txtParams.gravity = Gravity.TOP | Gravity.LEFT;
+        parent.addView(mTextView, txtParams);
     }
 
     @Override

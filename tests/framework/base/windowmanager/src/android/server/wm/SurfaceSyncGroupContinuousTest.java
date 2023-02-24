@@ -20,7 +20,10 @@ import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import android.app.KeyguardManager;
+import android.app.UiAutomation;
 import android.os.PowerManager;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.scvh.SyncValidatorSCVHTestCase;
@@ -50,12 +53,15 @@ public class SurfaceSyncGroupContinuousTest {
         mCapturedActivity = mActivityRule.getActivity();
         mCapturedActivity.setLogicalDisplaySize(getLogicalDisplaySize());
 
+        UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity();
         final KeyguardManager km = mCapturedActivity.getSystemService(KeyguardManager.class);
         if ((km != null && km.isKeyguardLocked()) || !Objects.requireNonNull(
                 mCapturedActivity.getSystemService(PowerManager.class)).isInteractive()) {
             pressWakeupButton();
             pressUnlockButton();
         }
+        uiAutomation.dropShellPermissionIdentity();
     }
 
     @Test
