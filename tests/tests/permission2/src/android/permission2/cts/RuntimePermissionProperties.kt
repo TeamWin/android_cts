@@ -57,6 +57,7 @@ import android.Manifest.permission.WRITE_CONTACTS
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.Manifest.permission_group.UNDEFINED
 import android.app.AppOpsManager.permissionToOp
+import android.content.pm.PackageManager
 import android.content.pm.PackageManager.GET_PERMISSIONS
 import android.content.pm.PermissionInfo.PROTECTION_DANGEROUS
 import android.content.pm.PermissionInfo.PROTECTION_FLAG_APPOP
@@ -170,6 +171,23 @@ class RuntimePermissionProperties {
         expectedPerms.add(BODY_SENSORS_WRIST_TEMPERATURE)
         expectedPerms.add(BODY_SENSORS_WRIST_TEMPERATURE_BACKGROUND)
 
+        // Add runtime permissions added in V (back ported from U) which were _not_ split from a
+        // previously existing runtime permission
+        if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            expectedPerms.add(BODY_SENSORS_WRIST_TEMPERATURE)
+            expectedPerms.add(BODY_SENSORS_WRIST_TEMPERATURE_BACKGROUND)
+        }
+
         assertThat(expectedPerms).containsExactlyElementsIn(platformRuntimePerms.map { it.name })
+    }
+
+    companion object {
+        // These permissions are back ported from Android U to tm-wear, hidden in the
+        // "core/res/AndroidManifest.xml" file of /framework/base repo. Added these 2 constants here
+        // because hidden permissions can't be imported like other imported permissions in this file
+        private const val BODY_SENSORS_WRIST_TEMPERATURE =
+                "android.permission.BODY_SENSORS_WRIST_TEMPERATURE"
+        private const val BODY_SENSORS_WRIST_TEMPERATURE_BACKGROUND =
+                "android.permission.BODY_SENSORS_WRIST_TEMPERATURE_BACKGROUND"
     }
 }
