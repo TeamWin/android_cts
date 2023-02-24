@@ -115,17 +115,6 @@ public class CookieManagerTest extends SharedWebViewTest {
         }
     }
 
-    private SharedSdkWebServer setupWebServer(@SslMode int sslMode) throws Exception {
-        return setupWebServer(sslMode, 0, 0);
-    }
-
-    private SharedSdkWebServer setupWebServer(@SslMode int sslMode, int keyResId,
-                int certResI) throws Exception {
-        SharedSdkWebServer webServer = getTestEnvironment().getWebServer();
-        webServer.start(sslMode, null, keyResId, certResI);
-        return webServer;
-    }
-
     @Test
     public void testGetInstance() {
         mOnUiThread.cleanUp();
@@ -145,7 +134,7 @@ public class CookieManagerTest extends SharedWebViewTest {
         mCookieManager.setAcceptCookie(false);
         assertFalse(mCookieManager.acceptCookie());
 
-        mWebServer = setupWebServer(SslMode.INSECURE);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         String url = mWebServer.getCookieUrl("conquest.html");
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals("0", mOnUiThread.getTitle()); // no cookies passed
@@ -360,7 +349,7 @@ public class CookieManagerTest extends SharedWebViewTest {
         // port. Instead we cheat making some of the urls come from localhost and some
         // from 127.0.0.1 which count (both in theory and pratice) as having different
         // origins.
-        mWebServer = setupWebServer(SslMode.INSECURE);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
 
         // Turn on Javascript (otherwise <script> aren't fetched spoiling the test).
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
@@ -400,7 +389,7 @@ public class CookieManagerTest extends SharedWebViewTest {
 
     @Test
     public void testSameSiteLaxByDefault() throws Throwable {
-        mWebServer = setupWebServer(SslMode.INSECURE);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
         mCookieManager.setAcceptCookie(true);
         mOnUiThread.setAcceptThirdPartyCookies(true);
@@ -416,7 +405,7 @@ public class CookieManagerTest extends SharedWebViewTest {
 
     @Test
     public void testSameSiteNoneRequiresSecure() throws Throwable {
-        mWebServer = setupWebServer(SslMode.INSECURE);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
         mCookieManager.setAcceptCookie(true);
 
@@ -430,15 +419,16 @@ public class CookieManagerTest extends SharedWebViewTest {
 
     @Test
     public void testSchemefulSameSite() throws Throwable {
-        mWebServer = setupWebServer(SslMode.INSECURE);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
         mCookieManager.setAcceptCookie(true);
         mOnUiThread.setAcceptThirdPartyCookies(true);
 
         // Verify that two servers with different schemes on the same host are not considered
         // same-site to each other.
-        SharedSdkWebServer secureServer = setupWebServer(SslMode.NO_CLIENT_AUTH,
-                R.raw.trustedkey, R.raw.trustedcert);
+        SharedSdkWebServer secureServer = getTestEnvironment()
+                .getSetupWebServer(SslMode.NO_CLIENT_AUTH, null,
+                        R.raw.trustedkey, R.raw.trustedcert);
         try {
             String cookieUrl = secureServer.getSetCookieUrl("/cookie_1.js", "test1",
                     "value1", null);

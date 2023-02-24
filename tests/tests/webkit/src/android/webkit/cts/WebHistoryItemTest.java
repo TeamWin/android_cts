@@ -78,8 +78,7 @@ public class WebHistoryItemTest extends SharedWebViewTest {
             mOnUiThread = new WebViewOnUiThread(webview);
         }
         mContext = getTestEnvironment().getContext();
-        mWebServer = getTestEnvironment().getWebServer();
-        mWebServer.start(SslMode.INSECURE);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
     }
 
     @After

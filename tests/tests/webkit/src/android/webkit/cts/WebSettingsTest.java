@@ -22,7 +22,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -235,7 +234,7 @@ public class WebSettingsTest extends SharedWebViewTest {
 
     @Test
     public void testAccessUserAgentString() throws Exception {
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         String url = mWebServer.getUserAgentUrl();
 
         String defaultUserAgent = mSettings.getUserAgentString();
@@ -317,7 +316,7 @@ public class WebSettingsTest extends SharedWebViewTest {
         openIconDatabase();
         final IconListenerClient iconListener = new IconListenerClient();
         mOnUiThread.setWebChromeClient(iconListener);
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
 
         mSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         assertEquals(WebSettings.LOAD_CACHE_ELSE_NETWORK, mSettings.getCacheMode());
@@ -340,7 +339,7 @@ public class WebSettingsTest extends SharedWebViewTest {
         openIconDatabase();
         final IconListenerClient iconListener = new IconListenerClient();
         mOnUiThread.setWebChromeClient(iconListener);
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
 
         mSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         assertEquals(WebSettings.LOAD_NO_CACHE, mSettings.getCacheMode());
@@ -363,7 +362,7 @@ public class WebSettingsTest extends SharedWebViewTest {
         openIconDatabase();
         final IconListenerClient iconListener = new IconListenerClient();
         mOnUiThread.setWebChromeClient(iconListener);
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
 
         // As a precondition, get the icon in the cache.
         mSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
@@ -490,7 +489,7 @@ public class WebSettingsTest extends SharedWebViewTest {
     public void testAccessJavaScriptCanOpenWindowsAutomatically() throws Exception {
         mSettings.setJavaScriptEnabled(true);
         mSettings.setSupportMultipleWindows(true);
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
 
         final WebView childWebView = mOnUiThread.createWebView();
         final SettableFuture<Void> createWindowFuture = SettableFuture.create();
@@ -694,7 +693,7 @@ public class WebSettingsTest extends SharedWebViewTest {
     public void testAppCacheDisabled() throws Throwable {
         // Test that when AppCache is disabled, we don't get any AppCache
         // callbacks.
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         final String url = mWebServer.getAppCacheUrl();
         mSettings.setJavaScriptEnabled(true);
 
@@ -718,7 +717,7 @@ public class WebSettingsTest extends SharedWebViewTest {
 
         // Test that when AppCache is enabled but no valid path is provided,
         // we don't get any AppCache callbacks.
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         final String url = mWebServer.getAppCacheUrl();
         mSettings.setAppCacheEnabled(true);
         mSettings.setJavaScriptEnabled(true);
@@ -752,7 +751,7 @@ public class WebSettingsTest extends SharedWebViewTest {
     @Test
     public void testDatabaseDisabled() throws Throwable {
         // Verify that websql database does not work when disabled.
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
 
         mOnUiThread.setWebChromeClient(new WebViewSyncLoader.WaitForProgressClient(mOnUiThread) {
             @Override
@@ -792,7 +791,7 @@ public class WebSettingsTest extends SharedWebViewTest {
 
     @Test
     public void testLoadsImagesAutomatically_httpImagesLoaded() throws Throwable {
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         mSettings.setJavaScriptEnabled(true);
         mSettings.setLoadsImagesAutomatically(true);
 
@@ -802,7 +801,7 @@ public class WebSettingsTest extends SharedWebViewTest {
 
     @Test
     public void testLoadsImagesAutomatically_dataUriImagesLoaded() throws Throwable {
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         mSettings.setJavaScriptEnabled(true);
         mSettings.setLoadsImagesAutomatically(true);
 
@@ -812,7 +811,7 @@ public class WebSettingsTest extends SharedWebViewTest {
 
     @Test
     public void testLoadsImagesAutomatically_blockLoadingImages() throws Throwable {
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         mSettings.setJavaScriptEnabled(true);
         mSettings.setLoadsImagesAutomatically(false);
 
@@ -826,7 +825,7 @@ public class WebSettingsTest extends SharedWebViewTest {
 
     @Test
     public void testLoadsImagesAutomatically_loadImagesWithoutReload() throws Throwable {
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         mSettings.setJavaScriptEnabled(true);
         mSettings.setLoadsImagesAutomatically(false);
 
@@ -850,7 +849,7 @@ public class WebSettingsTest extends SharedWebViewTest {
     public void testBlockNetworkImage() throws Throwable {
         assertFalse(mSettings.getBlockNetworkImage());
 
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         mSettings.setJavaScriptEnabled(true);
 
         // Check that by default network and data url images are loaded.
@@ -880,7 +879,7 @@ public class WebSettingsTest extends SharedWebViewTest {
     public void testBlockNetworkLoads() throws Throwable {
         assertFalse(mSettings.getBlockNetworkLoads());
 
-        startWebServer(false);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         mSettings.setJavaScriptEnabled(true);
 
         // Check that by default network resources and data url images are loaded.
@@ -1063,7 +1062,7 @@ public class WebSettingsTest extends SharedWebViewTest {
         mOnUiThread.setWebViewClient(interceptClient);
         mSettings.setJavaScriptEnabled(true);
 
-        startWebServer(true);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.NO_CLIENT_AUTH);
         String secureUrl = mWebServer.setResponse(SECURE_URL, SECURE_HTML, null);
         mOnUiThread.clearSslPreferences();
 
@@ -1114,18 +1113,6 @@ public class WebSettingsTest extends SharedWebViewTest {
     }
 
     /**
-     * Starts the internal web server. The server will be shut down automatically
-     * during tearDown().
-     *
-     * @throws Exception
-     */
-    private void startWebServer(boolean secure) throws Exception {
-        assertNull(mWebServer);
-        mWebServer = getTestEnvironment().getWebServer();
-        mWebServer.start(secure ? SslMode.NO_CLIENT_AUTH : SslMode.INSECURE);
-    }
-
-    /**
      * Load the given asset from the internal web server. Starts the server if
      * it is not already running.
      *
@@ -1134,7 +1121,7 @@ public class WebSettingsTest extends SharedWebViewTest {
      */
     private void loadAssetUrl(String asset) throws Exception {
         if (mWebServer == null) {
-            startWebServer(false);
+            mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         }
         String url = mWebServer.getAssetUrl(asset);
         mOnUiThread.loadUrlAndWaitForCompletion(url);

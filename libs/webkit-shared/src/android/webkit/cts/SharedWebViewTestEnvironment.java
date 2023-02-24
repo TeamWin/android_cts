@@ -133,6 +133,25 @@ public final class SharedWebViewTestEnvironment {
         }
     }
 
+    /** Returns a web server that has been started and can be used
+     *  for web based testing. */
+    public SharedSdkWebServer getSetupWebServer(@SslMode int sslMode) {
+        return getSetupWebServer(sslMode, null, 0, 0);
+    }
+
+    /** Returns a web server that has been started and can be used
+     *  for web based testing. */
+    public SharedSdkWebServer getSetupWebServer(@SslMode int sslMode,
+            @Nullable byte[] acceptedIssuerDer, int keyResId, int certResId) {
+        try {
+            SharedSdkWebServer webServer = getWebServer();
+            webServer.start(sslMode, acceptedIssuerDer, keyResId, certResId);
+            return webServer;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Use this builder to create a {@link SharedWebViewTestEnvironment}. The {@link
      * SharedWebViewTestEnvironment} can not be built directly.
