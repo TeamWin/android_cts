@@ -28,6 +28,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.media.MediaFormat;
+import android.mediav2.common.cts.BitStreamUtils;
 import android.mediav2.common.cts.EncoderConfigParams;
 import android.mediav2.common.cts.RawResource;
 
@@ -133,6 +134,7 @@ public class VideoEncoderIntraFrameIntervalTest extends VideoEncoderValidationTe
     @Before
     public void setUp() {
         mIsLoopBack = true;
+        mParser = BitStreamUtils.getParserObject(mMediaType);
     }
 
     @ApiTest(apis = {"android.media.MediaFormat#KEY_I_FRAME_INTERVAL"})

@@ -54,6 +54,7 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
     static final boolean ENABLE_LOGS = false;
 
     protected final CompressedResource mCRes;
+    protected BitStreamUtils.ParserBase mParser;
 
     final TreeMap<Long, Integer> mPtsPicTypeMap = new TreeMap<>();
 
@@ -185,9 +186,9 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
                 MediaFormat format = mCodec.getOutputFormat(bufferIndex);
                 picType = format.getInteger(MediaFormat.KEY_PICTURE_TYPE, PICTURE_TYPE_UNKNOWN);
             }
-            if (picType == PICTURE_TYPE_UNKNOWN) {
+            if (picType == PICTURE_TYPE_UNKNOWN && mParser != null) {
                 ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
-                picType = BitStreamUtils.getFrameTypeFromBitStream(mMediaType, buf, info);
+                picType = BitStreamUtils.getFrameTypeFromBitStream(buf, info, mParser);
             }
             mPtsPicTypeMap.put(info.presentationTimeUs, picType);
         }
