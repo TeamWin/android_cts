@@ -80,7 +80,7 @@
             android:label="InputCtsActivity"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation
                     |screenLayout|fontScale|uiMode|orientation|density|screenSize
-                    |smallestScreenSize">
+                    |smallestScreenSize|layoutDirection">
         </activity>
 
         <activity android:name="android.hardware.input.cts.InputAssistantActivity"
@@ -88,7 +88,7 @@
             android:exported="true"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation
                     |screenLayout|fontScale|uiMode|orientation|density|screenSize
-                    |smallestScreenSize">
+                    |smallestScreenSize|layoutDirection">
             <intent-filter >
                 <action android:name="android.speech.action.VOICE_SEARCH_HANDS_FREE" />
                 <category android:name="android.intent.category.DEFAULT" />
