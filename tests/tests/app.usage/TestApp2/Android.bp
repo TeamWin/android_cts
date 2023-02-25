@@ -25,7 +25,7 @@ android_test_helper_app {
         "ctstestrunner-axt",
         "cts-wm-util",
         "junit",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
     ],
     libs: [
         "android.test.base",

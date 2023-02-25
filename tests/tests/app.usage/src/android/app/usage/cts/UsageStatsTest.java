@@ -70,9 +70,6 @@ import android.platform.test.annotations.AppModeInstant;
 import android.provider.Settings;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.Until;
 import android.text.format.DateUtils;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -82,6 +79,9 @@ import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.Until;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;

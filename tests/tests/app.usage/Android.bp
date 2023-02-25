@@ -27,7 +27,7 @@ android_test {
         "cts-wm-util",
         "junit",
         "permission-test-util-lib",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
     ],
     libs: [
         "android.test.base",
@@ -65,7 +65,6 @@ java_defaults {
         "ctstestrunner-axt",
         "cts-wm-util",
         "junit",
-        "ub-uiautomator",
     ],
     libs: [
         "android.test.base",
