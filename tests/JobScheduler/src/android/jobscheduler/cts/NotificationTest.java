@@ -16,6 +16,7 @@
 
 package android.jobscheduler.cts;
 
+import static android.app.job.JobInfo.NETWORK_TYPE_ANY;
 import static android.jobscheduler.cts.TestAppInterface.TEST_APP_PACKAGE;
 
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
@@ -49,6 +50,7 @@ public class NotificationTest extends BaseJobSchedulerTest {
             NotificationTest.class.getSimpleName() + "_channel";
 
     private NotificationManager mNotificationManager;
+    private NetworkingHelper mNetworkingHelper;
 
     @Override
     public void setUp() throws Exception {
@@ -57,12 +59,15 @@ public class NotificationTest extends BaseJobSchedulerTest {
         NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
                 NotificationTest.class.getSimpleName(), NotificationManager.IMPORTANCE_DEFAULT);
         mNotificationManager.createNotificationChannel(channel);
+        mNetworkingHelper =
+                new NetworkingHelper(InstrumentationRegistry.getInstrumentation(), mContext);
     }
 
     @Override
     public void tearDown() throws Exception {
         mJobScheduler.cancel(JOB_ID);
         mNotificationManager.cancelAll();
+        mNetworkingHelper.tearDown();
 
         // The super method should be called at the end.
         super.tearDown();
@@ -143,6 +148,7 @@ public class NotificationTest extends BaseJobSchedulerTest {
     }
 
     public void testNotificationRemovedOnForceStop() throws Exception {
+        mNetworkingHelper.setAllNetworksEnabled(true);
         try (TestAppInterface mTestAppInterface = new TestAppInterface(mContext, JOB_ID);
              TestNotificationListener.NotificationHelper notificationHelper =
                      new TestNotificationListener.NotificationHelper(
@@ -155,7 +161,8 @@ public class NotificationTest extends BaseJobSchedulerTest {
                     ),
                     Map.of(
                             TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION_JOB_END_POLICY,
-                            JobService.JOB_END_NOTIFICATION_POLICY_DETACH
+                            JobService.JOB_END_NOTIFICATION_POLICY_DETACH,
+                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY
                     ));
 
             assertTrue("Job did not start after scheduling",
@@ -171,6 +178,7 @@ public class NotificationTest extends BaseJobSchedulerTest {
     }
 
     public void testNotificationRemovedOnTaskManagerStop() throws Exception {
+        mNetworkingHelper.setAllNetworksEnabled(true);
         try (TestAppInterface mTestAppInterface = new TestAppInterface(mContext, JOB_ID);
              TestNotificationListener.NotificationHelper notificationHelper =
                      new TestNotificationListener.NotificationHelper(
@@ -183,7 +191,8 @@ public class NotificationTest extends BaseJobSchedulerTest {
                     ),
                     Map.of(
                             TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION_JOB_END_POLICY,
-                            JobService.JOB_END_NOTIFICATION_POLICY_DETACH
+                            JobService.JOB_END_NOTIFICATION_POLICY_DETACH,
+                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY
                     ));
 
             assertTrue("Job did not start after scheduling",
@@ -205,6 +214,7 @@ public class NotificationTest extends BaseJobSchedulerTest {
      * but doesn't provide one.
      */
     public void testNotification_userInitiated_anrWhenNotProvided() throws Exception {
+        mNetworkingHelper.setAllNetworksEnabled(true);
         try (TestAppInterface testAppInterface = new TestAppInterface(mContext, JOB_ID);
              AnrMonitor monitor = AnrMonitor.start(InstrumentationRegistry.getInstrumentation(),
                      TEST_APP_PACKAGE);
@@ -216,7 +226,7 @@ public class NotificationTest extends BaseJobSchedulerTest {
                             TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true,
                             TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION, false
                     ),
-                    Collections.emptyMap());
+                    Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
 
             // Clicking on the notification should put the app into a BAL approved state.
             notificationHelper.clickNotification();
@@ -233,6 +243,7 @@ public class NotificationTest extends BaseJobSchedulerTest {
      * Test that no ANR happens if the app is required to show a notification and it provides one.
      */
     public void testNotification_userInitiated_noAnrWhenProvided() throws Exception {
+        mNetworkingHelper.setAllNetworksEnabled(true);
         try (TestAppInterface testAppInterface = new TestAppInterface(mContext, JOB_ID);
              AnrMonitor monitor = AnrMonitor.start(InstrumentationRegistry.getInstrumentation(),
                      TEST_APP_PACKAGE);
@@ -244,7 +255,7 @@ public class NotificationTest extends BaseJobSchedulerTest {
                             TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true,
                             TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION, true
                     ),
-                    Collections.emptyMap());
+                    Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
 
             // Clicking on the notification should put the app into a BAL approved state.
             notificationHelper.clickNotification();
