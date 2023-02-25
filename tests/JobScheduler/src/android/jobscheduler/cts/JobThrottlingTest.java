@@ -1055,10 +1055,9 @@ public class JobThrottlingTest {
     }
 
     @Test
-    public void testRestrictingStopReason_RestrictedBucket() throws Exception {
+    public void testRestrictingStopReason_RestrictedBucket_connectivity() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
+        // Tests cannot disable ethernet network.
         assumeFalse("not testable, since ethernet is connected", hasEthernetConnection());
 
         assumeTrue(mNetworkingHelper.hasWifiFeature());
@@ -1082,8 +1081,6 @@ public class JobThrottlingTest {
         setScreenState(false);
         triggerJobIdle();
 
-        // Toggle individual constraints
-
         // Connectivity
         mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
         runJob();
@@ -1094,7 +1091,32 @@ public class JobThrottlingTest {
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
         assertEquals(JobParameters.STOP_REASON_CONSTRAINT_CONNECTIVITY,
                 mTestAppInterface.getLastParams().getStopReason());
+    }
+
+    @Test
+    public void testRestrictingStopReason_RestrictedBucket_idle() throws Exception {
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
+
+        assumeTrue(mNetworkingHelper.hasWifiFeature());
+        mNetworkingHelper.ensureSavedWifiNetwork();
+
+        // This test is designed for the old quota system.
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
+
+        setRestrictedBucketEnabled(true);
+        setTestPackageStandbyBucket(Bucket.RESTRICTED);
+
+        // Disable coalescing and the parole session
+        mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
+        mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
+
+        // Satisfy all additional constraints.
         mNetworkingHelper.setAllNetworksEnabled(true);
+        mNetworkingHelper.setWifiMeteredState(false);
+        setChargingState(true);
+        BatteryUtils.runDumpsysBatterySetLevel(100);
+        setScreenState(false);
+        triggerJobIdle();
 
         // Idle
         mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
@@ -1106,6 +1128,34 @@ public class JobThrottlingTest {
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
         assertEquals(JobParameters.STOP_REASON_APP_STANDBY,
                 mTestAppInterface.getLastParams().getStopReason());
+    }
+
+    @Test
+    public void testRestrictingStopReason_RestrictedBucket_charging() throws Exception {
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
+        // Can't toggle charging state on automotive devices.
+        assumeFalse("not testable on automotive device", mAutomotiveDevice);
+        // Can't toggle charging state on leanback devices.
+        assumeFalse("not testable on leanback device", mLeanbackOnly);
+
+        assumeTrue(mNetworkingHelper.hasWifiFeature());
+        mNetworkingHelper.ensureSavedWifiNetwork();
+
+        // This test is designed for the old quota system.
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
+
+        setRestrictedBucketEnabled(true);
+        setTestPackageStandbyBucket(Bucket.RESTRICTED);
+
+        // Disable coalescing and the parole session
+        mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
+        mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
+
+        // Satisfy all additional constraints.
+        mNetworkingHelper.setAllNetworksEnabled(true);
+        mNetworkingHelper.setWifiMeteredState(false);
+        setChargingState(true);
+        BatteryUtils.runDumpsysBatterySetLevel(100);
         setScreenState(false);
         triggerJobIdle();
 
@@ -1119,8 +1169,36 @@ public class JobThrottlingTest {
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
         assertEquals(JobParameters.STOP_REASON_APP_STANDBY,
                 mTestAppInterface.getLastParams().getStopReason());
+    }
+
+    @Test
+    public void testRestrictingStopReason_RestrictedBucket_batteryNotLow() throws Exception {
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
+        // Automotive devices typically don't have batteries.
+        assumeFalse("not testable on automotive device", mAutomotiveDevice);
+        // Leanback devices typically don't have batteries.
+        assumeFalse("not testable on leanback device", mLeanbackOnly);
+
+        assumeTrue(mNetworkingHelper.hasWifiFeature());
+        mNetworkingHelper.ensureSavedWifiNetwork();
+
+        // This test is designed for the old quota system.
+        mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
+
+        setRestrictedBucketEnabled(true);
+        setTestPackageStandbyBucket(Bucket.RESTRICTED);
+
+        // Disable coalescing and the parole session
+        mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
+        mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
+
+        // Satisfy all additional constraints.
+        mNetworkingHelper.setAllNetworksEnabled(true);
+        mNetworkingHelper.setWifiMeteredState(false);
         setChargingState(true);
         BatteryUtils.runDumpsysBatterySetLevel(100);
+        setScreenState(false);
+        triggerJobIdle();
 
         // Battery not low
         setScreenState(false);
