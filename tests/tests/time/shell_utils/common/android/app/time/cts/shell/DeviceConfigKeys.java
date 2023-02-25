@@ -56,6 +56,14 @@ public final class DeviceConfigKeys {
 
         /**
          * See {@link
+         * com.android.server.timedetector.ServerFlags#KEY_TIME_DETECTOR_LOWER_BOUND_MILLIS_OVERRIDE
+         * }
+         */
+        public static final String KEY_TIME_DETECTOR_LOWER_BOUND_MILLIS_OVERRIDE =
+                "time_detector_lower_bound_millis_override";
+
+        /**
+         * See {@link
          * com.android.server.timedetector.ServerFlags#KEY_TIME_DETECTOR_ORIGIN_PRIORITIES_OVERRIDE}
          */
         public static final String KEY_TIME_DETECTOR_ORIGIN_PRIORITIES_OVERRIDE =

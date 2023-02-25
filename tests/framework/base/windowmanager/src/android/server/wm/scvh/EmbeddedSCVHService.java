@@ -35,6 +35,7 @@ import android.view.SurfaceControlViewHost;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -44,6 +45,8 @@ public class EmbeddedSCVHService extends Service {
     private SurfaceControlViewHost mVr;
 
     private Handler mHandler;
+
+    private SlowView mSlowView;
 
     @Override
     public void onCreate() {
@@ -58,7 +61,7 @@ public class EmbeddedSCVHService extends Service {
         return new AttachEmbeddedWindow();
     }
 
-    public static class SlowView extends View {
+    public static class SlowView extends TextView {
         private long mDelayMs;
 
         public SlowView(Context context) {
@@ -90,10 +93,11 @@ public class EmbeddedSCVHService extends Service {
                 mVr = new SurfaceControlViewHost(context, display, hostToken);
                 FrameLayout content = new FrameLayout(context);
 
-                SlowView slowView = new SlowView(context);
-                slowView.setDelay(delayMs);
-                slowView.setBackgroundColor(Color.BLUE);
-                content.addView(slowView);
+                mSlowView = new SlowView(context);
+                mSlowView.setDelay(delayMs);
+                mSlowView.setBackgroundColor(Color.BLUE);
+                mSlowView.setTextColor(Color.WHITE);
+                content.addView(mSlowView);
                 WindowManager.LayoutParams lp = new WindowManager.LayoutParams(width, height,
                         TYPE_APPLICATION, 0, PixelFormat.OPAQUE);
                 lp.setTitle("EmbeddedWindow");
@@ -125,7 +129,10 @@ public class EmbeddedSCVHService extends Service {
 
         @Override
         public void relayout(WindowManager.LayoutParams lp) {
-            mHandler.post(() -> mVr.relayout(lp));
+            mHandler.post(() -> {
+                mSlowView.setText(lp.width + "x" + lp.height);
+                mVr.relayout(lp);
+            });
         }
     }
 }

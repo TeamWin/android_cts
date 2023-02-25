@@ -95,8 +95,7 @@ public class WebBackForwardListTest extends SharedWebViewTest {
         assertNull(list.getItemAtIndex(-1));
         assertNull(list.getItemAtIndex(2));
 
-        SharedSdkWebServer server = getTestEnvironment().getWebServer();
-        server.start(SslMode.INSECURE);
+        SharedSdkWebServer server = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
         try {
             String url1 = server.getAssetUrl(TestHtmlConstants.HTML_URL1);
             String url2 = server.getAssetUrl(TestHtmlConstants.HTML_URL2);

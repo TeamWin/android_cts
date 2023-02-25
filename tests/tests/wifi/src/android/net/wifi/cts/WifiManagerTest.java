@@ -94,6 +94,7 @@ import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
@@ -198,6 +199,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private static final int DURATION_SETTINGS_TOGGLE = 1_000;
     private static final int DURATION_SOFTAP_START_MS = 6_000;
     private static final int WIFI_SCAN_TEST_CACHE_DELAY_MILLIS = 3 * 60 * 1000;
+    private static final String DEVICE_CONFIG_NAMESPACE = "wifi";
 
     private static final int ENFORCED_NUM_NETWORK_SUGGESTIONS_PER_APP = 50;
 
@@ -6317,11 +6319,22 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             return;
         }
 
+        final Mutable<Boolean> callbackReceived = new Mutable<Boolean>(false);
+        final Mutable<Boolean> policiesRejected = new Mutable<Boolean>(true);
         Consumer<List<Integer>> listener = new Consumer<List<Integer>>() {
             @Override
             public void accept(List value) {
                 synchronized (mLock) {
-                    // TODO: Check status code when implemented.
+                    callbackReceived.value = true;
+                    List<Integer> statusList = value;
+                    for (Integer status : statusList) {
+                        if (status != WifiManager.QOS_REQUEST_STATUS_FAILURE_UNKNOWN) {
+                            policiesRejected.value = false;
+                            break;
+                        }
+                    }
+                    Log.i(TAG, "Callback received for QoS add request, size=" + statusList.size()
+                            + ", rejected=" + policiesRejected.value);
                     mLock.notify();
                 }
             }
@@ -6339,14 +6352,25 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
+            boolean enabled = DeviceConfig.getBoolean(DEVICE_CONFIG_NAMESPACE,
+                    "application_qos_policy_api_enabled", false);
 
-            // Valid list
-            fillQosPolicyParamsList(policyParamsList, 4, true);
-            mWifiManager.addQosPolicies(policyParamsList, mExecutor, listener);
+            // If the feature flag is disabled, verify that all policies are rejected.
+            if (!enabled) {
+                Log.i(TAG, "QoS policy APIs are not enabled");
+                fillQosPolicyParamsList(policyParamsList, 4, true);
+                mWifiManager.addQosPolicies(policyParamsList, mExecutor, listener);
+                synchronized (mLock) {
+                    mLock.wait(TEST_WAIT_DURATION_MS);
+                }
+                assertTrue(callbackReceived.value);
+                assertTrue(policiesRejected.value);
+                return;
+            }
 
             // Empty params list
             assertThrows("empty list should trigger exception", IllegalArgumentException.class,
-                    () -> mWifiManager.addQosPolicies(policyParamsList, mExecutor, listener));
+                    () -> mWifiManager.addQosPolicies(new ArrayList<>(), mExecutor, listener));
 
             // More than {@link WifiManager#getMaxNumberOfPoliciesPerQosRequest()}
             // policies in the list
@@ -6359,6 +6383,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             fillQosPolicyParamsList(policyParamsList, 4, false);
             assertThrows("duplicate ids should trigger exception", IllegalArgumentException.class,
                     () -> mWifiManager.addQosPolicies(policyParamsList, mExecutor, listener));
+
+            // Valid list
+            fillQosPolicyParamsList(policyParamsList, 4, true);
+            mWifiManager.addQosPolicies(policyParamsList, mExecutor, listener);
 
             // sleep to wait for a response from supplicant
             synchronized (mLock) {
@@ -6376,8 +6404,6 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 mLock.wait(TEST_WAIT_DURATION_MS);
             }
             mWifiManager.removeAllQosPolicies();
-        } catch (UnsupportedOperationException ex) {
-            // Expected if the feature is disabled by the feature flag.
         } catch (Exception e) {
             fail("addAndRemoveQosPolicy unexpected Exception " + e);
         } finally {

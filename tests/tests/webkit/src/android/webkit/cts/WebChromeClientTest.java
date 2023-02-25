@@ -81,8 +81,7 @@ public class WebChromeClientTest extends SharedWebViewTest{
         if (webview != null) {
             mOnUiThread = new WebViewOnUiThread(webview);
         }
-        mWebServer = getTestEnvironment().getWebServer();
-        mWebServer.start(SslMode.INSECURE);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
     }
 
     @After

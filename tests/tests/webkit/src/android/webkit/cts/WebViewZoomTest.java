@@ -131,10 +131,9 @@ public class WebViewZoomTest extends SharedWebViewTest{
         assertFalse("onScaleChanged has already been called before page has been setup",
                 mWebViewClient.onScaleChangedCalled());
         assertNull(mWebServer);
-        mWebServer = getTestEnvironment().getWebServer();
         // Pass SslMode.TRUST_ANY_CLIENT to make the server serve https URLs yet do
         // not ask client for client authentication.
-        mWebServer.start(SslMode.TRUST_ANY_CLIENT);
+        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.TRUST_ANY_CLIENT);
         mOnUiThread.loadUrlAndWaitForCompletion(
                 mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL));
         pollingCheckForCanZoomIn();

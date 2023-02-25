@@ -19,6 +19,7 @@ package android.credentials.cts.unittests;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.slice.Slice;
+import android.content.pm.SigningInfo;
 import android.credentials.CredentialDescription;
 import android.credentials.CredentialOption;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.service.credentials.Action;
+import android.service.credentials.CallingAppInfo;
 import android.service.credentials.CreateEntry;
 import android.service.credentials.CredentialEntry;
 
@@ -74,6 +76,20 @@ public class TestUtils {
         for (String key : b.keySet()) {
             assertThat(b.get(key)).isEqualTo(a.get(key));
         }
+    }
+
+    public static void assertEquals(SigningInfo a, SigningInfo b) {
+        assertThat(b.getApkContentsSigners()).isEqualTo(a.getApkContentsSigners());
+        assertThat(b.getSigningCertificateHistory()).isEqualTo(
+                a.getSigningCertificateHistory());
+        assertThat(b.hasPastSigningCertificates()).isEqualTo(
+                a.hasPastSigningCertificates());
+        assertThat(b.hasMultipleSigners()).isEqualTo(a.hasMultipleSigners());
+    }
+
+    public static void assertEquals(CallingAppInfo a, CallingAppInfo b) {
+        assertThat(a.getPackageName()).isEqualTo(b.getPackageName());
+        assertEquals(a.getSigningInfo(), b.getSigningInfo());
     }
 
     public static <T extends Parcelable> T cloneParcelable(T obj) {

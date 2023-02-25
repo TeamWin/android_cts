@@ -634,13 +634,10 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
         assertThat(result.getNetworkTransferDurationMillis()).isEqualTo(6000);
     }
 
-    private void validateAAudioStreamAtom(int direction) throws Exception {
-        Set<Integer> directionSet = new HashSet<>(Arrays.asList(direction));
-        List<Set<Integer>> directionList = Arrays.asList(directionSet);
-
+    private void validateAAudioStreamAtom(String direction) throws Exception {
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        AtomTestUtils.assertStatesOccurredInOrder(directionList, data, 0,
-                atom -> atom.getMediametricsAaudiostreamReported().getDirection().getNumber());
+
+        assertThat(data).isNotEmpty();
 
         int appUid = DeviceUtils.getAppUid(getDevice(), TEST_PKG);
 
@@ -654,10 +651,11 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
             assertThat(atom.getFramesPerBurst()).isGreaterThan(0);
             assertThat(atom.getFramesPerBurst()).isLessThan(atom.getBufferCapacity());
             assertThat(atom.getUid()).isEqualTo(appUid);
+            assertThat(atom.getDirection().toString()).isEqualTo(direction);
         }
     }
 
-    private void runAAudioTestAndValidate(String requiredFeature, int direction,
+    private void runAAudioTestAndValidate(String requiredFeature, String direction,
             String testFunctionName) throws Exception {
         if (!DeviceUtils.hasFeature(getDevice(), requiredFeature)) {
             return;
@@ -682,7 +680,7 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
     @Test
     public void testAAudioLowLatencyInputStream() throws Exception {
         runAAudioTestAndValidate(FEATURE_MICROPHONE,
-                AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_INPUT_VALUE,
+                "DIRECTION_INPUT",
                 "testAAudioLowLatencyInputStream");
     }
 
@@ -695,7 +693,7 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
     @Test
     public void testAAudioLowLatencyOutputStream() throws Exception {
         runAAudioTestAndValidate(FEATURE_AUDIO_OUTPUT,
-                AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_OUTPUT_VALUE,
+                "DIRECTION_OUTPUT",
                 "testAAudioLowLatencyOutputStream");
     }
 
@@ -708,7 +706,7 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
     @Test
     public void testAAudioLegacyInputStream() throws Exception {
         runAAudioTestAndValidate(FEATURE_MICROPHONE,
-                AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_INPUT_VALUE,
+                "DIRECTION_INPUT",
                 "testAAudioLegacyInputStream");
     }
 
@@ -721,7 +719,7 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
     @Test
     public void testAAudioLegacyOutputStream() throws Exception {
         runAAudioTestAndValidate(FEATURE_AUDIO_OUTPUT,
-                AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_OUTPUT_VALUE,
+                "DIRECTION_OUTPUT",
                 "testAAudioLegacyOutputStream");
     }
 

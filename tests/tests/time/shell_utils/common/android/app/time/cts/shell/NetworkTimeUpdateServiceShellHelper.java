@@ -81,12 +81,6 @@ public class NetworkTimeUpdateServiceShellHelper {
     public void resetServerConfigForTests() throws Exception {
         mShellCommandExecutor.executeToTrimmedString(
                 SHELL_CMD_PREFIX + " reset_server_config_for_tests");
-
-    }
-
-    /** Clears any stored, possibly fake, network time that may have been introduced by tests. */
-    public void clearTime() throws Exception {
-        mShellCommandExecutor.executeToTrimmedString("cmd network_time_update_service clear_time");
     }
 
     /** Tries to refresh the time from the time server. Returns true if successful. */

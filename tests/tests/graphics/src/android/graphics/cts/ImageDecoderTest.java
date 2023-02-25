@@ -252,6 +252,15 @@ public class ImageDecoderTest {
             SystemProperties.getInt("ro.vndk.version", 0) >= Build.VERSION_CODES.TIRAMISU);
         assumeTrue("No 10-bit HEVC decoder, skip the test.", has10BitHEVCDecoder());
 
+        // For TVs, even if the device advertises that 10 bits profile is supported, the output
+        // format might not be 10 bits pixel format, but can still be displayed. So only when
+        // the TV is capable to output RGBA_1010102, this test can continue.
+        if (MediaUtils.isTv()) {
+            assumeTrue(
+                "The TV is unable to decode to RGBA_1010102 format, skip the test",
+                hasDecoderSupportsRGBA1010102());
+        }
+
         try {
             ImageDecoder.Source src = ImageDecoder
                 .createSource(getResources(), R.raw.heifimage_10bit);
@@ -2788,5 +2797,27 @@ public class ImageDecoderTest {
             return false;
         }
         return true;
+    }
+
+    private static boolean hasDecoderSupportsRGBA1010102() {
+        MediaCodecList codecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        for (MediaCodecInfo mediaCodecInfo : codecList.getCodecInfos()) {
+            if (mediaCodecInfo.isEncoder()) {
+                continue;
+            }
+            for (String mediaType : mediaCodecInfo.getSupportedTypes()) {
+                if (mediaType.equalsIgnoreCase("video/hevc")) {
+                    MediaCodecInfo.CodecCapabilities codecCapabilities =
+                            mediaCodecInfo.getCapabilitiesForType(mediaType);
+                    for (int i = 0; i < codecCapabilities.colorFormats.length; ++i) {
+                        if (codecCapabilities.colorFormats[i]
+                                == MediaCodecInfo.CodecCapabilities.COLOR_Format32bitABGR2101010) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

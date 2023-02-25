@@ -16,10 +16,13 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.view.Display.DEFAULT_DISPLAY;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
 import android.graphics.PointF;
+import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualMouse;
 import android.hardware.input.VirtualMouseButtonEvent;
 import android.hardware.input.VirtualMouseConfig;
@@ -48,14 +51,18 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
 
     @Override
     void onSetUpVirtualInputDevice() {
+        mVirtualMouse = createVirtualMouse(mVirtualDisplay.getDisplay().getDisplayId());
+    }
+
+    VirtualMouse createVirtualMouse(int displayId) {
         final VirtualMouseConfig mouseConfig =
                 new VirtualMouseConfig.Builder()
                         .setVendorId(VENDOR_ID)
                         .setProductId(PRODUCT_ID)
                         .setInputDeviceName(DEVICE_NAME)
-                        .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
+                        .setAssociatedDisplayId(displayId)
                         .build();
-        mVirtualMouse = mVirtualDevice.createVirtualMouse(mouseConfig);
+        return mVirtualDevice.createVirtualMouse(mouseConfig);
     }
 
     @Override
@@ -254,5 +261,18 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
                 /* edgeFlags= */ 0,
                 InputDevice.SOURCE_MOUSE,
                 /* flags= */ 0);
+    }
+
+    @Test
+    public void createVirtualMouse_defaultDisplay_throwsException() {
+        assertThrows(SecurityException.class, () -> createVirtualMouse(DEFAULT_DISPLAY));
+    }
+
+    @Test
+    public void createVirtualMouse_unownedDisplay_throwsException() {
+        VirtualDisplay unownedDisplay = createUnownedVirtualDisplay();
+        assertThrows(SecurityException.class,
+                () -> createVirtualMouse(unownedDisplay.getDisplay().getDisplayId()));
+        unownedDisplay.release();
     }
 }

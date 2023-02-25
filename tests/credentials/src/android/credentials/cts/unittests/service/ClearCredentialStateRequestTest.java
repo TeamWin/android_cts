@@ -23,12 +23,11 @@ import static org.testng.Assert.assertThrows;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.SigningInfo;
-import android.credentials.Credential;
 import android.credentials.cts.unittests.TestUtils;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.service.credentials.CallingAppInfo;
-import android.service.credentials.CreateCredentialRequest;
+import android.service.credentials.ClearCredentialStateRequest;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -41,7 +40,7 @@ import org.junit.runner.RunWith;
 @SmallTest
 @AppModeFull(reason = "unit test")
 @RunWith(AndroidJUnit4.class)
-public class CreateCredentialRequestTest {
+public class ClearCredentialStateRequestTest {
 
     private CallingAppInfo mCallingAppInfo;
 
@@ -55,54 +54,37 @@ public class CreateCredentialRequestTest {
     }
 
     @Test
-    public void testConstructor_nullCallingInfo() {
+    public void testConstructor_nullCallingInfo_throwsNPE() {
         assertThrows(NullPointerException.class,
-                () -> new CreateCredentialRequest(null, Credential.TYPE_PASSWORD_CREDENTIAL,
-                        Bundle.EMPTY));
+                () -> new ClearCredentialStateRequest(null, Bundle.EMPTY));
     }
 
     @Test
-    public void testConstructor_nullType() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new CreateCredentialRequest(mCallingAppInfo, null, Bundle.EMPTY));
+    public void testConstructor_nullData_throwsNPE() {
+        assertThrows(NullPointerException.class,
+                () -> new ClearCredentialStateRequest(mCallingAppInfo, null));
     }
 
     @Test
-    public void testConstructor_emptyType() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new CreateCredentialRequest(mCallingAppInfo, "", Bundle.EMPTY));
-    }
+    public void testConstructor_success() {
+        final Bundle data = TestUtils.createTestBundle();
 
-    @Test
-    public void testConstructor_nullData() {
-        assertThrows(NullPointerException.class, () -> new CreateCredentialRequest(mCallingAppInfo,
-                Credential.TYPE_PASSWORD_CREDENTIAL, null));
-    }
-
-    @Test
-    public void testConstructor() {
-        final String type = Credential.TYPE_PASSWORD_CREDENTIAL;
-        final Bundle data = new Bundle();
-        data.putString("foo", "bar");
-
-        final CreateCredentialRequest request = new CreateCredentialRequest(mCallingAppInfo, type,
+        final ClearCredentialStateRequest request = new ClearCredentialStateRequest(mCallingAppInfo,
                 data);
-        assertThat(request.getType()).isEqualTo(type);
         assertThat(request.getCallingAppInfo()).isSameInstanceAs(mCallingAppInfo);
         assertThat(request.getData()).isSameInstanceAs(data);
     }
 
     @Test
-    public void testWriteToParcel() {
-        final String type = Credential.TYPE_PASSWORD_CREDENTIAL;
-        final Bundle data = new Bundle();
-        data.putString("foo", "bar");
+    public void testWriteToParcel_success() {
+        final Bundle data = TestUtils.createTestBundle();
 
-        final CreateCredentialRequest request1 = new CreateCredentialRequest(mCallingAppInfo, type,
-                data);
-        final CreateCredentialRequest request2 = TestUtils.cloneParcelable(request1);
-        assertThat(request2.getType()).isEqualTo(request1.getType());
+        final ClearCredentialStateRequest request1 = new ClearCredentialStateRequest(
+                mCallingAppInfo, data);
+
+        final ClearCredentialStateRequest request2 = TestUtils.cloneParcelable(request1);
 
         TestUtils.assertEquals(request2.getCallingAppInfo(), request1.getCallingAppInfo());
+        TestUtils.assertEquals(request2.getData(), request1.getData());
     }
 }
