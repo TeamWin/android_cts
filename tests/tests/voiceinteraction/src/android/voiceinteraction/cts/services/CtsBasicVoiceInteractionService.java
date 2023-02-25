@@ -342,10 +342,20 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         }, MANAGE_HOTWORD_DETECTION));
     }
 
+    /**
+     * Create a SoftwareHotwordDetector, but it will not implement the onFailure method of
+     * HotwordDetector.Callback. It will implement the onFailure method by using
+     * createSoftwareHotwordDetectorWithOnFailureCallback method.
+     */
     public void createSoftwareHotwordDetector() {
         createSoftwareHotwordDetector(/* useExecutor= */ false, /* runOnMainThread= */ false);
     }
 
+    /**
+     * Create a SoftwareHotwordDetector, but it will not implement the onFailure method of
+     * HotwordDetector.Callback. It will implement the onFailure method by using
+     * createSoftwareHotwordDetectorWithOnFailureCallback method.
+     */
     public void createSoftwareHotwordDetector(boolean useExecutor, boolean runOnMainThread) {
         mServiceTriggerLatch = new CountDownLatch(1);
 
@@ -363,6 +373,85 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             @Override
             public void onError() {
                 Log.i(TAG, "onError");
+            }
+
+            @Override
+            public void onRecognitionPaused() {
+                Log.i(TAG, "onRecognitionPaused");
+            }
+
+            @Override
+            public void onRecognitionResumed() {
+                Log.i(TAG, "onRecognitionResumed");
+            }
+
+            @Override
+            public void onRejected(HotwordRejectedResult result) {
+                Log.i(TAG, "onRejected");
+                mRejectedResult = result;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnDetectRejectLatch != null) {
+                    mOnDetectRejectLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onHotwordDetectionServiceInitialized(int status) {
+                Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
+                if (status != HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
+                    return;
+                }
+                mInitializedStatus = status;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mServiceTriggerLatch != null) {
+                    mServiceTriggerLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onHotwordDetectionServiceRestarted() {
+                Log.i(TAG, "onHotwordDetectionServiceRestarted");
+            }
+        };
+
+        final Handler handler = runOnMainThread ? new Handler(Looper.getMainLooper()) : mHandler;
+        handler.post(() -> runWithShellPermissionIdentity(() -> {
+            mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector(callback, useExecutor);
+        }, MANAGE_HOTWORD_DETECTION));
+    }
+
+    /**
+     * Create a SoftwareHotwordDetector with onFailure callback. The onFailure provides the error
+     * code, error message and suggested action the assistant application should take.
+     */
+    public void createSoftwareHotwordDetectorWithOnFailureCallback(boolean useExecutor,
+            boolean runOnMainThread) {
+        mServiceTriggerLatch = new CountDownLatch(1);
+
+        final HotwordDetector.Callback callback = new HotwordDetector.Callback() {
+            @Override
+            public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
+                Log.i(TAG, "onDetected");
+                mDetectedResult = eventPayload;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnDetectRejectLatch != null) {
+                    mOnDetectRejectLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onError() {
+                Log.i(TAG, "onError");
+            }
+
+            @Override
+            public void onFailure(DetectorFailure detectorFailure) {
+                Log.i(TAG, "onFailure detectorFailure=" + detectorFailure);
+                mDetectorFailure = detectorFailure;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnFailureLatch != null) {
+                    mOnFailureLatch.countDown();
+                }
             }
 
             @Override
