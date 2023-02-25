@@ -52,11 +52,11 @@ import android.os.Process;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.uiautomator.UiDevice;
 import android.util.ArrayMap;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
