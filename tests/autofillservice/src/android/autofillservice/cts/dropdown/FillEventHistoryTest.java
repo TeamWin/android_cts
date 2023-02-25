@@ -494,7 +494,7 @@ public class FillEventHistoryTest extends FillEventHistoryCommonTestCase {
 
         {
             // Verify fill history
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(7);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(6);
 
             assertFillEventForDatasetShown(events.get(0), UI_TYPE_MENU);
             assertFillEventForDatasetSelected(events.get(1), "id1", UI_TYPE_MENU);
@@ -502,8 +502,7 @@ public class FillEventHistoryTest extends FillEventHistoryCommonTestCase {
             assertFillEventForDatasetShown(events.get(3), UI_TYPE_MENU);
             assertFillEventForDatasetSelected(events.get(4), "id2", UI_TYPE_MENU);
 
-            assertFillEventForDatasetShown(events.get(5), UI_TYPE_MENU);
-            final FillEventHistory.Event event3 = events.get(6);
+            final FillEventHistory.Event event3 = events.get(5);
             assertThat(event3.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event3.getDatasetId()).isNull();
             assertThat(event3.getClientState()).isNull();
