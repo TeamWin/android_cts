@@ -80,6 +80,8 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                 final boolean expedited = intent.getBooleanExtra(EXTRA_AS_EXPEDITED, false);
                 final boolean userInitiated =
                         intent.getBooleanExtra(EXTRA_AS_USER_INITIATED, false);
+                final int backoffPolicy = userInitiated ? JobInfo.BACKOFF_POLICY_EXPONENTIAL
+                                                        : JobInfo.BACKOFF_POLICY_LINEAR;
                 final boolean requestJobUidState = intent.getBooleanExtra(
                         EXTRA_REQUEST_JOB_UID_STATE, false);
                 final Bundle extras = new Bundle();
@@ -90,7 +92,7 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                         intent.getIntExtra(EXTRA_SET_NOTIFICATION_JOB_END_POLICY,
                                 JobService.JOB_END_NOTIFICATION_POLICY_REMOVE));
                 JobInfo.Builder jobBuilder = new JobInfo.Builder(jobId, jobServiceComponent)
-                        .setBackoffCriteria(JOB_INITIAL_BACKOFF, JobInfo.BACKOFF_POLICY_LINEAR)
+                        .setBackoffCriteria(JOB_INITIAL_BACKOFF, backoffPolicy)
                         .setTransientExtras(extras)
                         .setImportantWhileForeground(allowInIdle)
                         .setExpedited(expedited)

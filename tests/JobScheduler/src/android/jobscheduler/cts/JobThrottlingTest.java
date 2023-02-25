@@ -59,7 +59,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -961,6 +960,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
         assumeFalse("not testable in leanback device", mLeanbackOnly);
         BatteryUtils.assumeBatterySaverFeature();
+        mNetworkingHelper.setAllNetworksEnabled(true);
 
         try (TestNotificationListener.NotificationHelper notificationHelper =
                      new TestNotificationListener.NotificationHelper(
@@ -972,7 +972,7 @@ public class JobThrottlingTest {
                     Map.of(
                             TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true
                     ),
-                    Collections.emptyMap());
+                    Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
             notificationHelper.clickNotification();
 
             assertTrue("New user-initiated job failed to start with battery saver ON",
@@ -985,6 +985,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
         assumeFalse("not testable in leanback device", mLeanbackOnly);
         BatteryUtils.assumeBatterySaverFeature();
+        mNetworkingHelper.setAllNetworksEnabled(true);
 
         try (TestNotificationListener.NotificationHelper notificationHelper =
                      new TestNotificationListener.NotificationHelper(
@@ -996,7 +997,7 @@ public class JobThrottlingTest {
                     Map.of(
                             TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true
                     ),
-                    Collections.emptyMap());
+                    Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
             notificationHelper.clickNotification();
 
             assertTrue("New user-initiated job failed to start with battery saver ON",
@@ -1011,6 +1012,7 @@ public class JobThrottlingTest {
     @Test
     public void testUserInitiatedJobBypassesDeviceIdle() throws Exception {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+        mNetworkingHelper.setAllNetworksEnabled(true);
 
         try (TestNotificationListener.NotificationHelper notificationHelper =
                      new TestNotificationListener.NotificationHelper(
@@ -1021,7 +1023,7 @@ public class JobThrottlingTest {
                     Map.of(
                             TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true
                     ),
-                    Collections.emptyMap());
+                    Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
             notificationHelper.clickNotification();
 
             assertTrue("Job did not start after scheduling",
@@ -1032,6 +1034,7 @@ public class JobThrottlingTest {
     @Test
     public void testUserInitiatedJobBypassesDeviceIdle_toggling() throws Exception {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+        mNetworkingHelper.setAllNetworksEnabled(true);
 
         try (TestNotificationListener.NotificationHelper notificationHelper =
                      new TestNotificationListener.NotificationHelper(
@@ -1042,7 +1045,7 @@ public class JobThrottlingTest {
                     Map.of(
                             TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true
                     ),
-                    Collections.emptyMap());
+                    Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
             notificationHelper.clickNotification();
 
             assertTrue("Job did not start after scheduling",

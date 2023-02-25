@@ -533,6 +533,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
         final boolean isAppOpPermission = isRunUserInitiatedJobsPermissionAppOp();
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setUserInitiated(true)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .build();
         // Default is allowed.
         AppOpsUtils.setOpMode(MY_PACKAGE, OPSTR_RUN_USER_INITIATED_JOBS, MODE_DEFAULT);
