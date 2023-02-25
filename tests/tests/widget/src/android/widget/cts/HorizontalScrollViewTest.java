@@ -74,11 +74,11 @@ import java.util.ArrayList;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class HorizontalScrollViewTest {
-    private static final int ITEM_WIDTH  = 250;
-    private static final int ITEM_HEIGHT = 100;
+    private static final int ITEM_WIDTH  = 500;
+    private static final int ITEM_HEIGHT = 200;
     private static final int ITEM_COUNT  = 15;
-    private static final int PAGE_WIDTH  = 100;
-    private static final int PAGE_HEIGHT = 100;
+    private static final int PAGE_WIDTH  = 200;
+    private static final int PAGE_HEIGHT = 200;
     private static final int SCROLL_RIGHT = ITEM_WIDTH * ITEM_COUNT - PAGE_WIDTH;
 
     private Instrumentation mInstrumentation;
