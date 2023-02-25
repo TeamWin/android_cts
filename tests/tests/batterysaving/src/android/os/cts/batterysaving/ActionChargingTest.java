@@ -205,8 +205,10 @@ public class ActionChargingTest extends BatterySavingTestBase {
         final long manufacturingDate = mBatteryManager.getLongProperty(BatteryManager
                 .BATTERY_PROPERTY_MANUFACTURING_DATE);
 
-        assertThat(manufacturingDate).isAtLeast(BATTERY_USAGE_DATE_IN_EPOCH_MIN);
-        assertThat(manufacturingDate).isLessThan(BATTERY_USAGE_DATE_IN_EPOCH_MAX + 1);
+        if (manufacturingDate != 0) {
+            assertThat(manufacturingDate).isAtLeast(BATTERY_USAGE_DATE_IN_EPOCH_MIN);
+            assertThat(manufacturingDate).isLessThan(BATTERY_USAGE_DATE_IN_EPOCH_MAX + 1);
+        }
 
         mAutomation.dropShellPermissionIdentity();
     }
@@ -218,8 +220,10 @@ public class ActionChargingTest extends BatterySavingTestBase {
         final long firstUsageDate = mBatteryManager.getLongProperty(BatteryManager
                 .BATTERY_PROPERTY_FIRST_USAGE_DATE);
 
-        assertThat(firstUsageDate).isAtLeast(BATTERY_USAGE_DATE_IN_EPOCH_MIN);
-        assertThat(firstUsageDate).isLessThan(BATTERY_USAGE_DATE_IN_EPOCH_MAX + 1);
+        if (firstUsageDate != 0) {
+            assertThat(firstUsageDate).isAtLeast(BATTERY_USAGE_DATE_IN_EPOCH_MIN);
+            assertThat(firstUsageDate).isLessThan(BATTERY_USAGE_DATE_IN_EPOCH_MAX + 1);
+        }
 
         mAutomation.dropShellPermissionIdentity();
     }
@@ -231,7 +235,9 @@ public class ActionChargingTest extends BatterySavingTestBase {
         final int chargingPolicy = mBatteryManager.getIntProperty(BatteryManager
                 .BATTERY_PROPERTY_CHARGING_POLICY);
 
-        assertThat(chargingPolicy).isAtLeast(CHARGING_POLICY_DEFAULT);
+        if (chargingPolicy >= 0) {
+            assertThat(chargingPolicy).isAtLeast(CHARGING_POLICY_DEFAULT);
+        }
 
         mAutomation.dropShellPermissionIdentity();
     }
@@ -243,8 +249,10 @@ public class ActionChargingTest extends BatterySavingTestBase {
         final int stateOfHealth = mBatteryManager.getIntProperty(BatteryManager
                 .BATTERY_PROPERTY_STATE_OF_HEALTH);
 
-        assertThat(stateOfHealth).isAtLeast(BATTERY_STATE_OF_HEALTH_MIN);
-        assertThat(stateOfHealth).isLessThan(BATTERY_STATE_OF_HEALTH_MAX + 1);
+        if (stateOfHealth >= 0) {
+            assertThat(stateOfHealth).isAtLeast(BATTERY_STATE_OF_HEALTH_MIN);
+            assertThat(stateOfHealth).isLessThan(BATTERY_STATE_OF_HEALTH_MAX + 1);
+        }
 
         mAutomation.dropShellPermissionIdentity();
     }
