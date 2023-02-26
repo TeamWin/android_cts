@@ -51,6 +51,7 @@ android_test {
         ":CtsPermissionBackupApp22",
         ":CtsAppLocalesBackupApp1",
         ":CtsAppLocalesBackupApp2",
+        ":CtsBackupRestoreEventLoggerApp",
         ":CtsFullBackupApp",
         ":CtsKeyValueBackupApp",
     ],
