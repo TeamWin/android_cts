@@ -16,6 +16,7 @@
 
 package android.jobscheduler.cts;
 
+import static android.app.job.JobInfo.NETWORK_TYPE_ANY;
 import static android.jobscheduler.cts.JobThrottlingTest.setTestPackageStandbyBucket;
 
 import static org.junit.Assert.assertTrue;
@@ -36,7 +37,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Collections;
 import java.util.Map;
 
 @RunWith(AndroidJUnit4.class)
@@ -47,6 +47,7 @@ public class UserInitiatedJobTest {
     private Context mContext;
     private UiDevice mUiDevice;
     private TestAppInterface mTestAppInterface;
+    private NetworkingHelper mNetworkingHelper;
 
     @Before
     public void setUp() throws Exception {
@@ -54,11 +55,15 @@ public class UserInitiatedJobTest {
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mTestAppInterface = new TestAppInterface(mContext, JOB_ID);
         setTestPackageStandbyBucket(mUiDevice, JobThrottlingTest.Bucket.ACTIVE);
+        mNetworkingHelper =
+                new NetworkingHelper(InstrumentationRegistry.getInstrumentation(), mContext);
+        mNetworkingHelper.setAllNetworksEnabled(true); // all user-initiated jobs require a network
     }
 
     @After
     public void tearDown() throws Exception {
         mTestAppInterface.cleanup();
+        mNetworkingHelper.tearDown();
     }
 
     @Test
@@ -76,7 +81,7 @@ public class UserInitiatedJobTest {
                             TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true,
                             TestJobSchedulerReceiver.EXTRA_REQUEST_JOB_UID_STATE, true
                     ),
-                    Collections.emptyMap());
+                    Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
 
             // Clicking on the notification should put the app into a BAL approved state.
             notificationHelper.clickNotification();
@@ -99,7 +104,10 @@ public class UserInitiatedJobTest {
         for (int i = 0; i < numUijs; ++i) {
             mTestAppInterface.scheduleJob(
                     Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
-                    Map.of(TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, i));
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, i,
+                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY
+                    ));
             assertTrue("Job did not start after scheduling",
                     mTestAppInterface.awaitJobStart(i, DEFAULT_WAIT_TIMEOUT_MS));
         }
@@ -114,7 +122,7 @@ public class UserInitiatedJobTest {
             mTestAppInterface.closeActivity(true);
             mTestAppInterface.postUiInitiatingNotification(
                     Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
-                    Collections.emptyMap());
+                    Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
 
             // Clicking on the notification should put the app into a BAL approved state.
             notificationHelper.clickNotification();
@@ -131,7 +139,7 @@ public class UserInitiatedJobTest {
         ScreenUtils.setScreenOn(false);
         mTestAppInterface.scheduleJob(
                 Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
-                Collections.emptyMap());
+                Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
         assertTrue(mTestAppInterface
                 .awaitJobScheduleResult(DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_FAILURE));
     }
@@ -142,7 +150,7 @@ public class UserInitiatedJobTest {
         mTestAppInterface.startAndKeepTestActivity(true);
         mTestAppInterface.scheduleJob(
                 Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
-                Collections.emptyMap());
+                Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
         assertTrue(mTestAppInterface
                 .awaitJobScheduleResult(DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_SUCCESS));
     }

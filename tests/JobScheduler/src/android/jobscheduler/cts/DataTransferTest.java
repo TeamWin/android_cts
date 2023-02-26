@@ -48,7 +48,6 @@ public class DataTransferTest extends BaseJobSchedulerTest {
         mNetworkingHelper.setAllNetworksEnabled(true);
 
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setDataTransfer(true)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setEstimatedNetworkBytes(
                         JobInfo.NETWORK_BYTES_UNKNOWN, JobInfo.NETWORK_BYTES_UNKNOWN)
@@ -72,7 +71,6 @@ public class DataTransferTest extends BaseJobSchedulerTest {
         mNetworkingHelper.setAllNetworksEnabled(true);
 
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setDataTransfer(true)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setEstimatedNetworkBytes(
                         JobInfo.NETWORK_BYTES_UNKNOWN, JobInfo.NETWORK_BYTES_UNKNOWN)

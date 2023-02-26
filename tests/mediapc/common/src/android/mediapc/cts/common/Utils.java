@@ -68,19 +68,33 @@ public class Utils {
     static {
         // with a default-media-performance-class that can be configured through a command line
         // argument.
-        android.os.Bundle args = InstrumentationRegistry.getArguments();
-        String mediaPerfClassArg = args.getString(MEDIA_PERF_CLASS_KEY);
-        if (mediaPerfClassArg != null) {
-            Log.d(TAG, "Running the tests with performance class set to " + mediaPerfClassArg);
-            sPc = Integer.parseInt(mediaPerfClassArg);
-        } else {
-            sPc = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)
-                    ? Build.VERSION.MEDIA_PERFORMANCE_CLASS
-                    : SystemProperties.getInt("ro.odm.build.media_performance_class", 0);
+        android.os.Bundle args;
+        try {
+            args = InstrumentationRegistry.getArguments();
+        } catch (Exception e) {
+            args = null;
         }
-        Log.d(TAG, "performance class is " + sPc);
+        if (args != null) {
+            String mediaPerfClassArg = args.getString(MEDIA_PERF_CLASS_KEY);
+            if (mediaPerfClassArg != null) {
+                Log.d(TAG, "Running the tests with performance class set to " + mediaPerfClassArg);
+                sPc = Integer.parseInt(mediaPerfClassArg);
+            } else {
+                sPc = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)
+                        ? Build.VERSION.MEDIA_PERFORMANCE_CLASS
+                        : SystemProperties.getInt("ro.odm.build.media_performance_class", 0);
+            }
+            Log.d(TAG, "performance class is " + sPc);
+        } else {
+            sPc = 0;
+        }
 
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        Context context;
+        try {
+            context = InstrumentationRegistry.getInstrumentation().getContext();
+        } catch (Exception e) {
+            context = null;
+        }
         // When used from ItsService, context will be null
         if (context != null) {
             WindowManager windowManager = context.getSystemService(WindowManager.class);

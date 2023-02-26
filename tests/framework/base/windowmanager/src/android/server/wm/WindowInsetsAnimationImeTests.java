@@ -38,6 +38,8 @@ import android.content.pm.PackageManager;
 import android.platform.test.annotations.Presubmit;
 import android.view.WindowInsets;
 
+import com.android.cts.mockime.MockIme;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -68,6 +70,12 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
 
     private void initActivity(boolean useFloating) {
         MockImeHelper.createManagedMockImeSession(this, KEYBOARD_HEIGHT, useFloating);
+
+        // The existing IME will be replaced by MockIME. Wait for the new IME window.
+        mWmState.waitFor("MockIme must be ready.", wms -> {
+            final WindowManagerState.WindowState ime = wms.getInputMethodWindowState();
+            return ime != null && ime.getPackageName().equals(MockIme.class.getPackageName());
+        });
 
         mActivity = startActivityInWindowingMode(TestActivity.class, WINDOWING_MODE_FULLSCREEN);
         mRootView = mActivity.getWindow().getDecorView();
