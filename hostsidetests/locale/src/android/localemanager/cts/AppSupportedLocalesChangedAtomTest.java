@@ -153,6 +153,7 @@ public class AppSupportedLocalesChangedAtomTest extends DeviceTestCase implement
                 DeviceUtils.getAppUid(getDevice(), INSTALLED_PACKAGE_NAME), INVALID_NUM, false,
                 false, true, AppSupportedLocalesChanged.Status.STATUS_UNSPECIFIED, result2);
     }
+
     public void testAtomLogging_invalidPackage_logsAtomWithFailureInvalidPackageName()
             throws Exception {
         // Calling setOverrideLocaleConfig() with an invalid package name.
