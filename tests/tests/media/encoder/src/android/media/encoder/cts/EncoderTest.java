@@ -22,8 +22,8 @@ import static android.media.MediaCodecInfo.CodecProfileLevel.AACObjectLC;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -57,9 +57,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @SmallTest
 @RequiresDevice
@@ -72,6 +69,7 @@ public class EncoderTest {
     static final String mInpPrefix = WorkDir.getMediaDirString();
     private static final int kNumInputBytes = 512 * 1024;
     private static final long kTimeoutUs = 100;
+    public static final int PER_TEST_TIMEOUT_SMALL_TEST_MS = 60000;
 
     // not all combinations are valid
     private static final int MODE_SILENT = 0;
@@ -94,7 +92,7 @@ public class EncoderTest {
     private final int mBitrate;
     private final int mSampleRate;
     private final int mChannelCount;
-    private ArrayList<MediaFormat> mFormats;
+    private final MediaFormat mFormat = new MediaFormat();
 
     static boolean isDefaultCodec(String codecName, String mime)
             throws IOException {
@@ -186,78 +184,26 @@ public class EncoderTest {
         mChannelCount = channelcount;
     }
 
-    private void setUpFormats() {
-        mFormats = new ArrayList<MediaFormat>();
-        MediaFormat format = new MediaFormat();
-        format.setString(MediaFormat.KEY_MIME, mMime);
-        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, mSampleRate);
-        format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, mChannelCount);
+    private void setUpFormat() {
+        mFormat.setString(MediaFormat.KEY_MIME, mMime);
+        mFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, mSampleRate);
+        mFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, mChannelCount);
         if (mProfile >= 0) {
-            format.setInteger(MediaFormat.KEY_PROFILE, mProfile);
+            mFormat.setInteger(MediaFormat.KEY_PROFILE, mProfile);
             if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
-                format.setInteger(MediaFormat.KEY_AAC_PROFILE, mProfile);
+                mFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, mProfile);
             }
         }
-        format.setInteger(MediaFormat.KEY_BIT_RATE, mBitrate);
-        mFormats.add(format);
+        mFormat.setInteger(MediaFormat.KEY_BIT_RATE, mBitrate);
     }
 
-    @Test
-    public void testEncoders() {
-        setUpFormats();
-        testEncoderWithFormats();
-    }
-
-    private void testEncoderWithFormatsParallel(String mime, ArrayList<MediaFormat> formats,
-            String componentName, int ThreadCount) {
-        int testsStarted = 0;
-        int totalDurationSeconds = 0;
-        ExecutorService pool = Executors.newFixedThreadPool(ThreadCount);
-
-        for (MediaFormat format : formats) {
-            assertEquals(mime, format.getString(MediaFormat.KEY_MIME));
-            pool.execute(new EncoderRun(componentName, format));
-            int sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-            int channelCount = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-            int bytesQueuedPerSecond = 2 * channelCount * sampleRate;
-            int durationSeconds =
-                    (kNumInputBytes + bytesQueuedPerSecond - 1) / bytesQueuedPerSecond;
-            totalDurationSeconds += durationSeconds * kNumEncoderTestsPerRun;
-            testsStarted++;
-        }
-        try {
-            pool.shutdown();
-            Log.i(TAG, "waiting up to " + totalDurationSeconds + " seconds for "
-                            + testsStarted + " sub-tests to finish");
-            assertTrue("timed out waiting for encoder threads",
-                    pool.awaitTermination(totalDurationSeconds, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-            fail("interrupted while waiting for encoder threads");
-        }
-    }
-
-    private void testEncoderWithFormats() {
-        for (MediaFormat fmt : mFormats) {
-            if (!MediaUtils.supports(mEncoderName, fmt)) {
-                MediaUtils.skipTest("no encoders found for " + fmt.toString());
-                return;
-            }
-        }
-        final int ThreadPoolCount = 1;
-        int instances = ThreadPoolCount;
-        MediaCodec codec = null;
-        try {
-            codec = MediaCodec.createByCodecName(mEncoderName);
-            MediaCodecInfo info = codec.getCodecInfo();
-            MediaCodecInfo.CodecCapabilities cap = info.getCapabilitiesForType(mMime);
-            instances = Math.min(cap.getMaxSupportedInstances(), instances);
-            assertTrue(instances >= 1);
-        } catch (Exception e) {
-            fail("codec '" + mEncoderName + "' failed construction.");
-        } finally {
-            codec.release();
-        }
-        testEncoderWithFormatsParallel(mMime, mFormats, mEncoderName, instances);
+    @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
+    public void testEncoders() throws FileNotFoundException {
+        setUpFormat();
+        assumeTrue("no encoders found for " + mFormat.toString(),
+                MediaUtils.supports(mEncoderName, mFormat));
+        assertEquals(mMime, mFormat.getString(MediaFormat.KEY_MIME));
+        testEncoder(mEncoderName, mFormat);
     }
 
     // See bug 25843966
@@ -326,25 +272,6 @@ public class EncoderTest {
             MediaCodec codec, ByteBuffer[] outputBuffers,
             int index, MediaCodec.BufferInfo info) {
         codec.releaseOutputBuffer(index, false /* render */);
-    }
-
-    class EncoderRun implements Runnable {
-        String mComponentName;
-        MediaFormat mFormat;
-
-        EncoderRun(String componentName, MediaFormat format) {
-            mComponentName = componentName;
-            mFormat = format;
-        }
-        @Override
-        public void run() {
-            try {
-                testEncoder(mComponentName, mFormat);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-                fail("Received exception " + e);
-            }
-        }
     }
 
     // Number of tests called in testEncoder(String componentName, MediaFormat format)
