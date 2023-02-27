@@ -45,6 +45,7 @@
         <option name="test-file-name" value="CtsPermissionBackupApp22.apk" />
         <option name="test-file-name" value="CtsAppLocalesBackupApp1.apk" />
         <option name="test-file-name" value="CtsAppLocalesBackupApp2.apk" />
+        <option name="test-file-name" value="CtsBackupRestoreEventLoggerApp.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/cts/backup" />
@@ -57,6 +58,7 @@
         <option name="push" value="CtsPermissionBackupApp22.apk->/data/local/tmp/cts/backup/CtsPermissionBackupApp22.apk" />
         <option name="push" value="CtsAppLocalesBackupApp1.apk->/data/local/tmp/cts/backup/CtsAppLocalesBackupApp1.apk" />
         <option name="push" value="CtsAppLocalesBackupApp2.apk->/data/local/tmp/cts/backup/CtsAppLocalesBackupApp2.apk" />
+        <option name="push" value="CtsBackupRestoreEventLoggerApp.apk->/data/local/tmp/cts/backup/CtsBackupRestoreEventLoggerApp.apk" />
     </target_preparer>
     <target_preparer class="android.cts.backup.BackupPreparer">
         <option name="enable-backup-if-needed" value="true" />
