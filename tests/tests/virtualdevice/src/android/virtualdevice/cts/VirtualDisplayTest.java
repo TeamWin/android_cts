@@ -352,8 +352,8 @@ public class VirtualDisplayTest {
         // last value from getDeviceIdForDisplayId call and the test will fail.
         assertThat(pollForResult(() -> mVirtualDeviceManager.getDeviceIdForDisplayId(
                         virtualDisplay.getDisplay().getDisplayId()),
-                VirtualDeviceManager.DEVICE_ID_DEFAULT)).isEqualTo(
-                VirtualDeviceManager.DEVICE_ID_DEFAULT);
+                Context.DEVICE_ID_DEFAULT)).isEqualTo(
+                Context.DEVICE_ID_DEFAULT);
     }
 
     @Test

@@ -21,7 +21,7 @@ import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.READ_CLIPBOARD_IN_BACKGROUND;
 import static android.Manifest.permission.WAKE_LOCK;
-import static android.companion.virtual.VirtualDeviceManager.DEVICE_ID_DEFAULT;
+import static android.content.Context.DEVICE_ID_DEFAULT;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.virtualdevice.cts.util.VirtualDeviceTestUtils.createActivityOptions;
 
