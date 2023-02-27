@@ -20,6 +20,7 @@ import android.graphics.Bitmap;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.cts.ScriptC_raw_converter;
 import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.LensShadingMap;
 import android.renderscript.Allocation;
@@ -30,8 +31,6 @@ import android.renderscript.Int4;
 import android.renderscript.Matrix3f;
 import android.renderscript.RenderScript;
 import android.renderscript.Type;
-
-import android.hardware.camera2.cts.ScriptC_raw_converter;
 import android.util.Log;
 import android.util.Rational;
 import android.util.SparseIntArray;
