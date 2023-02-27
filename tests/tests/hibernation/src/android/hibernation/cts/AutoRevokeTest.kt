@@ -560,6 +560,7 @@ class AutoRevokeTest {
         assertPermission(PERMISSION_GRANTED)
         startApp()
         killDummyApp()
+        SystemUtil.waitForBroadcasts()
     }
 
     private fun startApp() {
