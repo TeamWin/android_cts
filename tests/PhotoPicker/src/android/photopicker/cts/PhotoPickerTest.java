@@ -18,8 +18,12 @@ package android.photopicker.cts;
 
 import static android.photopicker.cts.util.GetContentActivityAliasUtils.clearPackageData;
 import static android.photopicker.cts.util.GetContentActivityAliasUtils.getDocumentsUiPackageName;
-import static android.photopicker.cts.util.PhotoPickerFilesUtils.createDNGVideosAndGetUris;
+import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImageWithUnknownMimeType;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImagesAndGetUris;
+import static android.photopicker.cts.util.PhotoPickerFilesUtils.createMj2VideosAndGetUris;
+import static android.photopicker.cts.util.PhotoPickerFilesUtils.createMpegVideo;
+import static android.photopicker.cts.util.PhotoPickerFilesUtils.createSvgImage;
+import static android.photopicker.cts.util.PhotoPickerFilesUtils.createVideoWithUnknownMimeType;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createVideosAndGetUris;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.REGEX_PACKAGE_NAME;
@@ -30,6 +34,7 @@ import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findPreviewAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findPreviewAddOrSelectButton;
 import static android.photopicker.cts.util.ResultsAssertionsUtils.assertContainsMimeType;
+import static android.photopicker.cts.util.ResultsAssertionsUtils.assertExtension;
 import static android.photopicker.cts.util.ResultsAssertionsUtils.assertMimeType;
 import static android.photopicker.cts.util.ResultsAssertionsUtils.assertPersistedGrant;
 import static android.photopicker.cts.util.ResultsAssertionsUtils.assertPickerUriFormat;
@@ -63,6 +68,7 @@ import org.junit.runners.Parameterized.Parameters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Photo Picker Device only tests for common flows.
@@ -229,7 +235,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     @Test
     public void testMultiSelect_longPress() throws Exception {
         final int videoCount = 3;
-        mUriList.addAll(createDNGVideosAndGetUris(videoCount, mContext.getUserId()));
+        mUriList.addAll(createMj2VideosAndGetUris(videoCount, mContext.getUserId()));
 
         Intent intent = new Intent(mAction);
         intent.setType("video/*");
@@ -544,11 +550,11 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     @Test
     public void testMimeTypeFilter() throws Exception {
         final int videoCount = 2;
-        mUriList.addAll(createDNGVideosAndGetUris(videoCount, mContext.getUserId()));
+        mUriList.addAll(createMj2VideosAndGetUris(videoCount, mContext.getUserId()));
         final int imageCount = 1;
         mUriList.addAll(createImagesAndGetUris(imageCount, mContext.getUserId()));
 
-        final String mimeType = "video/dng";
+        final String mimeType = "video/mj2";
 
         Intent intent = new Intent(mAction);
         addMultipleSelectionFlag(intent);
@@ -579,9 +585,9 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
 
     @Test
     public void testExtraMimeTypeFilter() throws Exception {
-        final int dngVideoCount = 2;
-        // Creates 2 videos with mime type: "video/dng"
-        mUriList.addAll(createDNGVideosAndGetUris(dngVideoCount, mContext.getUserId()));
+        final int mj2VideoCount = 2;
+        // Creates 2 videos with mime type: "video/mj2"
+        mUriList.addAll(createMj2VideosAndGetUris(mj2VideoCount, mContext.getUserId()));
 
         final int mp4VideoCount = 3;
         // Creates 3 videos with mime type: "video/mp4"
@@ -597,11 +603,11 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         if (Intent.ACTION_GET_CONTENT.equals(intent.getAction())) {
             intent.setType("*/*");
         }
-        final String[] mimeTypes = new String[]{"video/dng", "image/dng"};
+        final String[] mimeTypes = new String[]{"video/mj2", "image/dng"};
         intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
         launchPhotoPickerForIntent(intent);
 
-        final int totalCount = dngVideoCount + imageCount;
+        final int totalCount = mj2VideoCount + imageCount;
         final List<UiObject> itemList = findItemList(totalCount);
         final int itemCount = itemList.size();
         assertThat(itemCount).isAtLeast(totalCount);
@@ -626,7 +632,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     @Test
     public void testMimeTypeFilterPriority() throws Exception {
         final int videoCount = 2;
-        mUriList.addAll(createDNGVideosAndGetUris(videoCount, mContext.getUserId()));
+        mUriList.addAll(createMj2VideosAndGetUris(videoCount, mContext.getUserId()));
         final int imageCount = 1;
         mUriList.addAll(createImagesAndGetUris(imageCount, mContext.getUserId()));
 
@@ -634,7 +640,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         addMultipleSelectionFlag(intent);
         // setType has lower priority than EXTRA_MIME_TYPES filters.
         intent.setType("image/*");
-        final String mimeType = "video/dng";
+        final String mimeType = "video/mj2";
         intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {mimeType});
         launchPhotoPickerForIntent(intent);
 
@@ -657,6 +663,53 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
             assertPersistedGrant(uri, mContext.getContentResolver());
             assertRedactedReadOnlyAccess(uri);
             assertMimeType(uri, mimeType);
+        }
+    }
+
+    @Test
+    public void testPickerUriFileExtensions() throws Exception {
+        // 1. Create test media items
+        mUriList.add(createSvgImage(mContext.getUserId()));
+        mUriList.add(createImageWithUnknownMimeType(mContext.getUserId()));
+        mUriList.add(createMpegVideo(mContext.getUserId()));
+        mUriList.add(createVideoWithUnknownMimeType(mContext.getUserId()));
+
+        final int expectedItemCount = mUriList.size();
+
+        final Map<String, String> mimeTypeToExpectedExtensionMap = Map.of(
+                "image/svg+xml", "svg",
+                "image/foo", "jpg",
+                "video/mpeg", "mpeg",
+                "video/foo", "mp4"
+        );
+
+        // 2. Launch Picker in multi-select mode for the test mime types
+        final Intent intent = new Intent(mAction);
+        addMultipleSelectionFlag(intent);
+        launchPhotoPickerForIntent(intent);
+
+        // 3. Add all items
+        final List<UiObject> itemList = findItemList(expectedItemCount);
+        final int itemCount = itemList.size();
+        assertWithMessage("Unexpected number of media items found in the picker ui")
+                .that(itemCount)
+                .isEqualTo(expectedItemCount);
+
+        for (UiObject item : itemList) {
+            clickAndWait(sDevice, item);
+        }
+        clickAndWait(sDevice, findAddButton());
+
+        // 4. Get the activity result data to extract the picker uris
+        final ClipData clipData = mActivity.getResult().data.getClipData();
+        assertWithMessage("Unexpected number of items returned from the picker activity")
+                .that(clipData.getItemCount())
+                .isEqualTo(itemCount);
+
+        // 5. Assert the picker uri file extension as expected for each item
+        for (int i = 0; i < itemCount; i++) {
+            final Uri uri = clipData.getItemAt(i).getUri();
+            assertExtension(uri, mimeTypeToExpectedExtensionMap);
         }
     }
 

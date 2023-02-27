@@ -33,6 +33,7 @@ import android.net.Uri;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 
+import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 
 import java.io.ByteArrayOutputStream;
@@ -44,6 +45,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Photo Picker Utility methods for PhotoPicker result assertions.
@@ -107,11 +109,39 @@ public class ResultsAssertionsUtils {
         }
     }
 
+    public static void assertExtension(@NonNull Uri uri,
+            @NonNull Map<String, String> mimeTypeToExpectedExtensionMap) {
+        assertThat(uri).isNotNull();
+
+        final ContentResolver resolver =
+                InstrumentationRegistry.getTargetContext().getContentResolver();
+        final String[] projection =
+                new String[]{ PickerMediaColumns.MIME_TYPE, PickerMediaColumns.DISPLAY_NAME };
+
+        try (Cursor c = resolver.query(
+                uri, projection, /* queryArgs */ null, /* cancellationSignal */ null)) {
+            assertThat(c).isNotNull();
+            assertThat(c.moveToFirst()).isTrue();
+
+            final String mimeType = c.getString(c.getColumnIndex(PickerMediaColumns.MIME_TYPE));
+            final String expectedExtension = mimeTypeToExpectedExtensionMap.get(mimeType);
+
+            final String displayName =
+                    c.getString(c.getColumnIndex(PickerMediaColumns.DISPLAY_NAME));
+            final String[] displayNameParts = displayName.split("\\.");
+            final String resultExtension = displayNameParts[displayNameParts.length - 1];
+
+            assertWithMessage("Unexpected picker file extension")
+                    .that(resultExtension)
+                    .isEqualTo(expectedExtension);
+        }
+    }
+
     private static void assertVideoRedactedReadOnlyAccess(Uri uri, ContentResolver resolver)
             throws Exception {
         // The location is redacted
         // TODO(b/201505595): Make this method work for test_video.mp4. Currently it works only for
-        //  test_video_dng.mp4
+        //  test_video_mj2.mp4
         try (InputStream in = resolver.openInputStream(uri);
                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             FileUtils.copy(in, out);
