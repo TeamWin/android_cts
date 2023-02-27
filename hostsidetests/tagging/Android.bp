@@ -39,5 +39,6 @@ java_defaults {
         "androidx.test.ext.junit",
     ],
     jni_libs: ["libtagging-common-devicesidelib-jni"],
-    sdk_version: "current",
+    min_sdk_version: "30",
+    target_sdk_version: "30",
 }
