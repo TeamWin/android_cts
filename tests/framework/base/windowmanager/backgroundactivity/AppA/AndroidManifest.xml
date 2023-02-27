@@ -84,10 +84,6 @@
             android:name=".ActivityStarterService"
             android:enabled="true"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.TTS_SERVICE" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
         </service>
     </application>
 </manifest>
