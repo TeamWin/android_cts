@@ -22,12 +22,7 @@
 
   <application
       android:label="LocationProviderWithSummaryApp">
-    <activity android:name=".AddLocationProviderActivity" android:exported="true">
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-        <category android:name="android.intent.category.LAUNCHER" />
-      </intent-filter>
-    </activity>
+    <activity android:name=".AddLocationProviderActivity" android:exported="true" />
     <activity android:name=".AllServicesActivity" android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.VIEW_APP_FEATURES" />
