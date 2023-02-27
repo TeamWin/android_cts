@@ -1152,8 +1152,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             // start an activity that has no permissions, which will run matchesCallFilter on
             // a meaningless uri. The result code indicates whether or not the method call was
             // permitted.
-            final Intent mcfIntent = new Intent();
-            mcfIntent.setPackage(TEST_APP);
+            final Intent mcfIntent = new Intent(Intent.ACTION_MAIN);
             mcfIntent.setClassName(TEST_APP, MATCHES_CALL_FILTER_CLASS);
             GetResultActivity grActivity = setUpGetResultActivity();
             grActivity.startActivityForResult(mcfIntent, REQUEST_CODE);
@@ -1184,8 +1183,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             Thread.sleep(500);
 
             // set up & run intent
-            final Intent mcfIntent = new Intent();
-            mcfIntent.setPackage(TEST_APP);
+            final Intent mcfIntent = new Intent(Intent.ACTION_MAIN);
             mcfIntent.setClassName(TEST_APP, MATCHES_CALL_FILTER_CLASS);
             GetResultActivity grActivity = setUpGetResultActivity();
             grActivity.startActivityForResult(mcfIntent, REQUEST_CODE);
@@ -1210,8 +1208,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             toggleReadContactsPermission(TEST_APP, true);
 
             // set up & run intent
-            final Intent mcfIntent = new Intent();
-            mcfIntent.setPackage(TEST_APP);
+            final Intent mcfIntent = new Intent(Intent.ACTION_MAIN);
             mcfIntent.setClassName(TEST_APP, MATCHES_CALL_FILTER_CLASS);
             GetResultActivity grActivity = setUpGetResultActivity();
             grActivity.startActivityForResult(mcfIntent, REQUEST_CODE);

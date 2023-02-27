@@ -1354,7 +1354,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         mNotificationManager.notifyAsPackage(TEST_APP, "tag", 0, n);
 
         assertNotNull(mNotificationHelper.findPostedNotification("tag", 0, SEARCH_TYPE.APP));
-        final Intent revokeIntent = new Intent();
+        final Intent revokeIntent = new Intent(Intent.ACTION_MAIN);
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
         activity.startActivityForResult(revokeIntent, REQUEST_CODE);
         assertEquals(RESULT_OK, activity.getResult().resultCode);
@@ -1385,7 +1385,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 SEARCH_TYPE.APP));
         mNotificationManager.cancelAsPackage(TEST_APP, "toBeCanceled", 10000);
         assertTrue(mNotificationHelper.isNotificationGone(10000, SEARCH_TYPE.APP));
-        final Intent revokeIntent = new Intent();
+        final Intent revokeIntent = new Intent(Intent.ACTION_MAIN);
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
         activity.startActivityForResult(revokeIntent, REQUEST_CODE);
         assertEquals(RESULT_OK, activity.getResult().resultCode);
@@ -1406,7 +1406,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertNotNull(mListener);
 
         // grant this test permission to post
-        final Intent activityIntent = new Intent();
+        final Intent activityIntent = new Intent(Intent.ACTION_MAIN);
         activityIntent.setClassName(TEST_APP, DELEGATE_POST_CLASS);
 
         activity.startActivityForResult(activityIntent, REQUEST_CODE);
@@ -1424,7 +1424,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // double check that the notification does still exist
         assertNotNull(mNotificationHelper.findPostedNotification(null, 9, SEARCH_TYPE.LISTENER));
 
-        final Intent revokeIntent = new Intent();
+        final Intent revokeIntent = new Intent(Intent.ACTION_MAIN);
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
         activity.startActivityForResult(revokeIntent, REQUEST_CODE);
         assertEquals(RESULT_OK, activity.getResult().resultCode);
@@ -1453,7 +1453,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         assertNotNull(channels);
 
-        final Intent revokeIntent = new Intent();
+        final Intent revokeIntent = new Intent(Intent.ACTION_MAIN);
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
         activity.startActivityForResult(revokeIntent, REQUEST_CODE);
         assertEquals(RESULT_OK, activity.getResult().resultCode);
@@ -1482,7 +1482,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         assertNotNull(channel);
 
-        final Intent revokeIntent = new Intent();
+        final Intent revokeIntent = new Intent(Intent.ACTION_MAIN);
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
         activity.startActivityForResult(revokeIntent, REQUEST_CODE);
         assertEquals(RESULT_OK, activity.getResult().resultCode);
@@ -1506,7 +1506,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         assertTrue(mNotificationManager.canNotifyAsPackage(TEST_APP));
 
-        final Intent revokeIntent = new Intent();
+        final Intent revokeIntent = new Intent(Intent.ACTION_MAIN);
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
         activity.startActivityForResult(revokeIntent, REQUEST_CODE);
         assertEquals(RESULT_OK, activity.getResult().resultCode);
@@ -1589,7 +1589,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     private void performNotificationProviderAction(@NonNull String action) {
         // Create an intent to launch an activity which just posts or cancels notifications
-        Intent activityIntent = new Intent();
+        Intent activityIntent = new Intent(Intent.ACTION_MAIN);
         activityIntent.setClassName(NOTIFICATIONPROVIDER, RICH_NOTIFICATION_ACTIVITY);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         activityIntent.putExtra("action", action);
