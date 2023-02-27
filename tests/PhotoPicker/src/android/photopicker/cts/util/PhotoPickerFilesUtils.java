@@ -28,6 +28,7 @@ import android.provider.cts.ProviderTestUtils;
 import android.provider.cts.media.MediaStoreUtils;
 import android.util.Pair;
 
+import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellUtils;
@@ -91,10 +92,10 @@ public class PhotoPickerFilesUtils {
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/jpeg", userId, isFavorite);
     }
 
-    public static List<Uri> createDNGVideosAndGetUris(int count, int userId) throws Exception {
+    public static List<Uri> createMj2VideosAndGetUris(int count, int userId) throws Exception {
         List<Uri> uriList = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            final Uri uri = createDNGVideo(userId);
+            final Uri uri = createMj2Video(userId);
             uriList.add(uri);
             clearMediaOwner(uri, userId);
         }
@@ -131,8 +132,8 @@ public class PhotoPickerFilesUtils {
         ShellUtils.runShellCommand(cmd);
     }
 
-    private static Uri createDNGVideo(int userId) throws Exception {
-        return getPermissionAndStageMedia(R.raw.test_video_dng,
+    private static Uri createMj2Video(int userId) throws Exception {
+        return getPermissionAndStageMedia(R.raw.test_video_mj2,
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI, "video/mp4", userId,
                 /* isFavorite */ false).first;
     }
@@ -175,5 +176,33 @@ public class PhotoPickerFilesUtils {
             }
             return new Pair(session.publish(), displayName);
         }
+    }
+
+    @NonNull
+    public static Uri createSvgImage(int userId) throws Exception {
+        return getPermissionAndStageMedia(R.raw.lg_g4_iso_800_svg,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/svg+xml", userId,
+                /* isFavorite */ false).first;
+    }
+
+    @NonNull
+    public static Uri createImageWithUnknownMimeType(int userId) throws Exception {
+        return getPermissionAndStageMedia(R.raw.lg_g4_iso_800_unknown_mime_type,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/jpeg", userId,
+                /* isFavorite */ false).first;
+    }
+
+    @NonNull
+    public static Uri createMpegVideo(int userId) throws Exception {
+        return getPermissionAndStageMedia(R.raw.test_video_mpeg,
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI, "video/mpeg", userId,
+                /* isFavorite */ false).first;
+    }
+
+    @NonNull
+    public static Uri createVideoWithUnknownMimeType(int userId) throws Exception {
+        return getPermissionAndStageMedia(R.raw.test_video_unknown_mime_type,
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI, "video/mp4", userId,
+                /* isFavorite */ false).first;
     }
 }
