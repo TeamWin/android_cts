@@ -18,12 +18,15 @@ package com.android.bedstead.nene.devicepolicy;
 
 import static android.os.Build.VERSION_CODES.TIRAMISU;
 
+import static com.android.bedstead.harrier.UserType.SECONDARY_USER;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ComponentName;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
@@ -131,16 +134,12 @@ public class ProfileOwnerTest {
     @Test
     @EnsureHasSecondaryUser
     @RequireRunNotOnSecondaryUser
+    @EnsureHasProfileOwner(onUser = SECONDARY_USER)
     public void remove_onOtherUser_removesProfileOwner() {
-        try (TestAppInstance dpc = sNonTestOnlyDpc.install(sDeviceState.secondaryUser())) {
-            ProfileOwner profileOwner = TestApis.devicePolicy().setProfileOwner(
-                    sDeviceState.secondaryUser(), NON_TEST_ONLY_DPC_COMPONENT_NAME);
-
-            profileOwner.remove();
+            TestApis.devicePolicy().getProfileOwner(sDeviceState.secondaryUser()).remove();
 
             assertThat(TestApis.devicePolicy().getProfileOwner(sDeviceState.secondaryUser()))
                     .isNull();
-        }
     }
 
     @Test
