@@ -60,6 +60,7 @@ android_test {
         ":CtsMockInputMethod",
         ":CtsSpellCheckingIme",
         ":CtsInputMethodStandaloneTestApp",
+        ":CtsMockLargeResourceInputMethod",
     ],
     per_testcase_directory: true,
 }
