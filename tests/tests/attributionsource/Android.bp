@@ -19,7 +19,7 @@ package {
 }
 
 android_test {
-    name: "CtsPermission5TestCases",
+    name: "CtsAttributionSourceTestCases",
     sdk_version: "test_current",
     srcs: [
         "src/**/*.kt",
