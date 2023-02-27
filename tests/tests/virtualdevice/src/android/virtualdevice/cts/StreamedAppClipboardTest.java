@@ -24,7 +24,7 @@ import static android.Manifest.permission.READ_DEVICE_CONFIG;
 import static android.Manifest.permission.WAKE_LOCK;
 import static android.Manifest.permission.WRITE_DEVICE_CONFIG;
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
-import static android.companion.virtual.VirtualDeviceManager.DEVICE_ID_DEFAULT;
+import static android.content.Context.DEVICE_ID_DEFAULT;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_GET_CLIP;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_SET_AND_GET_CLIP;
