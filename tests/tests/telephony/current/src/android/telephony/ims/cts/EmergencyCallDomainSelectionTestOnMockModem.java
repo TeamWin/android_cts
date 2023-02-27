@@ -39,10 +39,12 @@ import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_MAXIMUM_NUMBER_OF_EMERGENCY_TRIES_OVER_VOWIFI_INT;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_PREFER_IMS_EMERGENCY_WHEN_VOICE_CALLS_ON_CS_BOOL;
 import static android.telephony.CarrierConfigManager.ImsEmergency.SCAN_TYPE_NO_PREFERENCE;
+import static android.telephony.CarrierConfigManager.ImsWfc.KEY_EMERGENCY_CALL_OVER_EMERGENCY_PDN_BOOL;
 import static android.telephony.NetworkRegistrationInfo.REGISTRATION_STATE_HOME;
 import static android.telephony.NetworkRegistrationInfo.REGISTRATION_STATE_UNKNOWN;
 import static android.telephony.mockmodem.IRadioVoiceImpl.LATCH_EMERGENCY_DIAL;
 import static android.telephony.mockmodem.IRadioVoiceImpl.LATCH_GET_LAST_CALL_FAIL_CAUSE;
+import static android.telephony.mockmodem.MockNetworkService.LATCH_CANCEL_EMERGENCY_SCAN;
 import static android.telephony.mockmodem.MockNetworkService.LATCH_TRIGGER_EMERGENCY_SCAN;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT;
 
@@ -113,6 +115,9 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
             "persist.radio.test_domain_selection";
 
     private static final String TEST_EMERGENCY_NUMBER = "998877665544332211";
+
+    private static final int EMERGENCY_MODE_WWAN = 1;
+    private static final int EMERGENCY_MODE_WLAN = 2;
 
     // the timeout to wait for latch countdonw in milliseconds
     private static final int WAIT_LATCH_TIMEOUT_MS = 10000;
@@ -957,6 +962,36 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
     }
 
     @Test
+    public void testDefaultWifiImsRegisteredScanTimeoutSelectWifiImsPdn() throws Exception {
+        // Setup pre-condition
+        PersistableBundle bundle = getDefaultPersistableBundle();
+        bundle.putInt(KEY_EMERGENCY_SCAN_TIMER_SEC_INT, 3);
+        bundle.putBoolean(KEY_EMERGENCY_CALL_OVER_EMERGENCY_PDN_BOOL, false);
+        overrideCarrierConfig(bundle);
+
+        MockEmergencyRegResult regResult = getEmergencyRegResult(EUTRAN, REGISTRATION_STATE_UNKNOWN,
+                0, false, false, 0, 0, "", "");
+        sMockModemManager.setEmergencyRegResult(sTestSlot, regResult);
+
+        bindImsService(ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN);
+
+        placeOutgoingCall(TEST_EMERGENCY_NUMBER);
+
+        assertTrue(waitForNetworkLatchCountdown(LATCH_TRIGGER_EMERGENCY_SCAN));
+        assertEquals(EMERGENCY_MODE_WWAN, sMockModemManager.getEmergencyMode(sTestSlot));
+        assertTrue(waitForNetworkLatchCountdown(LATCH_CANCEL_EMERGENCY_SCAN));
+
+        TimeUnit.MILLISECONDS.sleep(WAIT_REQUEST_TIMEOUT_MS);
+
+        assertEquals(EMERGENCY_MODE_WLAN, sMockModemManager.getEmergencyMode(sTestSlot));
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getImsCallsession();
+
+        assertNotNull(callSession);
+    }
+
+    @Test
     public void testDefaultCsThenPs() throws Exception {
         // Setup pre-condition
         unsolBarringInfoChanged(true);
@@ -1177,6 +1212,7 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
         int maxRetriesOverWiFi = 1;
         int cellularScanTimerSec = 10;
         int scanType = SCAN_TYPE_NO_PREFERENCE;
+        boolean useEmergencyPdn = true;
         boolean requiresImsRegistration = false;
         boolean requiresVoLteEnabled = false;
         boolean ltePreferredAfterNrFailed = false;
@@ -1184,15 +1220,15 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
         return getPersistableBundle(imsRats, csRats, imsRoamRats, csRoamRats,
                 domainPreference, roamDomainPreference, imsWhenVoiceOnCs, maxRetriesOverWiFi,
-                cellularScanTimerSec, scanType, requiresImsRegistration, requiresVoLteEnabled,
-                ltePreferredAfterNrFailed, cdmaPreferredNumbers);
+                useEmergencyPdn, cellularScanTimerSec, scanType, requiresImsRegistration,
+                requiresVoLteEnabled, ltePreferredAfterNrFailed, cdmaPreferredNumbers);
     }
 
     private static PersistableBundle getPersistableBundle(
             @Nullable int[] imsRats, @Nullable int[] csRats,
             @Nullable int[] imsRoamRats, @Nullable int[] csRoamRats,
             @Nullable int[] domainPreference, @Nullable int[] roamDomainPreference,
-            boolean imsWhenVoiceOnCs, int maxRetriesOverWiFi,
+            boolean imsWhenVoiceOnCs, int maxRetriesOverWiFi, boolean useEmergencyPdn,
             int cellularScanTimerSec, int scanType, boolean requiresImsRegistration,
             boolean requiresVoLteEnabled, boolean ltePreferredAfterNrFailed,
             @Nullable String[] cdmaPreferredNumbers) {
@@ -1225,6 +1261,7 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
         }
         bundle.putBoolean(KEY_PREFER_IMS_EMERGENCY_WHEN_VOICE_CALLS_ON_CS_BOOL, imsWhenVoiceOnCs);
         bundle.putInt(KEY_MAXIMUM_NUMBER_OF_EMERGENCY_TRIES_OVER_VOWIFI_INT, maxRetriesOverWiFi);
+        bundle.putBoolean(KEY_EMERGENCY_CALL_OVER_EMERGENCY_PDN_BOOL, useEmergencyPdn);
         bundle.putInt(KEY_EMERGENCY_SCAN_TIMER_SEC_INT, cellularScanTimerSec);
         bundle.putInt(KEY_EMERGENCY_NETWORK_SCAN_TYPE_INT, scanType);
         bundle.putBoolean(KEY_EMERGENCY_REQUIRES_IMS_REGISTRATION_BOOL, requiresImsRegistration);
