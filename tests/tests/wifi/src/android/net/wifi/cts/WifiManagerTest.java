@@ -6412,6 +6412,56 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Tests the builder and get methods for {@link QosPolicyParams}.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    public void testQosPolicyParamsBuilder() throws Exception {
+        final int policyId = 5;
+        final int direction = QosPolicyParams.DIRECTION_DOWNLINK;
+        final int dscp = 12;
+        final int userPriority = QosPolicyParams.USER_PRIORITY_VIDEO_LOW;
+        final MacAddress srcAddr = MacAddress.fromString("00:11:22:33:44:55");
+        final MacAddress dstAddr = MacAddress.fromString("aa:bb:cc:dd:ee:ff");
+        final int srcPort = 123;
+        final int protocol = QosPolicyParams.PROTOCOL_TCP;
+        final int[] dstPortRange = new int[]{15, 22};
+
+        // Invalid parameter
+        assertThrows("Invalid dscp should trigger an exception", IllegalArgumentException.class,
+                () -> new QosPolicyParams.Builder(policyId, direction)
+                        .setDscp(70)
+                        .build());
+        assertThrows("Null src address should trigger an exception", NullPointerException.class,
+                () -> new QosPolicyParams.Builder(policyId, direction)
+                        .setSourceAddress(null)
+                        .build());
+        assertThrows("Null dest address should trigger an exception", NullPointerException.class,
+                () -> new QosPolicyParams.Builder(policyId, direction)
+                        .setDestinationAddress(null)
+                        .build());
+
+        // Valid parameters
+        QosPolicyParams params = new QosPolicyParams.Builder(policyId, direction)
+                .setSourceAddress(srcAddr)
+                .setDestinationAddress(dstAddr)
+                .setDscp(dscp)
+                .setUserPriority(userPriority)
+                .setSourcePort(srcPort)
+                .setProtocol(protocol)
+                .setDestinationPortRange(dstPortRange[0], dstPortRange[1])
+                .build();
+        assertEquals(policyId, params.getPolicyId());
+        assertEquals(direction, params.getDirection());
+        assertEquals(srcAddr, params.getSourceAddress());
+        assertEquals(dstAddr, params.getDestinationAddress());
+        assertEquals(dscp, params.getDscp());
+        assertEquals(userPriority, params.getUserPriority());
+        assertEquals(srcPort, params.getSourcePort());
+        assertEquals(protocol, params.getProtocol());
+        assertArrayEquals(dstPortRange, params.getDestinationPortRange());
+    }
+
+    /**
      * Verifies when the link layer stats polling interval is overridden by
      * {@link WifiManager#setLinkLayerStatsPollingInterval(int)},
      * the new interval is set correctly by checking
