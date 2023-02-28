@@ -38,7 +38,6 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
-import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -78,7 +77,6 @@ public class BackgroundRestrictedAlarmsTest {
     private Context mContext;
     private ComponentName mAlarmScheduler;
     private AlarmManagerDeviceConfigHelper mConfigHelper = new AlarmManagerDeviceConfigHelper();
-    private UiDevice mUiDevice;
     private DeviceConfigStateHelper mActivityManagerDeviceConfigStateHelper =
             new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER);
     private DeviceConfigStateHelper mTareDeviceConfigStateHelper =
@@ -99,7 +97,6 @@ public class BackgroundRestrictedAlarmsTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mAlarmScheduler = new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER);
         mAlarmCount = 0;
         final IntentFilter intentFilter = new IntentFilter();
@@ -227,12 +224,12 @@ public class BackgroundRestrictedAlarmsTest {
     }
 
     private void setAppStandbyBucket(String bucket) throws IOException {
-        mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " " + bucket);
+        SystemUtil.runShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " " + bucket);
     }
 
     private void makeUidIdle() throws IOException {
-        mUiDevice.executeShellCommand("cmd deviceidle tempwhitelist -r " + TEST_APP_PACKAGE);
-        mUiDevice.executeShellCommand("am make-uid-idle " + TEST_APP_PACKAGE);
+        SystemUtil.runShellCommand("cmd deviceidle tempwhitelist -r " + TEST_APP_PACKAGE);
+        SystemUtil.runShellCommand("am make-uid-idle " + TEST_APP_PACKAGE);
     }
 
     private void toggleAutoRestrictedBucketOnBgRestricted(boolean enable) {

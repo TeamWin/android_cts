@@ -38,7 +38,6 @@ import android.os.BatteryManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
-import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 import android.util.LongArray;
 
@@ -49,6 +48,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -111,8 +111,6 @@ public class AppStandbyTests {
     private static final DeviceConfigStateHelper sTareDeviceConfigStateHelper =
             new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_TARE);
     private static Context sContext = InstrumentationRegistry.getTargetContext();
-    private static UiDevice sUiDevice = UiDevice.getInstance(
-            InstrumentationRegistry.getInstrumentation());
 
     private ComponentName mAlarmScheduler;
     private AtomicInteger mAlarmCount;
@@ -313,7 +311,7 @@ public class AppStandbyTests {
     }
 
     private static String executeAndLog(String cmd) throws IOException {
-        final String output = sUiDevice.executeShellCommand(cmd).trim();
+        final String output = SystemUtil.runShellCommand(cmd).trim();
         Log.d(TAG, "command: [" + cmd + "], output: [" + output + "]");
         return output;
     }
