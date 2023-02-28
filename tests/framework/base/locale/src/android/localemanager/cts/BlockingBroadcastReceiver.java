@@ -71,8 +71,8 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver {
         return mInputMethodId;
     }
 
-    public void await() throws Exception {
-        mLatch.await(5, TimeUnit.SECONDS);
+    public boolean await() throws Exception {
+        return mLatch.await(5, TimeUnit.SECONDS);
     }
 
     public void reset() {

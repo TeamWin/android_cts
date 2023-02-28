@@ -28,6 +28,7 @@
     <receiver android:name="android.localemanager.cts.app.TestBroadcastReceiver"  android:exported="true" android:enabled="true">
       <intent-filter>
         <action android:name="android.intent.action.LOCALE_CHANGED"/>
+        <action android:name="android.locale.cts.action.RECEIVER_ACTION"/>
       </intent-filter>
     </receiver>
   </application>
