@@ -620,20 +620,30 @@ public class VehiclePropertyVerifier<T> {
 
     }
 
+    private static int getUpdatesPerAreaId(int changeMode) {
+        return changeMode != CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS
+                ? 1 : 2;
+    }
+
+    private static long getRegisterCallbackTimeoutMillis(int changeMode, float minSampleRate) {
+        long timeoutMillis = 1500;
+        if (changeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS) {
+            float secondsToMillis = 1_000;
+            long bufferMillis = 1_000; // 1 second
+            timeoutMillis = ((long) ((1.0f / minSampleRate) * secondsToMillis
+                    * getUpdatesPerAreaId(changeMode))) + bufferMillis;
+        }
+        return timeoutMillis;
+    }
+
     private void verifyCarPropertyValueCallback(CarPropertyConfig<T> carPropertyConfig,
             CarPropertyManager carPropertyManager) {
         if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
             return;
         }
-        int updatesPerAreaId = 1;
-        long timeoutMillis = 1500;
-        if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS) {
-            updatesPerAreaId = 2;
-            float secondsToMillis = 1_000;
-            long bufferMillis = 1_000; // 1 second
-            timeoutMillis = ((long) ((1.0f / carPropertyConfig.getMinSampleRate()) * secondsToMillis
-                    * updatesPerAreaId)) + bufferMillis;
-        }
+        int updatesPerAreaId = getUpdatesPerAreaId(mChangeMode);
+        long timeoutMillis = getRegisterCallbackTimeoutMillis(mChangeMode,
+                carPropertyConfig.getMinSampleRate());
 
         CarPropertyValueCallback carPropertyValueCallback = new CarPropertyValueCallback(
                 mPropertyName, carPropertyConfig.getAreaIds(), updatesPerAreaId, timeoutMillis);
@@ -1106,57 +1116,59 @@ public class VehiclePropertyVerifier<T> {
                     mPropertyName
                             + " - property ID: "
                             + mPropertyId
-                            + " CarPropertyConfig should not be accessible without permissions")
+                            + " CarPropertyConfig should not be accessible without permissions.")
                 .that(carPropertyManager.getCarPropertyConfig(mPropertyId))
                 .isNull();
 
+        int access = carPropertyConfig.getAccess();
         for (int areaId : carPropertyConfig.getAreaIds()) {
-            switch(carPropertyConfig.getAccess()) {
-                case CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE:
-                    assertThrows(
-                            mPropertyName
-                                    + " - property ID: "
-                                    + mPropertyId
-                                    + " - area ID: "
-                                    + areaId
-                                    + " should not be able to be read without permissions",
-                            SecurityException.class,
-                            () -> carPropertyManager.getProperty(mPropertyId, areaId));
-                    assertThrows(
-                            mPropertyName
-                                    + " - property ID: "
-                                    + mPropertyId
-                                    + " - area ID: "
-                                    + areaId
-                                    + " should not be able to be written to without permissions",
-                            SecurityException.class,
-                            () -> carPropertyManager.setProperty(
-                                        Object.class, mPropertyId, areaId, 0));
-                    break;
-                case CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ:
-                    assertThrows(
-                            mPropertyName
-                                    + " - property ID: "
-                                    + mPropertyId
-                                    + " - area ID: "
-                                    + areaId
-                                    + " should not be able to be read without permissions",
-                            SecurityException.class,
-                            () -> carPropertyManager.getProperty(mPropertyId, areaId));
-                    break;
-                case CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE:
-                    assertThrows(
-                            mPropertyName
-                                    + " - property ID: "
-                                    + mPropertyId
-                                    + " - area ID: "
-                                    + areaId
-                                    + " should not be able to be written to without permissions",
-                            SecurityException.class,
-                            () -> carPropertyManager.setProperty(
-                                        Object.class, mPropertyId, areaId, 0));
-                    break;
+            if (access == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ
+                    || access == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                assertThrows(
+                        mPropertyName
+                                + " - property ID: "
+                                + mPropertyId
+                                + " - area ID: "
+                                + areaId
+                                + " should not be able to be read without permissions.",
+                        SecurityException.class,
+                        () -> carPropertyManager.getProperty(mPropertyId, areaId));
             }
+            if (access == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE
+                    || access == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                assertThrows(
+                        mPropertyName
+                                + " - property ID: "
+                                + mPropertyId
+                                + " - area ID: "
+                                + areaId
+                                + " should not be able to be written to without permissions.",
+                        SecurityException.class,
+                        () -> carPropertyManager.setProperty(mPropertyType, mPropertyId, areaId,
+                                getDefaultValue(mPropertyType)));
+            }
+        }
+
+        if (access == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
+            return;
+        }
+        int updatesPerAreaId = getUpdatesPerAreaId(mChangeMode);
+        long timeoutMillis = getRegisterCallbackTimeoutMillis(mChangeMode,
+                carPropertyConfig.getMinSampleRate());
+
+        CarPropertyValueCallback carPropertyValueCallback = new CarPropertyValueCallback(
+                mPropertyName, carPropertyConfig.getAreaIds(), updatesPerAreaId, timeoutMillis);
+        try {
+            assertWithMessage(
+                    mPropertyName
+                            + " - property ID: "
+                            + mPropertyId
+                            + " should not be able to be listened to without permissions.")
+                    .that(carPropertyManager.registerCallback(carPropertyValueCallback, mPropertyId,
+                    carPropertyConfig.getMaxSampleRate())).isFalse();
+        } finally {
+            // TODO(b/269891334): registerCallback needs to fix exception handling
+            carPropertyManager.unregisterCallback(carPropertyValueCallback, mPropertyId);
         }
     }
 
