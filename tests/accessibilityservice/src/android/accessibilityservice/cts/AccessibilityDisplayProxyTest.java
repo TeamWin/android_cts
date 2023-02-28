@@ -16,6 +16,8 @@
 
 package android.accessibilityservice.cts;
 
+import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
+import static android.Manifest.permission.MANAGE_ACCESSIBILITY;
 import static android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_AUDIBLE;
 import static android.accessibilityservice.AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
@@ -219,7 +221,8 @@ public class AccessibilityDisplayProxyTest {
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerProxy"})
     public void testRegisterProxyForDisplay_withPermission_successfullyRegisters() {
         runWithShellPermissionIdentity(sUiAutomation,
-                () -> assertThat(mA11yManager.registerDisplayProxy(mA11yProxy)).isTrue());
+                () -> assertThat(mA11yManager.registerDisplayProxy(mA11yProxy)).isTrue(),
+                CREATE_VIRTUAL_DEVICE, MANAGE_ACCESSIBILITY);
     }
 
     @Test
@@ -231,7 +234,23 @@ public class AccessibilityDisplayProxyTest {
 
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerProxy"})
-    public void testRegisterProxyForDisplay_alreadyProxyed_throwsSecurityException() {
+    public void testRegisterProxyForDisplay_withoutA11yPermission_throwsSecurityException() {
+        runWithShellPermissionIdentity(sUiAutomation,
+                () -> assertThrows(SecurityException.class, () ->
+                mA11yManager.registerDisplayProxy(mA11yProxy)), CREATE_VIRTUAL_DEVICE);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerProxy"})
+    public void testRegisterProxyForDisplay_withoutDevicePermission_throwsSecurityException() {
+        runWithShellPermissionIdentity(sUiAutomation,
+                () -> assertThrows(SecurityException.class, () ->
+                        mA11yManager.registerDisplayProxy(mA11yProxy)), MANAGE_ACCESSIBILITY);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerProxy"})
+    public void testRegisterProxyForDisplay_alreadyProxyed_throwsIllegalArgumentException() {
         runWithShellPermissionIdentity(sUiAutomation,
                 () -> assertThat(mA11yManager.registerDisplayProxy(mA11yProxy)).isTrue());
 
@@ -253,6 +272,22 @@ public class AccessibilityDisplayProxyTest {
             runWithShellPermissionIdentity(sUiAutomation, () ->
                     mA11yManager.unregisterDisplayProxy(invalidProxy));
         }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#unregisterProxy"})
+    public void testUnregisterAccessibilityProxy_withoutDevicePermission_throwsSecurityException() {
+        runWithShellPermissionIdentity(sUiAutomation,
+                () -> assertThrows(SecurityException.class, () ->
+                        mA11yManager.unregisterDisplayProxy(mA11yProxy)), MANAGE_ACCESSIBILITY);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#unregisterProxy"})
+    public void testUnregisterAccessibilityProxy_withoutA11yPermission_throwsSecurityException() {
+        runWithShellPermissionIdentity(sUiAutomation,
+                () -> assertThrows(SecurityException.class, () ->
+                        mA11yManager.unregisterDisplayProxy(mA11yProxy)), CREATE_VIRTUAL_DEVICE);
     }
 
     @Test
