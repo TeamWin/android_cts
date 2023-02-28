@@ -136,8 +136,8 @@ public class JavaPlayer extends Player {
 
             allocBurstBuffer();
             mAudioTrack.setPreferredDevice(mRouteDevice);
-            // set enough space to double-buffer
-            mAudioTrack.setBufferSizeInFrames(mNumBufferFrames * 2);
+            // set enough space to avoid glitches
+            mAudioTrack.setBufferSizeInFrames(mNumBufferFrames * 4);
         }  catch (UnsupportedOperationException ex) {
             if (LOG) {
                 Log.e(TAG, "Couldn't open AudioTrack: " + ex);

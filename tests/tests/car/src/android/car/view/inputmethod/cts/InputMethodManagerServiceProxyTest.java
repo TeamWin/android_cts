@@ -22,8 +22,10 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.UserManager;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
@@ -31,6 +33,7 @@ import org.junit.Test;
 
 
 // TODO(b/267678351): Mark this test with RequireCheckerRule
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 public final class InputMethodManagerServiceProxyTest {
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();

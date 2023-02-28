@@ -20,8 +20,8 @@ import static android.Manifest.permission.ACTIVITY_EMBEDDING;
 import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.WAKE_LOCK;
-import static android.companion.virtual.VirtualDeviceManager.DEVICE_ID_DEFAULT;
-import static android.companion.virtual.VirtualDeviceManager.DEVICE_ID_INVALID;
+import static android.content.Context.DEVICE_ID_DEFAULT;
+import static android.content.Context.DEVICE_ID_INVALID;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.virtualdevice.cts.util.VirtualDeviceTestUtils.createActivityOptions;
 

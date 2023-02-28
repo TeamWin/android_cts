@@ -160,7 +160,7 @@ public class ActivityManagerTest {
     // The action sent back by the SIMPLE_APP_IMMEDIATE_EXIT when it terminates.
     private static final String ACTIVITY_EXIT_ACTION =
             "com.android.cts.launchertests.LauncherAppsTests.EXIT_ACTION";
-    // The action sent back by the SIMPLE_APP_CHAIN_EXIT when the task chain ends. 
+    // The action sent back by the SIMPLE_APP_CHAIN_EXIT when the task chain ends.
     private static final String ACTIVITY_CHAIN_EXIT_ACTION =
             "com.android.cts.launchertests.LauncherAppsTests.CHAIN_EXIT_ACTION";
     // The action sent to identify the time track info.
@@ -1021,6 +1021,7 @@ public class ActivityManagerTest {
                 ACTIVITY_LAUNCHED_ACTION);
         // Start an activity of another APK.
         Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_MAIN);
         intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mTargetContext.startActivity(intent);
@@ -1028,7 +1029,7 @@ public class ActivityManagerTest {
 
         // Start a new activity in the same task. Here adds an action to make a different to intent
         // filter comparison so another same activity will be created.
-        intent.setAction(Intent.ACTION_MAIN);
+        intent.setAction(Intent.ACTION_VIEW);
         mTargetContext.startActivity(intent);
         assertEquals(RESULT_PASS, appStartedReceiver.waitForActivity());
         appStartedReceiver.close();
