@@ -577,7 +577,7 @@ public class ShareIdentityTest {
      * and {@code testCase}.
      */
     private static Intent getTestIntent(int testId, int testCase) {
-        Intent intent = new Intent();
+        Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setComponent(TEST_COMPONENT);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT
                 | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
