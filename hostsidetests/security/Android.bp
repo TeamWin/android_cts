@@ -45,6 +45,10 @@ java_test_host {
     static_libs: [
         "CtsSecurityHostTestCases_StaticLibs",
         "diffutils-prebuilt-jar",
+        "CompatChangeGatingTestBase",
+    ],
+    data: [
+        ":CtsZipValidateApp",
     ],
     // These two host cc_library_* modules cannot be wrapped as java_resources directly into
     // a .jar due to the "missing variant" issue, see b/197025344 for more details. This workaround
