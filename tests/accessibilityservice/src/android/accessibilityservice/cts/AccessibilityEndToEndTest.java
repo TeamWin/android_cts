@@ -1643,6 +1643,7 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         final StubMotionInterceptingAccessibilityService service =
                 mMotionInterceptingServiceRule.enableService();
         service.setMotionEventSources(requestedSource);
+        assertThat(service.getServiceInfo().getMotionEventSources()).isEqualTo(requestedSource);
         final Object waitObject = new Object();
         final AtomicInteger eventCount = new AtomicInteger(0);
         service.setOnMotionEventListener(motionEvent -> {
@@ -1664,6 +1665,7 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
 
         // Stop listening to events for this source, then inject 1 more event to the input filter.
         service.setMotionEventSources(0 /* no sources */);
+        assertThat(service.getServiceInfo().getMotionEventSources()).isEqualTo(0);
         sUiAutomation.injectInputEventToInputFilter(createMotionEvent(requestedSource));
         // Assert we only received the original 2.
         try {
