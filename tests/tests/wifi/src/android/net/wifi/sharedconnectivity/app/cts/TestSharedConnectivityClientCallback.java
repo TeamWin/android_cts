@@ -26,17 +26,17 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 public class TestSharedConnectivityClientCallback implements SharedConnectivityClientCallback {
     private static final String TAG = "SharedConnectivityTestingCallback";
 
-    private final CountDownLatch mServiceConnectedLatch = new CountDownLatch(1);
     private List<TetherNetwork> mTetherNetworksList = new ArrayList<>();
     private List<KnownNetwork> mKnownNetworksList = new ArrayList<>();
     private SharedConnectivitySettingsState mSharedConnectivitySettingsState;
     private TetherNetworkConnectionStatus mTetherNetworkConnectionStatus;
     private KnownNetworkConnectionStatus mKnownNetworkConnectionStatus;
+    private boolean mIsServiceConnected = false;
+    private boolean mIsRegisterCallbackFailed = false;
 
     @Override
     public void onTetherNetworksUpdated(List<TetherNetwork> networks) {
@@ -74,21 +74,19 @@ public class TestSharedConnectivityClientCallback implements SharedConnectivityC
     @Override
     public void onServiceConnected() {
         Log.i(TAG, "onServiceConnected");
-        mServiceConnectedLatch.countDown();
+        mIsServiceConnected = true;
     }
 
     @Override
     public void onServiceDisconnected() {
         Log.i(TAG, "onServiceDisconnected");
+        mIsServiceConnected = false;
     }
 
     @Override
     public void onRegisterCallbackFailed(Exception exception) {
         Log.i(TAG, "onRegisterCallbackFailed");
-    }
-
-    public CountDownLatch getServiceConnectedLatch() {
-        return mServiceConnectedLatch;
+        mIsRegisterCallbackFailed = true;
     }
 
     public List<TetherNetwork> getTetherNetworksList() {
@@ -109,5 +107,13 @@ public class TestSharedConnectivityClientCallback implements SharedConnectivityC
 
     public KnownNetworkConnectionStatus getKnownNetworkConnectionStatus() {
         return mKnownNetworkConnectionStatus;
+    }
+
+    public boolean isServiceConnected() {
+        return mIsServiceConnected;
+    }
+
+    public boolean isRegisterCallbackFailed() {
+        return mIsRegisterCallbackFailed;
     }
 }
