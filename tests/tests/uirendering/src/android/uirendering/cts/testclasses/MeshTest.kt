@@ -989,6 +989,134 @@ class MeshTest : ActivityTestBase() {
         assertEquals("myVarying", varying.name)
     }
 
+    @Test
+    fun testInvalidOffsetThrows() {
+        val meshSpec = MeshSpecification.make(
+            simpleAttributeList, 8, simpleVaryingList,
+            simpleVertexShader, simpleFragmentShader
+        )
+        val vertexBuffer = FloatBuffer.allocate(6)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(50f)
+        vertexBuffer.put(50f)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(50f)
+        vertexBuffer.rewind()
+        val indexBuffer = ShortBuffer.allocate(3)
+        indexBuffer.put(0, 0)
+        indexBuffer.put(1, 1)
+        indexBuffer.put(2, 2)
+        indexBuffer.rewind()
+        indexBuffer.position(1)
+        assertThrows(IllegalArgumentException::class.java) {
+            Mesh(
+                meshSpec, Mesh.TRIANGLES, vertexBuffer, 3, indexBuffer,
+                RectF(0f, 0f, 100f, 100f)
+            )
+        }
+    }
+
+    @Test
+    fun testInvalidVertexCountThrows() {
+        val meshSpec = MeshSpecification.make(
+            simpleAttributeList, 8, simpleVaryingList,
+            simpleVertexShader, simpleFragmentShader
+        )
+        val vertexBuffer = FloatBuffer.allocate(6)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(50f)
+        vertexBuffer.put(50f)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(50f)
+        vertexBuffer.rewind()
+        assertThrows(IllegalArgumentException::class.java) {
+            Mesh(
+                meshSpec, Mesh.TRIANGLES, vertexBuffer, 2,
+                RectF(0f, 0f, 100f, 100f)
+            )
+        }
+    }
+
+    @Test
+    fun testInvalidIndexCountThrows() {
+        val meshSpec = MeshSpecification.make(
+            simpleAttributeList, 8, simpleVaryingList,
+            simpleVertexShader, simpleFragmentShader
+        )
+        val vertexBuffer = FloatBuffer.allocate(6)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(50f)
+        vertexBuffer.put(50f)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(50f)
+        vertexBuffer.rewind()
+        val indexBuffer = ShortBuffer.allocate(1)
+        indexBuffer.put(0, 0)
+        indexBuffer.rewind()
+        assertThrows(IllegalArgumentException::class.java) {
+            Mesh(
+                meshSpec, Mesh.TRIANGLES, vertexBuffer, 3, indexBuffer,
+                RectF(0f, 0f, 100f, 100f)
+            )
+        }
+    }
+
+    @Test
+    fun testInvalidIndexOffsetThrows() {
+        val meshSpec = MeshSpecification.make(
+            simpleAttributeList, 8, simpleVaryingList,
+            simpleVertexShader, simpleFragmentShader
+        )
+        val vertexBuffer = FloatBuffer.allocate(6)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(50f)
+        vertexBuffer.put(50f)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(50f)
+        vertexBuffer.rewind()
+        val indexBuffer = ShortBuffer.allocate(1)
+        indexBuffer.put(0, 0)
+        indexBuffer.rewind()
+        assertThrows(IllegalArgumentException::class.java) {
+            Mesh(
+                meshSpec, Mesh.TRIANGLES, vertexBuffer, 3, indexBuffer,
+                RectF(0f, 0f, 100f, 100f)
+            )
+        }
+    }
+
+    @Test
+    fun testIndexOffsetBeyondBoundsThrows() {
+        val meshSpec = MeshSpecification.make(
+            simpleAttributeList, 8, simpleVaryingList,
+            simpleVertexShader, simpleFragmentShader
+        )
+        val vertexBuffer = FloatBuffer.allocate(6)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(50f)
+        vertexBuffer.put(50f)
+        vertexBuffer.put(0f)
+        vertexBuffer.put(50f)
+        vertexBuffer.rewind()
+        val indexBuffer = ShortBuffer.allocate(3)
+        indexBuffer.put(0, 0)
+        indexBuffer.put(1, 1)
+        indexBuffer.put(2, 2)
+        indexBuffer.rewind()
+        indexBuffer.position(2)
+        assertThrows(IllegalArgumentException::class.java) {
+            Mesh(
+                meshSpec, Mesh.TRIANGLES, vertexBuffer, 3, indexBuffer,
+                RectF(0f, 0f, 100f, 100f)
+            )
+        }
+    }
+
     // /////////////    Test Values    ///////////////
 
     private val simpleAttributeList = arrayOf(
