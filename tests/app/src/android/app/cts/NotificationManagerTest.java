@@ -404,7 +404,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         UiDevice.getInstance(mInstrumentation).pressHome();
     }
 
-    private void verifyCanSendFullScreenIntent(int appOpState, boolean canSend) throws Exception {
+    private void verifyCanUseFullScreenIntent(int appOpState, boolean canSend) throws Exception {
         final int previousState = PermissionUtils.getAppOp(STUB_PACKAGE_NAME,
                 Manifest.permission.USE_FULL_SCREEN_INTENT);
         try {
@@ -413,9 +413,9 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                     appOpState);
 
             if (canSend) {
-                assertTrue(mNotificationManager.canSendFullScreenIntent());
+                assertTrue(mNotificationManager.canUseFullScreenIntent());
             } else {
-                assertFalse(mNotificationManager.canSendFullScreenIntent());
+                assertFalse(mNotificationManager.canUseFullScreenIntent());
             }
 
         } finally {
@@ -427,15 +427,15 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testCanSendFullScreenIntent_modeDefault_returnsTrue() throws Exception {
-        verifyCanSendFullScreenIntent(MODE_DEFAULT, /*canSend=*/ true);
+        verifyCanUseFullScreenIntent(MODE_DEFAULT, /*canSend=*/ true);
     }
 
     public void testCanSendFullScreenIntent_modeAllowed_returnsTrue() throws Exception {
-        verifyCanSendFullScreenIntent(MODE_ALLOWED, /*canSend=*/ true);
+        verifyCanUseFullScreenIntent(MODE_ALLOWED, /*canSend=*/ true);
     }
 
     public void testCanSendFullScreenIntent_modeErrored_returnsFalse() throws Exception {
-        verifyCanSendFullScreenIntent(MODE_ERRORED, /*canSend=*/ false);
+        verifyCanUseFullScreenIntent(MODE_ERRORED, /*canSend=*/ false);
     }
 
     public void testCreateChannelGroup() throws Exception {
