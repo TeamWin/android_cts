@@ -31,8 +31,6 @@ import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_UNLOCKIN
 import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_VISIBLE;
 import static android.car.user.CarUserManager.UserLifecycleEvent;
 
-import static com.android.compatibility.common.util.TestUtils.waitUntil;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -162,7 +160,7 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                     .contains(newUser);
             // By the time USER_VISIBLE event is received the user should have been assigned to
             // the display.
-            assertWithMessage("User assigned to display " + displayId)
+            assertWithMessage("User assigned to display %s", displayId)
                     .that(mOccupantZoneManager.getUserForDisplayId(displayId))
                     .isEqualTo(newUser.getIdentifier());
             CarOccupantZoneManager.OccupantZoneInfo zone =
@@ -183,14 +181,13 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                     .isEqualTo(USER_LIFECYCLE_EVENT_TYPE_INVISIBLE);
             assertWithMessage("UserId of the event").that(invisibleEvent.getUserHandle())
                     .isEqualTo(newUser);
-            // TODO(b/269324030): Remove the retry logic when we know the user is unassigned by
-            // the time USER_INVISIBLE event is received.
             assertWithMessage("Visible users").that(mUserManager.getVisibleUsers())
                     .doesNotContain(newUser);
-            waitUntil("User " + newUser + " cannot be unassigned from display " + displayId
-                            + " after timeout", STOP_TIMEOUT_MS / 1000,
-                    () -> (mOccupantZoneManager.getUserForDisplayId(displayId)
-                            == CarOccupantZoneManager.INVALID_USER_ID));
+            // By the time USER_INVISIBLE event is received, the user should have been unassigned
+            // from the display.
+            assertWithMessage("User assigned to display %s", displayId)
+                    .that(mOccupantZoneManager.getUserForDisplayId(displayId))
+                            .isEqualTo(CarOccupantZoneManager.INVALID_USER_ID);
             assertWithMessage("The occupant zone assigned to the stopped user %s", newUser)
                     .that(mOccupantZoneManager.getOccupantZoneForUser(newUser))
                     .isNull();
