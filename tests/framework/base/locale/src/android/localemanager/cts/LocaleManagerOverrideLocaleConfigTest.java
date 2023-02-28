@@ -27,6 +27,7 @@ import static com.android.compatibility.common.util.SystemUtil.callWithShellPerm
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.Manifest;
@@ -155,7 +156,7 @@ public class LocaleManagerOverrideLocaleConfigTest extends ActivityManagerTestBa
         // app.
         launchActivity(TEST_APP_MAIN_ACTIVITY, extraString(EXTRA_QUERY_LOCALECONFIG, "true"));
 
-        mTestAppCreationInfoProvider.await();
+        assertTrue(mTestAppCreationInfoProvider.await());
         assertReceivedBroadcastContains(mTestAppCreationInfoProvider, TEST_APP_PACKAGE,
                 OVERRIDE_LOCALES);
     }
