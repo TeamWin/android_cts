@@ -35,6 +35,7 @@ import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.hardware.display.VirtualDisplayConfig;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Bundle;
@@ -287,8 +288,11 @@ public class VirtualDisplayTest {
      */
     @Test
     public void testVirtualDisplayWithRequestedRefreshRate() throws Exception {
-        VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
-                WIDTH, HEIGHT, DENSITY, REQUESTED_REFRESH_RATE, mSurface, 0);
+        VirtualDisplayConfig config = new VirtualDisplayConfig.Builder(NAME, WIDTH, HEIGHT, DENSITY)
+                .setSurface(mSurface)
+                .setRequestedRefreshRate(REQUESTED_REFRESH_RATE)
+                .build();
+        VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(config);
         assertNotNull("virtual display must not be null", virtualDisplay);
         Display display = virtualDisplay.getDisplay();
         try {
