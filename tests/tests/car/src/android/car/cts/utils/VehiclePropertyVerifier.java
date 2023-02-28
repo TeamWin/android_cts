@@ -41,9 +41,11 @@ import android.car.hardware.property.CarPropertyManager.GetPropertyCallback;
 import android.car.hardware.property.CarPropertyManager.GetPropertyRequest;
 import android.car.hardware.property.CarPropertyManager.GetPropertyResult;
 import android.car.hardware.property.CarPropertyManager.PropertyAsyncError;
+import android.car.hardware.property.PropertyNotAvailableAndRetryException;
 import android.car.hardware.property.PropertyNotAvailableErrorCode;
 import android.car.hardware.property.PropertyNotAvailableException;
 import android.os.SystemClock;
+import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 
@@ -69,6 +71,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class VehiclePropertyVerifier<T> {
+    private static final String TAG = VehiclePropertyVerifier.class.getSimpleName();
     private static final String CAR_PROPERTY_VALUE_SOURCE_GETTER = "Getter";
     private static final String CAR_PROPERTY_VALUE_SOURCE_CALLBACK = "Callback";
     private static final float FLOAT_INEQUALITY_THRESHOLD = 0.00001f;
@@ -320,15 +323,22 @@ public class VehiclePropertyVerifier<T> {
                                         VehiclePropertyIds.HVAC_POWER_ON);
                         if (hvacPowerOnCarPropertyConfig != null && hvacPowerOnCarPropertyConfig
                                 .getConfigArray().contains(mPropertyId)) {
-                            hvacPowerStateByAreaId = getHvacPowerStateByAreaId(
-                                    hvacPowerOnCarPropertyConfig, carPropertyManager);
+                            hvacPowerStateByAreaId = (SparseArray<Boolean>)
+                                    getInitialValuesByAreaId(hvacPowerOnCarPropertyConfig,
+                                            carPropertyManager);
                             turnOnHvacPower(hvacPowerOnCarPropertyConfig, carPropertyManager);
                         }
                     }
 
                     verifyCarPropertyValueGetter(carPropertyConfig, carPropertyManager);
                     verifyCarPropertyValueCallback(carPropertyConfig, carPropertyManager);
+                    SparseArray<T> areaIdToInitialValue = getInitialValuesByAreaId(
+                            carPropertyConfig, carPropertyManager);
                     verifyCarPropertyValueSetter(carPropertyConfig, carPropertyManager);
+                    if (areaIdToInitialValue != null) {
+                        restoreInitialValuesByAreaId(carPropertyConfig, carPropertyManager,
+                                areaIdToInitialValue);
+                    }
                     verifyGetPropertiesAsync(carPropertyConfig, carPropertyManager);
                     // TODO(b/266000988): verifySetProeprtiesAsync(...)
 
@@ -336,26 +346,46 @@ public class VehiclePropertyVerifier<T> {
                         // TODO(b/265483050): Reenable once the bug is fixed.
                         // turnOffHvacPower(hvacPowerOnCarPropertyConfig, carPropertyManager);
                         // verifySetNotAvailable(carPropertyConfig, carPropertyManager);
-                        // restoreHvacPower(hvacPowerOnCarPropertyConfig, carPropertyManager,
-                        //         hvacPowerStateByAreaId);
+                        restoreInitialValuesByAreaId(hvacPowerOnCarPropertyConfig,
+                                carPropertyManager, hvacPowerStateByAreaId);
                     }
                 }, allPermissions.toArray(new String[0]));
 
         verifyPermissionNotGrantedException(savedCarPropertyConfig.get(), carPropertyManager);
     }
 
-    // Get a map from hvac area Ids to hvac power state.
-    private static SparseArray<Boolean> getHvacPowerStateByAreaId(
-            CarPropertyConfig<Boolean> hvacPowerOnCarPropertyConfig,
-            CarPropertyManager carPropertyManager) {
-        SparseArray<Boolean> powerStateByAreaId = new SparseArray<>();
-        for (int areaId : hvacPowerOnCarPropertyConfig.getAreaIds()) {
-            boolean isOn = carPropertyManager.getBooleanProperty(
-                    VehiclePropertyIds.HVAC_POWER_ON, areaId);
-            powerStateByAreaId.put(areaId, isOn);
+    // Get a map storing the property's area Ids to the initial values.
+    @Nullable
+    private static <U> SparseArray<U> getInitialValuesByAreaId(
+            CarPropertyConfig<U> carPropertyConfig, CarPropertyManager carPropertyManager) {
+        // Array types are being skipped because setting them is not supported currently.
+        if (carPropertyConfig.getAccess() != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE
+                || carPropertyConfig.getPropertyType().isArray()) {
+            return null;
         }
-        return powerStateByAreaId;
+        SparseArray<U> areaIdToInitialValue = new SparseArray<U>();
+        int propertyId = carPropertyConfig.getPropertyId();
+        String propertyName = VehiclePropertyIds.toString(propertyId);
+        for (int areaId : carPropertyConfig.getAreaIds()) {
+            CarPropertyValue<U> carPropertyValue = null;
+            try {
+                carPropertyValue = carPropertyManager.getProperty(propertyId, areaId);
+            } catch (PropertyNotAvailableAndRetryException | PropertyNotAvailableException
+                    | CarInternalErrorException e) {
+                Log.w(TAG, "Failed to get property:" + propertyName + " at area ID: " + areaId
+                        + " to save initial car property value. Error: " + e);
+                continue;
+            }
+            if (carPropertyValue == null) {
+                Log.w(TAG, "Failed to get property:" + propertyName + " at area ID: " + areaId
+                        + " to save initial car property value.");
+                continue;
+            }
+            areaIdToInitialValue.put(areaId, (U) carPropertyValue.getValue());
+        }
+        return areaIdToInitialValue;
     }
+
 
     // Turn the power on for all hvac areas.
     private static void turnOnHvacPower(
@@ -393,25 +423,38 @@ public class VehiclePropertyVerifier<T> {
         }
     }
 
-    // Restore the hvac power state to the state provided by {@code hvacPowerStateByAreaId}.
-    private void restoreHvacPower(
-            CarPropertyConfig<Boolean> hvacPowerOnCarPropertyConfig,
-            CarPropertyManager carPropertyManager,
-            SparseArray<Boolean> hvacPowerStateByAreaId) {
-        for (int i = 0; i < hvacPowerStateByAreaId.size(); i++) {
-            int areaId = hvacPowerStateByAreaId.keyAt(i);
-            boolean previousState = hvacPowerStateByAreaId.valueAt(i);
-            boolean currentState = carPropertyManager.getBooleanProperty(
-                    VehiclePropertyIds.HVAC_POWER_ON, areaId);
-            if (previousState == currentState) {
+    // Restore the initial values of the property provided by {@code areaIdToInitialValue}.
+    private static <U> void restoreInitialValuesByAreaId(CarPropertyConfig<U> carPropertyConfig,
+            CarPropertyManager carPropertyManager, SparseArray<U> areaIdToInitialValue) {
+        int propertyId = carPropertyConfig.getPropertyId();
+        String propertyName = VehiclePropertyIds.toString(propertyId);
+        for (int i = 0; i < areaIdToInitialValue.size(); i++) {
+            int areaId = areaIdToInitialValue.keyAt(i);
+            U originalValue = areaIdToInitialValue.valueAt(i);
+            CarPropertyValue<U> currentCarPropertyValue = null;
+            try {
+                currentCarPropertyValue = carPropertyManager.getProperty(propertyId, areaId);
+            } catch (PropertyNotAvailableAndRetryException | PropertyNotAvailableException
+                    | CarInternalErrorException e) {
+                Log.w(TAG, "Failed to get property:" + propertyName + " at area ID: " + areaId
+                        + " to restore initial car property value. Error: " + e);
                 continue;
             }
-            CarPropertyValue<Boolean> carPropertyValue = setPropertyAndWaitForChange(
-                    carPropertyManager, VehiclePropertyIds.HVAC_POWER_ON,
-                    Boolean.class, areaId, previousState);
+            if (currentCarPropertyValue == null) {
+                Log.w(TAG, "Failed to get property:" + propertyName + " at area ID: " + areaId
+                        + " to restore initial car property value.");
+                continue;
+            }
+            U currentValue = (U) currentCarPropertyValue.getValue();
+            if (originalValue.equals(currentValue)) {
+                continue;
+            }
+            CarPropertyValue<U> carPropertyValue = setPropertyAndWaitForChange(carPropertyManager,
+                    propertyId, carPropertyConfig.getPropertyType(), areaId, originalValue);
             assertWithMessage(
-                    VehiclePropertyIds.toString(VehiclePropertyIds.HVAC_POWER_ON)
-                            + " carPropertyValue is null for area id: " + areaId)
+                    "Failed to restore car property value for property: " + propertyName
+                            + " at area ID: " + areaId + " to its original value: " + originalValue
+                            + ", current value: " + currentValue)
                     .that(carPropertyValue).isNotNull();
         }
     }
