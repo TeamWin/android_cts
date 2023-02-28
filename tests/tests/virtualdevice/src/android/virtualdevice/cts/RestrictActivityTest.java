@@ -47,6 +47,7 @@ import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.hardware.display.VirtualDisplayConfig;
 import android.media.ImageReader;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
@@ -73,6 +74,9 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class RestrictActivityTest {
+
+    private static final String DISPLAY_NAME = "RestrictActivityTest";
+
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule =
             new AdoptShellPermissionsRule(
@@ -210,24 +214,14 @@ public class RestrictActivityTest {
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         new VirtualDeviceParams.Builder().build());
+        VirtualDisplayConfig.Builder builder =
+                new VirtualDisplayConfig.Builder(DISPLAY_NAME, 100, 100, 240)
+                        .setSurface(mReader.getSurface())
+                        .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
         if (displayCategories != null) {
-            return mVirtualDevice.createVirtualDisplay(
-                    /* width= */ 100,
-                    /* height= */ 100,
-                    /* densityDpi= */ 240,
-                    displayCategories,
-                    mReader.getSurface(),
-                    DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED,
-                    Runnable::run,
-                    mVirtualDisplayCallback);
+            builder = builder.setDisplayCategories(displayCategories);
         }
         return mVirtualDevice.createVirtualDisplay(
-                /* width= */ 100,
-                /* height= */ 100,
-                /* densityDpi= */ 240,
-                mReader.getSurface(),
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED,
-                Runnable::run,
-                mVirtualDisplayCallback);
+                builder.build(), Runnable::run, mVirtualDisplayCallback);
     }
 }
