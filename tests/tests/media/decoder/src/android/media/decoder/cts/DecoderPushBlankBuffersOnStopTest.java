@@ -1,18 +1,34 @@
+/*
+ * Copyright (C) 2023 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package android.media.decoder.cts;
 
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.media.cts.MediaHeavyPresubmitTest;
-import android.media.cts.MediaStubActivity;
 import android.media.MediaCodec;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.cts.MediaHeavyPresubmitTest;
+import android.media.cts.MediaStubActivity;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
-import android.util.Log;
+import android.platform.test.annotations.AppModeFull;
 import android.view.Surface;
 
 import androidx.test.core.app.ActivityScenario;
@@ -21,22 +37,21 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.screenshot.ScreenCapture;
 import androidx.test.runner.screenshot.Screenshot;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.Preconditions;
 
-import org.junit.Test;
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Class that contains tests for the "Push blank buffers on stop" decoder feature.
@@ -51,6 +66,7 @@ import java.util.concurrent.TimeUnit;
  * to ensure the activity is launched in immersive mode and its title is removed.
  */
 @MediaHeavyPresubmitTest
+@AppModeFull(reason = "There should be no instant apps specific behavior related to decoders")
 public class DecoderPushBlankBuffersOnStopTest {
     private static final String TAG = "DecoderPushBlankBufferOnStopTest";
     private static final String mInpPrefix = WorkDir.getMediaDirString();
@@ -240,14 +256,17 @@ public class DecoderPushBlankBuffersOnStopTest {
         }
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
+    // This test was added in Android U. Though KEY_PUSH_BLANK_BUFFERS_ON_STOP has been around for
+    // a while now, it was not consistent/enforced till Android U.
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     @Test
     public void testPushBlankBuffersOnStopVp9() throws Exception {
         testPushBlankBuffersOnStop(
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
+    // This test was added in Android U.
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     @Test
     public void testPushBlankBuffersOnStopAvc() throws Exception {
         testPushBlankBuffersOnStop(
