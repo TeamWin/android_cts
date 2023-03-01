@@ -26,6 +26,8 @@ import static android.service.autofill.FillEventHistory.Event.TYPE_DATASETS_SHOW
 import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_AUTHENTICATION_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_SAVE_SHOWN;
+import static android.service.autofill.FillEventHistory.Event.TYPE_VIEW_REQUESTED_AUTOFILL;
+
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
@@ -1204,6 +1206,14 @@ public final class Helper {
             @Nullable String datasetId, int uiType) {
         assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, null, null, null);
         assertFillEventPresentationType(event, uiType);
+    }
+
+    /**
+     * Asserts that {@android.service.autofill.FillEventHistory.Event#TYPE_VIEW_REQUESTED_AUTOFILL}
+     * is present in the FillEventHistory
+     */
+    public static void assertFillEventForViewEntered(@NonNull FillEventHistory.Event event) {
+        assertFillEvent(event, TYPE_VIEW_REQUESTED_AUTOFILL, null, null, null, null);
     }
 
     /**
