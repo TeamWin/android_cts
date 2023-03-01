@@ -93,6 +93,7 @@ public class VideoEncoderDecoderTest {
     private static final String MPEG4 = MediaFormat.MIMETYPE_VIDEO_MPEG4;
     private static final String VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
     private static final String VP9 = MediaFormat.MIMETYPE_VIDEO_VP9;
+    private static final String AV1 = MediaFormat.MIMETYPE_VIDEO_AV1;
 
     // test results:
 
@@ -253,7 +254,7 @@ public class VideoEncoderDecoderTest {
     @Parameterized.Parameters(name = "{1}_{4}_{0}_{2}x{3}_{5}")
     public static Collection<Object[]> input() throws IOException {
         final List<Object[]> testParams = new ArrayList<>();
-        final String[] mediaTypes = {AVC, HEVC, MPEG2, MPEG4, VP8, VP9, H263};
+        final String[] mediaTypes = {AVC, HEVC, MPEG2, MPEG4, VP8, VP9, H263, AV1};
         for (String mediaType : mediaTypes) {
             if (mediaType.equals(AVC)) {
                 int[] widths = {320, 720, 1280, 1920};
@@ -282,6 +283,10 @@ public class VideoEncoderDecoderTest {
             } else if (mediaType.equals(VP9)) {
                 int[] widths = {320, 640, 1280, 1920, 3840};
                 int[] heights = {180, 360, 720, 1080, 2160};
+                prepareParamsList(testParams, mediaType, widths, heights);
+            } else if (mediaType.equals(AV1)) {
+                int[] widths = {320, 720, 1280, 1920};
+                int[] heights = {240, 480, 720, 1080};
                 prepareParamsList(testParams, mediaType, widths, heights);
             }
         }
