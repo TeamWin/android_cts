@@ -23,13 +23,14 @@
     <Button
         android:id="@+id/button"
         android:text="@string/button_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+    />
     <EditText
         android:id="@+id/edit_text"
         android:text="@string/proxy_display_activity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:inputType="text|textCapWords"
     />
 

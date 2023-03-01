@@ -27,6 +27,7 @@ android_test {
         "platform-test-annotations",
         "CtsAccessibilityCommon",
         "CtsInputMethodServiceCommon",
+        "CtsVirtualDeviceCommonLib",
         "sts-device-util",
     ],
     libs: [

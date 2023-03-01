@@ -29,6 +29,8 @@
 
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
+    <uses-feature android:name="android.software.companion_device_setup" />
+
     <application android:theme="@android:style/Theme.Holo.NoActionBar"
          android:requestLegacyExternalStorage="true">
 
