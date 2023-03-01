@@ -128,7 +128,7 @@ public class VehiclePropertyVerifier<T> {
     private final Class<T> mPropertyType;
     private final boolean mRequiredProperty;
     private final Optional<ConfigArrayVerifier> mConfigArrayVerifier;
-    private final Optional<CarPropertyValueVerifier> mCarPropertyValueVerifier;
+    private final Optional<CarPropertyValueVerifier<T>> mCarPropertyValueVerifier;
     private final Optional<AreaIdsVerifier> mAreaIdsVerifier;
     private final Optional<CarPropertyConfigVerifier> mCarPropertyConfigVerifier;
     private final ImmutableSet<Integer> mPossibleConfigArrayValues;
@@ -150,7 +150,7 @@ public class VehiclePropertyVerifier<T> {
             Class<T> propertyType,
             boolean requiredProperty,
             Optional<ConfigArrayVerifier> configArrayVerifier,
-            Optional<CarPropertyValueVerifier> carPropertyValueVerifier,
+            Optional<CarPropertyValueVerifier<T>> carPropertyValueVerifier,
             Optional<AreaIdsVerifier> areaIdsVerifier,
             Optional<CarPropertyConfigVerifier> carPropertyConfigVerifier,
             ImmutableSet<Integer> possibleConfigArrayValues,
@@ -938,10 +938,6 @@ public class VehiclePropertyVerifier<T> {
 
     private void verifyCarPropertyValue(CarPropertyConfig<T> carPropertyConfig,
             CarPropertyValue<?> carPropertyValue, int expectedAreaId, String source) {
-        // TODO(b/258512284): update CarPropertyValueVerifier to test GetPropertyResult as well.
-        mCarPropertyValueVerifier.ifPresent(
-                propertyValueVerifier -> propertyValueVerifier.verify(carPropertyConfig,
-                        carPropertyValue));
         verifyCarPropertyValue(carPropertyConfig, carPropertyValue.getPropertyId(),
                 carPropertyValue.getAreaId(), carPropertyValue.getStatus(),
                 carPropertyValue.getTimestamp(), (T) carPropertyValue.getValue(), expectedAreaId,
@@ -951,6 +947,9 @@ public class VehiclePropertyVerifier<T> {
     private void verifyCarPropertyValue(CarPropertyConfig<T> carPropertyConfig,
             int propertyId, int areaId, int status, long timestampNanos, T value,
             int expectedAreaId, String source) {
+        mCarPropertyValueVerifier.ifPresent(
+                propertyValueVerifier -> propertyValueVerifier.verify(carPropertyConfig, propertyId,
+                        areaId, timestampNanos, value));
         assertWithMessage(
                         mPropertyName
                                 + " - areaId: "
@@ -1176,8 +1175,9 @@ public class VehiclePropertyVerifier<T> {
         void verify(List<Integer> configArray);
     }
 
-    public interface CarPropertyValueVerifier {
-        void verify(CarPropertyConfig<?> carPropertyConfig, CarPropertyValue<?> carPropertyValue);
+    public interface CarPropertyValueVerifier<T> {
+        void verify(CarPropertyConfig<T> carPropertyConfig, int propertyId, int areaId,
+                long timestampNanos, T value);
     }
 
     public interface AreaIdsVerifier {
@@ -1196,7 +1196,7 @@ public class VehiclePropertyVerifier<T> {
         private final Class<T> mPropertyType;
         private boolean mRequiredProperty = false;
         private Optional<ConfigArrayVerifier> mConfigArrayVerifier = Optional.empty();
-        private Optional<CarPropertyValueVerifier> mCarPropertyValueVerifier = Optional.empty();
+        private Optional<CarPropertyValueVerifier<T>> mCarPropertyValueVerifier = Optional.empty();
         private Optional<AreaIdsVerifier> mAreaIdsVerifier = Optional.empty();
         private Optional<CarPropertyConfigVerifier> mCarPropertyConfigVerifier = Optional.empty();
         private ImmutableSet<Integer> mPossibleConfigArrayValues = ImmutableSet.of();
@@ -1231,7 +1231,7 @@ public class VehiclePropertyVerifier<T> {
         }
 
         public Builder<T> setCarPropertyValueVerifier(
-                CarPropertyValueVerifier carPropertyValueVerifier) {
+                CarPropertyValueVerifier<T> carPropertyValueVerifier) {
             mCarPropertyValueVerifier = Optional.of(carPropertyValueVerifier);
             return this;
         }
