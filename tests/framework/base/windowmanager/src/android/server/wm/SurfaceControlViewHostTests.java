@@ -1005,6 +1005,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         return connection;
     }
 
+    @androidx.test.filters.FlakyTest(bugId = 270554470)
     @Test
     public void testHostInputTokenAllowsObscuredTouches() throws Throwable {
         SurfaceControlViewHost.SurfacePackage p = null;
