@@ -24,8 +24,6 @@ import androidx.annotation.Nullable;
 
 import java.util.function.IntConsumer;
 
-import javax.annotation.Nonnull;
-
 /**
  * {@link VisualQueryDetectionService} implementation that just calls its super methods.
  */
@@ -33,8 +31,8 @@ public class NoOpVisualQueryDetectionService extends VisualQueryDetectionService
     static final String TAG = "NoOpVisualQueryDetectionService";
 
     @Override
-    public void onStartDetection(@Nonnull Callback callback) {
-        super.onStartDetection(callback);
+    public void onStartDetection() {
+        super.onStartDetection();
     }
 
     @Override
