@@ -87,7 +87,7 @@ public class CodecInfoTest {
         mCodecInfo = codecInfo;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}")
     public static Collection<Object[]> input() {
         final List<Object[]> argsList = new ArrayList<>();
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);

@@ -118,7 +118,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
         mSupportRequirements = supportRequirements;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = true;

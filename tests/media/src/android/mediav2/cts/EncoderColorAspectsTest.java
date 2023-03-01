@@ -111,7 +111,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                     for (int transfer : transfers) {
                         for (int maxBFrame : maxBFrames) {
                             if (!mediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)
-                                    && !mediaType.equals((MediaFormat.MIMETYPE_VIDEO_HEVC))
+                                    && !mediaType.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)
                                     && maxBFrame != 0) {
                                 continue;
                             }
@@ -126,7 +126,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                                     .setInputBitDepth(bitDepth)
                                     .build();
                             testArgs[1] = cfg;
-                            testArgs[2] = String.format("%s:%s:%s:%s:%d-bframes",
+                            testArgs[2] = String.format("%s_%s_%s_%s_%d-bframes",
                                     rangeToString(range),
                                     colorStandardToString(standard),
                                     colorTransferToString(transfer),
@@ -140,7 +140,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{3})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{3}")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = false;
