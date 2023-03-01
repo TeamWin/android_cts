@@ -29,6 +29,7 @@ import android.mediav2.common.cts.EncoderConfigParams;
 import android.mediav2.common.cts.RawResource;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.AfterClass;
 import org.junit.Assume;
@@ -165,6 +166,7 @@ public class VideoEncoderTargetBitrateTest extends VideoEncoderValidationTestBas
         }
     }
 
+    @CddTest(requirements = {"5.2/C-5-2", "5.2/C-6-1"})
     @ApiTest(apis = {"android.media.MediaFormat#KEY_BITRATE_MODE"})
     @Test
     public void testEncoderBitRateModeSupport() throws IOException, InterruptedException {
