@@ -52,7 +52,7 @@ public class CodecListTest {
     /**
      * Tests if the device under test has support for required codecs as guided by cdd
      */
-    @CddTest(requirements = {"2.2.2", "2.3.2", "2.4.2", "2.5.2", "2.6"})
+    @CddTest(requirements = {"2.2.2", "2.3.2", "2.4.2", "2.5.2", "2.6", "5.1.1", "5.1.2"})
     @Test
     public void testCddRequiredCodecsAvailability() {
         final boolean needAudio = mediaTypePrefix == null || mediaTypePrefix.startsWith("audio");

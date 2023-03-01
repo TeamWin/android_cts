@@ -361,6 +361,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
      * the output has to be consistent. The test also verifies if the component / framework
      * behavior is consistent between SDK and NDK.
      */
+    @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2", "5.1.2"})
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
             "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
             "android.media.AudioFormat#ENCODING_PCM_16BIT"})

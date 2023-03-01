@@ -46,8 +46,8 @@ import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
-import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Assume;
 import org.junit.Test;
@@ -194,6 +194,7 @@ public class CodecInfoTest {
      * device supports HDR display, it must support COLOR_FormatYUVP010 as a video decoder output
      * format. For TVs, this requirement is optional.
      */
+    @CddTest(requirements = "5.12/C-6-5")
     @Test
     public void testP010SupportForHDRDisplay() {
         Assume.assumeTrue("Test is applicable for video codecs", mMediaType.startsWith("video/"));

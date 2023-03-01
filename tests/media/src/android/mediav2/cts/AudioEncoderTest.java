@@ -209,7 +209,7 @@ public class AudioEncoderTest extends CodecEncoderTestBase {
      */
     @ApiTest(apis = {"android.media.AudioFormat#ENCODING_PCM_16BIT",
             "android.media.AudioFormat#ENCODING_PCM_FLOAT"})
-    @CddTest(requirements = "5.1.1")
+    @CddTest(requirements = "5.1.1/C-3-1")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testEncodeAndValidate() throws IOException, InterruptedException {

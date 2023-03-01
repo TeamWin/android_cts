@@ -52,6 +52,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.After;
@@ -716,6 +717,7 @@ public class CodecEncoderSurfaceTest {
      * output in all runs. The output is written to a file using muxer. This file is validated
      * for PSNR to check if the encoding happened successfully with out any obvious artifacts.
      */
+    @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2"})
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
@@ -843,6 +845,7 @@ public class CodecEncoderSurfaceTest {
     /**
      * Test is similar to {@link #testSimpleEncodeFromSurface()} but uses ndk api
      */
+    @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2"})
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
