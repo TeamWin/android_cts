@@ -1,2 +1,3 @@
-# These atom tests are owned by the multi-user team
-include platform/frameworks/base:/MULTIUSER_OWNERS
+set noparent
+
+file:platform/frameworks/base:/MULTIUSER_OWNERS
