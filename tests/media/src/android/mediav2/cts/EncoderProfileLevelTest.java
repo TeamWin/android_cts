@@ -178,12 +178,11 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_MPEG4, 3000000, 704, 576, 30},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG4, 8000000, 720, 576, 30},
 
-                // TODO (b/151430764)
-                /*{MediaFormat.MIMETYPE_VIDEO_VP9, 200000, 256, 144, 15},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 200000, 256, 144, 15},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 8000000, 384, 192, 30},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 1800000, 480, 256, 30},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 3600000, 640, 384, 30},
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 7200000, 1080, 512, 30},*/
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 7200000, 1080, 512, 30},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 12000000, 1280, 768, 30},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 18000000, 2048, 1088, 30},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 30000000, 2048, 1088, 60},
