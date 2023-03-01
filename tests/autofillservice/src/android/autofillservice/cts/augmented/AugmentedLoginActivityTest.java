@@ -59,7 +59,6 @@ import android.content.ComponentName;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.uiautomator.UiObject2;
 import android.util.ArraySet;
 import android.view.View;
 import android.view.autofill.AutofillId;
@@ -68,6 +67,7 @@ import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 
 import androidx.test.filters.FlakyTest;
+import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Test;
 
