@@ -115,7 +115,9 @@ public class ApnPermissionTest {
 
     @After
     public void tearDown() throws Exception {
-        assumeTrue(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
 
         // Ensures APNs are deleted in case a test threw.
         InstrumentationRegistry.getInstrumentation()
