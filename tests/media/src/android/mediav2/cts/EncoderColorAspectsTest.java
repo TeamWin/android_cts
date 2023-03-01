@@ -31,6 +31,7 @@ import android.mediav2.common.cts.CodecDecoderTestBase;
 import android.mediav2.common.cts.CodecEncoderTestBase;
 import android.mediav2.common.cts.CodecTestBase;
 import android.mediav2.common.cts.EncoderConfigParams;
+import android.mediav2.common.cts.InputSurface;
 import android.mediav2.common.cts.OutputManager;
 import android.opengl.GLES20;
 import android.os.Build;
@@ -77,7 +78,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     private static final String LOG_TAG = EncoderColorAspectsTest.class.getSimpleName();
 
     private Surface mInpSurface;
-    private EGLWindowSurface mEGLWindowInpSurface;
+    private InputSurface mEGLWindowInpSurface;
 
     private int mLatency;
     private boolean mReviseLatency;
@@ -344,7 +345,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 assertTrue("Surface is not valid \n" + mTestConfig + mTestEnv,
                         mInpSurface.isValid());
                 mEGLWindowInpSurface =
-                        new EGLWindowSurface(mInpSurface, mActiveEncCfg.mInputBitDepth == 10);
+                        new InputSurface(mInpSurface, false, mActiveEncCfg.mInputBitDepth == 10);
                 if (mCodec.getInputFormat().containsKey(MediaFormat.KEY_LATENCY)) {
                     mReviseLatency = true;
                     mLatency = mCodec.getInputFormat().getInteger(MediaFormat.KEY_LATENCY);

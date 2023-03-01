@@ -14,25 +14,40 @@
  * limitations under the License.
  */
 
-package android.mediav2.cts;
+package android.mediav2.common.cts;
 
+import android.media.MediaCodec;
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
+import android.opengl.GLES20;
+import android.util.Log;
 import android.view.Surface;
 
-class EGLWindowSurface {
-    private static final String TAG = "EGLWindowSurface";
+
+/**
+ * Holds state associated with a Surface used for MediaCodec encoder input.
+ * <p>
+ * The constructor takes a Surface obtained from MediaCodec.createInputSurface(), and uses that
+ * to create an EGL window surface.  Calls to eglSwapBuffers() cause a frame of data to be sent
+ * to the video encoder.
+ */
+public class InputSurface {
+    private static final String TAG = "InputSurface";
 
     private EGLDisplay mEGLDisplay = EGL14.EGL_NO_DISPLAY;
     private EGLContext mEGLContext = EGL14.EGL_NO_CONTEXT;
     private EGLSurface mEGLSurface = EGL14.EGL_NO_SURFACE;
     private EGLConfig[] mConfigs = new EGLConfig[1];
 
+    private final boolean mReleaseSurface;
     private Surface mSurface;
+    private int mWidth;
+    private int mHeight;
+
 
     /**
      * Checks for EGL errors.
@@ -60,10 +75,10 @@ class EGLWindowSurface {
 
         // Configure EGL for recordable and OpenGL ES 2.0.  We want enough RGB bits
         // to minimize artifacts from possible YUV conversion.
-        int eglColorSize = useHighBitDepth ? 10: 8;
-        int eglAlphaSize = useHighBitDepth ? 2: 0;
-        int recordable = useHighBitDepth ? 0: 1;
-        int[] attribList = {
+        int eglColorSize = useHighBitDepth ? 10 : 8;
+        int eglAlphaSize = useHighBitDepth ? 2 : 0;
+        int recordable = useHighBitDepth ? 0 : 1;
+        int[] configAttribList = {
                 EGL14.EGL_RED_SIZE, eglColorSize,
                 EGL14.EGL_GREEN_SIZE, eglColorSize,
                 EGL14.EGL_BLUE_SIZE, eglColorSize,
@@ -73,18 +88,18 @@ class EGLWindowSurface {
                 EGL14.EGL_NONE
         };
         int[] numConfigs = new int[1];
-        if (!EGL14.eglChooseConfig(mEGLDisplay, attribList, 0, mConfigs, 0, mConfigs.length,
+        if (!EGL14.eglChooseConfig(mEGLDisplay, configAttribList, 0, mConfigs, 0, mConfigs.length,
                 numConfigs, 0)) {
             throw new RuntimeException("unable to find RGB888+recordable ES2 EGL config");
         }
 
         // Configure context for OpenGL ES 2.0.
-        int[] attrib_list = {
+        int[] contextAttribList = {
                 EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
                 EGL14.EGL_NONE
         };
         mEGLContext = EGL14.eglCreateContext(mEGLDisplay, mConfigs[0], EGL14.EGL_NO_CONTEXT,
-                attrib_list, 0);
+                contextAttribList, 0);
         checkEglError("eglCreateContext");
         if (mEGLContext == null) {
             throw new RuntimeException("null context");
@@ -92,6 +107,9 @@ class EGLWindowSurface {
 
         // Create a window surface, and attach it to the Surface we received.
         createEGLSurface();
+
+        mWidth = getWidth();
+        mHeight = getHeight();
     }
 
     private void createEGLSurface() {
@@ -110,7 +128,7 @@ class EGLWindowSurface {
     /**
      * Queries the surface's width.
      */
-    private int getWidth() {
+    public int getWidth() {
         int[] value = new int[1];
         EGL14.eglQuerySurface(mEGLDisplay, mEGLSurface, EGL14.EGL_WIDTH, value, 0);
         return value[0];
@@ -119,7 +137,7 @@ class EGLWindowSurface {
     /**
      * Queries the surface's height.
      */
-    private int getHeight() {
+    public int getHeight() {
         int[] value = new int[1];
         EGL14.eglQuerySurface(mEGLDisplay, mEGLSurface, EGL14.EGL_HEIGHT, value, 0);
         return value[0];
@@ -128,24 +146,58 @@ class EGLWindowSurface {
     /**
      * Creates an InputSurface from a Surface.
      */
-    public EGLWindowSurface(Surface surface, boolean useHighBitDepth) {
+    public InputSurface(Surface surface, boolean releaseSurface, boolean useHighBitDepth) {
         if (surface == null) {
             throw new NullPointerException();
         }
         mSurface = surface;
+        mReleaseSurface = releaseSurface;
 
         eglSetup(useHighBitDepth);
     }
 
+    public InputSurface(Surface surface, boolean useHighBitDepth) {
+        this(surface, true, useHighBitDepth);
+    }
+
     /**
-     * Discard all resources held by this class, notably the EGL context.
+     * Creates an InputSurface from a Surface.
+     */
+    public InputSurface(Surface surface) {
+        this(surface, true, false);
+    }
+
+    public void updateSize(int width, int height) {
+        if (width != mWidth || height != mHeight) {
+            Log.d(TAG, "re-create EGLSurface");
+            releaseEGLSurface();
+            createEGLSurface();
+            mWidth = getWidth();
+            mHeight = getHeight();
+        }
+    }
+
+    private void releaseEGLSurface() {
+        if (mEGLDisplay != EGL14.EGL_NO_DISPLAY) {
+            EGL14.eglDestroySurface(mEGLDisplay, mEGLSurface);
+            mEGLSurface = EGL14.EGL_NO_SURFACE;
+        }
+    }
+
+    /**
+     * Discard all resources held by this class, notably the EGL context.  Also releases the
+     * Surface that was passed to our constructor.
      */
     public void release() {
-        EGL14.eglDestroySurface(mEGLDisplay, mEGLSurface);
         if (mEGLDisplay != EGL14.EGL_NO_DISPLAY) {
+            EGL14.eglDestroySurface(mEGLDisplay, mEGLSurface);
             EGL14.eglDestroyContext(mEGLDisplay, mEGLContext);
             EGL14.eglReleaseThread();
             EGL14.eglTerminate(mEGLDisplay);
+        }
+
+        if (mReleaseSurface) {
+            mSurface.release();
         }
 
         mEGLDisplay = EGL14.EGL_NO_DISPLAY;
@@ -164,6 +216,13 @@ class EGLWindowSurface {
         }
     }
 
+    public void makeUnCurrent() {
+        if (!EGL14.eglMakeCurrent(mEGLDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
+                EGL14.EGL_NO_CONTEXT)) {
+            throw new RuntimeException("eglMakeCurrent failed");
+        }
+    }
+
     /**
      * Calls eglSwapBuffers.  Use this to "publish" the current frame.
      */
@@ -172,10 +231,42 @@ class EGLWindowSurface {
     }
 
     /**
+     * Returns the Surface that the MediaCodec receives buffers from.
+     */
+    public Surface getSurface() {
+        return mSurface;
+    }
+
+    /**
      * Sends the presentation time stamp to EGL.  Time is expressed in nanoseconds.
      */
     public void setPresentationTime(long nsecs) {
         EGLExt.eglPresentationTimeANDROID(mEGLDisplay, mEGLSurface, nsecs);
     }
-}
 
+    public void configure(MediaCodec codec) {
+        codec.setInputSurface(mSurface);
+    }
+
+    /**
+     * Clears the surface to black.
+     * <p>
+     * Ported from https://github.com/google/grafika
+     */
+    public static void clearSurface(Surface surface) {
+        // We need to do this with OpenGL ES (*not* Canvas -- the "software render" bits
+        // are sticky).  We can't stay connected to the Surface after we're done because
+        // that'd prevent the video encoder from attaching.
+        //
+        // If the Surface is resized to be larger, the new portions will be black, so
+        // clearing to something other than black may look weird unless we do the clear
+        // post-resize.
+        InputSurface win = new InputSurface(surface, /* release */ false,
+                /* useHighBitDepth */ false);
+        win.makeCurrent();
+        GLES20.glClearColor(0, 0, 0, 0);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+        win.swapBuffers();
+        win.release();
+    }
+}

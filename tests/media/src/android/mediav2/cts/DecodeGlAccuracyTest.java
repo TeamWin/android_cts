@@ -30,6 +30,7 @@ import android.media.MediaFormat;
 import android.mediav2.common.cts.CodecDecoderTestBase;
 import android.mediav2.common.cts.CodecTestBase;
 import android.mediav2.common.cts.OutputManager;
+import android.mediav2.common.cts.OutputSurface;
 import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.util.Log;

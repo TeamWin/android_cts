@@ -32,7 +32,9 @@ import android.mediav2.common.cts.CodecAsyncHandler;
 import android.mediav2.common.cts.CodecDecoderTestBase;
 import android.mediav2.common.cts.CodecTestBase;
 import android.mediav2.common.cts.EncoderConfigParams;
+import android.mediav2.common.cts.InputSurface;
 import android.mediav2.common.cts.OutputManager;
+import android.mediav2.common.cts.OutputSurface;
 import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.util.Log;
@@ -105,7 +107,7 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
     private final CodecAsyncHandler mAsyncHandleEncoder;
     private MediaCodec mEncoder;
     private Surface mInpSurface;
-    private EGLWindowSurface mEGLWindowInpSurface;
+    private InputSurface mEGLWindowInpSurface;
     private OutputSurface mEGLWindowOutSurface;
     private boolean mSawInputEOSEnc;
     private boolean mSawOutputEOSEnc;
@@ -301,7 +303,7 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
         mInpSurface = mEncoder.createInputSurface();
         assertTrue("Surface is not valid \n" + mTestConfig + mTestEnv, mInpSurface.isValid());
         mEGLWindowInpSurface =
-                new EGLWindowSurface(mInpSurface, mEncCfgParams.mInputBitDepth == 10);
+                new InputSurface(mInpSurface, false, mEncCfgParams.mInputBitDepth == 10);
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "codec configured");
         }
