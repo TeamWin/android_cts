@@ -97,6 +97,8 @@ public class ExpeditedJobTest {
             mTestAppInterface.scheduleJob(
                     Map.of(TestJobSchedulerReceiver.EXTRA_AS_EXPEDITED, true),
                     Map.of(TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, i));
+        }
+        for (int i = 0; i < numEjs; ++i) {
             assertTrue("Job did not start after scheduling",
                     mTestAppInterface.awaitJobStart(i, DEFAULT_WAIT_TIMEOUT_MS));
         }
