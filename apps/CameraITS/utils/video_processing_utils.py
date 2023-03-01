@@ -50,6 +50,64 @@ LOWEST_RES_TESTED_AREA = {
 }
 
 
+VIDEO_QUALITY_SIZE = {
+    # 'HIGH' and 'LOW' not included as they are DUT-dependent
+    '2160P': '3840x2160',
+    '1080P': '1920x1080',
+    '720P': '1280x720',
+    '480P': '720x480',
+    'VGA': '640x480',
+    'CIF': '352x288',
+    'QVGA': '320x240',
+    'QCIF': '176x144',
+}
+
+
+def get_lowest_preview_video_size(
+    supported_preview_sizes, supported_video_qualities, min_area):
+  """Returns the common, smallest size above minimum in preview and video.
+
+  Args:
+    supported_preview_sizes: str; preview size (ex. '1920x1080')
+    supported_video_qualities: str; video recording quality and id pair
+    (ex. '480P:4', '720P:5'')
+    min_area: int; filter to eliminate smaller sizes (ex. 640*480)
+  Returns:
+    smallest_common_size: str; smallest, common size between preview and video
+    smallest_common_video_quality: str; video recording quality such as 480P
+  """
+
+  # Make dictionary on video quality and size according to compatibility
+  supported_video_size_to_quality = {}
+  for quality in supported_video_qualities:
+    video_quality = quality.split(':')[0]
+    if video_quality in VIDEO_QUALITY_SIZE:
+      video_size = VIDEO_QUALITY_SIZE[video_quality]
+      supported_video_size_to_quality[video_size] = video_quality
+  logging.debug(
+      'Supported video size to quality: %s', supported_video_size_to_quality)
+
+  # Use areas of video sizes to find the smallest, common size
+  size_to_area = lambda s: int(s.split('x')[0])*int(s.split('x')[1])
+  smallest_common_size = ''
+  smallest_area = float('inf')
+  for size in supported_preview_sizes:
+    if size in supported_video_size_to_quality:
+      area = size_to_area(size)
+      if smallest_area > area >= min_area:
+        smallest_area = area
+        smallest_common_size = size
+  logging.debug('Lowest common size: %s', smallest_common_size)
+
+  # Find video quality of resolution with resolution as key
+  smallest_common_video_quality = (
+      supported_video_size_to_quality[smallest_common_size])
+  logging.debug(
+      'Lowest common size video quality: %s', smallest_common_video_quality)
+
+  return smallest_common_size, smallest_common_video_quality
+
+
 def log_ffmpeg_version():
   """Logs the ffmpeg version being used."""
 
