@@ -19,7 +19,6 @@ package android.videocodec.cts;
 import static android.media.MediaFormat.PICTURE_TYPE_B;
 import static android.media.MediaFormat.PICTURE_TYPE_I;
 import static android.media.MediaFormat.PICTURE_TYPE_P;
-import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -108,7 +107,7 @@ public class VideoEncoderMaxBFrameTest extends VideoEncoderValidationTestBase {
                         maxBFrames), BIRTHDAY_FULLHD_LANDSCAPE, label});
             }
         }
-        return prepareParamList(exhaustiveArgsList, true, false, true, false, HARDWARE);
+        return prepareParamList(exhaustiveArgsList, true, false, true, false);
     }
 
     public VideoEncoderMaxBFrameTest(String encoder, String mediaType, EncoderConfigParams cfg,
@@ -153,11 +152,10 @@ public class VideoEncoderMaxBFrameTest extends VideoEncoderValidationTestBase {
         String msg = String.format("Number of BFrames in a SubGOP exceeds maximum number of"
                         + " BFrames configured.\n Configured max BFrames %d. \n Got max"
                         + " BFrames %d. \n", mEncCfgParams[0].mMaxBFrames, maxBFramesFound);
-        Assume.assumeTrue(msg + mTestConfig + mTestEnv,
-                maxBFramesFound <= mEncCfgParams[0].mMaxBFrames);
+        assertTrue(msg + mTestConfig + mTestEnv, maxBFramesFound <= mEncCfgParams[0].mMaxBFrames);
         if (mEncCfgParams[0].mMaxBFrames > 0) {
-            assertTrue("maxBFrames are configured to > 0, but no B Frames are seen in sequence \n"
-                    + mTestConfig + mTestEnv, maxBFramesFound > 0);
+            Assume.assumeTrue("maxBFrames are configured to > 0, but no B Frames are seen "
+                    + "in sequence \n" + mTestConfig + mTestEnv, maxBFramesFound > 0);
         }
     }
 }
