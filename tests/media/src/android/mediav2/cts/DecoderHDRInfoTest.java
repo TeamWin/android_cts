@@ -117,7 +117,7 @@ public class DecoderHDRInfoTest extends HDRDecoderTestBase {
      */
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
-    @CddTest(requirements = {"5.3.5/C-3-1", "5.3.7/C-4-1", "5.3.9"})
+    @CddTest(requirements = {"5.3.5/C-3-1", "5.3.7/C-4-1", "5.3.9/C-3-1"})
     public void testHDRInfo() throws IOException, InterruptedException {
         validateHDRInfo(mHDRStaticInfoStream, mHDRStaticInfoContainer, mHDRDynamicInfoStream,
                 mHDRDynamicInfoContainer);
