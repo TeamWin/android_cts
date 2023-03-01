@@ -110,7 +110,8 @@ open class PackageInstallerTestBase {
 
             if (status == STATUS_PENDING_USER_ACTION) {
                 val activityIntent = intent.getParcelableExtra(EXTRA_INTENT, Intent::class.java)
-                activityIntent!!.addFlags(FLAG_ACTIVITY_CLEAR_TASK or FLAG_ACTIVITY_NEW_TASK)
+                Assert.assertEquals(activityIntent!!.extras!!.keySet().size, 1)
+                activityIntent.addFlags(FLAG_ACTIVITY_CLEAR_TASK or FLAG_ACTIVITY_NEW_TASK)
                 installDialogStarter.activity.startActivityForResult(activityIntent)
             }
 
