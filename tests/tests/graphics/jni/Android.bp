@@ -62,6 +62,7 @@ cc_test_library {
         "libmediandk",
         "libEGL",
         "libGLESv2",
+        "libbinder_ndk",
     ],
     stl: "c++_static",
     sdk_version: "current",

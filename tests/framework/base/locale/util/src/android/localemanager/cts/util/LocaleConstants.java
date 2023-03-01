@@ -72,6 +72,9 @@ public final class LocaleConstants {
     public static final String INSTALLER_APP_BROADCAST_RECEIVER = INSTALLER_PACKAGE
             + ".InstallerBroadcastReceiver";
 
+    public static final String APP_RECEIVER_ACTION =
+            "android.locale.cts.action.RECEIVER_ACTION";
+
     public static final String IME_APP_CREATION_INFO_PROVIDER_ACTION =
             "android.locale.cts.action.IME_APP_CREATION_INFO_PROVIDER";
 

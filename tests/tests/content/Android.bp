@@ -83,6 +83,7 @@ android_test {
     data: [
         ":CtsContentDirectBootUnawareTestApp",
         ":CtsContentMockLauncherTestApp",
+        ":CtsContentMockRestrictedApp",
         ":CtsContentLongLabelNameTestApp",
         ":CtsContentPartiallyDirectBootAwareTestApp",
         ":CtsIntentResolutionTestApp",
