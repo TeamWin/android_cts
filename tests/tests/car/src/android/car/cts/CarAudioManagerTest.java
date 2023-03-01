@@ -17,6 +17,7 @@
 package android.car.cts;
 
 import static android.car.Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME;
+import static android.car.media.CarAudioManager.AUDIO_FEATURE_AUDIO_MIRRORING;
 import static android.car.media.CarAudioManager.AUDIO_FEATURE_DYNAMIC_ROUTING;
 import static android.car.media.CarAudioManager.AUDIO_FEATURE_VOLUME_GROUP_MUTING;
 import static android.car.media.CarAudioManager.CarVolumeCallback;
@@ -37,6 +38,7 @@ import android.app.UiAutomation;
 import android.car.Car;
 import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
+import android.car.media.AudioZonesMirrorStatusCallback;
 import android.car.media.CarAudioManager;
 import android.car.media.CarAudioZoneConfigInfo;
 import android.car.media.CarVolumeGroupInfo;
@@ -71,6 +73,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Instant Apps cannot get car related permissions")
@@ -100,6 +103,8 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     private TestPrimaryZoneMediaAudioRequestStatusCallback mRequestCallback;
     private long mMediaRequestId = INVALID_REQUEST_ID;
     private String mCarAudioServiceDump;
+    private TestAudioZonesMirrorStatusCallback mAudioZonesMirrorCallback;
+    private long mMirrorRequestId = INVALID_REQUEST_ID;
 
     // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
     @Override
@@ -134,6 +139,16 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
             Log.w(TAG, "Releasing media request callback");
             mCarAudioManager.clearPrimaryZoneMediaAudioRequestCallback();
         }
+
+        if (mAudioZonesMirrorCallback != null) {
+            Log.i(TAG, "Releasing audio mirror request callback");
+            mCarAudioManager.clearAudioZonesMirrorStatusCallback();
+        }
+
+        if (mMirrorRequestId != INVALID_REQUEST_ID) {
+            Log.i(TAG, "Disabling audio mirror for request: " + mMirrorRequestId);
+            mCarAudioManager.disableAudioMirror(mMirrorRequestId);
+        }
     }
 
     @Test
@@ -158,6 +173,16 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                 () -> mCarAudioManager.isAudioFeatureEnabled(-1));
 
         assertThat(exception).hasMessageThat().contains("Unknown Audio Feature");
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.media.CarAudioManager#isAudioFeatureEnabled(int)",
+            "android.car.media.CarAudioManager#AUDIO_FEATURE_AUDIO_MIRRORING"})
+    public void isAudioFeatureEnabled_withAudioMirrorFeature_succeeds() {
+        boolean audioMirroringEnabled = mCarAudioManager.isAudioFeatureEnabled(
+                AUDIO_FEATURE_AUDIO_MIRRORING);
+
+        assertThat(audioMirroringEnabled).isAnyOf(true, false);
     }
 
     @Test
@@ -521,7 +546,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                 .that(succeeded).isTrue();
         assertWithMessage("Approved request id in primary zone")
                 .that(callback.mRequestId).isEqualTo(mMediaRequestId);
-        assertWithMessage("Approved request occuapnt in primary zone")
+        assertWithMessage("Approved request occupant in primary zone")
                 .that(callback.mOccupantZoneInfo).isEqualTo(info);
         assertWithMessage("Audio status in primary zone").that(callback.mStatus)
                 .isEqualTo(CarAudioManager.AUDIO_REQUEST_STATUS_APPROVED);
@@ -759,6 +784,126 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
         assertThat(exception).hasMessageThat().contains("callback can not be null");
     }
 
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#setAudioZoneMirrorStatusCallback(Executor, AudioZonesMirrorStatusCallback)"})
+    public void setAudioZoneMirrorStatusCallback() {
+        assumeAudioMirrorEnabled();
+        assumePassengersForAudioMirror();
+        Executor executor = Executors.newFixedThreadPool(1);
+        TestAudioZonesMirrorStatusCallback callback;
+        boolean registered = false;
+
+        try {
+            callback = new TestAudioZonesMirrorStatusCallback();
+            registered = mCarAudioManager.setAudioZoneMirrorStatusCallback(executor, callback);
+        } finally {
+            if (registered) {
+                mCarAudioManager.clearAudioZonesMirrorStatusCallback();
+            }
+        }
+
+        assertWithMessage("Audio zone mirror status callback registered status")
+                .that(registered).isTrue();
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#enableMirrorForAudioZones(List)"})
+    public void enableMirrorForAudioZones() throws Exception {
+        assumeAudioMirrorEnabled();
+        List<Integer> audioZones = assumePassengersForAudioMirror();
+        setupAudioMirrorStatusCallback();
+
+        mMirrorRequestId = mCarAudioManager.enableMirrorForAudioZones(audioZones);
+
+        mAudioZonesMirrorCallback.waitForCallback();
+        assertWithMessage("Enabled mirror for audio zone status")
+                .that(mAudioZonesMirrorCallback.mStatus).isEqualTo(
+                        CarAudioManager.AUDIO_REQUEST_STATUS_APPROVED);
+        assertWithMessage("Enabled mirror audio zones")
+                .that(mAudioZonesMirrorCallback.mAudioZones).containsExactlyElementsIn(audioZones);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#enableMirrorForAudioZones(List)"})
+    public void enableMirrorForAudioZones_withNullList() throws Exception {
+        assumeAudioMirrorEnabled();
+        setupAudioMirrorStatusCallback();
+
+        NullPointerException thrown = assertThrows(NullPointerException.class, () ->
+                mMirrorRequestId = mCarAudioManager
+                        .enableMirrorForAudioZones(/* audioZonesToMirror= */ null));
+
+        assertWithMessage("Null enable mirror audio zones exception")
+                .that(thrown).hasMessageThat().contains("Audio zones to mirror");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#disableAudioMirrorForZone(int)"})
+    public void disableAudioMirrorForZone() throws Exception {
+        assumeAudioMirrorEnabled();
+        List<Integer> audioZones = assumePassengersForAudioMirror();
+        int zoneToDisable = audioZones.get(0);
+        setupAudioMirrorStatusCallback();
+        mMirrorRequestId = mCarAudioManager.enableMirrorForAudioZones(audioZones);
+        mAudioZonesMirrorCallback.waitForCallback();
+        mAudioZonesMirrorCallback.reset();
+
+        mCarAudioManager.disableAudioMirrorForZone(zoneToDisable);
+
+        mMirrorRequestId = INVALID_REQUEST_ID;
+        mAudioZonesMirrorCallback.waitForCallback();
+        assertWithMessage("Disable mirror status for audio zone %s", zoneToDisable)
+                .that(mAudioZonesMirrorCallback.mStatus).isEqualTo(
+                        CarAudioManager.AUDIO_REQUEST_STATUS_STOPPED);
+        assertWithMessage("Disable mirror zones for audio zone %s", zoneToDisable)
+                .that(mAudioZonesMirrorCallback.mAudioZones).containsExactlyElementsIn(audioZones);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#disableAudioMirror(long)"})
+    public void disableAudioMirror() throws Exception {
+        assumeAudioMirrorEnabled();
+        List<Integer> audioZones = assumePassengersForAudioMirror();
+        setupAudioMirrorStatusCallback();
+        mMirrorRequestId = mCarAudioManager.enableMirrorForAudioZones(audioZones);
+        mAudioZonesMirrorCallback.waitForCallback();
+        mAudioZonesMirrorCallback.reset();
+
+        mCarAudioManager.disableAudioMirror(mMirrorRequestId);
+
+        mMirrorRequestId = INVALID_REQUEST_ID;
+        mAudioZonesMirrorCallback.waitForCallback();
+        assertWithMessage("Disable mirror status for audio zones")
+                .that(mAudioZonesMirrorCallback.mStatus).isEqualTo(
+                        CarAudioManager.AUDIO_REQUEST_STATUS_STOPPED);
+        assertWithMessage("Disable mirror zones for audio zones")
+                .that(mAudioZonesMirrorCallback.mAudioZones).containsExactlyElementsIn(audioZones);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getMirrorAudioZonesForAudioZone(int)"})
+    public void getMirrorAudioZonesForAudioZone() throws Exception {
+        assumeAudioMirrorEnabled();
+        List<Integer> audioZones = assumePassengersForAudioMirror();
+        int zoneToQuery = audioZones.get(0);
+        setupAudioMirrorStatusCallback();
+        mMirrorRequestId = mCarAudioManager.enableMirrorForAudioZones(audioZones);
+        mAudioZonesMirrorCallback.waitForCallback();
+
+        List<Integer> queriedZones = mCarAudioManager.getMirrorAudioZonesForAudioZone(zoneToQuery);
+
+        mAudioZonesMirrorCallback.waitForCallback();
+        assertWithMessage("Queried audio zones").that(queriedZones)
+                .containsExactlyElementsIn(audioZones);
+    }
+
     private TestMediaAudioRequestStatusCallback requestToPlayMediaInPrimaryZone(
             OccupantZoneInfo info) {
         Executor callbackExecutor = Executors.newFixedThreadPool(1);
@@ -774,20 +919,43 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
         mCarAudioManager.setPrimaryZoneMediaAudioRequestCallback(requestExecutor, mRequestCallback);
     }
 
-    private int assumePassengerWithValidAudioZone() {
-        int passengerAudioZoneId = getAvailablePassengerAudioZone();
-        assumeTrue("Need passenger with audio zone id to share audio",
-                passengerAudioZoneId != INVALID_AUDIO_ZONE);
-
-        return passengerAudioZoneId;
+    private void setupAudioMirrorStatusCallback() {
+        Executor executor = Executors.newFixedThreadPool(1);
+        mAudioZonesMirrorCallback = new TestAudioZonesMirrorStatusCallback();
+        mCarAudioManager.setAudioZoneMirrorStatusCallback(executor, mAudioZonesMirrorCallback);
     }
 
-    private int getAvailablePassengerAudioZone() {
+    private int assumePassengerWithValidAudioZone() {
+        List<Integer> audioZonesWithPassengers = assumePassengersWithValidAudioZones(
+                /* count= */ 1, "Audio share to primary zone");
+
+        return audioZonesWithPassengers.get(0);
+    }
+
+    private List<Integer> assumePassengersWithValidAudioZones(int minimumCount, String message) {
+        List<Integer> audioZonesWithPassengers = getAvailablePassengerAudioZone();
+        assumeTrue(message + ": Need at least " + minimumCount
+                        + " passenger(s) with valid audio zone id",
+                audioZonesWithPassengers.size() >= minimumCount);
+
+        return audioZonesWithPassengers;
+    }
+
+    private List<Integer> assumePassengersForAudioMirror() {
+        List<Integer> audioZonesWithPassengers = assumePassengersWithValidAudioZones(/* count= */ 2,
+                "Passenger audio mirror");
+
+        return audioZonesWithPassengers.subList(/* fromIndex= */ 0, /* toIndex= */ 2);
+    }
+
+    private List<Integer> getAvailablePassengerAudioZone() {
         return mCarOccupantZoneManager.getAllOccupantZones().stream()
+                .filter(occupant -> mCarOccupantZoneManager.getUserForOccupant(occupant)
+                        != CarOccupantZoneManager.INVALID_USER_ID)
                 .map(occupant -> mCarOccupantZoneManager.getAudioZoneIdForOccupant(occupant))
                 .filter(audioZoneId -> audioZoneId != INVALID_AUDIO_ZONE
                         && audioZoneId != PRIMARY_AUDIO_ZONE)
-                .findFirst().orElse(INVALID_AUDIO_ZONE);
+                .collect(Collectors.toList());
     }
 
     private List<TestZoneConfigInfo> assumeSecondaryZoneConfigs() {
@@ -848,15 +1016,23 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     }
 
     private void assumeDynamicRoutingIsEnabled() {
-        assumeTrue(mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING));
+        assumeTrue("Requires dynamic audio routing",
+                mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING));
     }
 
     private void assumeVolumeGroupMutingIsEnabled() {
-        assumeTrue(mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_VOLUME_GROUP_MUTING));
+        assumeTrue("Requires volume group muting",
+                mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_VOLUME_GROUP_MUTING));
     }
 
     private void assumeVolumeGroupMutingIsDisabled() {
-        assumeFalse(mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_VOLUME_GROUP_MUTING));
+        assumeFalse("Requires volume group muting disabled",
+                mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_VOLUME_GROUP_MUTING));
+    }
+
+    private void assumeAudioMirrorEnabled() {
+        assumeTrue("Requires audio mirroring",
+                mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_AUDIO_MIRRORING));
     }
 
     private void runWithCarControlAudioVolumePermission(Runnable runnable) {
@@ -975,7 +1151,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
         public void onRequestMediaOnPrimaryZone(OccupantZoneInfo info, long requestId) {
             mOccupantZoneInfo = info;
             mRequestId = requestId;
-            Log.v(TAG, "onRequestMediaOnPrimaryZone info " + info + " request id " + requestId);
+            Log.i(TAG, "onRequestMediaOnPrimaryZone info " + info + " request id " + requestId);
             mRequestAudioLatch.countDown();
         }
 
@@ -1014,7 +1190,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
             mOccupantZoneInfo = info;
             mRequestId = requestId;
             mStatus = status;
-            Log.v(TAG, "onMediaAudioRequestStatusChanged info " + info + " request id "
+            Log.i(TAG, "onMediaAudioRequestStatusChanged info " + info + " request id "
                     + requestId + " status " + status);
             mRequestAudioLatch.countDown();
         }
@@ -1045,6 +1221,31 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
             Log.i(TAG, "onAudioZoneConfigSwitched zoneConfig " + zoneConfigInfo + " is successful? "
                     + isSuccessful);
             mRequestAudioLatch.countDown();
+        }
+    }
+
+    private static final class TestAudioZonesMirrorStatusCallback implements
+            AudioZonesMirrorStatusCallback {
+
+        private CountDownLatch mRequestAudioLatch = new CountDownLatch(1);
+        public List<Integer> mAudioZones;
+        public int mStatus;
+
+        @Override
+        public void onAudioZonesMirrorStatusChanged(List<Integer> mirroredAudioZones, int status) {
+            mAudioZones = mirroredAudioZones;
+            mStatus = status;
+            Log.i(TAG, "onAudioZonesMirrorStatusChanged: audio zones " + mirroredAudioZones
+                    + " status " + status);
+            mRequestAudioLatch.countDown();
+        }
+
+        private void waitForCallback() throws InterruptedException {
+            await(mRequestAudioLatch, WAIT_TIMEOUT_MS);
+        }
+
+        public void reset() {
+            mRequestAudioLatch = new CountDownLatch(1);
         }
     }
 }
