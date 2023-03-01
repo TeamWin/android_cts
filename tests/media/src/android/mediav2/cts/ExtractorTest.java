@@ -781,7 +781,7 @@ public class ExtractorTest {
         @Rule
         public TestName testName = new TestName();
 
-        @Parameterized.Parameters(name = "{index}({0})")
+        @Parameterized.Parameters(name = "{index}_{0}")
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
                     {MediaFormat.MIMETYPE_VIDEO_MPEG2, new String[]{
@@ -1361,7 +1361,7 @@ public class ExtractorTest {
             mTestFile = testFile;
         }
 
-        @Parameterized.Parameters(name = "{index}({0})")
+        @Parameterized.Parameters(name = "{index}_{0}")
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
                     {MediaFormat.MIMETYPE_AUDIO_FLAC,
@@ -1443,7 +1443,7 @@ public class ExtractorTest {
             mHCh = hCh;
         }
 
-        @Parameterized.Parameters(name = "{index}({0})")
+        @Parameterized.Parameters(name = "{index}_{0}")
         public static Collection<Object[]> input() {
             // mediaType, clips, profile, level, width/sample rate, height/channel count
             List<Object[]> exhaustiveArgsList = new ArrayList<>();

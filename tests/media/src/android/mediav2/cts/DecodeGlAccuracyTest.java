@@ -309,7 +309,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{3}_{4}_{5}_{6}_{7})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{3}_{4}_{5}_{6}_{7}")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = false;

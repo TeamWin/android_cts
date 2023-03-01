@@ -425,7 +425,7 @@ public class MuxerTest {
             new File(mOutPath).delete();
         }
 
-        @Parameterized.Parameters(name = "{index}({3})")
+        @Parameterized.Parameters(name = "{index}_{3}")
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, "bbb_cif_768kbps_30fps_avc.mp4",
@@ -731,7 +731,7 @@ public class MuxerTest {
             new File(mOutPath).delete();
         }
 
-        @Parameterized.Parameters(name = "{index}({3})")
+        @Parameterized.Parameters(name = "{index}_{3}")
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
                     // audio, video are 3 sec
@@ -865,7 +865,7 @@ public class MuxerTest {
             new File(mOutPath).delete();
         }
 
-        @Parameterized.Parameters(name = "{index}({3})")
+        @Parameterized.Parameters(name = "{index}_{3}")
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
@@ -978,7 +978,7 @@ public class MuxerTest {
             new File(mOutPath).delete();
         }
 
-        @Parameterized.Parameters(name = "{index}({3})")
+        @Parameterized.Parameters(name = "{index}_{3}")
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
@@ -1090,7 +1090,7 @@ public class MuxerTest {
         private native boolean nativeTestSimpleAppend(String srcPath, String outPath,
                 String mediaType, String selector);
 
-        @Parameterized.Parameters(name = "{index}({2})")
+        @Parameterized.Parameters(name = "{index}_{2}")
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
                     // Video Codecs
@@ -1250,7 +1250,7 @@ public class MuxerTest {
             return result;
         }
 
-        @Parameterized.Parameters(name = "{index}({0})")
+        @Parameterized.Parameters(name = "{index}_{0}")
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
                     // Video

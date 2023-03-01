@@ -251,7 +251,7 @@ public class CodecEncoderSurfaceTest {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{9})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{2}_{3}_{9}")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = false;
