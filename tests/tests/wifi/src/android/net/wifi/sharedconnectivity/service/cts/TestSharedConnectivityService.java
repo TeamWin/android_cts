@@ -16,8 +16,8 @@
 
 package android.net.wifi.sharedconnectivity.service.cts;
 
+import android.net.wifi.sharedconnectivity.app.HotspotNetwork;
 import android.net.wifi.sharedconnectivity.app.KnownNetwork;
-import android.net.wifi.sharedconnectivity.app.TetherNetwork;
 import android.net.wifi.sharedconnectivity.service.SharedConnectivityService;
 import android.util.Log;
 
@@ -34,8 +34,8 @@ public class TestSharedConnectivityService extends SharedConnectivityService {
         return TestSharedConnectivityService.sService;
     }
 
-    private TetherNetwork mConnectTetherNetwork;
-    private TetherNetwork mDisconnectTetherNetwork;
+    private HotspotNetwork mConnectHotspotNetwork;
+    private HotspotNetwork mDisconnectHotspotNetwork;
     private KnownNetwork mConnectKnownNetwork;
     private KnownNetwork mForgetKnownNetwork;
 
@@ -45,15 +45,15 @@ public class TestSharedConnectivityService extends SharedConnectivityService {
     }
 
     @Override
-    public void onConnectTetherNetwork(TetherNetwork network) {
-        Log.i(TAG, "onConnectTetherNetwork");
-        mConnectTetherNetwork = network;
+    public void onConnectHotspotNetwork(HotspotNetwork network) {
+        Log.i(TAG, "onConnectHotspotNetwork");
+        mConnectHotspotNetwork = network;
     }
 
     @Override
-    public void onDisconnectTetherNetwork(TetherNetwork network) {
-        Log.i(TAG, "onDisconnectTetherNetwork");
-        mDisconnectTetherNetwork = network;
+    public void onDisconnectHotspotNetwork(HotspotNetwork network) {
+        Log.i(TAG, "onDisconnectHotspotNetwork");
+        mDisconnectHotspotNetwork = network;
     }
 
     @Override
@@ -68,12 +68,12 @@ public class TestSharedConnectivityService extends SharedConnectivityService {
         mForgetKnownNetwork = network;
     }
 
-    public TetherNetwork getConnectTetherNetwork() {
-        return mConnectTetherNetwork;
+    public HotspotNetwork getConnectHotspotNetwork() {
+        return mConnectHotspotNetwork;
     }
 
-    public TetherNetwork getDisconnectTetherNetwork() {
-        return mDisconnectTetherNetwork;
+    public HotspotNetwork getDisconnectHotspotNetwork() {
+        return mDisconnectHotspotNetwork;
     }
 
     public KnownNetwork getConnectKnownNetwork() {
