@@ -30,6 +30,7 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -91,6 +92,8 @@ public class DeviceAssociationTest {
     private VirtualDisplay mVirtualDisplay;
     @Mock
     private VirtualDisplay.Callback mVirtualDisplayCallback;
+    @Mock
+    private VirtualDeviceManager.ActivityListener mActivityListener;
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -116,6 +119,7 @@ public class DeviceAssociationTest {
         final DisplayManager dm = getApplicationContext().getSystemService(DisplayManager.class);
         mDefaultDisplay = dm.getDisplay(DEFAULT_DISPLAY);
         mVirtualDevice = createVirtualDevice();
+        mVirtualDevice.addActivityListener(context.getMainExecutor(), mActivityListener);
         mVirtualDisplay = createVirtualDisplay(mVirtualDevice);
     }
 
@@ -314,6 +318,18 @@ public class DeviceAssociationTest {
         startActivity(mVirtualDisplay);
 
         assertThat(getApplicationContext().getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
+    }
+
+    @Test
+    public void applicationContext_activityOnVirtualDeviceDestroyed_returnsDefault() {
+        Activity activity = startActivity(mVirtualDisplay);
+        activity.finish();
+        activity.releaseInstance();
+
+        verify(mActivityListener, timeout(3000))
+                .onDisplayEmpty(eq(mVirtualDisplay.getDisplay().getDisplayId()));
+
+        assertThat(getApplicationContext().getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
     }
 
     @Test
