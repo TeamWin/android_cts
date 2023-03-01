@@ -1455,11 +1455,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                     configArray.get(4));
                         })
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, wheelTicks) -> {
                             List<Integer> wheelTickConfigArray = carPropertyConfig.getConfigArray();
                             int supportedWheels = wheelTickConfigArray.get(0);
 
-                            Long[] wheelTicks = (Long[]) carPropertyValue.getValue();
                             assertWithMessage("WHEEL_TICK Long[] value must be size 5")
                                     .that(wheelTicks.length)
                                     .isEqualTo(5);
@@ -1511,9 +1510,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         String.class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) ->
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, vin) ->
                                 assertWithMessage("INFO_VIN must be 17 characters")
-                                        .that((String) carPropertyValue.getValue())
+                                        .that(vin)
                                         .hasLength(17))
                 .addReadPermission(Car.PERMISSION_IDENTIFICATION)
                 .build()
@@ -1580,11 +1579,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         Float.class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) ->
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, fuelCapacity) ->
                                 assertWithMessage(
                                                 "INFO_FUEL_CAPACITY Float value must be greater"
                                                     + " than or equal 0")
-                                        .that((Float) carPropertyValue.getValue())
+                                        .that(fuelCapacity)
                                         .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
@@ -1600,8 +1599,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         Integer[].class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            Integer[] fuelTypes = (Integer[]) carPropertyValue.getValue();
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, fuelTypes) -> {
                             assertWithMessage("INFO_FUEL_TYPE must specify at least 1 fuel type")
                                     .that(fuelTypes.length)
                                     .isGreaterThan(0);
@@ -1643,12 +1641,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         Float.class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) ->
-                                assertWithMessage(
-                                                "INFO_EV_BATTERY_CAPACITY Float value must be"
-                                                    + " greater than or equal to 0")
-                                        .that((Float) carPropertyValue.getValue())
-                                        .isAtLeast(0))
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                evBatteryCapacity) ->
+                                        assertWithMessage(
+                                                        "INFO_EV_BATTERY_CAPACITY Float value must"
+                                                            + " be greater than or equal to 0")
+                                                .that(evBatteryCapacity)
+                                                .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
                 .verify(mCarPropertyManager);
@@ -1663,8 +1662,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         Integer[].class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            Integer[] evConnectorTypes = (Integer[]) carPropertyValue.getValue();
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                evConnectorTypes) -> {
                             assertWithMessage(
                                             "INFO_EV_CONNECTOR_TYPE must specify at least 1"
                                                 + " connection type")
@@ -1737,8 +1736,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         Integer[].class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            Integer[] evPortLocations = (Integer[]) carPropertyValue.getValue();
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                evPortLocations) -> {
                             assertWithMessage(
                                             "INFO_MULTI_EV_PORT_LOCATIONS must specify at least 1"
                                                 + " port location")
@@ -1798,8 +1797,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         Integer[].class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            Integer[] exteriorDimensions = (Integer[]) carPropertyValue.getValue();
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                exteriorDimensions) -> {
                             assertWithMessage(
                                             "INFO_EXTERIOR_DIMENSIONS must specify all 8 dimension"
                                                 + " measurements")
@@ -1840,8 +1839,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         Integer.class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            Integer value = (Integer) carPropertyValue.getValue();
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, value) -> {
                             boolean deadReckonedIsSet = (value
                                     & LocationCharacterization.DEAD_RECKONED)
                                     == LocationCharacterization.DEAD_RECKONED;
@@ -2654,13 +2652,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Float.class)
                 .requireMinMaxValues()
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) ->
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, tirePressure) ->
                                 assertWithMessage(
                                                 "TIRE_PRESSURE Float value"
                                                         + " at Area ID equals to "
-                                                        + carPropertyValue.getAreaId()
+                                                        + areaId
                                                         + " must be greater than or equal 0")
-                                        .that((Float) carPropertyValue.getValue())
+                                        .that(tirePressure)
                                         .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_TIRES)
                 .build()
@@ -2676,15 +2674,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                         Float.class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            int areaId = carPropertyValue.getAreaId();
-
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                criticallyLowTirePressure) -> {
                             assertWithMessage(
                                             "CRITICALLY_LOW_TIRE_PRESSURE Float value"
                                                     + "at Area ID equals to"
                                                     + areaId
                                                     + " must be greater than or equal 0")
-                                    .that((Float) carPropertyValue.getValue())
+                                    .that(criticallyLowTirePressure)
                                     .isAtLeast(0);
 
                             CarPropertyConfig<?> tirePressureConfig =
@@ -2702,7 +2699,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                     + areaId
                                                     + " must not exceed"
                                                     + " minFloatValue in TIRE_PRESSURE")
-                                    .that((Float) carPropertyValue.getValue())
+                                    .that(criticallyLowTirePressure)
                                     .isAtMost((Float) tirePressureConfig.getMinValue(areaId));
                         })
                 .addReadPermission(Car.PERMISSION_TIRES)
@@ -2791,11 +2788,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
                         Float.class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, fuelLevel) -> {
                             assertWithMessage(
                                             "FUEL_LEVEL Float value must be greater than or equal"
                                                 + " 0")
-                                    .that((Float) carPropertyValue.getValue())
+                                    .that(fuelLevel)
                                     .isAtLeast(0);
 
                             if (mCarPropertyManager.getCarPropertyConfig(
@@ -2812,7 +2809,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             assertWithMessage(
                                             "FUEL_LEVEL Float value must not exceed"
                                                 + " INFO_FUEL_CAPACITY Float value")
-                                    .that((Float) carPropertyValue.getValue())
+                                    .that(fuelLevel)
                                     .isAtMost((Float) infoFuelCapacityValue.getValue());
                         })
                 .addReadPermission(Car.PERMISSION_ENERGY)
@@ -2829,11 +2826,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
                         Float.class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, evBatteryLevel) -> {
                             assertWithMessage(
                                             "EV_BATTERY_LEVEL Float value must be greater than or"
                                                 + " equal 0")
-                                    .that((Float) carPropertyValue.getValue())
+                                    .that(evBatteryLevel)
                                     .isAtLeast(0);
 
                             if (mCarPropertyManager.getCarPropertyConfig(
@@ -2851,7 +2848,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                             "EV_BATTERY_LEVEL Float value must not exceed "
                                                     + "INFO_EV_BATTERY_CAPACITY Float "
                                                     + "value")
-                                    .that((Float) carPropertyValue.getValue())
+                                    .that(evBatteryLevel)
                                     .isAtMost((Float) infoEvBatteryCapacityValue.getValue());
                         })
                 .addReadPermission(Car.PERMISSION_ENERGY)
@@ -2868,11 +2865,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Float.class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                evCurrentBatteryCapacity) -> {
                             assertWithMessage(
                                             "EV_CURRENT_BATTERY_CAPACITY Float value must be"
                                                     + "greater than or equal 0")
-                                    .that((Float) carPropertyValue.getValue())
+                                    .that(evCurrentBatteryCapacity)
                                     .isAtLeast(0);
 
                             if (mCarPropertyManager.getCarPropertyConfig(
@@ -2890,7 +2888,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                             "EV_CURRENT_BATTERY_CAPACITY Float value must not"
                                                     + "exceed INFO_EV_BATTERY_CAPACITY Float "
                                                     + "value")
-                                    .that((Float) carPropertyValue.getValue())
+                                    .that(evCurrentBatteryCapacity)
                                     .isAtMost((Float) infoEvBatteryCapacityValue.getValue());
                         })
                 .addReadPermission(Car.PERMISSION_ENERGY)
@@ -2920,13 +2918,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
                         Float.class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            assertWithMessage(
-                                            "RANGE_REMAINING Float value must be greater than or"
-                                                + " equal 0")
-                                    .that((Float) carPropertyValue.getValue())
-                                    .isAtLeast(0);
-                        })
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, rangeRemaining) ->
+                                assertWithMessage(
+                                                "RANGE_REMAINING Float value must be greater than"
+                                                    + " or equal 0")
+                                        .that(rangeRemaining)
+                                        .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .addWritePermission(Car.PERMISSION_ADJUST_RANGE_REMAINING)
                 .build()
@@ -3012,13 +3009,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                     .isGreaterThan(0);
                         })
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                evChargeCurrentDrawLimit) -> {
                             List<Integer> evChargeCurrentDrawLimitConfigArray =
                                     carPropertyConfig.getConfigArray();
                             int maxCurrentDrawThresholdAmps =
                                     evChargeCurrentDrawLimitConfigArray.get(0);
 
-                            Float evChargeCurrentDrawLimit = (Float) carPropertyValue.getValue();
                             assertWithMessage(
                                             "EV_CHARGE_CURRENT_DRAW_LIMIT value must be greater"
                                                 + " than 0")
@@ -3064,10 +3061,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             }
                         })
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                evChargePercentLimit) -> {
                             List<Integer> evChargePercentLimitConfigArray =
                                     carPropertyConfig.getConfigArray();
-                            Float evChargePercentLimit = (Float) carPropertyValue.getValue();
 
                             if (evChargePercentLimitConfigArray.isEmpty()) {
                                 assertWithMessage(
@@ -3137,13 +3134,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
                         Integer.class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            assertWithMessage(
-                                            "FUEL_LEVEL Integer value must be greater than or equal"
-                                                + " 0")
-                                    .that((Integer) carPropertyValue.getValue())
-                                    .isAtLeast(0);
-                        })
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                evChargeTimeRemaining) ->
+                                        assertWithMessage(
+                                                        "EV_CHARGE_TIME_REMAINING Integer value"
+                                                            + " must be greater than or equal 0")
+                                                .that(evChargeTimeRemaining)
+                                                .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .build()
                 .verify(mCarPropertyManager);
@@ -3246,11 +3243,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
                         Float.class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) ->
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, engineRpm) ->
                                 assertWithMessage(
                                                 "ENGINE_RPM Float value must be greater than or"
                                                     + " equal 0")
-                                        .that((Float) carPropertyValue.getValue())
+                                        .that(engineRpm)
                                         .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
                 .build()
@@ -3280,11 +3277,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
                         Float.class)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) ->
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, perfOdometer) ->
                                 assertWithMessage(
                                                 "PERF_ODOMETER Float value must be greater than or"
                                                     + " equal 0")
-                                        .that((Float) carPropertyValue.getValue())
+                                        .that(perfOdometer)
                                         .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_MILEAGE)
                 .build()
@@ -3343,7 +3340,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, fogLightsState) -> {
                             assertWithMessage(
                                             "FRONT_FOG_LIGHTS_STATE must not be implemented"
                                                     + "when FOG_LIGHTS_STATE is implemented")
@@ -3389,7 +3386,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                frontFogLightsState) -> {
                             assertWithMessage(
                                             "FOG_LIGHTS_STATE must not be implemented"
                                                     + "when FRONT_FOG_LIGHTS_STATE is implemented")
@@ -3413,7 +3411,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                rearFogLightsState) -> {
                             assertWithMessage(
                                             "FOG_LIGHTS_STATE must not be implemented"
                                                     + "when REAR_FOG_LIGHTS_STATE is implemented")
@@ -3528,8 +3527,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                     .isGreaterThan(0);
                         })
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            Integer curbWeightKg = (Integer) carPropertyValue.getValue();
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, curbWeightKg) -> {
                             Integer grossWeightKg = carPropertyConfig.getConfigArray().get(0);
 
                             assertWithMessage("VEHICLE_CURB_WEIGHT must be greater than zero")
@@ -3600,7 +3598,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                fogLightsSwitch) -> {
                             assertWithMessage(
                                             "FRONT_FOG_LIGHTS_SWITCH must not be implemented"
                                                     + "when FOG_LIGHTS_SWITCH is implemented")
@@ -3648,7 +3647,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                frontFogLightsSwitch) -> {
                             assertWithMessage(
                                             "FOG_LIGHTS_SWITCH must not be implemented"
                                                     + "when FRONT_FOG_LIGHTS_SWITCH is implemented")
@@ -3673,7 +3673,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                rearFogLightsSwitch) -> {
                             assertWithMessage(
                                             "FOG_LIGHTS_SWITCH must not be implemented"
                                                     + "when REAR_FOG_LIGHTS_SWITCH is implemented")
@@ -4906,17 +4907,17 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                     .collect(Collectors.toList()));
                         })
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            Integer[] fanDirectionValues = (Integer[]) carPropertyValue.getValue();
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                fanDirectionValues) -> {
                             assertWithMessage(
                                             "HVAC_FAN_DIRECTION_AVAILABLE area ID: "
-                                                    + carPropertyValue.getAreaId()
+                                                    + areaId
                                                     + " must have at least 1 direction defined")
                                     .that(fanDirectionValues.length)
                                     .isAtLeast(1);
                             assertWithMessage(
                                             "HVAC_FAN_DIRECTION_AVAILABLE area ID: "
-                                                    + carPropertyValue.getAreaId()
+                                                    + areaId
                                                     + " values all must all be unique: "
                                                     + Arrays.toString(fanDirectionValues))
                                     .that(fanDirectionValues.length)
@@ -4924,7 +4925,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             for (Integer fanDirection : fanDirectionValues) {
                                 assertWithMessage(
                                                 "HVAC_FAN_DIRECTION_AVAILABLE's area ID: "
-                                                        + carPropertyValue.getAreaId()
+                                                        + areaId
                                                         + " must be a valid combination of fan"
                                                         + " directions")
                                         .that(fanDirection)
@@ -4984,11 +4985,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                     .collect(Collectors.toList()));
                         })
                 .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                hvacFanDirection) -> {
                             CarPropertyValue<Integer[]> hvacFanDirectionAvailableCarPropertyValue =
                                     mCarPropertyManager.getProperty(
                                             VehiclePropertyIds.HVAC_FAN_DIRECTION_AVAILABLE,
-                                            carPropertyValue.getAreaId());
+                                            areaId);
                             assertWithMessage(
                                             "HVAC_FAN_DIRECTION_AVAILABLE value must be available")
                                     .that(hvacFanDirectionAvailableCarPropertyValue)
@@ -4996,10 +4998,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
                             assertWithMessage(
                                             "HVAC_FAN_DIRECTION area ID "
-                                                    + carPropertyValue.getAreaId()
+                                                    + areaId
                                                     + " value must be in list for"
                                                     + " HVAC_FAN_DIRECTION_AVAILABLE")
-                                    .that(carPropertyValue.getValue())
+                                    .that(hvacFanDirection)
                                     .isIn(
                                             Arrays.asList(
                                                     hvacFanDirectionAvailableCarPropertyValue
