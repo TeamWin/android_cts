@@ -44,9 +44,10 @@ import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.SaveInfo;
-import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.autofill.AutofillId;
+
+import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Test;
 

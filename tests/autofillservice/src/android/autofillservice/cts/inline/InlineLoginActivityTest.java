@@ -54,10 +54,10 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillContext;
-import android.support.test.uiautomator.Direction;
 import android.view.accessibility.AccessibilityManager;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.Direction;
 
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;

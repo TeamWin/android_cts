@@ -43,10 +43,11 @@ import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequ
 import android.content.ComponentName;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.SaveInfo;
-import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.autofill.AutofillId;
+
+import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Test;
 

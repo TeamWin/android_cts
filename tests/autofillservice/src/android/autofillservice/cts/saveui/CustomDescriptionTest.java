@@ -39,14 +39,14 @@ import android.service.autofill.ImageTransformation;
 import android.service.autofill.RegexValidator;
 import android.service.autofill.TextValueSanitizer;
 import android.service.autofill.Validator;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Test;
 

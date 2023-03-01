@@ -27,12 +27,12 @@ import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.UiBot;
 import android.content.Intent;
 import android.service.autofill.CustomDescription;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.UiObject2;
 import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
 import androidx.test.filters.FlakyTest;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Test;
 

@@ -55,8 +55,9 @@ import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.content.Intent;
 import android.service.autofill.FillEventHistory;
-import android.support.test.uiautomator.UiObject2;
 import android.view.View;
+
+import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Test;
 

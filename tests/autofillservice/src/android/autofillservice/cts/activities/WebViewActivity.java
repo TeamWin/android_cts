@@ -23,7 +23,6 @@ import android.autofillservice.cts.R;
 import android.autofillservice.cts.testcore.UiBot;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
@@ -34,6 +33,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+
+import androidx.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.RetryableException;
 
