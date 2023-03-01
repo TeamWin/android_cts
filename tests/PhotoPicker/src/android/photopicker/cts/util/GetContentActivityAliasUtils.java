@@ -16,15 +16,16 @@
 
 package android.photopicker.cts.util;
 
+import static android.provider.MediaStore.ACTION_PICK_IMAGES;
+
 import android.Manifest;
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
-import android.provider.MediaStore;
 
+import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 
 import java.util.concurrent.TimeUnit;
@@ -37,7 +38,7 @@ public class GetContentActivityAliasUtils {
     private static final long POLLING_SLEEP_MILLIS = 100;
 
     private static ComponentName sComponentName = new ComponentName(
-            getMediaProviderPackageName(),
+            getPhotoPickerPackageName(),
             "com.android.providers.media.photopicker.PhotoPickerGetContentActivity");
 
     public static int enableAndGetOldState() throws Exception {
@@ -77,9 +78,7 @@ public class GetContentActivityAliasUtils {
     public static String getDocumentsUiPackageName() {
         final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.setType("*/*");
-        final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
-        final ResolveInfo ri = inst.getContext().getPackageManager().resolveActivity(intent, 0);
-        return ri.activityInfo.packageName;
+        return getActivityPackageNameFromIntent(intent);
     }
 
     private static void updateComponentEnabledSetting(PackageManager packageManager,
@@ -118,11 +117,15 @@ public class GetContentActivityAliasUtils {
         return packageManager.getComponentEnabledSetting(sComponentName) == state;
     }
 
-    private static String getMediaProviderPackageName() {
-        final Instrumentation inst = androidx.test.InstrumentationRegistry.getInstrumentation();
-        final PackageManager packageManager = inst.getContext().getPackageManager();
-        final ProviderInfo providerInfo = packageManager.resolveContentProvider(
-                MediaStore.AUTHORITY, PackageManager.MATCH_ALL);
-        return providerInfo.packageName;
+    @NonNull
+    private static String getPhotoPickerPackageName() {
+        return getActivityPackageNameFromIntent(new Intent(ACTION_PICK_IMAGES));
+    }
+
+    @NonNull
+    private static String getActivityPackageNameFromIntent(@NonNull Intent intent) {
+        final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
+        final ResolveInfo ri = inst.getContext().getPackageManager().resolveActivity(intent, 0);
+        return ri.activityInfo.packageName;
     }
 }
