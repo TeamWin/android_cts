@@ -35,6 +35,7 @@ public final class UserCreationRequestTest extends AbstractExpectableTestCase {
         expectThat(userCreationRequest.getName()).isEqualTo(NAME);
         expectThat(userCreationRequest.isGuest()).isFalse();
         expectThat(userCreationRequest.isAdmin()).isFalse();
+        expectThat(userCreationRequest.isEphemeral()).isFalse();
     }
 
     @Test
@@ -44,31 +45,45 @@ public final class UserCreationRequestTest extends AbstractExpectableTestCase {
         expectThat(userCreationRequest.getName()).isNull();
         expectThat(userCreationRequest.isGuest()).isFalse();
         expectThat(userCreationRequest.isAdmin()).isFalse();
+        expectThat(userCreationRequest.isEphemeral()).isFalse();
     }
 
     @Test
     public void testUserCreationRequestGuest() {
         UserCreationRequest userCreationRequest = new UserCreationRequest.Builder()
-                .setGuest(true).build();
+                .setGuest().build();
 
         expectThat(userCreationRequest.getName()).isNull();
         expectThat(userCreationRequest.isGuest()).isTrue();
         expectThat(userCreationRequest.isAdmin()).isFalse();
+        expectThat(userCreationRequest.isEphemeral()).isFalse();
     }
 
     @Test
     public void testUserCreationRequestAdmin() {
-        UserCreationRequest userCreationRequest = new UserCreationRequest.Builder().setAdmin(true)
+        UserCreationRequest userCreationRequest = new UserCreationRequest.Builder().setAdmin()
                 .build();
 
         expectThat(userCreationRequest.getName()).isNull();
         expectThat(userCreationRequest.isGuest()).isFalse();
         expectThat(userCreationRequest.isAdmin()).isTrue();
+        expectThat(userCreationRequest.isEphemeral()).isFalse();
+    }
+
+    @Test
+    public void testUserCreationRequestGuestUser() {
+        UserCreationRequest userCreationRequest = new UserCreationRequest.Builder().setEphemeral()
+                .build();
+
+        expectThat(userCreationRequest.getName()).isNull();
+        expectThat(userCreationRequest.isGuest()).isFalse();
+        expectThat(userCreationRequest.isAdmin()).isFalse();
+        expectThat(userCreationRequest.isEphemeral()).isTrue();
     }
 
     @Test
     public void testUserCreationRequestGuestAndAdmin() {
         assertThrows(IllegalArgumentException.class,
-                () -> new UserCreationRequest.Builder().setGuest(true).setAdmin(true).build());
+                () -> new UserCreationRequest.Builder().setGuest().setAdmin().build());
     }
 }
