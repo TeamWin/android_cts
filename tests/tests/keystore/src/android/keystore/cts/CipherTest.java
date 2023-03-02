@@ -619,16 +619,11 @@ public class CipherTest {
         return (pm != null && pm.hasSystemFeature("android.software.leanback_only"));
     }
 
-    private boolean hasSecureLockScreen() {
-        PackageManager pm = getContext().getPackageManager();
-        return (pm != null && pm.hasSystemFeature("android.software.secure_lock_screen"));
-    }
-
     @Presubmit
     @Test
     public void testKeyguardLockAndUnlock()
             throws Exception {
-        if (!hasSecureLockScreen()) {
+        if (!TestUtils.hasSecureLockScreen(getContext())) {
             return;
         }
 
@@ -650,7 +645,7 @@ public class CipherTest {
         final boolean isUnlockedDeviceRequired = true;
         final boolean isUserAuthRequired = false;
 
-        if (!hasSecureLockScreen()) {
+        if (!TestUtils.hasSecureLockScreen(getContext())) {
             return;
         }
 
@@ -1218,7 +1213,7 @@ public class CipherTest {
         final boolean isUnlockedDeviceRequired = false;
         final boolean isUserAuthRequired = true;
 
-        if (!hasSecureLockScreen()) {
+        if (!TestUtils.hasSecureLockScreen(getContext())) {
             return;
         }
 
