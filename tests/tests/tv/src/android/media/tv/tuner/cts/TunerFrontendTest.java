@@ -1085,15 +1085,15 @@ public class TunerFrontendTest {
             return;
         }
         IptvFrontendSettingsFec fec =
-                IptvFrontendSettingsFec
-                        .builder()
+                new IptvFrontendSettingsFec
+                        .Builder()
                         .setFecType(IptvFrontendSettingsFec.FEC_TYPE_ROW)
                         .setFecColNum(19)
                         .setFecRowNum(26)
                         .build();
         IptvFrontendSettings settings =
-                IptvFrontendSettings
-                        .builder()
+                new IptvFrontendSettings
+                        .Builder()
                         .setSrcIpAddress(new byte[]{2, 3, 4, 5})
                         .setDstIpAddress(new byte[]{2, 3, 4, 5})
                         .setSrcPort(8000)
