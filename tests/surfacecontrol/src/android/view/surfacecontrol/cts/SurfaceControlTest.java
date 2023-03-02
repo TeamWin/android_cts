@@ -39,7 +39,6 @@ import android.hardware.SyncFence;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.Display;
-import android.view.Surface;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
@@ -47,7 +46,6 @@ import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecke
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.RectChecker;
 import android.view.cts.surfacevalidator.PixelColor;
 
-import androidx.annotation.NonNull;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -63,10 +61,37 @@ import org.junit.runner.RunWith;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+
+
+import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
+import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.RectChecker;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Rect;
+import android.platform.test.annotations.Presubmit;
+import android.view.Surface;
+import android.view.SurfaceControl;
+import android.view.SurfaceHolder;
+import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
+import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecker;
+import android.view.cts.surfacevalidator.PixelColor;
+
+import androidx.annotation.NonNull;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+
+import java.util.concurrent.Executor;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
@@ -86,7 +111,8 @@ public class SurfaceControlTest {
      * the edges. It's easier to just ignore those pixels and ensure the rest are correct.
      */
     private static final Rect DEFAULT_RECT = new Rect(1, 1, DEFAULT_LAYOUT_WIDTH - 1,
-            DEFAULT_LAYOUT_HEIGHT - 1);
+    DEFAULT_LAYOUT_HEIGHT - 1);
+
 
     private static final PixelColor RED = new PixelColor(Color.RED);
     private static final PixelColor BLUE = new PixelColor(Color.BLUE);
@@ -231,13 +257,12 @@ public class SurfaceControlTest {
 
         @Override
         public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width,
-                int height) {
-        }
+                int height) {}
 
         @Override
-        public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
-        }
+        public void surfaceDestroyed(@NonNull SurfaceHolder holder) {}
     }
+
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -521,7 +546,7 @@ public class SurfaceControlTest {
                                 .apply();
                     }
                 },
-                new RectChecker(DEFAULT_RECT) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x >= 10 && x < 50 && y >= 10 && y < 50) {
@@ -550,7 +575,7 @@ public class SurfaceControlTest {
                                 .apply();
                     }
                 },
-                new RectChecker(DEFAULT_RECT) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x >= 10 && x < 50 && y >= 10 && y < 50) {
@@ -579,7 +604,7 @@ public class SurfaceControlTest {
                                 .apply();
                     }
                 },
-                new RectChecker(DEFAULT_RECT) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x >= 10 && x < 50 && y >= 10 && y < 50) {
@@ -759,7 +784,7 @@ public class SurfaceControlTest {
                     }
                 },
 
-                new RectChecker(DEFAULT_RECT) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x >= 10 && x < 30 && y >= 10 && y < 40) {
@@ -787,7 +812,7 @@ public class SurfaceControlTest {
                     }
                 },
 
-                new RectChecker(DEFAULT_RECT) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
@@ -842,7 +867,7 @@ public class SurfaceControlTest {
                     }
                 },
 
-                new RectChecker(DEFAULT_RECT) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
@@ -883,7 +908,7 @@ public class SurfaceControlTest {
                     }
                 },
 
-                new RectChecker(DEFAULT_RECT) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
@@ -917,7 +942,7 @@ public class SurfaceControlTest {
                                 .apply();
                     }
                 },
-                new RectChecker(DEFAULT_RECT) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
@@ -1007,7 +1032,7 @@ public class SurfaceControlTest {
                                 .apply();
                     }
                 },
-                new RectChecker(DEFAULT_RECT) {
+                new RectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x < halfWidth && y < halfHeight) {
@@ -1627,8 +1652,7 @@ public class SurfaceControlTest {
         // of HDR probably
         mActivity.getWindow().getAttributes().screenBrightness = 0.01f;
         // Wait for the screenBrightness to be picked up by VRI
-        WidgetTestUtils.runOnMainAndDrawSync(mActivity.getParentFrameLayout(), () -> {
-        });
+        WidgetTestUtils.runOnMainAndDrawSync(mActivity.getParentFrameLayout(), () -> {});
         CountDownLatch hdrReady = new CountDownLatch(1);
         Exception[] listenerErrors = new Exception[1];
         if (display.isHdrSdrRatioAvailable()) {
@@ -1655,8 +1679,7 @@ public class SurfaceControlTest {
             });
         } else {
             assertThrows(IllegalStateException.class, () ->
-                    display.registerHdrSdrRatioChangedListener(Runnable::run, ignored -> {
-                    }));
+                    display.registerHdrSdrRatioChangedListener(Runnable::run, ignored -> {}));
         }
 
         final int extendedDataspace = DataSpace.pack(DataSpace.STANDARD_BT709,
@@ -1741,10 +1764,10 @@ public class SurfaceControlTest {
 
     private SurfaceControl buildDefaultSurface(SurfaceControl parent) {
         return new SurfaceControl.Builder()
-                .setBufferSize(DEFAULT_SURFACE_SIZE, DEFAULT_SURFACE_SIZE)
-                .setName("CTS surface")
-                .setParent(parent)
-                .build();
+            .setBufferSize(DEFAULT_SURFACE_SIZE, DEFAULT_SURFACE_SIZE)
+            .setName("CTS surface")
+            .setParent(parent)
+            .build();
 
     }
 
@@ -1765,7 +1788,6 @@ public class SurfaceControlTest {
     private SurfaceControl buildDefaultRedSurface(SurfaceControl parent) {
         return buildDefaultSurface(parent, Color.RED);
     }
-
     private SurfaceControl buildSmallRedSurface(SurfaceControl parent) {
         SurfaceControl surfaceControl = new SurfaceControl.Builder()
                 .setBufferSize(DEFAULT_SURFACE_SIZE / 2, DEFAULT_SURFACE_SIZE / 2)
@@ -1801,7 +1823,7 @@ public class SurfaceControlTest {
     @Test
     public void testHide() throws Throwable {
         verifyTest(
-                new SurfaceHolderCallback() {
+                new SurfaceHolderCallback () {
                     @Override
                     public void addChildren(SurfaceControl parent) {
                         final SurfaceControl sc = buildDefaultRedSurface(parent);
@@ -1821,7 +1843,7 @@ public class SurfaceControlTest {
     public void testReparentOff() throws Throwable {
         final SurfaceControl sc = buildDefaultRedSurface(null);
         verifyTest(
-                new SurfaceHolderCallback() {
+                new SurfaceHolderCallback () {
                     @Override
                     public void addChildren(SurfaceControl parent) {
                         makeTransactionWithListener().reparent(sc, parent).apply();
@@ -1829,13 +1851,13 @@ public class SurfaceControlTest {
                     }
                 },
                 new RectChecker(DEFAULT_RECT, Color.BLACK), 2);
-        // Since the SurfaceControl is parented off-screen, if we release our reference
-        // it may completely die. If this occurs while the render thread is still rendering
-        // the RED background we could trigger a crash. For this test defer destroying the
-        // Surface until we have collected our test results.
-        if (sc != null) {
-            sc.release();
-        }
+      // Since the SurfaceControl is parented off-screen, if we release our reference
+      // it may completely die. If this occurs while the render thread is still rendering
+      // the RED background we could trigger a crash. For this test defer destroying the
+      // Surface until we have collected our test results.
+      if (sc != null) {
+        sc.release();
+      }
     }
 
     /**
@@ -1844,14 +1866,14 @@ public class SurfaceControlTest {
     @Test
     public void testReparentOn() throws Throwable {
         verifyTest(
-                new SurfaceHolderCallback() {
+                new SurfaceHolderCallback () {
                     @Override
                     public void addChildren(SurfaceControl parent) {
                         final SurfaceControl sc = buildDefaultRedSurface(null);
 
                         makeTransactionWithListener().setVisibility(sc, true)
-                                .reparent(sc, parent)
-                                .apply();
+                            .reparent(sc, parent)
+                            .apply();
 
                         sc.release();
                     }
@@ -1865,17 +1887,17 @@ public class SurfaceControlTest {
     @Test
     public void testSetLayer() throws Throwable {
         verifyTest(
-                new SurfaceHolderCallback() {
+                new SurfaceHolderCallback () {
                     @Override
                     public void addChildren(SurfaceControl parent) {
                         final SurfaceControl sc = buildDefaultRedSurface(parent);
                         final SurfaceControl sc2 = buildDefaultSurface(parent, Color.GREEN);
 
                         makeTransactionWithListener().setVisibility(sc, true)
-                                .setVisibility(sc2, true)
-                                .setLayer(sc, 1)
-                                .setLayer(sc2, 2)
-                                .apply();
+                            .setVisibility(sc2, true)
+                            .setLayer(sc, 1)
+                            .setLayer(sc2, 2)
+                            .apply();
 
                         sc.release();
                     }
@@ -1889,14 +1911,13 @@ public class SurfaceControlTest {
     @Test
     public void testSetGeometry_dstBoundsOffScreen() throws Throwable {
         verifyTest(
-                new SurfaceHolderCallback() {
+                new SurfaceHolderCallback () {
                     @Override
                     public void addChildren(SurfaceControl parent) {
                         final SurfaceControl sc = buildDefaultRedSurface(parent);
                         makeTransactionWithListener().setVisibility(sc, true)
-                                .setGeometry(sc, null, new Rect(-50, -50, 50, 50),
-                                        Surface.ROTATION_0)
-                                .apply();
+                            .setGeometry(sc, null, new Rect(-50, -50, 50, 50), Surface.ROTATION_0)
+                            .apply();
                         sc.release();
                     }
                 },
@@ -1905,7 +1926,6 @@ public class SurfaceControlTest {
                 new RectChecker(DEFAULT_RECT) {
                     final PixelColor mRed = new PixelColor(Color.RED);
                     final PixelColor mBlack = new PixelColor(Color.BLACK);
-
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x < 50 && y < 50) {
@@ -1923,14 +1943,13 @@ public class SurfaceControlTest {
     @Test
     public void testSetGeometry_dstBoundsOnScreen() throws Throwable {
         verifyTest(
-                new SurfaceHolderCallback() {
+                new SurfaceHolderCallback () {
                     @Override
                     public void addChildren(SurfaceControl parent) {
                         final SurfaceControl sc = buildDefaultRedSurface(parent);
                         makeTransactionWithListener().setVisibility(sc, true)
-                                .setGeometry(sc, null, new Rect(50, 50, 150, 150),
-                                        Surface.ROTATION_0)
-                                .apply();
+                            .setGeometry(sc, null, new Rect(50, 50, 150, 150), Surface.ROTATION_0)
+                            .apply();
 
                         sc.release();
                     }
@@ -1940,7 +1959,6 @@ public class SurfaceControlTest {
                 new RectChecker(DEFAULT_RECT) {
                     final PixelColor mRed = new PixelColor(Color.RED);
                     final PixelColor mBlack = new PixelColor(Color.BLACK);
-
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
                         if (x >= 50 && y >= 50) {
@@ -1958,16 +1976,15 @@ public class SurfaceControlTest {
     @Test
     public void testSetGeometry_dstBoundsScaled() throws Throwable {
         verifyTest(
-                new SurfaceHolderCallback() {
+                new SurfaceHolderCallback () {
                     @Override
                     public void addChildren(SurfaceControl parent) {
                         final SurfaceControl sc = buildSmallRedSurface(parent);
                         makeTransactionWithListener().setVisibility(sc, true)
-                                .setGeometry(sc, new Rect(0, 0, DEFAULT_SURFACE_SIZE / 2,
-                                                DEFAULT_SURFACE_SIZE / 2),
-                                        new Rect(0, 0, DEFAULT_SURFACE_SIZE, DEFAULT_SURFACE_SIZE),
-                                        Surface.ROTATION_0)
-                                .apply();
+                            .setGeometry(sc, new Rect(0, 0, DEFAULT_SURFACE_SIZE / 2, DEFAULT_SURFACE_SIZE / 2),
+                                    new Rect(0, 0, DEFAULT_SURFACE_SIZE , DEFAULT_SURFACE_SIZE),
+                                    Surface.ROTATION_0)
+                            .apply();
                         sc.release();
                     }
                 },
