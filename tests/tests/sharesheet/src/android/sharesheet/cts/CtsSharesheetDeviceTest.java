@@ -228,9 +228,12 @@ public class CtsSharesheetDeviceTest {
             showsAppAndIntentFilterLabel();
             isChooserTargetServiceDirectShareDisabled();
 
+            CountDownLatch appStartedLatch = prepareAppStartedEvaluation();
+
             // Must be run last, partial completion closes the Sharesheet
             firesIntentSenderWithExtraChosenComponent();
 
+            appStartedLatch.await(1000, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             // No-op
         } finally {
@@ -387,7 +390,7 @@ public class CtsSharesheetDeviceTest {
      *
      * Requires content loaded with permission: android.permission.QUERY_ALL_PACKAGES
      */
-    public void doesExcludeComponents() {
+    private void doesExcludeComponents() {
         // The excluded component should not be found on screen
         waitAndAssertNoTextContains(mBlacklistLabel);
     }
@@ -395,7 +398,7 @@ public class CtsSharesheetDeviceTest {
     /**
      * Tests API behavior compliance for security to always show application label
      */
-    public void showsApplicationLabel() {
+    private void showsApplicationLabel() {
         // For each app target the providing app's application manifest label should be shown
         waitAndAssertTextContains(mAppLabel);
     }
@@ -403,7 +406,7 @@ public class CtsSharesheetDeviceTest {
     /**
      * Tests API behavior compliance to show application and activity label when available
      */
-    public void showsAppAndActivityLabel() {
+    private void showsAppAndActivityLabel() {
         waitAndAssertTextContains(mActivityTesterAppLabel);
         waitAndAssertTextContains(mActivityTesterActivityLabel);
     }
@@ -411,7 +414,7 @@ public class CtsSharesheetDeviceTest {
     /**
      * Tests API behavior compliance to show application and intent filter label when available
      */
-    public void showsAppAndIntentFilterLabel() {
+    private void showsAppAndIntentFilterLabel() {
         // NOTE: it is not necessary to show any set Activity label if an IntentFilter label is set
         waitAndAssertTextContains(mIntentFilterTesterAppLabel);
         waitAndAssertTextContains(mIntentFilterTesterIntentFilterLabel);
@@ -420,7 +423,7 @@ public class CtsSharesheetDeviceTest {
     /**
      * Tests API compliance for Intent.EXTRA_INITIAL_INTENTS
      */
-    public void showsExtraInitialIntents() {
+    private void showsExtraInitialIntents() {
         // Should show extra initial intents but must limit them, can't test limit here
         waitAndAssertTextContains(mExtraInitialIntentsLabelBase);
     }
@@ -428,7 +431,7 @@ public class CtsSharesheetDeviceTest {
     /**
      * Tests API compliance for Intent.EXTRA_CHOOSER_TARGETS
      */
-    public void showsExtraChooserTargets() {
+    private void showsExtraChooserTargets() {
         // Should show chooser targets but must limit them, can't test limit here
         if (mActivityManager.isLowRamDevice()) {
             // The direct share row and EXTRA_CHOOSER_TARGETS should be hidden on low-ram devices
@@ -441,22 +444,37 @@ public class CtsSharesheetDeviceTest {
     /**
      * Tests API behavior compliance for Intent.EXTRA_TITLE
      */
-    public void showsContentPreviewTitle() {
+    private void showsContentPreviewTitle() {
         waitAndAssertTextContains(mPreviewTitle);
     }
 
     /**
      * Tests API behavior compliance for Intent.EXTRA_TEXT
      */
-    public void showsContentPreviewText() {
+    private void showsContentPreviewText() {
         waitAndAssertTextContains(mPreviewText);
+    }
+
+    /**
+     * Set the listener for the activity that will receive the Intent.
+     *
+     * @return a CountDownLatch to await to ensure that the assertions have been completed.
+     */
+    private CountDownLatch prepareAppStartedEvaluation() {
+        CountDownLatch appStartedLatch = new CountDownLatch(1);
+        CtsSharesheetDeviceActivity.setOnIntentReceivedConsumer(intent -> {
+            assertEquals(CTS_DATA_TYPE, intent.getType());
+            assertEquals(Intent.ACTION_SEND, intent.getAction());
+            appStartedLatch.countDown();
+        });
+        return appStartedLatch;
     }
 
     /**
      * Tests API compliance for Intent.EXTRA_CHOSEN_COMPONENT_INTENT_SENDER and related APIs
      * UI assumption: target labels are clickable, clicking opens target
      */
-    public void firesIntentSenderWithExtraChosenComponent() throws Exception {
+    private void firesIntentSenderWithExtraChosenComponent() throws Exception {
         // To receive the extra chosen component a target must be clicked. Clicking the target
         // will close the Sharesheet. Run this last in any sequence of tests.
 
