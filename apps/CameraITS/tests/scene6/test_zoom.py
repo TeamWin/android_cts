@@ -38,9 +38,8 @@ _MIN_CIRCLE_PTS = 25
 _MIN_FOCUS_DIST_TOL = 0.80  # allow charts a little closer than min
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_STEPS = 10
-_OFFSET_LOW_VAL = 10  # number of pixels
+_OFFSET_ATOL = 10  # number of pixels
 _OFFSET_RTOL = 0.15
-_OFFSET_RTOL_LOW_OFFSET = 0.20
 _OFFSET_RTOL_MIN_FD = 0.30
 _RADIUS_RTOL = 0.10
 _RADIUS_RTOL_MIN_FD = 0.15
@@ -224,10 +223,10 @@ class ZoomTest(its_base_test.ItsBaseTest):
 
         for i, data in test_data.items():
           logging.debug('Zoom: %.2f, fl: %.2f', data['z'], data['fl'])
-          offset_abs = [(data['circle'][0] - size[0] // 2),
-                        (data['circle'][1] - size[1] // 2)]
+          offset_xy = [(data['circle'][0] - size[0] // 2),
+                       (data['circle'][1] - size[1] // 2)]
           logging.debug('Circle r: %.1f, center offset x, y: %d, %d',
-                        data['circle'][2], offset_abs[0], offset_abs[1])
+                        data['circle'][2], offset_xy[0], offset_xy[1])
           z_ratio = data['z'] / z_0
 
           # check relative size against zoom[0]
@@ -243,21 +242,20 @@ class ZoomTest(its_base_test.ItsBaseTest):
           # check relative offset against init vals w/ no focal length change
           if i == 0 or test_data[i-1]['fl'] != data['fl']:  # set init values
             z_init = float(data['z'])
-            offset_init = [(data['circle'][0] - size[0] // 2),
-                           (data['circle'][1] - size[1] // 2)]
+            offset_hypot_init = math.hypot(offset_xy[0], offset_xy[1])
+            logging.debug('offset_hypot_init: %.3f', offset_hypot_init)
           else:  # check
             z_ratio = data['z'] / z_init
-            offset_rel = (math.hypot(offset_abs[0], offset_abs[1]) / z_ratio /
-                          math.hypot(offset_init[0], offset_init[1]))
-            logging.debug('offset_rel: %.3f', offset_rel)
+            offset_hypot_rel = math.hypot(offset_xy[0], offset_xy[1]) / z_ratio
+            logging.debug('offset_hypot_rel: %.3f', offset_hypot_rel)
             rel_tol = data['o_tol']
-            if (np.linalg.norm(offset_init) < _OFFSET_LOW_VAL and
-                rel_tol == _OFFSET_RTOL):
-              rel_tol = _OFFSET_RTOL_LOW_OFFSET
-            if not math.isclose(offset_rel, 1.0, rel_tol=rel_tol):
+            if not math.isclose(offset_hypot_init, offset_hypot_rel,
+                                rel_tol=rel_tol, abs_tol=_OFFSET_ATOL):
               test_failed = True
-              e_msg = (f"zoom: {data['z']:.2f}, offset(rel to 1): "
-                       f'{offset_rel:.4f}, RTOL: {rel_tol}')
+              e_msg = (f"zoom: {data['z']:.2f}, "
+                       f'offset init: {offset_hypot_init:.4f}, '
+                       f'offset rel: {offset_hypot_rel:.4f}, '
+                       f'RTOL: {rel_tol}, ATOL: {_OFFSET_ATOL}')
               logging.error(e_msg)
 
     if test_failed:
