@@ -34,6 +34,8 @@ SCROLLER_TIMEOUT_MS = 3000
 VALID_NUM_DEVICES = (1, 2)
 NOT_YET_MANDATED_ALL = 100
 DEFAULT_TABLET_BRIGHTNESS = 192
+ELEVEN_BIT_TABLET_BRIGHTNESS = 1536
+ELEVEN_BIT_TABLET_NAMES = ('nabu',)
 LEGACY_TABLET_BRIGHTNESS = 96
 LEGACY_TABLET_NAME = 'dragon'
 TABLET_REQUIREMENTS_URL = 'https://source.android.com/docs/compatibility/cts/camera-its-box#tablet-requirements'
@@ -61,6 +63,27 @@ NOT_YET_MANDATED = {
 }
 
 logging.getLogger('matplotlib.font_manager').disabled = True
+
+
+def _validate_tablet_brightness(tablet_name, brightness):
+  """Ensures tablet brightness is set according to documentation.
+
+  https://source.android.com/docs/compatibility/cts/camera-its-box#tablet-requirements
+  Args:
+    tablet_name: tablet product name specified by `ro.build.product`.
+    brightness: brightness specified by config file.
+  """
+  name_to_brightness = {
+      LEGACY_TABLET_NAME: LEGACY_TABLET_BRIGHTNESS,
+  }
+  for name in ELEVEN_BIT_TABLET_NAMES:
+    name_to_brightness[name] = ELEVEN_BIT_TABLET_BRIGHTNESS
+  if tablet_name in name_to_brightness:
+    if brightness != name_to_brightness[tablet_name]:
+      raise AssertionError(BRIGHTNESS_ERROR)
+  else:
+    if brightness != DEFAULT_TABLET_BRIGHTNESS:
+      raise AssertionError(BRIGHTNESS_ERROR)
 
 
 class ItsBaseTest(base_test.BaseTestClass):
@@ -115,12 +138,7 @@ class ItsBaseTest(base_test.BaseTestClass):
         )
         tablet_name = str(tablet_name_unencoded.decode('utf-8')).strip()
         logging.debug('tablet name: %s', tablet_name)
-        if tablet_name != LEGACY_TABLET_NAME:
-          if self.tablet_screen_brightness != DEFAULT_TABLET_BRIGHTNESS:
-            raise AssertionError(BRIGHTNESS_ERROR)
-        else:
-          if self.tablet_screen_brightness != LEGACY_TABLET_BRIGHTNESS:
-            raise AssertionError(BRIGHTNESS_ERROR)
+        _validate_tablet_brightness(tablet_name, self.tablet_screen_brightness)
       except KeyError:
         logging.debug('Not all tablet arguments set.')
     else:  # sensor_fusion or manual run
