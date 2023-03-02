@@ -93,6 +93,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "com.android.permissioncontroller:id/permission_allow_all_photos_button"
         const val SELECT_PHOTOS_BUTTON =
             "com.android.permissioncontroller:id/permission_allow_selected_photos_button"
+        const val SELECT_MORE_PHOTOS_BUTTON =
+            "com.android.permissioncontroller:id/permission_allow_more_selected_photos_button"
         const val ALLOW_BUTTON =
                 "com.android.permissioncontroller:id/permission_allow_button"
         const val ALLOW_FOREGROUND_BUTTON =
