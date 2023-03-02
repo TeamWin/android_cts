@@ -17,6 +17,7 @@
 package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LATE;
+import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_DEVICE_ADMIN;
 
 import com.android.bedstead.harrier.UserType;
 
@@ -40,6 +41,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(EnsureHasUserRestrictionGroup.class)
+// This is only required because the user restrictions are applied by a Device Admin.
+@RequireFeature(FEATURE_DEVICE_ADMIN)
 public @interface EnsureHasUserRestriction {
 
     int ENSURE_HAS_USER_RESTRICTION_WEIGHT = LATE;
