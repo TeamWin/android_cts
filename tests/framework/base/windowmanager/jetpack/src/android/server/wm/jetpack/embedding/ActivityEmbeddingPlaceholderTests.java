@@ -30,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestActivityWithId;
@@ -210,6 +211,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
      * Tests that when the task width is increased to a width large enough to support a placeholder,
      * then a placeholder activity is launched.
      */
+    @FlakyTest(bugId = 271093500)
     @Test
     public void testPlaceholderLaunchedWhenTaskWidthIncreased() {
         final double splitTaskWidth = getTaskWidth() * 1.05;
