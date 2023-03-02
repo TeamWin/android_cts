@@ -258,6 +258,11 @@ public final class RemoteControlPassthrough {
                     device,
                     CLASS,
                     "Short press KEYCODE_" + mUserControlPressKeys_20.get(userControlPressKey));
+            // KEYCODE_HOME pressing will let the activity HdmiCecKeyEventCapture be paused.
+            // Resume the activity after tesing for KEYCODE_HOME pressing.
+            if (userControlPressKey == HdmiCecConstants.CEC_KEYCODE_ROOT_MENU) {
+                device.executeShellCommand(START_COMMAND);
+            }
         }
     }
 
