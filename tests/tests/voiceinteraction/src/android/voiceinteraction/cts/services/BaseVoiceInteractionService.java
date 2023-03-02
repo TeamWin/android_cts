@@ -277,14 +277,23 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
         sShowSessionFailedLatch = null;
     }
 
+    /**
+     * Returns {@link VoiceInteractionService} for testing
+     */
     public static VoiceInteractionService getService() {
         return sService;
     }
 
+    /**
+     * Returns if the {@link VoiceInteractionService} is running on the main thread
+     */
     static boolean isRunningOnMainThread() {
         return Looper.getMainLooper().getThread() == Thread.currentThread();
     }
 
+    /**
+     * Returns the {@link Executor} of the detector callback
+     */
     private static Executor getDetectorCallbackExecutor() {
         return Executors.newSingleThreadExecutor();
     }
@@ -347,7 +356,8 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
         Log.d(mTag, "waitCreateAlwaysOnHotwordDetectorNoHotwordDetectionServiceReady(), latch="
                 + mServiceTriggerLatch);
         if (mServiceTriggerLatch == null
-                || !mServiceTriggerLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
+                || !mServiceTriggerLatch.await(WAIT_TIMEOUT_IN_MS,
+                TimeUnit.MILLISECONDS)) {
             Log.w(mTag, "waitCreateAlwaysOnHotwordDetectorNoHotwordDetectionServiceReady()");
             mServiceTriggerLatch = null;
             throw new AssertionError(
@@ -365,7 +375,8 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
         Log.d(mTag, "waitSandboxedDetectionServiceInitializedCalledOrException(), latch="
                 + mServiceTriggerLatch);
         if (mServiceTriggerLatch == null
-                || !mServiceTriggerLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
+                || !mServiceTriggerLatch.await(WAIT_TIMEOUT_IN_MS,
+                TimeUnit.MILLISECONDS)) {
             Log.w(mTag, "waitAndGetSandboxedServiceInitializedResult()");
             mServiceTriggerLatch = null;
             throw new AssertionError("Sandboxed detection service initialized fail.");

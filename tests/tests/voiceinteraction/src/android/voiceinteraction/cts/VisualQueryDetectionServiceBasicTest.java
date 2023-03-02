@@ -40,6 +40,7 @@ import android.platform.test.annotations.RequiresDevice;
 import android.service.voice.HotwordDetector;
 import android.service.voice.VisualQueryDetector;
 import android.util.Log;
+import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.Helper;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
@@ -99,7 +100,7 @@ public class VisualQueryDetectionServiceBasicTest {
     public void setup() {
         // VoiceInteractionServiceConnectedRule handles the service connected,
         // the test should be able to get service
-        mService = (CtsBasicVoiceInteractionService) CtsBasicVoiceInteractionService.getService();
+        mService = (CtsBasicVoiceInteractionService) BaseVoiceInteractionService.getService();
         // Check the test can get the service
         Objects.requireNonNull(mService);
 
