@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
+import android.app.KeyguardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -137,6 +138,11 @@ public class CapturedActivity extends Activity {
 
         mCountDownLatch = new CountDownLatch(1);
         bindMediaProjectionService();
+
+        KeyguardManager keyguardManager = getSystemService(KeyguardManager.class);
+        if (keyguardManager != null) {
+            keyguardManager.requestDismissKeyguard(this, null);
+        }
     }
 
     public void setLogicalDisplaySize(Point logicalDisplaySize) {
