@@ -22,6 +22,8 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.libcore.runner"
                      android:label="CTS Libcore OJ test cases">
+        <meta-data android:name="listener"
+                   android:value="com.android.cts.runner.CtsLibcoreTestRunListener" />
     </instrumentation>
 
 </manifest>
