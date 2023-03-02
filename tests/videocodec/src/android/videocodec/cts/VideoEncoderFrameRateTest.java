@@ -97,11 +97,16 @@ public class VideoEncoderFrameRateTest extends VideoEncoderValidationTestBase {
 
     private static void addParams(int width, int height, CompressedResource res) {
         final String[] mediaTypes = new String[]{MediaFormat.MIMETYPE_VIDEO_AVC,
-                MediaFormat.MIMETYPE_VIDEO_HEVC};
+                MediaFormat.MIMETYPE_VIDEO_HEVC, MediaFormat.MIMETYPE_VIDEO_AV1};
         final int[] maxBFramesPerSubGop = new int[]{0, 1};
         for (String mediaType : mediaTypes) {
             for (int maxBFrames : maxBFramesPerSubGop) {
                 // mediaType, cfg, resource file, test label
+                if (!mediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)
+                        && !mediaType.equals((MediaFormat.MIMETYPE_VIDEO_HEVC))
+                        && maxBFrames != 0) {
+                    continue;
+                }
                 String label = String.format("%dkbps_%dx%d_maxb-%d", BIT_RATE / 1000, width,
                         height, maxBFrames);
                 exhaustiveArgsList.add(new Object[]{mediaType, getVideoEncoderCfgParams(mediaType,

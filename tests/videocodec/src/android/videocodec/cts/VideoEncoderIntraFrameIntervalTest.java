@@ -103,12 +103,17 @@ public class VideoEncoderIntraFrameIntervalTest extends VideoEncoderValidationTe
     @Parameterized.Parameters(name = "{index}({0}_{1}_{4})")
     public static Collection<Object[]> input() {
         final String[] mediaTypes = new String[]{MediaFormat.MIMETYPE_VIDEO_AVC,
-                MediaFormat.MIMETYPE_VIDEO_HEVC};
+                MediaFormat.MIMETYPE_VIDEO_HEVC, MediaFormat.MIMETYPE_VIDEO_AV1};
         final int[] maxBFramesPerSubGop = new int[]{0, 1, 2, 3};
         final int[] bitRateModes = new int[]{BITRATE_MODE_CBR, BITRATE_MODE_VBR};
         final int[] intraIntervals = new int[]{0, 2};
         for (String mediaType : mediaTypes) {
             for (int maxBFrames : maxBFramesPerSubGop) {
+                if (!mediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)
+                        && !mediaType.equals((MediaFormat.MIMETYPE_VIDEO_HEVC))
+                        && maxBFrames != 0) {
+                    continue;
+                }
                 for (int bitRateMode : bitRateModes) {
                     for (int intraInterval : intraIntervals) {
                         // mediaType, cfg, res, test label
