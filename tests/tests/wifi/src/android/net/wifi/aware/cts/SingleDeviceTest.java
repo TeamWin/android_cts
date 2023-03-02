@@ -265,6 +265,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         @Override
         public void onClusterIdChanged(int clusterEventType, MacAddress clusterId) {
+            super.onClusterIdChanged(clusterEventType, clusterId);
             mClusterId = clusterId;
             mClusterEventType = clusterEventType;
             mBlockerClusterIdCallback.countDown();
