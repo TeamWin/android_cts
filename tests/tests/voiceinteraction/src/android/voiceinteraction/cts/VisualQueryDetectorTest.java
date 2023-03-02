@@ -32,6 +32,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.service.voice.SandboxedDetectionServiceBase;
 import android.service.voice.VisualQueryDetector;
 import android.util.Log;
+import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
@@ -74,7 +75,7 @@ public class VisualQueryDetectorTest {
     public void setup() {
         // VoiceInteractionServiceConnectedRule handles the service connected, we should be
         // able to get service
-        mService = (CtsBasicVoiceInteractionService) CtsBasicVoiceInteractionService.getService();
+        mService = (CtsBasicVoiceInteractionService) BaseVoiceInteractionService.getService();
         // Check we can get the service, we need service object to call the service provided method
         Objects.requireNonNull(mService);
         // Wait the original HotwordDetectionService finish clean up to avoid flaky
