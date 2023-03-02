@@ -19,8 +19,8 @@ package android.app.cts;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_CAMERA;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_LOCATION;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_MICROPHONE;
-import static android.app.ActivityManager.PROCESS_CAPABILITY_NETWORK;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NONE;
+import static android.app.ActivityManager.PROCESS_CAPABILITY_POWER_RESTRICTED_NETWORK;
 import static android.app.stubs.LocalForegroundService.ACTION_START_FGS_RESULT;
 import static android.app.stubs.LocalForegroundServiceLocation.ACTION_START_FGSL_RESULT;
 import static android.os.PowerExemptionManager.REASON_PUSH_MESSAGING;
@@ -109,12 +109,12 @@ public class ActivityManagerFgsBgStartTest {
     public static final Integer LOCAL_SERVICE_PROCESS_CAPABILITY = new Integer(
             PROCESS_CAPABILITY_FOREGROUND_CAMERA
                     | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
-                    | PROCESS_CAPABILITY_NETWORK);
+                    | PROCESS_CAPABILITY_POWER_RESTRICTED_NETWORK);
 
     private static final int PROCESS_CAPABILITY_ALL = PROCESS_CAPABILITY_FOREGROUND_LOCATION
             | PROCESS_CAPABILITY_FOREGROUND_CAMERA
             | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
-            | PROCESS_CAPABILITY_NETWORK;
+            | PROCESS_CAPABILITY_POWER_RESTRICTED_NETWORK;
 
     static final int WAITFOR_MSEC = 10000;
 
@@ -206,7 +206,7 @@ public class ActivityManagerFgsBgStartTest {
             // APP1 is in FGS state, but won't get location capability.
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NETWORK));
+                    new Integer(PROCESS_CAPABILITY_POWER_RESTRICTED_NETWORK));
             waiter.doWait(WAITFOR_MSEC);
             // stop FGSL
             CommandReceiver.sendCommand(mContext,
@@ -229,7 +229,7 @@ public class ActivityManagerFgsBgStartTest {
             // APP1 is in STATE_FG_SERVICE, but won't get location capability.
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NETWORK));
+                    new Integer(PROCESS_CAPABILITY_POWER_RESTRICTED_NETWORK));
             waiter.doWait(WAITFOR_MSEC);
             // stop FGS.
             CommandReceiver.sendCommand(mContext,
@@ -310,7 +310,7 @@ public class ActivityManagerFgsBgStartTest {
             // APP2 won't have location capability because APP1 is not in TOP state.
             uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NETWORK));
+                    new Integer(PROCESS_CAPABILITY_POWER_RESTRICTED_NETWORK));
             waiter.doWait(WAITFOR_MSEC);
 
             CommandReceiver.sendCommand(mContext,
@@ -394,7 +394,7 @@ public class ActivityManagerFgsBgStartTest {
             // APP2 won't have location capability.
             uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NETWORK));
+                    new Integer(PROCESS_CAPABILITY_POWER_RESTRICTED_NETWORK));
             waiter.doWait(WAITFOR_MSEC);
             // Stop FGSL in APP2.
             CommandReceiver.sendCommand(mContext,
@@ -412,7 +412,7 @@ public class ActivityManagerFgsBgStartTest {
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NETWORK));
+                    new Integer(PROCESS_CAPABILITY_POWER_RESTRICTED_NETWORK));
             waiter.doWait(WAITFOR_MSEC);
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_CREATE_FGSL_PENDING_INTENT,
@@ -426,7 +426,7 @@ public class ActivityManagerFgsBgStartTest {
             // APP2 won't have location capability.
             uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NETWORK));
+                    new Integer(PROCESS_CAPABILITY_POWER_RESTRICTED_NETWORK));
             waiter.doWait(WAITFOR_MSEC);
             // stop FGSL in APP2.
             CommandReceiver.sendCommand(mContext,
@@ -516,7 +516,7 @@ public class ActivityManagerFgsBgStartTest {
             // APP1 is in FGS state, but won't get location capability.
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NETWORK));
+                    new Integer(PROCESS_CAPABILITY_POWER_RESTRICTED_NETWORK));
             waiter.doWait(WAITFOR_MSEC);
 
             // unbind service.
