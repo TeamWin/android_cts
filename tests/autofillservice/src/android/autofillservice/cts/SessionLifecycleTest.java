@@ -55,13 +55,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.autofill.AutofillValue;
-import android.view.View;
+
+import androidx.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.Timeout;
 

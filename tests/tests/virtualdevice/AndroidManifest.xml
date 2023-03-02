@@ -27,6 +27,9 @@
         <activity android:name=".util.EmptyActivity"
             android:allowEmbedded="true"
             android:exported="false" />
+        <activity android:name=".util.SecondActivity"
+                  android:allowEmbedded="true"
+                  android:exported="false" />
         <activity android:name=".util.InterceptedActivity"
             android:allowEmbedded="true"
             android:exported="false">

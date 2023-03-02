@@ -32,6 +32,7 @@ import android.mediav2.common.cts.RawResource;
 import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.Assume;
 import org.junit.Test;
@@ -107,7 +108,7 @@ public class VideoEncoderTest extends CodecEncoderTestBase {
         return argsList;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{3})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{3}")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = false;
@@ -150,6 +151,7 @@ public class VideoEncoderTest extends CodecEncoderTestBase {
     /**
      * Check description of class {@link VideoEncoderTest}
      */
+    @CddTest(requirements = {"5.1.7/C-1-2", "5.12/C-6-5"})
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
             "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010"})
     @LargeTest

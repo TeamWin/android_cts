@@ -351,14 +351,18 @@ fun waitFindObject(uiAutomation: UiAutomation, selector: BySelector): UiObject2 
         val title = ui.depthFirstSearch { node ->
             node.viewIdResourceName?.contains("alertTitle") == true
         }
-        val okButton = ui.depthFirstSearch { node ->
-            node.textAsString?.equals("OK", ignoreCase = true) ?: false
+        val okCloseButton = ui.depthFirstSearch { node ->
+            (node.textAsString?.equals("OK", ignoreCase = true) ?: false)  ||
+                (node.textAsString?.equals("Close app", ignoreCase = true) ?: false)
         }
-
-        if (title?.text?.toString() == "Android System" && okButton != null) {
+        val titleString = title?.text?.toString()
+        if (okCloseButton != null &&
+            titleString != null &&
+            (titleString == "Android System" ||
+                titleString.endsWith("keeps stopping"))) {
             // Auto dismiss occasional system dialogs to prevent interfering with the test
             android.util.Log.w(AutoRevokeTest.LOG_TAG, "Ignoring exception", e)
-            okButton.click()
+            okCloseButton.click()
             return UiAutomatorUtils.waitFindObject(selector)
         } else {
             throw e

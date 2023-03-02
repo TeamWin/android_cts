@@ -30,6 +30,7 @@ import android.media.MediaFormat;
 import android.mediav2.common.cts.CodecDecoderTestBase;
 import android.mediav2.common.cts.CodecTestBase;
 import android.mediav2.common.cts.OutputManager;
+import android.mediav2.common.cts.OutputSurface;
 import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.util.Log;
@@ -37,6 +38,7 @@ import android.util.Log;
 import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Test;
@@ -307,7 +309,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{3}_{4}_{5}_{6}_{7})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{3}_{4}_{5}_{6}_{7}")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = false;
@@ -523,10 +525,8 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
      * The OpenGL fragment shader reads the frame buffers as external textures and renders to
      * a pbuffer. The output RGB values are read and compared against the expected values.
      */
-    @ApiTest(apis = {"android.media.MediaCodec#dequeueOutputBuffer",
-            "android.media.MediaCodec#releaseOutputBuffer",
-            "android.media.MediaCodec.Callback#onOutputBufferAvailable",
-            "android.media.MediaFormat#KEY_COLOR_RANGE",
+    @CddTest(requirements = "5.12/C-7-4")
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_COLOR_RANGE",
             "android.media.MediaFormat#KEY_COLOR_STANDARD",
             "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @LargeTest

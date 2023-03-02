@@ -16,12 +16,12 @@
 
 package android.net.wifi.sharedconnectivity.app.cts;
 
+import android.net.wifi.sharedconnectivity.app.HotspotNetwork;
+import android.net.wifi.sharedconnectivity.app.HotspotNetworkConnectionStatus;
 import android.net.wifi.sharedconnectivity.app.KnownNetwork;
 import android.net.wifi.sharedconnectivity.app.KnownNetworkConnectionStatus;
 import android.net.wifi.sharedconnectivity.app.SharedConnectivityClientCallback;
 import android.net.wifi.sharedconnectivity.app.SharedConnectivitySettingsState;
-import android.net.wifi.sharedconnectivity.app.TetherNetwork;
-import android.net.wifi.sharedconnectivity.app.TetherNetworkConnectionStatus;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -30,18 +30,18 @@ import java.util.List;
 public class TestSharedConnectivityClientCallback implements SharedConnectivityClientCallback {
     private static final String TAG = "SharedConnectivityTestingCallback";
 
-    private List<TetherNetwork> mTetherNetworksList = new ArrayList<>();
+    private List<HotspotNetwork> mHotspotNetworksList = new ArrayList<>();
     private List<KnownNetwork> mKnownNetworksList = new ArrayList<>();
     private SharedConnectivitySettingsState mSharedConnectivitySettingsState;
-    private TetherNetworkConnectionStatus mTetherNetworkConnectionStatus;
+    private HotspotNetworkConnectionStatus mHotspotNetworkConnectionStatus;
     private KnownNetworkConnectionStatus mKnownNetworkConnectionStatus;
     private boolean mIsServiceConnected = false;
     private boolean mIsRegisterCallbackFailed = false;
 
     @Override
-    public void onTetherNetworksUpdated(List<TetherNetwork> networks) {
-        Log.i(TAG, "onTetherNetworksUpdated");
-        mTetherNetworksList = networks;
+    public void onHotspotNetworksUpdated(List<HotspotNetwork> networks) {
+        Log.i(TAG, "onHotspotNetworksUpdated");
+        mHotspotNetworksList = networks;
     }
 
     @Override
@@ -58,10 +58,10 @@ public class TestSharedConnectivityClientCallback implements SharedConnectivityC
     }
 
     @Override
-    public void onTetherNetworkConnectionStatusChanged(
-            TetherNetworkConnectionStatus status) {
-        Log.i(TAG, "onTetherNetworkConnectionStatusChanged");
-        mTetherNetworkConnectionStatus = status;
+    public void onHotspotNetworkConnectionStatusChanged(
+            HotspotNetworkConnectionStatus status) {
+        Log.i(TAG, "onHotspotNetworkConnectionStatusChanged");
+        mHotspotNetworkConnectionStatus = status;
     }
 
     @Override
@@ -89,8 +89,8 @@ public class TestSharedConnectivityClientCallback implements SharedConnectivityC
         mIsRegisterCallbackFailed = true;
     }
 
-    public List<TetherNetwork> getTetherNetworksList() {
-        return mTetherNetworksList;
+    public List<HotspotNetwork> getHotspotNetworksList() {
+        return mHotspotNetworksList;
     }
 
     public List<KnownNetwork> getKnownNetworksList() {
@@ -101,8 +101,8 @@ public class TestSharedConnectivityClientCallback implements SharedConnectivityC
         return mSharedConnectivitySettingsState;
     }
 
-    public TetherNetworkConnectionStatus getTetherNetworkConnectionStatus() {
-        return mTetherNetworkConnectionStatus;
+    public HotspotNetworkConnectionStatus getHotspotNetworkConnectionStatus() {
+        return mHotspotNetworkConnectionStatus;
     }
 
     public KnownNetworkConnectionStatus getKnownNetworkConnectionStatus() {

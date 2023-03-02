@@ -27,6 +27,7 @@ android_test {
         "platform-test-annotations",
         "CtsAccessibilityCommon",
         "CtsInputMethodServiceCommon",
+        "CtsVirtualDeviceCommonLib",
         "sts-device-util",
     ],
     libs: [
@@ -47,4 +48,14 @@ android_test {
         ":CtsAccessibilityMultipleServicesApp",
         ":CtsAccessibilityWidgetProvider",
     ],
+}
+
+java_library_static {
+    name: "CtsAccessibilityServiceUtils",
+    sdk_version: "test_current",
+    static_libs: [
+        "compatibility-device-util-axt",
+        "CtsAccessibilityCommon",
+    ],
+    srcs: ["src/**/utils/*.java"],
 }

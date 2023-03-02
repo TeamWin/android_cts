@@ -1182,6 +1182,7 @@ public final class DeviceConfigApiTests {
         }
         assertEquals(callback.onNamespaceUpdateCalls, 1);
         assertEquals(callback.onDeviceConfigAccessCalls, 1);
+        DeviceConfig.clearMonitorCallback(CONTEXT.getContentResolver());
     }
 
     /**

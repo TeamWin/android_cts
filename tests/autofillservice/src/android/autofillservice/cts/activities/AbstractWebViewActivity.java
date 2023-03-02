@@ -17,9 +17,10 @@ package android.autofillservice.cts.activities;
 
 import android.autofillservice.cts.testcore.UiBot;
 import android.os.SystemClock;
-import android.support.test.uiautomator.UiObject2;
 import android.view.KeyEvent;
 import android.widget.EditText;
+
+import androidx.test.uiautomator.UiObject2;
 
 public abstract class AbstractWebViewActivity extends AbstractAutoFillActivity {
 

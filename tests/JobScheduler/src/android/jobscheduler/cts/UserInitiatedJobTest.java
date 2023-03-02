@@ -108,6 +108,8 @@ public class UserInitiatedJobTest {
                             TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, i,
                             TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY
                     ));
+        }
+        for (int i = 0; i < numUijs; ++i) {
             assertTrue("Job did not start after scheduling",
                     mTestAppInterface.awaitJobStart(i, DEFAULT_WAIT_TIMEOUT_MS));
         }

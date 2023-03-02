@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.mediav2.cts;
+package android.mediav2.common.cts;
 
 import static org.junit.Assert.assertTrue;
 
@@ -44,7 +44,7 @@ import android.view.Surface;
  * By default, the Surface will be using a BufferQueue in asynchronous mode, so we
  * can potentially drop frames.
  */
-class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
+public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     private static final String TAG = "OutputSurface";
     private static final boolean VERBOSE = false;
 
@@ -158,8 +158,8 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
         // Configure EGL for pbuffer and OpenGL ES 2.0.  We want enough RGB bits
         // to be able to tell if the frame is reasonable.
-        int eglColorSize = useHighBitDepth ? 10: 8;
-        int eglAlphaSize = useHighBitDepth ? 2: 0;
+        int eglColorSize = useHighBitDepth ? 10 : 8;
+        int eglAlphaSize = useHighBitDepth ? 2 : 0;
         int[] attribList = {
                 EGL14.EGL_RED_SIZE, eglColorSize,
                 EGL14.EGL_GREEN_SIZE, eglColorSize,
@@ -265,14 +265,14 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
      * data is available.
      */
     public void awaitNewImage() {
-        final int TIMEOUT_MS = 2000;
+        final int timeOutMS = 2000;
 
         synchronized (mFrameSyncObject) {
             while (!mFrameAvailable) {
                 try {
                     // Wait for onFrameAvailable() to signal us.  Use a timeout to avoid
                     // stalling the test if it doesn't arrive.
-                    mFrameSyncObject.wait(TIMEOUT_MS);
+                    mFrameSyncObject.wait(timeOutMS);
                     if (!mFrameAvailable) {
                         // TODO: if "spurious wakeup", continue while loop
                         throw new RuntimeException("Surface frame wait timed out");

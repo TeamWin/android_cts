@@ -5335,28 +5335,45 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="audio_usb_restrict_record_test">USB Audio Restrict Record Access Test</string>
     <string name="audio_usb_restrict_record_entry">
-        This test checks that the appropriate warning message is displayed when an app which has
-        not been granted RECORD permission could potentially record audio through the raw USB
-        API. To test, connect a USB peripheral with CAPTURE capability and press the "Test" button.
-        The access permission API should contain a warning message about potential dangerous
-        access. If so, the test passes.
+    Tests whether the appropriate warning message is displayed when an app which has
+    not been granted RECORD permission could potentially record audio through the raw USB API.
+    \n\nTest Setup:
+    \n1. Exit CTS-Verifier with the Home button
+    \n2. Go to Android Settings
+    \n3. Select Apps &amp; notifications
+    \n4. Select CTS Verifier
+    \n5. Select Permissions
+    \n6. Deny Microphone permission
+    \n7. Start CTS Verifier. Ignore the \"Please grant all permissions\" message by clicking on the
+        face of the CTS Verifier (not in the dialog).
+    \n8. Run this test
+    \n\nTest Process:
+    \nConnect a USB peripheral with CAPTURE capability and press the \"Test\" button.
+    \n\nTest Criteria:
+    \nThe access permission API should present a warning message about potential dangerous
+    access. If so, the test passes. If you do not see this warning, the test fails.
+    \n\nPost-test completion:
+    \n1. Exit CTS-Verifier with the Home button
+    \n2. Reenable Microphone permission in Android Settings
     </string>
 
     <string name="audio_usb_restrict_permission_info">
-        The test can only be run with Microphone permission DENIED.\n\n
-        To run this test:\n
-        &#160;&#160;Exit CTS-Verifier\n
-        &#160;&#160;Go to Android Settings\n
-        &#160;&#160;Select Apps &amp; notifications\n
-        &#160;&#160;Select CTS Verifier\n
-        &#160;&#160;Select Permissions\n
-        &#160;&#160;Deny Microphone permission\n
-        &#160;&#160;Run this test\n
-        When complete:\n
-        &#160;&#160;Exit CTS-Verifier\n
-        &#160;&#160;Return to Permissions Settings for CTS Verifier\n
-        &#160;&#160;grant Microphone permission
+    The test can only be run with Microphone permission DENIED.
+    \n\nTo run this test:
+    \n1. Exit CTS-Verifier with the Home button
+    \n2. Go to Android Settings
+    \n3. Select Apps &amp; notifications
+    \n4. Select CTS Verifier
+    \n5. Select Permissions
+    \n6. Deny Microphone permission
+    \n7. Start CTS Verifier. Ignore the \"Please grant all permissions\" message by clicking on the
+    ace of the CTS Verifier (not in the dialog).
+    \n8. Run this test
+    \n\nWhen complete:
+    \n1. Exit CTS-Verifier with the Home button
+    \n2. Reenable Microphone permission in Android Settings
     </string>
+
     <string name="usb_restrictrecord_instructions">
         Permissions for CTS Verifier are correctly set to run this test.\n\n
         Connect a USB peripheral with CAPTURE capability. Press the "Test" button and verify that

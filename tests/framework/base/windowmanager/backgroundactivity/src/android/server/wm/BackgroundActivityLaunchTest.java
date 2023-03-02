@@ -813,7 +813,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // any background activity even within grace period after pressing home button.
         pressHomeAndWaitHomeResumed();
 
-        assertActivityNotResumed(APP_A);
+        boolean result = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+        assertFalse("Should not able to launch background activity", result);
     }
 
     // Check picture-in-picture(PIP) won't allow to start BAL after pressing home.
@@ -834,7 +835,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // activity to be started after pressing home button.
         pressHomeAndWaitHomeResumed();
 
-        assertActivityNotResumed(APP_A);
+        boolean result = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+        assertFalse("Should not able to launch background activity", result);
     }
 
     // Check that a presentation on a virtual display won't allow BAL after pressing home.
@@ -852,7 +854,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // the background activity.
         pressHomeAndWaitHomeResumed();
 
-        assertActivityNotResumed(APP_A);
+        boolean result = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+        assertFalse("Should not able to launch background activity", result);
     }
 
 

@@ -52,10 +52,11 @@ import android.graphics.Rect;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.SaveInfo;
-import android.support.test.uiautomator.UiObject2;
 import android.text.InputType;
 import android.view.ViewGroup;
 import android.view.autofill.AutofillManager;
+
+import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Ignore;
 import org.junit.Test;

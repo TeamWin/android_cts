@@ -163,7 +163,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         return list;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = true;
@@ -361,6 +361,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
      * the output has to be consistent. The test also verifies if the component / framework
      * behavior is consistent between SDK and NDK.
      */
+    @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2", "5.1.2"})
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
             "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
             "android.media.AudioFormat#ENCODING_PCM_16BIT"})

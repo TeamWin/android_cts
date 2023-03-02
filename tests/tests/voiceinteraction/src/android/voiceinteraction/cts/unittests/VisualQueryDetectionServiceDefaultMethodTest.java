@@ -38,8 +38,7 @@ public class VisualQueryDetectionServiceDefaultMethodTest {
     @Test
     public void testVisualQueryDetectionService_onStartDetection() throws Throwable {
         assertThrows(UnsupportedOperationException.class,
-                () -> new NoOpVisualQueryDetectionService().onStartDetection(
-                        null));
+                () -> new NoOpVisualQueryDetectionService().onStartDetection());
     }
 
     @Test

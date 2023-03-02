@@ -118,7 +118,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
         mSupportRequirements = supportRequirements;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = true;
@@ -639,7 +639,10 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
             "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
             "android.media.AudioFormat#ENCODING_PCM_16BIT"})
-    @CddTest(requirements = "5.1.3")
+    // "5.1.3", "5.1.2/C-1-11" are covered partially
+    @CddTest(requirements = {"5.1.2/C-1-1", "5.1.2/C-1-2", "5.1.2/C-1-3", "5.1.2/C-1-4",
+            "5.1.2/C-1-11", "5.1.2/C-1-5", "5.1.2/C-1-6", "5.1.2/C-1-8", "5.1.2/C-1-9",
+            "5.1.2/C-1-10", "5.1.2/C-2-1", "5.1.2/C-6-1", "5.1.3"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testDecodeAndValidate() throws IOException, InterruptedException {

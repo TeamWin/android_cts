@@ -33,10 +33,13 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
+import static android.view.Display.INVALID_DISPLAY;
 
 import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -111,6 +114,7 @@ import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
 
+import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -140,7 +144,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 @RunWith(AndroidJUnit4.class)
-public class ActivityManagerTest {
+public final class ActivityManagerTest {
     private static final String TAG = ActivityManagerTest.class.getSimpleName();
     private static final String STUB_PACKAGE_NAME = "android.app.stubs";
     private static final long WAITFOR_MSEC = 5000;
@@ -198,13 +202,34 @@ public class ActivityManagerTest {
     private boolean mAutomotiveDevice;
     private boolean mLeanbackOnly;
 
+    private UserHandle mUser;
+    private UserManager mUserManager;
+    private boolean mIsRunningOnVisibleBgUser;
+    private int mDisplayId = INVALID_DISPLAY; // only set when mIsRunningOnVisibleBgUser
+
     @Before
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mTargetContext = mInstrumentation.getTargetContext();
-        mActivityManager = (ActivityManager) mInstrumentation.getContext()
-                .getSystemService(Context.ACTIVITY_SERVICE);
-        mPackageManager = mInstrumentation.getContext().getPackageManager();
+        Context context = mInstrumentation.getContext();
+        mActivityManager = context.getSystemService(ActivityManager.class);
+        mPackageManager = context.getPackageManager();
+        mUserManager = context.getSystemService(UserManager.class);
+        mUser = context.getUser();
+        int currentUserId = callWithShellPermissionIdentity(
+                () -> mActivityManager.getCurrentUser());
+        boolean visibleBackgroundUsersSupported = mUserManager.isVisibleBackgroundUsersSupported();
+        Log.v(TAG, "setUp(): mUser=" + mUser + ", currentUser=" + currentUserId
+                + ", visibleBackgroundUsersSupported=" + visibleBackgroundUsersSupported);
+        if (visibleBackgroundUsersSupported && currentUserId != mUser.getIdentifier()) {
+            mDisplayId = mUserManager.getDisplayIdAssignedToUser();
+            assertWithMessage("display id for user %s", mUser).that(mDisplayId)
+                    .isNotEqualTo(INVALID_DISPLAY);
+            mIsRunningOnVisibleBgUser = true;
+            Log.v(TAG, "User " + mUser + " is running on background, visible on display "
+                    + mDisplayId);
+        }
+
         mStartedActivityList = new ArrayList<Activity>();
         mErrorProcessID = -1;
         mAppStandbyEnabled = AppStandbyUtils.isAppStandbyEnabled();
@@ -494,8 +519,10 @@ public class ActivityManagerTest {
         return uiDevice.executeShellCommand(cmd).trim();
     }
 
-    private void setForcedAppStandby(String packageName, boolean enabled) throws IOException {
-        final StringBuilder cmdBuilder = new StringBuilder("appops set ")
+    private void setForcedAppStandby(String packageName, boolean enabled)
+            throws IOException {
+        final StringBuilder cmdBuilder = new StringBuilder("appops set --user ")
+                .append(mUser.getIdentifier()).append(' ')
                 .append(packageName)
                 .append(" RUN_ANY_IN_BACKGROUND ")
                 .append(enabled ? "ignore" : "allow");
@@ -505,9 +532,8 @@ public class ActivityManagerTest {
     @Test
     public void testIsBackgroundRestricted() throws IOException {
         // This instrumentation runs in the target package's uid.
-        final Context targetContext = mInstrumentation.getTargetContext();
-        final String targetPackage = targetContext.getPackageName();
-        final ActivityManager am = targetContext.getSystemService(ActivityManager.class);
+        final String targetPackage = mTargetContext.getPackageName();
+        final ActivityManager am = mTargetContext.getSystemService(ActivityManager.class);
         setForcedAppStandby(targetPackage, true);
         assertTrue(am.isBackgroundRestricted());
         setForcedAppStandby(targetPackage, false);
@@ -781,13 +807,34 @@ public class ActivityManagerTest {
      * lifetime tests.
      */
     private void launchHome() throws Exception {
-        if (!noHomeScreen()) {
-            Intent intent = new Intent(Intent.ACTION_MAIN);
-            intent.addCategory(Intent.CATEGORY_HOME);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mTargetContext.startActivity(intent);
-            Thread.sleep(WAIT_TIME);
+        if (noHomeScreen()) {
+            Log.d(TAG, "launcHome(): no home screen");
+            return;
         }
+        launchHomeScreenUsingIntent();
+        Thread.sleep(WAIT_TIME);
+    }
+
+    private void launchHomeScreenUsingIntent() {
+        Intent intent = new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (mIsRunningOnVisibleBgUser) {
+            ActivityOptions options = getActivityOptionsForDisplay();
+            mTargetContext.startActivity(intent, options.toBundle());
+        } else {
+            mTargetContext.startActivity(intent);
+        }
+    }
+
+    private void launchHomeScreenUsingKeyCode() throws IOException {
+        if (mIsRunningOnVisibleBgUser) {
+            // TODO(b/270634492): should call "input -d + mDisplayId + keyevent KEYCODE_HOME", but
+            // it's not working
+            launchHomeScreenUsingIntent();
+            return;
+        }
+        executeAndLogShellCommand("input keyevent KEYCODE_HOME");
     }
 
     /**
@@ -1188,7 +1235,7 @@ public class ActivityManagerTest {
             toggleScreenOn(true);
 
             // Now launch home
-            executeAndLogShellCommand("input keyevent KEYCODE_HOME");
+            launchHomeScreenUsingKeyCode();
 
             // force device idle again
             toggleScreenOn(false);
@@ -2507,5 +2554,17 @@ public class ActivityManagerTest {
     private void assumeNonHeadlessSystemUserMode() {
         assumeFalse("System user is not a FULL user in headless system user mode.",
                 UserManager.isHeadlessSystemUserMode());
+    }
+
+    // TODO(b/269803777): consider adding 2 methods below to a helper method
+    private ActivityOptions getActivityOptionsForDisplay() {
+        return getActivityOptionsForDisplay(/* options= */ null);
+    }
+
+    private ActivityOptions getActivityOptionsForDisplay(@Nullable ActivityOptions options) {
+        ActivityOptions augmentedOptions = options != null ? options : ActivityOptions.makeBasic();
+        augmentedOptions.setLaunchDisplayId(mDisplayId);
+        Log.d(TAG, "getActivityOptionsForDisplay(): returning " + augmentedOptions);
+        return augmentedOptions;
     }
 }

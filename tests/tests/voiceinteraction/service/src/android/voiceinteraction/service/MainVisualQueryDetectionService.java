@@ -26,7 +26,6 @@ import android.system.ErrnoException;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.function.IntConsumer;
@@ -51,7 +50,6 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
 
     private final Object mLock = new Object();
     private Handler mHandler;
-    private Callback mCallback;
 
     @GuardedBy("mLock")
     private boolean mStopDetectionCalled;
@@ -70,10 +68,8 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
     }
 
     @Override
-    public void onStartDetection(@NonNull Callback callback) {
+    public void onStartDetection() {
         Log.d(TAG, "onStartDetection");
-
-        mCallback = callback;
 
         synchronized (mLock) {
             if (mDetectionJob != null) {
@@ -92,10 +88,10 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
                 Log.d(TAG, "Sending detected result after stop detection");
                 // We can't store and use this callback in onStopDetection (not valid anymore
                 // there), so we shut down the service.
-                mCallback.onAttentionGained();
-                mCallback.onQueryDetected(FAKE_QUERY_SECOND);
-                mCallback.onQueryRejected();
-                mCallback.onAttentionLost();
+                gainedAttention();
+                streamQuery(FAKE_QUERY_SECOND);
+                rejectQuery();
+                lostAttention();
             }
         }
     }
@@ -170,44 +166,44 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
 
         if (scenario == SCENARIO_ATTENTION_LEAVE) {
             detectionJob = () -> {
-                mCallback.onAttentionGained();
-                mCallback.onAttentionLost();
+                gainedAttention();
+                lostAttention();
             };
         } else if (scenario == SCENARIO_ATTENTION_QUERY_FINISHED_LEAVE) {
             detectionJob = () -> {
-                mCallback.onAttentionGained();
-                mCallback.onQueryDetected(FAKE_QUERY_FIRST);
-                mCallback.onQueryDetected(FAKE_QUERY_SECOND);
-                mCallback.onQueryFinished();
-                mCallback.onAttentionLost();
+                gainedAttention();
+                streamQuery(FAKE_QUERY_FIRST);
+                streamQuery(FAKE_QUERY_SECOND);
+                finishQuery();
+                lostAttention();
             };
         } else if (scenario == SCENARIO_ATTENTION_QUERY_REJECTED_LEAVE) {
             detectionJob = () -> {
-                mCallback.onAttentionGained();
-                mCallback.onQueryDetected(FAKE_QUERY_FIRST);
-                mCallback.onQueryRejected();
-                mCallback.onAttentionLost();
+                gainedAttention();
+                streamQuery(FAKE_QUERY_FIRST);
+                rejectQuery();
+                lostAttention();
             };
         } else if (scenario == SCENARIO_ATTENTION_DOUBLE_QUERY_FINISHED_LEAVE) {
             detectionJob = () -> {
-                mCallback.onAttentionGained();
-                mCallback.onQueryDetected(FAKE_QUERY_FIRST);
-                mCallback.onQueryFinished();
-                mCallback.onQueryDetected(FAKE_QUERY_SECOND);
-                mCallback.onQueryFinished();
-                mCallback.onAttentionLost();
+                gainedAttention();
+                streamQuery(FAKE_QUERY_FIRST);
+                finishQuery();
+                streamQuery(FAKE_QUERY_SECOND);
+                finishQuery();
+                lostAttention();
             };
         } else if (scenario == SCENARIO_QUERY_NO_ATTENTION) {
             detectionJob = () -> {
-                mCallback.onQueryDetected(FAKE_QUERY_FIRST);
-                mCallback.onQueryFinished();
-                mCallback.onQueryRejected();
+                streamQuery(FAKE_QUERY_FIRST);
+                finishQuery();
+                rejectQuery();
             };
         } else if (scenario == SCENARIO_QUERY_NO_QUERY_FINISH) {
             detectionJob = () -> {
-                mCallback.onAttentionGained();
-                mCallback.onQueryFinished();
-                mCallback.onAttentionLost();
+                gainedAttention();
+                finishQuery();
+                lostAttention();
             };
         } else {
             Log.i(TAG, "Do nothing...");

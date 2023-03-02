@@ -27,10 +27,6 @@
     <activity android:name=".MainActivity"
         android:label="MainActivity"
         android:exported="true" >
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN"/>
-        <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
-      </intent-filter>
     </activity>
     <service android:name=".TestIme"
         android:label="Test IME"

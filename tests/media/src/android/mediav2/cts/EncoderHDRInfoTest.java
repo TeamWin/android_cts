@@ -83,7 +83,7 @@ public class EncoderHDRInfoTest extends HDREncoderTestBase {
                 .build();
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{3})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{3}")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = false;

@@ -30,12 +30,15 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.annotation.Nullable;
 import android.app.Activity;
+import android.app.Instrumentation;
+import android.app.Instrumentation.ActivityMonitor;
 import android.app.Service;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
@@ -50,6 +53,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.view.Display;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.util.EmptyActivity;
+import android.virtualdevice.cts.util.SecondActivity;
 import android.virtualdevice.cts.util.TestService;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -67,6 +71,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
 import java.util.function.IntConsumer;
@@ -81,6 +87,7 @@ public class DeviceAssociationTest {
 
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
+    private static final int TIMEOUT_MILLIS = 3000;
 
     private Executor mTestExecutor;
     @Mock
@@ -91,6 +98,8 @@ public class DeviceAssociationTest {
     private VirtualDisplay mVirtualDisplay;
     @Mock
     private VirtualDisplay.Callback mVirtualDisplayCallback;
+    @Mock
+    private VirtualDeviceManager.ActivityListener mActivityListener;
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -106,6 +115,8 @@ public class DeviceAssociationTest {
     private VirtualDeviceManager mVirtualDeviceManager;
     @Nullable
     private VirtualDevice mVirtualDevice;
+    private List<Activity> mActivities = new ArrayList();
+    private List<VirtualDevice> mVirtualDevices = new ArrayList();
 
     @Before
     public void setUp() throws Exception {
@@ -116,13 +127,18 @@ public class DeviceAssociationTest {
         final DisplayManager dm = getApplicationContext().getSystemService(DisplayManager.class);
         mDefaultDisplay = dm.getDisplay(DEFAULT_DISPLAY);
         mVirtualDevice = createVirtualDevice();
+        mVirtualDevice.addActivityListener(context.getMainExecutor(), mActivityListener);
         mVirtualDisplay = createVirtualDisplay(mVirtualDevice);
     }
 
     @After
     public void tearDown() {
-        if (mVirtualDevice != null) {
-            mVirtualDevice.close();
+        for (VirtualDevice virtualDevice : mVirtualDevices) {
+            virtualDevice.close();
+        }
+        for (Activity activity : mActivities) {
+            activity.finish();
+            activity.releaseInstance();
         }
     }
 
@@ -177,7 +193,8 @@ public class DeviceAssociationTest {
         context.updateDeviceId(mVirtualDevice.getDeviceId());
 
         assertThat(context.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
-        verify(mDeviceChangeListener, timeout(3000)).accept(mVirtualDevice.getDeviceId());
+        verify(mDeviceChangeListener, timeout(TIMEOUT_MILLIS))
+                .accept(mVirtualDevice.getDeviceId());
 
 
         // DeviceId of listener is not updated after unregistering.
@@ -263,8 +280,9 @@ public class DeviceAssociationTest {
         context.updateDeviceId(mVirtualDevice.getDeviceId());
 
         assertThat(context.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
-        verify(mDeviceChangeListener, timeout(3000)).accept(mVirtualDevice.getDeviceId());
-        verify(mDeviceChangeListener2, timeout(3000)).accept(mVirtualDevice.getDeviceId());
+        verify(mDeviceChangeListener, timeout(TIMEOUT_MILLIS)).accept(mVirtualDevice.getDeviceId());
+        verify(mDeviceChangeListener2, timeout(TIMEOUT_MILLIS))
+                .accept(mVirtualDevice.getDeviceId());
     }
 
     @Test
@@ -274,7 +292,7 @@ public class DeviceAssociationTest {
         context.registerDeviceIdChangeListener(mTestExecutor, mDeviceChangeListener);
 
         context.updateDeviceId(mVirtualDevice.getDeviceId());
-        verify(mDeviceChangeListener, timeout(3000)).accept(mVirtualDevice.getDeviceId());
+        verify(mDeviceChangeListener, timeout(TIMEOUT_MILLIS)).accept(mVirtualDevice.getDeviceId());
 
         context.updateDeviceId(mVirtualDevice.getDeviceId());
         verifyNoMoreInteractions(mDeviceChangeListener);
@@ -282,21 +300,21 @@ public class DeviceAssociationTest {
 
     @Test
     public void activityContext_startActivityOnVirtualDevice_returnsVirtualDeviceId() {
-        Activity activityContext = startActivity(mVirtualDisplay);
+        Activity activityContext = startActivity(EmptyActivity.class, mVirtualDisplay);
 
         assertThat(activityContext.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
     }
 
     @Test
     public void activityContext_startActivityOnDefaultDevice_returnsDefaultDeviceId() {
-        Activity activityContext = startActivity(DEFAULT_DISPLAY);
+        Activity activityContext = startActivity(EmptyActivity.class, DEFAULT_DISPLAY);
 
         assertThat(activityContext.getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
     }
 
     @Test
     public void activityContext_activityMovesDisplay_returnsDeviceIdAssociatedWithDisplay() {
-        Activity activity = startActivity(mVirtualDisplay);
+        Activity activity = startActivity(EmptyActivity.class, mVirtualDisplay);
         try (VirtualDevice virtualDevice2 = createVirtualDevice()) {
             VirtualDisplay virtualDisplay2 = createVirtualDisplay(virtualDevice2);
 
@@ -310,34 +328,80 @@ public class DeviceAssociationTest {
 
     @Test
     public void applicationContext_lastActivityOnVirtualDevice_returnsVirtualDeviceId() {
-        startActivity(DEFAULT_DISPLAY);
-        startActivity(mVirtualDisplay);
+        startActivity(EmptyActivity.class, DEFAULT_DISPLAY);
+        startActivity(SecondActivity.class, mVirtualDisplay);
 
         assertThat(getApplicationContext().getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
     }
 
     @Test
-    public void applicationContext_lastActivityOnDefaultDevice_returnsDefault() {
-        startActivity(mVirtualDisplay);
-        startActivity(DEFAULT_DISPLAY);
+    public void applicationContext_recreateActivity_returnsDeviceIdOfActivity() {
+        Activity virtualDeviceActivity = startActivity(EmptyActivity.class, mVirtualDisplay);
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        ActivityMonitor monitor = createMonitor(EmptyActivity.class.getName());
+        instrumentation.addMonitor(monitor);
+
+        instrumentation.runOnMainSync(() -> virtualDeviceActivity.recreate());
+        monitor.waitForActivity();
+        instrumentation.removeMonitor(monitor);
+
+        assertThat(getApplicationContext().getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
+    }
+
+    @Test
+    public void applicationContext_recreateFirstActivity_returnsDeviceOfLastCreatedActivity() {
+        Activity defaultActivity = startActivity(EmptyActivity.class, DEFAULT_DISPLAY);
+        startActivity(SecondActivity.class, mVirtualDisplay);
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        ActivityMonitor monitor = createMonitor(EmptyActivity.class.getName());
+        instrumentation.addMonitor(monitor);
+
+        instrumentation.runOnMainSync(() -> defaultActivity.recreate());
+        monitor.waitForActivity();
+        instrumentation.removeMonitor(monitor);
+
+        assertThat(getApplicationContext().getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
+    }
+
+    @Test
+    public void applicationContext_activityOnVirtualDeviceDestroyed_returnsDefault() {
+        Activity activity = startActivity(EmptyActivity.class, mVirtualDisplay);
+        activity.finish();
+        activity.releaseInstance();
+
+        verify(mActivityListener, timeout(TIMEOUT_MILLIS))
+                .onDisplayEmpty(eq(mVirtualDisplay.getDisplay().getDisplayId()));
 
         assertThat(getApplicationContext().getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
     }
 
     @Test
+    public void applicationContext_lastActivityOnDefaultDevice_returnsDefault() {
+        startActivity(EmptyActivity.class, mVirtualDisplay);
+        startActivity(SecondActivity.class, DEFAULT_DISPLAY);
+
+        assertThat(getApplicationContext().getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
+    }
+
+    @Test
+    public void application_context_noActivities_returnsDefault() {
+        assertThat(getApplicationContext().getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
+    }
+
+    @Test
     public void applicationContext_twoVirtualDevices_returnsIdOfLatest() {
-        startActivity(mVirtualDisplay);
+        startActivity(EmptyActivity.class, mVirtualDisplay);
         Context context = getApplicationContext();
         try (VirtualDevice virtualDevice2 = createVirtualDevice()) {
             VirtualDisplay virtualDisplay2 = createVirtualDisplay(virtualDevice2);
 
             assertThat(context.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
 
-            startActivity(virtualDisplay2);
+            startActivity(SecondActivity.class, virtualDisplay2);
 
             assertThat(context.getDeviceId()).isEqualTo(virtualDevice2.getDeviceId());
 
-            startActivity(DEFAULT_DISPLAY);
+            startActivity(SecondActivity.class, DEFAULT_DISPLAY);
 
             assertThat(context.getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
         }
@@ -347,8 +411,8 @@ public class DeviceAssociationTest {
     public void serviceContext_lastActivityOnVirtualDevice_returnsVirtualDeviceId()
             throws TimeoutException {
         Service service = createTestService();
-        startActivity(DEFAULT_DISPLAY);
-        startActivity(mVirtualDisplay);
+        startActivity(EmptyActivity.class, DEFAULT_DISPLAY);
+        startActivity(SecondActivity.class, mVirtualDisplay);
 
         assertThat(service.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
     }
@@ -357,8 +421,8 @@ public class DeviceAssociationTest {
     public void serviceContext_lastActivityOnDefaultDevice_returnsDefault()
             throws TimeoutException {
         Service service = createTestService();
-        startActivity(mVirtualDisplay);
-        startActivity(DEFAULT_DISPLAY);
+        startActivity(EmptyActivity.class, mVirtualDisplay);
+        startActivity(SecondActivity.class, DEFAULT_DISPLAY);
 
         assertThat(service.getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
     }
@@ -366,8 +430,8 @@ public class DeviceAssociationTest {
     @Test
     public void serviceContext_startServiceAfterActivity_hasDeviceIdOfTopActivity()
             throws TimeoutException {
-        startActivity(DEFAULT_DISPLAY);
-        startActivity(mVirtualDisplay);
+        startActivity(EmptyActivity.class, DEFAULT_DISPLAY);
+        startActivity(SecondActivity.class, mVirtualDisplay);
         Service service = createTestService();
 
         assertThat(service.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
@@ -376,8 +440,8 @@ public class DeviceAssociationTest {
     @Test
     public void serviceContext_startServiceAfterActivityDeviceIsClosed_returnsDefault()
             throws TimeoutException {
-        startActivity(DEFAULT_DISPLAY);
-        startActivity(mVirtualDisplay);
+        startActivity(EmptyActivity.class, DEFAULT_DISPLAY);
+        startActivity(SecondActivity.class, mVirtualDisplay);
         mVirtualDevice.close();
         Service service = createTestService();
 
@@ -393,9 +457,11 @@ public class DeviceAssociationTest {
     }
 
     private VirtualDevice createVirtualDevice() {
-        return mVirtualDeviceManager.createVirtualDevice(
+        VirtualDevice virtualDevice = mVirtualDeviceManager.createVirtualDevice(
                 mFakeAssociationRule.getAssociationInfo().getId(),
                 DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        mVirtualDevices.add(virtualDevice);
+        return virtualDevice;
     }
 
     private VirtualDisplay createVirtualDisplay(VirtualDevice virtualDevice) {
@@ -409,21 +475,28 @@ public class DeviceAssociationTest {
                 mVirtualDisplayCallback);
     }
 
-    private Activity startActivity(VirtualDisplay virtualDisplay) {
-        return startActivityWithOptions(createActivityOptions(virtualDisplay));
+    private ActivityMonitor createMonitor(String activityName) {
+        return new ActivityMonitor(activityName,
+                new Instrumentation.ActivityResult(0, new Intent()), false);
     }
 
-    private Activity startActivity(int displayId) {
-        return startActivityWithOptions(createActivityOptions(displayId));
+    private Activity startActivity(Class<?> activityClass, VirtualDisplay virtualDisplay) {
+        return startActivityWithOptions(createActivityOptions(virtualDisplay), activityClass);
     }
 
-    private Activity startActivityWithOptions(Bundle activityOptions) {
-        return InstrumentationRegistry.getInstrumentation()
+    private Activity startActivity(Class<?> activityClass, int displayId) {
+        return startActivityWithOptions(createActivityOptions(displayId), activityClass);
+    }
+
+    private Activity startActivityWithOptions(Bundle activityOptions, Class<?> activityClass) {
+        Activity activity = InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(
-                        new Intent(getApplicationContext(), EmptyActivity.class)
+                        new Intent(getApplicationContext(), activityClass)
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                                         | Intent.FLAG_ACTIVITY_CLEAR_TASK),
                         activityOptions);
+        mActivities.add(activity);
+        return activity;
     }
 
     private Service createTestService() throws TimeoutException {

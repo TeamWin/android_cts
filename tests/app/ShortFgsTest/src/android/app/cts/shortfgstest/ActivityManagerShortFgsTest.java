@@ -33,6 +33,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.ForegroundServiceStartNotAllowedException;
 import android.app.Service;
+import android.app.StartForegroundCalledOnStoppedServiceException;
 import android.app.cts.shortfgstest.DumpProtoUtils.ProcStateInfo;
 import android.app.cts.shortfgstesthelper.ShortFgsHelper;
 import android.app.cts.shortfgstesthelper.ShortFgsMessage;
@@ -660,7 +661,7 @@ public class ActivityManagerShortFgsTest {
             ShortFgsMessage m = waitForException();
 
             assertThat(m.getActualExceptionClasss())
-                    .isEqualTo(IllegalStateException.class.getName());
+                    .isEqualTo(StartForegroundCalledOnStoppedServiceException.class.getName());
 
             assertThat(m.getActualExceptionMessage())
                     .contains("called on a service that's not started.");

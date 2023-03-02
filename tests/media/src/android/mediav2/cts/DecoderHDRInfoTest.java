@@ -67,7 +67,7 @@ public class DecoderHDRInfoTest extends HDRDecoderTestBase {
         mHDRDynamicInfoContainer = hdrDynamicInfoContainer;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = false;
@@ -117,7 +117,7 @@ public class DecoderHDRInfoTest extends HDRDecoderTestBase {
      */
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
-    @CddTest(requirements = {"5.3.5/C-3-1", "5.3.7/C-4-1", "5.3.9"})
+    @CddTest(requirements = {"5.3.5/C-3-1", "5.3.7/C-4-1", "5.3.9/C-3-1"})
     public void testHDRInfo() throws IOException, InterruptedException {
         validateHDRInfo(mHDRStaticInfoStream, mHDRStaticInfoContainer, mHDRDynamicInfoStream,
                 mHDRDynamicInfoContainer);

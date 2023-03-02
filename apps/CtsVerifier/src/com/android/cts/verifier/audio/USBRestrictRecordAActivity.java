@@ -87,9 +87,13 @@ public class USBRestrictRecordAActivity extends PassFailButtons.Activity {
                 R.string.audio_usb_restrict_record_test,
                 R.string.audio_usb_restrict_record_entry,
                 -1);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
         mHasRecordPermission = hasRecordPermission();
-
         if (mHasRecordPermission) {
             TextView tx = findViewById(R.id.usb_restrictrecord_instructions);
             tx.setText(getResources().getString(R.string.audio_usb_restrict_permission_info));

@@ -33,9 +33,9 @@ import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InlineUiBot;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.uiautomator.UiObject2;
 
 import androidx.annotation.NonNull;
+import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Test;
 import org.junit.rules.TestRule;

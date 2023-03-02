@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.mediav2.cts;
+package android.mediav2.common.cts;
 
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
@@ -42,69 +42,69 @@ class TextureRender {
     private final float[] mTriangleVerticesData = {
             // X, Y, Z, U, V
             -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
     };
 
     private FloatBuffer mTriangleVertices;
 
     private static final String VERTEX_SHADER_RGB =
-            "uniform mat4 uMVPMatrix;\n" +
-            "uniform mat4 uSTMatrix;\n" +
-            "attribute vec4 aPosition;\n" +
-            "attribute vec4 aTextureCoord;\n" +
-            "varying vec2 vTextureCoord;\n" +
-            "void main() {\n" +
-            "  gl_Position = uMVPMatrix * aPosition;\n" +
-            "  vTextureCoord = (uSTMatrix * aTextureCoord).xy;\n" +
-            "}\n";
+            "uniform mat4 uMVPMatrix;\n"
+            + "uniform mat4 uSTMatrix;\n"
+            + "attribute vec4 aPosition;\n"
+            + "attribute vec4 aTextureCoord;\n"
+            + "varying vec2 vTextureCoord;\n"
+            + "void main() {\n"
+            + "  gl_Position = uMVPMatrix * aPosition;\n"
+            + "  vTextureCoord = (uSTMatrix * aTextureCoord).xy;\n"
+            + "}\n";
 
     private static final String FRAGMENT_SHADER_RGB =
-            "#extension GL_OES_EGL_image_external : require\n" +
-            "precision mediump float;\n" +      // highp here doesn't seem to matter
-            "varying vec2 vTextureCoord;\n" +
-            "uniform samplerExternalOES sTexture;\n" +
-            "void main() {\n" +
-            "  gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
-            "}\n";
+            "#extension GL_OES_EGL_image_external : require\n"
+            + "precision mediump float;\n"         // highp here doesn't seem to matter
+            + "varying vec2 vTextureCoord;\n"
+            + "uniform samplerExternalOES sTexture;\n"
+            + "void main() {\n"
+            + "  gl_FragColor = texture2D(sTexture, vTextureCoord);\n"
+            + "}\n";
 
     private static final String VERTEX_SHADER_YUV =
-            "#version 300 es\n" +
-            "uniform mat4 uMVPMatrix;\n" +
-            "uniform mat4 uSTMatrix;\n" +
-            "in vec4 aPosition;\n" +
-            "in vec4 aTextureCoord;\n" +
-            "out vec2 vTextureCoord;\n" +
-            "void main() {\n" +
-            "  gl_Position = uMVPMatrix * aPosition;\n" +
-            "  vTextureCoord = (uSTMatrix * aTextureCoord).xy;\n" +
-            "}\n";
+            "#version 300 es\n"
+            + "uniform mat4 uMVPMatrix;\n"
+            + "uniform mat4 uSTMatrix;\n"
+            + "in vec4 aPosition;\n"
+            + "in vec4 aTextureCoord;\n"
+            + "out vec2 vTextureCoord;\n"
+            + "void main() {\n"
+            + "  gl_Position = uMVPMatrix * aPosition;\n"
+            + "  vTextureCoord = (uSTMatrix * aTextureCoord).xy;\n"
+            + "}\n";
 
     private static final String FRAGMENT_SHADER_YUV =
-            "#version 300 es\n" +
-            "#extension GL_OES_EGL_image_external : require\n" +
-            "#extension GL_EXT_YUV_target : require\n" +
-            "precision mediump float;\n" +      // highp here doesn't seem to matter
-            "uniform __samplerExternal2DY2YEXT uTexSampler;\n" +
-            "in vec2 vTextureCoord;\n" +
-            "out vec4 outColor;\n" +
-            "void main() {\n" +
-            "    outColor = texture(uTexSampler, vTextureCoord);\n" +
-            "}\n";
+            "#version 300 es\n"
+            + "#extension GL_OES_EGL_image_external : require\n"
+            + "#extension GL_EXT_YUV_target : require\n"
+            + "precision mediump float;\n"      // highp here doesn't seem to matter
+            + "uniform __samplerExternal2DY2YEXT uTexSampler;\n"
+            + "in vec2 vTextureCoord;\n"
+            + "out vec4 outColor;\n"
+            + "void main() {\n"
+            + "    outColor = texture(uTexSampler, vTextureCoord);\n"
+            + "}\n";
 
     private float[] mMVPMatrix = new float[16];
     private float[] mSTMatrix = new float[16];
 
     private int mProgram;
     private int mTextureID;
-    private int muMVPMatrixHandle;
-    private int muSTMatrixHandle;
-    private int maPositionHandle;
-    private int maTextureHandle;
+    private int mUMVPMatrixHandle;
+    private int mUSTMatrixHandle;
+    private int mAPositionHandle;
+    private int mATextureHandle;
     private boolean mUseYuvSampling;
 
-    public TextureRender() {
+    TextureRender() {
         mTriangleVertices = ByteBuffer.allocateDirect(
             mTriangleVerticesData.length * FLOAT_SIZE_BYTES)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -136,22 +136,22 @@ class TextureRender {
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, mTextureID);
 
         mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
-        GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false,
-            TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+        GLES20.glVertexAttribPointer(mAPositionHandle, 3, GLES20.GL_FLOAT, false,
+                TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
         checkGlError("glVertexAttribPointer maPosition");
-        GLES20.glEnableVertexAttribArray(maPositionHandle);
+        GLES20.glEnableVertexAttribArray(mAPositionHandle);
         checkGlError("glEnableVertexAttribArray maPositionHandle");
 
         mTriangleVertices.position(TRIANGLE_VERTICES_DATA_UV_OFFSET);
-        GLES20.glVertexAttribPointer(maTextureHandle, 2, GLES20.GL_FLOAT, false,
-            TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+        GLES20.glVertexAttribPointer(mATextureHandle, 2, GLES20.GL_FLOAT, false,
+                TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
         checkGlError("glVertexAttribPointer maTextureHandle");
-        GLES20.glEnableVertexAttribArray(maTextureHandle);
+        GLES20.glEnableVertexAttribArray(mATextureHandle);
         checkGlError("glEnableVertexAttribArray maTextureHandle");
 
         Matrix.setIdentityM(mMVPMatrix, 0);
-        GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
-        GLES20.glUniformMatrix4fv(muSTMatrixHandle, 1, false, mSTMatrix, 0);
+        GLES20.glUniformMatrix4fv(mUMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+        GLES20.glUniformMatrix4fv(mUSTMatrixHandle, 1, false, mSTMatrix, 0);
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         checkGlError("glDrawArrays");
@@ -162,7 +162,7 @@ class TextureRender {
      * Initializes GL state.  Call this after the EGL surface has been created and made current.
      */
     public void surfaceCreated() {
-        if (mUseYuvSampling == false) {
+        if (!mUseYuvSampling) {
             mProgram = createProgram(VERTEX_SHADER_RGB, FRAGMENT_SHADER_RGB);
         } else {
             mProgram = createProgram(VERTEX_SHADER_YUV, FRAGMENT_SHADER_YUV);
@@ -170,26 +170,26 @@ class TextureRender {
         if (mProgram == 0) {
             throw new RuntimeException("failed creating program");
         }
-        maPositionHandle = GLES20.glGetAttribLocation(mProgram, "aPosition");
+        mAPositionHandle = GLES20.glGetAttribLocation(mProgram, "aPosition");
         checkGlError("glGetAttribLocation aPosition");
-        if (maPositionHandle == -1) {
+        if (mAPositionHandle == -1) {
             throw new RuntimeException("Could not get attrib location for aPosition");
         }
-        maTextureHandle = GLES20.glGetAttribLocation(mProgram, "aTextureCoord");
+        mATextureHandle = GLES20.glGetAttribLocation(mProgram, "aTextureCoord");
         checkGlError("glGetAttribLocation aTextureCoord");
-        if (maTextureHandle == -1) {
+        if (mATextureHandle == -1) {
             throw new RuntimeException("Could not get attrib location for aTextureCoord");
         }
 
-        muMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
+        mUMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
         checkGlError("glGetUniformLocation uMVPMatrix");
-        if (muMVPMatrixHandle == -1) {
+        if (mUMVPMatrixHandle == -1) {
             throw new RuntimeException("Could not get attrib location for uMVPMatrix");
         }
 
-        muSTMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uSTMatrix");
+        mUSTMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uSTMatrix");
         checkGlError("glGetUniformLocation uSTMatrix");
-        if (muSTMatrixHandle == -1) {
+        if (mUSTMatrixHandle == -1) {
             throw new RuntimeException("Could not get attrib location for uSTMatrix");
         }
 
