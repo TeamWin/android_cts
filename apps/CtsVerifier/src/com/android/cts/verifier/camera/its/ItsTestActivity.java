@@ -129,10 +129,12 @@ public class ItsTestActivity extends DialogTestListActivity {
             "scene2_c",
             "scene2_d",
             "scene2_e",
+            "scene2_f",
             "scene3",
             "scene4",
             "scene5",
             "scene6",
+            "scene_extensions/scene_hdr",
             "sensor_fusion");
 
     // This must match scenes of SUB_CAMERA_TESTS in tools/run_all_tests.py
