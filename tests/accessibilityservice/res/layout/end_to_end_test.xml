@@ -39,9 +39,9 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:gravity="center">
-        <LinearLayout android:id="@+id/adpView"
-            android:contentDescription="@string/adp_desc"
-            android:accessibilityDataPrivate="yes"
+        <LinearLayout android:id="@+id/adsView"
+            android:contentDescription="@string/ads_desc"
+            android:accessibilityDataSensitive="yes"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:gravity="center">
