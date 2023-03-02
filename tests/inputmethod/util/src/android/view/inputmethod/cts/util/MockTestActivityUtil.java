@@ -125,8 +125,8 @@ public final class MockTestActivityUtil {
             commandBuilder.append(String.format("am start -a %s -c %s --activity-clear-task %s",
                     Intent.ACTION_VIEW, Intent.CATEGORY_BROWSABLE, uri.toString()));
         } else {
-            commandBuilder.append(String.format("am start -a %s -n %s --activity-clear-task",
-                    Intent.ACTION_MAIN, TEST_ACTIVITY.flattenToShortString()));
+            commandBuilder.append("am start --activity-clear-task -n ")
+                    .append(TEST_ACTIVITY.flattenToShortString());
             if (extras != null) {
                 extras.forEach((key, value) -> commandBuilder.append(" --es ")
                         .append(key).append(" ").append(value));
