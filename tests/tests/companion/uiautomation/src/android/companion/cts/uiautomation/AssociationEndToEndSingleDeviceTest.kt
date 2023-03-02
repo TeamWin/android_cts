@@ -5,6 +5,7 @@ import android.companion.AssociationRequest.DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
 import android.companion.AssociationRequest.DEVICE_PROFILE_COMPUTER
 import android.companion.AssociationRequest.DEVICE_PROFILE_NEARBY_DEVICE_STREAMING
 import android.platform.test.annotations.AppModeFull
+import com.android.compatibility.common.util.FeatureUtil
 import org.junit.Assume.assumeFalse
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,6 +28,7 @@ class AssociationEndToEndSingleDeviceTest(
     override fun setUp() {
         super.setUp()
 
+        assumeFalse(FeatureUtil.isWatch())
         // Self_managed profiles are not supported for single_device association flow.
         assumeFalse(profile == DEVICE_PROFILE_COMPUTER)
         assumeFalse(profile == DEVICE_PROFILE_APP_STREAMING)

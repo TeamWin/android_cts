@@ -10,6 +10,7 @@ import android.companion.cts.common.CompanionActivity
 import android.companion.cts.common.RecordingCallback.OnAssociationCreated
 import android.content.Intent
 import android.platform.test.annotations.AppModeFull
+import com.android.compatibility.common.util.FeatureUtil
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -36,6 +37,7 @@ class AssociationEndToEndSelfManagedTest(
     override fun setUp() {
         super.setUp()
 
+        assumeFalse(FeatureUtil.isWatch())
         // confirmation UI (the "self-managed" flow variant).
         // Watch and glasses profiles are not supported for self-managed association flow.
         assumeFalse(profile == null)
