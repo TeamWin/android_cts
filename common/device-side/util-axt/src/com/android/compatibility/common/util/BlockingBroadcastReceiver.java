@@ -212,6 +212,7 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver implements Auto
         }
 
         try {
+            AmUtils.waitForBroadcastBarrier();
             mReceivedIntent = mBlockingQueue.poll(timeoutMillis, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Log.e(TAG, "waitForBroadcast get interrupted: ", e);
