@@ -23,7 +23,7 @@
                      android:targetPackage="android.libcore.runner"
                      android:label="CTS Libcore OJ test cases">
         <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener" />
+                   android:value="com.android.cts.runner.CtsLibcoreTestRunListener" />
     </instrumentation>
 
 </manifest>
