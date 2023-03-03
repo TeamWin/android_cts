@@ -220,11 +220,6 @@ public class AccessibilityDisplayProxyTest {
                 mVirtualDisplay.getDisplay().getDisplayId());
         mProxyActivityTitle = getActivityTitle(sInstrumentation, mProxyActivity);
         mProxyActivityA11yManager = mProxyActivity.getSystemService(AccessibilityManager.class);
-
-        final AccessibilityServiceInfo automationInfo = sUiAutomation.getServiceInfo();
-        assertThat(automationInfo).isNotNull();
-        automationInfo.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
-        sUiAutomation.setServiceInfo(automationInfo);
     }
 
     @After
@@ -405,7 +400,7 @@ public class AccessibilityDisplayProxyTest {
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#findFocus(int)"})
     public void testGetFocus_proxyGetsAccessibilityFocus() throws TimeoutException {
-        registerProxyAndWaitForConnection();
+        registerProxyAndEnableTouchExploration();
         assertVirtualDisplayActivityExistsToProxy();
 
         final EditText editText = mProxyActivity.findViewById(R.id.edit_text);
@@ -422,7 +417,7 @@ public class AccessibilityDisplayProxyTest {
         final StubProxyConcurrentAccessibilityService service =
                 mProxyConcurrentServiceRule.enableService();
         try {
-            registerProxyAndWaitForConnection();
+            registerProxyAndEnableTouchExploration();
             assertVirtualDisplayActivityExistsToProxy();
             // Launch an activity on the default display.
             final ProxyConcurrentActivity concurrentToProxyActivity =
@@ -445,7 +440,7 @@ public class AccessibilityDisplayProxyTest {
         final StubProxyConcurrentAccessibilityService service =
                 mProxyConcurrentServiceRule.enableService();
         try {
-            registerProxyAndWaitForConnection();
+            registerProxyAndEnableTouchExploration();
             assertVirtualDisplayActivityExistsToProxy();
 
             final EditText editText = mProxyActivity.findViewById(R.id.edit_text);
@@ -464,7 +459,7 @@ public class AccessibilityDisplayProxyTest {
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#onAccessibilityEvent"})
     public void testGetFocus_proxyDoesNotGetWindowFocusChangeEvent_withinWindow() throws Exception {
-        registerProxyAndWaitForConnection();
+        registerProxyAndEnableTouchExploration();
         assertVirtualDisplayActivityExistsToProxy();
 
         final EditText editText = mProxyActivity.findViewById(R.id.edit_text);
@@ -474,12 +469,12 @@ public class AccessibilityDisplayProxyTest {
                 AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
         assertThat(a11yFocusedNode).isEqualTo(editText.createAccessibilityNodeInfo());
 
+        mA11yProxy.setEventFilter(
+                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED));
         final Button button = mProxyActivity.findViewById(R.id.button);
         mProxyActivity.runOnUiThread(() -> button.performAccessibilityAction(
                 AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null));
 
-        mA11yProxy.setEventFilter(
-                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED));
         assertThrows(AssertionError.class, () ->
                 waitOn(mA11yProxy.mWaitObject, ()-> mA11yProxy.mReceivedEvent.get(),
                         TIMEOUT_MS,
@@ -490,14 +485,14 @@ public class AccessibilityDisplayProxyTest {
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#onAccessibilityEvent"})
     public void testGetFocus_proxyGetsWindowFocusChangeEvent_initialFocusInWindow() {
-        registerProxyAndWaitForConnection();
+        registerProxyAndEnableTouchExploration();
         assertVirtualDisplayActivityExistsToProxy();
 
+        mA11yProxy.setEventFilter(
+                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED));
         final EditText editText = mProxyActivity.findViewById(R.id.edit_text);
         mProxyActivity.runOnUiThread(() -> editText.performAccessibilityAction(
                 AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null));
-        mA11yProxy.setEventFilter(
-                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED));
 
         waitOn(mA11yProxy.mWaitObject, ()-> mA11yProxy.mReceivedEvent.get(), TIMEOUT_MS,
                 "Expected event was not received within " + TIMEOUT_MS + " ms");
@@ -506,7 +501,7 @@ public class AccessibilityDisplayProxyTest {
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#onAccessibilityEvent"})
     public void testGetFocus_proxyGetsWindowFocusChangeEvent_betweenWindows() throws Exception {
-        registerProxyAndWaitForConnection();
+        registerProxyAndEnableTouchExploration();
         assertVirtualDisplayActivityExistsToProxy();
 
         final EditText editText = mProxyActivity.findViewById(R.id.edit_text);
@@ -517,15 +512,15 @@ public class AccessibilityDisplayProxyTest {
                 mA11yProxy.getWindows());
         assertThat(topWindow).isNotNull();
 
+        mA11yProxy.setEventFilter(filterWaitForAll(
+                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED),
+                filterForEventType(AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED)));
         final AccessibilityNodeInfo buttonNode =
                 topWindow.getRoot().findAccessibilityNodeInfosByText(
                         sInstrumentation.getContext().getString(R.string.button1)).get(0);
 
         mProxyActivity.runOnUiThread(() -> buttonNode.performAction(
                 AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS));
-        mA11yProxy.setEventFilter(filterWaitForAll(
-                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED),
-                filterForEventType(AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED)));
 
         waitOn(mA11yProxy.mWaitObject, ()-> mA11yProxy.mReceivedEvent.get(), TIMEOUT_MS,
                 "Expected event was not received within " + TIMEOUT_MS + " ms");
@@ -537,7 +532,7 @@ public class AccessibilityDisplayProxyTest {
         final StubProxyConcurrentAccessibilityService service =
                 mProxyConcurrentServiceRule.enableService();
         try {
-            registerProxyAndWaitForConnection();
+            registerProxyAndEnableTouchExploration();
             assertVirtualDisplayActivityExistsToProxy();
             // TODO(268752827): Investigate why the proxy window is invisible to to accessibility
             //  services nce the activity on the default display is launched. (Launching the default
@@ -726,7 +721,7 @@ public class AccessibilityDisplayProxyTest {
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#setFocusAppearance"})
     public void testSetFocusAppearanceDataAfterProxyEnabled() {
-        registerProxyAndWaitForConnection();
+        registerProxyAndEnableTouchExploration();
         // This test verifies that the proxy can set the user's focus appearance, which affects all
         // apps. Ideally this should only affect the apps that are proxy-ed.
         // TODO(264594384): Test that a non-proxy activity does not get a changed focus appearance.
@@ -911,6 +906,40 @@ public class AccessibilityDisplayProxyTest {
         return activityOnVirtualDisplay;
     }
 
+
+    private void registerProxyAndEnableTouchExploration() {
+        registerProxyAndWaitForConnection();
+        assertVirtualDisplayActivityExistsToProxy();
+
+        final AccessibilityManager proxyActivityA11yManager =
+                mProxyActivity.getSystemService(AccessibilityManager.class);
+        // This may be the case when the concurrent service is enabled.
+        if (proxyActivityA11yManager.isTouchExplorationEnabled()) {
+            return;
+        }
+        final Object waitObject = new Object();
+        final AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+        final AccessibilityManager.TouchExplorationStateChangeListener touchExplorationListener =
+                (boolean b) -> {
+                    synchronized (waitObject) {
+                        atomicBoolean.set(b);
+                        waitObject.notifyAll();
+                    }
+                };
+
+        proxyActivityA11yManager.addTouchExplorationStateChangeListener(touchExplorationListener);
+        final List<AccessibilityServiceInfo> serviceInfos =
+                mA11yProxy.getInstalledAndEnabledServices();
+        serviceInfos.get(0).flags |=
+                AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        mA11yProxy.setInstalledAndEnabledServices(serviceInfos);
+
+        waitOn(waitObject, () -> atomicBoolean.get(), TIMEOUT_MS,
+                "Touch exploration state listener called");
+        assertThat(proxyActivityA11yManager.isTouchExplorationEnabled()).isTrue();
+        proxyActivityA11yManager.removeTouchExplorationStateChangeListener(
+                touchExplorationListener);
+    }
     /**
      * Class for testing AccessibilityDisplayProxy.
      */
