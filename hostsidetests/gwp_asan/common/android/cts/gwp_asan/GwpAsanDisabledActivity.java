@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-package android.gwpasan;
+package android.cts.gwp_asan;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
 
-import java.lang.Override;
-
-import android.gwpasan.Utils;
-
-public class GwpAsanDefaultActivity extends Activity {
-
+public class GwpAsanDisabledActivity extends Activity {
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         try {
-          boolean enabled = Utils.isGwpAsanEnabled();
-          setResult(RESULT_FIRST_USER + (enabled ? 1 : 0));
+            if (Utils.isGwpAsanDisabled()) {
+                setResult(Utils.TEST_SUCCESS);
+            } else {
+                setResult(Utils.TEST_FAILURE);
+            }
         } catch (Exception e) {
-          setResult(RESULT_OK);
+            setResult(Utils.TEST_FAILURE);
         }
         finish();
     }
-
 }
