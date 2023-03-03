@@ -16,10 +16,14 @@
 
 package android.graphics.cts;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.Gainmap;
 import android.graphics.ImageDecoder;
@@ -32,6 +36,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayOutputStream;
+
 import junitparams.JUnitParamsRunner;
 
 @SmallTest
@@ -40,6 +46,37 @@ public class GainmapTest {
     private static final float EPSILON = 0.0001f;
 
     private static Context sContext;
+
+    static final Bitmap sScalingRedA8;
+    static final Bitmap sScalingRed8888;
+
+    static {
+        sScalingRedA8 = Bitmap.createBitmap(new int[] {
+                Color.RED,
+                Color.RED,
+                Color.RED,
+                Color.RED
+        }, 4, 1, Bitmap.Config.ARGB_8888);
+        sScalingRedA8.setGainmap(new Gainmap(Bitmap.createBitmap(new int[] {
+                0x00000000,
+                0x40000000,
+                0x80000000,
+                0xFF000000
+        }, 4, 1, Bitmap.Config.ALPHA_8)));
+
+        sScalingRed8888 = Bitmap.createBitmap(new int[] {
+                Color.RED,
+                Color.RED,
+                Color.RED,
+                Color.RED
+        }, 4, 1, Bitmap.Config.ARGB_8888);
+        sScalingRed8888.setGainmap(new Gainmap(Bitmap.createBitmap(new int[] {
+                0xFF000000,
+                0xFF404040,
+                0xFF808080,
+                0xFFFFFFFF
+        }, 4, 1, Bitmap.Config.ARGB_8888)));
+    }
 
     @BeforeClass
     public static void setupClass() {
@@ -153,5 +190,41 @@ public class GainmapTest {
         assertEquals(gainmap.getDisplayRatioForFullHdr(),
                 unparceledGainmap.getDisplayRatioForFullHdr(), 0f);
         p.recycle();
+    }
+
+    @Test
+    public void testCompress8888() throws Exception {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        assertTrue(sScalingRed8888.compress(Bitmap.CompressFormat.JPEG, 100, stream));
+        byte[] data = stream.toByteArray();
+        Bitmap result = ImageDecoder.decodeBitmap(ImageDecoder.createSource(data));
+        assertTrue(result.hasGainmap());
+        Bitmap gainmapImage = result.getGainmap().getGainmapContents();
+        assertEquals(Bitmap.Config.ARGB_8888, gainmapImage.getConfig());
+        Bitmap sourceImage = sScalingRed8888.getGainmap().getGainmapContents();
+        for (int x = 0; x < 4; x++) {
+            Color expected = sourceImage.getColor(x, 0);
+            Color got = gainmapImage.getColor(x, 0);
+            assertArrayEquals("Differed at x=" + x,
+                    expected.getComponents(), got.getComponents(), 0.05f);
+        }
+    }
+
+    @Test
+    public void testCompressA8() throws Exception {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        assertTrue(sScalingRedA8.compress(Bitmap.CompressFormat.JPEG, 100, stream));
+        byte[] data = stream.toByteArray();
+        Bitmap result = ImageDecoder.decodeBitmap(ImageDecoder.createSource(data));
+        assertTrue(result.hasGainmap());
+        Bitmap gainmapImage = result.getGainmap().getGainmapContents();
+        assertEquals(Bitmap.Config.ALPHA_8, gainmapImage.getConfig());
+        Bitmap sourceImage = sScalingRedA8.getGainmap().getGainmapContents();
+        for (int x = 0; x < 4; x++) {
+            Color expected = sourceImage.getColor(x, 0);
+            Color got = gainmapImage.getColor(x, 0);
+            assertArrayEquals("Differed at x=" + x,
+                    expected.getComponents(), got.getComponents(), 0.05f);
+        }
     }
 }
