@@ -304,8 +304,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         Resources resources = getResources();
         mYesString = resources.getString(R.string.audio_general_yes);
         mNoString = resources.getString(R.string.audio_general_no);
-        mPassString = resources.getString(R.string.audio_general_pass);
-        mFailString = resources.getString(R.string.audio_general_fail);
+        mPassString = resources.getString(R.string.audio_general_teststatus_pass);
+        mFailString = resources.getString(R.string.audio_general_teststatus_fail);
         mNotTestedString = resources.getString(R.string.audio_general_not_tested);
         mNotRequiredString = resources.getString(R.string.audio_general_not_required);
         mRequiredString = resources.getString(R.string.audio_general_required);
@@ -772,8 +772,60 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
             return mResultsString;
         }
 
+        static final int RESULTCODE_NONE = 0;
+        static final int RESULTCODE_PASS = 1;
+        static final int RESULTCODE_FAIL_NOINTERNAL = 2;
+        static final int RESULTCODE_FAIL_BASIC = 3;
+        static final int RESULTCODE_FAIL_MPC = 4;
+        static final int RESULTCODE_FAIL_PROONEPATH = 5;
+        static final int RESULTCODE_FAIL_PROLIMITS_ANALOG = 6;
+        static final int RESULTCODE_FAIL_PROLIMITS_USB = 7;
+        static final int RESULTCODE_FAIL_24BIT = 8;
+        static final int RESULTCODE_FAIL_PRO_NOWIRED = 9;
+        int mResultCode = 0;
+
         private boolean checkLatency(double measured, double limit) {
             return measured == LATENCY_NOT_MEASURED || measured <= limit;
+        }
+
+        private void setResultCode(boolean pass, int code) {
+            // only set the first non-none result code
+            Log.i(TAG, "setResultCode(" + pass + ", " + code + ")");
+            if (!pass && mResultCode == RESULTCODE_NONE) {
+                mResultCode = code;
+            }
+        }
+
+        public String getResultCodeText() {
+            Resources resources = getResources();
+            switch (mResultCode) {
+                case RESULTCODE_NONE:
+                    return resources.getString(R.string.audio_loopback_resultcode_none);
+                case RESULTCODE_PASS:
+                    return resources.getString(R.string.audio_loopback_resultcode_pass);
+                case RESULTCODE_FAIL_NOINTERNAL:
+                    return resources.getString(
+                            R.string.audio_loopback_resultcode_nointernal);
+                case RESULTCODE_FAIL_BASIC:
+                    return resources.getString(
+                            R.string.audio_loopback_resultcode_failbasic);
+                case RESULTCODE_FAIL_MPC:
+                    return resources.getString(R.string.audio_loopback_resultcode_failmpc);
+                case RESULTCODE_FAIL_PROONEPATH:
+                    return resources.getString(R.string.audio_loopback_resultcode_failpro);
+                case RESULTCODE_FAIL_PROLIMITS_ANALOG:
+                    return resources.getString(R.string.audio_loopback_resultcode_failproanalog);
+                case RESULTCODE_FAIL_PROLIMITS_USB:
+                    return resources.getString(R.string.audio_loopback_resultcode_failprousb);
+                case RESULTCODE_FAIL_24BIT:
+                    return resources.getString(R.string.audio_loopback_resultcode_fail24bit);
+                case RESULTCODE_FAIL_PRO_NOWIRED:
+                    return resources.getString(
+                            R.string.audio_loopback_resultcode_failproaudiowired);
+                default:
+                    // this should never happen
+                    return resources.getString(R.string.audio_loopback_resultcode_invalid);
+            }
         }
 
         public boolean evaluate(boolean proAudio,
@@ -784,41 +836,59 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                                        boolean analog24BitHardwareSupport,
                                        boolean usb24BitHardwareSupport) {
 
+            Log.i(TAG, "evaluate()");
+            mResultCode = RESULTCODE_NONE;
+
             // Required to test the Mic/Speaker path
             boolean internalPathRun = deviceLatency != LATENCY_NOT_MEASURED;
+            Log.i(TAG, "  internalPathRun:" + internalPathRun);
+            setResultCode(internalPathRun, RESULTCODE_FAIL_NOINTERNAL);
 
             // All devices must be under the basic limit.
             boolean basicPass = checkLatency(deviceLatency, LATENCY_BASIC)
                     && checkLatency(analogLatency, LATENCY_BASIC)
                     && checkLatency(usbLatency, LATENCY_BASIC);
+            Log.i(TAG, "  basicPass:" + basicPass);
+            setResultCode(basicPass, RESULTCODE_FAIL_BASIC);
 
             // For Media Performance Class T the RT latency must be <= 80 msec on one path.
             boolean mpcAtLeastOnePass = (mediaPerformanceClass < MPC_T)
                     || checkLatency(deviceLatency, LATENCY_MPC_AT_LEAST_ONE)
                     || checkLatency(analogLatency, LATENCY_MPC_AT_LEAST_ONE)
                     || checkLatency(usbLatency, LATENCY_MPC_AT_LEAST_ONE);
+            Log.i(TAG, "  mpcAtLeastOnePass:" + mpcAtLeastOnePass);
+            setResultCode(mpcAtLeastOnePass, RESULTCODE_FAIL_MPC);
 
             // For ProAudio, the RT latency must be <= 25 msec on one path.
             boolean proAudioAtLeastOnePass = !proAudio
                     || checkLatency(deviceLatency, LATENCY_PRO_AUDIO_AT_LEAST_ONE)
                     || checkLatency(analogLatency, LATENCY_PRO_AUDIO_AT_LEAST_ONE)
                     || checkLatency(usbLatency, LATENCY_PRO_AUDIO_AT_LEAST_ONE);
+            Log.i(TAG, "  proAudioAtLeastOnePass:" + proAudioAtLeastOnePass);
+            setResultCode(proAudioAtLeastOnePass, RESULTCODE_FAIL_PROONEPATH);
 
-            String supplementalText = "";
             // For ProAudio, analog and USB have specific limits
             boolean proAudioLimitsPass = !proAudio;
             if (proAudio) {
                 if (analogLatency > 0.0) {
                     proAudioLimitsPass = analogLatency <= LATENCY_PRO_AUDIO_ANALOG;
+                    setResultCode(proAudioLimitsPass, RESULTCODE_FAIL_PROLIMITS_ANALOG);
                 } else if (usbLatency > 0.0) {
                     // USB audio must be supported if 3.5mm jack not supported
                     proAudioLimitsPass =  usbLatency <= LATENCY_PRO_AUDIO_USB;
+                    setResultCode(proAudioLimitsPass, RESULTCODE_FAIL_PROLIMITS_USB);
                 }
+            }
+
+            if (!proAudioLimitsPass) {
+                setResultCode(false, RESULTCODE_FAIL_PRO_NOWIRED);
             }
 
             // For Media Performance Class T, usb and analog should support >=24 bit audio.
             boolean has24BitHardwareSupportPass = (mediaPerformanceClass < MPC_T)
                     || analog24BitHardwareSupport  || usb24BitHardwareSupport;
+            Log.i(TAG, "  has24BitHardwareSupportPass:" + has24BitHardwareSupportPass);
+            setResultCode(has24BitHardwareSupportPass, RESULTCODE_FAIL_24BIT);
 
             boolean pass =
                     internalPathRun
@@ -827,6 +897,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                     && proAudioAtLeastOnePass
                     && proAudioLimitsPass
                     && has24BitHardwareSupportPass;
+            Log.i(TAG, "  pass:" + pass);
 
             // Build the results explanation
             StringBuilder sb = new StringBuilder();
@@ -849,8 +920,10 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                     ? String.format("%.2fms ", usbLatency)
                     : (mNotTestedString + " - " + mNotRequiredString)));
 
-            sb.append(supplementalText);
             mResultsString = sb.toString();
+            if (mResultCode > RESULTCODE_PASS) {
+                mResultsString = mResultsString + "\n" + getResultCodeText();
+            }
 
             return pass;
         }

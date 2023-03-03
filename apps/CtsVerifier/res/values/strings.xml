@@ -5524,7 +5524,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_stop">Stop</string>
     <string name="audio_general_status">Status</string>
     <string name="audio_general_pass">PASS</string>
+    <string name="audio_general_teststatus_pass">Test Status: PASS</string>
     <string name="audio_general_fail">FAIL</string>
+    <string name="audio_general_teststatus_fail">Test Status: FAIL</string>
     <string name="audio_general_not_tested">Not Tested</string>
     <string name="audio_general_not_required">Please Test If Supported</string>
     <string name="audio_general_required">Required</string>
@@ -5610,14 +5612,27 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_loopback_speakermicpath_instructions">Place the DUT flat on a table
     in a quiet room. Press the Start button and allow the test to proceed.</string>
 
-    <string name="audio_loopback_headsetpath_instructions">Insert the loopback plug in the
-    headset jack.  Press the Start button and allow the test to proceed.</string>
+    <string name="audio_loopback_headsetpath_instructions">If supported, insert the loopback plug
+        into the headset jack.  Press the Start button and allow the test to proceed.</string>
 
-    <string name="audio_loopback_usbpath_instructions">Plug in the appropriate USB audio test
-        peripheral with loopback setup into the USB port. Press the start button and allow the
-        test to proceed.</string>
+    <string name="audio_loopback_usbpath_instructions">If USB Audio supported, Connect the USB
+        port to an appropriate USB audio test peripheral with loopback set up. Press the Start
+        button and allow the test to proceed.</string>
 
     <string name="audio_loopback_failure">FAILURE - Could not allocate analyzer thread.</string>
+
+    <!-- result codes -->
+    <string name="audio_loopback_resultcode_none">Result: None.</string>
+    <string name="audio_loopback_resultcode_pass">Result: Pass.</string>
+    <string name="audio_loopback_resultcode_nointernal">Result: Fail - Speaker/Mic path not tested.</string>
+    <string name="audio_loopback_resultcode_failbasic">Result: Fail - Basic latency not met.</string>
+    <string name="audio_loopback_resultcode_failmpc">Result: Fail - Media Performance Class latency not met.</string>
+    <string name="audio_loopback_resultcode_failpro">Result: Fail - Pro Audio max latency on one path not met.</string>
+    <string name="audio_loopback_resultcode_failproanalog">Result: Fail - Pro Audio analog latency not met.</string>
+    <string name="audio_loopback_resultcode_failprousb">Result: Fail - Pro Audio USB latency not met.</string>
+    <string name="audio_loopback_resultcode_fail24bit">Result: Fail - 24-bit playback requirement no met.</string>
+    <string name="audio_loopback_resultcode_failproaudiowired">Result: Fail - Pro Audio latency for wired path not met.</string>
+    <string name="audio_loopback_resultcode_invalid">Result: Invalid result code.</string>
 
     <!-- Audio Cold-Start Latency Test -->
     <string name="audio_coldstart_out_latency_test">Audio Cold Start Output Latency Test</string>
