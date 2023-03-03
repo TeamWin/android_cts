@@ -41,7 +41,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.platform.test.annotations.FlakyTest;
-import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.Postsubmit;
 import android.provider.DeviceConfig;
 import android.provider.DeviceConfig.Properties;
 import android.server.wm.WindowManagerTestBase.FocusableActivity;
@@ -71,7 +71,7 @@ import org.junit.rules.TestRule;
  * <p>Build/Install/Run:
  * atest CtsWindowManagerDeviceTestCases:CompatChangeTests
  */
-@Presubmit
+@Postsubmit
 @FlakyTest(bugId = 265133599)
 public final class CompatChangeTests extends MultiDisplayTestBase {
     private static final ComponentName RESIZEABLE_PORTRAIT_ACTIVITY =
