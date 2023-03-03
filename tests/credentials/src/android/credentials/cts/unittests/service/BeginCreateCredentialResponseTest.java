@@ -26,6 +26,7 @@ import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
 import android.service.credentials.BeginCreateCredentialResponse;
 import android.service.credentials.CreateEntry;
+import android.service.credentials.RemoteEntry;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -94,7 +95,7 @@ public class BeginCreateCredentialResponseTest {
         final List<CreateEntry> entries = List.of(new CreateEntry(mSlice));
         assertThat(builder.setCreateEntries(entries)).isSameInstanceAs(builder);
 
-        final CreateEntry remoteEntry = new CreateEntry(mSlice);
+        final RemoteEntry remoteEntry = new RemoteEntry(mSlice);
         assertThat(builder.setRemoteCreateEntry(remoteEntry)).isSameInstanceAs(builder);
         assertThat(builder.build().getRemoteCreateEntry()).isSameInstanceAs(remoteEntry);
     }
@@ -102,9 +103,10 @@ public class BeginCreateCredentialResponseTest {
     @Test
     public void testWriteParcelable() {
         final BeginCreateCredentialResponse response1 =
-                new BeginCreateCredentialResponse.Builder().addCreateEntry(
-                        new CreateEntry(mSlice)).setRemoteCreateEntry(
-                        new CreateEntry(mSlice)).build();
+                new BeginCreateCredentialResponse.Builder()
+                        .addCreateEntry(new CreateEntry(mSlice))
+                        .setRemoteCreateEntry(new RemoteEntry(mSlice))
+                        .build();
 
 
         final BeginCreateCredentialResponse response2 = TestUtils.cloneParcelable(response1);

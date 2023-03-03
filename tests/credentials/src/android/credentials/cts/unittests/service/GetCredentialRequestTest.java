@@ -39,13 +39,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
+
 @SmallTest
 @AppModeFull(reason = "unit test")
 @RunWith(AndroidJUnit4.class)
 public class GetCredentialRequestTest {
     private CallingAppInfo mCallingAppInfo;
-    private CredentialOption mCredentialOption = new CredentialOption("type", createTestBundle(),
-            createTestBundle(), true);
+    private List<CredentialOption> mCredentialOptions = List.of(
+            new CredentialOption("type1", createTestBundle(), createTestBundle(),
+                    true),
+            new CredentialOption("type2", createTestBundle(), createTestBundle(),
+                    false));
 
     @Before
     public void setup() throws PackageManager.NameNotFoundException {
@@ -59,11 +64,11 @@ public class GetCredentialRequestTest {
     @Test
     public void testConstructor_nullCallingAppInfo() {
         assertThrows(NullPointerException.class,
-                () -> new GetCredentialRequest(null, mCredentialOption));
+                () -> new GetCredentialRequest(null, mCredentialOptions));
     }
 
     @Test
-    public void testConstructor_nullCredentialOption() {
+    public void testConstructor_nullCredentialOptionList() {
         assertThrows(NullPointerException.class,
                 () -> new GetCredentialRequest(mCallingAppInfo, null));
     }
@@ -71,23 +76,29 @@ public class GetCredentialRequestTest {
     @Test
     public void testConstructor() {
         final GetCredentialRequest request = new GetCredentialRequest(mCallingAppInfo,
-                mCredentialOption);
+                mCredentialOptions);
         assertThat(request.getCallingAppInfo()).isSameInstanceAs(mCallingAppInfo);
-        assertThat(request.getCredentialOption()).isSameInstanceAs(mCredentialOption);
+        assertThat(request.getCredentialOptions()).isSameInstanceAs(mCredentialOptions);
     }
 
     @Test
     public void testWriteToParcel() {
         final GetCredentialRequest req1 = new GetCredentialRequest(mCallingAppInfo,
-                mCredentialOption);
+                mCredentialOptions);
 
         final GetCredentialRequest req2 = TestUtils.cloneParcelable(req1);
-        TestUtils.assertEquals(req2.getCredentialOption().getCandidateQueryData(),
-                req1.getCredentialOption().getCandidateQueryData());
-        TestUtils.assertEquals(req2.getCredentialOption().getCredentialRetrievalData(),
-                req1.getCredentialOption().getCredentialRetrievalData());
-        assertThat(req2.getCredentialOption().getType()).isEqualTo(
-                req1.getCredentialOption().getType());
+        assertThat(req1.getCredentialOptions().size()).isEqualTo(
+                req2.getCredentialOptions().size());
+        for (int i = 0; i < req1.getCredentialOptions().size(); i++) {
+            CredentialOption req1Option = req1.getCredentialOptions().get(i);
+            CredentialOption req2Option = req1.getCredentialOptions().get(i);
+            TestUtils.assertEquals(req2Option.getCandidateQueryData(),
+                    req1Option.getCandidateQueryData());
+            TestUtils.assertEquals(req2Option.getCredentialRetrievalData(),
+                    req1Option.getCredentialRetrievalData());
+            assertThat(req2Option.getType()).isEqualTo(
+                    req1Option.getType());
+        }
 
         final SigningInfo signing1 = req1.getCallingAppInfo().getSigningInfo();
         final SigningInfo signing2 = req2.getCallingAppInfo().getSigningInfo();

@@ -30,6 +30,7 @@ import android.service.credentials.Action;
 import android.service.credentials.CallingAppInfo;
 import android.service.credentials.CreateEntry;
 import android.service.credentials.CredentialEntry;
+import android.service.credentials.RemoteEntry;
 
 import java.util.Random;
 
@@ -59,6 +60,10 @@ public class TestUtils {
     }
 
     public static void assertEquals(CreateEntry a, CreateEntry b) {
+        assertEquals(a.getSlice(), b.getSlice());
+    }
+
+    public static void assertEquals(RemoteEntry a, RemoteEntry b) {
         assertEquals(a.getSlice(), b.getSlice());
     }
 
