@@ -46,6 +46,7 @@ import android.content.ComponentName;
 import android.content.res.Resources;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivityCallback;
+import android.view.WindowManager;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
@@ -120,19 +121,9 @@ public class MultiWindowTests extends ActivityManagerTestBase {
                 assertActivitySupportedInSplitScreen(NON_RESIZEABLE_ACTIVITY);
                 break;
             case 0:
-                final int configLargeScreenSmallestScreenWidthDp;
-                try {
-                    configLargeScreenSmallestScreenWidthDp =
-                            resources.getInteger(resources.getIdentifier(
-                                    "config_largeScreenSmallestScreenWidthDp",
-                                    "integer", "android"));
-                } catch (Resources.NotFoundException e) {
-                    fail("Device must define config_largeScreenSmallestScreenWidthDp");
-                    return;
-                }
                 final int smallestScreenWidthDp = mWmState.getHomeTask()
                         .mFullConfiguration.smallestScreenWidthDp;
-                if (smallestScreenWidthDp >= configLargeScreenSmallestScreenWidthDp) {
+                if (smallestScreenWidthDp >= WindowManager.LARGE_SCREEN_SMALLEST_SCREEN_WIDTH_DP) {
                     assertActivitySupportedInSplitScreen(NON_RESIZEABLE_ACTIVITY);
                 } else {
                     assertActivityNotSupportedInSplitScreen(NON_RESIZEABLE_ACTIVITY);

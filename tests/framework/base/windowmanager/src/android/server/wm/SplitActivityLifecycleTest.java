@@ -47,6 +47,7 @@ import android.os.IBinder;
 import android.os.SystemProperties;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.TaskFragment;
+import android.view.WindowManager;
 import android.window.TaskFragmentCreationParams;
 import android.window.TaskFragmentInfo;
 import android.window.WindowContainerToken;
@@ -597,7 +598,8 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
         assumeTrue(SystemProperties.getBoolean("persist.wm.extensions.enabled", false));
 
         // Skip the test if this is not a large screen device
-        assumeTrue(getDisplayConfiguration().smallestScreenWidthDp >= 600);
+        assumeTrue(getDisplayConfiguration().smallestScreenWidthDp
+                >= WindowManager.LARGE_SCREEN_SMALLEST_SCREEN_WIDTH_DP);
 
         // Rotate the device to landscape
         final RotationSession rotationSession = createManagedRotationSession();
