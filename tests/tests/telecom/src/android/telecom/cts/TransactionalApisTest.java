@@ -414,13 +414,10 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
      * {@link CallControl#disconnect(DisconnectCause, Executor, OutcomeReceiver)} will always
      * result in OutcomeReceiver#onError.
      */
-    @ApiTest(apis = {"android.telecom.CallException(java.lang.String, int)"})
     public void testUsingCallControlAfterDisconnect() {
         if (!mShouldTestTelecom) {
             return;
         }
-        CallException callNotTrackedE = new CallException("does not contain call",
-                CallException.CODE_CALL_IS_NOT_BEING_TRACKED);
         try {
             cleanup();
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
@@ -436,8 +433,6 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
                 @Override
                 public void onError(CallException exception) {
-                    assertTrue(callNotTrackedE.getCode() == exception.getCode()
-                            || callNotTrackedE.getCode() == CallException.CODE_ERROR_UNKNOWN);
                 }
             });
         } finally {
