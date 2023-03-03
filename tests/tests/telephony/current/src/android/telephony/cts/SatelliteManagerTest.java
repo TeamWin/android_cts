@@ -62,7 +62,7 @@ public class SatelliteManagerTest {
     }
 
     @Test
-    public void testSatellitePositionUpdates() {
+    public void testSatellitePositionUpdates() throws Exception {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
         SatellitePositionUpdateCallbackTest callback = new SatellitePositionUpdateCallbackTest();
 
@@ -70,6 +70,22 @@ public class SatelliteManagerTest {
         assertThrows(SecurityException.class,
                 () -> mSatelliteManager.startSatellitePositionUpdates(
                         getContext().getMainExecutor(), error::offer, callback));
+
+        grantSatellitePermission();
+        int errorCode;
+        mSatelliteManager.startSatellitePositionUpdates(
+                getContext().getMainExecutor(), error::offer, callback);
+        errorCode = error.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+        if (errorCode == SatelliteManager.SATELLITE_ERROR_NONE) {
+            Log.d(TAG, "Successfully started position updates.");
+        } else {
+            Log.d(TAG, "Failed to start position updates: " + errorCode);
+        }
+        mSatelliteManager.stopSatellitePositionUpdates(
+                callback, getContext().getMainExecutor(), error::offer);
+        errorCode = error.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+        Log.d(TAG, "Stop position updates: " + errorCode);
+        revokeSatellitePermission();
     }
 
     @Test
@@ -354,6 +370,11 @@ public class SatelliteManagerTest {
     private void grantSatellitePermission() {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.SATELLITE_COMMUNICATION);
+    }
+
+    private void revokeSatellitePermission() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
     }
 
     private static class SatellitePositionUpdateCallbackTest extends
