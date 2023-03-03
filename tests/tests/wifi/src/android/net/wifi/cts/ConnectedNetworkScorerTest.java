@@ -556,6 +556,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
 
         @Override
         public void onStart(int sessionId) {
+            super.onStart(sessionId);
             synchronized (mCountDownLatch) {
                 this.startSessionId = sessionId;
                 mCountDownLatch.countDown();
@@ -571,6 +572,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
 
         @Override
         public void onStart(WifiConnectedSessionInfo sessionInfo) {
+            super.onStart(sessionInfo);
             synchronized (mCountDownLatch) {
                 this.startSessionId = sessionInfo.getSessionId();
                 this.isUserSelected = sessionInfo.isUserSelected();

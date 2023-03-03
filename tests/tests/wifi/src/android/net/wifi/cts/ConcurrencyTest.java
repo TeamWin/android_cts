@@ -36,6 +36,7 @@ import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pGroup;
@@ -1181,5 +1182,16 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mWifiP2pManager.getListenState(mWifiP2pChannel, mExecutor, testListenStateListener);
         assertTrue(waitForServiceResponse(mMyResponse));
         assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STOPPED, mMyResponse.listenState);
+    }
+
+    public void testWpsInfo() {
+        WpsInfo info = new WpsInfo();
+        assertEquals(WpsInfo.INVALID, info.setup);
+        assertNull(info.BSSID);
+        assertNull(info.pin);
+        WpsInfo infoCopy = new WpsInfo(info);
+        assertEquals(WpsInfo.INVALID, infoCopy.setup);
+        assertNull(infoCopy.BSSID);
+        assertNull(infoCopy.pin);
     }
 }
