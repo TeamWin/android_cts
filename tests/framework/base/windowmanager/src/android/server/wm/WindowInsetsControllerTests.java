@@ -449,6 +449,11 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     public void testSystemUiVisibilityCallbackCausedByAppearance() {
         final TestActivity activity = startActivity(TestActivity.class);
         final View controlTarget = activity.getWindow().getDecorView();
+
+        // Assume we have at least one visible system bar.
+        assumeTrue(controlTarget.getRootWindowInsets().isVisible(statusBars()) ||
+                controlTarget.getRootWindowInsets().isVisible(navigationBars()));
+
         final int[] targetSysUiVis = new int[1];
         getInstrumentation().runOnMainSync(() -> {
             controlTarget.setOnSystemUiVisibilityChangeListener(
