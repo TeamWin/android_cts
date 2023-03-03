@@ -71,6 +71,7 @@ import android.graphics.Rect;
 import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.util.SparseArray;
@@ -120,6 +121,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * gives access to a suite of helpful utils for testing service-like behavior.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 @Presubmit
 public class AccessibilityDisplayProxyTest {
     private static final int TIMEOUT_MS = 5000;
