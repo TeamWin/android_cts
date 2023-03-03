@@ -33,6 +33,7 @@ import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
 import android.app.job.JobParameters;
+import android.app.job.JobScheduler;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -218,6 +219,9 @@ class TestAppInterface implements AutoCloseable {
                         }
                         jobState.running = ACTION_JOB_STARTED.equals(intent.getAction());
                         jobState.params = params;
+                        // With these broadcasts, the job is/was running, and therefore scheduling
+                        // was successful.
+                        jobState.scheduleResult = JobScheduler.RESULT_SUCCESS;
                         if (intent.getBooleanExtra(EXTRA_REQUEST_JOB_UID_STATE, false)) {
                             jobState.procState = intent.getIntExtra(JOB_PROC_STATE_KEY,
                                     ActivityManager.PROCESS_STATE_NONEXISTENT);
