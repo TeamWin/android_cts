@@ -29,6 +29,7 @@ import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.os.PowerManager;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -91,6 +92,8 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
     private WifiManager mWifiManager;
     private boolean mWasVerboseLoggingEnabled;
     private boolean mWasScanThrottleEnabled;
+    private PowerManager mPower;
+    private PowerManager.WakeLock mLock;
 
     @Before
     public void setUp() throws Exception {
@@ -129,6 +132,8 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
                 "Wifi not connected",
                 WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
+        mPower = mContext.getSystemService(PowerManager.class);
+        mLock = mPower.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
     }
 
     @After
@@ -142,6 +147,9 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
                 () -> mWifiManager.setScanThrottleEnabled(mWasScanThrottleEnabled));
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
+        if (mLock.isHeld()) {
+            mLock.release();
+        }
     }
 
     private void setWifiEnabled(boolean enable) throws Exception {
@@ -150,6 +158,7 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
     }
 
     private void turnScreenOn() throws Exception {
+        if (mLock.isHeld()) mLock.release();
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
                 "input keyevent KEYCODE_WAKEUP");
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(""
@@ -159,6 +168,7 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
     }
 
     private void turnScreenOff() throws Exception {
+        if (!mLock.isHeld()) mLock.acquire();
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
                 "input keyevent KEYCODE_SLEEP");
         // Since the screen on/off intent is ordered, they will not be sent right now.
