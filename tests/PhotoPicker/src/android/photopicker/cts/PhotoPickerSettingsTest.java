@@ -36,8 +36,6 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-
 /**
  * Photo Picker tests for settings page launched from the overflow menu in PhotoPickerActivity or
  * the Settings app.
@@ -47,37 +45,22 @@ import java.io.IOException;
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
-    private static final String NAMESPACE_STORAGE_NATIVE_BOOT = "storage_native_boot";
-    private static final String ALLOWED_CLOUD_PROVIDERS_KEY = "allowed_cloud_providers";
-
     private static String sPreviouslyAllowedCloudProviders;
 
     @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
+    public static void setUpBeforeClass() {
         // Store current allowed cloud providers for reset at the end of tests.
-        sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
+        sPreviouslyAllowedCloudProviders = PhotoPickerCloudUtils.getAllowedProvidersDeviceConfig();
 
         // Enable Settings menu item in PhotoPickerActivity's overflow menu.
-        sDevice.executeShellCommand(
-                String.format("device_config put %s %s not_empty", NAMESPACE_STORAGE_NATIVE_BOOT,
-                        ALLOWED_CLOUD_PROVIDERS_KEY));
-        Assume.assumeTrue(!getAllowedProvidersDeviceConfig().isBlank());
+        PhotoPickerCloudUtils.setAllowedProvidersDeviceConfig(
+                /* allowedCloudProviders */ "not_empty");
     }
 
     @AfterClass
-    public static void tearDownClass() throws Exception {
+    public static void tearDownClass() {
         // Reset allowed cloud providers device config.
-        if (sPreviouslyAllowedCloudProviders == null
-                || sPreviouslyAllowedCloudProviders.isBlank()) {
-            // Delete the device config since `device_config put` does not support empty values.
-            sDevice.executeShellCommand(
-                    String.format("device_config delete %s %s", NAMESPACE_STORAGE_NATIVE_BOOT,
-                            ALLOWED_CLOUD_PROVIDERS_KEY));
-        } else {
-            sDevice.executeShellCommand(
-                    String.format("device_config put %s %s %s", NAMESPACE_STORAGE_NATIVE_BOOT,
-                            ALLOWED_CLOUD_PROVIDERS_KEY, sPreviouslyAllowedCloudProviders));
-        }
+        PhotoPickerCloudUtils.setAllowedProvidersDeviceConfig(sPreviouslyAllowedCloudProviders);
     }
 
     @Test
@@ -93,16 +76,10 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
         PhotoPickerUiUtils.clickAndWait(sDevice, settingsMenuItem);
 
         // Verify PhotoPickerSettingsActivity is launched and visible.
-        verifySettingsActivityIsVisible(sDevice);
+        verifySettingsActivityIsVisible();
         verifySettingsActionBarIsVisible();
         verifySettingsTitleIsVisible();
         verifySettingsDescriptionIsVisible();
         verifySettingsFragmentContainerExists();
-    }
-
-    private static String getAllowedProvidersDeviceConfig() throws IOException {
-        return sDevice.executeShellCommand(
-                String.format("device_config get %s %s", NAMESPACE_STORAGE_NATIVE_BOOT,
-                        ALLOWED_CLOUD_PROVIDERS_KEY));
     }
 }
