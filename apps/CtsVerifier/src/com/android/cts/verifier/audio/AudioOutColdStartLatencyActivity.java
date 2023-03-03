@@ -16,21 +16,17 @@
 
 package com.android.cts.verifier.audio;
 
-import com.android.cts.verifier.audio.audiolib.SettingsUtils;
-
 import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
 import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
 
 import android.media.AudioTimestamp;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.TextView;
 
 import com.android.compatibility.common.util.CddTest;
-
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.audiolib.AudioSystemParams;
+import com.android.cts.verifier.audio.audiolib.SettingsUtils;
 
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
 import org.hyphonate.megaaudio.player.Player;
@@ -170,7 +166,6 @@ public class AudioOutColdStartLatencyActivity
         audioSystemParams.init(this);
 
         mSampleRate = audioSystemParams.getSystemSampleRate();
-        // mNumBufferFrames = audioSystemParams.getSystemBufferFrames();
         mNumBufferFrames = audioSystemParams.getSystemBurstFrames();
 
         AudioSourceProvider sourceProvider = new SilenceAudioSourceProvider();

@@ -21,11 +21,8 @@ import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.TextView;
 
 import com.android.compatibility.common.util.CddTest;
-
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.audiolib.AudioSystemParams;
 
@@ -33,7 +30,6 @@ import org.hyphonate.megaaudio.recorder.AudioSinkProvider;
 import org.hyphonate.megaaudio.recorder.Recorder;
 import org.hyphonate.megaaudio.recorder.RecorderBuilder;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallback;
-import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSink;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
 
 /**
@@ -51,10 +47,7 @@ public class AudioInColdStartLatencyActivity
     // MegaAudio
     private Recorder mRecorder;
 
-//    private TextView mCallbackDeltaTxt;
-
     private long mPreviousCallbackTime;
-    private long mCallbackDeltaTime;
 
     private long mNominalCallbackDelta;
     private long mCallbackThresholdTime;
@@ -65,8 +58,6 @@ public class AudioInColdStartLatencyActivity
     protected void onCreate(Bundle savedInstanceState) {
         setContentView(R.layout.audio_coldstart_in_activity);
         super.onCreate(savedInstanceState);
-
-//        mCallbackDeltaTxt = (TextView) findViewById(R.id.coldstart_inCallbackDeltaTxt);
 
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
@@ -120,6 +111,7 @@ public class AudioInColdStartLatencyActivity
         mSampleRate = audioSystemParams.getSystemSampleRate();
         mNumBufferFrames = audioSystemParams.getSystemBurstFrames();
 
+        mPreviousCallbackTime = 0;
         mAccumulatedTime = 0;
         mNumCallbacks = 0;
 
@@ -194,12 +186,12 @@ public class AudioInColdStartLatencyActivity
                 // showAttributes();
                 mPreviousCallbackTime = time;
             } else {
-                mCallbackDeltaTime = time - mPreviousCallbackTime;
+                long callbackDeltaTime = time - mPreviousCallbackTime;
 
                 mPreviousCallbackTime = time;
-                mAccumulatedTime += mCallbackDeltaTime;
+                mAccumulatedTime += callbackDeltaTime;
 
-                if (mCallbackDeltaTime < mCallbackThresholdTime) {
+                if (callbackDeltaTime < mCallbackThresholdTime) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
