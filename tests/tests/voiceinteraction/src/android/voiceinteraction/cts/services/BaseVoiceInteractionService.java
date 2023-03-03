@@ -302,6 +302,8 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
      * Returns if createAlwaysOnHotwordDetector throws IllegalStateException.
      */
     public boolean isCreateDetectorIllegalStateExceptionThrow() {
+        Log.d(mTag, "isCreateDetectorIllegalStateExceptionThrow = "
+                + mIsCreateDetectorIllegalStateExceptionThrow);
         return mIsCreateDetectorIllegalStateExceptionThrow;
     }
 
@@ -309,6 +311,8 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
      * Returns if createAlwaysOnHotwordDetector throws SecurityException.
      */
     public boolean isCreateDetectorSecurityExceptionThrow() {
+        Log.d(mTag, "isCreateDetectorSecurityExceptionThrow = "
+                + mIsCreateDetectorSecurityExceptionThrow);
         return mIsCreateDetectorSecurityExceptionThrow;
     }
 
@@ -316,6 +320,8 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
      * Returns if the callback of the detector is running on main thread
      */
     public boolean isDetectorCallbackRunningOnMainThread() {
+        Log.d(mTag, "isDetectorCallbackRunningOnMainThread = "
+                + mIsDetectorCallbackRunningOnMainThread);
         return mIsDetectorCallbackRunningOnMainThread;
     }
 
@@ -419,6 +425,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
      * Return the result for onHotwordDetectionServiceInitialized().
      */
     public int getSandboxedDetectionServiceInitializedResult() {
+        Log.d(mTag, "getSandboxedDetectionServiceInitializedResult = " + mInitializedStatus);
         return mInitializedStatus;
     }
 
@@ -440,14 +447,14 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                     locale,
                     callback);
         } catch (IllegalStateException | SecurityException e) {
-            Log.w(mTag, "callCreateAlwaysOnHotwordDetector() exception: " + e);
-            if (mServiceTriggerLatch != null) {
-                mServiceTriggerLatch.countDown();
-            }
             if (e instanceof IllegalStateException) {
                 mIsCreateDetectorIllegalStateExceptionThrow = true;
             } else {
                 mIsCreateDetectorSecurityExceptionThrow = true;
+            }
+            Log.w(mTag, "callCreateAlwaysOnHotwordDetector() exception: " + e);
+            if (mServiceTriggerLatch != null) {
+                mServiceTriggerLatch.countDown();
             }
         }
         return null;
@@ -478,14 +485,14 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                     Helper.createFakeSharedMemoryData(),
                     callback);
         } catch (IllegalStateException | SecurityException e) {
-            Log.w(mTag, "callCreateAlwaysOnHotwordDetector() exception: " + e);
-            if (mServiceTriggerLatch != null) {
-                mServiceTriggerLatch.countDown();
-            }
             if (e instanceof IllegalStateException) {
                 mIsCreateDetectorIllegalStateExceptionThrow = true;
             } else {
                 mIsCreateDetectorSecurityExceptionThrow = true;
+            }
+            Log.w(mTag, "callCreateAlwaysOnHotwordDetector() exception: " + e);
+            if (mServiceTriggerLatch != null) {
+                mServiceTriggerLatch.countDown();
             }
         }
         return null;
@@ -504,12 +511,12 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
             return createHotwordDetector(Helper.createFakePersistableBundleData(),
                     Helper.createFakeSharedMemoryData(), callback);
         } catch (Exception e) {
+            if (e instanceof IllegalStateException) {
+                mIsCreateDetectorIllegalStateExceptionThrow = true;
+            }
             Log.w(mTag, "callCreateSoftwareHotwordDetector() exception: " + e);
             if (mServiceTriggerLatch != null) {
                 mServiceTriggerLatch.countDown();
-            }
-            if (e instanceof IllegalStateException) {
-                mIsCreateDetectorIllegalStateExceptionThrow = true;
             }
         }
         return null;
@@ -523,14 +530,14 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                     Helper.createFakeSharedMemoryData(), Executors.newSingleThreadExecutor(),
                     callback);
         } catch (IllegalStateException | SecurityException e) {
-            Log.w(mTag, "callCreateVisualQueryDetector() exception: " + e);
-            if (mServiceTriggerLatch != null) {
-                mServiceTriggerLatch.countDown();
-            }
             if (e instanceof IllegalStateException) {
                 mIsCreateDetectorIllegalStateExceptionThrow = true;
             } else {
                 mIsCreateDetectorSecurityExceptionThrow = true;
+            }
+            Log.w(mTag, "callCreateVisualQueryDetector() exception: " + e);
+            if (mServiceTriggerLatch != null) {
+                mServiceTriggerLatch.countDown();
             }
         }
         return null;
