@@ -19,6 +19,7 @@ package android.virtualdevice.cts;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
+import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_RECENTS;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static android.media.AudioManager.AUDIO_SESSION_ID_GENERATE;
@@ -26,7 +27,6 @@ import static android.media.AudioManager.AUDIO_SESSION_ID_GENERATE;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -45,7 +45,6 @@ import android.virtualdevice.cts.util.TestAppHelper;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.android.compatibility.common.util.ApiTest;
 import com.android.internal.os.BackgroundThread;
 
 import org.junit.Before;
@@ -83,6 +82,7 @@ public class VirtualDeviceParamsTest {
                 .setUsersWithMatchingAccounts(Set.of(UserHandle.of(123), UserHandle.of(456)))
                 .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
                 .setDevicePolicy(POLICY_TYPE_AUDIO, DEVICE_POLICY_CUSTOM)
+                .setDevicePolicy(POLICY_TYPE_RECENTS, DEVICE_POLICY_CUSTOM)
                 .setAudioPlaybackSessionId(PLAYBACK_SESSION_ID)
                 .setAudioRecordingSessionId(RECORDING_SESSION_ID)
                 .addVirtualSensorConfig(
@@ -102,6 +102,7 @@ public class VirtualDeviceParamsTest {
                 .containsExactly(UserHandle.of(123), UserHandle.of(456));
         assertThat(params.getDevicePolicy(POLICY_TYPE_SENSORS)).isEqualTo(DEVICE_POLICY_CUSTOM);
         assertThat(params.getDevicePolicy(POLICY_TYPE_AUDIO)).isEqualTo(DEVICE_POLICY_CUSTOM);
+        assertThat(params.getDevicePolicy(POLICY_TYPE_RECENTS)).isEqualTo(DEVICE_POLICY_CUSTOM);
         assertThat(params.getAudioPlaybackSessionId()).isEqualTo(PLAYBACK_SESSION_ID);
         assertThat(params.getAudioRecordingSessionId()).isEqualTo(RECORDING_SESSION_ID);
         assertThat(params.getVirtualSensorCallback()).isNotNull();
@@ -253,6 +254,7 @@ public class VirtualDeviceParamsTest {
 
         assertThat(params.getDevicePolicy(POLICY_TYPE_SENSORS)).isEqualTo(DEVICE_POLICY_DEFAULT);
         assertThat(params.getDevicePolicy(POLICY_TYPE_AUDIO)).isEqualTo(DEVICE_POLICY_DEFAULT);
+        assertThat(params.getDevicePolicy(POLICY_TYPE_RECENTS)).isEqualTo(DEVICE_POLICY_DEFAULT);
     }
 
     @Test
@@ -261,10 +263,31 @@ public class VirtualDeviceParamsTest {
                 .setName(VIRTUAL_DEVICE_NAME)
                 .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
                 .setDevicePolicy(POLICY_TYPE_AUDIO, DEVICE_POLICY_CUSTOM)
+                .setDevicePolicy(POLICY_TYPE_RECENTS, DEVICE_POLICY_CUSTOM)
                 .build();
 
         assertThat(params.getDevicePolicy(POLICY_TYPE_SENSORS)).isEqualTo(DEVICE_POLICY_CUSTOM);
         assertThat(params.getDevicePolicy(POLICY_TYPE_AUDIO)).isEqualTo(DEVICE_POLICY_CUSTOM);
+        assertThat(params.getDevicePolicy(POLICY_TYPE_RECENTS)).isEqualTo(DEVICE_POLICY_CUSTOM);
+    }
+
+    @Test
+    public void setDevicePolcy_overwritePreviousValue_shouldReturnValueFromLastCall() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setName(VIRTUAL_DEVICE_NAME)
+                .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                .setDevicePolicy(POLICY_TYPE_AUDIO, DEVICE_POLICY_CUSTOM)
+                .setDevicePolicy(POLICY_TYPE_RECENTS, DEVICE_POLICY_CUSTOM)
+
+                .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_DEFAULT)
+                .setDevicePolicy(POLICY_TYPE_AUDIO, DEVICE_POLICY_DEFAULT)
+                .setDevicePolicy(POLICY_TYPE_RECENTS, DEVICE_POLICY_DEFAULT)
+
+                .build();
+
+        assertThat(params.getDevicePolicy(POLICY_TYPE_SENSORS)).isEqualTo(DEVICE_POLICY_DEFAULT);
+        assertThat(params.getDevicePolicy(POLICY_TYPE_AUDIO)).isEqualTo(DEVICE_POLICY_DEFAULT);
+        assertThat(params.getDevicePolicy(POLICY_TYPE_RECENTS)).isEqualTo(DEVICE_POLICY_DEFAULT);
     }
 
     @Test
@@ -406,29 +429,6 @@ public class VirtualDeviceParamsTest {
 
         assertThrows(IllegalArgumentException.class, () -> new VirtualDeviceParams.Builder()
                 .setAudioRecordingSessionId(recordingSessionId).build());
-    }
-
-
-
-    @ApiTest(apis = {"android.companion.virtual.VirtualDeviceParams#setDefaultRecentsPolicy",
-            "android.companion.virtual.VirtualDeviceParams#getDefaultRecentsPolicy"})
-    public void getRecentsPolicy_setAllowInHostDeviceRecents_shouldReturnConfiguredValue() {
-        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
-                .setDefaultRecentsPolicy(
-                        VirtualDeviceParams.RECENTS_POLICY_ALLOW_IN_HOST_DEVICE_RECENTS)
-                .build();
-
-        assertThat(params.getDefaultRecentsPolicy()).isEqualTo(
-                VirtualDeviceParams.RECENTS_POLICY_ALLOW_IN_HOST_DEVICE_RECENTS);
-    }
-
-    @Test
-    @ApiTest(apis = {"android.companion.virtual.VirtualDeviceParams#getRecentsPolicy"})
-    public void getRecentsPolicy_doesNotSetAllowInHostRecents_shouldNotIncludeFlag() {
-        VirtualDeviceParams params = new VirtualDeviceParams.Builder().build();
-
-        assertTrue((params.getDefaultRecentsPolicy()
-                & VirtualDeviceParams.RECENTS_POLICY_ALLOW_IN_HOST_DEVICE_RECENTS) == 0);
     }
 }
 
