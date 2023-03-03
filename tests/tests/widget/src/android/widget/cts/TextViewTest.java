@@ -7479,25 +7479,25 @@ public class TextViewTest {
                 actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_LONG_CLICK));
     }
 
-    @ApiTest(apis = {"android.view.View#setAccessibilityDataPrivate",
-            "android.view.accessibility.AccessibilityEvent#setAccessibilityDataPrivate"})
+    @ApiTest(apis = {"android.view.View#setAccessibilityDataSensitive",
+            "android.view.accessibility.AccessibilityEvent#setAccessibilityDataSensitive"})
     @UiThreadTest
     @Test
-    public void testOnPopulateA11yEvent_checksAccessibilityDataPrivateBeforePopulating() {
+    public void testOnPopulateA11yEvent_checksAccessibilityDataSensitiveBeforePopulating() {
         mTextView = findTextView(R.id.textview_text);
-        mTextView.setAccessibilityDataPrivate(View.ACCESSIBILITY_DATA_PRIVATE_YES);
+        mTextView.setAccessibilityDataSensitive(View.ACCESSIBILITY_DATA_SENSITIVE_YES);
 
-        final AccessibilityEvent eventAdp = new AccessibilityEvent();
-        eventAdp.setAccessibilityDataPrivate(true);
-        mTextView.onPopulateAccessibilityEventInternal(eventAdp);
-        assertFalse("event should have populated text when ADP is true on both event & view",
-                eventAdp.getText().isEmpty());
+        final AccessibilityEvent eventAds = new AccessibilityEvent();
+        eventAds.setAccessibilityDataSensitive(true);
+        mTextView.onPopulateAccessibilityEventInternal(eventAds);
+        assertFalse("event should have populated text when ADS is true on both event & view",
+                eventAds.getText().isEmpty());
 
-        final AccessibilityEvent eventNotAdp = new AccessibilityEvent();
-        eventNotAdp.setAccessibilityDataPrivate(false);
-        mTextView.onPopulateAccessibilityEventInternal(eventNotAdp);
-        assertTrue("event should not populate text when view ADP=true but event ADP=false",
-                eventNotAdp.getText().isEmpty());
+        final AccessibilityEvent eventNotAds = new AccessibilityEvent();
+        eventNotAds.setAccessibilityDataSensitive(false);
+        mTextView.onPopulateAccessibilityEventInternal(eventNotAds);
+        assertTrue("event should not populate text when view ADS=true but event ADS=false",
+                eventNotAds.getText().isEmpty());
     }
 
     @Test

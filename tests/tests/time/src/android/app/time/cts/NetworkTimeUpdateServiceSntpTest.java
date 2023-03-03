@@ -20,7 +20,6 @@ import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
 import static android.app.time.cts.shell.DeviceConfigKeys.TimeDetector.KEY_TIME_DETECTOR_LOWER_BOUND_MILLIS_OVERRIDE;
 import static android.app.time.cts.shell.DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -235,7 +234,7 @@ public class NetworkTimeUpdateServiceSntpTest {
 
     /** Asserts the latest network time held by the time detector is as expected. */
     private void assertTimeDetectorLatestNetworkTimeInBounds(
-            long expectedUnixEpochMillis, long beforeRefreshElapsedMillis,
+            long serverUnixEpochMillis, long beforeRefreshElapsedMillis,
             long afterRefreshElapsedMillis) throws Exception {
         TestNetworkTime networkTime = mTimeDetectorShellHelper.getNetworkTime();
 
@@ -243,7 +242,10 @@ public class NetworkTimeUpdateServiceSntpTest {
         // That shouldn't happen because the lower bound is overridden by this test.
         assertNotNull("Expected network time but it is null", networkTime);
 
-        assertEquals(expectedUnixEpochMillis, networkTime.unixEpochTime.unixEpochTimeMillis);
+        assertInRange("Unix epoch tine",
+                networkTime.unixEpochTime.unixEpochTimeMillis,
+                serverUnixEpochMillis - networkTime.uncertaintyMillis,
+                serverUnixEpochMillis + networkTime.uncertaintyMillis);
         assertInRange("Latest network time elapsed realtime",
                 networkTime.unixEpochTime.elapsedRealtimeMillis,
                 beforeRefreshElapsedMillis, afterRefreshElapsedMillis);

@@ -89,7 +89,7 @@ public class UserInitiatedJobTest {
             assertTrue("Job did not start after scheduling",
                     mTestAppInterface.awaitJobStart(2 * DEFAULT_WAIT_TIMEOUT_MS));
             mTestAppInterface.assertJobUidState(ActivityManager.PROCESS_STATE_IMPORTANT_FOREGROUND,
-                    ActivityManager.PROCESS_CAPABILITY_NETWORK,
+                    ActivityManager.PROCESS_CAPABILITY_POWER_RESTRICTED_NETWORK,
                     201 /* ProcessList.PERCEPTIBLE_APP_ADJ + 1 */);
         }
     }

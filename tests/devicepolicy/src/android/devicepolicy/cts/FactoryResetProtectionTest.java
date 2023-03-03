@@ -21,10 +21,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.app.admin.FactoryResetProtectionPolicy;
+import android.service.persistentdata.PersistentDataBlockManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireSystemServiceAvailable;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.policies.FactoryResetProtection;
@@ -37,6 +39,7 @@ import org.junit.runner.RunWith;
 import java.util.List;
 
 @RunWith(BedsteadJUnit4.class)
+@RequireSystemServiceAvailable(PersistentDataBlockManager.class)
 public final class FactoryResetProtectionTest {
 
     @ClassRule @Rule

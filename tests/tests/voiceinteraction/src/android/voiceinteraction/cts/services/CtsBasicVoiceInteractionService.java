@@ -449,6 +449,9 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         return mStreamedQueries;
     }
 
+    /**
+     * Wait for onHotwordDetectionServiceRestarted() callback called.
+     */
     public void waitOnHotwordDetectionServiceRestartedCalled() throws InterruptedException {
         Log.d(TAG, "waitOnHotwordDetectionServiceRestartedCalled(), latch="
                 + mOnHotwordDetectionServiceRestartedLatch);

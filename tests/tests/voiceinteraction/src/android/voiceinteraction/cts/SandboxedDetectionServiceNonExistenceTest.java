@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
+import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.CtsMainVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
@@ -59,7 +60,7 @@ public final class SandboxedDetectionServiceNonExistenceTest {
         // VoiceInteractionServiceConnectedRule handles the service connected, we should be able
         // to get service.
         CtsMainVoiceInteractionService service =
-                (CtsMainVoiceInteractionService) CtsMainVoiceInteractionService.getService();
+                (CtsMainVoiceInteractionService) BaseVoiceInteractionService.getService();
         // Check we can get the service, we need service object to call the service provided method
         Objects.requireNonNull(service);
 

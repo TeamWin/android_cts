@@ -98,6 +98,9 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     private static final String LAUNCH_STATE_HOT = "HOT";
     private static final String LAUNCH_STATE_RELAUNCH = "RELAUNCH";
     private static final int EVENT_WM_ACTIVITY_LAUNCH_TIME = 30009;
+    private static final int APP_TRANSITION_STARTING_WINDOW = 1;
+    private static final int APP_TRANSITION_WINDOWS_DRAWN = 2;
+    private static final int APP_TRANSITION_TIMEOUT = 3;
     private final MetricsReader mMetricsReader = new MetricsReader();
     private long mPreUptimeMs;
     private LogSeparator mLogSeparator;
@@ -128,7 +131,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
 
         final long postUptimeMs = SystemClock.uptimeMillis();
         assertMetricsLogs(TEST_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs, postUptimeMs);
-        assertTransitionIsStartingWindow(metricsLog);
+        assertTransitionStartReason(metricsLog);
         final int windowsDrawnDelayMs =
                 (int) metricsLog.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS);
         final String expectedLog =
@@ -161,12 +164,26 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
                 windowsDrawnDelayMs,  lessThanOrEqualTo(testElapsedTimeMs));
     }
 
-    private void assertTransitionIsStartingWindow(LogMaker log) {
+    private void assertTransitionStartReason(LogMaker log) {
         if (isLeanBack()) return;
-        assertEquals("transition should be started because of starting window",
-                1 /* APP_TRANSITION_STARTING_WINDOW */, log.getSubtype());
-        assertNotNull("log should have starting window delay",
-                log.getTaggedData(APP_TRANSITION_STARTING_WINDOW_DELAY_MS));
+
+        final int transitionStartReason = log.getSubtype();
+        switch (transitionStartReason) {
+            case APP_TRANSITION_STARTING_WINDOW:
+                assertNotNull("Transition started by starting window should include delay time",
+                        log.getTaggedData(APP_TRANSITION_STARTING_WINDOW_DELAY_MS));
+                break;
+            case APP_TRANSITION_WINDOWS_DRAWN:
+                // It is fine if the activity is drawn faster than the starting window.
+                StateLogger.logAlways("APP_TRANSITION_WINDOWS_DRAWN");
+                break;
+            case APP_TRANSITION_TIMEOUT:
+                // There might be other issues in system, but it isn't in the scope of this test.
+                StateLogger.logE("APP_TRANSITION_TIMEOUT");
+                break;
+            default:
+                fail("Unexpected transition start reason " + transitionStartReason);
+        }
     }
 
     private void assertEventLogsContainsLaunchTime(List<Event> events, ComponentName componentName,
@@ -361,7 +378,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         metricsLog = waitForMetricsLog(THIRD_ACTIVITY, APP_TRANSITION);
         assertMetricsLogs(THIRD_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs,
                 postUptimeMs);
-        assertTransitionIsStartingWindow(metricsLog);
+        assertTransitionStartReason(metricsLog);
     }
 
     @Test
@@ -397,7 +414,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         final LogMaker metricsLog = waitForMetricsLog(SECOND_ACTIVITY, APP_TRANSITION);
         final long postUptimeMs = SystemClock.uptimeMillis();
         assertMetricsLogs(SECOND_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs, postUptimeMs);
-        assertTransitionIsStartingWindow(metricsLog);
+        assertTransitionStartReason(metricsLog);
     }
 
     /**

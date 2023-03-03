@@ -638,14 +638,15 @@ class Test:
             command += " -e COEXISTENCE false"
 
         if len(self.class_methods) > 0:
-            if any(s.endswith("*") for s in self.class_methods):
+            if any("*" in s for s in self.class_methods):
                 if len(self.class_methods) > 1:
                     print("Error. If you use a wildcard target, you can only specify one target")
                     sys.exit(1)
-                class_method = self.class_methods[0]
-                # We need to escape 3 times to get through the various interpreters
-                # Using regex adds 5 seconds or so to running a single test so has to be opt-in
-                command += " -e tests_regex " + re.escape(re.escape(re.escape(class_method[:-1]))) + ".*"
+                for class_method in self.class_methods:
+                    # class_method = self.class_methods[0]
+                    # We need to escape 3 times to get through the various interpreters
+                    # Using regex adds 5 seconds or so to running a single test so has to be opt-in
+                    command += " -e tests_regex " + ".*".join([re.escape(re.escape(re.escape(s))) for s in class_method.split("*")])
             else:
                 command += " -e class " + ",".join(self.class_methods)
 

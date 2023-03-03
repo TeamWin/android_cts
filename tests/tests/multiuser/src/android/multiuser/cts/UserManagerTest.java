@@ -18,6 +18,7 @@ package android.multiuser.cts;
 
 import static android.Manifest.permission.CREATE_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.QUERY_USERS;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.multiuser.cts.TestingUtils.getBooleanProperty;
@@ -36,7 +37,9 @@ import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
@@ -133,6 +136,57 @@ public final class UserManagerTest {
     @Test
     public void testUserGoat_api30() {
         assertWithMessage("isUserAGoat()").that(mUserManager.isUserAGoat()).isFalse();
+    }
+
+    /**
+     * Verify that isAdminUser() can be called without any permissions and returns true for the
+     * initial user which is an admin user.
+     */
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isAdminUser"})
+    @RequireRunOnInitialUser
+    public void testIsAdminUserOnInitialUser_noPermission() {
+        assertTrue(mUserManager.isAdminUser());
+    }
+
+    /**
+     * Verify that isAdminUser() throws SecurityException when called for a different user context
+     * without any permission.
+     */
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isAdminUser"})
+    @EnsureHasAdditionalUser(installInstrumentedApp = TRUE)
+    public void testIsAdminUserForOtherUserContextFailsWithoutPermission() {
+        UserReference additionalUser = sDeviceState.additionalUser();
+        additionalUser.switchTo();
+        Context userContext;
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            userContext = getContextForUser(additionalUser.id());
+        }
+
+        UserManager um = userContext.getSystemService(UserManager.class);
+        assertThrows(SecurityException.class, () -> um.isAdminUser());
+    }
+
+    /**
+     * Verify that isAdminUser() works fine when called for a different user context
+     * with required permission.
+     */
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isAdminUser"})
+    @EnsureHasAdditionalUser(installInstrumentedApp = TRUE)
+    @EnsureHasPermission(CREATE_USERS)
+    public void testIsAdminUserForOtherUserContextWithPermission() {
+        UserReference additionalUser = sDeviceState.additionalUser();
+        Context userContext;
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            userContext = getContextForUser(additionalUser.id());
+        }
+
+        UserManager um = userContext.getSystemService(UserManager.class);
+        assertFalse(um.isAdminUser());
     }
 
     @Test

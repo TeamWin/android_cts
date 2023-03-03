@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,42 +16,20 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LATE;
-import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_DEVICE_ADMIN;
-
-import com.android.bedstead.harrier.UserType;
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.FIRST;
+import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_WATCH;
 
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Mark that a test requires a given user restriction be set.
- *
- * <p>You should use {@code DeviceState} to ensure that the device enters
- * the correct state for the method.
- *
- * <p>Note that when relying on {@code DeviceState} to enforce this policy, it will make use of a
- * Profile Owner. This should not be used in states where no profile owner is wanted on the
- * user the restriction is required on.
- */
-// TODO(264844667): Enforce no use of @EnsureHasNoProfileOwner
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(EnsureHasUserRestrictionGroup.class)
-// This is only required because the user restrictions are applied by a Device Admin.
-@RequireFeature(FEATURE_DEVICE_ADMIN)
-public @interface EnsureHasUserRestriction {
+@RequireDoesNotHaveFeature(FEATURE_WATCH)
+public @interface RequireNotWatch {
 
-    int ENSURE_HAS_USER_RESTRICTION_WEIGHT = LATE;
-
-    /** The restriction to be set. */
-    String value();
-
-    /** The user the restriction should be set on. */
-    UserType onUser() default UserType.INSTRUMENTED_USER;
+    String reason();
 
     /**
      * Weight sets the order that annotations will be resolved.
@@ -63,5 +41,5 @@ public @interface EnsureHasUserRestriction {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default ENSURE_HAS_USER_RESTRICTION_WEIGHT;
+    int weight() default FIRST;
 }

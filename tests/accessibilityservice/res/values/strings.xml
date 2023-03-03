@@ -36,9 +36,9 @@
 
     <string name="button_tooltip">Never press this button</string>
 
-    <!-- String descriptions and title of the views used to test accessibilityDataPrivate -->
+    <!-- String descriptions and title of the views used to test accessibilityDataSensitive -->
     <string name="container_desc">Outer container View</string>
-    <string name="adp_desc">AccessibilityDataPrivate View</string>
+    <string name="ads_desc">AccessibilityDataSensitive View</string>
     <string name="inner_container_desc">Inner container View</string>
     <string name="inner_desc">Inner Button</string>
     <string name="inner_title">Inner Click</string>
