@@ -42,6 +42,7 @@
             <meta-data android:name="distractionOptimized" android:value="false"/>
         </activity>
         <activity android:name=".CarDisplayInputLockTest$TestActivity" />
+        <activity android:name=".CarInputTest$TestActivity" />
         <activity android:name="android.car.app.cts.CarActivityManagerTest$TestActivity"
             android:allowEmbedded="true" />
 
