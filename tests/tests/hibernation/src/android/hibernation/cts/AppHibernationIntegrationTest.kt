@@ -339,15 +339,18 @@ class AppHibernationIntegrationTest {
 
             // Settings can have multiple scrollable containers so all of them should be
             // searched.
-            var toggleFound = UiAutomatorUtils.waitFindObjectOrNull(By.text(title))
+            var toggleFound = UiAutomatorUtils.waitFindObjectOrNull(By.text(title)) != null
             var i = 0
             var scrollableObject = UiScrollable(UiSelector().scrollable(true).instance(i))
-            while (toggleFound == null && scrollableObject.waitForExists(WAIT_TIME_MS)) {
-                toggleFound = UiAutomatorUtils.waitFindObjectOrNull(By.text(title))
+            while (!toggleFound && scrollableObject.waitForExists(WAIT_TIME_MS)) {
+                // The following line should work for both handhold and car Settings.
+                toggleFound =
+                    scrollableObject.scrollTextIntoView(title) ||
+                        UiAutomatorUtils.waitFindObjectOrNull(By.text(title)) != null
                 scrollableObject = UiScrollable(UiSelector().scrollable(true).instance(++i))
             }
 
-            assertNotNull("Remove permissions and free up space toggle not found", toggleFound)
+            assertTrue("Remove permissions and free up space toggle not found", toggleFound)
         }
     }
 
