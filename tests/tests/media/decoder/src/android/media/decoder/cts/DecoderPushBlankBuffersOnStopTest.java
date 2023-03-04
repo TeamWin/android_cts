@@ -248,6 +248,8 @@ public class DecoderPushBlankBuffersOnStopTest {
             Assert.assertFalse("Frame is blank before stop.", isUniformlyBlank(
                             captureBeforeStop.getBitmap()));
             decoder.stop();
+            // Allow one second after stop() for blank frame to be pushed.
+            Thread.sleep(1000);
             final ScreenCapture captureAfterStop = Screenshot.capture();
             Assert.assertTrue("Frame is not blank after stop.", isUniformlyBlank(
                             captureAfterStop.getBitmap()));
