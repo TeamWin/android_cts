@@ -18,14 +18,14 @@ package android.voiceinteraction.cts.unittests;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.service.voice.SandboxedDetectionServiceBase;
+import android.service.voice.SandboxedDetectionInitializer;
 
 import org.junit.Test;
 
 public class SandboxedDetectionServiceDefaultTest {
 
     @Test
-    public void testSandboxedDetectionServiceBase_getMaxCustomInitializationStatus() {
-        assertThat(SandboxedDetectionServiceBase.getMaxCustomInitializationStatus()).isEqualTo(2);
+    public void testSandboxedDetectionInitializer_getMaxCustomInitializationStatus() {
+        assertThat(SandboxedDetectionInitializer.getMaxCustomInitializationStatus()).isEqualTo(2);
     }
 }

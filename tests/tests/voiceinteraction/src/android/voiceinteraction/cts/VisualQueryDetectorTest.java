@@ -29,7 +29,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.Context;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.service.voice.SandboxedDetectionServiceBase;
+import android.service.voice.SandboxedDetectionInitializer;
 import android.service.voice.VisualQueryDetector;
 import android.util.Log;
 import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
@@ -100,7 +100,7 @@ public class VisualQueryDetectorTest {
         Objects.requireNonNull(visualQueryDetector);
 
         assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
-                SandboxedDetectionServiceBase.INITIALIZATION_STATUS_SUCCESS);
+                SandboxedDetectionInitializer.INITIALIZATION_STATUS_SUCCESS);
 
 
         runWithShellPermissionIdentity(() -> {

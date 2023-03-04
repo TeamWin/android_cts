@@ -31,7 +31,7 @@ import android.service.voice.DetectorFailure;
 import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
-import android.service.voice.SandboxedDetectionServiceBase;
+import android.service.voice.SandboxedDetectionInitializer;
 import android.service.voice.VisualQueryDetector;
 import android.service.voice.VoiceInteractionService;
 import android.util.Log;
@@ -555,7 +555,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 @Override
                 public void onVisualQueryDetectionServiceInitialized(int status) {
                     Log.i(TAG, "onVisualQueryDetectionServiceInitialized status = " + status);
-                    if (status != SandboxedDetectionServiceBase.INITIALIZATION_STATUS_SUCCESS) {
+                    if (status != SandboxedDetectionInitializer.INITIALIZATION_STATUS_SUCCESS) {
                         return;
                     }
                     mInitializedStatus = status;
