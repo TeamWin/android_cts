@@ -89,12 +89,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val OTHER_APP_PACKAGE_NAME = "android.permission3.cts.usepermissionother"
         const val TEST_INSTALLER_PACKAGE_NAME = "android.permission3.cts"
 
-        const val ALLOW_ALL_PHOTOS_BUTTON =
-            "com.android.permissioncontroller:id/permission_allow_all_photos_button"
-        const val SELECT_PHOTOS_BUTTON =
-            "com.android.permissioncontroller:id/permission_allow_selected_photos_button"
-        const val SELECT_MORE_PHOTOS_BUTTON =
-            "com.android.permissioncontroller:id/permission_allow_more_selected_photos_button"
+        const val ALLOW_ALL_BUTTON =
+            "com.android.permissioncontroller:id/permission_allow_all_button"
+        const val SELECT_BUTTON =
+            "com.android.permissioncontroller:id/permission_allow_selected_button"
+        const val SELECT_MORE_BUTTON =
+            "com.android.permissioncontroller:id/permission_allow_more_selected_button"
         const val ALLOW_BUTTON =
                 "com.android.permissioncontroller:id/permission_allow_button"
         const val ALLOW_FOREGROUND_BUTTON =
@@ -544,7 +544,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clickPermissionRequestAllowAllPhotosButton(timeoutMillis: Long = 20000) {
-        click(By.res(ALLOW_ALL_PHOTOS_BUTTON), timeoutMillis)
+        click(By.res(ALLOW_ALL_BUTTON), timeoutMillis)
     }
 
     /**
