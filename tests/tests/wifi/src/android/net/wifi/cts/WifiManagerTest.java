@@ -3172,6 +3172,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 verifySetGetSoftApConfig(softApConfigBuilder.build());
             }
 
+            assertThat(callback.getCurrentSoftApCapability().getMaxSupportedClients())
+                    .isGreaterThan(0);
             // Test CLIENT_FORCE_DISCONNECT supported config.
             if (callback.getCurrentSoftApCapability()
                     .areFeaturesSupported(

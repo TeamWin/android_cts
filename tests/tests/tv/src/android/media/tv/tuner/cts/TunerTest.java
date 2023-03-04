@@ -3341,8 +3341,8 @@ public class TunerTest {
                     IptvFrontendCapabilities iptvCaps = (IptvFrontendCapabilities) caps;
                     int protocol = getFirstCapable(iptvCaps.getProtocolCapability());
                     IptvFrontendSettings settings =
-                            IptvFrontendSettings
-                                    .builder()
+                            new IptvFrontendSettings
+                                    .Builder()
                                     .setProtocol(protocol)
                                     .build();
                     return settings;

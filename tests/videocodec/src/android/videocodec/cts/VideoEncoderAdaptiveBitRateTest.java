@@ -98,7 +98,7 @@ public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestB
     private static void addParams(int width, int height, int[] segmentBitRates,
             CompressedResource res) {
         final String[] mediaTypes = new String[]{MediaFormat.MIMETYPE_VIDEO_AVC,
-                MediaFormat.MIMETYPE_VIDEO_HEVC};
+                MediaFormat.MIMETYPE_VIDEO_HEVC, MediaFormat.MIMETYPE_VIDEO_AV1};
         final int[] bitRateModes = new int[]{BITRATE_MODE_CBR, BITRATE_MODE_VBR};
         for (String mediaType : mediaTypes) {
             for (int bitRateMode : bitRateModes) {

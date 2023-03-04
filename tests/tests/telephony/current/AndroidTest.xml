@@ -62,5 +62,7 @@
         <option name="run-command" value="pm disable com.android.dialer/com.android.voicemail.impl.OmtpService" />
         <option name="teardown-command" value="pm enable com.android.dialer/com.android.voicemail.impl.StatusCheckJobService" />
         <option name="teardown-command" value="pm enable com.android.dialer/com.android.voicemail.impl.OmtpService" />
+        <option name="run-command" value="setprop persist.radio.allow_mock_modem true" />
+        <option name="teardown-command" value="setprop persist.radio.allow_mock_modem false" />
     </target_preparer>
 </configuration>

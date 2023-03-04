@@ -1243,8 +1243,8 @@ public abstract class ActivityManagerTestBase {
                     .getDisplay(DEFAULT_DISPLAY);
             final Context windowContext = appContext.createWindowContext(defaultDisplay,
                     TYPE_APPLICATION_OVERLAY, null /* options */);
-            sIsTablet = windowContext.getResources()
-                    .getConfiguration().smallestScreenWidthDp >= 600;
+            sIsTablet = windowContext.getResources().getConfiguration().smallestScreenWidthDp
+                    >= WindowManager.LARGE_SCREEN_SMALLEST_SCREEN_WIDTH_DP;
         }
         return sIsTablet;
     }

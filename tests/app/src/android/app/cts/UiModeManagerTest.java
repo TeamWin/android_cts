@@ -40,6 +40,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
+import android.os.UserManager;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.util.ArraySet;
@@ -48,7 +49,6 @@ import android.util.Log;
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.compatibility.common.util.SettingsUtils;
-import com.android.compatibility.common.util.UserUtils;
 
 import com.google.common.util.concurrent.MoreExecutors;
 
@@ -921,7 +921,7 @@ public class UiModeManagerTest extends AndroidTestCase {
 
     private String getUiNightModeFromSetting() {
         String key = "ui_night_mode";
-        return UserUtils.isHeadlessSystemUserMode()
+        return UserManager.isHeadlessSystemUserMode()
                 ? SettingsUtils.getSecureSettingAsUser(UserHandle.USER_SYSTEM, key)
                 : SettingsUtils.getSecureSetting(key);
     }

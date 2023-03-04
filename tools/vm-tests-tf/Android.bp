@@ -182,10 +182,8 @@ java_genrule_host {
 java_test_host {
     name: "vm-tests-tf",
     static_libs: [
-        "vm-tests-tf-lib"
-    ],
-    libs: [
         "compatibility-host-vm-targetprep",
+        "vm-tests-tf-lib",
     ],
     test_config: "AndroidTest.xml",
     test_suites: [

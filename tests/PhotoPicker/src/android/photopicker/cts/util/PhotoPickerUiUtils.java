@@ -157,7 +157,7 @@ public class PhotoPickerUiUtils {
                 .isTrue();
     }
 
-    public static void verifySettingsActivityIsVisible(UiDevice uiDevice) {
+    public static void verifySettingsActivityIsVisible() {
         // id/settings_activity_root is the root layout in activity_photo_picker_settings.xml
         assertWithMessage("Timed out waiting for settings activity to appear")
                 .that(new UiObject(new UiSelector()
@@ -169,5 +169,24 @@ public class PhotoPickerUiUtils {
     public static void clickAndWait(UiDevice uiDevice, UiObject uiObject) throws Exception {
         uiObject.click();
         uiDevice.waitForIdle();
+    }
+
+    public static String getBannerPrimaryText() throws Exception {
+        final UiObject bannerPrimaryText = new UiObject(new UiSelector().resourceIdMatches(
+                REGEX_PACKAGE_NAME + ":id/banner_primary_text"));
+        assertWithMessage("Timed out waiting for the banner to appear")
+                .that(bannerPrimaryText.waitForExists(TIMEOUT))
+                .isTrue();
+        return bannerPrimaryText.getText();
+    }
+
+    public static UiObject findBannerDismissButton() {
+        return new UiObject(new UiSelector().resourceIdMatches(
+                REGEX_PACKAGE_NAME + ":id/dismiss_button"));
+    }
+
+    public static UiObject findBannerActionButton() {
+        return new UiObject(new UiSelector().resourceIdMatches(
+                REGEX_PACKAGE_NAME + ":id/action_button"));
     }
 }
