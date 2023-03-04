@@ -33,13 +33,18 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class MimeTypeMapTest {
+public class MimeTypeMapTest extends SharedWebViewTest{
 
     private MimeTypeMap mMimeTypeMap;
 
     @Before
     public void setUp() throws Exception {
         mMimeTypeMap = MimeTypeMap.getSingleton();
+    }
+
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        return new SharedWebViewTestEnvironment.Builder().build();
     }
 
     @Test
