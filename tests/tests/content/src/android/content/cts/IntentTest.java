@@ -20,10 +20,14 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertArrayEquals;
 
+import android.app.PendingIntent;
+import android.content.ClipData;
+import android.content.ClipDescription;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.cts.util.XmlUtils;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -1378,14 +1382,57 @@ public class IntentTest extends AndroidTestCase {
     public void testCreateChooser() {
         Intent target = Intent.createChooser(mIntent, null);
         assertEquals(Intent.ACTION_CHOOSER, target.getAction());
-        Intent returnIntent = (Intent) target.getParcelableExtra(Intent.EXTRA_INTENT);
+        Intent returnIntent = target.getParcelableExtra(Intent.EXTRA_INTENT);
         assertEquals(mIntent.toString(), returnIntent.toString());
         assertEquals(mIntent.toURI(), returnIntent.toURI());
         assertNull(returnIntent.getStringExtra(Intent.EXTRA_INTENT));
+
         final String title = "title String";
         target = Intent.createChooser(mIntent, title);
         assertEquals(title, target.getStringExtra(Intent.EXTRA_TITLE));
         assertNotNull(target.resolveActivity(mPm));
+
+        IntentSender sender = PendingIntent.getActivity(
+                mContext, 0, mIntent, PendingIntent.FLAG_IMMUTABLE).getIntentSender();
+        target = Intent.createChooser(mIntent, null, sender);
+        assertEquals(sender, target.getParcelableExtra(
+                Intent.EXTRA_CHOSEN_COMPONENT_INTENT_SENDER, IntentSender.class));
+
+        // Asser that setting the data URI *without* a permission granting flag *doesn't* copy
+        // anything to ClipData.
+        Uri data = Uri.parse("some://uri");
+        mIntent.setData(data);
+        target = Intent.createChooser(mIntent, null);
+        assertNull(target.getClipData());
+
+        // Now add the flag and verify that ClipData is written.
+        mIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        target = Intent.createChooser(mIntent, null);
+        ClipData clipData = target.getClipData();
+        assertEquals(1, clipData.getItemCount());
+        assertEquals(data, clipData.getItemAt(0).getUri());
+        assertEquals(0, clipData.getDescription().getMimeTypeCount());
+        // Ensure flag is propagated.
+        assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                target.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        // Add a MIME type, check for it in the ClipData
+        final String mimeType = "image/png";
+        mIntent.setDataAndType(data, mimeType);
+        target = Intent.createChooser(mIntent, null);
+        clipData = target.getClipData();
+        assertEquals(1, clipData.getDescription().getMimeTypeCount());
+        assertEquals(mimeType, clipData.getDescription().getMimeType(0));
+
+        // Ensure that ClipData that is already set is overwritten.
+        Uri anotherUri = Uri.parse("another://uri");
+        ClipData anotherClipData = new ClipData(
+                new ClipDescription("desc", new String[0]), new ClipData.Item(anotherUri));
+        mIntent.setClipData(anotherClipData);
+        target = Intent.createChooser(mIntent, null);
+        clipData = target.getClipData();
+        assertEquals(1, clipData.getItemCount());
+        assertEquals(anotherUri, clipData.getItemAt(0).getUri());
     }
 
     public void testGetFloatArrayExtra() {
