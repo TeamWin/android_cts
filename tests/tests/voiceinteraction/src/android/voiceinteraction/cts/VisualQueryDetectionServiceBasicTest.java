@@ -19,7 +19,7 @@ package android.voiceinteraction.cts;
 
 import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.RECORD_AUDIO;
-import static android.service.voice.SandboxedDetectionServiceBase.INITIALIZATION_STATUS_SUCCESS;
+import static android.service.voice.SandboxedDetectionInitializer.INITIALIZATION_STATUS_SUCCESS;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
