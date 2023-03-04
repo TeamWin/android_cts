@@ -38,8 +38,7 @@ import org.junit.runner.RunWith;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class ServiceWorkerWebSettingsTest {
-
+public class ServiceWorkerWebSettingsTest extends SharedWebViewTest {
     private ServiceWorkerWebSettings mSettings;
     private WebViewOnUiThread mOnUiThread;
 
@@ -49,14 +48,10 @@ public class ServiceWorkerWebSettingsTest {
 
     @Before
     public void setUp() throws Exception {
-        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-        mActivityScenarioRule.getScenario().onActivity(activity -> {
-            WebViewCtsActivity webViewCtsActivity = (WebViewCtsActivity) activity;
-            WebView webview = webViewCtsActivity.getWebView();
-            if (webview != null) {
-                mOnUiThread = new WebViewOnUiThread(webview);
-            }
-        });
+        WebView webview = getTestEnvironment().getWebView();
+        if (webview != null) {
+            mOnUiThread = new WebViewOnUiThread(webview);
+        }
         mSettings = ServiceWorkerController.getInstance().getServiceWorkerWebSettings();
     }
 
@@ -65,6 +60,27 @@ public class ServiceWorkerWebSettingsTest {
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
+    }
+
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+
+        SharedWebViewTestEnvironment.Builder builder = new SharedWebViewTestEnvironment.Builder();
+
+        mActivityScenarioRule
+                .getScenario()
+                .onActivity(
+                        activity -> {
+                            WebView webView = ((WebViewCtsActivity) activity).getWebView();
+                            builder.setHostAppInvoker(
+                                            SharedWebViewTestEnvironment.createHostAppInvoker(
+                                                    activity))
+                                    .setContext(activity)
+                                    .setWebView(webView);
+                        });
+
+        return builder.build();
     }
 
     /**
