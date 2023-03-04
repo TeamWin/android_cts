@@ -16,8 +16,9 @@
 
 package android.net.wifi.nl80211.cts;
 
-import static com.google.common.truth.Truth.assertThat;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
@@ -34,10 +35,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-/** CTS tests for {@link WifiKeystore}. */
+/**
+ * CTS tests for {@link WifiKeystore}.
+ *
+ * Note: API calls are expected to fail due to SELinux restrictions on ILegacyKeystore.
+ */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class WifiKeyStoreTest {
+    private static final String TEST_ALIAS = "some_alias";
+    private static final String TEST_PREFIX = "prefix_";
+    private static final byte[] TEST_DATA = new byte[]{1, 2, 3, 4, 7};
 
     private Context mContext;
 
@@ -51,6 +59,24 @@ public class WifiKeyStoreTest {
     @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     public void testGet() {
-        assertThat(WifiKeystore.get("some_alias")).isNull();
+        assertNull(WifiKeystore.get(TEST_ALIAS));
+    }
+
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    public void testPut() {
+        assertFalse(WifiKeystore.put(TEST_ALIAS, TEST_DATA));
+    }
+
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    public void testRemove() {
+        assertFalse(WifiKeystore.remove(TEST_ALIAS));
+    }
+
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    public void testList() {
+        assertEquals(0, WifiKeystore.list(TEST_PREFIX).length);
     }
 }
