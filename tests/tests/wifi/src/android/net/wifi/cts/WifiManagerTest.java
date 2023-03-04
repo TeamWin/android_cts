@@ -6608,4 +6608,39 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         // Drop the permission.
         uiAutomation.dropShellPermissionIdentity();
     }
+
+    /**
+     * Tests {@link WifiManager#isThirdPartyAppEnablingWifiConfirmationDialogEnabled()}
+     * and {@link WifiManager#setThirdPartyAppEnablingWifiConfirmationDialogEnabled(boolean)}
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    public void testGetAndSetThirdPartyAppEnablingWifiConfirmationDialogEnabled() {
+        // Expect a SecurityException without the required permissions.
+        assertThrows(SecurityException.class,
+                () -> mWifiManager.isThirdPartyAppEnablingWifiConfirmationDialogEnabled());
+        assertThrows(SecurityException.class,
+                () -> mWifiManager.setThirdPartyAppEnablingWifiConfirmationDialogEnabled(true));
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+
+            // Store a new value.
+            boolean defaultVal =
+                    mWifiManager.isThirdPartyAppEnablingWifiConfirmationDialogEnabled();
+            boolean newVal = !defaultVal;
+            mWifiManager.setThirdPartyAppEnablingWifiConfirmationDialogEnabled(newVal);
+            assertEquals(newVal,
+                    mWifiManager.isThirdPartyAppEnablingWifiConfirmationDialogEnabled());
+
+            // Restore the original value.
+            mWifiManager.setThirdPartyAppEnablingWifiConfirmationDialogEnabled(defaultVal);
+            assertEquals(defaultVal,
+                    mWifiManager.isThirdPartyAppEnablingWifiConfirmationDialogEnabled());
+        } catch (Exception e) {
+            fail("Unexpected exception " + e);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
 }
