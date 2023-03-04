@@ -129,6 +129,15 @@ public class WifiP2pConfigTest extends AndroidTestCase {
                 GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL);
     }
 
+    public void testWifiP2pConfigBuilderWithJoinExistingGroupSet() {
+        WifiP2pConfig config = new WifiP2pConfig.Builder()
+                .setDeviceAddress(MacAddress.fromString(TEST_DEVICE_ADDRESS))
+                .setJoinExistingGroup(true)
+                .build();
+        assertEquals(config.deviceAddress, TEST_DEVICE_ADDRESS);
+        assertTrue(config.isJoinExistingGroup());
+    }
+
     private static void assertWifiP2pConfigHasFields(WifiP2pConfig config,
             String networkName, String passphrase, int groupOwnerFrequency, String deviceAddress,
             int networkId, int groupClientIpProvisioningMode) {
@@ -138,5 +147,6 @@ public class WifiP2pConfigTest extends AndroidTestCase {
         assertEquals(config.deviceAddress, deviceAddress);
         assertEquals(config.getNetworkId(), networkId);
         assertEquals(config.getGroupClientIpProvisioningMode(), groupClientIpProvisioningMode);
+        assertFalse(config.isJoinExistingGroup());
     }
 }
