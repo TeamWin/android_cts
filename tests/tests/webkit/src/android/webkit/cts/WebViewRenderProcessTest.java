@@ -48,7 +48,7 @@ import java.util.concurrent.Future;
 @AppModeFull
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class WebViewRenderProcessTest {
+public class WebViewRenderProcessTest extends SharedWebViewTest {
     private WebViewOnUiThread mOnUiThread;
 
     @Rule
@@ -57,14 +57,10 @@ public class WebViewRenderProcessTest {
 
     @Before
     public void setUp() throws Exception {
-        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-        mActivityScenarioRule.getScenario().onActivity(activity -> {
-            WebViewCtsActivity webViewCtsActivity = (WebViewCtsActivity) activity;
-            WebView webview = webViewCtsActivity.getWebView();
-            if (webview != null) {
-                mOnUiThread = new WebViewOnUiThread(webview);
-            }
-        });
+        WebView webview = getTestEnvironment().getWebView();
+        if (webview != null) {
+            mOnUiThread = new WebViewOnUiThread(webview);
+        }
     }
 
     @After
@@ -72,6 +68,26 @@ public class WebViewRenderProcessTest {
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
+    }
+
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+
+        SharedWebViewTestEnvironment.Builder builder = new SharedWebViewTestEnvironment.Builder();
+
+        mActivityScenarioRule
+                .getScenario()
+                .onActivity(
+                        activity -> {
+                            WebView webView = ((WebViewCtsActivity) activity).getWebView();
+                            builder.setHostAppInvoker(
+                                    SharedWebViewTestEnvironment.createHostAppInvoker(
+                                            activity))
+                                    .setWebView(webView);
+                        });
+
+        return builder.build();
     }
 
     private boolean terminateRenderProcessOnUiThread(
