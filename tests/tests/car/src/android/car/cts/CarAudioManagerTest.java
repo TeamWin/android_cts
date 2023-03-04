@@ -357,6 +357,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @ApiTest(apis = {"android.car.media.CarAudioManager"
             + "#getAudioAttributesForVolumeGroup(CarVolumeGroupInfo)"})
     public void getAudioAttributesForVolumeGroup_withoutPermission() {
+        assumeDynamicRoutingIsEnabled();
         CarVolumeGroupInfo info;
 
         UI_AUTOMATION.adoptShellPermissionIdentity(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME);
