@@ -17,11 +17,14 @@
 package android.input.cts
 
 import android.view.InputDevice.SOURCE_STYLUS
+import android.view.InputDevice.SOURCE_TOUCHSCREEN
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
+import android.view.MotionEvent.ACTION_UP
 import android.view.MotionEvent.PointerCoords
 import android.view.MotionEvent.PointerProperties
+import android.view.MotionEvent.TOOL_TYPE_FINGER
 import android.view.MotionEvent.TOOL_TYPE_STYLUS
 import android.view.MotionPredictor
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -29,18 +32,45 @@ import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import java.time.Duration
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.fail
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
-private val DEVICE_ID = 0
+private val STYLUS_DEVICE_ID = 0
+private val TOUCH_DEVICE_ID = 1
 
 private fun getStylusMotionEvent(
         eventTime: Duration,
         action: Int,
         x: Float,
         y: Float,
+        ): MotionEvent{
+    return getMotionEvent(
+            eventTime, action, STYLUS_DEVICE_ID, x, y, SOURCE_STYLUS, TOOL_TYPE_STYLUS)
+}
+
+private fun getTouchMotionEvent(
+        eventTime: Duration,
+        action: Int,
+        x: Float,
+        y: Float,
+        ): MotionEvent{
+    return getMotionEvent(
+            eventTime, action, TOUCH_DEVICE_ID, x, y, SOURCE_TOUCHSCREEN, TOOL_TYPE_FINGER)
+}
+
+private fun getMotionEvent(
+        eventTime: Duration,
+        action: Int,
+        deviceId: Int,
+        x: Float,
+        y: Float,
+        source: Int,
+        toolType: Int,
         ): MotionEvent{
     val pointerCount = 1
     val properties = arrayOfNulls<MotionEvent.PointerProperties>(pointerCount)
@@ -49,7 +79,7 @@ private fun getStylusMotionEvent(
     for (i in 0 until pointerCount) {
         properties[i] = PointerProperties()
         properties[i]!!.id = i
-        properties[i]!!.toolType = TOOL_TYPE_STYLUS
+        properties[i]!!.toolType = toolType
         coords[i] = PointerCoords()
         coords[i]!!.x = x
         coords[i]!!.y = y
@@ -57,8 +87,8 @@ private fun getStylusMotionEvent(
 
     return MotionEvent.obtain(/*downTime=*/0, eventTime.toMillis(), action, properties.size,
                 properties, coords, /*metaState=*/0, /*buttonState=*/0,
-                /*xPrecision=*/0f, /*yPrecision=*/0f, DEVICE_ID, /*edgeFlags=*/0,
-                SOURCE_STYLUS, /*flags=*/0)
+                /*xPrecision=*/0f, /*yPrecision=*/0f, deviceId, /*edgeFlags=*/0,
+                source, /*flags=*/0)
 }
 
 /**
@@ -72,7 +102,7 @@ class MotionPredictorTest {
     @Test
     fun testFeatureDisabled() {
         val predictor = MotionPredictor(context)
-        assumeFalse(predictor.isPredictionAvailable(DEVICE_ID, SOURCE_STYLUS))
+        assumeFalse(predictor.isPredictionAvailable(STYLUS_DEVICE_ID, SOURCE_STYLUS))
         // Now that we know prediction is off, feed some events and ensure prediction doesn't work
 
         var eventTime = Duration.ofMillis(0)
@@ -83,8 +113,7 @@ class MotionPredictorTest {
         predictor.record(getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/11f, /*y=*/24f))
 
         // Check that predictions aren't generated
-        val predicted = predictor.predict(Duration.ofMillis(10).toNanos())
-        assertEquals(0, predicted.size)
+        assertNull(predictor.predict(Duration.ofMillis(10).toNanos()))
     }
 
     /**
@@ -93,7 +122,7 @@ class MotionPredictorTest {
     @Test
     fun testNoMotion() {
         val predictor = MotionPredictor(context)
-        assumeTrue(predictor.isPredictionAvailable(DEVICE_ID, SOURCE_STYLUS))
+        assumeTrue(predictor.isPredictionAvailable(STYLUS_DEVICE_ID, SOURCE_STYLUS))
 
         // One-time: send a DOWN event
         var eventTime = Duration.ofMillis(0) // t= 0 ms
@@ -110,11 +139,10 @@ class MotionPredictorTest {
         val predicted = predictor.predict(Duration.ofMillis(24).toNanos())
         // There should either be no predictions (indicating no movement), or a prediction at the
         // same location.
-        if (predicted.size > 0) {
-            assertEquals(1, predicted.size)
-            assertEquals(10f, predicted[0].getX(), /*delta=*/1f)
-            assertEquals(20f, predicted[0].getY(), /*delta=*/2f)
-            assertEquals(DEVICE_ID, predicted[0].deviceId)
+        if (predicted != null) {
+            assertEquals(10f, predicted.getX(), /*delta=*/1f)
+            assertEquals(20f, predicted.getY(), /*delta=*/2f)
+            assertEquals(STYLUS_DEVICE_ID, predicted.deviceId)
         }
     }
 
@@ -124,7 +152,7 @@ class MotionPredictorTest {
     @Test
     fun testLinearMotion() {
         val predictor = MotionPredictor(context)
-        assumeTrue(predictor.isPredictionAvailable(DEVICE_ID, SOURCE_STYLUS))
+        assumeTrue(predictor.isPredictionAvailable(STYLUS_DEVICE_ID, SOURCE_STYLUS))
 
         // One-time: send a DOWN event
         var eventTime = Duration.ofMillis(0) // t= 0 ms
@@ -139,15 +167,53 @@ class MotionPredictorTest {
         predictor.record(getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/10f, /*y=*/30f))
 
         val predicted = predictor.predict(Duration.ofMillis(24).toNanos())
-        assertEquals(1, predicted.size)
+        assertNotNull(predicted)
 
         // Calculate the expected location based on the timestamp of the prediction.
         val yMovement = 10 / 8f // px per ms
         // The last event was at t=16, y=30.
-        val expectedY = 30 + ((predicted[0].getEventTime() - 16) * yMovement)
+        val expectedY = 30 + ((predicted!!.getEventTime() - 16) * yMovement)
 
-        assertEquals(10f, predicted[0].getX(), /*delta=*/5f)
-        assertEquals(expectedY, predicted[0].getY(), /*delta=*/15f)
-        assertEquals(DEVICE_ID, predicted[0].deviceId)
+        assertEquals(10f, predicted.getX(), /*delta=*/5f)
+        assertEquals(expectedY, predicted.getY(), /*delta=*/15f)
+        assertEquals(STYLUS_DEVICE_ID, predicted.deviceId)
+    }
+
+    /**
+     * If an inconsistent MotionEvent stream is provided, an IllegalArgumentException should be
+     * thrown.
+     */
+    @Test
+    fun testInconsistentEventStream() {
+        val predictor = MotionPredictor(context)
+        assumeTrue(predictor.isPredictionAvailable(STYLUS_DEVICE_ID, SOURCE_STYLUS))
+
+        // Send some events from the stylus device
+        var eventTime = Duration.ofMillis(0) // t= 0 ms
+        predictor.record(getStylusMotionEvent(eventTime, ACTION_DOWN, /*x=*/10f, /*y=*/20f))
+
+        // Send a few coordinates
+        eventTime += Duration.ofMillis(8) // t= 8 ms
+        // Send MOVE event and then call .predict
+        predictor.record(getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/10f, /*y=*/21f))
+
+        // Now send an event from touch device without first ending the stylus gesture. The
+        // new event should be rejected with an exception
+        try {
+            eventTime += Duration.ofMillis(8) // t= 16 ms
+            predictor.record(getTouchMotionEvent(eventTime, ACTION_DOWN, /*x=*/20f, /*y=*/30f))
+            fail("Expected an IllegalArgumentException due to an inconsistent event stream")
+        } catch (e: IllegalArgumentException) {
+            // This is expected!
+        }
+
+        // Complete the stylus gesture
+        eventTime += Duration.ofMillis(8) // t= 24 ms
+        predictor.record(getStylusMotionEvent(eventTime, ACTION_UP, /*x=*/10f, /*y=*/21f))
+
+        // Now that there's no active gesture, the subsequent events from another device
+        // should not throw.
+        eventTime += Duration.ofMillis(8) // t= 32 ms
+        predictor.record(getTouchMotionEvent(eventTime, ACTION_DOWN, /*x=*/20f, /*y=*/30f))
     }
 }

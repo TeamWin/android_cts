@@ -259,7 +259,7 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {"android.car.CarOccupantZoneManager"
-            + "#assignVisibleUserToOccupantZone(OccupantZoneInfo, UserHandle, int)"})
+            + "#assignVisibleUserToOccupantZone(OccupantZoneInfo, UserHandle)"})
     public void testReassigningAlreadyAssignedZone() {
         mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_MANAGE_OCCUPANT_ZONE);
 
@@ -267,7 +267,7 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
             int userId = mCarOccupantZoneManager.getUserForOccupant(info);
             if (userId != CarOccupantZoneManager.INVALID_USER_ID) {
                 int result = mCarOccupantZoneManager.assignVisibleUserToOccupantZone(info,
-                        UserHandle.of(userId), 0);
+                        UserHandle.of(userId));
                 assertWithMessage(
                         "Re-assigning the same user to zoneId:%s", info.zoneId).that(
                         result).isEqualTo(CarOccupantZoneManager.USER_ASSIGNMENT_RESULT_OK);
@@ -301,16 +301,16 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {"android.car.CarOccupantZoneManager"
-            + "#assignVisibleUserToOccupantZone(OccupantZoneInfo, UserHandle, int)"})
+            + "#assignVisibleUserToOccupantZone(OccupantZoneInfo, UserHandle)"})
     public void testZoneAssignmentWithoutPermission() {
         assertThrows(SecurityException.class, () ->
                 mCarOccupantZoneManager.assignVisibleUserToOccupantZone(mAllZones.get(0),
-                        UserHandle.CURRENT, 0));
+                        UserHandle.CURRENT));
     }
 
     @Test
     @ApiTest(apis = {"android.car.CarOccupantZoneManager"
-            + "#assignVisibleUserToOccupantZone(OccupantZoneInfo, UserHandle, int)"})
+            + "#assignVisibleUserToOccupantZone(OccupantZoneInfo, UserHandle)"})
     public void testAssignInvalidUser() {
         mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_MANAGE_OCCUPANT_ZONE);
 
@@ -319,8 +319,8 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
         UserHandle invalidUser = UserHandle.of(Integer.MAX_VALUE);
         assertWithMessage(
                 "Check USER_ASSIGNMENT_RESULT_FAIL_NON_VISIBLE_USER").that(
-                mCarOccupantZoneManager.assignVisibleUserToOccupantZone(zone, invalidUser,
-                        0)).isEqualTo(
+                mCarOccupantZoneManager.assignVisibleUserToOccupantZone(zone, invalidUser))
+                        .isEqualTo(
                 CarOccupantZoneManager.USER_ASSIGNMENT_RESULT_FAIL_NON_VISIBLE_USER);
     }
 
@@ -359,7 +359,7 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
             }
             assertWithMessage("Reassigning the same valid user should work").that(
                     mCarOccupantZoneManager.assignVisibleUserToOccupantZone(zone,
-                            UserHandle.of(originalUser), 0)).isEqualTo(
+                            UserHandle.of(originalUser))).isEqualTo(
                     CarOccupantZoneManager.USER_ASSIGNMENT_RESULT_OK);
         }
     }

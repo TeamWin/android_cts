@@ -83,6 +83,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -1745,6 +1746,37 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 mLock.wait(WAIT_FOR_AWARE_CHANGE_SECS * 1000);
             }
             assertTrue(enabled.get());
+            attachAndGetSession();
+            AtomicBoolean called = new AtomicBoolean(false);
+            AtomicBoolean canBeCreated = new AtomicBoolean(false);
+            AtomicReference<Set<WifiManager.InterfaceCreationImpact>>
+                    interfacesWhichWillBeDeleted = new AtomicReference<>(null);
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.reportCreateInterfaceImpact(
+                            WifiManager.WIFI_INTERFACE_TYPE_DIRECT, true,
+                            Executors.newSingleThreadScheduledExecutor(),
+                            (canBeCreatedLocal, interfacesWhichWillBeDeletedLocal) -> {
+                                synchronized (mLock) {
+                                    canBeCreated.set(canBeCreatedLocal);
+                                    called.set(true);
+                                    interfacesWhichWillBeDeleted
+                                            .set(interfacesWhichWillBeDeletedLocal);
+                                    mLock.notify();
+                                }
+                            }));
+            synchronized (mLock) {
+                mLock.wait(WAIT_FOR_AWARE_CHANGE_SECS * 1000);
+            }
+            assertTrue(called.get());
+            if (canBeCreated.get()) {
+                for (WifiManager.InterfaceCreationImpact entry
+                        : interfacesWhichWillBeDeleted.get()) {
+                    int interfaceType = entry.getInterfaceType();
+                    assertEquals(WifiManager.WIFI_INTERFACE_TYPE_AWARE, interfaceType);
+                    Set<String> packages = entry.getPackages();
+                    assertTrue(packages.isEmpty());
+                }
+            }
         } finally {
             mWifiAwareManager.setOpportunisticModeEnabled(false);
         }

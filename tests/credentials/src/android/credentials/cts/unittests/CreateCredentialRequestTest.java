@@ -42,8 +42,7 @@ public class CreateCredentialRequestTest {
     @Test
     public void testConstructor_nullType() {
         assertThrows(IllegalArgumentException.class,
-                () -> new CreateCredentialRequest.Builder(Bundle.EMPTY, Bundle.EMPTY)
-                .setType(null)
+                () -> new CreateCredentialRequest.Builder(null, Bundle.EMPTY, Bundle.EMPTY)
                 .setIsSystemProviderRequired(false)
                 .setAlwaysSendAppInfoToProvider(false)
                 .build());
@@ -52,8 +51,8 @@ public class CreateCredentialRequestTest {
     @Test
     public void testConstructor_nullRetrievalData() {
         assertThrows(NullPointerException.class,
-                () -> new CreateCredentialRequest.Builder(Bundle.EMPTY, null)
-                    .setType(Credential.TYPE_PASSWORD_CREDENTIAL)
+                () -> new CreateCredentialRequest.Builder(Credential.TYPE_PASSWORD_CREDENTIAL,
+                        Bundle.EMPTY, null)
                     .setIsSystemProviderRequired(false)
                     .setAlwaysSendAppInfoToProvider(false)
                     .build());
@@ -62,8 +61,9 @@ public class CreateCredentialRequestTest {
     @Test
     public void testConstructor_nullQueryData() {
         assertThrows(NullPointerException.class,
-                () -> new CreateCredentialRequest.Builder(null, Bundle.EMPTY)
-                    .setType(Credential.TYPE_PASSWORD_CREDENTIAL)
+                () -> new CreateCredentialRequest.Builder(Credential.TYPE_PASSWORD_CREDENTIAL,
+                        null,
+                        Bundle.EMPTY)
                     .setIsSystemProviderRequired(false)
                     .setAlwaysSendAppInfoToProvider(false)
                     .build());
@@ -82,8 +82,7 @@ public class CreateCredentialRequestTest {
         final boolean alwaysSendAppInfo = true;
         final String origin = "origin";
 
-        final CreateCredentialRequest req = new CreateCredentialRequest.Builder(data, query)
-                .setType(type)
+        final CreateCredentialRequest req = new CreateCredentialRequest.Builder(type, data, query)
                 .setIsSystemProviderRequired(isSystemProviderRequired)
                 .setAlwaysSendAppInfoToProvider(alwaysSendAppInfo)
                 .setOrigin(origin)
@@ -110,8 +109,7 @@ public class CreateCredentialRequestTest {
         final boolean isSystemProviderRequired = true;
         final boolean alwaysSendAppInfo = true;
 
-        final CreateCredentialRequest req = new CreateCredentialRequest.Builder(data, query)
-                .setType(type)
+        final CreateCredentialRequest req = new CreateCredentialRequest.Builder(type, data, query)
                 .setIsSystemProviderRequired(isSystemProviderRequired)
                 .setAlwaysSendAppInfoToProvider(alwaysSendAppInfo)
                 .build();
@@ -131,9 +129,8 @@ public class CreateCredentialRequestTest {
         final Bundle queryData = new Bundle();
         queryData.putString("baz", "foo");
 
-        final CreateCredentialRequest req1 = new CreateCredentialRequest.Builder(credData,
-                queryData)
-                .setType(Credential.TYPE_PASSWORD_CREDENTIAL)
+        final CreateCredentialRequest req1 = new CreateCredentialRequest.Builder(
+                Credential.TYPE_PASSWORD_CREDENTIAL, credData, queryData)
                 .setIsSystemProviderRequired(true)
                 .setAlwaysSendAppInfoToProvider(true)
                 .build();

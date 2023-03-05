@@ -215,8 +215,8 @@ public class CtsCredentialProviderServiceDeviceTest {
         AtomicReference<CreateCredentialException> loadedResult = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
         Bundle empty = new Bundle();
-        CreateCredentialRequest request = new CreateCredentialRequest.Builder(empty, empty)
-                .setType(PASSWORD_CREDENTIAL_TYPE)
+        CreateCredentialRequest request = new CreateCredentialRequest.Builder(
+                PASSWORD_CREDENTIAL_TYPE, empty, empty)
                 .setIsSystemProviderRequired(false)
                 .setAlwaysSendAppInfoToProvider(true)
                 .build();

@@ -27,6 +27,7 @@ import android.service.credentials.Action;
 import android.service.credentials.BeginGetCredentialOption;
 import android.service.credentials.BeginGetCredentialResponse;
 import android.service.credentials.CredentialEntry;
+import android.service.credentials.RemoteEntry;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -42,9 +43,6 @@ import java.util.List;
 @AppModeFull(reason = "unit test")
 @RunWith(AndroidJUnit4.class)
 public class BeginGetCredentialResponseTest {
-
-    private static final BeginGetCredentialOption sCredOption1 = new BeginGetCredentialOption("id1",
-            "type", Bundle.EMPTY);
     private static final BeginGetCredentialOption sCredOption2 = new BeginGetCredentialOption("id2",
             "type2", Bundle.EMPTY);
 
@@ -54,7 +52,7 @@ public class BeginGetCredentialResponseTest {
     private static final Action sAction = new Action(sSlice);
     private static final Action sAuthAction = new Action(sSlice);
 
-    private static final CredentialEntry sRemoteCred = new CredentialEntry(sCredOption1, sSlice);
+    private static final RemoteEntry sRemoteCred = new RemoteEntry(sSlice);
     private static final CredentialEntry sCred = new CredentialEntry(sCredOption2, sSlice);
 
     @Test

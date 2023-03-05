@@ -375,7 +375,7 @@ public class DisplayEventTest {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClass(mContext, SimpleActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        mContext.startActivity(intent);
+        mInstrumentation.startActivitySync(intent);
 
         // Launch Home to bring the test activity into cached mode
         Intent home = new Intent(Intent.ACTION_MAIN);

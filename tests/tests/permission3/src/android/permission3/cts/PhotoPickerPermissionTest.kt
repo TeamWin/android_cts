@@ -119,7 +119,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
     fun testAppWithUserSelectedPermShowsSelectOption() {
         installPackage(APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE)
         requestAppPermissions(READ_MEDIA_IMAGES) {
-            assertNotNull(waitFindObjectOrNull(By.res(SELECT_PHOTOS_BUTTON)))
+            assertNotNull(waitFindObjectOrNull(By.res(SELECT_BUTTON)))
             click(By.res(DENY_BUTTON))
         }
     }
@@ -130,7 +130,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         requestAppPermissionsAndAssertResult(
             arrayOf(READ_MEDIA_IMAGES, READ_MEDIA_VISUAL_USER_SELECTED),
             arrayOf(READ_MEDIA_IMAGES to false, READ_MEDIA_VISUAL_USER_SELECTED to false)) {
-            click(By.res(SELECT_PHOTOS_BUTTON))
+            click(By.res(SELECT_BUTTON))
             findImageOrVideo(expected = true)
             uiDevice.pressBack()
         }
@@ -143,7 +143,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         installPackage(APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE)
         requestAppPermissionsAndAssertResult(arrayOf(READ_MEDIA_IMAGES),
             arrayOf(READ_MEDIA_IMAGES to true)) {
-            click(By.res(SELECT_PHOTOS_BUTTON))
+            click(By.res(SELECT_BUTTON))
             clickImageOrVideo()
             clickAllow()
         }
@@ -172,7 +172,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         uiAutomation.grantRuntimePermission(APP_PACKAGE_NAME, READ_MEDIA_VISUAL_USER_SELECTED)
 
         requestAppPermissions(READ_MEDIA_IMAGES) {
-            waitFindObject(By.res(SELECT_MORE_PHOTOS_BUTTON))
+            waitFindObject(By.res(SELECT_MORE_BUTTON))
             uiDevice.pressBack()
         }
     }
@@ -183,7 +183,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         requestAppPermissionsAndAssertResult(
             arrayOf(READ_MEDIA_IMAGES, READ_MEDIA_VISUAL_USER_SELECTED),
             arrayOf(READ_MEDIA_IMAGES to false, READ_MEDIA_VISUAL_USER_SELECTED to true)) {
-            click(By.res(SELECT_PHOTOS_BUTTON))
+            click(By.res(SELECT_BUTTON))
             clickImageOrVideo()
             clickAllow()
         }
@@ -196,13 +196,13 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
     fun testNonImplicitAutomaticallyShowsPickerWhenUserFixed() {
         installPackage(APP_APK_PATH_LATEST)
         requestAppPermissions(READ_MEDIA_IMAGES) {
-            click(By.res(SELECT_PHOTOS_BUTTON))
+            click(By.res(SELECT_BUTTON))
             clickImageOrVideo()
             clickAllow()
         }
 
         requestAppPermissions(READ_MEDIA_IMAGES) {
-            click(By.res(SELECT_MORE_PHOTOS_BUTTON))
+            click(By.res(SELECT_MORE_BUTTON))
             clickImageOrVideo()
             clickAllow()
         }
@@ -219,14 +219,14 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
     fun testRequestedPermsFilterMediaType() {
         installPackage(APP_APK_PATH_LATEST)
         requestAppPermissions(READ_MEDIA_IMAGES) {
-            click(By.res(SELECT_PHOTOS_BUTTON))
+            click(By.res(SELECT_BUTTON))
             findImageOrVideo(expected = true)
             findVideo(expected = false)
             uiDevice.pressBack()
         }
 
         requestAppPermissions(READ_MEDIA_VIDEO) {
-            click(By.res(SELECT_PHOTOS_BUTTON))
+            click(By.res(SELECT_BUTTON))
             findVideo(expected = true)
             uiDevice.pressBack()
         }
@@ -237,7 +237,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         installPackage(APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE)
         requestAppPermissionsAndAssertResult(arrayOf(READ_MEDIA_IMAGES),
             arrayOf(READ_MEDIA_IMAGES to true)) {
-            click(By.res(ALLOW_ALL_PHOTOS_BUTTON))
+            click(By.res(ALLOW_ALL_BUTTON))
         }
 
         eventually {
@@ -249,7 +249,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         requestAppPermissionsAndAssertResult(
             arrayOf(READ_MEDIA_IMAGES, READ_MEDIA_VISUAL_USER_SELECTED),
             arrayOf(READ_MEDIA_IMAGES to true, READ_MEDIA_VISUAL_USER_SELECTED to true)) {
-            click(By.res(ALLOW_ALL_PHOTOS_BUTTON))
+            click(By.res(ALLOW_ALL_BUTTON))
         }
     }
 
@@ -291,7 +291,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         }
 
         requestAppPermissions(READ_MEDIA_IMAGES) {
-            findView(By.res(SELECT_PHOTOS_BUTTON), expected = false)
+            findView(By.res(SELECT_BUTTON), expected = false)
             pressBack()
         }
 

@@ -35,6 +35,8 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,6 +55,7 @@ import java.util.Map;
  * appropriately cleared or handled. Otherwise, the calling UID may not match the calling package
  * during permission checks.
  */
+@ApiTest(apis = {"android.provider.Telephony.Carriers#CONTENT_URI"})
 @RunWith(AndroidJUnit4.class)
 public class ApnPermissionTest {
     private static final String TAG = "ApnPermissionTest";

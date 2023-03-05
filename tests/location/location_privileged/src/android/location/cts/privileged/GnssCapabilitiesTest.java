@@ -51,16 +51,9 @@ public class GnssCapabilitiesTest {
         parcel.recycle();
     }
 
-    @Test
-    public void testClear() {
-        GnssCapabilities event = new GnssCapabilities.Builder(getTestGnssCapabilities())
-                .clearIsAccumulatedDeltaRangeCapabilityKnown().build();
-        assertEquals(false, event.isAccumulatedDeltaRangeCapabilityKnown());
-    }
-
     private static GnssCapabilities getTestGnssCapabilities() {
         GnssCapabilities.Builder builder = new GnssCapabilities.Builder();
-        builder.setHasAccumulatedDeltaRange(true);
+        builder.setHasAccumulatedDeltaRange(GnssCapabilities.CAPABILITY_SUPPORTED);
         builder.setHasAntennaInfo(true);
         builder.setHasGeofencing(true);
         builder.setHasLowPowerMode(true);
@@ -90,7 +83,8 @@ public class GnssCapabilitiesTest {
     }
 
     private static void verifyTestValues(GnssCapabilities gnssCapabilities) {
-        assertEquals(true, gnssCapabilities.hasAccumulatedDeltaRange());
+        assertEquals(GnssCapabilities.CAPABILITY_SUPPORTED,
+                gnssCapabilities.hasAccumulatedDeltaRange());
         assertEquals(true, gnssCapabilities.hasAntennaInfo());
         assertEquals(true, gnssCapabilities.hasGeofencing());
         assertEquals(true, gnssCapabilities.hasLowPowerMode());
