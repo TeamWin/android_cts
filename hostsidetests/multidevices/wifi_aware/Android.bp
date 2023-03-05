@@ -33,6 +33,7 @@ python_test_host {
     data: [
         // Package the snippet with the mobly test
         ":wifi_aware_snippet",
+	"requirements.txt",
     ],
     version: {
         py3: {
