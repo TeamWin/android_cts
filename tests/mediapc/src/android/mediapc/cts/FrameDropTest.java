@@ -50,7 +50,7 @@ public class FrameDropTest extends FrameDropTestBase {
     // Returns the list of parameters with mimeTypes and their hardware decoders
     // combining with sync and async modes.
     // Parameters {0}_{1}_{2} -- Mime_DecoderName_isAsync
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{2}")
     public static Collection<Object[]> inputParams() {
         return prepareArgumentsList(null);
     }

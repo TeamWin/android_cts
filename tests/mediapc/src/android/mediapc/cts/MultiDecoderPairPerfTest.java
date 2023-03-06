@@ -69,7 +69,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
     // Returns the list of params with two hardware (mime - decoder) pairs in both
     // sync and async modes.
     // Parameters {0}_{1}_{2} -- Pair(Mime DecoderName)_Pair(Mime DecoderName)_isAsync
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{2}")
     public static Collection<Object[]> inputParams() {
         final List<Object[]> argsList = new ArrayList<>();
         ArrayList<Pair<String, String>> mimeTypeDecoderPairs = new ArrayList<>();

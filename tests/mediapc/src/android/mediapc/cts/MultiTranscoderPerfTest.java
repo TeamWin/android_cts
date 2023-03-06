@@ -74,7 +74,7 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
     public final TestName mTestName = new TestName();
 
     // Parameters {0}_{1}_{2} -- Pair(Mime DecoderName)_Pair(Mime EncoderName)_isAsync
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{2}")
     public static Collection<Object[]> inputParams() {
         // Prepares the params list with the supported Hardware decoders/encoders in the device
         final List<Object[]> argsList = new ArrayList<>();
