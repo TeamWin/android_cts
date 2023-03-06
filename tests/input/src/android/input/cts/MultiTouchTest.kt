@@ -15,18 +15,18 @@
  */
 package android.input.cts
 
+import android.app.ActivityOptions
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.PointF
 import android.server.wm.WindowManagerStateHelper
 import android.view.Display.DEFAULT_DISPLAY
 import android.view.View
 import android.view.WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
-import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -34,8 +34,6 @@ import org.junit.runners.Parameterized
 @MediumTest
 @RunWith(Parameterized::class)
 class MultiTouchTest {
-    @get:Rule
-    val activityRule = ActivityScenarioRule<CaptureEventActivity>(CaptureEventActivity::class.java)
     private lateinit var activity: CaptureEventActivity
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private lateinit var verifier: EventVerifier
@@ -54,11 +52,15 @@ class MultiTouchTest {
 
     @Before
     fun setUp() {
-        activityRule.getScenario().onActivity() {
-            activity = it
-            activity.window.addFlags(flags)
-            activity.setRequestedOrientation(orientation)
-        }
+        val bundle = ActivityOptions.makeBasic().setLaunchDisplayId(0).toBundle()
+        val intent = Intent(Intent.ACTION_VIEW)
+                .setClass(instrumentation.targetContext, CaptureEventActivity::class.java)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                .putExtra(CaptureEventActivity.EXTRA_FIXED_ORIENTATION, orientation)
+                .putExtra(CaptureEventActivity.EXTRA_WINDOW_FLAGS, flags)
+
+        activity = instrumentation.startActivitySync(intent, bundle) as CaptureEventActivity
+
         PollingCheck.waitFor { activity.hasWindowFocus() }
         verifier = EventVerifier(activity::getInputEvent)
 

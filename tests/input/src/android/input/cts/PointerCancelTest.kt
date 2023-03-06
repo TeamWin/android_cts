@@ -16,6 +16,8 @@
 package android.input.cts
 
 import android.graphics.PointF
+import android.server.wm.WindowManagerStateHelper
+import android.view.Display.DEFAULT_DISPLAY
 import android.view.Gravity
 import android.view.InputEvent
 import android.view.MotionEvent
@@ -57,8 +59,10 @@ class PointerCancelTest {
             activity = it
         }
         PollingCheck.waitFor { activity.hasWindowFocus() }
-        instrumentation.uiAutomation.syncInputTransactions()
         verifier = EventVerifier(activity::getInputEvent)
+
+        WindowManagerStateHelper().waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY)
+        instrumentation.uiAutomation.syncInputTransactions()
     }
 
     /**
