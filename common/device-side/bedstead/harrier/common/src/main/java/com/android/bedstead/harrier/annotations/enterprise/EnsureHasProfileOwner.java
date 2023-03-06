@@ -24,6 +24,8 @@ import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
+import com.android.queryable.annotations.Query;
+import com.android.queryable.annotations.StringQuery;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -45,6 +47,13 @@ import java.lang.annotation.Target;
 public @interface EnsureHasProfileOwner {
     /** Which user type the profile owner should be installed on. */
     UserType onUser() default INSTRUMENTED_USER;
+
+    /**
+     * Requirements for the DPC
+     */
+    // Default to latest version
+    Query dpc() default @Query(
+            packageName = @StringQuery(isEqualTo = "com.android.cts.RemoteDPC"));
 
     /**
      * Whether this DPC should be returned by calls to {@code Devicestate#dpc()}.

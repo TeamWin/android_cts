@@ -24,6 +24,8 @@ import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.annotations.meta.RequireRunOnProfileAnnotation;
 import com.android.bedstead.nene.types.OptionalBoolean;
+import com.android.queryable.annotations.Query;
+import com.android.queryable.annotations.StringQuery;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -50,6 +52,13 @@ import java.lang.annotation.Target;
 @RequireFeature(FEATURE_DEVICE_ADMIN)
 public @interface RequireRunOnWorkProfile {
     OptionalBoolean installInstrumentedAppInParent() default ANY;
+
+    /**
+     * Requirements for the Profile Owner.
+     */
+    // Default to latest version
+    Query dpc() default @Query(
+            packageName = @StringQuery(isEqualTo = "com.android.cts.RemoteDPC"));
 
     /**
      * Whether the profile owner's DPC should be returned by calls to {@code Devicestate#dpc()}.

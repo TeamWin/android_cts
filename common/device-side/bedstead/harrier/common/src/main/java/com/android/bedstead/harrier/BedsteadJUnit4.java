@@ -55,6 +55,7 @@ import com.android.bedstead.harrier.exceptions.RestartTestException;
 import com.android.bedstead.nene.annotations.Nullable;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.types.OptionalBoolean;
+import com.android.queryable.annotations.Query;
 
 import com.google.auto.value.AutoAnnotation;
 import com.google.common.collect.ImmutableMap;
@@ -88,6 +89,12 @@ import java.util.stream.Stream;
 /**
  * A JUnit test runner for use with Bedstead.
  */
+// Annotating this class with @Query as a workaround to add this as a data type to a field
+// in annotations that are called upon by @AutoAnnotation (for e.g. EnsureHasWorkProfile).
+// @AutoAnnotation is not able to set default value for a field with an annotated data type,
+// so we try to pass the default value explicitly that is accessed via reflection through this
+// class.
+@Query
 public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
     private static final Set<TestLifecycleListener> sLifecycleListeners = new HashSet<>();
@@ -136,8 +143,8 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
     }
 
     @AutoAnnotation
-    private static RequireRunOnWorkProfile requireRunOnWorkProfile() {
-        return new AutoAnnotation_BedsteadJUnit4_requireRunOnWorkProfile();
+    private static RequireRunOnWorkProfile requireRunOnWorkProfile(Query dpc) {
+        return new AutoAnnotation_BedsteadJUnit4_requireRunOnWorkProfile(dpc);
     }
 
     @AutoAnnotation
@@ -170,8 +177,8 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
     }
 
     @AutoAnnotation
-    private static EnsureHasWorkProfile ensureHasWorkProfile() {
-        return new AutoAnnotation_BedsteadJUnit4_ensureHasWorkProfile();
+    private static EnsureHasWorkProfile ensureHasWorkProfile(Query dpc) {
+        return new AutoAnnotation_BedsteadJUnit4_ensureHasWorkProfile(dpc);
     }
 
     @AutoAnnotation
@@ -204,6 +211,20 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             String namespace, String key) {
         return new AutoAnnotation_BedsteadJUnit4_ensureFeatureFlagNotEnabled(namespace, key);
     }
+
+    // Get @Query annotation via BedsteadJunit4 class as a workaround to enable adding Query
+    // fields to annotations that rely on @AutoAnnotation (for e.g. @EnsureHasWorkProfile)
+    private static Query query() {
+        try {
+            return Class.forName("com.android.bedstead.harrier.BedsteadJUnit4")
+                    .getAnnotation(Query.class);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(
+                    "Unable to get BedsteadJunit4 class when trying to get "
+                            + "@Query annotation", e);
+        }
+    }
+
 
     // These are annotations which are not included indirectly
     private static final Set<String> sIgnoredAnnotationPackages = new HashSet<>();
@@ -918,7 +939,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             case SECONDARY_USER:
                 return requireRunOnSecondaryUser();
             case WORK_PROFILE:
-                return requireRunOnWorkProfile();
+                return requireRunOnWorkProfile(query());
             case TV_PROFILE:
                 return requireRunOnTvProfile();
             case CLONE_PROFILE:
@@ -945,7 +966,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             case SECONDARY_USER:
                 return ensureHasSecondaryUser();
             case WORK_PROFILE:
-                return ensureHasWorkProfile();
+                return ensureHasWorkProfile(query());
             case TV_PROFILE:
                 return ensureHasTvProfile();
             case CLONE_PROFILE:
