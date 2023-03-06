@@ -1053,7 +1053,7 @@ def main():
 
         instrumented_runs = {}
         for module in args.modules:
-            instrumented_runs[module] = [target[1] for target in args.targets if target[0] == module and target[1] is not None]
+            instrumented_runs[module] = [target[1] for target in args.targets if target[0] == module and target[1]]
 
         try:
             for i, state in enumerate(states):

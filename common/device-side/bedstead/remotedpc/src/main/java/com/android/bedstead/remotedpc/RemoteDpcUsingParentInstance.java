@@ -20,8 +20,6 @@ import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
 import android.content.ComponentName;
 
-import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
-
 /**
  * Version of {@link RemoteDpc} which returns the result of calling
  * {@link DevicePolicyManager#getParentProfileInstance(ComponentName)} when calling
@@ -29,9 +27,8 @@ import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
  */
 public final class RemoteDpcUsingParentInstance extends RemoteDpc {
 
-    public RemoteDpcUsingParentInstance(
-            DevicePolicyController devicePolicyController) {
-        super(devicePolicyController);
+    public RemoteDpcUsingParentInstance(RemoteDpc remoteDpc) {
+        super(remoteDpc.testApp(), remoteDpc.devicePolicyController());
     }
 
     @Override

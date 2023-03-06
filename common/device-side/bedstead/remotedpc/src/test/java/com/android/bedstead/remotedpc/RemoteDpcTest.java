@@ -66,8 +66,8 @@ public class RemoteDpcTest {
 
     private static TestApp sNonRemoteDpcTestApp = sDeviceState.testApps().query()
     // TODO(180478924): Query by feature not package name
-                .wherePackageName().isEqualTo(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME)
-                .get();
+            .wherePackageName().isEqualTo(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME)
+            .get();
     private static final UserReference sUser = TestApis.users().instrumented();
     private static final UserReference NON_EXISTING_USER_REFERENCE =
             TestApis.users().find(99999);
@@ -457,6 +457,14 @@ public class RemoteDpcTest {
     }
 
     @Test
+    public void setAsDeviceOwner_withoutTestAppQuery_setsDefault() {
+        RemoteDpc.setAsDeviceOwner();
+
+        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
+        assertThat(deviceOwner.pkg().packageName()).isEqualTo("com.android.cts.RemoteDPC");
+    }
+
+    @Test
     @EnsureHasDeviceOwner
     public void setAsDeviceOwner_alreadySet_doesNothing() {
         RemoteDpc.setAsDeviceOwner();
@@ -803,4 +811,77 @@ public class RemoteDpcTest {
                             .getParentProfileInstance(remoteDpc.componentName()));
         }
     }
+
+    @Test
+    public void setAsProfileOwner_alreadySetToDifferentRemoteDpc_replacesRemoteDpc() {
+        try {
+            RemoteDpc.setAsProfileOwner(sUser,
+                    sDeviceState.testApps().query().whereTargetSdkVersion().isLessThan(28));
+            RemoteDpc.setAsProfileOwner(sUser,
+                    sDeviceState.testApps().query().whereTargetSdkVersion().isGreaterThan(28));
+
+            assertThat(TestApis.devicePolicy().getProfileOwner()
+                    .pkg().targetSdkVersion()).isGreaterThan(28);
+        } finally {
+            ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(sUser);
+            if (profileOwner != null) {
+                profileOwner.remove();
+            }
+        }
+    }
+
+    @Test
+    public void setAsDeviceOwner_alreadySetToDifferentRemoteDpc_replacesRemoteDpc() {
+        try {
+            RemoteDpc.setAsDeviceOwner(
+                    sDeviceState.testApps().query().whereTargetSdkVersion().isLessThan(28));
+            RemoteDpc.setAsDeviceOwner(
+                    sDeviceState.testApps().query().whereTargetSdkVersion().isGreaterThan(28));
+
+            assertThat(TestApis.devicePolicy().getDeviceOwner()
+                    .pkg().targetSdkVersion()).isGreaterThan(28);
+        } finally {
+            DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
+            if (deviceOwner != null) {
+                deviceOwner.remove();
+            }
+        }
+    }
+
+    @Test
+    public void setAsProfileOwner_matchesExistingRemoteDpc_doesNotReplace() {
+        try {
+            RemoteDpc.setAsProfileOwner(sUser,
+                    sDeviceState.testApps().query().whereTargetSdkVersion().isEqualTo(28));
+            RemoteDpc.setAsProfileOwner(sUser,
+                    sDeviceState.testApps().query().whereTargetSdkVersion().isEqualTo(28));
+
+            assertThat(TestApis.devicePolicy().getProfileOwner()
+                    .pkg().targetSdkVersion()).isEqualTo(28);
+        } finally {
+            ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(sUser);
+            if (profileOwner != null) {
+                profileOwner.remove();
+            }
+        }
+    }
+
+    @Test
+    public void setAsDeviceOwner_matchesExistingRemoteDpc_doesNotReplace() {
+        try {
+            RemoteDpc.setAsDeviceOwner(
+                    sDeviceState.testApps().query().whereTargetSdkVersion().isEqualTo(28));
+            RemoteDpc.setAsDeviceOwner(
+                    sDeviceState.testApps().query().whereTargetSdkVersion().isEqualTo(28));
+
+            assertThat(TestApis.devicePolicy().getDeviceOwner()
+                    .pkg().targetSdkVersion()).isEqualTo(28);
+        } finally {
+            DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
+            if (deviceOwner != null) {
+                deviceOwner.remove();
+            }
+        }
+    }
+
 }

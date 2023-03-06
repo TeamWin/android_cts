@@ -16,6 +16,7 @@
 
 package com.android.queryable.queries;
 
+import static com.android.queryable.annotations.IntegerQuery.DEFAULT_INT_QUERY_PARAMETERS_VALUE;
 import static com.android.queryable.util.ParcelableUtils.readNullableInt;
 import static com.android.queryable.util.ParcelableUtils.writeNullableInt;
 
@@ -123,6 +124,27 @@ public final class IntegerQueryHelper<E extends Queryable> implements IntegerQue
         } else {
             mLessThanOrEqualToValue = Math.min(mLessThanOrEqualToValue, i);
         }
+        return mQuery;
+    }
+
+    @Override
+    public E matchesAnnotation(com.android.queryable.annotations.IntegerQuery queryAnnotation) {
+        if (queryAnnotation.isEqualTo() != DEFAULT_INT_QUERY_PARAMETERS_VALUE) {
+            isEqualTo(queryAnnotation.isEqualTo());
+        }
+        if (queryAnnotation.isGreaterThan() != DEFAULT_INT_QUERY_PARAMETERS_VALUE) {
+            isGreaterThan(queryAnnotation.isGreaterThan());
+        }
+        if (queryAnnotation.isGreaterThanOrEqualTo() != DEFAULT_INT_QUERY_PARAMETERS_VALUE) {
+            isGreaterThanOrEqualTo(queryAnnotation.isGreaterThanOrEqualTo());
+        }
+        if (queryAnnotation.isLessThan() != DEFAULT_INT_QUERY_PARAMETERS_VALUE) {
+            isLessThan(queryAnnotation.isLessThan());
+        }
+        if (queryAnnotation.isLessThanOrEqualTo() != DEFAULT_INT_QUERY_PARAMETERS_VALUE) {
+            isLessThanOrEqualTo(queryAnnotation.isLessThanOrEqualTo());
+        }
+
         return mQuery;
     }
 

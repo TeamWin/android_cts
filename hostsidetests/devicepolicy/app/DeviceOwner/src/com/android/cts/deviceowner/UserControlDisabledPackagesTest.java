@@ -37,9 +37,6 @@ import java.util.ArrayList;
 public class UserControlDisabledPackagesTest extends BaseDeviceOwnerTest {
     private static final String TAG = "UserControlDisabledPackagesTest";
 
-    private static final String TEST_APP_APK = "CtsEmptyTestApp.apk";
-    private static final String TEST_APP_PKG = "android.packageinstaller.emptytestapp.cts";
-    private static final String SIMPLE_APP_APK = "CtsSimpleApp.apk";
     private static final String SIMPLE_APP_PKG = "com.android.cts.launcherapps.simpleapp";
     private static final String SIMPLE_APP_ACTIVITY =
             "com.android.cts.launcherapps.simpleapp.SimpleActivityImmediateExit";

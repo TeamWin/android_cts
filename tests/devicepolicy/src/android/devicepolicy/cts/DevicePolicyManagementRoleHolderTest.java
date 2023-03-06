@@ -56,7 +56,6 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
-import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.compatibility.common.util.CddTest;
 import com.android.eventlib.truth.EventLogsSubject;
 
@@ -119,9 +118,9 @@ public class DevicePolicyManagementRoleHolderTest { // TODO: This is crashing on
     public void createAndManageUser_roleHolderIsInManagedUser() {
         try (UserReference userReference = UserReference.of(
                 sDeviceState.dpc().devicePolicyManager().createAndManageUser(
-                        RemoteDpc.DPC_COMPONENT_NAME,
+                        sDeviceState.dpc().componentName(),
                         MANAGED_USER_NAME,
-                        RemoteDpc.DPC_COMPONENT_NAME,
+                        sDeviceState.dpc().componentName(),
                         /* adminExtras= */ null,
                         /* flags= */ 0))) {
             Poll.forValue(() -> TestApis.packages().installedForUser(userReference))

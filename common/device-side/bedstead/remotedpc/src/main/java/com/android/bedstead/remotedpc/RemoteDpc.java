@@ -27,6 +27,7 @@ import android.app.admin.ProvisioningException;
 import android.content.ComponentName;
 import android.os.Build;
 import android.os.UserHandle;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -41,21 +42,19 @@ import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppProvider;
+import com.android.bedstead.testapp.TestAppQueryBuilder;
 
 /** Entry point to RemoteDPC. */
 public class RemoteDpc extends RemotePolicyManager {
 
-    public static final ComponentName DPC_COMPONENT_NAME = new ComponentName(
-            "com.android.cts.RemoteDPC",
-            "com.android.bedstead.testapp.BaseTestAppDeviceAdminReceiver"
-    );
+    public static final String REMOTE_DPC_APP_PACKAGE_NAME_OR_PREFIX = "com.android.cts.RemoteDPC";
+    private static final String TEST_APP_CLASS_NAME =
+            "com.android.bedstead.testapp.BaseTestAppDeviceAdminReceiver";
+    private static final String LOG_TAG = "RemoteDpc";
 
     private static final DevicePolicyManager sDevicePolicyManager =
             TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    public static final TestApp REMOTE_DPC_TEST_APP = sTestAppProvider.query()
-            .wherePackageName().isEqualTo(DPC_COMPONENT_NAME.getPackageName())
-            .get();
 
     private boolean mShouldRemoveUserWhenRemoved = false;
 
@@ -67,11 +66,14 @@ public class RemoteDpc extends RemotePolicyManager {
     @Nullable
     public static RemoteDpc deviceOwner() {
         DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
-        if (deviceOwner == null || !deviceOwner.componentName().equals(DPC_COMPONENT_NAME)) {
+        if (!isRemoteDpc(deviceOwner)) {
             return null;
         }
 
-        return new RemoteDpc(deviceOwner);
+        TestApp remoteDpcTestApp = new TestAppProvider().query().wherePackageName()
+                .isEqualTo(deviceOwner.componentName().getPackageName())
+                .get();
+        return new RemoteDpc(remoteDpcTestApp, deviceOwner);
     }
 
     /**
@@ -110,11 +112,14 @@ public class RemoteDpc extends RemotePolicyManager {
         }
 
         ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(profile);
-        if (profileOwner == null || !profileOwner.componentName().equals(DPC_COMPONENT_NAME)) {
+        if (!isRemoteDpc(profileOwner)) {
             return null;
         }
 
-        return new RemoteDpc(profileOwner);
+        TestApp remoteDpcTestApp = new TestAppProvider().query().wherePackageName()
+                .isEqualTo(profileOwner.componentName().getPackageName())
+                .get();
+        return new RemoteDpc(remoteDpcTestApp, profileOwner);
     }
 
     /**
@@ -165,40 +170,76 @@ public class RemoteDpc extends RemotePolicyManager {
         if (controller == null) {
             throw new NullPointerException();
         }
-        if (!controller.componentName().equals(DPC_COMPONENT_NAME)) {
-            throw new IllegalStateException("DevicePolicyController is not a RemoteDPC: "
-                    + controller);
+
+        if (isRemoteDpc(controller)) {
+            TestApp remoteDpcTestApp = new TestAppProvider().query().wherePackageName()
+                    .isEqualTo(controller.componentName().getPackageName())
+                    .get();
+
+            return new RemoteDpc(remoteDpcTestApp, controller);
         }
 
-        return new RemoteDpc(controller);
+        throw new IllegalStateException("DevicePolicyController is not a RemoteDPC: "
+                + controller);
     }
 
     /**
      * Set RemoteDPC as the Device Owner.
      */
     public static RemoteDpc setAsDeviceOwner() {
-        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
-        if (deviceOwner != null) {
-            if (deviceOwner.componentName().equals(DPC_COMPONENT_NAME)) {
-                return new RemoteDpc(deviceOwner); // Already set
-            }
-            deviceOwner.remove();
-        }
-
-        ensureInstalled(TestApis.users().system());
-        RemoteDpc remoteDpc = new RemoteDpc(
-                TestApis.devicePolicy().setDeviceOwner(DPC_COMPONENT_NAME));
-        return remoteDpc;
+        return setAsDeviceOwner(new TestAppProvider().query().wherePackageName()
+                .isEqualTo(REMOTE_DPC_APP_PACKAGE_NAME_OR_PREFIX));
     }
 
     /**
-     * Set RemoteDPC as the Profile Owner.
+     * Sets RemoteDPC as the Device Owner based on TestAppQuery
+     */
+    public static RemoteDpc setAsDeviceOwner(TestAppQueryBuilder dpcQuery) {
+        // We make sure that the query has RemoteDpc filter specified,
+        // this is useful for the case where the user calls the method directly
+        // and does not specify the RemoteDpc filter.
+        dpcQuery = enforceRemoteDpcPackageFilter(dpcQuery);
+
+        DeviceOwner currentDeviceOwner = TestApis.devicePolicy().getDeviceOwner();
+        if (matchesRemoteDpcQuery(currentDeviceOwner, dpcQuery)) {
+            return RemoteDpc.forDevicePolicyController(currentDeviceOwner);
+        }
+
+        if (currentDeviceOwner != null) {
+            currentDeviceOwner.remove();
+        }
+
+        TestApp testApp = dpcQuery.get();
+        testApp.install(TestApis.users().system());
+        Log.i(LOG_TAG, "Installing RemoteDPC app: " + testApp.packageName());
+        ComponentName componentName =
+                new ComponentName(testApp.packageName(), TEST_APP_CLASS_NAME);
+        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(componentName);
+        return new RemoteDpc(testApp, deviceOwner);
+    }
+
+    /**
+     * Set any RemoteDPC as the Profile Owner.
      */
     public static RemoteDpc setAsProfileOwner(UserHandle user) {
         if (user == null) {
             throw new NullPointerException();
         }
-        return setAsProfileOwner(TestApis.users().find(user));
+
+        TestAppQueryBuilder anyRemoteDpcQuery = new TestAppProvider().query()
+                .wherePackageName().startsWith(REMOTE_DPC_APP_PACKAGE_NAME_OR_PREFIX);
+        return setAsProfileOwner(TestApis.users().find(user), anyRemoteDpcQuery);
+    }
+
+    /**
+     * Set RemoteDPC that matches the query as the Profile Owner.
+     */
+    public static RemoteDpc setAsProfileOwner(
+            UserHandle user, TestAppQueryBuilder dpcQuery) {
+        if (user == null) {
+            throw new NullPointerException();
+        }
+        return setAsProfileOwner(TestApis.users().find(user), dpcQuery);
     }
 
     /**
@@ -212,23 +253,54 @@ public class RemoteDpc extends RemotePolicyManager {
             throw new NullPointerException();
         }
 
+        TestAppQueryBuilder anyRemoteDpcQuery = new TestAppProvider().query()
+                .wherePackageName().startsWith(REMOTE_DPC_APP_PACKAGE_NAME_OR_PREFIX);
+        return setAsProfileOwner(user, anyRemoteDpcQuery);
+    }
+
+    /**
+     * Set RemoteDPC that matches the query as the Profile Owner.
+     *
+     * <p>If called for Android versions prior to Q, an exception will be thrown if the user is not
+     * the instrumented user.
+     */
+    public static RemoteDpc setAsProfileOwner(
+            UserReference user, TestAppQueryBuilder dpcQuery) {
+        // We make sure that the query has RemoteDpc filter specified,
+        // this is useful for the case where the user calls the method directly
+        // and does not specify the RemoteDpc filter.
+        dpcQuery = enforceRemoteDpcPackageFilter(dpcQuery);
+
+        if (user == null) {
+            throw new NullPointerException();
+        }
+
         if (!user.equals(TestApis.users().instrumented())) {
             if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.Q)) {
                 throw new NeneException("Cannot use RemoteDPC across users prior to Q");
             }
         }
 
-        ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(user);
-        if (profileOwner != null) {
-            if (profileOwner.componentName().equals(DPC_COMPONENT_NAME)) {
-                return new RemoteDpc(profileOwner); // Already set
-            }
-            profileOwner.remove();
+        ProfileOwner currentProfileOwner = TestApis.devicePolicy().getProfileOwner(user);
+        if (matchesRemoteDpcQuery(currentProfileOwner, dpcQuery)) {
+            return RemoteDpc.forDevicePolicyController(currentProfileOwner);
         }
 
-        ensureInstalled(user);
+        if (currentProfileOwner != null) {
+            currentProfileOwner.remove();
+        }
+
+        TestApp testApp = dpcQuery.get();
+        if (!testApp.installedOnUser(user)) {
+            Log.i(LOG_TAG, "Installing RemoteDPC app: " + testApp.packageName());
+            testApp.install(user);
+        }
+
+        ComponentName componentName =
+                new ComponentName(testApp.packageName(), TEST_APP_CLASS_NAME);
         RemoteDpc remoteDpc = new RemoteDpc(
-                TestApis.devicePolicy().setProfileOwner(user, DPC_COMPONENT_NAME));
+                testApp,
+                TestApis.devicePolicy().setProfileOwner(user, componentName));
 
         // DISALLOW_INSTALL_UNKNOWN_SOURCES causes verification failures in work profiles
         remoteDpc.devicePolicyManager()
@@ -250,6 +322,18 @@ public class RemoteDpc extends RemotePolicyManager {
     }
 
     /**
+     * Create a work profile of the instrumented user with RemoteDpc as the profile owner.
+     *
+     * <p>If autoclosed, the user will be removed along with the dpc.
+     *
+     * <p>If called for Android versions prior to Q an exception will be thrown
+     */
+    @Experimental
+    public static RemoteDpc createWorkProfile(TestAppQueryBuilder dpcQuery) {
+        return createWorkProfile(TestApis.users().instrumented(), dpcQuery);
+    }
+
+    /**
      * Create a work profile with RemoteDpc as the profile owner.
      *
      * <p>If autoclosed, the user will be removed along with the dpc.
@@ -258,6 +342,19 @@ public class RemoteDpc extends RemotePolicyManager {
      */
     @Experimental
     public static RemoteDpc createWorkProfile(UserReference parent) {
+        return createWorkProfile(parent, new TestAppProvider().query().wherePackageName()
+                .isEqualTo(REMOTE_DPC_APP_PACKAGE_NAME_OR_PREFIX));
+    }
+
+    /**
+     * Create a work profile with RemoteDpc as the profile owner.
+     *
+     * <p>If autoclosed, the user will be removed along with the dpc.
+     *
+     * <p>If called for Android versions prior to Q an exception will be thrown
+     */
+    @Experimental
+    public static RemoteDpc createWorkProfile(UserReference parent, TestAppQueryBuilder dpcQuery) {
         // It'd be ideal if this method could be in TestApis.devicePolicy() but the dependency
         // direction wouldn't allow it
         if (parent == null) {
@@ -274,32 +371,69 @@ public class RemoteDpc extends RemotePolicyManager {
                 .parent(parent)
                 .createAndStart();
 
-            return setAsProfileOwner(profile);
+            return setAsProfileOwner(profile, dpcQuery);
         }
-        ensureInstalled(parent);
+
+        boolean removeFromParent = false;
+        TestApp testApp = dpcQuery.get();
+        if (!testApp.installedOnUser(parent)) {
+            Log.i(LOG_TAG, "Installing RemoteDPC app: " + testApp.packageName());
+            testApp.install(parent);
+        }
 
         try (PermissionContext p =
                      TestApis.permissions().withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
             RemoteDpc dpc = forDevicePolicyController(TestApis.devicePolicy().getProfileOwner(
                     sDevicePolicyManager.createAndProvisionManagedProfile(
                             new ManagedProfileProvisioningParams.Builder(
-                                    DPC_COMPONENT_NAME, "RemoteDPC").build())));
+                                    new ComponentName(testApp.packageName(), TEST_APP_CLASS_NAME),
+                                    "RemoteDPC").build())));
             dpc.mShouldRemoveUserWhenRemoved = true;
             return dpc;
 
         } catch (ProvisioningException e) {
             throw new NeneException("Error provisioning work profile", e);
+        } finally {
+            if (removeFromParent) {
+                testApp.uninstall(parent);
+            }
         }
     }
 
-    private static void ensureInstalled(UserReference user) {
-        REMOTE_DPC_TEST_APP.install(user);
+    /**
+     * Check if the RemoteDpc matches the query
+     */
+    public static boolean matchesRemoteDpcQuery(
+            DevicePolicyController devicePolicyController,
+            TestAppQueryBuilder dpcQuery) {
+        if (isRemoteDpc(devicePolicyController)) {
+            RemoteDpc remoteDpc = RemoteDpc.forDevicePolicyController(devicePolicyController);
+            return dpcQuery.matches(remoteDpc.testApp());
+        }
+        return false;
+    }
+
+    /**
+     * Check if dpc is a RemoteDpc
+     */
+    public static boolean isRemoteDpc(DevicePolicyController controller) {
+        return controller != null
+                && controller.componentName().getPackageName()
+                .startsWith(REMOTE_DPC_APP_PACKAGE_NAME_OR_PREFIX)
+                && controller.componentName().getClassName().equals(TEST_APP_CLASS_NAME);
+    }
+
+    private static TestAppQueryBuilder enforceRemoteDpcPackageFilter(
+            TestAppQueryBuilder dpcQuery) {
+        return dpcQuery.wherePackageName()
+                .startsWith(REMOTE_DPC_APP_PACKAGE_NAME_OR_PREFIX)
+                .allowInternalBedsteadTestApps();
     }
 
     private final DevicePolicyController mDevicePolicyController;
 
-    RemoteDpc(DevicePolicyController devicePolicyController) {
-        super(REMOTE_DPC_TEST_APP, devicePolicyController == null ? null
+    RemoteDpc(TestApp remoteDpcTestApp, DevicePolicyController devicePolicyController) {
+        super(remoteDpcTestApp, devicePolicyController == null ? null
                 : devicePolicyController.user());
         mDevicePolicyController = devicePolicyController;
     }
@@ -319,7 +453,7 @@ public class RemoteDpc extends RemotePolicyManager {
             mDevicePolicyController.user().remove();
         } else {
             mDevicePolicyController.remove();
-            TestApis.packages().find(DPC_COMPONENT_NAME.getPackageName())
+            TestApis.packages().find(mDevicePolicyController.componentName().getPackageName())
                     .uninstall(mDevicePolicyController.user());
         }
     }
@@ -334,7 +468,7 @@ public class RemoteDpc extends RemotePolicyManager {
      */
     @Override
     public ComponentName componentName() {
-        return DPC_COMPONENT_NAME;
+        return mDevicePolicyController.componentName();
     }
 
     @Override

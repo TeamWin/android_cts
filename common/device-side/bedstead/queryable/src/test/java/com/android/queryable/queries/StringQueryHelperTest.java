@@ -114,6 +114,26 @@ public final class StringQueryHelperTest {
     }
 
     @Test
+    public void matches_startsWith_meetsRestriction_returnsTrue() {
+        StringQueryHelper<Queryable> stringQueryHelper =
+                new StringQueryHelper<>(mQuery);
+
+        stringQueryHelper.startsWith("prefix");
+
+        assertThat(stringQueryHelper.matches("prefixstring")).isTrue();
+    }
+
+    @Test
+    public void matches_startsWith_doesNotMeetRestriction_returnsFalse() {
+        StringQueryHelper<Queryable> stringQueryHelper =
+                new StringQueryHelper<>(mQuery);
+
+        stringQueryHelper.startsWith("prefix");
+
+        assertThat(stringQueryHelper.matches("not")).isFalse();
+    }
+
+    @Test
     public void parcel_parcelsCorrectly() {
         StringQueryHelper<Queryable> stringQueryHelper = new StringQueryHelper<>(mQuery);
 
