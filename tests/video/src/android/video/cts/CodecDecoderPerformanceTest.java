@@ -41,7 +41,7 @@ public class CodecDecoderPerformanceTest extends CodecDecoderPerformanceTestBase
         super(decoderName, testFile, keyPriority, scalingFactor);
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{2}_{3})")
+    @Parameterized.Parameters(name = "{index}_{0}_{2}_{3}")
     public static Collection<Object[]> input() throws IOException {
         final String[] fileList = new String[]{
                 // Video - Filename
