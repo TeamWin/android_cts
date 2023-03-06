@@ -68,7 +68,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.List;
+import java.util.Set;
 
 /** Tests for blocking of activities that should not be shown on the virtual device. */
 @RunWith(AndroidJUnit4.class)
@@ -150,7 +150,7 @@ public class RestrictActivityTest {
     @Test
     public void restrictedActivity_nonRestrictedActivityOnRestrictedDevice_shouldFail() {
         VirtualDisplay virtualDisplay =
-                createVirtualDisplay(List.of("automotive"));
+                createVirtualDisplay(Set.of("automotive"));
         Intent intent =
                 TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -164,7 +164,7 @@ public class RestrictActivityTest {
     @Test
     public void restrictedActivity_differentCategory_shouldFail() {
         VirtualDisplay virtualDisplay =
-                createVirtualDisplay(List.of("abc"));
+                createVirtualDisplay(Set.of("abc"));
         launchRestrictedAutomotiveActivity(virtualDisplay);
 
         verify(mOnReceiveResultListener, after(3000).never()).onReceiveResult(anyInt(), any());
@@ -173,7 +173,7 @@ public class RestrictActivityTest {
     @Test
     public void restrictedActivity_containCategories_shouldSucceed() {
         VirtualDisplay virtualDisplay =
-                createVirtualDisplay(List.of("automotive"));
+                createVirtualDisplay(Set.of("automotive"));
         launchRestrictedAutomotiveActivity(virtualDisplay);
 
         verify(mOnReceiveResultListener, timeout(3000))
@@ -209,7 +209,7 @@ public class RestrictActivityTest {
                 .startActivity(intent, createActivityOptions(display));
     }
 
-    private VirtualDisplay createVirtualDisplay(@Nullable List<String> displayCategories) {
+    private VirtualDisplay createVirtualDisplay(@Nullable Set<String> displayCategories) {
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
