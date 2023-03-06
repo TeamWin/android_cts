@@ -62,6 +62,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -514,6 +515,9 @@ public class KeyAttestationTest {
 
     @Test
     public void testEcAttestation_UniqueIdWorksWithCorrectPermission() throws Exception {
+        assumeTrue("Device doesn't have secure lock screen",
+                TestUtils.hasSecureLockScreen(getContext()));
+
         String keystoreAlias = "test_key";
         KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
                 .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
