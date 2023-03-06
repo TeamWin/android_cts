@@ -95,6 +95,8 @@ public class VirtualSensorTest {
     private static final String VIRTUAL_SENSOR_NAME = "VirtualAccelerometer";
     private static final String VIRTUAL_SENSOR_VENDOR = "VirtualDeviceVendor";
 
+    private static final int CUSTOM_SENSOR_TYPE = 9999;
+
     private static final int SENSOR_TIMEOUT_MILLIS = 1000;
 
     private static final int SENSOR_EVENT_SIZE = 104;
@@ -391,6 +393,36 @@ public class VirtualSensorTest {
         final VirtualSensorEvent thirdEvent =
                 new VirtualSensorEvent.Builder(new float[] {7.7f, 8.8f}).build();
         mVirtualSensor.sendEvent(thirdEvent);
+
+        mSensorEventListener.assertNoMoreEvents();
+
+        mVirtualDeviceSensorManager.unregisterListener(mSensorEventListener);
+    }
+
+    @Test
+    public void virtualSensor_arbitrarySensorType() {
+        mVirtualSensor = setUpVirtualSensor(
+                new VirtualSensorConfig.Builder(CUSTOM_SENSOR_TYPE, VIRTUAL_SENSOR_NAME).build());
+
+        Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(CUSTOM_SENSOR_TYPE);
+
+        mVirtualDeviceSensorManager.registerListener(
+                mSensorEventListener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+
+        float[] values = new float[16];
+        Arrays.fill(values, 1.2f);
+
+        final VirtualSensorEvent validEvent = new VirtualSensorEvent.Builder(values).build();
+        mVirtualSensor.sendEvent(validEvent);
+
+        mSensorEventListener.assertReceivedSensorEvent(sensor, validEvent);
+
+        // Sensor events can have at most 16 values. Check that events with more values are dropped.
+        float[] invalidValues = new float[17];
+        Arrays.fill(values, 3.4f);
+        final VirtualSensorEvent invalidEvent =
+                new VirtualSensorEvent.Builder(invalidValues).build();
+        mVirtualSensor.sendEvent(invalidEvent);
 
         mSensorEventListener.assertNoMoreEvents();
 
