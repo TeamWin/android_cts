@@ -63,6 +63,7 @@ public class KeepScreenOnTests extends MultiDisplayTestBase {
         setScreenOffTimeoutMs(mInitialDisplayTimeout);
         Settings.Global.putInt(mContentResolver, STAY_ON_WHILE_PLUGGED_IN,
                 mInitialStayOnWhilePluggedInSetting);
+        wakeUpAndUnlock(mContext);
     }
 
     @ApiTest(apis = "android.view.WindowManager.LayoutParams#FLAG_KEEP_SCREEN_ON")
