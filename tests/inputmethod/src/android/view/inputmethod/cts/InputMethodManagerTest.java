@@ -37,6 +37,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Debug;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SecurityTest;
 import android.text.TextUtils;
@@ -59,13 +60,19 @@ import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.Until;
 
+import com.android.compatibility.common.util.PollingCheck;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.ref.Cleaner;
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -291,6 +298,47 @@ public class InputMethodManagerTest {
                 new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
         waitOnMainUntil(() -> !isInputMethodPickerShown(mImManager), TIMEOUT,
                 "InputMethod picker should be closed");
+    }
+
+    @Test
+    public void testNoStrongServedViewReferenceAfterWindowDetached() throws IOException {
+        var receivedSignalCleaned = new CountDownLatch(1);
+        Runnable r = () -> {
+            var viewRef = new View[1];
+            TestActivity testActivity = TestActivity.startSync(activity -> {
+                viewRef[0] = new EditText(activity);
+                viewRef[0].setLayoutParams(new LayoutParams(
+                        LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+                viewRef[0].requestFocus();
+                return viewRef[0];
+            });
+            // wait until editText becomes active
+            PollingCheck.waitFor(
+                    () -> testActivity.getSystemService(InputMethodManager.class).isActive(
+                            viewRef[0]));
+
+            Cleaner.create().register(viewRef[0], receivedSignalCleaned::countDown);
+            viewRef[0] = null;
+
+            // finishing the activity should destroy the reference inside IMM
+            testActivity.finish();
+        };
+        r.run();
+
+        waitForWithGc(() -> receivedSignalCleaned.getCount() == 0);
+    }
+
+    private void waitForWithGc(PollingCheck.PollingCheckCondition condition) throws IOException {
+        try {
+            PollingCheck.waitFor(() -> {
+                Runtime.getRuntime().gc();
+                return condition.canProceed();
+            });
+        } catch (AssertionError e) {
+            File heap = new File(mContext.getExternalFilesDir(null), "dump.hprof");
+            Debug.dumpHprofData(heap.getAbsolutePath());
+            throw new AssertionError("Dumped heap in device at " + heap.getAbsolutePath(), e);
+        }
     }
 
     private void enableImes(String... ids) {
