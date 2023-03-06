@@ -168,7 +168,7 @@ public class CodecInitializationLatencyTest {
      *
      * @return Collection of Parameters {0}_{1} -- MIME_CodecName
      */
-    @Parameterized.Parameters(name = "{index}({0}_{1})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}")
     public static Collection<Object[]> inputParams() {
         // Prepares the params list with the required Hardware video codecs and all available
         // audio codecs present in the device.
