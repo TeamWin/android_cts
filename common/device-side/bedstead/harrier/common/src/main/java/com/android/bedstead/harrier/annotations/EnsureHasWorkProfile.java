@@ -25,6 +25,8 @@ import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasProfileAnnotation;
 import com.android.bedstead.nene.types.OptionalBoolean;
+import com.android.queryable.annotations.Query;
+import com.android.queryable.annotations.StringQuery;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -56,6 +58,13 @@ public @interface EnsureHasWorkProfile {
 
     /** Whether the instrumented test app should be installed in the work profile. */
     OptionalBoolean installInstrumentedApp() default ANY;
+
+    /**
+     * Requirements for the Profile Owner.
+     */
+    // Default to latest version
+    Query dpc() default @Query(
+            packageName = @StringQuery(isEqualTo = "com.android.cts.RemoteDPC"));
 
     /**
      * Whether the profile owner's DPC should be returned by calls to {@code Devicestate#dpc()}.

@@ -52,7 +52,6 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_USE
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_MANAGED_PROFILE;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_USER;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
-import static com.android.bedstead.remotedpc.RemoteDpc.REMOTE_DPC_TEST_APP;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -111,7 +110,6 @@ import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
-import com.android.bedstead.nene.users.UserType;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
@@ -191,13 +189,14 @@ public final class ProvisioningTest {
             createRoleHolderExtrasBundle();
     private static final String TEST_KEY = "test_key";
     private static final String TEST_VALUE = "test_value";
-    private static final UserType MANAGED_PROFILE_USER_TYPE =
-            TestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
 
     private static final String EXISTING_ACCOUNT_TYPE =
             "com.android.bedstead.testapp.AccountManagementApp.account.type";
     private static final Account ACCOUNT_WITH_EXISTING_TYPE =
             new Account("user0", EXISTING_ACCOUNT_TYPE);
+
+    private static final TestApp sDpcTestApp = sDeviceState.testApps().query()
+            .whereIsDeviceAdmin().isTrue().get();
 
     @Test
     public void provisioningException_constructor_works() {
@@ -1428,7 +1427,7 @@ public final class ProvisioningTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @EnsureHasWorkProfile
     public void finalizeWorkProfileProvisioning_valid_sendsBroadcast() {
-        try (TestAppInstance personalInstance = REMOTE_DPC_TEST_APP.install()) {
+        try (TestAppInstance personalInstance = sDpcTestApp.install()) {
             personalInstance.registerReceiver(new IntentFilter(ACTION_MANAGED_PROFILE_PROVISIONED));
             sDevicePolicyManager.finalizeWorkProfileProvisioning(
                     /* managedProfileUser= */ sDeviceState.workProfile().userHandle(),
@@ -1448,7 +1447,7 @@ public final class ProvisioningTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @EnsureHasWorkProfile
     public void finalizeWorkProfileProvisioning_withAccount_broadcastIncludesAccount() {
-        try (TestAppInstance personalInstance = REMOTE_DPC_TEST_APP.install()) {
+        try (TestAppInstance personalInstance = sDpcTestApp.install()) {
             personalInstance.registerReceiver(new IntentFilter(ACTION_MANAGED_PROFILE_PROVISIONED));
 
             sDevicePolicyManager.finalizeWorkProfileProvisioning(

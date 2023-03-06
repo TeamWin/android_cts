@@ -21,6 +21,7 @@ import android.content.IntentFilter;
 import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.queryable.annotations.Query;
 import com.android.queryable.info.ActivityInfo;
 import com.android.queryable.info.ServiceInfo;
 
@@ -49,6 +50,21 @@ public final class TestAppProvider {
     /** Begin a query for a {@link TestApp}. */
     public TestAppQueryBuilder query() {
         return new TestAppQueryBuilder(this);
+    }
+
+    /** Create a query for a {@link TestApp} starting with a {@link Query}. */
+    public TestAppQueryBuilder query(Query query) {
+        TestAppQueryBuilder queryBuilder = query();
+
+        if (query == null) {
+            return queryBuilder;
+        }
+
+        queryBuilder = queryBuilder.whereTargetSdkVersion().matchesAnnotation(query.targetSdkVersion());
+        queryBuilder = queryBuilder.whereMinSdkVersion().matchesAnnotation(query.minSdkVersion());
+        queryBuilder = queryBuilder.whereMaxSdkVersion().matchesAnnotation(query.maxSdkVersion());
+        queryBuilder = queryBuilder.wherePackageName().matchesAnnotation(query.packageName());
+        return queryBuilder;
     }
 
     /** Get any {@link TestApp}. */

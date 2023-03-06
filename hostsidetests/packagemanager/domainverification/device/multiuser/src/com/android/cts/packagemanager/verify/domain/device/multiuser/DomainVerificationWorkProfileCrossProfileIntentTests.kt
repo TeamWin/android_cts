@@ -24,7 +24,6 @@ import com.android.bedstead.harrier.UserType
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile
 import com.android.bedstead.harrier.annotations.Postsubmit
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser
-import com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_1
 import org.junit.After
 import org.junit.Before
@@ -42,9 +41,9 @@ class DomainVerificationWorkProfileCrossProfileIntentTests :
     @Before
     fun saveAndSetPolicy() {
         val manager = deviceState.getWorkDevicePolicyManager()
-        initialAppLinkPolicy = manager.getAppLinkPolicy(DPC_COMPONENT_NAME)
+        initialAppLinkPolicy = manager.getAppLinkPolicy(deviceState.dpc().componentName()!!)
         if (initialAppLinkPolicy != false) {
-            manager.setAppLinkPolicy(DPC_COMPONENT_NAME, false)
+            manager.setAppLinkPolicy(deviceState.dpc().componentName()!!, false)
         }
 
         val intentFilter = IntentFilter().apply {
@@ -55,7 +54,7 @@ class DomainVerificationWorkProfileCrossProfileIntentTests :
             addDataAuthority(DOMAIN_1, null)
         }
         manager.addCrossProfileIntentFilter(
-            DPC_COMPONENT_NAME,
+            deviceState.dpc().componentName()!!,
             intentFilter,
             DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED
                     or DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT
@@ -65,10 +64,11 @@ class DomainVerificationWorkProfileCrossProfileIntentTests :
     @After
     fun resetPolicy() {
         val manager = deviceState.getWorkDevicePolicyManager()
-        if (initialAppLinkPolicy ?: return != manager.getAppLinkPolicy(DPC_COMPONENT_NAME)) {
-            manager.setAppLinkPolicy(DPC_COMPONENT_NAME, initialAppLinkPolicy!!)
+        if (initialAppLinkPolicy ?: return != manager.getAppLinkPolicy(
+            deviceState.dpc().componentName()!!)) {
+            manager.setAppLinkPolicy(deviceState.dpc().componentName()!!, initialAppLinkPolicy!!)
         }
-        manager.clearCrossProfileIntentFilters(DPC_COMPONENT_NAME)
+        manager.clearCrossProfileIntentFilters(deviceState.dpc().componentName()!!)
     }
 
     @RequireRunOnInitialUser

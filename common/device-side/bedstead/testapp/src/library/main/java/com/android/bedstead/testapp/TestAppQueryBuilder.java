@@ -49,6 +49,7 @@ public final class TestAppQueryBuilder implements Queryable {
             new SetQueryHelper<>(this);
     BooleanQueryHelper<TestAppQueryBuilder> mIsDeviceAdmin = new BooleanQueryHelper<>(this);
     StringQueryHelper<TestAppQueryBuilder> mSharedUserId = new StringQueryHelper<>(this);
+    private boolean mAllowInternalBedsteadTestApps = false;
 
     TestAppQueryBuilder(TestAppProvider provider) {
         if (provider == null) {
@@ -146,6 +147,14 @@ public final class TestAppQueryBuilder implements Queryable {
     }
 
     /**
+     * Allow the query to return internal bedstead testapps.
+     */
+    public TestAppQueryBuilder allowInternalBedsteadTestApps() {
+        mAllowInternalBedsteadTestApps = true;
+        return this;
+    }
+
+    /**
      * Get the {@link TestApp} matching the query.
      *
      * @throws NotFoundException if there is no matching @{link TestApp}.
@@ -153,6 +162,14 @@ public final class TestAppQueryBuilder implements Queryable {
     public TestApp get() {
         // TODO(scottjonathan): Provide instructions on adding the TestApp if the query fails
         return new TestApp(resolveQuery());
+    }
+
+    /**
+     * Checks if the query matches the specified test app
+     */
+    public boolean matches(TestApp testApp) {
+        TestAppDetails details = testApp.mDetails;
+        return matches(details);
     }
 
     private TestAppDetails resolveQuery() {
@@ -229,7 +246,8 @@ public final class TestAppQueryBuilder implements Queryable {
             }
         }
 
-        if (details.mMetadata.getString("testapp-package-query-only", "false")
+        if (!mAllowInternalBedsteadTestApps
+                && details.mMetadata.getString("testapp-package-query-only", "false")
                 .equals("true")) {
             if (!mPackageName.isQueryingForExactMatch()) {
                 return false;
@@ -255,5 +273,10 @@ public final class TestAppQueryBuilder implements Queryable {
                 mTestOnly.describeQuery("testOnly"),
                 mIsDeviceAdmin.describeQuery("isDeviceAdmin")
         ) + "}";
+    }
+
+    @Override
+    public String toString() {
+        return "TestAppQueryBuilder" + describeQuery(null);
     }
 }

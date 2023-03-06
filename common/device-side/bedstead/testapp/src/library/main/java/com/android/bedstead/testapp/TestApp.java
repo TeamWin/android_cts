@@ -31,7 +31,6 @@ import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.Users;
 import com.android.bedstead.testapp.processor.annotations.TestAppSender;
 import com.android.queryable.collections.QueryableActivityInfoHashSet;
-import com.android.queryable.info.ActivityInfo;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,6 +44,7 @@ import java.util.Set;
 public final class TestApp {
     // Must be instrumentation context to access resources
     private static final Context sContext = TestApis.context().instrumentationContext();
+    private static final String LOG_TAG = "TestApp";
     final TestAppDetails mDetails;
 
     TestApp(TestAppDetails details) {
@@ -101,6 +101,20 @@ public final class TestApp {
      */
     public void uninstall() {
         uninstall(TestApis.users().instrumented());
+    }
+
+    /**
+     * Check if {@link TestApp} is installed on the given {@link UserReference}
+     */
+    public boolean installedOnUser(UserReference user) {
+        return pkg().installedOnUser(user);
+    }
+
+    /**
+     * Check if {@link TestApp} is installed on the given {@link UserHandle}
+     */
+    public boolean installedOnUser(UserHandle user) {
+        return pkg().installedOnUser(user);
     }
 
     /**

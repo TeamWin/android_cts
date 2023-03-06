@@ -39,8 +39,6 @@ import static android.app.admin.TargetUser.LOCAL_USER_ID;
 import static android.os.UserManager.DISALLOW_MODIFY_ACCOUNTS;
 import static android.os.UserManager.DISALLOW_WIFI_DIRECT;
 
-import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
@@ -180,10 +178,10 @@ public final class DeviceManagementCoexistenceTests {
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_lockTaskPolicySet_returnsPolicy() {
         String[] originalLockTaskPackages = sDeviceState.dpc().devicePolicyManager()
-                .getLockTaskPackages(DPC_COMPONENT_NAME);
+                .getLockTaskPackages(sDeviceState.dpc().componentName());
         try {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{PACKAGE_NAME});
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{PACKAGE_NAME});
 
             PolicyState<LockTaskPolicy> policyState = getLockTaskPolicyState(
                     new NoArgsPolicyKey(LOCK_TASK_POLICY),
@@ -193,7 +191,7 @@ public final class DeviceManagementCoexistenceTests {
                     .containsExactly(PACKAGE_NAME);
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -204,10 +202,10 @@ public final class DeviceManagementCoexistenceTests {
     public void getDevicePolicyState_userControlDisabledPackagesSet_returnsPolicy() {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                        DPC_COMPONENT_NAME);
+                        sDeviceState.dpc().componentName());
         try {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(),
                     Arrays.asList(sTestApp.packageName()));
 
             PolicyState<Set<String>> policyState = getStringSetPolicyState(
@@ -218,7 +216,7 @@ public final class DeviceManagementCoexistenceTests {
                     sTestApp.packageName());
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(),
                     originalDisabledPackages);
         }
     }
@@ -324,7 +322,7 @@ public final class DeviceManagementCoexistenceTests {
     public void getDevicePolicyState_resetPasswordTokenSet_returnsPolicy() {
         try {
             sDeviceState.dpc().devicePolicyManager().setResetPasswordToken(
-                    DPC_COMPONENT_NAME, TOKEN);
+                    sDeviceState.dpc().componentName(), TOKEN);
 
             PolicyState<Long> policyState = getLongPolicyState(
                     new NoArgsPolicyKey(RESET_PASSWORD_TOKEN_POLICY),
@@ -340,7 +338,7 @@ public final class DeviceManagementCoexistenceTests {
             assertThat(token).isNotNull();
             assertThat(token).isNotEqualTo(0);
         } finally {
-            sDeviceState.dpc().devicePolicyManager().clearResetPasswordToken(DPC_COMPONENT_NAME);
+            sDeviceState.dpc().devicePolicyManager().clearResetPasswordToken(sDeviceState.dpc().componentName());
         }
     }
 
@@ -459,10 +457,10 @@ public final class DeviceManagementCoexistenceTests {
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_lockTaskPolicy_returnsCorrectResolutionMechanism() {
         String[] originalLockTaskPackages = sDeviceState.dpc().devicePolicyManager()
-                .getLockTaskPackages(DPC_COMPONENT_NAME);
+                .getLockTaskPackages(sDeviceState.dpc().componentName());
         try {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{PACKAGE_NAME});
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{PACKAGE_NAME});
 
             PolicyState<LockTaskPolicy> policyState = getLockTaskPolicyState(
                     new NoArgsPolicyKey(LOCK_TASK_POLICY),
@@ -475,7 +473,7 @@ public final class DeviceManagementCoexistenceTests {
                             DpcAuthority.DPC_AUTHORITY));
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -486,10 +484,10 @@ public final class DeviceManagementCoexistenceTests {
     public void getDevicePolicyState_userControlDisabledPackages_returnsCorrectResolutionMechanism() {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                        DPC_COMPONENT_NAME);
+                        sDeviceState.dpc().componentName());
         try {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(),
                     Arrays.asList(sTestApp.packageName()));
 
             PolicyState<Set<String>> policyState = getStringSetPolicyState(
@@ -500,7 +498,7 @@ public final class DeviceManagementCoexistenceTests {
                     StringSetUnion.STRING_SET_UNION);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(),
                     originalDisabledPackages);
         }
     }
@@ -638,17 +636,17 @@ public final class DeviceManagementCoexistenceTests {
     @Postsubmit(reason = "new test")
     public void policyUpdateReceiver_lockTaskPolicySet_receivedPolicySetBroadcast() {
         String[] originalLockTaskPackages = sDeviceState.dpc().devicePolicyManager()
-                .getLockTaskPackages(DPC_COMPONENT_NAME);
+                .getLockTaskPackages(sDeviceState.dpc().componentName());
         try {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{PACKAGE_NAME});
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{PACKAGE_NAME});
 
             assertPolicySetResultReceived(
                     LOCK_TASK_POLICY, PolicyUpdateResult.RESULT_SUCCESS, LOCAL_USER_ID,
                     new Bundle());
         } finally {
             sDeviceState.dpc().devicePolicyManager()
-                    .setLockTaskPackages(DPC_COMPONENT_NAME, originalLockTaskPackages);
+                    .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
@@ -658,10 +656,10 @@ public final class DeviceManagementCoexistenceTests {
     public void policyUpdateReceiver_userControlDisabledPackagesSet_receivedPolicySetBroadcast() {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                        DPC_COMPONENT_NAME);
+                        sDeviceState.dpc().componentName());
         try {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(),
                     Arrays.asList(sTestApp.packageName()));
 
             assertPolicySetResultReceived(
@@ -670,7 +668,7 @@ public final class DeviceManagementCoexistenceTests {
 
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    DPC_COMPONENT_NAME,
+                    sDeviceState.dpc().componentName(),
                     originalDisabledPackages);
         }
     }

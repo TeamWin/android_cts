@@ -25,6 +25,8 @@ import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 import com.android.bedstead.harrier.annotations.RequireNotWatch;
 import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
+import com.android.queryable.annotations.Query;
+import com.android.queryable.annotations.StringQuery;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -58,6 +60,13 @@ public @interface EnsureHasDeviceOwner {
 
     /** Behaviour if the device owner cannot be set. */
     FailureMode failureMode() default FailureMode.FAIL;
+
+    /**
+     * Requirements for the DPC
+     */
+    // Default to latest version
+    Query dpc() default @Query(
+            packageName = @StringQuery(isEqualTo = "com.android.cts.RemoteDPC"));
 
     /**
      * Whether this DPC should be returned by calls to {@code Devicestate#dpc()}.
