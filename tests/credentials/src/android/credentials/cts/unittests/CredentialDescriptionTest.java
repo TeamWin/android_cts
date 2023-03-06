@@ -40,15 +40,15 @@ public class CredentialDescriptionTest {
     private static final String FLATTENED_REQUEST = "FLATTENED_REQ";
 
     @Test
-    public void testConstructor_nullType_shouldThrowNullPointerException() {
-        assertThrows(NullPointerException.class,
+    public void testConstructor_nullType_shouldThrowIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class,
                 () -> new CredentialDescription(null, FLATTENED_REQUEST,
                         Collections.emptyList()));
     }
 
     @Test
-    public void testConstructor_nullFlattenedRequest_shouldThrowNullPointerException() {
-        assertThrows(NullPointerException.class,
+    public void testConstructor_nullFlattenedRequest_shouldThrowIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class,
                 () -> new CredentialDescription(CREDENTIAL_TYPE, null,
                         Collections.emptyList()));
     }
