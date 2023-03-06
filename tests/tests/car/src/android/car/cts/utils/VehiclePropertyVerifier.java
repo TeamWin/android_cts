@@ -464,6 +464,7 @@ public class VehiclePropertyVerifier<T> {
     private void verifyCarPropertyValueSetter(CarPropertyConfig<T> carPropertyConfig,
             CarPropertyManager carPropertyManager) {
         if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
+            verifySetPropertyFails(carPropertyConfig, carPropertyManager);
             return;
         }
         if (Boolean.class.equals(carPropertyConfig.getPropertyType())) {
@@ -473,6 +474,17 @@ public class VehiclePropertyVerifier<T> {
         } else if (Float.class.equals(carPropertyConfig.getPropertyType())) {
             verifyFloatPropertySetter(carPropertyConfig, carPropertyManager);
         }
+    }
+
+    private void verifySetPropertyFails(CarPropertyConfig<T> carPropertyConfig,
+            CarPropertyManager carPropertyManager) {
+        assertThrows(
+                mPropertyName
+                        + " is a read_only property so setProperty should throw an"
+                        + " IllegalArgumentException.",
+                IllegalArgumentException.class,
+                () -> carPropertyManager.setProperty(mPropertyType, mPropertyId,
+                        carPropertyConfig.getAreaIds()[0], getDefaultValue(mPropertyType)));
     }
 
     private void verifyBooleanPropertySetter(CarPropertyConfig<T> carPropertyConfig,
@@ -675,6 +687,7 @@ public class VehiclePropertyVerifier<T> {
     private void verifyCarPropertyValueCallback(CarPropertyConfig<T> carPropertyConfig,
             CarPropertyManager carPropertyManager) {
         if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
+            verifyCallbackFails(carPropertyConfig, carPropertyManager);
             return;
         }
         int updatesPerAreaId = getUpdatesPerAreaId(mChangeMode);
@@ -703,6 +716,23 @@ public class VehiclePropertyVerifier<T> {
                         carPropertyValue.getAreaId(), CAR_PROPERTY_VALUE_SOURCE_CALLBACK);
             }
         }
+    }
+
+    private void verifyCallbackFails(CarPropertyConfig<T> carPropertyConfig,
+            CarPropertyManager carPropertyManager) {
+        int updatesPerAreaId = getUpdatesPerAreaId(mChangeMode);
+        long timeoutMillis = getRegisterCallbackTimeoutMillis(mChangeMode,
+                carPropertyConfig.getMinSampleRate());
+
+        CarPropertyValueCallback carPropertyValueCallback = new CarPropertyValueCallback(
+                mPropertyName, carPropertyConfig.getAreaIds(), updatesPerAreaId, timeoutMillis);
+        assertThrows(
+                mPropertyName
+                        + " is a write_only property so registerCallback should throw an"
+                        + " IllegalArgumentException.",
+                IllegalArgumentException.class,
+                () -> carPropertyManager.registerCallback(carPropertyValueCallback, mPropertyId,
+                    carPropertyConfig.getMaxSampleRate()));
     }
 
     private void verifyCarPropertyConfig(CarPropertyConfig<T> carPropertyConfig) {
@@ -938,6 +968,7 @@ public class VehiclePropertyVerifier<T> {
     private void verifyCarPropertyValueGetter(CarPropertyConfig<T> carPropertyConfig,
             CarPropertyManager carPropertyManager) {
         if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
+            verifyGetPropertyFails(carPropertyConfig, carPropertyManager);
             return;
         }
         for (int areaId : carPropertyConfig.getAreaIds()) {
@@ -956,6 +987,17 @@ public class VehiclePropertyVerifier<T> {
             verifyCarPropertyValue(carPropertyConfig, carPropertyValue, areaId,
                     CAR_PROPERTY_VALUE_SOURCE_GETTER);
         }
+    }
+
+    private void verifyGetPropertyFails(CarPropertyConfig<T> carPropertyConfig,
+            CarPropertyManager carPropertyManager) {
+        assertThrows(
+                mPropertyName
+                        + " is a write_only property so getProperty should throw an"
+                        + " IllegalArgumentException.",
+                IllegalArgumentException.class,
+                () -> carPropertyManager.getProperty(mPropertyId,
+                        carPropertyConfig.getAreaIds()[0]));
     }
 
     private static void verifyPropertyNotAvailableException(PropertyNotAvailableException e) {
@@ -1547,9 +1589,8 @@ public class VehiclePropertyVerifier<T> {
 
     private void verifyGetPropertiesAsync(CarPropertyConfig<T> carPropertyConfig,
             CarPropertyManager carPropertyManager) {
-        if (carPropertyConfig.getAccess() != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE
-                && carPropertyConfig.getAccess()
-                != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
+        if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
+            verifyGetPropertiesAsyncFails(carPropertyConfig, carPropertyManager);
             return;
         }
 
@@ -1584,6 +1625,24 @@ public class VehiclePropertyVerifier<T> {
                     (T) getPropertyResult.getValue(), expectedAreaId,
                     CAR_PROPERTY_VALUE_SOURCE_CALLBACK);
         }
+    }
+
+    private void verifyGetPropertiesAsyncFails(CarPropertyConfig<T> carPropertyConfig,
+            CarPropertyManager carPropertyManager) {
+        List<GetPropertyRequest> getPropertyRequests = new ArrayList<>();
+        GetPropertyRequest getPropertyRequest = carPropertyManager.generateGetPropertyRequest(
+                    mPropertyId, carPropertyConfig.getAreaIds()[0]);
+        getPropertyRequests.add(getPropertyRequest);
+        CarPropertyCallback carPropertyCallback = new CarPropertyCallback(
+                /* getPropertyResultsCount: */ 1);
+        assertThrows(
+                mPropertyName
+                        + " is a write_only property so getPropertiesAsync should throw an"
+                        + " IllegalArgumentException.",
+                IllegalArgumentException.class,
+                () -> carPropertyManager.getPropertiesAsync(getPropertyRequests,
+                        /* cancellationSignal: */ null, /* callbackExecutor: */ null,
+                        carPropertyCallback));
     }
 
     private static <U> CarPropertyValue<U> setPropertyAndWaitForChange(
