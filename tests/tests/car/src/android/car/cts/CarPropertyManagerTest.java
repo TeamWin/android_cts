@@ -780,7 +780,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.CRUISE_CONTROL_TYPE,
                             VehiclePropertyIds.CRUISE_CONTROL_STATE,
                             VehiclePropertyIds.CRUISE_CONTROL_TARGET_SPEED,
-                            VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP)
+                            VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP,
+                            VehiclePropertyIds
+                                    .ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1282,6 +1284,21 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testAdaptiveCruiseControlLeadVehicleMeasuredDistanceIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                        Integer.class)
+                .requireMinMaxValues()
+                .requireMinValuesToBeZero()
+                .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
                 .verify(mCarPropertyManager);
     }
