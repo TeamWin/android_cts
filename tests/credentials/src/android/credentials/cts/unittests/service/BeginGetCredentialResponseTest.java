@@ -43,10 +43,11 @@ import java.util.List;
 @AppModeFull(reason = "unit test")
 @RunWith(AndroidJUnit4.class)
 public class BeginGetCredentialResponseTest {
-    private static final BeginGetCredentialOption sCredOption2 = new BeginGetCredentialOption("id2",
-            "type2", Bundle.EMPTY);
+    private static final BeginGetCredentialOption sCredOption2 =
+            new BeginGetCredentialOption("id2", "type2", Bundle.EMPTY);
 
-    private static final Slice sSlice = new Slice.Builder(Uri.parse("foo://bar"), null).addText(
+    private static final Slice sSlice = new Slice.Builder(Uri.parse("foo://bar"),
+            null).addText(
             "some text", null, List.of(Slice.HINT_TITLE)).build();
 
     private static final Action sAction = new Action(sSlice);
@@ -54,6 +55,8 @@ public class BeginGetCredentialResponseTest {
 
     private static final RemoteEntry sRemoteCred = new RemoteEntry(sSlice);
     private static final CredentialEntry sCred = new CredentialEntry(sCredOption2, sSlice);
+    private static final CredentialEntry sCred2 = new CredentialEntry(sCredOption2.getId(),
+            sCredOption2.getType(), sSlice);
 
     @Test
     public void testBuilder_addCredentialEntry_null() {
@@ -94,7 +97,8 @@ public class BeginGetCredentialResponseTest {
     @Test
     public void testBuilder_setCredentialEntries_nullItem() {
         Assert.assertThrows(NullPointerException.class,
-                () -> new BeginGetCredentialResponse.Builder().setCredentialEntries(List.of(null)));
+                () -> new BeginGetCredentialResponse.Builder().setCredentialEntries(
+                        List.of(null)));
     }
 
     @Test
@@ -114,14 +118,15 @@ public class BeginGetCredentialResponseTest {
     public void testBuilder_add_build() {
         final BeginGetCredentialResponse response =
                 new BeginGetCredentialResponse.Builder().setRemoteCredentialEntry(
-                        sRemoteCred).addCredentialEntry(sCred).addAction(
-                        sAction).addAuthenticationAction(sAuthAction).build();
+                        sRemoteCred).addCredentialEntry(sCred)
+                        .addCredentialEntry(sCred2).addAction(sAction)
+                        .addAuthenticationAction(sAuthAction).build();
 
         assertThat(response.getRemoteCredentialEntry()).isSameInstanceAs(sRemoteCred);
-        assertThat(response.getCredentialEntries()).containsExactly(sCred);
+        assertThat(response.getCredentialEntries()).containsExactlyElementsIn(
+                List.of(sCred, sCred2));
         assertThat(response.getActions()).containsExactly(sAction);
         assertThat(response.getAuthenticationActions()).containsExactly(sAuthAction);
-
     }
 
     @Test
