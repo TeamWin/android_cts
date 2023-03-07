@@ -25,6 +25,8 @@ import static org.junit.Assert.assertThrows;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ActivityManager.RunningTaskInfo;
+import android.app.ActivityOptions;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.car.Car;
@@ -49,8 +51,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @RunWith(JUnit4.class)
 public class CarActivityManagerTest {
@@ -82,7 +86,8 @@ public class CarActivityManagerTest {
         mUiAutomation.adoptShellPermissionIdentity(
                 Car.PERMISSION_CONTROL_CAR_APP_LAUNCH,  // for CAM.setPersistentActivity
                 // to launch an Activity in the virtual display
-                Manifest.permission.ACTIVITY_EMBEDDING);
+                Manifest.permission.ACTIVITY_EMBEDDING,
+                Manifest.permission.MANAGE_ACTIVITY_TASKS /* for CAM.getVisibleTasks */);
         mCarActivityManager =
             (CarActivityManager) car.getCarManager(Car.CAR_ACTIVITY_SERVICE);
         assertThat(mCarActivityManager).isNotNull();
@@ -197,6 +202,48 @@ public class CarActivityManagerTest {
 
             assertThat(TestActivity.sInstance.getDisplay().getDisplayId())
                     .isEqualTo(secondaryDisplayId);
+        }
+    }
+
+    @ApiTest(apis = {"android.car.app.CarActivityManager#getVisibleTasks()"})
+    @Test
+    public void testGetVisibleTasks() throws Exception {
+        // launch the activity
+        Intent startIntent = Intent.makeMainActivity(mTestActivity)
+                .addFlags(FLAG_ACTIVITY_NEW_TASK);
+        TestActivity activity = (TestActivity) mInstrumentation.startActivitySync(
+                startIntent, /* option */ null);
+
+        List<RunningTaskInfo> tasks = mCarActivityManager.getVisibleTasks();
+        List<RunningTaskInfo> filteredTasks = tasks.stream()
+                .filter(t -> t.topActivity.getClassName().equals(TestActivity.class.getName()))
+                .collect(Collectors.toList());
+        assertThat(filteredTasks).hasSize(1);
+        assertThat(filteredTasks.get(0).isVisible()).isTrue();
+        assertThat(filteredTasks.get(0).getDisplayId()).isEqualTo(0);
+    }
+
+    @ApiTest(apis = {"android.car.app.CarActivityManager#getVisibleTasks(int)"})
+    @Test
+    public void testGetVisibleTasksByDisplayId() throws Exception {
+        try (VirtualDisplaySession session = new VirtualDisplaySession()) {
+            // create a secondary virtual display
+            Display virtualDisplay = session.createDisplay(mContext,
+                    /* width= */ 400, /* height= */ 300, /* density= */ 120, /* private= */ true);
+            assertThat(virtualDisplay).isNotNull();
+            int displayId = virtualDisplay.getDisplayId();
+
+            // launch the activity
+            Intent startIntent = Intent.makeMainActivity(mTestActivity)
+                    .addFlags(FLAG_ACTIVITY_NEW_TASK);
+            ActivityOptions options = ActivityOptions.makeBasic().setLaunchDisplayId(displayId);
+            TestActivity activity = (TestActivity) mInstrumentation.startActivitySync(
+                    startIntent, options.toBundle());
+
+            List<RunningTaskInfo> tasks = mCarActivityManager.getVisibleTasks(displayId);
+            assertThat(tasks).hasSize(1);
+            assertThat(tasks.get(0).isVisible()).isTrue();
+            assertThat(tasks.get(0).getDisplayId()).isEqualTo(displayId);
         }
     }
 
