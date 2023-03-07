@@ -37,6 +37,7 @@ import android.service.autofill.UserData;
 import android.util.Log;
 import android.util.Pair;
 import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
 
@@ -941,6 +942,14 @@ public final class CannedFillResponse {
              */
             public Builder setField(String id, String text) {
                 return setField(id, AutofillValue.forText(text));
+            }
+
+            /**
+             * Sets the canned value of a text field applicable for all hints.
+             * This is applicable to PCC related datasets entry only.
+             */
+            public Builder setField(String text) {
+                return setField(AutofillManager.ANY_HINT, AutofillValue.forText(text));
             }
 
             /**
