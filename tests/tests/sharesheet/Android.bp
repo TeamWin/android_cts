@@ -47,6 +47,7 @@ android_test {
         ":CtsSharesheetExcludeTester",
         ":CtsSharesheetActivityLabelTester",
         ":CtsSharesheetIntentFilterLabelTester",
+        ":CtsSharesheetAlternateType",
     ],
     per_testcase_directory: true,
 }
