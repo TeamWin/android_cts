@@ -1269,7 +1269,7 @@ public class VideoEncoderTest extends MediaTestBase {
         return encoder;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}x{3}_{4}_{5})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{2}x{3}_{4}_{5}")
     public static Collection<Object[]> input() {
         final String[] mediaTypesList = new String[] {
                 MediaFormat.MIMETYPE_VIDEO_AVC,

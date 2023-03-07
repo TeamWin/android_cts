@@ -181,7 +181,7 @@ public class EncodeDecodeTest {
         assumeTrue(MediaUtils.supports(mDecoderName, format));
     }
 
-    @Parameterized.Parameters(name = "{index}({0}:{1})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}")
     public static Collection<Object[]> input() {
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Mime, width, height, bit-rate, allow bt601, allow bt709

@@ -277,7 +277,7 @@ public class AdaptivePlaybackTest extends MediaTestBase {
         return argsList;
     }
 
-    @Parameterized.Parameters(name = "{index}({0})")
+    @Parameterized.Parameters(name = "{index}_{0}")
     public static Collection<Object[]> input() {
         final List<Object> exhaustiveArgsList = Arrays.asList(new Object[]{
                 H264(), HEVC(), VP8(), VP9(), AV1(), Mpeg2(), Mpeg4(), H263()

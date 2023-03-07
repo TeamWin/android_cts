@@ -229,7 +229,7 @@ public class DecodeEditEncodeTest {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{4}_{5})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{2}_{3}_{4}_{5}")
     public static Collection<Object[]> input() {
         final List<Object[]> baseArgsList = Arrays.asList(new Object[][]{
                 // width, height, bitrate
