@@ -51,7 +51,7 @@ public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
     // Returns the list of parameters with mimeTypes and their hardware decoders supporting the
     // AdaptivePlayback feature combining with sync and async modes.
     // Parameters {0}_{1}_{2} -- Mime_DecoderName_isAsync
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{2}")
     public static Collection<Object[]> inputParams() {
         return prepareArgumentsList(new String[]{
                 MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback});

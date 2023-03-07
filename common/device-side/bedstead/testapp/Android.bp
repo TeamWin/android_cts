@@ -49,6 +49,7 @@ android_library {
         "androidx.annotation_annotation",
         "TestApp_TestApps",
         "TestApp_JavaProtos",
+        "QueryableCommonAndroid"
     ],
     manifest: "src/library/main/AndroidManifest.xml",
     min_sdk_version: "29",
@@ -79,6 +80,7 @@ android_test {
     ],
     manifest: "src/test/AndroidManifest.xml",
     min_sdk_version: "29",
+    plugins: ["auto_annotation_plugin"],
 }
 
 python_binary_host {
@@ -109,6 +111,10 @@ java_genrule {
         ":DelegateTestApp",
         ":DevicePolicyManagementRoleHolderTestApp",
         ":RemoteDPCTestApp",
+        ":RemoteDPCTestAppTargetingV23",
+        ":RemoteDPCTestAppTargetingV24",
+        ":RemoteDPCTestAppTargetingV28",
+        ":RemoteDPCTestAppTargetingV30",
         ":DialerApp",
         ":SmsApp",
         ":AccountManagementApp",
@@ -131,6 +137,10 @@ java_genrule {
         " && cp $(location :DelegateTestApp) $(genDir)/res/raw" +
         " && cp $(location :DevicePolicyManagementRoleHolderTestApp) $(genDir)/res/raw" +
         " && cp $(location :RemoteDPCTestApp) $(genDir)/res/raw" +
+        " && cp $(location :RemoteDPCTestAppTargetingV23) $(genDir)/res/raw" +
+        " && cp $(location :RemoteDPCTestAppTargetingV24) $(genDir)/res/raw" +
+        " && cp $(location :RemoteDPCTestAppTargetingV28) $(genDir)/res/raw" +
+        " && cp $(location :RemoteDPCTestAppTargetingV30) $(genDir)/res/raw" +
         " && cp $(location :DialerApp) $(genDir)/res/raw" +
         " && cp $(location :SmsApp) $(genDir)/res/raw" +
         " && cp $(location :AccountManagementApp) $(genDir)/res/raw" +
@@ -229,6 +239,62 @@ android_test_helper_app {
     additional_manifests: ["CommonManifest.xml"],
     min_sdk_version: "29",
     sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "RemoteDPCTestAppTargetingV23",
+    static_libs: [
+        "TestApp_TestApps",
+    ],
+    resource_dirs: ["src/testapps/main/res/device_admin"],
+    manifest: "manifests/RemoteDPCManifest.xml",
+    additional_manifests: ["CommonManifest.xml"],
+    aaptflags: [
+        "--rename-manifest-package com.android.cts.RemoteDPCV23",
+    ],
+    target_sdk_version: "23",
+}
+
+android_test_helper_app {
+    name: "RemoteDPCTestAppTargetingV24",
+    static_libs: [
+        "TestApp_TestApps",
+    ],
+    resource_dirs: ["src/testapps/main/res/device_admin"],
+    manifest: "manifests/RemoteDPCManifest.xml",
+    additional_manifests: ["CommonManifest.xml"],
+    aaptflags: [
+        "--rename-manifest-package com.android.cts.RemoteDPCV24",
+    ],
+    target_sdk_version: "24",
+}
+
+android_test_helper_app {
+    name: "RemoteDPCTestAppTargetingV28",
+    static_libs: [
+        "TestApp_TestApps",
+    ],
+    resource_dirs: ["src/testapps/main/res/device_admin"],
+    manifest: "manifests/RemoteDPCManifest.xml",
+    additional_manifests: ["CommonManifest.xml"],
+    aaptflags: [
+        "--rename-manifest-package com.android.cts.RemoteDPCV28",
+    ],
+    target_sdk_version: "28",
+}
+
+android_test_helper_app {
+    name: "RemoteDPCTestAppTargetingV30",
+    static_libs: [
+        "TestApp_TestApps",
+    ],
+    resource_dirs: ["src/testapps/main/res/device_admin"],
+    manifest: "manifests/RemoteDPCManifest.xml",
+    additional_manifests: ["CommonManifest.xml"],
+    aaptflags: [
+        "--rename-manifest-package com.android.cts.RemoteDPCV30",
+    ],
+    target_sdk_version: "30",
 }
 
 android_test_helper_app {

@@ -19,8 +19,6 @@ package android.devicepolicy.cts;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
 
-import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
@@ -189,7 +187,8 @@ public class NoAdminLeakingTest {
     public void testTrustAgentConfiguration_adminPolicyNotAvailableToNonAdmin() {
         assertOnlyAggregatePolicyAvailableToNonAdmin(
                 (dpm, who) -> dpm.getTrustAgentConfiguration(who,
-                        DPC_COMPONENT_NAME /* agent component, need to be non-null */));
+                        sDeviceState.dpc().componentName()
+                        /* agent component, need to be non-null */));
     }
 
     // TODO(b/210996030): replace this with test method parametrization and separate "null" case.
@@ -202,7 +201,8 @@ public class NoAdminLeakingTest {
             SecurityException adminPackageEx = null;
             try {
                 // Requesting policy for an admin from a different app should throw.
-                accessor.accept(testApp.devicePolicyManager(), DPC_COMPONENT_NAME);
+                accessor.accept(testApp.devicePolicyManager(),
+                        sDeviceState.dpc().componentName());
                 fail("Checking particular admin policy shouldn't be allowed for non admin");
             } catch (SecurityException e) {
                 adminPackageEx = e;
@@ -221,7 +221,7 @@ public class NoAdminLeakingTest {
             // Both exceptions should have the same message (except package name) to avoid revealing
             // admin existence.
             String adminMessage = adminPackageEx.getMessage()
-                    .replace(DPC_COMPONENT_NAME.toString(), "");
+                    .replace(sDeviceState.dpc().componentName().toString(), "");
             String nonexistentMessage = nonexistentPackageEx.getMessage()
                     .replace(nonexistentComponent.toString(), "");
             assertThat(adminMessage).isEqualTo(nonexistentMessage);

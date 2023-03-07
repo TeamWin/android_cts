@@ -63,7 +63,7 @@ public class MultiEncoderPerfTest extends MultiCodecPerfTestBase {
     // Returns the params list with the mime and their hardware encoders in
     // both sync and async modes.
     // Parameters {0}_{2}_{3} -- Mime_EncoderName_isAsync
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{2}")
     public static Collection<Object[]> inputParams() {
         final List<Object[]> argsList = new ArrayList<>();
         for (String mime : mMimeList) {

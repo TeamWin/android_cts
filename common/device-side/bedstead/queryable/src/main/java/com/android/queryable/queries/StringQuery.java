@@ -30,4 +30,10 @@ public interface StringQuery<E extends Queryable> extends NullableQuery<E, Strin
         return new StringQueryHelper.StringQueryBase();
     }
 
+    /** Require the {@link String} starts with {@code string}. */
+    E startsWith(String string);
+
+    /** Require the {@link String} matches the requirements of the query annotation. */
+    E matchesAnnotation(com.android.queryable.annotations.StringQuery queryAnnotation);
+
 }

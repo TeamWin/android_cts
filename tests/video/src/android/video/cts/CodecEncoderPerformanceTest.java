@@ -53,7 +53,7 @@ public class CodecEncoderPerformanceTest extends CodecEncoderPerformanceTestBase
                 isAsync, maxBFrames);
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{2}_{3}_{5}_{6}_{7}_{8})")
+    @Parameterized.Parameters(name = "{index}_{0}_{2}_{3}_{5}_{6}_{7}_{8}")
     public static Collection<Object[]> input() throws IOException {
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Filename, Recommended AVC bitrate

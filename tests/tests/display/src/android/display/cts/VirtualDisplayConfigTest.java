@@ -33,7 +33,7 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
+import java.util.Set;
 
 @RunWith(AndroidJUnit4.class)
 public class VirtualDisplayConfigTest {
@@ -53,7 +53,7 @@ public class VirtualDisplayConfigTest {
                 new VirtualDisplayConfig.Builder(NAME, WIDTH, HEIGHT, DENSITY)
                         .setFlags(FLAGS)
                         .setSurface(surface)
-                        .setDisplayCategories(Arrays.asList("C1", "C2"))
+                        .setDisplayCategories(Set.of("C1", "C2"))
                         .addDisplayCategory("C3")
                         .setRequestedRefreshRate(REQUESTED_REFRESH_RATE)
                         .build();

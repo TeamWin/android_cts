@@ -27,6 +27,7 @@ java_library_host {
         "auto_value_annotations",
         "guava",
         "NeneCommon",
+        "QueryableCommon",
         "truth-prebuilt",
     ],
 
@@ -44,6 +45,7 @@ android_library {
         "auto_value_annotations",
         "guava",
         "NeneCommonAndroid",
+        "QueryableCommonAndroid",
         "truth-prebuilt",
     ],
 

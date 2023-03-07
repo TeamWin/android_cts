@@ -19,7 +19,6 @@ package android.devicepolicy.cts;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
-import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -84,7 +83,7 @@ public class LockTest {
 
             assertThat(metrics.query()
                     .whereType().isEqualTo(EventId.LOCK_NOW_VALUE)
-                    .whereAdminPackageName().isEqualTo(DPC_COMPONENT_NAME.getPackageName())
+                    .whereAdminPackageName().isEqualTo(sDeviceState.dpc().packageName())
                     .whereInteger().isEqualTo(0)
             ).wasLogged();
         }
