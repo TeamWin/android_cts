@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+
 import junit.framework.Assert;
 
 public class ResourceManagerStubActivity extends Activity {
@@ -66,7 +67,8 @@ public class ResourceManagerStubActivity extends Activity {
         }
     }
 
-    public void testReclaimResource(int type1, int type2) throws InterruptedException {
+    public void testReclaimResource(int type1, int type2, boolean highResolution)
+            throws InterruptedException {
         mType1 = type1;
         mType2 = type2;
         if (type1 != ResourceManagerTestActivityBase.TYPE_MIX && type1 != type2) {
@@ -83,11 +85,13 @@ public class ResourceManagerStubActivity extends Activity {
                     Intent intent1 = new Intent(context, ResourceManagerTestActivity1.class);
                     intent1.putExtra("test-type", mType1);
                     intent1.putExtra("wait-for-reclaim", mWaitForReclaim);
+                    intent1.putExtra("high-resolution", highResolution);
                     startActivityForResult(intent1, mRequestCodes[0]);
                     Thread.sleep(5000);  // wait for process to launch and allocate all codecs.
 
                     Intent intent2 = new Intent(context, ResourceManagerTestActivity2.class);
                     intent2.putExtra("test-type", mType2);
+                    intent2.putExtra("high-resolution", highResolution);
                     startActivityForResult(intent2, mRequestCodes[1]);
 
                     synchronized (mFinishEvent) {
