@@ -110,7 +110,7 @@ public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{4})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{4}")
     public static Collection<Object[]> input() {
         addParams(25000000, 1920, 1080, BIRTHDAY_FULLHD_LANDSCAPE);
         addParams(25000000, 1080, 1920, SELFIEGROUP_FULLHD_PORTRAIT);

@@ -160,7 +160,7 @@ public class VideoDecodeEditEncodeTest {
         mMediaType = mediaType;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = false;
