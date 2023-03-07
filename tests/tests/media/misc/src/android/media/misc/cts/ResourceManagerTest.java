@@ -33,41 +33,71 @@ public class ResourceManagerTest
         super("android.media.misc.cts", ResourceManagerStubActivity.class);
     }
 
-    private void doTestReclaimResource(int type1, int type2) throws Exception {
+    private void doTestReclaimResource(int type1, int type2, boolean highResolution)
+            throws Exception {
         Bundle extras = new Bundle();
         ResourceManagerStubActivity activity = launchActivity(
                 "android.media.misc.cts", ResourceManagerStubActivity.class, extras);
-        activity.testReclaimResource(type1, type2);
+        activity.testReclaimResource(type1, type2, highResolution);
         activity.finish();
     }
 
     public void testReclaimResourceNonsecureVsNonsecure() throws Exception {
         doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_NONSECURE,
-                ResourceManagerTestActivityBase.TYPE_NONSECURE);
+                ResourceManagerTestActivityBase.TYPE_NONSECURE, false);
     }
 
     public void testReclaimResourceNonsecureVsSecure() throws Exception {
         doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_NONSECURE,
-                ResourceManagerTestActivityBase.TYPE_SECURE);
+                ResourceManagerTestActivityBase.TYPE_SECURE, false);
     }
 
     public void testReclaimResourceSecureVsNonsecure() throws Exception {
         doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_SECURE,
-                ResourceManagerTestActivityBase.TYPE_NONSECURE);
+                ResourceManagerTestActivityBase.TYPE_NONSECURE, false);
     }
 
     public void testReclaimResourceSecureVsSecure() throws Exception {
         doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_SECURE,
-                ResourceManagerTestActivityBase.TYPE_SECURE);
+                ResourceManagerTestActivityBase.TYPE_SECURE, false);
     }
 
     public void testReclaimResourceMixVsNonsecure() throws Exception {
         doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_MIX,
-                ResourceManagerTestActivityBase.TYPE_NONSECURE);
+                ResourceManagerTestActivityBase.TYPE_NONSECURE, false);
     }
 
     public void testReclaimResourceMixVsSecure() throws Exception {
         doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_MIX,
-                ResourceManagerTestActivityBase.TYPE_SECURE);
+                ResourceManagerTestActivityBase.TYPE_SECURE, false);
+    }
+
+    public void testReclaimResourceNonsecureVsNonsecureHighResolution() throws Exception {
+        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_NONSECURE,
+                ResourceManagerTestActivityBase.TYPE_NONSECURE, true);
+    }
+
+    public void testReclaimResourceNonsecureVsSecureHighResolution() throws Exception {
+        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_NONSECURE,
+                ResourceManagerTestActivityBase.TYPE_SECURE, true);
+    }
+
+    public void testReclaimResourceSecureVsNonsecureHighResolution() throws Exception {
+        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_SECURE,
+                ResourceManagerTestActivityBase.TYPE_NONSECURE, true);
+    }
+
+    public void testReclaimResourceSecureVsSecureHighResolution() throws Exception {
+        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_SECURE,
+                ResourceManagerTestActivityBase.TYPE_SECURE, true);
+    }
+
+    public void testReclaimResourceMixVsNonsecureHighResolution() throws Exception {
+        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_MIX,
+                ResourceManagerTestActivityBase.TYPE_NONSECURE, true);
+    }
+    public void testReclaimResourceMixVsSecureHighResolution() throws Exception {
+        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_MIX,
+                ResourceManagerTestActivityBase.TYPE_SECURE, true);
     }
 }

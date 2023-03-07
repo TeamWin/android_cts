@@ -25,6 +25,7 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.os.Bundle;
 import android.util.Log;
+
 import java.io.IOException;
 import java.util.Vector;
 
@@ -65,11 +66,22 @@ public class ResourceManagerTestActivityBase extends Activity {
 
     private MediaCodec.Callback mCallback = new TestCodecCallback();
 
-    private MediaFormat getTestFormat(CodecCapabilities caps, boolean securePlayback) {
+    private MediaFormat getTestFormat(CodecCapabilities caps, boolean securePlayback,
+            boolean highResolution) {
         VideoCapabilities vcaps = caps.getVideoCapabilities();
-        int width = vcaps.getSupportedWidths().getLower();
-        int height = vcaps.getSupportedHeightsFor(width).getLower();
-        int bitrate = vcaps.getBitrateRange().getLower();
+        int width = 0;
+        int height = 0;
+        int bitrate = 0;
+
+        if (highResolution) {
+            width = vcaps.getSupportedWidths().getUpper();
+            height = vcaps.getSupportedHeightsFor(width).getUpper();
+            bitrate = vcaps.getBitrateRange().getUpper();
+        } else {
+            width = vcaps.getSupportedWidths().getLower();
+            height = vcaps.getSupportedHeightsFor(width).getLower();
+            bitrate = vcaps.getBitrateRange().getLower();
+        }
 
         MediaFormat format = MediaFormat.createVideoFormat(MIME, width, height);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, caps.colorFormats[0]);
@@ -116,9 +128,11 @@ public class ResourceManagerTestActivityBase extends Activity {
     protected int allocateCodecs(int max) {
         Bundle extras = getIntent().getExtras();
         int type = TYPE_NONSECURE;
+        boolean highResolution = false;
         if (extras != null) {
             type = extras.getInt("test-type", type);
-            Log.d(TAG, "type is: " + type);
+            highResolution = extras.getBoolean("high-resolution", highResolution);
+            Log.d(TAG, "type is: " + type + " high-resolution: " + highResolution);
         }
 
         boolean shouldSkip = false;
@@ -127,7 +141,7 @@ public class ResourceManagerTestActivityBase extends Activity {
             securePlayback = false;
             MediaCodecInfo info = getTestCodecInfo(securePlayback);
             if (info != null) {
-                allocateCodecs(max, info, securePlayback);
+                allocateCodecs(max, info, securePlayback, highResolution);
             } else {
                 shouldSkip = true;
             }
@@ -138,7 +152,7 @@ public class ResourceManagerTestActivityBase extends Activity {
                 securePlayback = true;
                 MediaCodecInfo info = getTestCodecInfo(securePlayback);
                 if (info != null) {
-                    allocateCodecs(max, info, securePlayback);
+                    allocateCodecs(max, info, securePlayback, highResolution);
                 } else {
                     shouldSkip = true;
                 }
@@ -154,10 +168,11 @@ public class ResourceManagerTestActivityBase extends Activity {
         return mCodecs.size();
     }
 
-    protected void allocateCodecs(int max, MediaCodecInfo info, boolean securePlayback) {
+    protected void allocateCodecs(int max, MediaCodecInfo info, boolean securePlayback,
+            boolean highResolution) {
         String name = info.getName();
         CodecCapabilities caps = info.getCapabilitiesForType(MIME);
-        MediaFormat format = getTestFormat(caps, securePlayback);
+        MediaFormat format = getTestFormat(caps, securePlayback, highResolution);
         MediaCodec codec = null;
         for (int i = mCodecs.size(); i < max; ++i) {
             try {
