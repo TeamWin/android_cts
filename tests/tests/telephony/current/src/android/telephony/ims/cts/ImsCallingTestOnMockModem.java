@@ -109,6 +109,10 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
             sSupportsImsHal = true;
         }
 
+        if (!sSupportsImsHal) {
+            return;
+        }
+
         enforceMockModemDeveloperSetting();
         sMockModemManager = new MockModemManager();
         assertNotNull(sMockModemManager);
@@ -144,6 +148,10 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
             return;
         }
 
+        if (!sSupportsImsHal) {
+            return;
+        }
+
         afterAllTestsBase();
 
         // Rebind all interfaces which is binding to MockModemService to default.
@@ -157,9 +165,8 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
 
     @Before
     public void beforeTest() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
-            return;
-        }
+        assumeTrue(ImsUtils.shouldTestImsService());
+        assumeTrue(sSupportsImsHal);
 
         if (sMockModemManager != null) {
             sMockModemManager.resetImsAllLatchCountdown();
@@ -169,6 +176,10 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
     @After
     public void afterTest() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        if (!sSupportsImsHal) {
             return;
         }
 
@@ -205,6 +216,7 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
 
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
 
+        TimeUnit.MILLISECONDS.sleep(WAIT_UPDATE_TIMEOUT_MS);
         TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
                 .getImsCallsession();
 
@@ -432,6 +444,7 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
 
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
 
+        TimeUnit.MILLISECONDS.sleep(WAIT_UPDATE_TIMEOUT_MS);
         TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
                 .getImsCallsession();
 
