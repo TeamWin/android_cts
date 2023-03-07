@@ -238,7 +238,7 @@ public class TvInputServiceTest {
         @Override
         public void onAvailableSpeeds(String inputId, float[] speeds) {
             mTimeShiftSpeedsCount++;
-            mTimeShiftSpeeds = new float[]{};
+            mTimeShiftSpeeds = speeds;
         }
 
         @Override
