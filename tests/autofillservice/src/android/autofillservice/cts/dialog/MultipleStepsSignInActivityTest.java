@@ -30,7 +30,6 @@ import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.content.Intent;
-import android.util.Log;
 
 import org.junit.After;
 import org.junit.Test;
@@ -42,6 +41,7 @@ import org.junit.Test;
  */
 public class MultipleStepsSignInActivityTest extends AutoFillServiceTestCase.ManualActivityLaunch {
     MultipleStepsSignInActivity mActivity;
+
     @After
     public void teardown() {
         if (mActivity != null) {
@@ -49,6 +49,7 @@ public class MultipleStepsSignInActivityTest extends AutoFillServiceTestCase.Man
         }
         mActivity = null;
     }
+
     @Test
     public void testShowFillDialog_contentChanged_shownFillDialog() throws Exception {
         // Enable feature and test service
@@ -130,11 +131,10 @@ public class MultipleStepsSignInActivityTest extends AutoFillServiceTestCase.Man
         // Start activity
         mActivity = startMultipleStepsSignInActivity();
 
-        Log.e("tymtest", "autofill etst 1");
         // Check onFillRequest has the flag: FLAG_SUPPORTS_FILL_DIALOG
         final InstrumentedAutoFillService.FillRequest fillRequest = sReplier.getNextFillRequest();
         assertHasFlags(fillRequest.flags, FLAG_SUPPORTS_FILL_DIALOG);
-        Log.e("tymtest", "autofill etst 2");
+
         // Set response for second page
         final CannedFillResponse.Builder builder2 = new CannedFillResponse.Builder()
                 .addDataset(new CannedFillResponse.CannedDataset.Builder()
