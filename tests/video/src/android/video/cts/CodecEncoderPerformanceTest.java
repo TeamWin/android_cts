@@ -24,6 +24,8 @@ import android.util.Log;
 
 import androidx.test.filters.LargeTest;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -121,6 +123,8 @@ public class CodecEncoderPerformanceTest extends CodecEncoderPerformanceTestBase
     /**
      * Validates performance of hardware accelerated video encoders
      */
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_PRIORITY",
+            "android.media.MediaFormat#KEY_OPERATING_RATE"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testPerformanceOfHardwareVideoEncoders() throws IOException, InterruptedException {
