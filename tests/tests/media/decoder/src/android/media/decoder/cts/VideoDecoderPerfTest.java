@@ -121,7 +121,7 @@ public class VideoDecoderPerfTest extends MediaTestBase {
         return argsList;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}:{3})")
+    @Parameterized.Parameters(name = "{index}_{0}_{3}")
     public static Collection<Object[]> input() {
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // MediaType, resources, graphics display resolution

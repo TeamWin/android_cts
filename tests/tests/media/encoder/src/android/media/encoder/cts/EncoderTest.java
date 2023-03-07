@@ -156,7 +156,7 @@ public class EncoderTest {
         return argsList;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{4}_{5})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{2}_{3}_{4}_{5}")
     public static Collection<Object[]> input() {
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Audio - CodecMime, arrays of profiles, bit-rates, sample rates, channel counts

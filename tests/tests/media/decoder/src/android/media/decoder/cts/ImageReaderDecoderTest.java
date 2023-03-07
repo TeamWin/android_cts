@@ -124,7 +124,7 @@ public class ImageReaderDecoderTest {
         mTestId = testId;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{4})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{4}")
     public static Collection<Object[]> input() {
         final List<Object[]> argsList = new ArrayList<>();
         for (MediaAssets assets : ASSETS) {
