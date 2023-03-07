@@ -87,8 +87,9 @@ public class CtsSharesheetDeviceTest {
             "android.sharesheet.cts.CHOOSER_CUSTOM_ACTION_BROADCAST_ACTION";
     private static final String CHOOSER_REFINEMENT_BROADCAST_ACTION =
             "android.sharesheet.cts.CHOOSER_REFINEMENT_BROADCAST_ACTION";
-    static final String CTS_DATA_TYPE = "test/cts"; // Special CTS mime type
-    static final String CATEGORY_CTS_TEST = "CATEGORY_CTS_TEST";
+    private static final String CTS_DATA_TYPE = "test/cts"; // Special CTS mime type
+    private static final String CTS_ALTERNATE_DATA_TYPE = "test/cts_alternate";
+    private static final String CATEGORY_CTS_TEST = "CATEGORY_CTS_TEST";
 
     private Context mContext;
     private Instrumentation mInstrumentation;
@@ -286,12 +287,17 @@ public class CtsSharesheetDeviceTest {
         }
     }
 
+    // Launch the chooser with an EXTRA_INTENT of type "test/cts" and EXTRA_ALTERNATE_INTENTS with
+    // one of "test/cts_alternate". Both of these will match CtsSharesheetDeviceActivity. Choose
+    // that target, then in the refinement process, select the "test/cts_alternate" option and
+    // then verify that the alternate type is seen by the activity in the end.
     @Test
     public void testRefinementIntentSender() throws InterruptedException {
         if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
 
         final CountDownLatch broadcastInvoked = new CountDownLatch(1);
         final CountDownLatch chooserCallbackInvoked = new CountDownLatch(1);
+        final CountDownLatch appStarted = new CountDownLatch(1);
 
         BroadcastReceiver refinementReceiver = new BroadcastReceiver() {
             @Override
@@ -300,9 +306,18 @@ public class CtsSharesheetDeviceTest {
                 // Call back the sharesheet to complete the share.
                 ResultReceiver resultReceiver = intent.getParcelableExtra(
                         Intent.EXTRA_RESULT_RECEIVER, ResultReceiver.class);
+
+                Intent mainIntent = intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
+                assertEquals(CTS_DATA_TYPE, mainIntent.getType());
+
+                Intent[] alternates = intent.getParcelableArrayExtra(
+                        Intent.EXTRA_ALTERNATE_INTENTS, Intent.class);
+                assertEquals(1, alternates.length);
+                assertEquals(CTS_ALTERNATE_DATA_TYPE, alternates[0].getType());
+
                 Bundle bundle = new Bundle();
-                bundle.putParcelable(Intent.EXTRA_INTENT,
-                        intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class));
+                bundle.putParcelable(Intent.EXTRA_INTENT, alternates[0]);
+
                 resultReceiver.send(Activity.RESULT_OK, bundle);
                 broadcastInvoked.countDown();
             }
@@ -314,6 +329,13 @@ public class CtsSharesheetDeviceTest {
                 chooserCallbackInvoked.countDown();
             }
         };
+
+        CtsSharesheetDeviceActivity.setOnIntentReceivedConsumer(intent -> {
+            // Ensure that the app was started with the alternate type chosen by refinement.
+            assertEquals(CTS_ALTERNATE_DATA_TYPE, intent.getType());
+            appStarted.countDown();
+        });
+
         mContext.registerReceiver(chooserCallbackReceiver,
                 new IntentFilter(ACTION_INTENT_SENDER_FIRED_ON_CLICK),
                 Context.RECEIVER_EXPORTED);
@@ -329,6 +351,9 @@ public class CtsSharesheetDeviceTest {
             Intent shareIntent = createShareIntent(false, 0, 0, null);
             shareIntent.putExtra(Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER,
                     refinement.getIntentSender());
+            Intent alternateIntent = new Intent(Intent.ACTION_SEND);
+            alternateIntent.setType(CTS_ALTERNATE_DATA_TYPE);
+            shareIntent.putExtra(Intent.EXTRA_ALTERNATE_INTENTS, new Intent[] {alternateIntent});
             mContext.registerReceiver(
                     refinementReceiver, new IntentFilter(CHOOSER_REFINEMENT_BROADCAST_ACTION),
                     Context.RECEIVER_EXPORTED);
@@ -336,8 +361,50 @@ public class CtsSharesheetDeviceTest {
             findTextContains(mAppLabel).click();
             assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
             assertTrue(chooserCallbackInvoked.await(1000, TimeUnit.MILLISECONDS));
+            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
         } finally {
             mContext.unregisterReceiver(refinementReceiver);
+            mContext.unregisterReceiver(chooserCallbackReceiver);
+            closeSharesheet();
+        }
+    }
+
+    // Launch the chooser with an EXTRA_INTENT of type "test/cts" and EXTRA_ALTERNATE_INTENTS with
+    // one of "test/cts_alternate". Ensure that the "alternate type" app, which only accepts
+    // "test/cts_alternate" shows up and can be chosen.
+    @Test
+    public void testAlternateTargetsShown() throws InterruptedException {
+        if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
+
+        final CountDownLatch chooserCallbackInvoked = new CountDownLatch(1);
+
+        BroadcastReceiver chooserCallbackReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                ComponentName chosenComponent = intent.getParcelableExtra(
+                        Intent.EXTRA_CHOSEN_COMPONENT, ComponentName.class);
+                assertEquals("android.sharesheet.cts.packages.alternatetype",
+                        chosenComponent.getPackageName());
+                assertEquals("android.sharesheet.cts.packages.LabelTestActivity",
+                        chosenComponent.getClassName());
+                chooserCallbackInvoked.countDown();
+            }
+        };
+
+        mContext.registerReceiver(chooserCallbackReceiver,
+                new IntentFilter(ACTION_INTENT_SENDER_FIRED_ON_CLICK),
+                Context.RECEIVER_EXPORTED);
+
+
+        try {
+            Intent shareIntent = createShareIntent(false, 0, 0, null);
+            Intent alternateIntent = new Intent(Intent.ACTION_SEND);
+            alternateIntent.setType(CTS_ALTERNATE_DATA_TYPE);
+            shareIntent.putExtra(Intent.EXTRA_ALTERNATE_INTENTS, new Intent[] {alternateIntent});
+            launchSharesheet(shareIntent);
+            findTextContains(mContext.getString(R.string.test_alternate_app_label)).click();
+            assertTrue(chooserCallbackInvoked.await(1000, TimeUnit.MILLISECONDS));
+        } finally {
             mContext.unregisterReceiver(chooserCallbackReceiver);
             closeSharesheet();
         }
