@@ -7415,8 +7415,8 @@
          device.
 	 @SystemApi
          @hide -->
-    <permission android:name="android.permission.PROVIDE_HYBRID_CREDENTIAL_SERVICE"
-                android:protectionLevel="signature|privileged" />
+    <permission android:name="android.permission.PROVIDE_REMOTE_CREDENTIALS"
+	    android:protectionLevel="signature|privileged|role" />
 
     <!-- Allows an app access to the installer provided app metadata.
         @SystemApi
