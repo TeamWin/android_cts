@@ -26,6 +26,11 @@ import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
 import com.android.tradefed.util.RunUtil;
 
+import com.google.common.collect.Iterables;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 
 
@@ -151,5 +156,47 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
          * Similar to {@link BooleanSupplier#getAsBoolean} but has {@code throws Exception}.
          */
         boolean getAsBoolean() throws Exception;
+    }
+
+    protected static String getPublicVolumeExcluding(String excludingVolume) throws Exception {
+        List<String> volList = splitMultiLineOutput(sDevice.executeShellCommand("sm list-volumes"));
+
+        // list volumes will result in something like
+        // private mounted null
+        // public:7,281 mounted 3080-17E8
+        // emulated;0 mounted null
+        // and we are interested in 3080-17E8
+        for (String volume: volList) {
+            if (volume.contains("public")
+                    && (excludingVolume == null || !volume.contains(excludingVolume))) {
+                //public:7,281 mounted 3080-17E8
+                String[] splits = volume.split(" ");
+                //Return the last snippet, that is 3080-17E8
+                return splits[splits.length - 1];
+            }
+        }
+        return null;
+    }
+
+    protected static boolean partitionDisks() {
+        try {
+            List<String> diskNames = splitMultiLineOutput(sDevice
+                    .executeShellCommand("sm list-disks"));
+            if (!diskNames.isEmpty() && !Iterables.getLast(diskNames).isEmpty()) {
+                sDevice.executeShellCommand("sm partition "
+                        + Iterables.getLast(diskNames) + " public");
+                return true;
+            }
+        } catch (Exception ignored) {
+            //ignored
+        }
+        return false;
+    }
+
+    private static List<String> splitMultiLineOutput(String input) throws Exception {
+        if (input == null) {
+            return new ArrayList<>();
+        }
+        return Arrays.asList(input.split("\\r?\\n"));
     }
 }
