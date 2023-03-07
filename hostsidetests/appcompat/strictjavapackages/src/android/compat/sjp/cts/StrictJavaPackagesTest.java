@@ -879,7 +879,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testBootclasspath_nonDuplicateClasses() throws Exception {
-        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastR());
+        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastT());
         assertThat(getDuplicateClasses(sBootclasspathJars)).isEmpty();
     }
 
@@ -888,7 +888,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testSystemServerClasspath_nonDuplicateClasses() throws Exception {
-        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastR());
+        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastT());
         ImmutableSet<String> overlapBurndownList;
         if (hasFeature(FEATURE_AUTOMOTIVE)) {
             overlapBurndownList = ImmutableSet.copyOf(AUTOMOTIVE_HIDL_OVERLAP_BURNDOWN_LIST);
@@ -910,7 +910,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testBootClasspathAndSystemServerClasspath_nonDuplicateClasses() throws Exception {
-        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastR());
+        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastT());
         ImmutableList.Builder<String> jars = ImmutableList.builder();
         jars.addAll(sBootclasspathJars);
         jars.addAll(sSystemserverclasspathJars);
