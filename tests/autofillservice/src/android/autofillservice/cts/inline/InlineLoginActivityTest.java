@@ -27,6 +27,7 @@ import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.testcore.Helper.getContext;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
 import static android.autofillservice.cts.testcore.Timeouts.MOCK_IME_TIMEOUT_MS;
+import static android.view.View.AUTOFILL_HINT_USERNAME;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
@@ -657,6 +658,36 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         final InstrumentedAutoFillService.FillRequest request = sReplier.getNextFillRequest();
         assertThat(request.hints.size()).isEqualTo(1);
         assertThat(request.hints.get(0)).isEqualTo("username");
+        disablePccDetectionFeature(sContext);
+        sReplier.setIdMode(IdMode.RESOURCE_ID);
+    }
+
+    @Test
+    public void autofillPccDatasetTest_setForAllHints() throws Exception {
+        // Set service.
+        enableService();
+        enablePccDetectionFeature(sContext, "username", "password", "new_password");
+        sReplier.setIdMode(IdMode.PCC_ID);
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(AUTOFILL_HINT_USERNAME, "dude")
+                        .setField("allField1")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField("allField2")
+                        .setPresentation(createPresentation("generic user"))
+                        .build());
+        sReplier.addResponse(builder.build());
+
+        // Trigger auto-fill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+        final InstrumentedAutoFillService.FillRequest request = sReplier.getNextFillRequest();
+        assertThat(request.hints.size()).isEqualTo(3);
+
         disablePccDetectionFeature(sContext);
         sReplier.setIdMode(IdMode.RESOURCE_ID);
     }
