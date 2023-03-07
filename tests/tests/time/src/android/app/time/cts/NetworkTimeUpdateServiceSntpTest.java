@@ -92,12 +92,15 @@ public class NetworkTimeUpdateServiceSntpTest {
 
     @Before
     public void setUp() throws Exception {
-        mSetupInstant = Instant.now();
-        mSetupElapsedRealtimeMillis = SystemClock.elapsedRealtime();
         mShellCommandExecutor = new InstrumentationShellCommandExecutor(
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
         mNetworkTimeUpdateServiceShellHelper =
                 new NetworkTimeUpdateServiceShellHelper(mShellCommandExecutor);
+
+        skipOnFormFactorsWithoutService(mNetworkTimeUpdateServiceShellHelper);
+
+        mSetupInstant = Instant.now();
+        mSetupElapsedRealtimeMillis = SystemClock.elapsedRealtime();
         mTimeDetectorShellHelper = new TimeDetectorShellHelper(mShellCommandExecutor);
         mDeviceConfigShellHelper = new DeviceConfigShellHelper(mShellCommandExecutor);
         mPreTestDeviceConfigState = mDeviceConfigShellHelper.setSyncModeForTest(
@@ -106,6 +109,8 @@ public class NetworkTimeUpdateServiceSntpTest {
 
     @After
     public void tearDown() throws Exception {
+        skipOnFormFactorsWithoutService(mNetworkTimeUpdateServiceShellHelper);
+
         mNetworkTimeUpdateServiceShellHelper.resetServerConfigForTests();
         mTimeDetectorShellHelper.clearNetworkTime();
         mNetworkTimeUpdateServiceShellHelper.forceRefresh();
@@ -148,14 +153,6 @@ public class NetworkTimeUpdateServiceSntpTest {
     @AppModeFull(reason = "Cannot bind socket in instant app mode")
     @Test
     public void testNetworkTimeUpdate() throws Exception {
-        // If you have to adjust this logic: consider that the public SDK
-        // SystemClock.currentNetworkTimeClock() method currently requires
-        // network_time_update_service to be present to work.
-        if (isWatch()) {
-            // network_time_update_service is not expected to exist on Wear. This means that
-            // SystemClock.currentNetworkTimeClock() will do nothing useful there.
-            assumeFalse(mNetworkTimeUpdateServiceShellHelper.isNetworkTimeUpdateServicePresent());
-        }
         mNetworkTimeUpdateServiceShellHelper.assumeNetworkTimeUpdateServiceIsPresent();
 
         // Set the device's lower bound for acceptable system clock time to avoid the canned test
@@ -251,7 +248,20 @@ public class NetworkTimeUpdateServiceSntpTest {
                 beforeRefreshElapsedMillis, afterRefreshElapsedMillis);
     }
 
-    private boolean isWatch() {
+    private static void skipOnFormFactorsWithoutService(
+            NetworkTimeUpdateServiceShellHelper networkTimeUpdateServiceShellHelper)
+            throws Exception {
+        // If you have to adjust or remove this logic: consider that the public SDK
+        // SystemClock.currentNetworkTimeClock() method currently requires
+        // network_time_update_service to be present to work.
+        if (isWatch()) {
+            // network_time_update_service is not expected to exist on Wear. This means that
+            // SystemClock.currentNetworkTimeClock() will do nothing useful there.
+            assumeFalse(networkTimeUpdateServiceShellHelper.isNetworkTimeUpdateServicePresent());
+        }
+    }
+
+    private static boolean isWatch() {
         return ApplicationProvider.getApplicationContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
