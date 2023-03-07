@@ -111,7 +111,7 @@ public class MediaProjectionActivity extends Activity {
     }
 
     public MediaProjection waitForMediaProjection() throws InterruptedException {
-        final long timeOutMs = 125000;
+        final long timeOutMs = 5000;
         final int retryCount = 2;
         int count = 0;
         // Sometimes system decides to rotate the permission activity to another orientation
