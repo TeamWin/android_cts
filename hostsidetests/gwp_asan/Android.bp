@@ -1,10 +1,10 @@
-// Copyright (C) 2020 The Android Open Source Project
+// Copyright (C) 2023 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,27 +16,38 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
+java_test_host {
     name: "CtsGwpAsanTestCases",
     defaults: ["cts_defaults"],
-    compile_multilib: "both",
-    // When built, explicitly put it in the data partition.
-    // Tag this module as a cts test artifact
+    srcs: ["src/**/*.java"],
+    libs: [
+        "cts-tradefed",
+        "tradefed",
+    ],
     test_suites: [
         "cts",
         "general-tests",
     ],
-    libs: [
-        "android.test.runner",
-        "android.test.base",
+    data: [
+        ":CtsGwpAsanEnabled",
     ],
+}
+
+java_defaults {
+    name: "cts_gwp_asan_app_defaults",
+    defaults: ["cts_defaults"],
+    compile_multilib: "both",
     static_libs: [
         "ctstestrunner-axt",
         "androidx.test.rules",
         "androidx.test.core",
         "androidx.test.ext.junit",
+        "gwp_asan_cts_common",
     ],
-    srcs: ["src/**/*.java"],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    jni_libs: ["libgwp_asan_cts_library_jni"],
     sdk_version: "current",
-    use_embedded_native_libs: false,
 }

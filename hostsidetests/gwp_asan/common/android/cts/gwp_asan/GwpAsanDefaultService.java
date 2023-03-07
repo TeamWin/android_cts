@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package android.gwpasan;
+package android.cts.gwp_asan;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcel;
-import java.lang.Override;
 
-import android.gwpasan.Utils;
-
-public class GwpAsanDisabledService extends Service {
-
+public class GwpAsanDefaultService extends Service {
     private final IBinder mBinder = new LocalBinder();
 
     @Override
@@ -35,16 +31,15 @@ public class GwpAsanDisabledService extends Service {
     }
 
     public class LocalBinder extends Binder {
-
         @Override
         public boolean onTransact(int code, Parcel data, Parcel reply, int flags) {
-            if (code == 42) {
-              try {
-                reply.writeInt(Utils.isGwpAsanEnabled() ? 1 : 0);
-              } catch (Exception e) {
-                reply.writeInt(-1);
-              }
-              return true;
+            if (code == Utils.SERVICE_IS_GWP_ASAN_ENABLED) {
+                try {
+                    reply.writeInt(Utils.isGwpAsanEnabled() ? 1 : 0);
+                } catch (Exception e) {
+                    reply.writeInt(-1);
+                }
+                return true;
             }
             return false;
         }

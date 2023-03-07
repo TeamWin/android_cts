@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2020 The Android Open Source Project
+<!-- Copyright (C) 2023 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-       package="android.gwpasan.cts"
-       android:targetSandboxVersion="2">
+          package="android.cts.gwp_asan"
+          android:targetSandboxVersion="2">
 
-  <application android:extractNativeLibs="true"
+  <uses-sdk android:targetSdkVersion="30" />
+  <application android:debuggable="true"
+               android:extractNativeLibs="true"
                android:gwpAsanMode="always">
     <processes>
       <process />
@@ -28,24 +30,28 @@
                android:gwpAsanMode="never" />
       <process android:process=":gwp_asan_default" />
     </processes>
+
     <uses-library android:name="android.test.runner" />
-    <activity android:name="android.gwpasan.GwpAsanTestActivity" />
-    <activity android:name="android.gwpasan.GwpAsanEnabledActivity"
+
+    <activity android:name=".TestActivityLauncher" />
+    <activity android:name=".GwpAsanActivityTest" />
+
+    <activity android:name=".GwpAsanEnabledActivity"
               android:process=":gwp_asan_enabled" />
-    <activity android:name="android.gwpasan.GwpAsanDisabledActivity"
+    <activity android:name=".GwpAsanDisabledActivity"
               android:process=":gwp_asan_disabled" />
-    <activity android:name="android.gwpasan.GwpAsanDefaultActivity"
+    <activity android:name=".GwpAsanDefaultActivity"
               android:process=":gwp_asan_default" />
-    <service android:name="android.gwpasan.GwpAsanEnabledService"
+
+    <service android:name=".GwpAsanEnabledService"
              android:process=":gwp_asan_enabled" />
-    <service android:name="android.gwpasan.GwpAsanDisabledService"
+    <service android:name=".GwpAsanDisabledService"
              android:process=":gwp_asan_disabled" />
-    <service android:name="android.gwpasan.GwpAsanDefaultService"
+    <service android:name=".GwpAsanDefaultService"
              android:process=":gwp_asan_default" />
   </application>
 
   <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                   android:targetPackage="android.gwpasan.cts"
-                   android:label="CTS tests of GWP-ASan">
-  </instrumentation>
+                   android:targetPackage="android.cts.gwp_asan"
+                   android:label="CTS tests of GWP-ASan" />
 </manifest>

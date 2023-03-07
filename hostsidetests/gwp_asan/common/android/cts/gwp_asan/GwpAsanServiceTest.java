@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package android.gwpasan.cts;
+package android.cts.gwp_asan;
+
+import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
+
+import static org.junit.Assert.assertTrue;
 
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.Parcel;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.ServiceTestRule;
 
@@ -26,49 +31,29 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.concurrent.TimeoutException;
-
-import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-
-import android.gwpasan.GwpAsanEnabledService;
-import android.gwpasan.GwpAsanDisabledService;
-import android.gwpasan.GwpAsanDefaultService;
-
 @RunWith(AndroidJUnit4.class)
 public class GwpAsanServiceTest {
-    @Rule
-    public final ServiceTestRule mServiceRule = new ServiceTestRule();
+    @Rule public final ServiceTestRule mServiceRule = new ServiceTestRule();
 
-    private boolean isGwpAsanEnabledInService(Class<?> cls) throws Exception {
+    private boolean runService(Class<?> cls, int testNum) throws Exception {
         Intent serviceIntent = new Intent(getApplicationContext(), cls);
         IBinder binder = mServiceRule.bindService(serviceIntent);
         final Parcel request = Parcel.obtain();
         final Parcel reply = Parcel.obtain();
-        if (!binder.transact(42, request, reply, 0)) {
-          throw new Exception();
+        if (!binder.transact(testNum, request, reply, 0)) {
+            throw new Exception();
         }
         int res = reply.readInt();
         if (res < 0) {
-          throw new Exception();
+            throw new Exception();
         }
         return res != 0;
     }
 
     @Test
-    public void testEnabledService() throws Exception {
-        assertTrue(isGwpAsanEnabledInService(GwpAsanEnabledService.class));
-    }
-
-    @Test
-    public void testDisabledService() throws Exception {
-        assertFalse(isGwpAsanEnabledInService(GwpAsanDisabledService.class));
-    }
-
-    @Test
-    public void testDefaultService() throws Exception {
-        // GwpAsanDefaultService inherits the application attribute.
-        assertTrue(isGwpAsanEnabledInService(GwpAsanDefaultService.class));
+    public void testEnablement() throws Exception {
+        assertTrue(runService(GwpAsanEnabledService.class, Utils.SERVICE_IS_GWP_ASAN_ENABLED));
+        assertTrue(runService(GwpAsanDefaultService.class, Utils.SERVICE_IS_GWP_ASAN_ENABLED));
+        assertTrue(runService(GwpAsanDisabledService.class, Utils.SERVICE_IS_GWP_ASAN_DISABLED));
     }
 }
