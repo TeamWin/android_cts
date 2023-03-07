@@ -42,6 +42,7 @@ import android.window.TaskFragmentInfo;
 import android.window.WindowContainerTransaction;
 
 import androidx.annotation.NonNull;
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -170,6 +171,7 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
      * bounds outside of its parent bounds will still set the TaskFragment bounds within its parent.
      */
     @Test
+    @FlakyTest(bugId = 271975866)
     public void testUntrustedModeTaskFragment_setRelativeBoundsOutsideOfParentBounds() {
         final Task parentTask = mWmState.getRootTask(mOwnerTaskId);
         final Rect parentBounds = new Rect(parentTask.getBounds());

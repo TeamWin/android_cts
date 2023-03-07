@@ -73,6 +73,7 @@ import android.widget.Toast;
 import androidx.annotation.AnimRes;
 import androidx.annotation.Nullable;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.FeatureUtil;
@@ -674,6 +675,7 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
+    @FlakyTest(bugId = 260666647)
     public void testWhenExitAnimationAboveThresholdFromSameUid_allowsTouch() {
         addExitAnimationActivity(APP_SELF);
         sendFinishToExitAnimationActivity(APP_SELF,
