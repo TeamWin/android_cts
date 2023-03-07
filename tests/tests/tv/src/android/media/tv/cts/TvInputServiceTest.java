@@ -832,6 +832,24 @@ public class TvInputServiceTest {
         assertThat(session.mInteractiveAppNotificationEnabled).isEqualTo(true);
     }
 
+
+    @Test
+    public void verifyCommandNotifyTvMessage() {
+        Bundle bundle = createTestBundle();
+        resetPassedValues();
+
+        onTvView(tvView -> tvView.notifyTvMessage(TvInputManager.TV_MESSAGE_TYPE_WATERMARK,
+                bundle));
+
+        mInstrumentation.waitForIdleSync();
+        final CountingSession session =
+                waitForSessionCheck(s -> s.mTvMessageCount > 0);
+
+        assertThat(session.mTvMessageCount).isEqualTo(1);
+        assertThat(session.mTvMessageType).isEqualTo(TvInputManager.TV_MESSAGE_TYPE_WATERMARK);
+        assertBundlesAreEqual(session.mTvMessageData, bundle);
+    }
+
     @Test
     public void verifyCallbackChannelRetuned() {
         final CountingSession session = tune(CHANNEL_0);
@@ -1309,6 +1327,7 @@ public class TvInputServiceTest {
             public volatile long mTimeShiftGetStartPositionCount;
             public volatile int mAppPrivateCommandCount;
             public volatile int mSetInteractiveAppNotificationEnabledCount;
+            public volatile int mTvMessageCount;
 
             public volatile String mAppPrivateCommandAction;
             public volatile Bundle mAppPrivateCommandData;
@@ -1336,6 +1355,8 @@ public class TvInputServiceTest {
             public volatile Integer mOverlayViewSizeChangedWidth;
             public volatile Integer mOverlayViewSizeChangedHeight;
             public volatile Boolean mInteractiveAppNotificationEnabled;
+            public volatile String mTvMessageType;
+            public volatile Bundle mTvMessageData;
 
             CountingSession(Context context, @Nullable String sessionId) {
 
@@ -1368,6 +1389,7 @@ public class TvInputServiceTest {
                 mTimeShiftGetStartPositionCount = 0;
                 mAppPrivateCommandCount = 0;
                 mSetInteractiveAppNotificationEnabledCount = 0;
+                mTvMessageCount = 0;
             }
 
             public void resetPassedValues() {
@@ -1397,6 +1419,8 @@ public class TvInputServiceTest {
                 mOverlayViewSizeChangedWidth = null;
                 mOverlayViewSizeChangedHeight = null;
                 mInteractiveAppNotificationEnabled = null;
+                mTvMessageType = null;
+                mTvMessageData = null;
             }
 
             @Override
@@ -1561,6 +1585,13 @@ public class TvInputServiceTest {
             public void onSetInteractiveAppNotificationEnabled(boolean enabled) {
                 mSetInteractiveAppNotificationEnabledCount++;
                 mInteractiveAppNotificationEnabled = enabled;
+            }
+
+            @Override
+            public void onTvMessage(String type, Bundle data) {
+                mTvMessageCount++;
+                mTvMessageType = type;
+                mTvMessageData = data;
             }
         }
 
