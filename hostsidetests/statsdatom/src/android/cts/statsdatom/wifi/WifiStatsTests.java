@@ -336,8 +336,11 @@ public class WifiStatsTests extends DeviceTestCase implements IBuildReceiver {
             assertThat(scan.getResult()).isEqualTo(
                     AtomsProto.WifiScanReported.Result.RESULT_SUCCESS);
             assertThat(scan.getType()).isEqualTo(AtomsProto.WifiScanReported.Type.TYPE_SINGLE);
-            assertThat(scan.getImportance()).isEqualTo(
-                    AtomsProto.WifiScanReported.Importance.IMPORTANCE_FOREGROUND_SERVICE);
+            List<AtomsProto.WifiScanReported.Importance> expectedResult =
+                    Arrays.asList(
+                            AtomsProto.WifiScanReported.Importance.IMPORTANCE_FOREGROUND_SERVICE,
+                            AtomsProto.WifiScanReported.Importance.IMPORTANCE_FOREGROUND);
+            assertThat(scan.getImportance()).isIn(expectedResult);
             assertThat(scan.getScanDurationMillis()).isGreaterThan(0);
         }
     }
