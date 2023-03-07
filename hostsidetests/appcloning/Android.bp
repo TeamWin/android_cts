@@ -23,6 +23,7 @@ java_test_host {
         "hostside/src/**/BaseHostTestCase.java",
         "hostside/src/**/AppCloningBaseHostTest.java",
         "hostside/src/**/IntentRedirectionTest.java",
+        "hostside/src/**/AppCloningPublicVolumeTest.java",
     ],
     libs: [
         "cts-tradefed",

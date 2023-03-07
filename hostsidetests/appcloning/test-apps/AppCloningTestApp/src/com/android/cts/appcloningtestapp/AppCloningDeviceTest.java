@@ -24,9 +24,12 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -45,6 +48,8 @@ import java.util.List;
 public class AppCloningDeviceTest {
     private static final String EMPTY_STRING = "";
     private static final String TAG = "AppCloningDeviceTest";
+
+    private static final int ANDROID_Q = 29;
 
     private Context mContext;
     private StorageManager mStorageManager;
@@ -94,13 +99,19 @@ public class AppCloningDeviceTest {
         return getTestArgumentValueForGivenKey("cloneUserId");
     }
 
+    private String getPublicSdCardVol() {
+        return getTestArgumentValueForGivenKey("publicSdCardVol");
+    }
+
     @Test
     public void testMediaStoreManager_verifyCrossUserImagesInSharedStorage() throws Exception {
         // This method will be called only after writing images in owner and clone profile
         String imageNameToBeVerifiedInOwnerProfile = getImageNameToBeVerifiedInOwnerProfile();
         String imageNameToBeVerifiedInCloneProfile = getImageNameToBeVerifiedInCloneProfile();
+        Uri collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
 
-        List<Image> imageList = MediaStoreReadOperation.getImageFilesFromMediaStore(mContext);
+        List<Image> imageList = MediaStoreReadOperation.getImageFilesFromMediaStore(mContext,
+                collection);
         boolean verifiedImageInOwnerProfile = false;
         boolean verifiedImageInCloneProfile = false;
 
@@ -139,8 +150,68 @@ public class AppCloningDeviceTest {
 
         Bitmap bitmap = createImage(1000, 1000, color);
 
+        /*
+           1. Find all media files on the primary external storage device
+           2. Build.VERSION_CODES.Q = 29
+        */
+        Uri imageCollection = (Build.VERSION.SDK_INT >= ANDROID_Q)
+                ? MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY) :
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+
         assertThat(MediaStoreWriteOperation.createImageFileToMediaStore(mContext,
-                getImageNameToBeDisplayed(), bitmap)).isTrue();
+                getImageNameToBeDisplayed(), bitmap, imageCollection)).isTrue();
+    }
+
+    @Test
+    public void testMediaStoreManager_verifyCrossUserImagesInPublicSdCard() throws Exception {
+        // This method will be called only after writing images in owner and clone profile
+        String imageNameToBeVerifiedInOwnerProfile = getImageNameToBeVerifiedInOwnerProfile();
+        String imageNameToBeVerifiedInCloneProfile = getImageNameToBeVerifiedInCloneProfile();
+        Uri collection = MediaStore.Images.Media.getContentUri(getPublicSdCardVol().toLowerCase());
+
+        List<Image> imageList = MediaStoreReadOperation.getImageFilesFromMediaStore(mContext,
+                collection);
+        boolean verifiedImageInOwnerProfile = false;
+        boolean verifiedImageInCloneProfile = false;
+
+        for (Image image: imageList) {
+
+            // Eg: Data: /storage/A1EF-226J/Pictures/<imageName>.jpg
+            if (!verifiedImageInOwnerProfile && image.getData().contains(getPublicSdCardVol())
+                    && image.getDisplayName().startsWith(imageNameToBeVerifiedInOwnerProfile)) {
+                verifiedImageInOwnerProfile = true;
+                continue;
+            }
+
+            if (!verifiedImageInCloneProfile && image.getData().contains(getPublicSdCardVol())
+                    && image.getDisplayName().startsWith(imageNameToBeVerifiedInCloneProfile)) {
+                verifiedImageInCloneProfile = true;
+            }
+        }
+
+        assertThat(verifiedImageInOwnerProfile && verifiedImageInCloneProfile).isTrue();
+    }
+
+    @Test
+    public void testMediaStoreManager_writeImageToPublicSdCard() throws Exception {
+        String imageNameToBeCreated = getImageNameToBeCreated();
+
+        int color = 0x00000000;
+        if (imageNameToBeCreated.equalsIgnoreCase("clone_profile_image")) {
+            // Blue represents clone profile image
+            color = Color.BLUE;
+        } else if (imageNameToBeCreated.equalsIgnoreCase("owner_profile_image")) {
+            // Green represents owner profile image
+            color = Color.GREEN;
+        }
+
+        Bitmap bitmap = createImage(1000, 1000, color);
+
+        Uri imageCollection = MediaStore.Images.Media.getContentUri(getPublicSdCardVol()
+                .toLowerCase());
+
+        assertThat(MediaStoreWriteOperation.createImageFileToMediaStore(mContext,
+                getImageNameToBeDisplayed(), bitmap, imageCollection)).isTrue();
     }
 
     /**
