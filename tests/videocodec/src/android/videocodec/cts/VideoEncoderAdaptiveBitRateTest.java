@@ -112,7 +112,7 @@ public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestB
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{5})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{5}")
     public static Collection<Object[]> input() {
         addParams(1920, 1080, SEGMENT_BITRATES_FULLHD, BIRTHDAY_FULLHD_LANDSCAPE);
         addParams(1080, 1920, SEGMENT_BITRATES_FULLHD, SELFIEGROUP_FULLHD_PORTRAIT);

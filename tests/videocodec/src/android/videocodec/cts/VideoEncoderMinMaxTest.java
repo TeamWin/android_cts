@@ -238,7 +238,7 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
         return newParamList;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{4})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{4}")
     public static Collection<Object[]> input() throws CloneNotSupportedException {
         addParams(1280, 720, BIRTHDAY_FULLHD_LANDSCAPE);
         return updateParamList(prepareParamList(exhaustiveArgsList, true, false, true, false,

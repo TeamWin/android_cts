@@ -126,7 +126,7 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{4})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{4}")
     public static Collection<Object[]> input() {
         addParams(1080, 1920, 30);
         addParams(720, 1280, 30);
