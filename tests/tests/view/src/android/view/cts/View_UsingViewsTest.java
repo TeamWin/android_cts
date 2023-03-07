@@ -37,7 +37,6 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.support.test.uiautomator.UiDevice;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -50,6 +49,7 @@ import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 
