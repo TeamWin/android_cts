@@ -2490,6 +2490,7 @@
         icon, large icon, notification title, notification text, and two action buttons.
         If this device does not support heads-up notifications, press Pass.</string>
     <string name="action">Action %1$d</string>
+    <string name="no_test_items">No tests available for this device.</string>
     <string name="tile_service_name">Tile Service for CTS Verifier</string>
     <string name="tiles_test">Tile Service Test</string>
     <string name="tiles_info">This test checks that a Tile Service added by a third party
