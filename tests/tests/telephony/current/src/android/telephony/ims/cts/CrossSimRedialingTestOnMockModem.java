@@ -18,9 +18,11 @@ package android.telephony.ims.cts;
 
 import static android.telephony.AccessNetworkConstants.AccessNetworkType.EUTRAN;
 import static android.telephony.AccessNetworkConstants.AccessNetworkType.GERAN;
+import static android.telephony.AccessNetworkConstants.AccessNetworkType.UNKNOWN;
 import static android.telephony.AccessNetworkConstants.AccessNetworkType.UTRAN;
 import static android.telephony.BarringInfo.BARRING_SERVICE_TYPE_EMERGENCY;
 import static android.telephony.BarringInfo.BarringServiceInfo.BARRING_TYPE_UNCONDITIONAL;
+import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_CROSS_STACK_REDIAL_TIMER_SEC_INT;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_DOMAIN_PREFERENCE_INT_ARRAY;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_DOMAIN_PREFERENCE_ROAMING_INT_ARRAY;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_NETWORK_SCAN_TYPE_INT;
@@ -29,10 +31,16 @@ import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_OVER_IMS_ROAMING_SUPPORTED_3GPP_NETWORK_TYPES_INT_ARRAY;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_OVER_IMS_SUPPORTED_3GPP_NETWORK_TYPES_INT_ARRAY;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_PREFER_IMS_EMERGENCY_WHEN_VOICE_CALLS_ON_CS_BOOL;
+import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_QUICK_CROSS_STACK_REDIAL_TIMER_SEC_INT;
+import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_START_QUICK_CROSS_STACK_REDIAL_TIMER_WHEN_REGISTERED_BOOL;
+import static android.telephony.CarrierConfigManager.ImsEmergency.REDIAL_TIMER_DISABLED;
 import static android.telephony.CarrierConfigManager.ImsEmergency.SCAN_TYPE_NO_PREFERENCE;
 import static android.telephony.NetworkRegistrationInfo.REGISTRATION_STATE_HOME;
+import static android.telephony.NetworkRegistrationInfo.REGISTRATION_STATE_UNKNOWN;
 import static android.telephony.mockmodem.IRadioVoiceImpl.LATCH_EMERGENCY_DIAL;
 import static android.telephony.mockmodem.IRadioVoiceImpl.LATCH_GET_LAST_CALL_FAIL_CAUSE;
+import static android.telephony.mockmodem.MockNetworkService.LATCH_CANCEL_EMERGENCY_SCAN;
+import static android.telephony.mockmodem.MockNetworkService.LATCH_TRIGGER_EMERGENCY_SCAN;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT;
 
 import static junit.framework.Assert.assertNotNull;
@@ -106,6 +114,9 @@ public class CrossSimRedialingTestOnMockModem extends ImsCallingBase {
 
     // the timeout to wait for request in milliseconds
     private static final int WAIT_REQUEST_TIMEOUT_MS = 3000;
+
+    // the cross sim redialing timer in seconds
+    private static final int CROSS_STACK_TIMEOUT_SEC = 3;
 
     private static MockModemManager sMockModemManager;
 
@@ -305,6 +316,34 @@ public class CrossSimRedialingTestOnMockModem extends ImsCallingBase {
         assertTrue(waitForVoiceLatchCountdown(sOtherSlot, LATCH_EMERGENCY_DIAL));
     }
 
+    @Test
+    public void testCrossStackTimer() throws Exception {
+        // Setup pre-condition
+        unsolBarringInfoChanged(sTestSlot, false, false);
+        unsolBarringInfoChanged(sOtherSlot, false, false);
+
+        PersistableBundle bundle = getDefaultPersistableBundle();
+        bundle.putInt(KEY_CROSS_STACK_REDIAL_TIMER_SEC_INT, CROSS_STACK_TIMEOUT_SEC);
+        overrideCarrierConfig(bundle);
+
+        MockEmergencyRegResult regResult = getEmergencyRegResult(UNKNOWN,
+                REGISTRATION_STATE_UNKNOWN, 0, false, false, 0, 0, "", "");
+        setEmergencyRegResult(sTestSlot, regResult);
+        setEmergencyRegResult(sOtherSlot, regResult);
+
+        bindImsServiceUnregistered();
+
+        placeOutgoingCall(TEST_EMERGENCY_NUMBER);
+
+        assertTrue(waitForNetworkLatchCountdown(sTestSlot, LATCH_TRIGGER_EMERGENCY_SCAN));
+        assertTrue(waitForNetworkLatchCountdown(sTestSlot, LATCH_CANCEL_EMERGENCY_SCAN));
+
+        assertTrue(waitForNetworkLatchCountdown(sOtherSlot,
+                  LATCH_TRIGGER_EMERGENCY_SCAN, WAIT_UPDATE_TIMEOUT_MS));
+
+        unsolEmergencyNetworkScanResult(sOtherSlot);
+    }
+
     private void placeOutgoingCall(String address) throws Exception {
         TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
                 .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
@@ -361,15 +400,20 @@ public class CrossSimRedialingTestOnMockModem extends ImsCallingBase {
                 };
         boolean imsWhenVoiceOnCs = false;
         int scanType = SCAN_TYPE_NO_PREFERENCE;
+        int crossStackTimer = 120;
+        int quickCrossStackTimer = REDIAL_TIMER_DISABLED;
+        boolean quickTimerWhenInService = true;
 
         return getPersistableBundle(imsRats, csRats,
-                domainPreference, imsWhenVoiceOnCs, scanType);
+                domainPreference, imsWhenVoiceOnCs, scanType,
+                crossStackTimer, quickCrossStackTimer, quickTimerWhenInService);
     }
 
     private static PersistableBundle getPersistableBundle(
             @Nullable int[] imsRats, @Nullable int[] csRats,
             @Nullable int[] domainPreference,
-            boolean imsWhenVoiceOnCs, int scanType) {
+            boolean imsWhenVoiceOnCs, int scanType,
+            int crossStackTimer, int quickCrossStackTimer, boolean quickTimerWhenInService) {
 
         PersistableBundle bundle  = new PersistableBundle();
         if (imsRats != null) {
@@ -390,6 +434,12 @@ public class CrossSimRedialingTestOnMockModem extends ImsCallingBase {
         }
         bundle.putBoolean(KEY_PREFER_IMS_EMERGENCY_WHEN_VOICE_CALLS_ON_CS_BOOL, imsWhenVoiceOnCs);
         bundle.putInt(KEY_EMERGENCY_NETWORK_SCAN_TYPE_INT, scanType);
+
+        bundle.putInt(KEY_CROSS_STACK_REDIAL_TIMER_SEC_INT, crossStackTimer);
+        bundle.putInt(KEY_QUICK_CROSS_STACK_REDIAL_TIMER_SEC_INT, quickCrossStackTimer);
+        bundle.putBoolean(KEY_START_QUICK_CROSS_STACK_REDIAL_TIMER_WHEN_REGISTERED_BOOL,
+                quickTimerWhenInService);
+
 
         return bundle;
     }
@@ -438,6 +488,14 @@ public class CrossSimRedialingTestOnMockModem extends ImsCallingBase {
         sMockModemManager.clearAllCalls(slotId, cause);
     }
 
+    private boolean waitForNetworkLatchCountdown(int slotId, int latchIndex) {
+        return waitForNetworkLatchCountdown(slotId, latchIndex, WAIT_LATCH_TIMEOUT_MS);
+    }
+
+    public boolean waitForNetworkLatchCountdown(int slotId, int latchIndex, int waitMs) {
+        return sMockModemManager.waitForNetworkLatchCountdown(slotId, latchIndex, waitMs);
+    }
+
     private void resetNetworkAllLatchCountdown(int slotId) {
         sMockModemManager.resetNetworkAllLatchCountdown(slotId);
     }
@@ -448,5 +506,13 @@ public class CrossSimRedialingTestOnMockModem extends ImsCallingBase {
 
     private void setEmergencyRegResult(int slotId, MockEmergencyRegResult regResult) {
         sMockModemManager.setEmergencyRegResult(slotId, regResult);
+    }
+
+    private void unsolEmergencyNetworkScanResult(int slotId) throws Exception {
+        MockEmergencyRegResult regResult = getEmergencyRegResult(UTRAN,
+                REGISTRATION_STATE_HOME, NetworkRegistrationInfo.DOMAIN_CS,
+                false, false, 0, 0, "", "");
+        sMockModemManager.unsolEmergencyNetworkScanResult(slotId, regResult);
+        waitForVoiceLatchCountdown(slotId, LATCH_EMERGENCY_DIAL);
     }
 }
