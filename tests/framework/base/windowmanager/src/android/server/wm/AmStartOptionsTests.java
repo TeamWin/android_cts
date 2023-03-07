@@ -34,6 +34,7 @@ import static org.junit.Assert.assertTrue;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 
+import org.junit.After;
 import org.junit.Test;
 
 /**
@@ -108,5 +109,11 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
 
         waitAndAssertTopResumedActivity(actualActivity, DEFAULT_DISPLAY,
                 "Activity must be launched");
+    }
+
+    @After
+    public void tearDown() {
+        // Ensure debug app is cleaned to avoid impacting other tests (b/271998036)
+        executeShellCommand("am clear-debug-app");
     }
 }
