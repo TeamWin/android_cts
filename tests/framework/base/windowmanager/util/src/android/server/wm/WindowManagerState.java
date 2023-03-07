@@ -2135,7 +2135,7 @@ public class WindowManagerState {
             } else if (proto.animatingExit) {
                 mWindowType = WINDOW_TYPE_EXITING;
             } else if (mName.startsWith(DEBUGGER_WINDOW_PREFIX)) {
-                mWindowType = WINDOW_TYPE_STARTING;
+                mWindowType = WINDOW_TYPE_DEBUGGER;
                 mName = mName.substring(DEBUGGER_WINDOW_PREFIX.length());
             } else {
                 mWindowType = 0;
