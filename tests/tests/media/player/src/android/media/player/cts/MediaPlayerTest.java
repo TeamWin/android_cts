@@ -117,6 +117,8 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     private static final int  RECORDED_VIDEO_HEIGHT = 144;
     private static final long RECORDED_DURATION_MS  = 3000;
     private static final float FLOAT_TOLERANCE = .0001f;
+    private static final int PLAYBACK_DURATION_MS  = 10000;
+    private static final int ANR_DETECTION_TIME_MS  = 20000;
 
     private final Vector<Integer> mTimedTextTrackIndex = new Vector<>();
     private final Monitor mOnTimedTextCalled = new Monitor();
@@ -715,9 +717,9 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             player.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
             player.prepare();
             // Test needs the mediaplayer to playback at least about 5 seconds of content.
-            // Clip used here has a duration of 61 seconds, so seek to 50 seconds in the media file.
+            // Clip used here has a duration of 61 seconds, given PLAYBACK_DURATION_MS for play.
             // This leaves enough remaining time, with gapless enabled or disabled,
-            player.seekTo(50000);
+            player.seekTo(player.getDuration() - PLAYBACK_DURATION_MS);
         }
     }
 
@@ -759,6 +761,8 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
     @Test
     public void testSetNextMediaPlayer() throws Exception {
+        final int TOTAL_TIMEOUT_MS = PLAYBACK_DURATION_MS * 4 + ANR_DETECTION_TIME_MS
+                        + 5000 /* listener latency(ms) */;
         initMediaPlayer(mMediaPlayer);
 
         final Monitor mTestCompleted = new Monitor();
@@ -772,9 +776,9 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
                     return;
                 }
                 long now = SystemClock.elapsedRealtime();
-                if ((now - startTime) > 45000) {
-                    // We've been running for 45 seconds and still aren't done, so we're stuck
-                    // somewhere. Signal ourselves to dump the thread stacks.
+                if ((now - startTime) > TOTAL_TIMEOUT_MS) {
+                    // We've been running beyond TOTAL_TIMEOUT and still aren't done,
+                    // so we're stuck somewhere. Signal ourselves to dump the thread stacks.
                     android.os.Process.sendSignal(android.os.Process.myPid(), 3);
                     SystemClock.sleep(2000);
                     fail("Test is stuck, see ANR stack trace for more info. You may need to" +
