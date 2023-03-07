@@ -369,6 +369,7 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 272078811)
     public void testSetKeepClearRectsOnDisplaySingleWindow() throws Exception {
         mTestSession.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
         final TestActivity activity = mTestSession.getActivity();

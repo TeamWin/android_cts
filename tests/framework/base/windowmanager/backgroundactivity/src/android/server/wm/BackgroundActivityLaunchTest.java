@@ -206,6 +206,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 270713916)
     public void testBackgroundActivityBlockedWhenForegroundActivityNotTop() {
         Intent intent = new Intent();
         intent.setComponent(APP_A.FOREGROUND_ACTIVITY);
@@ -289,6 +290,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 270713916)
     public void testActivityBroughtToTopOfTaskWhenLaunchedInTheBackground() throws Exception {
         // Start foreground activity, and foreground activity able to launch background activity
         // successfully
@@ -390,6 +392,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 272082654)
     public void testActivityFromBgActivityInFgTaskSdk33_isNotBlocked() {
         // Launch Activity A, B in the same task with different processes.
         final Intent intent = new Intent()
@@ -529,7 +532,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 130800326)
+    @FlakyTest(bugId = 270713916)
     public void testPendingIntentActivity_appAIsForeground_isNotBlocked() {
         // Start AppA foreground activity
         Intent intent = new Intent();

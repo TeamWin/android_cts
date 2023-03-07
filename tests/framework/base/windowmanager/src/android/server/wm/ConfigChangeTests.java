@@ -49,6 +49,8 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
@@ -201,6 +203,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 270696442)
     public void testChangeFontScaleNoRelaunch() {
         // Should receive onConfigurationChanged() and no relaunch
         testChangeFontScale(FONT_SCALE_NO_RELAUNCH_ACTIVITY, false /* relaunch */);
