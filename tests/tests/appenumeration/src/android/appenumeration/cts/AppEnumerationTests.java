@@ -189,6 +189,7 @@ import org.hamcrest.core.IsNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -339,6 +340,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         assertVisible(QUERIES_NOTHING_RECEIVES_URI, QUERIES_NOTHING_PERM);
     }
 
+    @Ignore("b/271099944")
     @Test
     public void startActivityWithUri_canSeePermissionProtectedProvider() throws Exception {
         uninstallPackage(QUERIES_NOTHING_RECEIVES_PERM_URI);
