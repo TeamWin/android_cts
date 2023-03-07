@@ -72,8 +72,6 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
     private static final String TAG = AbstractCarTestCase.class.getSimpleName();
     private static final String NEW_USER_NAME_PREFIX = "CarCTSTest.";
     private static final int START_TIMEOUT_MS = 20_000;
-    private static final int STOP_TIMEOUT_MS = 20_000;
-
     private static final int NO_EVENTS_TIMEOUT_MS = 5_000;
 
     private final List<UserHandle> mUsersToRemove = new ArrayList<>();
@@ -108,8 +106,8 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {
-            "android.car.user.CarUserManager#startUser(UserStartRequest)",
-            "android.car.user.CarUserManager#stopUser(UserStopRequest)"})
+            "android.car.user.CarUserManager#startUser(UserStartRequest, Executor, ResultCallback)",
+            "android.car.user.CarUserManager#stopUser(UserStopRequest, Executor, ResultCallback)"})
     @EnsureHasPermission({CREATE_USERS, MANAGE_USERS, INTERACT_ACROSS_USERS})
     public void testStartUserOnDisplayAndStopUser() throws Exception {
 
@@ -125,15 +123,16 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
         boolean isAdded = false;
         try {
             newUser = createUser("newUser", /* isGuest= */ false);
+            int userId = newUser.getIdentifier();
             listenerForVisible = BlockingUserLifecycleListener
                     .forSpecificEvents()
-                    .forUser(newUser.getIdentifier())
+                    .forUser(userId)
                     .setTimeout(START_TIMEOUT_MS)
                     .addExpectedEvent(USER_LIFECYCLE_EVENT_TYPE_VISIBLE)
                     .build();
             listenerForInvisible = BlockingUserLifecycleListener
                     .forSpecificEvents()
-                    .forUser(newUser.getIdentifier())
+                    .forUser(userId)
                     .setTimeout(START_TIMEOUT_MS)
                     .addExpectedEvent(USER_LIFECYCLE_EVENT_TYPE_INVISIBLE)
                     .build();
@@ -147,7 +146,10 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
             // Start the new user on a display.
             UserStartRequest startRequest = new UserStartRequest.Builder(newUser)
                     .setDisplayId(displayId).build();
-            mCarUserManager.startUser(startRequest);
+            mCarUserManager.startUser(startRequest, Runnable::run,
+                    response ->
+                            assertWithMessage("startUser success for user %s on display %s",
+                                    userId, displayId).that(response.isSuccess()).isTrue());
 
             List<UserLifecycleEvent> visibleEvents = listenerForVisible.waitForEvents();
             assertWithMessage("events").that(visibleEvents).hasSize(1);
@@ -162,7 +164,7 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
             // the display.
             assertWithMessage("User assigned to display %s", displayId)
                     .that(mOccupantZoneManager.getUserForDisplayId(displayId))
-                    .isEqualTo(newUser.getIdentifier());
+                    .isEqualTo(userId);
             CarOccupantZoneManager.OccupantZoneInfo zone =
                     mOccupantZoneManager.getOccupantZoneForUser(newUser);
             assertWithMessage("The display assigned to the started user %s", newUser)
@@ -172,7 +174,10 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
 
             // Stop the user.
             UserStopRequest stopRequest = new UserStopRequest.Builder(newUser).setForce().build();
-            mCarUserManager.stopUser(stopRequest);
+            mCarUserManager.stopUser(stopRequest, Runnable::run,
+                    response ->
+                            assertWithMessage("stopUser success for user %s on display %s",
+                                    userId, displayId).that(response.isSuccess()).isTrue());
 
             List<UserLifecycleEvent> invisibleEvents = listenerForInvisible.waitForEvents();
             assertWithMessage("events").that(invisibleEvents).hasSize(1);
