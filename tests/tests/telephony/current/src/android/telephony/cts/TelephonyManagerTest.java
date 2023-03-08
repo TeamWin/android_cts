@@ -443,6 +443,8 @@ public class TelephonyManagerTest {
         mSelfPackageName = getContext().getPackageName();
         mSelfCertHash = getCertHash(mSelfPackageName);
         mTestSub = SubscriptionManager.getDefaultSubscriptionId();
+        // If the test subscription is invalid, TelephonyManager APIs may return null
+        assumeTrue(mTestSub != SubscriptionManager.INVALID_SUBSCRIPTION_ID);
         mTelephonyManager = getContext().getSystemService(TelephonyManager.class)
                 .createForSubscriptionId(mTestSub);
         Pair<Integer, Integer> networkHalVersion =
@@ -2141,7 +2143,7 @@ public class TelephonyManagerTest {
     }
 
     /**
-     * Basic test to ensure {@link NetworkRegistrationInfo#getRoamingType()} ()} does not throw any
+     * Basic test to ensure {@link NetworkRegistrationInfo#getRoamingType()} does not throw any
      * exception and returns valid result
      * @see ServiceState.RoamingType
      */
