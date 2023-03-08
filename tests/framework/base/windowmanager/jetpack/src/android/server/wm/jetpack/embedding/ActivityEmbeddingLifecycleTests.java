@@ -19,7 +19,7 @@ package android.server.wm.jetpack.embedding;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRuleBuilderWithPrimaryActivityClass;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRuleWithPrimaryActivityClass;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplit;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotVisible;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
 import static android.server.wm.lifecycle.LifecycleConstants.ON_CREATE;
@@ -120,8 +120,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch a secondary activity to side
-        startActivityAndVerifySplit(primaryActivity, TestActivityWithId.class, splitPairRule,
-                "secondaryActivity1" /* secondActivityId */, mSplitInfoConsumer);
+        startActivityAndVerifySplitAttributes(primaryActivity, TestActivityWithId.class,
+                splitPairRule, "secondaryActivity1" /* secondActivityId */, mSplitInfoConsumer);
         List<Pair<String, String>> expected = List.of(
                 transition(TestConfigChangeHandlingActivity.class, ON_CREATE),
                 transition(TestActivityWithId.class, ON_CREATE),
@@ -131,7 +131,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mEventLog.clear();
 
         // Launch a replacing secondary activity
-        Activity secondaryActivity2 = startActivityAndVerifySplit(primaryActivity,
+        Activity secondaryActivity2 = startActivityAndVerifySplitAttributes(primaryActivity,
                 TestActivityWithId2.class, splitPairRule,
                 "secondaryActivity2" /* secondActivityId */, mSplitInfoConsumer);
         List<Pair<String, String>> expected2 = List.of(
@@ -161,7 +161,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch a secondary activity to side
-        Activity secondaryActivity1 = startActivityAndVerifySplit(primaryActivity,
+        Activity secondaryActivity1 = startActivityAndVerifySplitAttributes(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1" /* secondActivityId */, mSplitInfoConsumer);
         List<Pair<String, String>> expected = List.of(
@@ -173,7 +173,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mEventLog.clear();
 
         // Launch a secondary activity on top
-        Activity secondaryActivity2 = startActivityAndVerifySplit(primaryActivity,
+        Activity secondaryActivity2 = startActivityAndVerifySplitAttributes(primaryActivity,
                 TestActivityWithId2.class, splitPairRule,
                 "secondaryActivity2" /* secondActivityId */, mSplitInfoConsumer);
         List<Pair<String, String>> expected2 = List.of(
@@ -201,7 +201,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch a secondary activity to side
-        Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+        Activity secondaryActivity = startActivityAndVerifySplitAttributes(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1" /* secondActivityId */, mSplitInfoConsumer);
         List<Pair<String, String>> expected = List.of(
@@ -216,7 +216,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
                 TestActivityWithId.class, false /* shouldClearTop */);
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
-        Activity secondaryActivity2 = startActivityAndVerifySplit(secondaryActivity,
+        Activity secondaryActivity2 = startActivityAndVerifySplitAttributes(secondaryActivity,
                 TestActivityWithId2.class, splitPairRule,
                 "secondaryActivity2", mSplitInfoConsumer);
         List<Pair<String, String>> expected2 = List.of(
@@ -244,7 +244,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch a secondary activity to side
-        Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+        Activity secondaryActivity = startActivityAndVerifySplitAttributes(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1", mSplitInfoConsumer);
         mEventLog.clear();
@@ -273,7 +273,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch a secondary activity to side
-        Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+        Activity secondaryActivity = startActivityAndVerifySplitAttributes(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1", mSplitInfoConsumer);
         mEventLog.clear();
@@ -310,7 +310,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch a secondary activity to side
-        Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+        Activity secondaryActivity = startActivityAndVerifySplitAttributes(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1", mSplitInfoConsumer);
         mEventLog.clear();
@@ -339,8 +339,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch a secondary activity to side
-        startActivityAndVerifySplit(primaryActivity, TestActivityWithId.class, splitPairRule,
-                "secondaryActivity1", mSplitInfoConsumer);
+        startActivityAndVerifySplitAttributes(primaryActivity, TestActivityWithId.class,
+                splitPairRule, "secondaryActivity1", mSplitInfoConsumer);
         mEventLog.clear();
 
         // Finish primary activity should trigger finishing of the secondary as well.
@@ -372,7 +372,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
 
         // Launch a secondary activity to side
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
-        Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+        Activity secondaryActivity = startActivityAndVerifySplitAttributes(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1", mSplitInfoConsumer);
 
@@ -380,7 +380,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
                 TestActivityWithId.class, false /* shouldClearTop */);
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
-        Activity secondaryActivity2 = startActivityAndVerifySplit(secondaryActivity,
+        Activity secondaryActivity2 = startActivityAndVerifySplitAttributes(secondaryActivity,
                 TestActivityWithId2.class, splitPairRule,
                 "secondaryActivity2", mSplitInfoConsumer);
         waitAndAssertResumed(secondaryActivity);
@@ -409,7 +409,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch a secondary activity to side
-        Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+        Activity secondaryActivity = startActivityAndVerifySplitAttributes(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1", mSplitInfoConsumer);
 
@@ -417,7 +417,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
                 TestActivityWithId.class, false /* shouldClearTop */);
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
-        Activity secondaryActivity2 = startActivityAndVerifySplit(secondaryActivity,
+        Activity secondaryActivity2 = startActivityAndVerifySplitAttributes(secondaryActivity,
                 TestActivityWithId2.class, splitPairRule,
                 "secondaryActivity2", mSplitInfoConsumer);
         waitAndAssertResumed(secondaryActivity);
@@ -455,12 +455,12 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
         // Launch a secondary activity to side
-        Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+        Activity secondaryActivity = startActivityAndVerifySplitAttributes(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1", mSplitInfoConsumer);
 
         // Launch another secondary activity to side
-        Activity secondaryActivity2 = startActivityAndVerifySplit(secondaryActivity,
+        Activity secondaryActivity2 = startActivityAndVerifySplitAttributes(secondaryActivity,
                 TestActivityWithId2.class, splitPairRule,
                 "secondaryActivity2", mSplitInfoConsumer);
         waitAndAssertResumed(secondaryActivity);
@@ -495,7 +495,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         SplitPairRule splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
                 TestConfigChangeHandlingActivity.class, false /* shouldClearTop */);
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
-        Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+        Activity secondaryActivity = startActivityAndVerifySplitAttributes(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1", mSplitInfoConsumer);
 
@@ -506,7 +506,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 .setFinishSecondaryWithPrimary(FINISH_ALWAYS)
                 .build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
-        Activity secondaryActivity2 = startActivityAndVerifySplit(secondaryActivity,
+        Activity secondaryActivity2 = startActivityAndVerifySplitAttributes(secondaryActivity,
                 TestActivityWithId2.class, splitPairRule,
                 "secondaryActivity2", mSplitInfoConsumer);
         waitAndAssertResumed(secondaryActivity);
