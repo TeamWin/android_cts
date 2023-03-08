@@ -99,13 +99,13 @@ public class DistanceMeasurementResultTest {
     }
 
     @Test
-    public void testSetGetMeters() {
+    public void testSetGetResultMeters() {
         if (shouldSkipTest()) {
             return;
         }
         DistanceMeasurementResult result = new DistanceMeasurementResult.Builder(121.0, 120.0)
                 .build();
-        assertEquals(121.0, result.getMeters(), 0.0);
+        assertEquals(121.0, result.getResultMeters(), 0.0);
     }
 
     @Test
@@ -183,7 +183,7 @@ public class DistanceMeasurementResultTest {
             fail("Cannot compare null with non-null value: p=" + p + ", other=" + other);
         }
 
-        assertEquals(p.getMeters(), other.getMeters(), 0.0);
+        assertEquals(p.getResultMeters(), other.getResultMeters(), 0.0);
         assertEquals(p.getErrorMeters(), other.getErrorMeters(), 0.0);
         assertEquals(p.getAzimuthAngle(), other.getAzimuthAngle(), 0.0);
         assertEquals(p.getErrorAzimuthAngle(), other.getErrorAzimuthAngle(), 0.0);
