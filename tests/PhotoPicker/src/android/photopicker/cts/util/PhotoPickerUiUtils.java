@@ -34,7 +34,7 @@ import java.util.List;
 public class PhotoPickerUiUtils {
     public static final long SHORT_TIMEOUT = 5 * DateUtils.SECOND_IN_MILLIS;
 
-    private static final long TIMEOUT = 30 * DateUtils.SECOND_IN_MILLIS;
+    public static final long TIMEOUT = 30 * DateUtils.SECOND_IN_MILLIS;
 
     public static final String REGEX_PACKAGE_NAME =
             "com(.google)?.android.providers.media(.module)?";
