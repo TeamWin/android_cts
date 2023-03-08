@@ -74,6 +74,7 @@ import static android.server.wm.CommandSession.KEY_FORWARD;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getLogTag;
 import static android.server.wm.StateLogger.log;
+import static android.server.wm.StateLogger.logAlways;
 import static android.server.wm.StateLogger.logE;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.UiDeviceUtils.pressEnterButton;
@@ -200,6 +201,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -860,15 +862,25 @@ public abstract class ActivityManagerTestBase {
         waitForIdle();
     }
 
-    public static String executeShellCommand(String command) {
+    public static void executeShellCommand(String command) {
         log("Shell command: " + command);
         try {
-            return SystemUtil.runShellCommand(getInstrumentation(), command);
-        } catch (IOException e) {
-            //bubble it up
-            logE("Error running shell command: " + command);
-            throw new RuntimeException(e);
+            SystemUtil.runShellCommandOrThrow(command);
+        } catch (AssertionError e) {
+            String message = e.getMessage();
+            if (message != null
+                    && message.contains("Warning: Activity not started")
+                    && !message.toLowerCase(Locale.ROOT).contains("error")) {
+                logAlways(message);
+            } else {
+                throw e;
+            }
         }
+    }
+
+    public static String executeShellCommandAndGetStdout(String command) {
+        log("Shell command: " + command);
+        return SystemUtil.runShellCommandOrThrow(command);
     }
 
     protected Bitmap takeScreenshot() {
@@ -984,6 +996,20 @@ public abstract class ActivityManagerTestBase {
         // dismiss all system dialogs before launch home.
         closeSystemDialogs();
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+    }
+
+    protected static void launchHomeActivityNoWaitExpectFailure() {
+        closeSystemDialogs();
+        try {
+            executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        } catch (AssertionError e) {
+            if (e.getMessage().contains("Error: Activity not started")) {
+                // expected
+                return;
+            }
+            throw new AssertionError("Expected activity start to fail, but got", e);
+        }
+        fail("Expected home activity launch to fail but didn't.");
     }
 
     /** Launches the home activity directly with waiting for it to be visible. */
@@ -1746,7 +1772,6 @@ public abstract class ActivityManagerTestBase {
                 removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
             }
 
-            setLockDisabled(mIsLockDisabled);
             final boolean wasCredentialSet = mLockCredentialSet;
             boolean wasDeviceLocked = false;
             if (mLockCredentialSet) {
@@ -1754,6 +1779,7 @@ public abstract class ActivityManagerTestBase {
                 removeLockCredential();
                 mLockCredentialSet = false;
             }
+            setLockDisabled(mIsLockDisabled);
 
             // Dismiss active keyguard after credential is cleared, so keyguard doesn't ask for
             // the stale credential.
@@ -1800,7 +1826,7 @@ public abstract class ActivityManagerTestBase {
          */
         private boolean isLockDisabled() {
             final String isLockDisabled = runCommandAndPrintOutput(
-                    "locksettings get-disabled").trim();
+                    "locksettings get-disabled " + oldIfNeeded()).trim();
             return !"null".equals(isLockDisabled) && Boolean.parseBoolean(isLockDisabled);
         }
 
@@ -1810,7 +1836,15 @@ public abstract class ActivityManagerTestBase {
          * @param lockDisabled true if should disable, false otherwise.
          */
         protected void setLockDisabled(boolean lockDisabled) {
-            runCommandAndPrintOutput("locksettings set-disabled " + lockDisabled);
+            runCommandAndPrintOutput("locksettings set-disabled " + oldIfNeeded() + lockDisabled);
+        }
+
+        @NonNull
+        private String oldIfNeeded() {
+            if (mLockCredentialSet) {
+                return " --old " + LOCK_CREDENTIAL + " ";
+            }
+            return "";
         }
     }
 
@@ -1896,7 +1930,8 @@ public abstract class ActivityManagerTestBase {
             mRotationObserver = new SettingsObserver(mRunnableHandler);
 
             // Disable fixed to user rotation
-            mPreviousFixedToUserRotationMode = executeShellCommand(FIXED_TO_USER_ROTATION_COMMAND);
+            mPreviousFixedToUserRotationMode = executeShellCommandAndGetStdout(
+                    FIXED_TO_USER_ROTATION_COMMAND);
             executeShellCommand(FIXED_TO_USER_ROTATION_COMMAND + "disabled");
 
             mPreviousDegree = get();
@@ -2099,7 +2134,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected static String runCommandAndPrintOutput(String command) {
-        final String output = executeShellCommand(command);
+        final String output = executeShellCommandAndGetStdout(command);
         log(output);
         return output;
     }
@@ -2136,8 +2171,8 @@ public abstract class ActivityManagerTestBase {
         for (String component : logTags) {
             filters += component + ":I ";
         }
-        final String[] result = executeShellCommand("logcat -v brief -d " + filters + " *:S")
-                .split("\\n");
+        final String[] result = executeShellCommandAndGetStdout(
+                "logcat -v brief -d " + filters + " *:S").split("\\n");
         if (logSeparator == null) {
             return result;
         }
@@ -2998,8 +3033,9 @@ public abstract class ActivityManagerTestBase {
 
         /** Get physical and override display metrics from WM for specified display. */
         public static ReportedDisplayMetrics getDisplayMetrics(int displayId) {
-            return new ReportedDisplayMetrics(executeShellCommand(WM_SIZE + " -d " + displayId)
-                    + executeShellCommand(WM_DENSITY + " -d " + displayId), displayId);
+            return new ReportedDisplayMetrics(
+                    executeShellCommandAndGetStdout(WM_SIZE + " -d " + displayId)
+                    + executeShellCommandAndGetStdout(WM_DENSITY + " -d " + displayId), displayId);
         }
 
         public void setDisplayMetrics(final Size size, final int density) {

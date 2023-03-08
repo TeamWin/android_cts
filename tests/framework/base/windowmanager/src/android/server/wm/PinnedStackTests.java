@@ -1208,7 +1208,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 });
                 mBroadcastActionTrigger.enterPipAndWait();
                 assertPinnedStackDoesNotExist();
-                launchHomeActivityNoWait();
+                launchHomeActivityNoWaitExpectFailure();
                 mWmState.computeState();
                 assertPinnedStackDoesNotExist();
             } finally {
