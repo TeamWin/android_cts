@@ -19,7 +19,7 @@ package android.photopicker.cts;
 import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImage;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
-import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.TIMEOUT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findBannerActionButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findBannerDismissButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.getBannerPrimaryText;
@@ -84,6 +84,11 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
 
     @After
     public void tearDown() throws Exception {
+        if (!isHardwareSupported()) {
+            // No-op, skip tear down if hardware is not supported.
+            return;
+        }
+
         if (mActivity != null) {
             mActivity.finish();
         }
@@ -107,7 +112,7 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
 
         // 4. Assert that the Banner disappeared while the Picker is still visible.
         assertWithMessage("Timed out waiting for the banner to disappear")
-                .that(dismissButton.waitUntilGone(SHORT_TIMEOUT))
+                .that(dismissButton.waitUntilGone(TIMEOUT))
                 .isTrue();
         assertThatPhotoPickerActivityIsVisible();
     }
