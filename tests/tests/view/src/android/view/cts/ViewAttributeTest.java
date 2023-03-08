@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
-import android.support.test.uiautomator.UiDevice;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -30,6 +29,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.UiDevice;
 
 import org.junit.After;
 import org.junit.Before;
