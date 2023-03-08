@@ -1350,6 +1350,12 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
             // Free image resources
             image.close();
         }
+
+        // Check that after clearing JPEG_GPS_LOCATION with null,
+        // the value reflects the null value.
+        stillBuilder.set(CaptureRequest.JPEG_GPS_LOCATION, null);
+        Assert.assertNull("JPEG_GPS_LOCATION value should be null if set to null",
+                stillBuilder.get(CaptureRequest.JPEG_GPS_LOCATION));
     }
 
     /**
