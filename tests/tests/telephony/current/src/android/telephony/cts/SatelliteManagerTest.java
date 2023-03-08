@@ -26,7 +26,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.OutcomeReceiver;
-import android.telephony.satellite.ISatelliteDatagramReceiverAck;
 import android.telephony.satellite.PointingInfo;
 import android.telephony.satellite.SatelliteCapabilities;
 import android.telephony.satellite.SatelliteDatagram;
@@ -38,6 +37,8 @@ import android.telephony.satellite.SatelliteStateCallback;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+
+import com.android.internal.telephony.ILongConsumer;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -292,30 +293,17 @@ public class SatelliteManagerTest {
 
     @Test
     public void testSendSatelliteDatagram() {
-        final AtomicReference<Long> datagramId = new AtomicReference<>();
-        final AtomicReference<Integer> errorCode = new AtomicReference<>();
-        OutcomeReceiver<Long, SatelliteManager.SatelliteException> receiver =
-                new OutcomeReceiver<>() {
-                    @Override
-                    public void onResult(Long result) {
-                        datagramId.set(result);
-                    }
-
-                    @Override
-                    public void onError(SatelliteManager.SatelliteException exception) {
-                        errorCode.set(exception.getErrorCode());
-                    }
-                };
-
+        LinkedBlockingQueue<Integer> resultListener = new LinkedBlockingQueue<>(1);
 
         String mText = "This is a test datagram message";
         SatelliteDatagram datagram = new SatelliteDatagram(mText.getBytes());
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class,
-                ()-> mSatelliteManager.sendSatelliteDatagram(0,
+                ()-> mSatelliteManager.sendSatelliteDatagram(
                         SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE, datagram, true,
-                        getContext().getMainExecutor(), receiver));
+                        getContext().getMainExecutor(), resultListener::offer));
+        // TODO: add detailed test
     }
 
     @Test
@@ -416,7 +404,7 @@ public class SatelliteManagerTest {
     private static class SatelliteDatagramCallbackTest extends SatelliteDatagramCallback {
         @Override
         public void onSatelliteDatagramReceived(long datagramId, SatelliteDatagram datagram,
-                int pendingCount, ISatelliteDatagramReceiverAck callback) {
+                int pendingCount, ILongConsumer callback) {
             Log.d(TAG, "onSatelliteDatagramReceived: datagramId=" + datagramId + ", datagram="
                     + datagram + ", pendingCount=" + pendingCount);
         }
