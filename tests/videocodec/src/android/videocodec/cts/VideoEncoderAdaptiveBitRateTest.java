@@ -183,7 +183,7 @@ public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestB
         assertTrue(msg + mTestConfig + mTestEnv, mSegmentSizes[segB] / mSegmentSizes[segA] >= 1.15);
     }
 
-    @CddTest(requirements = "5.2/C.2.1")
+    @CddTest(requirements = "5.2/C-2-1")
     @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_VIDEO_BITRATE")
     @Test
     public void testAdaptiveBitRate() throws IOException, InterruptedException,
