@@ -20,7 +20,7 @@ import static android.server.wm.jetpack.signed.Components.SIGNED_EMBEDDING_ACTIV
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EMBEDDED_ACTIVITY_ID;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifyNoCallback;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplit;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeHasDisplayFeatures;
@@ -44,6 +44,8 @@ import androidx.window.extensions.embedding.SplitPairRule;
 import androidx.window.extensions.layout.WindowLayoutComponent;
 import androidx.window.extensions.layout.WindowLayoutInfo;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,6 +60,8 @@ import java.util.Collections;
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:ActivityEmbeddingIntegrationTests
  */
+@ApiTest(apis = {"androidx.window.extensions.embedding.SplitPairRule",
+        "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener"})
 @Presubmit
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase {
@@ -95,7 +99,7 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
                 .build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
-        Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+        Activity secondaryActivity = startActivityAndVerifySplitAttributes(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity" /* secondActivityId */, mSplitInfoConsumer);
 
@@ -123,6 +127,8 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
     /**
      * Tests that clearing the split info consumer stops notifying unregistered consumer.
      */
+    @ApiTest(apis = "androidx.window.extensions.embedding.ActivityEmbeddingComponent"
+            + "#clearSplitInfoCallback")
     @Test
     public void testClearSplitInfoCallback() throws Exception {
         mActivityEmbeddingComponent.clearSplitInfoCallback();
@@ -151,6 +157,7 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
      * but using different packages for the host and embedded activities.
      * Fixed in CL: If2dbc337c4b8cb909914cc28ae4db28a82ff9de3
      */
+    @ApiTest(apis = "R.attr#knownActivityEmbeddingCerts")
     @Test
     public void testDisplayFeaturesWithEmbedding_differentPackage() throws Exception {
         // Start an activity to collect the window layout info.
