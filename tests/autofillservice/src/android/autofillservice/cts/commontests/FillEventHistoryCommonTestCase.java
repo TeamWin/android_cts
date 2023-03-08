@@ -273,7 +273,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
 
         {
             // Verify fill selection
-            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(5);
+            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(4);
             assertDeprecatedClientState(selection, "clientStateKey", "Value2");
 
             final List<Event> events = selection.getEvents();
@@ -282,9 +282,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
                     "Value2", presentationType);
             assertFillEventForDatasetSelected(events.get(2), "name3",
                     "clientStateKey", "Value2", presentationType);
-            assertFillEventForDatasetShown(events.get(3), "clientStateKey",
-                    "Value2", presentationType);
-            assertFillEventForSaveShown(events.get(4), NULL_DATASET_ID,
+            assertFillEventForSaveShown(events.get(3), NULL_DATASET_ID,
                     "clientStateKey", "Value2");
         }
     }
