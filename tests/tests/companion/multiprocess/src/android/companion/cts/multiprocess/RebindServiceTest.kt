@@ -16,6 +16,7 @@
 package android.companion.cts.multiprocess
 
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
+import android.companion.cts.common.DEVICE_DISPLAY_NAME_B
 import android.companion.cts.common.TestBase
 import android.companion.cts.common.assertApplicationBinds
 import android.companion.cts.common.killProcess
@@ -39,7 +40,6 @@ class RebindServiceTest : TestBase() {
         val associationId = createSelfManagedAssociation(DEVICE_DISPLAY_NAME_A)
         // Publish device's presence and wait for callback.
         cdm.notifyDeviceAppeared(associationId)
-
         assertApplicationBinds(cdm)
         // Wait for secondary service to start.
         SystemClock.sleep(2000)
@@ -52,6 +52,12 @@ class RebindServiceTest : TestBase() {
         // Primary and secondary services should not be bound.
         assertServiceNotBound("PrimaryCompanionService")
         assertServiceNotBound("SecondaryCompanionService")
+        // Recall notifyDeviceAppeared, primary and secondary services should be bound.
+        cdm.notifyDeviceAppeared(associationId)
+
+        assertApplicationBinds(cdm)
+        assertServiceBound("PrimaryCompanionService")
+        assertServiceBound("SecondaryCompanionService")
     }
 
     @Test
@@ -73,6 +79,34 @@ class RebindServiceTest : TestBase() {
         // Secondary service should be bound.
         assertServiceBound("SecondaryCompanionService")
         // Primary service should be still bound.
+        assertServiceBound("PrimaryCompanionService")
+    }
+
+    @Test
+    fun test_rebind_by_application() {
+        // Create a self-managed association.
+        val idA = createSelfManagedAssociation(DEVICE_DISPLAY_NAME_A)
+        val idB = createSelfManagedAssociation(DEVICE_DISPLAY_NAME_B)
+
+        // Publish device's presence and wait for callback.
+        cdm.notifyDeviceAppeared(idA)
+        cdm.notifyDeviceAppeared(idB)
+
+        assertApplicationBinds(cdm)
+        // Kill the primary process.
+        killProcess(":primary")
+        killProcess(":secondary")
+
+        SystemClock.sleep(2000)
+
+        // Primary service should be unbound.
+        assertServiceNotBound("PrimaryCompanionService")
+
+        // Rebind by the application
+        cdm.notifyDeviceAppeared(idA)
+        cdm.notifyDeviceAppeared(idB)
+
+        // Primary service should be bound again.
         assertServiceBound("PrimaryCompanionService")
     }
 
