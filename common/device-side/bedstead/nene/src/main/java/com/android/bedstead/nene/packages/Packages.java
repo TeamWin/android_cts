@@ -17,7 +17,6 @@
 package com.android.bedstead.nene.packages;
 
 import static android.Manifest.permission.INSTALL_PACKAGES;
-import static android.Manifest.permission.INSTALL_TEST_ONLY_PACKAGE;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.content.pm.PackageInstaller.EXTRA_STATUS;
@@ -28,6 +27,7 @@ import static android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTAL
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.R;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.INSTALL_TEST_ONLY_PACKAGE;
 import static com.android.compatibility.common.util.FileUtils.readInputStreamFully;
 
 import android.content.ComponentName;
@@ -151,6 +151,8 @@ public final class Packages {
 
     public static final Packages sInstance = new Packages();
 
+    private static final String PACKAGE_VERIFIER_INCLUDE_ADB = "verifier_verify_adb_installs";
+
     private Set<String> mFeatures = null;
     private final Context mInstrumentedContext;
 
@@ -253,8 +255,13 @@ public final class Packages {
             return install(user, loadBytes(apkFile));
         }
 
-        if (!user.exists() || !user.isUnlocked()) {
-            throw new NeneException("Packages can not be installed in non-started users "
+        if (!user.exists()) {
+            throw new NeneException("Packages can not be installed in stopped users "
+                    + "(Trying to install into user " + user + ")");
+        }
+
+        if (!user.isUnlocked()) {
+            throw new NeneException("Packages can not be installed in locked users "
                     + "(Trying to install into user " + user + ")");
         }
 
@@ -333,10 +340,15 @@ public final class Packages {
             throw new NullPointerException();
         }
 
-//        if (!user.exists() || !user.isUnlocked()) {
-//            throw new NeneException("Packages can not be installed in non-unlocked users "
-//                    + "(Trying to install into user " + user + ")");
-//        }
+        if (!user.exists()) {
+            throw new NeneException("Packages can not be installed in stopped users "
+                    + "(Trying to install into user " + user + ")");
+        }
+
+        if (!user.isUnlocked()) {
+            throw new NeneException("Packages can not be installed in locked users "
+                    + "(Trying to install into user " + user + ")");
+        }
 
         if (TestApis.packages().instrumented().isInstantApp()) {
             // We should install using stdin with the byte array
@@ -363,7 +375,14 @@ public final class Packages {
             return null;
         }
 
-        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)
+                || !user.isRunning()) {
+            // We can use the old adb version - as the new way fails for non-running users
+            return installPreS(user, apkFile);
+        }
+
+        // Temp: let's always use the old version so we're not reliant on broadcasts for now
+        if (true) {
             return installPreS(user, apkFile);
         }
 
@@ -401,6 +420,12 @@ public final class Packages {
                     session.close();
 
                     Intent intent = intentSender.await();
+
+                    if (intent == null) {
+                        throw new NeneException(
+                                "Did not receive broadcast from package installer session when"
+                                        + " installing bytes on user " + user);
+                    }
 
                     if (intent.getIntExtra(EXTRA_STATUS, /* defaultValue= */ STATUS_FAILURE)
                             != STATUS_SUCCESS) {
@@ -618,5 +643,15 @@ public final class Packages {
         String defaultSmsPackage = TestApis.context().instrumentedContext().getString(
                 Resources.getSystem().getIdentifier("config_defaultSms", "string", "android"));
         return TestApis.packages().find(defaultSmsPackage);
+    }
+
+    @Experimental
+    public void setVerifyAdbInstalls(boolean verify) {
+        TestApis.settings().global().putInt(PACKAGE_VERIFIER_INCLUDE_ADB, verify ? 1 : 0);
+    }
+
+    @Experimental
+    public boolean getVerifyAdbInstalls() {
+        return TestApis.settings().global().getInt(PACKAGE_VERIFIER_INCLUDE_ADB, 1) == 1;
     }
 }

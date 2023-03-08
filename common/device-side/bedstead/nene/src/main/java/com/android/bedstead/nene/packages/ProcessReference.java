@@ -87,6 +87,7 @@ public final class ProcessReference {
 
         Poll.forValue("process", () -> mPackage.runningProcess(mUser))
                 .toBeNull()
+                .errorOnFail("Error killing process")
                 .await();
     }
 

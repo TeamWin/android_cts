@@ -37,7 +37,7 @@ public final class BluetoothTest {
 
     @Test
     @EnsureBluetoothDisabled
-    public void enable_bluetoothIsEnabled() throws Exception {
+    public void setEnabled_true_bluetoothIsEnabled() throws Exception {
         TestApis.bluetooth().setEnabled(true);
 
         assertThat(TestApis.bluetooth().isEnabled()).isTrue();
@@ -45,7 +45,7 @@ public final class BluetoothTest {
 
     @Test
     @EnsureBluetoothEnabled
-    public void enable_bluetoothIsDisabled() {
+    public void setEnabled_false_bluetoothIsDisabled() {
         TestApis.bluetooth().setEnabled(false);
 
         assertThat(TestApis.bluetooth().isEnabled()).isFalse();

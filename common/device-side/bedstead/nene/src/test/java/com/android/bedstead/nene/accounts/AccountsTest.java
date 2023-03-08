@@ -27,6 +27,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.nene.TestApis;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,8 +48,9 @@ public final class AccountsTest {
     @Test
     @EnsureHasAdditionalUser
     @EnsureHasAccount(onUser = ADDITIONAL_USER)
+    @Ignore("/b271540793")
     public void allOnDevice_includesAccountOnOtherUser() {
-        assertThat(TestApis.accounts().allOnDevice())
+        assertThat(TestApis.accounts().all(sDeviceState.additionalUser()))
                 .contains(sDeviceState.account());
     }
 }

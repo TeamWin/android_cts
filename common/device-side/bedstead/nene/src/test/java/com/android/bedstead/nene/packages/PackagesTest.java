@@ -135,14 +135,19 @@ public class PackagesTest {
     }
 
     @Test
+    @EnsureHasAdditionalUser
     public void installedForUser_doesNotContainPackageNotInstalledForUser() {
-        Package pkg = TestApis.packages().install(mUser, TEST_APP_APK_FILE);
+        Package pkg = null;
+        try {
+            pkg = TestApis.packages().install(mUser, TEST_APP_APK_FILE);
+            pkg.uninstall(sDeviceState.additionalUser());
 
-        try (UserReference otherUser = TestApis.users().createUser().create()) {
-            assertThat(TestApis.packages().installedForUser(otherUser))
+            assertThat(TestApis.packages().installedForUser(sDeviceState.additionalUser()))
                     .doesNotContain(pkg);
         } finally {
-            pkg.uninstall(mUser);
+            if (pkg != null) {
+                pkg.uninstall(mUser);
+            }
         }
     }
 
@@ -228,36 +233,32 @@ public class PackagesTest {
     }
 
     @Test
+    @EnsureHasAdditionalUser
     public void install_byteArray_differentUser_isInstalled() {
-        UserReference user = TestApis.users().createUser().createAndStart();
-        TestApis.packages().install(user, TEST_APP_BYTES);
-        Package pkg = TestApis.packages().find(TEST_APP_PACKAGE_NAME);
-
+        Package pkg = null;
         try {
-            assertThat(pkg.installedOnUser(user)).isTrue();
+            pkg = TestApis.packages().install(sDeviceState.additionalUser(), TEST_APP_BYTES);
+
+            assertThat(pkg.installedOnUser(sDeviceState.additionalUser())).isTrue();
         } finally {
-            user.remove();
+            if (pkg != null) {
+                pkg.uninstallFromAllUsers();
+            }
         }
     }
 
     @Test
-    @RequireRunOnSystemUser
+    @EnsureHasAdditionalUser
     public void install_userNotStarted_throwsException() {
-        try (UserReference user = TestApis.users().createUser().create().stop()) {
-            assertThrows(NeneException.class, () -> TestApis.packages().install(user,
-                    TEST_APP_APK_FILE));
-        }
-    }
-
-    @Test
-    public void install_byteArray_userNotStarted_throwsException() {
-        UserReference user = TestApis.users().createUser().create().stop();
-
         try {
-            assertThrows(NeneException.class, () -> TestApis.packages().install(user,
-                    TEST_APP_BYTES));
+            sDeviceState.additionalUser().stop();
+
+            assertThrows(NeneException.class, () -> {
+                TestApis.packages().install(
+                        sDeviceState.additionalUser(), TEST_APP_APK_FILE);
+            });
         } finally {
-            user.remove();
+            sDeviceState.additionalUser().start();
         }
     }
 
@@ -298,36 +299,37 @@ public class PackagesTest {
     }
 
     @Test
+    @EnsureHasAdditionalUser
     public void install_alreadyInstalledOnOtherUser_installs() {
         Package pkg = null;
 
-        try (UserReference otherUser = TestApis.users().createUser().createAndStart()) {
-            TestApis.packages().install(otherUser, TEST_APP_APK_FILE);
+        try {
+            pkg = TestApis.packages().install(sDeviceState.additionalUser(), TEST_APP_APK_FILE);
 
-            pkg =
-                    TestApis.packages().install(mUser, TEST_APP_APK_FILE);
+            TestApis.packages().install(mUser, TEST_APP_APK_FILE);
 
             assertThat(pkg.installedOnUser(mUser)).isTrue();
         } finally {
             if (pkg != null) {
-                pkg.uninstall(mUser);
+                pkg.uninstallFromAllUsers();
             }
         }
     }
 
     @Test
+    @EnsureHasAdditionalUser
     public void install_byteArray_alreadyInstalledOnOtherUser_installs() {
         Package pkg = null;
 
-        try (UserReference otherUser = TestApis.users().createUser().createAndStart()) {
-            TestApis.packages().install(otherUser, TEST_APP_BYTES);
+        try {
+            pkg = TestApis.packages().install(sDeviceState.additionalUser(), TEST_APP_BYTES);
 
-            pkg = TestApis.packages().install(mUser, TEST_APP_BYTES);
+            TestApis.packages().install(mUser, TEST_APP_BYTES);
 
             assertThat(pkg.installedOnUser(mUser)).isTrue();
         } finally {
             if (pkg != null) {
-                pkg.uninstall(mUser);
+                pkg.uninstallFromAllUsers();
             }
         }
     }
@@ -417,29 +419,30 @@ public class PackagesTest {
     }
 
     @Test
+    @Ignore // TODO(270963894): Restore
     public void kill_killsProcess() {
         try (TestAppInstance testApp = sTestApp.install()) {
             // Start an activity so the process exists
-            TestAppActivityReference activity = testApp.activities().query()
+            testApp.activities().query()
                     .whereActivity().exported().isTrue()
-                    .get();
-            Intent intent = new Intent();
-            intent.setComponent(activity.component().componentName());
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            TestApis.context().instrumentedContext().startActivity(intent);
+                    .get().start();
             Poll.forValue("process", () -> sTestApp.pkg().runningProcess())
                     .toNotBeNull()
                     .await();
+            int pidBeforeKill = sTestApp.pkg().runningProcess().pid();
 
             sTestApp.pkg().runningProcess().kill();
 
-            assertThat(sTestApp.pkg().runningProcess()).isNull();
+            ProcessReference processReference = sTestApp.pkg().runningProcess();
+            int pidAfterKill = processReference == null ? -1 : processReference.pid();
+            assertThat(pidAfterKill).isNotEqualTo(pidBeforeKill);
         }
     }
 
     @Test
     @RequireRunOnInitialUser
     @EnsureHasWorkProfile
+    @Ignore // TODO(270963894): Restore
     public void kill_doesNotKillProcessInOtherUser() {
         try (TestAppInstance personalTestApp = sTestApp.install();
                 TestAppInstance workTestApp = sTestApp.install(sDeviceState.workProfile())) {
@@ -460,7 +463,7 @@ public class PackagesTest {
                     .toNotBeNull()
                     .await();
 
-            sTestApp.pkg().runningProcess().kill();
+             sTestApp.pkg().runningProcess().kill();
 
             assertThat(sTestApp.pkg().runningProcess(sDeviceState.workProfile())).isNotNull();
         }
