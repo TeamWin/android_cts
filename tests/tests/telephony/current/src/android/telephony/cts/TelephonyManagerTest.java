@@ -5748,13 +5748,14 @@ public class TelephonyManagerTest {
                 ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                         tm -> tm.setRadioPower(false), permission.MODIFY_PHONE_STATE);
                 turnedRadioOff = true;
-                // Wait until ServiceState reflects the power change
+                // Wait up to 20s until ServiceState reflects the power change,
+                // but this should only take a little over 10s in reality.
                 int retry = 0;
                 while ((callback.mRadioPowerState != TelephonyManager.RADIO_POWER_OFF
                         || callback.mServiceState.getState() == ServiceState.STATE_IN_SERVICE)
                         && retry < 10) {
                     retry++;
-                    waitForMs(1000);
+                    waitForMs(2000);
                 }
                 assertEquals(TelephonyManager.RADIO_POWER_OFF, callback.mRadioPowerState);
                 assertNotEquals(ServiceState.STATE_IN_SERVICE, callback.mServiceState.getState());
