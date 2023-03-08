@@ -42,7 +42,6 @@ import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
@@ -178,7 +177,6 @@ public class WebViewClientTest extends SharedWebViewTest {
 
     // Verify shouldoverrideurlloading called on webview called via onCreateWindow
     // TODO(sgurun) upstream this test to Aw.
-    @FlakyTest(bugId = 253448914)
     @Test
     public void testShouldOverrideUrlLoadingOnCreateWindow() throws Exception {
         mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
