@@ -17,6 +17,9 @@ package android.quickaccesswallet.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
+
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -25,6 +28,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -65,7 +69,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-
 /**
  * Tests parceling of the {@link WalletCard}
  */
@@ -88,7 +91,6 @@ public class QuickAccessWalletClientTest {
     public void setUp() throws Exception {
         // Save current default payment app
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        mDefaultPaymentApp = SettingsUtils.get(NFC_PAYMENT_DEFAULT_COMPONENT);
         ComponentName component =
                 ComponentName.createRelative(mContext, TestHostApduService.class.getName());
         SettingsUtils.syncSet(mContext, NFC_PAYMENT_DEFAULT_COMPONENT,
@@ -355,24 +357,54 @@ public class QuickAccessWalletClientTest {
     }
 
     @Test
-    public void testGetWalletCards_serviceResponseWithError_success() throws Exception {
-        GetWalletCardsError error = new GetWalletCardsError(null, "error");
-        TestQuickAccessWalletService.setWalletCardsError(error);
-
+    public void testGetWalletCards_locationFeatureEnabled_includesLocations() throws Exception {
+        assumeTrue(
+                mContext.getPackageManager()
+                        .hasSystemFeature(
+                                PackageManager.FEATURE_WALLET_LOCATION_BASED_SUGGESTIONS));
+        WalletCard card =
+                new WalletCard.Builder("cardId", createCardImage(), "Card", createPendingIntent())
+                        .setCardLocations(List.of(new Location("test")))
+                        .build();
+        TestQuickAccessWalletService.setWalletCardsResponse(
+                new GetWalletCardsResponse(Collections.singletonList(card), 0));
         TestCallback callback = new TestCallback();
 
         QuickAccessWalletClient.create(mContext).getWalletCards(GET_WALLET_CARDS_REQUEST, callback);
-        callback.await(3, TimeUnit.SECONDS);
 
-        assertThat(callback.mError).isNotNull();
-        assertThat(callback.mError.getMessage()).isEqualTo(error.getMessage());
+        callback.await(3, TimeUnit.SECONDS);
+        assertThat(callback.mResponse).isNotNull();
+        assertThat(callback.mResponse.getWalletCards()).hasSize(1);
+        assertThat(callback.mResponse.getWalletCards().get(0).getCardLocations()).hasSize(1);
+    }
+
+    @Test
+    public void testGetWalletCards_locationFeatureDisabled_excludesLocations() throws Exception {
+        assumeFalse(
+                mContext.getPackageManager()
+                        .hasSystemFeature(
+                                PackageManager.FEATURE_WALLET_LOCATION_BASED_SUGGESTIONS));
+        WalletCard card =
+                new WalletCard.Builder("cardId", createCardImage(), "Card", createPendingIntent())
+                        .setCardLocations(List.of(new Location("test")))
+                        .build();
+        TestQuickAccessWalletService.setWalletCardsResponse(
+                new GetWalletCardsResponse(Collections.singletonList(card), 0));
+        TestCallback callback = new TestCallback();
+
+        QuickAccessWalletClient.create(mContext).getWalletCards(GET_WALLET_CARDS_REQUEST, callback);
+
+        callback.await(3, TimeUnit.SECONDS);
+        assertThat(callback.mResponse).isNotNull();
+        assertThat(callback.mResponse.getWalletCards()).hasSize(1);
+        assertThat(callback.mResponse.getWalletCards().get(0).getCardLocations()).isEmpty();
     }
 
     @Test
     public void testSelectWalletCard_success() throws Exception {
         TestQuickAccessWalletService.setExpectedRequestCount(1);
-        QuickAccessWalletClient.create(mContext).selectWalletCard(
-                new SelectWalletCardRequest("card1"));
+        QuickAccessWalletClient.create(mContext)
+                .selectWalletCard(new SelectWalletCardRequest("card1"));
         TestQuickAccessWalletService.awaitRequests(3, TimeUnit.SECONDS);
 
         List<SelectWalletCardRequest> selectRequests =
