@@ -17,7 +17,6 @@ package android.app.cts.shortfgstesthelper;
 
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.EXTRA_MESSAGE;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.HELPER_PACKAGE;
-import static android.app.cts.shortfgstesthelper.ShortFgsHelper.NOTIFICATION_ID;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.TAG;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.createNotification;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.sContext;
@@ -28,23 +27,37 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.Process;
 import android.util.Log;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 /**
  * This class receives a message from the main test package and run a command.
  */
 public class ShortFgsMessageReceiver extends BroadcastReceiver {
+    private static final HashMap<ComponentName, ServiceConnection> sServiceConnections =
+            new HashMap<>();
+
+
     /**
      * Send a ShortFgsMessage to this receiver.
      */
     public static void sendMessage(ShortFgsMessage m) {
+        sendMessage(HELPER_PACKAGE, m);
+    }
+
+    /**
+     * Send a ShortFgsMessage to this receiver in a given package.
+     */
+    public static void sendMessage(String packageName, ShortFgsMessage m) {
         Intent i = new Intent();
-        i.setComponent(new ComponentName(HELPER_PACKAGE, ShortFgsMessageReceiver.class.getName()));
+        i.setComponent(new ComponentName(packageName, ShortFgsMessageReceiver.class.getName()));
         i.setAction(Intent.ACTION_VIEW);
         i.putExtra(EXTRA_MESSAGE, m);
         i.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
@@ -101,11 +114,22 @@ public class ShortFgsMessageReceiver extends BroadcastReceiver {
                 return;
             }
 
+            // Call Context.startService()?
+            if (m.isDoCallStartService()) {
+                // Call startService for the component, and also pass along the message
+                Log.i(TAG, "isDoCallStartService: " + m);
+                sContext.startService(
+                        setMessage(new Intent().setComponent(m.getComponentName()), m));
+                ShortFgsHelper.sendBackAckMessage();
+                return;
+            }
+
             // Call Service.startForeground()?
             if (m.isDoCallStartForeground()) {
                 Log.i(TAG, "isDoCallStartForeground: " + m);
-                FgsBase.getInstanceForClass(m.getComponentName().getClassName())
-                        .startForeground(NOTIFICATION_ID, createNotification(), m.getFgsType());
+                ServiceBase.getInstanceForClass(m.getComponentName().getClassName())
+                        .startForeground(m.getNotificationId(),
+                                createNotification(), m.getFgsType());
                 ShortFgsHelper.sendBackAckMessage();
                 return;
             }
@@ -113,7 +137,7 @@ public class ShortFgsMessageReceiver extends BroadcastReceiver {
             // Call Service.stopForeground()?
             if (m.isDoCallStopForeground()) {
                 Log.i(TAG, "isDoCallStopForeground: " + m);
-                FgsBase.getInstanceForClass(m.getComponentName().getClassName())
+                ServiceBase.getInstanceForClass(m.getComponentName().getClassName())
                         .stopForeground(Service.STOP_FOREGROUND_DETACH);
                 ShortFgsHelper.sendBackAckMessage();
                 return;
@@ -122,7 +146,7 @@ public class ShortFgsMessageReceiver extends BroadcastReceiver {
             // Call Service.stopSelf()?
             if (m.isDoCallStopSelf()) {
                 Log.i(TAG, "isDoCallStopSelf: " + m);
-                FgsBase.getInstanceForClass(m.getComponentName().getClassName())
+                ServiceBase.getInstanceForClass(m.getComponentName().getClassName())
                         .stopSelf();
                 ShortFgsHelper.sendBackAckMessage();
                 return;
@@ -147,6 +171,25 @@ public class ShortFgsMessageReceiver extends BroadcastReceiver {
                 return;
             }
 
+            // Call Context.bindService()?
+            if (m.isDoCallBindService()) {
+                Log.i(TAG, "isDoCallBindService: " + m);
+                Intent bindingIntent = new Intent(Intent.ACTION_VIEW)
+                        .setComponent(m.getComponentName());
+                final boolean success = sContext.bindService(bindingIntent, getServiceConnection(
+                        m.getComponentName()), Context.BIND_AUTO_CREATE);
+                ShortFgsHelper.sendBackAckMessage();
+                return;
+            }
+
+            // Call Context.unbindService()?
+            if (m.isDoCallUnbindService()) {
+                Log.i(TAG, "isDoCallUnbindService: " + m);
+                sContext.unbindService(getServiceConnection(m.getComponentName()));
+                ShortFgsHelper.sendBackAckMessage();
+                return;
+            }
+
             throw new RuntimeException("Unknown message " + m + " received");
         } catch (Throwable th) {
             final boolean isExpected = expectedException != null
@@ -166,5 +209,34 @@ public class ShortFgsMessageReceiver extends BroadcastReceiver {
 
     private static void killSelf() {
         Process.killProcess(Process.myPid());
+    }
+
+    private ServiceConnection getServiceConnection(ComponentName cn) {
+        ServiceConnection ret = sServiceConnections.get(cn);
+        if (ret == null) {
+            ret = new ServiceConnection() {
+                @Override
+                public void onServiceConnected(ComponentName name, IBinder service) {
+                    Log.i(TAG, "onServiceConnected: " + name);
+                }
+
+                @Override
+                public void onServiceDisconnected(ComponentName name) {
+                    Log.i(TAG, "onServiceDisconnected: " + name);
+                }
+
+                @Override
+                public void onBindingDied(ComponentName name) {
+                    Log.i(TAG, "onBindingDied: " + name);
+                }
+
+                @Override
+                public void onNullBinding(ComponentName name) {
+                    Log.i(TAG, "onNullBinding: " + name);
+                }
+            };
+            sServiceConnections.put(cn, ret);
+        }
+        return ret;
     }
 }

@@ -49,6 +49,9 @@
             android:exported="true">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="cts" />
         </service>
+        <service android:name=".BoundService"
+            android:exported="true">
+        </service>
     </application>
 
 </manifest>
