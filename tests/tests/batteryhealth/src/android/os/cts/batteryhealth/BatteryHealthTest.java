@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.os.cts.batterysaving;
+package android.os.cts.batteryhealth;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -22,14 +22,19 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
 
+import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Before;
 import org.junit.Test;
 
-public class BatteryHealthTest extends BatterySavingTestBase {
+public class BatteryHealthTest {
     private static final String TAG = "BatteryHealthTest";
 
     // Battery usage date: check the range from 2020-12-01 to 2038-01-19
@@ -49,10 +54,13 @@ public class BatteryHealthTest extends BatterySavingTestBase {
 
     @Before
     public void setUp() {
-        mBatteryManager = getContext().getSystemService(BatteryManager.class);
+        final Context context = InstrumentationRegistry.getContext();
+
+        mBatteryManager = context.getSystemService(BatteryManager.class);
     }
 
     @Test
+    @ApiTest(apis = {"android.os.BatteryManager#BATTERY_PROPERTY_MANUFACTURING_DATE"})
     public void testManufacturingDate_dataInRange() {
         mAutomation = getInstrumentation().getUiAutomation();
         mAutomation.adoptShellPermissionIdentity(android.Manifest.permission.BATTERY_STATS);
@@ -68,6 +76,7 @@ public class BatteryHealthTest extends BatterySavingTestBase {
     }
 
     @Test
+    @ApiTest(apis = {"android.os.BatteryManager#BATTERY_PROPERTY_FIRST_USAGE_DATE"})
     public void testFirstUsageDate_dataInRange() {
         mAutomation = getInstrumentation().getUiAutomation();
         mAutomation.adoptShellPermissionIdentity(android.Manifest.permission.BATTERY_STATS);
@@ -83,6 +92,7 @@ public class BatteryHealthTest extends BatterySavingTestBase {
     }
 
     @Test
+    @ApiTest(apis = {"android.os.BatteryManager#BATTERY_PROPERTY_CHARGING_POLICY"})
     public void testChargingPolicy_dataInRange() {
         mAutomation = getInstrumentation().getUiAutomation();
         mAutomation.adoptShellPermissionIdentity(android.Manifest.permission.BATTERY_STATS);
@@ -97,6 +107,7 @@ public class BatteryHealthTest extends BatterySavingTestBase {
     }
 
     @Test
+    @ApiTest(apis = {"android.os.BatteryManager#BATTERY_PROPERTY_STATE_OF_HEALTH"})
     public void testBatteryStateOfHealth_dataInRange() {
         mAutomation = getInstrumentation().getUiAutomation();
         mAutomation.adoptShellPermissionIdentity(android.Manifest.permission.BATTERY_STATS);
@@ -112,8 +123,10 @@ public class BatteryHealthTest extends BatterySavingTestBase {
     }
 
     @Test
+    @ApiTest(apis = {"android.os.BatteryManager#EXTRA_CYCLE_COUNT"})
     public void testBatteryCycleCount_dataInRange() {
-        final Intent batteryInfo = getContext().registerReceiver(null,
+        final Context context = InstrumentationRegistry.getContext();
+        final Intent batteryInfo = context.registerReceiver(null,
                                     new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         final int batteryCycleCount = batteryInfo.getIntExtra(BatteryManager
                 .EXTRA_CYCLE_COUNT, -1);
@@ -122,6 +135,7 @@ public class BatteryHealthTest extends BatterySavingTestBase {
     }
 
     @Test
+    @ApiTest(apis = {"android.os.BatteryManager#BATTERY_PROPERTY_MANUFACTURING_DATE"})
     public void testManufacturingDate_noPermission() {
         try {
             final long manufacturingDate = mBatteryManager.getLongProperty(BatteryManager
@@ -133,6 +147,7 @@ public class BatteryHealthTest extends BatterySavingTestBase {
     }
 
     @Test
+    @ApiTest(apis = {"android.os.BatteryManager#BATTERY_PROPERTY_FIRST_USAGE_DATE"})
     public void testFirstUsageDate_noPermission() {
         try {
             final long firstUsageDate = mBatteryManager.getLongProperty(BatteryManager
@@ -144,6 +159,7 @@ public class BatteryHealthTest extends BatterySavingTestBase {
     }
 
     @Test
+    @ApiTest(apis = {"android.os.BatteryManager#BATTERY_PROPERTY_CHARGING_POLICY"})
     public void testChargingPolicy_noPermission() {
         try {
             final int chargingPolicy = mBatteryManager.getIntProperty(BatteryManager
@@ -155,6 +171,7 @@ public class BatteryHealthTest extends BatterySavingTestBase {
     }
 
     @Test
+    @ApiTest(apis = {"android.os.BatteryManager#BATTERY_PROPERTY_STATE_OF_HEALTH"})
     public void testBatteryStateOfHealth_noPermission() {
         try {
             final int stateOfHealth = mBatteryManager.getIntProperty(BatteryManager
