@@ -41,6 +41,7 @@ DEVICE_INFO_ACTIVITIES += \
   $(DEVICE_INFO_PACKAGE).InputDeviceInfo \
   $(DEVICE_INFO_PACKAGE).LocaleDeviceInfo \
   $(DEVICE_INFO_PACKAGE).MediaDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).MediaOutputDeviceInfo \
   $(DEVICE_INFO_PACKAGE).MemoryDeviceInfo \
   $(DEVICE_INFO_PACKAGE).PackageDeviceInfo \
   $(DEVICE_INFO_PACKAGE).ScreenDeviceInfo \

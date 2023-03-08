@@ -80,6 +80,7 @@ genrule {
         " -a com.android.compatibility.common.deviceinfo.InputDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.LocaleDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.MediaDeviceInfo " +
+        " -a com.android.compatibility.common.deviceinfo.MediaOutputDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.MemoryDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.PackageDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.ScreenDeviceInfo " +
