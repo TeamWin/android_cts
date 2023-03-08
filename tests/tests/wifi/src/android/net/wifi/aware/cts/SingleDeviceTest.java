@@ -19,11 +19,14 @@ package android.net.wifi.aware.cts;
 import static android.Manifest.permission.OVERRIDE_WIFI_CONFIG;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.net.wifi.aware.AwarePairingConfig.PAIRING_BOOTSTRAPPING_OPPORTUNISTIC;
+import static android.net.wifi.aware.Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_PK_PASN_128;
+import static android.net.wifi.aware.Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_PK_PASN_256;
 
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.mock;
 
+import android.annotation.NonNull;
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -334,6 +337,13 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         static final int ON_SESSION_SUSPEND_FAILED = 11;
         static final int ON_SESSION_RESUME_SUCCEEDED = 12;
         static final int ON_SESSION_RESUME_FAILED = 13;
+        static final int ON_PAIRING_SETUP_SUCCEEDED = 14;
+        static final int ON_PAIRING_SETUP_FAILED = 15;
+        static final int ON_PAIRING_SETUP_REQUEST_RECEIVED = 16;
+        static final int ON_PAIRING_VERIFICATION_SUCCEEDED = 17;
+        static final int ON_PAIRING_VERIFICATION_FAILED = 18;
+        static final int ON_BOOTSTRAPPING_SUCCEEDED = 19;
+        static final int ON_BOOTSTRAPPING_FAILED = 20;
 
         private final Object mLocalLock = new Object();
         private final ArrayDeque<Integer> mCallbackQueue = new ArrayDeque<>();
@@ -356,80 +366,140 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         @Override
         public void onPublishStarted(PublishDiscoverySession session) {
+            super.onPublishStarted(session);
             mPublishDiscoverySession = session;
             processCallback(ON_PUBLISH_STARTED);
         }
 
         @Override
         public void onSubscribeStarted(SubscribeDiscoverySession session) {
+            super.onSubscribeStarted(session);
             mSubscribeDiscoverySession = session;
             processCallback(ON_SUBSCRIBE_STARTED);
         }
 
         @Override
         public void onSessionConfigUpdated() {
+            super.onSessionConfigUpdated();
             processCallback(ON_SESSION_CONFIG_UPDATED);
         }
 
         @Override
         public void onSessionConfigFailed() {
+            super.onSessionConfigFailed();
             processCallback(ON_SESSION_CONFIG_FAILED);
         }
 
         @Override
         public void onSessionTerminated() {
+            super.onSessionTerminated();
             processCallback(ON_SESSION_TERMINATED);
         }
 
         @Override
         public void onSessionSuspendSucceeded() {
+            super.onSessionSuspendSucceeded();
             processCallback(ON_SESSION_SUSPEND_SUCCEEDED);
         }
 
         @Override
         public void onSessionSuspendFailed(int reason) {
+            super.onSessionSuspendFailed(reason);
             processCallback(ON_SESSION_SUSPEND_FAILED);
         }
 
         @Override
         public void onSessionResumeSucceeded() {
+            super.onSessionResumeSucceeded();
             processCallback(ON_SESSION_RESUME_SUCCEEDED);
         }
 
         @Override
         public void onSessionResumeFailed(int reason) {
+            super.onSessionResumeFailed(reason);
             processCallback(ON_SESSION_RESUME_FAILED);
         }
 
         @Override
         public void onServiceDiscovered(PeerHandle peerHandle, byte[] serviceSpecificInfo,
                 List<byte[]> matchFilter) {
+            super.onServiceDiscovered(peerHandle, serviceSpecificInfo, matchFilter);
             processCallback(ON_SERVICE_DISCOVERED);
         }
 
         @Override
         public void onServiceDiscovered(ServiceDiscoveryInfo info) {
+            super.onServiceDiscovered(info);
             processCallback(ON_SERVICE_DISCOVERED);
         }
 
         @Override
         public void onMessageSendSucceeded(int messageId) {
+            super.onMessageSendSucceeded(messageId);
             processCallback(ON_MESSAGE_SEND_SUCCEEDED);
         }
 
         @Override
         public void onMessageSendFailed(int messageId) {
+            super.onMessageSendFailed(messageId);
             processCallback(ON_MESSAGE_SEND_FAILED);
         }
 
         @Override
         public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
+            super.onMessageReceived(peerHandle, message);
             processCallback(ON_MESSAGE_RECEIVED);
         }
 
         @Override
         public void onServiceLost(PeerHandle peerHandle, int reason) {
+            super.onServiceLost(peerHandle, reason);
             processCallback(ON_SESSION_DISCOVERED_LOST);
+        }
+
+        @Override
+        public void onPairingSetupRequestReceived(@NonNull PeerHandle peerHandle, int requestId) {
+            super.onPairingSetupRequestReceived(peerHandle, requestId);
+            processCallback(ON_PAIRING_SETUP_REQUEST_RECEIVED);
+        }
+
+        @Override
+        public void onPairingSetupSucceeded(@NonNull PeerHandle peerHandle,
+                @NonNull String alias) {
+            super.onPairingSetupSucceeded(peerHandle, alias);
+            processCallback(ON_PAIRING_SETUP_SUCCEEDED);
+
+        }
+
+        @Override
+        public void onPairingSetupFailed(@NonNull PeerHandle peerHandle) {
+            super.onPairingSetupFailed(peerHandle);
+            processCallback(ON_PAIRING_SETUP_FAILED);
+        }
+
+        @Override
+        public void onPairingVerificationSucceed(@NonNull PeerHandle peerHandle,
+                @NonNull String alias) {
+            super.onPairingVerificationSucceed(peerHandle, alias);
+            processCallback(ON_PAIRING_VERIFICATION_SUCCEEDED);
+        }
+
+        @Override
+        public void onPairingVerificationFailed(@NonNull PeerHandle peerHandle) {
+            super.onPairingVerificationFailed(peerHandle);
+            processCallback(ON_PAIRING_VERIFICATION_FAILED);
+        }
+
+        @Override
+        public void onBootstrappingSucceeded(@NonNull PeerHandle peerHandle, int method) {
+            super.onBootstrappingSucceeded(peerHandle, method);
+            processCallback(ON_BOOTSTRAPPING_SUCCEEDED);
+        }
+
+        @Override
+        public void onBootstrappingFailed(@NonNull PeerHandle peerHandle) {
+            super.onBootstrappingFailed(peerHandle);
+            processCallback(ON_BOOTSTRAPPING_FAILED);
         }
 
         /**
@@ -625,6 +695,12 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                     characteristics.isInstantCommunicationModeSupported());
             ShellIdentityUtils.invokeWithShellPermissions(() ->
                     mWifiAwareManager.enableInstantCommunicationMode(false));
+        }
+        if (characteristics.isAwarePairingSupported()) {
+            assertTrue(((characteristics.getSupportedPairingCipherSuites()
+                    & WIFI_AWARE_CIPHER_SUITE_NCS_PK_PASN_128) != 0)
+                    || ((characteristics.getSupportedPairingCipherSuites()
+                    & WIFI_AWARE_CIPHER_SUITE_NCS_PK_PASN_256) != 0));
         }
     }
 
