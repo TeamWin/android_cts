@@ -55,10 +55,7 @@ public class BroadcastOptionsTest {
      * Creates a clone of BroadcastOptions, using toBundle().
      */
     private BroadcastOptions cloneViaBundle(BroadcastOptions bo) {
-        final Bundle b = bo.toBundle();
-
-        // If toBundle() returns null, that means the BroadcastOptions was the default values.
-        return b == null ? BroadcastOptions.makeBasic() : new BroadcastOptions(b);
+        return BroadcastOptions.fromBundle(bo.toBundle());
     }
 
     private void assertBroadcastOptionTemporaryAppAllowList(
@@ -92,12 +89,8 @@ public class BroadcastOptionsTest {
     public void testTemporaryAppAllowlistBroadcastOptions_noDefaultValues() {
         BroadcastOptions bo;
 
-        bo = BroadcastOptions.makeBasic();
-
-        Bundle bundle = bo.toBundle();
-        assertNull(bundle);
-
         // Check the default values about temp-allowlist.
+        bo = BroadcastOptions.makeBasic();
         assertBroadcastOption_noTemporaryAppAllowList(bo);
     }
 
@@ -305,6 +298,25 @@ public class BroadcastOptionsTest {
     }
 
     @Test
+    public void testSetGetDeferralPolicy() {
+        final BroadcastOptions options = BroadcastOptions.makeBasic();
+        assertEquals(BroadcastOptions.DEFERRAL_POLICY_DEFAULT,
+                options.getDeferralPolicy());
+
+        options.setDeferralPolicy(BroadcastOptions.DEFERRAL_POLICY_UNTIL_ACTIVE);
+        assertEquals(BroadcastOptions.DEFERRAL_POLICY_UNTIL_ACTIVE,
+                options.getDeferralPolicy());
+
+        final BroadcastOptions options2 = cloneViaBundle(options);
+        assertEquals(BroadcastOptions.DEFERRAL_POLICY_UNTIL_ACTIVE,
+                options2.getDeferralPolicy());
+
+        options.clearDeferralPolicy();
+        assertEquals(BroadcastOptions.DEFERRAL_POLICY_DEFAULT,
+                options.getDeferralPolicy());
+    }
+
+    @Test
     public void testSetGetDeliveryGroupPolicy() {
         final BroadcastOptions options = BroadcastOptions.makeBasic();
         final int defaultPolicy = options.getDeliveryGroupPolicy();
@@ -313,7 +325,7 @@ public class BroadcastOptionsTest {
         assertEquals(BroadcastOptions.DELIVERY_GROUP_POLICY_MOST_RECENT,
                 options.getDeliveryGroupPolicy());
 
-        final BroadcastOptions options2 = new BroadcastOptions(options.toBundle());
+        final BroadcastOptions options2 = cloneViaBundle(options);
         assertEquals(BroadcastOptions.DELIVERY_GROUP_POLICY_MOST_RECENT,
                 options2.getDeliveryGroupPolicy());
 
@@ -333,7 +345,7 @@ public class BroadcastOptionsTest {
         assertEquals(String.join(":", namespace, key),
                 options.getDeliveryGroupMatchingKey());
 
-        final BroadcastOptions options2 = new BroadcastOptions(options.toBundle());
+        final BroadcastOptions options2 = cloneViaBundle(options);
         assertEquals(String.join(":", namespace, key),
                 options2.getDeliveryGroupMatchingKey());
 
