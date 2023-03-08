@@ -31,7 +31,9 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsers;
+import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsersOnDefaultDisplay;
 import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
+import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsersOnDefaultDisplay;
 import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
 
@@ -213,8 +215,29 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
             + "isVisibleBackgroundUsersSupported(UserManager)"})
     @RequireNotVisibleBackgroundUsers(reason = "Because test is testing exactly that")
     public void testIsVisibleBackgroundUsersSupported_not() {
-        expectWithMessage("Users on secondary displays supported").that(
+        expectWithMessage("Users on secondary displays not supported").that(
                 UserManagerHelper.isVisibleBackgroundUsersSupported(mUserManager)).isFalse();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.builtin.os.UserManagerHelper#"
+            + "isVisibleBackgroundUsersOnDefaultDisplaySupported(UserManager)"})
+    @RequireVisibleBackgroundUsersOnDefaultDisplay(reason = "Because test is testing exactly that")
+    public void testIsVisibleBackgroundUsersOnDefaultDisplaySupported() {
+        expectWithMessage("Visible background Users on default display supported").that(
+                UserManagerHelper.isVisibleBackgroundUsersOnDefaultDisplaySupported(mUserManager))
+                    .isTrue();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.builtin.os.UserManagerHelper#"
+            + "isVisibleBackgroundUsersOnDefaultDisplaySupported(UserManager)"})
+    @RequireNotVisibleBackgroundUsersOnDefaultDisplay(
+            reason = "Because test is testing exactly that")
+    public void testIsVisibleBackgroundUsersOnDefaultDisplaySupported_not() {
+        expectWithMessage("Visible background Users on default display not supported").that(
+                UserManagerHelper.isVisibleBackgroundUsersOnDefaultDisplaySupported(mUserManager))
+                    .isFalse();
     }
 
     @Test
