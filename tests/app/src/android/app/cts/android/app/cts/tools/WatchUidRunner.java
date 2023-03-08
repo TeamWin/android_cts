@@ -99,13 +99,19 @@ public class WatchUidRunner {
     }
 
     public WatchUidRunner(Instrumentation instrumentation, int uid, long defaultWaitTime) {
+        this(instrumentation, uid, defaultWaitTime, 0);
+    }
+
+    public WatchUidRunner(Instrumentation instrumentation, int uid, long defaultWaitTime,
+            int capabilityMask) {
         mInstrumentation = instrumentation;
         mUid = uid;
         mUidStr = Integer.toString(uid);
         mDefaultWaitTime = defaultWaitTime;
         mSpaceSplitter = Pattern.compile("\\s+");
+        final String maskString = capabilityMask == 0 ? "" : " --mask " + capabilityMask;
         ParcelFileDescriptor[] pfds = instrumentation.getUiAutomation().executeShellCommandRw(
-                "am watch-uids --oom " + uid);
+                "am watch-uids --oom " + uid + maskString);
         mReadFd = pfds[0];
         mReadStream = new ParcelFileDescriptor.AutoCloseInputStream(mReadFd);
         mReadReader = new BufferedReader(new InputStreamReader(mReadStream));
