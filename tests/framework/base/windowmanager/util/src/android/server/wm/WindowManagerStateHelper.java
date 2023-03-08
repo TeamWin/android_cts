@@ -235,6 +235,13 @@ public class WindowManagerStateHelper extends WindowManagerState {
         assertEquals(message, screenOrientation, getLastOrientation());
     }
 
+    /** Waits for the configuration orientation (landscape or portrait) of the default display. */
+    public void waitForDisplayOrientation(int configOrientation) {
+        waitForWithAmState(state -> state.getDisplay(DEFAULT_DISPLAY)
+                        .mFullConfiguration.orientation == configOrientation,
+                "orientation of default display to be " + configOrientation);
+    }
+
     /**
      * Wait for the configuration orientation of the Activity.
      */
