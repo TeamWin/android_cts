@@ -96,7 +96,7 @@ public final class FeatureUtil {
     /**
      * Checks whether the device is watch .
      */
-    private static boolean isWatch(Context context) {
+    public static boolean isWatch(Context context) {
         PackageManager pm = context.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }

@@ -29,7 +29,6 @@ import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
@@ -39,6 +38,7 @@ import android.view.ViewGroup;
 import androidx.annotation.StringRes;
 
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.features.FeatureUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,12 +105,14 @@ public class NotificationPrivacyVerifierActivity extends InteractiveVerifierActi
 
     @Override
     protected List<InteractiveTestCase> createTestItems() {
-        boolean isAutomotive = getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_AUTOMOTIVE);
         List<InteractiveTestCase> tests = new ArrayList<>();
-        if (!isAutomotive) {
-            // FIRST: set redaction settings
-            tests.add(new SetScreenLockEnabledStep());
+
+        // FIRST: enable lock screen
+        tests.add(new SetScreenLockEnabledStep());
+
+        // for watches, no notifications should appear on the secure lock screen
+        if (!FeatureUtil.isWatch(this)) {
+            // THEN: set redaction settings
             tests.add(new SetGlobalVisibilityPublicStep());
             tests.add(new SetChannelLockscreenVisibilityPrivateStep());
             // NOW TESTING: redacted by channel
@@ -129,13 +131,16 @@ public class NotificationPrivacyVerifierActivity extends InteractiveVerifierActi
             tests.add(new NotificationWhenOccludedShowsRedactedTest());
 
             tests.add(new SetGlobalVisibilitySecretStep());
-            // NOW TESTING: notifications do not appear
-            tests.add(new NotificationWhenLockedIsHiddenTest());
-            tests.add(new NotificationWhenOccludedIsHiddenTest());
-
-            // FINALLY: restore device state
-            tests.add(new SetScreenLockDisabledStep());
         }
+
+        // NOW TESTING: notifications do not appear
+        tests.add(new NotificationWhenLockedIsHiddenTest());
+        if (!FeatureUtil.isWatch(this)) {
+            tests.add(new NotificationWhenOccludedIsHiddenTest());
+        }
+
+        // FINALLY: restore device state
+        tests.add(new SetScreenLockDisabledStep());
         return tests;
     }
 
