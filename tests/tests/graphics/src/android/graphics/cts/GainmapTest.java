@@ -197,7 +197,10 @@ public class GainmapTest {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         assertTrue(sScalingRed8888.compress(Bitmap.CompressFormat.JPEG, 100, stream));
         byte[] data = stream.toByteArray();
-        Bitmap result = ImageDecoder.decodeBitmap(ImageDecoder.createSource(data));
+        Bitmap result = ImageDecoder.decodeBitmap(
+                ImageDecoder.createSource(data), (decoder, info, src) -> {
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+            });
         assertTrue(result.hasGainmap());
         Bitmap gainmapImage = result.getGainmap().getGainmapContents();
         assertEquals(Bitmap.Config.ARGB_8888, gainmapImage.getConfig());
@@ -215,7 +218,10 @@ public class GainmapTest {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         assertTrue(sScalingRedA8.compress(Bitmap.CompressFormat.JPEG, 100, stream));
         byte[] data = stream.toByteArray();
-        Bitmap result = ImageDecoder.decodeBitmap(ImageDecoder.createSource(data));
+        Bitmap result = ImageDecoder.decodeBitmap(
+                ImageDecoder.createSource(data), (decoder, info, src) -> {
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+            });
         assertTrue(result.hasGainmap());
         Bitmap gainmapImage = result.getGainmap().getGainmapContents();
         assertEquals(Bitmap.Config.ALPHA_8, gainmapImage.getConfig());
@@ -226,5 +232,21 @@ public class GainmapTest {
             assertArrayEquals("Differed at x=" + x,
                     expected.getComponents(), got.getComponents(), 0.05f);
         }
+    }
+
+    @Test
+    public void testHardwareGainmapCopy() throws Exception {
+        Bitmap bitmap = ImageDecoder.decodeBitmap(
+                ImageDecoder.createSource(sContext.getResources(), R.raw.gainmap),
+                (decoder, info, source) -> decoder.setAllocator(ImageDecoder.ALLOCATOR_HARDWARE));
+        assertNotNull(bitmap);
+        assertTrue("Missing gainmap", bitmap.hasGainmap());
+        assertEquals(Bitmap.Config.HARDWARE, bitmap.getConfig());
+
+        Gainmap gainmap = bitmap.getGainmap();
+        assertNotNull(gainmap);
+        Bitmap gainmapData = gainmap.getGainmapContents();
+        assertNotNull(gainmapData);
+        assertEquals(Bitmap.Config.HARDWARE, gainmapData.getConfig());
     }
 }
