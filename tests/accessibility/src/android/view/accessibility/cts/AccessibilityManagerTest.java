@@ -35,7 +35,6 @@ import android.content.Context;
 import android.content.pm.ServiceInfo;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.Settings;
 import android.view.accessibility.AccessibilityEvent;
@@ -595,7 +594,6 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
     }
 
     @Test
-    @AppModeFull
     public void testGetUiContrast() {
         float initialContrast = mAccessibilityManager.getUiContrast();
         try {
@@ -614,7 +612,6 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
     }
 
     @Test
-    @AppModeFull
     public void testAddUiContrastChangeListener() {
         float initialContrast = mAccessibilityManager.getUiContrast();
         final Object waitObject = new Object();
@@ -664,7 +661,6 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
     }
 
     @Test
-    @AppModeFull
     public void testRemoveUiContrastChangeListener() {
         float initialContrast = mAccessibilityManager.getUiContrast();
         final Object waitObject = new Object();
