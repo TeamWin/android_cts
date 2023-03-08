@@ -307,6 +307,7 @@ public class WindowInputTests {
                         TAPPING_TARGET_WINDOW_SIZE);
                 // Any opacity higher than this would make InputDispatcher block the touch
                 params.alpha = mInputManager.getMaximumObscuringOpacityForTouch();
+                params.setFitInsetsTypes(0);
                 intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
                 mActivity.startForegroundService(intent);
             });
@@ -361,6 +362,7 @@ public class WindowInputTests {
                 placeWindowAtLayoutCenter(params, TAPPING_TARGET_WINDOW_SIZE,
                         viewOnScreenLocation[0], viewOnScreenLocation[1],
                         TAPPING_TARGET_WINDOW_SIZE);
+                params.setFitInsetsTypes(0);
                 intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
                 mActivity.startForegroundService(intent);
             });
@@ -463,6 +465,7 @@ public class WindowInputTests {
                 placeWindowAtLayoutCenter(params, TAPPING_TARGET_WINDOW_SIZE,
                         viewOnScreenLocation[0], viewOnScreenLocation[1],
                         TAPPING_TARGET_WINDOW_SIZE);
+                params.setFitInsetsTypes(0);
                 intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
                 mActivity.startForegroundService(intent);
             });
@@ -518,6 +521,7 @@ public class WindowInputTests {
                         viewOnScreenLocation[0], viewOnScreenLocation[1], TAPPING_TARGET_WINDOW_SIZE);
                 // Move it off the touch path (center) but still overlap with window above
                 params.y += PARTIAL_OBSCURING_WINDOW_SIZE;
+                params.setFitInsetsTypes(0);
                 intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
                 mActivity.startForegroundService(intent);
             });
