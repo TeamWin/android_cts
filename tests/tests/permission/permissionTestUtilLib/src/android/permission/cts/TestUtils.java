@@ -179,4 +179,27 @@ public class TestUtils {
             throw new RuntimeException(e);
         }
     }
+
+    public static void awaitJobUntilRequestedState(
+            String packageName,
+            int jobId,
+            long timeout,
+            UiAutomation automation,
+            String requestedState1,
+            String requestedState2) {
+        String statusCmd = "cmd jobscheduler get-job-state -u "
+                + Process.myUserHandle().getIdentifier() + " " + packageName + " " + jobId;
+        try {
+            eventually(() -> {
+                String jobState = runShellCommand(automation, statusCmd).trim();
+                boolean jobInEitherRequestedState = jobState.startsWith(requestedState1)
+                        || jobState.startsWith(requestedState2);
+                Assert.assertTrue("The job doesn't have requested state "
+                        + "(" + requestedState1 + " or " + requestedState2 + ")"
+                        + " yet, current state: " + jobState, jobInEitherRequestedState);
+            }, timeout);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
