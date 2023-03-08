@@ -711,7 +711,7 @@ public class VideoDecodeEditEncodeTest {
      */
     @ApiTest(apis = {"android.opengl.GLES20#GL_FRAGMENT_SHADER",
             "android.media.format.MediaFormat#KEY_ALLOW_FRAME_DROP",
-            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_Format32bitABGR8888"})
+            "MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
     @Test
     public void testVideoEdit() throws IOException, InterruptedException {
         VideoChunks sourceChunks = new VideoChunks();

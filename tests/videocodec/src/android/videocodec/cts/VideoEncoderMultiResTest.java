@@ -175,7 +175,8 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
     }
 
     @ApiTest(apis = {"android.media.MediaFormat#KEY_WIDTH",
-            "android.media.MediaFormat#KEY_HEIGHT"})
+            "android.media.MediaFormat#KEY_HEIGHT",
+            "android.media.MediaFormat#KEY_FRAME_RATE"})
     @Test
     public void testMultiRes() throws IOException, InterruptedException {
         MediaFormat format = mEncCfgParams[0].getFormat();
