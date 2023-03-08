@@ -499,7 +499,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         // Start a portrait activity first to ensure that the orientation will change.
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
-        mWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
+        mWmState.waitForDisplayOrientation(ORIENTATION_PORTRAIT);
         final int prevRotation = mWmState.getRotation();
 
         getLaunchActivityBuilder()
@@ -509,7 +509,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
                 // rotated but the activity is rotated.
                 .setIntentExtra(bundle -> bundle.putBoolean(EXTRA_CONFIG_INFO_IN_ON_CREATE, true))
                 .execute();
-        mWmState.waitForLastOrientation(SCREEN_ORIENTATION_LANDSCAPE);
+        mWmState.waitForDisplayOrientation(ORIENTATION_LANDSCAPE);
 
         final SizeInfo reportedSizes =
                 getLastReportedSizesForActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
