@@ -95,6 +95,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     // Don't accidently use emergency number.
     private static int sCounter = 5553638;
 
+    //Smaller timeout for checking outgoing connection
+    //Since this called after placeAndVerifyCall
+    private static final long WAIT_FOR_OUTGOING_CONNECTION_TIMEOUT_MS = 2000;
+
     public static final String TEST_EMERGENCY_NUMBER = "5553637";
     public static final Uri TEST_EMERGENCY_URI = Uri.fromParts("tel", TEST_EMERGENCY_NUMBER, null);
     public static final String PKG_NAME = "android.telecom.cts";
@@ -935,9 +939,8 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     void verifyNoConnectionForOutgoingCall() {
         try {
-            if (!connectionService.lock.tryAcquire(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+            if (!connectionService.lock.tryAcquire(WAIT_FOR_OUTGOING_CONNECTION_TIMEOUT_MS,
                     TimeUnit.MILLISECONDS)) {
-                //fail("No outgoing call connection requested by Telecom");
             }
         } catch (InterruptedException e) {
             Log.i(TAG, "Test interrupted!");
