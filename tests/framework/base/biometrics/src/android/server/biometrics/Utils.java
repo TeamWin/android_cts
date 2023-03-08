@@ -42,6 +42,8 @@ import java.security.KeyStore;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -316,12 +318,13 @@ public class Utils {
     private static int getAidlSensorId(String adbCommand, String providerRegex) {
         final byte[] dump = executeShellCommand(adbCommand);
         final String fpsDumpSys = new String(dump, StandardCharsets.UTF_8);
-        final int indexOfAidlProvider = fpsDumpSys.indexOf(providerRegex);
+        final Matcher matcher =
+                Pattern.compile("sensorId: (\\d+)" + providerRegex).matcher(fpsDumpSys);
 
-        if (indexOfAidlProvider > 0) {
-            return Integer.parseInt(
-                    fpsDumpSys.substring(indexOfAidlProvider - 1, indexOfAidlProvider));
+        if (matcher.find()) {
+            return Integer.parseInt(matcher.group(1));
         }
-        return indexOfAidlProvider /* -1 No AIDL HAL */;
+
+        return -1 /* No AIDL HAL */;
     }
 }
