@@ -15,7 +15,6 @@
  */
 package android.app.cts.shortfgstesthelper;
 
-import static android.app.cts.shortfgstesthelper.ShortFgsHelper.NOTIFICATION_ID;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.TAG;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.createNotification;
 
@@ -30,20 +29,20 @@ import com.android.internal.annotations.GuardedBy;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class FgsBase extends Service {
+public abstract class ServiceBase extends Service {
     /** Class name -> instance map */
     @GuardedBy("sInstances")
-    private static Map<String, FgsBase> sInstances = new HashMap<>();
+    private static Map<String, ServiceBase> sInstances = new HashMap<>();
 
-    public FgsBase() {
+    public ServiceBase() {
         synchronized (sInstances) {
             sInstances.put(this.getClass().getName(), this);
         }
     }
 
-    public static FgsBase getInstanceForClass(String className) {
+    public static ServiceBase getInstanceForClass(String className) {
         synchronized (sInstances) {
-            FgsBase result = sInstances.get(className);
+            ServiceBase result = sInstances.get(className);
             if (result == null) {
                 throw new RuntimeException("Service " + className + " isn't created yet");
             }
@@ -59,7 +58,8 @@ public abstract class FgsBase extends Service {
         final ShortFgsMessage incoming = ShortFgsHelper.getMessage(intent);
 
         if (incoming.isDoCallStartForeground()) {
-            startForeground(NOTIFICATION_ID, createNotification(), incoming.getFgsType());
+            startForeground(
+                    incoming.getNotificationId(), createNotification(), incoming.getFgsType());
         }
 
         // If we reach here, send back the method name.

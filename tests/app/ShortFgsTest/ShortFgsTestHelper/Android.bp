@@ -37,3 +37,28 @@ android_test_helper_app {
     ],
     platform_apis: true,
 }
+
+// Second test package, it's used only to host a bound service that's bound by ShortFgsTestHelper.
+android_test_helper_app {
+    name: "ShortFgsTestHelper2",
+    package_name: "android.app.cts.shortfgstesthelper2",
+
+    defaults: ["cts_support_defaults"],
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+    ],
+    static_libs: [
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+    ],
+    srcs: [
+        "src/**/*.java",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "sts",
+    ],
+    platform_apis: true,
+}

@@ -16,11 +16,15 @@
 package android.app.cts.shortfgstest;
 
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.ACTIVITY;
+import static android.app.cts.shortfgstesthelper.ShortFgsHelper.BOUND_SERVICE_B;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.FGS0;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.FGS1;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.FGS2;
+import static android.app.cts.shortfgstesthelper.ShortFgsHelper.FGS_B_0;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.HELPER_PACKAGE;
+import static android.app.cts.shortfgstesthelper.ShortFgsHelper.HELPER_PACKAGE2;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.TAG;
+import static android.app.cts.shortfgstesthelper.ShortFgsHelper.flattenComponentName;
 import static android.app.nano.AppProtoEnums.PROCESS_STATE_FOREGROUND_SERVICE;
 import static android.app.nano.AppProtoEnums.PROCESS_STATE_LAST_ACTIVITY;
 import static android.app.nano.AppProtoEnums.PROCESS_STATE_TOP;
@@ -41,6 +45,7 @@ import android.app.cts.shortfgstesthelper.ShortFgsMessageReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.PowerExemptionManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
@@ -53,6 +58,7 @@ import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.ShellUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.server.am.nano.ServiceRecordProto;
+import com.android.server.am.nano.ServiceRecordProto.ShortFgsInfo;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -63,14 +69,21 @@ import org.junit.Test;
 
 /**
  * Tests for "SHORT SERVICE" foreground services.
- *
- * TODO(short-service): Add more test cases, see b/260748204
  */
 @Presubmit
 public class ActivityManagerShortFgsTest {
     protected static final Context sContext = ShortFgsHelper.sContext;
 
     public static DeviceConfigStateHelper sDeviceConfig;
+
+    /**
+     * The timeout duration documented on the
+     * {@link android.content.pm.ServiceInfo#FOREGROUND_SERVICE_TYPE_SHORT_SERVICE} javadoc.
+     */
+    public static final long SHORT_FGS_PUBLIC_TIMEOUT = 3 * 60 * 1000;
+
+    public static final long SHORT_FGS_MINIMUM_PROCSTATE_DEMOTION_GRACE_PERIOD = 5 * 1000;
+    public static final long SHORT_FGS_MINIMUM_ANR_GRACE_PERIOD = 10 * 1000;
 
     public static final long WAIT_TIMEOUT = 10_000;
 
@@ -110,6 +123,10 @@ public class ActivityManagerShortFgsTest {
      */
     public static final long TOP_TO_FGS_GRACE_PERIOD = 5_000;
 
+    /**
+     * We keep track of the test start time and finish time with them. Helper will use them,
+     * via {@link ShortFgsHelper#getCurrentTestInfo()}, to detect stale messages.
+     */
     private static volatile long sLastTestStartUptime;
     private static volatile long sLastTestEndUptime;
 
@@ -149,11 +166,11 @@ public class ActivityManagerShortFgsTest {
         updateDeviceConfig("service_start_foreground_timeout_ms",
                 SHORTENED_START_SERVICE_TIMEOUT, /* verify= */ true);
 
-        forceStopHelperApp();
+        forceStopHelperApps();
 
-        // We update the start time here, to drop any messages sent before this line.
-        // (we drop stale messages in waitForNextMessage()).
-        // Before this, the helper app's receiver won't receive messages either.
+        // Drop any pending messages
+        CallProvider.clearMessageQueue();
+
         sLastTestStartUptime = SystemClock.uptimeMillis();
 
         Log.d(TAG, "setUp() done");
@@ -161,11 +178,9 @@ public class ActivityManagerShortFgsTest {
 
     @After
     public void tearDown() throws Exception {
-        sLastTestEndUptime = SystemClock.uptimeMillis();
-
         Log.d(TAG, "tearDown() started");
 
-        forceStopHelperApp();
+        forceStopHelperApps();
 
         Log.d(TAG, "tearDown() done");
     }
@@ -209,10 +224,15 @@ public class ActivityManagerShortFgsTest {
     }
 
     /**
-     * Force-stop the helper app.
+     * Force-stop the helper app. It'll also remove the test app from temp-allowlist.
      */
-    private static void forceStopHelperApp() throws Exception {
-        SystemUtil.runShellCommand("am force-stop " + FGS0.getPackageName());
+    private static void forceStopHelperApps() throws Exception {
+        SystemUtil.runShellCommand("am force-stop " + HELPER_PACKAGE);
+        untempAllowlistPackage(HELPER_PACKAGE);
+
+        SystemUtil.runShellCommand("am force-stop " + HELPER_PACKAGE2);
+        untempAllowlistPackage(HELPER_PACKAGE2);
+
         ensureHelperAppNotRunning();
     }
 
@@ -223,13 +243,6 @@ public class ActivityManagerShortFgsTest {
      * prevent STICKY FGS from restarting)
      */
     private static void killHelperApp() throws Exception {
-        // If we do it outside of a test, the helper app would just ignore the message,
-        // so we make sure a test is running.
-        Assert.assertTrue("killHelperApp() can't be used outside of a test",
-                sLastTestStartUptime > 0);
-        Assert.assertTrue("killHelperApp() can't be used outside of a test",
-                sLastTestEndUptime == 0);
-
         // Tell the helper to kill itself.
         ShortFgsMessageReceiver.sendMessage(newMessage().setDoKillProcess(true));
 
@@ -252,23 +265,11 @@ public class ActivityManagerShortFgsTest {
     }
 
     private static ShortFgsMessage waitForNextMessage() {
-        for (;;) {
-            final ShortFgsMessage m = CallProvider.waitForNextMessage(WAIT_TIMEOUT);
-            if (m.getTimestamp() <= sLastTestStartUptime) {
-                // We ignore messages sent before the test started.
-                continue;
-            }
-            Log.i(TAG, "waitForNextMessage: received " + m);
-            return m;
-        }
+        return CallProvider.waitForNextMessage(WAIT_TIMEOUT);
     }
 
     public static void waitForAckMessage() {
-        ShortFgsMessage ack = waitForNextMessage();
-        if (ack.isAck()) {
-            return;
-        }
-        Assert.fail("Expected an ACK message, but received: " + ack);
+        CallProvider.waitForAckMessage(WAIT_TIMEOUT);
     }
 
     public static ShortFgsMessage waitForException() {
@@ -304,8 +305,14 @@ public class ActivityManagerShortFgsTest {
     public static ShortFgsMessage waitForMethodCall(ComponentName cn, String methodName) {
         Log.i(TAG, "waitForMethodCall: waiting for " + methodName + " from " + cn);
         ShortFgsMessage m = waitForNextMessage();
-        assertThat(m.getComponentName()).isEqualTo(cn);
-        assertThat(m.getMethodName()).isEqualTo(methodName);
+
+        String expected = flattenComponentName(cn) + "." + methodName;
+        if (m.getMethodName() == null) {
+            Assert.fail("Waited for " + expected + " but received: " + m);
+        }
+        assertThat(
+                flattenComponentName(m.getComponentName()) + "." + m.getMethodName())
+                .isEqualTo(expected);
         return m;
     }
 
@@ -325,15 +332,48 @@ public class ActivityManagerShortFgsTest {
         assertThat(actual.mProcState).isAtMost(PROCESS_STATE_LAST_ACTIVITY);
     }
 
+    /**
+     * Make sure a specified FGS is running.
+     */
+    public static ServiceRecordProto assertFgsRunning(ComponentName cn) {
+        final ServiceRecordProto srp = DumpProtoUtils.findServiceRecord(cn);
+        if (srp == null) {
+            Assert.fail("Service " + cn + " is not running");
+        }
+        if (srp.foreground == null) {
+            Assert.fail("Service " + cn + " is running, but is not an FGS");
+        }
+
+        return srp;
+    }
+
+    /**
+     * Make sure a service is running. (it doesn't have to be an FGS.)
+     */
     public static ServiceRecordProto assertServiceRunning(ComponentName cn) {
         final ServiceRecordProto srp = DumpProtoUtils.findServiceRecord(cn);
-        assertThat(srp).isNotNull();
+        if (srp == null) {
+            Assert.fail("Service " + cn + " is not running");
+        }
+
         return srp;
     }
 
     public static void assertServiceNotRunning(ComponentName cn) {
         final ServiceRecordProto srp = DumpProtoUtils.findServiceRecord(cn);
         assertThat(srp).isNull();
+    }
+
+    public static void tempAllowlistPackage(String packageName, int durationMillis) {
+        final PowerExemptionManager pem = sContext.getSystemService(PowerExemptionManager.class);
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> pem.addToTemporaryAllowList(packageName, PowerExemptionManager.REASON_OTHER,
+                        TAG, durationMillis));
+    }
+
+    public static void untempAllowlistPackage(String packageName) {
+        SystemUtil.runShellCommand("cmd deviceidle tempwhitelist -r " + packageName);
     }
 
     /**
@@ -351,7 +391,7 @@ public class ActivityManagerShortFgsTest {
         // Wait for the method name message.
         waitForMethodCall(FGS0, "onStartCommand");
 
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
 
         // Short service's procstat is IMP-FG, and when it starts. It's not started from TOP,
         // so the oom-adj will be 225 + 1.
@@ -389,7 +429,7 @@ public class ActivityManagerShortFgsTest {
         // Wait for the method name message.
         waitForMethodCall(FGS0, "onStartCommand");
 
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
 
         // Short service's procstat is IMP-FG, and when it starts. It's not started from TOP,
         // so the oom-adj will be 225 + 1.
@@ -431,7 +471,7 @@ public class ActivityManagerShortFgsTest {
         final int startId =
                 waitForMethodCall(FGS0, "onStartCommand").getServiceStartId();
 
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
 
         // Short service's procstat is IMP-FG, and when it starts. It's not started from TOP,
         // so the oom-adj will be 225 + 1.
@@ -453,7 +493,7 @@ public class ActivityManagerShortFgsTest {
         // At this point, the procstate should still be the same.
         assertHelperPackageProcState(PROCESS_STATE_FOREGROUND_SERVICE, 225 + 1);
 
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
 
         // Stop the service.
         sContext.stopService(new Intent().setComponent(FGS0));
@@ -485,12 +525,12 @@ public class ActivityManagerShortFgsTest {
         // Wait for the method name message.
         final int startId =
                 waitForMethodCall(FGS0, "onStartCommand").getServiceStartId();
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
 
         // Start FGS1. (which is not a SHORT_SERVICE.)
         startForegroundService(FGS1, FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         waitForMethodCall(FGS1, "onStartCommand");
-        assertServiceRunning(FGS1);
+        assertFgsRunning(FGS1);
 
         // The procstat should be FGS. (not IMP_FG, which is for SHORT_SERVICE.)
         assertHelperPackageProcState(PROCESS_STATE_FOREGROUND_SERVICE, 200);
@@ -510,7 +550,7 @@ public class ActivityManagerShortFgsTest {
         // Because the app has a "normal" FGS, the procstate should still be the same.
         assertHelperPackageProcState(PROCESS_STATE_FOREGROUND_SERVICE, 200);
 
-        assertServiceRunning(FGS1);
+        assertFgsRunning(FGS1);
 
         // Stop both services.
         sContext.stopService(new Intent().setComponent(FGS0));
@@ -539,7 +579,7 @@ public class ActivityManagerShortFgsTest {
         final int startId =
                 waitForMethodCall(FGS0, "onStartCommand").getServiceStartId();
 
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
 
         // Wait until the procstate is demoted
         Thread.sleep(SHORTENED_TIMEOUT + SHORTENED_PROCSTATE_GRACE_PERIOD);
@@ -555,7 +595,7 @@ public class ActivityManagerShortFgsTest {
         assertHelperPackageIsCached();
 
         // Service should still exist.
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
 
         // Stop the service.
         sContext.stopService(new Intent().setComponent(FGS0));
@@ -629,7 +669,7 @@ public class ActivityManagerShortFgsTest {
         killHelperApp();
 
         // Because the service _is_ sticky, the ServiceRecord should still exist.
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
 
         // Stop the service.
         sContext.stopService(new Intent().setComponent(FGS0));
@@ -687,11 +727,11 @@ public class ActivityManagerShortFgsTest {
             // Wait for the method name message.
             waitForMethodCall(FGS0, "onStartCommand");
 
-            assertServiceRunning(FGS0);
+            assertFgsRunning(FGS0);
         }
 
         // After unbinding, the service should still running.
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
 
         // The procstate should be of the SHORT_FGS.
         assertHelperPackageProcState(PROCESS_STATE_FOREGROUND_SERVICE, 225 + 1);
@@ -719,7 +759,7 @@ public class ActivityManagerShortFgsTest {
         // Start FGS0.
         startForegroundService(FGS0, FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
         waitForMethodCall(FGS0, "onStartCommand");
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
 
         assertHelperPackageProcState(PROCESS_STATE_FOREGROUND_SERVICE, 225 + 1);
 
@@ -764,14 +804,14 @@ public class ActivityManagerShortFgsTest {
         // Start FGS0.
         startForegroundService(FGS0, FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
         waitForMethodCall(FGS0, "onStartCommand");
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
 
         assertHelperPackageProcState(PROCESS_STATE_FOREGROUND_SERVICE, 225 + 1);
 
         // Start another FGS, that's not a SHORT_SERVICE.
         startForegroundService(FGS1, FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         waitForMethodCall(FGS1, "onStartCommand");
-        assertServiceRunning(FGS1);
+        assertFgsRunning(FGS1);
 
         // Now at the FGS procstate.
         assertHelperPackageProcState(PROCESS_STATE_FOREGROUND_SERVICE, 200);
@@ -790,7 +830,7 @@ public class ActivityManagerShortFgsTest {
 
         // FGS2 should now be running too.
         waitForMethodCall(FGS2, "onStartCommand");
-        assertServiceRunning(FGS2);
+        assertFgsRunning(FGS2);
     }
 
     /**
@@ -819,7 +859,7 @@ public class ActivityManagerShortFgsTest {
         // Start a short-fgs. Procstate should still be TOP.
         startForegroundService(FGS0, FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
         waitForMethodCall(FGS0, "onStartCommand");
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
 
         assertHelperPackageProcState(PROCESS_STATE_TOP, 0);
 
@@ -829,16 +869,22 @@ public class ActivityManagerShortFgsTest {
 
         waitForMethodCall(ACTIVITY, "onDestroy");
 
-        // The service is still running, and the procstate should now be IMP_FG, but
+        // The service is still running, and the procstate should now be FGS, but
         // the OOM-adjustment should be boosted.
-        assertServiceRunning(FGS0);
+        assertFgsRunning(FGS0);
         assertHelperPackageProcState(PROCESS_STATE_FOREGROUND_SERVICE, 51);
 
-        // TODO(short-service) We don't run an oomj after TOP_TO_FGS_GRACE_PERIOD, so this part
-        // won't pass.
-//        // Wait until the grace period finishes. Now, the oom-adjustment should be lower.
-//        Thread.sleep(TOP_TO_FGS_GRACE_PERIOD);
-//        assertHelperPackageProcState(PROCESS_STATE_IMPORTANT_FOREGROUND, 220 + 1);
+        // Wait until the grace period finishes. Now, the oom-adjustment should be lower.
+        Thread.sleep(TOP_TO_FGS_GRACE_PERIOD + 1000 /* extra time, just in case*/);
+
+        // The system doesn't actually run a timer for this grace period expiration.
+        // So, instead, we let helper call startForeground(SHORT_SERVICE), which should succeed
+        // and causes an oom-adjuster run.
+        ShortFgsMessageReceiver.sendMessage(newMessage()
+                .setComponentName(FGS0)
+                .setDoCallStartForeground(true)
+                .setFgsType(FOREGROUND_SERVICE_TYPE_SHORT_SERVICE));
+        assertHelperPackageProcState(PROCESS_STATE_FOREGROUND_SERVICE, 225 + 1);
     }
 
     /**
@@ -862,7 +908,7 @@ public class ActivityManagerShortFgsTest {
             // Wait for the method name message.
             waitForMethodCall(FGS0, "onStartCommand");
 
-            assertServiceRunning(FGS0);
+            assertFgsRunning(FGS0);
 
             // Wait for the timeout + extra duration
             Thread.sleep(SHORTENED_TIMEOUT + anrExtraTimeout + 2000);
@@ -873,5 +919,443 @@ public class ActivityManagerShortFgsTest {
             // The ANR time should be after the timeout + the ANR grace period.
             assertThat(anrTime).isAtLeast(startTime + SHORTENED_TIMEOUT + anrExtraTimeout);
         }
+    }
+
+
+    /**
+     * Start a SHORT_SERVICE, using Context.startService, instead of Context.startForegroundService.
+     *
+     * Then make sure onTimeout() is called.
+     */
+    @Test
+    public void testStartFromStartService() throws Exception {
+
+        // The helper app is in the background and can't start a BG service, so we need to put
+        // it in the temp-allowlsit first.
+        tempAllowlistPackage(HELPER_PACKAGE, 5000);
+
+        final long serviceStartTime = SystemClock.uptimeMillis();
+
+        ShortFgsMessageReceiver.sendMessage(newMessage()
+                .setComponentName(FGS0)
+                .setDoCallStartService(true)
+                .setDoCallStartForeground(true)
+                .setFgsType(FOREGROUND_SERVICE_TYPE_SHORT_SERVICE)
+                .setStartCommandResult(Service.START_NOT_STICKY));
+
+        waitForAckMessage();
+
+        // Wait for the method name message.
+        final int startId =
+                waitForMethodCall(FGS0, "onStartCommand").getServiceStartId();
+
+        assertFgsRunning(FGS0);
+
+        assertHelperPackageProcState(PROCESS_STATE_FOREGROUND_SERVICE, 225 + 1);
+
+
+        // Wait for onTimeout()
+        Thread.sleep(SHORTENED_TIMEOUT);
+
+        {
+            ShortFgsMessage m = waitForMethodCall(FGS0, "onTimeout");
+
+            assertThat(m.getServiceStartId()).isEqualTo(startId);
+
+            // Timeout should happen after SHORTENED_TIMEOUT.
+            assertThat(m.getTimestamp()).isAtLeast(serviceStartTime + SHORTENED_TIMEOUT);
+        }
+
+        // At this point, the procstate should still be the same.
+        assertHelperPackageProcState(PROCESS_STATE_FOREGROUND_SERVICE, 225 + 1);
+
+        assertFgsRunning(FGS0);
+
+        // Stop the service.
+        sContext.stopService(new Intent().setComponent(FGS0));
+
+        waitForMethodCall(FGS0, "onDestroy");
+
+        assertServiceNotRunning(FGS0);
+
+        // Wait for the timeout + extra duration
+        Thread.sleep(SHORTENED_TIMEOUT + 5000);
+
+        // Make sure onTimeout() didn't happen. (If it did, onTimeout() would send a message,
+        // which would break the below ensureNoMoreMessages().)
+
+        CallProvider.ensureNoMoreMessages();
+    }
+
+    private static void checkServiceTimeoutValues(ServiceRecordProto sr,
+            long preServiceStartTime, // A time before the service starts.
+            long postServiceStartTime, // A time after the service starts.
+            long timeoutTime, // Expected timeout duration
+            long demoteTime, // Expected "demotion" extra time (in addition to the timeout duration)
+            long anrTime // Expected ANR extra time (in addition to the timeout duration)
+    ) throws Exception {
+        ShortFgsInfo sfi = sr.shortFgsInfo;
+        assertThat(sfi).isNotNull();
+        assertThat(sfi.startTime).isAtLeast(preServiceStartTime);
+        assertThat(sfi.startTime).isAtMost(postServiceStartTime);
+
+        assertThat(sfi.timeoutTime).isEqualTo(sfi.startTime + timeoutTime);
+        assertThat(sfi.procStateDemoteTime).isEqualTo(sfi.startTime + timeoutTime + demoteTime);
+        assertThat(sfi.anrTime).isEqualTo(sfi.startTime + timeoutTime + anrTime);
+    }
+
+    /**
+     * Check the various timestamps (obtained from the ServiceRecord) related to SHORT_FGS
+     */
+    @Test
+    public void testTimeoutDetails() throws Exception {
+
+        final long serviceStartTime = SystemClock.uptimeMillis();
+
+        // Start FGS0.
+        startForegroundService(FGS0, FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+
+        // Wait for the method name message.
+        final int startId =
+                waitForMethodCall(FGS0, "onStartCommand").getServiceStartId();
+
+        final long serviceStartDoneTime = SystemClock.uptimeMillis();
+
+        {
+            ServiceRecordProto sr = assertFgsRunning(FGS0);
+
+            checkServiceTimeoutValues(sr,
+                    serviceStartTime,
+                    serviceStartDoneTime,
+                    SHORTENED_TIMEOUT,
+                    SHORTENED_PROCSTATE_GRACE_PERIOD,
+                    SHORTENED_PROCSTATE_GRACE_PERIOD + EXTENDED_ANR_GRACE_PERIOD);
+        }
+    }
+
+    /**
+     * Change the FGS type from SHORT_SERVICE to another type.
+     */
+    @Test
+    public void testTypeChange_fromShort_toAnother() throws Exception {
+        final long serviceStartTime = SystemClock.uptimeMillis();
+
+        // Temp-allowlist the helper app for the entire test, so the app can call startForeground()
+        // any time.
+        tempAllowlistPackage(HELPER_PACKAGE, 10 * 60 * 1000);
+
+        startForegroundService(FGS0, FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+
+        waitForMethodCall(FGS0, "onStartCommand");
+
+        final long serviceStartDoneTime = SystemClock.uptimeMillis();
+
+        // Check the start time and the FGS type.
+        {
+            ServiceRecordProto sr = assertFgsRunning(FGS0);
+
+            assertThat(sr.foreground.foregroundServiceType)
+                    .isEqualTo(FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+
+            checkServiceTimeoutValues(sr,
+                    serviceStartTime,
+                    serviceStartDoneTime,
+                    SHORTENED_TIMEOUT,
+                    SHORTENED_PROCSTATE_GRACE_PERIOD,
+                    SHORTENED_PROCSTATE_GRACE_PERIOD + EXTENDED_ANR_GRACE_PERIOD);
+        }
+
+        // Change the FGS type to SPECIAL_USE.
+        Thread.sleep(1000);
+
+        ShortFgsMessageReceiver.sendMessage(newMessage()
+                .setComponentName(FGS0)
+                .setDoCallStartForeground(true)
+                .setFgsType(FOREGROUND_SERVICE_TYPE_SPECIAL_USE));
+
+        waitForAckMessage();
+
+        // The FGS type should be different now.
+        {
+            ServiceRecordProto sr = assertFgsRunning(FGS0);
+
+            assertThat(sr.foreground.foregroundServiceType)
+                    .isEqualTo(FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        }
+
+        // Change the FGS type back to SHORT_SERVICE again.
+        Thread.sleep(1000);
+
+        long typeChangeStartTime = SystemClock.uptimeMillis();
+        // Change the FGS type.
+        ShortFgsMessageReceiver.sendMessage(newMessage()
+                .setComponentName(FGS0)
+                .setDoCallStartForeground(true)
+                .setFgsType(FOREGROUND_SERVICE_TYPE_SHORT_SERVICE));
+
+        waitForAckMessage();
+        long typeChangeDoneTime = SystemClock.uptimeMillis();
+
+        // Check the start time and the FGS type.
+        {
+            ServiceRecordProto sr = assertFgsRunning(FGS0);
+            assertThat(sr.foreground.foregroundServiceType)
+                    .isEqualTo(FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+
+            checkServiceTimeoutValues(sr,
+                    typeChangeStartTime,
+                    typeChangeDoneTime,
+                    SHORTENED_TIMEOUT,
+                    SHORTENED_PROCSTATE_GRACE_PERIOD,
+                    SHORTENED_PROCSTATE_GRACE_PERIOD + EXTENDED_ANR_GRACE_PERIOD);
+        }
+    }
+
+    /**
+     * Make sure Service.startForeground()s calls extend the timeout.
+     */
+    @Test
+    public void testTimeoutExtension() throws Exception {
+        final long serviceStartTime = SystemClock.uptimeMillis();
+
+        // Temp-allowlist the helper app for the entire test, so the app can call startForeground()
+        // any time.
+        tempAllowlistPackage(HELPER_PACKAGE, 10 * 60 * 1000);
+
+        startForegroundService(FGS0, FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+
+        waitForMethodCall(FGS0, "onStartCommand");
+
+        final long serviceStartDoneTime = SystemClock.uptimeMillis();
+
+        // Check the start time and the FGS type.
+        {
+            ServiceRecordProto sr = assertFgsRunning(FGS0);
+
+            assertThat(sr.foreground.foregroundServiceType)
+                    .isEqualTo(FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+
+            checkServiceTimeoutValues(sr,
+                    serviceStartTime,
+                    serviceStartDoneTime,
+                    SHORTENED_TIMEOUT,
+                    SHORTENED_PROCSTATE_GRACE_PERIOD,
+                    SHORTENED_PROCSTATE_GRACE_PERIOD + EXTENDED_ANR_GRACE_PERIOD);
+        }
+
+        int notificationId = 10;
+
+        // Call startForeground() and make sure the start time is updated.
+        for (int i = 0; i < 3; i++) {
+            Thread.sleep(1000);
+
+            long startForegroundStartTime = SystemClock.uptimeMillis();
+            // Change the FGS type.
+            ShortFgsMessageReceiver.sendMessage(newMessage()
+                    .setComponentName(FGS0)
+                    .setDoCallStartForeground(true)
+                    .setFgsType(FOREGROUND_SERVICE_TYPE_SHORT_SERVICE)
+                    .setNotificationId(++notificationId));
+
+            waitForAckMessage();
+            long startForegroundDoneTime = SystemClock.uptimeMillis();
+
+            // Check the start time and the FGS type.
+            {
+                ServiceRecordProto sr = assertFgsRunning(FGS0);
+
+                assertThat(sr.foreground.foregroundServiceType)
+                        .isEqualTo(FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+
+                checkServiceTimeoutValues(sr,
+                        startForegroundStartTime,
+                        startForegroundDoneTime,
+                        SHORTENED_TIMEOUT,
+                        SHORTENED_PROCSTATE_GRACE_PERIOD,
+                        SHORTENED_PROCSTATE_GRACE_PERIOD + EXTENDED_ANR_GRACE_PERIOD);
+
+                // Make sure the notification ID has changed as well, even if the timeout didn't
+                // extend.
+                assertThat(sr.foreground.id).isEqualTo(notificationId);
+            }
+        }
+    }
+
+    /**
+     * Test to make sure:
+     * - calling startForeground([other types]) on an already running short-FGS *will* throw.
+     * - calling startForeground(SHORT_SERVICE) on an already running short-FGS will _not_ throw.
+     */
+    @Test
+    public void testStartForeground_onTimedOutShortService() throws Exception {
+
+        // Here, we want the SHORT_SERVICE timeout to be significantly larger than the
+        // startForeground() timeout, because we want to check the state between them.
+        updateDeviceConfig("short_fgs_timeout_duration", SHORTENED_START_SERVICE_TIMEOUT + 30_000);
+
+        // Start FGS0.
+        final long serviceStartTime = SystemClock.uptimeMillis();
+        startForegroundService(FGS0, FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+        waitForMethodCall(FGS0, "onStartCommand");
+        final long serviceStartDoneTime = SystemClock.uptimeMillis();
+
+        assertFgsRunning(FGS0);
+
+        // Check the timeout values.
+        {
+            ServiceRecordProto sr = assertFgsRunning(FGS0);
+
+            assertThat(sr.foreground.foregroundServiceType)
+                    .isEqualTo(FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+
+            checkServiceTimeoutValues(sr,
+                    serviceStartTime,
+                    serviceStartDoneTime,
+                    SHORTENED_TIMEOUT + 30_000,
+                    SHORTENED_PROCSTATE_GRACE_PERIOD,
+                    SHORTENED_PROCSTATE_GRACE_PERIOD + EXTENDED_ANR_GRACE_PERIOD);
+        }
+
+        // First, call startForeground(SPECIAL_USE) and make sure it _fails_.
+
+        // We use the same logic astestCannotStartAnotherFgsFromShortService() does here:
+
+        // Because of the first Context.startForegroundService() for FGS0, the helper
+        // app is temp-allowlisted for this duration, so another
+        // Context.startForegroundService() would automatically succeed.
+        // We wait until the temp-allowlist expires, so startForegroundService() would
+        // fail.
+        Thread.sleep(SHORTENED_START_SERVICE_TIMEOUT);
+
+        // Let the helper app call Context.startForegroundService, which should fail.
+        ShortFgsMessageReceiver.sendMessage(
+                newMessage()
+                        .setDoCallStartForeground(true)
+                        .setFgsType(FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+                        .setComponentName(FGS0)
+                        .setExpectedExceptionClass(
+                                ForegroundServiceStartNotAllowedException.class));
+
+        // It should have failed.
+        ShortFgsMessage m = waitForException();
+        assertThat(m.getActualExceptionClasss())
+                .isEqualTo(ForegroundServiceStartNotAllowedException.class.getName());
+
+        // Now, do the same thing but with FOREGROUND_SERVICE_TYPE_SHORT_SERVICE.
+        // This _should_ succeed.
+        ShortFgsMessageReceiver.sendMessage(
+                newMessage()
+                        .setDoCallStartForeground(true)
+                        .setFgsType(FOREGROUND_SERVICE_TYPE_SHORT_SERVICE)
+                        .setComponentName(FGS0));
+
+        waitForAckMessage();
+
+        // But, it shouldn't have changed the timeout.
+        {
+            ServiceRecordProto sr = assertFgsRunning(FGS0);
+
+            assertThat(sr.foreground.foregroundServiceType)
+                    .isEqualTo(FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+
+            checkServiceTimeoutValues(sr,
+                    serviceStartTime,
+                    serviceStartDoneTime,
+                    SHORTENED_TIMEOUT + 30_000,
+                    SHORTENED_PROCSTATE_GRACE_PERIOD,
+                    SHORTENED_PROCSTATE_GRACE_PERIOD + EXTENDED_ANR_GRACE_PERIOD);
+        }
+    }
+
+    /**
+     * Common part for tests that involve bindign from helper to helper2.
+     * This will:
+     * - Start FGS0 as a foreground service in helper, using fgsType.
+     * - Let helper bind to helper 2.
+     */
+    private void setupForBindingTest(int fgsType) throws Exception {
+        // For this test, timeout is not needed.
+        updateDeviceConfig("short_fgs_timeout_duration", 60 * 60 * 1000);
+
+        // In this test, we want the helper app to call Context.startForegroundService(). *1
+        // To do so, we need to temp-allowlist it.
+        // *1 this is because, if this main test app calls Context.startForegroundService(),
+        // then it'll put the helper app in a grace period where it could start an FGS,
+        // and that grace period would propagate to the second helper app.
+        tempAllowlistPackage(HELPER_PACKAGE, 60_0000);
+
+        // Start a SHORT_SERVICE in the helper app, and let it bound to helper2.
+        ShortFgsMessageReceiver.sendMessage(
+                newMessage().setDoCallStartForegroundService(true)
+                        .setComponentName(FGS0)
+                        .setDoCallStartForeground(true)
+                        .setFgsType(fgsType));
+        waitForAckMessage();
+        waitForMethodCall(FGS0, "onStartCommand");
+        assertFgsRunning(FGS0);
+
+        // Let helper bind to helper2.
+        ShortFgsMessageReceiver.sendMessage(
+                newMessage()
+                        .setDoCallBindService(true)
+                        .setComponentName(BOUND_SERVICE_B));
+        waitForAckMessage();
+        waitForMethodCall(BOUND_SERVICE_B, "onBind");
+
+        // Now, the bound service (in helper2) should be running.
+        assertServiceRunning(BOUND_SERVICE_B);
+
+        // Un-tempallowlist the helper app. (so it's no longer BFSL-allowed.)
+        untempAllowlistPackage(HELPER_PACKAGE);
+
+        // Adding a small sleep here, which will make it a little easy to debug when the following
+        // checks fail...
+        Thread.sleep(1000);
+    }
+
+    /**
+     * Make sure, when an app bound (in helper2)  by a SHORT_SERVICE (in main helper) is
+     * BFSL-denied.
+     *
+     * (i.e. ensure negative PROCESS_CAPABILITY_BFSL is propagated.)
+     */
+    @Test
+    public void testBoundByShortService() throws Exception {
+        setupForBindingTest(FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+
+        // Now, verify that helper2 can't call Context.startForegroundService().
+        ShortFgsMessageReceiver.sendMessage(HELPER_PACKAGE2,
+                newMessage().setDoCallStartForegroundService(true)
+                        .setComponentName(FGS_B_0)
+                        .setExpectedExceptionClass(
+                                ForegroundServiceStartNotAllowedException.class));
+
+        // It should have failed.
+        ShortFgsMessage m = waitForException();
+        assertThat(m.getActualExceptionClasss())
+                .isEqualTo(ForegroundServiceStartNotAllowedException.class.getName());
+    }
+
+    /**
+     * Same as {@ink #testBoundByShortService}, except it uses a non-short-FGS type,
+     * so helper2 should be allowed BFSL.
+     *
+     * (i.e. ensure positive PROCESS_CAPABILITY_BFSL is propagated.)
+     */
+    @Test
+    public void testBoundByNonShortService() throws Exception {
+        setupForBindingTest(FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+
+        // Make sure helper2 can start an FGS.
+        ShortFgsMessageReceiver.sendMessage(HELPER_PACKAGE2,
+                newMessage().setDoCallStartForegroundService(true)
+                        .setComponentName(FGS_B_0)
+                        .setDoCallStartForeground(true)
+                        .setFgsType(FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+                        .setExpectedExceptionClass(
+                                ForegroundServiceStartNotAllowedException.class));
+
+        waitForAckMessage();
+        assertFgsRunning(FGS_B_0);
     }
 }

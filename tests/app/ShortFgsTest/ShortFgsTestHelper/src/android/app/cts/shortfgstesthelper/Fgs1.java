@@ -15,5 +15,5 @@
  */
 package android.app.cts.shortfgstesthelper;
 
-public class Fgs1 extends FgsBase {
+public class Fgs1 extends ServiceBase {
 }
