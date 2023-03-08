@@ -18,10 +18,12 @@ package android.media.audio.cts;
 
 import android.media.audiofx.HapticGenerator;
 import android.media.cts.PostProcTestBase;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import com.android.compatibility.common.util.NonMainlineTest;
 
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class HapticGeneratorTest extends PostProcTestBase {
 
     private String TAG = "HapticGeneratorTest";

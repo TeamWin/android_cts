@@ -21,6 +21,7 @@ import android.media.AudioManager;
 import android.media.VolumeInfo;
 import android.media.audiopolicy.AudioVolumeGroup;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -29,8 +30,8 @@ import com.android.compatibility.common.util.NonMainlineTest;
 
 import java.util.List;
 
-
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class VolumeInfoTest extends CtsAndroidTestCase {
 
     private static final String TAG = "VolumeInfoTest";

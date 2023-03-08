@@ -24,6 +24,7 @@ import android.media.cts.AudioHelper;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.DeviceReportLog;
@@ -34,6 +35,7 @@ import com.android.compatibility.common.util.ResultUnit;
 import java.util.ArrayList;
 
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AudioTrack_ListenerTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioTrack_ListenerTest";
     private static final String REPORT_LOG_NAME = "CtsMediaAudioTestCases";

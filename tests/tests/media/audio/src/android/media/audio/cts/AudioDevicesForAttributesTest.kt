@@ -20,6 +20,7 @@ import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.platform.test.annotations.AppModeSdkSandbox
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.NonMainlineTest
@@ -29,6 +30,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4::class)
 class AudioDevicesForAttributesTest {
     /**

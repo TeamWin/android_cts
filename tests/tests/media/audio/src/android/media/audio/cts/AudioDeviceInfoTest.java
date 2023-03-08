@@ -17,6 +17,7 @@
 package android.media.audio.cts;
 
 import android.media.AudioDeviceInfo;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4.class)
 public class AudioDeviceInfoTest {
     private static final Set<Integer> INPUT_TYPES = Stream.of(

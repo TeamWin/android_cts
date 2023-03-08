@@ -76,6 +76,7 @@ import android.os.Build;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.provider.Settings;
 import android.provider.Settings.System;
 import android.test.InstrumentationTestCase;
@@ -108,6 +109,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AudioManagerTest extends InstrumentationTestCase {
     private static final String TAG = "AudioManagerTest";
 

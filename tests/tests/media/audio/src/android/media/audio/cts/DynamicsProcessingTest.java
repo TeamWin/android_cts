@@ -29,8 +29,10 @@ import android.media.audiofx.DynamicsProcessing.Mbc;
 import android.media.audiofx.DynamicsProcessing.MbcBand;
 import android.media.cts.PostProcTestBase;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class DynamicsProcessingTest extends PostProcTestBase {
 
     private static final String TAG = "DynamicsProcessingTest";

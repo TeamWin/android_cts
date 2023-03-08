@@ -20,11 +20,13 @@ import android.media.audiofx.AudioEffect;
 import android.media.audiofx.BassBoost;
 import android.media.cts.PostProcTestBase;
 import android.os.Looper;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 
 import com.android.compatibility.common.util.NonMainlineTest;
 
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class BassBoostTest extends PostProcTestBase {
 
     private String TAG = "BassBoostTest";
