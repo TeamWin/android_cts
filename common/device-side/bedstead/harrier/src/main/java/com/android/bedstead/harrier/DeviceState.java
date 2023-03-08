@@ -218,6 +218,7 @@ public final class DeviceState extends HarrierRule {
     private static final String MIN_SDK_VERSION_KEY = "min-sdk-version";
     private static final String PERMISSIONS_INSTRUMENTATION_PACKAGE_KEY =
             "permission-instrumentation-package";
+    private static final String ADDITIONAL_FEATURES_KEY = "additional-features";
     private boolean mSkipTestTeardown;
     private boolean mSkipClassTeardown;
     private boolean mSkipTests;
@@ -225,6 +226,7 @@ public final class DeviceState extends HarrierRule {
     private boolean mUsingBedsteadJUnit4 = false;
     private String mSkipTestsReason;
     private String mFailTestsReason;
+    private List<String> mAdditionalFeatures;
     // The minimum version supported by tests, defaults to current version
     private int mMinSdkVersion;
     private int mMinSdkVersionCurrentTest;
@@ -263,6 +265,8 @@ public final class DeviceState extends HarrierRule {
                 SDK_INT);
         mPermissionsInstrumentationPackage = TestApis.instrumentation().arguments().getString(
                 PERMISSIONS_INSTRUMENTATION_PACKAGE_KEY);
+        mAdditionalFeatures = Arrays.asList(TestApis.instrumentation().arguments().getString(
+                ADDITIONAL_FEATURES_KEY, "").split(","));
         if (mPermissionsInstrumentationPackage != null) {
             mPermissionsInstrumentationPackagePermissions.addAll(
                     TestApis.packages().find(mPermissionsInstrumentationPackage)
@@ -352,6 +356,7 @@ public final class DeviceState extends HarrierRule {
             Tags.addTag(Tags.USES_DEVICESTATE);
             assumeFalse(mSkipTestsReason, mSkipTests);
             assertFalse(mFailTestsReason, mFailTests);
+            TestApis.packages().features().addAll(mAdditionalFeatures);
 
             // Ensure that tests only see events from the current test
             EventLogs.resetLogs();
