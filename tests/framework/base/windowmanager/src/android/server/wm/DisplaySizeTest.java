@@ -184,14 +184,15 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
                 densityProp = DENSITY_PROP_DEVICE;
             }
 
-            return Integer.parseInt(executeShellCommand("getprop " + densityProp).trim());
+            return Integer.parseInt(
+                    executeShellCommandAndGetStdout("getprop " + densityProp).trim());
         }
 
         private void setDensity(int targetDensity) {
             executeShellCommand("wm density " + targetDensity);
 
             // Verify that the density is changed.
-            final String output = executeShellCommand("wm density");
+            final String output = executeShellCommandAndGetStdout("wm density");
             final boolean success = output.contains("Override density: " + targetDensity);
 
             assertTrue("Failed to set density to " + targetDensity, success);

@@ -438,7 +438,8 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      */
     @Test
     public void testConsecutiveLaunch() {
-        final String amStartOutput = executeShellCommand("am start --ez " + KEY_LAUNCH_ACTIVITY
+        final String amStartOutput = SystemUtil.runShellCommand(
+                "am start --ez " + KEY_LAUNCH_ACTIVITY
                 + " true --es " + KEY_TARGET_COMPONENT + " " + TEST_ACTIVITY.flattenToShortString()
                 + " -W " + LAUNCHING_ACTIVITY.flattenToShortString());
         assertLaunchComponentState(amStartOutput, TEST_ACTIVITY, LAUNCH_STATE_COLD);
