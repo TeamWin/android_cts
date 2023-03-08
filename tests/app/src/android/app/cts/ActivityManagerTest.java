@@ -626,7 +626,7 @@ public final class ActivityManagerTest {
         final ApplicationInfo stubInfo = mTargetContext.getPackageManager().getApplicationInfo(
                 STUB_PACKAGE_NAME, 0);
         final WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
-                WAITFOR_MSEC);
+                WAITFOR_MSEC, PROCESS_CAPABILITY_ALL);
         final String crashActivityName = "ActivityManagerStubCrashActivity";
 
         final SettingsSession<Integer> showOnFirstCrash = new SettingsSession<>(

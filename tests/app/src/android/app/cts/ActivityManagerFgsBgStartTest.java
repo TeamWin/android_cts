@@ -187,7 +187,7 @@ public class ActivityManagerFgsBgStartTest {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
         WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
-                WAITFOR_MSEC);
+                WAITFOR_MSEC, PROCESS_CAPABILITY_ALL);
 
         try {
             WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
@@ -290,9 +290,9 @@ public class ActivityManagerFgsBgStartTest {
         ApplicationInfo app2Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP2, 0);
         WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
-                WAITFOR_MSEC);
+                WAITFOR_MSEC, PROCESS_CAPABILITY_ALL);
         WatchUidRunner uid2Watcher = new WatchUidRunner(mInstrumentation, app2Info.uid,
-                WAITFOR_MSEC);
+                WAITFOR_MSEC, PROCESS_CAPABILITY_ALL);
 
         try {
             // APP1 is in BG state, start FGSL in APP2.
@@ -376,9 +376,9 @@ public class ActivityManagerFgsBgStartTest {
         ApplicationInfo app2Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP2, 0);
         WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
-                WAITFOR_MSEC);
+                WAITFOR_MSEC, PROCESS_CAPABILITY_ALL);
         WatchUidRunner uid2Watcher = new WatchUidRunner(mInstrumentation, app2Info.uid,
-                WAITFOR_MSEC);
+                WAITFOR_MSEC, PROCESS_CAPABILITY_ALL);
 
         try {
             WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
@@ -494,7 +494,7 @@ public class ActivityManagerFgsBgStartTest {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
         WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
-                WAITFOR_MSEC);
+                WAITFOR_MSEC, PROCESS_CAPABILITY_ALL);
 
         try {
             WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
@@ -1413,7 +1413,7 @@ public class ActivityManagerFgsBgStartTest {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
         WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
-                WAITFOR_MSEC);
+                WAITFOR_MSEC, PROCESS_CAPABILITY_ALL);
         try {
             // Enable the FGS background startForeground() restriction.
             enableFgsRestriction(true, true, null);
@@ -1495,7 +1495,7 @@ public class ActivityManagerFgsBgStartTest {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
         WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
-                WAITFOR_MSEC);
+                WAITFOR_MSEC, PROCESS_CAPABILITY_ALL);
         try {
             // Enable the FGS background startForeground() restriction.
             enableFgsRestriction(true, true, null);
