@@ -107,10 +107,9 @@ public class DistanceMeasurementParamsTest {
             return;
         }
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice).build();
-        assertEquals(DistanceMeasurementParams.getDefaultDurationSeconds(),
-                params.getDurationSeconds());
+        assertEquals(DistanceMeasurementParams.getDefaultDuration(), params.getDuration());
         assertEquals(REPORT_FREQUENCY_LOW, params.getFrequency());
-        assertEquals(DISTANCE_MEASUREMENT_METHOD_RSSI, params.getMethodId());
+        assertEquals(DISTANCE_MEASUREMENT_METHOD_RSSI, params.getMethod());
     }
 
     @Test
@@ -123,13 +122,13 @@ public class DistanceMeasurementParamsTest {
     }
 
     @Test
-    public void testSetGetDurationSeconds() {
+    public void testSetGetDuration() {
         if (shouldSkipTest()) {
             return;
         }
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
-                .setDurationSeconds(120).build();
-        assertEquals(120, params.getDurationSeconds());
+                .setDuration(120).build();
+        assertEquals(120, params.getDuration());
     }
 
     @Test
@@ -143,13 +142,13 @@ public class DistanceMeasurementParamsTest {
     }
 
     @Test
-    public void testSetGetMethodId() {
+    public void testSetGetMethod() {
         if (shouldSkipTest()) {
             return;
         }
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
-                .setMethodId(DISTANCE_MEASUREMENT_METHOD_RSSI).build();
-        assertEquals(DISTANCE_MEASUREMENT_METHOD_RSSI, params.getMethodId());
+                .setMethod(DISTANCE_MEASUREMENT_METHOD_RSSI).build();
+        assertEquals(DISTANCE_MEASUREMENT_METHOD_RSSI, params.getMethod());
     }
 
 
@@ -163,9 +162,9 @@ public class DistanceMeasurementParamsTest {
         }
 
         assertEquals(p.getDevice(), other.getDevice());
-        assertEquals(p.getDurationSeconds(), other.getDurationSeconds());
+        assertEquals(p.getDuration(), other.getDuration());
         assertEquals(p.getFrequency(), other.getFrequency());
-        assertEquals(p.getMethodId(), other.getMethodId());
+        assertEquals(p.getMethod(), other.getMethod());
     }
 
     private boolean shouldSkipTest() {

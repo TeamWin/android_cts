@@ -102,7 +102,7 @@ public class DistanceMeasurementManagerTest {
     @Test
     public void testStartMeasurementSession() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
-                .setDurationSeconds(15)
+                .setDuration(15)
                 .setFrequency(DistanceMeasurementParams.REPORT_FREQUENCY_LOW)
                 .build();
         CancellationSignal signal = mDistanceMeasurementManager.startMeasurementSession(params,
