@@ -125,7 +125,7 @@ public class VideoCodecTest extends VideoCodecTestBase {
         return argsList;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}:{1}:{2})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{2}")
     public static Collection<Object[]> input() {
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {VP8_MIME, VIDEO_ControlRateConstant},

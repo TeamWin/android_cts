@@ -30,6 +30,7 @@
         <option name="test-file-name" value="CtsSharesheetActivityLabelTester.apk" />
         <option name="test-file-name" value="CtsSharesheetIntentFilterLabelTester.apk" />
         <option name="test-file-name" value="CtsSharesheetExcludeTester.apk" />
+        <option name="test-file-name" value="CtsSharesheetAlternateType.apk" />
     </target_preparer>
     
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

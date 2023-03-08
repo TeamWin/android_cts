@@ -172,7 +172,7 @@ public class EncodeVirtualDisplayTest {
         return argsList;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}:{6})")
+    @Parameterized.Parameters(name = "{index}_{0}_{6}")
     public static Collection<Object[]> input() {
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // mediaType, width, height,  bitrate, framerate, level

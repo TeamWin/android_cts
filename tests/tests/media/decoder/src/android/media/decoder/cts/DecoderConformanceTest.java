@@ -86,7 +86,7 @@ public class DecoderConformanceTest {
 
     private DeviceReportLog mReportLog;
 
-    @Parameterized.Parameters(name = "{index}({0})")
+    @Parameterized.Parameters(name = "{index}_{0}")
     public static Collection<Object[]> input() throws Exception {
         final String[] mediaTypeList = new String[] {MediaFormat.MIMETYPE_VIDEO_VP9};
         final List<Object[]> argsList = new ArrayList<>();

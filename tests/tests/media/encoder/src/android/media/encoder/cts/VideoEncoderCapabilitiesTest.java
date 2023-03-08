@@ -42,7 +42,7 @@ public class VideoEncoderCapabilitiesTest {
     final private int mBitRate;
     final private boolean mOptional;
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}x{2}_{3}_{4}_{5})")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}x{2}_{3}_{4}_{5}")
     public static Collection<Object[]> input() {
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // MediaType, width, height, frame-rate, bit-rate, optional

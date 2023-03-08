@@ -378,6 +378,7 @@ public class WindowInputTests {
     }
 
     @Test
+    @FlakyTest(bugId = 263497259)
     public void testDoNotFlagTouchesWhenObscuredByZeroOpacityWindow() throws Throwable {
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
 
@@ -628,6 +629,7 @@ public class WindowInputTests {
     }
 
     @Test
+    @FlakyTest(bugId = 260913895)
     public void testWindowBecomesUnTouchable() throws Throwable {
         final WindowManager wm = mActivity.getWindowManager();
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
@@ -739,6 +741,7 @@ public class WindowInputTests {
     }
 
     @Test
+    @FlakyTest(bugId = 272080751)
     public void testInjectFromThread() throws InterruptedException {
         // Continually inject event to activity from thread.
         final int[] decorViewLocation = new int[2];

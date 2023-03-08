@@ -148,6 +148,7 @@ public class BlurTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 263872611)
     public void testNoBlurBehindWhenBlurDisabled() {
         setForceBlurDisabled(true);
         startTestActivity(BLUR_ACTIVITY,
@@ -157,6 +158,7 @@ public class BlurTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 263872611)
     public void testNoBlurBehindWhenFlagNotSet() {
         startTestActivity(BAD_BLUR_ACTIVITY,
                           extraInt(EXTRA_BLUR_BEHIND_RADIUS_PX, BLUR_BEHIND_PX),
@@ -165,6 +167,7 @@ public class BlurTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 263872611)
     public void testBackgroundBlurActivatesFallbackDynamically() throws Exception {
         startTestActivity(BLUR_ACTIVITY,
                           extraInt(EXTRA_BACKGROUND_BLUR_RADIUS_PX, BACKGROUND_BLUR_PX),
@@ -217,6 +220,7 @@ public class BlurTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 263872611)
     public void testBlurBehindAndBackgroundBlur() throws Exception {
         startTestActivity(BLUR_ACTIVITY,
                           extraInt(EXTRA_BLUR_BEHIND_RADIUS_PX, BLUR_BEHIND_PX),

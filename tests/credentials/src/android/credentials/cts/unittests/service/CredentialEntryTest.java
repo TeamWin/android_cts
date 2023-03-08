@@ -21,7 +21,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.app.slice.Slice;
-import android.credentials.Credential;
 import android.credentials.cts.unittests.TestUtils;
 import android.net.Uri;
 import android.os.Bundle;
@@ -42,41 +41,77 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class CredentialEntryTest {
 
-    private static final BeginGetCredentialOption sCredOption = new BeginGetCredentialOption("id1",
-            "type", Bundle.EMPTY);
-
-    private static final Slice sSlice = new Slice.Builder(Uri.parse("foo://bar"), null).addText(
+    private static final BeginGetCredentialOption sCredOption = new BeginGetCredentialOption(
+            "id1", "type", Bundle.EMPTY);
+    private static final String sCredEntryId = "id";
+    private static final String sCredEntryType = "type";
+    private static final Slice sSlice = new Slice.Builder(Uri.parse("foo://bar"),
+            null).addText(
             "some text", null, List.of(Slice.HINT_TITLE)).build();
 
     @Test
-    public void testConstructor_nullOption() {
+    public void testConstructorWithRawId_nullId() {
+        assertThrows(NullPointerException.class,
+                () -> new CredentialEntry(null, "type", sSlice));
+    }
+
+    @Test
+    public void testConstructorWithBeginGetCredentialOption_nullOption_throwsNPE() {
         assertThrows(NullPointerException.class,
                 () -> new CredentialEntry((BeginGetCredentialOption) null, sSlice));
     }
 
     @Test
-    public void testConstructor_nullSlice() {
-        assertThrows(NullPointerException.class, () -> new CredentialEntry(sCredOption, null));
+    public void testConstructorWithBeginGetCredentialOption_success() {
+        final CredentialEntry entry = new CredentialEntry(sCredOption, sSlice);
+
+        assertThat(entry.getType()).isSameInstanceAs(sCredOption.getType());
+        assertThat(entry.getBeginGetCredentialOptionId()).isSameInstanceAs(sCredOption.getId());
+        assertThat(entry.getSlice()).isSameInstanceAs(sSlice);
     }
 
     @Test
-    public void testConstructor() {
-        final String type = Credential.TYPE_PASSWORD_CREDENTIAL;
-        final CredentialEntry entry = new CredentialEntry(sCredOption, sSlice);
+    public void testConstructorWithRawId_emptyId() {
+        assertThrows(NullPointerException.class,
+                () -> new CredentialEntry("", "type", sSlice));
+    }
 
-        assertThat(entry.getBeginGetCredentialOption()).isSameInstanceAs(sCredOption);
+    @Test
+    public void testConstructorWithRawId_nullType() {
+        assertThrows(NullPointerException.class,
+                () -> new CredentialEntry("id", null, sSlice));
+    }
+
+    @Test
+    public void testConstructorWithRawId_emptyType() {
+        assertThrows(NullPointerException.class,
+                () -> new CredentialEntry("id", "", sSlice));
+    }
+
+    @Test
+    public void testConstructorWithRawId_nullSlice() {
+        assertThrows(NullPointerException.class, () -> new CredentialEntry(
+                "id", "type", null));
+    }
+
+    @Test
+    public void testConstructorWithRawId_success() {
+        final CredentialEntry entry = new CredentialEntry(sCredEntryId, sCredEntryType, sSlice);
+
+        assertThat(entry.getBeginGetCredentialOptionId()).isEqualTo(sCredEntryId);
+        assertThat(entry.getType()).isEqualTo(sCredEntryType);
         assertThat(entry.getSlice()).isSameInstanceAs(sSlice);
     }
 
     @Test
     public void testWriteToParcel() {
-        final CredentialEntry entry1 = new CredentialEntry(sCredOption, sSlice);
+        final CredentialEntry entry1 = new CredentialEntry(sCredEntryId, sCredEntryType, sSlice);
 
         final CredentialEntry entry2 = TestUtils.cloneParcelable(entry1);
-        assertThat(entry2.getBeginGetCredentialOption().getId()).isEqualTo(
-                entry1.getBeginGetCredentialOption().getId());
-        assertThat(entry2.getBeginGetCredentialOption().getType()).isEqualTo(
-                entry1.getBeginGetCredentialOption().getType());
+        assertThat(entry2.getBeginGetCredentialOptionId()).isEqualTo(
+                entry1.getBeginGetCredentialOptionId());
+        assertThat(entry2.getType()).isEqualTo(
+                entry1.getType());
 
         TestUtils.assertEquals(entry2.getSlice(), entry1.getSlice());
     }

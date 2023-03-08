@@ -42,6 +42,7 @@ import android.util.Pair;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.MediaPerfUtils;
 import com.android.compatibility.common.util.MediaUtils;
@@ -303,6 +304,15 @@ public class VideoEncoderDecoderTest {
         this.mMaxBFrames = maxBFrames;
     }
 
+    @ApiTest(apis = {"VideoCapabilities#getSupportedWidths",
+            "VideoCapabilities#getSupportedHeightsFor",
+            "VideoCapabilities#getSupportedFrameRatesFor",
+            "VideoCapabilities#getBitrateRange",
+            "VideoCapabilities#getAchievableFrameRatesFor",
+            "CodecCapabilities#COLOR_FormatYUV420SemiPlanar",
+            "CodecCapabilities#COLOR_FormatYUV420Planar",
+            "CodecCapabilities#COLOR_FormatYUV420Flexible",
+            "android.media.MediaFormat#KEY_MAX_B_FRAMES"})
     @Test
     public void testVid() throws Exception {
         if (mType == Type.Qual) {

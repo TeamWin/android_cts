@@ -78,7 +78,7 @@ public class GetCredentialRequestTest {
     }
 
     @Test
-    public void testSetCredentialAddOptions_build() {
+    public void testGetCredentialSetOptions_build() {
         final Bundle dataBundle = createTestBundle();
         final GetCredentialRequest.Builder builder = new GetCredentialRequest.Builder(dataBundle);
 
@@ -92,7 +92,8 @@ public class GetCredentialRequestTest {
     @Test
     public void testSetOrigin_build() {
         final Bundle dataBundle = createTestBundle();
-        final GetCredentialRequest.Builder builder = new GetCredentialRequest.Builder(dataBundle);
+        final GetCredentialRequest.Builder builder = new GetCredentialRequest.Builder(
+                dataBundle).setCredentialOptions(sCredOptions);
 
         builder.setOrigin(ORIGIN);
 
@@ -100,6 +101,7 @@ public class GetCredentialRequestTest {
         final GetCredentialRequest req = builder.build();
         assertThat(req.getOrigin()).isEqualTo(ORIGIN);
         assertThat(req.getData()).isSameInstanceAs(dataBundle);
+        assertThat(req.getCredentialOptions()).isEqualTo(sCredOptions);
     }
 
     @Test

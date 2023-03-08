@@ -47,15 +47,15 @@ import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.UiDeviceUtils;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.BySelector;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.Until;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.Until;
 
 import com.android.server.biometrics.nano.SensorServiceStateProto;
 import com.android.server.biometrics.nano.SensorStateProto;

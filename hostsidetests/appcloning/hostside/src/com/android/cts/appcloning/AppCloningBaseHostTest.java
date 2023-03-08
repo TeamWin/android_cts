@@ -45,6 +45,8 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
 
     protected static String sCloneUserId;
 
+    protected static String sPublicSdCardVol;
+
     protected static void createAndStartCloneUser() throws Exception {
         // create clone user
         String output = sDevice.executeShellCommand(
@@ -60,6 +62,24 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
 
     protected static void removeCloneUser() throws Exception {
         sDevice.executeShellCommand("pm remove-user " + sCloneUserId);
+    }
+
+    protected static void createSDCardVirtualDisk() throws Exception {
+        //remove any existing volume that was mounted before
+        removeVirtualDisk();
+        String existingPublicVolume = getPublicVolumeExcluding(null);
+        sDevice.executeShellCommand("sm set-force-adoptable on");
+        sDevice.executeShellCommand("sm set-virtual-disk true");
+        eventually(AppCloningBaseHostTest::partitionDisks, 10000,
+                "Could not create public volume in time");
+        sPublicSdCardVol = getPublicVolumeExcluding(existingPublicVolume);
+        assertThat(sPublicSdCardVol).isNotNull();
+    }
+
+    protected static void removeVirtualDisk() throws Exception {
+        sDevice.executeShellCommand("sm set-virtual-disk false");
+        //sleep to make sure that it is unmounted
+        Thread.sleep(4000);
     }
 
     public static void baseHostSetup(ITestDevice device) throws Exception {

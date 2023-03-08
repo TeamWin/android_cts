@@ -23,6 +23,7 @@ import static android.telephony.AccessNetworkConstants.AccessNetworkType.UNKNOWN
 import static android.telephony.AccessNetworkConstants.AccessNetworkType.UTRAN;
 import static android.telephony.BarringInfo.BARRING_SERVICE_TYPE_EMERGENCY;
 import static android.telephony.BarringInfo.BarringServiceInfo.BARRING_TYPE_UNCONDITIONAL;
+import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_CROSS_STACK_REDIAL_TIMER_SEC_INT;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_CALL_SETUP_TIMER_ON_CURRENT_NETWORK_SEC_INT;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_CDMA_PREFERRED_NUMBERS_STRING_ARRAY;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_DOMAIN_PREFERENCE_INT_ARRAY;
@@ -38,6 +39,9 @@ import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_SCAN_TIMER_SEC_INT;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_MAXIMUM_NUMBER_OF_EMERGENCY_TRIES_OVER_VOWIFI_INT;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_PREFER_IMS_EMERGENCY_WHEN_VOICE_CALLS_ON_CS_BOOL;
+import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_QUICK_CROSS_STACK_REDIAL_TIMER_SEC_INT;
+import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_START_QUICK_CROSS_STACK_REDIAL_TIMER_WHEN_REGISTERED_BOOL;
+import static android.telephony.CarrierConfigManager.ImsEmergency.REDIAL_TIMER_DISABLED;
 import static android.telephony.CarrierConfigManager.ImsEmergency.SCAN_TYPE_NO_PREFERENCE;
 import static android.telephony.CarrierConfigManager.ImsWfc.KEY_EMERGENCY_CALL_OVER_EMERGENCY_PDN_BOOL;
 import static android.telephony.NetworkRegistrationInfo.REGISTRATION_STATE_HOME;
@@ -1217,11 +1221,15 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
         boolean requiresVoLteEnabled = false;
         boolean ltePreferredAfterNrFailed = false;
         String[] cdmaPreferredNumbers = new String[] {};
+        int crossStackTimer = REDIAL_TIMER_DISABLED;
+        int quickCrossStackTimer = REDIAL_TIMER_DISABLED;
+        boolean quickTimerWhenInService = true;
 
         return getPersistableBundle(imsRats, csRats, imsRoamRats, csRoamRats,
                 domainPreference, roamDomainPreference, imsWhenVoiceOnCs, maxRetriesOverWiFi,
                 useEmergencyPdn, cellularScanTimerSec, scanType, requiresImsRegistration,
-                requiresVoLteEnabled, ltePreferredAfterNrFailed, cdmaPreferredNumbers);
+                requiresVoLteEnabled, ltePreferredAfterNrFailed, cdmaPreferredNumbers,
+                crossStackTimer, quickCrossStackTimer, quickTimerWhenInService);
     }
 
     private static PersistableBundle getPersistableBundle(
@@ -1231,7 +1239,8 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
             boolean imsWhenVoiceOnCs, int maxRetriesOverWiFi, boolean useEmergencyPdn,
             int cellularScanTimerSec, int scanType, boolean requiresImsRegistration,
             boolean requiresVoLteEnabled, boolean ltePreferredAfterNrFailed,
-            @Nullable String[] cdmaPreferredNumbers) {
+            @Nullable String[] cdmaPreferredNumbers,
+            int crossStackTimer, int quickCrossStackTimer, boolean quickTimerWhenInService) {
 
         PersistableBundle bundle  = new PersistableBundle();
         if (imsRats != null) {
@@ -1274,6 +1283,11 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
             bundle.putStringArray(KEY_EMERGENCY_CDMA_PREFERRED_NUMBERS_STRING_ARRAY,
                     cdmaPreferredNumbers);
         }
+
+        bundle.putInt(KEY_CROSS_STACK_REDIAL_TIMER_SEC_INT, crossStackTimer);
+        bundle.putInt(KEY_QUICK_CROSS_STACK_REDIAL_TIMER_SEC_INT, quickCrossStackTimer);
+        bundle.putBoolean(KEY_START_QUICK_CROSS_STACK_REDIAL_TIMER_WHEN_REGISTERED_BOOL,
+                quickTimerWhenInService);
 
         return bundle;
     }
