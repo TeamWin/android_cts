@@ -28,7 +28,10 @@
     <application>
         <service
             android:name="android.companion.cts.common.PrimaryCompanionService"
-            android:process=":primary" />
+            android:process=":primary">
+            <property android:name="android.companion.PROPERTY_PRIMARY_COMPANION_DEVICE_SERVICE"
+                      android:value="true" />
+        </service>
         <service
             android:name="android.companion.cts.common.SecondaryCompanionService"
             android:process=":secondary" />
