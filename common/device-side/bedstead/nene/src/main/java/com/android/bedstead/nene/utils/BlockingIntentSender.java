@@ -83,6 +83,11 @@ public class BlockingIntentSender implements AutoCloseable {
         return mBlockingBroadcastReceiver.awaitForBroadcast();
     }
 
+    /** Wait for the {@link #intentSender()} to be used. */
+    public Intent await(long timeoutMillis) {
+        return mBlockingBroadcastReceiver.awaitForBroadcast(timeoutMillis);
+    }
+
     /** Get the intent sender. */
     public IntentSender intentSender() {
         return mIntentSender;

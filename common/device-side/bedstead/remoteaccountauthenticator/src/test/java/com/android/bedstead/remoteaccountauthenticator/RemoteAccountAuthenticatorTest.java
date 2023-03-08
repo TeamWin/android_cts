@@ -23,11 +23,15 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.nene.accounts.AccountReference;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
 public final class RemoteAccountAuthenticatorTest {
+
+    @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
     @Test

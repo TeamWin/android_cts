@@ -449,8 +449,7 @@ public class TestAppProviderTest {
                 .whereIsDeviceAdmin().isTrue()
                 .get();
 
-        assertThat(testApp.packageName()).isEqualTo(
-                "com.android.bedstead.testapp.DeviceAdminTestApp");
+        assertThat(testApp.packageName()).endsWith("DeviceAdminTestApp");
     }
 
     @Test

@@ -234,9 +234,9 @@ public final class UserReference implements AutoCloseable {
             // Expects no output on success or failure - stderr output on failure
             ShellCommand.builder("am stop-user")
                     .addOperand("-w") // Wait for stop-user to complete
-                    .withTimeout(Duration.ofMinutes(1))
                     .addOperand("-f") // Force stop
                     .addOperand(mId)
+                    .withTimeout(Duration.ofMinutes(1))
                     .allowEmptyOutput(true)
                     .validate(String::isEmpty)
                     .execute();

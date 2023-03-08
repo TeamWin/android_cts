@@ -403,7 +403,7 @@ public final class Package {
 
             assertWithMessage("Error denying permission " + permission
                     + " to package " + this + " on user " + user
-                    + ". Command appeared successful but not set.")
+                    + ". Command appeared successful but not revoked.")
                     .that(hasPermission(user, permission)).isFalse();
 
             return this;
@@ -480,10 +480,11 @@ public final class Package {
     @Experimental
     @Nullable
     public ProcessReference runningProcess(UserReference user) {
-        return runningProcesses().stream().filter(
+        ProcessReference p = runningProcesses().stream().filter(
                 i -> i.user().equals(user))
                 .findAny()
                 .orElse(null);
+        return p;
     }
 
     /** Get the running {@link ProcessReference} for this package on the given user. */

@@ -33,6 +33,7 @@ import android.os.UserManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
@@ -101,8 +102,9 @@ public class UserReferenceTest {
     }
 
     @Test
+    @EnsureHasAdditionalUser
     public void remove_userExists_removesUser() {
-        UserReference user = TestApis.users().createUser().create();
+        UserReference user = sDeviceState.additionalUser();
 
         user.remove();
 
@@ -123,16 +125,13 @@ public class UserReferenceTest {
     }
 
     @Test
+    @EnsureHasAdditionalUser
     public void start_userNotStarted_userIsUnlocked() {
-        UserReference user = TestApis.users().createUser().create().stop();
+        sDeviceState.additionalUser().stop();
 
-        user.start();
+        sDeviceState.additionalUser().start();
 
-        try {
-            assertThat(user.isUnlocked()).isTrue();
-        } finally {
-            user.remove();
-        }
+        assertThat(sDeviceState.additionalUser().isUnlocked()).isTrue();
     }
 
     @Test
@@ -268,27 +267,19 @@ public class UserReferenceTest {
     }
 
     @Test
+    @EnsureHasAdditionalUser
     public void isRunning_userNotStarted_returnsFalse() {
-        UserReference user = TestApis.users().createUser().create();
-        user.stop();
+        sDeviceState.additionalUser().stop();
 
-        try {
-            assertThat(user.isRunning()).isFalse();
-        } finally {
-            user.remove();
-        }
+        assertThat(sDeviceState.additionalUser().isRunning()).isFalse();
     }
 
     @Test
+    @EnsureHasAdditionalUser
     public void isRunning_userIsRunning_returnsTrue() {
-        UserReference user = TestApis.users().createUser().create();
-        user.start();
+        sDeviceState.additionalUser().start();
 
-        try {
-            assertThat(user.isRunning()).isTrue();
-        } finally {
-            user.remove();
-        }
+        assertThat(sDeviceState.additionalUser().isRunning()).isTrue();
     }
 
     @Test
@@ -299,14 +290,11 @@ public class UserReferenceTest {
     }
 
     @Test
+    @EnsureHasAdditionalUser
     public void isUnlocked_userIsUnlocked_returnsTrue() {
-        UserReference user = TestApis.users().createUser().createAndStart();
+        sDeviceState.additionalUser().start();
 
-        try {
-            assertThat(user.isUnlocked()).isTrue();
-        } finally {
-            user.remove();
-        }
+        assertThat(sDeviceState.additionalUser().isUnlocked()).isTrue();
     }
 
     // TODO(b/203542772): add tests for locked state
@@ -340,14 +328,15 @@ public class UserReferenceTest {
     }
 
     @Test
+    @EnsureHasAdditionalUser
     public void autoclose_removesUser() {
-        int numUsers = TestApis.users().all().size();
+        UserReference additionalUser = sDeviceState.additionalUser();
 
-        try (UserReference user = TestApis.users().createUser().create()) {
+        try (UserReference user = additionalUser) {
             // We intentionally don't do anything here, just rely on the auto-close behaviour
         }
 
-        assertThat(TestApis.users().all()).hasSize(numUsers);
+        assertThat(TestApis.users().all()).doesNotContain(additionalUser);
     }
 
     @Test
