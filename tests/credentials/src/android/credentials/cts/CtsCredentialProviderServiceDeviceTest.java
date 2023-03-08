@@ -34,6 +34,7 @@ import android.credentials.CreateCredentialException;
 import android.credentials.CreateCredentialRequest;
 import android.credentials.CreateCredentialResponse;
 import android.credentials.CredentialManager;
+import android.credentials.CredentialProviderInfo;
 import android.credentials.CredentialOption;
 import android.credentials.GetCredentialException;
 import android.credentials.GetCredentialRequest;
@@ -66,6 +67,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Map;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -73,6 +75,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
@@ -83,14 +86,22 @@ public class CtsCredentialProviderServiceDeviceTest {
             + CtsNoOpCredentialProviderService.class.getSimpleName();
     private static final int USER_ID = UserHandle.myUserId();
     private static final String TAG = "CtsCredentialProviderServiceDeviceTest";
-    public static final String DEVICE_CONFIG_ENABLE_CREDENTIAL_MANAGER =
-            "enable_credential_manager";
     private static final String PASSWORD_CREDENTIAL_TYPE =
             "android.credentials.TYPE_PASSWORD_CREDENTIAL";
+    private static final String PASSKEY_CREDENTIAL_TYPE = "android.credentials.TYPE_PUBLIC_KEY_CREDENTIAL";
     private static final String CREDENTIAL_SERVICE = "credential_service";
     private static final Timeout CONNECTION_TIMEOUT = new Timeout(
             "CONNECTION_TIMEOUT", 1500, 2F, 1500);
-
+    private static final UserHandle USER_ID_HANDLE = UserHandle.getUserHandleForUid(USER_ID);
+    private static final int TEMPORARY_SERVICE_DURATION = 10000;
+    public static final String DEVICE_CONFIG_ENABLE_CREDENTIAL_MANAGER =
+            "enable_credential_manager";
+    private static final String NOOP_SERVICE =
+            "android.credentials.cts/android.credentials.cts.CtsNoOpCredentialProviderService";
+    private static final String NOOP_SERVICE_ALT =
+            "android.credentials.cts/android.credentials.cts.CtsNoOpCredentialProviderAltService";
+    private static final String NOOP_SERVICE_SYSTEM =
+            "android.credentials.cts/android.credentials.cts.CtsNoOpCredentialProviderSysService";
 
     private CredentialManager mCredentialManager;
     private final Context mContext = getInstrumentation().getContext();
@@ -319,6 +330,94 @@ public class CtsCredentialProviderServiceDeviceTest {
         });
     }
 
+    @Test
+    public void getCredentialProviderServices_returnsAllProviders() {
+        ActivityScenario<TestCredentialActivity> activityScenario =
+                ActivityScenario.launch(TestCredentialActivity.class);
+
+        activityScenario.onActivity(
+                activity -> {
+                    Map<String, CredentialProviderInfo> results =
+                            getCredentialProviderServices(
+                                    CredentialManager.PROVIDER_FILTER_ALL_PROVIDERS);
+
+                    // Verify data of the returned provider.
+                    CredentialProviderInfo cpi = results.get(NOOP_SERVICE);
+                    assertThat(cpi).isNotNull();
+                    assertThat(cpi.isSystemProvider()).isFalse();
+                    assertThat(cpi.getLabel(mContext)).isEqualTo("Test Provider Service");  // this
+                    assertThat(cpi.getSettingsSubtitle()).isEqualTo("This is a subtitle");
+                    assertThat(cpi.getServiceIcon(mContext)).isNotNull();
+                    assertThat(cpi.getServiceInfo()).isNotNull();
+                    assertThat(cpi.getCapabilities()).containsExactly(PASSWORD_CREDENTIAL_TYPE, PASSKEY_CREDENTIAL_TYPE);
+
+                    // Verify data of the returned provider.
+                    CredentialProviderInfo cpi2 = results.get(NOOP_SERVICE_ALT);
+                    assertThat(cpi2).isNotNull();
+                    assertThat(cpi2.isSystemProvider()).isFalse();
+                    assertThat(cpi2.getLabel(mContext)).isEqualTo("Test Provider Service Alternate");
+                    assertThat(cpi2.getServiceIcon(mContext)).isNotNull();
+                    assertThat(cpi2.getServiceInfo()).isNotNull();
+                    assertThat(cpi2.getCapabilities()).containsExactly(PASSKEY_CREDENTIAL_TYPE);
+                });
+    }
+
+    @Test
+    public void getCredentialProviderServices_returnsUserProviders() {
+        ActivityScenario<TestCredentialActivity> activityScenario =
+                ActivityScenario.launch(TestCredentialActivity.class);
+
+        activityScenario.onActivity(
+                activity -> {
+                    Map<String, CredentialProviderInfo> results =
+                            getCredentialProviderServices(
+                                    CredentialManager.PROVIDER_FILTER_USER_PROVIDERS_ONLY);
+
+                    // Verify data of the returned provider.
+                    CredentialProviderInfo cpi = results.get(NOOP_SERVICE);
+                    assertThat(cpi).isNotNull();
+                    assertThat(cpi.isSystemProvider()).isFalse();
+                    assertThat(cpi.getLabel(mContext)).isEqualTo("Test Provider Service");  // this
+                    assertThat(cpi.getSettingsSubtitle()).isEqualTo("This is a subtitle");
+                    assertThat(cpi.getServiceIcon(mContext)).isNotNull();
+                    assertThat(cpi.getServiceInfo()).isNotNull();
+                    assertThat(cpi.getCapabilities()).containsExactly(PASSWORD_CREDENTIAL_TYPE, PASSKEY_CREDENTIAL_TYPE);
+
+                    // Verify data of the returned provider.
+                    CredentialProviderInfo cpi2 = results.get(NOOP_SERVICE_ALT);
+                    assertThat(cpi2).isNotNull();
+                    assertThat(cpi2.isSystemProvider()).isFalse();
+                    assertThat(cpi2.getLabel(mContext)).isEqualTo("Test Provider Service Alternate");
+                    assertThat(cpi2.getSettingsSubtitle()).isNull();
+                    assertThat(cpi2.getServiceIcon(mContext)).isNotNull();
+                    assertThat(cpi2.getServiceInfo()).isNotNull();
+                    assertThat(cpi2.getCapabilities()).containsExactly(PASSKEY_CREDENTIAL_TYPE);
+                });
+    }
+
+    @Test
+    public void getCredentialProviderServices_returnsSystemProviders() {
+        ActivityScenario<TestCredentialActivity> activityScenario =
+                ActivityScenario.launch(TestCredentialActivity.class);
+
+        activityScenario.onActivity(
+                activity -> {
+                    Map<String, CredentialProviderInfo> results =
+                            getCredentialProviderServices(
+                                    CredentialManager.PROVIDER_FILTER_SYSTEM_PROVIDERS_ONLY);
+
+                    // Verify data of the returned provider.
+                    CredentialProviderInfo cpi = results.get(NOOP_SERVICE_SYSTEM);
+                    assertThat(cpi).isNotNull();
+                    assertThat(cpi.isSystemProvider()).isTrue();
+                    assertThat(cpi.getLabel(mContext)).isEqualTo("Test Provider Service System");  // this
+                    assertThat(cpi.getSettingsSubtitle()).isEqualTo("This is a subtitle");
+                    assertThat(cpi.getServiceIcon(mContext)).isNotNull();
+                    assertThat(cpi.getServiceInfo()).isNotNull();
+                    assertThat(cpi.getCapabilities()).containsExactly(PASSWORD_CREDENTIAL_TYPE);
+                });
+    }
+
     /**
      * Enable the main credential manager feature.
      * If this is off, any underlying changes for autofill-credentialManager integrations are off.
@@ -392,6 +491,15 @@ public class CtsCredentialProviderServiceDeviceTest {
             Log.i(TAG, "Failure... " + e.getLocalizedMessage());
             throw new AssertionError("Enabling Credman service failed.");
         }
+    }
+
+    private Map<String, CredentialProviderInfo> getCredentialProviderServices(int providerFilter) {
+        return mCredentialManager.getCredentialProviderServicesForTesting(providerFilter)
+                .stream()
+                .collect(Collectors.toMap(
+                        c -> c.getComponentName().flattenToString(),
+                        c -> c
+                ));
     }
 
     /**
