@@ -270,7 +270,7 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
         assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0]
                 + mTestConfig + mTestEnv, res);
-        encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, true, true);
+        encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, false, true);
         CompareStreams cs = null;
         StringBuilder msg = new StringBuilder();
         boolean isOk = true;
