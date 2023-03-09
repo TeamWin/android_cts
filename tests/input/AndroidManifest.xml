@@ -42,7 +42,7 @@
         </activity>
         <activity android:name="android.input.cts.CaptureEventActivity"
                   android:label="Capture events"
-                  android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|navigation|keyboard|density|fontScale|layoutDirection|locale|mcc|mnc|smallestScreenSize"
+                  android:configChanges="touchscreen|uiMode|orientation|screenSize|screenLayout|keyboardHidden|uiMode|navigation|keyboard|density|fontScale|layoutDirection|locale|mcc|mnc|smallestScreenSize"
                   android:turnScreenOn="true"
                   android:exported="true">
         </activity>
