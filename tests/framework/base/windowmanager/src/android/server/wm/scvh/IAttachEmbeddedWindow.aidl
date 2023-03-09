@@ -17,12 +17,11 @@
 package android.server.wm.scvh;
 
 import android.os.IBinder;
-import android.server.wm.scvh.IAttachEmbeddedWindowCallback;
 import android.view.SurfaceControlViewHost.SurfacePackage;
 import android.view.WindowManager.LayoutParams;
 
 interface IAttachEmbeddedWindow {
-    void attachEmbedded(IBinder hostToken, int width, int height, int displayId, long delayMs,
-            IAttachEmbeddedWindowCallback callback);
+    SurfacePackage attachEmbedded(IBinder hostToken, int width, int height, int displayId, long delayMs);
     void relayout(in LayoutParams lp);
+    void sendCrash();
 }

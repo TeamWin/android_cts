@@ -16,24 +16,18 @@
 
 package android.server.wm.scvh;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
-import android.graphics.Point;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
 import android.util.Log;
+import android.util.Size;
 import android.view.Gravity;
 import android.view.SurfaceControlViewHost.SurfacePackage;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -43,21 +37,29 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.window.SurfaceSyncGroup;
 
-import androidx.annotation.NonNull;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
     private static final String TAG = "SCVHSyncValidatorTestCase";
 
-    private final Point[] mSizes = new Point[]{new Point(500, 500), new Point(700, 400),
-            new Point(300, 800), new Point(200, 200)};
-    private int mLastSizeIndex = 1;
-
+    private final Size[] mSizes = new Size[]{new Size(500, 500), new Size(700, 400),
+            new Size(300, 800), new Size(200, 200)};
+    private int mLastSizeIndex = 0;
 
     private final long mDelayMs;
     private final boolean mOverrideDefaultDuration;
+
+    private SurfaceControlViewHostHelper mSurfaceControlViewHostHelper;
+
+    private IAttachEmbeddedWindow mIAttachEmbeddedWindow;
+
+    private Handler mHandler;
+    private TextView mTextView;
+    private SurfaceView mSurfaceView;
+    private SurfacePackage mSurfacePackage;
+
+    private final CountDownLatch mReadyToStart = new CountDownLatch(1);
 
     public SyncValidatorSCVHTestCase(long delayMs, boolean overrideDefaultDuration) {
         mDelayMs = delayMs;
@@ -67,21 +69,21 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
     private final Runnable mResizeWithSurfaceSyncGroup = new Runnable() {
         @Override
         public void run() {
-            Point size = mSizes[mLastSizeIndex % mSizes.length];
+            Size size = mSizes[mLastSizeIndex % mSizes.length];
 
             Runnable svResizeRunnable = () -> {
                 ViewGroup.LayoutParams svParams = mSurfaceView.getLayoutParams();
-                svParams.width = size.x;
-                svParams.height = size.y;
+                svParams.width = size.getWidth();
+                svParams.height = size.getHeight();
                 mSurfaceView.setLayoutParams(svParams);
 
-                mTextView.setText(size.x + "x" + size.y);
+                mTextView.setText(size.getWidth() + "x" + size.getHeight());
             };
 
             Runnable embeddedResizeRunnable = () -> {
                 try {
-                    final WindowManager.LayoutParams lp = new WindowManager.LayoutParams(size.x,
-                            size.y,
+                    final WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                            size.getWidth(), size.getHeight(),
                             WindowManager.LayoutParams.TYPE_APPLICATION, 0,
                             PixelFormat.TRANSPARENT);
                     mIAttachEmbeddedWindow.relayout(lp);
@@ -101,47 +103,13 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
         }
     };
 
-    private Handler mHandler;
-    private SurfaceView mSurfaceView;
-
-    private TextView mTextView;
-
-    private final CountDownLatch mReadyLatch = new CountDownLatch(1);
-    private boolean mSurfaceCreated;
-    private boolean mIsAttached;
-    private final Object mLock = new Object();
-    private int mDisplayId;
-    private IAttachEmbeddedWindow mIAttachEmbeddedWindow;
-    private SurfacePackage mSurfacePackage;
-
-    final SurfaceHolder.Callback mCallback = new SurfaceHolder.Callback() {
-        @Override
-        public void surfaceCreated(@NonNull SurfaceHolder holder) {
-            synchronized (mLock) {
-                mSurfaceCreated = true;
-            }
-            if (isReadyToAttach()) {
-                attachEmbedded();
-            }
-        }
-
-        @Override
-        public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width,
-                int height) {
-        }
-
-        @Override
-        public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
-        }
-    };
-
     @Override
     public PixelChecker getChecker() {
         return new PixelChecker(Color.BLACK) {
             @Override
             public boolean checkPixels(int matchingPixelCount, int width, int height) {
                 // Content has been set up yet.
-                if (mReadyLatch.getCount() > 0) {
+                if (mSurfacePackage == null) {
                     return true;
                 }
                 return matchingPixelCount == 0;
@@ -149,84 +117,24 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
         };
     }
 
-    private final ServiceConnection mConnection = new ServiceConnection() {
-        // Called when the connection with the service is established
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            Log.d(TAG, "Service Connected");
-            synchronized (mLock) {
-                mIAttachEmbeddedWindow = IAttachEmbeddedWindow.Stub.asInterface(service);
-            }
-            if (isReadyToAttach()) {
-                attachEmbedded();
-            }
-        }
-
-        public void onServiceDisconnected(ComponentName className) {
-            Log.d(TAG, "Service Disconnected");
-            mIAttachEmbeddedWindow = null;
-            synchronized (mLock) {
-                mIsAttached = false;
-            }
-        }
-    };
-
-    private boolean isReadyToAttach() {
-        synchronized (mLock) {
-            if (!mSurfaceCreated) {
-                Log.d(TAG, "surface is not created");
-            }
-            if (mIAttachEmbeddedWindow == null) {
-                Log.d(TAG, "Service is not attached");
-            }
-            if (mIsAttached) {
-                Log.d(TAG, "Already attached");
-            }
-
-            return mSurfaceCreated && mIAttachEmbeddedWindow != null && !mIsAttached;
-        }
-    }
-
-    private void attachEmbedded() {
-        synchronized (mLock) {
-            mIsAttached = true;
-        }
-        try {
-            mIAttachEmbeddedWindow.attachEmbedded(mSurfaceView.getHostToken(), mSizes[0].x,
-                    mSizes[0].y, mDisplayId, mDelayMs, new IAttachEmbeddedWindowCallback.Stub() {
-                        @Override
-                        public void onEmbeddedWindowAttached(SurfacePackage surfacePackage) {
-                            mHandler.post(() -> {
-                                mSurfacePackage = surfacePackage;
-                                mSurfaceView.setChildSurfacePackage(surfacePackage);
-                                mReadyLatch.countDown();
-                            });
-                        }
-                    });
-        } catch (RemoteException e) {
-            Log.e(TAG, "Failed to attach embedded window");
-        }
-    }
-
     @Override
     public void start(Context context, FrameLayout parent) {
-        mDisplayId = context.getDisplayId();
         mHandler = new Handler(Looper.getMainLooper());
 
-        Intent intent = new Intent(context, EmbeddedSCVHService.class);
-        intent.setAction(EmbeddedSCVHService.class.getName());
-        context.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        mSurfaceControlViewHostHelper = new SurfaceControlViewHostHelper(TAG, mReadyToStart,
+                context, mDelayMs, mSizes[0]);
 
-        mSurfaceView = new SurfaceView(context);
-        mSurfaceView.getHolder().addCallback(mCallback);
+        mSurfaceControlViewHostHelper.bindEmbeddedService();
 
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(mSizes[0].x,
-                mSizes[0].y);
+        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(mSizes[0].getWidth(),
+                mSizes[0].getHeight());
         layoutParams.gravity = Gravity.CENTER;
-        parent.addView(mSurfaceView, layoutParams);
+
+        mSurfaceView = mSurfaceControlViewHostHelper.attachSurfaceView(parent, layoutParams);
 
         mTextView = new TextView(context);
         mTextView.setTextColor(Color.GREEN);
-        mTextView.setText(mSizes[0].x + "x" + mSizes[0].y);
+        mTextView.setText(mSizes[0].getWidth() + "x" + mSizes[0].getHeight());
         FrameLayout.LayoutParams txtParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         txtParams.gravity = Gravity.TOP | Gravity.LEFT;
@@ -235,14 +143,17 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
 
     @Override
     public void waitForReady() {
-
+        boolean ready = false;
         try {
-            mReadyLatch.await(5, TimeUnit.SECONDS);
+            ready = mReadyToStart.await(1, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
+            Log.e(TAG, "Failed to wait for SCVH to attach");
         }
 
-        assertEquals("Timed out waiting for setup", 0, mReadyLatch.getCount());
-        assertNotNull("SurfacePackage is null", mSurfacePackage);
+        assertTrue("Failed to attach SCVH", ready);
+
+        mSurfacePackage = mSurfaceControlViewHostHelper.getSurfacePackage();
+        mIAttachEmbeddedWindow = mSurfaceControlViewHostHelper.getAttachedEmbeddedWindow();
 
         mHandler.post(mResizeWithSurfaceSyncGroup);
     }
