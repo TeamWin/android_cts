@@ -18,6 +18,7 @@ package android.media.tv.interactive.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotNull;
 
 import android.app.Instrumentation;
@@ -1472,22 +1473,60 @@ public class TvInteractiveAppServiceTest {
 
     @Test
     public void testTableResponseWithByteArray() throws Throwable {
-        // TODO: verify values
         linkTvView();
 
-        TableResponse response = new TableResponse(7, 77, BroadcastInfoResponse.RESPONSE_RESULT_OK,
-                new byte[5], 777, 7777);
-        response.getTableByteArray();
+        byte[] bytes = new byte[] {-1, 22, 54};
+        TableResponse responseSent = new TableResponse
+                .Builder(23, 42, BroadcastInfoResponse.RESPONSE_RESULT_OK, 675, 3)
+                .setTableByteArray(bytes)
+                .build();
+        mInputSession.notifyBroadcastInfoResponse(responseSent);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
+
+        TableResponse responseReceived = (TableResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
+        assertThat(responseReceived.getType()).isEqualTo(responseSent.getType());
+        assertThat(responseReceived.getRequestId()).isEqualTo(responseSent.getRequestId());
+        assertThat(responseReceived.getSequence()).isEqualTo(responseSent.getSequence());
+        assertThat(responseReceived.getResponseResult())
+                .isEqualTo(responseSent.getResponseResult());
+        assertThat(responseReceived.getVersion()).isEqualTo(responseSent.getVersion());
+        assertThat(responseReceived.getSize()).isEqualTo(responseSent.getSize());
+        assertArrayEquals(responseSent.getTableByteArray(), responseReceived.getTableByteArray());
     }
 
     @Test
     public void testTableResponseWithSharedMemory() throws Throwable {
-        // TODO: verify values
         linkTvView();
 
-        TableResponse response = new TableResponse(7, 77, BroadcastInfoResponse.RESPONSE_RESULT_OK,
-                SharedMemory.create("test", 8), 777, 7777);
-        response.getTableSharedMemory();
+        SharedMemory sm = SharedMemory.create("test", 5);
+        ByteBuffer byteBuffer = sm.mapReadWrite();
+        byte[] bytes = new byte[] {-3, -67, 0, 98, 23};
+        byteBuffer.put(bytes);
+        byteBuffer.flip();
+        SharedMemory.unmap(byteBuffer);
+
+        TableResponse responseSent = new TableResponse
+                .Builder(23, 42, BroadcastInfoResponse.RESPONSE_RESULT_OK, 675, 3)
+                .setTableSharedMemory(sm)
+                .build();
+        mInputSession.notifyBroadcastInfoResponse(responseSent);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
+
+        TableResponse responseReceived = (TableResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
+        assertThat(responseReceived.getType()).isEqualTo(responseSent.getType());
+        assertThat(responseReceived.getRequestId()).isEqualTo(responseSent.getRequestId());
+        assertThat(responseReceived.getSequence()).isEqualTo(responseSent.getSequence());
+        assertThat(responseReceived.getResponseResult())
+                .isEqualTo(responseSent.getResponseResult());
+        assertThat(responseReceived.getVersion()).isEqualTo(responseSent.getVersion());
+        assertThat(responseReceived.getSize()).isEqualTo(responseSent.getSize());
+
+        assertSharedMemoryDataEquals(responseReceived.getTableSharedMemory(),
+                responseReceived.getTableSharedMemory());
     }
 
     @Test
