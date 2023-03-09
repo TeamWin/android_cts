@@ -36,6 +36,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
@@ -154,10 +155,8 @@ public class SmsManagerTest {
                 PackageManager.FEATURE_TELEPHONY_MESSAGING));
 
         mContext = getContext();
-        mTelephonyManager =
-            (TelephonyManager) getContext().getSystemService(
-                    Context.TELEPHONY_SERVICE);
-        mSubscriptionManager = getContext().getSystemService(SubscriptionManager.class);
+        mTelephonyManager = mContext.getSystemService(TelephonyManager.class);
+        mSubscriptionManager = mContext.getSystemService(SubscriptionManager.class);
         mDestAddr = mTelephonyManager.getLine1Number();
         mText = "This is a test message";
 
@@ -925,20 +924,30 @@ public class SmsManagerTest {
     }
 
     /**
-     * Verify the API will not throw any exception when READ_PRIVILEGED_PHONE_STATE is granted
+     * Verify the API will not throw any exception when READ_PRIVILEGED_PHONE_STATE is granted.
      */
     @Test
     public void testGetSmscIdentity() {
+        try {
+            mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
+        } catch (IllegalStateException e) {
+            assumeNoException("Skipping test because Telephony service is null", e);
+        }
         SmsManager smsManager = getSmsManager();
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(smsManager,
-                sm -> sm.getSmscIdentity(), Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+                SmsManager::getSmscIdentity, Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
     }
 
     /**
-     * verify the API will throw the SecurityException or not when no permissions are granted.
+     * Verify the API will throw the SecurityException or not when no permissions are granted.
      */
     @Test
     public void testGetSmscIdentity_Exception() {
+        try {
+            mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
+        } catch (IllegalStateException e) {
+            assumeNoException("Skipping test because Telephony service is null", e);
+        }
         dropShellIdentity();
         try {
             getSmsManager().getSmscIdentity();
