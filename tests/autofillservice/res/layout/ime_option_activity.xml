@@ -35,4 +35,11 @@
         android:id="@+id/ime_option_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+
+    <EditText
+        android:importantForAutofill="yes"
+        android:imeOptions="actionGo"
+        android:id="@+id/ime_option_text_important_for_autofill"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </LinearLayout>
