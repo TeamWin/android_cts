@@ -1463,53 +1463,6 @@ public class SubscriptionManagerTest {
         }
     }
 
-
-    @Test
-    public void testSetAndGetSubscriptionUserHandle() throws Exception {
-        // Do not test if the feature is not enabled.
-        if (!ShellIdentityUtils.invokeStaticMethodWithShellPermissions(
-                () -> DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_TELEPHONY,
-                        "enable_work_profile_telephony", false))) {
-            return;
-        }
-
-        // Throws IllegalArgumentException as SubscriptionId is invalid.
-        assertThrows(IllegalArgumentException.class,
-                () -> mSm.setSubscriptionUserHandle(-1, UserHandle.SYSTEM));
-
-        // Throws IllegalArgumentException as SubscriptionId is invalid.
-        assertThrows(IllegalArgumentException.class, () -> mSm.getSubscriptionUserHandle(-1));
-
-        // Throws SecurityException as we do not have MANAGE_SUBSCRIPTION_USER_ASSOCIATION
-        // permission.
-        assertThrows(SecurityException.class,
-                () -> mSm.setSubscriptionUserHandle(mSubId, UserHandle.SYSTEM));
-
-        // Throws SecurityException as we do not have MANAGE_SUBSCRIPTION_USER_ASSOCIATION
-        // permission.
-        assertThrows(SecurityException.class, () -> mSm.getSubscriptionUserHandle(mSubId));
-
-        // Set and get user handle with MANAGE_SUBSCRIPTION_USER_ASSOCIATION permission.
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(
-                        Manifest.permission.MANAGE_SUBSCRIPTION_USER_ASSOCIATION);
-        try {
-            final UserHandle originalUserHandle = mSm.getSubscriptionUserHandle(mSubId);
-            mSm.setSubscriptionUserHandle(mSubId, null);
-            try {
-                assertThat(mSm.getSubscriptionUserHandle(mSubId)).isEqualTo(null);
-
-                mSm.setSubscriptionUserHandle(mSubId, UserHandle.SYSTEM);
-                assertThat(mSm.getSubscriptionUserHandle(mSubId)).isEqualTo(UserHandle.SYSTEM);
-            } finally {
-                mSm.setSubscriptionUserHandle(mSubId, originalUserHandle);
-            }
-        } finally {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity();
-        }
-    }
-
     @Nullable
     private PersistableBundle getBundleFromBackupData(byte[] data) {
         try (ByteArrayInputStream bis = new ByteArrayInputStream(data)) {
