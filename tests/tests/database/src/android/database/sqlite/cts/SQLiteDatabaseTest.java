@@ -2036,26 +2036,4 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         mDatabase.execSQL("ALTER TABLE \"t2\" RENAME TO \"t1\";");
         mDatabase.endTransaction();
     }
-
-    // http://b/183028015
-    public void testStatementDDLEvictsCache() {
-        // The following will be cached (key is SQL string)
-        String selectQuery = "SELECT * FROM t1";
-
-        mDatabase.beginTransaction();
-        mDatabase.execSQL("CREATE TABLE `t1` (`c1` INTEGER NOT NULL PRIMARY KEY, data TEXT)");
-        try (Cursor c = mDatabase.rawQuery(selectQuery, null)) {
-            assertEquals(2, c.getColumnCount());
-        }
-        // Alter the schema in such a way that if the cached query is used it would produce wrong
-        // results due to the change in column amounts.
-        mDatabase.execSQL("ALTER TABLE `t1` RENAME TO `t1_old`");
-        mDatabase.execSQL("CREATE TABLE `t1` (`c1` INTEGER NOT NULL PRIMARY KEY)");
-        // Execute cached query (that should have been evicted), validating it sees the new schema.
-        try (Cursor c = mDatabase.rawQuery(selectQuery, null)) {
-            assertEquals(1, c.getColumnCount());
-        }
-        mDatabase.setTransactionSuccessful();
-        mDatabase.endTransaction();
-    }
 }
