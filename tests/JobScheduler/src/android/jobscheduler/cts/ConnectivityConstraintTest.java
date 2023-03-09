@@ -708,7 +708,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mTestAppInterface.runSatisfiedJob();
 
         assertFalse("Job requiring cellular connectivity executed with Data Saver on",
-                mTestAppInterface.awaitJobStop(DEFAULT_TIMEOUT_MILLIS));
+                mTestAppInterface.awaitJobStart(DEFAULT_TIMEOUT_MILLIS));
     }
 
     /**
@@ -729,7 +729,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mTestAppInterface.runSatisfiedJob();
 
         assertFalse("BG expedited job requiring cellular connectivity executed with Data Saver on",
-                mTestAppInterface.awaitJobStop(DEFAULT_TIMEOUT_MILLIS));
+                mTestAppInterface.awaitJobStart(DEFAULT_TIMEOUT_MILLIS));
     }
 
     /**

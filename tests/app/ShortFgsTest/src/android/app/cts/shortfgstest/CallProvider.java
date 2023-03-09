@@ -28,8 +28,7 @@ import android.util.Log;
 
 import org.junit.Assert;
 
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.ArrayList;
 
 import javax.annotation.concurrent.GuardedBy;
 
@@ -88,7 +87,7 @@ public class CallProvider extends ContentProvider {
     }
 
     @GuardedBy("sMessageQueue")
-    private static final Queue<ShortFgsMessage> sMessageQueue = new LinkedBlockingQueue<>();
+    private static final ArrayList<ShortFgsMessage> sMessageQueue = new ArrayList<>();
 
     private static ShortFgsMessage handleCall(ShortFgsMessage args) {
         // If it's "get test info", then return send the info back.
@@ -112,24 +111,48 @@ public class CallProvider extends ContentProvider {
         }
     }
 
+    @GuardedBy("sMessageQueue")
+    private static void waitForMessageLocked(long timeoutUptime) {
+        while (sMessageQueue.size() == 0) {
+            final long wait = timeoutUptime - System.currentTimeMillis();
+            if (wait <= 0) {
+                Assert.fail("Timeout waiting for the next message");
+            }
+            try {
+                sMessageQueue.wait(wait);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     /**
      * Returns the next message from the helper app.
      */
     public static ShortFgsMessage waitForNextMessage(long timeoutMillis) {
-        final long timeout = System.currentTimeMillis() + timeoutMillis;
         synchronized (sMessageQueue) {
-            while (sMessageQueue.size() == 0) {
-                final long wait = timeout - System.currentTimeMillis();
-                if (wait <= 0) {
-                    Assert.fail("Timeout waiting for the next message");
-                }
-                try {
-                    sMessageQueue.wait(wait);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+            waitForMessageLocked(System.currentTimeMillis() + timeoutMillis);
+            return sMessageQueue.remove(0);
+        }
+    }
+
+    /**
+     * Wait for ack message.
+     *
+     * ACK and other messages (e.g. "method called" messages) may arrive in out-of-order,
+     * so in this method, we not only look at the head of the queue, but the entire queue.
+     */
+    public static void waitForAckMessage(long timeoutMillis) {
+        final long timeoutUptime = System.currentTimeMillis() + timeoutMillis;
+        synchronized (sMessageQueue) {
+            waitForMessageLocked(timeoutUptime);
+
+            for (int i = 0; i < sMessageQueue.size(); i++) {
+                if (sMessageQueue.get(i).isAck()) {
+                    sMessageQueue.remove(i);
+                    return;
                 }
             }
-            return sMessageQueue.poll();
         }
     }
 
@@ -144,7 +167,7 @@ public class CallProvider extends ContentProvider {
             }
 
             Assert.fail("Message queue should be empty, but it contains " + size
-                    + " messages. The first message is " + sMessageQueue.peek());
+                    + " messages. The first message is " + sMessageQueue.get(0));
         }
     }
 }

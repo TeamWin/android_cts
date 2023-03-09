@@ -33,6 +33,7 @@ import android.hardware.cts.R;
 import android.hardware.input.InputManager;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 
@@ -68,12 +69,19 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        setNewSettingsUiFlag(mInstrumentation.getTargetContext(), "false");
         MockitoAnnotations.initMocks(this);
         mInputManager = mInstrumentation.getTargetContext().getSystemService(InputManager.class);
         assertNotNull(mInputManager);
         mInputManager.registerInputDeviceListener(mInputDeviceChangedListener,
                 new Handler(Looper.getMainLooper()));
         mInOrderInputDeviceChangedListener = inOrder(mInputDeviceChangedListener);
+    }
+
+    @Override
+    void onTearDown() {
+        super.onTearDown();
+        setNewSettingsUiFlag(mInstrumentation.getTargetContext(), "");
     }
 
     @Test
@@ -212,5 +220,9 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
         public void onReceive(Context context, Intent intent) {
             // Nothing to do at this time.
         }
+    }
+
+    private static void setNewSettingsUiFlag(Context context, String flag) {
+        Settings.Global.putString(context.getContentResolver(), "settings_new_keyboard_ui", flag);
     }
 }

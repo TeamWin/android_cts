@@ -56,7 +56,7 @@ public class BroadcastDeferralTest extends BaseBroadcastTest {
                     .putExtra(TEST_EXTRA1, TEST_VALUE1)
                     .setPackage(HELPER_PKG2);
             final Bundle options = BroadcastOptions.makeBasic()
-                    .setDeferUntilActive(true)
+                    .setDeferralPolicy(BroadcastOptions.DEFERRAL_POLICY_UNTIL_ACTIVE)
                     .toBundle();
             int testPid = -1;
             TestServiceConnection connection2 = bindToHelperService(HELPER_PKG2);

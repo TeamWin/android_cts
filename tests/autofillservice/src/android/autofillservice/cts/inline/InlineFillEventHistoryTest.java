@@ -124,7 +124,7 @@ public class InlineFillEventHistoryTest extends FillEventHistoryCommonTestCase {
         final List<Event> events = selection.getEvents();
         assertFillEventForDatasetShown(events.get(0), UI_TYPE_INLINE);
         assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID, UI_TYPE_INLINE);
-        assertFillEventForDatasetShown(events.get(0), UI_TYPE_INLINE);
-        assertFillEventForSaveShown(events.get(3), NULL_DATASET_ID);
+        assertFillEventForSaveShown(events.get(2), NULL_DATASET_ID);
+        assertFillEventForDatasetShown(events.get(3), UI_TYPE_INLINE);
     }
 }

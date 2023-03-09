@@ -34,6 +34,7 @@ import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_DENY;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_GRANT;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_PROMPT;
 
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 
@@ -85,7 +86,7 @@ import java.lang.annotation.RetentionPolicy;
         key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
 @EnsureFeatureFlagEnabled(
         namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
-        key = "enable_coexistence")
+        key = ENABLE_DEVICE_POLICY_ENGINE_FLAG)
 public final class PermissionGrantTest {
 
     @ClassRule

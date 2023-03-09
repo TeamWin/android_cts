@@ -20,7 +20,7 @@ package android.server.wm.jetpack.embedding;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifyNotSplit;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplit;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.verifyFillsTask;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertFinishing;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
@@ -74,8 +74,9 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
         Activity primaryActivity = startFullScreenActivityNewTask(
                 TestConfigChangeHandlingActivity.class);
-        TestActivity secondaryActivity = (TestActivity) startActivityAndVerifySplit(primaryActivity,
-                TestActivityWithId.class, splitPairRule, "secondaryActivity", mSplitInfoConsumer);
+        TestActivity secondaryActivity = (TestActivity) startActivityAndVerifySplitAttributes(
+                primaryActivity, TestActivityWithId.class, splitPairRule, "secondaryActivity",
+                mSplitInfoConsumer);
 
         // Finishing the primary activity should cause the secondary activity to resize to fill the
         // task.
@@ -100,8 +101,9 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
         TestActivity primaryActivity = startFullScreenActivityNewTask(
                 TestActivityWithId.class);
-        TestActivity secondaryActivity = (TestActivity) startActivityAndVerifySplit(primaryActivity,
-                TestActivityWithId.class, splitPairRule, "secondaryActivity", mSplitInfoConsumer);
+        TestActivity secondaryActivity = (TestActivity) startActivityAndVerifySplitAttributes(
+                primaryActivity, TestActivityWithId.class, splitPairRule, "secondaryActivity",
+                mSplitInfoConsumer);
 
         // Need to reset primary activity bounds change counter because entering the split already
         // triggered a bounds change.
@@ -366,9 +368,9 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
             if (mShouldPreventSideBySideActivities) {
                 secondaryActivity = startActivityAndVerifyNotSplit(primaryActivity);
             } else {
-                secondaryActivity = (TestActivity) startActivityAndVerifySplit(primaryActivity,
-                        TestActivityWithId.class, splitPairRule, "secondaryActivity",
-                        mSplitInfoConsumer);
+                secondaryActivity = (TestActivity) startActivityAndVerifySplitAttributes(
+                        primaryActivity, TestActivityWithId.class, splitPairRule,
+                        "secondaryActivity", mSplitInfoConsumer);
             }
             return new Pair<>(primaryActivity, secondaryActivity);
         }

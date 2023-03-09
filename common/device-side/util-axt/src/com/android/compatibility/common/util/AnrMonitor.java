@@ -119,19 +119,21 @@ public class AnrMonitor implements AutoCloseable {
             final long timeoutUptime = SystemClock.uptimeMillis() + timeoutMillis;
             synchronized (mEventQueue) {
                 for (;;) {
-                    final long waitTime = timeoutUptime - SystemClock.uptimeMillis();
-                    if (waitTime <= 0) {
-                        // Timed out
-                        if (expectAnr) {
-                            fail("Timeout waiting for an ANR event from `am monitor`");
-                        } else {
-                            return NO_ANR;
+                    if (mEventQueue.size() == 0) {
+                        final long waitTime = timeoutUptime - SystemClock.uptimeMillis();
+                        if (waitTime <= 0) {
+                            // Timed out
+                            if (expectAnr) {
+                                fail("Timeout waiting for an ANR event from `am monitor`");
+                            } else {
+                                return NO_ANR;
+                            }
                         }
-                    }
-                    try {
-                        mEventQueue.wait(waitTime);
-                    } catch (InterruptedException e) {
-                        continue;
+                        try {
+                            mEventQueue.wait(waitTime);
+                        } catch (InterruptedException e) {
+                            continue;
+                        }
                     }
                     final Long uptime = mEventQueue.poll();
                     if (uptime == null) {

@@ -59,6 +59,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -369,6 +370,32 @@ public class CtsSharesheetDeviceTest {
         }
     }
 
+    @Test
+    public void testShortcutSelection() throws InterruptedException {
+        if (!mMeetsResolutionRequirements || mActivityManager.isLowRamDevice()) {
+            return; // Skip test if the device doesn't support shortcut targets.
+        }
+
+        final String testShortcutId = "TEST_SHORTCUT";
+        addShortcuts(createShortcut(testShortcutId));
+
+        final CountDownLatch appStarted = new CountDownLatch(1);
+
+        CtsSharesheetDeviceActivity.setOnIntentReceivedConsumer(intent -> {
+            assertEquals(testShortcutId, intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID));
+            appStarted.countDown();
+        });
+
+        try {
+            Intent shareIntent = createShareIntent(false, 0, 0, null);
+            launchSharesheet(shareIntent);
+            findTextContains(mSharingShortcutLabel).click();
+            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
+        } finally {
+            closeSharesheet();
+        }
+    }
+
     // Launch the chooser with an EXTRA_INTENT of type "test/cts" and EXTRA_ALTERNATE_INTENTS with
     // one of "test/cts_alternate". Ensure that the "alternate type" app, which only accepts
     // "test/cts_alternate" shows up and can be chosen.
@@ -593,6 +620,7 @@ public class CtsSharesheetDeviceTest {
         Log.d(TAG, "clicking on the custom action");
         customAction.click();
     }
+
     private void validateChosenComponentIntent(Intent intent, ComponentName matchingComponent) {
         assertNotNull(intent);
 
@@ -660,6 +688,10 @@ public class CtsSharesheetDeviceTest {
 
     public void addShortcuts(int size) {
         mShortcutManager.addDynamicShortcuts(createShortcuts(size));
+    }
+
+    public void addShortcuts(ShortcutInfo... shortcuts) {
+        mShortcutManager.addDynamicShortcuts(Arrays.asList(shortcuts));
     }
 
     public void clearShortcuts() {

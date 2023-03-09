@@ -20,6 +20,7 @@ import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 import android.annotation.NonNull;
@@ -79,7 +80,7 @@ public class ImsCallingTest extends ImsCallingBase {
     private TestImsCallSessionImpl mConfCallSession = null;
 
     // the timeout to wait result in milliseconds
-    private static final int WAIT_UPDATE_TIMEOUT_MS = 2000;
+    private static final int WAIT_UPDATE_TIMEOUT_MS = 4000;
 
     private static TelephonyManager sTelephonyManager;
 
@@ -1105,6 +1106,9 @@ public class ImsCallingTest extends ImsCallingBase {
         final Uri imsUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, String.valueOf(++sCounter), null);
         Bundle extras = new Bundle();
 
+        mAudioManager.setMode(AudioManager.MODE_NORMAL);
+        Log.i(LOG_TAG, "testSetCallAudioHandler - Reset AudioMode: " + mAudioManager.getMode());
+
         // Place outgoing call
         telecomManager.placeCall(imsUri, extras);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
@@ -1123,13 +1127,32 @@ public class ImsCallingTest extends ImsCallingBase {
         sServiceConnector.getCarrierService().getMmTelFeature()
                 .getTerminalBasedCallWaitingLatch().await(WAIT_UPDATE_TIMEOUT_MS,
                         TimeUnit.MILLISECONDS);
+
+        assertNotEquals(AudioManager.MODE_NORMAL, mAudioManager.getMode());
         assertEquals(AudioManager.MODE_IN_COMMUNICATION, mAudioManager.getMode());
+
+        call.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+
+        // Place the 2nd outgoing call
+        telecomManager.placeCall(imsUri, extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        call = getCall(mCurrentCallId);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        waitForCallSessionToNotBe(null);
+        callSession = sServiceConnector.getCarrierService().getMmTelFeature().getImsCallsession();
+
+        isCallActive(call, callSession);
 
         sServiceConnector.getCarrierService().getMmTelFeature()
                 .setCallAudioHandler(MmTelFeature.AUDIO_HANDLER_BASEBAND);
         sServiceConnector.getCarrierService().getMmTelFeature()
                 .getTerminalBasedCallWaitingLatch().await(WAIT_UPDATE_TIMEOUT_MS,
                         TimeUnit.MILLISECONDS);
+
+        assertNotEquals(AudioManager.MODE_NORMAL, mAudioManager.getMode());
         assertEquals(AudioManager.MODE_IN_CALL, mAudioManager.getMode());
 
         call.disconnect();

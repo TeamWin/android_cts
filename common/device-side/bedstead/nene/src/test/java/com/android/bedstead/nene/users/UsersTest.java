@@ -61,7 +61,7 @@ import java.util.Set;
 @RunWith(BedsteadJUnit4.class)
 public final class UsersTest {
 
-    private static final int MAX_SYSTEM_USERS = UserType.UNLIMITED;
+    private static final int MAX_SYSTEM_USERS = 1;
     private static final int MAX_SYSTEM_USERS_PER_PARENT = UserType.UNLIMITED;
     private static final String INVALID_TYPE_NAME = "invalidTypeName";
     private static final int MAX_MANAGED_PROFILES = UserType.UNLIMITED;

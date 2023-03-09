@@ -64,11 +64,20 @@ public class ShortFgsMessage implements Parcelable {
     /** If this is set, the receiver will call Context.startForegroundService() on mComponentName.*/
     private boolean mDoCallStartForegroundService;
 
+    /** If this is set, the receiver will call Context.startService() on mComponentName.*/
+    private boolean mDoCallStartService;
+
     /** If this is set, the receiver will call Service.startForeground() on mComponentName. */
     private boolean mDoCallStartForeground;
 
     /** If this is set, the receiver will call Service.stopForeground() on mComponentName. */
     private boolean mDoCallStopForeground;
+
+    /** If this is set, the receiver will call Context.bindService() on mComponentName. */
+    private boolean mDoCallBindService;
+
+    /** If this is set, the receiver will call Context.unbindService() on mComponentName. */
+    private boolean mDoCallUnbindService;
 
     /** If this is set, the receiver will call Service.stopSelf() on mComponentName. */
     private boolean mDoCallStopSelf;
@@ -100,6 +109,11 @@ public class ShortFgsMessage implements Parcelable {
 
     private long mLastTestStartUptime;
     private long mLastTestEndUptime;
+
+    /**
+     * Notification ID for FGS.
+     */
+    private int mNotificationId = 1;
 
     @NonNull
     public ShortFgsMessage setExpectedExceptionClass(Class<?> clazz) {
@@ -143,6 +157,62 @@ public class ShortFgsMessage implements Parcelable {
     //   Settings > Editor > Code Style > Formatter Control
     //@formatter:off
 
+
+    @DataClass.Generated.Member
+    /* package-private */ ShortFgsMessage(
+            long timestamp,
+            boolean ack,
+            @Nullable String failureString,
+            int fgsType,
+            int startCommandResult,
+            int serviceStartId,
+            @Nullable ComponentName componentName,
+            @Nullable String methodName,
+            boolean doCallStartForegroundService,
+            boolean doCallStartService,
+            boolean doCallStartForeground,
+            boolean doCallStopForeground,
+            boolean doCallBindService,
+            boolean doCallUnbindService,
+            boolean doCallStopSelf,
+            boolean doKillProcess,
+            boolean doStartActivity,
+            boolean doFinishActivity,
+            boolean callGetTestInfo,
+            @Nullable String expectedExceptionClass,
+            @Nullable String actualExceptionClasss,
+            @Nullable String actualExceptionMessage,
+            long lastTestStartUptime,
+            long lastTestEndUptime,
+            int notificationId) {
+        this.mTimestamp = timestamp;
+        this.ack = ack;
+        this.mFailureString = failureString;
+        this.mFgsType = fgsType;
+        this.mStartCommandResult = startCommandResult;
+        this.mServiceStartId = serviceStartId;
+        this.mComponentName = componentName;
+        this.mMethodName = methodName;
+        this.mDoCallStartForegroundService = doCallStartForegroundService;
+        this.mDoCallStartService = doCallStartService;
+        this.mDoCallStartForeground = doCallStartForeground;
+        this.mDoCallStopForeground = doCallStopForeground;
+        this.mDoCallBindService = doCallBindService;
+        this.mDoCallUnbindService = doCallUnbindService;
+        this.mDoCallStopSelf = doCallStopSelf;
+        this.mDoKillProcess = doKillProcess;
+        this.mDoStartActivity = doStartActivity;
+        this.mDoFinishActivity = doFinishActivity;
+        this.mCallGetTestInfo = callGetTestInfo;
+        this.mExpectedExceptionClass = expectedExceptionClass;
+        this.mActualExceptionClasss = actualExceptionClasss;
+        this.mActualExceptionMessage = actualExceptionMessage;
+        this.mLastTestStartUptime = lastTestStartUptime;
+        this.mLastTestEndUptime = lastTestEndUptime;
+        this.mNotificationId = notificationId;
+
+        // onConstructed(); // You can define this method to get a callback
+    }
 
     @DataClass.Generated.Member
     public long getTimestamp() {
@@ -193,6 +263,14 @@ public class ShortFgsMessage implements Parcelable {
     }
 
     /**
+     * If this is set, the receiver will call Context.startService() on mComponentName.
+     */
+    @DataClass.Generated.Member
+    public boolean isDoCallStartService() {
+        return mDoCallStartService;
+    }
+
+    /**
      * If this is set, the receiver will call Service.startForeground() on mComponentName.
      */
     @DataClass.Generated.Member
@@ -206,6 +284,22 @@ public class ShortFgsMessage implements Parcelable {
     @DataClass.Generated.Member
     public boolean isDoCallStopForeground() {
         return mDoCallStopForeground;
+    }
+
+    /**
+     * If this is set, the receiver will call Context.bindService() on mComponentName.
+     */
+    @DataClass.Generated.Member
+    public boolean isDoCallBindService() {
+        return mDoCallBindService;
+    }
+
+    /**
+     * If this is set, the receiver will call Context.unbindService() on mComponentName.
+     */
+    @DataClass.Generated.Member
+    public boolean isDoCallUnbindService() {
+        return mDoCallUnbindService;
     }
 
     /**
@@ -269,6 +363,14 @@ public class ShortFgsMessage implements Parcelable {
         return mLastTestEndUptime;
     }
 
+    /**
+     * Notification ID for FGS.
+     */
+    @DataClass.Generated.Member
+    public int getNotificationId() {
+        return mNotificationId;
+    }
+
     @DataClass.Generated.Member
     public @NonNull ShortFgsMessage setAck( boolean value) {
         ack = value;
@@ -321,6 +423,15 @@ public class ShortFgsMessage implements Parcelable {
     }
 
     /**
+     * If this is set, the receiver will call Context.startService() on mComponentName.
+     */
+    @DataClass.Generated.Member
+    public @NonNull ShortFgsMessage setDoCallStartService( boolean value) {
+        mDoCallStartService = value;
+        return this;
+    }
+
+    /**
      * If this is set, the receiver will call Service.startForeground() on mComponentName.
      */
     @DataClass.Generated.Member
@@ -335,6 +446,24 @@ public class ShortFgsMessage implements Parcelable {
     @DataClass.Generated.Member
     public @NonNull ShortFgsMessage setDoCallStopForeground( boolean value) {
         mDoCallStopForeground = value;
+        return this;
+    }
+
+    /**
+     * If this is set, the receiver will call Context.bindService() on mComponentName.
+     */
+    @DataClass.Generated.Member
+    public @NonNull ShortFgsMessage setDoCallBindService( boolean value) {
+        mDoCallBindService = value;
+        return this;
+    }
+
+    /**
+     * If this is set, the receiver will call Context.unbindService() on mComponentName.
+     */
+    @DataClass.Generated.Member
+    public @NonNull ShortFgsMessage setDoCallUnbindService( boolean value) {
+        mDoCallUnbindService = value;
         return this;
     }
 
@@ -417,6 +546,15 @@ public class ShortFgsMessage implements Parcelable {
         return this;
     }
 
+    /**
+     * Notification ID for FGS.
+     */
+    @DataClass.Generated.Member
+    public @NonNull ShortFgsMessage setNotificationId( int value) {
+        mNotificationId = value;
+        return this;
+    }
+
     @Override
     @DataClass.Generated.Member
     public String toString() {
@@ -433,8 +571,11 @@ public class ShortFgsMessage implements Parcelable {
                 "componentName = " + mComponentName + ", " +
                 "methodName = " + mMethodName + ", " +
                 "doCallStartForegroundService = " + mDoCallStartForegroundService + ", " +
+                "doCallStartService = " + mDoCallStartService + ", " +
                 "doCallStartForeground = " + mDoCallStartForeground + ", " +
                 "doCallStopForeground = " + mDoCallStopForeground + ", " +
+                "doCallBindService = " + mDoCallBindService + ", " +
+                "doCallUnbindService = " + mDoCallUnbindService + ", " +
                 "doCallStopSelf = " + mDoCallStopSelf + ", " +
                 "doKillProcess = " + mDoKillProcess + ", " +
                 "doStartActivity = " + mDoStartActivity + ", " +
@@ -444,7 +585,8 @@ public class ShortFgsMessage implements Parcelable {
                 "actualExceptionClasss = " + mActualExceptionClasss + ", " +
                 "actualExceptionMessage = " + mActualExceptionMessage + ", " +
                 "lastTestStartUptime = " + mLastTestStartUptime + ", " +
-                "lastTestEndUptime = " + mLastTestEndUptime +
+                "lastTestEndUptime = " + mLastTestEndUptime + ", " +
+                "notificationId = " + mNotificationId +
         " }";
     }
 
@@ -457,19 +599,22 @@ public class ShortFgsMessage implements Parcelable {
         long flg = 0;
         if (ack) flg |= 0x2;
         if (mDoCallStartForegroundService) flg |= 0x100;
-        if (mDoCallStartForeground) flg |= 0x200;
-        if (mDoCallStopForeground) flg |= 0x400;
-        if (mDoCallStopSelf) flg |= 0x800;
-        if (mDoKillProcess) flg |= 0x1000;
-        if (mDoStartActivity) flg |= 0x2000;
-        if (mDoFinishActivity) flg |= 0x4000;
-        if (mCallGetTestInfo) flg |= 0x8000;
+        if (mDoCallStartService) flg |= 0x200;
+        if (mDoCallStartForeground) flg |= 0x400;
+        if (mDoCallStopForeground) flg |= 0x800;
+        if (mDoCallBindService) flg |= 0x1000;
+        if (mDoCallUnbindService) flg |= 0x2000;
+        if (mDoCallStopSelf) flg |= 0x4000;
+        if (mDoKillProcess) flg |= 0x8000;
+        if (mDoStartActivity) flg |= 0x10000;
+        if (mDoFinishActivity) flg |= 0x20000;
+        if (mCallGetTestInfo) flg |= 0x40000;
         if (mFailureString != null) flg |= 0x4;
         if (mComponentName != null) flg |= 0x40;
         if (mMethodName != null) flg |= 0x80;
-        if (mExpectedExceptionClass != null) flg |= 0x10000;
-        if (mActualExceptionClasss != null) flg |= 0x20000;
-        if (mActualExceptionMessage != null) flg |= 0x40000;
+        if (mExpectedExceptionClass != null) flg |= 0x80000;
+        if (mActualExceptionClasss != null) flg |= 0x100000;
+        if (mActualExceptionMessage != null) flg |= 0x200000;
         dest.writeLong(flg);
         dest.writeLong(mTimestamp);
         if (mFailureString != null) dest.writeString(mFailureString);
@@ -483,6 +628,7 @@ public class ShortFgsMessage implements Parcelable {
         if (mActualExceptionMessage != null) dest.writeString(mActualExceptionMessage);
         dest.writeLong(mLastTestStartUptime);
         dest.writeLong(mLastTestEndUptime);
+        dest.writeInt(mNotificationId);
     }
 
     @Override
@@ -499,13 +645,16 @@ public class ShortFgsMessage implements Parcelable {
         long flg = in.readLong();
         boolean _ack = (flg & 0x2) != 0;
         boolean doCallStartForegroundService = (flg & 0x100) != 0;
-        boolean doCallStartForeground = (flg & 0x200) != 0;
-        boolean doCallStopForeground = (flg & 0x400) != 0;
-        boolean doCallStopSelf = (flg & 0x800) != 0;
-        boolean doKillProcess = (flg & 0x1000) != 0;
-        boolean doStartActivity = (flg & 0x2000) != 0;
-        boolean doFinishActivity = (flg & 0x4000) != 0;
-        boolean callGetTestInfo = (flg & 0x8000) != 0;
+        boolean doCallStartService = (flg & 0x200) != 0;
+        boolean doCallStartForeground = (flg & 0x400) != 0;
+        boolean doCallStopForeground = (flg & 0x800) != 0;
+        boolean doCallBindService = (flg & 0x1000) != 0;
+        boolean doCallUnbindService = (flg & 0x2000) != 0;
+        boolean doCallStopSelf = (flg & 0x4000) != 0;
+        boolean doKillProcess = (flg & 0x8000) != 0;
+        boolean doStartActivity = (flg & 0x10000) != 0;
+        boolean doFinishActivity = (flg & 0x20000) != 0;
+        boolean callGetTestInfo = (flg & 0x40000) != 0;
         long timestamp = in.readLong();
         String failureString = (flg & 0x4) == 0 ? null : in.readString();
         int fgsType = in.readInt();
@@ -513,11 +662,12 @@ public class ShortFgsMessage implements Parcelable {
         int serviceStartId = in.readInt();
         ComponentName componentName = (flg & 0x40) == 0 ? null : (ComponentName) in.readTypedObject(ComponentName.CREATOR);
         String methodName = (flg & 0x80) == 0 ? null : in.readString();
-        String expectedExceptionClass = (flg & 0x10000) == 0 ? null : in.readString();
-        String actualExceptionClasss = (flg & 0x20000) == 0 ? null : in.readString();
-        String actualExceptionMessage = (flg & 0x40000) == 0 ? null : in.readString();
+        String expectedExceptionClass = (flg & 0x80000) == 0 ? null : in.readString();
+        String actualExceptionClasss = (flg & 0x100000) == 0 ? null : in.readString();
+        String actualExceptionMessage = (flg & 0x200000) == 0 ? null : in.readString();
         long lastTestStartUptime = in.readLong();
         long lastTestEndUptime = in.readLong();
+        int notificationId = in.readInt();
 
         this.mTimestamp = timestamp;
         this.ack = _ack;
@@ -528,8 +678,11 @@ public class ShortFgsMessage implements Parcelable {
         this.mComponentName = componentName;
         this.mMethodName = methodName;
         this.mDoCallStartForegroundService = doCallStartForegroundService;
+        this.mDoCallStartService = doCallStartService;
         this.mDoCallStartForeground = doCallStartForeground;
         this.mDoCallStopForeground = doCallStopForeground;
+        this.mDoCallBindService = doCallBindService;
+        this.mDoCallUnbindService = doCallUnbindService;
         this.mDoCallStopSelf = doCallStopSelf;
         this.mDoKillProcess = doKillProcess;
         this.mDoStartActivity = doStartActivity;
@@ -540,6 +693,7 @@ public class ShortFgsMessage implements Parcelable {
         this.mActualExceptionMessage = actualExceptionMessage;
         this.mLastTestStartUptime = lastTestStartUptime;
         this.mLastTestEndUptime = lastTestEndUptime;
+        this.mNotificationId = notificationId;
 
         // onConstructed(); // You can define this method to get a callback
     }
@@ -558,11 +712,411 @@ public class ShortFgsMessage implements Parcelable {
         }
     };
 
+    /**
+     * A builder for {@link ShortFgsMessage}
+     */
+    @SuppressWarnings("WeakerAccess")
+    @DataClass.Generated.Member
+    public static class Builder {
+
+        private long mTimestamp;
+        private boolean ack;
+        private @Nullable String mFailureString;
+        private int mFgsType;
+        private int mStartCommandResult;
+        private int mServiceStartId;
+        private @Nullable ComponentName mComponentName;
+        private @Nullable String mMethodName;
+        private boolean mDoCallStartForegroundService;
+        private boolean mDoCallStartService;
+        private boolean mDoCallStartForeground;
+        private boolean mDoCallStopForeground;
+        private boolean mDoCallBindService;
+        private boolean mDoCallUnbindService;
+        private boolean mDoCallStopSelf;
+        private boolean mDoKillProcess;
+        private boolean mDoStartActivity;
+        private boolean mDoFinishActivity;
+        private boolean mCallGetTestInfo;
+        private @Nullable String mExpectedExceptionClass;
+        private @Nullable String mActualExceptionClasss;
+        private @Nullable String mActualExceptionMessage;
+        private long mLastTestStartUptime;
+        private long mLastTestEndUptime;
+        private int mNotificationId;
+
+        private long mBuilderFieldsSet = 0L;
+
+        /**
+         * Creates a new Builder.
+         *
+         * @param doCallStartForegroundService
+         *   If this is set, the receiver will call Context.startForegroundService() on mComponentName.
+         * @param doCallStartService
+         *   If this is set, the receiver will call Context.startService() on mComponentName.
+         * @param doCallStartForeground
+         *   If this is set, the receiver will call Service.startForeground() on mComponentName.
+         * @param doCallStopForeground
+         *   If this is set, the receiver will call Service.stopForeground() on mComponentName.
+         * @param doCallBindService
+         *   If this is set, the receiver will call Context.bindService() on mComponentName.
+         * @param doCallUnbindService
+         *   If this is set, the receiver will call Context.unbindService() on mComponentName.
+         * @param doCallStopSelf
+         *   If this is set, the receiver will call Service.stopSelf() on mComponentName.
+         * @param doKillProcess
+         *   If this is set, the helper process will kill itself.
+         * @param doStartActivity
+         *   If this is set, the receiver will start MyActivity.
+         * @param doFinishActivity
+         *   If this is set, the receiver will finish MyActivity.
+         * @param callGetTestInfo
+         *   Send by the helper app to the main test package, via CallProvider, to get the
+         *   currently running test information.
+         * @param expectedExceptionClass
+         *   Class name of an exception we expect in ShortFgsMessageReceiver
+         */
+        public Builder(
+                long timestamp,
+                boolean _ack,
+                @Nullable String failureString,
+                int fgsType,
+                int startCommandResult,
+                int serviceStartId,
+                @Nullable ComponentName componentName,
+                @Nullable String methodName,
+                boolean doCallStartForegroundService,
+                boolean doCallStartService,
+                boolean doCallStartForeground,
+                boolean doCallStopForeground,
+                boolean doCallBindService,
+                boolean doCallUnbindService,
+                boolean doCallStopSelf,
+                boolean doKillProcess,
+                boolean doStartActivity,
+                boolean doFinishActivity,
+                boolean callGetTestInfo,
+                @Nullable String expectedExceptionClass,
+                @Nullable String actualExceptionClasss,
+                @Nullable String actualExceptionMessage,
+                long lastTestStartUptime,
+                long lastTestEndUptime) {
+            mTimestamp = timestamp;
+            ack = _ack;
+            mFailureString = failureString;
+            mFgsType = fgsType;
+            mStartCommandResult = startCommandResult;
+            mServiceStartId = serviceStartId;
+            mComponentName = componentName;
+            mMethodName = methodName;
+            mDoCallStartForegroundService = doCallStartForegroundService;
+            mDoCallStartService = doCallStartService;
+            mDoCallStartForeground = doCallStartForeground;
+            mDoCallStopForeground = doCallStopForeground;
+            mDoCallBindService = doCallBindService;
+            mDoCallUnbindService = doCallUnbindService;
+            mDoCallStopSelf = doCallStopSelf;
+            mDoKillProcess = doKillProcess;
+            mDoStartActivity = doStartActivity;
+            mDoFinishActivity = doFinishActivity;
+            mCallGetTestInfo = callGetTestInfo;
+            mExpectedExceptionClass = expectedExceptionClass;
+            mActualExceptionClasss = actualExceptionClasss;
+            mActualExceptionMessage = actualExceptionMessage;
+            mLastTestStartUptime = lastTestStartUptime;
+            mLastTestEndUptime = lastTestEndUptime;
+        }
+
+        @DataClass.Generated.Member
+        public @NonNull Builder setTimestamp(long value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x1;
+            mTimestamp = value;
+            return this;
+        }
+
+        @DataClass.Generated.Member
+        public @NonNull Builder setAck(boolean value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x2;
+            ack = value;
+            return this;
+        }
+
+        @DataClass.Generated.Member
+        public @NonNull Builder setFailureString(@NonNull String value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x4;
+            mFailureString = value;
+            return this;
+        }
+
+        @DataClass.Generated.Member
+        public @NonNull Builder setFgsType(int value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x8;
+            mFgsType = value;
+            return this;
+        }
+
+        @DataClass.Generated.Member
+        public @NonNull Builder setStartCommandResult(int value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x10;
+            mStartCommandResult = value;
+            return this;
+        }
+
+        @DataClass.Generated.Member
+        public @NonNull Builder setServiceStartId(int value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x20;
+            mServiceStartId = value;
+            return this;
+        }
+
+        @DataClass.Generated.Member
+        public @NonNull Builder setComponentName(@NonNull ComponentName value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x40;
+            mComponentName = value;
+            return this;
+        }
+
+        @DataClass.Generated.Member
+        public @NonNull Builder setMethodName(@NonNull String value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x80;
+            mMethodName = value;
+            return this;
+        }
+
+        /**
+         * If this is set, the receiver will call Context.startForegroundService() on mComponentName.
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setDoCallStartForegroundService(boolean value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x100;
+            mDoCallStartForegroundService = value;
+            return this;
+        }
+
+        /**
+         * If this is set, the receiver will call Context.startService() on mComponentName.
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setDoCallStartService(boolean value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x200;
+            mDoCallStartService = value;
+            return this;
+        }
+
+        /**
+         * If this is set, the receiver will call Service.startForeground() on mComponentName.
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setDoCallStartForeground(boolean value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x400;
+            mDoCallStartForeground = value;
+            return this;
+        }
+
+        /**
+         * If this is set, the receiver will call Service.stopForeground() on mComponentName.
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setDoCallStopForeground(boolean value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x800;
+            mDoCallStopForeground = value;
+            return this;
+        }
+
+        /**
+         * If this is set, the receiver will call Context.bindService() on mComponentName.
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setDoCallBindService(boolean value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x1000;
+            mDoCallBindService = value;
+            return this;
+        }
+
+        /**
+         * If this is set, the receiver will call Context.unbindService() on mComponentName.
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setDoCallUnbindService(boolean value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x2000;
+            mDoCallUnbindService = value;
+            return this;
+        }
+
+        /**
+         * If this is set, the receiver will call Service.stopSelf() on mComponentName.
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setDoCallStopSelf(boolean value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x4000;
+            mDoCallStopSelf = value;
+            return this;
+        }
+
+        /**
+         * If this is set, the helper process will kill itself.
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setDoKillProcess(boolean value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x8000;
+            mDoKillProcess = value;
+            return this;
+        }
+
+        /**
+         * If this is set, the receiver will start MyActivity.
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setDoStartActivity(boolean value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x10000;
+            mDoStartActivity = value;
+            return this;
+        }
+
+        /**
+         * If this is set, the receiver will finish MyActivity.
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setDoFinishActivity(boolean value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x20000;
+            mDoFinishActivity = value;
+            return this;
+        }
+
+        /**
+         * Send by the helper app to the main test package, via CallProvider, to get the
+         * currently running test information.
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setCallGetTestInfo(boolean value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x40000;
+            mCallGetTestInfo = value;
+            return this;
+        }
+
+        /**
+         * Class name of an exception we expect in ShortFgsMessageReceiver
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setExpectedExceptionClass(@NonNull String value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x80000;
+            mExpectedExceptionClass = value;
+            return this;
+        }
+
+        @DataClass.Generated.Member
+        public @NonNull Builder setActualExceptionClasss(@NonNull String value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x100000;
+            mActualExceptionClasss = value;
+            return this;
+        }
+
+        @DataClass.Generated.Member
+        public @NonNull Builder setActualExceptionMessage(@NonNull String value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x200000;
+            mActualExceptionMessage = value;
+            return this;
+        }
+
+        @DataClass.Generated.Member
+        public @NonNull Builder setLastTestStartUptime(long value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x400000;
+            mLastTestStartUptime = value;
+            return this;
+        }
+
+        @DataClass.Generated.Member
+        public @NonNull Builder setLastTestEndUptime(long value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x800000;
+            mLastTestEndUptime = value;
+            return this;
+        }
+
+        /**
+         * Notification ID for FGS.
+         */
+        @DataClass.Generated.Member
+        public @NonNull Builder setNotificationId(int value) {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x1000000;
+            mNotificationId = value;
+            return this;
+        }
+
+        /** Builds the instance. This builder should not be touched after calling this! */
+        public @NonNull ShortFgsMessage build() {
+            checkNotUsed();
+            mBuilderFieldsSet |= 0x2000000; // Mark builder used
+
+            if ((mBuilderFieldsSet & 0x1000000) == 0) {
+                mNotificationId = 1;
+            }
+            ShortFgsMessage o = new ShortFgsMessage(
+                    mTimestamp,
+                    ack,
+                    mFailureString,
+                    mFgsType,
+                    mStartCommandResult,
+                    mServiceStartId,
+                    mComponentName,
+                    mMethodName,
+                    mDoCallStartForegroundService,
+                    mDoCallStartService,
+                    mDoCallStartForeground,
+                    mDoCallStopForeground,
+                    mDoCallBindService,
+                    mDoCallUnbindService,
+                    mDoCallStopSelf,
+                    mDoKillProcess,
+                    mDoStartActivity,
+                    mDoFinishActivity,
+                    mCallGetTestInfo,
+                    mExpectedExceptionClass,
+                    mActualExceptionClasss,
+                    mActualExceptionMessage,
+                    mLastTestStartUptime,
+                    mLastTestEndUptime,
+                    mNotificationId);
+            return o;
+        }
+
+        private void checkNotUsed() {
+            if ((mBuilderFieldsSet & 0x2000000) != 0) {
+                throw new IllegalStateException(
+                        "This Builder should not be reused. Use a new Builder instance instead");
+            }
+        }
+    }
+
     @DataClass.Generated(
-            time = 1670538953028L,
+            time = 1678225468346L,
             codegenVersion = "1.0.23",
             sourceFile = "cts/tests/app/ShortFgsTest/ShortFgsTestHelper/src/android/app/cts/shortfgstesthelper/ShortFgsMessage.java",
-            inputSignatures = "final private  long mTimestamp\nprivate  boolean ack\nprivate @android.annotation.Nullable java.lang.String mFailureString\nprivate  int mFgsType\nprivate  int mStartCommandResult\nprivate  int mServiceStartId\nprivate @android.annotation.Nullable android.content.ComponentName mComponentName\nprivate @android.annotation.Nullable java.lang.String mMethodName\nprivate  boolean mDoCallStartForegroundService\nprivate  boolean mDoCallStartForeground\nprivate  boolean mDoCallStopForeground\nprivate  boolean mDoCallStopSelf\nprivate  boolean mDoKillProcess\nprivate  boolean mDoStartActivity\nprivate  boolean mDoFinishActivity\nprivate  boolean mCallGetTestInfo\nprivate @android.annotation.Nullable java.lang.String mExpectedExceptionClass\nprivate @android.annotation.Nullable java.lang.String mActualExceptionClasss\nprivate @android.annotation.Nullable java.lang.String mActualExceptionMessage\nprivate  long mLastTestStartUptime\nprivate  long mLastTestEndUptime\npublic @android.annotation.NonNull android.app.cts.shortfgstesthelper.ShortFgsMessage setExpectedExceptionClass(java.lang.Class<?>)\npublic @android.annotation.Nullable java.lang.Class<?> getExpectedExceptionClass()\npublic  void setException(java.lang.Throwable)\nclass ShortFgsMessage extends java.lang.Object implements [android.os.Parcelable]\n@com.android.internal.util.DataClass(genConstructor=false, genSetters=true, genToString=true, genAidl=false)")
+            inputSignatures = "final private  long mTimestamp\nprivate  boolean ack\nprivate @android.annotation.Nullable java.lang.String mFailureString\nprivate  int mFgsType\nprivate  int mStartCommandResult\nprivate  int mServiceStartId\nprivate @android.annotation.Nullable android.content.ComponentName mComponentName\nprivate @android.annotation.Nullable java.lang.String mMethodName\nprivate  boolean mDoCallStartForegroundService\nprivate  boolean mDoCallStartService\nprivate  boolean mDoCallStartForeground\nprivate  boolean mDoCallStopForeground\nprivate  boolean mDoCallBindService\nprivate  boolean mDoCallUnbindService\nprivate  boolean mDoCallStopSelf\nprivate  boolean mDoKillProcess\nprivate  boolean mDoStartActivity\nprivate  boolean mDoFinishActivity\nprivate  boolean mCallGetTestInfo\nprivate @android.annotation.Nullable java.lang.String mExpectedExceptionClass\nprivate @android.annotation.Nullable java.lang.String mActualExceptionClasss\nprivate @android.annotation.Nullable java.lang.String mActualExceptionMessage\nprivate  long mLastTestStartUptime\nprivate  long mLastTestEndUptime\nprivate  int mNotificationId\npublic @android.annotation.NonNull android.app.cts.shortfgstesthelper.ShortFgsMessage setExpectedExceptionClass(java.lang.Class<?>)\npublic @android.annotation.Nullable java.lang.Class<?> getExpectedExceptionClass()\npublic  void setException(java.lang.Throwable)\nclass ShortFgsMessage extends java.lang.Object implements [android.os.Parcelable]\n@com.android.internal.util.DataClass(genConstructor=false, genSetters=true, genToString=true, genAidl=false)")
     @Deprecated
     private void __metadata() {}
 

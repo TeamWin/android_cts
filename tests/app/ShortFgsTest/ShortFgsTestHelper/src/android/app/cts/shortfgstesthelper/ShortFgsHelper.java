@@ -47,8 +47,14 @@ public class ShortFgsHelper {
      * Package name of this helper app.
      */
     public static final String HELPER_PACKAGE = "android.app.cts.shortfgstesthelper";
+
+    /**
+     * Second test package, it's used only to host a bound service that's bound by
+     * {@link #HELPER_PACKAGE}.
+     */
+    public static final String HELPER_PACKAGE2 = "android.app.cts.shortfgstesthelper2";
+
     public static final String EXTRA_MESSAGE = "message";
-    public static final int NOTIFICATION_ID = 1;
 
     private static final String NOTIFICATION_CHANNEL_ID = "cts/" + HELPER_PACKAGE;
 
@@ -57,12 +63,23 @@ public class ShortFgsHelper {
     public static ComponentName FGS1 = new ComponentName(HELPER_PACKAGE, Fgs1.class.getName());
     public static ComponentName FGS2 = new ComponentName(HELPER_PACKAGE, Fgs2.class.getName());
 
-    /** All the services owned by the helper app. */
-    public static ComponentName[] ALL_SERVICES = {FGS0, FGS1, FGS2};
+    public static ComponentName BOUND_SERVICE = new ComponentName(
+            HELPER_PACKAGE, BoundService.class.getName());
 
     /** Component names of {@link MyActivity}. */
     public static ComponentName ACTIVITY =
             new ComponentName(HELPER_PACKAGE, MyActivity.class.getName());
+
+    /**
+     * FGS0 in helper2
+     */
+    public static ComponentName FGS_B_0 = new ComponentName(HELPER_PACKAGE2, Fgs0.class.getName());
+
+    /**
+     * Bound service in helper2.
+     */
+    public static ComponentName BOUND_SERVICE_B = new ComponentName(
+            HELPER_PACKAGE2, BoundService.class.getName());
 
     public static String ensureNotificationChannel() {
         sContext.getSystemService(NotificationManager.class)
@@ -129,7 +146,14 @@ public class ShortFgsHelper {
      * Sends a class name and a method name back to the main test package.
      */
     public static void sendBackMethodName(Class<?> clazz, String methodName) {
-        sendBackMethodName(clazz, methodName, null);
+        sendBackMethodName(clazz, methodName, (Consumer) null);
+    }
+
+    /**
+     * Sends a class name and a method name back to the main test package.
+     */
+    public static void sendBackMethodName(Class<?> clazz, String methodName, ComponentName cn) {
+        sendBackMethodName(clazz, methodName, (m) -> m.setComponentName(cn));
     }
 
     /**
@@ -151,5 +175,12 @@ public class ShortFgsHelper {
      */
     public static ShortFgsMessage getCurrentTestInfo() {
         return sendMessageToMainTest(new ShortFgsMessage().setCallGetTestInfo(true));
+    }
+
+    public static String flattenComponentName(ComponentName cn) {
+        if (cn == null) {
+            return "(null)";
+        }
+        return cn.flattenToShortString();
     }
 }

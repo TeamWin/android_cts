@@ -40,6 +40,7 @@ android_test {
     platform_apis: false,
     data: [
         ":ShortFgsTestHelper",
+        ":ShortFgsTestHelper2",
     ],
     per_testcase_directory: true,
 }

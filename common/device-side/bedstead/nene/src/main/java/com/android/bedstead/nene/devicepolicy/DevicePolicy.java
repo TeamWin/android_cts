@@ -112,6 +112,11 @@ public final class DevicePolicy {
                         }
                         if (ex instanceof AdbException) {
                             String error = ((AdbException) ex).error();
+                            if (error.contains("is already set")) {
+                                // This can happen for a while when it is being tidied up
+                                return false;
+                            }
+
                             if (error.contains("is being removed")) {
                                 return false;
                             }

@@ -183,6 +183,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         shell(ShellCommandUtils.waitForBroadcastBarrier());
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID, Ime2Constants.IME_ID);
@@ -214,6 +215,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         installPossibleInstantPackage(
                 EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID);
 
@@ -221,6 +223,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(DeviceTestConstants.TEST_CREATE_IME1));
 
         uninstallPackageSyncIfExists(Ime1Constants.PACKAGE);
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, WAIT_TIMEOUT);
     }
 
@@ -247,12 +250,14 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         installPossibleInstantPackage(
                 EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID);
         shell(ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID));
         assertTrue(runDeviceTestMethod(DeviceTestConstants.TEST_CREATE_IME1));
 
         shell(ShellCommandUtils.disableIme(Ime1Constants.IME_ID));
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, WAIT_TIMEOUT);
     }
 
@@ -280,6 +285,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID, Ime2Constants.IME_ID);
@@ -313,6 +319,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID, imeForceQueryable);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID, imeForceQueryable);
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         // Make sure that there is at least one more IME that specifies
         // supportsSwitchingToNextInputMethod="true"
@@ -366,6 +373,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID, imeForceQueryable);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID, imeForceQueryable);
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID, Ime2Constants.IME_ID);
@@ -416,6 +424,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID, Ime2Constants.IME_ID);
@@ -449,6 +458,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         installPossibleInstantPackage(
                 EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID);
         shell(ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID));
@@ -482,6 +492,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID, Ime2Constants.IME_ID);
@@ -523,6 +534,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID, Ime2Constants.IME_ID);

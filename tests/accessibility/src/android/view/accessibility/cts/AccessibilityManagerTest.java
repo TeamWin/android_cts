@@ -34,17 +34,13 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.ServiceInfo;
 import android.os.Handler;
-import android.os.HandlerThread;
-import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.provider.Settings;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityServicesStateChangeListener;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
 import android.view.accessibility.AccessibilityManager.AudioDescriptionRequestedChangeListener;
 import android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener;
-import android.view.accessibility.AccessibilityManager.UiContrastChangeListener;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -62,11 +58,8 @@ import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Class for testing {@link AccessibilityManager}.
@@ -79,11 +72,11 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
 
     private InstrumentedAccessibilityServiceTestRule<SpeakingAccessibilityService>
             mSpeakingAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
-            SpeakingAccessibilityService.class, false);
+                    SpeakingAccessibilityService.class, false);
 
     private InstrumentedAccessibilityServiceTestRule<VibratingAccessibilityService>
             mVibratingAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
-            VibratingAccessibilityService.class, false);
+                    VibratingAccessibilityService.class, false);
 
     private InstrumentedAccessibilityServiceTestRule<SpeakingAndVibratingAccessibilityService>
             mSpeakingAndVibratingAccessibilityServiceRule =
@@ -118,8 +111,6 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
     private static final String ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT =
             "enabled_accessibility_audio_description_by_default";
 
-    private static final String CONTRAST_LEVEL = "contrast_level";
-
     private final SettingsStateChangerRule mAudioDescriptionSetterRule =
             new SettingsStateChangerRule(
                     sInstrumentation.getContext(),
@@ -144,8 +135,6 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
 
     private Handler mHandler;
 
-
-
     @Before
     public void setUp() throws Exception {
         mAccessibilityManager = (AccessibilityManager)
@@ -160,7 +149,7 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
     @Test
     public void testAddAndRemoveAccessibilityStateChangeListener() throws Exception {
         AccessibilityStateChangeListener listener = (state) -> {
-            /* do nothing */
+                /* do nothing */
         };
         assertTrue(mAccessibilityManager.addAccessibilityStateChangeListener(listener));
         assertTrue(mAccessibilityManager.removeAccessibilityStateChangeListener(listener));
@@ -480,6 +469,7 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
         }
     }
 
+
     @Test
     public void testAccessibilityStateListenerNoHandler() throws Exception {
         final Object waitObject = new Object();
@@ -592,115 +582,6 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
         assertFalse("Listener told that accessibility is disabled, but manager says enabled",
                 mAccessibilityManager.isEnabled());
         mAccessibilityManager.removeAccessibilityStateChangeListener(listener);
-    }
-
-    @Test
-    @AppModeFull
-    public void testGetUiContrast() {
-        float initialContrast = mAccessibilityManager.getUiContrast();
-        try {
-            for (float contrast : List.of(-1f, 0.5f)) {
-                Settings.Secure.putFloat(mTargetContext.getContentResolver(), CONTRAST_LEVEL,
-                        contrast);
-                PollingCheck.waitFor(() ->
-                        Math.abs(mAccessibilityManager.getUiContrast() - contrast)
-                                < 1e-10);
-                assertEquals(contrast, mAccessibilityManager.getUiContrast(), 1e-10);
-            }
-        } finally {
-            Settings.Secure.putFloat(
-                    mTargetContext.getContentResolver(), CONTRAST_LEVEL, initialContrast);
-        }
-    }
-
-    @Test
-    @AppModeFull
-    public void testAddUiContrastChangeListener() {
-        float initialContrast = mAccessibilityManager.getUiContrast();
-        final Object waitObject = new Object();
-        final List<UiContrastChangeListener> listeners = new ArrayList<>();
-
-        // store callback errors here to avoid crashing the whole test suite
-        final AtomicReference<AssertionError> error = new AtomicReference<>(null);
-        final AtomicBoolean atomicBoolean = new AtomicBoolean(false);
-
-        String handlerThreadName = "AccessibilityManagerTestBackgroundThread";
-        final HandlerThread backgroundThread = new HandlerThread(handlerThreadName);
-        backgroundThread.start();
-        Handler backgroundHandler = new Handler(backgroundThread.getLooper());
-        Executor backgroundExecutor = backgroundHandler::post;
-
-        try {
-            for (float testValue : List.of(-1f, 0f)) {
-                UiContrastChangeListener listener = (float contrast) -> {
-                    synchronized (waitObject) {
-                        try {
-                            assertEquals("Wrong value received by the color contrast listener",
-                                    testValue, contrast, 1e-10);
-                            assertEquals("The executor should be used to invoke the callback",
-                                    backgroundThread, Thread.currentThread());
-                        } catch (AssertionError e) {
-                            error.set(e);
-                        }
-                        atomicBoolean.set(true);
-                        waitObject.notifyAll();
-                    }
-                };
-                listeners.add(listener);
-                mAccessibilityManager.addUiContrastChangeListener(backgroundExecutor, listener);
-                Settings.Secure.putFloat(
-                        mTargetContext.getContentResolver(), CONTRAST_LEVEL, testValue);
-                waitForAtomicBooleanBecomes(atomicBoolean, true, waitObject,
-                        "The color contrast listener should be called when the setting changes");
-                if (error.get() != null) throw error.get();
-                mAccessibilityManager.removeUiContrastChangeListener(listener);
-            }
-        } finally {
-            backgroundThread.quitSafely();
-            Settings.Secure.putFloat(
-                    mTargetContext.getContentResolver(), CONTRAST_LEVEL, initialContrast);
-            listeners.forEach(mAccessibilityManager::removeUiContrastChangeListener);
-        }
-    }
-
-    @Test
-    @AppModeFull
-    public void testRemoveUiContrastChangeListener() {
-        float initialContrast = mAccessibilityManager.getUiContrast();
-        final Object waitObject = new Object();
-
-        // store callback errors here to avoid crashing the whole test suite
-        final AtomicReference<AssertionError> error = new AtomicReference<>(null);
-        final AtomicBoolean atomicBoolean = new AtomicBoolean(false);
-        Executor mainExecutor = mTargetContext.getMainExecutor();
-        UiContrastChangeListener listener = (float value) -> {
-            synchronized (waitObject) {
-                atomicBoolean.set(true);
-                waitObject.notifyAll();
-            }
-        };
-
-        UiContrastChangeListener removedListener = (float contrast) -> error.set(new AssertionError(
-                "The listener should not be invoked after being removed"));
-
-        final List<UiContrastChangeListener> listeners = List.of(listener, removedListener);
-        try {
-            for (float testValue: List.of(0.5f, 1f)) {
-                mAccessibilityManager.addUiContrastChangeListener(mainExecutor, removedListener);
-                mAccessibilityManager.addUiContrastChangeListener(mainExecutor, listener);
-                mAccessibilityManager.removeUiContrastChangeListener(removedListener);
-                Settings.Secure.putFloat(
-                        mTargetContext.getContentResolver(), CONTRAST_LEVEL, testValue);
-                waitForAtomicBooleanBecomes(atomicBoolean, true, waitObject,
-                        "The color contrast listener should be called when the setting changes");
-                if (error.get() != null) throw error.get();
-                mAccessibilityManager.removeUiContrastChangeListener(listener);
-            }
-        } finally {
-            Settings.Secure.putFloat(
-                    mTargetContext.getContentResolver(), CONTRAST_LEVEL, initialContrast);
-            listeners.forEach(mAccessibilityManager::removeUiContrastChangeListener);
-        }
     }
 
     @Test

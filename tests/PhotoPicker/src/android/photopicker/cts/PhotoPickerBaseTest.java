@@ -64,7 +64,7 @@ public class PhotoPickerBaseTest {
         sDevice.waitForIdle();
     }
 
-    private static boolean isHardwareSupported() {
+    static boolean isHardwareSupported() {
         // These UI tests are not optimised for Watches, TVs, Auto;
         // IoT devices do not have a UI to run these UI tests
         PackageManager pm = sInstrumentation.getContext().getPackageManager();
