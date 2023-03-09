@@ -39,6 +39,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
@@ -444,9 +445,15 @@ public class TelephonyManagerTest {
         mSelfCertHash = getCertHash(mSelfPackageName);
         mTestSub = SubscriptionManager.getDefaultSubscriptionId();
         // If the test subscription is invalid, TelephonyManager APIs may return null
-        assumeTrue(mTestSub != SubscriptionManager.INVALID_SUBSCRIPTION_ID);
+        assumeTrue("Skipping tests because default subscription ID is invalid",
+                mTestSub != SubscriptionManager.INVALID_SUBSCRIPTION_ID);
         mTelephonyManager = getContext().getSystemService(TelephonyManager.class)
                 .createForSubscriptionId(mTestSub);
+        try {
+            mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
+        } catch (IllegalStateException e) {
+            assumeNoException("Skipping tests because Telephony service is null", e);
+        }
         Pair<Integer, Integer> networkHalVersion =
                 mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_NETWORK);
         mNetworkHalVersion = makeRadioVersion(networkHalVersion.first, networkHalVersion.second);
@@ -459,7 +466,6 @@ public class TelephonyManagerTest {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(android.Manifest.permission.READ_PHONE_STATE);
         saveAllowedNetworkTypesForAllReasons();
-
         getContext().registerReceiver(mCountryChangedReceiver,
                 new IntentFilter(TelephonyManager.ACTION_NETWORK_COUNTRY_CHANGED),
                 Context.RECEIVER_EXPORTED);

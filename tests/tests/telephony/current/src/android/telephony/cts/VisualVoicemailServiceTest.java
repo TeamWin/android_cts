@@ -25,6 +25,7 @@ import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
@@ -114,6 +115,11 @@ public class VisualVoicemailServiceTest {
 
         mTelephonyManager = mContext.getSystemService(TelephonyManager.class)
                 .createForPhoneAccountHandle(mPhoneAccountHandle);
+        try {
+            mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
+        } catch (IllegalStateException e) {
+            assumeNoException("Skipping tests because Telephony service is null", e);
+        }
 
         PackageManager packageManager = mContext.getPackageManager();
         packageManager.setComponentEnabledSetting(
