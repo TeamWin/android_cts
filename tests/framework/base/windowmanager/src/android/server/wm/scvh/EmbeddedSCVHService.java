@@ -27,7 +27,6 @@ import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.RemoteException;
 import android.util.Log;
 import android.view.Display;
 import android.view.SurfaceControl.Transaction;
@@ -39,6 +38,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class EmbeddedSCVHService extends Service {
     private static final String TAG = "SCVHEmbeddedService";
@@ -84,8 +86,9 @@ public class EmbeddedSCVHService extends Service {
 
     private class AttachEmbeddedWindow extends IAttachEmbeddedWindow.Stub {
         @Override
-        public void attachEmbedded(IBinder hostToken, int width,
-                int height, int displayId, long delayMs, IAttachEmbeddedWindowCallback callback) {
+        public SurfaceControlViewHost.SurfacePackage attachEmbedded(IBinder hostToken, int width,
+                int height, int displayId, long delayMs) {
+            CountDownLatch countDownLatch = new CountDownLatch(1);
             mHandler.post(() -> {
                 Context context = EmbeddedSCVHService.this;
                 Display display = getApplicationContext().getSystemService(
@@ -109,14 +112,7 @@ public class EmbeddedSCVHService extends Service {
                         // First frame isn't included in the sync so don't notify the host about the
                         // surface package until the first draw has completed.
                         Transaction transaction = new Transaction().addTransactionCommittedListener(
-                                getMainExecutor(), () -> {
-                                    try {
-                                        callback.onEmbeddedWindowAttached(mVr.getSurfacePackage());
-                                    } catch (RemoteException e) {
-                                        Log.e(TAG, "Failed to tell host that embedded has been "
-                                                + "attached");
-                                    }
-                                });
+                                getMainExecutor(), countDownLatch::countDown);
                         v.getRootSurfaceControl().applyTransactionOnDraw(transaction);
                     }
 
@@ -125,6 +121,12 @@ public class EmbeddedSCVHService extends Service {
                     }
                 });
             });
+            try {
+                countDownLatch.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Failed to wait for timeout");
+            }
+            return mVr.getSurfacePackage();
         }
 
         @Override
@@ -132,6 +134,13 @@ public class EmbeddedSCVHService extends Service {
             mHandler.post(() -> {
                 mSlowView.setText(lp.width + "x" + lp.height);
                 mVr.relayout(lp);
+            });
+        }
+
+        @Override
+        public void sendCrash() {
+            mVr.getView().getViewTreeObserver().addOnPreDrawListener(() -> {
+                throw new RuntimeException();
             });
         }
     }
