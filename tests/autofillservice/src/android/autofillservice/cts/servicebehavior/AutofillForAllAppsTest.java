@@ -51,6 +51,10 @@ public class AutofillForAllAppsTest extends
     private DeviceConfigStateManager mIsTriggerFillRequestOnUnimportantViewEnabledStateManager =
             new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
               AutofillFeatureFlags.DEVICE_CONFIG_TRIGGER_FILL_REQUEST_ON_UNIMPORTANT_VIEW);
+    private DeviceConfigStateManager mTriggerFillRequestOnSelectedImportantViewsEnabledStateManager
+        = new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
+            "trigger_fill_request_on_filtered_important_views");
+
     private static final String TAG = "AutofillForAllAppsTest";
     private static final String TEST_CTS_PACKAGE_NAME = "android.autofillservice.cts";
     private static final String TEST_NOT_IMPORTANT_FOR_AUTOFILL_ACTIVITY_NAME =
@@ -76,6 +80,7 @@ public class AutofillForAllAppsTest extends
         setImeActionFlagValue("");
         setDenyListFlagValue("");
         setIsTriggerFillRequestOnUnimportantViewEnabledFlagValue(Boolean.toString(true));
+        setIsApplyHeuristicOnImportantViewEnabledFlagValue("false");
     }
 
     @After
@@ -83,6 +88,7 @@ public class AutofillForAllAppsTest extends
         setImeActionFlagValue("");
         setDenyListFlagValue("");
         setIsTriggerFillRequestOnUnimportantViewEnabledFlagValue(Boolean.toString(false));
+        setIsApplyHeuristicOnImportantViewEnabledFlagValue("false");
     }
 
     @Test
@@ -226,6 +232,35 @@ public class AutofillForAllAppsTest extends
         mUiBot.waitForIdleSync();
 
         sReplier.assertOnFillRequestNotCalled();
+    }
+
+    @Test
+    public void testAddingSeveralHeuristicsCanStopTriggeringFillRequestOnImportantViews()
+        throws Exception {
+        enableService();
+        // Test when adding multiple ime action ids including ime_action_go in flag, fill request
+        // won't be triggered
+        setImeActionFlagValue(String.valueOf(EditorInfo.IME_ACTION_GO) + "," + String.valueOf(
+            EditorInfo.IME_ACTION_SEND));
+        setIsApplyHeuristicOnImportantViewEnabledFlagValue("true");
+
+        // Set response with a dataset
+        sReplier.addResponse(mImeOptionResponseBuilder.build());
+        // Start ime option activity.
+        startImeOptionActivity();
+        // Test normally, fill request would be triggered on unimportant views
+        mUiBot.waitForIdleSync();
+        sReplier.assertNoUnhandledFillRequests();
+
+        mUiBot.selectByRelativeId(Helper.ID_IMEACTION_TEXT_IMPORTANT_FOR_AUTOFILL);
+        mUiBot.waitForIdleSync();
+
+        sReplier.assertOnFillRequestNotCalled();
+    }
+
+    private void setIsApplyHeuristicOnImportantViewEnabledFlagValue(String value) {
+        Helper.setDeviceConfig(mTriggerFillRequestOnSelectedImportantViewsEnabledStateManager,
+            value);
     }
 
     private void setImeActionFlagValue(String value) {
