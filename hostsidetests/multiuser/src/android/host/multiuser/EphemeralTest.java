@@ -16,6 +16,7 @@
 package android.host.multiuser;
 
 import static com.google.common.truth.Truth.assertWithMessage;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.Presubmit;
@@ -38,6 +39,8 @@ public class EphemeralTest extends BaseMultiUserTest {
 
     private static final String TEST_APP_PKG_NAME = "com.android.cts.multiuser";
     private static final String TEST_APP_PKG_APK = "CtsMultiuserApp.apk";
+
+    private static final String FEATURE_DEVICE_ADMIN = "android.software.device_admin";
 
     // Values below were copied from UserManager
     private static final int REMOVE_RESULT_REMOVED = 0;
@@ -167,6 +170,8 @@ public class EphemeralTest extends BaseMultiUserTest {
     @Presubmit
     @Test
     public void testRemoveUserWhenPossible_devicePolicyIsSet() throws Exception {
+        assumeTrue("Test requires device with device admin support",
+                getDevice().hasFeature(FEATURE_DEVICE_ADMIN));
         installPackage(DpcCommander.PKG_APK, /* options= */ "-t");
         assertWithMessage("isPackageInstalled(%s)", DpcCommander.PKG_APK)
                 .that(getDevice().isPackageInstalled(DpcCommander.PKG_NAME))
