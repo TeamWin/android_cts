@@ -23,4 +23,6 @@ interface IInputInjectionTestCallbacks {
     void onTouchEvent(in android.view.MotionEvent event);
 
     void onTestInjectionFromApp(in List<String> errors);
+
+    void onWindowFocused();
 }
