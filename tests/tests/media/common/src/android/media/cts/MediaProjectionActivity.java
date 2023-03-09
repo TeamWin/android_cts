@@ -19,14 +19,13 @@ package android.media.cts;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
-import android.os.IBinder;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Messenger;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -54,19 +53,8 @@ public class MediaProjectionActivity extends Activity {
     private CountDownLatch mCountDownLatch;
     private boolean mProjectionServiceBound;
 
-    private final ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            startActivityForResult(getScreenCaptureIntent(), PERMISSION_CODE);
-            dismissPermissionDialog();
-            mProjectionServiceBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            mProjectionServiceBound = false;
-        }
-    };
+    private int mResultCode;
+    private Intent mResultData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,14 +63,13 @@ public class MediaProjectionActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         mProjectionManager = getSystemService(MediaProjectionManager.class);
         mCountDownLatch = new CountDownLatch(1);
-        bindMediaProjectionService();
+        startActivityForResult(mProjectionManager.createScreenCaptureIntent(), PERMISSION_CODE);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (mProjectionServiceBound) {
-            unbindService(mConnection);
             mProjectionServiceBound = false;
         }
     }
@@ -91,10 +78,24 @@ public class MediaProjectionActivity extends Activity {
         return mProjectionManager.createScreenCaptureIntent();
     }
 
-    private void bindMediaProjectionService() {
-        Intent intent = new Intent(this, LocalMediaProjectionService.class);
-        startService(intent);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    /**
+     * Request to start a foreground service with type "mediaProjection",
+     * it's free to run in either the same process or a different process in the package;
+     * passing a messenger object to send signal back when the foreground service is up.
+     */
+    private void startMediaProjectionService() {
+        final Messenger messenger = new Messenger(new Handler(Looper.getMainLooper(), msg -> {
+            switch (msg.what) {
+                case LocalMediaProjectionService.MSG_START_FOREGROUND_DONE:
+                    createMediaProjection();
+                    return true;
+            }
+            Log.e(TAG, "Unknown message from the LocalMediaProjectionService: " + msg.what);
+            return false;
+        }));
+        final Intent intent = new Intent(this, LocalMediaProjectionService.class)
+                .putExtra(LocalMediaProjectionService.EXTRA_MESSENGER, messenger);
+        startForegroundService(intent);
     }
 
     @Override
@@ -106,7 +107,13 @@ public class MediaProjectionActivity extends Activity {
             throw new IllegalStateException("User denied screen sharing permission");
         }
         Log.d(TAG, "onActivityResult");
-        mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
+        mResultCode = resultCode;
+        mResultData = data;
+        startMediaProjectionService();
+    }
+
+    private void createMediaProjection() {
+        mMediaProjection = mProjectionManager.getMediaProjection(mResultCode, mResultData);
         mCountDownLatch.countDown();
     }
 

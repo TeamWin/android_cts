@@ -25,32 +25,30 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Icon;
-import android.os.Binder;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 
 public class LocalMediaProjectionService extends Service {
 
-    private final IBinder mBinder = new LocalBinder();
     private Bitmap mTestBitmap;
 
     private static final String NOTIFICATION_CHANNEL_ID = "Surfacevalidator";
     private static final String CHANNEL_NAME = "ProjectionService";
 
-    public class LocalBinder extends Binder {
-        LocalMediaProjectionService getService() {
-            return LocalMediaProjectionService.this;
-        }
-    }
+    static final int MSG_START_FOREGROUND_DONE = 1;
+    static final String EXTRA_MESSENGER = "messenger";
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startForeground();
+        startForeground(intent);
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        return mBinder;
+        return null;
     }
 
     @Override
@@ -69,7 +67,7 @@ public class LocalMediaProjectionService extends Service {
         return Icon.createWithBitmap(mTestBitmap);
     }
 
-    private void startForeground() {
+    private void startForeground(Intent intent) {
         final NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
                 CHANNEL_NAME, NotificationManager.IMPORTANCE_NONE);
         channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
@@ -89,6 +87,14 @@ public class LocalMediaProjectionService extends Service {
                 .build();
 
         startForeground(2, notification);
+
+        final Messenger messenger = intent.getParcelableExtra(EXTRA_MESSENGER);
+        final Message msg = Message.obtain();
+        msg.what = MSG_START_FOREGROUND_DONE;
+        try {
+            messenger.send(msg);
+        } catch (RemoteException e) {
+        }
     }
 
 }
