@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
 import android.annotation.NonNull;
@@ -172,6 +173,11 @@ public class TelephonyCallbackTest {
 
         mTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
+        try {
+            mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
+        } catch (IllegalStateException e) {
+            assumeNoException("Skipping tests because Telephony service is null", e);
+        }
         mCm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
     }
 

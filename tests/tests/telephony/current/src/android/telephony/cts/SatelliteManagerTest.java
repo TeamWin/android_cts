@@ -20,12 +20,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.OutcomeReceiver;
+import android.telephony.TelephonyManager;
 import android.telephony.satellite.PointingInfo;
 import android.telephony.satellite.SatelliteCapabilities;
 import android.telephony.satellite.SatelliteDatagram;
@@ -59,6 +61,12 @@ public class SatelliteManagerTest {
     public void setUp() throws Exception {
         assumeTrue(getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_TELEPHONY_SATELLITE));
+        try {
+            getContext().getSystemService(TelephonyManager.class)
+                    .getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
+        } catch (IllegalStateException e) {
+            assumeNoException("Skipping tests because Telephony service is null", e);
+        }
         mSatelliteManager = getContext().getSystemService(SatelliteManager.class);
     }
 

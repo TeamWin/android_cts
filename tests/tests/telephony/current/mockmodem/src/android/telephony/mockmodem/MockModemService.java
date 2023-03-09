@@ -122,7 +122,7 @@ public class MockModemService extends Service {
                             radioServiceSupportedNumber++;
                         }
                     }
-                } catch (NoSuchMethodError e) {
+                } catch (NoSuchMethodError | IllegalStateException e) {
                     Log.e(TAG, "Use the default number of interfaces - " + IRADIO_INTERFACE_NUMBER);
                     radioServiceSupportedNumber = IRADIO_INTERFACE_NUMBER;
                 }
