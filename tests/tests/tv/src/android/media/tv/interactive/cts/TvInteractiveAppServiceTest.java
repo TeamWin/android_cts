@@ -77,12 +77,14 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -852,11 +854,17 @@ public class TvInteractiveAppServiceTest {
     }
 
     @Test
-    public void testNotifyAdBuffer() throws Throwable {
+    public void testNotifyAdBufferReady() throws Throwable {
         linkTvView();
-        AdBuffer testAdBuffer = new AdBuffer(0, "mimeType", SharedMemory.create("test", 8), 0, 0, 0,
-                0);
-        mSession.notifyAdBuffer(testAdBuffer);
+        SharedMemory sm = SharedMemory.create("test", 5);
+        ByteBuffer byteBuffer = sm.mapReadWrite();
+        byte[] data = new byte[] {77, -25, 103, 96, 127};
+        byteBuffer.put(data);
+        byteBuffer.flip();
+        SharedMemory.unmap(byteBuffer);
+
+        AdBuffer testAdBuffer = new AdBuffer(0, "mimeType", sm, 0, 0, 0, 0);
+        mSession.notifyAdBufferReady(testAdBuffer);
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mAdBufferCount > 0);
 
@@ -868,6 +876,8 @@ public class TvInteractiveAppServiceTest {
         assertThat(mInputSession.mAdBuffer.getPresentationTimeUs())
                 .isEqualTo(testAdBuffer.getPresentationTimeUs());
         assertThat(mInputSession.mAdBuffer.getFlags()).isEqualTo(testAdBuffer.getFlags());
+
+        assertSharedMemoryDataEquals(mInputSession.mAdBuffer.getSharedMemory(), sm);
     }
 
     @Test
@@ -1571,5 +1581,22 @@ public class TvInteractiveAppServiceTest {
         } else {
             assertThat(actual).isEqualTo(expected);
         }
+    }
+
+    private static void assertSharedMemoryDataEquals(SharedMemory actual, SharedMemory expected)
+            throws Exception {
+        if (expected != null && actual != null) {
+            Assert.assertArrayEquals(getSharedMemoryData(actual), getSharedMemoryData(expected));
+        } else {
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
+    private static byte[] getSharedMemoryData(SharedMemory sm) throws Exception {
+        ByteBuffer byteBuffer = sm.mapReadOnly();
+        byte[] data = new byte[byteBuffer.remaining()];
+        byteBuffer.get(data);
+        SharedMemory.unmap(byteBuffer);
+        return data;
     }
 }
