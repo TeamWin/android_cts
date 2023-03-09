@@ -124,7 +124,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public String mInputId;
         public Long mTimeShiftStartPosition;
         public Long mTimeShiftCurrentPosition;
-        public String mTvMessageType;
+        public Integer mTvMessageType;
         public Bundle mTvMessageData;
         public AdBuffer mAdBuffer;
         public TvRecordingInfo mTvRecordingInfo;
@@ -540,7 +540,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         }
 
         @Override
-        public void onTvMessage(String type, Bundle data) {
+        public void onTvMessage(int type, Bundle data) {
             super.onTvMessage(type, data);
             mTvMessageCount++;
             mTvMessageType = type;
