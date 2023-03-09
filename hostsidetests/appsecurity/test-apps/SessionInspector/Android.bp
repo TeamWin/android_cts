@@ -29,6 +29,7 @@ android_test_helper_app {
         "general-tests",
     ],
 }
+
 android_test_helper_app {
     name: "CtsSessionInspectorAppB",
     defaults: ["cts_support_defaults"],

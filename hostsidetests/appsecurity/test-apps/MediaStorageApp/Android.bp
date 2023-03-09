@@ -24,7 +24,7 @@ android_test_helper_app {
     static_libs: [
         "compatibility-device-util-axt",
         "androidx.test.rules",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
     ],
     libs: ["android.test.base"],
     srcs: ["src/**/*.java"],
@@ -43,7 +43,7 @@ android_test_helper_app {
     static_libs: [
         "compatibility-device-util-axt",
         "androidx.test.rules",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
     ],
     libs: ["android.test.base"],
     srcs: ["src/**/*.java"],
@@ -63,7 +63,7 @@ android_test_helper_app {
     static_libs: [
         "compatibility-device-util-axt",
         "androidx.test.rules",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
     ],
     libs: ["android.test.base"],
     srcs: ["src/**/*.java"],

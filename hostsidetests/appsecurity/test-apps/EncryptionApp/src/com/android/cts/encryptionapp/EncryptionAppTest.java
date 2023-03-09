@@ -43,10 +43,11 @@ import android.os.strictmode.CredentialProtectedWhileLockedViolation;
 import android.os.strictmode.ImplicitDirectBootViolation;
 import android.os.strictmode.Violation;
 import android.provider.Settings;
-import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 import android.view.KeyEvent;
+
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.TestUtils;
 

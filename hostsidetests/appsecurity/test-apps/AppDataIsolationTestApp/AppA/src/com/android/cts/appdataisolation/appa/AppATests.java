@@ -45,11 +45,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.SystemProperties;
-import android.support.test.uiautomator.UiDevice;
 import android.view.KeyEvent;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.cts.appdataisolation.common.FileUtils;

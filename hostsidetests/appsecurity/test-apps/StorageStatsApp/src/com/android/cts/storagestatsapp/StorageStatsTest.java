@@ -53,10 +53,11 @@ import android.os.UserHandle;
 import android.os.storage.StorageManager;
 import android.provider.DeviceConfig;
 import android.provider.MediaStore;
-import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 import android.util.MutableLong;
+
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.storageapp.UtilsReceiver;
