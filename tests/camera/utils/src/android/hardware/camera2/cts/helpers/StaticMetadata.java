@@ -2728,6 +2728,14 @@ public class StaticMetadata {
     }
 
     /**
+     * Check if Jpeg/R format is supported
+     */
+    public boolean isJpegRSupported() {
+        int[] formats = getAvailableFormats(StaticMetadata.StreamDirection.Output);
+        return CameraTestUtils.contains(formats, ImageFormat.JPEG_R);
+    }
+
+    /**
      * Check if the dynamic black level is supported.
      *
      * <p>

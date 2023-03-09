@@ -17,7 +17,6 @@
 package android.hardware.camera2.cts;
 
 import static android.hardware.camera2.cts.CameraTestUtils.*;
-import static android.hardware.camera2.cts.helpers.AssertHelpers.assertArrayContains;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -29,6 +28,8 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.DngCreator;
+import android.hardware.camera2.params.DynamicRangeProfiles;
+import android.hardware.camera2.params.OutputConfiguration;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.ImageReader;
@@ -181,6 +182,93 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
                 closeDevice();
                 closeImageReader();
             }
+        }
+    }
+
+    /**
+     * Test Jpeg/R capture along with preview for each camera.
+     */
+    @Test
+    public void testJpegRCapture() throws Exception {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+            try {
+                Log.i(TAG, "Testing Jpeg/R for Camera " + mCameraIdsUnderTest[i]);
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isJpegRSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                            " does not support Jpeg/R, skipping");
+                    continue;
+                }
+
+                openDevice(mCameraIdsUnderTest[i]);
+
+                // Check the maximum supported size.
+                List<Size> orderedJpegRSizes = CameraTestUtils.getSortedSizesForFormat(
+                        mCameraIdsUnderTest[i], mCameraManager, ImageFormat.JPEG_R, null/*bound*/);
+                Size maxJpegRSize = orderedJpegRSizes.get(0);
+                stillJpegRTestByCamera(ImageFormat.JPEG_R, maxJpegRSize);
+            } finally {
+                closeDevice();
+                closeImageReader();
+            }
+        }
+    }
+
+    /**
+     * Issue a still capture and validate the Jpeg/R output.
+     */
+    private void stillJpegRTestByCamera(int format, Size stillSize) throws Exception {
+        assertTrue(format == ImageFormat.JPEG_R);
+
+        Size maxPreviewSz = mOrderedPreviewSizes.get(0);
+        if (VERBOSE) {
+            Log.v(TAG, "Testing Jpeg/R with size " + stillSize.toString()
+                    + ", preview size " + maxPreviewSz);
+        }
+
+        // prepare capture and start preview.
+        CaptureRequest.Builder previewBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        CaptureRequest.Builder stillBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+        SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
+        SimpleImageReaderListener imageListener = new SimpleImageReaderListener();
+
+        updatePreviewSurface(maxPreviewSz);
+        createImageReader(stillSize, format, MAX_READER_IMAGES, imageListener);
+
+        List<OutputConfiguration> outputConfigs = new ArrayList<>();
+        OutputConfiguration previewConfig = new OutputConfiguration(mPreviewSurface);
+        previewConfig.setDynamicRangeProfile(DynamicRangeProfiles.HLG10);
+        outputConfigs.add(previewConfig);
+        outputConfigs.add(new OutputConfiguration(mReaderSurface));
+        mSessionListener = new BlockingSessionCallback();
+        mSession = configureCameraSessionWithConfig(mCamera, outputConfigs, mSessionListener,
+                mHandler);
+
+        previewBuilder.addTarget(mPreviewSurface);
+        stillBuilder.addTarget(mReaderSurface);
+
+        // Start preview.
+        mSession.setRepeatingRequest(previewBuilder.build(), resultListener, mHandler);
+
+        // Capture a few Jpeg/R images and check whether they are valid jpegs.
+        for (int i = 0; i < MAX_READER_IMAGES; i++) {
+            CaptureRequest request = stillBuilder.build();
+            mSession.capture(request, resultListener, mHandler);
+            assertNotNull(resultListener.getCaptureResultForRequest(request,
+                    NUM_RESULTS_WAIT_TIMEOUT));
+            Image image = imageListener.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
+            assertNotNull("Unable to acquire next image", image);
+            CameraTestUtils.validateImage(image, stillSize.getWidth(), stillSize.getHeight(),
+                    format, null /*filePath*/);
+
+            // Free image resources
+            image.close();
         }
     }
 
