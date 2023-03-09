@@ -22,10 +22,8 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Insets;
@@ -38,8 +36,8 @@ import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
+import android.os.Messenger;
 import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
 import android.support.test.uiautomator.By;
@@ -102,11 +100,13 @@ public class CapturedActivity extends Activity {
     private volatile boolean mOnEmbedded;
     private volatile boolean mOnWatch;
     private CountDownLatch mCountDownLatch;
-    private boolean mProjectionServiceBound = false;
     private Point mLogicalDisplaySize = new Point();
     private long mMinimumCaptureDurationMs = 0;
 
     private AtomicBoolean mIsSharingScreenDenied;
+
+    private int mResultCode;
+    private Intent mResultData;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -137,12 +137,13 @@ public class CapturedActivity extends Activity {
                 (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
         mCountDownLatch = new CountDownLatch(1);
-        bindMediaProjectionService();
 
         KeyguardManager keyguardManager = getSystemService(KeyguardManager.class);
         if (keyguardManager != null) {
             keyguardManager.requestDismissKeyguard(this, null);
         }
+
+        startActivityForResult(mProjectionManager.createScreenCaptureIntent(), PERMISSION_CODE);
     }
 
     public void setLogicalDisplaySize(Point logicalDisplaySize) {
@@ -160,24 +161,24 @@ public class CapturedActivity extends Activity {
         }
     }
 
-    private ServiceConnection mConnection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            startActivityForResult(mProjectionManager.createScreenCaptureIntent(), PERMISSION_CODE);
-            mProjectionServiceBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            mProjectionServiceBound = false;
-        }
-    };
-
-    private void bindMediaProjectionService() {
-        Intent intent = new Intent(this, LocalMediaProjectionService.class);
-        startService(intent);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    /**
+     * Request to start a foreground service with type "mediaProjection",
+     * it's free to run in either the same process or a different process in the package;
+     * passing a messenger object to send signal back when the foreground service is up.
+     */
+    private void startMediaProjectionService() {
+        final Messenger messenger = new Messenger(new Handler(Looper.getMainLooper(), msg -> {
+            switch (msg.what) {
+                case LocalMediaProjectionService.MSG_START_FOREGROUND_DONE:
+                    createMediaProjection();
+                    return true;
+            }
+            Log.e(TAG, "Unknown message from the LocalMediaProjectionService: " + msg.what);
+            return false;
+        }));
+        final Intent intent = new Intent(this, LocalMediaProjectionService.class)
+                .putExtra(LocalMediaProjectionService.EXTRA_MESSENGER, messenger);
+        startForegroundService(intent);
     }
 
     @Override
@@ -187,10 +188,6 @@ public class CapturedActivity extends Activity {
         if (mMediaProjection != null) {
             mMediaProjection.stop();
             mMediaProjection = null;
-        }
-        if (mProjectionServiceBound) {
-            unbindService(mConnection);
-            mProjectionServiceBound = false;
         }
         restoreSettings();
     }
@@ -209,7 +206,13 @@ public class CapturedActivity extends Activity {
             return;
         }
         Log.d(TAG, "onActivityResult");
-        mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
+        mResultCode = resultCode;
+        mResultData = data;
+        startMediaProjectionService();
+    }
+
+    private void createMediaProjection() {
+        mMediaProjection = mProjectionManager.getMediaProjection(mResultCode, mResultData);
         mMediaProjection.registerCallback(new MediaProjectionCallback(), null);
         mCountDownLatch.countDown();
     }

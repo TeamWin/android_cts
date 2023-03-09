@@ -50,6 +50,7 @@ import android.util.ArrayMap;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.internal.util.ArrayUtils;
 
@@ -365,14 +366,18 @@ public final class ActivityManagerForegroundServiceTypeTest {
         final String testPackageName = TEST_PKG_NAME_TARGET;
         TestPermissionInfo[] allOfPermissions = null;
         TestPermissionInfo[] anyOfPermissions = null;
-        try {
+        final ForegroundServiceTypePolicy policy =
+                ForegroundServiceTypePolicy.getDefaultPolicy();
+        final ForegroundServiceTypePolicyInfo info = policy.getForegroundServiceTypePolicyInfo(
+                type, ServiceInfo.FOREGROUND_SERVICE_TYPE_NONE);
+        final String permFlag = info.getPermissionEnforcementFlagForTest();
+        try (DeviceConfigStateHelper helper = new DeviceConfigStateHelper("activity_manager")) {
             // Enable the permission check.
             enablePermissionEnforcement(true, testPackageName);
+            if (permFlag != null) {
+                helper.set(permFlag, "true");
+            }
 
-            final ForegroundServiceTypePolicy policy =
-                    ForegroundServiceTypePolicy.getDefaultPolicy();
-            final ForegroundServiceTypePolicyInfo info = policy.getForegroundServiceTypePolicyInfo(
-                    type, ServiceInfo.FOREGROUND_SERVICE_TYPE_NONE);
             assertEquals(type, info.getForegroundServiceType());
             allOfPermissions = triagePermissions(
                     info.getRequiredAllOfPermissionsForTest(mTargetContext).orElse(null));
@@ -397,6 +402,15 @@ public final class ActivityManagerForegroundServiceTypeTest {
                         startForegroundServiceWithType(TEST_COMP_TARGET_FGS_ALL_TYPE, type));
                 stopService(TEST_COMP_TARGET_FGS_ALL_TYPE, null);
                 resetPermissions(anyOfPermissions, testPackageName);
+
+                // If there is a feature flag to turn the permission check off, it should succeed.
+                if (permFlag != null) {
+                    helper.set(permFlag, "false");
+                    grantPermissions(allOfPermissions, testPackageName);
+                    startAndStopFgsType(TEST_COMP_TARGET_FGS_ALL_TYPE, type, null);
+                    resetPermissions(anyOfPermissions, testPackageName);
+                    helper.set(permFlag, "true");
+                }
 
                 // If we grant any of them, it should succeed.
                 for (TestPermissionInfo perm: anyOfPermissions) {
