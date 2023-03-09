@@ -30,6 +30,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony.Carriers;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -45,20 +46,12 @@ import org.junit.runner.RunWith;
 import java.util.Map;
 
 /**
- * Unit tests for the APN database exposed by {@link Carriers}.
- *
- * <p>Unlike ApnDatabaseTest.java, this is intended to test APN insertion with {@link
- * android.Manifest.permission.READ_PHONE_STATE} and makes use of {@link
- * android.Manifest.permission.WRITE_APN_SETTINGS} instead of carrier privileges. This covers a
- * class of errors where APIs that require READ_PHONE_STATE are called during APN updates. In these
- * cases, if a caller has READ_PHONE_STATE, it is important to ensure that the binder identity is
- * appropriately cleared or handled. Otherwise, the calling UID may not match the calling package
- * during permission checks.
+ * Tests for the APN database exposed by {@link Carriers}.
  */
 @ApiTest(apis = {"android.provider.Telephony.Carriers#CONTENT_URI"})
 @RunWith(AndroidJUnit4.class)
-public class ApnPermissionTest {
-    private static final String TAG = "ApnPermissionTest";
+public class ApnTest {
+    private static final String TAG = "ApnTest";
 
     private static final Uri CARRIER_TABLE_URI = Carriers.CONTENT_URI;
 
@@ -69,7 +62,6 @@ public class ApnPermissionTest {
     private static final String MMSC = "mmsc";
     private static final String MMSPROXY = "mmsproxy";
     private static final String MMSPORT = "mmsport";
-    private static final String NUMERIC = "numeric";
     private static final String USER = "user";
     private static final String PASSWORD = "password";
     private static final String AUTH_TYPE = "auth_type";
@@ -79,6 +71,7 @@ public class ApnPermissionTest {
     private static final String CARRIER_ENABLED = "true";
     private static final String NETWORK_TYPE_BITMASK = "0";
     private static final String BEARER = "0";
+    private static final String CARRIER_ID = String.valueOf(TelephonyManager.UNKNOWN_CARRIER_ID);
 
     private static final Map<String, String> APN_MAP =
             Map.ofEntries(
@@ -89,7 +82,6 @@ public class ApnPermissionTest {
                     entry(Carriers.MMSC, MMSC),
                     entry(Carriers.MMSPROXY, MMSPROXY),
                     entry(Carriers.MMSPORT, MMSPORT),
-                    entry(Carriers.NUMERIC, NUMERIC),
                     entry(Carriers.USER, USER),
                     entry(Carriers.PASSWORD, PASSWORD),
                     entry(Carriers.AUTH_TYPE, AUTH_TYPE),
@@ -98,10 +90,13 @@ public class ApnPermissionTest {
                     entry(Carriers.ROAMING_PROTOCOL, ROAMING_PROTOCOL),
                     entry(Carriers.CARRIER_ENABLED, CARRIER_ENABLED),
                     entry(Carriers.NETWORK_TYPE_BITMASK, NETWORK_TYPE_BITMASK),
-                    entry(Carriers.BEARER, BEARER));
+                    entry(Carriers.BEARER, BEARER),
+                    entry(Carriers.CARRIER_ID, CARRIER_ID));
 
-    private static final String TEST_APN_SELECTION = Carriers.NUMERIC + "=?";
-    private static final String[] TEST_APN_SELECTION_ARGS = {NUMERIC};
+    // make sure the numeric is empty aka default value
+    private static final String TEST_APN_SELECTION = Carriers.NUMERIC + "= '' AND "
+            + Carriers.CARRIER_ID + "=?";
+    private static final String[] TEST_APN_SELECTION_ARGS = {CARRIER_ID};
     private static final String[] TEST_APN_PROJECTION =
             APN_MAP.keySet().toArray(new String[APN_MAP.size()]);
 
@@ -136,6 +131,14 @@ public class ApnPermissionTest {
         }
     }
 
+    /* The CTS tests are intended to test APN insertion with {@link
+     * android.Manifest.permission.READ_PHONE_STATE} and makes use of {@link
+     * android.Manifest.permission.WRITE_APN_SETTINGS} instead of carrier privileges. This covers
+     * a class of errors where APIs that require READ_PHONE_STATE are called during APN updates.
+     * In these cases, if a caller has READ_PHONE_STATE, it is important to ensure that the binder
+     * identity is appropriately cleared or handled. Otherwise, the calling UID may not match
+     * the calling package during permission checks.
+     */
     @Test
     public void testPermissionCheckForApnInsertion_success() {
         try {
@@ -279,7 +282,9 @@ public class ApnPermissionTest {
     }
 
     /**
-     * Inserts the test APN and validates that it was inserted into the APN database.
+     * Verify that the test APN setting can be inserted, queried, and validated
+     * by {@link Carriers#CARRIER_ID} without {@link Carriers#NUMERIC} when
+     * the permission is granted
      *
      * @param grantPermission whether to grant WRITE_APN_SETTINGS prior to insertion
      */
