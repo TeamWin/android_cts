@@ -155,7 +155,7 @@ public class TvInputServiceTest {
         private Integer mTimeShiftMode;
         private float[] mTimeShiftSpeeds;
         private Boolean mCueingMessageAvailable;
-        private String mTvMessageType;
+        private Integer mTvMessageType;
         private Bundle mTvMessageData;
 
         @Override
@@ -248,7 +248,7 @@ public class TvInputServiceTest {
         }
 
         @Override
-        public void onTvMessage(String inputId, String type, Bundle data) {
+        public void onTvMessage(String inputId, int type, Bundle data) {
             super.onTvMessage(inputId, type, data);
             mTvMessageCount++;
             mTvMessageData = data;

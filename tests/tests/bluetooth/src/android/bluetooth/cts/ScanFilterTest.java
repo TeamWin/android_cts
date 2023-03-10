@@ -342,7 +342,7 @@ public class ScanFilterTest {
                 .setTdsFlags(tdsFlag, tdsFlagMask)
                 .setTransportData(transportData, transportDataMask).build();
 
-        if (mBluetoothAdapter.isOffloadedTransportDiscoveryDataScanSupported()
+        if (mBluetoothAdapter.getOffloadedTransportDiscoveryDataScanSupported()
                 != FEATURE_SUPPORTED) {
             assertThrows(IllegalArgumentException.class,
                     () -> mFilterBuilder.setTransportBlockFilter(transportBlockFilter));

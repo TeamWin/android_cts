@@ -143,8 +143,8 @@ public class StubTvInputService2 extends TvInputService {
         }
 
         @Override
-        public void onAdBuffer(AdBuffer buffer) {
-            super.onAdBuffer(buffer);
+        public void onAdBufferReady(AdBuffer buffer) {
+            super.onAdBufferReady(buffer);
             mAdBufferCount++;
             mAdBuffer = buffer;
         }

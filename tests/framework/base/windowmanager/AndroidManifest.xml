@@ -216,6 +216,12 @@
              android:authorities="android.server.wm.testjournalprovider"
              android:exported="true"/>
 
+        <!--compat tests-->
+        <activity android:name="android.server.wm.CompatChangeTests$TestPortraitActivityWithView"
+            android:maxAspectRatio="1.5"
+            android:resizeableActivity="false"
+            android:screenOrientation="portrait"/>
+
         <!--intent tests-->
         <activity android:name="android.server.wm.intent.Activities$RegularActivity"/>
         <activity android:name="android.server.wm.intent.Activities$SingleTopActivity"
@@ -627,6 +633,13 @@
                   android:exported="true"
                   android:noHistory="true"
                   android:theme="@style/Floating.NoMove"/>
+
+        <activity android:name="android.server.wm.scvh.SurfaceSyncGroupActivity"
+            android:screenOrientation="locked"
+            android:turnScreenOn="true"
+            android:theme="@style/WhiteBackgroundTheme"
+            android:exported="true">
+        </activity>
 
         <service android:name="android.server.wm.scvh.EmbeddedSCVHService"
             android:process="com.android.server.wm.scvh.embedded_process" />

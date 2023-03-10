@@ -32,14 +32,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import com.android.test.inputinjection.IInputInjectionTestCallbacks
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
 
 /**
  * Test case for injecting input through various means.
@@ -53,8 +53,6 @@ import kotlin.test.fail
 class InputInjectionTest {
 
     companion object {
-        const val WAIT_FOR_FOCUS_TIMEOUT_MILLS = 5000L
-
         const val INPUT_INJECTION_PACKAGE = "com.android.test.inputinjection"
         const val INPUT_INJECTION_ACTIVITY =
             "$INPUT_INJECTION_PACKAGE.InputInjectionActivity"
@@ -73,6 +71,7 @@ class InputInjectionTest {
     private lateinit var instrumentation: Instrumentation
     private lateinit var targetContext: Context
     private lateinit var activityManager: ActivityManager
+    private lateinit var windowFocusLatch: CountDownLatch
 
     @Before
     fun setUp() {
@@ -80,6 +79,7 @@ class InputInjectionTest {
         targetContext = instrumentation.targetContext
         activityManager = instrumentation.context
             .getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        windowFocusLatch = CountDownLatch(1)
     }
 
     /**
@@ -197,7 +197,7 @@ class InputInjectionTest {
     /** Synchronously starts the test activity and waits for it to gain window focus. */
     private fun startInjectionActivitySync(callback: IInputInjectionTestCallbacks): AutoCloseable {
         targetContext.startActivity(Intent().apply {
-            `package` = INPUT_INJECTION_PACKAGE
+            component = INPUT_INJECTION_COMPONENT
             action = Intent.ACTION_MAIN
             addCategory(Intent.CATEGORY_LAUNCHER)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -206,7 +206,8 @@ class InputInjectionTest {
             })
         })
 
-        waitForActivityWindowFocus(INPUT_INJECTION_COMPONENT)
+        assertTrue(windowFocusLatch.await(5, TimeUnit.SECONDS),
+                "Timed out waiting for $INPUT_INJECTION_COMPONENT window to be focused")
 
         return AutoCloseable {
             SystemUtil.runWithShellPermissionIdentity {
@@ -226,17 +227,20 @@ class InputInjectionTest {
             MotionEvent.obtain(downTime, upTime, MotionEvent.ACTION_UP,
                 bounds.centerX().toFloat(), bounds.centerY().toFloat(), 0))
     }
-}
 
-private fun withCallbacks(
-    onKey: (KeyEvent) -> Unit = InputInjectionTest.expectNoEvent,
-    onTouch: (MotionEvent) -> Unit = InputInjectionTest.expectNoEvent,
-    onTestResult: (List<String?>) -> Unit = InputInjectionTest.expectNoInjectionResult
-): IInputInjectionTestCallbacks {
-    return object : IInputInjectionTestCallbacks.Stub() {
-        override fun onKeyEvent(ev: KeyEvent?) = onKey(ev!!)
-        override fun onTouchEvent(ev: MotionEvent?) = onTouch(ev!!)
-        override fun onTestInjectionFromApp(errors: List<String?>) = onTestResult(errors)
+    private fun withCallbacks(
+            onKey: (KeyEvent) -> Unit = InputInjectionTest.expectNoEvent,
+            onTouch: (MotionEvent) -> Unit = InputInjectionTest.expectNoEvent,
+            onTestResult: (List<String?>) -> Unit = InputInjectionTest.expectNoInjectionResult
+    ): IInputInjectionTestCallbacks {
+        return object : IInputInjectionTestCallbacks.Stub() {
+            override fun onKeyEvent(ev: KeyEvent?) = onKey(ev!!)
+            override fun onTouchEvent(ev: MotionEvent?) = onTouch(ev!!)
+            override fun onTestInjectionFromApp(errors: List<String?>) = onTestResult(errors)
+            override fun onWindowFocused() {
+                windowFocusLatch.countDown()
+            }
+        }
     }
 }
 
@@ -244,22 +248,4 @@ private fun getActivityBounds(component: ComponentName): Rect {
     val wms = WindowManagerState().apply { computeState() }
     val activity = wms.getActivity(component) ?: fail("Failed to get activity for $component")
     return activity.bounds ?: fail("Failed to get bounds for activity $component")
-}
-
-private fun waitForActivityWindowFocus(component: ComponentName) {
-    val waitUntil = SystemClock.uptimeMillis() + InputInjectionTest.WAIT_FOR_FOCUS_TIMEOUT_MILLS
-    while (true) {
-        val wms = WindowManagerState().apply { computeState() }
-        if (wms.isWindowFocused(component)) return
-        check(SystemClock.uptimeMillis() <= waitUntil) {
-            "Timed out waiting for $component window to be focused"
-        }
-        Thread.sleep(100 /*millis*/)
-    }
-}
-
-private fun WindowManagerState.isWindowFocused(component: ComponentName): Boolean {
-    return focusedApp != null && focusedWindow != null &&
-            component == ComponentName.unflattenFromString(focusedApp)!! &&
-            component == ComponentName.unflattenFromString(focusedWindow)!!
 }
