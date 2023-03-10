@@ -300,6 +300,7 @@ public class ContentResolverTest extends AndroidTestCase {
         }
     }
 
+    @AppModeFull
     public void testGetTypeAnonymous() {
         String type1 = mContentResolver.getType(RESTRICTED_TABLE1_URI);
         assertTrue(type1.startsWith(ContentResolver.CURSOR_DIR_BASE_TYPE, 0));
