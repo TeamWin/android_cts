@@ -80,7 +80,7 @@ public class ImsCallingTest extends ImsCallingBase {
     private TestImsCallSessionImpl mConfCallSession = null;
 
     // the timeout to wait result in milliseconds
-    private static final int WAIT_UPDATE_TIMEOUT_MS = 4000;
+    private static final int WAIT_UPDATE_TIMEOUT_MS = 3000;
 
     private static TelephonyManager sTelephonyManager;
 
@@ -1117,6 +1117,8 @@ public class ImsCallingTest extends ImsCallingBase {
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
 
         waitForCallSessionToNotBe(null);
+        TimeUnit.MILLISECONDS.sleep(WAIT_UPDATE_TIMEOUT_MS);
+
         TestImsCallSessionImpl callSession =
                 sServiceConnector.getCarrierService().getMmTelFeature().getImsCallsession();
 
@@ -1142,6 +1144,7 @@ public class ImsCallingTest extends ImsCallingBase {
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
 
         waitForCallSessionToNotBe(null);
+        TimeUnit.MILLISECONDS.sleep(WAIT_UPDATE_TIMEOUT_MS);
         callSession = sServiceConnector.getCarrierService().getMmTelFeature().getImsCallsession();
 
         isCallActive(call, callSession);
