@@ -2024,6 +2024,101 @@ public class ActivityManagerFgsBgStartTest {
     }
 
     /**
+     * Test overlapped BroadcastOptions.setTemporaryAppAllowlist().
+     * This is similar to test case testOverlappedTempAllowList which is
+     * PowerExemptionManager.addToTemporaryAllowList().
+     */
+    @Test
+    public void testOverlappedTempAllowListByBroadcastOptions() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        ApplicationInfo app2Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP2, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        WatchUidRunner uid2Watcher = new WatchUidRunner(mInstrumentation, app2Info.uid,
+                WAITFOR_MSEC);
+        try {
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, null);
+            WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            runWithShellPermissionIdentity(()-> {
+                final BroadcastOptions options = BroadcastOptions.makeBasic();
+                // setTemporaryAppAllowlist API requires
+                // START_FOREGROUND_SERVICES_FROM_BACKGROUND permission.
+                options.setTemporaryAppAllowlist(10000,
+                        TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_ALLOWED, REASON_UNKNOWN,
+                        "10seconds_br_options");
+                // Must use Shell to issue this command because Shell has
+                // START_FOREGROUND_SERVICES_FROM_BACKGROUND permission.
+                CommandReceiver.sendCommandWithBroadcastOptions(mContext,
+                        CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                        PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null,
+                        options.toBundle());
+            });
+
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            waiter.doWait(WAITFOR_MSEC);
+            // Stop the FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_CACHED_EMPTY);
+
+            Thread.sleep(5000);
+            // second BroadcastOptions.setTemporaryAppAllowlist() overlap with
+            // first one.
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            runWithShellPermissionIdentity(()-> {
+                final BroadcastOptions options = BroadcastOptions.makeBasic();
+                // setTemporaryAppAllowlist API requires
+                // START_FOREGROUND_SERVICES_FROM_BACKGROUND permission.
+                options.setTemporaryAppAllowlist(10000,
+                        TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_ALLOWED, REASON_UNKNOWN,
+                        "10seconds_br_options_2");
+                // Must use Shell to issue this command because Shell has
+                // START_FOREGROUND_SERVICES_FROM_BACKGROUND permission.
+                CommandReceiver.sendCommandWithBroadcastOptions(mContext,
+                        CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                        PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null,
+                        options.toBundle());
+            });
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            waiter.doWait(WAITFOR_MSEC);
+            // Stop the FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_CACHED_EMPTY);
+
+            Thread.sleep(5000);
+            // The first BroadcastOptions.setTemporaryAppAllowlist()'s 10000ms duration has expired.
+            // Now FGS start is allowed by second BroadcastOption's 10000ms duration.
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            waiter.doWait(WAITFOR_MSEC);
+            // Stop the FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+        } finally {
+            uid1Watcher.finish();
+            uid2Watcher.finish();
+            // Sleep 10 seconds to let the temp allowlist expire so it won't affect next test case.
+            SystemClock.sleep(10000);
+        }
+    }
+
+    /**
      * IActivityManager.startService() is called directly (does not go through
      * {@link Context#startForegroundService(Intent)}, a spoofed packageName "com.google.android.as"
      * is used as callingPackage. Although "com.google.android.as" is allowlisted to start
