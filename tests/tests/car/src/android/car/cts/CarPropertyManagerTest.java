@@ -6945,6 +6945,20 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testPermissionControlDisplayUnitsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    assertWithMessage(
+                            "There must be no exposed properties when only "
+                                    + "PERMISSION_CONTROL_DISPLAY_UNITS is granted. Found: "
+                                    + mCarPropertyManager.getPropertyList())
+                            .that(mCarPropertyManager.getPropertyList())
+                            .isEmpty();
+                },
+                Car.PERMISSION_CONTROL_DISPLAY_UNITS);
+    }
+
+    @Test
     public void testPermissionReadAdasSettingsGranted() {
         runWithShellPermissionIdentity(
                 () -> {
