@@ -64,6 +64,7 @@ import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
@@ -87,6 +88,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
+@Presubmit
 public class ActivityManagerFgsBgStartTest {
     private static final String TAG = ActivityManagerFgsBgStartTest.class.getName();
 
