@@ -131,6 +131,7 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This class performs end-to-end testing of the accessibility feature by
@@ -1380,6 +1381,51 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
                 mActivity.getResources().getResourceName(R.id.innerContainerView))).isNotEmpty();
         assertThat(sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(
                 mActivity.getResources().getResourceName(R.id.innerView))).isNotEmpty();
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.view.accessibility.AccessibilityManager#isRequestFromAccessibilityTool"})
+    public void testAccessibilityDataSensitive_requestIsFromAccessibilityTool_TrueForTool() {
+        checkIsRequestFromAccessibilityTool(true);
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.view.accessibility.AccessibilityManager#isRequestFromAccessibilityTool"})
+    public void testAccessibilityDataSensitive_requestIsFromAccessibilityTool_FalseForNonTool() {
+        checkIsRequestFromAccessibilityTool(false);
+    }
+
+    private void checkIsRequestFromAccessibilityTool(boolean serviceIsAccessibilityTool) {
+        setAccessibilityTool(serviceIsAccessibilityTool);
+        final View view = mActivity.findViewById(R.id.listview);
+        final String viewId = mActivity.getResources().getResourceName(R.id.listview);
+        final AccessibilityManager accessibilityManager =
+                (AccessibilityManager) sInstrumentation.getContext().getSystemService(
+                        Service.ACCESSIBILITY_SERVICE);
+
+        final Object waitLock = new Object();
+        final AtomicReference<Boolean> fromTool = new AtomicReference<>();
+        view.setAccessibilityDelegate(new View.AccessibilityDelegate() {
+            @Override
+            public void onInitializeAccessibilityNodeInfo(View host,
+                    AccessibilityNodeInfo info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                synchronized (waitLock) {
+                    fromTool.set(accessibilityManager.isRequestFromAccessibilityTool());
+                    waitLock.notifyAll();
+                }
+            }
+        });
+
+        // Trigger node creation from the service-under-test (UiAutomation).
+        sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(viewId);
+
+        TestUtils.waitOn(waitLock,
+                () -> fromTool.get() != null && fromTool.get() == serviceIsAccessibilityTool,
+                DEFAULT_TIMEOUT_MS,
+                "Expected isRequestFromAccessibilityTool to be " + serviceIsAccessibilityTool);
     }
 
     @Test
