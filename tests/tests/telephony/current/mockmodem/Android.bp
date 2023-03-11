@@ -23,7 +23,6 @@ android_library {
     ],
     libs: [
         "android-support-annotations",
-        "telephony-common",
     ],
     static_libs: [
         "androidx.test.rules",
@@ -35,7 +34,6 @@ android_library {
         "android.hardware.radio.messaging-V2-java",
         "android.hardware.radio.voice-V2-java",
         "android.hardware.radio.ims-V1-java",
-        "android.hardware.radio.satellite-V1-java",
         "telephony-cts-utils",
     ],
 
