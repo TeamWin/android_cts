@@ -54,6 +54,7 @@ java_test_host {
         "src/**/vibrator/*.java",
         "src/**/wifi/*.java",
         "src/**/incremental/*.java",
+        "src/**/memorysafety/*.java",
     ],
 
     test_suites: [

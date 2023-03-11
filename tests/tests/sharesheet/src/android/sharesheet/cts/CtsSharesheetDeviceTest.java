@@ -65,6 +65,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -219,7 +221,16 @@ public class CtsSharesheetDeviceTest {
     @Test
     public void bulkTest1() {
         if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
-        try {
+
+        final CountDownLatch appStarted = new CountDownLatch(1);
+        final AtomicReference<Intent> targetLaunchIntent = new AtomicReference<>();
+
+        CtsSharesheetDeviceActivity.setOnIntentReceivedConsumer(intent -> {
+            targetLaunchIntent.set(intent);
+            appStarted.countDown();
+        });
+
+        runAndExecuteCleanupBeforeAnyThrow(() -> {
             launchSharesheet(createShareIntent(false /* do not test preview */,
                     0 /* do not test EIIs */,
                     0 /* do not test ECTs */,
@@ -230,24 +241,22 @@ public class CtsSharesheetDeviceTest {
             showsAppAndIntentFilterLabel();
             isChooserTargetServiceDirectShareDisabled();
 
-            CountDownLatch appStartedLatch = prepareAppStartedEvaluation();
-
             // Must be run last, partial completion closes the Sharesheet
             firesIntentSenderWithExtraChosenComponent();
 
-            appStartedLatch.await(1000, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            // No-op
-        } finally {
-            // The Sharesheet may or may not be open depending on test success, close it if it is
+            appStarted.await(1000, TimeUnit.MILLISECONDS);
+            assertEquals(CTS_DATA_TYPE, targetLaunchIntent.get().getType());
+            assertEquals(Intent.ACTION_SEND, targetLaunchIntent.get().getAction());
+        }, () -> {
+            // The Sharesheet may or may not be open depending on test success, close it if it is.
             closeSharesheetIfNeeded();
-        }
+            });
     }
 
     @Test
     public void bulkTest2() {
         if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
-        try {
+        runAndExecuteCleanupBeforeAnyThrow(() -> {
             addShortcuts(1);
             launchSharesheet(createShareIntent(false /* do not test preview */,
                     MAX_EXTRA_INITIAL_INTENTS_SHOWN + 1 /* test EIIs at 1 above cap */,
@@ -259,12 +268,10 @@ public class CtsSharesheetDeviceTest {
             showsExtraChooserTargets();
             isSharingShortcutDirectShareEnabled();
 
-        } catch (Exception e) {
-            // No-op
-        } finally {
+        }, () -> {
             closeSharesheet();
             clearShortcuts();
-        }
+            });
     }
 
     /**
@@ -274,18 +281,14 @@ public class CtsSharesheetDeviceTest {
     @Test
     public void contentPreviewTest() {
         if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
-        try {
+        runAndExecuteCleanupBeforeAnyThrow(() -> {
             launchSharesheet(createShareIntent(true /* test content preview */,
                     0 /* do not test EIIs */,
                     0 /* do not test ECTs */,
                     null /*add custom action*/));
             showsContentPreviewTitle();
             showsContentPreviewText();
-        } catch (Exception e) {
-            // No-op
-        } finally {
-            closeSharesheet();
-        }
+        }, () -> closeSharesheet());
     }
 
     // Launch the chooser with an EXTRA_INTENT of type "test/cts" and EXTRA_ALTERNATE_INTENTS with
@@ -293,28 +296,27 @@ public class CtsSharesheetDeviceTest {
     // that target, then in the refinement process, select the "test/cts_alternate" option and
     // then verify that the alternate type is seen by the activity in the end.
     @Test
-    public void testRefinementIntentSender() throws InterruptedException {
+    public void testRefinementIntentSender() {
         if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
 
         final CountDownLatch broadcastInvoked = new CountDownLatch(1);
         final CountDownLatch chooserCallbackInvoked = new CountDownLatch(1);
         final CountDownLatch appStarted = new CountDownLatch(1);
 
+        final AtomicLong chooserCallbackCountdownAtRefinementStart = new AtomicLong();
+        final AtomicReference<Intent> refinementRequest = new AtomicReference<>();
+
         BroadcastReceiver refinementReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                assertEquals(1, chooserCallbackInvoked.getCount());
+                chooserCallbackCountdownAtRefinementStart.set(chooserCallbackInvoked.getCount());
+                refinementRequest.set(intent);
                 // Call back the sharesheet to complete the share.
                 ResultReceiver resultReceiver = intent.getParcelableExtra(
                         Intent.EXTRA_RESULT_RECEIVER, ResultReceiver.class);
 
-                Intent mainIntent = intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
-                assertEquals(CTS_DATA_TYPE, mainIntent.getType());
-
                 Intent[] alternates = intent.getParcelableArrayExtra(
                         Intent.EXTRA_ALTERNATE_INTENTS, Intent.class);
-                assertEquals(1, alternates.length);
-                assertEquals(CTS_ALTERNATE_DATA_TYPE, alternates[0].getType());
 
                 Bundle bundle = new Bundle();
                 bundle.putParcelable(Intent.EXTRA_INTENT, alternates[0]);
@@ -331,14 +333,20 @@ public class CtsSharesheetDeviceTest {
             }
         };
 
+        final AtomicReference<String> dataTypeTargetLaunchedWith = new AtomicReference<>();
+
         CtsSharesheetDeviceActivity.setOnIntentReceivedConsumer(intent -> {
             // Ensure that the app was started with the alternate type chosen by refinement.
-            assertEquals(CTS_ALTERNATE_DATA_TYPE, intent.getType());
+            dataTypeTargetLaunchedWith.set(intent.getType());
             appStarted.countDown();
         });
 
         mContext.registerReceiver(chooserCallbackReceiver,
                 new IntentFilter(ACTION_INTENT_SENDER_FIRED_ON_CLICK),
+                Context.RECEIVER_EXPORTED);
+        mContext.registerReceiver(
+                refinementReceiver,
+                new IntentFilter(CHOOSER_REFINEMENT_BROADCAST_ACTION),
                 Context.RECEIVER_EXPORTED);
 
         PendingIntent refinement = PendingIntent.getBroadcast(
@@ -348,30 +356,38 @@ public class CtsSharesheetDeviceTest {
                         .setPackage(mContext.getPackageName()),
                 PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
 
-        try {
+        runAndExecuteCleanupBeforeAnyThrow(() -> {
             Intent shareIntent = createShareIntent(false, 0, 0, null);
             shareIntent.putExtra(Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER,
                     refinement.getIntentSender());
             Intent alternateIntent = new Intent(Intent.ACTION_SEND);
             alternateIntent.setType(CTS_ALTERNATE_DATA_TYPE);
             shareIntent.putExtra(Intent.EXTRA_ALTERNATE_INTENTS, new Intent[] {alternateIntent});
-            mContext.registerReceiver(
-                    refinementReceiver, new IntentFilter(CHOOSER_REFINEMENT_BROADCAST_ACTION),
-                    Context.RECEIVER_EXPORTED);
             launchSharesheet(shareIntent);
             findTextContains(mAppLabel).click();
             assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
             assertTrue(chooserCallbackInvoked.await(1000, TimeUnit.MILLISECONDS));
             assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
-        } finally {
+
+            assertEquals(1, chooserCallbackCountdownAtRefinementStart.get());
+            Intent mainIntentForRefinement =
+                    refinementRequest.get().getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
+            assertEquals(CTS_DATA_TYPE, mainIntentForRefinement.getType());
+            Intent[] alternatesForRefinement =
+                    refinementRequest.get().getParcelableArrayExtra(
+                            Intent.EXTRA_ALTERNATE_INTENTS, Intent.class);
+            assertEquals(1, alternatesForRefinement.length);
+            assertEquals(CTS_ALTERNATE_DATA_TYPE, alternatesForRefinement[0].getType());
+            assertEquals(CTS_ALTERNATE_DATA_TYPE, dataTypeTargetLaunchedWith.get());
+        }, () -> {
             mContext.unregisterReceiver(refinementReceiver);
             mContext.unregisterReceiver(chooserCallbackReceiver);
             closeSharesheet();
-        }
+            });
     }
 
     @Test
-    public void testShortcutSelection() throws InterruptedException {
+    public void testShortcutSelection() {
         if (!mMeetsResolutionRequirements || mActivityManager.isLowRamDevice()) {
             return; // Skip test if the device doesn't support shortcut targets.
         }
@@ -380,40 +396,38 @@ public class CtsSharesheetDeviceTest {
         addShortcuts(createShortcut(testShortcutId));
 
         final CountDownLatch appStarted = new CountDownLatch(1);
+        final AtomicReference<String> shortcutIdTargetLaunchedWith = new AtomicReference<>();
 
         CtsSharesheetDeviceActivity.setOnIntentReceivedConsumer(intent -> {
-            assertEquals(testShortcutId, intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID));
+            shortcutIdTargetLaunchedWith.set(intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID));
             appStarted.countDown();
         });
 
-        try {
+        runAndExecuteCleanupBeforeAnyThrow(() -> {
             Intent shareIntent = createShareIntent(false, 0, 0, null);
             launchSharesheet(shareIntent);
             findTextContains(mSharingShortcutLabel).click();
             assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
-        } finally {
-            closeSharesheet();
-        }
+            // The intent carries the shortcut ID that was registered with ShortcutManager.
+            assertEquals(testShortcutId, shortcutIdTargetLaunchedWith.get());
+        }, () -> closeSharesheet());
     }
 
     // Launch the chooser with an EXTRA_INTENT of type "test/cts" and EXTRA_ALTERNATE_INTENTS with
     // one of "test/cts_alternate". Ensure that the "alternate type" app, which only accepts
     // "test/cts_alternate" shows up and can be chosen.
     @Test
-    public void testAlternateTargetsShown() throws InterruptedException {
+    public void testAlternateTargetsShown() {
         if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
 
         final CountDownLatch chooserCallbackInvoked = new CountDownLatch(1);
+        final AtomicReference<ComponentName> chosenComponent = new AtomicReference<>();
 
         BroadcastReceiver chooserCallbackReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                ComponentName chosenComponent = intent.getParcelableExtra(
-                        Intent.EXTRA_CHOSEN_COMPONENT, ComponentName.class);
-                assertEquals("android.sharesheet.cts.packages.alternatetype",
-                        chosenComponent.getPackageName());
-                assertEquals("android.sharesheet.cts.packages.LabelTestActivity",
-                        chosenComponent.getClassName());
+                chosenComponent.set(intent.getParcelableExtra(
+                        Intent.EXTRA_CHOSEN_COMPONENT, ComponentName.class));
                 chooserCallbackInvoked.countDown();
             }
         };
@@ -423,7 +437,7 @@ public class CtsSharesheetDeviceTest {
                 Context.RECEIVER_EXPORTED);
 
 
-        try {
+        runAndExecuteCleanupBeforeAnyThrow(() -> {
             Intent shareIntent = createShareIntent(false, 0, 0, null);
             Intent alternateIntent = new Intent(Intent.ACTION_SEND);
             alternateIntent.setType(CTS_ALTERNATE_DATA_TYPE);
@@ -431,10 +445,14 @@ public class CtsSharesheetDeviceTest {
             launchSharesheet(shareIntent);
             findTextContains(mContext.getString(R.string.test_alternate_app_label)).click();
             assertTrue(chooserCallbackInvoked.await(1000, TimeUnit.MILLISECONDS));
-        } finally {
+            assertEquals("android.sharesheet.cts.packages.alternatetype",
+                    chosenComponent.get().getPackageName());
+            assertEquals("android.sharesheet.cts.packages.LabelTestActivity",
+                    chosenComponent.get().getClassName());
+        }, () -> {
             mContext.unregisterReceiver(chooserCallbackReceiver);
             closeSharesheet();
-        }
+            });
     }
 
     @Test
@@ -444,6 +462,7 @@ public class CtsSharesheetDeviceTest {
             // Skip test if resolution is too low
             return;
         }
+
         final CountDownLatch broadcastInvoked = new CountDownLatch(1);
         BroadcastReceiver customActionReceiver = new BroadcastReceiver() {
             @Override
@@ -452,26 +471,28 @@ public class CtsSharesheetDeviceTest {
                 Log.d(TAG, "custom action invoked");
             }
         };
+
+        mContext.registerReceiver(
+                customActionReceiver,
+                new IntentFilter(CHOOSER_CUSTOM_ACTION_BROADCAST_ACTION),
+                Context.RECEIVER_EXPORTED);
+
         PendingIntent customAction = PendingIntent.getBroadcast(
                 mContext,
                 1,
                 new Intent(CHOOSER_CUSTOM_ACTION_BROADCAST_ACTION),
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
-        try {
-            mContext.registerReceiver(
-                    customActionReceiver, new IntentFilter(CHOOSER_CUSTOM_ACTION_BROADCAST_ACTION));
+        runAndExecuteCleanupBeforeAnyThrow(() -> {
             launchSharesheet(createShareIntent(true /* test content preview */,
                     0 /* do not test EIIs */,
                     0 /* do not test ECTs */,
                     customAction /*add custom action*/));
             performCustomActionClick();
             assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
-        } catch (Exception e) {
-            // No-op
-        } finally {
+        }, () -> {
             mContext.unregisterReceiver(customActionReceiver);
             closeSharesheet();
-        }
+            });
     }
 
     /*
@@ -550,25 +571,10 @@ public class CtsSharesheetDeviceTest {
     }
 
     /**
-     * Set the listener for the activity that will receive the Intent.
-     *
-     * @return a CountDownLatch to await to ensure that the assertions have been completed.
-     */
-    private CountDownLatch prepareAppStartedEvaluation() {
-        CountDownLatch appStartedLatch = new CountDownLatch(1);
-        CtsSharesheetDeviceActivity.setOnIntentReceivedConsumer(intent -> {
-            assertEquals(CTS_DATA_TYPE, intent.getType());
-            assertEquals(Intent.ACTION_SEND, intent.getAction());
-            appStartedLatch.countDown();
-        });
-        return appStartedLatch;
-    }
-
-    /**
      * Tests API compliance for Intent.EXTRA_CHOSEN_COMPONENT_INTENT_SENDER and related APIs
      * UI assumption: target labels are clickable, clicking opens target
      */
-    private void firesIntentSenderWithExtraChosenComponent() throws Exception {
+    private void firesIntentSenderWithExtraChosenComponent() {
         // To receive the extra chosen component a target must be clicked. Clicking the target
         // will close the Sharesheet. Run this last in any sequence of tests.
 
@@ -596,17 +602,9 @@ public class CtsSharesheetDeviceTest {
         // Start the event sequence and wait for results
         shareTarget.click();
 
-        // The latch may fail for a number of reasons but we still need to unregister the
-        // BroadcastReceiver, so capture and rethrow any errors.
-        Exception delayedException = null;
-        try {
-            latch.await(1000, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            delayedException = e;
-        } finally {
-            mContext.unregisterReceiver(br);
-        }
-        if (delayedException != null) throw delayedException;
+        runAndExecuteCleanupBeforeAnyThrow(
+                () -> latch.await(1000, TimeUnit.MILLISECONDS),
+                () -> mContext.unregisterReceiver(br));
 
         // Finally validate the received Intent
         validateChosenComponentIntent(response[0], clickedComponent);
@@ -907,5 +905,49 @@ public class CtsSharesheetDeviceTest {
     private UiObject2 findTextContains(String containsText) {
         return mSharesheet.wait(Until.findObject(By.textContains(containsText)),
                 WAIT_AND_ASSERT_FOUND_TIMEOUT_MS);
+    }
+
+    /**
+     * A {@link Runnable}-like interface that's declared to throw checked exceptions. This is
+     * provided for convenience in writing inline ("lambda") blocks, so that test code doesn't need
+     * extra boilerplate to handle every possible site of a checked exception (since we're going to
+     * end up propagating these exceptions as test failures anyways).
+     */
+    private interface ThrowingRunnable {
+        void run() throws Throwable;
+    }
+
+    /**
+     * Perform the requested {@code execution} (which may throw), but then perform the requested
+     * {@code cleanup} (whether or not the main execution succeeded) before potentially throwing any
+     * exception from the main execution. This is similar to the normal `try/finally` construct,
+     * except that the `finally` (or `cleanup`) step is executed <em>before</em> any stack-unwinding
+     * to try to catch the exception. Note that any re-thrown exception is wrapped as a
+     * {@link RuntimeException} so that clients can skip the checked-exception boilerplate.
+     * TODO: it may be possible to move all our cleanup steps to an `@After` method and avoid this
+     * unusual construct, but we'd have to refactor to unify the cleanup logic across all tests.
+     */
+    private static void runAndExecuteCleanupBeforeAnyThrow(
+            ThrowingRunnable execution, Runnable cleanup) {
+        Throwable exceptionToRethrow = null;
+        try {
+            execution.run();
+        } catch (Throwable mainExecutionException) {
+            exceptionToRethrow = mainExecutionException;
+        } finally {
+            try {
+                cleanup.run();
+            } catch (Throwable cleanupException) {
+                if (exceptionToRethrow == null) {
+                    exceptionToRethrow = cleanupException;
+                } else {
+                    exceptionToRethrow.addSuppressed(cleanupException);
+                }
+            }
+
+            if (exceptionToRethrow != null) {
+                throw new RuntimeException(exceptionToRethrow);
+            }
+        }
     }
 }
