@@ -32,10 +32,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.google.common.truth.Truth.assertThat
 import kotlin.reflect.KClass
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsNot
 import org.junit.AfterClass
-import org.junit.Assume.assumeThat
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.BeforeClass
@@ -52,18 +49,21 @@ class OverrideConfigTest {
         private val uiDevice = UiDevice.getInstance(instrumentation)!!
 
         private var isNaturalPortrait = true
+        private var isRotationSupported = true
 
         @JvmStatic
         @BeforeClass
-        fun assumeRotationSupported() {
+        fun setUpRotation() {
             val packageManager = context.packageManager
-            assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT))
-            assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE))
-            assumeThat(
-                context.resources.configuration.uiMode
-                        and Configuration.UI_MODE_TYPE_MASK,
-                IsNot.not(IsEqual.equalTo(Configuration.UI_MODE_TYPE_VR_HEADSET))
-            )
+            isRotationSupported =
+                packageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT) &&
+                packageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE) &&
+                (context.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
+                    != Configuration.UI_MODE_TYPE_VR_HEADSET)
+
+            if (!isRotationSupported) {
+                return
+            }
 
             uiDevice.freezeRotation()
             uiDevice.setOrientationNatural()
@@ -87,8 +87,15 @@ class OverrideConfigTest {
         @JvmStatic
         @AfterClass
         fun resetRotation() {
-            uiDevice.unfreezeRotation()
+            if (isRotationSupported) {
+                uiDevice.unfreezeRotation()
+            }
         }
+    }
+
+    @Before
+    fun assumeRotationSupported() {
+        assumeTrue(isRotationSupported)
     }
 
     @Before
