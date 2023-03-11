@@ -511,10 +511,13 @@ public class SurfaceViewTests extends ActivityTestBase {
             assertTrue(helper.hasSurface());
             helper.getFence().await(3, TimeUnit.SECONDS);
             CountDownLatch latch = new CountDownLatch(1);
+            CountDownLatch transactionCommitted = new CountDownLatch(1);
             activity.runOnUiThread(() -> {
                 SurfaceControl.Transaction transaction = new SurfaceControl.Transaction()
                         .reparent(blueLayer, helper.getSurfaceView().getSurfaceControl())
-                        .setLayer(blueLayer, 1);
+                        .setLayer(blueLayer, 1)
+                        .addTransactionCommittedListener(Runnable::run,
+                                transactionCommitted::countDown);
 
                 int width = helper.getSurfaceView().getWidth();
                 int height = helper.getSurfaceView().getHeight();
@@ -540,10 +543,10 @@ public class SurfaceViewTests extends ActivityTestBase {
                 });
             });
 
-            latch.await(5, TimeUnit.SECONDS);
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
             // Wait for an additional second to ensure that the transaction reparenting the blue
             // layer is not applied.
-            TimeUnit.SECONDS.sleep(1);
+            assertFalse(transactionCommitted.await(1, TimeUnit.SECONDS));
             Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
             BitmapAsserter asserter =
                     new BitmapAsserter(this.getClass().getSimpleName(), name.getMethodName());
@@ -555,7 +558,7 @@ public class SurfaceViewTests extends ActivityTestBase {
                 canvas.drawColor(Color.GREEN);
                 holder.unlockCanvasAndPost(canvas);
             });
-            activity.waitForRedraw();
+            assertTrue(transactionCommitted.await(1, TimeUnit.SECONDS));
             screenshot = mScreenshotter.takeScreenshot(testInfo);
             // Now that a new frame was drawn, the blue layer should be overlaid now.
             asserter.assertBitmapIsVerified(
