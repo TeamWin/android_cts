@@ -556,6 +556,49 @@ public class CtsSharesheetDeviceTest {
     }
 
     @Test
+    @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_TARGETS")
+    public void testChooserTargets() throws Throwable {
+        if (!mMeetsResolutionRequirements || mActivityManager.isLowRamDevice()) {
+            return;  // Skip test if the device doesn't support shortcut targets.
+        }
+
+        final CountDownLatch appStarted = new CountDownLatch(1);
+        final AtomicReference<Intent> targetLaunchIntent = new AtomicReference<>();
+
+        CtsSharesheetDeviceActivity.setOnIntentReceivedConsumer(intent -> {
+            targetLaunchIntent.set(intent);
+            appStarted.countDown();
+        });
+
+        Bundle targetIntentExtras = new Bundle();
+        targetIntentExtras.putBoolean("FROM_CHOOSER_TARGET", true);
+
+        ChooserTarget chooserTarget = new ChooserTarget(
+                "ChooserTarget",
+                Icon.createWithResource(mContext, R.drawable.black_64x64),
+                1f,
+                new ComponentName(mPkg, mPkg + ".CtsSharesheetDeviceActivity"),
+                targetIntentExtras);
+
+        Intent shareIntent = createShareIntent(false, 0, 0, null);
+        shareIntent.putExtra(Intent.EXTRA_CHOOSER_TARGETS, new ChooserTarget[] { chooserTarget });
+
+        runAndExecuteCleanupBeforeAnyThrow(() -> {
+            launchSharesheet(shareIntent);
+
+            UiObject2 chooserTargetButton = mSharesheet.wait(
+                    Until.findObject(By.textContains("ChooserTarget")),
+                    WAIT_AND_ASSERT_FOUND_TIMEOUT_MS);
+            assertNotNull(chooserTargetButton);
+            Log.d(TAG, "clicking on the chooser target");
+            chooserTargetButton.click();
+
+            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
+            assertTrue(targetLaunchIntent.get().getBooleanExtra("FROM_CHOOSER_TARGET", false));
+        }, this::closeSharesheet);
+    }
+
+    @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_CUSTOM_ACTIONS")
     public void testCustomAction() {
         if (!mMeetsResolutionRequirements) {
