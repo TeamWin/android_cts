@@ -22,6 +22,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.SystemClock;
 
+import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.SystemUtil;
+
+import java.io.IOException;
+
 /**
  * Helper to wait for a broadcast to be sent.
  */
@@ -57,8 +63,14 @@ public class WaitForBroadcast {
     }
 
     public Intent doWait(long timeout) {
-        final long endTime = SystemClock.uptimeMillis() + timeout;
+        try {
+            SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                    "am wait-for-broadcast-barrier");
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
 
+        final long endTime = SystemClock.uptimeMillis() + timeout;
         synchronized (this) {
             while (!mHasResult) {
                 final long now = SystemClock.uptimeMillis();
