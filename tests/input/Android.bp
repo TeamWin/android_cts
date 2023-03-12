@@ -26,6 +26,10 @@ android_test {
     ],
     compile_multilib: "both",
 
+    kotlincflags: [
+        "-Werror",
+    ],
+
     srcs: [
         "src/**/*.kt",
         "InputInjectionApp/src/com/android/test/inputinjection/IInputInjectionTestCallbacks.aidl",

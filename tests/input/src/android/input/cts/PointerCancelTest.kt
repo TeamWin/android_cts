@@ -90,7 +90,7 @@ class PointerCancelTest {
                 pointerInFloating.y + view.height / 2 + 1)
 
         val eventsInFloating = LinkedBlockingQueue<InputEvent>()
-        view.setOnTouchListener { v, event ->
+        view.setOnTouchListener { _, event ->
             eventsInFloating.add(MotionEvent.obtain(event))
         }
         val verifierForFloating = EventVerifier { eventsInFloating.poll(5, TimeUnit.SECONDS) }
