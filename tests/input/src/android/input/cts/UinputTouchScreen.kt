@@ -20,6 +20,7 @@ import android.app.Instrumentation
 import android.content.Context
 import android.graphics.Point
 import android.hardware.input.InputManager
+import android.util.Size
 import android.view.Display
 import android.view.InputDevice
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
@@ -28,13 +29,14 @@ import java.io.Closeable
 import org.json.JSONArray
 import org.json.JSONObject
 
-class UinputTouchScreen(instrumentation: Instrumentation, display: Display) : Closeable {
+class UinputTouchScreen(instrumentation: Instrumentation, display: Display, size: Size) :
+        Closeable {
     private val uinputDevice: UinputDevice
     private lateinit var port: String
     private val inputManager: InputManager
 
     init {
-        uinputDevice = createDevice(instrumentation, display)
+        uinputDevice = createDevice(instrumentation, size)
         inputManager = instrumentation.targetContext.getSystemService(InputManager::class.java)!!
         associateWith(display)
     }
@@ -79,25 +81,22 @@ class UinputTouchScreen(instrumentation: Instrumentation, display: Display) : Cl
                 .bufferedReader().use { it.readText() }
     }
 
-    private fun createDevice(instrumentation: Instrumentation, display: Display): UinputDevice {
+    private fun createDevice(instrumentation: Instrumentation, size: Size): UinputDevice {
         val json = JSONObject(readRawResource(instrumentation.targetContext))
         val resourceDeviceId: Int = json.getInt("id")
         val vendorId = json.getInt("vid")
         val productId = json.getInt("pid")
         port = json.getString("port")
 
-        // Replace maximum value to real display size.
-        val displaySize = Point()
-        display.getRealSize(displaySize)
-
+        // Use the display size to set maximum values
         val absInfo: JSONArray = json.getJSONArray("abs_info")
         for (i in 0 until absInfo.length()) {
             val item = absInfo.getJSONObject(i)
             if (item.get("code") == ABS_MT_POSITION_X) {
-                item.getJSONObject("info").put("maximum", displaySize.x - 1)
+                item.getJSONObject("info").put("maximum", size.getWidth() - 1)
             }
             if (item.get("code") == ABS_MT_POSITION_Y) {
-                item.getJSONObject("info").put("maximum", displaySize.y - 1)
+                item.getJSONObject("info").put("maximum", size.getHeight() - 1)
             }
         }
 
