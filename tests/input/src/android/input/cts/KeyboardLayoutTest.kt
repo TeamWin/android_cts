@@ -70,7 +70,7 @@ class KeyboardLayoutTest {
 
         // Wait for device to be added
         PollingCheck.waitFor { inputManager.getInputDevice(virtualDevice.deviceId) != null }
-        keyboard = inputManager.getInputDevice(virtualDevice.deviceId)
+        keyboard = inputManager.getInputDevice(virtualDevice.deviceId)!!
     }
 
     @After

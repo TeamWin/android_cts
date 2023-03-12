@@ -51,7 +51,7 @@ public class CredentialEntryTest {
 
     @Test
     public void testConstructorWithRawId_nullId() {
-        assertThrows(NullPointerException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> new CredentialEntry(null, "type", sSlice));
     }
 
@@ -72,19 +72,19 @@ public class CredentialEntryTest {
 
     @Test
     public void testConstructorWithRawId_emptyId() {
-        assertThrows(NullPointerException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> new CredentialEntry("", "type", sSlice));
     }
 
     @Test
     public void testConstructorWithRawId_nullType() {
-        assertThrows(NullPointerException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> new CredentialEntry("id", null, sSlice));
     }
 
     @Test
     public void testConstructorWithRawId_emptyType() {
-        assertThrows(NullPointerException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> new CredentialEntry("id", "", sSlice));
     }
 

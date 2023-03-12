@@ -32,6 +32,7 @@ import android.media.ImageReader
 import android.os.Handler
 import android.os.Looper
 import android.server.wm.WindowManagerStateHelper
+import android.util.Size
 import android.view.Surface
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
@@ -108,7 +109,8 @@ class TouchScreenTest {
 
         assertTrue(displayCreated.await(5, TimeUnit.SECONDS))
 
-        touchScreen = UinputTouchScreen(instrumentation, virtualDisplay.display)
+        touchScreen = UinputTouchScreen(instrumentation, virtualDisplay.display,
+                Size(WIDTH, HEIGHT))
         assertNotNull(touchScreen)
     }
 

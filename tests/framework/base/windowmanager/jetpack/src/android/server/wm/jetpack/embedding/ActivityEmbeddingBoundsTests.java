@@ -28,7 +28,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestActivityWithId;
@@ -38,6 +37,7 @@ import android.util.Size;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.window.extensions.embedding.SplitAttributes;
 import androidx.window.extensions.embedding.SplitAttributes.LayoutDirection;
 import androidx.window.extensions.embedding.SplitAttributes.SplitType;
@@ -70,6 +70,7 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
      * Tests that when two activities are in a split and the parent bounds shrink such that
      * they can no longer support split activities, then the activities become stacked.
      */
+    @FlakyTest(bugId = 272276329)
     @ApiTest(apis = "androidx.window.extensions.embedding.SplitRule")
     @Test
     public void testParentWindowMetricsPredicate() {
