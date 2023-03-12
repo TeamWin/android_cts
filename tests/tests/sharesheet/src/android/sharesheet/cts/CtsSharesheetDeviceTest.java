@@ -389,7 +389,7 @@ public class CtsSharesheetDeviceTest {
     @Test
     public void testShortcutSelection() {
         if (!mMeetsResolutionRequirements || mActivityManager.isLowRamDevice()) {
-            return; // Skip test if the device doesn't support shortcut targets.
+            return;  // Skip test if the device doesn't support shortcut targets.
         }
 
         final String testShortcutId = "TEST_SHORTCUT";
@@ -411,6 +411,106 @@ public class CtsSharesheetDeviceTest {
             // The intent carries the shortcut ID that was registered with ShortcutManager.
             assertEquals(testShortcutId, shortcutIdTargetLaunchedWith.get());
         }, () -> closeSharesheet());
+    }
+
+    @Test
+    public void testShortcutSelectionRefinedToAlternate() {
+        if (!mMeetsResolutionRequirements || mActivityManager.isLowRamDevice()) {
+            return;  // Skip test if the device doesn't support shortcut targets.
+        }
+
+        final String testShortcutId = "TEST_SHORTCUT";
+        addShortcuts(createShortcut(testShortcutId));
+
+        final CountDownLatch broadcastInvoked = new CountDownLatch(1);
+        final CountDownLatch chooserCallbackInvoked = new CountDownLatch(1);
+        final CountDownLatch appStarted = new CountDownLatch(1);
+
+        final AtomicLong chooserCallbackCountdownAtRefinementStart = new AtomicLong();
+        final AtomicReference<Intent> refinementRequest = new AtomicReference<>();
+
+        BroadcastReceiver refinementReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                chooserCallbackCountdownAtRefinementStart.set(chooserCallbackInvoked.getCount());
+                refinementRequest.set(intent);
+                // Call back the sharesheet to complete the share.
+                ResultReceiver resultReceiver = intent.getParcelableExtra(
+                        Intent.EXTRA_RESULT_RECEIVER, ResultReceiver.class);
+
+                Intent[] alternates = intent.getParcelableArrayExtra(
+                        Intent.EXTRA_ALTERNATE_INTENTS, Intent.class);
+
+                Bundle bundle = new Bundle();
+                bundle.putParcelable(Intent.EXTRA_INTENT, alternates[0]);
+
+                resultReceiver.send(Activity.RESULT_OK, bundle);
+                broadcastInvoked.countDown();
+            }
+        };
+
+        BroadcastReceiver chooserCallbackReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                chooserCallbackInvoked.countDown();
+            }
+        };
+
+        final AtomicReference<String> shortcutIdTargetLaunchedWith = new AtomicReference<>();
+        final AtomicReference<String> dataTypeTargetLaunchedWith = new AtomicReference<>();
+
+        CtsSharesheetDeviceActivity.setOnIntentReceivedConsumer(intent -> {
+            shortcutIdTargetLaunchedWith.set(intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID));
+            dataTypeTargetLaunchedWith.set(intent.getType());
+            appStarted.countDown();
+        });
+
+        mContext.registerReceiver(chooserCallbackReceiver,
+                new IntentFilter(ACTION_INTENT_SENDER_FIRED_ON_CLICK),
+                Context.RECEIVER_EXPORTED);
+
+        mContext.registerReceiver(
+                refinementReceiver,
+                new IntentFilter(CHOOSER_REFINEMENT_BROADCAST_ACTION),
+                Context.RECEIVER_EXPORTED);
+
+        PendingIntent refinement = PendingIntent.getBroadcast(
+                mContext,
+                1,
+                new Intent(CHOOSER_REFINEMENT_BROADCAST_ACTION)
+                        .setPackage(mContext.getPackageName()),
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
+
+        runAndExecuteCleanupBeforeAnyThrow(() -> {
+            Intent shareIntent = createShareIntent(false, 0, 0, null);
+            shareIntent.putExtra(Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER,
+                    refinement.getIntentSender());
+            Intent alternateIntent = new Intent(Intent.ACTION_SEND);
+            alternateIntent.setType(CTS_ALTERNATE_DATA_TYPE);
+            shareIntent.putExtra(Intent.EXTRA_ALTERNATE_INTENTS, new Intent[] {alternateIntent});
+            launchSharesheet(shareIntent);
+            findTextContains(mSharingShortcutLabel).click();
+            assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
+            assertTrue(chooserCallbackInvoked.await(1000, TimeUnit.MILLISECONDS));
+            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
+
+            Intent mainIntentForRefinement =
+                    refinementRequest.get().getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
+            assertEquals(CTS_DATA_TYPE, mainIntentForRefinement.getType());
+            Intent[] alternatesForRefinement =
+                    refinementRequest.get().getParcelableArrayExtra(
+                            Intent.EXTRA_ALTERNATE_INTENTS, Intent.class);
+            assertEquals(1, alternatesForRefinement.length);
+            assertEquals(CTS_ALTERNATE_DATA_TYPE, alternatesForRefinement[0].getType());
+            // The intent carries the shortcut ID that was registered with ShortcutManager.
+            assertEquals(testShortcutId, shortcutIdTargetLaunchedWith.get());
+            // Ensure that the app was started with the alternate type chosen by refinement.
+            assertEquals(CTS_ALTERNATE_DATA_TYPE, dataTypeTargetLaunchedWith.get());
+        }, () -> {
+            mContext.unregisterReceiver(refinementReceiver);
+            mContext.unregisterReceiver(chooserCallbackReceiver);
+            closeSharesheet();
+            });
     }
 
     // Launch the chooser with an EXTRA_INTENT of type "test/cts" and EXTRA_ALTERNATE_INTENTS with
@@ -453,6 +553,49 @@ public class CtsSharesheetDeviceTest {
             mContext.unregisterReceiver(chooserCallbackReceiver);
             closeSharesheet();
             });
+    }
+
+    @Test
+    @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_TARGETS")
+    public void testChooserTargets() throws Throwable {
+        if (!mMeetsResolutionRequirements || mActivityManager.isLowRamDevice()) {
+            return;  // Skip test if the device doesn't support shortcut targets.
+        }
+
+        final CountDownLatch appStarted = new CountDownLatch(1);
+        final AtomicReference<Intent> targetLaunchIntent = new AtomicReference<>();
+
+        CtsSharesheetDeviceActivity.setOnIntentReceivedConsumer(intent -> {
+            targetLaunchIntent.set(intent);
+            appStarted.countDown();
+        });
+
+        Bundle targetIntentExtras = new Bundle();
+        targetIntentExtras.putBoolean("FROM_CHOOSER_TARGET", true);
+
+        ChooserTarget chooserTarget = new ChooserTarget(
+                "ChooserTarget",
+                Icon.createWithResource(mContext, R.drawable.black_64x64),
+                1f,
+                new ComponentName(mPkg, mPkg + ".CtsSharesheetDeviceActivity"),
+                targetIntentExtras);
+
+        Intent shareIntent = createShareIntent(false, 0, 0, null);
+        shareIntent.putExtra(Intent.EXTRA_CHOOSER_TARGETS, new ChooserTarget[] { chooserTarget });
+
+        runAndExecuteCleanupBeforeAnyThrow(() -> {
+            launchSharesheet(shareIntent);
+
+            UiObject2 chooserTargetButton = mSharesheet.wait(
+                    Until.findObject(By.textContains("ChooserTarget")),
+                    WAIT_AND_ASSERT_FOUND_TIMEOUT_MS);
+            assertNotNull(chooserTargetButton);
+            Log.d(TAG, "clicking on the chooser target");
+            chooserTargetButton.click();
+
+            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
+            assertTrue(targetLaunchIntent.get().getBooleanExtra("FROM_CHOOSER_TARGET", false));
+        }, this::closeSharesheet);
     }
 
     @Test
@@ -642,9 +785,9 @@ public class CtsSharesheetDeviceTest {
         // * Last time to run in suite so prior operations reduce wait time
 
 
-    	// ChooserTargetService was deprecated as of API level 30, results should not
-    	// appear in the list of results.
-    	waitAndAssertNoTextContains(mChooserTargetServiceLabel);
+        // ChooserTargetService was deprecated as of API level 30, results should not
+        // appear in the list of results.
+        waitAndAssertNoTextContains(mChooserTargetServiceLabel);
     }
 
     /**

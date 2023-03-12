@@ -19,6 +19,7 @@ package android.hardware.camera2.cts;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ColorSpace;
+import android.graphics.Gainmap;
 import android.graphics.ImageFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -2447,7 +2448,8 @@ public class CameraTestUtils extends Assert {
                 validateJpegData(data, width, height, filePath, colorSpace);
                 break;
             case ImageFormat.JPEG_R:
-                validateJpegData(data, width, height, filePath, null /*colorSpace*/);
+                validateJpegData(data, width, height, filePath, null /*colorSpace*/,
+                        true /*gainMapPresent*/);
                 break;
             case ImageFormat.YCBCR_P010:
                 validateP010Data(data, width, height, format, image.getTimestamp(), filePath);
@@ -2537,6 +2539,11 @@ public class CameraTestUtils extends Assert {
 
     public static void validateJpegData(byte[] jpegData, int width, int height, String filePath,
             ColorSpace colorSpace) {
+        validateJpegData(jpegData, width, height, filePath, colorSpace, false /*gainMapPresent*/);
+    }
+
+    public static void validateJpegData(byte[] jpegData, int width, int height, String filePath,
+            ColorSpace colorSpace, boolean gainMapPresent) {
         BitmapFactory.Options bmpOptions = new BitmapFactory.Options();
         // DecodeBound mode: only parse the frame header to get width/height.
         // it doesn't decode the pixel.
@@ -2557,6 +2564,11 @@ public class CameraTestUtils extends Assert {
                 Log.e(TAG, "Bitmap color space:\n\t" + bitmapColorSpace);
             }
             assertTrue("Color space mismatch in decoded jpeg!", matchingColorSpace);
+        }
+        if (gainMapPresent) {
+            Gainmap gainMap = bitmapImage.getGainmap();
+            assertNotNull(gainMap);
+            assertNotNull(gainMap.getGainmapContents());
         }
         if (DEBUG && filePath != null) {
             String fileName =
