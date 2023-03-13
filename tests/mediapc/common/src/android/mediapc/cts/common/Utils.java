@@ -136,10 +136,14 @@ public class Utils {
         return sPc == Build.VERSION_CODES.TIRAMISU;
     }
 
+    public static boolean isUPerfClass() {
+        return sPc == Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
+    }
+
     /**
      * Latest defined media performance class.
      */
-    private static final int LAST_PERFORMANCE_CLASS = Build.VERSION_CODES.TIRAMISU;
+    private static final int LAST_PERFORMANCE_CLASS = Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
     public static boolean isHandheld() {
         // handheld nature is not exposed to package manager, for now

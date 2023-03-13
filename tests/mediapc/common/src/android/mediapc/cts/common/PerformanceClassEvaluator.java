@@ -543,6 +543,32 @@ public class PerformanceClassEvaluator {
             return new FrameDropRequirement(RequirementConstants.R5_3__H_1_2, frameDropped,
                 frameRate);
         }
+
+        /**
+         * [2.2.7.1/5.3/H-1-2] MUST NOT drop more than 1 frames in 10 seconds during a
+         * video resolution change in a 4k 60 fps video session under load. Load is defined as a
+         * concurrent 1080p to 720p video-only transcoding session using hardware video codecs,
+         * as well as a 128Kbps AAC audio playback.
+         */
+        public static FrameDropRequirement createR5_3__H_1_2_U() {
+            RequiredMeasurement<Integer> frameDropped = RequiredMeasurement
+                    .<Integer>builder()
+                    .setId(RequirementConstants.FRAMES_DROPPED)
+                    .setPredicate(RequirementConstants.INTEGER_LTE)
+                    // MUST NOT drop more than 1 frame in 10 seconds so 3 frames for 30 seconds
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 3)
+                    .build();
+
+            RequiredMeasurement<Double> frameRate = RequiredMeasurement
+                    .<Double>builder()
+                    .setId(RequirementConstants.FRAME_RATE)
+                    .setPredicate(RequirementConstants.DOUBLE_EQ)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 60.0)
+                    .build();
+
+            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_2, frameDropped,
+                    frameRate);
+        }
     }
 
     public static class VideoCodecRequirement extends Requirement {
@@ -1619,6 +1645,10 @@ public class PerformanceClassEvaluator {
 
     public FrameDropRequirement addR5_3__H_1_2_ST() {
         return this.addRequirement(FrameDropRequirement.createR5_3__H_1_2_ST());
+    }
+
+    public FrameDropRequirement addR5_3__H_1_2_U() {
+        return this.addRequirement(FrameDropRequirement.createR5_3__H_1_2_U());
     }
 
     public CodecInitLatencyRequirement addR5_1__H_1_7() {
