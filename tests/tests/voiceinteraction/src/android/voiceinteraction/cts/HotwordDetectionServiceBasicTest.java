@@ -46,7 +46,6 @@ import android.os.PersistableBundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
-import android.service.voice.DetectorFailure;
 import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetectionServiceFailure;
 import android.service.voice.HotwordDetector;
@@ -320,7 +319,7 @@ public class HotwordDetectionServiceBasicTest {
 
             mService.waitOnFailureCalled();
 
-            verifyHotwordDetectionServiceFailure(mService.getDetectorFailure(),
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
                     HotwordDetectionServiceFailure.ERROR_CODE_BINDING_DIED);
 
             // ActivityManager will schedule a timer to restart the HotwordDetectionService due to
@@ -368,7 +367,7 @@ public class HotwordDetectionServiceBasicTest {
             // wait onFailure() called and verify the result
             mService.waitOnFailureCalled();
 
-            verifyHotwordDetectionServiceFailure(mService.getDetectorFailure(),
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
                     HotwordDetectionServiceFailure.ERROR_CODE_DETECT_TIMEOUT);
         } finally {
             // destroy detector
@@ -403,7 +402,7 @@ public class HotwordDetectionServiceBasicTest {
 
             mService.waitOnFailureCalled();
 
-            verifyHotwordDetectionServiceFailure(mService.getDetectorFailure(),
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
                     HotwordDetectionServiceFailure.ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
         } finally {
             // destroy detector
@@ -428,7 +427,7 @@ public class HotwordDetectionServiceBasicTest {
 
             mService.waitOnFailureCalled();
 
-            verifyHotwordDetectionServiceFailure(mService.getDetectorFailure(),
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
                     HotwordDetectionServiceFailure.ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
         } finally {
             // destroy detector
@@ -454,7 +453,7 @@ public class HotwordDetectionServiceBasicTest {
             // wait onFailure() called and verify the result
             mService.waitOnFailureCalled();
 
-            verifyHotwordDetectionServiceFailure(mService.getDetectorFailure(),
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
                     HotwordDetectionServiceFailure.ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
         } finally {
             // destroy detector
@@ -517,7 +516,7 @@ public class HotwordDetectionServiceBasicTest {
             // wait onFailure() called and verify the result
             mService.waitOnFailureCalled();
 
-            verifyHotwordDetectionServiceFailure(mService.getDetectorFailure(),
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
                     HotwordDetectionServiceFailure.ERROR_CODE_COPY_AUDIO_DATA_FAILURE);
         } finally {
             // destroy detector
@@ -929,12 +928,11 @@ public class HotwordDetectionServiceBasicTest {
         Helper.verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
     }
 
-    private void verifyHotwordDetectionServiceFailure(DetectorFailure detectorFailure,
-            int errorCode) throws Throwable {
-        assertThat(detectorFailure).isNotNull();
-        assertThat(detectorFailure).isInstanceOf(HotwordDetectionServiceFailure.class);
-        assertThat(((HotwordDetectionServiceFailure) detectorFailure).getErrorCode()).isEqualTo(
-                errorCode);
+    private void verifyHotwordDetectionServiceFailure(
+            HotwordDetectionServiceFailure hotwordDetectionServiceFailure, int errorCode)
+            throws Throwable {
+        assertThat(hotwordDetectionServiceFailure).isNotNull();
+        assertThat(hotwordDetectionServiceFailure.getErrorCode()).isEqualTo(errorCode);
     }
 
     /**

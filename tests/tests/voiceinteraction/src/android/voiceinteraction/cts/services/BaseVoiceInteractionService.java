@@ -21,9 +21,9 @@ import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 import android.os.Bundle;
 import android.os.Looper;
 import android.service.voice.AlwaysOnHotwordDetector;
-import android.service.voice.DetectorFailure;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
+import android.service.voice.VisualQueryDetectionServiceFailure;
 import android.service.voice.VisualQueryDetector;
 import android.service.voice.VoiceInteractionService;
 import android.util.Log;
@@ -122,37 +122,43 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
 
     // A VisualQueryDetector.Callback no nothing on callback methods
     final VisualQueryDetector.Callback mNoOpVisualQueryDetectorCallback =
-                new VisualQueryDetector.Callback() {
-        @Override
-        public void onQueryDetected(@NonNull String partialQuery) {
-            //No-op
-        }
+            new VisualQueryDetector.Callback() {
+                @Override
+                public void onQueryDetected(@NonNull String partialQuery) {
+                    //No-op
+                }
 
-        @Override
-        public void onQueryRejected() {
-            //No-op
-        }
+                @Override
+                public void onQueryRejected() {
+                    //No-op
+                }
 
-        @Override
-        public void onQueryFinished() {
-            //No-op
-        }
+                @Override
+                public void onQueryFinished() {
+                    //No-op
+                }
 
-        @Override
-        public void onVisualQueryDetectionServiceInitialized(int status) {
-            Log.i(mTag, "onVisualQueryDetectionServiceInitialized status = " + status);
-        }
+                @Override
+                public void onVisualQueryDetectionServiceInitialized(int status) {
+                    Log.i(mTag, "onVisualQueryDetectionServiceInitialized status = " + status);
+                }
 
-        @Override
-        public void onVisualQueryDetectionServiceRestarted() {
-            //No-op
-        }
+                @Override
+                public void onVisualQueryDetectionServiceRestarted() {
+                    //No-op
+                }
 
-        @Override
-        public void onFailure(@NonNull DetectorFailure detectorFailure) {
-            //No-op
-        }
-    };
+                @Override
+                public void onFailure(
+                        VisualQueryDetectionServiceFailure visualQueryDetectionServiceFailure) {
+                    //No-op
+                }
+
+                @Override
+                public void onUnknownFailure(String errorMessage) {
+                    //No-op
+                }
+            };
 
     // the status of onHotwordDetectionServiceInitialized()
     int mInitializedStatus = STATUS_NO_CALLBACK_CALLED;

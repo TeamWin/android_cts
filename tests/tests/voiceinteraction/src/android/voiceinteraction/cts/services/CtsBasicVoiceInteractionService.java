@@ -27,11 +27,13 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.service.voice.AlwaysOnHotwordDetector;
-import android.service.voice.DetectorFailure;
 import android.service.voice.HotwordDetectionService;
+import android.service.voice.HotwordDetectionServiceFailure;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
 import android.service.voice.SandboxedDetectionInitializer;
+import android.service.voice.SoundTriggerFailure;
+import android.service.voice.VisualQueryDetectionServiceFailure;
 import android.service.voice.VisualQueryDetector;
 import android.service.voice.VoiceInteractionService;
 import android.util.Log;
@@ -67,7 +69,10 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     private HotwordRejectedResult mRejectedResult;
     private ArrayList<String> mStreamedQueries = new ArrayList<>();
     private String mCurrentQuery = "";
-    private DetectorFailure mDetectorFailure = null;
+    private HotwordDetectionServiceFailure mHotwordDetectionServiceFailure = null;
+    private SoundTriggerFailure mSoundTriggerFailure = null;
+    private String mUnknownFailure = null;
+
     public CtsBasicVoiceInteractionService() {
         HandlerThread handlerThread = new HandlerThread("CtsBasicVoiceInteractionService");
         handlerThread.start();
@@ -298,9 +303,30 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             }
 
             @Override
-            public void onFailure(DetectorFailure detectorFailure) {
-                Log.i(TAG, "onFailure detectorFailure=" + detectorFailure);
-                mDetectorFailure = detectorFailure;
+            public void onFailure(HotwordDetectionServiceFailure hotwordDetectionServiceFailure) {
+                Log.i(TAG, "onFailure hotwordDetectionServiceFailure="
+                        + hotwordDetectionServiceFailure);
+                mHotwordDetectionServiceFailure = hotwordDetectionServiceFailure;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnFailureLatch != null) {
+                    mOnFailureLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onFailure(SoundTriggerFailure soundTriggerFailure) {
+                Log.i(TAG, "onFailure soundTriggerFailure=" + soundTriggerFailure);
+                mSoundTriggerFailure = soundTriggerFailure;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnFailureLatch != null) {
+                    mOnFailureLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onUnknownFailure(String errorMessage) {
+                Log.i(TAG, "onUnknownFailure errorMessage=" + errorMessage);
+                mUnknownFailure = errorMessage;
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
                 if (mOnFailureLatch != null) {
                     mOnFailureLatch.countDown();
@@ -445,9 +471,20 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             }
 
             @Override
-            public void onFailure(DetectorFailure detectorFailure) {
-                Log.i(TAG, "onFailure detectorFailure=" + detectorFailure);
-                mDetectorFailure = detectorFailure;
+            public void onFailure(HotwordDetectionServiceFailure hotwordDetectionServiceFailure) {
+                Log.i(TAG, "onFailure hotwordDetectionServiceFailure="
+                        + hotwordDetectionServiceFailure);
+                mHotwordDetectionServiceFailure = hotwordDetectionServiceFailure;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnFailureLatch != null) {
+                    mOnFailureLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onUnknownFailure(String errorMessage) {
+                Log.i(TAG, "onUnknownFailure errorMessage=" + errorMessage);
+                mUnknownFailure = errorMessage;
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
                 if (mOnFailureLatch != null) {
                     mOnFailureLatch.countDown();
@@ -570,8 +607,15 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 }
 
                 @Override
-                public void onFailure(@NonNull DetectorFailure detectorFailure) {
-                    Log.i(TAG, "onFailure");
+                public void onFailure(
+                        VisualQueryDetectionServiceFailure visualQueryDetectionServiceFailure) {
+                    Log.i(TAG, "onFailure visualQueryDetectionServiceFailure: "
+                            + visualQueryDetectionServiceFailure);
+                }
+
+                @Override
+                public void onUnknownFailure(String errorMessage) {
+                    Log.i(TAG, "onUnknownFailure errorMessage: " + errorMessage);
                 }
             };
             mVisualQueryDetector = callCreateVisualQueryDetector(callback);
@@ -658,10 +702,24 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     }
 
     /**
-     * Returns the OnFailure() result.
+     * Returns the OnFailure() with HotwordDetectionServiceFailure result.
      */
-    public DetectorFailure getDetectorFailure() {
-        return mDetectorFailure;
+    public HotwordDetectionServiceFailure getHotwordDetectionServiceFailure() {
+        return mHotwordDetectionServiceFailure;
+    }
+
+    /**
+     * Returns the OnFailure() with SoundTriggerFailure result.
+     */
+    public SoundTriggerFailure getSoundTriggerFailure() {
+        return mSoundTriggerFailure;
+    }
+
+    /**
+     * Returns the onUnknownFailure() with error message.
+     */
+    public String getUnknownFailure() {
+        return mUnknownFailure;
     }
 
     /**
