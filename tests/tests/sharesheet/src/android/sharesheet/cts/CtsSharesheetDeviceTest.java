@@ -558,8 +558,8 @@ public class CtsSharesheetDeviceTest {
     @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_TARGETS")
     public void testChooserTargets() throws Throwable {
-        if (!mMeetsResolutionRequirements || mActivityManager.isLowRamDevice()) {
-            return;  // Skip test if the device doesn't support shortcut targets.
+        if (!mMeetsResolutionRequirements) {
+            return;  // Skip test if resolution is too low
         }
 
         final CountDownLatch appStarted = new CountDownLatch(1);
@@ -596,6 +596,88 @@ public class CtsSharesheetDeviceTest {
             assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
             assertTrue(targetLaunchIntent.get().getBooleanExtra("FROM_CHOOSER_TARGET", false));
         }, this::closeSharesheet);
+    }
+
+    @Test
+    @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_TARGETS")
+    public void testChooserTargetsRefinement() throws Throwable {
+        if (!mMeetsResolutionRequirements) {
+            return;  // Skip test if resolution is too low
+        }
+
+        final CountDownLatch broadcastInvoked = new CountDownLatch(1);
+        final CountDownLatch appStarted = new CountDownLatch(1);
+        final AtomicReference<Intent> targetLaunchIntent = new AtomicReference<>();
+
+        CtsSharesheetDeviceActivity.setOnIntentReceivedConsumer(intent -> {
+            targetLaunchIntent.set(intent);
+            appStarted.countDown();
+        });
+
+        BroadcastReceiver refinementReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                // Call back the sharesheet to complete the share.
+                ResultReceiver resultReceiver = intent.getParcelableExtra(
+                        Intent.EXTRA_RESULT_RECEIVER, ResultReceiver.class);
+
+                Intent mainIntent = intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
+                Intent refinedIntent = new Intent(mainIntent);
+                refinedIntent.putExtra("REFINED", true);
+
+                Bundle bundle = new Bundle();
+                bundle.putParcelable(Intent.EXTRA_INTENT, refinedIntent);
+
+                resultReceiver.send(Activity.RESULT_OK, bundle);
+                broadcastInvoked.countDown();
+            }
+        };
+
+        mContext.registerReceiver(
+                refinementReceiver,
+                new IntentFilter(CHOOSER_REFINEMENT_BROADCAST_ACTION),
+                Context.RECEIVER_EXPORTED);
+
+        PendingIntent refinement = PendingIntent.getBroadcast(
+                mContext,
+                1,
+                new Intent(CHOOSER_REFINEMENT_BROADCAST_ACTION)
+                        .setPackage(mContext.getPackageName()),
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
+
+        Bundle targetIntentExtras = new Bundle();
+        targetIntentExtras.putBoolean("FROM_CHOOSER_TARGET", true);
+
+        ChooserTarget chooserTarget = new ChooserTarget(
+                "ChooserTarget",
+                Icon.createWithResource(mContext, R.drawable.black_64x64),
+                1f,
+                new ComponentName(mPkg, mPkg + ".CtsSharesheetDeviceActivity"),
+                targetIntentExtras);
+
+        Intent shareIntent = createShareIntent(false, 0, 0, null);
+        shareIntent.putExtra(Intent.EXTRA_CHOOSER_TARGETS, new ChooserTarget[] { chooserTarget });
+        shareIntent.putExtra(Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER,
+                refinement.getIntentSender());
+
+        runAndExecuteCleanupBeforeAnyThrow(() -> {
+            launchSharesheet(shareIntent);
+
+            UiObject2 chooserTargetButton = mSharesheet.wait(
+                    Until.findObject(By.textContains("ChooserTarget")),
+                    WAIT_AND_ASSERT_FOUND_TIMEOUT_MS);
+            assertNotNull(chooserTargetButton);
+            Log.d(TAG, "clicking on the chooser target");
+            chooserTargetButton.click();
+
+            assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
+            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
+            assertTrue(targetLaunchIntent.get().getBooleanExtra("FROM_CHOOSER_TARGET", false));
+            assertTrue(targetLaunchIntent.get().getBooleanExtra("REFINED", false));
+        }, () -> {
+                mContext.unregisterReceiver(refinementReceiver);
+                closeSharesheet();
+            });
     }
 
     @Test
