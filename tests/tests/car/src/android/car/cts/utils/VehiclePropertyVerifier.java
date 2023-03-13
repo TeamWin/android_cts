@@ -360,9 +360,7 @@ public class VehiclePropertyVerifier<T> {
     @Nullable
     private static <U> SparseArray<U> getInitialValuesByAreaId(
             CarPropertyConfig<U> carPropertyConfig, CarPropertyManager carPropertyManager) {
-        // Array types are being skipped because setting them is not supported currently.
-        if (carPropertyConfig.getAccess() != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE
-                || carPropertyConfig.getPropertyType().isArray()) {
+        if (carPropertyConfig.getAccess() != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
             return null;
         }
         SparseArray<U> areaIdToInitialValue = new SparseArray<U>();
@@ -448,7 +446,7 @@ public class VehiclePropertyVerifier<T> {
                 continue;
             }
             U currentValue = (U) currentCarPropertyValue.getValue();
-            if (originalValue.equals(currentValue)) {
+            if (valueEquals(originalValue, currentValue)) {
                 continue;
             }
             CarPropertyValue<U> carPropertyValue = setPropertyAndWaitForChange(carPropertyManager,
@@ -1536,11 +1534,27 @@ public class VehiclePropertyVerifier<T> {
     }
 
     private static <V> boolean valueEquals(V v1, V v2) {
-        return (v1 instanceof Float && floatEquals((Float) v1, (Float) v2)) || v1.equals(v2);
+        return (v1 instanceof Float && floatEquals((Float) v1, (Float) v2))
+                || (v1 instanceof Float[] && floatArrayEquals((Float[]) v1, (Float[]) v2))
+                || (v1 instanceof Long[] && longArrayEquals((Long[]) v1, (Long[]) v2))
+                || (v1 instanceof Integer[] && integerArrayEquals((Integer[]) v1, (Integer[]) v2))
+                || v1.equals(v2);
     }
 
     private static boolean floatEquals(float f1, float f2) {
         return Math.abs(f1 - f2) < FLOAT_INEQUALITY_THRESHOLD;
+    }
+
+    private static boolean floatArrayEquals(Float[] f1, Float[] f2) {
+        return Arrays.equals(f1, f2);
+    }
+
+    private static boolean longArrayEquals(Long[] l1, Long[] l2) {
+        return Arrays.equals(l1, l2);
+    }
+
+    private static boolean integerArrayEquals(Integer[] i1, Integer[] i2) {
+        return Arrays.equals(i1, i2);
     }
 
     private class CarPropertyCallback implements GetPropertyCallback {
