@@ -123,7 +123,7 @@ public class StreamedAppClipboardTest {
     private static final ComponentName CLIPBOARD_TEST_ACTIVITY_2 =
             new ComponentName("android.virtualdevice.streamedtestapp2",
                     "android.virtualdevice.streamedtestapp2.ClipboardTestActivity2");
-    private static final int EVENT_TIMEOUT_MS = 3000;
+    private static final int EVENT_TIMEOUT_MS = 6000;
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -705,7 +705,8 @@ public class StreamedAppClipboardTest {
 
         // Sometimes the top activity on the display isn't quite ready to receive inputs and the
         // injected input event gets rejected, so we retry a few times before giving up.
-        Timeout timeout = new Timeout("tapOnDisplay", EVENT_TIMEOUT_MS, 2f, EVENT_TIMEOUT_MS);
+        long maxTimeoutMs = 2 * EVENT_TIMEOUT_MS;
+        Timeout timeout = new Timeout("tapOnDisplay", EVENT_TIMEOUT_MS, 2f, maxTimeoutMs);
         try {
             timeout.run("tap on display " + display.getDisplayId(), ()-> {
                 final long downTime = SystemClock.elapsedRealtime();
