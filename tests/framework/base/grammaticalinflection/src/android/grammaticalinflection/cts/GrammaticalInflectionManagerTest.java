@@ -48,7 +48,9 @@ public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
     private GrammaticalInflectionManager mGrammaticalInflectionManager;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
+        super.setUp();
+
         final Context context = InstrumentationRegistry.getContext();
         mGrammaticalInflectionManager = context.getSystemService(
                 GrammaticalInflectionManager.class);
