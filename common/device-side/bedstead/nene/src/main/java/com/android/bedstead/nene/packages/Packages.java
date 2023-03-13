@@ -375,14 +375,7 @@ public final class Packages {
             return null;
         }
 
-        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)
-                || !user.isRunning()) {
-            // We can use the old adb version - as the new way fails for non-running users
-            return installPreS(user, apkFile);
-        }
-
-        // Temp: let's always use the old version so we're not reliant on broadcasts for now
-        if (true) {
+        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
             return installPreS(user, apkFile);
         }
 
@@ -423,7 +416,7 @@ public final class Packages {
 
                     if (intent == null) {
                         throw new NeneException(
-                                "Did not receive broadcast from package installer session when"
+                                "Did not receive intent from package installer session when"
                                         + " installing bytes on user " + user);
                     }
 
