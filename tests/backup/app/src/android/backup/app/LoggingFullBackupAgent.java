@@ -21,16 +21,14 @@ import android.app.backup.BackupDataInput;
 import android.app.backup.BackupDataOutput;
 import android.app.backup.BackupManager;
 import android.app.backup.BackupRestoreEventLogger;
-import android.app.backup.BackupRestoreEventLogger.BackupRestoreDataType;
-import android.app.backup.BackupRestoreEventLogger.BackupRestoreError;
 import android.app.backup.FullBackupDataOutput;
 import android.os.ParcelFileDescriptor;
 
 import java.io.IOException;
 
 public class LoggingFullBackupAgent extends BackupAgent {
-    @BackupRestoreDataType private static final String DATA_TYPE = "data_type";
-    @BackupRestoreError private static final String ERROR = "error";
+    private static final String DATA_TYPE = "data_type";
+    private static final String ERROR = "error";
     private static final String METADATA = "metadata";
     private static final int SUCCESS_COUNT = 1;
     private static final int FAIL_COUNT = 2;
@@ -59,7 +57,7 @@ public class LoggingFullBackupAgent extends BackupAgent {
         super.onFullBackup(data);
 
         mBackupRestoreEventLogger.logItemsBackedUp(DATA_TYPE, SUCCESS_COUNT);
-        mBackupRestoreEventLogger.logBackupMetaData(DATA_TYPE, METADATA);
+        mBackupRestoreEventLogger.logBackupMetadata(DATA_TYPE, METADATA);
         mBackupRestoreEventLogger.logItemsBackupFailed(DATA_TYPE, FAIL_COUNT, ERROR);
     }
 
