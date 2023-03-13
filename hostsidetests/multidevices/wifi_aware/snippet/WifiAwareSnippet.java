@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2023 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.snippet;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -13,10 +29,13 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 import android.util.Pair;
+
 import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.google.android.mobly.snippet.Snippet;
 import com.google.android.mobly.snippet.rpc.Rpc;
 import com.google.common.collect.ImmutableSet;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,234 +43,242 @@ import java.util.List;
 /** An example snippet class with a simple Rpc. */
 public class WifiAwareSnippet implements Snippet {
 
-  private static class WifiAwareSnippetException extends Exception {
-    private static final long SERIAL_VERSION_UID = 1;
+    private static class WifiAwareSnippetException extends Exception {
+        private static final long SERIAL_VERSION_UID = 1;
 
-    public WifiAwareSnippetException(String msg) {
-      super(msg);
+        WifiAwareSnippetException(String msg) {
+            super(msg);
+        }
+
+        WifiAwareSnippetException(String msg, Throwable err) {
+            super(msg, err);
+        }
     }
 
-    public WifiAwareSnippetException(String msg, Throwable err) {
-      super(msg, err);
-    }
-  }
+    private static final String TAG = "WifiAwareSnippet";
 
-  private static final String TAG = "WifiAwareSnippet";
+    private static final String SERVICE_NAME = "CtsVerifierTestService";
+    private static final byte[] MATCH_FILTER_BYTES = "bytes used for matching".getBytes(UTF_8);
+    private static final byte[] PUB_SSI = "Extra bytes in the publisher discovery".getBytes(UTF_8);
+    private static final byte[] SUB_SSI =
+            "Arbitrary bytes for the subscribe discovery".getBytes(UTF_8);
+    private static final int LARGE_ENOUGH_DISTANCE = 100000; // 100 meters
 
-  private static final String SERVICE_NAME = "CtsVerifierTestService";
-  private static final byte[] MATCH_FILTER_BYTES = "bytes used for matching".getBytes(UTF_8);
-  private static final byte[] PUB_SSI = "Extra bytes in the publisher discovery".getBytes(UTF_8);
-  private static final byte[] SUB_SSI =
-      "Arbitrary bytes for the subscribe discovery".getBytes(UTF_8);
-  private static final int LARGE_ENOUGH_DISTANCE = 100000; // 100 meters
+    private final WifiAwareManager mWifiAwareManager;
 
-  private final WifiAwareManager wifiAwareManager;
+    private final Context mContext;
 
-  private final Context context;
+    private final HandlerThread mHandlerThread;
 
-  private final HandlerThread handlerThread;
+    private final Handler mHandler;
 
-  private final Handler handler;
+    private WifiAwareSession mWifiAwareSession;
+    private DiscoverySession mDiscoverySession;
+    private CallbackUtils.DiscoveryCb mDiscoveryCb;
+    private PeerHandle mPeerHandle;
 
-  private WifiAwareSession wifiAwareSession;
-  private DiscoverySession wifiAwareDiscoverySession;
-  private CallbackUtils.DiscoveryCb discoveryCb;
-  private PeerHandle peerHandle;
-
-  public WifiAwareSnippet() {
-    context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-    wifiAwareManager = context.getSystemService(WifiAwareManager.class);
-    handlerThread = new HandlerThread("Snippet-Aware");
-    handlerThread.start();
-    handler = new Handler(handlerThread.getLooper());
-  }
-
-  @Rpc(description = "Execute attach.")
-  public void attach() throws InterruptedException, WifiAwareSnippetException {
-    CallbackUtils.AttachCb attachCb = new CallbackUtils.AttachCb();
-    wifiAwareManager.attach(attachCb, handler);
-    Pair<CallbackUtils.AttachCb.CallbackCode, WifiAwareSession> results = attachCb.waitForAttach();
-    if (results.first != CallbackUtils.AttachCb.CallbackCode.ON_ATTACHED) {
-      throw new WifiAwareSnippetException(String.format("executeTest: attach %s", results.first));
-    }
-    wifiAwareSession = results.second;
-    if (wifiAwareSession == null) {
-      throw new WifiAwareSnippetException(
-          "executeTest: attach callback succeeded but null session returned!?");
-    }
-  }
-
-  @Rpc(description = "Execute subscribe.")
-  public void subscribe(Boolean isUnsolicited, Boolean isRangingRequired)
-      throws InterruptedException, WifiAwareSnippetException {
-    discoveryCb = new CallbackUtils.DiscoveryCb();
-
-    List<byte[]> matchFilter = new ArrayList<>();
-    matchFilter.add(MATCH_FILTER_BYTES);
-    SubscribeConfig.Builder builder =
-        new SubscribeConfig.Builder()
-            .setServiceName(SERVICE_NAME)
-            .setServiceSpecificInfo(SUB_SSI)
-            .setMatchFilter(matchFilter)
-            .setSubscribeType(
-                isUnsolicited
-                    ? SubscribeConfig.SUBSCRIBE_TYPE_PASSIVE
-                    : SubscribeConfig.SUBSCRIBE_TYPE_ACTIVE)
-            .setTerminateNotificationEnabled(true);
-
-    if (isRangingRequired) {
-      // set up a distance that will always trigger - i.e. that we're already in that range
-      builder.setMaxDistanceMm(LARGE_ENOUGH_DISTANCE);
-    }
-    SubscribeConfig subscribeConfig = builder.build();
-    Log.d(TAG, "executeTestSubscriber: subscribeConfig=" + subscribeConfig);
-    wifiAwareSession.subscribe(subscribeConfig, discoveryCb, handler);
-
-    // wait for results - subscribe session
-    CallbackUtils.DiscoveryCb.CallbackData callbackData =
-        discoveryCb.waitForCallbacks(
-            ImmutableSet.of(
-                CallbackUtils.DiscoveryCb.CallbackCode.ON_SUBSCRIBE_STARTED,
-                CallbackUtils.DiscoveryCb.CallbackCode.ON_SESSION_CONFIG_FAILED));
-    if (callbackData.callbackCode != CallbackUtils.DiscoveryCb.CallbackCode.ON_SUBSCRIBE_STARTED) {
-      throw new WifiAwareSnippetException(
-          String.format("executeTestSubscriber: subscribe %s", callbackData.callbackCode));
-    }
-    wifiAwareDiscoverySession = callbackData.subscribeDiscoverySession;
-    if (wifiAwareDiscoverySession == null) {
-      throw new WifiAwareSnippetException(
-          "executeTestSubscriber: subscribe succeeded but null session returned");
-    }
-    Log.d(TAG, "executeTestSubscriber: subscribe succeeded");
-
-    // 3. wait for discovery
-    callbackData =
-        discoveryCb.waitForCallbacks(
-            ImmutableSet.of(
-                isRangingRequired
-                    ? CallbackUtils.DiscoveryCb.CallbackCode.ON_SERVICE_DISCOVERED_WITH_RANGE
-                    : CallbackUtils.DiscoveryCb.CallbackCode.ON_SERVICE_DISCOVERED));
-
-    if (callbackData.callbackCode == CallbackUtils.DiscoveryCb.CallbackCode.TIMEOUT) {
-      throw new WifiAwareSnippetException("executeTestSubscriber: waiting for discovery TIMEOUT");
-    }
-    peerHandle = callbackData.peerHandle;
-    if (!isRangingRequired) {
-      Log.d(TAG, "executeTestSubscriber: discovery");
-    } else {
-      Log.d(TAG, "executeTestSubscriber: discovery with range=" + callbackData.distanceMm);
+    public WifiAwareSnippet() {
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        mWifiAwareManager = mContext.getSystemService(WifiAwareManager.class);
+        mHandlerThread = new HandlerThread("Snippet-Aware");
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper());
     }
 
-    if (!Arrays.equals(PUB_SSI, callbackData.serviceSpecificInfo)) {
-      throw new WifiAwareSnippetException(
-          "executeTestSubscriber: discovery but SSI mismatch: rx='"
-              + new String(callbackData.serviceSpecificInfo, UTF_8)
-              + "'");
+    @Rpc(description = "Execute attach.")
+    public void attach() throws InterruptedException, WifiAwareSnippetException {
+        CallbackUtils.AttachCb attachCb = new CallbackUtils.AttachCb();
+        mWifiAwareManager.attach(attachCb, mHandler);
+        Pair<CallbackUtils.AttachCb.CallbackCode, WifiAwareSession> results =
+                attachCb.waitForAttach();
+        if (results.first != CallbackUtils.AttachCb.CallbackCode.ON_ATTACHED) {
+            throw new WifiAwareSnippetException(
+                    String.format("executeTest: attach %s", results.first));
+        }
+        mWifiAwareSession = results.second;
+        if (mWifiAwareSession == null) {
+            throw new WifiAwareSnippetException(
+                    "executeTest: attach callback succeeded but null session returned!?");
+        }
     }
-    if (callbackData.matchFilter.size() != 1
-        || !Arrays.equals(MATCH_FILTER_BYTES, callbackData.matchFilter.get(0))) {
-      StringBuilder sb = new StringBuilder();
-      sb.append("size=").append(callbackData.matchFilter.size());
-      for (byte[] mf : callbackData.matchFilter) {
-        sb.append(", e='").append(new String(mf, UTF_8)).append("'");
-      }
-      throw new WifiAwareSnippetException(
-          "executeTestSubscriber: discovery but matchFilter mismatch: " + sb);
-    }
-    if (peerHandle == null) {
-      throw new WifiAwareSnippetException("executeTestSubscriber: discovery but null peerHandle");
-    }
-  }
 
-  @Rpc(description = "Send message.")
-  public void sendMessage(int messageId, String message)
-      throws InterruptedException, WifiAwareSnippetException {
-    // 4. send message & wait for send status
-    wifiAwareDiscoverySession.sendMessage(peerHandle, messageId, message.getBytes(UTF_8));
-    CallbackUtils.DiscoveryCb.CallbackData callbackData =
-        discoveryCb.waitForCallbacks(
-            ImmutableSet.of(
-                CallbackUtils.DiscoveryCb.CallbackCode.ON_MESSAGE_SEND_SUCCEEDED,
-                CallbackUtils.DiscoveryCb.CallbackCode.ON_MESSAGE_SEND_FAILED));
+    @Rpc(description = "Execute subscribe.")
+    public void subscribe(Boolean isUnsolicited, Boolean isRangingRequired)
+            throws InterruptedException, WifiAwareSnippetException {
+        mDiscoveryCb = new CallbackUtils.DiscoveryCb();
 
-    if (callbackData.callbackCode
-        != CallbackUtils.DiscoveryCb.CallbackCode.ON_MESSAGE_SEND_SUCCEEDED) {
-      throw new WifiAwareSnippetException(
-          String.format("executeTestSubscriber: sendMessage %s", callbackData.callbackCode));
-    }
-    Log.d(TAG, "executeTestSubscriber: send message succeeded");
-    if (callbackData.messageId != messageId) {
-      throw new WifiAwareSnippetException(
-          "executeTestSubscriber: send message message ID mismatch: " + callbackData.messageId);
-    }
-  }
+        List<byte[]> matchFilter = new ArrayList<>();
+        matchFilter.add(MATCH_FILTER_BYTES);
+        SubscribeConfig.Builder builder =
+                new SubscribeConfig.Builder()
+                        .setServiceName(SERVICE_NAME)
+                        .setServiceSpecificInfo(SUB_SSI)
+                        .setMatchFilter(matchFilter)
+                        .setSubscribeType(
+                                isUnsolicited
+                                        ? SubscribeConfig.SUBSCRIBE_TYPE_PASSIVE
+                                        : SubscribeConfig.SUBSCRIBE_TYPE_ACTIVE)
+                        .setTerminateNotificationEnabled(true);
 
-  @Rpc(description = "Create publish session.")
-  public void publish(Boolean isUnsolicited, Boolean isRangingRequired)
-      throws WifiAwareSnippetException, InterruptedException {
-    discoveryCb = new CallbackUtils.DiscoveryCb();
+        if (isRangingRequired) {
+            // set up a distance that will always trigger - i.e. that we're already in that range
+            builder.setMaxDistanceMm(LARGE_ENOUGH_DISTANCE);
+        }
+        SubscribeConfig subscribeConfig = builder.build();
+        Log.d(TAG, "executeTestSubscriber: subscribeConfig=" + subscribeConfig);
+        mWifiAwareSession.subscribe(subscribeConfig, mDiscoveryCb, mHandler);
 
-    // 2. publish
-    List<byte[]> matchFilter = new ArrayList<>();
-    matchFilter.add(MATCH_FILTER_BYTES);
-    PublishConfig publishConfig =
-        new PublishConfig.Builder()
-            .setServiceName(SERVICE_NAME)
-            .setServiceSpecificInfo(PUB_SSI)
-            .setMatchFilter(matchFilter)
-            .setPublishType(
-                isUnsolicited
-                    ? PublishConfig.PUBLISH_TYPE_UNSOLICITED
-                    : PublishConfig.PUBLISH_TYPE_SOLICITED)
-            .setTerminateNotificationEnabled(true)
-            .setRangingEnabled(isRangingRequired)
-            .build();
-    Log.d(TAG, "executeTestPublisher: publishConfig=" + publishConfig);
-    wifiAwareSession.publish(publishConfig, discoveryCb, handler);
+        // wait for results - subscribe session
+        CallbackUtils.DiscoveryCb.CallbackData callbackData =
+                mDiscoveryCb.waitForCallbacks(
+                        ImmutableSet.of(
+                                CallbackUtils.DiscoveryCb.CallbackCode.ON_SUBSCRIBE_STARTED,
+                                CallbackUtils.DiscoveryCb.CallbackCode.ON_SESSION_CONFIG_FAILED));
+        if (callbackData.callbackCode
+                != CallbackUtils.DiscoveryCb.CallbackCode.ON_SUBSCRIBE_STARTED) {
+            throw new WifiAwareSnippetException(
+                    String.format("executeTestSubscriber: subscribe %s",
+                            callbackData.callbackCode));
+        }
+        mDiscoverySession = callbackData.subscribeDiscoverySession;
+        if (mDiscoverySession == null) {
+            throw new WifiAwareSnippetException(
+                    "executeTestSubscriber: subscribe succeeded but null session returned");
+        }
+        Log.d(TAG, "executeTestSubscriber: subscribe succeeded");
 
-    //    wait for results - publish session
-    CallbackUtils.DiscoveryCb.CallbackData callbackData =
-        discoveryCb.waitForCallbacks(
-            ImmutableSet.of(
-                CallbackUtils.DiscoveryCb.CallbackCode.ON_PUBLISH_STARTED,
-                CallbackUtils.DiscoveryCb.CallbackCode.ON_SESSION_CONFIG_FAILED));
-    if (callbackData.callbackCode != CallbackUtils.DiscoveryCb.CallbackCode.ON_PUBLISH_STARTED) {
-      throw new WifiAwareSnippetException(
-          String.format("executeTestPublisher: publish %s", callbackData.callbackCode));
-    }
-    wifiAwareDiscoverySession = callbackData.publishDiscoverySession;
-    if (wifiAwareDiscoverySession == null) {
-      throw new WifiAwareSnippetException(
-          "executeTestPublisher: publish succeeded but null session returned");
-    }
-    Log.d(TAG, "executeTestPublisher: publish succeeded");
-  }
+        // 3. wait for discovery
+        callbackData =
+                mDiscoveryCb.waitForCallbacks(ImmutableSet.of(isRangingRequired
+                        ? CallbackUtils.DiscoveryCb.CallbackCode.ON_SERVICE_DISCOVERED_WITH_RANGE
+                        : CallbackUtils.DiscoveryCb.CallbackCode.ON_SERVICE_DISCOVERED));
 
-  @Rpc(description = "Receive message.")
-  public String receiveMessage() throws WifiAwareSnippetException, InterruptedException {
-    // 3. wait to receive message.
-    CallbackUtils.DiscoveryCb.CallbackData callbackData =
-        discoveryCb.waitForCallbacks(
-            ImmutableSet.of(CallbackUtils.DiscoveryCb.CallbackCode.ON_MESSAGE_RECEIVED));
-    peerHandle = callbackData.peerHandle;
-    Log.d(TAG, "executeTestPublisher: received message");
+        if (callbackData.callbackCode == CallbackUtils.DiscoveryCb.CallbackCode.TIMEOUT) {
+            throw new WifiAwareSnippetException(
+                    "executeTestSubscriber: waiting for discovery TIMEOUT");
+        }
+        mPeerHandle = callbackData.peerHandle;
+        if (!isRangingRequired) {
+            Log.d(TAG, "executeTestSubscriber: discovery");
+        } else {
+            Log.d(TAG, "executeTestSubscriber: discovery with range=" + callbackData.distanceMm);
+        }
 
-    if (peerHandle == null) {
-      throw new WifiAwareSnippetException(
-          "executeTestPublisher: received message but peerHandle is null!?");
+        if (!Arrays.equals(PUB_SSI, callbackData.serviceSpecificInfo)) {
+            throw new WifiAwareSnippetException(
+                    "executeTestSubscriber: discovery but SSI mismatch: rx='"
+                            + new String(callbackData.serviceSpecificInfo, UTF_8)
+                            + "'");
+        }
+        if (callbackData.matchFilter.size() != 1
+                || !Arrays.equals(MATCH_FILTER_BYTES, callbackData.matchFilter.get(0))) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("size=").append(callbackData.matchFilter.size());
+            for (byte[] mf : callbackData.matchFilter) {
+                sb.append(", e='").append(new String(mf, UTF_8)).append("'");
+            }
+            throw new WifiAwareSnippetException(
+                    "executeTestSubscriber: discovery but matchFilter mismatch: " + sb);
+        }
+        if (mPeerHandle == null) {
+            throw new WifiAwareSnippetException(
+                    "executeTestSubscriber: discovery but null peerHandle");
+        }
     }
-    return new String(callbackData.serviceSpecificInfo, UTF_8);
-  }
 
-  @Override
-  public void shutdown() {
-    if (wifiAwareDiscoverySession != null) {
-      wifiAwareDiscoverySession.close();
-      wifiAwareDiscoverySession = null;
+    @Rpc(description = "Send message.")
+    public void sendMessage(int messageId, String message)
+            throws InterruptedException, WifiAwareSnippetException {
+        // 4. send message & wait for send status
+        mDiscoverySession.sendMessage(mPeerHandle, messageId, message.getBytes(UTF_8));
+        CallbackUtils.DiscoveryCb.CallbackData callbackData =
+                mDiscoveryCb.waitForCallbacks(
+                        ImmutableSet.of(
+                                CallbackUtils.DiscoveryCb.CallbackCode.ON_MESSAGE_SEND_SUCCEEDED,
+                                CallbackUtils.DiscoveryCb.CallbackCode.ON_MESSAGE_SEND_FAILED));
+
+        if (callbackData.callbackCode
+                != CallbackUtils.DiscoveryCb.CallbackCode.ON_MESSAGE_SEND_SUCCEEDED) {
+            throw new WifiAwareSnippetException(
+                    String.format("executeTestSubscriber: sendMessage %s",
+                            callbackData.callbackCode));
+        }
+        Log.d(TAG, "executeTestSubscriber: send message succeeded");
+        if (callbackData.messageId != messageId) {
+            throw new WifiAwareSnippetException(
+                    "executeTestSubscriber: send message message ID mismatch: "
+                            + callbackData.messageId);
+        }
     }
-    if (wifiAwareSession != null) {
-      wifiAwareSession.close();
-      wifiAwareSession = null;
+
+    @Rpc(description = "Create publish session.")
+    public void publish(Boolean isUnsolicited, Boolean isRangingRequired)
+            throws WifiAwareSnippetException, InterruptedException {
+        mDiscoveryCb = new CallbackUtils.DiscoveryCb();
+
+        // 2. publish
+        List<byte[]> matchFilter = new ArrayList<>();
+        matchFilter.add(MATCH_FILTER_BYTES);
+        PublishConfig publishConfig =
+                new PublishConfig.Builder()
+                        .setServiceName(SERVICE_NAME)
+                        .setServiceSpecificInfo(PUB_SSI)
+                        .setMatchFilter(matchFilter)
+                        .setPublishType(
+                                isUnsolicited
+                                        ? PublishConfig.PUBLISH_TYPE_UNSOLICITED
+                                        : PublishConfig.PUBLISH_TYPE_SOLICITED)
+                        .setTerminateNotificationEnabled(true)
+                        .setRangingEnabled(isRangingRequired)
+                        .build();
+        Log.d(TAG, "executeTestPublisher: publishConfig=" + publishConfig);
+        mWifiAwareSession.publish(publishConfig, mDiscoveryCb, mHandler);
+
+        //    wait for results - publish session
+        CallbackUtils.DiscoveryCb.CallbackData callbackData =
+                mDiscoveryCb.waitForCallbacks(
+                        ImmutableSet.of(
+                                CallbackUtils.DiscoveryCb.CallbackCode.ON_PUBLISH_STARTED,
+                                CallbackUtils.DiscoveryCb.CallbackCode.ON_SESSION_CONFIG_FAILED));
+        if (callbackData.callbackCode
+                != CallbackUtils.DiscoveryCb.CallbackCode.ON_PUBLISH_STARTED) {
+            throw new WifiAwareSnippetException(
+                    String.format("executeTestPublisher: publish %s", callbackData.callbackCode));
+        }
+        mDiscoverySession = callbackData.publishDiscoverySession;
+        if (mDiscoverySession == null) {
+            throw new WifiAwareSnippetException(
+                    "executeTestPublisher: publish succeeded but null session returned");
+        }
+        Log.d(TAG, "executeTestPublisher: publish succeeded");
     }
-  }
+
+    @Rpc(description = "Receive message.")
+    public String receiveMessage() throws WifiAwareSnippetException, InterruptedException {
+        // 3. wait to receive message.
+        CallbackUtils.DiscoveryCb.CallbackData callbackData =
+                mDiscoveryCb.waitForCallbacks(
+                        ImmutableSet.of(
+                                CallbackUtils.DiscoveryCb.CallbackCode.ON_MESSAGE_RECEIVED));
+        mPeerHandle = callbackData.peerHandle;
+        Log.d(TAG, "executeTestPublisher: received message");
+
+        if (mPeerHandle == null) {
+            throw new WifiAwareSnippetException(
+                    "executeTestPublisher: received message but peerHandle is null!?");
+        }
+        return new String(callbackData.serviceSpecificInfo, UTF_8);
+    }
+
+    @Override
+    public void shutdown() {
+        if (mDiscoverySession != null) {
+            mDiscoverySession.close();
+            mDiscoverySession = null;
+        }
+        if (mWifiAwareSession != null) {
+            mWifiAwareSession.close();
+            mWifiAwareSession = null;
+        }
+    }
 }
