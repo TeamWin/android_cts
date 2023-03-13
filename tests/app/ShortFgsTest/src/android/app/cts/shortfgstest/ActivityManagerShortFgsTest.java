@@ -65,7 +65,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -136,6 +135,7 @@ public class ActivityManagerShortFgsTest {
         Log.d(TAG, "setUpClass() started");
 
         sDeviceConfig = new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER);
+        ShellUtils.runShellCommand("cmd device_config set_sync_disabled_for_tests until_reboot");
 
         Log.d(TAG, "setUpClass() done");
     }
@@ -892,7 +892,6 @@ public class ActivityManagerShortFgsTest {
      * Make sure, if a short service doesn't stop, the app gets ANRed.
      */
     @Test
-    @Ignore
     public void testAnr() throws Exception {
         final int anrExtraTimeout = 10_000;
 
