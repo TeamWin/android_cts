@@ -26,6 +26,7 @@ android_test {
     manifest: "AndroidManifest.xml",
     static_libs: [
         "androidx.test.runner",
+        "compatibility-device-util-axt",
         "guava",
         "mobly-snippet-lib",
     ],
