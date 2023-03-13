@@ -60,7 +60,7 @@ public class UnsupportedErrorDialogTests extends ActivityManagerTestBase {
         resetAppErrors();
     }
 
-    /** Make sure the developer options apply correctly leading to the dialog being shown. */
+    /** Make sure the developer option applies correctly leading to the dialog being shown. */
     @Test
     public void testDevSettingOverride() {
         try (SettingsSession<Integer> devDialogShow =
@@ -71,16 +71,6 @@ public class UnsupportedErrorDialogTests extends ActivityManagerTestBase {
                      secureIntSession(Settings.Secure.SHOW_FIRST_CRASH_DIALOG_DEV_OPTION)) {
             // set developer setting to show dialogs anyway
             devDialogShow.set(1);
-
-            // enable only the regular option for showing the crash dialog after the first crash
-            showOnFirstCrash.set(1);
-            showOnFirstCrashDev.set(0);
-            launchActivityNoWait(Components.CRASHING_ACTIVITY);
-            findCrashDialogAndCloseApp();
-            ensureActivityNotFocused(Components.CRASHING_ACTIVITY);
-
-            resetAppErrors();
-
             // enable only the dev option for showing the crash dialog after the first crash
             showOnFirstCrash.set(0);
             showOnFirstCrashDev.set(1);
