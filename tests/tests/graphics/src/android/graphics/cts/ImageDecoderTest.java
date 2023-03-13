@@ -253,12 +253,13 @@ public class ImageDecoderTest {
         assumeTrue("No 10-bit HEVC decoder, skip the test.", has10BitHEVCDecoder());
 
         // For TVs, even if the device advertises that 10 bits profile is supported, the output
-        // format might not be 10 bits pixel format, but can still be displayed. So only when
-        // the TV is capable to output RGBA_1010102, this test can continue.
+        // format might not be CPU readable, but can still be displayed, and only when the TV
+        // is capable to decode to YUVP010 format, the image can be converted into RGBA_1010102,
+        // and this test can continue.
         if (MediaUtils.isTv()) {
             assumeTrue(
-                "The TV is unable to decode to RGBA_1010102 format, skip the test",
-                hasDecoderSupportsRGBA1010102());
+                "The TV is unable to decode to YUVP010 format, skip the test",
+                hasHEVCDecoderSupportsYUVP010());
         }
 
         try {
@@ -2799,7 +2800,7 @@ public class ImageDecoderTest {
         return true;
     }
 
-    private static boolean hasDecoderSupportsRGBA1010102() {
+    private static boolean hasHEVCDecoderSupportsYUVP010() {
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
         for (MediaCodecInfo mediaCodecInfo : codecList.getCodecInfos()) {
             if (mediaCodecInfo.isEncoder()) {
@@ -2811,7 +2812,7 @@ public class ImageDecoderTest {
                             mediaCodecInfo.getCapabilitiesForType(mediaType);
                     for (int i = 0; i < codecCapabilities.colorFormats.length; ++i) {
                         if (codecCapabilities.colorFormats[i]
-                                == MediaCodecInfo.CodecCapabilities.COLOR_Format32bitABGR2101010) {
+                                == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010) {
                             return true;
                         }
                     }

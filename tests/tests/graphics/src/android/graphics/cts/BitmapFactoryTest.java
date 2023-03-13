@@ -1010,7 +1010,7 @@ public class BitmapFactoryTest {
 
     @Test
     @RequiresDevice
-    public void testDecode10BitHEIFTo10BitBitmap() {
+    public void testDecode10BitHEIF() {
         assumeTrue(
             "Test needs Android T.", ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU));
         assumeTrue(
@@ -1018,22 +1018,23 @@ public class BitmapFactoryTest {
             SystemProperties.getInt("ro.vndk.version", 0) >= Build.VERSION_CODES.TIRAMISU);
         assumeTrue("No 10-bit HEVC decoder, skip the test.", has10BitHEVCDecoder());
 
+        Config preferredConfig = Config.RGBA_1010102;
+
         // For TVs, even if the device advertises that 10 bits profile is supported, the output
-        // format might not be 10 bits pixel format, but can still be displayed. So only when
-        // the TV is capable to output RGBA_1010102, this test can continue.
-        if (MediaUtils.isTv()) {
-            assumeTrue(
-                "The TV is unable to decode to RGBA_1010102 format, skip the test",
-                hasDecoderSupportsRGBA1010102());
+        // format might not be CPU readable, but can still be displayed. When the TV device is
+        // not capable to decode to YUVP010 format, it should be able to fall back to decode to
+        // RGB_565 format.
+        if (MediaUtils.isTv() && !hasHEVCDecoderSupportsYUVP010()) {
+            preferredConfig = Config.RGB_565;
         }
 
         BitmapFactory.Options opt = new BitmapFactory.Options();
-        opt.inPreferredConfig = Config.RGBA_1010102;
+        opt.inPreferredConfig = preferredConfig;
         Bitmap bm = BitmapFactory.decodeStream(obtainInputStream(R.raw.heifimage_10bit), null, opt);
         assertNotNull(bm);
         assertEquals(4096, bm.getWidth());
         assertEquals(3072, bm.getHeight());
-        assertEquals(Config.RGBA_1010102, bm.getConfig());
+        assertEquals(preferredConfig, bm.getConfig());
     }
 
     @Test
@@ -1047,12 +1048,13 @@ public class BitmapFactoryTest {
         assumeTrue("No 10-bit HEVC decoder, skip the test.", has10BitHEVCDecoder());
 
         // For TVs, even if the device advertises that 10 bits profile is supported, the output
-        // format might not be 10 bits pixel format, but can still be displayed. So only when
-        // the TV is capable to output RGBA_1010102, this test can continue.
+        // format might not be CPU readable, but can still be displayed, and only when the TV
+        // is capable to decode to YUVP010 format, the image can be converted into RGBA_1010102,
+        // and this test can continue.
         if (MediaUtils.isTv()) {
             assumeTrue(
                 "The TV is unable to decode to RGBA_1010102 format, skip the test",
-                hasDecoderSupportsRGBA1010102());
+                hasHEVCDecoderSupportsYUVP010());
         }
 
         BitmapFactory.Options opt = new BitmapFactory.Options();
@@ -1132,7 +1134,7 @@ public class BitmapFactoryTest {
         return true;
     }
 
-    private static boolean hasDecoderSupportsRGBA1010102() {
+    private static boolean hasHEVCDecoderSupportsYUVP010() {
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
         for (MediaCodecInfo mediaCodecInfo : codecList.getCodecInfos()) {
             if (mediaCodecInfo.isEncoder()) {
@@ -1144,7 +1146,7 @@ public class BitmapFactoryTest {
                             mediaCodecInfo.getCapabilitiesForType(mediaType);
                     for (int i = 0; i < codecCapabilities.colorFormats.length; ++i) {
                         if (codecCapabilities.colorFormats[i]
-                                == MediaCodecInfo.CodecCapabilities.COLOR_Format32bitABGR2101010) {
+                                == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010) {
                             return true;
                         }
                     }
