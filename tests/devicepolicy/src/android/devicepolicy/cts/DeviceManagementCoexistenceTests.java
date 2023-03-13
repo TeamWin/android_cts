@@ -74,7 +74,6 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
-import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 
@@ -596,8 +595,8 @@ public final class DeviceManagementCoexistenceTests {
             sDeviceState.dpc().devicePolicyManager().setAutoTimeZoneEnabled(
                     sDeviceState.dpc().componentName(), true);
 
-            assertPolicySetResultReceived(AUTO_TIMEZONE_POLICY, PolicyUpdateResult.RESULT_SUCCESS,
-                    GLOBAL_USER_ID, new Bundle());
+            assertPolicySetResultReceived(AUTO_TIMEZONE_POLICY,
+                    PolicyUpdateResult.RESULT_POLICY_SET, GLOBAL_USER_ID, new Bundle());
         } finally {
             sDeviceState.dpc().devicePolicyManager().setAutoTimeZoneEnabled(
                     sDeviceState.dpc().componentName(), originalValue);
@@ -622,7 +621,7 @@ public final class DeviceManagementCoexistenceTests {
                             GRANTABLE_PERMISSION, PERMISSION_GRANT_STATE_GRANTED);
 
             assertPolicySetResultReceived(
-                    PERMISSION_GRANT_POLICY, PolicyUpdateResult.RESULT_SUCCESS, LOCAL_USER_ID,
+                    PERMISSION_GRANT_POLICY, PolicyUpdateResult.RESULT_POLICY_SET, LOCAL_USER_ID,
                     bundle);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
@@ -642,7 +641,7 @@ public final class DeviceManagementCoexistenceTests {
                     .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{PACKAGE_NAME});
 
             assertPolicySetResultReceived(
-                    LOCK_TASK_POLICY, PolicyUpdateResult.RESULT_SUCCESS, LOCAL_USER_ID,
+                    LOCK_TASK_POLICY, PolicyUpdateResult.RESULT_POLICY_SET, LOCAL_USER_ID,
                     new Bundle());
         } finally {
             sDeviceState.dpc().devicePolicyManager()
@@ -664,7 +663,7 @@ public final class DeviceManagementCoexistenceTests {
 
             assertPolicySetResultReceived(
                     USER_CONTROL_DISABLED_PACKAGES_POLICY,
-                    PolicyUpdateResult.RESULT_SUCCESS, GLOBAL_USER_ID, new Bundle());
+                    PolicyUpdateResult.RESULT_POLICY_SET, GLOBAL_USER_ID, new Bundle());
 
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
@@ -686,7 +685,7 @@ public final class DeviceManagementCoexistenceTests {
 
             assertPolicySetResultReceived(
                     PACKAGE_UNINSTALL_BLOCKED_POLICY,
-                    PolicyUpdateResult.RESULT_SUCCESS, LOCAL_USER_ID, bundle);
+                    PolicyUpdateResult.RESULT_POLICY_SET, LOCAL_USER_ID, bundle);
 
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUninstallBlocked(
@@ -712,7 +711,7 @@ public final class DeviceManagementCoexistenceTests {
 
             assertPolicySetResultReceived(
                     PERSISTENT_PREFERRED_ACTIVITY_POLICY,
-                    PolicyUpdateResult.RESULT_SUCCESS, LOCAL_USER_ID, bundle);
+                    PolicyUpdateResult.RESULT_POLICY_SET, LOCAL_USER_ID, bundle);
         } finally {
             sDeviceState.dpc().devicePolicyManager().clearPackagePersistentPreferredActivities(
                     sDeviceState.dpc().componentName(),
@@ -733,7 +732,7 @@ public final class DeviceManagementCoexistenceTests {
 
             assertPolicySetResultReceived(
                     getIdentifierForUserRestriction(LOCAL_USER_RESTRICTION),
-                    PolicyUpdateResult.RESULT_SUCCESS, LOCAL_USER_ID, new Bundle());
+                    PolicyUpdateResult.RESULT_POLICY_SET, LOCAL_USER_ID, new Bundle());
         } finally {
             if (!hasRestrictionOriginally) {
                 sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
@@ -755,7 +754,7 @@ public final class DeviceManagementCoexistenceTests {
 
             assertPolicySetResultReceived(
                     getIdentifierForUserRestriction(GLOBAL_USER_RESTRICTION),
-                    PolicyUpdateResult.RESULT_SUCCESS, GLOBAL_USER_ID, new Bundle());
+                    PolicyUpdateResult.RESULT_POLICY_SET, GLOBAL_USER_ID, new Bundle());
         } finally {
             if (!hasRestrictionOriginally) {
                 sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
