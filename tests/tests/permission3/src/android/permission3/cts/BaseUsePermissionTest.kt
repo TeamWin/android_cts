@@ -203,7 +203,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
         @JvmStatic
         protected fun isPhotoPickerPermissionPromptEnabled(): Boolean {
-            return SdkLevel.isAtLeastU() && SystemUtil.callWithShellPermissionIdentity {
+            return SdkLevel.isAtLeastU() && callWithShellPermissionIdentity {
                 DeviceConfig.getBoolean(
                     DeviceConfig.NAMESPACE_PRIVACY, PICKER_ENABLED_SETTING, true)
             }
@@ -543,7 +543,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }
     }
 
-    protected fun clickPermissionRequestAllowAllPhotosButton(timeoutMillis: Long = 20000) {
+    protected fun clickPermissionRequestAllowAllButton(timeoutMillis: Long = 20000) {
         click(By.res(ALLOW_ALL_BUTTON), timeoutMillis)
     }
 
