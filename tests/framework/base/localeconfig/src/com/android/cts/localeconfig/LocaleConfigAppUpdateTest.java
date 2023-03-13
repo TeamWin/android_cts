@@ -51,7 +51,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Tests for {@link com.android.server.locales.AppUpdateTracker} API(s).
+ * Tests for {@link com.android.server.locales.LocaleManagerBackupHelper#onPackageUpdateFinished()}.
  *
  * Build/Install/Run: atest LocaleConfigAppUpdateTest
  */

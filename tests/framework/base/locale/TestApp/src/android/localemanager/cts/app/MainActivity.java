@@ -51,7 +51,7 @@ import androidx.annotation.Nullable;
  * </ul>
  */
 public class MainActivity extends Activity {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final String TAG = "LocaleManagerTestApp";
 
     @Override
