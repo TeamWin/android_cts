@@ -16,21 +16,28 @@
 
 package com.google.snippet;
 
+import static android.net.wifi.aware.AwarePairingConfig.PAIRING_BOOTSTRAPPING_OPPORTUNISTIC;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import android.content.Context;
+import android.net.wifi.aware.AwarePairingConfig;
+import android.net.wifi.aware.Characteristics;
 import android.net.wifi.aware.DiscoverySession;
 import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.aware.PublishConfig;
 import android.net.wifi.aware.SubscribeConfig;
 import android.net.wifi.aware.WifiAwareManager;
 import android.net.wifi.aware.WifiAwareSession;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 import android.util.Pair;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 import com.google.android.mobly.snippet.Snippet;
 import com.google.android.mobly.snippet.rpc.Rpc;
@@ -39,9 +46,15 @@ import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /** An example snippet class with a simple Rpc. */
 public class WifiAwareSnippet implements Snippet {
+
+    private Object mLock;
 
     private static class WifiAwareSnippetException extends Exception {
         private static final long SERIAL_VERSION_UID = 1;
@@ -63,6 +76,10 @@ public class WifiAwareSnippet implements Snippet {
     private static final byte[] SUB_SSI =
             "Arbitrary bytes for the subscribe discovery".getBytes(UTF_8);
     private static final int LARGE_ENOUGH_DISTANCE = 100000; // 100 meters
+    private static final String PASSWORD = "Some super secret password";
+    private static final String ALIAS_PUBLISH = "publisher";
+    private static final String ALIAS_SUBSCRIBE = "subscriber";
+    private static final int TEST_WAIT_DURATION_MS = 10000;
 
     private final WifiAwareManager mWifiAwareManager;
 
@@ -76,6 +93,12 @@ public class WifiAwareSnippet implements Snippet {
     private DiscoverySession mDiscoverySession;
     private CallbackUtils.DiscoveryCb mDiscoveryCb;
     private PeerHandle mPeerHandle;
+    private final AwarePairingConfig mPairingConfig = new AwarePairingConfig.Builder()
+            .setPairingCacheEnabled(true)
+            .setPairingSetupEnabled(true)
+            .setPairingVerificationEnabled(true)
+            .setBootstrappingMethods(PAIRING_BOOTSTRAPPING_OPPORTUNISTIC)
+            .build();
 
     public WifiAwareSnippet() {
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -103,8 +126,8 @@ public class WifiAwareSnippet implements Snippet {
     }
 
     @Rpc(description = "Execute subscribe.")
-    public void subscribe(Boolean isUnsolicited, Boolean isRangingRequired)
-            throws InterruptedException, WifiAwareSnippetException {
+    public void subscribe(Boolean isUnsolicited, Boolean isRangingRequired,
+            Boolean isPairingRequired) throws InterruptedException, WifiAwareSnippetException {
         mDiscoveryCb = new CallbackUtils.DiscoveryCb();
 
         List<byte[]> matchFilter = new ArrayList<>();
@@ -123,6 +146,9 @@ public class WifiAwareSnippet implements Snippet {
         if (isRangingRequired) {
             // set up a distance that will always trigger - i.e. that we're already in that range
             builder.setMaxDistanceMm(LARGE_ENOUGH_DISTANCE);
+        }
+        if (isPairingRequired) {
+            builder.setPairingConfig(mPairingConfig);
         }
         SubscribeConfig subscribeConfig = builder.build();
         Log.d(TAG, "executeTestSubscriber: subscribeConfig=" + subscribeConfig);
@@ -149,8 +175,8 @@ public class WifiAwareSnippet implements Snippet {
 
         // 3. wait for discovery
         callbackData =
-                mDiscoveryCb.waitForCallbacks(ImmutableSet.of(isRangingRequired
-                        ? CallbackUtils.DiscoveryCb.CallbackCode.ON_SERVICE_DISCOVERED_WITH_RANGE
+                mDiscoveryCb.waitForCallbacks(ImmutableSet.of(isRangingRequired ? CallbackUtils
+                        .DiscoveryCb.CallbackCode.ON_SERVICE_DISCOVERED_WITH_RANGE
                         : CallbackUtils.DiscoveryCb.CallbackCode.ON_SERVICE_DISCOVERED));
 
         if (callbackData.callbackCode == CallbackUtils.DiscoveryCb.CallbackCode.TIMEOUT) {
@@ -161,7 +187,8 @@ public class WifiAwareSnippet implements Snippet {
         if (!isRangingRequired) {
             Log.d(TAG, "executeTestSubscriber: discovery");
         } else {
-            Log.d(TAG, "executeTestSubscriber: discovery with range=" + callbackData.distanceMm);
+            Log.d(TAG, "executeTestSubscriber: discovery with range="
+                    + callbackData.distanceMm);
         }
 
         if (!Arrays.equals(PUB_SSI, callbackData.serviceSpecificInfo)) {
@@ -212,14 +239,14 @@ public class WifiAwareSnippet implements Snippet {
     }
 
     @Rpc(description = "Create publish session.")
-    public void publish(Boolean isUnsolicited, Boolean isRangingRequired)
+    public void publish(Boolean isUnsolicited, Boolean isRangingRequired, Boolean isPairingRequired)
             throws WifiAwareSnippetException, InterruptedException {
         mDiscoveryCb = new CallbackUtils.DiscoveryCb();
 
         // 2. publish
         List<byte[]> matchFilter = new ArrayList<>();
         matchFilter.add(MATCH_FILTER_BYTES);
-        PublishConfig publishConfig =
+        PublishConfig.Builder builder =
                 new PublishConfig.Builder()
                         .setServiceName(SERVICE_NAME)
                         .setServiceSpecificInfo(PUB_SSI)
@@ -229,8 +256,11 @@ public class WifiAwareSnippet implements Snippet {
                                         ? PublishConfig.PUBLISH_TYPE_UNSOLICITED
                                         : PublishConfig.PUBLISH_TYPE_SOLICITED)
                         .setTerminateNotificationEnabled(true)
-                        .setRangingEnabled(isRangingRequired)
-                        .build();
+                        .setRangingEnabled(isRangingRequired);
+        if (isPairingRequired) {
+            builder.setPairingConfig(mPairingConfig);
+        }
+        PublishConfig publishConfig = builder.build();
         Log.d(TAG, "executeTestPublisher: publishConfig=" + publishConfig);
         mWifiAwareSession.publish(publishConfig, mDiscoveryCb, mHandler);
 
@@ -251,6 +281,153 @@ public class WifiAwareSnippet implements Snippet {
                     "executeTestPublisher: publish succeeded but null session returned");
         }
         Log.d(TAG, "executeTestPublisher: publish succeeded");
+    }
+
+    @Rpc(description = "Initiate pairing setup, should be on subscriber")
+    public void initiatePairingSetup(Boolean withPassword, Boolean accept)
+            throws InterruptedException, WifiAwareSnippetException {
+        mDiscoverySession.initiateBootstrappingRequest(mPeerHandle,
+                PAIRING_BOOTSTRAPPING_OPPORTUNISTIC);
+        CallbackUtils.DiscoveryCb.CallbackData callbackData =
+                mDiscoveryCb.waitForCallbacks(Set.of(
+                        CallbackUtils.DiscoveryCb.CallbackCode.ON_BOOTSTRAPPING_CONFIRMED));
+        if (callbackData.callbackCode
+                != CallbackUtils.DiscoveryCb.CallbackCode.ON_BOOTSTRAPPING_CONFIRMED) {
+            throw new WifiAwareSnippetException(
+                    String.format("initiatePairingSetup: bootstrapping confirm missing %s",
+                            callbackData.callbackCode));
+        }
+        if (!callbackData.bootstrappingAccept
+                || callbackData.bootstrappingMethod != PAIRING_BOOTSTRAPPING_OPPORTUNISTIC) {
+            throw new WifiAwareSnippetException("initiatePairingSetup: bootstrapping failed");
+        }
+        mDiscoverySession.initiatePairingRequest(mPeerHandle, ALIAS_PUBLISH,
+                Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_PK_PASN_128,
+                withPassword ? PASSWORD : null);
+        callbackData =
+                mDiscoveryCb.waitForCallbacks(Set.of(
+                        CallbackUtils.DiscoveryCb.CallbackCode.ON_PAIRING_SETUP_CONFIRMED));
+        if (callbackData.callbackCode
+                != CallbackUtils.DiscoveryCb.CallbackCode.ON_PAIRING_SETUP_CONFIRMED) {
+            throw new WifiAwareSnippetException(
+                    String.format("initiatePairingSetup: pairing confirm missing %s",
+                            callbackData.callbackCode));
+        }
+        if (!accept) {
+            if (callbackData.pairingAccept) {
+                throw new WifiAwareSnippetException("initiatePairingSetup: pairing should be "
+                        + "rejected");
+            }
+            return;
+        }
+        if (!callbackData.pairingAccept) {
+            throw new WifiAwareSnippetException("initiatePairingSetup: pairing reject");
+        }
+        mWifiAwareManager.removePairedDevice(ALIAS_PUBLISH);
+        AtomicReference<List<String>> aliasList = new AtomicReference<>();
+        Consumer<List<String>> consumer = value -> {
+            synchronized (mLock) {
+                aliasList.set(value);
+                mLock.notify();
+            }
+        };
+        mWifiAwareManager.getPairedDevices(Executors.newSingleThreadScheduledExecutor(), consumer);
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        if (aliasList.get().size() != 1 || !ALIAS_PUBLISH.equals(aliasList.get().get(0))) {
+            throw new WifiAwareSnippetException("initiatePairingSetup: pairing alias mismatch");
+        }
+        mWifiAwareManager.removePairedDevice(ALIAS_SUBSCRIBE);
+        mWifiAwareManager.getPairedDevices(Executors.newSingleThreadScheduledExecutor(), consumer);
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        if (!aliasList.get().isEmpty()) {
+            throw new WifiAwareSnippetException(
+                    "initiatePairingSetup: pairing alias is not empty after "
+                            + "removal");
+        }
+    }
+
+    @Rpc(description = "respond to a pairing request, should be on publisher")
+    public void respondToPairingSetup(Boolean withPassword, Boolean accept)
+            throws InterruptedException, WifiAwareSnippetException {
+        CallbackUtils.DiscoveryCb.CallbackData callbackData = mDiscoveryCb.waitForCallbacks(Set.of(
+                CallbackUtils.DiscoveryCb.CallbackCode.ON_BOOTSTRAPPING_CONFIRMED));
+        if (callbackData.callbackCode
+                != CallbackUtils.DiscoveryCb.CallbackCode.ON_BOOTSTRAPPING_CONFIRMED) {
+            throw new WifiAwareSnippetException(
+                    String.format("respondToPairingSetup: bootstrapping confirm missing %s",
+                            callbackData.callbackCode));
+        }
+        if (!callbackData.bootstrappingAccept
+                || callbackData.bootstrappingMethod != PAIRING_BOOTSTRAPPING_OPPORTUNISTIC) {
+            throw new WifiAwareSnippetException("respondToPairingSetup: bootstrapping failed");
+        }
+        callbackData =
+                mDiscoveryCb.waitForCallbacks(Set.of(
+                        CallbackUtils.DiscoveryCb.CallbackCode.ON_PAIRING_REQUEST_RECEIVED));
+        if (callbackData.callbackCode
+                != CallbackUtils.DiscoveryCb.CallbackCode.ON_PAIRING_REQUEST_RECEIVED) {
+            throw new WifiAwareSnippetException(
+                    String.format("respondToPairingSetup: pairing request missing %s",
+                            callbackData.callbackCode));
+        }
+        if (accept) {
+            mDiscoverySession.acceptPairingRequest(callbackData.pairingRequestId, mPeerHandle,
+                    ALIAS_SUBSCRIBE, Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_PK_PASN_128,
+                    withPassword ? PASSWORD : null);
+        } else {
+            mDiscoverySession.rejectPairingRequest(callbackData.pairingRequestId, mPeerHandle);
+            return;
+        }
+        callbackData =
+                mDiscoveryCb.waitForCallbacks(Set.of(
+                        CallbackUtils.DiscoveryCb.CallbackCode.ON_PAIRING_SETUP_CONFIRMED));
+        if (callbackData.callbackCode
+                != CallbackUtils.DiscoveryCb.CallbackCode.ON_PAIRING_SETUP_CONFIRMED) {
+            throw new WifiAwareSnippetException(
+                    String.format("respondToPairingSetup: pairing confirm missing %s",
+                            callbackData.callbackCode));
+        }
+        if (!callbackData.pairingAccept) {
+            throw new WifiAwareSnippetException("respondToPairingSetup: pairing reject");
+        }
+        mWifiAwareManager.removePairedDevice(ALIAS_PUBLISH);
+        AtomicReference<List<String>> aliasList = new AtomicReference<>();
+        Consumer<List<String>> consumer = value -> {
+            synchronized (mLock) {
+                aliasList.set(value);
+                mLock.notify();
+            }
+        };
+        mWifiAwareManager.getPairedDevices(Executors.newSingleThreadScheduledExecutor(), consumer);
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        if (aliasList.get().size() != 1 || !ALIAS_PUBLISH.equals(aliasList.get().get(0))) {
+            throw new WifiAwareSnippetException("respondToPairingSetup: pairing alias mismatch");
+        }
+        mWifiAwareManager.removePairedDevice(ALIAS_SUBSCRIBE);
+        mWifiAwareManager.getPairedDevices(Executors.newSingleThreadScheduledExecutor(), consumer);
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        if (!aliasList.get().isEmpty()) {
+            throw new WifiAwareSnippetException(
+                    "respondToPairingSetup: pairing alias is not empty after "
+                            + "removal");
+        }
+    }
+
+    @Rpc(description = "Check if Aware pairing supported")
+    public Boolean checkIfPairingSupported()
+            throws WifiAwareSnippetException, InterruptedException {
+        if (!ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)) {
+            return false;
+        }
+        return mWifiAwareManager.getCharacteristics().isAwarePairingSupported();
     }
 
     @Rpc(description = "Receive message.")
@@ -280,5 +457,6 @@ public class WifiAwareSnippet implements Snippet {
             mWifiAwareSession.close();
             mWifiAwareSession = null;
         }
+        mWifiAwareManager.resetPairedDevices();
     }
 }

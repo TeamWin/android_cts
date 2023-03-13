@@ -22,16 +22,21 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.wifi.aware.AttachCallback;
+import android.net.wifi.aware.AwarePairingConfig;
 import android.net.wifi.aware.DiscoverySessionCallback;
 import android.net.wifi.aware.IdentityChangedListener;
 import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.aware.PublishDiscoverySession;
+import android.net.wifi.aware.ServiceDiscoveryInfo;
 import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.net.wifi.aware.WifiAwareSession;
 import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.RangingResultCallback;
+import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -177,8 +182,11 @@ public final class CallbackUtils {
             ON_MESSAGE_SEND_SUCCEEDED,
             ON_MESSAGE_SEND_FAILED,
             ON_MESSAGE_RECEIVED,
-            ON_SERVICE_DISCOVERED_WITH_RANGE,
+            ON_SERVICE_DISCOVERED_WITH_RANGE, ON_PAIRING_REQUEST_RECEIVED,
+            ON_PAIRING_SETUP_CONFIRMED, ON_BOOTSTRAPPING_CONFIRMED,
+            ON_PAIRING_VERIFICATION_CONFIRMED,
         }
+
 
         ;
 
@@ -200,10 +208,17 @@ public final class CallbackUtils {
             public List<byte[]> matchFilter;
             public int messageId;
             public int distanceMm;
+            public int pairingRequestId;
+            public boolean pairingAccept;
+            public boolean bootstrappingAccept;
+            public String pairingAlias;
+            public int bootstrappingMethod;
+            public String pairedAlias;
+            public AwarePairingConfig pairingConfig;
         }
 
-        private CountDownLatch mCountDownLatch = null;
-        private Set<CallbackCode> mCallbackCodes = ImmutableSet.of();
+        private CountDownLatch mBlocker = null;
+        private Set<CallbackCode> mWaitForCallbackCodes = ImmutableSet.of();
 
         private final Object mLock = new Object();
         private final ArrayDeque<CallbackData> mCallbackQueue = new ArrayDeque<>();
@@ -211,8 +226,8 @@ public final class CallbackUtils {
         private void processCallback(CallbackData callbackData) {
             synchronized (mLock) {
                 mCallbackQueue.addLast(callbackData);
-                if (mCountDownLatch != null && mCallbackCodes.contains(callbackData.callbackCode)) {
-                    mCountDownLatch.countDown();
+                if (mBlocker != null && mWaitForCallbackCodes.contains(callbackData.callbackCode)) {
+                    mBlocker.countDown();
                 }
             }
         }
@@ -238,15 +253,15 @@ public final class CallbackUtils {
                     return cbd;
                 }
 
-                mCallbackCodes = callbackCodes;
-                mCountDownLatch = new CountDownLatch(1);
+                mWaitForCallbackCodes = callbackCodes;
+                mBlocker = new CountDownLatch(1);
             }
 
             boolean finishedNormally = true;
             if (timeout) {
-                finishedNormally = mCountDownLatch.await(CALLBACK_TIMEOUT_SEC, SECONDS);
+                finishedNormally = mBlocker.await(CALLBACK_TIMEOUT_SEC, SECONDS);
             } else {
-                mCountDownLatch.await();
+                mBlocker.await();
             }
             if (finishedNormally) {
                 CallbackData cbd = getAndRemoveFirst(callbackCodes);
@@ -341,6 +356,19 @@ public final class CallbackUtils {
         }
 
         @Override
+        public void onServiceDiscovered(ServiceDiscoveryInfo info) {
+            CallbackData callbackData = new CallbackData(CallbackCode.ON_SERVICE_DISCOVERED);
+            callbackData.peerHandle = info.getPeerHandle();
+            callbackData.serviceSpecificInfo = info.getServiceSpecificInfo();
+            callbackData.matchFilter = info.getMatchFilters();
+            if (ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)) {
+                callbackData.pairedAlias = info.getPairedAlias();
+                callbackData.pairingConfig = info.getPairingConfig();
+            }
+            processCallback(callbackData);
+        }
+
+        @Override
         public void onServiceDiscoveredWithinRange(
                 PeerHandle peerHandle,
                 byte[] serviceSpecificInfo,
@@ -376,6 +404,67 @@ public final class CallbackUtils {
             callbackData.serviceSpecificInfo = message;
             processCallback(callbackData);
         }
+
+        @Override
+        public void onPairingSetupRequestReceived(PeerHandle peerHandle, int requestId) {
+            CallbackData callbackData = new CallbackData(CallbackCode.ON_PAIRING_REQUEST_RECEIVED);
+            callbackData.peerHandle = peerHandle;
+            callbackData.pairingRequestId = requestId;
+            processCallback(callbackData);
+        }
+
+        @Override
+        public void onPairingSetupSucceeded(PeerHandle peerHandle, String alias) {
+            CallbackData callbackData = new CallbackData(CallbackCode.ON_PAIRING_SETUP_CONFIRMED);
+            callbackData.peerHandle = peerHandle;
+            callbackData.pairingAccept = true;
+            callbackData.pairingAlias = alias;
+            processCallback(callbackData);
+        }
+
+        @Override
+        public void onPairingSetupFailed(PeerHandle peerHandle) {
+            CallbackData callbackData = new CallbackData(CallbackCode.ON_PAIRING_SETUP_CONFIRMED);
+            callbackData.peerHandle = peerHandle;
+            callbackData.pairingAccept = false;
+            processCallback(callbackData);
+        }
+
+        @Override
+        public void onPairingVerificationSucceed(PeerHandle peerHandle, String alias) {
+            CallbackData callbackData = new CallbackData(
+                    CallbackCode.ON_PAIRING_VERIFICATION_CONFIRMED);
+            callbackData.peerHandle = peerHandle;
+            callbackData.pairingAccept = true;
+            callbackData.pairingAlias = alias;
+            processCallback(callbackData);
+        }
+
+        @Override
+        public void onPairingVerificationFailed(PeerHandle peerHandle) {
+            CallbackData callbackData = new CallbackData(
+                    CallbackCode.ON_PAIRING_VERIFICATION_CONFIRMED);
+            callbackData.peerHandle = peerHandle;
+            callbackData.pairingAccept = false;
+            processCallback(callbackData);
+        }
+
+        @Override
+        public void onBootstrappingSucceeded(PeerHandle peerHandle, int method) {
+            CallbackData callbackData = new CallbackData(CallbackCode.ON_BOOTSTRAPPING_CONFIRMED);
+            callbackData.peerHandle = peerHandle;
+            callbackData.bootstrappingAccept = true;
+            callbackData.bootstrappingMethod = method;
+            processCallback(callbackData);
+        }
+
+        @Override
+        public void onBootstrappingFailed(PeerHandle peerHandle) {
+            CallbackData callbackData = new CallbackData(CallbackCode.ON_BOOTSTRAPPING_CONFIRMED);
+            callbackData.peerHandle = peerHandle;
+            callbackData.bootstrappingAccept = false;
+            processCallback(callbackData);
+        }
     }
 
     /**
@@ -389,7 +478,7 @@ public final class CallbackUtils {
 
         private final CountDownLatch mBlocker = new CountDownLatch(1);
         private int mStatus = TIMEOUT;
-        private List<RangingResult> mResultList = null;
+        private List<RangingResult> mResults = null;
 
         /**
          * Wait (blocks) for Ranging results callbacks - or times-out.
@@ -399,7 +488,7 @@ public final class CallbackUtils {
         public Pair<Integer, List<RangingResult>> waitForRangingResults()
                 throws InterruptedException {
             if (mBlocker.await(CALLBACK_TIMEOUT_SEC, SECONDS)) {
-                return new Pair<>(mStatus, mResultList);
+                return new Pair<>(mStatus, mResults);
             }
             return new Pair<>(TIMEOUT, null);
         }
@@ -413,7 +502,7 @@ public final class CallbackUtils {
         @Override
         public void onRangingResults(List<RangingResult> results) {
             mStatus = ON_RESULTS;
-            this.mResultList = results;
+            this.mResults = results;
             mBlocker.countDown();
         }
     }

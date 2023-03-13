@@ -48,10 +48,8 @@ class WifiAwareTest(base_test.BaseTestClass):
         self.subscriber.wifi_aware_snippet.attach()
         self.publisher.wifi_aware_snippet.attach()
 
-        self.publisher.wifi_aware_snippet.publish(is_unsolicited,
-                                                  is_ranging_required)
-        self.subscriber.wifi_aware_snippet.subscribe(is_unsolicited,
-                                                     is_ranging_required)
+        self.publisher.wifi_aware_snippet.publish(is_unsolicited, is_ranging_required, False)
+        self.subscriber.wifi_aware_snippet.subscribe(is_unsolicited, is_ranging_required, False)
 
         self.subscriber.wifi_aware_snippet.sendMessage(MESSAGE_ID, TEST_MESSAGE)
         received_message = self.publisher.wifi_aware_snippet.receiveMessage()
@@ -59,6 +57,36 @@ class WifiAwareTest(base_test.BaseTestClass):
             received_message, TEST_MESSAGE,
             'Message received by publisher does not match the message sent by subscriber.'
         )
+
+    def test_aware_pairing_accept_test_case(self):
+        is_pairing_supported = self.publisher.wifi_aware_snippet.checkIfPairingSupported() and \
+                               self.subscriber.wifi_aware_snippet.checkIfPairingSupported()
+        asserts.skip_if(not is_pairing_supported,
+                        "Aware pairing test skip as feature is not supported")
+        is_unsolicited = True
+        is_ranging_required = False
+        self.subscriber.wifi_aware_snippet.attach()
+        self.publisher.wifi_aware_snippet.attach()
+
+        self.publisher.wifi_aware_snippet.publish(is_unsolicited, is_ranging_required, True)
+        self.subscriber.wifi_aware_snippet.subscribe(is_unsolicited, is_ranging_required, True)
+        self.subscriber.wifi_aware_snippet.initiatePairingSetup(True, True)
+        self.subscriber.wifi_aware_snippet.respondToPairingSetup(True, True)
+
+    def test_aware_pairing_reject_test_case(self):
+        is_pairing_supported = self.publisher.wifi_aware_snippet.checkIfPairingSupported() and \
+                               self.subscriber.wifi_aware_snippet.checkIfPairingSupported()
+        asserts.skip_if(not is_pairing_supported,
+                        "Aware pairing test skip as feature is not supported")
+        is_unsolicited = True
+        is_ranging_required = False
+        self.subscriber.wifi_aware_snippet.attach()
+        self.publisher.wifi_aware_snippet.attach()
+
+        self.publisher.wifi_aware_snippet.publish(is_unsolicited, is_ranging_required, True)
+        self.subscriber.wifi_aware_snippet.subscribe(is_unsolicited, is_ranging_required, True)
+        self.subscriber.wifi_aware_snippet.initiatePairingSetup(True, False)
+        self.subscriber.wifi_aware_snippet.respondToPairingSetup(True, False)
 
 
 if __name__ == '__main__':
