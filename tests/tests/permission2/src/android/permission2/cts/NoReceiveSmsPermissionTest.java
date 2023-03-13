@@ -108,7 +108,7 @@ public class NoReceiveSmsPermissionTest extends AndroidTestCase {
         filter.addAction(MESSAGE_SENT_ACTION);
         filter.addAction(MESSAGE_STATUS_RECEIVED_ACTION);
         filter.addAction(APP_SPECIFIC_SMS_RECEIVED_ACTION);
-        getContext().registerReceiver(receiver, filter);
+        getContext().registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
 
         PendingIntent receivedIntent = PendingIntent.getBroadcast(getContext(), 0,
                 new Intent(APP_SPECIFIC_SMS_RECEIVED_ACTION)
