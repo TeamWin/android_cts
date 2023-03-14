@@ -341,10 +341,11 @@
              android:exported="true"
              android:configChanges="uiMode"/>
         <activity android:name=".FontScaleActivity"
+             android:configChanges="screenSize|screenLayout"
              android:exported="true"/>
         <activity android:name=".FontScaleNoRelaunchActivity"
              android:exported="true"
-             android:configChanges="fontScale"/>
+             android:configChanges="fontScale|screenSize|screenLayout"/>
         <activity android:name=".DisplayAccessCheckEmbeddingActivity"
              android:allowEmbedded="true"
              android:exported="true"/>
