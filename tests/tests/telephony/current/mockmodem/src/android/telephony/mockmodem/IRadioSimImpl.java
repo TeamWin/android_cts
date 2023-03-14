@@ -32,6 +32,7 @@ import android.hardware.radio.sim.IRadioSimIndication;
 import android.hardware.radio.sim.IRadioSimResponse;
 import android.hardware.radio.sim.SimRefreshResult;
 import android.os.AsyncResult;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
@@ -237,8 +238,9 @@ public class IRadioSimImpl extends IRadioSim.Stub {
             carriers.allowedCarriers = mCarrierList;
         }
         carriers.excludedCarriers = new Carrier[0];
-        carriers.status = mCarrierRestrictionStatus;
-
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
+            carriers.status = mCarrierRestrictionStatus;
+        }
         int multiSimPolicy = android.hardware.radio.sim.SimLockMultiSimPolicy.NO_MULTISIM_POLICY;
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
