@@ -61,7 +61,6 @@ import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.preference.PreferenceManager;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.Suppress;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Xml;
@@ -1804,9 +1803,6 @@ public class ContextTest extends AndroidTestCase {
      * release or later that do not specify {@link Context#RECEIVER_EXPORTED} or {@link
      * Context#RECEIVER_NOT_EXPORTED} when registering for non-system broadcasts.
      */
-    // TODO(b/206699109): Re-enable test when instrumentation workaround is removed; without a flag
-    // specified the instrumentation workaround automatically adds RECEIVER_EXPORTED.
-    @Suppress
     public void testRegisterReceiver_noFlags_exceptionThrown() throws Exception {
         try {
             final ResultReceiver receiver = new ResultReceiver();
@@ -1918,9 +1914,6 @@ public class ContextTest extends AndroidTestCase {
      * Verifies a receiver registered with {@link Context#RECEIVER_NOT_EXPORTED} does not receive
      * a broadcast from an external app.
      */
-    // TODO(b/206699109): Re-enable this test once the skip for an external app sending a broadcast
-    // to an unexported receiver is restored in BroadcastQueue.
-    @Suppress
     public void testRegisterReceiver_notExported_broadcastNotReceived() throws Exception {
         final ResultReceiver receiver = new ResultReceiver();
         registerBroadcastReceiver(receiver, new IntentFilter(ResultReceiver.MOCK_ACTION),
