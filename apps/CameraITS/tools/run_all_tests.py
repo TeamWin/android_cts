@@ -64,14 +64,16 @@ _FRONT_CAMERA_ID = '1'
 _ALL_SCENES = [
     'scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b', 'scene2_c',
     'scene2_d', 'scene2_e', 'scene2_f', 'scene3', 'scene4', 'scene5',
-    'scene6', os.path.join('scene_extensions', 'scene_hdr'), 'sensor_fusion'
+    'scene6', os.path.join('scene_extensions', 'scene_hdr'),
+    os.path.join('scene_extensions', 'scene_night'), 'sensor_fusion'
 ]
 
 # Scenes that can be automated through tablet display
 _AUTO_SCENES = [
     'scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b', 'scene2_c',
     'scene2_d', 'scene2_e', 'scene2_f', 'scene3', 'scene4', 'scene6',
-    os.path.join('scene_extensions', 'scene_hdr')
+    os.path.join('scene_extensions', 'scene_hdr'),
+    os.path.join('scene_extensions', 'scene_night')
 ]
 
 # Scenes that are logically grouped and can be called as group
@@ -107,6 +109,11 @@ _SCENE_REQ = {
         'A tablet displayed scene with a face on the left '
         'and a low-contrast QR code on the right. '
         'See tests/scene_extensions/scene_hdr/scene_hdr.png'
+    ),
+    os.path.join('scene_extensions', 'scene_night'): (
+        'A tablet displayed scene with a white circle '
+        'and four smaller circles inside of it. '
+        'See tests/scene_extensions/scene_night/scene_night.png'
     ),
     'sensor_fusion': 'A checkerboard pattern for phone to rotate in front of '
                      'in tests/sensor_fusion/checkerboard.pdf\n'
