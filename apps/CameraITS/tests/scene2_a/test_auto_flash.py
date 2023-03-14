@@ -46,45 +46,6 @@ _PATCH_X = 0.5 - _PATCH_W/2
 _PATCH_Y = 0.5 - _PATCH_H/2
 _TEST_NAME = os.path.splitext(os.path.basename(__file__))[0]
 _CAPTURE_INTENT_STILL_CAPTURE = 2
-_AE_MODE_ON_AUTO_FLASH = 2
-_CAPTURE_INTENT_PREVIEW = 1
-_CAPTURE_INTENT_STILL_CAPTURE = 2
-_AE_PRECAPTURE_TRIGGER_START = 1
-_AE_PRECAPTURE_TRIGGER_IDLE = 0
-
-
-def take_captures_with_flash(cam, fmt):
-  """Take capture required sequence to trigger auto flash."""
-  # Run precapture sequence by setting the aePrecapture trigger to
-  # START and capture intent set to Preview.
-  preview_req_start = capture_request_utils.auto_capture_request()
-  preview_req_start[
-      'android.control.aeMode'] = _AE_MODE_ON_AUTO_FLASH
-  preview_req_start[
-      'android.control.captureIntent'] = _CAPTURE_INTENT_PREVIEW
-  preview_req_start[
-      'android.control.aePrecaptureTrigger'] = _AE_PRECAPTURE_TRIGGER_START
-  # Repeat preview requests with aePrecapture set to IDLE
-  # until AE is converged.
-  preview_req_idle = capture_request_utils.auto_capture_request()
-  preview_req_idle[
-      'android.control.aeMode'] = _AE_MODE_ON_AUTO_FLASH
-  preview_req_idle[
-      'android.control.captureIntent'] = _CAPTURE_INTENT_PREVIEW
-  preview_req_idle[
-      'android.control.aePrecaptureTrigger'] = _AE_PRECAPTURE_TRIGGER_IDLE
-  # Single still capture request.
-  still_capture_req = capture_request_utils.auto_capture_request()
-  still_capture_req[
-      'android.control.aeMode'] = _AE_MODE_ON_AUTO_FLASH
-  still_capture_req[
-      'android.control.captureIntent'] = _CAPTURE_INTENT_STILL_CAPTURE
-  still_capture_req[
-      'android.control.aePrecaptureTrigger'] = _AE_PRECAPTURE_TRIGGER_IDLE
-  cap = cam.do_capture_with_flash(preview_req_start,
-                                  preview_req_idle,
-                                  still_capture_req, fmt)
-  return cap
 
 
 class AutoFlashTest(its_base_test.ItsBaseTest):
@@ -182,7 +143,7 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
           logging.debug('Taking capture with auto flash enabled.')
           flash_fired = False
 
-          cap = take_captures_with_flash(cam, out_surfaces)
+          cap = capture_request_utils.take_captures_with_flash(cam, out_surfaces)
           y, _, _ = image_processing_utils.convert_capture_to_planes(
               cap, props)
           # Save captured image
