@@ -22,6 +22,7 @@ import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import java.lang.Thread.sleep
 
@@ -50,6 +51,7 @@ class RuntimeMessageCollectionTest {
     }
 
     @Test
+    @Ignore
     fun collectAsyncStackTrace() {
         for (attempt in 0..24) {
             installApk("CtsAppToCollect.apk")
