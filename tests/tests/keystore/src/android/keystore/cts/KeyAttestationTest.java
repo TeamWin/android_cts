@@ -998,12 +998,18 @@ public class KeyAttestationTest {
                     TestUtils.isPropertyEmptyOrUnknown(Build.BRAND_FOR_ATTESTATION)
                     ? Build.BRAND : Build.BRAND_FOR_ATTESTATION;
             assertThat(keyDetailsList.getBrand()).isEqualTo(platformReportedBrand);
-            assertEquals(Build.DEVICE, keyDetailsList.getDevice());
+            final String platformReportedDevice =
+                    TestUtils.isPropertyEmptyOrUnknown(Build.DEVICE_FOR_ATTESTATION)
+                            ? Build.DEVICE : Build.DEVICE_FOR_ATTESTATION;
+            assertThat(keyDetailsList.getDevice()).isEqualTo(platformReportedDevice);
             final String platformReportedProduct =
                     TestUtils.isPropertyEmptyOrUnknown(Build.PRODUCT_FOR_ATTESTATION)
                     ? Build.PRODUCT : Build.PRODUCT_FOR_ATTESTATION;
             assertThat(keyDetailsList.getProduct()).isEqualTo(platformReportedProduct);
-            assertEquals(Build.MANUFACTURER, keyDetailsList.getManufacturer());
+            final String platformReportedManufacturer =
+                    TestUtils.isPropertyEmptyOrUnknown(Build.MANUFACTURER_FOR_ATTESTATION)
+                            ? Build.MANUFACTURER : Build.MANUFACTURER_FOR_ATTESTATION;
+            assertThat(keyDetailsList.getManufacturer()).isEqualTo(platformReportedManufacturer);
             final String platformReportedModel =
                     TestUtils.isPropertyEmptyOrUnknown(Build.MODEL_FOR_ATTESTATION)
                     ? Build.MODEL : Build.MODEL_FOR_ATTESTATION;
