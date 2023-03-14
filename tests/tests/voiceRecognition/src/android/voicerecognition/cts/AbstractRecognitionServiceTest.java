@@ -220,7 +220,7 @@ abstract class AbstractRecognitionServiceTest {
     }
 
     @Test
-    public void testCanSetModelDownloadListener() throws Throwable {
+    public void testCanTriggerModelDownloadWithListener() throws Throwable {
         mUiDevice.waitForIdle();
         SpeechRecognizer recognizer = mActivity.getRecognizerInfoDefault().mRecognizer;
         assertThat(recognizer).isNotNull();
@@ -251,8 +251,7 @@ abstract class AbstractRecognitionServiceTest {
                 callbackCalls.add("error");
             }
         };
-        mActivity.setModelDownloadListenerDefault(intent, listener);
-        mActivity.triggerModelDownloadDefault(intent);
+        mActivity.triggerModelDownloadWithListenerDefault(intent, listener);
         PollingCheck.waitFor(SEQUENCE_TEST_WAIT_TIMEOUT_MS,
                 () -> CtsRecognitionService.sDownloadTriggers.size() > 0);
         PollingCheck.waitFor(SEQUENCE_TEST_WAIT_TIMEOUT_MS,
@@ -260,16 +259,6 @@ abstract class AbstractRecognitionServiceTest {
         assertThat(callbackCalls)
                 .containsExactly("progress", "scheduled", "success", "error")
                 .inOrder();
-
-        CtsRecognitionService.sDownloadTriggers.clear();
-        callbackCalls.clear();
-        assertThat(callbackCalls).isEmpty();
-        mActivity.setModelDownloadListenerDefault(intent, listener);
-        mActivity.clearModelDownloadListenerDefault(intent);
-        mActivity.triggerModelDownloadDefault(intent);
-        PollingCheck.waitFor(SEQUENCE_TEST_WAIT_TIMEOUT_MS,
-                () -> CtsRecognitionService.sDownloadTriggers.size() > 0);
-        assertThat(callbackCalls).isEmpty();
     }
 
     @Test
