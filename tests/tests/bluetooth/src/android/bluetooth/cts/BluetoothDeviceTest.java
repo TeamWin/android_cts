@@ -548,5 +548,10 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         mFakeDevice.createBond();
         assertEquals(getContext().getPackageName(),
                 mFakeDevice.getPackageNameOfBondingApplication());
+
+        // Clean up create bond
+        // Either cancel the bonding process or remove bond
+        mFakeDevice.cancelBondProcess();
+        mFakeDevice.removeBond();
     }
 }
