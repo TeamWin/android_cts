@@ -20,6 +20,7 @@ import static android.server.wm.ActivityManagerTestBase.launchHomeActivityNoWait
 import static android.server.wm.BarTestUtils.assumeHasStatusBar;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
+import static android.server.wm.WaitForWindowInfo.waitForWindowOnTop;
 import static android.server.wm.WindowUntrustedTouchTest.MIN_POSITIVE_OPACITY;
 import static android.server.wm.app.Components.OverlayTestService.EXTRA_LAYOUT_PARAMS;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
@@ -748,6 +749,8 @@ public class WindowInputTests {
     @Test
     @FlakyTest(bugId = 272080751)
     public void testInjectFromThread() throws InterruptedException {
+        assertTrue("Window did not become visible", waitForWindowOnTop(mActivity.getWindow()));
+
         // Continually inject event to activity from thread.
         final int[] decorViewLocation = new int[2];
         final View decorView = mActivity.getWindow().getDecorView();
