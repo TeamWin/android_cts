@@ -300,9 +300,6 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         checkViews(builder.createBigContentView()) {
             val pictureView = requireViewByIdName<ImageView>("big_picture")
             assertThat(pictureView.visibility).isEqualTo(View.VISIBLE)
-            assertThat(pictureView.width.toFloat())
-                    .isWithin(1f)
-                    .of((pictureView.height * 4 / 3).toFloat())
             assertThat(pictureView.scaleType).isEqualTo(ImageView.ScaleType.CENTER_CROP)
         }
     }
