@@ -775,10 +775,23 @@ public class CtsTestServer {
             Log.i(TAG, "Redirecting to: " + location);
             response.addHeader("Location", location);
         } else if (path.equals(QUERY_REDIRECT_PATH)) {
-            String location = Uri.parse(uriString).getQueryParameter("dest");
+            Uri androidUri = Uri.parse(uriString);
+            String location = androidUri.getQueryParameter("dest");
+
+            int statusCode = HttpStatus.SC_MOVED_TEMPORARILY;
+            String statusCodeParam = androidUri.getQueryParameter("statusCode");
+            if (statusCodeParam != null) {
+                try {
+                    int parsedStatusCode = Integer.parseInt(statusCodeParam);
+                    if (300 <= parsedStatusCode && parsedStatusCode < 400) {
+                        statusCode = parsedStatusCode;
+                    }
+                } catch (NumberFormatException ignored) { }
+            }
+
             if (location != null) {
                 Log.i(TAG, "Redirecting to: " + location);
-                response = createResponse(HttpStatus.SC_MOVED_TEMPORARILY);
+                response = createResponse(statusCode);
                 response.addHeader("Location", location);
             }
         } else if (path.startsWith(COOKIE_PREFIX)) {
@@ -1202,13 +1215,21 @@ public class CtsTestServer {
                     HttpResponse response = mServer.getResponse(mRequest);
                     mConnection.sendResponseHeader(response);
                     mConnection.sendResponseEntity(response);
-                    mConnection.close();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error handling request:", e);
+                } finally {
+                    try {
+                        mConnection.close();
+                    } catch (IOException e) {
+                        Log.e(TAG, "Failed to close http connection", e);
+                    }
 
+                    // mConnection.close() closes mSocket.
+                    // mConnection only throws an IOException when the socket.close() call fails, at
+                    // which point, there is not much that can be done anyways.
                     synchronized(mLock) {
                         ServerThread.this.mSockets.remove(mSocket);
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error handling request:", e);
                 }
             }
         }

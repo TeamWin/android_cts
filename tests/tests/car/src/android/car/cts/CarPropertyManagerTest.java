@@ -74,6 +74,7 @@ import android.car.hardware.property.VehicleLightState;
 import android.car.hardware.property.VehicleLightSwitch;
 import android.car.hardware.property.VehicleOilLevel;
 import android.car.hardware.property.VehicleTurnSignal;
+import android.car.hardware.property.VehicleVendorPermission;
 import android.car.hardware.property.WindshieldWipersState;
 import android.car.hardware.property.WindshieldWipersSwitch;
 import android.car.test.ApiCheckerRule.Builder;
@@ -804,6 +805,47 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             ImmutableList.<Integer>builder()
                     .add(
                             VehiclePropertyIds.LOCATION_CHARACTERIZATION)
+                    .build();
+    private static final ImmutableList<String> VENDOR_PROPERTY_PERMISSIONS =
+            ImmutableList.<String>builder()
+                    .add(
+                            Car.PERMISSION_VENDOR_EXTENSION,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_WINDOW,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_WINDOW,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_DOOR,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_DOOR,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_SEAT,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_SEAT,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_MIRROR,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_MIRROR,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_INFO,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_INFO,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_ENGINE,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_ENGINE,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_HVAC,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_HVAC,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_LIGHT,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_LIGHT,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_1,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_1,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_2,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_2,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_3,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_3,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_4,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_4,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_5,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_5,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_6,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_6,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_7,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_7,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_8,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_8,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_9,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_9,
+                            VehicleVendorPermission.PERMISSION_GET_CAR_VENDOR_CATEGORY_10,
+                            VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_10)
                     .build();
 
     private static final int VEHICLE_PROPERTY_GROUP_MASK = 0xf0000000;
@@ -6956,6 +6998,27 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             .isEmpty();
                 },
                 Car.PERMISSION_CONTROL_DISPLAY_UNITS);
+    }
+
+    @Test
+    public void testVendorPermissionsGranted() {
+        for (String vendorPermission : VENDOR_PROPERTY_PERMISSIONS) {
+            runWithShellPermissionIdentity(
+                    () -> {
+                        for (CarPropertyConfig<?> carPropertyConfig :
+                                mCarPropertyManager.getPropertyList()) {
+                            assertWithMessage(
+                                    "There must be no non-vendor properties exposed by vendor "
+                                            + "permissions. Found: " + VehiclePropertyIds.toString(
+                                            carPropertyConfig.getPropertyId()) + " exposed by: "
+                                            + vendorPermission)
+                                    .that(carPropertyConfig.getPropertyId()
+                                            & VEHICLE_PROPERTY_GROUP_MASK)
+                                    .isEqualTo(VEHICLE_PROPERTY_GROUP_VENDOR);
+                        }
+                    },
+                    vendorPermission);
+        }
     }
 
     @Test

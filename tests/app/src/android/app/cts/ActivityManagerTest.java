@@ -2208,6 +2208,41 @@ public final class ActivityManagerTest {
                 assumeTrue(mActivityManager.switchUser(UserHandle.SYSTEM)));
     }
 
+    @Test
+    public void testNoteForegroundResourceUse() {
+        // Testing the method without permissions
+        try {
+            mActivityManager.noteForegroundResourceUseBegin(1, 1, 1);
+            fail("Should not be able to call noteForegroundResourceUseBegin without permission");
+        } catch (SecurityException expected) {
+        }
+        try {
+            mActivityManager.noteForegroundResourceUseEnd(1, 1, 1);
+            fail("Should not be able to call noteForegroundResourceUseEnd without permission");
+        } catch (SecurityException expected) {
+        }
+
+        try {
+            mInstrumentation.getUiAutomation()
+                    .adoptShellPermissionIdentity(
+                            android.Manifest.permission.LOG_FOREGROUND_RESOURCE_USE);
+        } catch (Exception e) {
+            fail("Couldn't grant permission: " + e.getMessage());
+        }
+
+        // Testing invocation with permission granted
+        try {
+            mActivityManager.noteForegroundResourceUseBegin(1, 1, 1);
+        } catch (SecurityException e) {
+            fail("Could not call noteForegroundResourceUseBegin with permission" + e.getMessage());
+        }
+        try {
+            mActivityManager.noteForegroundResourceUseEnd(1, 1, 1);
+        } catch (SecurityException e) {
+            fail("Could not call noteForegroundResourceUseBegin with permission" + e.getMessage());
+        }
+    }
+
     private CountDownLatch startRemoteActivityAndLinkToDeath(ComponentName activity,
             WatchUidRunner uidWatcher) throws Exception {
         final IBinder[] remoteBinderHolder = new IBinder[1];
