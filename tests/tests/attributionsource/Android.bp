@@ -29,6 +29,7 @@ android_test {
         "src/**/*.kt",
     ],
     static_libs: [
+        "androidx.test.core",
         "compatibility-device-util-axt",
         "truth-prebuilt",
         "ctstestrunner-axt",

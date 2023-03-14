@@ -35,6 +35,8 @@
     <application>
         <uses-library android:name="android.test.runner" />
         <activity android:name=".NoOpActivity"/>
+        <activity android:name="android.attributionsource.cts.AttributionSourceActivity"
+                  android:exported="false" />
     </application>
 
     <instrumentation
