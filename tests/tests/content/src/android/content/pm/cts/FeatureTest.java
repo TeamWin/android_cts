@@ -74,7 +74,7 @@ public class FeatureTest extends AndroidTestCase {
         }
 
         // Managed profiles only required for handheld devices
-        if (!isHandheldDevice()) {
+        if (!isHandheldOrTabletDevice()) {
             return;
         }
 
@@ -93,12 +93,20 @@ public class FeatureTest extends AndroidTestCase {
     }
 
     /**
-     * The CDD defines a handheld device as one that has a battery and a screen size between
-     * 2.5 and 8 inches.
+     * The CDD defines:
+     * - A handheld device as one that has a battery and a screen size between 2.5 and 8 inches.
+     * - A tablet device as one that has a battery and a screen size between 7 and 18 inches.
      */
-    private boolean isHandheldDevice() throws Exception {
+    private boolean isHandheldOrTabletDevice() throws Exception {
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+                || mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
+                || mPackageManager.hasSystemFeature(PackageManager.FEATURE_EMBEDDED)) {
+            return false;
+        }
+
         double screenInches = getScreenSizeInInches();
-        return deviceHasBattery() && screenInches >= 2.5 && screenInches <= 8.0;
+        return deviceHasBattery() && screenInches >= 2.5 && screenInches <= 18.0;
     }
 
     private boolean deviceHasBattery() {
