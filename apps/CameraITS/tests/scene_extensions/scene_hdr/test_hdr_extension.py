@@ -16,6 +16,7 @@
 
 import logging
 import os.path
+import time
 
 import cv2
 from mobly import test_runner
@@ -44,6 +45,7 @@ _CONTOUR_INDEX = -1  # Draw all contours as per opencv convention
 _BGR_RED = (0, 0, 255)
 _CONTOUR_LINE_THICKNESS = 3
 
+_DURATION_DIFF_TOL = 0.5  # HDR ON captures must take 0.5 seconds longer
 _GRADIENT_TOL = 0.15  # Largest HDR gradient must be at most 15% of non-HDR
 
 
@@ -221,7 +223,11 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
       out_surfaces = {'format': _FMT_NAME, 'width': _WIDTH, 'height': _HEIGHT}
       cam.do_3a()
       req = capture_request_utils.auto_capture_request()
+      no_hdr_start_of_capture = time.time()
       no_hdr_cap = cam.do_capture(req, out_surfaces)
+      no_hdr_end_of_capture = time.time()
+      no_hdr_capture_duration = no_hdr_end_of_capture - no_hdr_start_of_capture
+      logging.debug('no HDR cap duration: %.2f', no_hdr_capture_duration)
       logging.debug('no HDR cap metadata: %s', no_hdr_cap['metadata'])
       no_hdr_img = image_processing_utils.convert_capture_to_rgb_image(
           no_hdr_cap)
@@ -233,8 +239,12 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
       out_surfaces = {'format': _FMT_NAME, 'width': _WIDTH, 'height': _HEIGHT}
       cam.do_3a()
       req = capture_request_utils.auto_capture_request()
+      hdr_start_of_capture = time.time()
       hdr_cap = cam.do_capture_with_extensions(
           req, _EXTENSION_HDR, out_surfaces)
+      hdr_end_of_capture = time.time()
+      hdr_capture_duration = hdr_end_of_capture - hdr_start_of_capture
+      logging.debug('HDR cap duration: %.2f', hdr_capture_duration)
       logging.debug('HDR cap metadata: %s', hdr_cap['metadata'])
       hdr_img = image_processing_utils.convert_capture_to_rgb_image(
           hdr_cap)
@@ -285,6 +295,16 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
           if failure_messages:
             logging.error('\n'.join(failure_messages))
             failure_messages = []
+
+      # Compare capture durations
+      duration_diff = hdr_capture_duration - no_hdr_capture_duration
+      if duration_diff < _DURATION_DIFF_TOL:
+        failure_messages.append('Capture with HDR did not take '
+                                'significantly more time than '
+                                'capture without HDR! '
+                                f'Difference: {duration_diff:.2f}, '
+                                f'Expected: {_DURATION_DIFF_TOL}')
+
       if failure_messages:
         raise AssertionError('\n'.join(failure_messages))
 
