@@ -119,21 +119,18 @@ public class SpeechRecognitionActivity extends Activity {
         mHandler.post(() -> mRecognizerInfos.get(index).mRecognizer.triggerModelDownload(intent));
     }
 
-    public void setModelDownloadListenerDefault(Intent intent, ModelDownloadListener listener) {
-        setModelDownloadListener(intent, listener, /* index */ 0);
+    public void triggerModelDownloadWithListenerDefault(
+            Intent intent, ModelDownloadListener listener) {
+        triggerModelDownloadWithListener(intent, listener, /* index */ 0);
     }
 
-    public void setModelDownloadListener(Intent intent, ModelDownloadListener listener, int index) {
+    public void triggerModelDownloadWithListener(
+            Intent intent, ModelDownloadListener listener, int index) {
         mHandler.post(() -> mRecognizerInfos.get(index)
-                .mRecognizer.setModelDownloadListener(
+                .mRecognizer.triggerModelDownload(
                         intent,
                         Executors.newSingleThreadExecutor(),
                         listener));
-    }
-
-    public void clearModelDownloadListenerDefault(Intent intent) {
-        mHandler.post(() -> mRecognizerInfos.get(/* index */ 0)
-                .mRecognizer.clearModelDownloadListener(intent));
     }
 
     public void initDefault(boolean onDevice, String customRecognizerComponent) {
