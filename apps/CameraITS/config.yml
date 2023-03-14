@@ -50,4 +50,7 @@ TestBeds:
       rotator_ch: <controller-channel>
       camera: <camera-id>
       foldable_device: "False" # set to True if testing a foldable device
+      lighting_cntl: <controller-type>  # can be arduino or "None"
+      lighting_ch: <controller-channel>
+      scene: "sensor_fusion"
 

@@ -17,11 +17,16 @@
 import logging
 import math
 
-COMMON_IMG_ARS = (4/3, 16/9)
-COMMON_IMG_ARS_ATOL = 0.01
-MAX_YUV_SIZE = (1920, 1080)
-MIN_YUV_SIZE = (640, 360)
-VGA_W, VGA_H = 640, 360
+_COMMON_IMG_ARS = (4/3, 16/9)
+_COMMON_IMG_ARS_ATOL = 0.01
+_MAX_YUV_SIZE = (1920, 1080)
+_MIN_YUV_SIZE = (640, 360)
+_VGA_W, _VGA_H = 640, 360
+_CAPTURE_INTENT_STILL_CAPTURE = 2
+_AE_MODE_ON_AUTO_FLASH = 2
+_CAPTURE_INTENT_PREVIEW = 1
+_AE_PRECAPTURE_TRIGGER_START = 1
+_AE_PRECAPTURE_TRIGGER_IDLE = 0
 
 
 def is_common_aspect_ratio(size):
@@ -33,8 +38,8 @@ def is_common_aspect_ratio(size):
   Returns:
     Boolean
   """
-  for aspect_ratio in COMMON_IMG_ARS:
-    if math.isclose(size[0]/size[1], aspect_ratio, abs_tol=COMMON_IMG_ARS_ATOL):
+  for aspect_ratio in _COMMON_IMG_ARS:
+    if math.isclose(size[0]/size[1], aspect_ratio, abs_tol=_COMMON_IMG_ARS_ATOL):
       return True
   return False
 
@@ -410,10 +415,10 @@ def get_near_vga_yuv_format(props, match_ar=None):
   fmt = {'format': 'yuv', 'width': size[0], 'height': size[1]}
   fmt_area = fmt['width'] * fmt['height']
 
-  if ((fmt['width'] / fmt['height']) not in COMMON_IMG_ARS or
-      fmt_area < MIN_YUV_SIZE[1] * MIN_YUV_SIZE[0] or
-      fmt_area > MAX_YUV_SIZE[1] * MAX_YUV_SIZE[0]):
-    fmt['width'], fmt['height'] = VGA_W, VGA_H
+  if ((fmt['width'] / fmt['height']) not in _COMMON_IMG_ARS or
+      fmt_area < _MIN_YUV_SIZE[1] * _MIN_YUV_SIZE[0] or
+      fmt_area > _MAX_YUV_SIZE[1] * _MAX_YUV_SIZE[0]):
+    fmt['width'], fmt['height'] = _VGA_W, _VGA_H
 
   logging.debug('YUV format selected: %s', fmt)
   return fmt
@@ -451,3 +456,53 @@ def get_max_digital_zoom(props):
     max_z = props['android.scaler.availableMaxDigitalZoom']
 
   return max_z
+
+
+def take_captures_with_flash(cam, out_surface):
+  """Takes capture with auto flash ON.
+
+  Runs precapture sequence by setting the aePrecapture trigger to
+  START and capture intent set to Preview and then take the capture
+  with flash.
+  Args:
+    cam: ItsSession object
+    out_surface: Specifications of the output image format and
+      size to use for the capture.
+
+  Returns:
+    cap: An object which contains following fields:
+      * data: the image data as a numpy array of bytes.
+      * width: the width of the captured image.
+      * height: the height of the captured image.
+      * format: image format
+      * metadata: the capture result object
+  """
+
+  preview_req_start = auto_capture_request()
+  preview_req_start[
+      'android.control.aeMode'] = _AE_MODE_ON_AUTO_FLASH
+  preview_req_start[
+      'android.control.captureIntent'] = _CAPTURE_INTENT_PREVIEW
+  preview_req_start[
+      'android.control.aePrecaptureTrigger'] = _AE_PRECAPTURE_TRIGGER_START
+  # Repeat preview requests with aePrecapture set to IDLE
+  # until AE is converged.
+  preview_req_idle = auto_capture_request()
+  preview_req_idle[
+      'android.control.aeMode'] = _AE_MODE_ON_AUTO_FLASH
+  preview_req_idle[
+      'android.control.captureIntent'] = _CAPTURE_INTENT_PREVIEW
+  preview_req_idle[
+      'android.control.aePrecaptureTrigger'] = _AE_PRECAPTURE_TRIGGER_IDLE
+  # Single still capture request.
+  still_capture_req = auto_capture_request()
+  still_capture_req[
+      'android.control.aeMode'] = _AE_MODE_ON_AUTO_FLASH
+  still_capture_req[
+      'android.control.captureIntent'] = _CAPTURE_INTENT_STILL_CAPTURE
+  still_capture_req[
+      'android.control.aePrecaptureTrigger'] = _AE_PRECAPTURE_TRIGGER_IDLE
+  cap = cam.do_capture_with_flash(preview_req_start,
+                                  preview_req_idle,
+                                  still_capture_req, out_surface)
+  return cap
