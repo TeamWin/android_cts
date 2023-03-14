@@ -45,14 +45,6 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
             PERMISSION_RATIONALE_ENABLED,
             true.toString())
 
-    @get:Rule
-    val deviceConfigTestSafetyLabelDataEnabled =
-        DeviceConfigStateChangerRule(
-            context,
-            DeviceConfig.NAMESPACE_PRIVACY,
-            PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED,
-            false.toString())
-
     @Before
     fun setup() {
         Assume.assumeTrue("Permission rationale is only available on U+", SdkLevel.isAtLeastU())
@@ -195,20 +187,6 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun requestLocationPerm_noAppMetadata_placeholderDataFlagEnabled_hasPermissionRationale() {
-        setDeviceConfigPrivacyProperty(
-            PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED, true.toString())
-        installPackageWithInstallSourceAndNoMetadata(APP_APK_NAME_31)
-
-        assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
-        assertAppHasPermission(ACCESS_FINE_LOCATION, false)
-
-        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertPermissionRationaleContainerOnGrantDialogIsVisible(true)
-        }
-    }
-
-    @Test
     fun requestCoarseLocationPerm_hasPermissionRationale() {
         installPackageWithInstallSourceAndMetadata(APP_APK_NAME_31)
 
@@ -259,11 +237,5 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
             assertPermissionRationaleDialogIsVisible(false)
             assertPermissionRationaleContainerOnGrantDialogIsVisible(true)
         }
-    }
-
-    companion object {
-        // TODO(b/257293222): Remove when hooking up PackageManager APIs
-        private const val PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED =
-            "privacy_placeholder_safety_label_data_enabled"
     }
 }
