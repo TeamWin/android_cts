@@ -1318,6 +1318,17 @@ public abstract class ActivityManagerTestBase {
      * visible, but is not necessarily the top activity.
      *
      * @param activityName the activity name
+     */
+    public void waitAndAssertResumedActivity(ComponentName activityName) {
+        waitAndAssertResumedActivity(
+                activityName, activityName.toShortString() + " must be resumed");
+    }
+
+    /**
+     * Waits and asserts that the activity represented by the given activity name is resumed and
+     * visible, but is not necessarily the top activity.
+     *
+     * @param activityName the activity name
      * @param message the error message
      */
     public void waitAndAssertResumedActivity(ComponentName activityName, String message) {
@@ -1326,6 +1337,17 @@ public abstract class ActivityManagerTestBase {
         mWmState.assertValidity();
         assertTrue(message, mWmState.hasActivityState(activityName, STATE_RESUMED));
         mWmState.assertVisibility(activityName, true /* visible */);
+    }
+
+    /**
+     * Waits and asserts that the activity represented by the given activity name is stopped and
+     * invisible.
+     *
+     * @param activityName the activity name
+     */
+    public void waitAndAssertStoppedActivity(ComponentName activityName) {
+        waitAndAssertStoppedActivity(
+                activityName, activityName.toShortString() + " must be stopped");
     }
 
     /**
