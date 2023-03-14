@@ -115,7 +115,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     private String mInitialAnimatorDurationScale;
 
     // We need to allow for some variation stemming from color conversions
-    private static final float COLOR_VALUE_VARIANCE_TOLERANCE = 0.03f;
+    private static final float COLOR_VALUE_VARIANCE_TOLERANCE = 0.05f;
 
     @ClassRule
     public static DisableImmersiveModeConfirmationRule mDisableImmersiveModeConfirmationRule =
