@@ -720,6 +720,56 @@ public class CtsSharesheetDeviceTest {
             });
     }
 
+    @Test
+    @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_MODIFY_SHARE_ACTION")
+    public void testModifyShare() {
+        if (!mMeetsResolutionRequirements) {
+            // Skip test if resolution is too low
+            return;
+        }
+        final CountDownLatch broadcastInvoked = new CountDownLatch(1);
+        BroadcastReceiver modifyShareActionReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                broadcastInvoked.countDown();
+            }
+        };
+        PendingIntent modifyShare = PendingIntent.getBroadcast(
+                mContext,
+                1,
+                new Intent(CHOOSER_CUSTOM_ACTION_BROADCAST_ACTION),
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
+
+        Intent shareIntent = createShareIntent(true /* test content preview */,
+                0 /* do not test EIIs */,
+                0 /* do not test ECTs */,
+                null /*add custom action*/);
+        ChooserAction modifyShareAction = new ChooserAction.Builder(
+                Icon.createWithResource(
+                        mInstrumentation.getContext().getPackageName(),
+                        R.drawable.black_64x64),
+                mCustomActionLabel,
+                modifyShare
+            ).build();
+        shareIntent.putExtra(Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION, modifyShareAction);
+
+        runAndExecuteCleanupBeforeAnyThrow(
+                () -> {
+                    mContext.registerReceiver(
+                            modifyShareActionReceiver,
+                            new IntentFilter(CHOOSER_CUSTOM_ACTION_BROADCAST_ACTION),
+                            Context.RECEIVER_EXPORTED);
+                    launchSharesheet(shareIntent);
+                    performCustomActionClick();
+                    assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
+                },
+                () -> {
+                    mContext.unregisterReceiver(modifyShareActionReceiver);
+                    closeSharesheet();
+                }
+        );
+    }
+
     /*
     Test methods
      */
