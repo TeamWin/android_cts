@@ -21,7 +21,10 @@ import android.util.Log;
 import com.android.bedstead.nene.utils.ShellCommand;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * TestApis related to logcat.
@@ -43,6 +46,14 @@ public final class Logcat {
         return ShellCommand.builder("logcat")
                 .addOperand("-d") // Dump - don't stream
                 .executeOrThrowNeneException("Error dumping logcat");
+    }
+
+    /**
+     * Get an instant dump from logcat, filtered by {@code lineFilter}.
+     */
+    public String dump(Predicate<String> lineFilter) {
+        return Arrays.stream(dump().split("\n"))
+                .filter(lineFilter).collect(Collectors.joining("\n"));
     }
 
     /**

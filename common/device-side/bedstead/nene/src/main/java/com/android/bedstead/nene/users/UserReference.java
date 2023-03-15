@@ -30,6 +30,7 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.MODIFY_QUI
 import static com.android.bedstead.nene.users.Users.users;
 
 import android.annotation.TargetApi;
+import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
@@ -293,20 +294,27 @@ public final class UserReference implements AutoCloseable {
                 }
             }
 
-            // Expects no output on success or failure
-            ShellCommand.builder("am switch-user")
-                    .addOperand(mId)
-                    .allowEmptyOutput(true)
-                    .validate(String::isEmpty)
-                    .execute();
+            ActivityManager am = TestApis.context().instrumentedContext().getSystemService(
+                    ActivityManager.class);
+
+            boolean switched = false;
+            try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
+                switched = am.switchUser(userHandle());
+            }
+
+            if (!switched) {
+                // TODO(273229540): It might take a while to fail - we should stream from the
+                // start of the call
+                throw new NeneException("Error switching user to " + this
+                        + ". Relevant logcat: " + TestApis.logcat().dump(
+                                (line) -> line.contains("ActivityManager")));
+            }
 
             if (Versions.meetsMinimumSdkVersionRequirement(R)) {
                 broadcastReceiver.awaitForBroadcast();
             } else {
                 Thread.sleep(20000);
             }
-        } catch (AdbException e) {
-            throw new NeneException("Could not switch to user", e);
         } catch (InterruptedException e) {
             Log.e(LOG_TAG, "Interrupted while switching user", e);
         } finally {
