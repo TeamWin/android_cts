@@ -16,6 +16,7 @@
 
 package android.permission3.cts
 
+import android.Manifest.permission.ACCESS_MEDIA_LOCATION
 import android.Manifest.permission.READ_MEDIA_IMAGES
 import android.Manifest.permission.READ_MEDIA_VIDEO
 import android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
@@ -262,12 +263,13 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         eventually {
             assertAppHasPermission(READ_MEDIA_IMAGES, expectPermission = true)
             assertAppHasPermission(READ_MEDIA_VIDEO, expectPermission = true)
+            assertAppHasPermission(ACCESS_MEDIA_LOCATION, expectPermission = true)
             assertAppHasPermission(READ_MEDIA_VISUAL_USER_SELECTED, expectPermission = true)
         }
     }
 
     @Test
-    fun testSelectPhotosInSettings() {
+    fun testSelectPhotosInSettingsImplicit() {
         installPackage(APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE)
         navigateToIndividualPermissionSetting(READ_MEDIA_IMAGES)
         click(By.res(SELECT_PHOTOS_RADIO_BUTTON))
@@ -275,6 +277,21 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         eventually {
             assertAppHasPermission(READ_MEDIA_IMAGES, expectPermission = false)
             assertAppHasPermission(READ_MEDIA_VIDEO, expectPermission = false)
+            assertAppHasPermission(ACCESS_MEDIA_LOCATION, expectPermission = false)
+            assertAppHasPermission(READ_MEDIA_VISUAL_USER_SELECTED, expectPermission = true)
+        }
+    }
+
+    @Test
+    fun testSelectPhotosInSettingsExplicit() {
+        installPackage(APP_APK_PATH_LATEST)
+        navigateToIndividualPermissionSetting(READ_MEDIA_IMAGES)
+        click(By.res(SELECT_PHOTOS_RADIO_BUTTON))
+
+        eventually {
+            assertAppHasPermission(READ_MEDIA_IMAGES, expectPermission = false)
+            assertAppHasPermission(READ_MEDIA_VIDEO, expectPermission = false)
+            assertAppHasPermission(ACCESS_MEDIA_LOCATION, expectPermission = true)
             assertAppHasPermission(READ_MEDIA_VISUAL_USER_SELECTED, expectPermission = true)
         }
     }
@@ -297,6 +314,65 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
 
         navigateToIndividualPermissionSetting(READ_MEDIA_IMAGES)
         findView(By.res(SELECT_PHOTOS_RADIO_BUTTON), expected = false)
+    }
+
+    @Test
+    fun testAppCantRequestOnlyPartialStoragePerms() {
+        installPackage(APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE)
+        requestAppPermissionsAndAssertResult(READ_MEDIA_VISUAL_USER_SELECTED to false) {}
+        uninstallPackage(APP_PACKAGE_NAME)
+        installPackage(APP_APK_PATH_LATEST)
+        requestAppPermissionsAndAssertResult(READ_MEDIA_VISUAL_USER_SELECTED to false,
+        ACCESS_MEDIA_LOCATION to false) {}
+    }
+
+    @Test
+    fun testImplicitAppCanExpandAccessMediaLocation() {
+        installPackage(APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE)
+        requestAppPermissions(ACCESS_MEDIA_LOCATION) {
+            click(By.res(ALLOW_ALL_BUTTON))
+        }
+        requestAppPermissionsAndAssertResult(READ_MEDIA_IMAGES to true,
+            READ_MEDIA_VIDEO to true) {}
+    }
+
+    @Test
+    fun testExplicitAppCannotExpandAccessMediaLocation() {
+        installPackage(APP_APK_PATH_LATEST)
+        requestAppPermissionsAndAssertResult(READ_MEDIA_IMAGES to false,
+            ACCESS_MEDIA_LOCATION to true, READ_MEDIA_VISUAL_USER_SELECTED to true) {
+            click(By.res(SELECT_BUTTON))
+            clickImageOrVideo()
+            clickAllow()
+        }
+        requestAppPermissions(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO) {
+            click(By.res(ALLOW_ALL_SINGLETON_BUTTON))
+        }
+    }
+
+    @Test
+    fun testExplicitAppCannotRequestOnlyPartialAccess() {
+        installPackage(APP_APK_PATH_LATEST)
+        requestAppPermissionsAndAssertResult(ACCESS_MEDIA_LOCATION to false,
+            READ_MEDIA_VISUAL_USER_SELECTED to false) {
+            findView(By.res(SELECT_BUTTON), expected = false)
+        }
+    }
+
+    @Test
+    fun testMorePhotosDialogShowsAfterClickingSelect() {
+        installPackage(APP_APK_PATH_LATEST)
+        requestAppPermissionsAndAssertResult(READ_MEDIA_IMAGES to false,
+            ACCESS_MEDIA_LOCATION to true, READ_MEDIA_VISUAL_USER_SELECTED to true) {
+            click(By.res(SELECT_BUTTON))
+            clickImageOrVideo()
+            clickAllow()
+        }
+
+        requestAppPermissions(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO) {
+            findView(By.res(SELECT_MORE_BUTTON), expected = true)
+            click(By.res(ALLOW_ALL_SINGLETON_BUTTON))
+        }
     }
 
     private fun clickImageOrVideo() {
