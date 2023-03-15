@@ -77,7 +77,8 @@ public class IntentSenderActivity extends Activity {
         if (result != null) {
             Log.d(TAG, "Result intent: " + result.data);
         } else {
-            Log.d(TAG, "null result after " + timeoutSec + "s");
+            Log.d(TAG, "no result after " + timeoutSec
+                    + "s (see log for \"onActivityResult()\" to see actual result");
         }
         return (result != null) ? result.data : null;
     }
