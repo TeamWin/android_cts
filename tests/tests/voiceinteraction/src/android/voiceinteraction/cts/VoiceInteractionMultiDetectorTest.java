@@ -26,7 +26,6 @@ import android.hardware.soundtrigger.SoundTrigger;
 import android.hardware.soundtrigger.SoundTrigger.KeyphraseRecognitionExtra;
 import android.media.AudioFormat;
 import android.os.ConditionVariable;
-import android.os.ServiceSpecificException;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.util.Log;
@@ -36,7 +35,6 @@ import android.voiceinteraction.service.IProxyDetectorCallback;
 import android.voiceinteraction.service.ITestVoiceInteractionService;
 import android.voiceinteraction.service.ITestVoiceInteractionServiceListener;
 import android.voiceinteraction.service.IVoiceInteractionServiceBindingHelper;
-import android.voiceinteraction.service.ProxyVoiceInteractionService;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -133,12 +131,9 @@ public class VoiceInteractionMultiDetectorTest {
 
         alwaysOnHotwordDetector.startRecognitionOnFakeAudioStream();
         alwaysOnHotwordDetector.destroy();
-        assertThat(assertThrows(ServiceSpecificException.class,
-                () -> alwaysOnHotwordDetector.startRecognitionOnFakeAudioStream()).errorCode)
-                .isEqualTo(ProxyVoiceInteractionService.EXCEPTION_HOTWORD_DETECTOR_ILLEGAL_STATE);
-        assertThat(assertThrows(ServiceSpecificException.class,
-                () -> alwaysOnHotwordDetector.stopRecognition()).errorCode)
-                .isEqualTo(ProxyVoiceInteractionService.EXCEPTION_HOTWORD_DETECTOR_ILLEGAL_STATE);
+        assertThrows(IllegalStateException.class,
+                () -> alwaysOnHotwordDetector.startRecognitionOnFakeAudioStream());
+        assertThrows(IllegalStateException.class, () -> alwaysOnHotwordDetector.stopRecognition());
         assertThrows(IllegalStateException.class,
                 () -> alwaysOnHotwordDetector.updateState(null, null));
         assertThrows(IllegalStateException.class, () ->
