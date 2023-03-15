@@ -50,7 +50,6 @@ import android.service.voice.DetectorFailure;
 import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetectionServiceFailure;
 import android.service.voice.HotwordDetector;
-import android.service.voice.HotwordDetector.IllegalDetectorStateException;
 import android.service.voice.HotwordRejectedResult;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
@@ -766,8 +765,7 @@ public class HotwordDetectionServiceBasicTest {
         try {
             adoptShellPermissionIdentityForHotword();
             // Can no longer use the detector because it is in an invalid state
-            assertThrows(IllegalDetectorStateException.class,
-                    softwareHotwordDetector::startRecognition);
+            assertThrows(IllegalStateException.class, softwareHotwordDetector::startRecognition);
         } finally {
             // Drop identity adopted.
             InstrumentationRegistry.getInstrumentation().getUiAutomation()

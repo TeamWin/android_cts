@@ -38,7 +38,6 @@ import android.os.PersistableBundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
-import android.service.voice.HotwordDetector;
 import android.service.voice.VisualQueryDetector;
 import android.util.Log;
 import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
@@ -189,8 +188,7 @@ public class VisualQueryDetectionServiceBasicTest {
         try {
             adoptShellPermissionIdentityForVisualQueryDetection();
             // Can no longer use the detector because it is in an invalid state
-            assertThrows(HotwordDetector.IllegalDetectorStateException.class,
-                    visualQueryDetector::startRecognition);
+            assertThrows(IllegalStateException.class, visualQueryDetector::startRecognition);
         } finally {
             // Drop identity adopted.
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
