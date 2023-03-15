@@ -366,6 +366,9 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
         assertWithMessage("profile " + targetPath + " is " + Integer.parseInt(result) + " bytes")
                 .that(Integer.parseInt(result)).isGreaterThan(0);
 
+        // System managed profiles are by default private, unless created from an external profile
+        // such as a cloud profile.
+        assertCommandSucceeds("chmod", "640", targetPath);
         assertCommandSucceeds("chown", owner, targetPath);
     }
 
