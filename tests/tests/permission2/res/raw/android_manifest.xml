@@ -5222,7 +5222,7 @@
          exact alarm APIs.
      -->
     <permission android:name="android.permission.SCHEDULE_EXACT_ALARM"
-        android:protectionLevel="normal|appop"/>
+        android:protectionLevel="signature|privileged|appop"/>
 
     <!-- Allows apps to use exact alarms just like with SCHEDULE_EXACT_ALARM but without needing
     to request this permission from the user.
