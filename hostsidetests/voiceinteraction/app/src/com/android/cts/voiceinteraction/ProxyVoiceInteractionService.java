@@ -32,23 +32,18 @@ import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.os.RemoteException;
-import android.os.ServiceSpecificException;
 import android.os.SharedMemory;
 import android.service.voice.AlwaysOnHotwordDetector;
-import android.service.voice.HotwordDetector.IllegalDetectorStateException;
 import android.service.voice.VoiceInteractionService;
 import android.util.Log;
 
 import androidx.annotation.GuardedBy;
-import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
 
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
@@ -71,13 +66,7 @@ public class ProxyVoiceInteractionService extends VoiceInteractionService {
     public static final String ACTION_BIND_TEST_VOICE_INTERACTION =
             "android.intent.action.ACTION_BIND_TEST_VOICE_INTERACTION";
 
-    public static final int EXCEPTION_HOTWORD_DETECTOR_ILLEGAL_STATE = 1;
     public static final int SOUND_TRIGGER_RECOGNITION_STATUS_SUCCESS = 1;
-
-    @IntDef({EXCEPTION_HOTWORD_DETECTOR_ILLEGAL_STATE})
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface ExceptionReference {
-    }
 
     static final String TAG = ProxyVoiceInteractionService.class.getSimpleName();
     private final Object mLock = new Object();
@@ -312,12 +301,7 @@ public class ProxyVoiceInteractionService extends VoiceInteractionService {
         @Override
         public void updateState(@Nullable PersistableBundle options,
                 @Nullable SharedMemory sharedMemory) {
-            try {
-                mAlwaysOnHotwordDetector.updateState(options, sharedMemory);
-            } catch (IllegalDetectorStateException e) {
-                Log.e(TAG, "updateState failed", e);
-                throw new ServiceSpecificException(EXCEPTION_HOTWORD_DETECTOR_ILLEGAL_STATE);
-            }
+            mAlwaysOnHotwordDetector.updateState(options, sharedMemory);
         }
 
         @Override
@@ -332,54 +316,29 @@ public class ProxyVoiceInteractionService extends VoiceInteractionService {
         @Override
         public boolean startRecognitionWithAudioStream(ParcelFileDescriptor audioStream,
                 AudioFormat audioFormat, @Nullable PersistableBundle options) {
-            try {
-                return mAlwaysOnHotwordDetector.startRecognition(audioStream,
-                        audioFormat, options);
-            } catch (IllegalDetectorStateException e) {
-                Log.e(TAG, "startRecognitionWithAudioStream failed", e);
-                throw new ServiceSpecificException(EXCEPTION_HOTWORD_DETECTOR_ILLEGAL_STATE);
-            }
+            return mAlwaysOnHotwordDetector.startRecognition(audioStream,
+                    audioFormat, options);
         }
 
         @Override
         public boolean startRecognitionWithFlagsAndData(int recognitionFlags, byte[] data) {
-            try {
-                return mAlwaysOnHotwordDetector.startRecognition(recognitionFlags, data);
-            } catch (IllegalDetectorStateException e) {
-                Log.e(TAG, "startRecognitionWithFlagsAndData failed", e);
-                throw new ServiceSpecificException(EXCEPTION_HOTWORD_DETECTOR_ILLEGAL_STATE);
-            }
+            return mAlwaysOnHotwordDetector.startRecognition(recognitionFlags, data);
         }
 
         @Override
         public boolean startRecognitionWithFlags(int recognitionFlags) {
-            try {
-                return mAlwaysOnHotwordDetector.startRecognition(recognitionFlags);
-            } catch (IllegalDetectorStateException e) {
-                Log.e(TAG, "startRecognitionWithFlags failed", e);
-                throw new ServiceSpecificException(EXCEPTION_HOTWORD_DETECTOR_ILLEGAL_STATE);
-            }
+            return mAlwaysOnHotwordDetector.startRecognition(recognitionFlags);
         }
 
         @Override
         public boolean startRecognition() {
-            try {
-                return mAlwaysOnHotwordDetector.startRecognition();
-            } catch (IllegalDetectorStateException e) {
-                Log.e(TAG, "startRecognition failed", e);
-                throw new ServiceSpecificException(EXCEPTION_HOTWORD_DETECTOR_ILLEGAL_STATE);
-            }
+            return mAlwaysOnHotwordDetector.startRecognition();
         }
 
         @Override
         public boolean stopRecognition() {
             closeFakeAudioStream();
-            try {
-                return mAlwaysOnHotwordDetector.stopRecognition();
-            } catch (IllegalDetectorStateException e) {
-                Log.e(TAG, "stopRecognition failed", e);
-                throw new ServiceSpecificException(EXCEPTION_HOTWORD_DETECTOR_ILLEGAL_STATE);
-            }
+            return mAlwaysOnHotwordDetector.stopRecognition();
         }
 
         @Override
