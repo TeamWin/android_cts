@@ -189,7 +189,7 @@ def get_available_output_sizes(fmt, props, max_size=None, match_ar_size=None):
   out_sizes = [(cfg['width'], cfg['height']) for cfg in out_configs]
   if max_size:
     out_sizes = [
-        s for s in out_sizes if s[0] <= max_size[0] and s[1] <= max_size[1]
+        s for s in out_sizes if s[0] <= int(max_size[0]) and s[1] <= int(max_size[1])
     ]
   if match_ar_size:
     ar = match_ar_size[0] / float(match_ar_size[1])
