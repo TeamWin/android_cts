@@ -1429,7 +1429,8 @@ class PreviewTestCase {
             ALOGE("%s: Called when session hasn't been configured", __FUNCTION__);
             return ACAMERA_ERROR_INVALID_OPERATION;
         }
-        return ACameraCaptureSession_setWindowPreparedCallback(mSession, &mPreparedCb);
+        return ACameraCaptureSession_setWindowPreparedCallback(mSession, &mSessionListener,
+                                                               mPreparedCb);
     }
 
     bool gotAllPreparedCallbacksWithErrorLog() {
@@ -1803,12 +1804,7 @@ class PreviewTestCase {
         CaptureSessionListener::onActive
     };
 
-    ACameraCaptureSession_prepareCallbacks mPreparedCb {
-        &mSessionListener,
-        CaptureSessionListener::onWindowPrepared,
-        nullptr /*reserved0*/,
-        nullptr /*reserved1*/
-    };
+    ACameraCaptureSession_prepareCallback mPreparedCb  = &CaptureSessionListener::onWindowPrepared;
 
     CaptureResultListener mResultListener;
     ACameraCaptureSession_captureCallbacks mResultCb {
