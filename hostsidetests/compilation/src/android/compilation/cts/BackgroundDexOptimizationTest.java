@@ -20,6 +20,7 @@ import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.device.ITestDevice;
@@ -83,6 +84,7 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
     @Before
     public void setUp() throws Exception {
         mDevice = getDevice();
+        assumeFalse(mDevice.getBooleanProperty("dalvik.vm.useartservice", false));
         assertThat(mDevice.waitForBootComplete(REBOOT_TIMEOUT_MS)).isTrue();
         // Turn off the display to simulate the idle state in terms of power consumption.
         toggleScreenOn(false);
@@ -97,7 +99,6 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
         executeShellCommand(CMD_CANCEL_IDLE);
         executeShellCommand(CMD_CANCEL_POST_BOOT);
         mDevice.uninstallPackage(APPLICATION_PACKAGE);
-        CLog.i("Last status:" + getLastStatusDump());
     }
 
     @Test
