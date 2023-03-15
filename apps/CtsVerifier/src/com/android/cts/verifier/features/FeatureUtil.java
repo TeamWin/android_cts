@@ -94,6 +94,13 @@ public final class FeatureUtil {
     }
 
     /**
+     * Checks whether back touch is supported on the window.
+     */
+    public static boolean isBackTouchesSupported(Context context) {
+        return !isWatchOrAutomotiveOrTv(context);
+    }
+
+    /**
      * Checks whether the device is watch .
      */
     public static boolean isWatch(Context context) {
@@ -104,11 +111,22 @@ public final class FeatureUtil {
     /**
      * Checks whether the device is watch or automotive
      */
-    public static boolean isWatchOrAutomotive(Context context) {
+    private static boolean isWatchOrAutomotive(Context context) {
         PackageManager pm = context.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                 || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
+
+    /**
+     * Checks whether the device is watch, automotive or TV
+     */
+    public static boolean isWatchOrAutomotiveOrTv(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
+                || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY);
+    }
+
 
     /**
      * Checks whether the device is automotive

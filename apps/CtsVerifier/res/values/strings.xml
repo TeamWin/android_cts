@@ -285,6 +285,15 @@
         Pass the test if the device admin could not be activated while the details
         window was being obscured.
     </string>
+    <string name="da_tapjacking_instructions" product="tv">
+        1. Launch the device admin add screen by pressing the button below.\n
+        2. Wait for an overlaying transparent activity to show up obscuring the device admin details window.\n
+        3. The button to activate the admin should be disabled and should not register any taps.\n
+        4. Wait for the overlaying activity to finish.\n
+        5. Press \'back\' to exit the device admin details and return to this screen.\n
+        Pass the test if the device admin could not be activated while the details
+        window was being obscured.
+    </string>
     <string name="da_tapjacking_button_text">Enable device admin</string>
 
     <!-- Strings for RecentTaskRemovalTestActivity -->
