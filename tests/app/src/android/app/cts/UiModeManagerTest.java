@@ -97,6 +97,8 @@ public class UiModeManagerTest extends AndroidTestCase {
     @Override
     protected void tearDown() throws Exception {
         resetNightMode();
+        BatteryUtils.runDumpsysBatteryReset();
+        BatteryUtils.resetBatterySaver();
     }
 
     private void resetNightMode() {
@@ -499,8 +501,6 @@ public class UiModeManagerTest extends AndroidTestCase {
         BatteryUtils.enableBatterySaver(false);
         assertEquals(UiModeManager.MODE_NIGHT_NO, mUiModeManager.getNightMode());
         assertVisibleNightModeInConfiguration(Configuration.UI_MODE_NIGHT_NO);
-
-        BatteryUtils.runDumpsysBatteryReset();
     }
 
     /**

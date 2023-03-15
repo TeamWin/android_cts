@@ -106,6 +106,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mJobScheduler.cancel(CONNECTIVITY_JOB_ID);
 
         BatteryUtils.runDumpsysBatteryReset();
+        BatteryUtils.resetBatterySaver();
 
         // Restore initial restricted bucket setting.
         Settings.Global.putString(mContext.getContentResolver(),

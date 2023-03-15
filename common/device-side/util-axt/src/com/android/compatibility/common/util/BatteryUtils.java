@@ -131,6 +131,14 @@ public class BatteryUtils {
         Log.d(TAG, "Battery saver turned " + (enabled ? "ON" : "OFF"));
     }
 
+    /** Reset battery saver state and take it out of a forced state. */
+    public static void resetBatterySaver() throws Exception {
+        SystemUtil.runShellCommandForNoOutput("cmd power set-mode 0");
+        putGlobalSetting(Global.LOW_POWER_MODE, null);
+        putGlobalSetting(Global.LOW_POWER_MODE_STICKY, null);
+        waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
+    }
+
     /**
      * Turn on/off screen.
      */

@@ -1358,7 +1358,7 @@ public class JobThrottlingTest {
         mTestAppInterface.cleanup();
         mUiDevice.executeShellCommand("cmd jobscheduler monitor-battery off");
         BatteryUtils.runDumpsysBatteryReset();
-        BatteryUtils.enableBatterySaver(false);
+        BatteryUtils.resetBatterySaver();
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.BATTERY_STATS_CONSTANTS, mInitialBatteryStatsConstants);
         removeTestAppFromTempWhitelist();
