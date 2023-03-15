@@ -432,9 +432,14 @@ public class CapturedActivity extends Activity {
     }
 
     public void restoreSettings() {
-        if (mSettingsSession != null) {
-            mSettingsSession.close();
-            mSettingsSession = null;
+        // Adding try/catch due to bug with UiAutomation crashing the test b/272370325
+        try {
+            if (mSettingsSession != null) {
+                mSettingsSession.close();
+                mSettingsSession = null;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Crash occurred when closing settings session. See b/272370325", e);
         }
     }
 
