@@ -479,14 +479,14 @@ public final class AutoFillServiceTestCase {
          * Enables the {@link InstrumentedAutoFillService} for autofill for the current user.
          */
         protected void enableService() {
-            Helper.enableAutofillService(getContext(), SERVICE_NAME);
+            Helper.enableAutofillService(SERVICE_NAME);
         }
 
         /**
          * Disables the {@link InstrumentedAutoFillService} for autofill for the current user.
          */
         protected void disableService() {
-            Helper.disableAutofillService(getContext());
+            Helper.disableAutofillService();
         }
 
         /**

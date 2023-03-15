@@ -87,10 +87,10 @@ import androidx.test.runner.lifecycle.Stage;
 import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.DeviceConfigStateManager;
 import com.android.compatibility.common.util.OneTimeSettingsListener;
-import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.ShellUtils;
 import com.android.compatibility.common.util.TestNameUtils;
 import com.android.compatibility.common.util.Timeout;
+import com.android.compatibility.common.util.UserSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -155,6 +155,8 @@ public final class Helper {
             OneTimeSettingsListener.DEFAULT_TIMEOUT_MS);
 
     public static final String DEVICE_CONFIG_AUTOFILL_DIALOG_HINTS = "autofill_dialog_hints";
+
+    private static final UserSettings sUserSettings = new UserSettings();
 
     /**
      * Helper interface used to filter nodes.
@@ -275,8 +277,8 @@ public final class Helper {
     /**
      * Sets whether the user completed the initial setup.
      */
-    public static void setUserComplete(Context context, boolean complete) {
-        SettingsUtils.syncSet(context, USER_SETUP_COMPLETE, complete ? "1" : null);
+    public static void setUserComplete(boolean complete) {
+        sUserSettings.syncSet(USER_SETUP_COMPLETE, complete ? "1" : null);
     }
 
     private static void dump(@NonNull StringBuilder builder, @NonNull ViewNode node,
@@ -953,13 +955,12 @@ public final class Helper {
      * Uses Settings to enable the given autofill service for the default user, and checks the
      * value was properly check, throwing an exception if it was not.
      */
-    public static void enableAutofillService(@NonNull Context context,
-            @NonNull String serviceName) {
+    public static void enableAutofillService(String serviceName) {
         if (isAutofillServiceEnabled(serviceName)) return;
 
         // Sets the setting synchronously. Note that the config itself is sets synchronously but
         // launch of the service is asynchronous after the config is updated.
-        SettingsUtils.syncSet(context, AUTOFILL_SERVICE, serviceName);
+        sUserSettings.syncSet(AUTOFILL_SERVICE, serviceName);
 
         // Waits until the service is actually enabled.
         try {
@@ -975,14 +976,14 @@ public final class Helper {
      * Uses Settings to disable the given autofill service for the default user, and waits until
      * the setting is deleted.
      */
-    public static void disableAutofillService(@NonNull Context context) {
-        final String currentService = SettingsUtils.get(AUTOFILL_SERVICE);
+    public static void disableAutofillService() {
+        final String currentService = sUserSettings.get(AUTOFILL_SERVICE);
         if (currentService == null) {
             Log.v(TAG, "disableAutofillService(): already disabled");
             return;
         }
         Log.v(TAG, "Disabling " + currentService);
-        SettingsUtils.syncDelete(context, AUTOFILL_SERVICE);
+        sUserSettings.syncDelete(AUTOFILL_SERVICE);
     }
 
     /**
@@ -997,14 +998,14 @@ public final class Helper {
      * Gets then name of the autofill service for the default user.
      */
     public static String getAutofillServiceName() {
-        return SettingsUtils.get(AUTOFILL_SERVICE);
+        return sUserSettings.get(AUTOFILL_SERVICE);
     }
 
     /**
      * Asserts whether the given service is enabled as the autofill service for the default user.
      */
     public static void assertAutofillServiceStatus(@NonNull String serviceName, boolean enabled) {
-        final String actual = SettingsUtils.get(AUTOFILL_SERVICE);
+        final String actual = sUserSettings.get(AUTOFILL_SERVICE);
         final String expected = enabled ? serviceName : null;
         assertWithMessage("Invalid value for secure setting %s", AUTOFILL_SERVICE)
                 .that(actual).isEqualTo(expected);

@@ -76,7 +76,7 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
 
     @Override
     protected void enableService() {
-        Helper.enableAutofillService(getContext(), SERVICE_NAME);
+        Helper.enableAutofillService(SERVICE_NAME);
     }
 
     public InlineLoginActivityTest() {

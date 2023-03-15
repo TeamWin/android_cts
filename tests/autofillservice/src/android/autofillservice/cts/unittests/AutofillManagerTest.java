@@ -86,7 +86,7 @@ public class AutofillManagerTest {
     private void enableOutsidePackageTestAutofillService() {
         final String outsidePackageAutofillServiceName =
                 "android.autofill.cts2/.NoOpAutofillService";
-        Helper.enableAutofillService(sContext, outsidePackageAutofillServiceName);
+        Helper.enableAutofillService(outsidePackageAutofillServiceName);
     }
 
     private void install(String apk) {
