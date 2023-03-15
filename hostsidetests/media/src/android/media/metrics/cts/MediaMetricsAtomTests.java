@@ -652,6 +652,8 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
             assertThat(atom.getChannelCountHardware()).isGreaterThan(0);
             assertThat(atom.getSampleRateHardware()).isGreaterThan(0);
             assertThat(atom.getFormatHardware()).isNotEqualTo(0);
+            assertThat(atom.getTotalFramesTransferred()).isGreaterThan(0);
+            assertThat(atom.getXrunCount()).isEqualTo(0);
         }
     }
 
