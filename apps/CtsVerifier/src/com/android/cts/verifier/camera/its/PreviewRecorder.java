@@ -516,9 +516,10 @@ class PreviewRecorder implements AutoCloseable {
      */
     private static float[] getRotationMatrix(int orientationDegrees) {
         double rads = orientationDegrees * Math.PI / 180;
+        // Rotate clockwise because sensor orientation assumes clockwise rotation
         return new float[] {
-                (float) Math.cos(rads), (float) Math.sin(rads),
-                (float) -Math.sin(rads), (float) Math.cos(rads)
+                (float) Math.cos(rads), (float) -Math.sin(rads),
+                (float) Math.sin(rads), (float) Math.cos(rads)
         };
     }
 
