@@ -2664,10 +2664,10 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
 
         // Now disable user_complete and try again.
         try {
-            setUserComplete(mContext, false);
+            setUserComplete(false);
             Helper.assertAutofillEnabled(afm, false);
         } finally {
-            setUserComplete(mContext, true);
+            setUserComplete(true);
         }
     }
 
@@ -2691,7 +2691,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertDatasets("The Dude");
 
         // Now disable service by setting another service
-        Helper.enableAutofillService(mContext, NoOpAutofillService.SERVICE_NAME);
+        Helper.enableAutofillService(NoOpAutofillService.SERVICE_NAME);
 
         // ...and make sure popup's gone
         mUiBot.assertNoDatasets();
@@ -2729,7 +2729,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertDatasets("The Dude");
 
         // Now disable service by setting another service...
-        Helper.enableAutofillService(mContext, serviceName);
+        Helper.enableAutofillService(serviceName);
 
         // ...and make sure popup's gone
         mUiBot.assertNoDatasets();

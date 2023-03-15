@@ -837,7 +837,7 @@ public class AugmentedLoginActivityTest
     @Test
     public void testAugmentedAutoFill_noPreviousRequest_requestAutofill() throws Exception {
         // Set services
-        Helper.disableAutofillService(sContext);
+        Helper.disableAutofillService();
         final CtsAugmentedAutofillService service = enableAugmentedService();
 
         // Request requestAutofill without any existing request
@@ -853,7 +853,7 @@ public class AugmentedLoginActivityTest
     public void testAugmentedAutoFill_hasPreviousRequestViewFocused_requestAutofill()
             throws Exception {
         // Set services
-        Helper.disableAutofillService(sContext);
+        Helper.disableAutofillService();
         final CtsAugmentedAutofillService service = enableAugmentedService();
 
         // Set expectations
@@ -898,7 +898,7 @@ public class AugmentedLoginActivityTest
     public void testAugmentedAutoFill_hasPreviousRequestViewNotFocused_requestAutofill()
             throws Exception {
         // Set services
-        Helper.disableAutofillService(sContext);
+        Helper.disableAutofillService();
         final CtsAugmentedAutofillService service = enableAugmentedService();
 
         // Set expectations
@@ -927,7 +927,7 @@ public class AugmentedLoginActivityTest
     @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAugmentedAutoFill_mainServiceDisabled() throws Exception {
         // Set services
-        Helper.disableAutofillService(sContext);
+        Helper.disableAutofillService();
         enableAugmentedService();
 
         // Set expectations
@@ -964,7 +964,7 @@ public class AugmentedLoginActivityTest
     @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAugmentedAutoFill_mainServiceDisabled_manualRequest() throws Exception {
         // Set services
-        Helper.disableAutofillService(sContext);
+        Helper.disableAutofillService();
         enableAugmentedService();
 
         // Set expectations
@@ -1003,7 +1003,7 @@ public class AugmentedLoginActivityTest
     @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAugmentedAutoFill_mainServiceDisabled_autoThenManualRequest() throws Exception {
         // Set services
-        Helper.disableAutofillService(sContext);
+        Helper.disableAutofillService();
         enableAugmentedService();
 
         // Set expectations
@@ -1050,7 +1050,7 @@ public class AugmentedLoginActivityTest
     public void testAugmentedAutoFill_mainServiceDisabled_valueChangedOnSecondRequest()
             throws Exception {
         // Set services
-        Helper.disableAutofillService(sContext);
+        Helper.disableAutofillService();
         enableAugmentedService();
 
         // Set expectations
@@ -1091,7 +1091,7 @@ public class AugmentedLoginActivityTest
     public void testAugmentedAutoFill_mainServiceDisabled_tappingSecondTimeNotTrigger()
             throws Exception {
         // Set services
-        Helper.disableAutofillService(sContext);
+        Helper.disableAutofillService();
         enableAugmentedService();
 
         // Set expectations

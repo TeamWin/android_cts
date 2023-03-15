@@ -23,7 +23,6 @@ import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
 import static android.autofillservice.cts.testcore.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.testcore.Helper.getContext;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillServiceCompatMode.SERVICE_NAME;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillServiceCompatMode.SERVICE_PACKAGE;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
@@ -91,12 +90,12 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
     @Override
     protected void enableService() {
-        Helper.enableAutofillService(getContext(), SERVICE_NAME);
+        Helper.enableAutofillService(SERVICE_NAME);
     }
 
     @Override
     protected void disableService() {
-        Helper.disableAutofillService(getContext());
+        Helper.disableAutofillService();
     }
 
     @Override
