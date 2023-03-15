@@ -3420,6 +3420,22 @@
                        android:value="android.app.Notification.Builder#setBubbleMetadata|android.app.NotificationManager#notify" />
         </activity>
 
+        <activity android:name=".vibrations.HasVibratorVerifierActivity"
+                  android:exported="true"
+                  android:label="@string/test_title_has_vibrator">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_vibrations" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.os.Vibrator.Vibrator#hasVibrator" />
+        </activity>
+
         <activity android:name=".notifications.BubbleActivity"
                   android:label="@string/bubble_activity_title"
                   android:exported="true"

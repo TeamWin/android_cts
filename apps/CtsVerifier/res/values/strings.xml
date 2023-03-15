@@ -31,6 +31,8 @@
     <string name="retry_button_text">Retry</string>
     <string name="finish_button_text">Finish</string>
     <string name="fail_and_next_button_text">Fail and Next</string>
+    <string name="yes_string">Yes</string>
+    <string name="no_string">No</string>
 
     <!-- Strings for CtsReportLog warning -->
     <string name="reportlog_warning_title">CTS-Verifier Report Log</string>
@@ -480,6 +482,18 @@
         This test ensures that keys created with setUnlockedDeviceRequired are usable when the
         screen is unlocked but not when it is locked.
     </string>
+
+    <!-- Strings for HasVibratorVerifierActivity -->
+    <string name="has_vibrator_test_description">This test validates the Vibrator#HasVibrator API response.</string>
+    <string name="has_vibrator_response_label">Does this device say it has a vibrator?</string>
+    <string name="has_vibrator_start_test_label">To start the test, hold the device in your hand and click the vibrate button.</string>
+    <string name="has_vibrator_did_device_vibrate_label">Did the device vibrate?</string>
+    <string name="has_vibrator_test_vibrate_and_pass_message">Feeling vibration indicates that the test passed. Click the pass button to register the result.</string>
+    <string name="has_vibrator_test_vibrate_and_fail_message">Not feeling vibration indicates that the test failed. Click the fail button to register the result.</string>
+    <string name="has_vibrator_test_no_vibrate_and_pass_message">Not feeling vibration indicates that the test passed. Click the pass button to register the result.</string>
+    <string name="has_vibrator_test_no_vibrate_and_fail_message">Feeling vibration indicates that the test failed. Click the fail button to register the result.</string>
+    <string name="has_vibrator_test_running_text">Test will end in %d</string>
+    <string name="has_vibrator_test_vibrate_button_text">Vibrate</string>
 
     <!-- Strings for BluetoothActivity -->
     <string name="bluetooth_test">Bluetooth Test</string>
@@ -2357,6 +2371,9 @@
     <string name="package_priority_high">Find \"%s\" in the \"Notifications\" settings panel, and allow it to Override Do Not Disturb.</string>
     <string name="package_priority_default">Find \"%s\" in the \"Notifications\" settings panel, and disallow it to Override Do Not Disturb.</string>
     <string name="package_priority_user_order">Check that ranker respects user priorities.</string>
+
+    <string name="test_category_vibrations">Vibrations</string>
+    <string name="test_title_has_vibrator">Has Vibrator Test</string>
 
     <string name="shortcut_reset_test">Shortcut Reset Rate-limiting Test</string>
     <string name="shortcut_reset_info">This test checks that when an inline-reply happens, ShortcutManager\'s rate-limiting
