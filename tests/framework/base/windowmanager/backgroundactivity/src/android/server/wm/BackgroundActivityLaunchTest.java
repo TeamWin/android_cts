@@ -323,7 +323,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testActivityBlockedWhenLaunchedAfterHomePress() throws Exception {
-        int backgroundStartDelayMs = 4000;
+        int backgroundStartDelayMs = 4500;
 
         Intent intent = new Intent();
         intent.setComponent(APP_A.FOREGROUND_ACTIVITY);

@@ -33,13 +33,10 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
-import static android.view.Display.INVALID_DISPLAY;
 
 import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -115,7 +112,6 @@ import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
 
-import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -124,6 +120,7 @@ import com.android.compatibility.common.util.AmMonitor;
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.compatibility.common.util.UserHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -204,33 +201,14 @@ public final class ActivityManagerTest {
     private boolean mAutomotiveDevice;
     private boolean mLeanbackOnly;
 
-    private UserHandle mUser;
-    private UserManager mUserManager;
-    private boolean mIsRunningOnVisibleBgUser;
-    private int mDisplayId = INVALID_DISPLAY; // only set when mIsRunningOnVisibleBgUser
+    private final UserHelper mUserHelper = new UserHelper();
 
     @Before
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mTargetContext = mInstrumentation.getTargetContext();
-        Context context = mInstrumentation.getContext();
-        mActivityManager = context.getSystemService(ActivityManager.class);
-        mPackageManager = context.getPackageManager();
-        mUserManager = context.getSystemService(UserManager.class);
-        mUser = context.getUser();
-        int currentUserId = callWithShellPermissionIdentity(
-                () -> mActivityManager.getCurrentUser());
-        boolean visibleBackgroundUsersSupported = mUserManager.isVisibleBackgroundUsersSupported();
-        Log.v(TAG, "setUp(): mUser=" + mUser + ", currentUser=" + currentUserId
-                + ", visibleBackgroundUsersSupported=" + visibleBackgroundUsersSupported);
-        if (visibleBackgroundUsersSupported && currentUserId != mUser.getIdentifier()) {
-            mDisplayId = mUserManager.getDisplayIdAssignedToUser();
-            assertWithMessage("display id for user %s", mUser).that(mDisplayId)
-                    .isNotEqualTo(INVALID_DISPLAY);
-            mIsRunningOnVisibleBgUser = true;
-            Log.v(TAG, "User " + mUser + " is running on background, visible on display "
-                    + mDisplayId);
-        }
+        mActivityManager = mInstrumentation.getContext().getSystemService(ActivityManager.class);
+        mPackageManager = mInstrumentation.getContext().getPackageManager();
 
         mStartedActivityList = new ArrayList<Activity>();
         mErrorProcessID = -1;
@@ -524,7 +502,7 @@ public final class ActivityManagerTest {
     private void setForcedAppStandby(String packageName, boolean enabled)
             throws IOException {
         final StringBuilder cmdBuilder = new StringBuilder("appops set --user ")
-                .append(mUser.getIdentifier()).append(' ')
+                .append(mUserHelper.getUserId()).append(' ')
                 .append(packageName)
                 .append(" RUN_ANY_IN_BACKGROUND ")
                 .append(enabled ? "ignore" : "allow");
@@ -821,8 +799,8 @@ public final class ActivityManagerTest {
         Intent intent = new Intent(Intent.ACTION_MAIN)
                 .addCategory(Intent.CATEGORY_HOME)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        if (mIsRunningOnVisibleBgUser) {
-            ActivityOptions options = getActivityOptionsForDisplay();
+        if (mUserHelper.isVisibleBackgroundUser()) {
+            ActivityOptions options = mUserHelper.getActivityOptions();
             mTargetContext.startActivity(intent, options.toBundle());
         } else {
             mTargetContext.startActivity(intent);
@@ -830,7 +808,7 @@ public final class ActivityManagerTest {
     }
 
     private void launchHomeScreenUsingKeyCode() throws IOException {
-        if (mIsRunningOnVisibleBgUser) {
+        if (mUserHelper.isVisibleBackgroundUser()) {
             // TODO(b/270634492): should call "input -d + mDisplayId + keyevent KEYCODE_HOME", but
             // it's not working
             launchHomeScreenUsingIntent();
@@ -2591,17 +2569,5 @@ public final class ActivityManagerTest {
     private void assumeNonHeadlessSystemUserMode() {
         assumeFalse("System user is not a FULL user in headless system user mode.",
                 UserManager.isHeadlessSystemUserMode());
-    }
-
-    // TODO(b/269803777): consider adding 2 methods below to a helper method
-    private ActivityOptions getActivityOptionsForDisplay() {
-        return getActivityOptionsForDisplay(/* options= */ null);
-    }
-
-    private ActivityOptions getActivityOptionsForDisplay(@Nullable ActivityOptions options) {
-        ActivityOptions augmentedOptions = options != null ? options : ActivityOptions.makeBasic();
-        augmentedOptions.setLaunchDisplayId(mDisplayId);
-        Log.d(TAG, "getActivityOptionsForDisplay(): returning " + augmentedOptions);
-        return augmentedOptions;
     }
 }

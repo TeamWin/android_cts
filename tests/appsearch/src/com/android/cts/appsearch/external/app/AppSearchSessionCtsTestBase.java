@@ -570,7 +570,6 @@ public abstract class AppSearchSessionCtsTestBase {
                                         .setJoinableValueType(
                                                 StringPropertyConfig
                                                         .JOINABLE_VALUE_TYPE_QUALIFIED_ID)
-                                        .setDeletionPropagation(true)
                                         .build())
                         .build();
 

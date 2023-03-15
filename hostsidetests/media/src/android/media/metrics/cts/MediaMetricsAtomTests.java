@@ -16,7 +16,6 @@
 
 package android.media.metrics.cts;
 
-import com.android.tradefed.util.RunUtil;
 import static android.media.cts.MediaMetricsTestConstants.LOG_SESSION_ID_KEY;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -39,6 +38,7 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
+import com.android.tradefed.util.RunUtil;
 
 import com.google.common.truth.Correspondence;
 
@@ -48,11 +48,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.FileNotFoundException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -652,6 +649,9 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
             assertThat(atom.getFramesPerBurst()).isLessThan(atom.getBufferCapacity());
             assertThat(atom.getUid()).isEqualTo(appUid);
             assertThat(atom.getDirection().toString()).isEqualTo(direction);
+            assertThat(atom.getChannelCountHardware()).isGreaterThan(0);
+            assertThat(atom.getSampleRateHardware()).isGreaterThan(0);
+            assertThat(atom.getFormatHardware()).isNotEqualTo(0);
         }
     }
 

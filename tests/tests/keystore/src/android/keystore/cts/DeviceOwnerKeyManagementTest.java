@@ -137,12 +137,18 @@ public class DeviceOwnerKeyManagementTest {
                 TestUtils.isPropertyEmptyOrUnknown(Build.BRAND_FOR_ATTESTATION)
                 ? Build.BRAND : Build.BRAND_FOR_ATTESTATION;
         assertThat(teeAttestation.getBrand()).isEqualTo(platformReportedBrand);
-        assertThat(teeAttestation.getDevice()).isEqualTo(Build.DEVICE);
+        final String platformReportedDevice =
+                TestUtils.isPropertyEmptyOrUnknown(Build.DEVICE_FOR_ATTESTATION)
+                        ? Build.DEVICE : Build.DEVICE_FOR_ATTESTATION;
+        assertThat(teeAttestation.getDevice()).isEqualTo(platformReportedDevice);
         final String platformReportedProduct =
                 TestUtils.isPropertyEmptyOrUnknown(Build.PRODUCT_FOR_ATTESTATION)
                 ? Build.PRODUCT : Build.PRODUCT_FOR_ATTESTATION;
         assertThat(teeAttestation.getProduct()).isEqualTo(platformReportedProduct);
-        assertThat(teeAttestation.getManufacturer()).isEqualTo(Build.MANUFACTURER);
+        final String platformReportedManufacturer =
+                TestUtils.isPropertyEmptyOrUnknown(Build.MANUFACTURER_FOR_ATTESTATION)
+                        ? Build.MANUFACTURER : Build.MANUFACTURER_FOR_ATTESTATION;
+        assertThat(teeAttestation.getManufacturer()).isEqualTo(platformReportedManufacturer);
         final String platformReportedModel =
                 TestUtils.isPropertyEmptyOrUnknown(Build.MODEL_FOR_ATTESTATION)
                 ? Build.MODEL : Build.MODEL_FOR_ATTESTATION;
@@ -209,14 +215,21 @@ public class DeviceOwnerKeyManagementTest {
                 ? Build.BRAND : Build.BRAND_FOR_ATTESTATION;
         assertThat(new String(teeAttestation.attestationIdBrand.get()))
                 .isEqualTo(platformReportedBrand);
-        assertThat(new String(teeAttestation.attestationIdDevice.get())).isEqualTo(Build.DEVICE);
+        final String platformReportedDevice =
+                TestUtils.isPropertyEmptyOrUnknown(Build.DEVICE_FOR_ATTESTATION)
+                        ? Build.DEVICE : Build.DEVICE_FOR_ATTESTATION;
+        assertThat(new String(teeAttestation.attestationIdDevice.get()))
+                .isEqualTo(platformReportedDevice);
         final String platformReportedProduct =
                 TestUtils.isPropertyEmptyOrUnknown(Build.PRODUCT_FOR_ATTESTATION)
                 ? Build.PRODUCT : Build.PRODUCT_FOR_ATTESTATION;
         assertThat(new String(teeAttestation.attestationIdProduct.get()))
                 .isEqualTo(platformReportedProduct);
+        final String platformReportedManufacturer =
+                TestUtils.isPropertyEmptyOrUnknown(Build.MANUFACTURER_FOR_ATTESTATION)
+                        ? Build.MANUFACTURER : Build.MANUFACTURER_FOR_ATTESTATION;
         assertThat(new String(teeAttestation.attestationIdManufacturer.get()))
-                .isEqualTo(Build.MANUFACTURER);
+                .isEqualTo(platformReportedManufacturer);
         final String platformReportedModel =
                 TestUtils.isPropertyEmptyOrUnknown(Build.MODEL_FOR_ATTESTATION)
                 ? Build.MODEL : Build.MODEL_FOR_ATTESTATION;

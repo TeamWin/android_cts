@@ -52,7 +52,6 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -328,7 +327,6 @@ public class BasicApiTests {
     }
 
     @Test
-    @Ignore("Fails on cuttlefish")  // TODO (b/182835530): Investigate and fix.
     public void testSetPrioritized() throws InterruptedException {
         mMockAlarmReceiver.reset();
         mMockAlarmReceiver2.reset();

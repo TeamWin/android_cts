@@ -38,7 +38,6 @@ import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -72,7 +71,6 @@ public class CtsRecognitionService extends RecognitionService {
     static final int MAX_CONCURRENT_SESSIONS_COUNT = 3;
 
     private final Random mRandom = new Random();
-    private final Map<String, ModelDownloadListener> mModelDownloadListenerMap = new HashMap<>();
 
     @Override
     protected void onStartListening(Intent recognizerIntent, Callback listener) {
@@ -121,31 +119,20 @@ public class CtsRecognitionService extends RecognitionService {
             @NonNull Intent recognizerIntent,
             @NonNull AttributionSource attributionSource) {
         assertThat(attributionSource.getUid()).isEqualTo(android.os.Process.myUid());
-        ModelDownloadListener listener = mModelDownloadListenerMap.get(recognizerIntent.toUri(0));
-        if (listener != null) {
-            listener.onProgress(50);
-            listener.onScheduled();
-            listener.onSuccess();
-            listener.onError(0);
-        }
         sDownloadTriggers.add(recognizerIntent);
     }
 
     @Override
-    public void setModelDownloadListener(
+    public void onTriggerModelDownload(
             @NonNull Intent recognizerIntent,
             @NonNull AttributionSource attributionSource,
-            @Nullable ModelDownloadListener modelDownloadListener) {
+            @NonNull ModelDownloadListener listener) {
         assertThat(attributionSource.getUid()).isEqualTo(android.os.Process.myUid());
-        mModelDownloadListenerMap.put(recognizerIntent.toUri(0), modelDownloadListener);
-    }
-
-    @Override
-    public void clearModelDownloadListener(
-            @NonNull Intent recognizerIntent,
-            @NonNull AttributionSource attributionSource) {
-        assertThat(attributionSource.getUid()).isEqualTo(android.os.Process.myUid());
-        mModelDownloadListenerMap.remove(recognizerIntent.toUri(0));
+        listener.onProgress(50);
+        listener.onScheduled();
+        listener.onSuccess();
+        listener.onError(0);
+        sDownloadTriggers.add(recognizerIntent);
     }
 
     @Override
