@@ -15,24 +15,15 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
-import android.app.ActivityManager;
-import android.app.ActivityManager.MemoryInfo;
-import android.content.Context;
-import android.os.Bundle;
-import android.os.Build;
-
-import android.media.CamcorderProfile;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaCodecList;
+import android.os.Build;
 
-import com.android.compatibility.common.util.DeviceInfoStore;
 import com.android.compatibility.common.util.ApiLevelUtil;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 /**
  * Media information collector.
@@ -78,6 +69,8 @@ public final class MediaDeviceInfo extends DeviceInfo {
                 }
                 store.addResult("supported_secure_playback", codecCapabilities.isFeatureSupported(
                         CodecCapabilities.FEATURE_SecurePlayback));
+                store.addResult("supported_hdr_editing", codecCapabilities.isFeatureSupported(
+                        CodecCapabilities.FEATURE_HdrEditing));
                 VideoCapabilities videoCapabilities = codecCapabilities.getVideoCapabilities();
                 if (videoCapabilities != null) {
                     store.startGroup("supported_resolutions");
