@@ -259,7 +259,7 @@ class ZoomTest(its_base_test.ItsBaseTest):
               logging.error(e_msg)
 
     if test_failed:
-      raise AssertionError(f'{_NAME} failed! Check logging for errors')
+      raise AssertionError(f'{_NAME} failed! Check test_log.DEBUG for errors')
 
 if __name__ == '__main__':
   test_runner.main()
