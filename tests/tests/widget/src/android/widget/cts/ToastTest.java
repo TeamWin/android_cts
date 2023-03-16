@@ -64,6 +64,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
@@ -989,6 +990,7 @@ public class ToastTest {
      * us to wait a given amount of time to test that the limit has been enforced/lifted.
      */
     @Test
+    @ApiTest(apis = {"android.widget.Toast#show"})
     public void testRateLimitingToastsWhenInBackground() throws Throwable {
         // enable rate limiting to test it
         SystemUtil.runWithShellPermissionIdentity(() -> mNotificationManager
@@ -1051,6 +1053,7 @@ public class ToastTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.widget.Toast#show"})
     public void testAppWithUnlimitedToastsPermissionCanPostUnlimitedToasts() throws Throwable {
         // enable rate limiting to test it
         SystemUtil.runWithShellPermissionIdentity(() -> mNotificationManager
