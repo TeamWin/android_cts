@@ -30,6 +30,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
+import android.graphics.ColorSpace;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -54,6 +55,7 @@ import android.hardware.camera2.DngCreator;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.cts.PerformanceTest;
+import android.hardware.camera2.params.ColorSpaceProfiles;
 import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.camera2.params.ExtensionSessionConfiguration;
 import android.hardware.camera2.params.InputConfiguration;
@@ -919,6 +921,9 @@ public class ItsService extends Service implements SensorEventListener {
                     String cameraId = cmdObj.getString("cameraId");
                     int profileId = cmdObj.getInt("profileId");
                     doCheckHLG10Support(cameraId, profileId);
+                } else if ("isP3Supported".equals(cmdObj.getString("cmdName"))) {
+                    String cameraId = cmdObj.getString("cameraId");
+                    doCheckP3Support(cameraId);
                 } else if ("doCaptureWithFlash".equals(cmdObj.getString("cmdName"))) {
                     doCaptureWithFlash(cmdObj);
                 } else if ("doGetUnavailablePhysicalCameras".equals(cmdObj.getString("cmdName"))) {
@@ -1516,6 +1521,38 @@ public class ItsService extends Service implements SensorEventListener {
 
         mSocketRunnableObj.sendResponse("hlg10Response",
                 codecSupported && cameraHLG10OutputSupported ? "true" : "false");
+    }
+
+    private void doCheckP3Support(String cameraId) throws ItsException {
+        if (mItsCameraIdList == null) {
+            mItsCameraIdList = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
+        }
+        if (mItsCameraIdList.mCameraIds.size() == 0) {
+            throw new ItsException("No camera devices");
+        }
+        if (!mItsCameraIdList.mCameraIds.contains(cameraId)) {
+            throw new ItsException("Invalid cameraId " + cameraId);
+        }
+        boolean cameraP3OutputSupported = false;
+        try {
+            CameraCharacteristics c = mCameraManager.getCameraCharacteristics(cameraId);
+            int[] caps = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            boolean colorSpaceProfilesSupported = IntStream.of(caps).anyMatch(x -> x
+                    == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES);
+            if (colorSpaceProfilesSupported) {
+                ColorSpaceProfiles colorSpaceProfiles = c.get(
+                        CameraCharacteristics.REQUEST_AVAILABLE_COLOR_SPACE_PROFILES);
+                Set<ColorSpace.Named> colorSpaces =
+                        colorSpaceProfiles.getSupportedColorSpaces(ImageFormat.UNKNOWN);
+                if (colorSpaces.contains(ColorSpace.Named.DISPLAY_P3)) {
+                    cameraP3OutputSupported = true;
+                }
+            }
+        } catch (CameraAccessException e) {
+            throw new ItsException("Failed to get camera characteristics", e);
+        }
+
+        mSocketRunnableObj.sendResponse("p3Response", cameraP3OutputSupported ? "true" : "false");
     }
 
     private void doCheckPerformanceClass() throws ItsException {
@@ -2825,6 +2862,14 @@ public class ItsService extends Service implements SensorEventListener {
                     if (mStreamUseCaseMap.get(i) != null) {
                         config.setStreamUseCase(mStreamUseCaseMap.get(i));
                     }
+                    if (jsonOutputSpecs != null) {
+                        JSONObject surfaceObj = jsonOutputSpecs.getJSONObject(i);
+                        int colorSpaceInt = surfaceObj.optInt(
+                                "colorSpace", ColorSpaceProfiles.UNSPECIFIED);
+                        if (colorSpaceInt != ColorSpaceProfiles.UNSPECIFIED) {
+                            config.setColorSpace(ColorSpace.Named.values()[colorSpaceInt]);
+                        }
+                    }
                     outputConfigs.add(config);
                 }
                 mCamera.createCaptureSessionByOutputConfigurations(outputConfigs,
@@ -2850,6 +2895,8 @@ public class ItsService extends Service implements SensorEventListener {
 
             } catch (CameraAccessException e) {
                 throw new ItsException("Error configuring outputs", e);
+            } catch (org.json.JSONException e) {
+                throw new ItsException("Error parsing params", e);
             }
 
             // Start background requests and let it warm up pipeline
