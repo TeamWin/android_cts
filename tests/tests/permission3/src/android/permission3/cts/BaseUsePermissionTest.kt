@@ -726,6 +726,13 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                         addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     }
                 )
+                if (isTv) {
+                    waitForIdle()
+                    pressDPadDown()
+                    pressDPadDown()
+                    pressDPadDown()
+                    pressDPadDown()
+                }
                 // Open the permissions UI
                 click(byTextRes(R.string.permissions).enabled(true))
             } catch (e: Exception) {

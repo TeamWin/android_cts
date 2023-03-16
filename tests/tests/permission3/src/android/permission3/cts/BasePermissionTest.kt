@@ -355,6 +355,11 @@ abstract class BasePermissionTest {
         waitForIdle()
     }
 
+    protected fun pressDPadDown() {
+        uiDevice.pressDPadDown()
+        waitForIdle()
+    }
+
     protected fun waitForIdle() = uiAutomation.waitForIdle(IDLE_TIMEOUT_MILLIS, TIMEOUT_MILLIS)
 
     protected fun startActivityForFuture(
