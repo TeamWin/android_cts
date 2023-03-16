@@ -52,6 +52,7 @@ java_test_host {
         "src/**/tls/*.java",
         "src/**/users/*.java",
         "src/**/vibrator/*.java",
+        "src/**/voiceinteraction/*.java",
         "src/**/wifi/*.java",
         "src/**/incremental/*.java",
         "src/**/memorysafety/*.java",
@@ -84,6 +85,7 @@ java_test_host {
         ":CtsSimpleApp",
         ":CtsStatsdAlarmHelper",
         ":CtsStatsdAlarmHelper2",
+        ":CtsVoiceInteractionTestCases",
     ],
     per_testcase_directory: true,
 }
