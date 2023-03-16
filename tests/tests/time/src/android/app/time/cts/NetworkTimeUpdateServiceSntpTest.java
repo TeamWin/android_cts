@@ -24,7 +24,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 
 import android.app.time.cts.shell.DeviceConfigShellHelper;
 import android.app.time.cts.shell.DeviceShellCommandExecutor;
@@ -45,6 +44,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.ThrowingSupplier;
 
 import org.junit.After;
+import org.junit.AssumptionViolatedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -253,11 +253,19 @@ public class NetworkTimeUpdateServiceSntpTest {
             throws Exception {
         // If you have to adjust or remove this logic: consider that the public SDK
         // SystemClock.currentNetworkTimeClock() method currently requires
-        // network_time_update_service to be present to work.
+        // network_time_update_service (or NtpNetworkTimeHelper in the location service) to be
+        // running in order to work. See also b/271256787 for context.
         if (isWatch()) {
-            // network_time_update_service is not expected to exist on Wear. This means that
-            // SystemClock.currentNetworkTimeClock() will do nothing useful there.
-            assumeFalse(networkTimeUpdateServiceShellHelper.isNetworkTimeUpdateServicePresent());
+            // network_time_update_service is not expected to exist on Wear due to
+            // form-factor-specific changes. If this fails, more changes could be required besides
+            // just removing this logic, so failing the test forces a discussion rather than moving
+            // from silently skip test -> test passing.
+            assertFalse(networkTimeUpdateServiceShellHelper.isNetworkTimeUpdateServicePresent());
+
+            // Stop the test execution, but in a way that isn't considered a failure.
+            // assumeFalse(isWatch()) would also work except for the assertion immediately above.
+            throw new AssumptionViolatedException(
+                    "Skipping test on devices without network_time_update_service");
         }
     }
 

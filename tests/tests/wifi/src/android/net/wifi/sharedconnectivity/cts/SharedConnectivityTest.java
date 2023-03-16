@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.sharedconnectivity.app.HotspotNetwork;
 import android.net.wifi.sharedconnectivity.app.HotspotNetworkConnectionStatus;
@@ -116,12 +117,6 @@ public class SharedConnectivityTest {
                     .setConnectionStrength(1)
                     .build())
             .build();
-
-    private static final SharedConnectivitySettingsState TEST_SETTINGS_STATE =
-            new SharedConnectivitySettingsState.Builder()
-                    .setInstantTetherEnabled(true)
-                    .setExtras(Bundle.EMPTY)
-                    .build();
 
     private static final HotspotNetworkConnectionStatus TEST_HOTSPOT_NETWORK_CONNECTION_STATUS =
             new HotspotNetworkConnectionStatus.Builder()
@@ -228,7 +223,7 @@ public class SharedConnectivityTest {
 
             assertThat(manager.unregisterCallback(callback)).isTrue();
             // Try to use callback and validate that manager was not updated.
-            service.setSettingsState(TEST_SETTINGS_STATE);
+            service.setSettingsState(buildSettingsState(context));
             assertThat(callbackLatch.await(LATCH_TIMEOUT_SECS, TimeUnit.SECONDS)).isFalse();
             assertThat(callback.getSharedConnectivitySettingsState()).isNull();
         } finally {
@@ -362,11 +357,11 @@ public class SharedConnectivityTest {
             manager.registerCallback(Runnable::run, callback);
             assertServiceConnected(callback);
 
-            service.setSettingsState(TEST_SETTINGS_STATE);
+            service.setSettingsState(buildSettingsState(context));
 
             assertThat(callbackLatch.await(LATCH_TIMEOUT_SECS, TimeUnit.SECONDS)).isTrue();
             assertThat(callback.getSharedConnectivitySettingsState()).isEqualTo(
-                    TEST_SETTINGS_STATE);
+                    buildSettingsState(context));
         } finally {
             dropPermission();
         }
@@ -560,5 +555,13 @@ public class SharedConnectivityTest {
             throws InterruptedException {
         assertThat(callback.getServiceConnectedLatch().await(LATCH_TIMEOUT_SECS,
                 TimeUnit.SECONDS)).isTrue();
+    }
+
+    private SharedConnectivitySettingsState buildSettingsState(Context context) {
+        return new SharedConnectivitySettingsState.Builder(context)
+                        .setInstantTetherEnabled(true)
+                        .setInstantTetherSettingsPendingIntent(new Intent())
+                        .setExtras(Bundle.EMPTY)
+                        .build();
     }
 }

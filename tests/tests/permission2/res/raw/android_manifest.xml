@@ -5222,7 +5222,7 @@
          exact alarm APIs.
      -->
     <permission android:name="android.permission.SCHEDULE_EXACT_ALARM"
-        android:protectionLevel="normal|appop"/>
+        android:protectionLevel="signature|privileged|appop"/>
 
     <!-- Allows apps to use exact alarms just like with SCHEDULE_EXACT_ALARM but without needing
     to request this permission from the user.
@@ -7421,9 +7421,7 @@
                 android:protectionLevel="signature|privileged" />
 
     <!-- Allows an application to be able to store and retrieve credentials from a remote
-         device.
-	 @SystemApi
-         @hide -->
+         device. -->
     <permission android:name="android.permission.PROVIDE_REMOTE_CREDENTIALS"
 	    android:protectionLevel="signature|privileged|role" />
 

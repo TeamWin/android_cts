@@ -102,6 +102,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mSendTvRecordingInfoCount;
         public int mSendTvRecordingInfoListCount;
         public int mCurrentVideoBoundsCount;
+        public int mRecordingTunedCount;
 
         public Integer mKeyDownCode;
         public Integer mKeyUpCode;
@@ -164,6 +165,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mSendTvRecordingInfoCount = 0;
             mSendTvRecordingInfoListCount = 0;
             mCurrentVideoBoundsCount = 0;
+            mRecordingTunedCount = 0;
 
             mKeyDownCode = null;
             mKeyUpCode = null;
@@ -566,6 +568,13 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             super.onTvRecordingInfoList(recordingInfoList);
             mSendTvRecordingInfoListCount++;
             mTvRecordingInfoList = recordingInfoList;
+        }
+
+        @Override
+        public void onRecordingTuned(String recordingId, Uri channelUri) {
+            mRecordingTunedCount++;
+            mRecordingId = recordingId;
+            mTunedUri = channelUri;
         }
     }
 }

@@ -208,6 +208,28 @@ class ItsBaseTest(base_test.BaseTestClass):
                   int(self.tablet.adb.shell(
                       'settings get system user_rotation')))
 
+  def set_screen_brightness(self, brightness_level):
+    """Sets the screen brightness to desired level.
+
+    Args:
+       brightness_level : brightness level to set.
+    """
+    # Turn off the adaptive brightness on tablet.
+    self.tablet.adb.shell(
+        ['settings', 'put', 'system', 'screen_brightness_mode', '0'])
+    # Set the screen brightness
+    self.tablet.adb.shell([
+        'settings', 'put', 'system', 'screen_brightness',
+        brightness_level
+    ])
+    logging.debug('Tablet brightness set to: %s', brightness_level)
+    actual_brightness = self.tablet.adb.shell(
+        'settings get system screen_brightness')
+    if int(actual_brightness) != int(brightness_level):
+      raise AssertionError('Brightness was not set as expected! '
+                           'Requested brightness: {brightness_level}, '
+                           'Actual brightness: {actual_brightness}')
+
   def parse_hidden_camera_id(self):
     """Parse the string of camera ID into an array.
 
@@ -266,4 +288,5 @@ class ItsBaseTest(base_test.BaseTestClass):
               f'{self.root_output_path}_{self.__class__.__name__}')
     # print root_output_path so that it can be written to report log.
     # Note: Do not replace print with logging.debug here.
-    print('root_output_path:', f'{self.root_output_path}_{self.__class__.__name__}')
+    print('root_output_path:',
+          f'{self.root_output_path}_{self.__class__.__name__}')

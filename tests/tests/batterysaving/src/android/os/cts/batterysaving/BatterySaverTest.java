@@ -16,6 +16,7 @@
 package android.os.cts.batterysaving;
 
 import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
+import static com.android.compatibility.common.util.BatteryUtils.resetBatterySaver;
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -64,10 +65,11 @@ public class BatterySaverTest extends BatterySavingTestBase {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         mDeviceConfigStateHelper.restoreOriginalValues();
         SettingsUtils.delete(SettingsUtils.NAMESPACE_GLOBAL, "battery_saver_constants");
         runShellCommand("cmd uimode night " + mInitialNightMode);
+        resetBatterySaver();
     }
 
     /**

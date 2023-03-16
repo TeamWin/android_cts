@@ -17,6 +17,7 @@
 package com.android.compatibility.common.util;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
@@ -29,7 +30,11 @@ import androidx.annotation.Nullable;
 
 /**
  * Provides utilities to interact with the device's {@link Settings}.
+ *
+ * @deprecated this class has 2 limitations (uses shell commands instead of client-side APIs and
+ * is not multi-user aware), please use {@link UserSettings} instead.
  */
+@Deprecated
 public final class SettingsUtils {
 
     private static final String TAG = SettingsUtils.class.getSimpleName();

@@ -407,7 +407,7 @@ public class ExternalServiceTest extends AndroidTestCase {
      * Test when the flag BIND_EXTERNAL_SERVICE(0x80000000) is set in 64 bits long flags,
      * an IllegalArgumentException is thrown. The reason is that integer 0x80000000 is
      * automatically converted to long 0xffff_ffff_8000_000, it is not a correct flag any more.
-     * In 64 bits long flags, use BIND_EXTERNAL_SERVICE_LONG(0x8000_0000_0000_0000L) instead.
+     * In 64 bits long flags, use BIND_EXTERNAL_SERVICE_LONG(0x4000_0000_0000_0000L) instead.
      */
     public void testFailBindExternalServiceLongFlags() {
         // Start the service and wait for connection.
@@ -428,7 +428,7 @@ public class ExternalServiceTest extends AndroidTestCase {
     }
 
     /**
-     * Test 64 bits long flag BIND_EXTERNAL_SERVICE_LONG(0x8000_0000_0000_0000L), it deprecates
+     * Test 64 bits long flag BIND_EXTERNAL_SERVICE_LONG(0x4000_0000_0000_0000L), it deprecates
      * 32 bits flag BIND_EXTERNAL_SERVICE(0x80000000) when 64 bits long flags is used.
      */
     public void testBindExternalServiceLongFlags() {
