@@ -365,11 +365,15 @@ public class SatelliteManagerTest {
         }
 
         @Override
-        public void onDatagramTransferStateChanged(int state, int sendPendingCount,
-                int receivePendingCount, int errorCode) {
-            Log.d(TAG, "onSatellitePositionChanged: state=" + state + ", sendPendingCount="
-                    + sendPendingCount + ", receivePendingCount=" + receivePendingCount
-                    + ", errorCode=" + errorCode);
+        public void onSendDatagramStateChanged(int state, int sendPendingCount, int errorCode) {
+            Log.d(TAG, "onSendDatagramStateChanged: state=" + state + ", sendPendingCount="
+                    + sendPendingCount + ", errorCode=" + errorCode);
+        }
+
+        @Override
+        public void onReceiveDatagramStateChanged(int state, int receivePendingCount, int errorCode) {
+            Log.d(TAG, "onReceiveDatagramStateChanged: state=" + state + ", "
+                    + "receivePendingCount=" + receivePendingCount + ", errorCode=" + errorCode);
         }
     }
 
