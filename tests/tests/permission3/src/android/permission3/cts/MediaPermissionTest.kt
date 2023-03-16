@@ -134,7 +134,7 @@ class MediaPermissionTest : BaseUsePermissionTest() {
             Manifest.permission.READ_MEDIA_VIDEO,
             Manifest.permission.READ_MEDIA_IMAGES) {
                 if (isPhotoPickerPermissionPromptEnabled()) {
-                    clickPermissionRequestAllowAllPhotosButton()
+                    clickPermissionRequestAllowAllButton()
                 } else {
                     clickPermissionRequestAllowButton()
                 }
