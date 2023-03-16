@@ -114,6 +114,7 @@ public class CtsTestServer {
     private static final String APPCACHE_MANIFEST_PATH = "/appcache.manifest";
     private static final String REDIRECT_PREFIX = "/redirect";
     private static final String QUERY_REDIRECT_PATH = "/alt_redirect";
+    private static final String ECHO_HEADERS_PREFIX = "/echo_headers";
     private static final String DELAY_PREFIX = "/delayed";
     private static final String BINARY_PREFIX = "/binary";
     private static final String SET_COOKIE_PREFIX = "/setcookie";
@@ -122,6 +123,8 @@ public class CtsTestServer {
     private static final String AUTH_PREFIX = "/auth";
     public static final String NOLENGTH_POSTFIX = "nolength";
     private static final int DELAY_MILLIS = 2000;
+
+    public static final String ECHOED_RESPONSE_HEADER_PREFIX = "x-request-header-";
 
     public static final String AUTH_REALM = "Android CTS";
     public static final String AUTH_USER = "cts";
@@ -393,6 +396,14 @@ public class CtsTestServer {
         sb.append(ASSET_PREFIX);
         sb.append(path);
         return sb.toString();
+    }
+
+    /**
+     * Return an absolute URL that refers to an endpoint which will send received headers back to
+     * the sender with a prefix.
+     */
+    public String getEchoHeadersUrl() {
+        return getBaseUri() + ECHO_HEADERS_PREFIX;
     }
 
     /**
@@ -678,6 +689,14 @@ public class CtsTestServer {
         URI uri = URI.create(uriString);
         String path = uri.getPath();
         String query = uri.getQuery();
+
+        if (path.startsWith(ECHO_HEADERS_PREFIX)) {
+            response = createResponse(HttpStatus.SC_OK);
+            for (Header header : request.getAllHeaders()) {
+                response.addHeader(
+                        ECHOED_RESPONSE_HEADER_PREFIX + header.getName(), header.getValue());
+            }
+        }
         if (path.equals(FAVICON_PATH)) {
             path = FAVICON_ASSET_PATH;
         }
