@@ -74,6 +74,17 @@ android_test_helper_app {
     v4_signature: true,
 }
 
+java_library_static {
+    name: "statslog-cts",
+    srcs: [
+        ":statslog-statsdatom-cts-java-gen",
+    ],
+    visibility: [
+        "//cts/hostsidetests/statsdapp/apps:__subpackages__",
+        "//vendor:__subpackages__",
+    ],
+}
+
 genrule {
     name: "statslog-statsdatom-cts-java-gen",
     tools: ["stats-log-api-gen"],
