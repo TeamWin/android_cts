@@ -76,6 +76,18 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     @Override
     public void onListenerDisconnected() {
         isConnected = false;
+        sNotificationAssistantInstance = null;
+    }
+
+    public void resetData() {
+        resetNotificationClickCount();
+        resetNotificationVisibilityCounts();
+        isPanelOpen = false;
+        snoozedKey = null;
+        snoozedUntilContext = null;
+        notificationRank = -1;
+        notificationFeedback = 0;
+        mRemoved.clear();
     }
 
     public static TestNotificationAssistant getInstance() {
