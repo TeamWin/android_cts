@@ -50,6 +50,7 @@ import android.media.cts.StreamUtils;
 import android.media.cts.TestUtils;
 import android.opengl.GLES20;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -245,6 +246,16 @@ public class MediaCodecTest {
             fail("flush should not return MediaCodec.CodecException on wrong state");
         } catch (IllegalStateException e) { // expected
         }
+        try {
+            codec.setParameters(new Bundle());
+            fail("setParameters should not work if not yet configured/initialized");
+        } catch (MediaCodec.CodecException e) {
+            logMediaCodecException(e);
+            fail("setParameters should not return MediaCodec.CodecException if not yet "
+                    + "configured/initialized");
+        } catch (IllegalStateException e) { // expected
+        }
+
         MediaCodecInfo codecInfo = codec.getCodecInfo(); // obtaining the codec info now is fine.
         try {
             int bufIndex = codec.dequeueInputBuffer(0);
