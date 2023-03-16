@@ -761,8 +761,10 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
     @Test
     public void testSetNextMediaPlayer() throws Exception {
-        final int TOTAL_TIMEOUT_MS = PLAYBACK_DURATION_MS * 4 + ANR_DETECTION_TIME_MS
-                        + 5000 /* listener latency(ms) */;
+        final int ITERATIONS = 3;
+        // the +1 is for the trailing test of setNextMediaPlayer(null)
+        final int TOTAL_TIMEOUT_MS = PLAYBACK_DURATION_MS * (ITERATIONS + 1)
+                        + ANR_DETECTION_TIME_MS + 5000 /* listener latency(ms) */;
         initMediaPlayer(mMediaPlayer);
 
         final Monitor mTestCompleted = new Monitor();
@@ -791,7 +793,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         timer.start();
 
         try {
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < ITERATIONS; i++) {
 
                 initMediaPlayer(mMediaPlayer2);
                 mOnCompletionCalled.reset();
@@ -831,6 +833,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             }
 
             // Now test that setNextMediaPlayer(null) works. 1 is still playing, 2 is done
+            // this is the final "+1" in our time calculations above
             mOnCompletionCalled.reset();
             mOnInfoCalled.reset();
             initMediaPlayer(mMediaPlayer2);
