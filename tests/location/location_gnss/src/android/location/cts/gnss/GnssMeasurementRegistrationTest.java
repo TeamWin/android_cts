@@ -169,7 +169,10 @@ public class GnssMeasurementRegistrationTest {
      * Test GPS measurements registration with a listener with a passive interval and a listener
      * with the fastest interval.
      *
-     * Verify the passive listener can receive measurements.
+     * 1. Verify the passive listener can receive measurements after the 2nd non-passive listener
+     * is registered.
+     * 2. Verify the passive listener stops receiving measurements after the 2nd non-passive
+     * listener is unregistered.
      */
     @Test
     public void testGnssMeasurementRegistration_passiveListenerAndNonPassiveListener()
@@ -192,6 +195,9 @@ public class GnssMeasurementRegistrationTest {
         verifyGnssMeasurementsReceived();
 
         mTestLocationManager.unregisterGnssMeasurementCallback(nonPassiveListener);
+
+        // Verify that no more measurement is received in the passive listener.
+        verifyNoGnssMeasurementReceived();
     }
 
     private void verifyGnssMeasurementsReceived() throws InterruptedException {
@@ -235,5 +241,15 @@ public class GnssMeasurementRegistrationTest {
                 events.isEmpty());
 
         softAssert.assertAll();
+    }
+
+    private void verifyNoGnssMeasurementReceived() throws InterruptedException {
+        // Allow 1s for the in-flight measurement to arrive if any.
+        Thread.sleep(1000);
+        int eventCount = mMeasurementListener.getEvents().size();
+
+        // Assert that no more measurement is received in the next 5s
+        Thread.sleep(5000);
+        Assert.assertEquals(eventCount, mMeasurementListener.getEvents().size());
     }
 }
