@@ -27,7 +27,13 @@ import static org.junit.Assert.fail;
 import libcore.java.security.StandardNames;
 import libcore.java.security.TestKeyStore;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -68,6 +74,7 @@ import java.util.Set;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
+@RunWith(Parameterized.class)
 public class KeyStoreTest {
 
     private static final HashMap<String, PrivateKeyEntry> sPrivateKeys
@@ -106,6 +113,24 @@ public class KeyStoreTest {
     private static final ProtectionParameter PARAM_STORE = new PasswordProtection(PASSWORD_STORE);
     private static final ProtectionParameter PARAM_KEY = new PasswordProtection(PASSWORD_KEY);
     private static final ProtectionParameter PARAM_BAD = new PasswordProtection(PASSWORD_BAD);
+
+    @Parameters
+    public static Object[] data() {
+        return new Object[] {"true", "false"};
+    }
+
+    @Parameter
+    public String mApexCertsEnabled;
+
+    @Before
+    public void setUp() {
+        System.setProperty("system.certs.enabled", mApexCertsEnabled);
+    }
+
+    @After
+    public void tearDown() {
+        System.clearProperty("system.certs.enabled");
+    }
 
     private static PrivateKeyEntry getPrivateKey() {
         return getPrivateKey("RSA");
