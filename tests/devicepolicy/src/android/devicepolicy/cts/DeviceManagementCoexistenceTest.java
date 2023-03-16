@@ -26,6 +26,7 @@ import static android.app.admin.DevicePolicyIdentifiers.PERSISTENT_PREFERRED_ACT
 import static android.app.admin.DevicePolicyIdentifiers.RESET_PASSWORD_TOKEN_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.USER_CONTROL_DISABLED_PACKAGES_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.getIdentifierForUserRestriction;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_DENIED;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;
@@ -81,11 +82,12 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
 @CoexistenceFlagsOn
-public final class DeviceManagementCoexistenceTests {
+public final class DeviceManagementCoexistenceTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -104,6 +106,8 @@ public final class DeviceManagementCoexistenceTests {
     private static final String LOCAL_USER_RESTRICTION = DISALLOW_MODIFY_ACCOUNTS;
 
     private static final String GLOBAL_USER_RESTRICTION = DISALLOW_WIFI_DIRECT;
+
+    private static final int LOCK_TASK_FEATURES = LOCK_TASK_FEATURE_HOME;
 
     private static final TestApp sTestApp = sDeviceState.testApps().any();
 
@@ -176,6 +180,8 @@ public final class DeviceManagementCoexistenceTests {
         try {
             sDeviceState.dpc().devicePolicyManager()
                     .setLockTaskPackages(sDeviceState.dpc().componentName(), new String[]{PACKAGE_NAME});
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskFeatures(sDeviceState.dpc().componentName(), LOCK_TASK_FEATURES);
 
             PolicyState<LockTaskPolicy> policyState = getLockTaskPolicyState(
                     new NoArgsPolicyKey(LOCK_TASK_POLICY),
@@ -183,6 +189,8 @@ public final class DeviceManagementCoexistenceTests {
 
             assertThat(policyState.getCurrentResolvedPolicy().getPackages())
                     .containsExactly(PACKAGE_NAME);
+            assertThat(policyState.getCurrentResolvedPolicy().getFlags())
+                    .isEqualTo(LOCK_TASK_FEATURES);
         } finally {
             sDeviceState.dpc().devicePolicyManager()
                     .setLockTaskPackages(sDeviceState.dpc().componentName(), originalLockTaskPackages);
@@ -752,6 +760,50 @@ public final class DeviceManagementCoexistenceTests {
                     getIdentifierForUserRestriction(GLOBAL_USER_RESTRICTION),
                     PolicyUpdateResult.RESULT_POLICY_SET, GLOBAL_USER_ID, new Bundle());
         } finally {
+            if (!hasRestrictionOriginally) {
+                sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                        sDeviceState.dpc().componentName(), GLOBAL_USER_RESTRICTION);
+            }
+        }
+    }
+
+    @Test
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void devicePolicyState_getPoliciesForAllUsers_returnsPolicies() {
+        boolean originalAutoTimeZoneValue = sDeviceState.dpc().devicePolicyManager()
+                .getAutoTimeZoneEnabled(sDeviceState.dpc().componentName());
+        boolean hasRestrictionOriginally = sDeviceState.dpc()
+                .userManager().hasUserRestriction(LOCAL_USER_RESTRICTION);
+        try {
+            sDeviceState.dpc().devicePolicyManager().setAutoTimeZoneEnabled(
+                    sDeviceState.dpc().componentName(), true);
+            sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), LOCAL_USER_RESTRICTION);
+
+            try {
+                DevicePolicyState state =
+                        sDeviceState.dpmRoleHolder().devicePolicyManager().getDevicePolicyState();
+                Map<UserHandle, Map<PolicyKey, PolicyState<?>>> policies =
+                        state.getPoliciesForAllUsers();
+
+                PolicyState<Boolean> autoTimezonePolicy =
+                        (PolicyState<Boolean>) (policies.get(UserHandle.ALL)
+                                .get(new NoArgsPolicyKey(AUTO_TIMEZONE_POLICY)));
+                PolicyState<Boolean> userRestrictionPolicy =
+                        (PolicyState<Boolean>) (policies.get(sDeviceState.dpc().user().userHandle())
+                                .get(new UserRestrictionPolicyKey(
+                                        getIdentifierForUserRestriction(LOCAL_USER_RESTRICTION),
+                                        LOCAL_USER_RESTRICTION)));
+                assertThat(autoTimezonePolicy.getCurrentResolvedPolicy()).isTrue();
+                assertThat(userRestrictionPolicy.getCurrentResolvedPolicy()).isTrue();
+            } catch (ClassCastException e) {
+                fail("Returned policy is not of type Boolean: " + e);
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setAutoTimeZoneEnabled(
+                    sDeviceState.dpc().componentName(), originalAutoTimeZoneValue);
             if (!hasRestrictionOriginally) {
                 sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
                         sDeviceState.dpc().componentName(), GLOBAL_USER_RESTRICTION);
