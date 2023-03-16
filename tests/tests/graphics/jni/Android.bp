@@ -40,6 +40,7 @@ cc_test_library {
         "MediaTestHelpers.cpp",
         "NativeTestHelpers.cpp",
         "VulkanPreTransformTestHelpers.cpp",
+        "VulkanProfiles.cpp",
         "VulkanTestHelpers.cpp",
     ],
     include_dirs: ["system/core/include"],

@@ -299,159 +299,20 @@ public class VulkanFeaturesTest {
         assertEquals(expectedVariant, actualVariant);
     }
 
+    private static native String nativeGetABPSupport();
+    private static native String nativeGetABPCpuOnlySupport();
+
     @CddTest(requirement = "7.1.4.2/C-1-13")
     @Test
     public void testAndroidBaselineProfile2021Support() throws JSONException {
-        // TODO(vantablack) This should be replaced by the Vulkan-Profiles header utility
         assumeTrue("Skipping because Vulkan is not supported", mVulkanHardwareVersion != null);
 
-        // Check for instance extensions
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_surface",
-                hasInstanceExtension(
-                    "VK_KHR_surface", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_android_surface",
-                hasInstanceExtension(
-                    "VK_KHR_android_surface", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_get_physical_device_properties2",
-                hasInstanceExtension(
-                    "VK_KHR_get_physical_device_properties2", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_EXT_swapchain_colorspace",
-                hasInstanceExtension(
-                    "VK_EXT_swapchain_colorspace", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_get_surface_capabilities2",
-                hasInstanceExtension(
-                    "VK_KHR_get_surface_capabilities2", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_external_semaphore_capabilities",
-                hasInstanceExtension(
-                    "VK_KHR_external_semaphore_capabilities", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_external_memory_capabilities",
-                hasInstanceExtension(
-                    "VK_KHR_external_memory_capabilities", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_external_fence_capabilities",
-                hasInstanceExtension(
-                    "VK_KHR_external_fence_capabilities", 1));
-
-        // Check for device Extensions
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_swapchain",
-                hasDeviceExtension(
-                    mBestDevice, "VK_KHR_swapchain", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_maintenance1",
-                hasDeviceExtension(
-                    mBestDevice, "VK_KHR_maintenance1", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_incremental_present",
-                hasDeviceExtension(
-                    mBestDevice, "VK_KHR_incremental_present", 1));
-        // cuttlefish does not support VK_GOOGLE_display_timing
         if (!hasOnlyCpuDevice()) {
-            assertTrue("This device must support the ABP 2021, and therefore must also support "
-                    + "VK_GOOGLE_display_timing",
-                    hasDeviceExtension(
-                        mBestDevice, "VK_GOOGLE_display_timing", 1));
+            assertEquals("This device must support the ABP 2021.", "", nativeGetABPSupport());
+        } else {
+            assertEquals("This device must support the ABP 2021.", "",
+                    nativeGetABPCpuOnlySupport());
         }
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_descriptor_update_template",
-                hasDeviceExtension(
-                    mBestDevice, "VK_KHR_descriptor_update_template", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_get_memory_requirements2",
-                hasDeviceExtension(
-                    mBestDevice, "VK_KHR_get_memory_requirements2", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_dedicated_allocation",
-                hasDeviceExtension(
-                    mBestDevice, "VK_KHR_dedicated_allocation", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_storage_buffer_storage_class",
-                hasDeviceExtension(
-                    mBestDevice, "VK_KHR_storage_buffer_storage_class", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_external_semaphore",
-                hasDeviceExtension(
-                    mBestDevice, "VK_KHR_external_semaphore", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_external_memory",
-                hasDeviceExtension(
-                    mBestDevice, "VK_KHR_external_memory", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_external_semaphore_fd",
-                hasDeviceExtension(
-                    mBestDevice, "VK_KHR_external_semaphore_fd", 1));
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "VK_KHR_external_fence",
-                hasDeviceExtension(
-                    mBestDevice, "VK_KHR_external_fence", 1));
-        // cuttlefish does not support VK_KHR_external_fence_fd or VK_KHR_variable_pointers
-        if (!hasOnlyCpuDevice()) {
-            assertTrue("This device must support the ABP 2021, and therefore must also support "
-                    + "VK_KHR_external_fence_fd",
-                    hasDeviceExtension(
-                        mBestDevice, "VK_KHR_external_fence_fd", 1));
-            assertTrue("This device must support the ABP 2021, and therefore must also support "
-                    + "VK_KHR_variable_pointers",
-                    hasDeviceExtension(
-                        mBestDevice, "VK_KHR_variable_pointers", 1));
-        }
-
-        // Check for required VkPhysicalDeviceFeatures
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "depthBiasClamp",
-                mBestDevice.getJSONObject("features")
-                           .getInt("depthBiasClamp") != 0);
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "fragmentStoresAndAtomics",
-                mBestDevice.getJSONObject("features")
-                           .getInt("fragmentStoresAndAtomics") != 0);
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "fullDrawIndexUint32",
-                mBestDevice.getJSONObject("features")
-                           .getInt("fullDrawIndexUint32") != 0);
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "imageCubeArray",
-                mBestDevice.getJSONObject("features")
-                           .getInt("imageCubeArray") != 0);
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "independentBlend",
-                mBestDevice.getJSONObject("features")
-                           .getInt("independentBlend") != 0);
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "robustBufferAccess",
-                mBestDevice.getJSONObject("features")
-                           .getInt("robustBufferAccess") != 0);
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "sampleRateShading",
-                mBestDevice.getJSONObject("features")
-                           .getInt("sampleRateShading") != 0);
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "shaderSampledImageArrayDynamicIndexing",
-                mBestDevice.getJSONObject("features")
-                           .getInt("shaderSampledImageArrayDynamicIndexing") != 0);
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "shaderStorageImageArrayDynamicIndexing",
-                mBestDevice.getJSONObject("features")
-                           .getInt("shaderStorageImageArrayDynamicIndexing") != 0);
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "shaderUniformBufferArrayDynamicIndexing",
-                mBestDevice.getJSONObject("features")
-                           .getInt("shaderUniformBufferArrayDynamicIndexing") != 0);
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "textureCompressionASTC_LDR",
-                mBestDevice.getJSONObject("features")
-                           .getInt("textureCompressionASTC_LDR") != 0);
-        assertTrue("This device must support the ABP 2021, and therefore must also support "
-                + "textureCompressionETC2",
-                mBestDevice.getJSONObject("features")
-                           .getInt("textureCompressionETC2") != 0);
     }
 
     private JSONObject getBestDevice() throws JSONException {
