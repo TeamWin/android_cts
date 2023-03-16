@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts.listeningports;
 
+import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Process;
@@ -143,8 +144,15 @@ public class ListeningPortsTest extends AndroidTestCase {
     }
 
     private String uidToPackage(int uid) {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         PackageManager pm = this.getContext().getPackageManager();
-        String[] packages = pm.getPackagesForUid(uid);
+        String[] packages;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            packages = pm.getPackagesForUid(uid);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
         if (packages == null) {
             return "[unknown]";
         }
