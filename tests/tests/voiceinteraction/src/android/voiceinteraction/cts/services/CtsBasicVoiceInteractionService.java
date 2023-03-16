@@ -242,6 +242,16 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     }
 
     /**
+     * Create a SoftwareHotwordDetector but doesn't hold MANAGE_HOTWORD_DETECTION
+     */
+    public void createSoftwareHotwordDetectorWithoutManageHotwordDetectionPermission() {
+        mServiceTriggerLatch = new CountDownLatch(1);
+        mHandler.post(() -> runWithShellPermissionIdentity(
+                () -> callCreateSoftwareHotwordDetector(mNoOpSoftwareDetectorCallback,
+                        /* useExecutor= */ false)));
+    }
+
+    /**
      * Create an AlwaysOnHotwordDetector but doesn't hold MANAGE_HOTWORD_DETECTION but hold
      * BIND_HOTWORD_DETECTION_SERVICE.
      */
