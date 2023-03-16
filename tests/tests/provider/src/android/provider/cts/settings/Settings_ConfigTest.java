@@ -16,7 +16,7 @@
 
 package android.provider.cts.settings;
 
-import static android.provider.Settings.Config.SYNC_DISABLED_MODE_NONE;
+import static android.provider.DeviceConfig.SYNC_DISABLED_MODE_NONE;
 import static android.provider.Settings.RESET_MODE_PACKAGE_DEFAULTS;
 
 import static org.junit.Assert.assertEquals;
