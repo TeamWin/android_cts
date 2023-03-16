@@ -153,6 +153,26 @@ object AppMetadata {
         return createMetadataWithDataShared(dataSharedBundle)
     }
 
+    /**
+     * Returns an App Metadata [PersistableBundle] representation where location data is shared,
+     * including for advertising purpose.
+     */
+    fun createAppMetadataWithLocationSharingAds(): PersistableBundle {
+        val locationBundle =
+            PersistableBundle().apply {
+                putPersistableBundle(
+                    APPROX_LOCATION,
+                    PersistableBundle().apply {
+                        putIntArray(KEY_PURPOSES, listOf(PURPOSE_ADVERTISING).toIntArray())
+                    })
+            }
+
+        val dataSharedBundle =
+            PersistableBundle().apply { putPersistableBundle(LOCATION_CATEGORY, locationBundle) }
+
+        return createMetadataWithDataShared(dataSharedBundle)
+    }
+
     private fun createMetadataWithDataShared(
         dataSharedBundle: PersistableBundle
     ): PersistableBundle {
@@ -179,6 +199,7 @@ object AppMetadata {
     private const val LOCATION_CATEGORY = "location"
     private const val APPROX_LOCATION = "approx_location"
     private const val PURPOSE_FRAUD_PREVENTION_SECURITY = 4
+    private const val PURPOSE_ADVERTISING = 5
 
     private const val KEY_VERSION = "version"
     private const val KEY_SAFETY_LABELS = "safety_labels"
