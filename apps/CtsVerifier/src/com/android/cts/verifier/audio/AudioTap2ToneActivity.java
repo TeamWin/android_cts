@@ -269,17 +269,21 @@ public class AudioTap2ToneActivity
             mDuplexAudioManager.setNumRecorderChannels(NUM_RECORD_CHANNELS);
         }
 
-        mDuplexAudioManager.setupStreams(mApi, BuilderBase.TYPE_JAVA);
-        mBuffSizeView.setText(
-                getString(R.string.audio_general_play_colon)
-                + mDuplexAudioManager.getNumPlayerBufferFrames()
-                + getString(R.string.audio_general_record_colon)
-                + mDuplexAudioManager.getNumRecorderBufferFrames());
-        mDuplexAudioManager.start();
+        if (mDuplexAudioManager.setupStreams(mApi, BuilderBase.TYPE_JAVA) == StreamBase.OK) {
+            mBuffSizeView.setText(
+                    getString(R.string.audio_general_play_colon)
+                            + mDuplexAudioManager.getNumPlayerBufferFrames()
+                            + getString(R.string.audio_general_record_colon)
+                            + mDuplexAudioManager.getNumRecorderBufferFrames());
+            mDuplexAudioManager.start();
 
-        mBlipSource = (AudioSource) mDuplexAudioManager.getAudioSource();
+            mBlipSource = (AudioSource) mDuplexAudioManager.getAudioSource();
 
-        mIsRecording = true;
+            mIsRecording = true;
+        } else {
+            mIsRecording = false;
+            mResultsView.setText(getString(R.string.audio_tap2tone_bad_streams));
+        }
         enableAudioButtons();
     }
 
