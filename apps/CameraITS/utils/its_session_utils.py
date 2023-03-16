@@ -555,6 +555,23 @@ class ItsSession(object):
       raise error_util.CameraItsError('Failed to query HLG10 support')
     return data[_STR_VALUE] == 'true'
 
+  def is_p3_capture_supported(self):
+    """Query whether the camera device supports P3 image capture.
+
+    Returns:
+      Boolean: True, if device supports P3 image capture, False in
+      all other cases.
+    """
+    cmd = {}
+    cmd[_CMD_NAME_STR] = 'isP3Supported'
+    cmd[_CAMERA_ID_STR] = self._camera_id
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+
+    data, _ = self.__read_response_from_socket()
+    if data[_TAG_STR] != 'p3Response':
+      raise error_util.CameraItsError('Failed to query P3 support')
+    return data[_STR_VALUE] == 'true'
+
   def do_basic_recording(self, profile_id, quality, duration,
                          video_stabilization_mode=0, hlg10_enabled=False,
                          zoom_ratio=None, ae_target_fps_min=None,
