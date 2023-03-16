@@ -104,6 +104,8 @@ public class CtsTestServer {
     public static final String USERAGENT_PATH = "/useragent.html";
 
     public static final String TEST_DOWNLOAD_PATH = "/download.html";
+    public static final String CACHEABLE_TEST_DOWNLOAD_PATH =
+            "/cacheable-download.html";
     private static final String DOWNLOAD_ID_PARAMETER = "downloadId";
     private static final String NUM_BYTES_PARAMETER = "numBytes";
 
@@ -550,6 +552,21 @@ public class CtsTestServer {
     }
 
     /**
+     * @param downloadId used to differentiate the files created for each test
+     * @param numBytes of the content that the CTS server should send back
+     * @return url to get the file from
+     */
+    public String getCacheableTestDownloadUrl(String downloadId, int numBytes) {
+        return Uri.parse(getBaseUri())
+                .buildUpon()
+                .path(CACHEABLE_TEST_DOWNLOAD_PATH)
+                .appendQueryParameter(DOWNLOAD_ID_PARAMETER, downloadId)
+                .appendQueryParameter(NUM_BYTES_PARAMETER, Integer.toString(numBytes))
+                .build()
+                .toString();
+    }
+
+    /**
      * Returns true if the resource identified by url has been requested since
      * the server was started or the last call to resetRequestState().
      *
@@ -865,6 +882,8 @@ public class CtsTestServer {
             response.setEntity(createPage(agent, agent));
         } else if (path.equals(TEST_DOWNLOAD_PATH)) {
             response = createTestDownloadResponse(mContext, Uri.parse(uriString));
+        } else if (path.equals(CACHEABLE_TEST_DOWNLOAD_PATH)) {
+            response = createCacheableTestDownloadResponse(mContext, Uri.parse(uriString));
         } else if (path.equals(APPCACHE_PATH)) {
             response = createResponse(HttpStatus.SC_OK);
             response.setEntity(createEntity("<!DOCTYPE HTML>" +
@@ -980,6 +999,13 @@ public class CtsTestServer {
         HttpResponse response = createResponse(HttpStatus.SC_OK);
         response.setHeader("Content-Length", Integer.toString(numBytes));
         response.setEntity(createFileEntity(context, downloadId, numBytes));
+        return response;
+    }
+
+    private static HttpResponse createCacheableTestDownloadResponse(Context context, Uri uri)
+            throws IOException {
+        HttpResponse response = createTestDownloadResponse(context, uri);
+        response.setHeader("Cache-Control", "max-age=300");
         return response;
     }
 
