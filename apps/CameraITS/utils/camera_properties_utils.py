@@ -41,6 +41,7 @@ COLOR_SPACES = [
     'ADOBE_RGB', 'PRO_PHOTO_RGB', 'ACES', 'ACESCG',
     'CIE_XYZ', 'CIE_LAB', 'BT2020_HLG', 'BT2020_PQ'
 ]
+SETTINGS_OVERRIDE_ZOOM = 1
 
 
 def legacy(props):
@@ -409,6 +410,18 @@ def zoom_ratio_range(props):
   """
   return 'android.control.zoomRatioRange' in props and props[
       'android.control.zoomRatioRange'] is not None
+
+def low_latency_zoom(props):
+  """Returns whether a device supports low latency zoom via settings override.
+
+  Args:
+    props: Camera properties object.
+
+  Returns:
+    Boolean. True if device supports SETTINGS_OVERRIDE_ZOOM.
+  """
+  return ('android.control.availableSettingsOverrides') in props and (
+      SETTINGS_OVERRIDE_ZOOM in props['android.control.availableSettingsOverrides'])
 
 
 def sync_latency(props):
