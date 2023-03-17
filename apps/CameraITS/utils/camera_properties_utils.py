@@ -962,3 +962,16 @@ def color_space_to_int(color_space):
     return -1
 
   return COLOR_SPACES.index(color_space)
+
+
+def autoframing(props):
+  """Returns whether a device supports autoframing.
+
+  Args:
+    props: Camera properties object.
+
+  Returns:
+    Boolean. True if android.control.autoframing is supported.
+  """
+  return 'android.control.autoframingAvailable' in props and props[
+    'android.control.autoframingAvailable'] == 1
