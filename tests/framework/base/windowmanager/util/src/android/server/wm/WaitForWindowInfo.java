@@ -24,12 +24,14 @@ import android.window.WindowInfosListenerForTest;
 import android.window.WindowInfosListenerForTest.WindowInfo;
 
 import androidx.annotation.NonNull;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
@@ -121,7 +123,7 @@ public class WaitForWindowInfo {
     }
 
     /**
-     * Calls {@link WaitForWindowInfo#waitForWindowOnTop(boolean, int, TimeUnit, Supplier)}. Adopts
+     * Calls {@link WaitForWindowInfo#waitForWindowOnTop(int, TimeUnit, Supplier)}. Adopts
      * required permissions and waits five seconds before timing out.
      *
      * @param window The window to wait on.
@@ -129,7 +131,7 @@ public class WaitForWindowInfo {
      * reached. False otherwise.
      */
     public static boolean waitForWindowOnTop(@NonNull Window window) throws InterruptedException {
-        return waitForWindowOnTop(true, 5, TimeUnit.SECONDS,
+        return waitForWindowOnTop(5, TimeUnit.SECONDS,
                 () -> window.getDecorView().getWindowToken());
     }
 
@@ -141,23 +143,21 @@ public class WaitForWindowInfo {
      * trusted overlays.
      *
      * <p>
-     * <strong>Note:</strong>The caller must have
-     * android.permission.ACCESS_SURFACE_FLINGER permissions when adoptRequiredPermissions is false.
+     * <strong>Note:</strong>If the caller has any adopted shell permissions, they must include
+     * android.permission.ACCESS_SURFACE_FLINGER.
      * </p>
      *
-     * @param adoptRequiredPermissions When true, the method adopts and drops the required
-     *                                 permissions automatically.
-     * @param timeout                  The amount of time to wait for the window to be visible.
-     * @param unit                     The units associated with timeout.
-     * @param windowTokenSupplier      Supplies the window token for the window to wait on. The
-     *                                 supplier is called each time window infos change. If the
-     *                                 supplier returns null, the window is assumed not visible
-     *                                 yet.
+     * @param timeout             The amount of time to wait for the window to be visible.
+     * @param unit                The units associated with timeout.
+     * @param windowTokenSupplier Supplies the window token for the window to wait on. The
+     *                            supplier is called each time window infos change. If the
+     *                            supplier returns null, the window is assumed not visible
+     *                            yet.
      * @return True if the window satisfies the visibility requirements before the timeout is
      * reached. False otherwise.
      */
-    public static boolean waitForWindowOnTop(boolean adoptRequiredPermissions, int timeout,
-            @NonNull TimeUnit unit, @NonNull Supplier<IBinder> windowTokenSupplier)
+    public static boolean waitForWindowOnTop(int timeout, @NonNull TimeUnit unit,
+            @NonNull Supplier<IBinder> windowTokenSupplier)
             throws InterruptedException {
         var latch = new CountDownLatch(1);
         var satisfied = new AtomicBoolean();
@@ -250,11 +250,18 @@ public class WaitForWindowInfo {
             }
         };
 
-        if (adoptRequiredPermissions) {
+        Set<String> shellPermissions =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                        .getAdoptedShellPermissions();
+        if (shellPermissions.isEmpty()) {
             SystemUtil.runWithShellPermissionIdentity(waitForWindow,
                     Manifest.permission.ACCESS_SURFACE_FLINGER);
-        } else {
+        } else if (shellPermissions.contains(Manifest.permission.ACCESS_SURFACE_FLINGER)) {
             waitForWindow.run();
+        } else {
+            throw new IllegalStateException(
+                    "waitForWindowOnTop called with adopted shell permissions that don't include "
+                            + "ACCESS_SURFACE_FLINGER");
         }
 
         return satisfied.get();
