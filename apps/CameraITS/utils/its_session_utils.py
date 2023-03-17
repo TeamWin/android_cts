@@ -1563,6 +1563,34 @@ class ItsSession(object):
       raise error_util.CameraItsError('3A failed to converge')
     return ae_sens, ae_exp, awb_gains, awb_transform, af_dist
 
+  def do_autoframing(self, zoom_ratio=None):
+    """Perform autoframing on the device.
+
+    Args:
+      zoom_ratio: Zoom ratio. None if default zoom.
+    """
+    cmd = {}
+    cmd[_CMD_NAME_STR] = 'doAutoframing'
+    if zoom_ratio:
+      if self.zoom_ratio_within_range(zoom_ratio):
+        cmd['zoomRatio'] = zoom_ratio
+      else:
+        raise AssertionError(f'Zoom ratio {zoom_ratio} out of range')
+    converged = False
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+
+    while True:
+      data, _ = self.__read_response_from_socket()
+      if data[_TAG_STR] == 'autoframingConverged':
+        converged = True
+      elif data[_TAG_STR] == 'autoframingDone':
+        break
+      else:
+        raise error_util.CameraItsError('Invalid command response')
+
+    if not converged:
+      raise error_util.CameraItsError('Autoframing failed to converge')
+
   def calc_camera_fov(self, props):
     """Determine the camera field of view from internal params.
 
