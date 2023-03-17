@@ -1056,14 +1056,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireProperty()
                 .setAllPossibleEnumValues(VEHICLE_GEARS)
                 .setPossibleConfigArrayValues(VEHICLE_GEARS)
                 .requirePropertyValueTobeInConfigArray()
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @CddTest(requirements = {"2.5.1"})
@@ -1077,11 +1077,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .requireProperty()
                 .addReadPermission(Car.PERMISSION_EXTERIOR_ENVIRONMENT)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @CddTest(requirements = {"2.5.1"})
@@ -1095,11 +1095,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .requireProperty()
                 .addReadPermission(Car.PERMISSION_SPEED)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1109,10 +1109,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_SPEED)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @CddTest(requirements = {"2.5.1"})
@@ -1126,11 +1126,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .requireProperty()
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1140,11 +1140,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1159,11 +1159,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(possibleEnumValues)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1178,11 +1178,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1197,13 +1197,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(possibleEnumValues)
                 .setAllPossibleUnwritableValues(CRUISE_CONTROL_TYPE_UNWRITABLE_STATES)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1223,11 +1223,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(possibleEnumValues)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1242,11 +1242,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(CRUISE_CONTROL_COMMANDS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1256,7 +1256,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .setCarPropertyConfigVerifier(
                         carPropertyConfig -> {
@@ -1270,7 +1270,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1280,7 +1280,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setCarPropertyConfigVerifier(
                         carPropertyConfig -> {
                             List<Integer> configArray = carPropertyConfig.getConfigArray();
@@ -1307,7 +1307,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1317,12 +1317,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1332,11 +1332,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1351,11 +1351,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(possibleEnumValues)
                 .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1375,11 +1375,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(possibleEnumValues)
                 .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1394,7 +1394,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Long[].class)
+                        Long[].class, mCarPropertyManager)
                 .setConfigArrayVerifier(
                         configArray -> {
                             assertWithMessage("WHEEL_TICK config array must be size 5")
@@ -1470,7 +1470,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_SPEED)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1492,7 +1492,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        String.class)
+                        String.class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, vin) ->
                                 assertWithMessage("INFO_VIN must be 17 characters")
@@ -1500,7 +1500,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         .hasLength(17))
                 .addReadPermission(Car.PERMISSION_IDENTIFICATION)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1522,10 +1522,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        String.class)
+                        String.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1535,10 +1535,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        String.class)
+                        String.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1548,10 +1548,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1561,7 +1561,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, fuelCapacity) ->
                                 assertWithMessage(
@@ -1571,7 +1571,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1581,7 +1581,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer[].class)
+                        Integer[].class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, fuelTypes) -> {
                             assertWithMessage("INFO_FUEL_TYPE must specify at least 1 fuel type")
@@ -1613,7 +1613,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1623,7 +1623,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
                                 evBatteryCapacity) ->
@@ -1634,7 +1634,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                 .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1644,7 +1644,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer[].class)
+                        Integer[].class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
                                 evConnectorTypes) -> {
@@ -1680,7 +1680,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1690,11 +1690,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(PORT_LOCATION_TYPES)
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1704,11 +1704,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(PORT_LOCATION_TYPES)
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1718,7 +1718,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer[].class)
+                        Integer[].class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
                                 evPortLocations) -> {
@@ -1738,7 +1738,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1748,7 +1748,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(
                         ImmutableSet.of(
                                 VehicleAreaSeat.SEAT_UNKNOWN,
@@ -1769,7 +1769,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                 }))
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1779,7 +1779,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer[].class)
+                        Integer[].class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
                                 exteriorDimensions) -> {
@@ -1798,7 +1798,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1808,10 +1808,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Long.class)
+                        Long.class, mCarPropertyManager)
                 .addWritePermission(Car.PERMISSION_CAR_EPOCH_TIME)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1821,7 +1821,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, value) -> {
                             boolean deadReckonedIsSet = (value
@@ -1847,7 +1847,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(ACCESS_FINE_LOCATION)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1857,7 +1857,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(
                         ImmutableSet.of(
                                 VehicleElectronicTollCollectionCardType.UNKNOWN,
@@ -1867,7 +1867,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         .JP_ELECTRONIC_TOLL_COLLECTION_CARD_V2))
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1877,7 +1877,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(
                         ImmutableSet.of(
                                 VehicleElectronicTollCollectionCardStatus.UNKNOWN,
@@ -1889,7 +1889,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         .ELECTRONIC_TOLL_COLLECTION_CARD_NOT_INSERTED))
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1899,14 +1899,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(
                         ImmutableSet.of(
                                 GsrComplianceType.GSR_COMPLIANCE_TYPE_NOT_REQUIRED,
                                 GsrComplianceType.GSR_COMPLIANCE_TYPE_REQUIRED_V1))
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1916,10 +1916,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_EXTERIOR_ENVIRONMENT)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1929,13 +1929,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_GEARS)
                 .setPossibleConfigArrayValues(VEHICLE_GEARS)
                 .requirePropertyValueTobeInConfigArray()
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1945,10 +1945,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1958,7 +1958,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(
                         ImmutableSet.of(
                                 VehicleIgnitionState.UNDEFINED,
@@ -1969,7 +1969,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                 VehicleIgnitionState.START))
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1979,13 +1979,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
                 .addWritePermission(Car.PERMISSION_CONTROL_POWERTRAIN)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -1995,13 +1995,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(EV_STOPPING_MODES)
                 .setAllPossibleUnwritableValues(EV_STOPPING_MODE_UNWRITABLE_STATES)
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
                 .addWritePermission(Car.PERMISSION_CONTROL_POWERTRAIN)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
     @Test
     public void testAbsActiveIfSupported() {
@@ -2010,10 +2010,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CAR_DYNAMICS_STATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2023,10 +2023,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CAR_DYNAMICS_STATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2036,13 +2036,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_DOORS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_DOORS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2052,13 +2052,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_DOORS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_DOORS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2068,11 +2068,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_DOORS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_DOORS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2082,11 +2082,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_DOORS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_DOORS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2109,13 +2109,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2138,13 +2138,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2167,13 +2167,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2196,13 +2196,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2225,11 +2225,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2252,11 +2252,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2266,11 +2266,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2280,11 +2280,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2307,13 +2307,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_WINDOWS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_WINDOWS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2336,13 +2336,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_WINDOWS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_WINDOWS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2365,11 +2365,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_WINDOWS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_WINDOWS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2379,12 +2379,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
                 .addReadPermission(Car.PERMISSION_READ_WINDSHIELD_WIPERS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2394,11 +2394,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(WINDSHIELD_WIPERS_STATES)
                 .addReadPermission(Car.PERMISSION_READ_WINDSHIELD_WIPERS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2408,7 +2408,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(WINDSHIELD_WIPERS_SWITCHES)
                 .setAllPossibleUnwritableValues(WINDSHIELD_WIPERS_SWITCH_UNWRITABLE_STATES)
                 .setCarPropertyConfigVerifier(
@@ -2453,7 +2453,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_READ_WINDSHIELD_WIPERS)
                 .addWritePermission(Car.PERMISSION_CONTROL_WINDSHIELD_WIPERS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2463,12 +2463,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .addWritePermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2478,13 +2478,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .addWritePermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2494,12 +2494,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .addWritePermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2509,13 +2509,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .addWritePermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2525,11 +2525,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .addWritePermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2539,11 +2539,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .addWritePermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2553,11 +2553,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .addWritePermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2567,13 +2567,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
                 .addReadPermission(Car.PERMISSION_CONTROL_GLOVE_BOX)
                 .addWritePermission(Car.PERMISSION_CONTROL_GLOVE_BOX)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2583,11 +2583,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_GLOVE_BOX)
                 .addWritePermission(Car.PERMISSION_CONTROL_GLOVE_BOX)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2597,7 +2597,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(DISTANCE_DISPLAY_UNITS)
                 .setPossibleConfigArrayValues(DISTANCE_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
@@ -2606,7 +2606,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2616,7 +2616,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VOLUME_DISPLAY_UNITS)
                 .setPossibleConfigArrayValues(VOLUME_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
@@ -2625,7 +2625,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2635,7 +2635,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_WHEEL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, tirePressure) ->
@@ -2648,7 +2648,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_TIRES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2658,7 +2658,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_WHEEL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
                                 criticallyLowTirePressure) -> {
@@ -2690,7 +2690,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_TIRES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2700,7 +2700,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(PRESSURE_DISPLAY_UNITS)
                 .setPossibleConfigArrayValues(PRESSURE_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
@@ -2709,7 +2709,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2719,7 +2719,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(BATTERY_DISPLAY_UNITS)
                 .setPossibleConfigArrayValues(BATTERY_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
@@ -2728,7 +2728,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2738,7 +2738,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(SPEED_DISPLAY_UNITS)
                 .setPossibleConfigArrayValues(SPEED_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
@@ -2747,7 +2747,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2757,12 +2757,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
                 .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2772,7 +2772,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, fuelLevel) -> {
                             assertWithMessage(
@@ -2800,7 +2800,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2810,7 +2810,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, evBatteryLevel) -> {
                             assertWithMessage(
@@ -2839,7 +2839,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2849,7 +2849,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
                                 evCurrentBatteryCapacity) -> {
@@ -2879,7 +2879,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2889,10 +2889,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2902,7 +2902,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, rangeRemaining) ->
                                 assertWithMessage(
@@ -2913,7 +2913,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .addWritePermission(Car.PERMISSION_ADJUST_RANGE_REMAINING)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2923,10 +2923,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2936,11 +2936,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_ENERGY_PORTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ENERGY_PORTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2950,11 +2950,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_ENERGY_PORTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ENERGY_PORTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2964,10 +2964,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_ENERGY_PORTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -2977,7 +2977,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setConfigArrayVerifier(
                         configArray -> {
                             assertWithMessage(
@@ -3016,7 +3016,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_ENERGY)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3026,7 +3026,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setConfigArrayVerifier(
                         configArray -> {
                             for (int i = 0; i < configArray.size(); i++) {
@@ -3074,7 +3074,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_ENERGY)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3084,7 +3084,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(
                                             ImmutableSet.of(
                                                     EvChargeState.STATE_UNKNOWN,
@@ -3094,7 +3094,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                     EvChargeState.STATE_ERROR))
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3104,11 +3104,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_ENERGY)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3118,7 +3118,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
                                 evChargeTimeRemaining) ->
@@ -3129,7 +3129,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                 .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3139,8 +3139,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
-
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(
                                             ImmutableSet.of(
                                                     EvRegenerativeBrakingState.STATE_UNKNOWN,
@@ -3151,7 +3150,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                             .STATE_FULLY_ENABLED))
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3161,10 +3160,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_STEERING_STATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3174,10 +3173,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_STEERING_STATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3187,10 +3186,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3200,11 +3199,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_OIL_LEVELS)
                 .addReadPermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3214,10 +3213,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3227,7 +3226,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, engineRpm) ->
                                 assertWithMessage(
@@ -3237,7 +3236,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3247,11 +3246,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
                 .addWritePermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3261,7 +3260,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, perfOdometer) ->
                                 assertWithMessage(
@@ -3271,7 +3270,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_MILEAGE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3281,11 +3280,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(TURN_SIGNAL_STATES)
                 .addReadPermission(Car.PERMISSION_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3295,11 +3294,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3309,11 +3308,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3323,7 +3322,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, fogLightsState) -> {
@@ -3345,7 +3344,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3355,11 +3354,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3369,7 +3368,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
@@ -3384,7 +3383,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3394,7 +3393,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
@@ -3409,7 +3408,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3431,11 +3430,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_READ_INTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3457,11 +3456,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_READ_INTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3471,11 +3470,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_READ_INTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3497,7 +3496,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setConfigArrayVerifier(
                         configArray -> {
                             assertWithMessage(
@@ -3527,7 +3526,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_PRIVILEGED_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3537,12 +3536,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3552,11 +3551,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(TRAILER_STATES)
                 .addReadPermission(Car.PERMISSION_PRIVILEGED_CAR_INFO)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3566,12 +3565,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3581,7 +3580,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
@@ -3605,7 +3604,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3615,12 +3614,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3630,7 +3629,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
@@ -3646,7 +3645,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3656,7 +3655,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
@@ -3672,7 +3671,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3695,12 +3694,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3723,12 +3722,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3738,12 +3737,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3754,7 +3753,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
                 .setCarPropertyConfigVerifier(
@@ -3806,7 +3805,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3817,7 +3816,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
                 .setCarPropertyConfigVerifier(
@@ -3870,7 +3869,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3893,11 +3892,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3907,12 +3906,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3922,13 +3921,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3938,12 +3937,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3953,13 +3952,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3969,12 +3968,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -3984,13 +3983,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4000,12 +3999,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4015,13 +4014,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4044,12 +4043,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4072,13 +4071,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4101,12 +4100,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4129,13 +4128,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4158,12 +4157,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4186,13 +4185,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4215,12 +4214,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4243,13 +4242,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4272,12 +4271,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4300,13 +4299,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4331,12 +4330,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4359,13 +4358,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4388,12 +4387,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4416,13 +4415,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4445,12 +4444,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4473,13 +4472,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4489,11 +4488,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_STATES)
                 .addReadPermission(Car.PERMISSION_READ_INTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4503,12 +4502,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_LIGHT_SWITCHES)
                 .addReadPermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4518,11 +4517,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4532,11 +4531,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_AIRBAGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_AIRBAGS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4546,12 +4545,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4561,13 +4560,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4577,12 +4576,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4592,13 +4591,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4608,13 +4607,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4636,11 +4635,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(VEHICLE_SEAT_OCCUPANCY_STATES)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4663,11 +4662,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4677,11 +4676,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4691,13 +4690,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4707,13 +4706,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4723,7 +4722,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(HVAC_TEMPERATURE_DISPLAY_UNITS)
                 .setPossibleConfigArrayValues(HVAC_TEMPERATURE_DISPLAY_UNITS)
                 .requirePropertyValueTobeInConfigArray()
@@ -4732,7 +4731,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4742,11 +4741,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Float[].class)
+                        Float[].class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4769,7 +4768,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .setConfigArrayVerifier(
                         configArray -> {
                             CarPropertyConfig<?> hvacPowerOnCarPropertyConfig =
@@ -4813,7 +4812,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4836,13 +4835,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .setPossiblyDependentOnHvacPowerOn()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4865,7 +4864,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer[].class)
+                        Integer[].class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .setAreaIdsVerifier(
                         areaIds -> {
@@ -4920,7 +4919,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         })
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -4943,7 +4942,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .setAreaIdsVerifier(
                         areaIds -> {
@@ -4997,7 +4996,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5020,12 +5019,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5048,7 +5047,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Float.class)
+                        Float.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .setCarPropertyConfigVerifier(
                         carPropertyConfig -> {
@@ -5157,7 +5156,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5180,12 +5179,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5208,12 +5207,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5236,12 +5235,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5264,12 +5263,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5292,12 +5291,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5320,14 +5319,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5350,12 +5349,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5378,12 +5377,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5406,14 +5405,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5436,7 +5435,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .setAreaIdsVerifier(
                         areaIds -> {
@@ -5484,7 +5483,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5494,11 +5493,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5513,11 +5512,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(combinedCarPropertyValues)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5532,11 +5531,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5551,11 +5550,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(combinedCarPropertyValues)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5570,11 +5569,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5589,11 +5588,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(combinedCarPropertyValues)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5608,11 +5607,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5627,11 +5626,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(combinedCarPropertyValues)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5646,11 +5645,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5665,11 +5664,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(combinedCarPropertyValues)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5684,11 +5683,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Boolean.class)
+                        Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5698,11 +5697,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(LANE_CENTERING_ASSIST_COMMANDS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -5717,11 +5716,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                        Integer.class)
+                        Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(combinedCarPropertyValues)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
-                .verify(mCarPropertyManager);
+                .verify();
     }
 
     @Test
@@ -7034,7 +7033,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#setPropertiesAsync(List, "
             + "long, CancellationSignal, Executor, SetPropertyCallback)",
             "android.car.hardware.property.CarPropertyManager#generateSetPropertyRequest"})
-    public void testSetAllSupportedReadablePropertiesAsync() throws Exception {
+    public void testSetAllSupportedWritablePropertiesAsync() throws Exception {
         runWithShellPermissionIdentity(() -> {
             Executor executor = Executors.newFixedThreadPool(1);
             Set<Integer> pendingRequests = new ArraySet<>();
