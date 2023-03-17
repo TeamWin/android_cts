@@ -21,7 +21,7 @@ import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVIEW_REQUIRED;
-import static android.content.pm.PackageManager.FLAG_PERMISSION_REVOKE_ON_UPGRADE;
+import static android.content.pm.PackageManager.FLAG_PERMISSION_REVOKED_COMPAT;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVOKE_WHEN_REQUESTED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_USER_FIXED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_USER_SET;
@@ -36,7 +36,6 @@ import static com.android.compatibility.common.util.SystemUtil.eventually;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
@@ -92,16 +91,8 @@ public class PermissionFlagsTest {
     public void regularPermissionPreM() {
         install(APK_CONTACTS_15);
 
-        assertEquals(FLAG_PERMISSION_REVOKE_ON_UPGRADE | FLAG_PERMISSION_REVIEW_REQUIRED,
-                getPermissionFlags(APP_PKG, READ_CONTACTS));
-    }
-
-    @Test
-    public void implicitPermissionPreM() {
-        install(APK_CONTACTS_15);
-
-        assertEquals(FLAG_PERMISSION_REVOKE_ON_UPGRADE | FLAG_PERMISSION_REVIEW_REQUIRED |
-                FLAG_PERMISSION_REVOKE_WHEN_REQUESTED, getPermissionFlags(APP_PKG, READ_CALL_LOG));
+        assertEquals(FLAG_PERMISSION_REVIEW_REQUIRED,
+                getPermissionFlags(APP_PKG, READ_CONTACTS) & FLAG_PERMISSION_REVIEW_REQUIRED);
     }
 
     @Test
@@ -169,10 +160,8 @@ public class PermissionFlagsTest {
         install(APK_CONTACTS_15);
         install(APK_CONTACTS_15);
 
-        assertEquals(FLAG_PERMISSION_REVOKE_ON_UPGRADE | FLAG_PERMISSION_REVIEW_REQUIRED,
-                getPermissionFlags(APP_PKG, READ_CONTACTS));
-        assertEquals(FLAG_PERMISSION_REVOKE_ON_UPGRADE | FLAG_PERMISSION_REVIEW_REQUIRED |
-                FLAG_PERMISSION_REVOKE_WHEN_REQUESTED, getPermissionFlags(APP_PKG, READ_CALL_LOG));
+        assertEquals(FLAG_PERMISSION_REVIEW_REQUIRED,
+                getPermissionFlags(APP_PKG, READ_CONTACTS) & FLAG_PERMISSION_REVIEW_REQUIRED);
     }
 
     @Test
@@ -183,20 +172,12 @@ public class PermissionFlagsTest {
         setPermissionFlags(APP_PKG, READ_CONTACTS,
                 FLAG_PERMISSION_USER_SET | FLAG_PERMISSION_USER_FIXED,
                 FLAG_PERMISSION_USER_SET | FLAG_PERMISSION_USER_FIXED);
-        setPermissionFlags(APP_PKG, READ_CALL_LOG, FLAG_PERMISSION_REVIEW_REQUIRED, 0);
-        setPermissionFlags(APP_PKG, READ_CALL_LOG,
-                FLAG_PERMISSION_USER_SET | FLAG_PERMISSION_USER_FIXED,
-                FLAG_PERMISSION_USER_SET | FLAG_PERMISSION_USER_FIXED);
 
         install(APK_CONTACTS_15);
 
-        assertEquals(FLAG_PERMISSION_REVOKE_ON_UPGRADE | FLAG_PERMISSION_USER_SET
-                        | FLAG_PERMISSION_USER_FIXED,
-                getPermissionFlags(APP_PKG, READ_CONTACTS));
-
-        assertEquals(FLAG_PERMISSION_REVOKE_ON_UPGRADE | FLAG_PERMISSION_USER_SET
-                        | FLAG_PERMISSION_USER_FIXED | FLAG_PERMISSION_REVOKE_WHEN_REQUESTED,
-                getPermissionFlags(APP_PKG, READ_CALL_LOG));
+        assertEquals(FLAG_PERMISSION_USER_SET | FLAG_PERMISSION_USER_FIXED,
+                getPermissionFlags(APP_PKG, READ_CONTACTS) & (FLAG_PERMISSION_USER_SET
+                        | FLAG_PERMISSION_USER_FIXED | FLAG_PERMISSION_REVIEW_REQUIRED));
     }
 
     @Test
@@ -231,32 +212,16 @@ public class PermissionFlagsTest {
     }
 
     @Test
-    public void preMPermsAreMarkedRevokeOnUpgrade() throws Exception {
-        install(APK_LOCATION_22);
-
-        assertEquals(FLAG_PERMISSION_REVOKE_ON_UPGRADE,
-                getPermissionFlags(APP_PKG, ACCESS_COARSE_LOCATION)
-                        & FLAG_PERMISSION_REVOKE_ON_UPGRADE);
-        assertEquals(FLAG_PERMISSION_REVOKE_ON_UPGRADE,
-                getPermissionFlags(APP_PKG, ACCESS_BACKGROUND_LOCATION)
-                        & FLAG_PERMISSION_REVOKE_ON_UPGRADE);
-    }
-
-
-    @Test
     public void revokeOnUpgrade() throws Exception {
         install(APK_LOCATION_22);
 
-        setPermissionFlags(APP_PKG, ACCESS_COARSE_LOCATION, FLAG_PERMISSION_REVOKE_ON_UPGRADE, 0);
-
         install(APK_LOCATION_28);
 
-        assertTrue(isGranted(APP_PKG, ACCESS_COARSE_LOCATION));
+        assertFalse(isGranted(APP_PKG, ACCESS_COARSE_LOCATION));
         assertFalse(isGranted(APP_PKG, ACCESS_BACKGROUND_LOCATION));
-
         assertEquals(0,getPermissionFlags(APP_PKG, ACCESS_COARSE_LOCATION)
-                        & FLAG_PERMISSION_REVOKE_ON_UPGRADE);
+                & FLAG_PERMISSION_REVOKED_COMPAT);
         assertEquals(0,getPermissionFlags(APP_PKG, ACCESS_BACKGROUND_LOCATION)
-                        & FLAG_PERMISSION_REVOKE_ON_UPGRADE);
+                & FLAG_PERMISSION_REVOKED_COMPAT);
     }
 }

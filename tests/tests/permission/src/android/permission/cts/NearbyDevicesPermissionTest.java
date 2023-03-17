@@ -58,6 +58,9 @@ import org.junit.runner.RunWith;
  * Tests the behavior of the
  * {@link android.Manifest.permission_group#NEARBY_DEVICES} permission group
  * under various permutations of grant states.
+ *
+ * Note that some tests will be recognized as known failures with the new permission subsystem
+ * until b/273999500 is fixed.
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
