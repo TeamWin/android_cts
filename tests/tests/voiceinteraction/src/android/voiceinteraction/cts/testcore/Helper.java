@@ -96,6 +96,7 @@ public final class Helper {
                     .setHotwordPhraseId(DEFAULT_PHRASE_ID)
                     .setPersonalizedScore(10)
                     .setScore(15)
+                    .setBackgroundAudioPower(50)
                     .build();
     public static final HotwordDetectedResult DETECTED_RESULT_AFTER_STOP_DETECTION =
             new HotwordDetectedResult.Builder()
@@ -244,6 +245,8 @@ public final class Helper {
         assertThat(hotwordDetectedResult.getPersonalizedScore())
                 .isEqualTo(expectedDetectedResult.getPersonalizedScore());
         assertThat(hotwordDetectedResult.getScore()).isEqualTo(expectedDetectedResult.getScore());
+        assertThat(hotwordDetectedResult.getBackgroundAudioPower())
+                .isEqualTo(expectedDetectedResult.getBackgroundAudioPower());
         assertThat(audioStream).isNull();
     }
 
