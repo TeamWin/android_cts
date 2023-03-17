@@ -18,8 +18,6 @@ package android.hardware.input.cts.tests;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertThrows;
-
 import android.hardware.input.VirtualDpadConfig;
 import android.hardware.input.VirtualKeyboardConfig;
 import android.hardware.input.VirtualMouseConfig;
@@ -165,16 +163,20 @@ public class VirtualInputDeviceConfigTest {
     }
 
     @Test
-    public void testBuilder_malformedLanguageTag_throwsException() {
+    public void testBuilder_wellFormedTags_noException() {
         VirtualKeyboardConfig.Builder builder = new VirtualKeyboardConfig.Builder();
 
-        String malformedTag1 = "foo";
-        assertThrows(IllegalArgumentException.class,
-                () -> builder.setLanguageTag(malformedTag1));
+        String wellFormedTag1 = "ru-Cyrl";
+        builder.setLanguageTag(wellFormedTag1);
 
-        String malformedTag2 = "foo-bar";
-        assertThrows(IllegalArgumentException.class,
-                () -> builder.setLanguageTag(malformedTag2));
+        String wellFormedTag2 = "es-Latn-419";
+        builder.setLanguageTag(wellFormedTag2);
+
+        String wellFormedTag3 = "zh-CN";
+        builder.setLanguageTag(wellFormedTag3);
+
+        String wellFormedTag4 = "pt-Latn-PT";
+        builder.setLanguageTag(wellFormedTag4);
     }
 
     @Test
