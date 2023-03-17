@@ -15,6 +15,7 @@
  */
 package android.packageinstaller.install.cts
 
+import android.Manifest
 import android.app.Activity.RESULT_CANCELED
 import android.app.UiAutomation
 import android.content.pm.ApplicationInfo.CATEGORY_MAPS
@@ -29,8 +30,11 @@ import android.platform.test.annotations.AppModeFull
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.AppOpsUtils
+import com.android.compatibility.common.util.SystemUtil
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
@@ -192,6 +196,41 @@ class SessionTest : PackageInstallerTestBase() {
 
         // Install should never have started
         assertNotInstalled()
+    }
+
+    @Test
+    fun withPrivilegedPermissions_canAccessResolvedPath() {
+        val sessionParam = PackageInstaller.SessionParams(MODE_FULL_INSTALL)
+        val sessionId = pi.createSession(sessionParam)
+        val session = pi.openSession(sessionId)
+        writeSession(session, TEST_APK_NAME)
+
+        // resolvedBaseCodePath is populated only after the session is committed.
+        var sessionInfo: PackageInstaller.SessionInfo? = null
+        SystemUtil.runWithShellPermissionIdentity({
+            sessionInfo = pi.getSessionInfo(sessionId)
+        }, Manifest.permission.READ_INSTALLED_SESSION_PATHS)
+        assertNull(sessionInfo!!.resolvedBaseApkPath)
+
+        commitSession(session)
+
+        SystemUtil.runWithShellPermissionIdentity({
+            sessionInfo = pi.getSessionInfo(sessionId)
+        }, Manifest.permission.READ_INSTALLED_SESSION_PATHS)
+        assertNotNull(sessionInfo!!.resolvedBaseApkPath)
+        clickInstallerUIButton(CANCEL_BUTTON_ID)
+    }
+
+    @Test
+    fun withoutPrivilegedPermissions_cannotAccessResolvedPath() {
+        val sessionParam = PackageInstaller.SessionParams(MODE_FULL_INSTALL)
+        val sessionId = pi.createSession(sessionParam)
+        val session = pi.openSession(sessionId)
+        writeSession(session, TEST_APK_NAME)
+        commitSession(session)
+        val sessionInfo = pi.getSessionInfo(sessionId)
+        assertNull(sessionInfo!!.resolvedBaseApkPath)
+        clickInstallerUIButton(CANCEL_BUTTON_ID)
     }
 
     private fun installWithApplicationEnabledSetting(setEnabledSettingPersistent: Boolean = false) {
