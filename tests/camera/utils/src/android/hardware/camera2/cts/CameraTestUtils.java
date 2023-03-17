@@ -1458,6 +1458,31 @@ public class CameraTestUtils extends Assert {
     }
 
     /**
+     * Configure a new camera session with output configurations / a session color space.
+     *
+     * @param camera The CameraDevice to be configured.
+     * @param outputs The OutputConfiguration list that is used for camera output.
+     * @param listener The callback CameraDevice will notify when capture results are available.
+     * @param colorSpace The ColorSpace for this session.
+     */
+    public static CameraCaptureSession configureCameraSessionWithColorSpace(CameraDevice camera,
+            List<OutputConfiguration> outputs,
+            CameraCaptureSession.StateCallback listener, Handler handler,
+            ColorSpace.Named colorSpace) throws CameraAccessException {
+        BlockingSessionCallback sessionListener = new BlockingSessionCallback(listener);
+        SessionConfiguration sessionConfiguration = new SessionConfiguration(
+                SessionConfiguration.SESSION_REGULAR, outputs,
+                new HandlerExecutor(handler), sessionListener);
+        sessionConfiguration.setColorSpace(colorSpace);
+        camera.createCaptureSession(sessionConfiguration);
+        CameraCaptureSession session =
+                sessionListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
+        assertFalse("Camera session should not be a reprocessable session",
+                session.isReprocessable());
+        return session;
+    }
+
+    /**
      * Try configure a new camera session with output configurations.
      *
      * @param camera The CameraDevice to be configured.

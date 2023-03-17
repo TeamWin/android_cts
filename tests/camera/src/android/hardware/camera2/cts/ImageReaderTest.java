@@ -1720,13 +1720,18 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                     config.setPhysicalCameraId(physicalId);
                 }
                 config.setDynamicRangeProfile(params.mDynamicRangeProfile);
-                if (params.mUseColorSpace) {
-                    config.setColorSpace(params.mColorSpace);
-                }
                 config.setTimestampBase(params.mTimestampBase);
                 outputConfigs.add(config);
-                CaptureRequest request = prepareCaptureRequestForConfigs(
+
+                CaptureRequest request;
+                if (params.mUseColorSpace) {
+                    request = prepareCaptureRequestForColorSpace(
+                        outputConfigs, CameraDevice.TEMPLATE_PREVIEW, params.mColorSpace)
+                        .build();
+                } else {
+                    request = prepareCaptureRequestForConfigs(
                         outputConfigs, CameraDevice.TEMPLATE_PREVIEW).build();
+                }
 
                 SimpleCaptureCallback listener = new SimpleCaptureCallback();
                 startCapture(request, repeating, listener, mHandler);
