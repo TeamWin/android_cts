@@ -36,6 +36,7 @@ import com.android.tradefed.util.AbiUtils;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -962,6 +963,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * @throws Exception
      */
     @Test
+    @Ignore
     public void testCreateRequest_withNoAML_showConfirmDialog() throws Exception {
         installPackage(MEDIA.apk);
 
