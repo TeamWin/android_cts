@@ -37,7 +37,6 @@ import android.content.IntentFilter;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
-import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -107,7 +106,7 @@ public class BackgroundRestrictedAlarmsTest {
         mActivityManagerDeviceConfigStateHelper
                 .set("bg_auto_restricted_bucket_on_bg_restricted", "false");
         SystemUtil.runWithShellPermissionIdentity(() ->
-                DeviceConfig.setSyncDisabledMode(Settings.Config.SYNC_DISABLED_MODE_UNTIL_REBOOT));
+                DeviceConfig.setSyncDisabledMode(DeviceConfig.SYNC_DISABLED_MODE_UNTIL_REBOOT));
         AppOpsUtils.setOpMode(TEST_APP_PACKAGE, OPSTR_RUN_ANY_IN_BACKGROUND, MODE_IGNORED);
         makeUidIdle();
         setAppStandbyBucket("active");
@@ -196,7 +195,7 @@ public class BackgroundRestrictedAlarmsTest {
     @After
     public void tearDown() throws Exception {
         SystemUtil.runWithShellPermissionIdentity(() ->
-                DeviceConfig.setSyncDisabledMode(Settings.Config.SYNC_DISABLED_MODE_NONE));
+                DeviceConfig.setSyncDisabledMode(DeviceConfig.SYNC_DISABLED_MODE_NONE));
         deleteAlarmManagerConstants();
         AppOpsUtils.reset(TEST_APP_PACKAGE);
         mActivityManagerDeviceConfigStateHelper.restoreOriginalValues();
