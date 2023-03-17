@@ -6305,6 +6305,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             policyParamsList.add(new QosPolicyParams.Builder(
                     policyId, QosPolicyParams.DIRECTION_DOWNLINK)
                             .setUserPriority(QosPolicyParams.USER_PRIORITY_VIDEO_LOW)
+                            .setIpVersion(QosPolicyParams.IP_VERSION_4)
                             .build());
         }
     }
@@ -6420,12 +6421,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     public void testQosPolicyParamsBuilder() throws Exception {
         final int policyId = 5;
         final int direction = QosPolicyParams.DIRECTION_DOWNLINK;
+        final int ipVersion = QosPolicyParams.IP_VERSION_4;
         final int dscp = 12;
         final int userPriority = QosPolicyParams.USER_PRIORITY_VIDEO_LOW;
         final MacAddress srcAddr = MacAddress.fromString("00:11:22:33:44:55");
         final MacAddress dstAddr = MacAddress.fromString("aa:bb:cc:dd:ee:ff");
         final int srcPort = 123;
         final int protocol = QosPolicyParams.PROTOCOL_TCP;
+        final int dstPort = 17;
         final int[] dstPortRange = new int[]{15, 22};
 
         // Invalid parameter
@@ -6442,25 +6445,45 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         .setDestinationAddress(null)
                         .build());
 
-        // Valid parameters
-        QosPolicyParams params = new QosPolicyParams.Builder(policyId, direction)
-                .setSourceAddress(srcAddr)
-                .setDestinationAddress(dstAddr)
-                .setDscp(dscp)
-                .setUserPriority(userPriority)
-                .setSourcePort(srcPort)
-                .setProtocol(protocol)
-                .setDestinationPortRange(dstPortRange[0], dstPortRange[1])
-                .build();
-        assertEquals(policyId, params.getPolicyId());
-        assertEquals(direction, params.getDirection());
-        assertEquals(srcAddr, params.getSourceAddress());
-        assertEquals(dstAddr, params.getDestinationAddress());
-        assertEquals(dscp, params.getDscp());
-        assertEquals(userPriority, params.getUserPriority());
-        assertEquals(srcPort, params.getSourcePort());
-        assertEquals(protocol, params.getProtocol());
-        assertArrayEquals(dstPortRange, params.getDestinationPortRange());
+        // Valid downlink parameters
+        QosPolicyParams downlinkParams =
+                new QosPolicyParams.Builder(policyId, QosPolicyParams.DIRECTION_DOWNLINK)
+                        .setSourceAddress(srcAddr)
+                        .setDestinationAddress(dstAddr)
+                        .setUserPriority(userPriority)
+                        .setIpVersion(ipVersion)
+                        .setSourcePort(srcPort)
+                        .setProtocol(protocol)
+                        .setDestinationPort(dstPort)
+                        .build();
+        assertEquals(policyId, downlinkParams.getPolicyId());
+        assertEquals(QosPolicyParams.DIRECTION_DOWNLINK, downlinkParams.getDirection());
+        assertEquals(srcAddr, downlinkParams.getSourceAddress());
+        assertEquals(dstAddr, downlinkParams.getDestinationAddress());
+        assertEquals(userPriority, downlinkParams.getUserPriority());
+        assertEquals(ipVersion, downlinkParams.getIpVersion());
+        assertEquals(srcPort, downlinkParams.getSourcePort());
+        assertEquals(protocol, downlinkParams.getProtocol());
+        assertEquals(dstPort, downlinkParams.getDestinationPort());
+
+        // Valid uplink parameters
+        QosPolicyParams uplinkParams =
+                new QosPolicyParams.Builder(policyId, QosPolicyParams.DIRECTION_UPLINK)
+                    .setSourceAddress(srcAddr)
+                    .setDestinationAddress(dstAddr)
+                    .setDscp(dscp)
+                    .setSourcePort(srcPort)
+                    .setProtocol(protocol)
+                    .setDestinationPortRange(dstPortRange[0], dstPortRange[1])
+                    .build();
+        assertEquals(policyId, uplinkParams.getPolicyId());
+        assertEquals(QosPolicyParams.DIRECTION_UPLINK, uplinkParams.getDirection());
+        assertEquals(srcAddr, uplinkParams.getSourceAddress());
+        assertEquals(dstAddr, uplinkParams.getDestinationAddress());
+        assertEquals(dscp, uplinkParams.getDscp());
+        assertEquals(srcPort, uplinkParams.getSourcePort());
+        assertEquals(protocol, uplinkParams.getProtocol());
+        assertArrayEquals(dstPortRange, uplinkParams.getDestinationPortRange());
     }
 
     /**

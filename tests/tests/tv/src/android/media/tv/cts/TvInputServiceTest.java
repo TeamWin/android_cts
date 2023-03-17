@@ -1355,7 +1355,7 @@ public class TvInputServiceTest {
             public volatile Integer mOverlayViewSizeChangedWidth;
             public volatile Integer mOverlayViewSizeChangedHeight;
             public volatile Boolean mInteractiveAppNotificationEnabled;
-            public volatile String mTvMessageType;
+            public volatile Integer mTvMessageType;
             public volatile Bundle mTvMessageData;
 
             CountingSession(Context context, @Nullable String sessionId) {
@@ -1588,7 +1588,7 @@ public class TvInputServiceTest {
             }
 
             @Override
-            public void onTvMessage(String type, Bundle data) {
+            public void onTvMessage(int type, Bundle data) {
                 mTvMessageCount++;
                 mTvMessageType = type;
                 mTvMessageData = data;

@@ -76,6 +76,43 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     private Bundle mShowSessionFailedArgs = new Bundle();
     private int mPrepareToShowSessionFlags = -1;
 
+    final HotwordDetector.Callback mNoOpSoftwareDetectorCallback = new HotwordDetector.Callback() {
+        @Override
+        public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
+            // no-op
+        }
+
+        @Override
+        public void onError() {
+            // no-op
+        }
+
+        @Override
+        public void onRecognitionPaused() {
+            // no-op
+        }
+
+        @Override
+        public void onRecognitionResumed() {
+            // no-op
+        }
+
+        @Override
+        public void onRejected(HotwordRejectedResult result) {
+            // no-op
+        }
+
+        @Override
+        public void onHotwordDetectionServiceInitialized(int status) {
+            // no-op
+        }
+
+        @Override
+        public void onHotwordDetectionServiceRestarted() {
+            // no-op
+        }
+    };
+
     // An AlwaysOnHotwordDetector.Callback no nothing on callback methods
     final AlwaysOnHotwordDetector.Callback mNoOpHotwordDetectorCallback =
             new AlwaysOnHotwordDetector.Callback() {
@@ -510,9 +547,11 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
             }
             return createHotwordDetector(Helper.createFakePersistableBundleData(),
                     Helper.createFakeSharedMemoryData(), callback);
-        } catch (Exception e) {
+        } catch (IllegalStateException | SecurityException e) {
             if (e instanceof IllegalStateException) {
                 mIsCreateDetectorIllegalStateExceptionThrow = true;
+            } else {
+                mIsCreateDetectorSecurityExceptionThrow = true;
             }
             Log.w(mTag, "callCreateSoftwareHotwordDetector() exception: " + e);
             if (mServiceTriggerLatch != null) {

@@ -104,6 +104,8 @@ public class CtsTestServer {
     public static final String USERAGENT_PATH = "/useragent.html";
 
     public static final String TEST_DOWNLOAD_PATH = "/download.html";
+    public static final String CACHEABLE_TEST_DOWNLOAD_PATH =
+            "/cacheable-download.html";
     private static final String DOWNLOAD_ID_PARAMETER = "downloadId";
     private static final String NUM_BYTES_PARAMETER = "numBytes";
 
@@ -114,6 +116,7 @@ public class CtsTestServer {
     private static final String APPCACHE_MANIFEST_PATH = "/appcache.manifest";
     private static final String REDIRECT_PREFIX = "/redirect";
     private static final String QUERY_REDIRECT_PATH = "/alt_redirect";
+    private static final String ECHO_HEADERS_PREFIX = "/echo_headers";
     private static final String DELAY_PREFIX = "/delayed";
     private static final String BINARY_PREFIX = "/binary";
     private static final String SET_COOKIE_PREFIX = "/setcookie";
@@ -122,6 +125,8 @@ public class CtsTestServer {
     private static final String AUTH_PREFIX = "/auth";
     public static final String NOLENGTH_POSTFIX = "nolength";
     private static final int DELAY_MILLIS = 2000;
+
+    public static final String ECHOED_RESPONSE_HEADER_PREFIX = "x-request-header-";
 
     public static final String AUTH_REALM = "Android CTS";
     public static final String AUTH_USER = "cts";
@@ -396,6 +401,14 @@ public class CtsTestServer {
     }
 
     /**
+     * Return an absolute URL that refers to an endpoint which will send received headers back to
+     * the sender with a prefix.
+     */
+    public String getEchoHeadersUrl() {
+        return getBaseUri() + ECHO_HEADERS_PREFIX;
+    }
+
+    /**
      * Return an absolute URL that indirectly refers to the given asset.
      * When a client fetches this URL, the server will respond with a temporary redirect (302)
      * referring to the absolute URL of the given asset.
@@ -532,6 +545,21 @@ public class CtsTestServer {
         return Uri.parse(getBaseUri())
                 .buildUpon()
                 .path(TEST_DOWNLOAD_PATH)
+                .appendQueryParameter(DOWNLOAD_ID_PARAMETER, downloadId)
+                .appendQueryParameter(NUM_BYTES_PARAMETER, Integer.toString(numBytes))
+                .build()
+                .toString();
+    }
+
+    /**
+     * @param downloadId used to differentiate the files created for each test
+     * @param numBytes of the content that the CTS server should send back
+     * @return url to get the file from
+     */
+    public String getCacheableTestDownloadUrl(String downloadId, int numBytes) {
+        return Uri.parse(getBaseUri())
+                .buildUpon()
+                .path(CACHEABLE_TEST_DOWNLOAD_PATH)
                 .appendQueryParameter(DOWNLOAD_ID_PARAMETER, downloadId)
                 .appendQueryParameter(NUM_BYTES_PARAMETER, Integer.toString(numBytes))
                 .build()
@@ -678,6 +706,14 @@ public class CtsTestServer {
         URI uri = URI.create(uriString);
         String path = uri.getPath();
         String query = uri.getQuery();
+
+        if (path.startsWith(ECHO_HEADERS_PREFIX)) {
+            response = createResponse(HttpStatus.SC_OK);
+            for (Header header : request.getAllHeaders()) {
+                response.addHeader(
+                        ECHOED_RESPONSE_HEADER_PREFIX + header.getName(), header.getValue());
+            }
+        }
         if (path.equals(FAVICON_PATH)) {
             path = FAVICON_ASSET_PATH;
         }
@@ -846,6 +882,8 @@ public class CtsTestServer {
             response.setEntity(createPage(agent, agent));
         } else if (path.equals(TEST_DOWNLOAD_PATH)) {
             response = createTestDownloadResponse(mContext, Uri.parse(uriString));
+        } else if (path.equals(CACHEABLE_TEST_DOWNLOAD_PATH)) {
+            response = createCacheableTestDownloadResponse(mContext, Uri.parse(uriString));
         } else if (path.equals(APPCACHE_PATH)) {
             response = createResponse(HttpStatus.SC_OK);
             response.setEntity(createEntity("<!DOCTYPE HTML>" +
@@ -961,6 +999,13 @@ public class CtsTestServer {
         HttpResponse response = createResponse(HttpStatus.SC_OK);
         response.setHeader("Content-Length", Integer.toString(numBytes));
         response.setEntity(createFileEntity(context, downloadId, numBytes));
+        return response;
+    }
+
+    private static HttpResponse createCacheableTestDownloadResponse(Context context, Uri uri)
+            throws IOException {
+        HttpResponse response = createTestDownloadResponse(context, uri);
+        response.setHeader("Cache-Control", "max-age=300");
         return response;
     }
 

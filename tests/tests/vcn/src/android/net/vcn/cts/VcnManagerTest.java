@@ -18,10 +18,12 @@ package android.net.vcn.cts;
 
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 import static android.ipsec.ike.cts.IkeTunUtils.PortPair;
+import static android.net.ConnectivityDiagnosticsManager.DataStallReport.DETECTION_METHOD_DNS_EVENTS;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_VCN_MANAGED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
+import static android.net.vcn.VcnGatewayConnectionConfig.VCN_GATEWAY_OPTION_ENABLE_DATA_STALL_RECOVERY_WITH_MOBILITY;
 import static android.net.vcn.VcnUnderlyingNetworkTemplate.MATCH_FORBIDDEN;
 import static android.net.vcn.VcnUnderlyingNetworkTemplate.MATCH_REQUIRED;
 import static android.telephony.SubscriptionManager.INVALID_SUBSCRIPTION_ID;
@@ -56,6 +58,7 @@ import android.net.vcn.VcnWifiUnderlyingNetworkTemplate;
 import android.net.vcn.cts.TestNetworkWrapper.VcnTestNetworkCallback;
 import android.net.vcn.cts.TestNetworkWrapper.VcnTestNetworkCallback.CapabilitiesChangedEvent;
 import android.os.ParcelUuid;
+import android.os.PersistableBundle;
 import android.os.SystemClock;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -137,6 +140,8 @@ public class VcnManagerTest extends VcnTestBase {
                         VcnGatewayConnectionConfigTest.buildVcnGatewayConnectionConfigBase()
                                 .addExposedCapability(NetworkCapabilities.NET_CAPABILITY_MMS)
                                 .setVcnUnderlyingNetworkPriorities(nwTemplate)
+                                .addGatewayOption(
+                                        VCN_GATEWAY_OPTION_ENABLE_DATA_STALL_RECOVERY_WITH_MOBILITY)
                                 .build());
     }
 
@@ -484,6 +489,33 @@ public class VcnManagerTest extends VcnTestBase {
                 clearVcnConfigsAndVerifyNetworkTeardown(
                         subGrp, cellNetworkCb, vcnSetupResult.vcnNetwork);
             });
+        }
+    }
+
+    @Test
+    public void testSetVcnConfigOnTestNetworkAndHandleDataStall() throws Exception {
+        final int subId = verifyAndGetValidDataSubId();
+
+        try (TestNetworkWrapper testNetworkWrapper =
+                createTestNetworkWrapper(true /* isMetered */, subId, LOCAL_ADDRESS)) {
+            verifyUnderlyingCellAndRunTest(
+                    subId,
+                    (subGrp, cellNetwork, cellNetworkCb) -> {
+                        final VcnSetupResult vcnSetupResult =
+                                setupAndGetVcnNetwork(
+                                        subGrp, cellNetwork, cellNetworkCb, testNetworkWrapper);
+
+                        mConnectivityManager.simulateDataStall(
+                                DETECTION_METHOD_DNS_EVENTS,
+                                System.currentTimeMillis(),
+                                vcnSetupResult.vcnNetwork,
+                                new PersistableBundle() /* extra data stall info; unused */);
+
+                        injectAndVerifyIkeMobikePackets(testNetworkWrapper.ikeTunUtils);
+
+                        clearVcnConfigsAndVerifyNetworkTeardown(
+                                subGrp, cellNetworkCb, vcnSetupResult.vcnNetwork);
+                    });
         }
     }
 

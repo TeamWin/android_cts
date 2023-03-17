@@ -27,6 +27,7 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNotNull;
 
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
@@ -117,9 +118,9 @@ public class NotificationAssistantServiceTest {
                 REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
                 REVOKE_RUNTIME_PERMISSIONS);
         if (mNotificationListenerService != null) mNotificationListenerService.resetData();
+        if (mNotificationAssistantService != null) mNotificationAssistantService.resetData();
 
-        toggleListenerAccess(false);
-        toggleAssistantAccess(false);
+        disconnectListeners();
         mUi.dropShellPermissionIdentity();
     }
 
@@ -330,9 +331,6 @@ public class NotificationAssistantServiceTest {
     public void testAdjustNotification_smartActionKey() throws Exception {
         setUpListeners();
 
-        mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
-        mUi.dropShellPermissionIdentity();
-
         PendingIntent sendIntent = PendingIntent.getActivity(mContext, 0,
                 new Intent(Intent.ACTION_SEND), PendingIntent.FLAG_MUTABLE_UNAUDITED);
         Notification.Action sendAction = new Notification.Action.Builder(ICON_ID, "SEND",
@@ -376,9 +374,6 @@ public class NotificationAssistantServiceTest {
     public void testAdjustNotification_smartReplyKey() throws Exception {
         setUpListeners();
         CharSequence smartReply = "Smart Reply!";
-
-        mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
-        mUi.dropShellPermissionIdentity();
 
         sendNotification(1, ICON_ID);
         StatusBarNotification sbn = getFirstNotificationFromPackage(TestNotificationListener.PKG);
@@ -487,9 +482,10 @@ public class NotificationAssistantServiceTest {
         assertTrue(String.format("snoozed notification <%s> was not removed", sbn.getKey()),
                 mNotificationListenerService.checkRemovedKey(sbn.getKey()));
 
-        assertEquals(String.format("snoozed notification <%s> was not observed by NAS", sbn.getKey()),
-                sbn.getKey(), mNotificationAssistantService.snoozedKey);
+        assertEquals(String.format("snoozed notification <%s> was not observed by NAS",
+                        sbn.getKey()), sbn.getKey(), mNotificationAssistantService.snoozedKey);
         assertEquals(snoozeContext, mNotificationAssistantService.snoozedUntilContext);
+        mNotificationAssistantService.unsnoozeNotification(sbn.getKey());
     }
 
     @Test
@@ -531,7 +527,8 @@ public class NotificationAssistantServiceTest {
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.setAction(Intent.ACTION_MAIN);
 
-        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(
+                mContext, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         Notification.Action action = new Notification.Action.Builder(null, "",
                 pendingIntent).build();
         // This method has to exist and the call cannot fail
@@ -649,7 +646,8 @@ public class NotificationAssistantServiceTest {
 
         setUpListeners();
         turnScreenOn();
-        mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE", "android.permission.EXPAND_STATUS_BAR");
+        mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE",
+                "android.permission.EXPAND_STATUS_BAR");
 
         mNotificationAssistantService.resetNotificationClickCount();
 
@@ -674,7 +672,8 @@ public class NotificationAssistantServiceTest {
         assumeFalse("Status bar service not supported", isWatch());
 
         setUpListeners(); // also enables assistant
-        mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE", "android.permission.EXPAND_STATUS_BAR");
+        mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE",
+                "android.permission.EXPAND_STATUS_BAR");
 
         sendNotification(1, ICON_ID);
         StatusBarNotification sbn = getFirstNotificationFromPackage(TestNotificationListener.PKG);
@@ -729,6 +728,18 @@ public class NotificationAssistantServiceTest {
         assertNotNull(mNotificationAssistantService);
     }
 
+    private void disconnectListeners() throws Exception {
+        toggleListenerAccess(false);
+        toggleAssistantAccess(false);
+        Thread.sleep(2 * SLEEP_TIME); // wait for listener and assistant to be disconnected
+
+        mNotificationListenerService = TestNotificationListener.getInstance();
+        mNotificationAssistantService = TestNotificationAssistant.getInstance();
+
+        assertNull(mNotificationListenerService);
+        assertNull(mNotificationAssistantService);
+    }
+
     private void sendNotification(final int id, final int icon) throws Exception {
         sendNotification(id, null, icon);
     }
@@ -740,7 +751,8 @@ public class NotificationAssistantServiceTest {
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.setAction(Intent.ACTION_MAIN);
 
-        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(
+                mContext, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         final Notification notification =
                 new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                         .setSmallIcon(icon)
@@ -757,7 +769,8 @@ public class NotificationAssistantServiceTest {
         Person person = new Person.Builder()
                 .setName("test")
                 .build();
-        final Notification notification = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        final Notification notification = new Notification.Builder(
+                mContext, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("foo")
                 .setShortcutId("shareShortcut")
                 .setStyle(new Notification.MessagingStyle(person)

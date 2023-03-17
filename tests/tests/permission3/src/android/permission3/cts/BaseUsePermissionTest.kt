@@ -172,8 +172,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                         " practices may vary based on your app version, use, region, and age."
         const val LEARN_ABOUT_DATA_SHARING = "Learn about data sharing"
         const val LOCATION_PERMISSION = "Location permission"
-        const val PERMISSION_MANAGER = "Permission manager"
         const val APP_PACKAGE_NAME_SUBSTRING = "android.permission3"
+        const val NOW_SHARED_WITH_THIRD_PARTIES = "Your location data is now shared with third " +
+                "parties"
+        const val NOW_SHARED_WITH_THIRD_PARTIES_FOR_ADS = "Your location data is now shared with " +
+                "third parties for advertising or marketing"
         const val PROPERTY_DATA_SHARING_UPDATE_PERIOD_MILLIS =
                 "data_sharing_update_period_millis"
         const val PROPERTY_MAX_SAFETY_LABELS_PERSISTED_PER_APP =
@@ -205,8 +208,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
         @JvmStatic
         protected fun isPhotoPickerPermissionPromptEnabled(): Boolean {
-            return SystemUtil.callWithShellPermissionIdentity { DeviceConfig.getBoolean(
-                DeviceConfig.NAMESPACE_PRIVACY, PICKER_ENABLED_SETTING, true)
+            return SdkLevel.isAtLeastU() &&
+                callWithShellPermissionIdentity {
+                    DeviceConfig.getBoolean(
+                        DeviceConfig.NAMESPACE_PRIVACY, PICKER_ENABLED_SETTING, true)
             }
         }
     }
@@ -544,7 +549,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }
     }
 
-    protected fun clickPermissionRequestAllowAllPhotosButton(timeoutMillis: Long = 20000) {
+    protected fun clickPermissionRequestAllowAllButton(timeoutMillis: Long = 20000) {
         click(By.res(ALLOW_ALL_BUTTON), timeoutMillis)
     }
 
@@ -722,6 +727,13 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                         addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     }
                 )
+                if (isTv) {
+                    waitForIdle()
+                    pressDPadDown()
+                    pressDPadDown()
+                    pressDPadDown()
+                    pressDPadDown()
+                }
                 // Open the permissions UI
                 click(byTextRes(R.string.permissions).enabled(true))
             } catch (e: Exception) {

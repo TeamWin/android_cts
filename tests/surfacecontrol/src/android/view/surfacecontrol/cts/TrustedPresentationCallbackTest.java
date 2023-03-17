@@ -38,6 +38,7 @@ import android.view.SurfaceControl.TrustedPresentationThresholds;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
@@ -417,20 +418,27 @@ public class TrustedPresentationCallbackTest {
         private final ArraySet<SurfaceControl> mSurfaceControls = new ArraySet<>();
         private final ArraySet<HardwareBuffer> mBuffers = new ArraySet<>();
 
-        private final Size mSvSize = new Size(500, 500);
+        private Size mSvSize;
 
         @Override
         protected void onCreate(@Nullable Bundle savedInstanceState) {
-            FrameLayout content = new FrameLayout(this);
             super.onCreate(savedInstanceState);
+            WindowManager wm = getSystemService(WindowManager.class);
+            Rect bounds = wm.getCurrentWindowMetrics().getBounds();
+            // Make sure the content rendering is smaller than the display and not getting cut off
+            // by the edges.
+            mSvSize = new Size(bounds.width() / 2, bounds.height() / 2);
+
+            FrameLayout content = new FrameLayout(this);
             mSurfaceView = new SurfaceView(this);
-            content.addView(mSurfaceView, new FrameLayout.LayoutParams(
-                    mSvSize.getWidth(), mSvSize.getHeight(),
-                    Gravity.CENTER_HORIZONTAL | Gravity.TOP));
+            content.addView(mSurfaceView,
+                    new FrameLayout.LayoutParams(mSvSize.getWidth(), mSvSize.getHeight(),
+                            Gravity.CENTER));
             setContentView(content);
 
             mSurfaceView.setZOrderOnTop(true);
             mSurfaceView.getHolder().addCallback(this);
+
         }
 
         @Override

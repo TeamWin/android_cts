@@ -78,6 +78,7 @@ public class VideoDecoderPerfTest extends MediaTestBase {
     private static final String MPEG4 = MediaFormat.MIMETYPE_VIDEO_MPEG4;
     private static final String VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
     private static final String VP9 = MediaFormat.MIMETYPE_VIDEO_VP9;
+    private static final String AV1 = MediaFormat.MIMETYPE_VIDEO_AV1;
 
     private static final boolean GOOG = true;
     private static final boolean OTHER = false;
@@ -154,6 +155,12 @@ public class VideoDecoderPerfTest extends MediaTestBase {
                 {VP9, sVp9Media1280x0720, "hd"},
                 {VP9, sVp9Media1920x1080, "fullhd"},
                 {VP9, sVp9Media3840x2160, "uhd"},
+
+                {AV1, sAv1Media0352x0288, "cif"},
+                {AV1, sAv1Media0640x0360, "vga"},
+                {AV1, sAv1Media0720x0480, "sd"},
+                {AV1, sAv1Media1280x0720, "hd"},
+                {AV1, sAv1Media1920x1080, "fullhd"},
         });
         return prepareParamList(exhaustiveArgsList);
     }
@@ -555,6 +562,28 @@ public class VideoDecoderPerfTest extends MediaTestBase {
     private static final String[] sVp9Media3840x2160 = {
         "bbb_s4_3840x2160_webm_vp9_0p5_20mbps_30fps_vorbis_6ch_384kbps_24000hz.webm",
         "bbb_s2_3840x2160_webm_vp9_0p51_20mbps_60fps_vorbis_6ch_384kbps_32000hz.webm",
+    };
+
+    // AV1 tests
+
+    private static final String[] sAv1Media0352x0288 = {
+        "bbb_s1_352x288_mp4_av1_355kbps_30fps_aac_lc_stereo_128kbps_48000hz.mp4",
+    };
+
+    private static final String[] sAv1Media0640x0360 = {
+        "bbb_s1_640x360_mp4_av1_994kbps_30fps_aac_lc_6ch_342kbps_48000hz.mp4",
+    };
+
+    private static final String[] sAv1Media0720x0480 = {
+        "bbb_s1_720x480_mp4_av1_977kbps_30fps_aac_lc_6ch_341kbps_48000hz.mp4",
+    };
+
+    private static final String[] sAv1Media1280x0720 = {
+        "bbb_s4_1280x720_mp4_av1_2387kbps_30fps_aac_lc_stereo_130kbps_32000hz.mp4",
+    };
+
+    private static final String[] sAv1Media1920x1080 = {
+        "bbb_s2_1920x1080_mp4_av1_5010kbps_60fps_aac_lc_6ch_348kbps_22050hz.mp4",
     };
 
     @Test

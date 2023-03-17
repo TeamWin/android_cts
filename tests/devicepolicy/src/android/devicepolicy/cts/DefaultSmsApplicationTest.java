@@ -17,6 +17,8 @@
 package android.devicepolicy.cts;
 
 
+import static android.provider.DeviceConfig.NAMESPACE_DEVICE_POLICY_MANAGER;
+
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 import static com.android.queryable.queries.ActivityQuery.activity;
 import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
@@ -26,6 +28,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
+import android.app.admin.ManagedSubscriptionsPolicy;
 import android.app.admin.RemoteDevicePolicyManager;
 import android.app.role.RoleManager;
 import android.content.ComponentName;
@@ -37,6 +40,7 @@ import android.telephony.TelephonyManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
@@ -86,7 +90,14 @@ public final class DefaultSmsApplicationTest {
     // TODO(b/198588696): Add support is @RequireSmsCapable and @RequireNotSmsCapable
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = DefaultSmsApplication.class)
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            "enable_work_profile_telephony")
     public void setDefaultSmsApplication_works() {
+        //TODO(b/273529454): replace with EnsureTelephonyEnabledInUser annotation
+        if (mDpm.isOrganizationOwnedDeviceWithManagedProfile()) {
+            mDpm.setManagedSubscriptionsPolicy(new ManagedSubscriptionsPolicy(
+                    ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
+        }
         assumeTrue(mTelephonyManager.isSmsCapable()
                 || (mRoleManager != null && mRoleManager.isRoleAvailable(RoleManager.ROLE_SMS)));
         String previousSmsAppName = getDefaultSmsPackage();
@@ -95,6 +106,11 @@ public final class DefaultSmsApplicationTest {
             assertThat(getDefaultSmsPackage()).isEqualTo(smsApp.packageName());
         } finally {
             mDpm.setDefaultSmsApplication(mAdmin, previousSmsAppName);
+            //TODO(b/273529454): replace with EnsureTelephonyEnabledInUser annotation
+            if (mDpm.isOrganizationOwnedDeviceWithManagedProfile()) {
+                mDpm.setManagedSubscriptionsPolicy(new ManagedSubscriptionsPolicy(
+                        ManagedSubscriptionsPolicy.TYPE_ALL_PERSONAL_SUBSCRIPTIONS));
+            }
         }
     }
 

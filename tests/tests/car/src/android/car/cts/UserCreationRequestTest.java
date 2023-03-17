@@ -86,4 +86,17 @@ public final class UserCreationRequestTest extends AbstractExpectableTestCase {
         assertThrows(IllegalArgumentException.class,
                 () -> new UserCreationRequest.Builder().setGuest().setAdmin().build());
     }
+
+    @Test
+    public void testToString() {
+        UserCreationRequest userCreationRequest = new UserCreationRequest.Builder().setName(
+                NAME).setGuest().setEphemeral().build();
+
+        expectWithMessage("userCreationRequest.toString()").that(
+                userCreationRequest.toString()).containsMatch("name.*=.*testUser");
+        expectWithMessage("userCreationRequest.toString()").that(
+                userCreationRequest.toString()).containsMatch("guest.*=.*true");
+        expectWithMessage("userCreationRequest.toString()").that(
+                userCreationRequest.toString()).containsMatch("ephemeral.*=.*true");
+    }
 }

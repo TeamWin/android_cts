@@ -21,7 +21,6 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
-import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -35,11 +34,10 @@ public final class UserSettings {
 
     private static final String TAG = UserSettings.class.getSimpleName();
 
-    private static final int CURRENT_USER = UserHandle.CURRENT.getIdentifier();
-
     // Constants below are needed for switch statements
     public static final String NAMESPACE_SECURE = "secure";
     public static final String NAMESPACE_GLOBAL = "global";
+    public static final String NAMESPACE_SYSTEM = "system";
 
     private final Context mContext;
     private final Namespace mNamespace;
@@ -51,26 +49,58 @@ public final class UserSettings {
      * <ul>
      *   <li>target context of the instrumented app
      *   <li>secure namespace
-     *   <li>{@link android.app.ActivityManager#getCurrentUser() current foreground user}
+     *   <li>user running the test
      * </ul>
      */
     public UserSettings() {
-        this(CURRENT_USER);
+        this(InstrumentationRegistry.getTargetContext());
     }
 
     /**
      * Constructor for the {@link android.app.ActivityManager#getCurrentUser() current foreground
-     * user}
+     * user} and the given context and namespace.
      */
     public UserSettings(Context context, Namespace namespace) {
-        this(context, namespace, CURRENT_USER);
+        this(context, namespace, context.getUser().getIdentifier());
     }
 
     /**
-     * Constructor for the given user using target context and the secure namespace.
+     * Constructor that uses :
+     *
+     * <ul>
+     *   <li>the given context
+     *   <li>secure namespace
+     *   <li>user running the test
+     * </ul>
+     */
+    public UserSettings(Context context) {
+        this(context, Namespace.SECURE);
+    }
+
+    /**
+     * Default constructor, it uses:
+     *
+     * <ul>
+     *   <li>target context of the instrumented app
+     *   <li>secure namespace
+     *   <li>the given user
+     * </ul>
      */
     public UserSettings(int userId) {
         this(InstrumentationRegistry.getTargetContext(), Namespace.SECURE, userId);
+    }
+
+    /**
+     * Constructor that uses:
+     *
+     * <ul>
+     *   <li>target context of the instrumented app
+     *   <li>the given namespace
+     *   <li>user running the test
+     * </ul>
+     */
+    public UserSettings(Namespace namespace) {
+        this(InstrumentationRegistry.getTargetContext(), namespace);
     }
 
     /**
@@ -80,6 +110,7 @@ public final class UserSettings {
         mContext = context;
         mNamespace = namespace;
         mUserId = userId;
+        Log.v(TAG, toString());
     }
 
     /**
@@ -125,7 +156,7 @@ public final class UserSettings {
             delete(key);
             return;
         }
-        runShellCommand("settings put --user %s %s %s %s default", getUser(), mNamespace.get(), key,
+        runShellCommand("settings put --user %d %s %s %s default", mUserId, mNamespace.get(), key,
                 value);
     }
 
@@ -154,14 +185,14 @@ public final class UserSettings {
      */
     public void delete(String key) {
         logd("delete(%s)", key);
-        runShellCommand("settings delete --user %s %s %s", getUser(), mNamespace.get(), key);
+        runShellCommand("settings delete --user %d %s %s", mUserId, mNamespace.get(), key);
     }
 
     /**
      * Gets the value of a preference.
      */
     public String get(String key) {
-        String value = runShellCommand("settings get --user %s %s %s", getUser(), mNamespace.get(),
+        String value = runShellCommand("settings get --user %d %s %s", mUserId, mNamespace.get(),
                 key);
         String returnedValue = value == null || value.equals("null") ? null : value;
         logd("get(%s): settings returned '%s', returning '%s'", key, value, returnedValue);
@@ -178,14 +209,7 @@ public final class UserSettings {
     }
 
     private String toShortString() {
-        StringBuilder string = new StringBuilder("namespace=").append(mNamespace)
-                .append(", user=");
-        if (mUserId == CURRENT_USER) {
-            string.append("CURRENT");
-        } else {
-            string.append(mUserId);
-        }
-        return string.toString();
+        return "namespace=" + mNamespace + ", user=" + mUserId;
     }
 
     /**
@@ -193,7 +217,8 @@ public final class UserSettings {
      */
     public enum Namespace {
         SECURE(NAMESPACE_SECURE),
-        GLOBAL(NAMESPACE_GLOBAL);
+        GLOBAL(NAMESPACE_GLOBAL),
+        SYSTEM(NAMESPACE_SYSTEM);
 
         private final String mName;
 
@@ -207,11 +232,6 @@ public final class UserSettings {
         public String get() {
             return mName;
         }
-    }
-
-    // TODO(b/123885378): remove once it uses Settings API (instead of ShellCommand)
-    private String getUser() {
-        return mUserId == CURRENT_USER ? "cur" : String.valueOf(mUserId);
     }
 
     // TODO(b/123885378): we cannot pass an empty value when using 'cmd settings', so we need

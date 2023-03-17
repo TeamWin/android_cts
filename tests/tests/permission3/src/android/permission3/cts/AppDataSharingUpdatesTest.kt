@@ -20,6 +20,8 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.PersistableBundle
+import android.permission3.cts.AppMetadata.createAppMetadataWithLocationSharingAds
 import android.permission3.cts.AppMetadata.createAppMetadataWithLocationSharingNoAds
 import android.permission3.cts.AppMetadata.createAppMetadataWithNoSharing
 import android.provider.DeviceConfig
@@ -55,14 +57,6 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
             true.toString())
 
     @get:Rule
-    val deviceConfigPlaceholderSafetyLabelUpdatesEnabled =
-        DeviceConfigStateChangerRule(
-            context,
-            DeviceConfig.NAMESPACE_PRIVACY,
-            PLACEHOLDER_SAFETY_LABEL_UPDATES_ENABLED,
-            false.toString())
-
-    @get:Rule
     val deviceConfigDataSharingUpdatesPeriod =
         DeviceConfigStateChangerRule(
             context,
@@ -91,43 +85,136 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
         Assume.assumeFalse(isWatch)
 
         activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-
-        installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithNoSharing())
-        waitForBroadcasts()
-        installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
-        waitForBroadcasts()
     }
 
     @Test
-    fun startActivityWithIntent_featureEnabled_whenAppHasLocationGranted_showUpdates() {
-        grantLocationPermission(APP_PACKAGE_NAME)
+    fun startActivityWithIntent_whenAppGrantedCoarseLocation_noSharingToNoAdsSharing_showsUpdate() {
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+        grantCoarseLocationPermission(APP_PACKAGE_NAME)
 
         startAppDataSharingUpdatesActivity()
 
         try {
-            findView(By.descContains(DATA_SHARING_UPDATES), true)
-            findView(By.textContains(DATA_SHARING_UPDATES_SUBTITLE), true)
-            findView(By.textContains(UPDATES_IN_LAST_30_DAYS), true)
+            assertUpdatesPresent()
             findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), true)
-            findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
-            findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
+            findView(By.textContains(NOW_SHARED_WITH_THIRD_PARTIES), true)
         } finally {
             pressBack()
         }
     }
 
     @Test
-    fun startActivityWithIntent_featureEnabled_withPlaceholderData_showUpdates() {
-        setDeviceConfigPrivacyProperty(PLACEHOLDER_SAFETY_LABEL_UPDATES_ENABLED, true.toString())
+    fun startActivityWithIntent_whenAppGrantedFineLocation_showsUpdate() {
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+        grantFineLocationPermission(APP_PACKAGE_NAME)
 
         startAppDataSharingUpdatesActivity()
 
         try {
-            findView(By.descContains(DATA_SHARING_UPDATES), true)
-            findView(By.textContains(DATA_SHARING_UPDATES_SUBTITLE), true)
-            findView(By.textContains(UPDATES_IN_LAST_30_DAYS), true)
-            findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
-            findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
+            assertUpdatesPresent()
+            findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), true)
+            findView(By.textContains(NOW_SHARED_WITH_THIRD_PARTIES), true)
+        } finally {
+            pressBack()
+        }
+    }
+
+    @Test
+    fun startActivityWithIntent_whenAppGrantedBackgroundLocation_showsUpdate() {
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+        grantBackgroundLocationPermission(APP_PACKAGE_NAME)
+
+        startAppDataSharingUpdatesActivity()
+
+        try {
+            assertUpdatesPresent()
+            findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), true)
+            findView(By.textContains(NOW_SHARED_WITH_THIRD_PARTIES), true)
+        } finally {
+            pressBack()
+        }
+    }
+
+    @Test
+    fun startActivityWithIntent_whenAppGrantedLocation_noSharingToAdsSharing_showsUpdate() {
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingAds())
+        grantCoarseLocationPermission(APP_PACKAGE_NAME)
+
+        startAppDataSharingUpdatesActivity()
+
+        try {
+            assertUpdatesPresent()
+            findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), true)
+            findView(By.textContains(NOW_SHARED_WITH_THIRD_PARTIES_FOR_ADS), true)
+        } finally {
+            pressBack()
+        }
+    }
+
+    @Test
+    fun startActivityWithIntent_whenAppGrantedLocation_noAdsSharingToAdsSharing_showsUpdate() {
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingAds())
+        grantCoarseLocationPermission(APP_PACKAGE_NAME)
+
+        startAppDataSharingUpdatesActivity()
+
+        try {
+            assertUpdatesPresent()
+            findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), true)
+            findView(By.textContains(NOW_SHARED_WITH_THIRD_PARTIES_FOR_ADS), true)
+        } finally {
+            pressBack()
+        }
+    }
+
+    @Test
+    fun startActivityWithIntent_whenAppGrantedLocation_adsSharingToNoAdsSharing_showsNoUpdate() {
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingAds())
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+        grantCoarseLocationPermission(APP_PACKAGE_NAME)
+
+        startAppDataSharingUpdatesActivity()
+
+        try {
+            assertNoUpdatesPresent()
+            findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), false)
+        } finally {
+            pressBack()
+        }
+    }
+
+    @Test
+    fun startActivityWithIntent_whenAppGrantedLocation_noAdsSharingToNoSharing_showsNoUpdate() {
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        grantCoarseLocationPermission(APP_PACKAGE_NAME)
+
+        startAppDataSharingUpdatesActivity()
+
+        try {
+            assertNoUpdatesPresent()
+            findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), false)
+        } finally {
+            pressBack()
+        }
+    }
+
+    @Test
+    fun startActivityWithIntent_whenAppGrantedLocation_adsSharingToNoSharing_showsNoUpdate() {
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingAds())
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        grantCoarseLocationPermission(APP_PACKAGE_NAME)
+
+        startAppDataSharingUpdatesActivity()
+
+        try {
+            assertNoUpdatesPresent()
+            findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), false)
         } finally {
             pressBack()
         }
@@ -135,7 +222,9 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     @Test
     fun clickLearnMore_opensHelpCenter() {
-        grantLocationPermission(APP_PACKAGE_NAME)
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+        grantFineLocationPermission(APP_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
         try {
@@ -156,7 +245,9 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     @Test
     fun clickUpdate_opensAppLocationPermissionPage() {
-        grantLocationPermission(APP_PACKAGE_NAME)
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+        grantFineLocationPermission(APP_PACKAGE_NAME)
         startAppDataSharingUpdatesActivity()
 
         try {
@@ -176,17 +267,32 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun startActivityWithIntent_featureEnabled_whenAppDoesntHaveLocationGranted_showsNoUpdates() {
+    fun startActivityWithIntent_whenAppNotGrantedLocation_showsNoUpdates() {
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+
         startAppDataSharingUpdatesActivity()
 
         try {
-            findView(By.descContains(DATA_SHARING_UPDATES), true)
-            findView(By.textContains(DATA_SHARING_UPDATES_SUBTITLE), true)
-            findView(By.textContains(DATA_SHARING_NO_UPDATES_MESSAGE), true)
+            assertNoUpdatesPresent()
             findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), false)
-            findView(By.textContains(UPDATES_IN_LAST_30_DAYS), false)
-            findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
-            findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
+        } finally {
+            pressBack()
+        }
+    }
+
+    @Test
+    fun startActivityWithIntent_noMetadata_showsNoUpdates() {
+        installPackageWithoutInstallSource(APP_APK_PATH_31)
+        waitForBroadcasts()
+        installPackageWithoutInstallSource(APP_APK_PATH_31)
+        waitForBroadcasts()
+
+        startAppDataSharingUpdatesActivity()
+
+        try {
+            assertNoUpdatesPresent()
+            findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), false)
         } finally {
             pressBack()
         }
@@ -201,9 +307,41 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
         findView(By.descContains(DATA_SHARING_UPDATES), false)
     }
 
-    private fun grantLocationPermission(packageName: String) {
+    /** Installs an app and waits for the package added broadcast to be dispatched. */
+    private fun installAndWaitTillPackageAdded(apkPath: String, appMetadata: PersistableBundle) {
+        installPackageViaSession(apkPath, appMetadata)
+        waitForBroadcasts()
+    }
+
+    private fun assertUpdatesPresent() {
+        findView(By.descContains(DATA_SHARING_UPDATES), true)
+        findView(By.textContains(DATA_SHARING_UPDATES_SUBTITLE), true)
+        findView(By.textContains(UPDATES_IN_LAST_30_DAYS), true)
+        findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
+        findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
+    }
+
+    private fun assertNoUpdatesPresent() {
+        findView(By.descContains(DATA_SHARING_UPDATES), true)
+        findView(By.textContains(DATA_SHARING_UPDATES_SUBTITLE), true)
+        findView(By.textContains(DATA_SHARING_NO_UPDATES_MESSAGE), true)
+        findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), false)
+        findView(By.textContains(UPDATES_IN_LAST_30_DAYS), false)
+        findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
+        findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
+    }
+
+    private fun grantFineLocationPermission(packageName: String) {
         uiAutomation.grantRuntimePermission(
-            packageName, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                packageName, android.Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+    private fun grantCoarseLocationPermission(packageName: String) {
+        uiAutomation.grantRuntimePermission(
+                packageName, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+    }
+    private fun grantBackgroundLocationPermission(packageName: String) {
+        uiAutomation.grantRuntimePermission(
+                packageName, android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
     }
 
     private fun assertHelpCenterLinkClickSuccessful() {
@@ -229,8 +367,6 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     /** Companion object for [AppDataSharingUpdatesTest]. */
     companion object {
-        private const val PLACEHOLDER_SAFETY_LABEL_UPDATES_ENABLED =
-            "placeholder_safety_label_updates_enabled"
         private const val EXPECTED_HELP_CENTER_URL =
             "https://support.google.com/android?p=data_sharing"
     }

@@ -34,6 +34,14 @@ SOLID_COLOR_TEST_PATTERN = 1
 COLOR_BARS_TEST_PATTERN = 2
 USE_CASE_STILL_CAPTURE = 2
 DEFAULT_AE_TARGET_FPS_RANGE = (15, 30)
+COLOR_SPACES = [
+    'SRGB', 'LINEAR_SRGB', 'EXTENDED_SRGB',
+    'LINEAR_EXTENDED_SRGB', 'BT709', 'BT2020',
+    'DCI_P3', 'DISPLAY_P3', 'NTSC_1953', 'SMPTE_C',
+    'ADOBE_RGB', 'PRO_PHOTO_RGB', 'ACES', 'ACESCG',
+    'CIE_XYZ', 'CIE_LAB', 'BT2020_HLG', 'BT2020_PQ'
+]
+SETTINGS_OVERRIDE_ZOOM = 1
 
 
 def legacy(props):
@@ -402,6 +410,18 @@ def zoom_ratio_range(props):
   """
   return 'android.control.zoomRatioRange' in props and props[
       'android.control.zoomRatioRange'] is not None
+
+def low_latency_zoom(props):
+  """Returns whether a device supports low latency zoom via settings override.
+
+  Args:
+    props: Camera properties object.
+
+  Returns:
+    Boolean. True if device supports SETTINGS_OVERRIDE_ZOOM.
+  """
+  return ('android.control.availableSettingsOverrides') in props and (
+      SETTINGS_OVERRIDE_ZOOM in props['android.control.availableSettingsOverrides'])
 
 
 def sync_latency(props):
@@ -927,3 +947,18 @@ def get_reprocess_formats(props):
   if private_reprocess(props):
     reprocess_formats.append('private')
   return reprocess_formats
+
+
+def color_space_to_int(color_space):
+  """Returns the integer ordinal of a named color space.
+
+  Args:
+    color_space: The color space string.
+
+  Returns:
+    Int. Ordinal of the color space.
+  """
+  if color_space == 'UNSPECIFIED':
+    return -1
+
+  return COLOR_SPACES.index(color_space)
