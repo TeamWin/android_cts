@@ -65,11 +65,14 @@ public class HotwordDetectedResultTest {
         final int bitsForScore = Utils.bitCount(HotwordDetectedResult.getMaxScore());
         final int bitsForPersonalizedScore = Utils.bitCount(HotwordDetectedResult.getMaxScore());
         final int bitsForHotwordPhraseId = Utils.bitCount(Integer.MAX_VALUE);
+        final int bitsForBackgroundAudioPower = Utils.bitCount(
+                HotwordDetectedResult.getMaxBackgroundAudioPower());
 
         final int totalSize =
                 bitsForConfidenceLevel + bitsForHotwordOffsetMillis + bitsForHotwordDurationMillis
                         + bitsForAudioChannel + bitsForHotwordDetectionPersonalized + bitsForScore
                         + bitsForPersonalizedScore + bitsForHotwordPhraseId
+                        + bitsForBackgroundAudioPower
                         + HotwordDetectedResult.getMaxBundleSize() * Byte.SIZE;
 
         assertThat(totalSize <= Utils.MAX_HOTWORD_DETECTED_RESULT_SIZE * Byte.SIZE).isTrue();
@@ -130,6 +133,22 @@ public class HotwordDetectedResultTest {
     }
 
     @Test
+    public void testHotwordDetectedResult_getMaxBackgroundAudioPower() throws Exception {
+        assertThat(HotwordDetectedResult.getMaxBackgroundAudioPower() >= 255).isTrue();
+    }
+
+    @Test
+    public void testHotwordDetectedResult_setInvalidBackgroundAudioPower() throws Exception {
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setBackgroundAudioPower(
+                        HotwordDetectedResult.BACKGROUND_AUDIO_POWER_UNSET - 1).build());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setBackgroundAudioPower(
+                        HotwordDetectedResult.getMaxBackgroundAudioPower() + 1).build());
+    }
+
+    @Test
     public void testHotwordDetectedResult_setInvalidHotwordDurationMillis() throws Exception {
         assertThrows(IllegalArgumentException.class,
                 () -> new HotwordDetectedResult.Builder().setHotwordDurationMillis(-1).build());
@@ -186,7 +205,8 @@ public class HotwordDetectedResultTest {
                             new DetectedPhrase.Builder()
                                     .setId(1)
                                     .setPhrase("Test Phrase")
-                                    .build());
+                                    .build(),
+                            /* backgroundAudioPower= */ 100);
 
             assertHotwordDetectedResult(hotwordDetectedResult);
             HotwordAudioStream result = hotwordDetectedResult.getAudioStreams().get(0);
@@ -222,7 +242,8 @@ public class HotwordDetectedResultTest {
                             new DetectedPhrase.Builder()
                                     .setId(1)
                                     .setPhrase("Test Phrase")
-                                    .build());
+                                    .build(),
+                            /* backgroundAudioPower= */ 100);
 
             final Parcel p = Parcel.obtain();
             hotwordDetectedResult.writeToParcel(p, 0);
@@ -252,7 +273,8 @@ public class HotwordDetectedResultTest {
             int personalizedScore,
             List<HotwordAudioStream> audioStreams,
             PersistableBundle extras,
-            DetectedPhrase detectedPhrase) {
+            DetectedPhrase detectedPhrase,
+            int backgroundAudioPower) {
         return new HotwordDetectedResult.Builder()
                 .setConfidenceLevel(confidenceLevel)
                 .setMediaSyncEvent(mediaSyncEvent)
@@ -265,6 +287,7 @@ public class HotwordDetectedResultTest {
                 .setAudioStreams(audioStreams)
                 .setExtras(extras)
                 .setDetectedPhrase(detectedPhrase)
+                .setBackgroundAudioPower(backgroundAudioPower)
                 .build();
     }
 
@@ -282,6 +305,7 @@ public class HotwordDetectedResultTest {
         assertThat(hotwordDetectedResult.getDetectedPhrase().getPhrase()).isEqualTo("Test Phrase");
         assertThat(hotwordDetectedResult.getAudioStreams()).isNotNull();
         assertThat(hotwordDetectedResult.getExtras()).isNotNull();
+        assertThat(hotwordDetectedResult.getBackgroundAudioPower()).isEqualTo(100);
     }
 
     private static void assertHotwordAudioStream(HotwordAudioStream hotwordAudioStream,

@@ -64,6 +64,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                     .setHotwordPhraseId(DEFAULT_PHRASE_ID)
                     .setPersonalizedScore(10)
                     .setScore(15)
+                    .setBackgroundAudioPower(50)
                     .build();
     public static final HotwordDetectedResult DETECTED_RESULT_AFTER_STOP_DETECTION =
             new HotwordDetectedResult.Builder()
