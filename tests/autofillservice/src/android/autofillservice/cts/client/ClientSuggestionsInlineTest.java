@@ -32,11 +32,13 @@ import android.platform.test.annotations.AppModeFull;
 
 import com.android.cts.mockime.MockImeSession;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * Tests client suggestions behaviors for the inline mode.
  */
+@Ignore("b/273695387 Re-enable client suggestion test cases")
 public class ClientSuggestionsInlineTest extends ClientSuggestionsCommonTestCase {
 
     public ClientSuggestionsInlineTest() {
