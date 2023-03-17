@@ -1,4 +1,5 @@
-// Copyright (C) 2022 The Android Open Source Project
+//
+// Copyright (C) 2023 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,16 +18,20 @@ package {
 }
 
 android_test {
-    name: "CtsWallpaperTestCases",
+    name: "CtsWallpaperSdk33TestCases",
     defaults: ["cts_defaults"],
-    static_libs: [
-        "cts-opengl-util",
-        "cts-wm-util",
-    ],
+
     srcs: [
         "src/**/*.java",
         "src/**/*.kt",
     ],
+
+    static_libs: [
+        "cts-opengl-util",
+        "cts-wm-util",
+        "cts-wallpaper-util",
+    ],
+
     test_suites: [
         "cts",
         "general-tests",
@@ -34,14 +39,4 @@ android_test {
     manifest: "AndroidManifest.xml",
     test_config: "AndroidTest.xml",
     per_testcase_directory: true,
-    sdk_version: "test_current",
-}
-
-java_test_helper_library {
-    name: "cts-wallpaper-util",
-
-    srcs: [
-        "src/**/util/*.java",
-        "src/**/util/*.kt",
-    ],
 }
