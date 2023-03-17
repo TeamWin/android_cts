@@ -888,7 +888,7 @@ public final class UserManagerTest {
     }
 
     @Test
-    @CddTest
+    @CddTest(requirements = {"9.5/H-1-1,H-4-2"})
     public void headlessCannotSupportTelephony() {
         boolean isHeadless = UserManager.isHeadlessSystemUserMode();
         boolean hasTelephony =
