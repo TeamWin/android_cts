@@ -18,14 +18,14 @@ package android.autofillservice.cts.servicebehavior;
 import static android.autofillservice.cts.testcore.Helper.enablePccDetectionFeature;
 
 import android.autofillservice.cts.commontests.FieldClassificationServiceManualActivityLaunchTestCase;
+import android.platform.test.annotations.AppModeFull;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
+@AppModeFull
 public class PccFieldClassificationTest extends
         FieldClassificationServiceManualActivityLaunchTestCase {
 
-    @Ignore("b/269844271: breaking CTS, disable for now until fix")
     @Test
     public void testFieldClassificationRequestIsSentWhenScreenEntered() throws Exception {
         enableService();
