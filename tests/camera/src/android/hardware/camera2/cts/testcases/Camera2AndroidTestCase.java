@@ -30,6 +30,7 @@ import static android.hardware.camera2.cts.CameraTestUtils.getSupportedVideoSize
 import static com.android.ex.camera2.blocking.BlockingStateCallback.STATE_CLOSED;
 
 import android.content.Context;
+import android.graphics.ColorSpace;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCaptureSession.CaptureCallback;
@@ -276,12 +277,26 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
      * Create a {@link #CameraCaptureSession} using the currently open camera with
      * OutputConfigurations.
      *
-     * @param outputSurfaces The set of output surfaces to configure for this session
+     * @param outputConfigs The set of output configurations for this session
      */
     protected void createSessionByConfigs(List<OutputConfiguration> outputConfigs) throws Exception {
         mCameraSessionListener = new BlockingSessionCallback();
         mCameraSession = CameraTestUtils.configureCameraSessionWithConfig(mCamera, outputConfigs,
                 mCameraSessionListener, mHandler);
+    }
+
+    /**
+     * Create a {@link #CameraCaptureSession} using the currently open camera with
+     * OutputConfigurations and a ColorSpace.
+     *
+     * @param outputConfigs The set of output configurations for this session
+     * @param colorSpace The color space for this session
+     */
+    protected void createSessionByConfigsAndColorSpace(List<OutputConfiguration> outputConfigs,
+            ColorSpace.Named colorSpace) throws Exception {
+        mCameraSessionListener = new BlockingSessionCallback();
+        mCameraSession = CameraTestUtils.configureCameraSessionWithColorSpace(mCamera,
+                outputConfigs, mCameraSessionListener, mHandler, colorSpace);
     }
 
     /**
@@ -498,10 +513,8 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
         return captureBuilder;
     }
 
-    protected CaptureRequest.Builder prepareCaptureRequestForConfigs(
+    protected CaptureRequest.Builder prepareCaptureRequestBuilderWithConfig(
             List<OutputConfiguration> outputConfigs, int template) throws Exception {
-        createSessionByConfigs(outputConfigs);
-
         CaptureRequest.Builder captureBuilder =
                 mCamera.createCaptureRequest(template);
         assertNotNull("Fail to get captureRequest", captureBuilder);
@@ -510,8 +523,20 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
                 captureBuilder.addTarget(s);
             }
         }
-
         return captureBuilder;
+    }
+
+    protected CaptureRequest.Builder prepareCaptureRequestForConfigs(
+            List<OutputConfiguration> outputConfigs, int template) throws Exception {
+        createSessionByConfigs(outputConfigs);
+        return prepareCaptureRequestBuilderWithConfig(outputConfigs, template);
+    }
+
+    protected CaptureRequest.Builder prepareCaptureRequestForColorSpace(
+            List<OutputConfiguration> outputConfigs, int template, ColorSpace.Named colorSpace)
+            throws Exception {
+        createSessionByConfigsAndColorSpace(outputConfigs, colorSpace);
+        return prepareCaptureRequestBuilderWithConfig(outputConfigs, template);
     }
 
     /**

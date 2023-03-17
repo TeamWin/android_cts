@@ -2035,6 +2035,10 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             "android.hardware.camera2.params.ColorSpaceProfiles#getSupportedImageFormatsForColorSpace",
             "android.hardware.camera2.params.ColorSpaceProfiles#getSupportedDynamicRangeProfiles"})
     public void test8BitColorSpaceOutputCharacteristics() {
+        final Set<ColorSpace.Named> sdrColorSpaces = new ArraySet<>();
+        sdrColorSpaces.add(ColorSpace.Named.SRGB);
+        sdrColorSpaces.add(ColorSpace.Named.DISPLAY_P3);
+
         for (int i = 0; i < mAllCameraIds.length; i++) {
             Log.i(TAG, "test8BitColorSpaceOutputCharacteristics: Testing camera ID "
                     + mAllCameraIds[i]);
@@ -2059,6 +2063,11 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                             ImageFormat.UNKNOWN, DynamicRangeProfiles.STANDARD);
             mCollector.expectTrue("8-bit color spaces not present!",
                     !supportedColorSpacesStandard.isEmpty());
+
+            for (ColorSpace.Named colorSpace : supportedColorSpacesStandard) {
+                mCollector.expectTrue("ColorSpace " + colorSpace.ordinal() + " is not in the set"
+                        + " of supported color spaces", sdrColorSpaces.contains(colorSpace));
+            }
 
             Set<ColorSpace.Named> supportedColorSpaces = colorSpaceProfiles.getSupportedColorSpaces(
                     ImageFormat.UNKNOWN);
@@ -2111,6 +2120,15 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             "android.hardware.camera2.params.ColorSpaceProfiles#getSupportedImageFormatsForColorSpace",
             "android.hardware.camera2.params.ColorSpaceProfiles#getSupportedDynamicRangeProfiles"})
     public void test10BitColorSpaceOutputCharacteristics() {
+        final Set<ColorSpace.Named> sdrColorSpaces = new ArraySet<>();
+        sdrColorSpaces.add(ColorSpace.Named.SRGB);
+        sdrColorSpaces.add(ColorSpace.Named.DISPLAY_P3);
+
+        final Set<ColorSpace.Named> hdrColorSpaces = new ArraySet<>();
+        hdrColorSpaces.add(ColorSpace.Named.SRGB);
+        hdrColorSpaces.add(ColorSpace.Named.DISPLAY_P3);
+        hdrColorSpaces.add(ColorSpace.Named.BT2020_HLG);
+
         for (int i = 0; i < mAllCameraIds.length; i++) {
             Log.i(TAG, "test10BitColorSpaceOutputCharacteristics: Testing camera ID "
                     + mAllCameraIds[i]);
@@ -2167,10 +2185,16 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                                         + "should return a set containing STANDARD for a supported"
                                         + "color space and image format!",
                                         compatibleColorSpaces.contains(colorSpace));
+                                mCollector.expectTrue("ColorSpace " + colorSpace.ordinal() + " is "
+                                        + "not in the set of supported color spaces for STANDARD",
+                                        sdrColorSpaces.contains(colorSpace));
                             } else {
                                 mCollector.expectTrue("getSupportedColorSpacesForDynamicRange "
                                         + "should return an empty set for HDR!",
                                         compatibleColorSpaces.isEmpty());
+                                mCollector.expectTrue("ColorSpace " + colorSpace.ordinal() + " is "
+                                        + "not in the set of supported color spaces for HDR",
+                                        hdrColorSpaces.contains(colorSpace));
                             }
                         }
                     }
@@ -2197,6 +2221,16 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                             mCollector.expectTrue("Compatible dynamic range profile not reported in"
                                     + " DynamicRangeProfiles!",
                                     supportedDynamicRangeProfiles.contains(dynamicRangeProfile));
+
+                            if (dynamicRangeProfile == DynamicRangeProfiles.STANDARD) {
+                                mCollector.expectTrue("ColorSpace " + colorSpace.ordinal() + " is "
+                                        + "not in the set of supported color spaces for STANDARD",
+                                        sdrColorSpaces.contains(colorSpace));
+                            } else {
+                                mCollector.expectTrue("ColorSpace " + colorSpace.ordinal() + " is "
+                                        + "not in the set of supported color spaces for HDR",
+                                        hdrColorSpaces.contains(colorSpace));
+                            }
                         }
                     }
                 }
