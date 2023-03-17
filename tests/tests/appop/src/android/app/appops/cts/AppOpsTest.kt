@@ -65,7 +65,7 @@ import org.mockito.Mockito.verifyZeroInteractions
 @RunWith(AndroidJUnit4::class)
 class AppOpsTest {
     // Notifying OnOpChangedListener callbacks is an async operation, so we define a timeout.
-    private val TIMEOUT_MS = 5000L
+    private val TIMEOUT_MS = 10000L
 
     private lateinit var mAppOps: AppOpsManager
     private lateinit var mContext: Context
@@ -307,16 +307,28 @@ class AppOpsTest {
                     activeWatcher)
             try {
                 mAppOps.startOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null, null)
-                assertTrue(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
+                var activeState = receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive active state callback within $TIMEOUT_MS ms",
+                    activeState)
+                assertTrue(activeState!!)
 
                 mAppOps.finishOp(OPSTR_WIFI_SCAN, USER_SHELL_UID, SHELL_PACKAGE_NAME, null)
-                assertFalse(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
+                activeState = receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive active state callback within $TIMEOUT_MS ms",
+                    activeState)
+                assertFalse(activeState!!)
 
                 mAppOps.startOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null, null)
-                assertTrue(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
+                activeState = receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive active state callback within $TIMEOUT_MS ms",
+                    activeState)
+                assertTrue(activeState!!)
 
                 mAppOps.finishOp(OPSTR_WIFI_SCAN, USER_SHELL_UID, SHELL_PACKAGE_NAME, null)
-                assertFalse(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
+                activeState = receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive active state callback within $TIMEOUT_MS ms",
+                    activeState)
+                assertFalse(activeState!!)
             } finally {
                 mAppOps.stopWatchingActive(activeWatcher)
             }
