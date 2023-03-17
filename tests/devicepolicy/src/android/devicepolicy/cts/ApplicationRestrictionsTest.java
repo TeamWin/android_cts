@@ -21,6 +21,7 @@ import static android.provider.DeviceConfig.NAMESPACE_DEVICE_POLICY_MANAGER;
 
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -37,6 +38,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
@@ -251,6 +253,8 @@ public final class ApplicationRestrictionsTest {
     }
 
     @Postsubmit(reason = "New test")
+    @RequireFeatureFlagNotEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
+            key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
     @CanSetPolicyTest(policy = ApplicationRestrictions.class, singleTestOnly = true)
     public void setApplicationRestrictions_nullComponent_throwsException() {
         Bundle bundle = BundleUtils.createBundle(
