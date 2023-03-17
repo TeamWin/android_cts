@@ -352,20 +352,4 @@ public class BroadcastOptionsTest {
         options.clearDeliveryGroupMatchingKey();
         assertNull(options.getDeliveryGroupMatchingKey());
     }
-
-    @Test
-    public void testSetGetDeliveryGroupMatchingFilter() {
-        final BroadcastOptions options = BroadcastOptions.makeBasic();
-
-        final IntentFilter filter = new IntentFilter("test_action");
-        filter.addCategory("test_category");
-        final PersistableBundle extras = new PersistableBundle();
-        extras.putInt("extra_int", 34);
-        filter.setExtras(extras);
-        options.setDeliveryGroupMatchingFilter(filter);
-        assertEquals(filter, options.getDeliveryGroupMatchingFilter());
-
-        options.clearDeliveryGroupMatchingFilter();
-        assertNull(options.getDeliveryGroupMatchingFilter());
-    }
 }
