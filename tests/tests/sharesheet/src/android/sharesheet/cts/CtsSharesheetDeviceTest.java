@@ -55,6 +55,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -73,6 +74,7 @@ import java.util.stream.Collectors;
  * TODO: Add JavaDoc
  */
 @RunWith(AndroidJUnit4.class)
+@Ignore("b/273776367 background activity starting constraints interfering with the test")
 public class CtsSharesheetDeviceTest {
 
     public static final String TAG = CtsSharesheetDeviceTest.class.getSimpleName();
