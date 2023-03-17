@@ -835,6 +835,7 @@ public class TvInputServiceTest {
 
     @Test
     public void verifyCommandNotifyTvMessage() {
+        tune(CHANNEL_0);
         Bundle bundle = createTestBundle();
         resetPassedValues();
 
@@ -848,6 +849,23 @@ public class TvInputServiceTest {
         assertThat(session.mTvMessageCount).isEqualTo(1);
         assertThat(session.mTvMessageType).isEqualTo(TvInputManager.TV_MESSAGE_TYPE_WATERMARK);
         assertBundlesAreEqual(session.mTvMessageData, bundle);
+    }
+
+    @Test
+    public void verifyCommandSetTvMessageEnabled() {
+        tune(CHANNEL_0);
+        resetPassedValues();
+
+        onTvView(tvView -> tvView.setTvMessageEnabled(TvInputManager.TV_MESSAGE_TYPE_WATERMARK,
+                true));
+
+        mInstrumentation.waitForIdleSync();
+        final CountingSession session =
+                waitForSessionCheck(s -> s.mTvMessageEnabledCount > 0);
+
+        assertThat(session.mTvMessageEnabledCount).isEqualTo(1);
+        assertThat(session.mTvMessageType).isEqualTo(TvInputManager.TV_MESSAGE_TYPE_WATERMARK);
+        assertThat(session.mTvMessageEnabled).isEqualTo(true);
     }
 
     @Test
@@ -1328,6 +1346,7 @@ public class TvInputServiceTest {
             public volatile int mAppPrivateCommandCount;
             public volatile int mSetInteractiveAppNotificationEnabledCount;
             public volatile int mTvMessageCount;
+            public volatile int mTvMessageEnabledCount;
 
             public volatile String mAppPrivateCommandAction;
             public volatile Bundle mAppPrivateCommandData;
@@ -1357,6 +1376,7 @@ public class TvInputServiceTest {
             public volatile Boolean mInteractiveAppNotificationEnabled;
             public volatile Integer mTvMessageType;
             public volatile Bundle mTvMessageData;
+            public volatile Boolean mTvMessageEnabled;
 
             CountingSession(Context context, @Nullable String sessionId) {
 
@@ -1390,6 +1410,7 @@ public class TvInputServiceTest {
                 mAppPrivateCommandCount = 0;
                 mSetInteractiveAppNotificationEnabledCount = 0;
                 mTvMessageCount = 0;
+                mTvMessageEnabledCount = 0;
             }
 
             public void resetPassedValues() {
@@ -1421,6 +1442,7 @@ public class TvInputServiceTest {
                 mInteractiveAppNotificationEnabled = null;
                 mTvMessageType = null;
                 mTvMessageData = null;
+                mTvMessageEnabled = null;
             }
 
             @Override
@@ -1592,6 +1614,13 @@ public class TvInputServiceTest {
                 mTvMessageCount++;
                 mTvMessageType = type;
                 mTvMessageData = data;
+            }
+
+            @Override
+            public void onSetTvMessageEnabled(int type, boolean enabled) {
+                mTvMessageEnabledCount++;
+                mTvMessageType = type;
+                mTvMessageEnabled = enabled;
             }
         }
 
