@@ -837,7 +837,7 @@ public class AnimatorSetTest {
             @Override
             public void onAnimationStart(Animator animation, boolean inReverse) {
                 assertFalse(inReverse);
-                assertEquals(20, set.getCurrentPlayTime());
+                assertEquals(200, set.getCurrentPlayTime());
             }
         });
         set.play(anim);
