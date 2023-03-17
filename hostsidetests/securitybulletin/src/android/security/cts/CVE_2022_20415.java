@@ -16,6 +16,7 @@
 
 package android.security.cts;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNoException;
 
 import android.platform.test.annotations.AsbSecurityTest;
@@ -37,6 +38,11 @@ public class CVE_2022_20415 extends NonRootSecurityTestCase {
     @Test
     public void testPocCVE_2022_20415() {
         try {
+            // Test is not applicable for watch devices so skipping the test for watch devices
+            assumeFalse(
+                    "Skipping the test for watch devices",
+                    getDevice().hasFeature("android.hardware.type.watch"));
+
             final String testPkg = "android.security.cts.CVE_2022_20415";
 
             // Install the test-app
