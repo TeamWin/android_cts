@@ -16,6 +16,7 @@
 
 package android.app.cts.wallpapers;
 
+import static android.Manifest.permission.READ_WALLPAPER_INTERNAL;
 import static android.app.WallpaperManager.FLAG_LOCK;
 import static android.app.WallpaperManager.FLAG_SYSTEM;
 import static android.app.cts.wallpapers.util.WallpaperTestUtils.isSimilar;
@@ -113,6 +114,11 @@ public class WallpaperManagerTest {
 
     @Before
     public void setUp() throws Exception {
+
+        // grant READ_WALLPAPER_INTERNAL for all tests
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(READ_WALLPAPER_INTERNAL);
+
         mContext = InstrumentationRegistry.getTargetContext();
         mWallpaperManager = WallpaperManager.getInstance(mContext);
         assumeTrue("Device does not support wallpapers", mWallpaperManager.isWallpaperSupported());
@@ -146,6 +152,11 @@ public class WallpaperManagerTest {
 
     @After
     public void tearDown() throws Exception {
+
+        // drop READ_WALLPAPER_INTERNAL
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+
         if (mBroadcastReceiver != null) {
             mContext.unregisterReceiver(mBroadcastReceiver);
         }

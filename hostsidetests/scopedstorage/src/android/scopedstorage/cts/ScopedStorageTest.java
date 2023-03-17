@@ -17,7 +17,6 @@
 package android.scopedstorage.cts;
 
 import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA1;
-import static android.scopedstorage.cts.lib.TestUtils.adoptShellPermissionIdentity;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanAccessPrivateAppAndroidDataDir;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanAccessPrivateAppAndroidObbDir;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameFile;
@@ -34,7 +33,6 @@ import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.deleteRecursively;
-import static android.scopedstorage.cts.lib.TestUtils.dropShellPermissionIdentity;
 import static android.scopedstorage.cts.lib.TestUtils.executeShellCommand;
 import static android.scopedstorage.cts.lib.TestUtils.getAndroidDir;
 import static android.scopedstorage.cts.lib.TestUtils.getAndroidMediaDir;
@@ -82,7 +80,6 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
-import android.app.WallpaperManager;
 import android.content.ContentValues;
 import android.net.Uri;
 import android.os.Build;
@@ -848,49 +845,6 @@ public class ScopedStorageTest {
         // image files and exactly like Downloads for documents.
         assertSharedStorageAccess(otherAppMediaDir, otherAppMediaDir, APP_B_NO_PERMS);
         assertSharedStorageAccess(getDcimDir(), getDownloadDir(), APP_B_NO_PERMS);
-    }
-
-    @Test
-    public void testWallpaperApisNoPermission() throws Exception {
-        WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
-        assumeTrue("Test skipped as wallpaper is not supported.",
-                wallpaperManager.isWallpaperSupported());
-        assertThrows(SecurityException.class, () -> wallpaperManager.getFastDrawable());
-        assertThrows(SecurityException.class, () -> wallpaperManager.peekFastDrawable());
-        assertThrows(SecurityException.class,
-                () -> wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM));
-    }
-
-    @Test
-    public void testWallpaperApisReadExternalStorage() throws Exception {
-        pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
-        WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
-        wallpaperManager.getFastDrawable();
-        wallpaperManager.peekFastDrawable();
-        wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM);
-    }
-
-    @Test
-    public void testWallpaperApisManageExternalStorageAppOp() throws Exception {
-        pollForManageExternalStorageAllowed();
-
-        WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
-        wallpaperManager.getFastDrawable();
-        wallpaperManager.peekFastDrawable();
-        wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM);
-    }
-
-    @Test
-    public void testWallpaperApisManageExternalStoragePrivileged() throws Exception {
-        adoptShellPermissionIdentity(Manifest.permission.MANAGE_EXTERNAL_STORAGE);
-        try {
-            WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
-            wallpaperManager.getFastDrawable();
-            wallpaperManager.peekFastDrawable();
-            wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM);
-        } finally {
-            dropShellPermissionIdentity();
-        }
     }
 
     /**

@@ -17,8 +17,13 @@
 
 package android.permission.cts;
 
+import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 import static android.app.WallpaperManager.FLAG_LOCK;
 import static android.app.WallpaperManager.FLAG_SYSTEM;
+
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
+import static org.junit.Assert.assertThrows;
 
 import android.app.WallpaperManager;
 import android.content.Context;
@@ -26,6 +31,8 @@ import android.graphics.Bitmap;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
+
+import org.junit.function.ThrowingRunnable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -138,33 +145,53 @@ public class NoWallpaperPermissionsTest extends AndroidTestCase {
     }
 
     /**
-     * Verify that reading the current wallpaper requires READ_EXTERNAL_STORAGE
+     * Verify that reading the current wallpaper enforce the READ_WALLPAPER_INTERNAL permission.
+     * The methods concerned are:
+     * getDrawable, peekDrawable, getFastDrawable, peekFastDrawable, getWallpaperFile.
+     *
+     * These methods should throw a SecurityException, even if MANAGE_EXTERNAL_STORAGE is granted.
      */
-    @SmallTest
     public void testReadWallpaper() {
         if (wallpaperNotSupported()) {
             return;
         }
 
-        try {
-            /* ignore result */ mWM.getFastDrawable();
-            fail("getFastDrawable() did not enforce READ_EXTERNAL_STORAGE");
-        } catch (SecurityException expected) { /* expected */ }
+        runWithShellPermissionIdentity(() -> {
+            String message = "getDrawable did not enforce READ_WALLPAPER_INTERNAL";
+            assertSecurityException(mWM::getDrawable, message);
+            assertSecurityException(() -> mWM.getDrawable(FLAG_SYSTEM), message);
+            assertSecurityException(() -> mWM.getDrawable(FLAG_LOCK), message);
 
-        try {
-            /* ignore result */ mWM.peekFastDrawable();
-            fail("peekFastDrawable() did not enforce READ_EXTERNAL_STORAGE");
-        } catch (SecurityException expected) { /* expected */ }
+            message = "peekDrawable did not enforce READ_WALLPAPER_INTERNAL";
+            assertSecurityException(mWM::peekDrawable, message);
+            assertSecurityException(() -> mWM.peekDrawable(FLAG_SYSTEM), message);
+            assertSecurityException(() -> mWM.peekDrawable(FLAG_LOCK), message);
 
-        try {
-            /* ignore result */ mWM.getWallpaperFile(FLAG_SYSTEM);
-            fail("getWallpaperFile(FLAG_SYSTEM) did not enforce READ_EXTERNAL_STORAGE");
-        } catch (SecurityException expected) { /* expected */ }
+            message = "getFastDrawable did not enforce READ_WALLPAPER_INTERNAL";
+            assertSecurityException(mWM::getFastDrawable, message);
+            assertSecurityException(() -> mWM.getFastDrawable(FLAG_SYSTEM), message);
+            assertSecurityException(() -> mWM.getFastDrawable(FLAG_LOCK), message);
+
+            message = "peekFastDrawable did not enforce READ_WALLPAPER_INTERNAL";
+            assertSecurityException(mWM::peekFastDrawable, message);
+            assertSecurityException(() -> mWM.peekFastDrawable(FLAG_SYSTEM), message);
+            assertSecurityException(() -> mWM.peekFastDrawable(FLAG_LOCK), message);
+
+            message = "getWallpaperFile did not enforce READ_WALLPAPER_INTERNAL";
+            assertSecurityException(() -> mWM.getWallpaperFile(FLAG_SYSTEM), message);
+            assertSecurityException(() -> mWM.getWallpaperFile(FLAG_LOCK), message);
+        }, MANAGE_EXTERNAL_STORAGE);
+
+
     }
 
     // ---------- Utility methods ----------
 
     private boolean wallpaperNotSupported() {
         return !(mWM.isWallpaperSupported() && mWM.isSetWallpaperAllowed());
+    }
+
+    private void assertSecurityException(ThrowingRunnable runnable, String errorMessage) {
+        assertThrows(errorMessage, SecurityException.class, runnable);
     }
 }
