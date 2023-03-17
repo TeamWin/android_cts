@@ -16,8 +16,13 @@
 
 package android.cts.statsdatom.voiceinteraction;
 
+import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.STATSD_LOG_DEBOUNCE_MS;
+import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_APK;
+import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_CLASS;
+import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_PKG;
+import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.getTestAppUid;
+
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
@@ -33,8 +38,6 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Tests for HotwordDetectorCreateRequested logging.
@@ -42,21 +45,12 @@ import java.util.regex.Pattern;
 @NonApiTest(exemptionReasons = {}, justification = "METRIC")
 public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase implements
         IBuildReceiver {
-
-    private static final String TEST_PKG = "android.voiceinteraction.cts";
-    private static final String TEST_APK = "CtsVoiceInteractionTestCases.apk";
-    private static final String TEST_CLASS =
-            "android.voiceinteraction.cts.HotwordDetectionServiceBasicTest";
     private static final String TEST_METHOD_DSP_SUCCESS_FOR_METRIC_COLLECT =
             "testHotwordDetectionService_validHotwordDetectionComponentName_triggerSuccess";
     private static final String TEST_METHOD_DSP_FAILURE_FOR_METRIC_COLLECT =
             "testVoiceInteractionService_withoutManageHotwordDetectionPermission_triggerFailure";
     private static final String TEST_METHOD_SOFTWARE_SUCCESS_FOR_METRIC_COLLECT =
             "testHotwordDetectionService_onDetectFromMic_success";
-    // HotwordDetectionServiceBasicTest usually takes around 15 secs to complete the test, we need
-    // to wait for finish testing finish and logging behavior so use a longer duration to avoid
-    // test flaky.
-    private static final long STATSD_LOG_DEBOUNCE_MS = 25_000;
 
     protected IBuildInfo mCtsBuild;
 
@@ -98,8 +92,9 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).isNotNull();
-        // After testing finish, the test will switch to original VIS. If the original VIS creates
-        // detector, we may receive more than 1. The 1st is the creation from the CTS testing.
+        // After the voice CTS test executes completely. the test will switch to original VIS. If
+        // the original VIS creates detector, the test may receive more than 1 metric. Only the 1st
+        // is the creation from the CTS testing.
         assertThat(data.size()).isAtLeast(1);
         assertHotwordDetectorCreateRequested(data.get(0),
                 HotwordDetectorType.TRUSTED_DETECTOR_DSP, /* expectedCreatedDone= */ true);
@@ -147,16 +142,6 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
 
         assertThat(detectorType).isEqualTo(expectedType);
         assertThat(isCreatedDone).isEqualTo(expectedCreatedDone);
-        assertThat(uid).isEqualTo(getTestAppUid());
-    }
-
-    private int getTestAppUid() throws Exception {
-        final int currentUser = getDevice().getCurrentUser();
-        final String uidLine = getDevice().executeShellCommand(
-                "cmd package list packages -U --user " + currentUser + " " + TEST_PKG);
-        final Pattern pattern = Pattern.compile("package:" + TEST_PKG + " uid:(\\d+)");
-        final Matcher matcher = pattern.matcher(uidLine);
-        assertWithMessage("Pkg not found: " + TEST_PKG).that(matcher.find()).isTrue();
-        return Integer.parseInt(matcher.group(1));
+        assertThat(uid).isEqualTo(getTestAppUid(getDevice()));
     }
 }
