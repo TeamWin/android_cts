@@ -367,6 +367,7 @@ public class WindowInputTests {
                 intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
                 mActivity.startForegroundService(intent);
             });
+            mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
             CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
