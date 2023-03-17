@@ -41,6 +41,7 @@ import com.android.compatibility.common.util.SystemUtil
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -286,6 +287,31 @@ class TouchScreenTest {
                 )
             )
         }
+    }
+
+    @Test
+    fun testEventTime() {
+        val pointer = Point(100, 100)
+
+       // ACTION_DOWN
+        touchScreen.sendBtnTouch(true)
+        touchScreen.sendDown(0 /*id*/, pointer)
+        verifyEventTime()
+
+        // ACTION_MOVE
+        pointer.offset(1, 1)
+        touchScreen.sendMove(0 /*id*/, pointer)
+        verifyEventTime()
+
+        // ACTION_UP
+        touchScreen.sendBtnTouch(false)
+        touchScreen.sendUp(0 /*id*/)
+        verifyEventTime()
+    }
+
+    private fun verifyEventTime() {
+        val event = verifier.getMotionEvent()
+        assertEquals(event.getEventTimeNanos() / 1_000_000, event.getEventTime())
     }
 
     // Verifies that each of the four corners of the touch screen (lt, rt, rb, lb) map to the

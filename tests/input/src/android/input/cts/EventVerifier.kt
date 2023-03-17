@@ -82,4 +82,9 @@ class EventVerifier(val getInputEvent: () -> InputEvent?) {
             assertEquals(pt.y, event.y)
         }
     }
+
+    fun getMotionEvent(): MotionEvent {
+        val event = getInputEvent() as MotionEvent
+        return event
+    }
 }

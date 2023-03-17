@@ -60,6 +60,8 @@ public class MotionEventTest {
     private MotionEvent mMotionEventDynamic;
     private long mDownTime;
     private long mEventTime;
+    private long mEventTimeNano;
+    private static final int NS_PER_MS = 1_000_000;
     private static final float X_3F                = 3.0f;
     private static final float Y_4F                = 4.0f;
     private static final int META_STATE            = KeyEvent.META_SHIFT_ON;
@@ -82,6 +84,7 @@ public class MotionEventTest {
     public void setup() {
         mDownTime = SystemClock.uptimeMillis();
         mEventTime = SystemClock.uptimeMillis();
+        mEventTimeNano = mEventTime * NS_PER_MS;
         mMotionEvent1 = MotionEvent.obtain(mDownTime, mEventTime,
                 MotionEvent.ACTION_MOVE, X_3F, Y_4F, META_STATE);
         mMotionEvent2 = MotionEvent.obtain(mDownTime, mEventTime,
@@ -109,6 +112,7 @@ public class MotionEventTest {
         assertNotNull(mMotionEvent1);
         assertEquals(mDownTime, mMotionEvent1.getDownTime());
         assertEquals(mEventTime, mMotionEvent1.getEventTime());
+        assertEquals(mEventTimeNano, mMotionEvent1.getEventTimeNanos());
         assertEquals(MotionEvent.ACTION_DOWN, mMotionEvent1.getAction());
         assertEquals(X_3F, mMotionEvent1.getX(), DELTA);
         assertEquals(Y_4F, mMotionEvent1.getY(), DELTA);
@@ -129,6 +133,7 @@ public class MotionEventTest {
         assertNotNull(mMotionEventDynamic);
         assertEquals(mMotionEvent2.getDownTime(), mMotionEventDynamic.getDownTime());
         assertEquals(mMotionEvent2.getEventTime(), mMotionEventDynamic.getEventTime());
+        assertEquals(mMotionEvent2.getEventTimeNanos(), mMotionEventDynamic.getEventTimeNanos());
         assertEquals(mMotionEvent2.getAction(), mMotionEventDynamic.getAction());
         assertEquals(mMotionEvent2.getX(), mMotionEventDynamic.getX(), DELTA);
         assertEquals(mMotionEvent2.getY(), mMotionEventDynamic.getY(), DELTA);
@@ -151,6 +156,7 @@ public class MotionEventTest {
         assertNotNull(mMotionEventDynamic);
         assertEquals(mDownTime, mMotionEventDynamic.getDownTime());
         assertEquals(mEventTime, mMotionEventDynamic.getEventTime());
+        assertEquals(mEventTimeNano, mMotionEventDynamic.getEventTimeNanos());
         assertEquals(MotionEvent.ACTION_DOWN, mMotionEventDynamic.getAction());
         assertEquals(X_3F, mMotionEventDynamic.getX(), DELTA);
         assertEquals(Y_4F, mMotionEventDynamic.getY(), DELTA);
@@ -223,16 +229,19 @@ public class MotionEventTest {
         withCoords(X_3F + 10.0f, Y_4F + 15.0f).withPressure(2.0f).withSize(3.0f).
                 verifyMatches(mMotionEvent2);
         assertEquals(mEventTime + 20, mMotionEvent2.getEventTime());
+        assertEquals((mEventTime + 20) * NS_PER_MS, mMotionEvent2.getEventTimeNanos());
         // We should have history with 2 entries
         assertEquals(2, mMotionEvent2.getHistorySize());
         // The previous data should be history at index 1
         withCoords(X_3F + 5.0f, Y_4F + 5.0f).withPressure(0.5f).withSize(0.5f).
                 verifyMatchesHistorical(mMotionEvent2, 1);
         assertEquals(mEventTime + 10, mMotionEvent2.getHistoricalEventTime(1));
+        assertEquals((mEventTime + 10) * NS_PER_MS, mMotionEvent2.getHistoricalEventTimeNanos(1));
         // And the original data should be history at index 0
         withCoords(X_3F, Y_4F).withPressure(1.0f).withSize(1.0f).
                 verifyMatchesHistorical(mMotionEvent2, 0);
         assertEquals(mEventTime, mMotionEvent2.getHistoricalEventTime(0));
+        assertEquals(mEventTimeNano, mMotionEvent2.getHistoricalEventTimeNanos(0));
 
         assertEquals(2, mMotionEvent2.getHistorySize());
 
@@ -290,6 +299,7 @@ public class MotionEventTest {
         assertEquals(mMotionEvent2.getAction(), motionEvent.getAction());
         assertEquals(mMotionEvent2.getDownTime(), motionEvent.getDownTime());
         assertEquals(mMotionEvent2.getEventTime(), motionEvent.getEventTime());
+        assertEquals(mMotionEvent2.getEventTimeNanos(), motionEvent.getEventTimeNanos());
         assertEquals(mMotionEvent2.getEdgeFlags(), motionEvent.getEdgeFlags());
         assertEquals(mMotionEvent2.getDeviceId(), motionEvent.getDeviceId());
     }
@@ -391,6 +401,7 @@ public class MotionEventTest {
         withCoords(X_3F + 5.0f, Y_4F + 5.0f).withPressure(0.5f).withSize(0.5f).
                 verifyMatches(mMotionEvent2);
         assertEquals(mEventTime + 10, mMotionEvent2.getEventTime());
+        assertEquals((mEventTime + 10) * NS_PER_MS, mMotionEvent2.getEventTimeNanos());
         // We should have history with 1 entry
         assertEquals(1, mMotionEvent2.getHistorySize());
         // And the previous / original data should be history at index 0
@@ -398,6 +409,7 @@ public class MotionEventTest {
         withCoords(X_3F, Y_4F).withPressure(1.0f).withSize(1.0f).
                 verifyMatchesHistorical(mMotionEvent2, 0);
         assertEquals(mEventTime, mMotionEvent2.getHistoricalEventTime(0));
+        assertEquals(mEventTimeNano, mMotionEvent2.getHistoricalEventTimeNanos(0));
 
         // Add another update batch to our event
         mMotionEvent2.addBatch(mEventTime + 20, X_3F + 10.0f, Y_4F + 15.0f, 2.0f, 3.0f, 0);
@@ -405,16 +417,19 @@ public class MotionEventTest {
         withCoords(X_3F + 10.0f, Y_4F + 15.0f).withPressure(2.0f).withSize(3.0f).
                 verifyMatches(mMotionEvent2);
         assertEquals(mEventTime + 20, mMotionEvent2.getEventTime());
+        assertEquals((mEventTime + 20) * NS_PER_MS, mMotionEvent2.getEventTimeNanos());
         // We should have history with 2 entries
         assertEquals(2, mMotionEvent2.getHistorySize());
         // The previous data should be history at index 1
         withCoords(X_3F + 5.0f, Y_4F + 5.0f).withPressure(0.5f).withSize(0.5f).
                 verifyMatchesHistorical(mMotionEvent2, 1);
         assertEquals(mEventTime + 10, mMotionEvent2.getHistoricalEventTime(1));
+        assertEquals((mEventTime + 10) * NS_PER_MS, mMotionEvent2.getHistoricalEventTimeNanos(1));
         // And the original data should be history at index 0
         withCoords(X_3F, Y_4F).withPressure(1.0f).withSize(1.0f).
                 verifyMatchesHistorical(mMotionEvent2, 0);
         assertEquals(mEventTime, mMotionEvent2.getHistoricalEventTime(0));
+        assertEquals(mEventTimeNano, mMotionEvent2.getHistoricalEventTimeNanos(0));
     }
 
     private static void verifyCurrentPointerData(MotionEvent motionEvent,
@@ -588,6 +603,7 @@ public class MotionEventTest {
                 new PointerPropertiesBuilder[] { propertiesBuilder0, propertiesBuilder1 },
                 new PointerCoordsBuilder[] { coordsBuilderNext0, coordsBuilderNext1 });
         assertEquals(mEventTime + 10, mMotionEventDynamic.getEventTime());
+        assertEquals((mEventTime + 10) * NS_PER_MS, mMotionEventDynamic.getEventTimeNanos());
         // We should have history with 1 entry
         assertEquals(1, mMotionEventDynamic.getHistorySize());
         // And the previous / original data should be history at index 0
@@ -617,6 +633,7 @@ public class MotionEventTest {
                 new PointerPropertiesBuilder[] { propertiesBuilder0, propertiesBuilder1 },
                 new PointerCoordsBuilder[] { coordsBuilderLast0, coordsBuilderLast1 });
         assertEquals(mEventTime + 20, mMotionEventDynamic.getEventTime());
+        assertEquals((mEventTime + 20) * NS_PER_MS, mMotionEventDynamic.getEventTimeNanos());
         // We should have history with 2 entries
         assertEquals(2, mMotionEventDynamic.getHistorySize());
         // The previous data should be history at index 1
@@ -624,11 +641,14 @@ public class MotionEventTest {
                 new PointerCoordsBuilder[] { coordsBuilderNext0, coordsBuilderNext1 },
                 1);
         assertEquals(mEventTime + 10, mMotionEventDynamic.getHistoricalEventTime(1));
+        assertEquals((mEventTime + 10) * NS_PER_MS,
+                mMotionEventDynamic.getHistoricalEventTimeNanos(1));
         // And the original data should be history at index 0
         verifyHistoricalPointerData(mMotionEventDynamic,
                 new PointerCoordsBuilder[] { coordsBuilderInitial0, coordsBuilderInitial1 },
                 0);
         assertEquals(mEventTime, mMotionEventDynamic.getHistoricalEventTime(0));
+        assertEquals(mEventTimeNano, mMotionEventDynamic.getHistoricalEventTimeNanos(0));
     }
 
     @Test
