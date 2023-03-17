@@ -107,8 +107,8 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
                 By.pkg(PACKAGE_NAME).clazz(".Button").clickable(true)
         private val POSITIVE_BUTTON = By.copy(CLICKABLE_BUTTON).res(PACKAGE_NAME, "btn_positive")
         private val NEGATIVE_BUTTON = By.copy(CLICKABLE_BUTTON).res(PACKAGE_NAME, "btn_negative")
-        private val NEGATIVE_BUTTON_MULTIPLE_DEVICES = By.copy(CLICKABLE_BUTTON)
-                .res(PACKAGE_NAME, "btn_negative_multiple_devices")
+        private val NEGATIVE_BUTTON_MULTIPLE_DEVICES = By.pkg(PACKAGE_NAME)
+                .res(PACKAGE_NAME, "negative_multiple_devices_layout")
 
         private val DEVICE_LIST = By.pkg(PACKAGE_NAME)
                 .res(PACKAGE_NAME, "device_list")
