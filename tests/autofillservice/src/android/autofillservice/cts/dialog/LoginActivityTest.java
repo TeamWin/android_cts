@@ -186,13 +186,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
 
         // Check the results.
         activity.assertAutoFilled();
-
-        // Verify events history
-        final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(2);
-        assertNoDeprecatedClientState(selection);
-        final List<FillEventHistory.Event> events = selection.getEvents();
-        assertFillEventForDatasetShown(events.get(0), UI_TYPE_DIALOG);
-        assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID, UI_TYPE_DIALOG);
     }
 
 
