@@ -16,14 +16,11 @@
 
 package android.app.appsearch.cts.app;
 
-import static android.app.appsearch.AppSearchResult.RESULT_INVALID_ARGUMENT;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
 import android.app.appsearch.SearchSuggestionSpec;
-import android.app.appsearch.exceptions.AppSearchException;
 
 import com.google.common.collect.ImmutableList;
 
@@ -71,16 +68,15 @@ public class SearchSuggestionSpecCtsTest {
 
     @Test
     public void testDocumentIdFilterMustMatchNamespaceFilter() throws Exception {
-        AppSearchException e =
+        IllegalStateException e =
                 assertThrows(
-                        AppSearchException.class,
+                        IllegalStateException.class,
                         () ->
                                 new SearchSuggestionSpec.Builder(/*totalResultCount=*/ 123)
                                         .addFilterNamespaces("namespace1")
                                         .addFilterDocumentIds(
                                                 "namespace2", ImmutableList.of("doc1"))
                                         .build());
-        assertThat(e.getResultCode()).isEqualTo(RESULT_INVALID_ARGUMENT);
         assertThat(e)
                 .hasMessageThat()
                 .contains(
