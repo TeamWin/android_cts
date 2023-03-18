@@ -158,6 +158,7 @@ public class ItsService extends Service implements SensorEventListener {
     // Timeouts, in seconds.
     private static final int TIMEOUT_CALLBACK = 20;
     private static final int TIMEOUT_3A = 10;
+    private static final int TIMEOUT_AUTOFRAMING = 10;
 
     // Time given for background requests to warm up pipeline
     private static final long PIPELINE_WARMUP_TIME_MS = 2000;
@@ -194,6 +195,7 @@ public class ItsService extends Service implements SensorEventListener {
     public static final String EVCOMP_KEY = "evComp";
     public static final String AUTO_FLASH_KEY = "autoFlash";
     public static final String ZOOM_RATIO_KEY = "zoomRatio";
+    public static final String AUTOFRAMING_KEY = "autoframing";
     public static final String AUDIO_RESTRICTION_MODE_KEY = "mode";
     public static final int AVAILABILITY_TIMEOUT_MS = 10;
 
@@ -273,6 +275,7 @@ public class ItsService extends Service implements SensorEventListener {
     private CaptureRequest.Builder mCaptureRequestBuilder;
 
     private volatile ConditionVariable mInterlock3A = new ConditionVariable(true);
+    private volatile ConditionVariable mInterlockAutoframing = new ConditionVariable(true);
 
     final Object m3AStateLock = new Object();
     private volatile boolean mConvergedAE = false;
@@ -291,6 +294,8 @@ public class ItsService extends Service implements SensorEventListener {
                 new LinkedBlockingQueue<>();
     private Set<String> mUnavailablePhysicalCameras;
 
+    final Object mAutoframingStateLock = new Object();
+    private volatile boolean mConvergedAutoframing = false;
 
     class MySensorEvent {
         public Sensor sensor;
@@ -858,6 +863,8 @@ public class ItsService extends Service implements SensorEventListener {
                     doGetSensorEvents();
                 } else if ("do3A".equals(cmdObj.getString("cmdName"))) {
                     do3A(cmdObj);
+                } else if ("doAutoframing".equals(cmdObj.getString("cmdName"))) {
+                    doAutoframing(cmdObj);
                 } else if ("doCapture".equals(cmdObj.getString("cmdName"))) {
                     doCapture(cmdObj);
                 } else if ("doVibrate".equals(cmdObj.getString("cmdName"))) {
@@ -1799,7 +1806,7 @@ public class ItsService extends Service implements SensorEventListener {
 
                 synchronized(m3AStateLock) {
                     // If not converged yet, issue another capture request.
-                    if (       (mDoAE && (!triggeredAE || !mConvergedAE))
+                    if ((mDoAE && (!triggeredAE || !mConvergedAE))
                             || !mConvergedAWB
                             || (mDoAF && (!triggeredAF || !mConvergedAF))
                             || (mDoAE && mNeedsLockedAE && !mLockedAE)
@@ -1894,6 +1901,87 @@ public class ItsService extends Service implements SensorEventListener {
             mSocketRunnableObj.sendResponse("3aDone", "");
             // stop listener from updating 3A states
             threeAListener.stop();
+            if (mSession != null) {
+                mSession.close();
+            }
+        }
+    }
+
+    private void doAutoframing(JSONObject params) throws ItsException {
+        AutoframingResultListener autoframingListener = new AutoframingResultListener();
+        try {
+            CameraCharacteristics c = mCameraCharacteristics;
+            Size[] sizes = ItsUtils.getYuvOutputSizes(c);
+            int[] outputFormats = new int[1];
+            outputFormats[0] = ImageFormat.YUV_420_888;
+            Size[] outputSizes = new Size[1];
+            outputSizes[0] = sizes[0];
+            int width = outputSizes[0].getWidth();
+            int height = outputSizes[0].getHeight();
+
+            prepareImageReaders(outputSizes, outputFormats, /*inputSize*/null, /*inputFormat*/0,
+                    /*maxInputBuffers*/0);
+
+            List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>(1);
+            OutputConfiguration config =
+                    new OutputConfiguration(mOutputImageReaders[0].getSurface());
+            outputConfigs.add(config);
+            BlockingSessionCallback sessionListener = new BlockingSessionCallback();
+            mCamera.createCaptureSessionByOutputConfigurations(
+                    outputConfigs, sessionListener, mCameraHandler);
+            mSession = sessionListener.waitAndGetSession(TIMEOUT_IDLE_MS);
+
+            // Add a listener that just recycles buffers; they aren't saved anywhere.
+            ImageReader.OnImageAvailableListener readerListener =
+                    createAvailableListenerDropper();
+            mOutputImageReaders[0].setOnImageAvailableListener(readerListener, mSaveHandlers[0]);
+
+            double zoomRatio = params.optDouble(ZOOM_RATIO_KEY);
+
+            mInterlockAutoframing.open();
+            synchronized (mAutoframingStateLock) {
+                mConvergedAutoframing = false;
+            }
+
+            long tstart = System.currentTimeMillis();
+
+            // Keep issuing capture requests until autoframing has converged.
+            while (true) {
+                // Block until the next autoframing frame.
+                if (!mInterlockAutoframing.block(TIMEOUT_AUTOFRAMING * 1000)
+                        || System.currentTimeMillis() - tstart > TIMEOUT_AUTOFRAMING * 1000) {
+                    throw new ItsException(
+                            "Autoframing failed to converge after " + TIMEOUT_AUTOFRAMING
+                                    + " seconds.\n"
+                                    + "Autoframing converge state: " + mConvergedAutoframing + ".");
+                }
+                mInterlockAutoframing.close();
+
+                synchronized (mAutoframingStateLock) {
+                    if (!mConvergedAutoframing) {
+                        CaptureRequest.Builder req = mCamera.createCaptureRequest(
+                                CameraDevice.TEMPLATE_PREVIEW);
+                        req.set(CaptureRequest.CONTROL_AUTOFRAMING,
+                                CaptureRequest.CONTROL_AUTOFRAMING_ON);
+                        if (!Double.isNaN(zoomRatio)) {
+                            req.set(CaptureRequest.CONTROL_ZOOM_RATIO, (float) zoomRatio);
+                        }
+                        req.addTarget(mOutputImageReaders[0].getSurface());
+
+                        mSession.setRepeatingRequest(req.build(), autoframingListener,
+                                mResultHandler);
+                    } else {
+                        mSocketRunnableObj.sendResponse("autoframingConverged", "");
+                        Logt.i(TAG, "Autoframing converged");
+                        break;
+                    }
+                }
+            }
+        } catch (android.hardware.camera2.CameraAccessException e) {
+            throw new ItsException("Access error: ", e);
+        } finally {
+            mSocketRunnableObj.sendResponse("autoframingDone", "");
+            autoframingListener.stop();
             if (mSession != null) {
                 mSession.close();
             }
@@ -3485,6 +3573,51 @@ public class ItsService extends Service implements SensorEventListener {
 
         public void stop() {
             stopped = true;
+        }
+    }
+
+    private class AutoframingResultListener extends CaptureResultListener {
+        private volatile boolean mStopped = false;
+
+        @Override
+        public void onCaptureStarted(CameraCaptureSession session, CaptureRequest request,
+                long timestamp, long frameNumber) {
+        }
+
+        @Override
+        public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request,
+                TotalCaptureResult result) {
+            try {
+                if (mStopped) {
+                    return;
+                }
+
+                if (request == null || result == null) {
+                    throw new ItsException("Request/Result is invalid");
+                }
+
+                Logt.i(TAG, buildLogString(result));
+
+                synchronized (mAutoframingStateLock) {
+                    if (result.get(CaptureResult.CONTROL_AUTOFRAMING_STATE) != null) {
+                        mConvergedAutoframing = result.get(CaptureResult.CONTROL_AUTOFRAMING_STATE)
+                                == CaptureResult.CONTROL_AUTOFRAMING_STATE_CONVERGED;
+                    }
+                }
+                mInterlockAutoframing.open();
+            } catch (ItsException e) {
+                Logt.e(TAG, "Script error: ", e);
+            }
+        }
+
+        @Override
+        public void onCaptureFailed(CameraCaptureSession session, CaptureRequest request,
+                CaptureFailure failure) {
+            Logt.e(TAG, "Script error: capture failed");
+        }
+
+        public void stop() {
+            mStopped = true;
         }
     }
 

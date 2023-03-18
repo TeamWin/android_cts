@@ -394,6 +394,20 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
                 getRectsInScreenSpace(TEST_KEEP_CLEAR_RECTS, activity.getComponentName()));
         assertSameElementsEventually(expectedRectsOnDisplay,
                 () -> getKeepClearRectsOnDefaultDisplay());
+    }
+
+    @Test
+    public void testFinishingActivityRemovesItsKeepClearRects() throws Exception {
+        final List<Rect> prevKeepClearRectsOnDisplay = getKeepClearRectsOnDefaultDisplay();
+
+        mTestSession.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
+        final TestActivity activity = mTestSession.getActivity();
+
+        final Rect viewBounds = new Rect(0, 0, 60, 60);
+        final View v = createTestViewInActivity(activity, viewBounds);
+        mTestSession.runOnMainSyncAndWait(() -> v.setPreferKeepClearRects(TEST_KEEP_CLEAR_RECTS));
+        assertSameElementsEventually(TEST_KEEP_CLEAR_RECTS,
+                () -> getKeepClearRectsForActivity(activity));
 
         activity.finishAndRemoveTask();
         assertSameElementsEventually(prevKeepClearRectsOnDisplay,

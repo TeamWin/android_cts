@@ -130,9 +130,14 @@ public class ManagedProfileContactsAccessTest {
     public void setManagedProfileContactsAccess_validEmptyPolicy_works(
             @PackagePolicyParameters int testPolicy) {
         PackagePolicy policy = new PackagePolicy(testPolicy);
+
         mRemoteDevicePolicyManager
                 .setManagedProfileContactsAccessPolicy(policy);
 
+        assertThat(mRemoteDevicePolicyManager
+                .getManagedProfileContactsAccessPolicy().getPolicyType()).isEqualTo(testPolicy);
+        assertThat(mRemoteDevicePolicyManager
+                .getManagedProfileContactsAccessPolicy().getPackageNames()).isEmpty();
         assertThat(mRemoteDevicePolicyManager
                 .getManagedProfileContactsAccessPolicy()).isEqualTo(policy);
     }
@@ -146,9 +151,15 @@ public class ManagedProfileContactsAccessTest {
             @PackagePolicyParameters int testPolicy
     ) {
         PackagePolicy policy = new PackagePolicy(testPolicy, ONLY_PACKAGE_ONE);
+
         mRemoteDevicePolicyManager
                 .setManagedProfileContactsAccessPolicy(policy);
 
+        assertThat(mRemoteDevicePolicyManager
+                .getManagedProfileContactsAccessPolicy().getPolicyType()).isEqualTo(testPolicy);
+        assertThat(mRemoteDevicePolicyManager
+                .getManagedProfileContactsAccessPolicy().getPackageNames())
+                .isEqualTo(ONLY_PACKAGE_ONE);
         assertThat(mRemoteDevicePolicyManager
                 .getManagedProfileContactsAccessPolicy()).isEqualTo(policy);
     }

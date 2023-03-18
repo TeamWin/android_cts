@@ -16,8 +16,11 @@
 
 package android.app.cts.wallpapers;
 
+import static android.Manifest.permission.READ_WALLPAPER_INTERNAL;
 import static android.app.WallpaperManager.FLAG_LOCK;
 import static android.app.WallpaperManager.FLAG_SYSTEM;
+import static android.app.cts.wallpapers.WallpaperManagerTestUtils.WallpaperChange;
+import static android.app.cts.wallpapers.WallpaperManagerTestUtils.WallpaperState;
 import static android.app.cts.wallpapers.util.WallpaperTestUtils.isSimilar;
 import static android.opengl.cts.Egl14Utils.getMaxTextureSize;
 
@@ -40,7 +43,6 @@ import static org.mockito.Mockito.verify;
 import android.app.Activity;
 import android.app.WallpaperColors;
 import android.app.WallpaperManager;
-import android.app.cts.wallpapers.util.WallpaperTestUtils;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -113,6 +115,11 @@ public class WallpaperManagerTest {
 
     @Before
     public void setUp() throws Exception {
+
+        // grant READ_WALLPAPER_INTERNAL for all tests
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(READ_WALLPAPER_INTERNAL);
+
         mContext = InstrumentationRegistry.getTargetContext();
         mWallpaperManager = WallpaperManager.getInstance(mContext);
         assumeTrue("Device does not support wallpapers", mWallpaperManager.isWallpaperSupported());
@@ -146,6 +153,11 @@ public class WallpaperManagerTest {
 
     @After
     public void tearDown() throws Exception {
+
+        // drop READ_WALLPAPER_INTERNAL
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+
         if (mBroadcastReceiver != null) {
             mContext.unregisterReceiver(mBroadcastReceiver);
         }
@@ -1244,12 +1256,12 @@ public class WallpaperManagerTest {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         ArrayList<String> errorMessages = new ArrayList<>();
         runWithShellPermissionIdentity(() -> {
-            for (WallpaperTestUtils.WallpaperState state : WallpaperTestUtils.allPossibleStates()) {
+            for (WallpaperState state : WallpaperManagerTestUtils.allPossibleStates()) {
 
-                for (WallpaperTestUtils.WallpaperChange change: state.allPossibleChanges()) {
-                    WallpaperTestUtils.goToState(mWallpaperManager, state);
+                for (WallpaperChange change: state.allPossibleChanges()) {
+                    WallpaperManagerTestUtils.goToState(mWallpaperManager, state);
                     TestWallpaperService.Companion.resetCounts();
-                    WallpaperTestUtils.performChange(mWallpaperManager, change);
+                    WallpaperManagerTestUtils.performChange(mWallpaperManager, change);
 
                     int expectedCreateCount = state.expectedNumberOfLiveWallpaperCreate(change);
                     int actualCreateCount = TestWallpaperService.Companion.getCreateCount();

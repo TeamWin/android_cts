@@ -42,6 +42,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.os.UserManager;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -2478,6 +2479,7 @@ public final class DeviceState extends HarrierRule {
     }
 
     private UserReference createUser(com.android.bedstead.nene.users.UserType userType) {
+        ensureDoesNotHaveUserRestriction(UserManager.DISALLOW_ADD_USER, TestApis.users().system());
         ensureCanAddUser();
         try {
             UserReference user = TestApis.users().createUser()

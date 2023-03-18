@@ -37,11 +37,11 @@ import android.support.test.uiautomator.UiSelector
 import android.support.test.uiautomator.Until
 import android.util.Log
 import androidx.test.InstrumentationRegistry
-import com.android.compatibility.common.util.DeviceConfigStateManager
 import com.android.compatibility.common.util.ExceptionUtils.wrappingExceptions
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.ThrowingSupplier
 import com.android.compatibility.common.util.UiAutomatorUtils
 import com.android.compatibility.common.util.UiDumpUtils
 import com.android.compatibility.common.util.click
@@ -184,17 +184,18 @@ inline fun <T> withDeviceConfig(
     value: String,
     action: () -> T
 ): T {
-    val context = InstrumentationRegistry.getTargetContext()
-    val deviceConfigStateManager = DeviceConfigStateManager(context, namespace, name)
-    val oldValue = deviceConfigStateManager.get()
-    if (oldValue == value) {
-        return action()
-    }
+    val oldValue = runWithShellPermissionIdentity(ThrowingSupplier {
+        DeviceConfig.getProperty(namespace, name)
+    })
     try {
-        deviceConfigStateManager.set(value)
+        runWithShellPermissionIdentity {
+            DeviceConfig.setProperty(namespace, name, value, false /* makeDefault */)
+        }
         return action()
     } finally {
-        deviceConfigStateManager.set(oldValue)
+        runWithShellPermissionIdentity {
+            DeviceConfig.setProperty(namespace, name, oldValue, false /* makeDefault */)
+        }
     }
 }
 

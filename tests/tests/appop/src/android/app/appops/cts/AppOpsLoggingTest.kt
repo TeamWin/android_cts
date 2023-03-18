@@ -29,7 +29,6 @@ import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.OPSTR_GET_ACCOUNTS
 import android.app.AppOpsManager.OPSTR_GET_USAGE_STATS
 import android.app.AppOpsManager.OPSTR_READ_CONTACTS
-import android.app.AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE
 import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
 import android.app.AppOpsManager.OPSTR_SEND_SMS
 import android.app.AppOpsManager.OPSTR_WRITE_CONTACTS
@@ -38,8 +37,6 @@ import android.app.AppOpsManager.strOpToOp
 import android.app.AsyncNotedAppOp
 import android.app.PendingIntent
 import android.app.SyncNotedAppOp
-import android.app.WallpaperManager
-import android.app.WallpaperManager.FLAG_SYSTEM
 import android.bluetooth.BluetoothManager
 import android.bluetooth.cts.BTAdapterUtils.disableAdapter as disableBTAdapter
 import android.bluetooth.cts.BTAdapterUtils.enableAdapter as enableBTAdapter
@@ -853,23 +850,6 @@ class AppOpsLoggingTest {
     @Test
     fun openCameraWithDefaultAttribution() {
         openCamera(context)
-    }
-
-    /**
-     * Realistic end-to-end test for getting wallpaper
-     */
-    @Test
-    fun getWallpaper() {
-        val wallpaperManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
-                .getSystemService(WallpaperManager::class.java)
-        assumeTrue("Device does not support wallpaper",
-                wallpaperManager.isWallpaperSupported())
-
-        wallpaperManager.getWallpaperFile(FLAG_SYSTEM)
-
-        assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_EXTERNAL_STORAGE)
-        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
-        assertThat(noted[0].second.map { it.methodName }).contains("getWallpaper")
     }
 
     /**

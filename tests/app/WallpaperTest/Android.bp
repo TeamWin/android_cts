@@ -36,3 +36,12 @@ android_test {
     per_testcase_directory: true,
     sdk_version: "test_current",
 }
+
+java_test_helper_library {
+    name: "cts-wallpaper-util",
+
+    srcs: [
+        "src/**/util/*.java",
+        "src/**/util/*.kt",
+    ],
+}

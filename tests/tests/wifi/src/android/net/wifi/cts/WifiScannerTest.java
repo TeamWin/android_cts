@@ -20,15 +20,24 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiScanner;
+import android.net.wifi.WifiSsid;
 import android.os.Build;
 import android.os.Parcel;
 
 import androidx.test.filters.SdkSuppress;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 public class WifiScannerTest extends WifiJUnit3TestBase {
+
+    private static final String TEST_SSID = "TEST_SSID";
+    public static final String TEST_BSSID = "04:ac:fe:45:34:10";
+    public static final String TEST_CAPS = "CCMP";
+    public static final int TEST_LEVEL = -56;
+    public static final int TEST_FREQUENCY = 2412;
+    public static final long TEST_TIMESTAMP = 4660L;
 
     @Override
     protected void setUp() throws Exception {
@@ -115,5 +124,32 @@ public class WifiScannerTest extends WifiJUnit3TestBase {
         pnoSettings.setScanIntervalMultiplier(4);
         assertEquals(3, pnoSettings.getScanIterations());
         assertEquals(4, pnoSettings.getScanIntervalMultiplier());
+    }
+
+    public void testParcelableScanData() {
+        ScanResult scanResult = new ScanResult();
+        scanResult.SSID = TEST_SSID;
+        scanResult.setWifiSsid(WifiSsid.fromBytes(TEST_SSID.getBytes(StandardCharsets.UTF_8)));
+        scanResult.BSSID = TEST_BSSID;
+        scanResult.capabilities = TEST_CAPS;
+        scanResult.level = TEST_LEVEL;
+        scanResult.frequency = TEST_FREQUENCY;
+        scanResult.timestamp = TEST_TIMESTAMP;
+
+        WifiScanner.ScanData scanData = new WifiScanner.ScanData(0, 0,
+                new ScanResult[]{scanResult});
+        WifiScanner.ParcelableScanData parcelableScanData = new WifiScanner
+                .ParcelableScanData(new WifiScanner.ScanData[]{scanData});
+        WifiScanner.ScanData[] result = parcelableScanData.getResults();
+        assertThat(result.length).isEqualTo(1);
+        ScanResult scanResult1 = result[0].getResults()[0];
+
+        assertThat(scanResult1.SSID).isEqualTo(TEST_SSID);
+        assertThat(scanResult1.getWifiSsid()).isEqualTo(scanResult.getWifiSsid());
+        assertThat(scanResult1.BSSID).isEqualTo(TEST_BSSID);
+        assertThat(scanResult1.capabilities).isEqualTo(TEST_CAPS);
+        assertThat(scanResult1.level).isEqualTo(TEST_LEVEL);
+        assertThat(scanResult1.frequency).isEqualTo(TEST_FREQUENCY);
+        assertThat(scanResult1.timestamp).isEqualTo(TEST_TIMESTAMP);
     }
 }

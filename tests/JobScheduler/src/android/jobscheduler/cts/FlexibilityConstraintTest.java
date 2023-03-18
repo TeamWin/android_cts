@@ -19,10 +19,8 @@ package android.jobscheduler.cts;
 import android.app.job.JobInfo;
 import android.content.pm.PackageManager;
 import android.os.UserHandle;
-import android.platform.test.annotations.RequiresDevice;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
-import android.util.Log;
 
 import androidx.test.uiautomator.UiDevice;
 
@@ -33,7 +31,6 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
     private static final String TAG = "FlexibilityConstraintTest";
     public static final int FLEXIBLE_JOB_ID = FlexibilityConstraintTest.class.hashCode();
     private static final long FLEXIBILITY_TIMEOUT_MILLIS = 5_000;
-    private JobInfo.Builder mBuilder;
     private UiDevice mUiDevice;
 
     // Store previous values.
@@ -41,15 +38,12 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
     private String mPreviousLowPowerTriggerLevel;
 
     private DeviceConfigStateHelper mAlarmManagerDeviceConfigStateHelper;
-    private NetworkingHelper mNetworkingHelper;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        mBuilder = new JobInfo.Builder(FLEXIBLE_JOB_ID, kJobServiceComponent);
         mUiDevice = UiDevice.getInstance(getInstrumentation());
-        mNetworkingHelper = new NetworkingHelper(getInstrumentation(), getContext());
 
         mAlarmManagerDeviceConfigStateHelper =
                 new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
@@ -93,8 +87,6 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         Settings.Global.putString(getContext().getContentResolver(),
                 Settings.Global.LOW_POWER_MODE_TRIGGER_LEVEL, mPreviousLowPowerTriggerLevel);
 
-        mNetworkingHelper.tearDown();
-
         super.tearDown();
     }
 
@@ -107,7 +99,10 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         }
         // Make it so that constraints won't drop in time.
         mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints", "25,30,35,50");
-        scheduleJobToExecute();
+        kTestEnvironment.setExpectedExecutions(1);
+        // TODO(236261941): add prefer*Constraint* APIs
+        JobInfo job = new JobInfo.Builder(FLEXIBLE_JOB_ID, kJobServiceComponent).build();
+        mJobScheduler.schedule(job);
 
         // Job should fire even though constraints haven't dropped.
         runJob();
@@ -115,226 +110,31 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
                 kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
     }
 
-    /**
-     * Schedule a job to run, don't satisfy any constraints, then verify it runs only when no
-     * constraints are required.
-     */
-    public void testNoConstraintSatisfied() throws Exception {
+    public void testNoConstraintSatisfied_noPreferred() throws Exception {
         if (!deviceSupportsFlexConstraints()) {
             return;
         }
-        mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints", "5,6,7,25");
-        Thread.sleep(1_000);
-        scheduleJobToExecute();
-
-        // Wait for all constraints to drop.
-        assertFalse("Job fired before flexible constraints dropped",
-                kTestEnvironment.awaitExecution(3000));
-
-        // Remaining time before all constraints should have dropped.
-        Thread.sleep(4000);
+        satisfySystemWideConstraints(false, false, false);
+        kTestEnvironment.setExpectedExecutions(1);
+        JobInfo job = new JobInfo.Builder(FLEXIBLE_JOB_ID, kJobServiceComponent).build();
+        mJobScheduler.schedule(job);
         runJob();
 
-        assertTrue("Job with flexible constraint did not fire when no constraints were required",
-                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
-    }
-
-    /**
-     * Schedule a job to run, verify that if all constraints are satisfied that it runs.
-     */
-    public void testAllConstraintsSatisfied() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
-            return;
-        }
-        scheduleJobToExecute();
-        assertJobNotReady();
-
-        satisfyAllSystemWideConstraints();
-
-        runJob();
-        assertTrue("Job with flexible constraint did not fire when all constraints were satisfied",
+        assertTrue("Job without flexible constraint did not fire when no constraints were required",
                 kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
     }
 
     /**
      * Schedule an expedited job, verify it runs immediately.
      */
-    public void testExpeditedJobByPassFlexibility() throws Exception {
-        mBuilder.setExpedited(true);
-        scheduleJobToExecute();
+    public void testExpeditedJobBypassFlexibility() throws Exception {
+        JobInfo job = new JobInfo.Builder(FLEXIBLE_JOB_ID, kJobServiceComponent)
+                .setExpedited(true)
+                .build();
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(job);
         runJob();
         assertTrue("Expedited job did not start.",
-                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
-    }
-
-    /**
-     * Set the deadline proximity limit to close to a jobs enqueue time, verify it runs without
-     * satisfied constraints past that limit.
-     */
-    public void testCutoffWindowRemovesConstraints() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
-            return;
-        }
-        mDeviceConfigStateHelper.set("fc_flexibility_deadline_proximity_limit_ms", "95000");
-        // Let Flexibility Controller update.
-        Thread.sleep(1_000L);
-
-        scheduleJobToExecute();
-        assertJobNotReady();
-
-        // Wait for constraints to drop.
-        Thread.sleep(5_000L);
-
-        runJob();
-        assertTrue("Job with flexible constraint did not fire when the deadline was close",
-                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
-    }
-
-    /**
-     * Schedule a job, wait for one constraint to be required, verify the job runs if the device
-     * becomes idle.
-     */
-    public void testIdleSatisfiesFlexibleConstraints() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
-            return;
-        }
-        scheduleJobToExecute();
-        assertJobNotReady();
-
-        // Wait for all but one constraint to drop.
-        Thread.sleep(6_000);
-        toggleIdle(true);
-
-        runJob();
-        assertTrue("Job with flexible constraint did not fire"
-                        + " when idle was satisfied",
-                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
-    }
-
-    /**
-     * Schedule a job, wait for one constraint to be required, verify the job runs if the device
-     * is charging.
-     */
-    public void testChargingSatisfiesFlexibleConstraints() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
-            return;
-        }
-        scheduleJobToExecute();
-        assertJobNotReady();
-
-        // Wait for all but one constraint to drop.
-        Thread.sleep(6_000);
-        satisfySystemWideConstraints(true, false, false);
-
-        runJob();
-        assertTrue("Job with flexible constraint did not fire when charging was satisfied",
-                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
-    }
-
-    /**
-     * Schedule a job, wait for one constraint to be required, verify the job runs if the device
-     * is battery not low.
-     */
-    public void testBatteryNotLowSatisfiesFlexibleConstraints() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
-            return;
-        }
-        scheduleJobToExecute();
-        assertJobNotReady();
-
-        // Wait for all but one constraint to drop.
-        Thread.sleep(6_000);
-
-        assertJobNotReady();
-        satisfySystemWideConstraints(false, true, false);
-
-        runJob();
-        assertTrue("Job with flexible constraint did not fire when battery not low was satisfied",
-                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
-    }
-
-    /**
-     * Schedule a job that requires any network, wait for one constraint to be required,
-     * verify the job runs if the device is connected to wifi.
-     */
-    @RequiresDevice // Emulators don't always have access to wifi/network
-    public void testUnmeteredConnectionSatisfiesFlexibleConstraints() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
-            return;
-        }
-        if (mNetworkingHelper.hasEthernetConnection()) {
-            Log.d(TAG, "Can't run test with an active ethernet connection");
-            return;
-        }
-        if (!mNetworkingHelper.hasWifiFeature()) {
-            Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
-            return;
-        }
-        mNetworkingHelper.ensureSavedWifiNetwork();
-        mNetworkingHelper.setWifiMeteredState(true);
-
-        mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
-        scheduleJobToExecute();
-
-        assertJobNotReady();
-
-        // Wait for all but one constraint to drop.
-        Thread.sleep(12_000);
-
-        assertJobNotReady();
-        mNetworkingHelper.setWifiMeteredState(false);
-        Thread.sleep(1_000);
-
-        runJob();
-
-        assertTrue("Job with flexible constraint did not fire when connectivity was satisfied",
-                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
-    }
-
-    /**
-     * Schedule a job that requires no network.
-     * Verify it only requires 3 flexible constraints.
-     */
-    public void testPreferUnMetered_RequiredNone() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
-            return;
-        }
-        mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE);
-        scheduleJobToExecute();
-        assertJobNotReady();
-
-        satisfyAllSystemWideConstraints();
-
-        runJob();
-        assertTrue("Job with flexible constraint did not fire when wifi was not required",
-                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
-    }
-
-    /**
-     * Schedule a job that requires an unmetered network.
-     * Verify it only requires 3 flexible constraints.
-     */
-    @RequiresDevice // Emulators don't always have access to wifi/network
-    public void testPreferUnMetered_RequiredUnMetered() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
-            return;
-        }
-        if (!mNetworkingHelper.hasWifiFeature()) {
-            Log.d(TAG, "Skipping test that requires WiFi.");
-            return;
-        }
-        mNetworkingHelper.ensureSavedWifiNetwork();
-        mNetworkingHelper.setWifiMeteredState(false);
-        mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);
-        scheduleJobToExecute();
-        assertJobNotReady();
-        // Wait for one constraint to drop.
-        Thread.sleep(3_000);
-        assertJobNotReady();
-        satisfyAllSystemWideConstraints();
-
-        runJob();
-        assertTrue("Job with flexible constraint did not fire when wifi was not required",
                 kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
     }
 
@@ -359,11 +159,6 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
     private void toggleIdle(boolean state) throws Exception {
         toggleScreenOn(!state);
         IdleConstraintTest.triggerIdleMaintenance(mUiDevice);
-    }
-
-    private void scheduleJobToExecute() {
-        kTestEnvironment.setExpectedExecutions(1);
-        mJobScheduler.schedule(mBuilder.build());
     }
 
     void assertJobNotReady() throws Exception {

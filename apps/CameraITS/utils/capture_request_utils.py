@@ -21,7 +21,7 @@ _COMMON_IMG_ARS = (4/3, 16/9)
 _COMMON_IMG_ARS_ATOL = 0.01
 _MAX_YUV_SIZE = (1920, 1080)
 _MIN_YUV_SIZE = (640, 360)
-_VGA_W, _VGA_H = 640, 360
+_VGA_W, _VGA_H = 640, 480
 _CAPTURE_INTENT_STILL_CAPTURE = 2
 _AE_MODE_ON_AUTO_FLASH = 2
 _CAPTURE_INTENT_PREVIEW = 1
@@ -44,7 +44,8 @@ def is_common_aspect_ratio(size):
   return False
 
 
-def auto_capture_request(linear_tonemap=False, props=None, do_af=True):
+def auto_capture_request(linear_tonemap=False, props=None, do_af=True,
+                         do_autoframing=False, zoom_ratio=None):
   """Returns a capture request with everything set to auto.
 
   Args:
@@ -52,6 +53,8 @@ def auto_capture_request(linear_tonemap=False, props=None, do_af=True):
    props: [Optional] object from its_session_utils.get_camera_properties().
           Must present when linear_tonemap is True.
    do_af: [Optional] boolean whether af mode should be active.
+   do_autoframing: [Optional] boolean whether autoframing should be active.
+   zoom_ratio: [Optional] zoom ratio to be set in the capture request.
 
   Returns:
     Auto capture request, ready to be passed to the
@@ -66,10 +69,13 @@ def auto_capture_request(linear_tonemap=False, props=None, do_af=True):
       'android.shading.mode': 1,
       'android.tonemap.mode': 1,
       'android.lens.opticalStabilizationMode': 0,
-      'android.control.videoStabilizationMode': 0
+      'android.control.videoStabilizationMode': 0,
+      'android.control.autoframing': 1 if do_autoframing else 0
   }
   if not do_af:
     req['android.lens.focusDistance'] = 0.0
+  if zoom_ratio:
+    req['android.control.zoomRatio'] = zoom_ratio
   if linear_tonemap:
     if props is None:
       raise AssertionError('props is None with linear_tonemap.')
@@ -411,16 +417,19 @@ def get_near_vga_yuv_format(props, match_ar=None):
     fmt: an output format specification for the smallest possible yuv format
            for this device.
   """
-  size = get_available_output_sizes('yuv', props, match_ar_size=match_ar)[-1]
-  fmt = {'format': 'yuv', 'width': size[0], 'height': size[1]}
-  fmt_area = fmt['width'] * fmt['height']
+  sizes = get_available_output_sizes('yuv', props, match_ar_size=match_ar)
+  logging.debug('Available YUV sizes: %s', sizes)
+  max_area = _MAX_YUV_SIZE[1] * _MAX_YUV_SIZE[0]
+  min_area = _MIN_YUV_SIZE[1] * _MIN_YUV_SIZE[0]
 
-  if ((fmt['width'] / fmt['height']) not in _COMMON_IMG_ARS or
-      fmt_area < _MIN_YUV_SIZE[1] * _MIN_YUV_SIZE[0] or
-      fmt_area > _MAX_YUV_SIZE[1] * _MAX_YUV_SIZE[0]):
-    fmt['width'], fmt['height'] = _VGA_W, _VGA_H
-
+  fmt = {'format': 'yuv', 'width': _VGA_W, 'height': _VGA_H}
+  for size in sizes:
+    fmt_area = size[0]*size[1]
+    if fmt_area < min_area or fmt_area > max_area:
+      continue
+    fmt['width'], fmt['height'] = size[0], size[1]
   logging.debug('YUV format selected: %s', fmt)
+
   return fmt
 
 

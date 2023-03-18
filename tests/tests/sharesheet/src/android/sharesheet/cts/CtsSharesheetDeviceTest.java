@@ -55,6 +55,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -73,6 +74,7 @@ import java.util.stream.Collectors;
  * TODO: Add JavaDoc
  */
 @RunWith(AndroidJUnit4.class)
+@Ignore("b/273776367 background activity starting constraints interfering with the test")
 public class CtsSharesheetDeviceTest {
 
     public static final String TAG = CtsSharesheetDeviceTest.class.getSimpleName();
@@ -113,7 +115,6 @@ public class CtsSharesheetDeviceTest {
             mBlacklistLabel,
             mChooserTargetServiceLabel, mSharingShortcutLabel, mExtraChooserTargetsLabelBase,
             mExtraInitialIntentsLabelBase, mPreviewTitle, mPreviewText;
-    private String mCustomActionLabel;
     private Set<ComponentName> mTargetsToExclude;
 
     private boolean mMeetsResolutionRequirements;
@@ -173,7 +174,6 @@ public class CtsSharesheetDeviceTest {
         mExtraInitialIntentsLabelBase = mContext.getString(R.string.test_extra_initial_intents_label);
         mPreviewTitle = mContext.getString(R.string.test_preview_title);
         mPreviewText = mContext.getString(R.string.test_preview_text);
-        mCustomActionLabel = mContext.getString(R.string.test_custom_action_label);
         // We want to only show targets in the sheet put forth by the CTS test. In order to do that
         // a special type is used but this doesn't prevent apps registered against */* from showing.
         // To hide */* targets, search for all matching targets and exclude them. Requires
@@ -201,7 +201,7 @@ public class CtsSharesheetDeviceTest {
         // We need to know the package used by the system Sharesheet so we can properly
         // wait for the UI to load. Do this by resolving which activity consumes the share intent.
         // There must be a system Sharesheet or fail, otherwise fetch its the package.
-        Intent shareIntent = createShareIntent(false, 0, 0, null);
+        Intent shareIntent = createShareIntent(false, 0, 0);
         ResolveInfo shareRi = pm.resolveActivity(shareIntent, PackageManager.MATCH_DEFAULT_ONLY);
 
         assertNotNull(shareRi);
@@ -233,8 +233,7 @@ public class CtsSharesheetDeviceTest {
         runAndExecuteCleanupBeforeAnyThrow(() -> {
             launchSharesheet(createShareIntent(false /* do not test preview */,
                     0 /* do not test EIIs */,
-                    0 /* do not test ECTs */,
-                    null /*add custom action*/));
+                    0 /* do not test ECTs */));
             doesExcludeComponents();
             showsApplicationLabel();
             showsAppAndActivityLabel();
@@ -260,8 +259,7 @@ public class CtsSharesheetDeviceTest {
             addShortcuts(1);
             launchSharesheet(createShareIntent(false /* do not test preview */,
                     MAX_EXTRA_INITIAL_INTENTS_SHOWN + 1 /* test EIIs at 1 above cap */,
-                    MAX_EXTRA_CHOOSER_TARGETS_SHOWN + 1 /* test ECTs at 1 above cap */,
-                    null /*add custom action*/));
+                    MAX_EXTRA_CHOOSER_TARGETS_SHOWN + 1 /* test ECTs at 1 above cap */));
             // Note: EII and ECT cap is not tested here
 
             showsExtraInitialIntents();
@@ -284,8 +282,7 @@ public class CtsSharesheetDeviceTest {
         runAndExecuteCleanupBeforeAnyThrow(() -> {
             launchSharesheet(createShareIntent(true /* test content preview */,
                     0 /* do not test EIIs */,
-                    0 /* do not test ECTs */,
-                    null /*add custom action*/));
+                    0 /* do not test ECTs */));
             showsContentPreviewTitle();
             showsContentPreviewText();
         }, () -> closeSharesheet());
@@ -357,7 +354,7 @@ public class CtsSharesheetDeviceTest {
                 PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
 
         runAndExecuteCleanupBeforeAnyThrow(() -> {
-            Intent shareIntent = createShareIntent(false, 0, 0, null);
+            Intent shareIntent = createShareIntent(false, 0, 0);
             shareIntent.putExtra(Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER,
                     refinement.getIntentSender());
             Intent alternateIntent = new Intent(Intent.ACTION_SEND);
@@ -404,7 +401,7 @@ public class CtsSharesheetDeviceTest {
         });
 
         runAndExecuteCleanupBeforeAnyThrow(() -> {
-            Intent shareIntent = createShareIntent(false, 0, 0, null);
+            Intent shareIntent = createShareIntent(false, 0, 0);
             launchSharesheet(shareIntent);
             findTextContains(mSharingShortcutLabel).click();
             assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
@@ -482,7 +479,7 @@ public class CtsSharesheetDeviceTest {
                 PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
 
         runAndExecuteCleanupBeforeAnyThrow(() -> {
-            Intent shareIntent = createShareIntent(false, 0, 0, null);
+            Intent shareIntent = createShareIntent(false, 0, 0);
             shareIntent.putExtra(Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER,
                     refinement.getIntentSender());
             Intent alternateIntent = new Intent(Intent.ACTION_SEND);
@@ -538,7 +535,7 @@ public class CtsSharesheetDeviceTest {
 
 
         runAndExecuteCleanupBeforeAnyThrow(() -> {
-            Intent shareIntent = createShareIntent(false, 0, 0, null);
+            Intent shareIntent = createShareIntent(false, 0, 0);
             Intent alternateIntent = new Intent(Intent.ACTION_SEND);
             alternateIntent.setType(CTS_ALTERNATE_DATA_TYPE);
             shareIntent.putExtra(Intent.EXTRA_ALTERNATE_INTENTS, new Intent[] {alternateIntent});
@@ -580,7 +577,7 @@ public class CtsSharesheetDeviceTest {
                 new ComponentName(mPkg, mPkg + ".CtsSharesheetDeviceActivity"),
                 targetIntentExtras);
 
-        Intent shareIntent = createShareIntent(false, 0, 0, null);
+        Intent shareIntent = createShareIntent(false, 0, 0);
         shareIntent.putExtra(Intent.EXTRA_CHOOSER_TARGETS, new ChooserTarget[] { chooserTarget });
 
         runAndExecuteCleanupBeforeAnyThrow(() -> {
@@ -655,7 +652,7 @@ public class CtsSharesheetDeviceTest {
                 new ComponentName(mPkg, mPkg + ".CtsSharesheetDeviceActivity"),
                 targetIntentExtras);
 
-        Intent shareIntent = createShareIntent(false, 0, 0, null);
+        Intent shareIntent = createShareIntent(false, 0, 0);
         shareIntent.putExtra(Intent.EXTRA_CHOOSER_TARGETS, new ChooserTarget[] { chooserTarget });
         shareIntent.putExtra(Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER,
                 refinement.getIntentSender());
@@ -707,12 +704,30 @@ public class CtsSharesheetDeviceTest {
                 1,
                 new Intent(CHOOSER_CUSTOM_ACTION_BROADCAST_ACTION),
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent fakeCustomAction = PendingIntent.getBroadcast(
+                mContext,
+                1,
+                new Intent("some_action"),
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
+        Intent shareIntent = createShareIntent(true /* test content preview */,
+                0 /* do not test EIIs */,
+                0 /* do not test ECTs */);
+        // Test clicking the fifth action (to ensure it shows up to the max of 5).
+        ChooserAction[] actions = new ChooserAction[] {
+                createChooserAction("act1", fakeCustomAction),
+                createChooserAction("act2", fakeCustomAction),
+                createChooserAction("act3", fakeCustomAction),
+                createChooserAction("act4", fakeCustomAction),
+                createChooserAction("act5", customAction),
+        };
+        shareIntent.putExtra(Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS, actions);
         runAndExecuteCleanupBeforeAnyThrow(() -> {
-            launchSharesheet(createShareIntent(true /* test content preview */,
-                    0 /* do not test EIIs */,
-                    0 /* do not test ECTs */,
-                    customAction /*add custom action*/));
-            performCustomActionClick();
+            launchSharesheet(shareIntent);
+            // Ensure all the actions are shown, click the last one.
+            for (int i = 0; i < 4; i++) {
+                waitAndAssertTextContains(actions[i].getLabel().toString());
+            }
+            clickText(actions[4].getLabel().toString());
             assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
         }, () -> {
             mContext.unregisterReceiver(customActionReceiver);
@@ -742,13 +757,13 @@ public class CtsSharesheetDeviceTest {
 
         Intent shareIntent = createShareIntent(true /* test content preview */,
                 0 /* do not test EIIs */,
-                0 /* do not test ECTs */,
-                null /*add custom action*/);
+                0 /* do not test ECTs */);
+        String modifyShareLabel = "Modify Share";
         ChooserAction modifyShareAction = new ChooserAction.Builder(
                 Icon.createWithResource(
                         mInstrumentation.getContext().getPackageName(),
                         R.drawable.black_64x64),
-                mCustomActionLabel,
+                modifyShareLabel,
                 modifyShare
             ).build();
         shareIntent.putExtra(Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION, modifyShareAction);
@@ -760,7 +775,7 @@ public class CtsSharesheetDeviceTest {
                             new IntentFilter(CHOOSER_CUSTOM_ACTION_BROADCAST_ACTION),
                             Context.RECEIVER_EXPORTED);
                     launchSharesheet(shareIntent);
-                    performCustomActionClick();
+                    clickText(modifyShareLabel);
                     assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
                 },
                 () -> {
@@ -885,9 +900,9 @@ public class CtsSharesheetDeviceTest {
         validateChosenComponentIntent(response[0], clickedComponent);
     }
 
-    private void performCustomActionClick() {
+    private void clickText(String label) {
         UiObject2 customAction = mSharesheet.wait(
-                Until.findObject(By.textContains(mCustomActionLabel)),
+                Until.findObject(By.textContains(label)),
                 WAIT_AND_ASSERT_FOUND_TIMEOUT_MS);
         assertNotNull(customAction);
         Log.d(TAG, "clicking on the custom action");
@@ -1028,8 +1043,7 @@ public class CtsSharesheetDeviceTest {
     private Intent createShareIntent(
             boolean contentPreview,
             int numExtraInitialIntents,
-            int numExtraChooserTargets,
-            PendingIntent customAction) {
+            int numExtraChooserTargets) {
         Intent intent = createMatchingIntent();
 
         if (contentPreview) {
@@ -1086,21 +1100,17 @@ public class CtsSharesheetDeviceTest {
         // Ensure the sheet will launch directly from the test
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        if (customAction != null) {
-            shareIntent.putExtra(
-                    Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS,
-                    new ChooserAction[] {
-                            new ChooserAction.Builder(
-                                    Icon.createWithResource(
-                                            mInstrumentation.getContext().getPackageName(),
-                                            R.drawable.black_64x64),
-                                    mCustomActionLabel,
-                                    customAction
-                            ).build()
-                    });
-        }
-
         return shareIntent;
+    }
+
+    private ChooserAction createChooserAction(String label, PendingIntent pendingIntent) {
+        return new ChooserAction.Builder(
+                Icon.createWithResource(
+                        mInstrumentation.getContext().getPackageName(),
+                        R.drawable.black_64x64),
+                label,
+                pendingIntent
+        ).build();
     }
 
     private String getExtraChooserTargetLabel(int position) {

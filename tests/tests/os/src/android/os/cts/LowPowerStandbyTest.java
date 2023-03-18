@@ -20,7 +20,9 @@ import static android.os.PowerManager.FEATURE_WAKE_ON_LAN_IN_LOW_POWER_STANDBY;
 import static android.os.PowerManager.LOW_POWER_STANDBY_ALLOWED_REASON_ONGOING_CALL;
 import static android.os.PowerManager.LOW_POWER_STANDBY_ALLOWED_REASON_TEMP_POWER_SAVE_ALLOWLIST;
 import static android.os.PowerManager.LOW_POWER_STANDBY_ALLOWED_REASON_VOICE_INTERACTION;
+import static android.os.PowerManager.LowPowerStandbyPortDescription.MATCH_PORT_LOCAL;
 import static android.os.PowerManager.LowPowerStandbyPortDescription.MATCH_PORT_REMOTE;
+import static android.os.PowerManager.LowPowerStandbyPortDescription.PROTOCOL_TCP;
 import static android.os.PowerManager.LowPowerStandbyPortDescription.PROTOCOL_UDP;
 import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
 import static android.os.PowerManager.SYSTEM_WAKELOCK;
@@ -75,6 +77,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -619,6 +622,38 @@ public class LowPowerStandbyTest {
 
         assertThat(mPowerManager.getActiveLowPowerStandbyPorts()).contains(PORT_DESC_1);
         standbyPorts.release();
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.os.PowerManager.LowPowerStandbyPortDescription#getProtocol",
+            "android.os.PowerManager.LowPowerStandbyPortDescription#getPortMatcher",
+            "android.os.PowerManager.LowPowerStandbyPortDescription#getPortNumber",
+            "android.os.PowerManager.LowPowerStandbyPortDescription#getLocalAddress"
+    })
+    public void testPortDescriptionGetters() throws Exception {
+        int protocol = PROTOCOL_UDP;
+        int portMatcher = MATCH_PORT_LOCAL;
+        int portNumber = 5555;
+        LowPowerStandbyPortDescription portDesc =
+                new LowPowerStandbyPortDescription(protocol, portMatcher, portNumber);
+
+        assertThat(portDesc.getProtocol()).isEqualTo(protocol);
+        assertThat(portDesc.getPortMatcher()).isEqualTo(portMatcher);
+        assertThat(portDesc.getPortNumber()).isEqualTo(portNumber);
+        assertThat(portDesc.getLocalAddress()).isEqualTo(null);
+
+        protocol = PROTOCOL_TCP;
+        portMatcher = MATCH_PORT_REMOTE;
+        portNumber = 433;
+        InetAddress localAddress = InetAddress.getByName("192.168.5.5");
+        portDesc =
+                new LowPowerStandbyPortDescription(protocol, portMatcher, portNumber, localAddress);
+
+        assertThat(portDesc.getProtocol()).isEqualTo(protocol);
+        assertThat(portDesc.getPortMatcher()).isEqualTo(portMatcher);
+        assertThat(portDesc.getPortNumber()).isEqualTo(portNumber);
+        assertThat(portDesc.getLocalAddress()).isEqualTo(localAddress);
     }
 
     @Test
