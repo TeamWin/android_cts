@@ -22,7 +22,7 @@ import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.WindowManagerState.STATE_INITIALIZING;
 import static android.server.wm.backgroundactivity.common.CommonComponents.EVENT_NOTIFIER_EXTRA;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -73,6 +73,7 @@ import androidx.test.uiautomator.Until;
 import com.android.compatibility.common.util.AppOpsUtils;
 
 import org.junit.Assume;
+import org.junit.AssumptionViolatedException;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -784,9 +785,15 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // Owner (DO) creation in a similar manner as that of production flow.
         removeGuestUser();
 
-        String cmdResult = runShellCommand("dpm set-device-owner --user 0 "
+        try {
+            String cmdResult = runShellCommandOrThrow("dpm set-device-owner --user 0 "
                 + APP_A.SIMPLE_ADMIN_RECEIVER.flattenToString());
-        assertThat(cmdResult).contains("Success");
+            assertThat(cmdResult).contains("Success");
+        } catch (AssertionError e) {
+            assertThat(e).hasMessageThat().contains(
+                    "Not allowed to set the device owner because this device has already paired");
+            throw new AssumptionViolatedException("This test needs to be able to set device owner");
+        }
         EventReceiver receiver = new EventReceiver(
                 Event.APP_A_START_BACKGROUND_ACTIVITY_BROADCAST_RECEIVED);
         Intent intent = new Intent();
@@ -870,7 +877,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     public void testManageSpacePendingIntentNoBalAllowed() throws Exception {
         setupPendingIntentService(APP_A);
         runWithShellPermissionIdentity(() -> {
-            runShellCommand("cmd appops set " + APP_A.APP_PACKAGE_NAME
+            runShellCommandOrThrow("cmd appops set " + APP_A.APP_PACKAGE_NAME
                     + " android:manage_external_storage allow");
         });
         // Make sure AppA paused at least 10s so it can't start activity because of grace period.
