@@ -21,7 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.os.Parcel;
-import android.service.voice.DetectorFailure;
+import android.service.voice.FailureSuggestedAction;
 import android.service.voice.VisualQueryDetectionServiceFailure;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -67,7 +67,7 @@ public class VisualQueryDetectionServiceFailureTest {
                 new VisualQueryDetectionServiceFailure(TEST_ERROR_CODE, TEST_ERROR_MESSAGE);
 
         assertThat(visualQueryDetectionServiceFailure.getSuggestedAction()).isEqualTo(
-                DetectorFailure.SUGGESTED_ACTION_RECREATE_DETECTOR);
+                FailureSuggestedAction.RECREATE_DETECTOR);
     }
 
     @Test
