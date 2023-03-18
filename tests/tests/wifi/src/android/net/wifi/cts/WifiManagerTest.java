@@ -6421,15 +6421,17 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     public void testQosPolicyParamsBuilder() throws Exception {
         final int policyId = 5;
         final int direction = QosPolicyParams.DIRECTION_DOWNLINK;
-        final int ipVersion = QosPolicyParams.IP_VERSION_4;
+        final int ipVersion = QosPolicyParams.IP_VERSION_6;
         final int dscp = 12;
         final int userPriority = QosPolicyParams.USER_PRIORITY_VIDEO_LOW;
-        final MacAddress srcAddr = MacAddress.fromString("00:11:22:33:44:55");
-        final MacAddress dstAddr = MacAddress.fromString("aa:bb:cc:dd:ee:ff");
+        final String ipv6Address = "2001:db8:3333:4444:5555:6666:7777:8888";
+        final InetAddress srcAddr = InetAddress.getByName(ipv6Address);
+        final InetAddress dstAddr = InetAddress.getByName(ipv6Address);
         final int srcPort = 123;
         final int protocol = QosPolicyParams.PROTOCOL_TCP;
         final int dstPort = 17;
         final int[] dstPortRange = new int[]{15, 22};
+        final byte[] flowLabel = new byte[]{17, 18, 19};
 
         // Invalid parameter
         assertThrows("Invalid dscp should trigger an exception", IllegalArgumentException.class,
@@ -6455,6 +6457,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         .setSourcePort(srcPort)
                         .setProtocol(protocol)
                         .setDestinationPort(dstPort)
+                        .setFlowLabel(flowLabel)
                         .build();
         assertEquals(policyId, downlinkParams.getPolicyId());
         assertEquals(QosPolicyParams.DIRECTION_DOWNLINK, downlinkParams.getDirection());
@@ -6465,6 +6468,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         assertEquals(srcPort, downlinkParams.getSourcePort());
         assertEquals(protocol, downlinkParams.getProtocol());
         assertEquals(dstPort, downlinkParams.getDestinationPort());
+        assertArrayEquals(flowLabel, downlinkParams.getFlowLabel());
 
         // Valid uplink parameters
         QosPolicyParams uplinkParams =
