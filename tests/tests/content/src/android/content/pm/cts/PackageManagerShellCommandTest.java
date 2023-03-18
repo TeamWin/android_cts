@@ -950,8 +950,7 @@ public class PackageManagerShellCommandTest {
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
 
-        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest",
-                getPackageCertDigest(TEST_SDK1_PACKAGE));
+        overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
 
         // Install and uninstall.
         installPackage(TEST_USING_SDK1);
@@ -1013,6 +1012,54 @@ public class PackageManagerShellCommandTest {
     }
 
     @Test
+    public void testAppUsingSdkInstallGroupInstall() throws Exception {
+        // Install/uninstall the sdk to grab its certDigest.
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+        String sdkCertDigest = getPackageCertDigest(TEST_SDK1_PACKAGE);
+        uninstallPackageSilently(TEST_SDK1_PACKAGE);
+
+        // Try to install without required SDK1.
+        installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
+
+        // Parent session
+        String parentSessionId = createSession("--multi-package");
+
+        // Required SDK1.
+        String sdkSessionId = createSession("");
+        addSplits(sdkSessionId, new String[] { createApkPath(TEST_SDK1) });
+
+        // The app.
+        String appSessionId = createSession("");
+        addSplits(appSessionId, new String[] { createApkPath(TEST_USING_SDK1) });
+
+        overrideUsesSdkLibraryCertificateDigest(sdkCertDigest);
+
+        // Add both child sessions to the primary session and commit.
+        assertEquals("Success\n", executeShellCommand(
+                "pm install-add-session " + parentSessionId + " " + sdkSessionId + " "
+                        + appSessionId));
+        commitSession(parentSessionId);
+
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+        assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
+
+        // Check resolution API.
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK_USER_PACKAGE,
+                    PackageManager.ApplicationInfoFlags.of(GET_SHARED_LIBRARY_FILES));
+            assertEquals(1, appInfo.sharedLibraryInfos.size());
+            SharedLibraryInfo libInfo = appInfo.sharedLibraryInfos.get(0);
+            assertEquals("com.test.sdk1", libInfo.getName());
+            assertEquals(1, libInfo.getLongVersion());
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
     public void testInstallFailsMismatchingCertificate() throws Exception {
         // Install the required SDK1.
         installPackage(TEST_SDK1);
@@ -1028,8 +1075,7 @@ public class PackageManagerShellCommandTest {
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
 
-        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest",
-                getPackageCertDigest(TEST_SDK1_PACKAGE));
+        overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
 
         // Install the package.
         installPackage(TEST_USING_SDK1);
@@ -1061,8 +1107,7 @@ public class PackageManagerShellCommandTest {
 
         // Install and uninstall the user package.
         {
-            setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest",
-                    getPackageCertDigest(TEST_SDK1_PACKAGE));
+            overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
 
             installPackage(TEST_USING_SDK1_AND_SDK2);
 
@@ -1106,8 +1151,7 @@ public class PackageManagerShellCommandTest {
         installPackage(TEST_SDK1);
         installPackage(TEST_SDK2);
 
-        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest",
-                getPackageCertDigest(TEST_SDK1_PACKAGE));
+        overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
         installPackage(TEST_USING_SDK1_AND_SDK2);
 
         setSystemProperty("debug.pm.prune_unused_shared_libraries_delay", "0");
@@ -1140,8 +1184,7 @@ public class PackageManagerShellCommandTest {
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
 
-        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest",
-                getPackageCertDigest(TEST_SDK1_PACKAGE));
+        overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
 
         // Now install the required SDK3.
         installPackage(TEST_SDK3_USING_SDK1);
@@ -1218,8 +1261,7 @@ public class PackageManagerShellCommandTest {
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
 
-        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest",
-                getPackageCertDigest(TEST_SDK1_PACKAGE));
+        overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
 
         // Install and uninstall.
         installPackage(TEST_SDK3_USING_SDK1);
@@ -1949,6 +1991,15 @@ public class PackageManagerShellCommandTest {
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
+    }
+
+    /**
+     * SDK package is signed by build system. In theory we could try to extract the signature,
+     * and patch the app manifest. This property allows us to override in runtime, which is much
+     * easier.
+     */
+    private void overrideUsesSdkLibraryCertificateDigest(String sdkCertDigest) throws Exception {
+        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest", sdkCertDigest);
     }
 
     static String getSplits(String packageName) throws IOException {
