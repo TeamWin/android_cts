@@ -1263,14 +1263,18 @@ public class MockImeSession implements AutoCloseable {
      * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @param gesture {@link SelectGesture} or {@link InsertGesture} or {@link DeleteGesture}.
+     * @param useDelayedCancellation {@code true} to use delayed {@link CancellationSignal#cancel()}
+     *  on a supported gesture like {@link android.view.inputmethod.InsertModeGesture}.
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
      *         wait until this event is handled by {@link MockIme}.
      */
     @NonNull
-    public ImeCommand callPerformHandwritingGesture(@NonNull HandwritingGesture gesture) {
+    public ImeCommand callPerformHandwritingGesture(
+            @NonNull HandwritingGesture gesture, boolean useDelayedCancellation) {
         final Bundle params = new Bundle();
         params.putByteArray("gesture", gesture.toByteArray());
+        params.putBoolean("useDelayedCancellation", useDelayedCancellation);
         return callCommandInternal("performHandwritingGesture", params);
     }
 
@@ -1306,15 +1310,18 @@ public class MockImeSession implements AutoCloseable {
      *
      * @param gesture one of {@link SelectGesture}, {@link SelectRangeGesture},
      * {@link DeleteGesture}, {@link DeleteRangeGesture}.
+     * @param useDelayedCancellation {@code true} to use delayed {@link CancellationSignal#cancel()}
+     *  on a gesture preview.
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
      *         wait until this event is handled by {@link MockIme}.
      */
     @NonNull
     public ImeCommand callPreviewHandwritingGesture(
-            @NonNull PreviewableHandwritingGesture gesture) {
+            @NonNull PreviewableHandwritingGesture gesture, boolean useDelayedCancellation) {
         final Bundle params = new Bundle();
         params.putByteArray("gesture", gesture.toByteArray());
+        params.putBoolean("useDelayedCancellation", useDelayedCancellation);
         return callCommandInternal("previewHandwritingGesture", params);
     }
 

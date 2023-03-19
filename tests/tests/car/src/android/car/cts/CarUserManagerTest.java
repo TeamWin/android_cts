@@ -118,6 +118,7 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                 .getDisplayForStartingBackgroundUser(mContext, mOccupantZoneManager);
 
         BlockingUserLifecycleListener listenerForVisible = null;
+        BlockingUserLifecycleListener listenerForStarting = null;
         BlockingUserLifecycleListener listenerForInvisible = null;
         UserHandle newUser = null;
         boolean isAdded = false;
@@ -130,6 +131,12 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                     .setTimeout(START_TIMEOUT_MS)
                     .addExpectedEvent(USER_LIFECYCLE_EVENT_TYPE_VISIBLE)
                     .build();
+            listenerForStarting = BlockingUserLifecycleListener
+                    .forSpecificEvents()
+                    .forUser(userId)
+                    .setTimeout(START_TIMEOUT_MS)
+                    .addExpectedEvent(USER_LIFECYCLE_EVENT_TYPE_STARTING)
+                    .build();
             listenerForInvisible = BlockingUserLifecycleListener
                     .forSpecificEvents()
                     .forUser(userId)
@@ -139,6 +146,7 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
 
             Log.d(TAG, "Registering listeners.");
             mCarUserManager.addListener(Runnable::run, listenerForVisible);
+            mCarUserManager.addListener(Runnable::run, listenerForStarting);
             mCarUserManager.addListener(Runnable::run, listenerForInvisible);
             Log.d(TAG, "Registered listeners.");
             isAdded = true;
@@ -160,8 +168,17 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                     .isEqualTo(newUser);
             assertWithMessage("Visible users").that(mUserManager.getVisibleUsers())
                     .contains(newUser);
-            // By the time USER_VISIBLE event is received the user should have been assigned to
-            // the display.
+
+            List<UserLifecycleEvent> startingEvents = listenerForStarting.waitForEvents();
+            assertWithMessage("events").that(startingEvents).hasSize(1);
+            UserLifecycleEvent startingEvent = startingEvents.get(0);
+            assertWithMessage("Type of the event").that(startingEvent.getEventType())
+                    .isEqualTo(USER_LIFECYCLE_EVENT_TYPE_STARTING);
+            assertWithMessage("UserId of the event").that(startingEvent.getUserHandle())
+                    .isEqualTo(newUser);
+
+            // By the time USER_VISIBLE event and USER_STARTING event are both received
+            // the user should have been assigned to the display in occupant zone.
             assertWithMessage("User assigned to display %s", displayId)
                     .that(mOccupantZoneManager.getUserForDisplayId(displayId))
                     .isEqualTo(userId);

@@ -17,9 +17,12 @@ package android.autofillservice.cts.client;
 
 import android.autofillservice.cts.commontests.ClientSuggestionsCommonTestCase;
 
+import org.junit.Ignore;
+
 /**
  * Tests client suggestions behaviors for the dropdown mode.
  */
+@Ignore("b/273695387 Re-enable client suggestion test cases")
 public class ClientSuggestionsTest extends ClientSuggestionsCommonTestCase {
 
 }

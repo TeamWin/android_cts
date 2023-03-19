@@ -309,7 +309,8 @@ public final class HotwordDetectionServiceProximityTest {
             AlwaysOnHotwordDetector alwaysOnHotwordDetector) {
         mService.initDetectRejectLatch();
         alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
-                /* status= */ 0, /* soundModelHandle= */ 100, /* captureAvailable= */ true,
+                /* status= */ 0, /* soundModelHandle= */ 100,
+                /* halEventReceivedMillis= */ 12345, /* captureAvailable= */ true,
                 /* captureSession= */ 101, /* captureDelayMs= */ 1000,
                 /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
                 Helper.createFakeAudioFormat(), new byte[1024],
