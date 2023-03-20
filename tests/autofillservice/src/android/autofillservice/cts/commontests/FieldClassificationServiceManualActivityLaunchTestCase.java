@@ -19,6 +19,7 @@ package android.autofillservice.cts.commontests;
 import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InstrumentedFieldClassificationService;
 
+import org.junit.After;
 import org.junit.Before;
 
 public abstract class FieldClassificationServiceManualActivityLaunchTestCase extends
@@ -28,26 +29,32 @@ public abstract class FieldClassificationServiceManualActivityLaunchTestCase ext
 
     protected static InstrumentedFieldClassificationService.Replier sClassificationReplier;
 
-    private InstrumentedFieldClassificationService.ServiceWatcher mServiceWatcher;
+    private static InstrumentedFieldClassificationService.ServiceWatcher sServiceWatcher;
 
     @Before
     public void setFixtures() throws Exception {
         sClassificationReplier = InstrumentedFieldClassificationService.getReplier();
         sClassificationReplier.reset();
+    }
 
-        // Rest service
-        Helper.resetAutofillDetectionService();
-        if (mServiceWatcher != null) {
-            mServiceWatcher.waitOnDisconnected();
-            mServiceWatcher = null;
+    @After
+    public void resetService() throws Exception {
+        // Wait on service disconnect
+        // if sServiceWatcher is null, it means connections hasn't been set up before
+        if (sServiceWatcher != null) {
+            // Rest service with adb command
+            Helper.resetAutofillDetectionService();
+            sServiceWatcher.waitOnDisconnected();
         }
     }
 
     protected InstrumentedFieldClassificationService enablePccDetectionService()
             throws InterruptedException {
-        mServiceWatcher = InstrumentedFieldClassificationService.setServiceWatcher();
+        sServiceWatcher = InstrumentedFieldClassificationService.setServiceWatcher();
+
+        // Set service with adb command
         Helper.setAutofillDetectionService(InstrumentedFieldClassificationService.SERVICE_NAME);
-        InstrumentedFieldClassificationService service = mServiceWatcher.waitOnConnected();
+        InstrumentedFieldClassificationService service = sServiceWatcher.waitOnConnected();
         service.waitUntilConnected();
         return service;
     }
