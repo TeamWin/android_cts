@@ -27,14 +27,12 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.app.cts.broadcasts.BroadcastReceipt;
 import com.android.app.cts.broadcasts.ICommandReceiver;
-import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
 import com.android.compatibility.common.util.ThrowingSupplier;
@@ -168,32 +166,8 @@ abstract class BaseBroadcastTest {
             ThrowingSupplier<List<BroadcastReceipt>> actualBroadcastsSupplier,
             List<Intent> expectedBroadcasts, boolean matchExact,
             BroadcastReceiptVerifier verifier) throws Exception {
-        AmUtils.waitForBroadcastBarrier();
+        waitForBroadcastBarrier();
 
-        // wait-for-barrier gives us a signal that the broadcast has been dispatched to the app
-        // but it doesn't always meant that the receiver had a chance to handle the broadcast yet.
-        // So, when verifying the received broadcasts, retry a few times before failing.
-        final int retryAttempts = 10;
-        int attempt = 0;
-        do {
-            attempt++;
-            try {
-                assertReceivedBroadcasts(actualBroadcastsSupplier, expectedBroadcasts,
-                        matchExact, verifier);
-                return;
-            } catch (Error e) {
-                Log.d(TAG, "Broadcasts are not delivered as expected after attempt#" + attempt, e);
-            }
-            if (attempt <= retryAttempts) SystemClock.sleep(100);
-        } while (attempt <= retryAttempts);
-        assertReceivedBroadcasts(actualBroadcastsSupplier, expectedBroadcasts,
-                matchExact, verifier);
-    }
-
-    private void assertReceivedBroadcasts(
-            ThrowingSupplier<List<BroadcastReceipt>> actualBroadcastsSupplier,
-            List<Intent> expectedBroadcasts, boolean matchExact,
-            BroadcastReceiptVerifier verifier) throws Exception {
         final List<BroadcastReceipt> actualBroadcasts = actualBroadcastsSupplier.get();
         final String errorMsg = "Expected: " + toString(expectedBroadcasts)
                 + "; Actual: " + toString(actualBroadcasts);
@@ -297,6 +271,11 @@ abstract class BaseBroadcastTest {
             }
         }
         return true;
+    }
+
+    private void waitForBroadcastBarrier() {
+        SystemUtil.runCommandAndPrintOnLogcat(TAG,
+                "cmd activity wait-for-broadcast-barrier --flush-application-threads");
     }
 
     protected TestServiceConnection bindToHelperService(String packageName) {
