@@ -7341,10 +7341,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#generateSetPropertyRequest",
             "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#setUpdateRateHz",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#"
+                    + "setWaitForPropertyUpdate",
             "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#getPropertyId",
             "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#getAreaId",
             "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#getValue",
-            "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#getUpdateRateHz"})
+            "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#getUpdateRateHz",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#"
+                    + "isWaitForPropertyUpdate"})
     public void testSetPropertyRequestSettersGetters() throws Exception {
         int testPropId = 1;
         int testAreaId = 2;
@@ -7358,6 +7362,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         assertThat(spr.getAreaId()).isEqualTo(testAreaId);
         assertThat(spr.getValue()).isEqualTo(valueToSet);
         assertThat(spr.getUpdateRateHz()).isEqualTo(testUpdateRateHz);
+        assertWithMessage("waitForPropertyUpdate is true by default").that(
+                spr.isWaitForPropertyUpdate()).isTrue();
+
+        spr.setWaitForPropertyUpdate(false);
+
+        assertThat(spr.isWaitForPropertyUpdate()).isFalse();
     }
 
     private int getCounterBySampleRate(float maxSampleRateHz) {
