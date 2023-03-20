@@ -2083,6 +2083,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         TestSoftApCallback lohsSoftApCallback = new TestSoftApCallback(mLock);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         setWifiEnabled(false);
+        Thread.sleep(TEST_WAIT_DURATION_MS);
         boolean wifiEnabled = mWifiManager.isWifiEnabled();
         try {
             uiAutomation.adoptShellPermissionIdentity();
