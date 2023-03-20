@@ -201,6 +201,10 @@ public class VehiclePropertyVerifier<T> {
                 carPropertyManager);
     }
 
+    public String getPropertyName() {
+        return mPropertyName;
+    }
+
     @Nullable
     public static <U> U getDefaultValue(Class<?> clazz) {
         if (clazz == Boolean.class) {
@@ -476,6 +480,93 @@ public class VehiclePropertyVerifier<T> {
         }
     }
 
+    /**
+     * Gets the possible values that could be set to.
+     *
+     * The values returned here must not cause {@code IllegalArgumentException} for set.
+     *
+     * Returns null or empty array if we don't know possible values.
+     */
+    public @Nullable Collection<T> getPossibleValues(int areaId) {
+        CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
+        if (Boolean.class.equals(carPropertyConfig.getPropertyType())) {
+            return (List<T>) List.of(Boolean.TRUE, Boolean.FALSE);
+        } else if (Integer.class.equals(carPropertyConfig.getPropertyType())) {
+            return (List<T>) getPossibleIntegerValues(areaId);
+        } else if (Float.class.equals(carPropertyConfig.getPropertyType())) {
+            return getPossibleFloatValues();
+        }
+        return null;
+    }
+
+    /**
+     * Gets the possible values for an integer property.
+     */
+    private List<Integer> getPossibleIntegerValues(int areaId) {
+        CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
+        List<Integer> possibleValues = new ArrayList<>();
+        if (mPropertyId == VehiclePropertyIds.HVAC_FAN_DIRECTION) {
+            int[] availableHvacFanDirections = mCarPropertyManager.getIntArrayProperty(
+                        VehiclePropertyIds.HVAC_FAN_DIRECTION_AVAILABLE, areaId);
+            for (int i = 0; i < availableHvacFanDirections.length; i++) {
+                possibleValues.add(availableHvacFanDirections[i]);
+            }
+            return possibleValues;
+        }
+        if (mVerifySetterWithConfigArrayValues) {
+            for (Integer value : carPropertyConfig.getConfigArray()) {
+                possibleValues.add(value);
+            }
+            return possibleValues;
+        }
+
+        if (!mAllPossibleEnumValues.isEmpty()) {
+            AreaIdConfig areaIdConfig = carPropertyConfig.getAreaIdConfig(areaId);
+            for (Integer value : (List<Integer>) areaIdConfig.getSupportedEnumValues()) {
+                if (mAllPossibleUnwritableValues.isEmpty()
+                        || !mAllPossibleUnwritableValues.contains(value)) {
+                    possibleValues.add(value);
+                }
+            }
+        } else {
+            Integer minValue = (Integer) carPropertyConfig.getMinValue(areaId);
+            Integer maxValue = (Integer) carPropertyConfig.getMaxValue(areaId);
+            if (minValue != null && maxValue != null) {
+                List<Integer> valuesToSet = IntStream.rangeClosed(
+                        minValue.intValue(), maxValue.intValue()).boxed().collect(
+                        Collectors.toList());
+                for (int i = 0; i < valuesToSet.size(); i++) {
+                    possibleValues.add(valuesToSet.get(i));
+                }
+            }
+
+        }
+        return possibleValues;
+    }
+
+    /**
+     * Gets the possible values for an float property.
+     */
+    private Collection<T> getPossibleFloatValues() {
+        if (mPropertyId != VehiclePropertyIds.HVAC_TEMPERATURE_SET) {
+            return new ArrayList<>();
+        }
+        List<Integer> hvacTempSetConfigArray = getCarPropertyConfig().getConfigArray();
+        ImmutableSet.Builder<Float> possibleHvacTempSetValuesBuilder = ImmutableSet.builder();
+        // For HVAC_TEMPERATURE_SET, the configArray specifies the supported temperature values
+        // for the property. configArray[0] is the lower bound of the supported temperatures in
+        // Celsius. configArray[1] is the upper bound of the supported temperatures in Celsius.
+        // configArray[2] is the supported temperature increment between the two bounds. All
+        // configArray values are Celsius*10 since the configArray is List<Integer> but
+        // HVAC_TEMPERATURE_SET is a Float type property.
+        for (int possibleHvacTempSetValue = hvacTempSetConfigArray.get(0);
+                possibleHvacTempSetValue <= hvacTempSetConfigArray.get(1);
+                possibleHvacTempSetValue += hvacTempSetConfigArray.get(2)) {
+            possibleHvacTempSetValuesBuilder.add((float) possibleHvacTempSetValue / 10.0f);
+        }
+        return (Collection<T>) possibleHvacTempSetValuesBuilder.build();
+    }
+
     private void verifyCarPropertyValueSetter() {
         CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
         if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
@@ -506,31 +597,18 @@ public class VehiclePropertyVerifier<T> {
         CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
         for (int areaId : carPropertyConfig.getAreaIds()) {
             for (Boolean valueToSet: List.of(Boolean.TRUE, Boolean.FALSE)) {
-                if (carPropertyConfig.getAccess()
-                        == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
-                    CarPropertyValue<Boolean> currentCarPropertyValue =
-                            mCarPropertyManager.getProperty(mPropertyId, areaId);
-                    valueToSet = !currentCarPropertyValue.getValue();
-                }
                 verifySetProperty(areaId, (T) valueToSet);
             }
         }
     }
 
+
     private void verifyIntegerPropertySetter() {
         CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
-        if (mPropertyId == VehiclePropertyIds.HVAC_FAN_DIRECTION) {
-            for (int areaId : carPropertyConfig.getAreaIds()) {
-                int[] availableHvacFanDirections = mCarPropertyManager.getIntArrayProperty(
-                        VehiclePropertyIds.HVAC_FAN_DIRECTION_AVAILABLE, areaId);
-                for (int availableHvacFanDirection : availableHvacFanDirections) {
-                    verifySetProperty(areaId, (T) Integer.valueOf(availableHvacFanDirection));
-                }
+        for (int areaId : carPropertyConfig.getAreaIds()) {
+            for (Integer valueToSet : getPossibleIntegerValues(areaId)) {
+                verifySetProperty(areaId, (T) valueToSet);
             }
-            return;
-        }
-        if (mVerifySetterWithConfigArrayValues) {
-            verifySetterWithValues((Collection<T>) carPropertyConfig.getConfigArray());
         }
         if (!mAllPossibleEnumValues.isEmpty()) {
             for (AreaIdConfig<?> areaIdConfig : carPropertyConfig.getAreaIdConfigs()) {
@@ -545,61 +623,21 @@ public class VehiclePropertyVerifier<T> {
                                         mCarPropertyManager, mPropertyId,
                                         carPropertyConfig.getPropertyType(),
                                         areaIdConfig.getAreaId(), valueToSet));
-                    } else {
-                        verifySetProperty(areaIdConfig.getAreaId(), valueToSet);
                     }
                 }
-            }
-        } else {
-            verifySetterWithMinMaxValues();
-        }
-    }
-
-    private void verifySetterWithValues(Collection<T> valuesToSet) {
-        for (T valueToSet : valuesToSet) {
-            for (int areaId : getCarPropertyConfig().getAreaIds()) {
-                verifySetProperty(areaId, valueToSet);
-            }
-        }
-    }
-
-    private void verifySetterWithMinMaxValues() {
-        CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
-        for (int areaId : carPropertyConfig.getAreaIds()) {
-            if (carPropertyConfig.getMinValue(areaId) == null || carPropertyConfig.getMaxValue(
-                    areaId) == null) {
-                continue;
-            }
-            List<Integer> valuesToSet = IntStream.rangeClosed(
-                    ((Integer) carPropertyConfig.getMinValue(areaId)).intValue(),
-                    ((Integer) carPropertyConfig.getMaxValue(areaId)).intValue()).boxed().collect(
-                    Collectors.toList());
-
-            for (Integer valueToSet : valuesToSet) {
-                verifySetProperty(areaId, (T) valueToSet);
             }
         }
     }
 
     private void verifyFloatPropertySetter() {
-        if (mPropertyId != VehiclePropertyIds.HVAC_TEMPERATURE_SET) {
-            return;
+        Collection<T> possibleValues = getPossibleFloatValues();
+        if (!possibleValues.isEmpty()) {
+            for (T valueToSet : possibleValues) {
+                for (int areaId : getCarPropertyConfig().getAreaIds()) {
+                    verifySetProperty(areaId, valueToSet);
+                }
+            }
         }
-        List<Integer> hvacTempSetConfigArray = getCarPropertyConfig().getConfigArray();
-        ImmutableSet.Builder<Float> possibleHvacTempSetValuesBuilder = ImmutableSet.builder();
-        // For HVAC_TEMPERATURE_SET, the configArray specifies the supported temperature values
-        // for the property. configArray[0] is the lower bound of the supported temperatures in
-        // Celsius. configArray[1] is the upper bound of the supported temperatures in Celsius.
-        // configArray[2] is the supported temperature increment between the two bounds. All
-        // configArray values are Celsius*10 since the configArray is List<Integer> but
-        // HVAC_TEMPERATURE_SET is a Float type property.
-        for (int possibleHvacTempSetValue = hvacTempSetConfigArray.get(0);
-                possibleHvacTempSetValue <= hvacTempSetConfigArray.get(1);
-                possibleHvacTempSetValue += hvacTempSetConfigArray.get(2)) {
-            possibleHvacTempSetValuesBuilder.add((float) possibleHvacTempSetValue / 10.0f);
-        }
-        verifySetterWithValues(
-                (Collection<T>) possibleHvacTempSetValuesBuilder.build());
     }
 
     private void verifySetProperty(int areaId, T valueToSet) {
