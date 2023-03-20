@@ -26,6 +26,7 @@ import static java.util.Collections.singletonList;
 
 import android.app.slice.Slice;
 import android.app.slice.SliceSpec;
+import android.autofillservice.cts.testcore.Helper;
 import android.content.ClipData;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -330,6 +331,29 @@ public class DatasetTest {
     }
 
     @Test
+    public void testBuilder_setFieldWithTypeAndIds() {
+        final Presentations presentations =
+                new Presentations.Builder().setMenuPresentation(mPresentation).build();
+        final Field field1 = new Field.Builder()
+                .setValue(mValue)
+                .setFilter(mFilter)
+                .setPresentations(presentations)
+                .build();
+        Dataset dataset = new Dataset.Builder()
+                .setField(mId, field1)
+                .setField("username", field1)
+                .build();
+
+        assertThat(dataset).isNotNull();
+        assertThat(dataset.getFieldIds().get(0)).isEqualTo(mId);
+        assertThat(dataset.getFieldValues().size()).isEqualTo(1);
+        assertThat(dataset.getFieldPresentation(0)).isEqualTo(mPresentation);
+        assertThat(dataset.getFilter(0).getPattern().pattern()).isEqualTo(mFilter.pattern());
+        assertThat(dataset.getFieldValues().get(0)).isEqualTo(mValue);
+        assertThat(dataset.getAutofillDatatypes().get(0)).isEqualTo("username");
+    }
+
+    @Test
     public void testBuilder_setContent() {
         Dataset.Builder builder = new Dataset.Builder().setContent(mId, mContent);
         Dataset dataset = builder.build();
@@ -454,5 +478,36 @@ public class DatasetTest {
         assertThat(result.getFieldIds()).isEqualTo(singletonList(mId));
         assertThat(result.getFieldContent().getItemCount()).isEqualTo(mContent.getItemCount());
         assertThat(dataset.getFieldValues()).isEqualTo(singletonList(null));
+    }
+
+    @Test
+    public void testWriteToParcel_bothAutofillIdAndTypeSet() throws Exception {
+        final Presentations presentations = new Presentations.Builder()
+                .setMenuPresentation(Helper.createPresentation("presentation"))
+                .build();
+        final Field field1 = new Field.Builder().setValue(mValue)
+                .setFilter(mFilter)
+                .setPresentations(presentations)
+                .build();
+        final Field field2 = new Field.Builder().setValue(mValue)
+                .setFilter(mFilter)
+                .setPresentations(presentations)
+                .build();
+        String username = "username";
+        Dataset dataset = new Dataset.Builder()
+                .setField(mId, field1)
+                .setField(username, field1)
+                .setFieldForAllHints(field2)
+                .setId("test-dataset-id")
+                .build();
+        Parcel parcel = Parcel.obtain();
+        dataset.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+
+        Dataset result = Dataset.CREATOR.createFromParcel(parcel);
+        assertThat(result.getId()).isEqualTo(dataset.getId());
+        assertThat(result.getFieldIds()).contains(mId);
+        assertThat(result.getAutofillDatatypes())
+                .containsAtLeast(username, AutofillManager.ANY_HINT);
     }
 }
