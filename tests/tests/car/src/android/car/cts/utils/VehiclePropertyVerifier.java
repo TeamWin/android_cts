@@ -349,7 +349,7 @@ public class VehiclePropertyVerifier<T> {
                             hvacPowerStateByAreaId = (SparseArray<Boolean>)
                                     getInitialValuesByAreaId(hvacPowerOnCarPropertyConfig,
                                             mCarPropertyManager);
-                            turnOnHvacPower(hvacPowerOnCarPropertyConfig, mCarPropertyManager);
+                            turnOnHvacPower(hvacPowerOnCarPropertyConfig);
                         }
                     }
 
@@ -362,7 +362,7 @@ public class VehiclePropertyVerifier<T> {
                         restoreInitialValuesByAreaId(carPropertyConfig, mCarPropertyManager,
                                 areaIdToInitialValue);
                     }
-                    verifyGetPropertiesAsync(carPropertyConfig, mCarPropertyManager);
+                    verifyGetPropertiesAsync();
                     // TODO(b/266000988): verifySetProeprtiesAsync(...)
 
                     if (hvacPowerStateByAreaId != null) {
@@ -407,17 +407,14 @@ public class VehiclePropertyVerifier<T> {
         return areaIdToInitialValue;
     }
 
-
     // Turn the power on for all hvac areas.
-    private static void turnOnHvacPower(
-            CarPropertyConfig<Boolean> hvacPowerOnCarPropertyConfig,
-            CarPropertyManager carPropertyManager) {
+    private void turnOnHvacPower(CarPropertyConfig<Boolean> hvacPowerOnCarPropertyConfig) {
         for (int areaId : hvacPowerOnCarPropertyConfig.getAreaIds()) {
-            if (carPropertyManager.getBooleanProperty(VehiclePropertyIds.HVAC_POWER_ON, areaId)) {
+            if (mCarPropertyManager.getBooleanProperty(VehiclePropertyIds.HVAC_POWER_ON, areaId)) {
                 continue;
             }
             CarPropertyValue<Boolean> carPropertyValue = setPropertyAndWaitForChange(
-                    carPropertyManager, VehiclePropertyIds.HVAC_POWER_ON,
+                    mCarPropertyManager, VehiclePropertyIds.HVAC_POWER_ON,
                     Boolean.class, areaId, Boolean.TRUE);
             assertWithMessage(
                     VehiclePropertyIds.toString(VehiclePropertyIds.HVAC_POWER_ON)
@@ -427,15 +424,13 @@ public class VehiclePropertyVerifier<T> {
     }
 
     // Turn the power off for all hvac areas.
-    private static void turnOffHvacPower(
-            CarPropertyConfig<Boolean> hvacPowerOnCarPropertyConfig,
-            CarPropertyManager carPropertyManager) {
+    private void turnOffHvacPower(CarPropertyConfig<Boolean> hvacPowerOnCarPropertyConfig) {
         for (int areaId : hvacPowerOnCarPropertyConfig.getAreaIds()) {
-            if (!carPropertyManager.getBooleanProperty(VehiclePropertyIds.HVAC_POWER_ON, areaId)) {
+            if (!mCarPropertyManager.getBooleanProperty(VehiclePropertyIds.HVAC_POWER_ON, areaId)) {
                 continue;
             }
             CarPropertyValue<Boolean> carPropertyValue = setPropertyAndWaitForChange(
-                    carPropertyManager, VehiclePropertyIds.HVAC_POWER_ON,
+                    mCarPropertyManager, VehiclePropertyIds.HVAC_POWER_ON,
                     Boolean.class, areaId, Boolean.FALSE);
             assertWithMessage(
                     VehiclePropertyIds.toString(VehiclePropertyIds.HVAC_POWER_ON)
@@ -1656,17 +1651,17 @@ public class VehiclePropertyVerifier<T> {
         }
     }
 
-    private void verifyGetPropertiesAsync(CarPropertyConfig<T> carPropertyConfig,
-            CarPropertyManager carPropertyManager) {
+    private void verifyGetPropertiesAsync() {
+        CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
         if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
-            verifyGetPropertiesAsyncFails(carPropertyConfig, carPropertyManager);
+            verifyGetPropertiesAsyncFails();
             return;
         }
 
         List<GetPropertyRequest> getPropertyRequests = new ArrayList<>();
         SparseIntArray requestIdToAreaIdMap = new SparseIntArray();
         for (int areaId : carPropertyConfig.getAreaIds()) {
-            GetPropertyRequest getPropertyRequest = carPropertyManager.generateGetPropertyRequest(
+            GetPropertyRequest getPropertyRequest = mCarPropertyManager.generateGetPropertyRequest(
                     mPropertyId, areaId);
             int requestId = getPropertyRequest.getRequestId();
             requestIdToAreaIdMap.put(requestId, areaId);
@@ -1675,7 +1670,7 @@ public class VehiclePropertyVerifier<T> {
 
         CarPropertyCallback carPropertyCallback = new CarPropertyCallback(
                 requestIdToAreaIdMap.size());
-        carPropertyManager.getPropertiesAsync(getPropertyRequests, /* cancellationSignal: */ null,
+        mCarPropertyManager.getPropertiesAsync(getPropertyRequests, /* cancellationSignal: */ null,
                 /* callbackExecutor: */ null, carPropertyCallback);
         List<GetPropertyResult<?>> getPropertyResults =
                 carPropertyCallback.waitForGetPropertyResults();
@@ -1696,10 +1691,10 @@ public class VehiclePropertyVerifier<T> {
         }
     }
 
-    private void verifyGetPropertiesAsyncFails(CarPropertyConfig<T> carPropertyConfig,
-            CarPropertyManager carPropertyManager) {
+    private void verifyGetPropertiesAsyncFails() {
+        CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
         List<GetPropertyRequest> getPropertyRequests = new ArrayList<>();
-        GetPropertyRequest getPropertyRequest = carPropertyManager.generateGetPropertyRequest(
+        GetPropertyRequest getPropertyRequest = mCarPropertyManager.generateGetPropertyRequest(
                     mPropertyId, carPropertyConfig.getAreaIds()[0]);
         getPropertyRequests.add(getPropertyRequest);
         CarPropertyCallback carPropertyCallback = new CarPropertyCallback(
@@ -1709,7 +1704,7 @@ public class VehiclePropertyVerifier<T> {
                         + " is a write_only property so getPropertiesAsync should throw an"
                         + " IllegalArgumentException.",
                 IllegalArgumentException.class,
-                () -> carPropertyManager.getPropertiesAsync(getPropertyRequests,
+                () -> mCarPropertyManager.getPropertiesAsync(getPropertyRequests,
                         /* cancellationSignal: */ null, /* callbackExecutor: */ null,
                         carPropertyCallback));
     }
