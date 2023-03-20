@@ -32,7 +32,6 @@ import android.media.MediaSyncEvent;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
-import android.service.voice.DetectedPhrase;
 import android.service.voice.HotwordAudioStream;
 import android.service.voice.HotwordDetectedResult;
 import android.voiceinteraction.common.Utils;
@@ -94,7 +93,7 @@ public class HotwordDetectedResultTest {
 
     @Test
     public void testHotwordDetectedResult_getMaxHotwordPhraseId() throws Exception {
-        assertThat(HotwordDetectedResult.getMaxHotwordPhraseId() >= Integer.MAX_VALUE).isTrue();
+        assertThat(HotwordDetectedResult.getMaxHotwordPhraseId() >= 63).isTrue();
     }
 
     @Test
@@ -200,12 +199,9 @@ public class HotwordDetectedResultTest {
                             /* hotwordDetectionPersonalized= */ true,
                             /* score= */ 100,
                             /* personalizedScore= */ 100,
+                            /* hotwordPhraseId= */ 1,
                             audioStreams,
                             new PersistableBundle(),
-                            new DetectedPhrase.Builder()
-                                    .setId(1)
-                                    .setPhrase("Test Phrase")
-                                    .build(),
                             /* backgroundAudioPower= */ 100);
 
             assertHotwordDetectedResult(hotwordDetectedResult);
@@ -237,12 +233,9 @@ public class HotwordDetectedResultTest {
                             /* hotwordDetectionPersonalized= */ true,
                             /* score= */ 100,
                             /* personalizedScore= */ 100,
+                            /* hotwordPhraseId= */ 1,
                             audioStreams,
                             new PersistableBundle(),
-                            new DetectedPhrase.Builder()
-                                    .setId(1)
-                                    .setPhrase("Test Phrase")
-                                    .build(),
                             /* backgroundAudioPower= */ 100);
 
             final Parcel p = Parcel.obtain();
@@ -271,9 +264,9 @@ public class HotwordDetectedResultTest {
             boolean hotwordDetectionPersonalized,
             int score,
             int personalizedScore,
+            int hotwordPhraseId,
             List<HotwordAudioStream> audioStreams,
             PersistableBundle extras,
-            DetectedPhrase detectedPhrase,
             int backgroundAudioPower) {
         return new HotwordDetectedResult.Builder()
                 .setConfidenceLevel(confidenceLevel)
@@ -284,9 +277,9 @@ public class HotwordDetectedResultTest {
                 .setHotwordDetectionPersonalized(hotwordDetectionPersonalized)
                 .setScore(score)
                 .setPersonalizedScore(personalizedScore)
+                .setHotwordPhraseId(hotwordPhraseId)
                 .setAudioStreams(audioStreams)
                 .setExtras(extras)
-                .setDetectedPhrase(detectedPhrase)
                 .setBackgroundAudioPower(backgroundAudioPower)
                 .build();
     }
@@ -301,8 +294,7 @@ public class HotwordDetectedResultTest {
         assertThat(hotwordDetectedResult.isHotwordDetectionPersonalized()).isTrue();
         assertThat(hotwordDetectedResult.getScore()).isEqualTo(100);
         assertThat(hotwordDetectedResult.getPersonalizedScore()).isEqualTo(100);
-        assertThat(hotwordDetectedResult.getDetectedPhrase().getId()).isEqualTo(1);
-        assertThat(hotwordDetectedResult.getDetectedPhrase().getPhrase()).isEqualTo("Test Phrase");
+        assertThat(hotwordDetectedResult.getHotwordPhraseId()).isEqualTo(1);
         assertThat(hotwordDetectedResult.getAudioStreams()).isNotNull();
         assertThat(hotwordDetectedResult.getExtras()).isNotNull();
         assertThat(hotwordDetectedResult.getBackgroundAudioPower()).isEqualTo(100);
