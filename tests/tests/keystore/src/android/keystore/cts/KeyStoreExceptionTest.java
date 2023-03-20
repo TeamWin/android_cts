@@ -20,8 +20,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.hardware.security.keymint.ErrorCode;
 import android.security.KeyStoreException;
 import android.security.keymaster.KeymasterDefs;
+import android.text.TextUtils;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -31,6 +33,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class KeyStoreExceptionTest {
@@ -43,6 +47,30 @@ public class KeyStoreExceptionTest {
         for (Field f : kmErrors) {
             assertTrue(String.format("Missing entry for field %s", f.getName()),
                     KeyStoreException.hasFailureInfoForError(f.getInt(null)));
+        }
+    }
+
+    @Test
+    public void testErrorCodesMapping() throws IllegalAccessException {
+        ImmutableList<Field> kmDefsFields = getKeymasterDefsFields();
+        Field[] errorFields = ErrorCode.class.getDeclaredFields();
+        List<Integer> excludedErrorCodes = new ArrayList<Integer>();
+        excludedErrorCodes.add(-62); // -62 is KEY_REQUIRES_UPGRADE and is handled by Keystore.
+        for (Field code : errorFields) {
+            final int codeVal = code.getInt(null);
+            if (excludedErrorCodes.contains(codeVal)) {
+                continue;
+            }
+            assertTrue(
+                    TextUtils.formatSimple("ErrorCode %d is not defined in KeymasterDefs", codeVal),
+                    kmDefsFields.stream().anyMatch(f -> {
+                        try {
+                            return f.getType() == int.class && f.getInt(null) == codeVal;
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+            );
         }
     }
 
