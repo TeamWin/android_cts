@@ -202,7 +202,6 @@ public class UsageStatsTest {
     private KeyguardManager mKeyguardManager;
     private String mTargetPackage;
     private String mCachedUsageSourceSetting;
-    private String mCachedEnableRestrictedBucketSetting;
     private int mOtherUser;
     private Context mOtherUserContext;
     private UsageStatsManager mOtherUsageStats;
@@ -224,7 +223,6 @@ public class UsageStatsTest {
         assumeTrue("App Standby not enabled on device", AppStandbyUtils.isAppStandbyEnabled());
         setAppOpsMode("allow");
         mCachedUsageSourceSetting = getSetting(Settings.Global.APP_TIME_LIMIT_USAGE_SOURCE);
-        mCachedEnableRestrictedBucketSetting = getSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET);
     }
 
     @After
@@ -234,7 +232,6 @@ public class UsageStatsTest {
                     getSetting(Settings.Global.APP_TIME_LIMIT_USAGE_SOURCE))) {
             setUsageSourceSetting(mCachedUsageSourceSetting);
         }
-        setSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET, mCachedEnableRestrictedBucketSetting);
         // Force stop test package to avoid any running test code from carrying over to the next run
         SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
         SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP2_PKG));
@@ -1244,8 +1241,6 @@ public class UsageStatsTest {
     @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
     @Test
     public void testUserForceIntoRestricted() throws Exception {
-        setSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET, "1");
-
         launchSubActivity(TaskRootActivity.class);
         assertEquals("Activity launch didn't bring app up to ACTIVE bucket",
                 UsageStatsManager.STANDBY_BUCKET_ACTIVE,
@@ -1262,28 +1257,7 @@ public class UsageStatsTest {
     // TODO(148887416): get this test to work for instant apps
     @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
     @Test
-    public void testUserForceIntoRestricted_BucketDisabled() throws Exception {
-        setSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET, "0");
-
-        launchSubActivity(TaskRootActivity.class);
-        assertEquals("Activity launch didn't bring app up to ACTIVE bucket",
-                UsageStatsManager.STANDBY_BUCKET_ACTIVE,
-                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
-
-        // User force shouldn't have to deal with the timeout.
-        setStandByBucket(mTargetPackage, "restricted");
-        assertNotEquals("User was able to force into RESTRICTED bucket when bucket disabled",
-                UsageStatsManager.STANDBY_BUCKET_RESTRICTED,
-                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
-
-    }
-
-    // TODO(148887416): get this test to work for instant apps
-    @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
-    @Test
     public void testUserLaunchRemovesFromRestricted() throws Exception {
-        setSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET, "1");
-
         setStandByBucket(mTargetPackage, "restricted");
         assertEquals("User was unable to force an app into RESTRICTED bucket",
                 UsageStatsManager.STANDBY_BUCKET_RESTRICTED,
