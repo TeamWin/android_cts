@@ -132,8 +132,11 @@ def verify_zoom_results(test_data, size, z_max, z_min):
                   z_ratio, radius_ratio)
     if not math.isclose(z_ratio, radius_ratio, rel_tol=data['r_tol']):
       test_failed = True
-      e_msg = (f'zoom: {z_ratio:.2f}, radius ratio:  {radius_ratio:.2f}, '
-               f"RTOL: {data['r_tol']}")
+      e_msg = (f"Circle radius in capture taken at {z_0:.2f} "
+               "was expected to increase in capture taken at "
+               f"{data['z']:.2f} by {data['z']:.2f}/{z_0:.2f}="
+               f"{z_ratio:.2f}, but it increased by "
+               f"{radius_ratio:.2f}. RTOL: {data['r_tol']}")
       logging.error(e_msg)
 
     # check relative offset against init vals w/ no focal length change
