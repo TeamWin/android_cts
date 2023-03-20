@@ -94,7 +94,6 @@ public class JobThrottlingTest {
     private boolean mDeviceLightIdleEnabled;
     private boolean mAppStandbyEnabled;
     private String mInitialDisplayTimeout;
-    private String mInitialRestrictedBucketEnabled;
     private String mInitialBatteryStatsConstants;
     private boolean mAutomotiveDevice;
     private boolean mLeanbackOnly;
@@ -138,8 +137,6 @@ public class JobThrottlingTest {
         } else {
             Log.w(TAG, "App standby not enabled on test device");
         }
-        mInitialRestrictedBucketEnabled = Settings.Global.getString(mContext.getContentResolver(),
-                Settings.Global.ENABLE_RESTRICTED_BUCKET);
         mInitialBatteryStatsConstants = Settings.Global.getString(mContext.getContentResolver(),
                 Settings.Global.BATTERY_STATS_CONSTANTS);
         // Make sure ACTION_CHARGING is sent immediately.
@@ -459,8 +456,6 @@ public class JobThrottlingTest {
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
-        setRestrictedBucketEnabled(true);
-
         // Disable coalescing
         mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
 
@@ -490,8 +485,6 @@ public class JobThrottlingTest {
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
-
-        setRestrictedBucketEnabled(true);
 
         // Disable coalescing
         mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
@@ -525,8 +518,6 @@ public class JobThrottlingTest {
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
-
-        setRestrictedBucketEnabled(true);
 
         // Disable coalescing
         mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
@@ -572,8 +563,6 @@ public class JobThrottlingTest {
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
-        setRestrictedBucketEnabled(true);
-
         // Disable coalescing and the parole session
         mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
         mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
@@ -615,8 +604,6 @@ public class JobThrottlingTest {
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
-
-        setRestrictedBucketEnabled(true);
 
         // Disable coalescing and the parole session
         mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
@@ -1069,7 +1056,6 @@ public class JobThrottlingTest {
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
-        setRestrictedBucketEnabled(true);
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
 
         // Disable coalescing and the parole session
@@ -1106,7 +1092,6 @@ public class JobThrottlingTest {
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
-        setRestrictedBucketEnabled(true);
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
 
         // Disable coalescing and the parole session
@@ -1147,7 +1132,6 @@ public class JobThrottlingTest {
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
-        setRestrictedBucketEnabled(true);
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
 
         // Disable coalescing and the parole session
@@ -1188,7 +1172,6 @@ public class JobThrottlingTest {
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
-        setRestrictedBucketEnabled(true);
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
 
         // Disable coalescing and the parole session
@@ -1367,8 +1350,6 @@ public class JobThrottlingTest {
         mDeviceConfigStateHelper.restoreOriginalValues();
         mActivityManagerDeviceConfigStateHelper.restoreOriginalValues();
         mTareDeviceConfigStateHelper.restoreOriginalValues();
-        Settings.Global.putString(mContext.getContentResolver(),
-                Settings.Global.ENABLE_RESTRICTED_BUCKET, mInitialRestrictedBucketEnabled);
 
         mUiDevice.executeShellCommand(
                 "cmd jobscheduler reset-execution-quota -u " + UserHandle.myUserId()
@@ -1381,11 +1362,6 @@ public class JobThrottlingTest {
     private void setTestPackageRestricted(boolean restricted) throws Exception {
         AppOpsUtils.setOpMode(TEST_APP_PACKAGE, "RUN_ANY_IN_BACKGROUND",
                 restricted ? AppOpsManager.MODE_IGNORED : AppOpsManager.MODE_ALLOWED);
-    }
-
-    private void setRestrictedBucketEnabled(boolean enabled) {
-        Settings.Global.putString(mContext.getContentResolver(),
-                Settings.Global.ENABLE_RESTRICTED_BUCKET, enabled ? "1" : "0");
     }
 
     private void toggleAutoRestrictedBucketOnBgRestricted(boolean enable) {
