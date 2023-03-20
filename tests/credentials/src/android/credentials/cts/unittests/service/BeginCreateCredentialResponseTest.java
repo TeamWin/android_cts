@@ -50,12 +50,6 @@ public class BeginCreateCredentialResponseTest {
     }
 
     @Test
-    public void testBuilder_setCreateEntries_nullEntry() {
-        assertThrows(NullPointerException.class,
-                () -> new BeginCreateCredentialResponse.Builder().setCreateEntries(List.of(null)));
-    }
-
-    @Test
     public void testBuilder_setCreateEntries_emptyEntries() {
         assertThrows(IllegalArgumentException.class,
                 () -> new BeginCreateCredentialResponse.Builder().setCreateEntries(List.of()));

@@ -7408,6 +7408,12 @@
      -->
     <permission android:name="android.permission.CREDENTIAL_MANAGER_SET_ORIGIN"
       android:protectionLevel="normal"/>
+      
+    <!-- Allows specifying candidate credential providers to be queried in Credential Manager
+    get flows, or to be preferred as a default in the Credential Manager create flows.
+     <p>Protection level: normal -->
+    <permission android:name="android.permission.CREDENTIAL_MANAGER_SET_ALLOWED_PROVIDERS"
+      android:protectionLevel="normal"/>
 
     <!-- Allows permission to use Credential Manager UI for providing and saving credentials
          @hide -->
