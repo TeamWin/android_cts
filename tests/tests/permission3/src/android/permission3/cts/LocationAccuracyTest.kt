@@ -57,7 +57,6 @@ class LocationAccuracyTest : BaseUsePermissionTest() {
 
         requestAppPermissionsAndAssertResult(
                 ACCESS_FINE_LOCATION to false,
-                ACCESS_BACKGROUND_LOCATION to false,
                 ACCESS_COARSE_LOCATION to true
         ) {
             clickCoarseLocationRadioButton()
@@ -77,7 +76,6 @@ class LocationAccuracyTest : BaseUsePermissionTest() {
 
         requestAppPermissionsAndAssertResult(
                 ACCESS_FINE_LOCATION to true,
-                ACCESS_BACKGROUND_LOCATION to false,
                 ACCESS_COARSE_LOCATION to true
         ) {
             clickPreciseLocationRadioButton()
@@ -97,7 +95,6 @@ class LocationAccuracyTest : BaseUsePermissionTest() {
 
         requestAppPermissionsAndAssertResult(
                 ACCESS_FINE_LOCATION to false,
-                ACCESS_BACKGROUND_LOCATION to false,
                 ACCESS_COARSE_LOCATION to true
         ) {
             clickCoarseLocationRadioButton()
@@ -109,7 +106,6 @@ class LocationAccuracyTest : BaseUsePermissionTest() {
         // now request again to change to precise location
         requestAppPermissionsAndAssertResult(
                 ACCESS_FINE_LOCATION to true,
-                ACCESS_BACKGROUND_LOCATION to false,
                 ACCESS_COARSE_LOCATION to true
         ) {
             clickPreciseLocationOnlyView()
