@@ -90,6 +90,8 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         activitySession.launchTestActivityOnDisplaySync(
                 BackNavigationActivity.class, DEFAULT_DISPLAY);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        mInstrumentation.getUiAutomation().syncInputTransactions();
+
         mActivity = activitySession.getActivity();
         registerBackCallback(mActivity);
 
@@ -107,11 +109,11 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         int midWidth = mUiDevice.getDisplayWidth() / 2;
 
         final TouchHelper.SwipeSession touchSession = new TouchHelper.SwipeSession(
-                DEFAULT_DISPLAY, false, false);
+                DEFAULT_DISPLAY, true, false);
         long startDownTime = touchSession.beginSwipe(0, midHeight);
         // Inject another move event to trigger back start.
         TouchHelper.injectMotion(startDownTime, startDownTime, MotionEvent.ACTION_MOVE, 0,
-                midHeight, DEFAULT_DISPLAY, false, false);
+                midHeight, DEFAULT_DISPLAY, true, false);
         assertInvoked(mTracker.mStartLatch);
         assertNotInvoked(mTracker.mProgressLatch);
         assertNotInvoked(mTracker.mInvokeLatch);
@@ -140,11 +142,11 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         int midWidth = mUiDevice.getDisplayWidth() / 2;
 
         final TouchHelper.SwipeSession touchSession = new TouchHelper.SwipeSession(
-                DEFAULT_DISPLAY, false, false);
+                DEFAULT_DISPLAY, true, false);
         long startDownTime = touchSession.beginSwipe(0, midHeight);
         // Inject another move event to trigger back start.
         TouchHelper.injectMotion(startDownTime, startDownTime, MotionEvent.ACTION_MOVE, 0,
-                midHeight, DEFAULT_DISPLAY, false, false);
+                midHeight, DEFAULT_DISPLAY, true, false);
         touchSession.continueSwipe(midWidth, midHeight, PROGRESS_SWIPE_STEPS);
         assertInvoked(mTracker.mProgressLatch);
 
