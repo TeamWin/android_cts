@@ -14,48 +14,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  -->
-<LinearLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <Button
-        android:id="@+id/startAdvertisingButton"
-        android:layout_width="wrap_content"
-        android:layout_marginTop="80dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:text="Start Advertising Device" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
+        <Button
+            android:id="@+id/startAdvertisingButton"
+            android:layout_width="wrap_content"
+            android:layout_marginTop="80dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="Start Advertising Device" />
 
-    <Button
-        android:id="@+id/associateButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="50dp"
-        android:gravity="center"
-        android:text="Associate Device" />
+        <Button
+            android:id="@+id/associateButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="50dp"
+            android:gravity="center"
+            android:text="Associate Device" />
 
-    <Button
-        android:id="@+id/beginPermissionsSyncButton"
-        android:layout_width="wrap_content"
-        android:layout_marginTop="50dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:text="Begin Permissions Sync" />
+        <Button
+            android:id="@+id/beginPermissionsSyncButton"
+            android:layout_width="wrap_content"
+            android:layout_marginTop="50dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="Begin Permissions Sync" />
 
+        <Button
+            android:id="@+id/disassociateButton"
+            android:layout_width="wrap_content"
+            android:layout_marginTop="150dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="Disassociate Device" />
 
-    <Button
-        android:id="@+id/disassociateButton"
-        android:layout_width="wrap_content"
-        android:layout_marginTop="150dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:text="Disassociate Device" />
+    </LinearLayout>
 
-</LinearLayout>
+</ScrollView>
