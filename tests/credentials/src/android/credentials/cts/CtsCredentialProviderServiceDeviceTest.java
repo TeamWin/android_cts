@@ -104,7 +104,7 @@ public class CtsCredentialProviderServiceDeviceTest {
     private static final String NOOP_SERVICE_SYSTEM =
             "android.credentials.cts/android.credentials.cts.CtsNoOpCredentialProviderSysService";
     private static final List<String> CREDENTIAL_TYPES =
-            Arrays.asList(PASSWORD_CREDENTIAL_TYPE, PASSKEY_CREDENTIAL_TYPE);
+            Arrays.asList(PASSKEY_CREDENTIAL_TYPE, PASSWORD_CREDENTIAL_TYPE);
     private static final String PROVIDER_LABEL = "Test Provider Service";
     private static final String PROVIDER_LABEL_ALT = "Test Provider Service Alternate";
     private static final String PROVIDER_LABEL_SYSTEM = "Test Provider Service System";
@@ -352,18 +352,20 @@ public class CtsCredentialProviderServiceDeviceTest {
                     assertThat(cpi).isNotNull();
                     assertThat(cpi.isSystemProvider()).isFalse();
                     assertThat(cpi.getLabel(mContext)).isEqualTo(PROVIDER_LABEL);
+                    assertThat(cpi.getSettingsSubtitle()).isEqualTo("This is a subtitle");
                     assertThat(cpi.getServiceIcon(mContext)).isNotNull();
                     assertThat(cpi.getServiceInfo()).isNotNull();
-                    assertThat(cpi.getCapabilities()).isEqualTo(CREDENTIAL_TYPES);
+                    assertThat(cpi.getCapabilities()).containsExactlyElementsIn(CREDENTIAL_TYPES);
 
                     // Verify data of the returned provider.
                     CredentialProviderInfo cpi2 = results.get(NOOP_SERVICE_ALT);
                     assertThat(cpi2).isNotNull();
                     assertThat(cpi2.isSystemProvider()).isFalse();
+                    assertThat(cpi2.getSettingsSubtitle()).isNull();
                     assertThat(cpi2.getLabel(mContext)).isEqualTo(PROVIDER_LABEL_ALT);
                     assertThat(cpi2.getServiceIcon(mContext)).isNotNull();
                     assertThat(cpi2.getServiceInfo()).isNotNull();
-                    assertThat(cpi2.getCapabilities()).isEqualTo(CREDENTIAL_TYPES);
+                    assertThat(cpi2.getCapabilities()).containsExactlyElementsIn(CREDENTIAL_TYPES);
                 });
     }
 
@@ -383,18 +385,20 @@ public class CtsCredentialProviderServiceDeviceTest {
                     assertThat(cpi).isNotNull();
                     assertThat(cpi.isSystemProvider()).isFalse();
                     assertThat(cpi.getLabel(mContext)).isEqualTo(PROVIDER_LABEL);
+                    assertThat(cpi.getSettingsSubtitle()).isEqualTo("This is a subtitle");
                     assertThat(cpi.getServiceIcon(mContext)).isNotNull();
                     assertThat(cpi.getServiceInfo()).isNotNull();
-                    assertThat(cpi.getCapabilities()).isEqualTo(CREDENTIAL_TYPES);
+                    assertThat(cpi.getCapabilities()).containsExactlyElementsIn(CREDENTIAL_TYPES);
 
                     // Verify data of the returned provider.
                     CredentialProviderInfo cpi2 = results.get(NOOP_SERVICE_ALT);
                     assertThat(cpi2).isNotNull();
                     assertThat(cpi2.isSystemProvider()).isFalse();
+                    assertThat(cpi2.getSettingsSubtitle()).isNull();
                     assertThat(cpi2.getLabel(mContext)).isEqualTo(PROVIDER_LABEL_ALT);
                     assertThat(cpi2.getServiceIcon(mContext)).isNotNull();
                     assertThat(cpi2.getServiceInfo()).isNotNull();
-                    assertThat(cpi2.getCapabilities()).isEqualTo(CREDENTIAL_TYPES);
+                    assertThat(cpi2.getCapabilities()).containsExactlyElementsIn(CREDENTIAL_TYPES);
                 });
     }
 
@@ -415,8 +419,9 @@ public class CtsCredentialProviderServiceDeviceTest {
                     assertThat(cpi.isSystemProvider()).isTrue();
                     assertThat(cpi.getLabel(mContext)).isEqualTo(PROVIDER_LABEL_SYSTEM);
                     assertThat(cpi.getServiceIcon(mContext)).isNotNull();
+                    assertThat(cpi.getSettingsSubtitle()).isNull();
                     assertThat(cpi.getServiceInfo()).isNotNull();
-                    assertThat(cpi.getCapabilities()).isEqualTo(CREDENTIAL_TYPES);
+                    assertThat(cpi.getCapabilities()).containsExactlyElementsIn(CREDENTIAL_TYPES);
                 });
     }
 
