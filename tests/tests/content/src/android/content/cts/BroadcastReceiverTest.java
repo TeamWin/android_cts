@@ -18,6 +18,7 @@ package android.content.cts;
 
 import static android.content.Context.RECEIVER_EXPORTED;
 
+import android.app.BroadcastOptions;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -28,10 +29,19 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.os.FileUtils;
 import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 
+import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.CddTest;
+import com.android.server.am.nano.ActivityManagerServiceDumpBroadcastsProto;
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -422,6 +432,42 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         filter.addAction(Camera.ACTION_NEW_VIDEO);
         activity.registerReceiver(internalReceiver, filter, RECEIVER_EXPORTED);
         assertFalse(internalReceiver.waitForReceiverNoException(SEND_BROADCAST_TIMEOUT));
+    }
+
+    /**
+     * Starting in {@link android.os.Build.VERSION_CODES#UPSIDE_DOWN_CAKE}, the
+     * developer-visible behavior of {@link BroadcastReceiver} has been revised
+     * to support features like
+     * {@link BroadcastOptions#DEFERRAL_POLICY_UNTIL_ACTIVE}.
+     * <p>
+     * Even though the OS provides both a "modern" and "legacy" implementation
+     * that can be temporarily switched via a feature flag to aid debugging and
+     * triage, all devices must ship with the "modern" stack enabled to match
+     * documented developer expectations.
+     */
+    @CddTest(requirements = {"3.5/C-0-2"})
+    public void testModern() throws Exception {
+        final ActivityManagerServiceDumpBroadcastsProto dump = dumpBroadcasts();
+        final String msg = "Devices must ship with the modern broadcast queue "
+                + "that has updated behaviors and APIs that developers rely upon";
+
+        assertEquals(msg, 1, dump.broadcastQueue.length);
+        assertEquals(msg, "modern", dump.broadcastQueue[0].queueName);
+    }
+
+    private static ActivityManagerServiceDumpBroadcastsProto dumpBroadcasts() throws Exception {
+        return ActivityManagerServiceDumpBroadcastsProto
+                .parseFrom(executeShellCommand("dumpsys activity --proto broadcasts"));
+    }
+
+    private static byte[] executeShellCommand(String cmd) throws Exception {
+        ParcelFileDescriptor pfd = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().executeShellCommand(cmd);
+        try (FileInputStream in = new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            FileUtils.copy(in, out);
+            return out.toByteArray();
+        }
     }
 
     static class MyServiceConnection implements ServiceConnection {
