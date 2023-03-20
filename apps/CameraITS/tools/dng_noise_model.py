@@ -620,7 +620,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
       filename = f'{Path(_NAME_READ_NOISE_FILE).stem}.png'
       file_path = os.path.join(log_path, filename)
       capture_read_noise_utils.create_read_noise_plots_from_results(
-          results,
+          read_noise_results,
           sens_min,
           sens_max_meas,
           color_map,
@@ -630,7 +630,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
       filename = f'{Path(_NAME_READ_NOISE_FILE).stem}.csv'
       file_path = os.path.join(log_path, filename)
       capture_read_noise_utils.create_and_save_csv_from_results(
-          results,
+          read_noise_results,
           sens_min,
           sens_max_meas,
           color_map,
