@@ -96,7 +96,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
      * simulates a VoIP app construct of a Call object that accepts every
      * {@link CallControlCallback}
      */
-    private class TelecomCtsVoipCall {
+    public class TelecomCtsVoipCall {
         private static final String TAG = "TelecomCtsVoipCall";
         private final String mCallId;
         private String mTelecomCallId = "";
@@ -117,7 +117,8 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             mTelecomCallId = callControl.getCallId().toString();
         }
 
-        public CallEvent mEvents = new CallEvent();
+        public android.telecom.cts.TelecomCtsVoipCall.CallEvent mEvents =
+                new android.telecom.cts.TelecomCtsVoipCall.CallEvent();
 
         public CallControlCallback mHandshakes = new CallControlCallback() {
             @Override
@@ -154,86 +155,6 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
         public void resetAllCallbackVerifiers() {
             mWasOnDisconnectCalled = false;
-        }
-    }
-
-    public class CallEvent implements CallEventCallback {
-        public String mCallId = "";
-        private CallEndpoint mCallEndpoint;
-        private List<CallEndpoint> mAvailableEndpoints;
-        private boolean mIsMuted = false;
-        public boolean mWasMuteStateChangedCalled = false;
-        public boolean mWasOnEventCalled = false;
-
-        @Override
-        public void onCallEndpointChanged(@NonNull CallEndpoint newCallEndpoint) {
-            Log.i(TAG, String.format("onCallEndpointChanged: endpoint=[%s]", newCallEndpoint));
-            mCallEndpoint = newCallEndpoint;
-        }
-
-        @Override
-        public void onAvailableCallEndpointsChanged(
-                @NonNull List<CallEndpoint> availableEndpoints) {
-            Log.i(TAG, String.format("onAvailableCallEndpointsChanged: callId=[%s]", mCallId));
-            for (CallEndpoint endpoint : availableEndpoints) {
-                Log.i(TAG, String.format("endpoint=[%s]", endpoint));
-            }
-            mAvailableEndpoints = availableEndpoints;
-        }
-
-        @Override
-        public void onMuteStateChanged(boolean isMuted) {
-            mIsMuted = isMuted;
-            mWasMuteStateChangedCalled = true;
-        }
-
-        @Override
-        public void onCallStreamingFailed(int reason) {
-            Log.i(TAG, String.format("onCallStreamingFailed: callId=[%s], reason=[%s]", mCallId,
-                    reason));
-        }
-
-        @Override
-        public void onEvent(String event, Bundle extras) {
-            Log.i(TAG, String.format("onEvent: callId=[%s], event=[%s]", mCallId, event));
-            mWasOnEventCalled = true;
-        }
-
-        public void resetAllCallbackVerifiers() {
-            mWasMuteStateChangedCalled = false;
-            mWasOnEventCalled = false;
-        }
-
-        public CallEndpoint getCurrentCallEndpoint() {
-            return mCallEndpoint;
-        }
-
-        public List<CallEndpoint> getAvailableEndpoints() {
-            return mAvailableEndpoints;
-        }
-
-        public boolean isMuted() {
-            return mIsMuted;
-        }
-    }
-
-    public class LatchedOutcomeReceiver implements OutcomeReceiver<Void, CallException> {
-        CountDownLatch mCountDownLatch;
-
-        public LatchedOutcomeReceiver(CountDownLatch latch) {
-            mCountDownLatch = latch;
-        }
-
-        @Override
-        public void onResult(Void result) {
-            Log.i(TAG, "latch is counting down");
-            mCountDownLatch.countDown();
-        }
-
-        @Override
-        public void onError(@NonNull CallException error) {
-            Log.i(TAG, String.format("onError: code=[%d]", error.getCode()));
-            OutcomeReceiver.super.onError(error);
         }
     }
 
@@ -871,7 +792,8 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
     public void requestAndAssertEndpointChange(TelecomCtsVoipCall call, CallEndpoint endpoint) {
         final CountDownLatch latch = new CountDownLatch(1);
-        final LatchedOutcomeReceiver outcome = new LatchedOutcomeReceiver(latch);
+        final android.telecom.cts.TelecomCtsVoipCall.LatchedOutcomeReceiver outcome =
+                new android.telecom.cts.TelecomCtsVoipCall.LatchedOutcomeReceiver(latch);
 
         CallControl callControl = call.mCallControl;
         if (callControl == null) {
@@ -928,7 +850,8 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
     public void callControlAction(String action, TelecomCtsVoipCall call, Object... objects) {
         final CountDownLatch latch = new CountDownLatch(1);
-        final LatchedOutcomeReceiver outcome = new LatchedOutcomeReceiver(latch);
+        final android.telecom.cts.TelecomCtsVoipCall.LatchedOutcomeReceiver outcome =
+                new android.telecom.cts.TelecomCtsVoipCall.LatchedOutcomeReceiver(latch);
         DisconnectCause disconnectCause = new DisconnectCause(DisconnectCause.LOCAL);
 
         CallControl callControl = call.mCallControl;
