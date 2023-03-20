@@ -912,9 +912,13 @@ public class PhoneStateListenerTest {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     (tm) -> tm.listen(mListener,
                             PhoneStateListener.LISTEN_OUTGOING_EMERGENCY_SMS));
-            SmsManager.getDefault().sendTextMessage(
-                    TEST_EMERGENCY_NUMBER, null, "testOutgoingSmsListenerCts", null, null);
+
+            SmsManager smsManager = SmsManager.getDefault();
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(smsManager,
+                    (sm) -> sm.sendTextMessage(TEST_EMERGENCY_NUMBER, null,
+                            "testOutgoingSmsListenerCts", null, null));
         });
+
 
         try {
             Pair<EmergencyNumber, Integer> emergencySmsInfo =
