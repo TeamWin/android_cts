@@ -18,6 +18,7 @@ package android.devicepolicy.cts;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.provider.DeviceConfig.NAMESPACE_DEVICE_POLICY_MANAGER;
+import static android.provider.DeviceConfig.NAMESPACE_TELEPHONY;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -67,6 +68,8 @@ public final class ManagedSubscriptionsPolicyTest {
 
     @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
             ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
+            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
     @PolicyAppliesTest(policy = ManagedSubscriptions.class)
     @Postsubmit(reason = "new test")
     public void setManagedSubscriptionsPolicy_works() {
@@ -96,6 +99,8 @@ public final class ManagedSubscriptionsPolicyTest {
 
     @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
             ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
+            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
     @PolicyAppliesTest(policy = ManagedSubscriptions.class)
     @Ignore("TODO(263556964): Enable after we have a way to reset the policy to default for a dpc")
     @Postsubmit(reason = "new test")
@@ -111,6 +116,8 @@ public final class ManagedSubscriptionsPolicyTest {
 
     @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
             ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
+            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
     @CannotSetPolicyTest(policy = ManagedSubscriptions.class)
     @Postsubmit(reason = "new test")
     public void setManagedSubscriptionsPolicy_invalidAdmin_fails() {
@@ -125,6 +132,8 @@ public final class ManagedSubscriptionsPolicyTest {
     }
 
     @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
             ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
     @EnsureHasNoDpc
     @Postsubmit(reason = "new test")
@@ -151,6 +160,8 @@ public final class ManagedSubscriptionsPolicyTest {
     }
 
     @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
             ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
     @PolicyAppliesTest(policy = ManagedSubscriptions.class)
     @Postsubmit(reason = "new test")
