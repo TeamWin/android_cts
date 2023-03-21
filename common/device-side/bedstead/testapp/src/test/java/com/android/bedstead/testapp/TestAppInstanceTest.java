@@ -131,7 +131,7 @@ public class TestAppInstanceTest {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
             testAppInstance.keepAlive();
 
-//            testAppInstance.process().kill();
+            testAppInstance.process().kill();
 
             Poll.forValue("running process", () -> sTestApp.pkg().runningProcess(sUser))
                     .toNotBeNull()
@@ -227,12 +227,11 @@ public class TestAppInstanceTest {
     }
 
     @Test
-    @Ignore("b/203758521 need to re-add support for killing processes")
     public void stop_registeredReceiver_doesNotReceiveBroadcast() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
             testAppInstance.registerReceiver(INTENT_FILTER);
 
-//            testAppInstance.stop();
+            testAppInstance.stop();
             sContext.sendBroadcast(INTENT);
 
             EventLogs<BroadcastReceivedEvent> logs =
@@ -293,7 +292,7 @@ public class TestAppInstanceTest {
     public void registerReceiver_appIsKilled_stillReceivesBroadcast() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
             testAppInstance.registerReceiver(INTENT_FILTER);
-//            testApp.pkg().runningProcess(sUser).kill();
+            sTestApp.pkg().runningProcess(sUser).kill();
             Poll.forValue("running process", () -> sTestApp.pkg().runningProcess(sUser))
                     .toNotBeNull()
                     .errorOnFail()

@@ -36,7 +36,6 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.EnsureUnlocked;
-import com.android.bedstead.harrier.annotations.LocalPresubmit;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -92,7 +91,6 @@ public final class ScreenCaptureDisabledTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setScreenCaptureDisabled",
             "android.app.admin.DevicePolicyManager#getScreenCaptureDisabled"})
-    @LocalPresubmit
     public void setScreenCaptureDisabled_false_works() {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, false);
 
@@ -111,7 +109,6 @@ public final class ScreenCaptureDisabledTest {
 
     @CanSetPolicyTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test") // TODO: Remove
-    @LocalPresubmit
     public void setScreenCaptureDisabled_doesNotThrowSecurityException() {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, false);
     }
@@ -128,7 +125,6 @@ public final class ScreenCaptureDisabledTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setScreenCaptureDisabled",
             "android.app.admin.DevicePolicyManager#getScreenCaptureDisabled"})
-    @LocalPresubmit
     public void setScreenCaptureDisabled_true_works() {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, true);
     }

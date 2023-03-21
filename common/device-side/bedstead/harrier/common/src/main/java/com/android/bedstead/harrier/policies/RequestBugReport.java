@@ -18,21 +18,18 @@ package com.android.bedstead.harrier.policies;
 
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DPM_ROLE_HOLDER;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
-import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_SECURITY_LOGGING;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_LOCK_CREDENTIALS;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /**
- * Policy for security logging.
+ * Policies around requesting a bug report.
  *
- * <p>This is used by {@code DevicePolicyManager#setSecurityLoggingEnabled},
- * {@code DevicePolicyManager#isSecurityLoggingEnabled},
- * {@code DevicePolicyManager#retrieveSecurityLogs},
- * and {@code DevicePolicyManager#retrievePreRebootSecurityLogs}.
+ * <p>This is used by methods such as
+ * {@code DevicePolicyManager#requestBugReport()}
  */
-@EnterprisePolicy(dpc = APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE | APPLIES_GLOBALLY | CANNOT_BE_APPLIED_BY_ROLE_HOLDER)
-public final class SecurityLogging {
+@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER)
+public final class RequestBugReport {
 }

@@ -39,7 +39,6 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
-import com.android.bedstead.harrier.annotations.LocalPresubmit;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
@@ -93,7 +92,6 @@ public final class CameraTest {
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = CameraPolicy.class)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
-    @LocalPresubmit
     public void setCameraDisabledTrue_cameraDisabledLocally() {
         sDeviceState.dpc().devicePolicyManager()
                 .setCameraDisabled(sDeviceState.dpc().componentName(), true);
@@ -105,7 +103,6 @@ public final class CameraTest {
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = CameraPolicy.class)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
-    @LocalPresubmit
     public void setCameraDisabledFalse_cameraEnabledLocally() {
         sDeviceState.dpc().devicePolicyManager()
                 .setCameraDisabled(sDeviceState.dpc().componentName(), false);

@@ -417,7 +417,10 @@ public final class Packages {
                     if (intent == null) {
                         throw new NeneException(
                                 "Did not receive intent from package installer session when"
-                                        + " installing bytes on user " + user);
+                                        + " installing bytes on user " + user
+                                        + ". Relevant logcat: "
+                                        + TestApis.logcat().dump(
+                                                l -> l.contains("PackageInstaller")));
                     }
 
                     if (intent.getIntExtra(EXTRA_STATUS, /* defaultValue= */ STATUS_FAILURE)

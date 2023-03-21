@@ -53,8 +53,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
             "com.android.cts.comp.provisioning.ManagedProfileProvisioningTest";
     private static final String BIND_DEVICE_ADMIN_SERVICE_FAILS_TEST =
             "com.android.cts.comp.BindDeviceAdminServiceFailsTest";
-    private static final String DEVICE_WIDE_LOGGING_TEST =
-            "com.android.cts.comp.DeviceWideLoggingFeaturesTest";
     private static final String AFFILIATION_TEST =
             "com.android.cts.comp.provisioning.AffiliationTest";
     private static final String USER_RESTRICTION_TEST =
@@ -204,85 +202,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
             sendWipeProfileBroadcast(secondaryUserId);
             waitUntilUserRemoved(secondaryUserId);
         }, WIPE_DATA_WITH_REASON_DEVICE_POLICY_EVENT);
-    }
-
-    @Test
-    // Does not work emulated on headless as initial secondary user isn't affiliated
-    public void testNetworkAndSecurityLoggingAvailableIfAffiliated() throws Exception {
-        assumeCanCreateAdditionalUsers(2);
-
-        // If secondary users are allowed, create an affiliated one, to check that this still
-        // works if having both an affiliated user and an affiliated managed profile.
-        final int secondaryUserId = setupManagedSecondaryUser();
-
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                DEVICE_WIDE_LOGGING_TEST,
-                "testEnablingNetworkAndSecurityLogging",
-                mDeviceOwnerUserId);
-        try {
-            // No affiliation ids have been set on the profile, the features shouldn't be available.
-            runDeviceTestsAsUser(
-                    COMP_DPC_PKG,
-                    DEVICE_WIDE_LOGGING_TEST,
-                    "testRetrievingLogsThrowsSecurityException",
-                    mDeviceOwnerUserId);
-
-            // Affiliate the DO and the secondary user.
-            setSameAffiliationId(secondaryUserId);
-            runDeviceTestsAsUser(
-                    COMP_DPC_PKG,
-                    DEVICE_WIDE_LOGGING_TEST,
-                    "testRetrievingLogsDoesNotThrowException",
-                    mDeviceOwnerUserId);
-
-            setDifferentAffiliationId(secondaryUserId);
-            runDeviceTestsAsUser(
-                    COMP_DPC_PKG,
-                    DEVICE_WIDE_LOGGING_TEST,
-                    "testRetrievingLogsThrowsSecurityException",
-                    mDeviceOwnerUserId);
-        } finally {
-            runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                DEVICE_WIDE_LOGGING_TEST,
-                    "testDisablingNetworkAndSecurityLogging",
-                    mDeviceOwnerUserId);
-        }
-    }
-
-    @FlakyTest
-    @Test
-    // Does not work emulated on headless as initial secondary user isn't affiliated
-    public void testRequestBugreportAvailableIfAffiliated() throws Exception {
-        // This is a test that the DO can only take a bug report if all secondary users are
-        // affiliated
-        assumeCanCreateAdditionalUsers(2);
-
-        final int secondaryUserId = setupManagedSecondaryUser();
-
-        // No affiliation ids have been set on the secondary user, the feature shouldn't be
-        // available.
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                DEVICE_WIDE_LOGGING_TEST,
-                "testRequestBugreportThrowsSecurityException",
-                mDeviceOwnerUserId);
-
-        // Affiliate the DO and the secondary user.
-        setSameAffiliationId(secondaryUserId);
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                DEVICE_WIDE_LOGGING_TEST,
-                "testRequestBugreportDoesNotThrowException",
-                mDeviceOwnerUserId);
-
-        setDifferentAffiliationId(secondaryUserId, COMP_DPC_PKG);
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                DEVICE_WIDE_LOGGING_TEST,
-                "testRequestBugreportThrowsSecurityException",
-                mDeviceOwnerUserId);
     }
 
     private void verifyBindDeviceAdminServiceAsUser(int profileOwnerUserId) throws Exception {
