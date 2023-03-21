@@ -42,6 +42,7 @@ public class TestUtils {
         assertEquals(a.getCandidateQueryData(), b.getCandidateQueryData());
         assertEquals(a.getCredentialRetrievalData(), b.getCredentialRetrievalData());
         assertThat(a.isSystemProviderRequired()).isEqualTo(b.isSystemProviderRequired());
+        assertThat(a.getAllowedProviders()).containsExactlyElementsIn(b.getAllowedProviders());
     }
 
     public static void assertEquals(CredentialDescription a, CredentialDescription b) {
