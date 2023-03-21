@@ -216,12 +216,14 @@ public class SatelliteManagerTest {
                 receiver);
         assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
 
-        assertNotNull(errorCode.get());
-        int error = errorCode.get();
-        if (error == SatelliteManager.SATELLITE_ERROR_NONE) {
-            assertNotNull(supported.get());
+        Integer error = errorCode.get();
+        Boolean isSupported = supported.get();
+        if (error == null) {
+            assertNotNull(isSupported);
+            Log.d(TAG, "testRequestIsSatelliteSupported isSupported=" + isSupported);
         } else {
-            assertNull(supported.get());
+            assertNull(isSupported);
+            Log.d(TAG, "testRequestIsSatelliteSupported error=" + error);
         }
     }
 
