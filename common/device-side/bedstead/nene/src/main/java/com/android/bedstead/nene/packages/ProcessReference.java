@@ -20,6 +20,7 @@ import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
+import com.android.bedstead.nene.utils.ShellCommand;
 
 import java.util.Set;
 
@@ -73,8 +74,9 @@ public final class ProcessReference {
      * Kill this process.
      */
     public void kill() {
-        // Removing a permission kills the process, so we can grant then remove an arbitrary
-        // permission
+        int pid = pid();
+//        // Removing a permission kills the process, so we can grant then remove an arbitrary
+//        // permission
         String permission = getGrantablePermission();
 
         if (mPackage.hasPermission(mUser, permission)) {
@@ -85,10 +87,22 @@ public final class ProcessReference {
             mPackage.denyPermission(mUser, permission);
         }
 
-        Poll.forValue("process", () -> mPackage.runningProcess(mUser))
-                .toBeNull()
+        Poll.forValue("pid", () -> {
+            ProcessReference other = mPackage.runningProcess(mUser);
+            return other == null ? -1 : other.pid();
+        }).toNotBeEqualTo(pid)
                 .errorOnFail("Error killing process")
                 .await();
+    }
+
+    /**
+     * Crash this process.
+     */
+    public void crash() {
+        ShellCommand.builder("am crash")
+                .addOperand(mPackage.packageName())
+                .validate(String::isEmpty)
+                .executeOrThrowNeneException("Error crashing process");
     }
 
     private String getGrantablePermission() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,41 +16,21 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.REQUIRE_RUN_ON_PRECEDENCE;
-import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
-
-import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
-import com.android.bedstead.nene.types.OptionalBoolean;
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Mark that a test method should run on the system user.
- *
- * <p>Your test configuration should be such that this test is only run on the system user
- *
- * <p>Optionally, you can guarantee that these methods do not run outside of the system
- * user by using {@code Devicestate}.
- *
- * <p>Note that this requires that the test runs on the system user, including headless system
- * users. To mark that a test should run on the primary user, excluding headless
- * system users, see {@link RequireRunOnPrimaryUser}.
- */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@RequireRunOnUserAnnotation(
-        {"android.os.usertype.full.SYSTEM", "android.os.usertype.system.HEADLESS"})
-public @interface RequireRunOnSystemUser {
-    /**
-     * Should we ensure that we are switched to the given user.
-     *
-     * <p>ANY will be treated as TRUE if no other annotation has forced a switch and the user
-     * can be switched to.
-     */
-    OptionalBoolean switchedToUser() default TRUE;
+@Repeatable(EnsureSecureSettingSetGroup.class)
+public @interface EnsureSecureSettingSet {
+    String key();
+
+    String value();
 
     /**
      * Weight sets the order that annotations will be resolved.
@@ -62,5 +42,5 @@ public @interface RequireRunOnSystemUser {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default REQUIRE_RUN_ON_PRECEDENCE;
+    int weight() default MIDDLE;
 }

@@ -26,13 +26,14 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEV
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /**
- * Policy for security logging.
+ * Policy for security logging which logs from the entire device.
  *
  * <p>This is used by {@code DevicePolicyManager#setSecurityLoggingEnabled},
  * {@code DevicePolicyManager#isSecurityLoggingEnabled},
  * {@code DevicePolicyManager#retrieveSecurityLogs},
  * and {@code DevicePolicyManager#retrievePreRebootSecurityLogs}.
- */
-@EnterprisePolicy(dpc = APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE | APPLIES_GLOBALLY | CANNOT_BE_APPLIED_BY_ROLE_HOLDER)
-public final class SecurityLogging {
+ */ // APPLIED_BY_DPM_ROLE_HOLDER
+@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIES_GLOBALLY | CANNOT_BE_APPLIED_BY_ROLE_HOLDER)
+//        permissions = @EnterprisePolicy.Permission(appliedWith = MANAGE_DEVICE_POLICY_SECURITY_LOGGING, appliesTo = APPLIES_GLOBALLY))
+public final class GlobalSecurityLogging {
 }

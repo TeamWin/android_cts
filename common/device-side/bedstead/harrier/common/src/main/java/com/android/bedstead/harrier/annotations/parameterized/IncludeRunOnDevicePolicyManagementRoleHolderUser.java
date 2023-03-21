@@ -28,6 +28,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
+import com.android.bedstead.nene.types.OptionalBoolean;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -39,7 +40,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
-@RequireRunOnSystemUser
+@RequireRunOnSystemUser(switchedToUser = OptionalBoolean.ANY)
 @EnsureHasNoDpc(onUser = ANY)
 @EnsureHasDevicePolicyManagerRoleHolder(isPrimary = true)
 @EnsureFeatureFlagEnabled(

@@ -156,7 +156,8 @@ public final class UserReference implements AutoCloseable {
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
         } catch (AdbException e) {
-            throw new NeneException("Could not remove user " + this, e);
+            throw new NeneException("Could not remove user " + this + ". Logcat: "
+                    + TestApis.logcat().dump((l) -> l.contains("UserManagerService")), e);
         }
         if (exists()) {
             // This should never happen
@@ -303,11 +304,16 @@ public final class UserReference implements AutoCloseable {
             }
 
             if (!switched) {
+                String error = getSwitchToUserError();
+                if (error != null) {
+                    throw new NeneException(error);
+                }
+
                 // TODO(273229540): It might take a while to fail - we should stream from the
                 // start of the call
                 throw new NeneException("Error switching user to " + this
                         + ". Relevant logcat: " + TestApis.logcat().dump(
-                                (line) -> line.contains("ActivityManager")));
+                                (line) -> line.contains("Cannot switch")));
             }
 
             if (Versions.meetsMinimumSdkVersionRequirement(R)) {
@@ -787,5 +793,19 @@ public final class UserReference implements AutoCloseable {
     @Override
     public String toString() {
         return "User{id=" + id() + "}";
+    }
+
+    /**
+     * {@code true} if this user can be switched to.
+     */
+    public boolean canBeSwitchedTo() {
+        return getSwitchToUserError() == null;
+    }
+
+    private String getSwitchToUserError() {
+        if (TestApis.users().isHeadlessSystemUserMode() && equals(TestApis.users().system())) {
+            return "Cannot switch to system user on HSUM devices";
+        }
+        return null;
     }
 }

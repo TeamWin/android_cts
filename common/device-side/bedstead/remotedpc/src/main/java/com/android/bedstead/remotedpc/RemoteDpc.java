@@ -286,21 +286,51 @@ public class RemoteDpc extends RemotePolicyManager {
             return RemoteDpc.forDevicePolicyController(currentProfileOwner);
         }
 
+        return setAsProfileOwner(user, dpcQuery.get());
+    }
+
+    /**
+     * Set specific RemoteDPC {@link TestApp} as the Profile Owner.
+     *
+     * <p>If called for Android versions prior to Q, an exception will be thrown if the user is not
+     * the instrumented user.
+     */
+    public static RemoteDpc setAsProfileOwner(
+            UserReference user, TestApp dpcTestApp) {
+        if (!dpcTestApp.pkg().packageName().startsWith(REMOTE_DPC_APP_PACKAGE_NAME_OR_PREFIX)) {
+            throw new IllegalArgumentException("setAsProfileOwner test app must be a RemoteDPC");
+        }
+
+        if (user == null) {
+            throw new NullPointerException();
+        }
+
+        if (!user.equals(TestApis.users().instrumented())) {
+            if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.Q)) {
+                throw new NeneException("Cannot use RemoteDPC across users prior to Q");
+            }
+        }
+
+        ProfileOwner currentProfileOwner = TestApis.devicePolicy().getProfileOwner(user);
+
         if (currentProfileOwner != null) {
             currentProfileOwner.remove();
         }
 
-        TestApp testApp = dpcQuery.get();
-        if (!testApp.installedOnUser(user)) {
-            Log.i(LOG_TAG, "Installing RemoteDPC app: " + testApp.packageName());
-            testApp.install(user);
+        if (!dpcTestApp.installedOnUser(user)) {
+            Log.i(LOG_TAG, "Installing RemoteDPC app: " + dpcTestApp.packageName());
+            dpcTestApp.install(user);
         }
 
         ComponentName componentName =
-                new ComponentName(testApp.packageName(), TEST_APP_CLASS_NAME);
+                new ComponentName(dpcTestApp.packageName(), TEST_APP_CLASS_NAME);
         RemoteDpc remoteDpc = new RemoteDpc(
-                testApp,
+                dpcTestApp,
                 TestApis.devicePolicy().setProfileOwner(user, componentName));
+
+//        if (!remoteDpc.user().isRunning()) {
+//            remoteDpc.user().start();
+//        }
 
         // DISALLOW_INSTALL_UNKNOWN_SOURCES causes verification failures in work profiles
         remoteDpc.devicePolicyManager()

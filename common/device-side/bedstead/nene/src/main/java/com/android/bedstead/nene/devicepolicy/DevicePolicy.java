@@ -143,6 +143,21 @@ public final class DevicePolicy {
     }
 
     /**
+     * Get the organization owned profile owner for the device, if any, otherwise null.
+     */
+    public ProfileOwner getOrganizationOwnedProfileOwner() {
+        for (UserReference user : TestApis.users().all()) {
+            ProfileOwner profileOwner = getProfileOwner(user);
+            if (profileOwner != null && profileOwner.isOrganizationOwned()) {
+                return profileOwner;
+            }
+        }
+
+        return null;
+    }
+
+
+    /**
      * Get the profile owner for the instrumented user.
      */
     public ProfileOwner getProfileOwner() {

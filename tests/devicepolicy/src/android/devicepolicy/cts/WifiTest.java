@@ -38,7 +38,6 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureWifiEnabled;
-import com.android.bedstead.harrier.annotations.LocalPresubmit;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -618,7 +617,6 @@ public final class WifiTest {
     }
 
     @CanSetPolicyTest(policy = Wifi.class) // TODO: Remove
-    @LocalPresubmit
     public void setWifiSsidPolicy_doesNotThrowException() {
         sDeviceState.dpc().devicePolicyManager()
                 .setWifiSsidPolicy(WIFI_SSID_POLICY);
