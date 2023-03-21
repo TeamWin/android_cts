@@ -18,7 +18,10 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.server.wm.BarTestUtils.assumeHasBars;
+import static android.server.wm.InputMethodVisibilityVerifier.expectImeInvisible;
+import static android.server.wm.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
+import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SECONDARY_HOME_ACTIVITY;
@@ -37,6 +40,8 @@ import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.hideSoftInputMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -65,6 +70,7 @@ import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.WindowManagerState.WindowState;
 import android.server.wm.intent.Activities;
 import android.text.TextUtils;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
@@ -572,6 +578,46 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         notExpectEvent(stream, editorMatcher("showSoftInput",
                 imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                 NOT_EXPECT_TIMEOUT);
+    }
+
+    /**
+     * A regression test for Bug 273630528.
+     *
+     * Test that the IME on the editor activity with embedded in virtual display will be hidden
+     * after pressing the back key.
+     */
+    @Test
+    public void testHideImeWhenImeTargetOnEmbeddedVirtualDisplay() throws Exception {
+        final VirtualDisplaySession session = createManagedVirtualDisplaySession();
+        final MockImeSession imeSession = createManagedMockImeSession(this);
+        final TestActivitySession<ImeTestActivity> imeActivitySession =
+                createManagedTestActivitySession();
+
+        // Setup a virtual display embedded on an activity.
+        final WindowManagerState.DisplayContent dc = session
+                .setPublicDisplay(true)
+                .setSupportsTouch(true)
+                .createDisplay();
+
+        // Launch a test activity on that virtual display and show IME by tapping the editor.
+        imeActivitySession.launchTestActivityOnDisplay(ImeTestActivity.class, dc.mId);
+        tapAndAssertEditorFocusedOnImeActivity(imeActivitySession, dc.mId);
+        final ImeEventStream stream = imeSession.openEventStream();
+        final String marker = imeActivitySession.getActivity().mEditText.getPrivateImeOptions();
+        expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+        // Expect soft-keyboard becomes visible after requesting show IME.
+        showSoftInputAndAssertImeShownOnDisplay(DEFAULT_DISPLAY, imeActivitySession, stream);
+        expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                View.VISIBLE, TIMEOUT);
+        expectImeVisible(TIMEOUT);
+
+        // Pressing back key, expect soft-keyboard will become invisible.
+        pressBackButton();
+        expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
+        expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                View.GONE, TIMEOUT);
+        expectImeInvisible(TIMEOUT);
     }
 
     /**
