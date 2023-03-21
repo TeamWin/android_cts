@@ -435,6 +435,8 @@ public class TvInteractiveAppServiceTest {
                 .isEqualTo(actual.getName());
         assertThat(expected.getContentRatings())
                 .isEqualTo(actual.getContentRatings());
+        assertThat(expected.getProgramUri())
+                .isEqualTo(actual.getProgramUri());
     }
 
     @Before
@@ -1073,6 +1075,8 @@ public class TvInteractiveAppServiceTest {
     public void testSetTvRecordingInfo() throws Throwable {
         String mockRecordingId = "testRecordingId";
         TvRecordingInfo mockRecordingInfo = createMockRecordingInfo(mockRecordingId);
+        mockRecordingInfo.setDescription("modifiedDescription");
+        mockRecordingInfo.setName("modifiedName");
         mSession.setTvRecordingInfo(mockRecordingId, mockRecordingInfo);
         mCallback.resetValues();
         mInstrumentation.waitForIdleSync();
