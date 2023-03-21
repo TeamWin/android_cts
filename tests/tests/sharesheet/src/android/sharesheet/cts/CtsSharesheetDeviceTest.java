@@ -15,6 +15,8 @@
  */
 package android.sharesheet.cts;
 
+import static android.Manifest.permission.START_ACTIVITIES_FROM_BACKGROUND;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -52,10 +54,11 @@ import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -74,8 +77,12 @@ import java.util.stream.Collectors;
  * TODO: Add JavaDoc
  */
 @RunWith(AndroidJUnit4.class)
-@Ignore("b/273776367 background activity starting constraints interfering with the test")
 public class CtsSharesheetDeviceTest {
+
+    @Rule
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+            START_ACTIVITIES_FROM_BACKGROUND);
 
     public static final String TAG = CtsSharesheetDeviceTest.class.getSimpleName();
 
