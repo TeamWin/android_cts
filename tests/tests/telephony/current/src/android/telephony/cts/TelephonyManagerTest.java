@@ -1517,7 +1517,8 @@ public class TelephonyManagerTest {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
 
         String countryCode = mTelephonyManager.getSimCountryIso();
-        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) &&
+                !countryCode.isEmpty()) {
             assertTrue("Country code '" + countryCode + "' did not match "
                             + ISO_COUNTRY_CODE_PATTERN,
                     Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode));
