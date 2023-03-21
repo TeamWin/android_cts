@@ -580,12 +580,12 @@ public class SmsManagerTest {
 
         int defaultSmsSubId = SubscriptionManager.getDefaultSmsSubscriptionId();
 
+        UserHandle originalUserHandle = UserHandle.SYSTEM;
         try {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(
                             android.Manifest.permission.MANAGE_SUBSCRIPTION_USER_ASSOCIATION);
-            UserHandle originalUserHandle = mSubscriptionManager.getSubscriptionUserHandle(
-                    defaultSmsSubId);
+            originalUserHandle = mSubscriptionManager.getSubscriptionUserHandle(defaultSmsSubId);
 
             // Change user handle of default sms subscription.
             UserHandle testUserHandle = UserHandle.of(100);
@@ -610,9 +610,8 @@ public class SmsManagerTest {
             // default sms subscription is not associated with USER_SYSTEM.
             assertThat(mSendReceiver.getPendingResult().getResultCode())
                     .isEqualTo(SmsManager.RESULT_USER_NOT_ALLOWED);
-
-            mSubscriptionManager.setSubscriptionUserHandle(defaultSmsSubId, originalUserHandle);
         } finally {
+            mSubscriptionManager.setSubscriptionUserHandle(defaultSmsSubId, originalUserHandle);
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
         }
