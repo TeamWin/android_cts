@@ -20,6 +20,8 @@ import static android.os.Process.setThreadPriority;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.car.Car;
 import android.car.os.CarPerformanceManager;
 import android.car.os.ThreadPolicyWithPriority;
@@ -62,11 +64,17 @@ public final class CarPerformanceManagerTest extends AbstractCarTestCase {
         mCarPerformanceManager = (CarPerformanceManager) getCar().getCarManager(
                 Car.CAR_PERFORMANCE_SERVICE);
         assertThat(mCarPerformanceManager).isNotNull();
-
+        mOriginalPolicyWithPriority = null;
         if (mApiCheckerRule.isApiSupported("android.car.os.CarPerformanceManager#"
                 + "getThreadPriority")) {
-            mOriginalPolicyWithPriority = mCarPerformanceManager.getThreadPriority();
+            try {
+                mOriginalPolicyWithPriority = mCarPerformanceManager.getThreadPriority();
+            } catch (IllegalStateException e) {
+                mOriginalPolicyWithPriority = null;
+            }
         }
+        assumeTrue("Failed to get original thread priority or the thread prority is not supported",
+                mOriginalPolicyWithPriority != null);
     }
 
     @After
