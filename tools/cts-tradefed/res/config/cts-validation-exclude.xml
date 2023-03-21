@@ -46,7 +46,7 @@
     <option name="compatibility:exclude-filter" value="CtsPermission3TestCases" />
     <option name="compatibility:exclude-filter" value="CtsTransitionTestCases" />
     <option name="compatibility:exclude-filter" value="CtsRoleTestCases" />
-    <option name="compatibility:exclude-filter" value="CtsPermission2TestCases" />
+    <option name="compatibility:exclude-filter" value="CtsPermissionPolicyTestCases" />
     <option name="compatibility:exclude-filter" value="CtsAnimationTestCases" />
     <option name="compatibility:exclude-filter" value="CtsBackupTestCases" />
     <option name="compatibility:exclude-filter" value="CtsInputMethodServiceHostTestCases" />
