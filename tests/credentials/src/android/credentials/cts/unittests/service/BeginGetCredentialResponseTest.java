@@ -83,35 +83,15 @@ public class BeginGetCredentialResponseTest {
     }
 
     @Test
-    public void testBuilder_setActions_nullItem() {
-        Assert.assertThrows(NullPointerException.class,
-                () -> new BeginGetCredentialResponse.Builder().setActions(List.of(null)));
-    }
-
-    @Test
     public void testBuilder_setCredentialEntries_null() {
         Assert.assertThrows(NullPointerException.class,
                 () -> new BeginGetCredentialResponse.Builder().setCredentialEntries(null));
     }
 
     @Test
-    public void testBuilder_setCredentialEntries_nullItem() {
-        Assert.assertThrows(NullPointerException.class,
-                () -> new BeginGetCredentialResponse.Builder().setCredentialEntries(
-                        List.of(null)));
-    }
-
-    @Test
     public void testBuilder_setAuthenticationActions_null() {
         Assert.assertThrows(NullPointerException.class,
                 () -> new BeginGetCredentialResponse.Builder().setAuthenticationActions(null));
-    }
-
-    @Test
-    public void testBuilder_setAuthenticationActions_nullItem() {
-        Assert.assertThrows(NullPointerException.class,
-                () -> new BeginGetCredentialResponse.Builder().setAuthenticationActions(
-                        List.of(null)));
     }
 
     @Test

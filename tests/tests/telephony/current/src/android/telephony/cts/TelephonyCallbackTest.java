@@ -1148,11 +1148,12 @@ public class TelephonyCallbackTest {
 
         mOutgoingEmergencySmsCallback = new OutgoingEmergencySmsListener();
         registerTelephonyCallbackWithPermission(mOutgoingEmergencySmsCallback);
-        SmsManager.getDefault().sendTextMessage(
-                TEST_EMERGENCY_NUMBER, null,
-                "testOutgoingSmsListenerCtsByRegisterTelephonyCallback",
-                null, null);
-
+        SmsManager smsManager = SmsManager.getDefault();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(smsManager,
+                (sm) -> sm.sendTextMessage(
+                        TEST_EMERGENCY_NUMBER, null,
+                        "testOutgoingSmsListenerCtsByRegisterTelephonyCallback",
+                        null, null));
         try {
             synchronized (mLock) {
                 if (mOnOutgoingSmsEmergencyNumberChanged == null) {

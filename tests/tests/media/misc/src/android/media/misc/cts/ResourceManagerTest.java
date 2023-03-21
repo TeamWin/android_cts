@@ -23,9 +23,12 @@ import android.test.ActivityInstrumentationTestCase2;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.NonMainlineTest;
+
 @SmallTest
 @RequiresDevice
 @AppModeFull(reason = "TODO: evaluate and port to instant")
+@NonMainlineTest
 public class ResourceManagerTest
         extends ActivityInstrumentationTestCase2<ResourceManagerStubActivity> {
 

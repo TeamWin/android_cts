@@ -33,7 +33,6 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
 import android.platform.test.annotations.RequiresDevice;
-import android.provider.Settings;
 import android.util.Log;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
@@ -66,8 +65,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     private boolean mHasWifi;
     /** Whether the device running these tests supports telephony. */
     private boolean mHasTelephony;
-    /** Track whether the restricted bucket was enabled in case we toggle it. */
-    private String mInitialRestrictedBucketEnabled;
 
     private JobInfo.Builder mBuilder;
 
@@ -89,8 +86,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         if (mHasWifi) {
             mNetworkingHelper.ensureSavedWifiNetwork();
         }
-        mInitialRestrictedBucketEnabled = Settings.Global.getString(mContext.getContentResolver(),
-                Settings.Global.ENABLE_RESTRICTED_BUCKET);
         setDataSaverEnabled(false);
         mNetworkingHelper.setAllNetworksEnabled(true);
         // Force the test app out of the never bucket.
@@ -107,10 +102,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         BatteryUtils.runDumpsysBatteryReset();
         BatteryUtils.resetBatterySaver();
-
-        // Restore initial restricted bucket setting.
-        Settings.Global.putString(mContext.getContentResolver(),
-                Settings.Global.ENABLE_RESTRICTED_BUCKET, mInitialRestrictedBucketEnabled);
 
         // Ensure that we leave WiFi in its previous state.
         mNetworkingHelper.tearDown();
@@ -376,8 +367,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
 
-        Settings.Global.putString(mContext.getContentResolver(),
-                Settings.Global.ENABLE_RESTRICTED_BUCKET, "1");
         mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
         SystemUtil.runShellCommand("am set-standby-bucket "
                 + kJobServiceComponent.getPackageName() + " restricted");
@@ -506,8 +495,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
 
-        Settings.Global.putString(mContext.getContentResolver(),
-                Settings.Global.ENABLE_RESTRICTED_BUCKET, "1");
         mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
         SystemUtil.runShellCommand("am set-standby-bucket "
                 + kJobServiceComponent.getPackageName() + " restricted");
@@ -860,8 +847,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
 
-        Settings.Global.putString(mContext.getContentResolver(),
-                Settings.Global.ENABLE_RESTRICTED_BUCKET, "1");
         mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
         SystemUtil.runShellCommand("am set-standby-bucket "
                 + kJobServiceComponent.getPackageName() + " restricted");

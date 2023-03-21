@@ -21,7 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.os.Parcel;
-import android.service.voice.DetectorFailure;
+import android.service.voice.FailureSuggestedAction;
 import android.service.voice.SoundTriggerFailure;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -65,7 +65,7 @@ public class SoundTriggerFailureTest {
                 new SoundTriggerFailure(TEST_ERROR_CODE, TEST_ERROR_MESSAGE);
 
         assertThat(soundTriggerFailure.getSuggestedAction()).isEqualTo(
-                DetectorFailure.SUGGESTED_ACTION_RECREATE_DETECTOR);
+                FailureSuggestedAction.RECREATE_DETECTOR);
     }
 
     @Test

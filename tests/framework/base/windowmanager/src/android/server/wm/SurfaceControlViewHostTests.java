@@ -360,7 +360,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         for (int i = 0; i < 3; i++) {
             final List<MotionEvent> events = new ArrayList<>();
             mEmbeddedView = new View(mActivity);
-            mEmbeddedView.setOnTouchListener((v, e) -> events.add(e));
+            mEmbeddedView.setOnTouchListener((v, e) -> events.add(MotionEvent.obtain(e)));
 
             // Add a margin to the SurfaceView to offset the embedded view's location on the screen.
             final int leftMargin = i * 20;
