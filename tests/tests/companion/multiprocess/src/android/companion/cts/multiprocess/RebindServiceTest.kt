@@ -93,12 +93,11 @@ class RebindServiceTest : TestBase() {
         cdm.notifyDeviceAppeared(idB)
 
         assertApplicationBinds(cdm)
+        // Wait for secondary service to start.
+        SystemClock.sleep(2000)
         // Kill the primary process.
         killProcess(":primary")
         killProcess(":secondary")
-
-        SystemClock.sleep(2000)
-
         // Primary service should be unbound.
         assertServiceNotBound("PrimaryCompanionService")
 
