@@ -454,12 +454,15 @@ class AppOpsTest {
     }
 
     @Test
-    fun testOnOpNotedListener() {
+    fun startWatchingNoted_withoutExecutor_whenOpNoted_receivesCallback() {
         val watcher = mock(AppOpsManager.OnOpNotedListener::class.java)
         try {
-            mAppOps.startWatchingNoted(arrayOf<String>(OPSTR_WRITE_CALENDAR), watcher)
+            mAppOps.startWatchingNoted(arrayOf(OPSTR_WRITE_CALENDAR), watcher)
 
-            mAppOps.noteOp(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName, "testAttribution", null)
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                    mMyUid, mOpPackageName,
+                    "testAttribution",
+                    /* message = */ null)
 
             verify(watcher, timeout(TIMEOUT_MS))
                     .onOpNoted(
@@ -472,21 +475,83 @@ class AppOpsTest {
 
             Mockito.reset(watcher)
 
-            mAppOps.noteOp(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName, null, null)
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                    mMyUid,
+                    mOpPackageName,
+                    /* attributionTag = */ null,
+                    /* message = */ null)
 
             verify(watcher, timeout(TIMEOUT_MS))
                     .onOpNoted(
                             OPSTR_WRITE_CALENDAR,
                             mMyUid,
                             mOpPackageName,
-                            null,
+                            /* attributionTag = */ null,
                             AppOpsManager.OP_FLAG_SELF,
                             MODE_ALLOWED)
 
             mAppOps.stopWatchingNoted(watcher)
             Mockito.reset(watcher)
 
-            mAppOps.noteOp(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName, "testAttribution", null)
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                    mMyUid,
+                    mOpPackageName,
+                    "testAttribution",
+                    /* message = */ null)
+
+            verifyZeroInteractions(watcher)
+        } finally {
+            mAppOps.stopWatchingNoted(watcher)
+        }
+    }
+
+    @Test
+    fun startWatchingNoted_withExecutor_whenOpNoted_receivesCallback() {
+        val watcher = mock(AppOpsManager.OnOpNotedListener::class.java)
+        try {
+            mAppOps.startWatchingNoted(arrayOf(OPSTR_WRITE_CALENDAR), { it.run() }, watcher)
+
+            mAppOps.noteOp(
+                    OPSTR_WRITE_CALENDAR,
+                    mMyUid,
+                    mOpPackageName,
+                    "testAttribution",
+                    /* message = */ null)
+
+            verify(watcher, timeout(TIMEOUT_MS))
+                    .onOpNoted(
+                            OPSTR_WRITE_CALENDAR,
+                            mMyUid,
+                            mOpPackageName,
+                            "testAttribution",
+                            AppOpsManager.OP_FLAG_SELF,
+                            MODE_ALLOWED)
+
+            Mockito.reset(watcher)
+
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                    mMyUid,
+                    mOpPackageName,
+                    /* attributionTag = */ null,
+                    /* message = */ null)
+
+            verify(watcher, timeout(TIMEOUT_MS))
+                    .onOpNoted(
+                            OPSTR_WRITE_CALENDAR,
+                            mMyUid,
+                            mOpPackageName,
+                            /* attributionTag = */ null,
+                            AppOpsManager.OP_FLAG_SELF,
+                            MODE_ALLOWED)
+
+            mAppOps.stopWatchingNoted(watcher)
+            Mockito.reset(watcher)
+
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                    mMyUid,
+                    mOpPackageName,
+                    "testAttribution",
+                    /* message = */ null)
 
             verifyZeroInteractions(watcher)
         } finally {
