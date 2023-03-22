@@ -151,6 +151,14 @@ public class InstallUtilsHost {
     }
 
     /**
+     * Installs packages using rebootless (non-staged) install flow and waits
+     *     for verification to complete
+     */
+    public String installRebootlessPackage(File pkg) throws Exception {
+        return getTestInfo().getDevice().installPackage(pkg, false, "--force-non-staged");
+    }
+
+    /**
      * Install multiple package at the same time
      */
     public void installApexes(String... filenames) throws Exception {
