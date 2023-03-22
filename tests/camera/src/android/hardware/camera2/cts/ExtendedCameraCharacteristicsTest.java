@@ -3614,6 +3614,82 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
         }
     }
 
+    private void testLandscapeToPortraitSensorOrientation(String cameraId) throws Exception {
+        CameraCharacteristics characteristics =
+                mCameraManager.getCameraCharacteristics(cameraId, false);
+        CameraCharacteristics characteristicsOverride =
+                mCameraManager.getCameraCharacteristics(cameraId, true);
+        int sensorOrientation = characteristics.get(
+                CameraCharacteristics.SENSOR_ORIENTATION);
+        int sensorOrientationOverride = characteristicsOverride.get(
+                CameraCharacteristics.SENSOR_ORIENTATION);
+
+        if (sensorOrientation == 0 || sensorOrientation == 180) {
+            int facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+            if (facing == CameraMetadata.LENS_FACING_FRONT) {
+                assertEquals("SENSOR_ORIENTATION should be rotated 90 degrees"
+                        + " counter-clockwise for front-facing cameras.",
+                        (360 + sensorOrientation - 90) % 360, sensorOrientationOverride);
+            } else if (facing == CameraMetadata.LENS_FACING_BACK) {
+                assertEquals("SENSOR_ORIENTATION should be rotated 90 degrees clockwise"
+                        + " for back-facing cameras.",
+                        (360 + sensorOrientation + 90) % 360, sensorOrientationOverride);
+            } else {
+                assertEquals("SENSOR_ORIENTATION should be unchanged for external cameras.",
+                        sensorOrientation, sensorOrientationOverride);
+            }
+        } else {
+            assertEquals("SENSOR_ORIENTATION should be unchanged for non-landscape "
+                    + "sensors.", sensorOrientation, sensorOrientationOverride);
+        }
+    }
+
+    /**
+     * Test that the landscape to portrait override modifies SENSOR_ORIENTATION as expected.
+     * All cameras with SENSOR_ORIENTATION 0 or 180 should have SENSOR_ORIENTATION 90 or 270
+     * when the override is turned on. Cameras not accessible via openCamera ("constituent
+     * cameras") should not update their SENSOR_ORIENTATION values.
+     */
+    @Test
+    public void testLandscapeToPortraitOverride() throws Exception {
+        String[] cameraIdArr = mCameraManager.getCameraIdList();
+        ArrayList<String> cameraIdList = new ArrayList<>(Arrays.asList(cameraIdArr));
+        for (String cameraId : cameraIdList) {
+            Log.i(TAG, "testLandscapeToPortraitOverride: Testing camera ID " + cameraId);
+            StaticMetadata staticMetadata = mAllStaticInfo.get(cameraId);
+
+            testLandscapeToPortraitSensorOrientation(cameraId);
+
+            if (staticMetadata.isLogicalMultiCamera()) {
+                Log.i(TAG, "Camera " + cameraId + " is a logical multi-camera.");
+
+                CameraCharacteristics characteristics =
+                        mCameraManager.getCameraCharacteristics(cameraId, false);
+
+                Set<String> physicalCameraIds = characteristics.getPhysicalCameraIds();
+                for (String physicalId : physicalCameraIds) {
+                    if (!cameraIdList.contains(physicalId)) {
+                        Log.i(TAG, "Testing constituent camera id: " + physicalId);
+
+                        CameraCharacteristics physicalCharacteristics =
+                                mCameraManager.getCameraCharacteristics(physicalId, false);
+                        CameraCharacteristics physicalCharacteristicsOverride =
+                                mCameraManager.getCameraCharacteristics(physicalId, true);
+                        int physicalSensorOrientation = physicalCharacteristics.get(
+                                CameraCharacteristics.SENSOR_ORIENTATION);
+                        int physicalSensorOrientationOverride = physicalCharacteristicsOverride.get(
+                                CameraCharacteristics.SENSOR_ORIENTATION);
+
+                        // Check that physical camera orientations have NOT been overridden.
+                        assertEquals("SENSOR_ORIENTATION should be unchanged for constituent "
+                                + "physical cameras.", physicalSensorOrientation,
+                                physicalSensorOrientationOverride);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Check key is present in characteristics if the hardware level is at least {@code hwLevel};
      * check that the key is present if the actual capabilities are one of {@code capabilities}.

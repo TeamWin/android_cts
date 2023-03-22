@@ -222,7 +222,7 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
      * @param cameraId The id of the camera device to be opened.
      */
     protected void openDevice(String cameraId) throws Exception {
-        openDevice(cameraId, mCameraListener);
+        openDevice(cameraId, /*overrideToPortrait*/false, mCameraListener);
     }
 
     /**
@@ -232,8 +232,30 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
      * @param listener The {@link #BlockingStateCallback} used to wait for states.
      */
     protected void openDevice(String cameraId, BlockingStateCallback listener) throws Exception {
+        openDevice(cameraId, /*overrideToPortrait*/false, listener);
+    }
+
+    /**
+     * Open a {@link #CameraDevice} and get the StaticMetadata for a given camera id and listener.
+     *
+     * @param cameraId The id of the camera device to be opened.
+     * @param overrideToPortrait Whether to enable the landscape-to-portrait override
+     */
+    protected void openDevice(String cameraId, boolean overrideToPortrait) throws Exception {
+        openDevice(cameraId, overrideToPortrait, mCameraListener);
+    }
+
+    /**
+     * Open a {@link #CameraDevice} and get the StaticMetadata for a given camera id and listener.
+     *
+     * @param cameraId The id of the camera device to be opened.
+     * @param overrideToPortrait Whether to enable the landscape-to-portrait override
+     * @param listener The {@link #BlockingStateCallback} used to wait for states.
+     */
+    protected void openDevice(String cameraId, boolean overrideToPortrait,
+            BlockingStateCallback listener) throws Exception {
         mCamera = CameraTestUtils.openCamera(
-                mCameraManager, cameraId, listener, mHandler);
+                mCameraManager, cameraId, overrideToPortrait, listener, mHandler);
         mCollector.setCameraId(cameraId);
         mStaticInfo = mAllStaticInfo.get(cameraId);
         if (mStaticInfo.isColorOutputSupported()) {
