@@ -50,6 +50,9 @@ import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.text.TextUtils;
 import android.util.Log;
+import android.content.Intent;
+import android.net.Uri;
+import android.content.pm.ResolveInfo;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -114,6 +117,8 @@ public class CtsCredentialProviderServiceDeviceTest {
     private static final String PROVIDER_LABEL = "Test Provider Service";
     private static final String PROVIDER_LABEL_ALT = "Test Provider Service Alternate";
     private static final String PROVIDER_LABEL_SYSTEM = "Test Provider Service System";
+    private static final String PRIMARY_SETTINGS_INTENT = "android.settings.CREDENTIAL_PROVIDER";
+    private static final String SECONDARY_SETTINGS_INTENT = "android.settings.SYNC_SETTINGS";
 
     private CredentialManager mCredentialManager;
     private final Context mContext = getInstrumentation().getContext();
@@ -164,6 +169,20 @@ public class CtsCredentialProviderServiceDeviceTest {
 
             assertThat(mCredentialManager).isNotNull();
         });
+    }
+
+    @Test
+    public void testRequestSetCredentialManagerServiceIntent_primary() {
+        Intent intent = new Intent(PRIMARY_SETTINGS_INTENT)
+                .setData(Uri.parse("package:android.content.cts"));
+        assertCanBeHandled(intent);
+    }
+
+    @Test
+    public void testRequestSetCredentialManagerServiceIntent_secondary() {
+        Intent intent = new Intent(SECONDARY_SETTINGS_INTENT)
+                .setData(Uri.parse("package:android.content.cts"));
+        assertCanBeHandled(intent);
     }
 
     // TODO for all 'valid success' cases, mock credential manager the current success case
@@ -742,5 +761,17 @@ public class CtsCredentialProviderServiceDeviceTest {
         services.remove(service);
         String originalString = String.join(";", services);
         mUserSettings.set(CREDENTIAL_SERVICE, originalString);
+    }
+
+    /**
+     * Assert target intent can be handled by at least one Activity.
+     * @param intent - the Intent will be handled.
+     */
+    private void assertCanBeHandled(final Intent intent) {
+        PackageManager packageManager = mContext.getPackageManager();
+        List<ResolveInfo> resolveInfoList = packageManager.queryIntentActivities(intent, 0);
+        assertThat(resolveInfoList).isNotNull();
+        // one or more activity can handle this intent.
+        assertTrue(resolveInfoList.size() > 0);
     }
 }
