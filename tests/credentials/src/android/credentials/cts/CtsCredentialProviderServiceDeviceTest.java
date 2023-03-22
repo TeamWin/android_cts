@@ -59,8 +59,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateManager;
 import com.android.compatibility.common.util.RequiredFeatureRule;
-import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.Timeout;
+import com.android.compatibility.common.util.UserSettings;
 
 import org.junit.After;
 import org.junit.Before;
@@ -112,6 +112,7 @@ public class CtsCredentialProviderServiceDeviceTest {
 
     private CredentialManager mCredentialManager;
     private final Context mContext = getInstrumentation().getContext();
+    private final UserSettings mUserSettings = new UserSettings(mContext);
 
     @Rule
     public ActivityScenarioRule mActivityScenarioRule =
@@ -146,7 +147,7 @@ public class CtsCredentialProviderServiceDeviceTest {
     }
 
     private void clearAllTestCredentialProviderServices() {
-        SettingsUtils.set("secure", CREDENTIAL_SERVICE, null);
+        mUserSettings.set(CREDENTIAL_SERVICE, null);
     }
 
     @Test
@@ -575,7 +576,7 @@ public class CtsCredentialProviderServiceDeviceTest {
         }
         // Guaranteed to not be null now since the NoOp service exists at a minimum
         Log.i(TAG, "Attempting to set services: " + settingOutput);
-        SettingsUtils.set("secure", CREDENTIAL_SERVICE, settingOutput);
+        mUserSettings.set(CREDENTIAL_SERVICE, settingOutput);
 
         // Waits until the service is actually enabled.
         try {
@@ -619,7 +620,7 @@ public class CtsCredentialProviderServiceDeviceTest {
      * Gets then name of the credential service for the default user.
      */
     private String readCredentialManagerProviderSetting() {
-        String serviceNames = SettingsUtils.get(CREDENTIAL_SERVICE);
+        String serviceNames = mUserSettings.get(CREDENTIAL_SERVICE);
         return serviceNames;
     }
 
@@ -628,7 +629,7 @@ public class CtsCredentialProviderServiceDeviceTest {
      * the setting is deleted.
      */
     private void disableCredentialProviderService(@NonNull Context context, String service) {
-        final String currentService = SettingsUtils.get(CREDENTIAL_SERVICE);
+        final String currentService = mUserSettings.get(CREDENTIAL_SERVICE);
         if (currentService == null) {
             return;
         }
@@ -636,7 +637,6 @@ public class CtsCredentialProviderServiceDeviceTest {
         Set<String> services = new LinkedHashSet<>(List.of(currentService.split(";")));
         services.remove(service);
         String originalString = String.join(";", services);
-        SettingsUtils.set("secure", CREDENTIAL_SERVICE, originalString);
+        mUserSettings.set(CREDENTIAL_SERVICE, originalString);
     }
 }
-

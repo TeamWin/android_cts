@@ -35,6 +35,8 @@ import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.BeforeAfterRule;
 import com.android.compatibility.common.util.OnFailureRule;
 import com.android.compatibility.common.util.ProtoUtils;
+import com.android.compatibility.common.util.UserSettings;
+import com.android.compatibility.common.util.UserSettings.Namespace;
 import com.android.server.job.nano.JobSchedulerServiceDumpProto;
 import com.android.server.job.nano.StateControllerProto;
 
@@ -49,6 +51,8 @@ public class BatterySavingTestBase {
     public static final int DEFAULT_TIMEOUT_SECONDS = 30;
 
     public static final boolean DEBUG = false;
+
+    protected static final UserSettings sGlobalSettings = new UserSettings(Namespace.GLOBAL);
 
     protected final BroadcastRpc mRpc = new BroadcastRpc();
 

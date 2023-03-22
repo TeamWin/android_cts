@@ -220,10 +220,27 @@ public final class UserSettings {
         GLOBAL(NAMESPACE_GLOBAL),
         SYSTEM(NAMESPACE_SYSTEM);
 
+        // TODO(b/123885378): remove if it's not used anymore (after using Settings APIs)
         private final String mName;
 
         Namespace(String name) {
             mName = name;
+        }
+
+        /**
+         * Gets the enum for the given namespace.
+         */
+        public static Namespace of(String namespace) {
+            switch (namespace.toLowerCase()) {
+                case NAMESPACE_SECURE:
+                    return SECURE;
+                case NAMESPACE_GLOBAL:
+                    return GLOBAL;
+                case NAMESPACE_SYSTEM:
+                    return SYSTEM;
+                default:
+                    throw new IllegalArgumentException("Unknown namespace: "  + namespace);
+            }
         }
 
         /**
