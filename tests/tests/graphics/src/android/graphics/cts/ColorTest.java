@@ -44,8 +44,8 @@ public class ColorTest {
 
     @Test
     public void resourceColor() {
-        int colors [][] = {
-                { 0xff000000, android.R.color.background_dark  },
+        int colors[][] = {
+                { 0xff000000, android.R.color.background_dark },
                 { 0xffffffff, android.R.color.background_light },
                 { 0xff000000, android.R.color.black },
                 { 0xffaaaaaa, android.R.color.darker_gray },
@@ -174,18 +174,18 @@ public class ColorTest {
                 android.R.color.system_on_error_light,
                 android.R.color.system_error_container_light,
                 android.R.color.system_on_error_container_light,
-                android.R.color.system_primary_fixed_light,
-                android.R.color.system_primary_fixed_dim_light,
-                android.R.color.system_on_primary_fixed_light,
-                android.R.color.system_on_primary_fixed_variant_light,
-                android.R.color.system_secondary_fixed_light,
-                android.R.color.system_secondary_fixed_dim_light,
-                android.R.color.system_on_secondary_fixed_light,
-                android.R.color.system_on_secondary_fixed_variant_light,
-                android.R.color.system_tertiary_fixed_light,
-                android.R.color.system_tertiary_fixed_dim_light,
-                android.R.color.system_on_tertiary_fixed_light,
-                android.R.color.system_on_tertiary_fixed_variant_light,
+                android.R.color.system_primary_fixed,
+                android.R.color.system_primary_fixed_dim,
+                android.R.color.system_on_primary_fixed,
+                android.R.color.system_on_primary_fixed_variant,
+                android.R.color.system_secondary_fixed,
+                android.R.color.system_secondary_fixed_dim,
+                android.R.color.system_on_secondary_fixed,
+                android.R.color.system_on_secondary_fixed_variant,
+                android.R.color.system_tertiary_fixed,
+                android.R.color.system_tertiary_fixed_dim,
+                android.R.color.system_on_tertiary_fixed,
+                android.R.color.system_on_tertiary_fixed_variant,
                 android.R.color.system_control_activated_light,
                 android.R.color.system_control_normal_light,
                 android.R.color.system_control_highlight_light,
@@ -229,18 +229,6 @@ public class ColorTest {
                 android.R.color.system_on_error_dark,
                 android.R.color.system_error_container_dark,
                 android.R.color.system_on_error_container_dark,
-                android.R.color.system_primary_fixed_dark,
-                android.R.color.system_primary_fixed_dim_dark,
-                android.R.color.system_on_primary_fixed_dark,
-                android.R.color.system_on_primary_fixed_variant_dark,
-                android.R.color.system_secondary_fixed_dark,
-                android.R.color.system_secondary_fixed_dim_dark,
-                android.R.color.system_on_secondary_fixed_dark,
-                android.R.color.system_on_secondary_fixed_variant_dark,
-                android.R.color.system_tertiary_fixed_dark,
-                android.R.color.system_tertiary_fixed_dim_dark,
-                android.R.color.system_on_tertiary_fixed_dark,
-                android.R.color.system_on_tertiary_fixed_variant_dark,
                 android.R.color.system_control_activated_dark,
                 android.R.color.system_control_normal_dark,
                 android.R.color.system_control_highlight_dark,
@@ -268,8 +256,7 @@ public class ColorTest {
                 android.R.color.tab_indicator_text,
                 android.R.color.tertiary_text_dark,
                 android.R.color.tertiary_text_light,
-                android.R.color.widget_edittext_dark
-        );
+                android.R.color.widget_edittext_dark);
 
         Resources resources = getInstrumentation().getTargetContext().getResources();
         for (int[] pair : colors) {
@@ -279,7 +266,7 @@ public class ColorTest {
             // validate color from getColor
             int observedColor = resources.getColor(resourceId, null);
             assertEquals("Color = " + Integer.toHexString(observedColor) + ", "
-                            + Integer.toHexString(expectedColor) + " expected",
+                    + Integer.toHexString(expectedColor) + " expected",
                     expectedColor,
                     observedColor);
 
@@ -297,7 +284,7 @@ public class ColorTest {
                 // colors should be raw ints
                 assertTrue("Type should be int",
                         value.type >= TypedValue.TYPE_FIRST_INT
-                        && value.type <= TypedValue.TYPE_LAST_INT);
+                                && value.type <= TypedValue.TYPE_LAST_INT);
 
                 // Validate color from getValue
                 assertEquals("Color should be expected value", expectedColor, value.data);
@@ -305,7 +292,7 @@ public class ColorTest {
         }
 
         // System-API colors are used to allow updateable platform components to use the same colors
-        // as the system. The actual value of the color does not matter. Hence only enforce that
+        // as the system. The actual value of the color does not matter. Hence only  enforce that
         // 'colors' contains all the public colors and ignore System-api colors.
         int numPublicApiColors = 0;
         for (Field declaredColor : android.R.color.class.getDeclaredFields()) {
@@ -348,7 +335,7 @@ public class ColorTest {
         assertEquals(0xff, Color.green(Color.GREEN));
     }
 
-    @Test(expected=RuntimeException.class)
+    @Test(expected = RuntimeException.class)
     public void testHSVToColorArrayTooShort() {
         // abnormal case: hsv length less than 3
         float[] hsv = new float[2];
@@ -369,7 +356,7 @@ public class ColorTest {
         assertEquals(Color.RED, Color.HSVToColor(0xff, hsv));
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testParseColorStringOfInvalidLength() {
         // abnormal case: colorString starts with '#' but length is neither 7 nor 9
         Color.parseColor("#ff00ff0");
@@ -393,7 +380,7 @@ public class ColorTest {
         assertEquals(Color.MAGENTA, Color.parseColor("magenta"));
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testParseColorUnsupportedFormat() {
         // abnormal case: colorString doesn't start with '#' and is unknown color
         Color.parseColor("hello");
@@ -413,7 +400,7 @@ public class ColorTest {
         assertEquals(Color.YELLOW, Color.rgb(1.0f, 1.0f, 0.0f));
     }
 
-    @Test(expected=RuntimeException.class)
+    @Test(expected = RuntimeException.class)
     public void testRGBToHSVArrayTooShort() {
         // abnormal case: hsv length less than 3
         float[] hsv = new float[2];
