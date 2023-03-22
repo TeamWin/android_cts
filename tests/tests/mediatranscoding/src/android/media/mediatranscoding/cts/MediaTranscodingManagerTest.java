@@ -783,6 +783,57 @@ public class MediaTranscodingManagerTest {
     }
 
     @Test
+    public void testClearOnProgressUpdateListener() throws Exception {
+        Log.d(TAG, "Starting: testClearOnProgressUpdateListener");
+
+        Semaphore transcodeCompleteSemaphore = new Semaphore(0);
+
+        // Create a file Uri: file:///data/user/0/android.media.mediatranscoding.cts/cache/HevcTranscode.mp4
+        Uri destinationUri = Uri.parse(ContentResolver.SCHEME_FILE + "://"
+                + mContext.getCacheDir().getAbsolutePath() + "/HevcTranscode.mp4");
+
+        VideoTranscodingRequest request =
+                new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, destinationUri,
+                        createDefaultMediaFormat())
+                        .build();
+        Executor listenerExecutor = Executors.newSingleThreadExecutor();
+
+        TranscodingSession session = mMediaTranscodingManager.enqueueRequest(request,
+                listenerExecutor,
+                TranscodingSession -> {
+                    Log.d(TAG,
+                            "Transcoding completed with result: " + TranscodingSession.getResult());
+                    assertEquals(TranscodingSession.RESULT_SUCCESS, TranscodingSession.getResult());
+                    transcodeCompleteSemaphore.release();
+                });
+        assertNotNull(session);
+
+        AtomicInteger progressUpdateCount = new AtomicInteger(0);
+
+        // Set progress update executor and use the same executor as result listener.
+        session.setOnProgressUpdateListener(listenerExecutor,
+                new TranscodingSession.OnProgressUpdateListener() {
+                    int mPreviousProgress = 0;
+
+                    @Override
+                    public void onProgressUpdate(TranscodingSession session, int newProgress) {
+                        if (mPreviousProgress == 0) {
+                            // Clear listener the first time this is called.
+                            session.clearOnProgressUpdateListener();
+                        }
+                        mPreviousProgress = newProgress;
+                        progressUpdateCount.getAndIncrement();
+                        Log.i(TAG, "Get progress update " + newProgress);
+                    }
+                });
+
+        boolean finishedOnTime = transcodeCompleteSemaphore.tryAcquire(
+                TRANSCODE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        assertTrue("Transcode failed to complete in time.", finishedOnTime);
+        assertTrue("Expected exactly one progress update", progressUpdateCount.get() == 1);
+    }
+
+    @Test
     public void testAddingClientUids() throws Exception {
         Log.d(TAG, "Starting: testTranscodingProgressUpdate");
 
