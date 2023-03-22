@@ -44,7 +44,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
-import android.os.UserManager;
 import android.provider.Settings;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
@@ -53,8 +52,8 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.CommonTestUtils;
-import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.TestUtils;
+import com.android.compatibility.common.util.UserSettings;
 
 import com.google.common.util.concurrent.MoreExecutors;
 
@@ -81,6 +80,7 @@ public class UiModeManagerTest extends AndroidTestCase {
 
     private static final String CONTRAST_LEVEL = "contrast_level";
 
+    private final UserSettings mSystemUserSettings = new UserSettings(UserHandle.USER_SYSTEM);
     private UiModeManager mUiModeManager;
     private boolean mHasModifiedNightModePermissionAcquired = false;
 
@@ -1033,10 +1033,7 @@ public class UiModeManagerTest extends AndroidTestCase {
     }
 
     private String getUiNightModeFromSetting() {
-        String key = "ui_night_mode";
-        return UserManager.isHeadlessSystemUserMode()
-                ? SettingsUtils.getSecureSettingAsUser(UserHandle.USER_SYSTEM, key)
-                : SettingsUtils.getSecureSetting(key);
+        return mSystemUserSettings.get("ui_night_mode");
     }
 
     private void acquireModifyNightModePermission() {
