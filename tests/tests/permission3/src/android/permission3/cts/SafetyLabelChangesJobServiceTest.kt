@@ -25,6 +25,7 @@ import android.os.PersistableBundle
 import android.os.Process
 import android.permission.cts.CtsNotificationListenerHelperRule
 import android.permission.cts.CtsNotificationListenerServiceUtils
+import android.permission.cts.CtsNotificationListenerServiceUtils.getNotification
 import android.permission.cts.CtsNotificationListenerServiceUtils.getNotificationForPackageAndId
 import android.permission.cts.PermissionUtils
 import android.permission.cts.TestUtils
@@ -178,6 +179,13 @@ class SafetyLabelChangesJobServiceTest : BaseUsePermissionTest() {
         runNotificationJob()
 
         waitForNotificationShown()
+
+        val statusBarNotification = getNotification(permissionControllerPackageName,
+                SAFETY_LABEL_CHANGES_NOTIFICATION_ID)
+        val contentIntent = statusBarNotification!!.notification.contentIntent
+        contentIntent.send()
+
+        assertDataSharingScreenHasUpdates()
     }
 
     @Test
