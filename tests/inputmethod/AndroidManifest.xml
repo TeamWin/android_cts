@@ -26,6 +26,7 @@
         <package android:name="com.android.cts.mocka11yime" />
         <package android:name="com.android.cts.mockspellchecker" />
         <package android:name="com.android.cts.mocklargeresourceime" />
+        <package android:name="com.android.cts.mockimewithsubtypes" />
     </queries>
 
     <application android:label="CtsInputMethodTestCases"

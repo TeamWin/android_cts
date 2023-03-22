@@ -38,6 +38,7 @@ android_test {
         "CtsInputMethodStandaloneTestLib",
         "CtsMockSpellCheckerLib",
         "CtsLegacyImeClientTestLib",
+        "CtsMockInputMethodWithSubtypesLib",
         "testng",
         "kotlin-test",
         "cts-wm-util",
@@ -61,6 +62,7 @@ android_test {
         ":CtsSpellCheckingIme",
         ":CtsInputMethodStandaloneTestApp",
         ":CtsMockLargeResourceInputMethod",
+        ":CtsMockInputMethodWithSubtypes",
     ],
     per_testcase_directory: true,
 }
