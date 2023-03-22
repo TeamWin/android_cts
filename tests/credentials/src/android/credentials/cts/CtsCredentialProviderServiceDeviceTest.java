@@ -102,6 +102,15 @@ public class CtsCredentialProviderServiceDeviceTest {
             "android.credentials.cts/android.credentials.cts.CtsNoOpCredentialProviderAltService";
     private static final String NOOP_SERVICE_SYSTEM =
             "android.credentials.cts/android.credentials.cts.CtsNoOpCredentialProviderSysService";
+    private static final List<String> CREDENTIAL_TYPES =
+            Arrays.asList(PASSKEY_CREDENTIAL_TYPE, PASSWORD_CREDENTIAL_TYPE);
+    private static final List<String> PASSKEY_CREDENTIAL_TYPE_LIST =
+            Arrays.asList(PASSKEY_CREDENTIAL_TYPE);
+    private static final List<String> PASSWORD_CREDENTIAL_TYPE_LIST =
+            Arrays.asList(PASSWORD_CREDENTIAL_TYPE);
+    private static final String PROVIDER_LABEL = "Test Provider Service";
+    private static final String PROVIDER_LABEL_ALT = "Test Provider Service Alternate";
+    private static final String PROVIDER_LABEL_SYSTEM = "Test Provider Service System";
 
     private CredentialManager mCredentialManager;
     private final Context mContext = getInstrumentation().getContext();
@@ -358,7 +367,7 @@ public class CtsCredentialProviderServiceDeviceTest {
                     assertThat(cpi2.getLabel(mContext)).isEqualTo("Test Provider Service Alternate");
                     assertThat(cpi2.getServiceIcon(mContext)).isNotNull();
                     assertThat(cpi2.getServiceInfo()).isNotNull();
-                    assertThat(cpi2.getCapabilities()).containsExactly(PASSKEY_CREDENTIAL_TYPE);
+                    assertThat(cpi2.getCapabilities()).containsExactlyElementsIn(PASSWORD_CREDENTIAL_TYPE_LIST);
                 });
     }
 
@@ -391,7 +400,7 @@ public class CtsCredentialProviderServiceDeviceTest {
                     assertThat(cpi2.getSettingsSubtitle()).isNull();
                     assertThat(cpi2.getServiceIcon(mContext)).isNotNull();
                     assertThat(cpi2.getServiceInfo()).isNotNull();
-                    assertThat(cpi2.getCapabilities()).containsExactly(PASSKEY_CREDENTIAL_TYPE);
+                    assertThat(cpi2.getCapabilities()).containsExactlyElementsIn(PASSWORD_CREDENTIAL_TYPE_LIST);
                 });
     }
 
@@ -413,8 +422,9 @@ public class CtsCredentialProviderServiceDeviceTest {
                     assertThat(cpi.getLabel(mContext)).isEqualTo("Test Provider Service System");  // this
                     assertThat(cpi.getSettingsSubtitle()).isEqualTo("This is a subtitle");
                     assertThat(cpi.getServiceIcon(mContext)).isNotNull();
+                    assertThat(cpi.getSettingsSubtitle()).isEqualTo("This is a subtitle");
                     assertThat(cpi.getServiceInfo()).isNotNull();
-                    assertThat(cpi.getCapabilities()).containsExactly(PASSWORD_CREDENTIAL_TYPE);
+                    assertThat(cpi.getCapabilities()).containsExactlyElementsIn(PASSKEY_CREDENTIAL_TYPE_LIST);
                 });
     }
 
