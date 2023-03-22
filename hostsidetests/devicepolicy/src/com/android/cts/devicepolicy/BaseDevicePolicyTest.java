@@ -16,7 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.tradefed.util.RunUtil;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -34,6 +33,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.util.RunUtil;
 
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
@@ -183,7 +183,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     private boolean mSupportsMultiUser;
 
     /** Users we shouldn't delete in the tests */
-    private ArrayList<Integer> mFixedUsers;
+    private final ArrayList<Integer> mFixedUsers = new ArrayList<>();
 
     protected boolean mHasAttestation;
 
@@ -218,8 +218,6 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         mPackageVerifier = getDevice().executeShellCommand(
                 "settings get global verifier_verify_adb_installs");
         getDevice().executeShellCommand("settings put global verifier_verify_adb_installs 0");
-
-        mFixedUsers = new ArrayList<>();
 
         // Set the value of initial user ID calls in {@link #setUp}.
         if(mSupportsMultiUser) {
