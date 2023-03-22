@@ -86,6 +86,7 @@ import com.android.bedstead.harrier.annotations.EnsureNotDemoMode;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
+import com.android.bedstead.harrier.annotations.EnsureSecureSettingSet;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
@@ -1260,6 +1261,13 @@ public class DeviceStateTest {
         assertThat(((ProfileOwner) sDeviceState.profileOwner(
                 sDeviceState.workProfile()).devicePolicyController()).isOrganizationOwned())
                 .isTrue();
+    }
+
+    @EnsureSecureSettingSet(key = "testSecureSetting", value = "testValue")
+    @Test
+    public void ensureSecureSettingSetAnnotation_secureSettingIsSet() {
+        assertThat(TestApis.settings().secure().getString("testSecureSetting"))
+                .isEqualTo("testValue");
     }
 
     @EnsureGlobalSettingSet(key = "testGlobalSetting", value = "testValue")

@@ -896,6 +896,7 @@ def is_clone_user(user):
     return user["type"] == "profile.CLONE"
 
 def create_user(device_state, args):
+    ensure_no_dpcs(device_state, args) # avoid no_add_user TODO: Be more specific
     commands = ["adb", "shell", "pm", "create-user"]
 
     if device_state["sdk_version"] >= 33:
@@ -913,7 +914,7 @@ def create_user(device_state, args):
     return id
 
 def create_work_profile(device_state, args, parent_id):
-    ensure_no_device_owner(device_state, args)
+    ensure_no_dpcs(device_state, args) # avoid no_add_user TODO: Be more specific
 
     commands = ["adb", "shell", "pm", "create-user", "--managed", "--profileOf", str(parent_id)]
 
@@ -986,17 +987,16 @@ def get_current_user(args):
         print("Error parsing current user. Output: " + output[0] + " Err: " + output[1])
         sys.exit(1)
 
-def ensure_no_device_owner(device_state, args):
+def ensure_no_dpcs(device_state, args):
     device_policy_output = execute_shell_command("", args, ["adb", "shell", "dumpsys", "device_policy"])[0]
-    if "Device Owner: \n" not in device_policy_output:
-        return
 
-    try:
-        admin_name = device_policy_output.split("Device Owner: \n", 1)[1].split("admin=ComponentInfo{", 1)[1].split("}", 1)[0]
-    except IndexError:
-        print("Error parsing admin name. Output: " + device_policy_output)
-        sys.exit(1)
-    execute_shell_command("", args, ["adb", "shell", "dpm", "remove-active-admin", admin_name])
+    for user in device_policy_output.split("Enabled Device Admins (")[1:]:
+        user_line, device_admin_line, other = user.split("\n", 2)
+        if len(device_admin_line.strip()) > 0:
+            user = user_line.split(" ", 1)[1].split(",", 1)[0]
+            admin_name = device_admin_line.strip().split(":", 1)[0]
+            print(execute_shell_command("", args, ["adb", "shell", "dpm", "remove-active-admin", "--user", user, admin_name]))
+
 
 def run_tests(args):
     test = None

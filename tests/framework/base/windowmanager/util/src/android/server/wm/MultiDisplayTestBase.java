@@ -32,6 +32,7 @@ import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_PRESEN
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_PUBLIC_DISPLAY;
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_RESIZE_DISPLAY;
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_SHOW_SYSTEM_DECORATIONS;
+import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_SUPPORTS_TOUCH;
 import static android.server.wm.app.Components.VirtualDisplayActivity.VIRTUAL_DISPLAY_PREFIX;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
@@ -215,6 +216,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         private int mDisplayImePolicy = DISPLAY_IME_POLICY_FALLBACK_DISPLAY;
         private boolean mPresentationDisplay = false;
         private boolean mSimulateDisplay = false;
+        private boolean mSupportsTouch = false;
         private boolean mMustBeCreated = true;
         private Size mSimulationDisplaySize = new Size(1024 /* width */, 768 /* height */);
 
@@ -255,6 +257,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             mOwnContentOnly = ownContentOnly;
             return this;
         }
+
+        VirtualDisplaySession setSupportsTouch(boolean supportsTouch) {
+            mSupportsTouch = supportsTouch;
+            return this;
+        }
+
 
         /**
          * Sets the policy for how the display should show the ime.
@@ -403,7 +411,8 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                     .append(" --ez " + KEY_RESIZE_DISPLAY + " ").append(mResizeDisplay)
                     .append(" --ez " + KEY_SHOW_SYSTEM_DECORATIONS + " ")
                     .append(mShowSystemDecorations)
-                    .append(" --ez " + KEY_PRESENTATION_DISPLAY + " ").append(mPresentationDisplay);
+                    .append(" --ez " + KEY_PRESENTATION_DISPLAY + " ").append(mPresentationDisplay)
+                    .append(" --ez " + KEY_SUPPORTS_TOUCH + " ").append(mSupportsTouch);
             executeShellCommand(createVirtualDisplayCommand.toString());
             mVirtualDisplayCreated = true;
 

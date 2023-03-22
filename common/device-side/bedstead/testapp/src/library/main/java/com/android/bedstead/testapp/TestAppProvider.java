@@ -38,7 +38,6 @@ public final class TestAppProvider {
 
     // Must be instrumentation context to access resources
     private static final Context sContext = TestApis.context().instrumentationContext();
-
     private boolean mTestAppsInitialised = false;
     private final Set<TestAppDetails> mTestApps = new HashSet<>();
     private Set<TestAppDetails> mTestAppsSnapshot = null;

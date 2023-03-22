@@ -277,8 +277,8 @@ public class TvInteractiveAppServiceTest {
         }
 
         @Override
-        public void onRequestStartRecording(String requestId, String inputId, Uri programUri) {
-            super.onRequestStartRecording(requestId, inputId, programUri);
+        public void onRequestStartRecording(String id, String requestId, Uri programUri) {
+            super.onRequestStartRecording(id, requestId, programUri);
             mRequestStartRecordingCount++;
             mProgramUri = programUri;
             mRequestId = requestId;

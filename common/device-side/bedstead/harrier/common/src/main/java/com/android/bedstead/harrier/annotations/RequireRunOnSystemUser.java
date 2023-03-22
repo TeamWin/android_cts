@@ -47,7 +47,8 @@ public @interface RequireRunOnSystemUser {
     /**
      * Should we ensure that we are switched to the given user.
      *
-     * <p>ANY will be treated as TRUE if no other annotation has forced a switch.
+     * <p>ANY will be treated as TRUE if no other annotation has forced a switch and the user
+     * can be switched to.
      */
     OptionalBoolean switchedToUser() default TRUE;
 
