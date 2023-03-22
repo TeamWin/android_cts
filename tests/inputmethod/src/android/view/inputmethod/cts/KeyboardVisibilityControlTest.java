@@ -1343,6 +1343,58 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         setAutoRotateScreen(true);
     }
 
+    /**
+     * Test case for Bug 222064495.
+     *
+     * <p>Test that the IME should be hidden when the IME layering target overlay with
+     * "NOT_FOCUSABLE | ALT_FOCUSABLE_IM" flags popup during pressing the recents key to the
+     * overview screen.</b>
+     */
+    @Test
+    public void testImeHiddenWhenImeLayeringTargetDelayedToShowInAppSwitch() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String marker = getTestMarker();
+
+            final TestActivity testActivity = TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText editText = new EditText(activity);
+                layout.addView(editText);
+                editText.setHint("focused editText");
+                editText.setPrivateImeOptions(marker);
+                editText.requestFocus();
+                activity.getWindow().getDecorView().getWindowInsetsController().show(ime());
+                return layout;
+            });
+
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            // Intentionally showing an overlay with "IME Focusable" (NOT_FOCUSABLE |
+            // ALT_FOCUSABLE_IM) flags during pressing the recents key to the overview screen.
+            testActivity.getWindow().getDecorView().postDelayed(
+                    () -> SystemUtil.runWithShellPermissionIdentity(() ->
+                    testActivity.showOverlayWindow(true /* imeFocusable */)), 100);
+            InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(
+                    KeyEvent.KEYCODE_RECENT_APPS);
+
+            // Expect the IME should hidden by the IME not attachable on the activity when the
+            // overlay popup.
+            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.GONE, TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+        } finally {
+            // Back to home to clean up states after the test finished.
+            UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressHome();
+        }
+    }
+
     private void setAutoRotateScreen(boolean enable) {
         try {
             final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
