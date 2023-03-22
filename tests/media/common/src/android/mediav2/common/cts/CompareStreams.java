@@ -48,49 +48,54 @@ public class CompareStreams {
         DecodeStreamToYuv ref = new DecodeStreamToYuv(refMediaType, refFile);
         RawResource refYuv = ref.getDecodedYuv();
         mTmpFiles.add(refYuv.mFileName);
-        setUp(refYuv, testMediaType, testFile, allowRefResize, allowRefLoopBack);
+
+        DecodeStreamToYuv test = new DecodeStreamToYuv(testMediaType, testFile);
+        RawResource testYuv = test.getDecodedYuv();
+        mTmpFiles.add(testYuv.mFileName);
+
+        init(refYuv, testYuv, allowRefResize, allowRefLoopBack);
     }
 
-    public CompareStreams(RawResource ref, String testMediaType, String testFile,
-            boolean allowRefResize, boolean allowRefLoopBack)
-            throws IOException, InterruptedException {
-        setUp(ref, testMediaType, testFile, allowRefResize, allowRefLoopBack);
-    }
-
-    private void setUp(RawResource ref, String testMediaType, String testFile,
+    public CompareStreams(RawResource refYuv, String testMediaType, String testFile,
             boolean allowRefResize, boolean allowRefLoopBack)
             throws IOException, InterruptedException {
         DecodeStreamToYuv test = new DecodeStreamToYuv(testMediaType, testFile);
         RawResource testYuv = test.getDecodedYuv();
         mTmpFiles.add(testYuv.mFileName);
-        if (ref.mBytesPerSample != testYuv.mBytesPerSample) {
+
+        init(refYuv, testYuv, allowRefResize, allowRefLoopBack);
+    }
+
+    private void init(RawResource refYuv, RawResource testYuv, boolean allowRefResize,
+            boolean allowRefLoopBack) throws IOException {
+        if (refYuv.mBytesPerSample != testYuv.mBytesPerSample) {
             String msg = String.format(
                     "Reference file bytesPerSample and Test file bytesPerSample are not same. "
                             + "Reference bytesPerSample : %d, Test bytesPerSample : %d",
-                    ref.mBytesPerSample, testYuv.mBytesPerSample);
+                    refYuv.mBytesPerSample, testYuv.mBytesPerSample);
             cleanUp();
             throw new IllegalArgumentException(msg);
         }
-        RawResource refYuv;
-        if (ref.mHeight == testYuv.mHeight && ref.mWidth == testYuv.mWidth) {
-            refYuv = ref;
+        RawResource refYuvResized;
+        if (refYuv.mHeight == testYuv.mHeight && refYuv.mWidth == testYuv.mWidth) {
+            refYuvResized = refYuv;
         } else {
             if (allowRefResize) {
-                refYuv = readAndResizeInputRawYUV(ref, testYuv.mWidth, testYuv.mHeight,
+                refYuvResized = readAndResizeInputRawYUV(refYuv, testYuv.mWidth, testYuv.mHeight,
                         testYuv.mBytesPerSample);
-                mTmpFiles.add(refYuv.mFileName);
+                mTmpFiles.add(refYuvResized.mFileName);
             } else {
                 String msg = String.format(
                         "Reference file attributes and Test file attributes are not same. "
                                 + "Reference width : %d, height : %d, bytesPerSample : %d, Test "
                                 + "width : %d, height : %d, bytesPerSample : %d",
-                        ref.mWidth, ref.mHeight, ref.mBytesPerSample, testYuv.mWidth,
+                        refYuv.mWidth, refYuv.mHeight, refYuv.mBytesPerSample, testYuv.mWidth,
                         testYuv.mHeight, testYuv.mBytesPerSample);
                 cleanUp();
                 throw new IllegalArgumentException(msg);
             }
         }
-        mStatistics = new VideoErrorManager(refYuv, testYuv, allowRefLoopBack);
+        mStatistics = new VideoErrorManager(refYuvResized, testYuv, allowRefLoopBack);
     }
 
     private RawResource readAndResizeInputRawYUV(RawResource res, int width, int height,
