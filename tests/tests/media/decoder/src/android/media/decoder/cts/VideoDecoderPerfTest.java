@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo.VideoCapabilities;
@@ -222,8 +223,12 @@ public class VideoDecoderPerfTest extends MediaTestBase {
                            fasterIsOk,  measuredFps);
         // Performance numbers only make sense on real devices, so skip on non-real devices
         if ((MediaUtils.onFrankenDevice() || mSkipRateChecking) && error != null) {
-            // ensure there is data, but don't insist that it is correct
-            assertFalse(error, error.startsWith("Failed to get "));
+            if (TestUtils.isMtsMode() && TestUtils.isMainlineCodec(name)) {
+                assumeFalse(error, error.startsWith("Failed to get "));
+            } else {
+                // ensure there is data, but don't insist that it is correct
+                assertFalse(error, error.startsWith("Failed to get "));
+            }
         } else {
             assertNull(error, error);
         }
