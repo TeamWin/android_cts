@@ -50,6 +50,7 @@ java_test_host {
         "src/**/statsd/*.java",
         "src/**/telephony/*.java",
         "src/**/tls/*.java",
+        "src/**/usb/*.java",
         "src/**/users/*.java",
         "src/**/vibrator/*.java",
         "src/**/voiceinteraction/*.java",
