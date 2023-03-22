@@ -996,12 +996,7 @@ public class MediaStorageTest {
             // to keep rolling forward if we can't find our grant button
             final UiSelector grant = new UiSelector().textMatches("(?i)Allow");
             if (isWatch()) {
-                UiScrollable uiScrollable = new UiScrollable(new UiSelector().scrollable(true));
-                try {
-                    uiScrollable.scrollIntoView(grant);
-                } catch (UiObjectNotFoundException e) {
-                    // Scrolling can fail if the UI is not scrollable
-                }
+                scrollIntoView(grant);
             }
             final boolean grantExists = new UiObject(grant).waitForExists(timeout);
 
@@ -1016,8 +1011,11 @@ public class MediaStorageTest {
             // Verify that we now have access
             assertEquals(Activity.RESULT_OK, res.resultCode);
         } else {
-            // fine the Deny button
+            // find the Deny button
             final UiSelector deny = new UiSelector().textMatches("(?i)Deny");
+            if (isWatch()) {
+                scrollIntoView(deny);
+            }
             final boolean denyExists = new UiObject(deny).waitForExists(timeout);
 
             assertThat(denyExists).isTrue();
@@ -1027,6 +1025,15 @@ public class MediaStorageTest {
             final GetResultActivity.Result res = activity.getResult();
             // Verify that we don't have access
             assertEquals(Activity.RESULT_CANCELED, res.resultCode);
+        }
+    }
+
+    private static void scrollIntoView(UiSelector selector) {
+        UiScrollable uiScrollable = new UiScrollable(new UiSelector().scrollable(true));
+        try {
+            uiScrollable.scrollIntoView(selector);
+        } catch (UiObjectNotFoundException e) {
+            // Scrolling can fail if the UI is not scrollable
         }
     }
 
