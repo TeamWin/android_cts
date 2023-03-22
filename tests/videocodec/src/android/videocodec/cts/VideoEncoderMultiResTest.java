@@ -200,10 +200,9 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
             final double[] minPSNR = cs.getMinimumPSNR();
             for (int i = 0; i < minPSNR.length; i++) {
                 if (minPSNR[i] < MIN_ACCEPTABLE_QUALITY) {
-                    msg.append(String.format(
-                            "For %d plane, minPSNR is less than tolerance threshold, Got %f, "
-                                    + "Threshold %f",
-                            i, minPSNR[i], MIN_ACCEPTABLE_QUALITY));
+                    msg.append(String.format("For %d plane, minPSNR is less than tolerance"
+                            + " threshold, Got %f, Threshold %f", i, minPSNR[i],
+                            MIN_ACCEPTABLE_QUALITY));
                     isOk = false;
                     break;
                 }
@@ -211,7 +210,6 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
         } finally {
             if (cs != null) cs.cleanUp();
         }
-        new File(mMuxedOutputFile).delete();
         assertEquals("encoder did not encode the requested number of frames \n"
                 + mTestConfig + mTestEnv, FRAME_LIMIT, mOutputCount);
         assertTrue("Encountered frames with PSNR less than configured threshold "

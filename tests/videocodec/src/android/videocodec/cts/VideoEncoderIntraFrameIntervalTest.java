@@ -153,7 +153,7 @@ public class VideoEncoderIntraFrameIntervalTest extends VideoEncoderValidationTe
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
         assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
                 + mTestEnv, res);
-        encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, true, false);
+        encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, false, false);
         assertEquals("encoder did not encode the requested number of frames \n"
                 + mTestConfig + mTestEnv, FRAME_LIMIT, mOutputCount);
         int lastKeyFrameIdx = 0, currFrameIdx = 0, maxKeyFrameDistance = 0;
