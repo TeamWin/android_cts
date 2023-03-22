@@ -58,6 +58,7 @@ import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -689,6 +690,7 @@ public class CtsSharesheetDeviceTest {
 
     @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_CUSTOM_ACTIONS")
+    @Ignore("b/274645844")
     public void testCustomAction() {
         if (!mMeetsResolutionRequirements) {
             // Skip test if resolution is too low
