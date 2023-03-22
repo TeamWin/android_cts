@@ -16,13 +16,15 @@
 
 package android.content.res.cts;
 
+import android.content.cts.R;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.TypedValue;
-import android.content.cts.R;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class PrimitiveTest extends AndroidTestCase {
     private Resources mResources;
 

@@ -16,9 +16,9 @@
 
 package android.content.res.cts;
 
-
 import android.content.res.AssetFileDescriptor;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 
@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AssetFileDescriptor_AutoCloseInputStreamTest extends AndroidTestCase {
     private static final int FILE_END = -1;
     private static final String FILE_NAME = "testAssertFileDescriptorAutoCloseInputStream";

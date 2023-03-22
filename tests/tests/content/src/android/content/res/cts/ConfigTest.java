@@ -33,6 +33,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.content.res.TypedArray;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.DisplayMetrics;
 
 import androidx.test.InstrumentationRegistry;
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4.class)
 public class ConfigTest {
     private static final String TEST_PACKAGE = "android.content.cts";

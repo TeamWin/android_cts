@@ -20,11 +20,13 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.LocaleList;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 import android.view.View;
 
 import java.util.Locale;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ConfigurationTest extends AndroidTestCase {
 
     private Configuration mConfigDefault;
