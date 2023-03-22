@@ -672,6 +672,9 @@ public abstract class CodecTestBase {
                 // sec 2.3.2
                 list.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
                 list.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
+                if (IS_AT_LEAST_U) {
+                    list.add(MediaFormat.MIMETYPE_VIDEO_AV1);
+                }
             }
         } else {
             if (MediaUtils.hasMicrophone() && needAudio) {
