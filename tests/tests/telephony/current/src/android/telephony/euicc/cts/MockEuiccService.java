@@ -95,7 +95,13 @@ public class MockEuiccService extends EuiccService {
             boolean forceDeactivateSim) {
         sMockEuiccServiceCallback.setMethodCalled();
 
-        return onGetDownloadableSubscriptionMetadata(slotId, subscription, forceDeactivateSim);
+        if (subscription.getEncodedActivationCode() != null) {
+            return new GetDownloadableSubscriptionMetadataResult(
+                    EuiccService.RESULT_OK, subscription);
+        } else {
+            return new GetDownloadableSubscriptionMetadataResult(
+                    EuiccService.RESULT_RESOLVABLE_ERRORS, null /*subscription*/);
+        }
     }
 
     @Override

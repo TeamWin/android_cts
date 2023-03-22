@@ -105,6 +105,13 @@ public class EuiccServiceTest {
         }
 
         @Override
+        public GetDownloadableSubscriptionMetadataResult onGetDownloadableSubscriptionMetadata(
+                int slotId, int portIndex, DownloadableSubscription subscription,
+                boolean forceDeactivateSim) {
+            return null;
+        }
+
+        @Override
         public GetDefaultDownloadableSubscriptionListResult
                 onGetDefaultDownloadableSubscriptionList(
                 int slotId, boolean forceDeactivateSim) {
