@@ -1823,6 +1823,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             }
             assertTrue(enabled.get());
             attachAndGetSession();
+            if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+                return;
+            }
             AtomicBoolean called = new AtomicBoolean(false);
             AtomicBoolean canBeCreated = new AtomicBoolean(false);
             AtomicReference<Set<WifiManager.InterfaceCreationImpact>>
@@ -1872,6 +1875,14 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             };
             Executor executor = Executors.newSingleThreadScheduledExecutor();
             WifiAwareSession session = attachAndGetSession();
+            if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+                // Shell doesn't have permission before T.
+                assertThrows(SecurityException.class, () -> session
+                        .getMasterPreference(executor, result));
+                assertThrows(SecurityException.class, () -> session
+                        .setMasterPreference(254));
+                return;
+            }
             session.getMasterPreference(executor, result);
             synchronized (mLock) {
                 mLock.wait(WAIT_FOR_AWARE_CHANGE_SECS * 1000);
