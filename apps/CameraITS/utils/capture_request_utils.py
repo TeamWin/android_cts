@@ -70,8 +70,9 @@ def auto_capture_request(linear_tonemap=False, props=None, do_af=True,
       'android.tonemap.mode': 1,
       'android.lens.opticalStabilizationMode': 0,
       'android.control.videoStabilizationMode': 0,
-      'android.control.autoframing': 1 if do_autoframing else 0
   }
+  if do_autoframing:
+    req['android.control.autoframing'] = 1
   if not do_af:
     req['android.lens.focusDistance'] = 0.0
   if zoom_ratio:
