@@ -108,7 +108,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Tests exercising edge cases in camera setup, configuration, and usage.
@@ -225,28 +224,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
      * Test for making sure the mandatory stream combinations work as expected.
      */
     private void testMandatoryOutputCombinations(boolean maxResolution) throws Exception {
-        final int AVAILABILITY_TIMEOUT_MS = 10;
-        final LinkedBlockingQueue<Pair<String, String>> unavailablePhysicalCamEventQueue =
-                new LinkedBlockingQueue<>();
-        CameraManager.AvailabilityCallback ac = new CameraManager.AvailabilityCallback() {
-             @Override
-            public void onPhysicalCameraUnavailable(String cameraId, String physicalCameraId) {
-                unavailablePhysicalCamEventQueue.offer(new Pair<>(cameraId, physicalCameraId));
-            }
-        };
-
-        mCameraManager.registerAvailabilityCallback(ac, mHandler);
-        Set<Pair<String, String>> unavailablePhysicalCameras = new HashSet<Pair<String, String>>();
-        Pair<String, String> candidatePhysicalIds =
-                unavailablePhysicalCamEventQueue.poll(AVAILABILITY_TIMEOUT_MS,
-                java.util.concurrent.TimeUnit.MILLISECONDS);
-        while (candidatePhysicalIds != null) {
-            unavailablePhysicalCameras.add(candidatePhysicalIds);
-            candidatePhysicalIds =
-                unavailablePhysicalCamEventQueue.poll(AVAILABILITY_TIMEOUT_MS,
-                java.util.concurrent.TimeUnit.MILLISECONDS);
-        }
-        mCameraManager.unregisterAvailabilityCallback(ac);
         CameraCharacteristics.Key<MandatoryStreamCombination []> ck =
                 CameraCharacteristics.SCALER_MANDATORY_STREAM_COMBINATIONS;
 
@@ -284,22 +261,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 if (mStaticInfo.isLogicalMultiCamera()) {
                     Set<String> physicalCameraIds =
                             mStaticInfo.getCharacteristics().getPhysicalCameraIds();
-                    boolean skipTest = false;
                     for (String physicalId : physicalCameraIds) {
                         if (Arrays.asList(mCameraIdsUnderTest).contains(physicalId)) {
                             // If physicalId is advertised in camera ID list, do not need to test
                             // its stream combination through logical camera.
-                            skipTest = true;
-                        }
-                        for (Pair<String, String> unavailPhysicalCam : unavailablePhysicalCameras) {
-                            if (unavailPhysicalCam.first.equals(id) ||
-                                    unavailPhysicalCam.second.equals(physicalId)) {
-                                // This particular physical camera isn't available. Skip.
-                                skipTest = true;
-                                break;
-                            }
-                        }
-                        if (skipTest) {
                             continue;
                         }
                         StaticMetadata physicalStaticInfo = mAllStaticInfo.get(physicalId);
