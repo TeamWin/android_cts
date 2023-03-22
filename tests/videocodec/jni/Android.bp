@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2023 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,26 +16,32 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsVideoCodecTestCases",
-    defaults: ["cts_defaults"],
-    compile_multilib: "both",
-    static_libs: [
-        "androidx.test.core",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "ctsmediav2common",
+cc_defaults {
+    name: "cts_videocodec_jni_defaults",
+    shared_libs: [
+        "libmediandk",
+        "liblog",
     ],
-    platform_apis: true,
-    jni_uses_sdk_apis: true,
-    jni_libs: [
-        "libctsvideoqualityutils_jni",
+    header_libs: [
+        "liblog_headers",
+        "libeigen",
     ],
-    srcs: ["src/**/*.java"],
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
+    stl: "libc++_static",
+    cflags: [
+        "-Werror",
+        "-Wall",
     ],
+    gtest: false,
     min_sdk_version: "29",
+    sdk_version: "current",
+}
+
+cc_test_library {
+    name: "libctsvideoqualityutils_jni",
+    defaults: [
+        "cts_videocodec_jni_defaults",
+    ],
+    srcs: [
+        "NativeVideoQualityUtils.cpp",
+    ],
 }

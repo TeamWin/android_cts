@@ -315,12 +315,23 @@ public class CodecEncoderTestBase extends CodecTestBase {
                 + mTestConfig, mIsAudio || mIsVideo);
     }
 
+    public void deleteMuxedFile() {
+        if (mMuxedOutputFile != null) {
+            File file = new File(mMuxedOutputFile);
+            if (file.exists()) {
+                assertTrue("unable to delete file " + mMuxedOutputFile, file.delete());
+            }
+            mMuxedOutputFile = null;
+        }
+    }
+
     @After
     public void tearDown() {
         if (mMuxer != null) {
             mMuxer.release();
             mMuxer = null;
         }
+        deleteMuxedFile();
     }
 
     @Override
@@ -589,6 +600,14 @@ public class CodecEncoderTestBase extends CodecTestBase {
         mActiveEncCfg = null;
         mSaveToMem = false;
         mMuxOutput = false;
+    }
+
+    public void setLoopBack(boolean loopBack) {
+        mIsLoopBack = loopBack;
+    }
+
+    public String getMuxedOutputFilePath() {
+        return mMuxedOutputFile;
     }
 
     void validateTestState() {

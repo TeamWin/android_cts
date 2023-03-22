@@ -970,6 +970,10 @@ public abstract class CodecTestBase {
         return mIsCodecInAsyncMode ? mAsyncHandle.getOutputFormat() : mOutFormat;
     }
 
+    public int getOutputCount() {
+        return mOutputCount;
+    }
+
     protected void flushCodec() {
         mCodec.flush();
         // TODO(b/147576107): is it ok to clearQueues right away or wait for some signal
