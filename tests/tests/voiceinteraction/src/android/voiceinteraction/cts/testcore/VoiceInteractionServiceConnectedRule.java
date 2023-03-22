@@ -20,7 +20,7 @@ import android.content.Context;
 import android.provider.Settings;
 import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 
-import com.android.compatibility.common.util.SettingsUtils;
+import com.android.compatibility.common.util.UserSettings;
 
 import org.junit.rules.ExternalResource;
 
@@ -37,11 +37,13 @@ public class VoiceInteractionServiceConnectedRule extends ExternalResource {
     private final Context mContext;
     private final String mTestVoiceInteractionService;
     private String mOriginalVoiceInteractionService;
+    private final UserSettings mUserSettings;
 
     public VoiceInteractionServiceConnectedRule(Context context,
             String testVoiceInteractionService) {
         mContext = context;
         mTestVoiceInteractionService = testVoiceInteractionService;
+        mUserSettings = new UserSettings(mContext);
     }
 
     @Override
@@ -49,8 +51,8 @@ public class VoiceInteractionServiceConnectedRule extends ExternalResource {
         // To avoid onReady() is called before init connect latch, we should set the service
         // after init connect latch
         BaseVoiceInteractionService.initServiceConnectionLatches();
-        mOriginalVoiceInteractionService = SettingsUtils.get(
-                Settings.Secure.VOICE_INTERACTION_SERVICE);
+        mOriginalVoiceInteractionService = mUserSettings
+                .get(Settings.Secure.VOICE_INTERACTION_SERVICE);
         setVoiceInteractionService(mTestVoiceInteractionService);
         BaseVoiceInteractionService.waitServiceConnect();
     }
@@ -69,6 +71,6 @@ public class VoiceInteractionServiceConnectedRule extends ExternalResource {
     }
 
     private void setVoiceInteractionService(String service) {
-        SettingsUtils.syncSet(mContext, Settings.Secure.VOICE_INTERACTION_SERVICE, service);
+        mUserSettings.syncSet(Settings.Secure.VOICE_INTERACTION_SERVICE, service);
     }
 }

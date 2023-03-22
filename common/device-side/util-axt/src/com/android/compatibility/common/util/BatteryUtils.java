@@ -15,7 +15,6 @@
  */
 package com.android.compatibility.common.util;
 
-import static com.android.compatibility.common.util.SettingsUtils.putGlobalSetting;
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import android.content.Intent;
@@ -27,6 +26,8 @@ import android.provider.Settings.Global;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.UserSettings.Namespace;
 
 import org.junit.Assume;
 
@@ -114,16 +115,17 @@ public class BatteryUtils {
      * executed before enabling BS.
      */
     public static void enableBatterySaver(boolean enabled) throws Exception {
+        UserSettings globalSettings = new UserSettings(Namespace.GLOBAL);
         if (enabled) {
             SystemUtil.runShellCommandForNoOutput("cmd power set-mode 1");
             AmUtils.waitForBroadcastBarrier();
-            putGlobalSetting(Global.LOW_POWER_MODE, "1");
+            globalSettings.set(Global.LOW_POWER_MODE, "1");
             waitUntil("Battery saver still off", () -> getPowerManager().isPowerSaveMode());
         } else {
             SystemUtil.runShellCommandForNoOutput("cmd power set-mode 0");
             AmUtils.waitForBroadcastBarrier();
-            putGlobalSetting(Global.LOW_POWER_MODE, "0");
-            putGlobalSetting(Global.LOW_POWER_MODE_STICKY, "0");
+            globalSettings.set(Global.LOW_POWER_MODE, "0");
+            globalSettings.set(Global.LOW_POWER_MODE_STICKY, "0");
             waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
         }
 
@@ -133,9 +135,10 @@ public class BatteryUtils {
 
     /** Reset battery saver state and take it out of a forced state. */
     public static void resetBatterySaver() throws Exception {
+        UserSettings globalSettings = new UserSettings(Namespace.GLOBAL);
         SystemUtil.runShellCommandForNoOutput("cmd power set-mode 0");
-        putGlobalSetting(Global.LOW_POWER_MODE, null);
-        putGlobalSetting(Global.LOW_POWER_MODE_STICKY, null);
+        globalSettings.set(Global.LOW_POWER_MODE, null);
+        globalSettings.set(Global.LOW_POWER_MODE_STICKY, null);
         waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
     }
 

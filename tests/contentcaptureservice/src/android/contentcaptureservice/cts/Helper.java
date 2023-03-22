@@ -34,6 +34,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.Timeout;
+import com.android.compatibility.common.util.UserSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,6 +68,7 @@ public final class Helper {
     public static final String RESOURCE_STRING_SERVICE_NAME = "config_defaultContentCaptureService";
 
     public static final Context sContext = getInstrumentation().getTargetContext();
+    public static final UserSettings sUserSettings = new UserSettings(sContext);
 
     private static final Timeout MY_TIMEOUT = new Timeout("MY_TIMEOUT", GENERIC_TIMEOUT_MS, 2F,
             GENERIC_TIMEOUT_MS);
