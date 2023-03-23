@@ -1631,6 +1631,13 @@ public class WindowManagerState {
         int getActivityType() {
             return mTaskType;
         }
+
+        @Override
+        public String toString() {
+            return "Task[id=" + mTaskId + ", display=" + mDisplayId
+                    + ", mOrigActivity=" + mOrigActivity + ", realActivity=" + mRealActivity
+                    + ", activities=" + mActivities + "]";
+        }
     }
 
     public static class TaskFragment extends ActivityContainer {
@@ -1805,6 +1812,11 @@ public class WindowManagerState {
 
         public Rect getAppBounds() {
             return mFullConfiguration.windowConfiguration.getAppBounds();
+        }
+
+        @Override
+        public String toString() {
+            return "Activity[name=" + name + ", state=" + state + ", visible=" + visible + "]";
         }
     }
 
