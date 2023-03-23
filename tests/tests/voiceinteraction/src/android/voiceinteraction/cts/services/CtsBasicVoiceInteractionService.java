@@ -409,6 +409,10 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             @Override
             public void onError() {
                 Log.i(TAG, "onError");
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnErrorLatch != null) {
+                    mOnErrorLatch.countDown();
+                }
             }
 
             @Override
@@ -664,6 +668,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      * Create a CountDownLatch that is used to wait for onError()
      */
     public void initOnErrorLatch() {
+        Log.d(TAG, "initOnErrorLatch()");
         mOnErrorLatch = new CountDownLatch(1);
     }
 
