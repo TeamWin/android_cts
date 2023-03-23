@@ -70,9 +70,7 @@ public class CarActivityManagerTest {
     // Comes from android.window.DisplayAreaOrganizer.FEATURE_UNDEFINED
     private static final int FEATURE_UNDEFINED = -1;
 
-    private static final long QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE = 1000;  // ms
-
-    private static final long TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE = 10_000;  // ms
+    private static final long TIMEOUT_FOR_ACTIVITY_DESTROYED = 1_000;  // ms
 
     private final Context mContext = InstrumentationRegistry.getContext();
     private final Instrumentation mInstrumentation =
@@ -84,6 +82,9 @@ public class CarActivityManagerTest {
     private final ComponentName mFakedTestActivity = new ComponentName("fake_pkg", "fake_class");
 
     private CarActivityManager mCarActivityManager;
+    // When Maps in TaskView is unstable, the test can be flaky, launches a BlankActivity to make
+    // the test robust. See details at b/270989631.
+    private Activity mBlankActivity;
 
     @Before
     public void setUp() {
@@ -96,10 +97,16 @@ public class CarActivityManagerTest {
         mCarActivityManager =
             (CarActivityManager) car.getCarManager(Car.CAR_ACTIVITY_SERVICE);
         assertThat(mCarActivityManager).isNotNull();
+
+        mBlankActivity = mInstrumentation.startActivitySync(
+                Intent.makeMainActivity(new ComponentName(mTargetContext, BlankActivity.class))
+                        .addFlags(FLAG_ACTIVITY_NEW_TASK), /* option */ null);
     }
 
     @After
     public void tearDown() {
+        mBlankActivity.finishAndRemoveTask();
+
         mUiAutomation.dropShellPermissionIdentity();
     }
 
@@ -114,7 +121,7 @@ public class CarActivityManagerTest {
 
             // Need some delay to propagate the virtual display to ActivityTaskManager internal.
             // Without this, setPersistentActivity() would fail or cause the system crash.
-            SystemClock.sleep(100);
+            SystemClock.sleep(200);
 
             // assign the activity to the secondary virtual display
             int ret = mCarActivityManager.setPersistentActivity(mTestActivity,
@@ -309,7 +316,10 @@ public class CarActivityManagerTest {
         }
 
         private boolean waitForDestroyed() throws InterruptedException {
-            return mDestroyed.await(QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE, TimeUnit.MILLISECONDS);
+            return mDestroyed.await(TIMEOUT_FOR_ACTIVITY_DESTROYED, TimeUnit.MILLISECONDS);
         }
+    }
+
+    public static final class BlankActivity extends Activity {
     }
 }
