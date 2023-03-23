@@ -17,6 +17,7 @@
 package android.security.net.config.cts;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.wifi.WifiManager;
 import android.test.AndroidTestCase;
 
@@ -26,12 +27,24 @@ import com.android.compatibility.common.util.SystemUtil;
  * Base test case for all tests under {@link android.security.net.config.cts}.
  */
 public class BaseTestCase extends AndroidTestCase {
+
+    private boolean isWifiSupported(Context context) {
+        final PackageManager packageManager = context.getPackageManager();
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI);
+    }
+
     @Override
     public void setUp() throws Exception {
         // Instant Apps cannot access WifiManager, skip wifi check.
         if (getContext().getPackageManager().isInstantApp()) {
             return;
         }
+
+	// Skip accessing wifi manager if Wifi feature is not supported.
+        if (!isWifiSupported(getContext())) {
+            return;
+        }
+
         WifiManager wifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         if (!wifiManager.isWifiEnabled()) {
             SystemUtil.runShellCommand("svc wifi enable"); // toggle wifi on.
