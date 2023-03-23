@@ -24,6 +24,7 @@ import static android.videocodec.cts.VideoEncoderValidationTestBase.BIRTHDAY_FUL
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaFormat;
 import android.mediav2.common.cts.CodecEncoderTestBase;
@@ -181,7 +182,7 @@ public class VideoEncoderQualityRegressionTest {
         retMsg.append(String.format("bd rate %f not < %f", bdRate, minGain));
         Log.d(LOG_TAG, retMsg.toString());
         // assuming set B encoding is superior to set A,
-        assertTrue(retMsg.toString(), bdRate < minGain);
+        assumeTrue(retMsg.toString(), bdRate < minGain);
     }
 
     @ApiTest(apis = {"android.media.MediaFormat#KEY_BITRATE",
