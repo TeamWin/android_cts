@@ -317,6 +317,11 @@ public class RemoteDpc extends RemotePolicyManager {
             currentProfileOwner.remove();
         }
 
+        // TODO(274125850): Figure out the core reason these users are stopped
+        if (!user.isRunning()) {
+            user.start();
+        }
+
         if (!dpcTestApp.installedOnUser(user)) {
             Log.i(LOG_TAG, "Installing RemoteDPC app: " + dpcTestApp.packageName());
             dpcTestApp.install(user);
@@ -327,10 +332,6 @@ public class RemoteDpc extends RemotePolicyManager {
         RemoteDpc remoteDpc = new RemoteDpc(
                 dpcTestApp,
                 TestApis.devicePolicy().setProfileOwner(user, componentName));
-
-//        if (!remoteDpc.user().isRunning()) {
-//            remoteDpc.user().start();
-//        }
 
         // DISALLOW_INSTALL_UNKNOWN_SOURCES causes verification failures in work profiles
         remoteDpc.devicePolicyManager()

@@ -1425,9 +1425,15 @@ public final class ProvisioningTest {
     @Postsubmit(reason = "new test")
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasNoProfileOwner
+    @EnsureHasNoDeviceOwner
     @EnsureHasWorkProfile
     public void finalizeWorkProfileProvisioning_valid_sendsBroadcast() {
-        try (TestAppInstance personalInstance = sDpcTestApp.install()) {
+        try (TestAppInstance personalInstance = RemoteDpc.forDevicePolicyController(
+                TestApis.devicePolicy().getProfileOwner(
+                        sDeviceState.workProfile())).testApp().install()) {
+            // We know that RemoteDPC is the Profile Owner - we need the same package on the
+            // personal side to receive the broadcast
             personalInstance.registerReceiver(new IntentFilter(ACTION_MANAGED_PROFILE_PROVISIONED));
             sDevicePolicyManager.finalizeWorkProfileProvisioning(
                     /* managedProfileUser= */ sDeviceState.workProfile().userHandle(),
@@ -1445,9 +1451,15 @@ public final class ProvisioningTest {
     @Postsubmit(reason = "new test")
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasNoProfileOwner
+    @EnsureHasNoDeviceOwner
     @EnsureHasWorkProfile
     public void finalizeWorkProfileProvisioning_withAccount_broadcastIncludesAccount() {
-        try (TestAppInstance personalInstance = sDpcTestApp.install()) {
+        try (TestAppInstance personalInstance = RemoteDpc.forDevicePolicyController(
+                TestApis.devicePolicy().getProfileOwner(
+                        sDeviceState.workProfile())).testApp().install()) {
+            // We know that RemoteDPC is the Profile Owner - we need the same package on the
+            // personal side to receive the broadcast
             personalInstance.registerReceiver(new IntentFilter(ACTION_MANAGED_PROFILE_PROVISIONED));
 
             sDevicePolicyManager.finalizeWorkProfileProvisioning(
