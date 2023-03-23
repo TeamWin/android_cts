@@ -186,6 +186,8 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
 
     @Test
     public void testImmersiveFullscreenHidesSystemBars() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars());
+
         // Run the test twice, because the issue that shows system bars even in the immersive mode,
         // happens at the 2nd try.
         for (int i = 1; i <= 2; ++i) {
