@@ -121,7 +121,7 @@ public class CredentialOptionTest {
         candidateProviders.add(provider1);
         candidateProviders.add(provider2);
 
-        final boolean isSystemProviderRequiredDefault = true;
+        final boolean isSystemProviderRequiredDefault = false;
 
         final CredentialOption opt = new CredentialOption.Builder(type, retrievalData, queryData)
                 .setAllowedProviders(candidateProviders)
