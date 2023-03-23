@@ -13,15 +13,15 @@
     "output" :
         [
             {"index" : 0,
-             "data" : 0x31}   // DS_OUTPUT_REPORT_BT
+             "data" : 0x31},   // DS_OUTPUT_REPORT_BT
 
-            //{"index" : 3,
+            {"index" : 3,
              // DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT
-             //"data" : 0x02},
+             "data" : 0x02},
 
-            //{"index" : 41,
+            {"index" : 41,
              // DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2
-             //"data" : 0x04}
+             "data" : 0x04}
         ]
   },
 
@@ -34,15 +34,15 @@
     "output" :
         [
             {"index" : 0,
-             "data" : 0x31}   // DS_OUTPUT_REPORT_BT
+             "data" : 0x31},   // DS_OUTPUT_REPORT_BT
 
-            //{"index" : 3,
+            {"index" : 3,
              // DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT
-             //"data" : 0x02},
+             "data" : 0x02},
 
-            //{"index" : 41,
+            {"index" : 41,
              // DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2
-             //"data" : 0x04}
+             "data" : 0x04}
         ]
   }
 
