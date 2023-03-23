@@ -16,7 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.tradefed.util.RunUtil;
 import static android.stats.devicepolicy.EventId.ADD_CROSS_PROFILE_WIDGET_PROVIDER_VALUE;
 import static android.stats.devicepolicy.EventId.REMOVE_CROSS_PROFILE_WIDGET_PROVIDER_VALUE;
 import static android.stats.devicepolicy.EventId.SET_CROSS_PROFILE_CALENDAR_PACKAGES_VALUE;
@@ -36,6 +35,7 @@ import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.result.InputStreamSource;
+import com.android.tradefed.util.RunUtil;
 import com.android.tradefed.util.StreamUtil;
 
 import com.google.common.collect.Sets;
@@ -104,7 +104,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
                 "testAddParentCanAccessManagedFilters", mProfileUserId);
         runDeviceTestsAsUser(INTENT_SENDER_PKG, ".ContentTest", mProfileUserId);
-
     }
 
     @FlakyTest
@@ -171,33 +170,38 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
                 "testAllowCrossProfileCopyPaste", mProfileUserId);
         // Test that managed can see what is copied in the parent.
-        testCrossProfileCopyPasteInternal(mProfileUserId, true);
+        testCrossProfileCopyPasteInternal(mParentUserId, mProfileUserId, true);
         // Test that the parent can see what is copied in managed.
-        testCrossProfileCopyPasteInternal(mParentUserId, true);
+        testCrossProfileCopyPasteInternal(mProfileUserId, mParentUserId, true);
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
                 "testDisallowCrossProfileCopyPaste", mProfileUserId);
         // Test that managed can still see what is copied in the parent.
-        testCrossProfileCopyPasteInternal(mProfileUserId, true);
+        testCrossProfileCopyPasteInternal(mParentUserId, mProfileUserId, true);
         // Test that the parent cannot see what is copied in managed.
-        testCrossProfileCopyPasteInternal(mParentUserId, false);
+        testCrossProfileCopyPasteInternal(mProfileUserId, mParentUserId, false);
     }
 
-    private void testCrossProfileCopyPasteInternal(int userId, boolean shouldSucceed)
+    private void testCrossProfileCopyPasteInternal(
+            int sourceUserId, int targetUserId, boolean shouldSucceed)
             throws DeviceNotAvailableException {
-        final String direction = (userId == mParentUserId)
+        final String testAddTargetCanAccessSource = (sourceUserId == mParentUserId)
                 ? "testAddManagedCanAccessParentFilters"
                 : "testAddParentCanAccessManagedFilters";
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
                 "testRemoveAllFilters", mProfileUserId);
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
-                direction, mProfileUserId);
+                testAddTargetCanAccessSource, mProfileUserId);
+        runDeviceTestsAsUser(INTENT_SENDER_PKG, ".CopyPasteTest",
+                "testCopyInitialText", targetUserId);
+        runDeviceTestsAsUser(INTENT_SENDER_PKG, ".CopyPasteTest",
+                "testCopyNewText", sourceUserId);
         if (shouldSucceed) {
             runDeviceTestsAsUser(INTENT_SENDER_PKG, ".CopyPasteTest",
-                    "testCanReadAcrossProfiles", userId);
+                    "testClipboardHasNewText", targetUserId);
         } else {
             runDeviceTestsAsUser(INTENT_SENDER_PKG, ".CopyPasteTest",
-                    "testCannotReadAcrossProfiles", userId);
+                    "testClipboardHasInitialTextOrNull", targetUserId);
         }
     }
 
