@@ -45,10 +45,13 @@ import android.media.Image;
 import android.os.Parcel;
 import android.util.ArraySet;
 import android.util.Log;
+import android.util.Pair;
 import android.util.Range;
 import android.util.Rational;
 import android.util.Size;
 import android.view.Surface;
+
+import com.android.compatibility.common.util.PropertyUtil;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -1186,6 +1189,26 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         }
     }
 
+    private void verifyFocusRange(CaptureResult result, float focusDistance) {
+        if (PropertyUtil.getVendorApiLevel() < 33) {
+            // Skip, as this only applies to UDC and above
+            if (VERBOSE) {
+                Log.v(TAG, "Skipping FOCUS_RANGE verification due to API level");
+            }
+            return;
+        }
+
+        Pair<Float, Float> focusRange = result.get(CaptureResult.LENS_FOCUS_RANGE);
+        if (focusRange != null) {
+            mCollector.expectLessOrEqual("Focus distance should be less than or equal to "
+                    + "FOCUS_RANGE.near", focusRange.first, focusDistance);
+            mCollector.expectGreaterOrEqual("Focus distance should be greater than or equal to "
+                    + "FOCUS_RANGE.far", focusRange.second, focusDistance);
+        } else if (VERBOSE) {
+            Log.v(TAG, "FOCUS_RANGE undefined, skipping verification");
+        }
+    }
+
     private void focusDistanceTestRepeating(CaptureRequest.Builder requestBuilder,
             float errorMargin) throws Exception {
         CaptureRequest request;
@@ -1211,6 +1234,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
 
             resultDistances[i] = getValueNotNull(result, CaptureResult.LENS_FOCUS_DISTANCE);
             resultLensStates[i] = getValueNotNull(result, CaptureResult.LENS_STATE);
+
+            verifyFocusRange(result, resultDistances[i]);
 
             if (VERBOSE) {
                 Log.v(TAG, "Capture repeating request focus distance: " + testDistances[i]
@@ -1283,6 +1308,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
 
             resultDistances[i] = getValueNotNull(result, CaptureResult.LENS_FOCUS_DISTANCE);
             resultLensStates[i] = getValueNotNull(result, CaptureResult.LENS_STATE);
+
+            verifyFocusRange(result, resultDistances[i]);
 
             if (VERBOSE) {
                 Log.v(TAG, "Capture burst request focus distance: " + testDistances[i]
