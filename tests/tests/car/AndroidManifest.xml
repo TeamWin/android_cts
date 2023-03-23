@@ -49,6 +49,7 @@
         <activity android:name=".CarInputTest$TestActivity" />
         <activity android:name="android.car.app.cts.CarActivityManagerTest$TestActivity"
             android:allowEmbedded="true" />
+        <activity android:name="android.car.app.cts.CarActivityManagerTest$BlankActivity"/>
 
         <activity android:name="android.car.app.cts.CarTaskViewControllerTest$TestActivity"
             android:excludeFromRecents="true"
