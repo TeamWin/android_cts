@@ -18,12 +18,15 @@ package android.hardware.input.cts.tests;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
+import android.content.Context;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualKeyEvent;
 import android.hardware.input.VirtualKeyboard;
 import android.hardware.input.VirtualKeyboardConfig;
+import android.provider.Settings;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 
@@ -41,6 +44,10 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
 
     private static final String DEVICE_NAME = "CtsVirtualKeyboardTestDevice";
     private VirtualKeyboard mVirtualKeyboard;
+
+    private static void setNewSettingsUiFlag(Context context, String flag) {
+        Settings.Global.putString(context.getContentResolver(), "settings_new_keyboard_ui", flag);
+    }
 
     @Override
     void onSetUpVirtualInputDevice() {
@@ -65,6 +72,7 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
         if (mVirtualKeyboard != null) {
             mVirtualKeyboard.close();
         }
+        setNewSettingsUiFlag(mInstrumentation.getTargetContext(), "");
     }
 
     @Test
@@ -140,5 +148,66 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
         assertThrows(SecurityException.class,
                 () -> createVirtualKeyboard(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
+    }
+
+    @Test
+    public void createVirtualKeyboard_layoutSelected() {
+        setNewSettingsUiFlag(mInstrumentation.getTargetContext(), "true");
+        mVirtualKeyboard.close();
+
+        // Creates a virtual keyboard with french layout
+        final VirtualKeyboardConfig frenchKeyboardConfig =
+                new VirtualKeyboardConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setInputDeviceName(DEVICE_NAME)
+                        .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
+                        .setLanguageTag("fr-Latn-FR")
+                        .setLayoutType("azerty")
+                        .build();
+        mVirtualKeyboard = mVirtualDevice.createVirtualKeyboard(frenchKeyboardConfig);
+        waitForInputDevice();
+        InputDevice keyboard = getInputDevice();
+
+        assertEquals("Key location KEYCODE_Q should map to KEYCODE_A on a French layout.",
+                KeyEvent.KEYCODE_A, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
+        assertEquals("Key location KEYCODE_W should map to KEYCODE_Z on a French layout.",
+                KeyEvent.KEYCODE_Z, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_W));
+        assertEquals("Key location KEYCODE_E should map to KEYCODE_E on a French layout.",
+                KeyEvent.KEYCODE_E, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_E));
+        assertEquals("Key location KEYCODE_R should map to KEYCODE_R on a French layout.",
+                KeyEvent.KEYCODE_R, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_R));
+        assertEquals("Key location KEYCODE_T should map to KEYCODE_T on a French layout.",
+                KeyEvent.KEYCODE_T, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_T));
+        assertEquals("Key location KEYCODE_Y should map to KEYCODE_Y on a French layout.",
+                KeyEvent.KEYCODE_Y, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
+
+        // Creates a virtual keyboard with Swiss German layout
+        mVirtualKeyboard.close();
+        final VirtualKeyboardConfig swissGermanKeyboardConfig =
+                new VirtualKeyboardConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setInputDeviceName(DEVICE_NAME)
+                        .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
+                        .setLanguageTag("de-CH")
+                        .setLayoutType("qwertz")
+                        .build();
+        mVirtualKeyboard = mVirtualDevice.createVirtualKeyboard(swissGermanKeyboardConfig);
+        waitForInputDevice();
+        keyboard = getInputDevice();
+
+        assertEquals("Key location KEYCODE_Q should map to KEYCODE_Q on a Swiss German layout.",
+                KeyEvent.KEYCODE_Q, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
+        assertEquals("Key location KEYCODE_W should map to KEYCODE_W on a Swiss German layout.",
+                KeyEvent.KEYCODE_W, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_W));
+        assertEquals("Key location KEYCODE_E should map to KEYCODE_E on a Swiss German layout.",
+                KeyEvent.KEYCODE_E, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_E));
+        assertEquals("Key location KEYCODE_R should map to KEYCODE_R on a Swiss German layout.",
+                KeyEvent.KEYCODE_R, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_R));
+        assertEquals("Key location KEYCODE_T should map to KEYCODE_T on a Swiss German layout.",
+                KeyEvent.KEYCODE_T, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_T));
+        assertEquals("Key location KEYCODE_Y should map to KEYCODE_Z on a Swiss German layout.",
+                KeyEvent.KEYCODE_Z, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
     }
 }
