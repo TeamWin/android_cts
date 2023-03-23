@@ -47,6 +47,7 @@ import androidx.annotation.NonNull;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.Preconditions;
 
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -154,6 +155,8 @@ public class VideoDecodeEditEncodeTest {
     private final String mEncoderName;
     private final String mMediaType;
 
+    private final ArrayList<String> mTmpFiles = new ArrayList<>();
+
     public VideoDecodeEditEncodeTest(String encoderName, String mediaType,
             @SuppressWarnings("unused") String allTestParams) {
         mEncoderName = encoderName;
@@ -172,6 +175,15 @@ public class VideoDecodeEditEncodeTest {
         });
         return CodecTestBase.prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo,
                 false, SELECT_SWITCH);
+    }
+
+    @After
+    public void tearDown() {
+        for (String tmpFile : mTmpFiles) {
+            File tmp = new File(tmpFile);
+            if (tmp.exists()) assertTrue("unable to delete file " + tmpFile, tmp.delete());
+        }
+        mTmpFiles.clear();
     }
 
     private static String getShader(String width, String height, String kernel) {
@@ -721,33 +733,38 @@ public class VideoDecodeEditEncodeTest {
             outputData[i] = editVideoFile(sourceChunks, KERNELS[i]);
         }
         String tmpPathA = getTempFilePath("");
+        mTmpFiles.add(tmpPathA);
+        String tmpPathB = getTempFilePath("");
+        mTmpFiles.add(tmpPathB);
+
         int muxerFormat = getMuxerFormatForMediaType(mMediaType);
         muxOutput(tmpPathA, muxerFormat, outputData[0].getMediaFormat(), outputData[0].getBuffer(),
                 outputData[0].getChunkInfos());
-        String tmpPathB = getTempFilePath("");
         muxOutput(tmpPathB, muxerFormat, outputData[1].getMediaFormat(), outputData[1].getBuffer(),
                 outputData[1].getChunkInfos());
-        CompareStreams cs = new CompareStreams(mMediaType, tmpPathA, mMediaType, tmpPathB,
-                false, false);
-        double[] avgPSNR = cs.getAvgPSNR();
-        cs.cleanUp();
-        final double weightedAvgPSNR = (4 * avgPSNR[0] + avgPSNR[1] + avgPSNR[2]) / 6;
-        if (weightedAvgPSNR < AVG_ACCEPTABLE_QUALITY) {
-            fail(String.format("Average PSNR of the sequence: %f is < threshold : %f\n",
-                    weightedAvgPSNR, AVG_ACCEPTABLE_QUALITY));
+
+        CompareStreams cs = null;
+        try {
+            cs = new CompareStreams(mMediaType, tmpPathA, mMediaType, tmpPathB, false, false);
+            double[] avgPSNR = cs.getAvgPSNR();
+            final double weightedAvgPSNR = (4 * avgPSNR[0] + avgPSNR[1] + avgPSNR[2]) / 6;
+            if (weightedAvgPSNR < AVG_ACCEPTABLE_QUALITY) {
+                fail(String.format("Average PSNR of the sequence: %f is < threshold : %f\n",
+                        weightedAvgPSNR, AVG_ACCEPTABLE_QUALITY));
+            }
+        } finally {
+            if (cs != null) cs.cleanUp();
         }
         DecodeStreamToYuv yuvRes = new DecodeStreamToYuv(mMediaType, tmpPathA);
         RawResource yuv = yuvRes.getDecodedYuv();
+        mTmpFiles.add(yuv.mFileName);
         double varA = computeVariance(yuv);
-        File tmp = new File(yuv.mFileName);
-        assertTrue(tmp.delete());
+
         yuvRes = new DecodeStreamToYuv(mMediaType, tmpPathB);
         yuv = yuvRes.getDecodedYuv();
+        mTmpFiles.add(yuv.mFileName);
         double varB = computeVariance(yuv);
-        tmp = new File(yuv.mFileName);
-        assertTrue(tmp.delete());
-        assertTrue(new File(tmpPathA).delete());
-        assertTrue(new File(tmpPathB).delete());
+
         Log.d(LOG_TAG, "variance is " + varA + " " + varB);
         assertTrue(String.format("Blurred clip variance is not less than sharpened clip. Variance"
                         + " of blurred clip is %f, variance of sharpened clip is %f", varA, varB),

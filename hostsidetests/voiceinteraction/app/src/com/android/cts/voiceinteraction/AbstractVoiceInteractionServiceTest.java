@@ -37,7 +37,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ServiceTestRule;
 
 import com.android.compatibility.common.util.SettingsStateChangerRule;
-import com.android.compatibility.common.util.SettingsUtils;
+import com.android.compatibility.common.util.UserSettings;
 
 import org.junit.After;
 import org.junit.Before;
@@ -81,6 +81,8 @@ public abstract class AbstractVoiceInteractionServiceTest {
     public ServiceTestRule mServiceTestRule = new ServiceTestRule();
     ITestVoiceInteractionService mTestServiceInterface = null;
 
+    private final UserSettings mUserSettings = new UserSettings();
+
     @Before
     public void setUp() throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
@@ -121,9 +123,7 @@ public abstract class AbstractVoiceInteractionServiceTest {
     @After
     public void tearDown() {
         Log.i(TAG, "tearDown: clearing settings value");
-        SettingsUtils.syncSet(InstrumentationRegistry.getInstrumentation().getTargetContext(),
-                SettingsUtils.NAMESPACE_SECURE, Settings.Secure.VOICE_INTERACTION_SERVICE,
-                "dummy_service");
+        mUserSettings.syncSet(Settings.Secure.VOICE_INTERACTION_SERVICE, "dummy_service");
         Log.i(TAG, "tearDown: waiting for shutdown");
         assertThat(mIsTestServiceShutdown.block(TEST_SERVICE_TIMEOUT.toMillis())).isTrue();
         mServiceTestRule.unbindService();

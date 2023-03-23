@@ -41,6 +41,7 @@ import android.os.SystemClock;
 import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AppModeFull;
+import android.server.wm.IgnoreOrientationRequestSession;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -54,6 +55,8 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -86,12 +89,35 @@ public class LightBarTests extends LightBarTestBase {
     private final String NOTIFICATION_CHANNEL_ID = "test_channel";
     private final String NOTIFICATION_GROUP_KEY = "test_group";
     private NotificationManager mNm;
+    private IgnoreOrientationRequestSession mOrientationRequestSession;
 
     @Rule
     public ActivityTestRule<LightBarActivity> mActivityRule = new ActivityTestRule<>(
             LightBarActivity.class);
     @Rule
     public TestName mTestName = new TestName();
+
+
+
+    @Before
+    public void setUp() {
+        // We need to prevent letterboxing because when an activity is letterboxed, then the status
+        // bar icons are outside the activity space so our verification will fail. See b/246515090.
+        //
+        // When ignore_orientation_request is set to true and the device is in landscape but the
+        // activity is in portrait, then the device remains in landscape but letterboxes the
+        // activity (so the activity is *not* full screen). Setting ignore_orientation_request to
+        // false will cause the device to instead rotate to portrait to match the activity, thus
+        // preventing letterboxing.
+        mOrientationRequestSession = new IgnoreOrientationRequestSession(false /* enable */);
+    }
+
+    @After
+    public void tearDown() {
+        if (mOrientationRequestSession != null) {
+            mOrientationRequestSession.close();
+        }
+    }
 
     @Test
     @AppModeFull // Instant apps cannot create notifications

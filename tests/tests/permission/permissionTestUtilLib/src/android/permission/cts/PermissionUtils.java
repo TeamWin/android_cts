@@ -57,6 +57,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.modules.utils.build.SdkLevel;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -104,6 +106,7 @@ public class PermissionUtils {
                 + (Build.VERSION.RELEASE_OR_CODENAME.equals("REL") ? 0 : 1);
         boolean forceQueryable = sdkVersion > Build.VERSION_CODES.Q;
         runShellCommand("pm install -r --force-sdk "
+                + (SdkLevel.isAtLeastU() ? "--bypass-low-target-sdk-block " : "")
                 + (forceQueryable ? "--force-queryable " : "")
                 + apkFile);
     }

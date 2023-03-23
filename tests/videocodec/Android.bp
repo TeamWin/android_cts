@@ -27,6 +27,10 @@ android_test {
         "ctsmediav2common",
     ],
     platform_apis: true,
+    jni_uses_sdk_apis: true,
+    jni_libs: [
+        "libctsvideoqualityutils_jni",
+    ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact
     test_suites: [

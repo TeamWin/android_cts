@@ -73,10 +73,14 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
     @Test
     public void testUntrustedModeTaskFragmentVisibility_overlayTaskFragment() {
         // Create a task fragment with activity in untrusted mode.
-        final TaskFragmentInfo tf = createTaskFragment(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
+        final Rect baseActivityBounds =
+                mOwnerActivity.getResources().getConfiguration().windowConfiguration.getBounds();
+        final TaskFragmentInfo tf = createTaskFragment(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY,
+                partialOverlayRelativeBounds(baseActivityBounds));
 
         // Start a translucent activity over the TaskFragment.
-        createTaskFragment(mTranslucentActivity, partialOverlayRelativeBounds(tf));
+        createTaskFragment(mTranslucentActivity, partialOverlayRelativeBounds(
+                tf.getConfiguration().windowConfiguration.getBounds()));
         waitAndAssertResumedActivity(mTranslucentActivity, "Translucent activity must be resumed.");
 
         // The task fragment must be made invisible when there is an overlay activity in it.
@@ -100,8 +104,11 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
     @Test
     public void testUntrustedModeTaskFragmentVisibility_startActivityInTaskFragment() {
         // Create a task fragment with activity in untrusted mode.
+        final Rect baseActivityBounds =
+                mOwnerActivity.getResources().getConfiguration().windowConfiguration.getBounds();
         final TaskFragmentInfo taskFragmentInfo = createTaskFragment(
-                SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
+                SECOND_UNTRUSTED_EMBEDDING_ACTIVITY,
+                partialOverlayRelativeBounds(baseActivityBounds));
 
         // Start an activity with a different UID in the TaskFragment.
         final WindowContainerTransaction wct = new WindowContainerTransaction()
@@ -234,8 +241,7 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
      * provided one.
      */
     @NonNull
-    private Rect partialOverlayRelativeBounds(@NonNull TaskFragmentInfo info) {
-        final Rect baseBounds = info.getConfiguration().windowConfiguration.getBounds();
+    private Rect partialOverlayRelativeBounds(@NonNull Rect baseBounds) {
         final Rect result = new Rect(baseBounds);
         result.offsetTo(0, 0);
         result.inset(50 /* left */, 50 /* top */, 50 /* right */, 50 /* bottom */);

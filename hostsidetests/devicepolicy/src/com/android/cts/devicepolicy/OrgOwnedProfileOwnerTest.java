@@ -31,10 +31,16 @@ import android.stats.devicepolicy.EventId;
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.result.ByteArrayInputStreamSource;
+import com.android.tradefed.result.LogDataType;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.util.RunUtil;
 
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * Tests for organization-owned Profile Owner.
@@ -71,6 +77,9 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     protected int mUserId;
     private static final String DISALLOW_CONFIG_LOCATION = "no_config_location";
     private static final String CALLED_FROM_PARENT = "calledFromParent";
+
+    @Rule
+    public DeviceJUnit4ClassRunner.TestLogData mLogger = new DeviceJUnit4ClassRunner.TestLogData();
 
     @Override
     public void setUp() throws Exception {
@@ -253,7 +262,14 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                     "testEnablingSecurityLogging", mUserId);
             // Reboot to ensure ro.organization_owned is set to true in logd and logging is on.
             rebootAndWaitUntilReady();
-            waitForUserUnlock(mUserId);
+
+            try {
+                waitForUserUnlock(mUserId);
+            } catch (AssertionError e) {
+                // STOPSHIP(b/266588263): debug logs for "User is not unlocked" investigation.
+                collectUserLockedDebugLogs();
+                throw e;
+            }
 
             // Generate various types of events on device side and check that they are logged.
             runDeviceTestsAsUser(packageName, testClassName, "testGenerateLogs", mUserId);
@@ -272,6 +288,16 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                 getDevice().setSetting("global", "stay_on_while_plugged_in", stayAwake);
             }
         }
+    }
+
+    private void collectUserLockedDebugLogs() throws Exception {
+        String content = String.join("\n--------------------------------------\n",
+                getDevice().executeShellCommand("dumpsys activity users"),
+                getDevice().executeShellCommand("dumpsys user"),
+                getDevice().executeShellCommand("dumpsys device_policy"),
+                getDevice().executeShellCommand("dumpsys lock_settings"));
+        mLogger.addTestLog("user_locked_debug.txt", LogDataType.DUMPSYS,
+                new ByteArrayInputStreamSource(content.getBytes(StandardCharsets.UTF_8)));
     }
 
     @FlakyTest(bugId = 137088260)

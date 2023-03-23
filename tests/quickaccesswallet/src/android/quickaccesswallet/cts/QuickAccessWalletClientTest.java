@@ -22,7 +22,6 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.PendingIntent;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -55,7 +54,7 @@ import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.SettingsUtils;
+import com.android.compatibility.common.util.UserSettings;
 
 import org.junit.After;
 import org.junit.Before;
@@ -84,25 +83,27 @@ public class QuickAccessWalletClientTest {
 
     private static final String SETTING_DISABLED = "0";
     private static final String SETTING_ENABLED = "1";
-    private Context mContext;
+
+    private final Context mContext = InstrumentationRegistry.getInstrumentation()
+            .getTargetContext();
+    private final UserSettings mUserSettings = new UserSettings(mContext);
+
     private String mDefaultPaymentApp;
 
     @Before
     public void setUp() throws Exception {
         // Save current default payment app
-        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        mDefaultPaymentApp = mUserSettings.get(NFC_PAYMENT_DEFAULT_COMPONENT);
         ComponentName component =
                 ComponentName.createRelative(mContext, TestHostApduService.class.getName());
-        SettingsUtils.syncSet(mContext, NFC_PAYMENT_DEFAULT_COMPONENT,
-                component.flattenToString());
+        mUserSettings.syncSet(NFC_PAYMENT_DEFAULT_COMPONENT, component.flattenToString());
         TestQuickAccessWalletService.resetStaticFields();
     }
 
     @After
     public void tearDown() {
         // Restore saved default payment app
-        ContentResolver cr = mContext.getContentResolver();
-        SettingsUtils.syncSet(mContext, NFC_PAYMENT_DEFAULT_COMPONENT, mDefaultPaymentApp);
+        mUserSettings.syncSet(NFC_PAYMENT_DEFAULT_COMPONENT, mDefaultPaymentApp);
 
         // Return all services to default state
         setServiceState(TestQuickAccessWalletService.class,
@@ -126,18 +127,18 @@ public class QuickAccessWalletClientTest {
     @Test
     public void testIsWalletFeatureAvailableWhenDeviceLocked_checksSecureSettings() {
         QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
-        String showCardsAndPasses = SettingsUtils.getSecureSetting(
-                Settings.Secure.POWER_MENU_LOCKED_SHOW_CONTENT);
+        String showCardsAndPasses =
+                mUserSettings.get(Settings.Secure.POWER_MENU_LOCKED_SHOW_CONTENT);
 
         try {
-            SettingsUtils.syncSet(mContext, SETTING_KEY, SETTING_ENABLED);
+            mUserSettings.syncSet(SETTING_KEY, SETTING_ENABLED);
             assertThat(client.isWalletFeatureAvailableWhenDeviceLocked()).isTrue();
 
-            SettingsUtils.syncSet(mContext, SETTING_KEY, SETTING_DISABLED);
+            mUserSettings.syncSet(SETTING_KEY, SETTING_DISABLED);
             assertThat(client.isWalletFeatureAvailableWhenDeviceLocked()).isFalse();
         } finally {
             // return setting to original value
-            SettingsUtils.syncSet(mContext, SETTING_KEY, showCardsAndPasses);
+            mUserSettings.syncSet(SETTING_KEY, showCardsAndPasses);
         }
     }
 

@@ -435,6 +435,8 @@ public class TvInteractiveAppServiceTest {
                 .isEqualTo(actual.getName());
         assertThat(expected.getContentRatings())
                 .isEqualTo(actual.getContentRatings());
+        assertThat(expected.getProgramUri())
+                .isEqualTo(actual.getProgramUri());
     }
 
     @Before
@@ -872,8 +874,9 @@ public class TvInteractiveAppServiceTest {
         File tmpFile = File.createTempFile("cts_tv_interactive_app", "tias_test");
         ParcelFileDescriptor fd =
                 ParcelFileDescriptor.open(tmpFile, ParcelFileDescriptor.MODE_READ_WRITE);
+        Bundle testBundle = createTestBundle();
         AdRequest adRequest = new AdRequest(
-                567, AdRequest.REQUEST_TYPE_START, fd, 787L, 989L, 100L, "MMM", new Bundle());
+                567, AdRequest.REQUEST_TYPE_START, fd, 787L, 989L, 100L, "MMM", testBundle);
         mSession.requestAd(adRequest);
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mAdRequestCount > 0);
@@ -887,10 +890,33 @@ public class TvInteractiveAppServiceTest {
         assertThat(mInputSession.mAdRequest.getStopTimeMillis()).isEqualTo(989L);
         assertThat(mInputSession.mAdRequest.getEchoIntervalMillis()).isEqualTo(100L);
         assertThat(mInputSession.mAdRequest.getMediaFileType()).isEqualTo("MMM");
-        assertNotNull(mInputSession.mAdRequest.getMetadata());
+        assertThat(mInputSession.mAdRequest.getUri()).isEqualTo(null);
+        assertBundlesAreEqual(mInputSession.mAdRequest.getMetadata(), testBundle);
 
         fd.close();
         tmpFile.delete();
+    }
+
+    @Test
+    public void testAdRequestWithUri() throws Throwable {
+        linkTvView();
+        Uri testUri = createTestUri();
+        Bundle testBundle = createTestBundle();
+        AdRequest adRequest = new AdRequest(567, AdRequest.REQUEST_TYPE_START, testUri, 787L, 989L,
+                100L, testBundle);
+        mSession.requestAd(adRequest);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mAdRequestCount > 0);
+
+        assertThat(mInputSession.mAdRequestCount).isEqualTo(1);
+        assertThat(mInputSession.mAdRequest.getId()).isEqualTo(567);
+        assertThat(mInputSession.mAdRequest.getRequestType())
+                .isEqualTo(AdRequest.REQUEST_TYPE_START);
+        assertThat(mInputSession.mAdRequest.getStartTimeMillis()).isEqualTo(787L);
+        assertThat(mInputSession.mAdRequest.getStopTimeMillis()).isEqualTo(989L);
+        assertThat(mInputSession.mAdRequest.getEchoIntervalMillis()).isEqualTo(100L);
+        assertBundlesAreEqual(mInputSession.mAdRequest.getMetadata(), testBundle);
+        assertThat(mInputSession.mAdRequest.getUri()).isEqualTo(testUri);
     }
 
     @Test
@@ -1073,6 +1099,8 @@ public class TvInteractiveAppServiceTest {
     public void testSetTvRecordingInfo() throws Throwable {
         String mockRecordingId = "testRecordingId";
         TvRecordingInfo mockRecordingInfo = createMockRecordingInfo(mockRecordingId);
+        mockRecordingInfo.setDescription("modifiedDescription");
+        mockRecordingInfo.setName("modifiedName");
         mSession.setTvRecordingInfo(mockRecordingId, mockRecordingInfo);
         mCallback.resetValues();
         mInstrumentation.waitForIdleSync();

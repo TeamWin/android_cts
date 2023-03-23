@@ -22,6 +22,8 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.Activity;
@@ -31,6 +33,8 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.car.Car;
 import android.car.app.CarActivityManager;
+import android.car.app.CarTaskViewController;
+import android.car.app.CarTaskViewControllerCallback;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
@@ -39,6 +43,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.Display;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 
@@ -244,6 +249,45 @@ public class CarActivityManagerTest {
             assertThat(tasks).hasSize(1);
             assertThat(tasks.get(0).isVisible()).isTrue();
             assertThat(tasks.get(0).getDisplayId()).isEqualTo(displayId);
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.app.CarActivityManager#getCarTaskViewController(Activity,"
+            + "Executor,CarTaskViewControllerCallback)"})
+    public void getCarTaskViewController() throws Exception {
+        assumeTrue(mCarActivityManager.isCarSystemUIProxyRegistered());
+        Intent startIntent = Intent.makeMainActivity(mTestActivity)
+                .addFlags(FLAG_ACTIVITY_NEW_TASK);
+        TestActivity activity = (TestActivity) mInstrumentation.startActivitySync(
+                startIntent, /* option */ null);
+        TestCarTaskViewControllerCallback callback = new TestCarTaskViewControllerCallback();
+
+        mTargetContext.getMainExecutor().execute(() ->
+                mCarActivityManager.getCarTaskViewController(activity, mContext.getMainExecutor(),
+                        callback));
+
+        PollingCheck.waitFor(() -> callback.isConnected());
+        assertTrue(callback.isConnected());
+        activity.finishAndRemoveTask();
+    }
+
+    public static final class TestCarTaskViewControllerCallback
+            implements CarTaskViewControllerCallback {
+        private boolean mConnected = false;
+
+        @Override
+        public void onConnected(@NonNull CarTaskViewController carTaskViewController) {
+            mConnected = true;
+        }
+
+        @Override
+        public void onDisconnected(@NonNull CarTaskViewController carTaskViewController) {
+            mConnected = false;
+        }
+
+        public boolean isConnected() {
+            return mConnected;
         }
     }
 

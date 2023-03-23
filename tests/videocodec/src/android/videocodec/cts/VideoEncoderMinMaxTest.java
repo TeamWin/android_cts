@@ -289,7 +289,6 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
         } finally {
             if (cs != null) cs.cleanUp();
         }
-        new File(mMuxedOutputFile).delete();
         assertEquals("encoder did not encode the requested number of frames \n"
                 + mTestConfig + mTestEnv, FRAME_LIMIT, mOutputCount);
         assertTrue("Encountered frames with PSNR less than configured threshold "

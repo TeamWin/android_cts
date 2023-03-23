@@ -299,7 +299,28 @@ public class HearingAidProfileTest extends AndroidTestCase {
         assertEquals(BluetoothHearingAid.SIDE_LEFT, side);
     }
 
+    /**
+     * Basic test case to make sure that a fictional device's truncated HiSyncId is the
+     * expected value.
+     */
+    @MediumTest
+    public void test_getTruncatedHiSyncId() {
+        if (!(mIsBleSupported && mIsHearingAidSupported)) {
+            return;
+        }
 
+        waitForProfileConnect();
+        assertTrue(mIsProfileReady);
+        assertNotNull(mService);
+
+        // Create a fake advertisement data
+        AdvertisementServiceData data = mAdvertisementData;
+        assertNotNull(data);
+
+        final int id = data.getTruncatedHiSyncId();
+        // Fake device should be supported
+        assertEquals(1, id);
+    }
 
     /**
      * Basic test case to make sure that a fictional device's ASHA Advertisement Service Data's CSIP
@@ -323,7 +344,6 @@ public class HearingAidProfileTest extends AndroidTestCase {
         // Fake device should be supported
         assertEquals(true, supported);
     }
-
 
     /**
      * Basic test case to make sure that a fictional device's ASHA Advertisement Service Data's CSIP

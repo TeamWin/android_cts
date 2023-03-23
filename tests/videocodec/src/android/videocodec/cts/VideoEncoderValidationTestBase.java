@@ -82,10 +82,10 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
         }
     }
 
-    protected static final CompressedResource BIRTHDAY_FULLHD_LANDSCAPE =
+    public static final CompressedResource BIRTHDAY_FULLHD_LANDSCAPE =
             new CompressedResource(MediaFormat.MIMETYPE_VIDEO_AVC, MEDIA_DIR
                     + "AVICON-MOBILE-BirthdayHalfway-SI17-CRUW03-L-420-8bit-SDR-1080p-30fps.mp4");
-    protected static final CompressedResource SELFIEGROUP_FULLHD_PORTRAIT =
+    public static final CompressedResource SELFIEGROUP_FULLHD_PORTRAIT =
             new CompressedResource(MediaFormat.MIMETYPE_VIDEO_AVC, MEDIA_DIR
                     + "AVICON-MOBILE-SelfieGroupGarden-SF15-CF01-P-420-8bit-SDR-1080p-30fps.mp4");
 
@@ -121,6 +121,11 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
         mInputData = null;
         mFileReadOffset = 0L;
         mFileLength = mFileInp.length();
+    }
+
+    protected void resetContext(boolean isAsync, boolean signalEOSWithLastFrame) {
+        super.resetContext(isAsync, signalEOSWithLastFrame);
+        mPtsPicTypeMap.clear();
     }
 
     protected void enqueueInput(int bufferIndex) {
