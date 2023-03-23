@@ -13,15 +13,15 @@
     "output" :
         [
             {"index" : 0,
-             "data" : 0x02},   // DS_OUTPUT_REPORT_USB
+             "data" : 0x02}   // DS_OUTPUT_REPORT_USB
 
-            {"index" : 1,
+            //{"index" : 1,
                // DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT
-               "data" : 0x02},
+               //"data" : 0x02},
 
-            {"index" : 39,
+            //{"index" : 39,
                // DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2
-               "data" : 0x04}
+               //"data" : 0x04}
         ]
   },
 
@@ -34,15 +34,15 @@
     "output" :
         [
             {"index" : 0,
-             "data" : 0x02},   // DS_OUTPUT_REPORT_USB
+             "data" : 0x02}   // DS_OUTPUT_REPORT_USB
 
-            {"index" : 1,
+            //{"index" : 1,
                // DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT
-               "data" : 0x02},
+               //"data" : 0x02},
 
-            {"index" : 39,
+            //{"index" : 39,
                // DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2
-               "data" : 0x04}
+               //"data" : 0x04}
         ]
   }
 
