@@ -18,10 +18,14 @@ package android.attributionsource.cts
 
 import android.app.Activity
 import android.app.Instrumentation.ActivityResult
+import android.content.AttributionSource
 import android.content.Context
 import android.content.Intent
+import android.os.Process
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import com.android.compatibility.common.util.ApiTest
+import kotlin.test.assertFailsWith
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -42,6 +46,27 @@ class AttributionSourceTest {
 
         assertEquals("Test activity did not return RESULT_SECURITY_EXCEPTION",
                 AttributionSourceActivity.RESULT_SECURITY_EXCEPTION, thread.getResultCode())
+    }
+
+    @Test
+    @ApiTest(apis = ["android.content.AttributionSource.Builder#setNextAttributionSource"])
+    @Throws(Exception::class)
+    public fun testSetNextAttributionSourceNonNull() {
+        val context: Context = ApplicationProvider.getApplicationContext()
+        val thisAttributionSource = context.getAttributionSource()
+        val builder = AttributionSource.Builder(Process.myUid())
+        builder.setNextAttributionSource(thisAttributionSource)
+        val builtAttributionSource = builder.build()
+    }
+
+    @Test
+    @ApiTest(apis = ["android.content.AttributionSource.Builder#setNextAttributionSource"])
+    @Throws(Exception::class)
+    public fun testSetNextAttributionSourceWithNull() {
+        assertFailsWith(Exception::class, "setNextAttributionSource should throw on null", {
+            val nullBuilder = AttributionSource.Builder(Process.myUid())
+            AttributionSourceJavaWrapper.setNullNextAttributionSource(nullBuilder)
+        })
     }
 
     companion object {

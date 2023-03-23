@@ -27,6 +27,7 @@ android_test {
     min_sdk_version: "30",
     srcs: [
         "src/**/*.kt",
+        "src/**/*.java",
     ],
     static_libs: [
         "androidx.test.core",
@@ -34,6 +35,7 @@ android_test {
         "truth-prebuilt",
         "ctstestrunner-axt",
         "platform-test-annotations",
+        "kotlin-test",
     ],
     data: [
         ":CtsBlamedPermissionApp",
