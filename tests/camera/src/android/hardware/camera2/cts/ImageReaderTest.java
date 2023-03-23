@@ -46,6 +46,7 @@ import android.hardware.DataSpace;
 import android.hardware.HardwareBuffer;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
@@ -62,6 +63,7 @@ import android.media.ImageReader;
 import android.media.ImageWriter;
 import android.os.ConditionVariable;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -1340,6 +1342,69 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         assertWithMessage("Usage bits %s did not contain requested usage bits %s", myBits,
                 REQUESTED_USAGE_BITS).that(myBits & REQUESTED_USAGE_BITS)
                         .isEqualTo(REQUESTED_USAGE_BITS);
+    }
+
+    private void testLandscapeToPortraitOverride(boolean overrideToPortrait) throws Exception {
+        if (!SystemProperties.getBoolean(CameraManager.LANDSCAPE_TO_PORTRAIT_PROP, false)) {
+            Log.i(TAG, "Landscape to portrait override not supported, skipping test");
+            return;
+        }
+
+        for (String id : mCameraIdsUnderTest) {
+            CameraCharacteristics c = mCameraManager.getCameraCharacteristics(
+                    id, /*overrideToPortrait*/false);
+            int[] modes = c.get(CameraCharacteristics.SCALER_AVAILABLE_ROTATE_AND_CROP_MODES);
+            boolean supportsRotateAndCrop = false;
+            for (int mode : modes) {
+                if (mode == CameraMetadata.SCALER_ROTATE_AND_CROP_90
+                        || mode == CameraMetadata.SCALER_ROTATE_AND_CROP_270) {
+                    supportsRotateAndCrop = true;
+                    break;
+                }
+            }
+
+            if (!supportsRotateAndCrop) {
+                Log.i(TAG, "Skipping non-rotate-and-crop cameraId " + id);
+                continue;
+            }
+
+            int sensorOrientation = c.get(CameraCharacteristics.SENSOR_ORIENTATION);
+            if (sensorOrientation != 0 && sensorOrientation != 180) {
+                Log.i(TAG, "Skipping portrait orientation sensor cameraId " + id);
+                continue;
+            }
+
+            Log.i(TAG, "Testing overrideToPortrait " + overrideToPortrait
+                    + " for Camera " + id);
+
+            if (overrideToPortrait) {
+                c = mCameraManager.getCameraCharacteristics(id, overrideToPortrait);
+                sensorOrientation = c.get(CameraCharacteristics.SENSOR_ORIENTATION);
+                assertTrue("SENSOR_ORIENTATION should imply portrait sensor.",
+                        sensorOrientation == 90 || sensorOrientation == 270);
+            }
+
+            BufferFormatTestParam params = new BufferFormatTestParam(
+                    ImageFormat.JPEG, /*repeating*/false);
+            params.mValidateImageData = true;
+
+            try {
+                openDevice(id, overrideToPortrait);
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testLandscapeToPortraitOverrideEnabled() throws Exception {
+        testLandscapeToPortraitOverride(true);
+    }
+
+    @Test
+    public void testLandscapeToPortraitOverrideDisabled() throws Exception {
+        testLandscapeToPortraitOverride(false);
     }
 
     /**

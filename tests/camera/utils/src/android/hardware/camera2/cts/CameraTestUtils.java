@@ -60,6 +60,7 @@ import android.media.ImageWriter;
 import android.os.Build;
 import android.os.ConditionVariable;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Range;
@@ -1264,6 +1265,38 @@ public class CameraTestUtils extends Assert {
         }
     }
 
+    private static class BlockingCameraManager
+            extends com.android.ex.camera2.blocking.BlockingCameraManager {
+
+        BlockingCameraManager(CameraManager manager) {
+            super(manager);
+        }
+
+        public CameraDevice openCamera(String cameraId, boolean overrideToPortrait,
+                CameraDevice.StateCallback listener, Handler handler)
+                throws CameraAccessException, BlockingOpenException {
+            if (handler == null) {
+                throw new IllegalArgumentException("handler must not be null");
+            } else if (handler.getLooper() == Looper.myLooper()) {
+                throw new IllegalArgumentException(
+                        "handler's looper must not be the current looper");
+            }
+
+            return (new OpenListener(mManager, cameraId, overrideToPortrait, listener, handler))
+                    .blockUntilOpen();
+        }
+
+        protected class OpenListener
+                extends com.android.ex.camera2.blocking.BlockingCameraManager.OpenListener {
+            OpenListener(CameraManager manager, String cameraId, boolean overrideToPortrait,
+                    CameraDevice.StateCallback listener, Handler handler)
+                    throws CameraAccessException {
+                super(cameraId, listener);
+                manager.openCamera(cameraId, overrideToPortrait, handler, this);
+            }
+        }
+    }
+
     public static boolean hasCapability(CameraCharacteristics characteristics, int capability) {
         int [] capabilities =
                 characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
@@ -1347,7 +1380,30 @@ public class CameraTestUtils extends Assert {
          *
          * In this case, BlockingCameraManager#openCamera performs the check for us.
          */
-        return (new BlockingCameraManager(manager)).openCamera(cameraId, listener, handler);
+        return (new CameraTestUtils.BlockingCameraManager(manager))
+                .openCamera(cameraId, listener, handler);
+    }
+
+    /**
+     * Block until the camera is opened.
+     *
+     * <p>Don't use this to test #onDisconnected/#onError since this will throw
+     * an AssertionError if it fails to open the camera device.</p>
+     *
+     * @throws IllegalArgumentException
+     *            If the handler is null, or if the handler's looper is current.
+     * @throws CameraAccessException
+     *            If open fails immediately.
+     * @throws BlockingOpenException
+     *            If open fails after blocking for some amount of time.
+     * @throws TimeoutRuntimeException
+     *            If opening times out. Typically unrecoverable.
+     */
+    public static CameraDevice openCamera(CameraManager manager, String cameraId,
+            boolean overrideToPortrait, CameraDevice.StateCallback listener, Handler handler)
+            throws CameraAccessException, BlockingOpenException {
+        return (new CameraTestUtils.BlockingCameraManager(manager))
+                .openCamera(cameraId, overrideToPortrait, listener, handler);
     }
 
 
