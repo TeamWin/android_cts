@@ -93,8 +93,7 @@ public class DecodeStreamToYuv extends CodecDecoderTestBase {
         MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         codecName = mcl.findDecoderForFormat(format);
         if (codecName == null) {
-            throw new IllegalArgumentException(
-                    "No track with mediaType: " + mediaType + " found in file: " + file);
+            throw new IllegalArgumentException("No decoder for format: " + format);
         }
         return codecName;
     }
