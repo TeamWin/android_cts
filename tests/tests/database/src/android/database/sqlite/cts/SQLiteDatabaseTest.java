@@ -571,7 +571,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         }
 
         // make sure execSQL can't be used to execute more than 1 sql statement at a time
-        mDatabase.execSQL("UPDATE test SET age = 40 WHERE name = 'Mike';" + 
+        mDatabase.execSQL("UPDATE test SET age = 40 WHERE name = 'Mike';" +
                 "UPDATE test SET age = 50 WHERE name = 'Mike';");
         // age should be updated to 40 not to 50
         cursor = mDatabase.query(TABLE_NAME, TEST_PROJECTION, null, null, null, null, null);
@@ -2003,6 +2003,84 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
                 readThread.isAlive());
 
         assertTrue("ReadThread failed with errors: " + errors, errors.isEmpty());
+    }
+
+    /**
+     * This test verifies that a deferred transaction can be started, and it is really deferred.
+     * A deferred transaction does not start until the database is accessed.
+     */
+    public void testDeferredTransaction() throws Exception {
+        // Enable WAL.
+        assertFalse(mDatabase.isWriteAheadLoggingEnabled());
+        assertTrue(mDatabase.enableWriteAheadLogging());
+        assertTrue(mDatabase.isWriteAheadLoggingEnabled());
+        assertTrue(DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
+                .equalsIgnoreCase("WAL"));
+
+        // Create the t1 table and put some data in it.
+        mDatabase.beginTransaction();
+        mDatabase.execSQL("CREATE TABLE t1 (i int);");
+        mDatabase.execSQL("INSERT INTO t1 (i) VALUES (2)");
+        mDatabase.execSQL("INSERT INTO t1 (i) VALUES (3)");
+        mDatabase.setTransactionSuccessful();
+        mDatabase.endTransaction();
+
+        final List<Throwable> errors = new ArrayList<>();
+
+        // Start a deferred transaction.  Other transactions should be able to proceed until the
+        // first time this transaction touches the database.
+        mDatabase.beginTransactionDeferred();
+
+        // Launch a second thread to read the database.
+        Thread readThread = new Thread(
+                () -> {
+                    try {
+                        DatabaseUtils.longForQuery(mDatabase, "SELECT count(*) from t1", null);
+                    } catch (Throwable t) {
+                        Log.e(TAG, "ReadThread failed", t);
+                        errors.add(t);
+                    }
+                });
+        readThread.start();
+        readThread.join(500L);
+        assertFalse("ReadThread did not complete", readThread.isAlive());
+
+        DatabaseUtils.longForQuery(mDatabase, "SELECT count(*) from t1", null);
+        mDatabase.setTransactionSuccessful();
+        mDatabase.endTransaction();
+
+        assertTrue("ReadThread failed with errors: " + errors, errors.isEmpty());
+    }
+
+    public void testTransactionWithListenerDeferred() {
+        mDatabase.execSQL("CREATE TABLE test (num INTEGER);");
+        mDatabase.execSQL("INSERT INTO test (num) VALUES (0)");
+
+        assertEquals(mTransactionListenerOnBeginCalled, false);
+        assertEquals(mTransactionListenerOnCommitCalled, false);
+        assertEquals(mTransactionListenerOnRollbackCalled, false);
+        mDatabase.beginTransactionWithListenerDeferred(new TestSQLiteTransactionListener());
+
+        // Assert that the transaction has started
+        assertEquals(mTransactionListenerOnBeginCalled, true);
+        assertEquals(mTransactionListenerOnCommitCalled, false);
+        assertEquals(mTransactionListenerOnRollbackCalled, false);
+
+        setNum(1);
+
+        // State shouldn't have changed
+        assertEquals(mTransactionListenerOnBeginCalled, true);
+        assertEquals(mTransactionListenerOnCommitCalled, false);
+        assertEquals(mTransactionListenerOnRollbackCalled, false);
+
+        // commit the transaction
+        mDatabase.setTransactionSuccessful();
+        mDatabase.endTransaction();
+
+        // the listener should have been told that commit was called
+        assertEquals(mTransactionListenerOnBeginCalled, true);
+        assertEquals(mTransactionListenerOnCommitCalled, true);
+        assertEquals(mTransactionListenerOnRollbackCalled, false);
     }
 
     public void testSqliteLibraryVersion() {
