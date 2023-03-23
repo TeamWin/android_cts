@@ -75,6 +75,8 @@
 
         <!-- Wait for PACKAGE_ADDED broadcasts to be delivered to InputMethodManagerService. -->
         <option name="run-command" value="am wait-for-broadcast-barrier"  />
+        <!-- Dismiss any system dialogs (e.g. crashes, ANR). -->
+        <option name="run-command" value="am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS --receiver-foreground"  />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
         <option name="package" value="android.view.inputmethod.cts.sdk32" />
