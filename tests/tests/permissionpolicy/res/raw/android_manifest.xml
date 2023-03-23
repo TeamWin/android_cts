@@ -7412,6 +7412,12 @@
     <permission android:name="android.permission.RUN_USER_INITIATED_JOBS"
                 android:protectionLevel="normal"/>
 
+    <!-- Allows a browser to invoke the set of credential candidate query apis.
+         <p>Protection level: normal
+    -->
+    <permission android:name="android.permission.CREDENTIAL_MANAGER_QUERY_CANDIDATE_CREDENTIALS"
+                android:protectionLevel="normal" />
+
     <!-- Allows browsers to call on behalf of another app by passing in a custom origin.
 	 <p>Protection level: normal
      -->
