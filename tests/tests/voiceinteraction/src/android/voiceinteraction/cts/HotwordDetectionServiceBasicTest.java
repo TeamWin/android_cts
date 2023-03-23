@@ -348,6 +348,40 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
+    public void testHotwordDetectionService_softwareDetector_processDied_triggerOnFailure()
+            throws Throwable {
+        // Create SoftwareHotwordDetector
+        HotwordDetector softwareHotwordDetector =
+                createSoftwareHotwordDetector(/* useOnFailure= */ true);
+        try {
+            // Use SoftwareHotwordDetector to test process died of HotwordDetectionService
+            mService.initOnFailureLatch();
+            runWithShellPermissionIdentity(() -> {
+                PersistableBundle persistableBundle = new PersistableBundle();
+                persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                        Helper.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH);
+                softwareHotwordDetector.updateState(
+                        persistableBundle,
+                        Helper.createFakeSharedMemoryData());
+            }, MANAGE_HOTWORD_DETECTION);
+            // wait OnFailure() called and verify the result
+            mService.waitOnFailureCalled();
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
+                    HotwordDetectionServiceFailure.ERROR_CODE_BINDING_DIED);
+
+            // ActivityManager will schedule a timer to restart the HotwordDetectionService due to
+            // we crash the service in this test case. It may impact the other test cases when
+            // ActivityManager restarts the HotwordDetectionService again. Add the sleep time to
+            // wait ActivityManager to restart the HotwordDetectionService, so that the service
+            // can be destroyed after finishing this test case.
+            Thread.sleep(5000);
+        } finally {
+            // destroy detector
+            softwareHotwordDetector.destroy();
+        }
+    }
+
+    @Test
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromDspTimeout_triggerOnFailure()
             throws Throwable {
