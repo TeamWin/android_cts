@@ -18,7 +18,9 @@ package android.voiceinteraction.cts.services;
 
 import static android.Manifest.permission.BIND_HOTWORD_DETECTION_SERVICE;
 import static android.Manifest.permission.BIND_VISUAL_QUERY_DETECTION_SERVICE;
+import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
 import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
+import static android.Manifest.permission.RECORD_AUDIO;
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -138,7 +140,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             if (mServiceTriggerLatch != null) {
                 mServiceTriggerLatch.countDown();
             }
-        }, MANAGE_HOTWORD_DETECTION));
+        }, MANAGE_HOTWORD_DETECTION, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD));
     }
 
     /**
@@ -234,7 +236,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         final Handler handler = runOnMainThread ? new Handler(Looper.getMainLooper()) : mHandler;
         handler.post(() -> runWithShellPermissionIdentity(() -> {
             mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector(callback, useExecutor);
-        }, MANAGE_HOTWORD_DETECTION));
+        }, MANAGE_HOTWORD_DETECTION, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD));
     }
 
     /**
@@ -243,7 +245,9 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     public void createAlwaysOnHotwordDetectorWithoutManageHotwordDetectionPermission() {
         mServiceTriggerLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(
-                () -> callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback)));
+                () -> callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback),
+                RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD
+                ));
     }
 
     /**
@@ -264,7 +268,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         mServiceTriggerLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(
                 () -> callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback),
-                BIND_HOTWORD_DETECTION_SERVICE));
+                RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD, BIND_HOTWORD_DETECTION_SERVICE));
     }
 
     /**

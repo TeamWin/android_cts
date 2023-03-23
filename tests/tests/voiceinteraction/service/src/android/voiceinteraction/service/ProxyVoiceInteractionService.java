@@ -16,6 +16,11 @@
 
 package android.voiceinteraction.service;
 
+import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
+import static android.Manifest.permission.RECORD_AUDIO;
+
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import static java.util.Objects.requireNonNull;
 
 import android.content.Intent;
@@ -207,14 +212,20 @@ public class ProxyVoiceInteractionService extends VoiceInteractionService {
         static FakeAlwaysOnHotwordDetector create(String keyphrase, Locale locale,
                 PersistableBundle options, SharedMemory sharedMemory,
                 IProxyDetectorCallback callback, VoiceInteractionService service, Handler handler) {
-            return create(() -> service.createAlwaysOnHotwordDetector(keyphrase, locale, options,
-                    sharedMemory, createDetectorCallback(callback)), handler);
+            return create(() -> runWithShellPermissionIdentity(
+                    () -> service.createAlwaysOnHotwordDetector(keyphrase, locale, options,
+                    sharedMemory, createDetectorCallback(callback)),
+                    RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD /** required perms **/
+                ), handler);
         }
 
         static FakeAlwaysOnHotwordDetector create(String keyphrase, Locale locale,
                 IProxyDetectorCallback callback, VoiceInteractionService service, Handler handler) {
-            return create(() -> service.createAlwaysOnHotwordDetector(keyphrase, locale,
-                    createDetectorCallback(callback)), handler);
+            return create(() -> runWithShellPermissionIdentity(
+                    () -> service.createAlwaysOnHotwordDetector(keyphrase, locale,
+                    createDetectorCallback(callback)),
+                    RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD /** required perms */
+                ), handler);
         }
 
         private static AlwaysOnHotwordDetector.Callback createDetectorCallback(
