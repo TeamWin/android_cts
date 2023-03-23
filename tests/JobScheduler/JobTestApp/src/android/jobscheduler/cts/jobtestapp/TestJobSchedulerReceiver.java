@@ -54,6 +54,8 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
     public static final String EXTRA_SET_NOTIFICATION = PACKAGE_NAME + ".extra.SET_NOTIFICATION";
     public static final String EXTRA_SET_NOTIFICATION_JOB_END_POLICY =
             PACKAGE_NAME + ".extra.SET_NOTIFICATION_JOB_END_POLICY";
+    public static final String EXTRA_SLOW_START = PACKAGE_NAME + ".extra.SLOW_START";
+    public static final String EXTRA_SLOW_STOP = PACKAGE_NAME + ".extra.SLOW_STOP";
     public static final String ACTION_SCHEDULE_JOB = PACKAGE_NAME + ".action.SCHEDULE_JOB";
     public static final String ACTION_CANCEL_JOBS = PACKAGE_NAME + ".action.CANCEL_JOBS";
     public static final String ACTION_POST_UI_INITIATING_NOTIFICATION =
@@ -91,6 +93,9 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                 extras.putInt(EXTRA_SET_NOTIFICATION_JOB_END_POLICY,
                         intent.getIntExtra(EXTRA_SET_NOTIFICATION_JOB_END_POLICY,
                                 JobService.JOB_END_NOTIFICATION_POLICY_REMOVE));
+                extras.putBoolean(EXTRA_SLOW_START,
+                        intent.getBooleanExtra(EXTRA_SLOW_START, false));
+                extras.putBoolean(EXTRA_SLOW_STOP, intent.getBooleanExtra(EXTRA_SLOW_STOP, false));
                 JobInfo.Builder jobBuilder = new JobInfo.Builder(jobId, jobServiceComponent)
                         .setBackoffCriteria(JOB_INITIAL_BACKOFF, backoffPolicy)
                         .setTransientExtras(extras)
