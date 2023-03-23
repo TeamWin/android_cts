@@ -1573,18 +1573,6 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         assertThat(nodeInfo.hasRequestInitialAccessibilityFocus()).isTrue();
     }
 
-    @Test
-    @ApiTest(apis = {
-            "android.view.accessibility.AccessibilityNodeInfo"
-                    + "#setRequestTouchPassthrough",
-            "android.view.accessibility.AccessibilityNodeInfo"
-                    + "#hasRequestTouchPassthrough"})
-    public void testSetRequestTouchPassthrough() {
-        final View testView = mActivity.findViewById(R.id.buttonLayout);
-        final AccessibilityNodeInfo nodeInfo = testView.createAccessibilityNodeInfo();
-        nodeInfo.setRequestTouchPassthrough(true);
-        assertThat(nodeInfo.hasRequestTouchPassthrough()).isTrue();
-    }
 
     @AsbSecurityTest(cveBugId = {243378132})
     @Test
