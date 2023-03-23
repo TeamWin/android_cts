@@ -18,7 +18,6 @@ package android.permission.cts;
 
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-import static android.Manifest.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG;
 import static android.app.AppOpsManager.OPSTR_FINE_LOCATION;
 import static android.app.AppOpsManager.OP_FLAGS_ALL_TRUSTED;
 import static android.content.Context.BIND_AUTO_CREATE;
@@ -438,7 +437,7 @@ public class LocationAccessCheckTest {
             if (!valueWasSet) {
                 throw new IllegalStateException("Could not set " + propertyName + " to " + value);
             }
-        }, ALLOWLISTED_WRITE_DEVICE_CONFIG);
+        });
     }
 
 
