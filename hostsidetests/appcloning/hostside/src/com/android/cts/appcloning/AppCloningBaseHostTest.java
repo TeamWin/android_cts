@@ -70,10 +70,14 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
         String existingPublicVolume = getPublicVolumeExcluding(null);
         sDevice.executeShellCommand("sm set-force-adoptable on");
         sDevice.executeShellCommand("sm set-virtual-disk true");
-        eventually(AppCloningBaseHostTest::partitionDisks, 10000,
+        eventually(AppCloningBaseHostTest::partitionDisks, 15000,
                 "Could not create public volume in time");
+        // Need to do a short wait, to allow the newly created volume to mount.
+        Thread.sleep(2000);
         sPublicSdCardVol = getPublicVolumeExcluding(existingPublicVolume);
         assertThat(sPublicSdCardVol).isNotNull();
+        assertThat(sPublicSdCardVol).isNotEmpty();
+        assertThat(sPublicSdCardVol).isNotEqualTo("null");
     }
 
     protected static void removeVirtualDisk() throws Exception {
