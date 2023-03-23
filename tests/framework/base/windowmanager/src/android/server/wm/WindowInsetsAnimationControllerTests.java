@@ -260,6 +260,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_andCancel() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             runOnUiThread(() -> {
                 setupAnimationListener();
@@ -280,6 +282,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     @Test
     public void testControl_andImmediatelyCancel() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             runOnUiThread(() -> {
                 setupAnimationListener();
@@ -297,6 +301,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_immediately_show() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             setVisibilityAndWait(mType, false);
 
@@ -320,6 +326,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_immediately_hide() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             setVisibilityAndWait(mType, true);
 
@@ -343,6 +351,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_transition_show() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             setVisibilityAndWait(mType, false);
 
@@ -364,6 +374,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_transition_hide() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             setVisibilityAndWait(mType, true);
 
@@ -385,6 +397,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_transition_show_interpolator() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             mInterpolator = new DecelerateInterpolator();
             setVisibilityAndWait(mType, false);
@@ -407,6 +421,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_transition_hide_interpolator() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             mInterpolator = new AccelerateInterpolator();
             setVisibilityAndWait(mType, true);
@@ -428,6 +444,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     @Test
     public void testControl_andLoseControl() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             mInterpolator = new AccelerateInterpolator();
             setVisibilityAndWait(mType, true);
