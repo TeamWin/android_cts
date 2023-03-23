@@ -39,6 +39,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
 import android.os.SystemClock;
+import android.util.Log;
+import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
@@ -54,10 +56,16 @@ import com.google.common.collect.ImmutableList;
 
 import org.junit.Rule;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.Objects;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public abstract class VirtualDeviceTestCase extends InputTestCase {
+
+    private static final String TAG = "VirtualDeviceTestCase";
+    private static final int BARRIER_TIMEOUT = 1;
 
     private static final int ARBITRARY_SURFACE_TEX_ID = 1;
 
@@ -65,6 +73,8 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     protected static final int VENDOR_ID = 1;
     protected static final int DISPLAY_WIDTH = 100;
     protected static final int DISPLAY_HEIGHT = 100;
+
+    private InputDevice mInputDevice;
 
     // Uses:
     // Manifest.permission.CREATE_VIRTUAL_DEVICE,
@@ -75,22 +85,32 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation());
 
-    private final CountDownLatch mLatch = new CountDownLatch(1);
+    private final CyclicBarrier mBarrier = new CyclicBarrier(2);
     private final InputManager.InputDeviceListener mInputDeviceListener =
             new InputManager.InputDeviceListener() {
                 @Override
                 public void onInputDeviceAdded(int deviceId) {
-                    mLatch.countDown();
+                    mInputDevice = mInputManager.getInputDevice(deviceId);
+                    try {
+                        mBarrier.await();
+                    } catch (InterruptedException | BrokenBarrierException e) {
+                        Log.e(TAG, "Unexpected exception while waiting on CyclicBarrier", e);
+                    }
                 }
 
                 @Override
                 public void onInputDeviceRemoved(int deviceId) {
+                    if (mInputDevice != null && deviceId == mInputDevice.getId()) {
+                        mInputDevice = null;
+                    }
                 }
 
                 @Override
                 public void onInputDeviceChanged(int deviceId) {
                 }
             };
+
+    InputManager mInputManager;
 
     VirtualDeviceManager.VirtualDevice mVirtualDevice;
     VirtualDisplay mVirtualDisplay;
@@ -155,15 +175,11 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
 
     @Override
     void onSetUp() {
-        InstrumentationRegistry.getTargetContext().getSystemService(InputManager.class)
-                .registerInputDeviceListener(mInputDeviceListener,
-                        new Handler(Looper.getMainLooper()));
+        mInputManager = mInstrumentation.getTargetContext().getSystemService(InputManager.class);
+        mInputManager.registerInputDeviceListener(mInputDeviceListener,
+                new Handler(Looper.getMainLooper()));
         onSetUpVirtualInputDevice();
-        try {
-            mLatch.await(1, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            fail("Virtual input device setup was interrupted");
-        }
+        waitForInputDevice();
         // Tap to gain window focus on the activity
         tapActivityToFocus();
     }
@@ -187,17 +203,31 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
                 mVirtualDevice.close();
             }
             final Context context = InstrumentationRegistry.getTargetContext();
-            context.getSystemService(InputManager.class).unregisterInputDeviceListener(
-                    mInputDeviceListener);
+            mInputManager.unregisterInputDeviceListener(mInputDeviceListener);
             disassociateCompanionDevice(context.getPackageName());
         }
     }
 
     @Override
-    @Nullable Bundle getActivityOptions() {
+    @Nullable
+    Bundle getActivityOptions() {
         return ActivityOptions.makeBasic()
                 .setLaunchDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
                 .toBundle();
+    }
+
+    protected InputDevice getInputDevice() {
+        Objects.requireNonNull(mInputDevice, "Failed to get InputDevice");
+        return mInputDevice;
+    }
+
+    protected void waitForInputDevice() {
+        try {
+            mBarrier.await(BARRIER_TIMEOUT, TimeUnit.SECONDS);
+        } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+            fail("Virtual input device setup was interrupted or timed out.");
+        }
+        mBarrier.reset();
     }
 
     private void associateCompanionDevice(String packageName) {
@@ -249,6 +279,6 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
                 /* height= */ DISPLAY_HEIGHT,
                 /* displayIdToMirror= */ 50,
                 /* surface= */ null
-            );
+        );
     }
 }
