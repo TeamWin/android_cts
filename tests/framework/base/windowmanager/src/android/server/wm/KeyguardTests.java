@@ -465,6 +465,49 @@ public class KeyguardTests extends KeyguardTestBase {
         assertFalse(isDisplayOn(DEFAULT_DISPLAY));
     }
 
+    @Test
+    public void testShowWhenLockedActivityBeforeAod() {
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        final AodSession aodSession = createManagedAodSession();
+        assumeTrue(aodSession.isAodAvailable());
+        aodSession.setAodEnabled(true);
+
+        // Unlocked; ShowWhenLockedActivity should be visible
+        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+
+        // In AOD; ShowWhenLockedActivity should NOT be visible
+        lockScreenSession.sleepDevice();
+        mWmState.waitForKeyguardShowingAndOccluded();
+        waitAndAssertStoppedActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+
+        // Awake; ShowWhenLockedActivity should be visible again
+        lockScreenSession.wakeUpDevice();
+        waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        mWmState.assertKeyguardShowingAndOccluded();
+    }
+
+    @Test
+    public void testShowWhenLockedActivityDuringAod() {
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        final AodSession aodSession = createManagedAodSession();
+        assumeTrue(aodSession.isAodAvailable());
+        aodSession.setAodEnabled(true);
+
+        // In AOD and locked
+        lockScreenSession.sleepDevice();
+        mWmState.waitForKeyguardShowingAndOccluded();
+
+        // Launch ShowWhenLockedActivity invisibly under AOD
+        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        waitAndAssertStoppedActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+
+        // Wake up; we should see ShowWhenLockedActivity instead of KeyGuard
+        lockScreenSession.wakeUpDevice();
+        waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        mWmState.assertKeyguardShowingAndOccluded();
+    }
+
     /**
      * Tests whether a FLAG_DISMISS_KEYGUARD activity occludes Keyguard.
      */
