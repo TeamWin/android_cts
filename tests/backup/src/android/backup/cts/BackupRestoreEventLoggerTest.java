@@ -27,7 +27,6 @@ import android.app.backup.BackupRestoreEventLogger.DataTypeResult;
 import android.app.backup.RestoreObserver;
 import android.app.backup.RestoreSession;
 import android.content.Context;
-
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 
@@ -102,6 +101,9 @@ public class BackupRestoreEventLoggerTest extends BaseBackupCtsTest {
                 TimeUnit.SECONDS);
         assertThat(operationFinished).isTrue();
         assertLoggingResultsAreCorrect();
+
+        // Clean up restore session
+        restoreSession.endRestoreSession();
     }
 
     /**
