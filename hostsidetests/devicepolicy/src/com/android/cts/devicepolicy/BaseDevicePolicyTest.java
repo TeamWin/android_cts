@@ -138,6 +138,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected static final int FLAG_GUEST = 0x00000004;
     protected static final int FLAG_EPHEMERAL = 0x00000100;
     protected static final int FLAG_MANAGED_PROFILE = 0x00000020;
+    protected static final int FLAG_INITIALIZED = 0x00000010;
 
     /** Default password to use in tests. */
     protected static final String TEST_PASSWORD = "1234";
