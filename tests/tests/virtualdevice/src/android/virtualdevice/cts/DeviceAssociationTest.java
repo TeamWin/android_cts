@@ -30,6 +30,7 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -45,6 +46,7 @@ import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.os.Bundle;
@@ -122,9 +124,12 @@ public class DeviceAssociationTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         Context context = getApplicationContext();
+        assumeTrue(
+                context.getPackageManager()
+                        .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
         mTestExecutor = context.getMainExecutor();
-        final DisplayManager dm = getApplicationContext().getSystemService(DisplayManager.class);
+        final DisplayManager dm = context.getSystemService(DisplayManager.class);
         mDefaultDisplay = dm.getDisplay(DEFAULT_DISPLAY);
         mVirtualDevice = createVirtualDevice();
         mVirtualDevice.addActivityListener(context.getMainExecutor(), mActivityListener);
