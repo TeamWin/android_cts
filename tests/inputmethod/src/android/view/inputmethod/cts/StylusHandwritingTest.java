@@ -88,6 +88,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -109,6 +110,8 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     private static final String TEST_MARKER_PREFIX =
             "android.view.inputmethod.cts.StylusHandwritingTest";
     private static final int HANDWRITING_BOUNDS_OFFSET_PX = 20;
+    // A timeout greater than HandwritingModeController#HANDWRITING_DELEGATION_IDLE_TIMEOUT_MS.
+    private static final long DELEGATION_AFTER_IDLE_TIMEOUT_MS = 3100;
 
     private Context mContext;
     private int mHwInitialState;
@@ -1101,7 +1104,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final String editTextMarker = getTestMarker();
-            final View delegateView = launchTestActivityWithDelegate(editTextMarker);
+            final View delegateView =
+                    launchTestActivityWithDelegate(
+                            editTextMarker, null /* delegateLatch */, 0 /* delegateDelayMs */);
             expectBindInput(stream, Process.myPid(), TIMEOUT);
             addVirtualStylusIdForTestSession();
 
@@ -1126,6 +1131,92 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             verifyStylusHandwritingWindowIsShown(stream, imeSession);
 
             TestUtils.injectStylusUpEvent(delegateView, endX, endY);
+        }
+    }
+
+    /**
+     * Inject stylus events on top of a handwriting initiation delegator view and verify handwriting
+     * is started on the delegate editor, even though delegate took a little time to
+     * acceptStylusHandwriting().
+     */
+    @Test
+    public void testHandwriting_delegateDelayed() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String editTextMarker = getTestMarker();
+            final CountDownLatch latch = new CountDownLatch(1);
+            // Use a delegate that executes after 1 second delay.
+            final View delegatorView =
+                    launchTestActivityWithDelegate(editTextMarker, latch, TIMEOUT_1_S);
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            addVirtualStylusIdForTestSession();
+
+            final int touchSlop = getTouchSlop();
+            final int startX = delegatorView.getWidth() / 2;
+            final int startY = delegatorView.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY + 2 * touchSlop;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(delegatorView, startX, startY);
+            TestUtils.injectStylusMoveEvents(delegatorView, startX, startY, endX, endY, number);
+            // Wait until delegate makes request.
+            latch.await(DELEGATION_AFTER_IDLE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            // Keyboard shouldn't show up.
+            notExpectEvent(
+                    stream, editorMatcher("onStartInputView", editTextMarker), NOT_EXPECT_TIMEOUT);
+            // Handwriting should start since delegation was delayed (but still before timeout).
+            expectEvent(
+                    stream, editorMatcher("onStartStylusHandwriting", editTextMarker), TIMEOUT);
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
+
+            TestUtils.injectStylusUpEvent(delegatorView, endX, endY);
+        }
+    }
+
+    /**
+     * Inject stylus events on top of a handwriting initiation delegator view and verify handwriting
+     * is not started on the delegate editor after delegate idle-timeout.
+     */
+    @Test
+    public void testHandwriting_delegateAfterTimeout() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String editTextMarker = getTestMarker();
+            final CountDownLatch latch = new CountDownLatch(1);
+            // Use a delegate that executes after idle-timeout.
+            final View delegatorView =
+                    launchTestActivityWithDelegate(
+                            editTextMarker, latch, DELEGATION_AFTER_IDLE_TIMEOUT_MS);
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            addVirtualStylusIdForTestSession();
+
+            final int touchSlop = getTouchSlop();
+            final int startX = delegatorView.getWidth() / 2;
+            final int startY = delegatorView.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY + 2 * touchSlop;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(delegatorView, startX, startY);
+            TestUtils.injectStylusMoveEvents(delegatorView, startX, startY, endX, endY, number);
+            // Wait until delegate makes request.
+            latch.await(DELEGATION_AFTER_IDLE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            // Keyboard shouldn't show up.
+            notExpectEvent(
+                    stream, editorMatcher("onStartInputView", editTextMarker), NOT_EXPECT_TIMEOUT);
+            // Handwriting should *not* start since delegation was idle timed-out.
+            notExpectEvent(
+                    stream, editorMatcher("onStartStylusHandwriting", editTextMarker), TIMEOUT);
+            verifyStylusHandwritingWindowIsNotShown(stream, imeSession);
+
+            TestUtils.injectStylusUpEvent(delegatorView, endX, endY);
         }
     }
 
@@ -1676,14 +1767,15 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         return new Pair<>(focusedCustomEditorRef.get(), unfocusedCustomEditorRef.get());
     }
 
-    private View launchTestActivityWithDelegate(@NonNull String editTextMarker) {
-        final AtomicReference<View> delegateViewRef = new AtomicReference<>();
+    private View launchTestActivityWithDelegate(
+            @NonNull String editTextMarker, CountDownLatch delegateLatch, long delegateDelayMs) {
+        final AtomicReference<View> delegatorViewRef = new AtomicReference<>();
         TestActivity.startSync(activity -> {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
 
             final View delegatorView = new View(activity);
-            delegateViewRef.set(delegatorView);
+            delegatorViewRef.set(delegatorView);
             delegatorView.setBackgroundColor(Color.GREEN);
             delegatorView.setHandwritingDelegatorCallback(
                     () -> {
@@ -1692,8 +1784,14 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                         editText.setPrivateImeOptions(editTextMarker);
                         editText.setHint("editText");
                         layout.addView(editText);
-                        editText.requestFocus();
+                        editText.postDelayed(() -> {
+                            editText.requestFocus();
+                            if (delegateLatch != null) {
+                                delegateLatch.countDown();
+                            }
+                        }, delegateDelayMs);
                     });
+
             LinearLayout.LayoutParams layoutParams =
                     new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 40);
             // Add space so that stylus motion on the delegate view is not within the edit text's
@@ -1702,7 +1800,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             layout.addView(delegatorView, layoutParams);
             return layout;
         });
-        return delegateViewRef.get();
+        return delegatorViewRef.get();
     }
 
     private View launchTestActivityInExternalPackage(
