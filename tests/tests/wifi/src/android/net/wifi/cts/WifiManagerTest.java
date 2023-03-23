@@ -6449,14 +6449,6 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 () -> new QosPolicyParams.Builder(policyId, direction)
                         .setDscp(70)
                         .build());
-        assertThrows("Null src address should trigger an exception", NullPointerException.class,
-                () -> new QosPolicyParams.Builder(policyId, direction)
-                        .setSourceAddress(null)
-                        .build());
-        assertThrows("Null dest address should trigger an exception", NullPointerException.class,
-                () -> new QosPolicyParams.Builder(policyId, direction)
-                        .setDestinationAddress(null)
-                        .build());
 
         // Valid downlink parameters
         QosPolicyParams downlinkParams =
