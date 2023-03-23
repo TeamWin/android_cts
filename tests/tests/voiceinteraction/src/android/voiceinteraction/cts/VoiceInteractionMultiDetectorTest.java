@@ -47,6 +47,7 @@ import com.google.common.collect.ImmutableList;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -116,6 +117,7 @@ public class VoiceInteractionMultiDetectorTest {
     }
 
     @Test
+    @Ignore("b/274789133 - ProxyVIService instrumentation issue")
     public void testAlwaysOnHotwordDetectorDestroy_throwsExceptionAfterDestroy() throws Exception {
         final ConditionVariable availabilityChanged = new ConditionVariable();
         IProxyAlwaysOnHotwordDetector alwaysOnHotwordDetector =
@@ -154,6 +156,7 @@ public class VoiceInteractionMultiDetectorTest {
     }
 
     @Test
+    @Ignore("b/274789133 - ProxyVIService instrumentation issue")
     public void testAlwaysOnHotwordDetectorCreate_rejectMultipleDetectorsOfTheSameType()
             throws Exception {
         final ConditionVariable availabilityChanged = new ConditionVariable();
