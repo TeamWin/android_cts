@@ -6807,6 +6807,53 @@
             <meta-data android:name="test_category" android:value="@string/test_category_input"/>
             <meta-data android:name="ApiTest" android:value="android.view.InputDevice#getUsiVersion" />
         </activity>
+
+        <!-- Components used for CTS Verifying Capture Content For Notes APIs. -->
+        <activity
+            android:name=".capturecontentfornotes.CaptureContentForNotesVerifierActivity"
+            android:exported="true"
+            android:label="@string/ccfn_tests">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_features" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.app.StatusBarManager#canLaunchCaptureContentActivityForNote
+                       |android.content.Intent#ACTION_LAUNCH_CAPTURE_CONTENT_ACTIVITY_FOR_NOTE
+                       |android.content.Intent#CAPTURE_CONTENT_FOR_NOTE_SUCCESS
+                       |android.content.Intent#CAPTURE_CONTENT_FOR_NOTE_FAILED
+                       |android.content.Intent#CAPTURE_CONTENT_FOR_NOTE_USER_CANCELED
+                       |android.content.Intent#CAPTURE_CONTENT_FOR_NOTE_WINDOW_MODE_UNSUPPORTED
+                       |android.content.Intent#CAPTURE_CONTENT_FOR_NOTE_BLOCKED_BY_ADMIN" />
+        </activity>
+        <receiver
+            android:name=".capturecontentfornotes.DeviceAdminTestReceiver"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin"
+                       android:resource="@xml/capture_content_for_notes_device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
+            </intent-filter>
+        </receiver>
+        <activity
+            android:name=".capturecontentfornotes.DeviceAdminCommandExecutorActivity"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:exported="true"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.capturecontentfornotes.action.EXECUTE_COMMAND" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
+            <meta-data android:name="NonApiTest"
+                       android:value="Helper class. Used to perform admin policy setup." />
+        </activity>
     </application>
 
     <queries>
