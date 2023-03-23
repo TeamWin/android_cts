@@ -272,7 +272,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
     fun testSelectPhotosInSettingsImplicit() {
         installPackage(APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE)
         navigateToIndividualPermissionSetting(READ_MEDIA_IMAGES)
-        click(By.res(SELECT_PHOTOS_RADIO_BUTTON))
+        click(By.res(SELECT_RADIO_BUTTON))
 
         eventually {
             assertAppHasPermission(READ_MEDIA_IMAGES, expectPermission = false)
@@ -286,7 +286,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
     fun testSelectPhotosInSettingsExplicit() {
         installPackage(APP_APK_PATH_LATEST)
         navigateToIndividualPermissionSetting(READ_MEDIA_IMAGES)
-        click(By.res(SELECT_PHOTOS_RADIO_BUTTON))
+        click(By.res(SELECT_RADIO_BUTTON))
 
         eventually {
             assertAppHasPermission(READ_MEDIA_IMAGES, expectPermission = false)
@@ -313,7 +313,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         }
 
         navigateToIndividualPermissionSetting(READ_MEDIA_IMAGES)
-        findView(By.res(SELECT_PHOTOS_RADIO_BUTTON), expected = false)
+        findView(By.res(SELECT_RADIO_BUTTON), expected = false)
     }
 
     @Test
@@ -346,7 +346,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
             clickAllow()
         }
         requestAppPermissions(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO) {
-            click(By.res(ALLOW_ALL_SINGLETON_BUTTON))
+            click(By.res(ALWAYS_ALLOW_ALL_BUTTON))
         }
     }
 
@@ -371,7 +371,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
 
         requestAppPermissions(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO) {
             findView(By.res(SELECT_MORE_BUTTON), expected = true)
-            click(By.res(ALLOW_ALL_SINGLETON_BUTTON))
+            click(By.res(ALWAYS_ALLOW_ALL_BUTTON))
         }
     }
 
