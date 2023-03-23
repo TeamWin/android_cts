@@ -167,11 +167,11 @@ public class JobParametersTest extends BaseJobSchedulerTest {
                 .setRequiresStorageNotLow(true)
                 .build();
 
+        kTestEnvironment.setExpectedExecutions(1);
         setStorageStateLow(true);
         assertEquals(JobScheduler.RESULT_SUCCESS, jsA.schedule(jobA));
         assertEquals(JobScheduler.RESULT_SUCCESS, jsB.schedule(jobB));
 
-        kTestEnvironment.setExpectedExecutions(1);
         runSatisfiedJob(JOB_ID, "A");
         runSatisfiedJob(JOB_ID, "B");
         assertTrue("Job A didn't fire", kTestEnvironment.awaitExecution());
