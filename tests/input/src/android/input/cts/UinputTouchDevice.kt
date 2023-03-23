@@ -25,12 +25,17 @@ import android.view.Display
 import android.view.InputDevice
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.cts.input.UinputDevice
-import java.io.Closeable
 import org.json.JSONArray
 import org.json.JSONObject
 
-class UinputTouchScreen(instrumentation: Instrumentation, display: Display, size: Size) :
-        Closeable {
+class UinputTouchDevice(
+    instrumentation: Instrumentation,
+    display: Display,
+    size: Size,
+    private val rawResource: Int = R.raw.test_touchscreen_register
+) :
+    AutoCloseable {
+
     private val uinputDevice: UinputDevice
     private lateinit var port: String
     private val inputManager: InputManager
@@ -50,9 +55,10 @@ class UinputTouchScreen(instrumentation: Instrumentation, display: Display, size
         injectEvent(intArrayOf(EV_KEY, BTN_TOUCH, if (isDown) 1 else 0))
     }
 
-    fun sendDown(id: Int, location: Point) {
+    fun sendDown(id: Int, location: Point, toolType: Int? = null) {
         injectEvent(intArrayOf(EV_ABS, ABS_MT_SLOT, id))
         injectEvent(intArrayOf(EV_ABS, ABS_MT_TRACKING_ID, id))
+        if (toolType != null) injectEvent(intArrayOf(EV_ABS, ABS_MT_TOOL_TYPE, toolType))
         injectEvent(intArrayOf(EV_ABS, ABS_MT_POSITION_X, location.x))
         injectEvent(intArrayOf(EV_ABS, ABS_MT_POSITION_Y, location.y))
         injectEvent(intArrayOf(EV_SYN, SYN_REPORT, 0))
@@ -77,8 +83,8 @@ class UinputTouchScreen(instrumentation: Instrumentation, display: Display, size
 
     private fun readRawResource(context: Context): String {
         return context.resources
-                .openRawResource(R.raw.test_touchscreen_register)
-                .bufferedReader().use { it.readText() }
+            .openRawResource(rawResource)
+            .bufferedReader().use { it.readText() }
     }
 
     private fun createDevice(instrumentation: Instrumentation, size: Size): UinputDevice {
@@ -131,6 +137,7 @@ class UinputTouchScreen(instrumentation: Instrumentation, display: Display, size
         const val BTN_TOUCH = 0x14a
         const val SYN_REPORT = 0
         const val MT_TOOL_FINGER = 0
+        const val MT_TOOL_PEN = 1
         const val MT_TOOL_PALM = 2
         const val INVALID_TRACKING_ID = -1
     }
