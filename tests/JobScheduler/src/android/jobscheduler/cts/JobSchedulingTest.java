@@ -24,22 +24,31 @@ import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.app.AppOpsManager.OPSTR_RUN_USER_INITIATED_JOBS;
 import static android.app.AppOpsManager.OP_RUN_USER_INITIATED_JOBS;
 import static android.app.AppOpsManager.opToPermission;
+import static android.jobscheduler.cts.JobThrottlingTest.setTestPackageStandbyBucket;
+import static android.jobscheduler.cts.TestAppInterface.TEST_APP_PACKAGE;
 import static android.text.format.DateUtils.HOUR_IN_MILLIS;
 
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.jobscheduler.MockJobService.TestEnvironment;
 import android.jobscheduler.MockJobService.TestEnvironment.Event;
+import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.provider.DeviceConfig;
 import android.text.TextUtils;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
+
+import com.android.compatibility.common.util.AnrMonitor;
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +57,7 @@ import java.util.Map;
  */
 @TargetApi(30)
 public class JobSchedulingTest extends BaseJobSchedulerTest {
+    private static final long DEFAULT_WAIT_TIMEOUT_MS = 2_000;
     private static final int MIN_SCHEDULE_QUOTA = 250;
     private static final int JOB_ID = JobSchedulingTest.class.hashCode();
     // The maximum number of jobs that can run concurrently.
@@ -62,6 +72,122 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
 
         // The super method should be called at the end.
         super.tearDown();
+    }
+
+    /** Tests that an ANR happens if the job is blocked in onStartJob. */
+    public void testAnr_onStartJob_disabled() throws Exception {
+        try (TestAppInterface mTestAppInterface = new TestAppInterface(mContext, JOB_ID);
+             AnrMonitor monitor = AnrMonitor.start(InstrumentationRegistry.getInstrumentation(),
+                     TEST_APP_PACKAGE)) {
+
+            setTestPackageStandbyBucket(
+                    UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()),
+                    JobThrottlingTest.Bucket.ACTIVE);
+            SystemUtil.runShellCommand(getInstrumentation(),
+                    "am compat disable ANR_PRE_UDC_APIS_ON_SLOW_RESPONSES " + TEST_APP_PACKAGE);
+
+            mTestAppInterface.scheduleJob(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_EXPEDITED, true,
+                            TestJobSchedulerReceiver.EXTRA_SLOW_START, true
+                    ),
+                    Collections.emptyMap());
+
+            mTestAppInterface.forceRunJob();
+            assertTrue("Job did not start after scheduling",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
+
+            // Confirm no ANR
+            monitor.assertNoAnr(30_000);
+        }
+    }
+
+    /** Tests that an ANR happens if the job is blocked in onStopJob. */
+    public void testAnr_onStopJob_disabled() throws Exception {
+        try (TestAppInterface mTestAppInterface = new TestAppInterface(mContext, JOB_ID);
+             AnrMonitor monitor = AnrMonitor.start(InstrumentationRegistry.getInstrumentation(),
+                     TEST_APP_PACKAGE)) {
+
+            setTestPackageStandbyBucket(
+                    UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()),
+                    JobThrottlingTest.Bucket.ACTIVE);
+            SystemUtil.runShellCommand(getInstrumentation(),
+                    "am compat disable ANR_PRE_UDC_APIS_ON_SLOW_RESPONSES " + TEST_APP_PACKAGE);
+
+            mTestAppInterface.scheduleJob(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_EXPEDITED, true,
+                            TestJobSchedulerReceiver.EXTRA_SLOW_STOP, true
+                    ),
+                    Collections.emptyMap());
+
+            mTestAppInterface.forceRunJob();
+            assertTrue("Job did not start after scheduling",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
+
+            mTestAppInterface.cancelJob();
+
+            // Confirm no ANR
+            monitor.assertNoAnr(30_000);
+        }
+    }
+
+    /** Tests that an ANR happens if the job is blocked in onStartJob. */
+    public void testAnr_onStartJob_enabled() throws Exception {
+        try (TestAppInterface mTestAppInterface = new TestAppInterface(mContext, JOB_ID);
+             AnrMonitor monitor = AnrMonitor.start(InstrumentationRegistry.getInstrumentation(),
+                     TEST_APP_PACKAGE)) {
+
+            setTestPackageStandbyBucket(
+                    UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()),
+                    JobThrottlingTest.Bucket.ACTIVE);
+            SystemUtil.runShellCommand(getInstrumentation(),
+                    "am compat enable ANR_PRE_UDC_APIS_ON_SLOW_RESPONSES " + TEST_APP_PACKAGE);
+
+            mTestAppInterface.scheduleJob(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_EXPEDITED, true,
+                            TestJobSchedulerReceiver.EXTRA_SLOW_START, true
+                    ),
+                    Collections.emptyMap());
+
+            mTestAppInterface.forceRunJob();
+            assertTrue("Job did not start after scheduling",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
+
+            // Confirm ANR
+            monitor.waitForAnrAndReturnUptime(30_000);
+        }
+    }
+
+    /** Tests that an ANR happens if the job is blocked in onStopJob. */
+    public void testAnr_onStopJob_enabled() throws Exception {
+        try (TestAppInterface mTestAppInterface = new TestAppInterface(mContext, JOB_ID);
+             AnrMonitor monitor = AnrMonitor.start(InstrumentationRegistry.getInstrumentation(),
+                     TEST_APP_PACKAGE)) {
+
+            setTestPackageStandbyBucket(
+                    UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()),
+                    JobThrottlingTest.Bucket.ACTIVE);
+            SystemUtil.runShellCommand(getInstrumentation(),
+                    "am compat enable ANR_PRE_UDC_APIS_ON_SLOW_RESPONSES " + TEST_APP_PACKAGE);
+
+            mTestAppInterface.scheduleJob(
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_AS_EXPEDITED, true,
+                            TestJobSchedulerReceiver.EXTRA_SLOW_STOP, true
+                    ),
+                    Collections.emptyMap());
+
+            mTestAppInterface.forceRunJob();
+            assertTrue("Job did not start after scheduling",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
+
+            mTestAppInterface.cancelJob();
+
+            // Confirm ANR
+            monitor.waitForAnrAndReturnUptime(30_000);
+        }
     }
 
     public void testCancel_runningJob() throws Exception {
