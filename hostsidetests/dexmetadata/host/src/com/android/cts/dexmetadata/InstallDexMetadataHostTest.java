@@ -327,7 +327,7 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
     //
     // As ART is updatable, this assumption can be broken by a future change.
     //
-    // TODO(jiakaiz): Re-evaluate the necessity of having this test in CTS.
+    // TODO(jiakaiz): Re-evaluate the necessity of having this test in CTS. Maybe move it to MTS.
     @Test
     public void testProfileSnapshotAfterInstall() throws Exception {
         // Determine which profile to use.
