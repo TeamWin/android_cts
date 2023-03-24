@@ -16,7 +16,6 @@
 
 package android.permission.cts;
 
-import static android.Manifest.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG;
 import static android.os.Process.myUserHandle;
 import static android.permission.cts.TestUtils.eventually;
 
@@ -164,7 +163,7 @@ public class BaseNotificationListenerCheckTest {
             if (!valueWasSet) {
                 throw new  IllegalStateException("Could not set " + propertyName + " to " + value);
             }
-        }, ALLOWLISTED_WRITE_DEVICE_CONFIG);
+        });
     }
 
     /**
