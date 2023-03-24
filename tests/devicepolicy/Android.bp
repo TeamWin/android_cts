@@ -37,7 +37,7 @@ android_test {
         "TestApp",
         "MetricsRecorder",
         "statsdprotolite",
-        "Interactive"
+        "Interactive",
     ],
     srcs: ["src/**/*.java"],
     test_suites: [
@@ -67,7 +67,7 @@ android_test {
         "TestApp",
         "MetricsRecorder",
         "statsdprotolite",
-        "Interactive"
+        "Interactive",
     ],
     srcs: ["src/**/*.java"],
     test_suites: [
@@ -75,6 +75,5 @@ android_test {
         "general-tests",
     ],
     platform_apis: true,
-    test_config: "InteractiveAndroidTest.xml"
+    test_config: "InteractiveAndroidTest.xml",
 }
-
