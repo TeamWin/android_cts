@@ -4927,6 +4927,28 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Float[].class, mCarPropertyManager)
+                .setCarPropertyValueVerifier(
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                temperatureSuggestion) -> {
+                            assertWithMessage(
+                                            "HVAC_TEMPERATURE_VALUE_SUGGESTION Float[] value"
+                                                + " must be size 4.")
+                                    .that(temperatureSuggestion.length)
+                                    .isEqualTo(4);
+
+                            Float requestedTempUnits = temperatureSuggestion[1];
+                            assertWithMessage(
+                                            "The value at index 1 must be one of"
+                                                + " {VehicleUnit#CELSIUS, VehicleUnit#FAHRENHEIT}"
+                                                + " which correspond to values {"
+                                                + (float) VehicleUnit.CELSIUS
+                                                + ", "
+                                                + (float) VehicleUnit.FAHRENHEIT
+                                                + "}.")
+                                    .that(requestedTempUnits)
+                                    .isIn(List.of((float) VehicleUnit.CELSIUS,
+                                            (float) VehicleUnit.FAHRENHEIT));
+                        })
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
@@ -5337,6 +5359,15 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                             .isEqualTo(configMaxValue);
                                 }
                             }
+                        })
+                .setCarPropertyValueVerifier(
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, tempInCelsius) -> {
+                            List<Integer> configArray = carPropertyConfig.getConfigArray();
+                            Integer minTempInCelsius = configArray.get(0);
+                            Integer maxTempInCelsius = configArray.get(1);
+                            Integer incrementInCelsius = configArray.get(2);
+                            VehiclePropertyVerifier.verifyHvacTemperatureIsValid(tempInCelsius,
+                                    minTempInCelsius, maxTempInCelsius, incrementInCelsius);
                         })
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
