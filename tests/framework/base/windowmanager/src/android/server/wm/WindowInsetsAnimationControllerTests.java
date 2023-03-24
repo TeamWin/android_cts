@@ -71,12 +71,14 @@ import android.view.inputmethod.InputMethodManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.OverrideAnimationScaleRule;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
@@ -138,6 +140,10 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
                 { navigationBars(), "navigationBars" }
         };
     }
+
+    @Rule
+    public final OverrideAnimationScaleRule mEnableAnimationsRule =
+            new OverrideAnimationScaleRule(1.0f);
 
     public static class ControllerTestActivity extends TestActivity {
         @Override
