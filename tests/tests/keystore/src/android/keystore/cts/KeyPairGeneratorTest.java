@@ -2122,6 +2122,7 @@ public class KeyPairGeneratorTest {
 
     @Test
     public void testUniquenessOfEcKeysInStrongBox() throws Exception {
+        TestUtils.assumeStrongBox();
         KeyGenParameterSpec.Builder specBuilder = getWorkingSpec(KeyProperties.PURPOSE_SIGN)
                 .setDigests(KeyProperties.DIGEST_SHA256);
         specBuilder.setIsStrongBoxBacked(true);
