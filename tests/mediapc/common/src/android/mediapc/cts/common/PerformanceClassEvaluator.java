@@ -590,6 +590,10 @@ public class PerformanceClassEvaluator {
             this.setMeasuredValue(RequirementConstants.NUM_4k_HW_ENC, num4kHwEncoders);
         }
 
+        public void setAVIFDecoderReq(boolean avifDecoderReqSatisfied) {
+            this.setMeasuredValue(RequirementConstants.AVIF_DEC_REQ, avifDecoderReqSatisfied);
+        }
+
         /**
          * [2.2.7.1/5.1/H-1-15] Must have at least 1 HW video decoder supporting 4K60
          */
@@ -630,6 +634,20 @@ public class PerformanceClassEvaluator {
                 .build();
 
             return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_14, requirement);
+        }
+
+        /**
+         * [5.1/H-1-17] MUST have at least 1 Hw image decoder supporting AVIF Baseline profile.
+         */
+        public static VideoCodecRequirement createRAVIFDecoderReq() {
+            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
+                    .<Boolean>builder()
+                    .setId(RequirementConstants.AVIF_DEC_REQ)
+                    .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                    .build();
+
+            return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_17, requirement);
         }
     }
 
@@ -1677,6 +1695,10 @@ public class PerformanceClassEvaluator {
 
     public VideoCodecRequirement addRAV1DecoderReq() {
         return this.addRequirement(VideoCodecRequirement.createRAV1DecoderReq());
+    }
+
+    public VideoCodecRequirement addRAVIFDecoderReq() {
+        return this.addRequirement(VideoCodecRequirement.createRAVIFDecoderReq());
     }
 
     public SecureCodecRequirement addR5_1__H_1_11() {
