@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.server.wm.WindowManagerTestBase.startActivity;
+import static android.view.WindowInsets.Type.captionBar;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -84,6 +85,9 @@ public class SnapshotTaskTests extends ActivityManagerTestBase {
 
     @Test
     public void testSetDisablePreviewScreenshots() throws Exception {
+        final View decor = mActivity.getWindow().getDecorView();
+        final int captionBarHeight = decor.getRootWindowInsets().getInsets(captionBar()).top;
+
         BitmapPixelChecker pixelChecker = new BitmapPixelChecker(Color.RED);
 
         int retries = 0;
@@ -92,7 +96,8 @@ public class SnapshotTaskTests extends ActivityManagerTestBase {
             Bitmap bitmap = mWindowManager.snapshotTaskForRecents(mActivity.getTaskId());
             if (bitmap != null) {
                 int expectedMatching =
-                        bitmap.getWidth() * bitmap.getHeight() - MATCHING_PIXEL_MISMATCH_ALLOWED;
+                        bitmap.getWidth() * bitmap.getHeight() - MATCHING_PIXEL_MISMATCH_ALLOWED
+                                - (captionBarHeight * decor.getWidth());
                 Rect boundToCheck = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
                 int matchingPixels = pixelChecker.getNumMatchingPixels(bitmap, boundToCheck);
                 matchesPixels = matchingPixels >= expectedMatching;
