@@ -61,8 +61,8 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
     private static final int DISPLAY_WAIT_TIME_MS = 2000;
     private static final int NO_WAIT = 0;
 
-    private static final int DISPLAY_POWER_MODE_ON = 0;
-    private static final int DISPLAY_POWER_MODE_OFF = 1;
+    private static final int DISPLAY_POWER_MODE_OFF = 0;
+    private static final int DISPLAY_POWER_MODE_ON = 1;
     private static final int DISPLAY_POWER_MODE_ALWAYS_ON = 2;
 
     private static String sDefaultDisplayPowerModeValue;
