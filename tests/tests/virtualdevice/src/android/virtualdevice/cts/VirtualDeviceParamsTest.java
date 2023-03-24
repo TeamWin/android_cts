@@ -36,7 +36,9 @@ import android.companion.virtual.VirtualDeviceParams;
 import android.companion.virtual.sensor.VirtualSensor;
 import android.companion.virtual.sensor.VirtualSensorCallback;
 import android.companion.virtual.sensor.VirtualSensorConfig;
+import android.companion.virtual.sensor.VirtualSensorDirectChannelCallback;
 import android.content.ComponentName;
+import android.hardware.SensorDirectChannel;
 import android.os.Binder;
 import android.os.Parcel;
 import android.os.UserHandle;
@@ -69,6 +71,8 @@ public class VirtualDeviceParamsTest {
 
     @Mock
     private VirtualSensorCallback mVirtualSensorCallback;
+    @Mock
+    private VirtualSensorDirectChannelCallback mVirtualSensorDirectChannelCallback;
 
     @Before
     public void setUp() {
@@ -88,8 +92,13 @@ public class VirtualDeviceParamsTest {
                 .addVirtualSensorConfig(
                         new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, SENSOR_NAME)
                                 .setVendor(SENSOR_VENDOR)
+                                .setDirectChannelTypesSupported(
+                                        SensorDirectChannel.TYPE_MEMORY_FILE)
+                                .setHighestDirectReportRateLevel(SensorDirectChannel.RATE_NORMAL)
                                 .build())
                 .setVirtualSensorCallback(BackgroundThread.getExecutor(), mVirtualSensorCallback)
+                .setVirtualSensorDirectChannelCallback(
+                        BackgroundThread.getExecutor(), mVirtualSensorDirectChannelCallback)
                 .build();
         Parcel parcel = Parcel.obtain();
         originalParams.writeToParcel(parcel, 0);
@@ -310,6 +319,22 @@ public class VirtualDeviceParamsTest {
                                 TYPE_ACCELEROMETER, SENSOR_NAME)
                                 .build())
                         .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                        .build());
+    }
+
+    @Test
+    public void virtualSensorConfigs_withoutVirtualSensorDirectChannelCallback_throwsException() {
+        assertThrows(
+                IllegalArgumentException.class, () -> new VirtualDeviceParams.Builder()
+                        .addVirtualSensorConfig(new VirtualSensorConfig.Builder(
+                                TYPE_ACCELEROMETER, SENSOR_NAME)
+                                .setDirectChannelTypesSupported(
+                                        SensorDirectChannel.TYPE_MEMORY_FILE)
+                                .setHighestDirectReportRateLevel(SensorDirectChannel.RATE_NORMAL)
+                                .build())
+                        .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                        .setVirtualSensorCallback(
+                                BackgroundThread.getExecutor(), mVirtualSensorCallback)
                         .build());
     }
 
