@@ -195,21 +195,6 @@ public class VirtualSensorTest {
     }
 
     @Test
-    public void buildVirtualSensorConfig() {
-        VirtualSensorConfig config =
-                new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME)
-                        .setVendor(VIRTUAL_SENSOR_VENDOR)
-                        .setHighestDirectReportRateLevel(RATE_NORMAL)
-                        .setDirectChannelTypesSupported(TYPE_MEMORY_FILE)
-                        .build();
-        assertThat(config.getType()).isEqualTo(TYPE_ACCELEROMETER);
-        assertThat(config.getName()).isEqualTo(VIRTUAL_SENSOR_NAME);
-        assertThat(config.getVendor()).isEqualTo(VIRTUAL_SENSOR_VENDOR);
-        assertThat(config.getHighestDirectReportRateLevel()).isEqualTo(RATE_NORMAL);
-        assertThat(config.getDirectChannelTypesSupported()).isEqualTo(TYPE_MEMORY_FILE);
-    }
-
-    @Test
     public void buildVirtualSensorConfig_hardwareBufferDirectChannel_throwsException() {
         assertThrows(
                 IllegalArgumentException.class,
@@ -232,6 +217,11 @@ public class VirtualSensorTest {
                         .setVendor(VIRTUAL_SENSOR_VENDOR)
                         .setDirectChannelTypesSupported(TYPE_MEMORY_FILE)
                         .setHighestDirectReportRateLevel(RATE_NORMAL)
+                        .setMaximumRange(1.2f)
+                        .setResolution(3.4f)
+                        .setPower(5.6f)
+                        .setMinDelay(7)
+                        .setMaxDelay(8)
                         .build());
 
         assertThat(mVirtualSensor.getType()).isEqualTo(TYPE_ACCELEROMETER);
@@ -252,6 +242,13 @@ public class VirtualSensorTest {
         assertThat(sensor.isDirectChannelTypeSupported(TYPE_MEMORY_FILE)).isTrue();
         assertThat(sensor.isDirectChannelTypeSupported(TYPE_HARDWARE_BUFFER)).isFalse();
         assertThat(sensor.getHighestDirectReportRateLevel()).isEqualTo(RATE_NORMAL);
+        assertThat(sensor.getMaximumRange()).isEqualTo(1.2f);
+        assertThat(sensor.getResolution()).isEqualTo(3.4f);
+        assertThat(sensor.getPower()).isEqualTo(5.6f);
+        assertThat(sensor.getMinDelay()).isEqualTo(7);
+        assertThat(sensor.getMaxDelay()).isEqualTo(8);
+        assertThat(sensor.getStringType()).isEqualTo(Sensor.STRING_TYPE_ACCELEROMETER);
+        assertThat(sensor.getReportingMode()).isEqualTo(Sensor.REPORTING_MODE_CONTINUOUS);
     }
 
     @Test
