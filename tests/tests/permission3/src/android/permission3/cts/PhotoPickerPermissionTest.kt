@@ -37,7 +37,7 @@ import org.junit.AfterClass
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeFalse
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -82,10 +82,8 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
     }
 
     @Before
-    fun assumeHandheld() {
-        assumeFalse(isTv)
-        assumeFalse(isAutomotive)
-        assumeFalse(isWatch)
+    fun assumeEnabled() {
+        assumeTrue(isPhotoPickerPermissionPromptEnabled())
     }
 
     @Test
