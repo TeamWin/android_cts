@@ -195,7 +195,7 @@
          android:label="@string/car_permission_label_control_car_interior_lights"
          android:description="@string/car_permission_desc_control_car_interior_lights"/>
     <permission android:name="android.car.permission.CAR_POWER"
-         android:protectionLevel="signature|privileged"
+         android:protectionLevel="signature|privileged|vendorPrivileged"
          android:label="@string/car_permission_label_car_power"
          android:description="@string/car_permission_desc_car_power"/>
     <permission android:name="android.car.permission.CAR_POWERTRAIN"
@@ -491,11 +491,11 @@
                 android:label="@string/car_permission_label_read_car_power_policy"
                 android:description="@string/car_permission_desc_read_car_power_policy"/>
     <permission android:name="android.car.permission.CONTROL_CAR_POWER_POLICY"
-                android:protectionLevel="signature|privileged"
+                android:protectionLevel="signature|privileged|vendorPrivileged"
                 android:label="@string/car_permission_label_control_car_power_policy"
                 android:description="@string/car_permission_desc_control_car_power_policy"/>
     <permission android:name="android.car.permission.CONTROL_SHUTDOWN_PROCESS"
-                android:protectionLevel="signature|privileged"
+                android:protectionLevel="signature|privileged|vendorPrivileged"
                 android:label="@string/car_permission_label_adjust_shutdown_process"
                 android:description="@string/car_permission_desc_adjust_shutdown_process"/>
     <permission android:name="android.car.permission.TEMPLATE_RENDERER"
