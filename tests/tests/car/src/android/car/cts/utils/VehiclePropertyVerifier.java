@@ -53,6 +53,7 @@ import androidx.annotation.Nullable;
 
 import com.android.internal.annotations.GuardedBy;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
@@ -140,10 +141,11 @@ public class VehiclePropertyVerifier<T> {
     private final boolean mRequireZeroToBeContainedInMinMaxRanges;
     private final boolean mPossiblyDependentOnHvacPowerOn;
     private final ImmutableSet<String> mReadPermissions;
-    private final ImmutableSet<String> mWritePermissions;
+    private final ImmutableList<ImmutableSet<String>> mWritePermissions;
 
     private boolean mIsCarPropertyConfigCached;
     private CarPropertyConfig<T> mCachedCarPropertyConfig;
+    private SparseArray<SparseArray<?>> mPropertyToAreaIdValues;
 
     private VehiclePropertyVerifier(
             CarPropertyManager carPropertyManager,
@@ -167,7 +169,7 @@ public class VehiclePropertyVerifier<T> {
             boolean requireZeroToBeContainedInMinMaxRanges,
             boolean possiblyDependentOnHvacPowerOn,
             ImmutableSet<String> readPermissions,
-            ImmutableSet<String> writePermissions) {
+            ImmutableList<ImmutableSet<String>> writePermissions) {
         assertWithMessage("Must set car property manager").that(carPropertyManager).isNotNull();
         mCarPropertyManager = carPropertyManager;
         mPropertyId = propertyId;
@@ -192,6 +194,7 @@ public class VehiclePropertyVerifier<T> {
         mPossiblyDependentOnHvacPowerOn = possiblyDependentOnHvacPowerOn;
         mReadPermissions = readPermissions;
         mWritePermissions = writePermissions;
+        mPropertyToAreaIdValues = new SparseArray<>();
     }
 
     public static <T> Builder<T> newBuilder(
@@ -301,8 +304,11 @@ public class VehiclePropertyVerifier<T> {
     }
 
     public void verify() {
-        ImmutableSet<String> allPermissions = ImmutableSet.<String>builder().addAll(
-                mReadPermissions).addAll(mWritePermissions).build();
+        ImmutableSet.Builder<String> permissionsBuilder = ImmutableSet.<String>builder();
+        for (ImmutableSet<String> writePermissions: mWritePermissions) {
+            permissionsBuilder.addAll(writePermissions);
+        }
+        ImmutableSet<String> allPermissions = permissionsBuilder.addAll(mReadPermissions).build();
 
         runWithShellPermissionIdentity(
                 () -> {
@@ -338,43 +344,211 @@ public class VehiclePropertyVerifier<T> {
                     }
 
                     verifyCarPropertyConfig();
-                    CarPropertyConfig<Boolean> hvacPowerOnCarPropertyConfig = null;
-                    SparseArray<Boolean> hvacPowerStateByAreaId = null;
-                    if (mPossiblyDependentOnHvacPowerOn) {
-                        hvacPowerOnCarPropertyConfig = (CarPropertyConfig<Boolean>)
-                                mCarPropertyManager.getCarPropertyConfig(
-                                        VehiclePropertyIds.HVAC_POWER_ON);
-                        if (hvacPowerOnCarPropertyConfig != null && hvacPowerOnCarPropertyConfig
-                                .getConfigArray().contains(mPropertyId)) {
-                            hvacPowerStateByAreaId = (SparseArray<Boolean>)
-                                    getInitialValuesByAreaId(hvacPowerOnCarPropertyConfig,
-                                            mCarPropertyManager);
-                            turnOnHvacPower(hvacPowerOnCarPropertyConfig);
-                        }
-                    }
-
-                    verifyCarPropertyValueGetter();
-                    verifyCarPropertyValueCallback();
-                    SparseArray<T> areaIdToInitialValue = getInitialValuesByAreaId(
-                            carPropertyConfig, mCarPropertyManager);
-                    verifyCarPropertyValueSetter();
-                    if (areaIdToInitialValue != null) {
-                        restoreInitialValuesByAreaId(carPropertyConfig, mCarPropertyManager,
-                                areaIdToInitialValue);
-                    }
-                    verifyGetPropertiesAsync();
-                    // TODO(b/266000988): verifySetProeprtiesAsync(...)
-
-                    if (hvacPowerStateByAreaId != null) {
-                        // TODO(b/265483050): Reenable once the bug is fixed.
-                        // turnOffHvacPower(hvacPowerOnCarPropertyConfig);
-                        // verifySetNotAvailable();
-                        restoreInitialValuesByAreaId(hvacPowerOnCarPropertyConfig,
-                                mCarPropertyManager, hvacPowerStateByAreaId);
-                    }
                 }, allPermissions.toArray(new String[0]));
 
         verifyPermissionNotGrantedException();
+        verifyReadPermissions();
+        verifyWritePermissions();
+    }
+
+    private void verifyReadPermissions() {
+        CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
+        for (String readPermission: mReadPermissions) {
+            if (carPropertyConfig.getAccess()
+                    == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                verifyReadPermissionCannotWrite(readPermission, mWritePermissions);
+            }
+            verifyReadPermissionGivesAccessToReadApis(readPermission);
+        }
+    }
+
+    private void verifyWritePermissions() {
+        CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
+        for (ImmutableSet<String> writePermissions: mWritePermissions) {
+            if (carPropertyConfig.getAccess()
+                    == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                verifyWritePermissionsCannotRead(writePermissions, mReadPermissions);
+            }
+            if (writePermissions.size() > 1) {
+                verifyIndividualWritePermissionsCannotWrite(writePermissions);
+            }
+            verifyWritePermissionsGiveAccessToWriteApis(writePermissions, mReadPermissions);
+        }
+    }
+
+    private void verifyReadPermissionCannotWrite(String readPermission,
+            ImmutableList<ImmutableSet<String>> writePermissions) {
+        // If the read permission is the same as the write permission and the property does not
+        // require any other write permissions we skip this permission.
+        for (ImmutableSet<String> writePermissionSet: writePermissions) {
+            if (writePermissionSet.size() == 1 && writePermissionSet.contains(readPermission)) {
+                return;
+            }
+        }
+        runWithShellPermissionIdentity(
+                () -> {
+                    assertThrows(
+                            mPropertyName
+                                    + " - property ID: "
+                                    + mPropertyId
+                                    + " should not be able to be written to without write"
+                                    + " permissions.",
+                            SecurityException.class,
+                            () -> mCarPropertyManager.setProperty(mPropertyType, mPropertyId,
+                                    /* areaId = */ 0, getDefaultValue(mPropertyType)));
+                }, readPermission);
+    }
+
+    private void verifyReadPermissionGivesAccessToReadApis(String readPermission) {
+        runWithShellPermissionIdentity(
+                () -> {
+                    assertThat(mCarPropertyManager.getCarPropertyConfig(mPropertyId)).isNotNull();
+                    maybeTurnOnHvac();
+                    verifyCarPropertyValueGetter();
+                    verifyCarPropertyValueCallback();
+                    verifyGetPropertiesAsync();
+                    maybeTurnOffHvac();
+                }, readPermission);
+    }
+
+    private void verifyWritePermissionsCannotRead(ImmutableSet<String> writePermissions,
+            ImmutableSet<String> allReadPermissions) {
+        // If there is any write permission that is also a read permission we skip the permissions.
+        if (!Collections.disjoint(writePermissions, allReadPermissions)) {
+            return;
+        }
+        runWithShellPermissionIdentity(
+                () -> {
+                    assertThrows(
+                            mPropertyName
+                                    + " - property ID: "
+                                    + mPropertyId
+                                    + " should not be able to be read without read"
+                                    + " permissions.",
+                            SecurityException.class,
+                            () -> mCarPropertyManager.getProperty(mPropertyId, /* areaId = */ 0));
+                    assertThrows(
+                            mPropertyName
+                                    + " - property ID: "
+                                    + mPropertyId
+                                    + " should not be able to be listened to without read"
+                                    + " permissions.",
+                            SecurityException.class,
+                            () -> verifyCarPropertyValueCallback());
+                    assertThrows(
+                            mPropertyName
+                                    + " - property ID: "
+                                    + mPropertyId
+                                    + " should not be able to be read without read"
+                                    + " permissions.",
+                            SecurityException.class,
+                            () -> verifyGetPropertiesAsync());
+                }, writePermissions.toArray(new String[0]));
+    }
+
+    private void verifyIndividualWritePermissionsCannotWrite(
+            ImmutableSet<String> writePermissions) {
+        String writePermissionsNeededString = String.join(", ", writePermissions);
+        for (String writePermission: writePermissions) {
+            runWithShellPermissionIdentity(
+                    () -> {
+                        assertThat(mCarPropertyManager.getCarPropertyConfig(mPropertyId)).isNull();
+                        assertThrows(
+                                mPropertyName
+                                        + " - property ID: "
+                                        + mPropertyId
+                                        + " should not be able to be written to without all of the"
+                                        + " following permissions granted: "
+                                        + writePermissionsNeededString,
+                                SecurityException.class,
+                                () -> mCarPropertyManager.setProperty(mPropertyType, mPropertyId,
+                                        /* areaId = */ 0, getDefaultValue(mPropertyType)));
+                    }, writePermission);
+        }
+    }
+
+    private void verifyWritePermissionsGiveAccessToWriteApis(ImmutableSet<String> writePermissions,
+            ImmutableSet<String> readPermissions) {
+        runWithShellPermissionIdentity(
+                () -> {
+                    maybeTurnOnHvac();
+                    storeCurrentValues();
+                    verifyCarPropertyValueSetter();
+                    // TODO(b/266000988): verifySetProeprtiesAsync(...)
+                    restoreInitialValues();
+                    maybeTurnOffHvac();
+                }, ImmutableSet.<String>builder()
+                        .addAll(writePermissions)
+                        .addAll(readPermissions)
+                        .build().toArray(new String[0]));
+    }
+
+    private void maybeTurnOnHvac() {
+        if (!mPossiblyDependentOnHvacPowerOn) {
+            return;
+        }
+
+        CarPropertyConfig<Boolean> hvacPowerOnCarPropertyConfig = (CarPropertyConfig<Boolean>)
+                mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.HVAC_POWER_ON);
+        if (hvacPowerOnCarPropertyConfig == null
+                || !hvacPowerOnCarPropertyConfig.getConfigArray().contains(mPropertyId)) {
+            return;
+        }
+
+        SparseArray<Boolean> hvacPowerStateByAreaId = (SparseArray<Boolean>)
+                getInitialValuesByAreaId(hvacPowerOnCarPropertyConfig, mCarPropertyManager);
+        mPropertyToAreaIdValues.put(VehiclePropertyIds.HVAC_POWER_ON, hvacPowerStateByAreaId);
+        turnOnHvacPower(hvacPowerOnCarPropertyConfig);
+    }
+
+    private void maybeTurnOffHvac() {
+        if (!mPossiblyDependentOnHvacPowerOn) {
+            return;
+        }
+
+        CarPropertyConfig<Boolean> hvacPowerOnCarPropertyConfig = (CarPropertyConfig<Boolean>)
+                mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.HVAC_POWER_ON);
+        if (hvacPowerOnCarPropertyConfig == null
+                || !hvacPowerOnCarPropertyConfig.getConfigArray().contains(mPropertyId)) {
+            return;
+        }
+
+        // TODO(b/265483050): Reenable once the bug is fixed.
+        // turnOffHvacPower(hvacPowerOnCarPropertyConfig);
+        // verifySetNotAvailable();
+        SparseArray<Boolean> hvacPowerStateByAreaId = (SparseArray<Boolean>)
+                mPropertyToAreaIdValues.get(VehiclePropertyIds.HVAC_POWER_ON);
+        restoreInitialValuesByAreaId(hvacPowerOnCarPropertyConfig, mCarPropertyManager,
+                hvacPowerStateByAreaId);
+    }
+
+    /**
+     * Stores the property's current values for all areas so that they can be restored later.
+     */
+    public void storeCurrentValues() {
+        SparseArray<T> mAreaIdToInitialValue = getInitialValuesByAreaId(getCarPropertyConfig(),
+                mCarPropertyManager);
+        if (mAreaIdToInitialValue == null) {
+            return;
+        }
+        mPropertyToAreaIdValues.put(mPropertyId, mAreaIdToInitialValue);
+    }
+
+    /**
+     * Restore the property's values to original values stored by previous
+     * {@link #storeCurrentValues}.
+     *
+     * Do nothing if no stored current values are available.
+     */
+    public void restoreInitialValues() {
+        SparseArray<T> mAreaIdToInitialValue = (SparseArray<T>)
+                mPropertyToAreaIdValues.get(mPropertyId);
+        if (mAreaIdToInitialValue == null) {
+            Log.w(TAG, "No stored values to restore to, ignore");
+            return;
+        }
+        restoreInitialValuesByAreaId(getCarPropertyConfig(), mCarPropertyManager,
+                mAreaIdToInitialValue);
     }
 
     // Get a map storing the property's area Ids to the initial values.
@@ -772,12 +946,15 @@ public class VehiclePropertyVerifier<T> {
 
         CarPropertyValueCallback carPropertyValueCallback = new CarPropertyValueCallback(
                 mPropertyName, carPropertyConfig.getAreaIds(), updatesPerAreaId, timeoutMillis);
-        assertWithMessage("Failed to register callback for " + mPropertyName).that(
-                mCarPropertyManager.registerCallback(carPropertyValueCallback, mPropertyId,
-                        carPropertyConfig.getMaxSampleRate())).isTrue();
-        SparseArray<List<CarPropertyValue<?>>> areaIdToCarPropertyValues =
-                carPropertyValueCallback.getAreaIdToCarPropertyValues();
-        mCarPropertyManager.unregisterCallback(carPropertyValueCallback, mPropertyId);
+        SparseArray<List<CarPropertyValue<?>>> areaIdToCarPropertyValues;
+        try {
+            assertWithMessage("Failed to register callback for " + mPropertyName).that(
+                    mCarPropertyManager.registerCallback(carPropertyValueCallback, mPropertyId,
+                            carPropertyConfig.getMaxSampleRate())).isTrue();
+            areaIdToCarPropertyValues = carPropertyValueCallback.getAreaIdToCarPropertyValues();
+        } finally { // TODO(b/269891334): finally block can be removed once bug is fixed.
+            mCarPropertyManager.unregisterCallback(carPropertyValueCallback, mPropertyId);
+        }
 
         for (int areaId : carPropertyConfig.getAreaIds()) {
             List<CarPropertyValue<?>> carPropertyValues = areaIdToCarPropertyValues.get(areaId);
@@ -1441,8 +1618,8 @@ public class VehiclePropertyVerifier<T> {
         private boolean mRequireZeroToBeContainedInMinMaxRanges = false;
         private boolean mPossiblyDependentOnHvacPowerOn = false;
         private final ImmutableSet.Builder<String> mReadPermissionsBuilder = ImmutableSet.builder();
-        private final ImmutableSet.Builder<String> mWritePermissionsBuilder =
-                ImmutableSet.builder();
+        private final ImmutableList.Builder<ImmutableSet<String>> mWritePermissionsBuilder =
+                ImmutableList.builder();
 
         private Builder(int propertyId, int access, int areaType, int changeMode,
                 Class<T> propertyType, CarPropertyManager carPropertyManager) {
@@ -1533,8 +1710,26 @@ public class VehiclePropertyVerifier<T> {
             return this;
         }
 
+        /**
+         * Add a single permission that alone can be used to update the property. Any set of
+         * permissions in {@code mWritePermissionsBuilder} can be used to set the property.
+         *
+         * @param writePermission a permission used to update the property
+         */
         public Builder<T> addWritePermission(String writePermission) {
-            mWritePermissionsBuilder.add(writePermission);
+            mWritePermissionsBuilder.add(ImmutableSet.of(writePermission));
+            return this;
+        }
+
+        /**
+         * Add a set of permissions that together can be used to update the property. Any set of
+         * permissions in {@code mWritePermissionsBuilder} can be used to set the property.
+         *
+         * @param writePermissionSet a set of permissions that together can be used to update the
+         * property.
+         */
+        public Builder<T> addWritePermission(ImmutableSet<String> writePermissionSet) {
+            mWritePermissionsBuilder.add(writePermissionSet);
             return this;
         }
 
