@@ -37,6 +37,7 @@ import android.uirendering.cts.testinfrastructure.DrawActivity;
 import android.uirendering.cts.testinfrastructure.Tracer;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.uirendering.cts.util.BitmapAsserter;
+import android.view.AttachedSurfaceControl;
 import android.view.Gravity;
 import android.view.PixelCopy;
 import android.view.SurfaceControl;
@@ -123,6 +124,23 @@ public class SurfaceViewTests extends ActivityTestBase {
                 testPositionInfo.screenOffset.x, testPositionInfo.screenOffset.y,
                 TEST_WIDTH, TEST_HEIGHT);
     };
+
+    // waitForRedraw checks that HWUI finished drawing but SurfaceFlinger may be backpressured, so
+    // synchronizing by applying no-op transactions with UI draws instead.
+    private void waitForScreenshottable() throws InterruptedException {
+        AttachedSurfaceControl rootSurfaceControl =
+                getActivity().getWindow().getRootSurfaceControl();
+
+        CountDownLatch latch = new CountDownLatch(1);
+        SurfaceControl stub = new SurfaceControl.Builder().setName("test").build();
+        rootSurfaceControl.applyTransactionOnDraw(
+                rootSurfaceControl.buildReparentTransaction(stub));
+        rootSurfaceControl.applyTransactionOnDraw(
+                new SurfaceControl.Transaction().reparent(stub, null)
+                        .addTransactionCommittedListener(Runnable::run, latch::countDown));
+        getActivity().waitForRedraw();
+        latch.await(5, TimeUnit.SECONDS);
+    }
 
     @FlakyTest(bugId = 244426304)
     @Test
@@ -567,4 +585,64 @@ public class SurfaceViewTests extends ActivityTestBase {
             activity.reset();
         }
     }
+
+    // Regression test for b/269113414
+    @Test
+    public void surfaceViewOffscreenDoesNotPeekThrough() throws InterruptedException {
+
+        // Add a shared latch which will fire after both callbacks are complete.
+        CountDownLatch latch = new CountDownLatch(2);
+        sGreenCanvasCallback.setFence(latch);
+        sRedCanvasCallback.setFence(latch);
+
+        DrawActivity activity = getActivity();
+
+        SurfaceView surfaceViewRed = new SurfaceView(activity);
+        surfaceViewRed.getHolder().addCallback(sRedCanvasCallback);
+        SurfaceView surfaceViewGreen = new SurfaceView(activity);
+        surfaceViewGreen.setZOrderMediaOverlay(true);
+        surfaceViewGreen.getHolder().addCallback(sGreenCanvasCallback);
+
+        int width = activity.getWindow().getDecorView().getWidth();
+        int height = activity.getWindow().getDecorView().getHeight();
+
+        ViewInitializer initializer = (View view) -> {
+            FrameLayout root = view.findViewById(R.id.frame_layout);
+            root.addView(surfaceViewRed, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT));
+
+            root.addView(surfaceViewGreen, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT));
+        };
+
+        try {
+            TestPositionInfo testInfo = activity.enqueueRenderSpecAndWait(
+                    R.layout.frame_layout, null, initializer, true, false);
+            latch.await(5, TimeUnit.SECONDS);
+
+            BitmapAsserter asserter =
+                    new BitmapAsserter(this.getClass().getSimpleName(), name.getMethodName());
+
+            // Layout the SurfaceView way offscreen which would cause it to get quick rejected.
+            activity.runOnUiThread(() -> {
+                surfaceViewGreen.layout(
+                        width * 2,
+                        height * 2,
+                        width * 2 + TEST_WIDTH,
+                        height * 2 + TEST_HEIGHT);
+            });
+            waitForScreenshottable();
+            Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
+            asserter.assertBitmapIsVerified(
+                    screenshot,
+                    new ColorVerifier(Color.RED, 0), getName(),
+                    "Verifying red SurfaceControl");
+        } finally {
+            activity.reset();
+        }
+    }
+
+
 }
