@@ -36,6 +36,7 @@ import android.content.om.OverlayManager;
 import android.content.om.OverlayManagerTransaction;
 import android.content.pm.PackageManager;
 import android.os.UserHandle;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -61,6 +62,7 @@ import java.util.stream.Collectors;
  * This only tests the client API implementation of the OverlayManager
  * and not the service implementation.
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4.class)
 public class OverlayManagerTest {
     private OverlayManager mManager;
