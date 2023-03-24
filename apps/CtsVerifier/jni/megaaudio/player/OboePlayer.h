@@ -34,10 +34,17 @@ public:
     virtual void onErrorAfterClose(oboe::AudioStream *oboeStream, oboe::Result error) override;
     virtual void onErrorBeforeClose(oboe::AudioStream * oboeStream, oboe::Result error) override;
 
+    virtual Result setupStream(int32_t channelCount, int32_t sampleRate, int32_t performanceMode,
+        int32_t sharingMode, int32_t routeDeviceId) override;
     virtual Result setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) override;
     virtual Result startStream() override;
 
     bool getJavaTimestamp(jobject timestampObj);
+
+    int getLastErrorCallbackResult();
+
+    void setMMap(bool isMMap);
+    bool isMMap();
 
 private:
     // AudioTimestamp Field IDs

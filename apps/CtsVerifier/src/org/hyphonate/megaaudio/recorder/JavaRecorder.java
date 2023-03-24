@@ -23,6 +23,7 @@ import android.os.Message;
 import android.util.Log;
 
 import org.hyphonate.megaaudio.common.StreamBase;
+import org.hyphonate.megaaudio.common.StreamState;
 import org.hyphonate.megaaudio.recorder.sinks.NopAudioSinkProvider;
 
 /**
@@ -106,6 +107,27 @@ public class JavaRecorder extends Recorder {
         return mRecording;
     }
 
+    /**
+     * Sets up the stream with the specified attributes.
+     * @param channelCount  The number of channels of audio data to be streamed.
+     * @param sampleRate    The stream sample rate
+     * @param performanceMode See BuilderBase.PERFORMANCE_MODE flags
+     * @param sharingMode     See BuilderBase.SHARING_MODE flags
+     * @param numBufferFrames   The number of frames of audio data in the stream's buffer.
+     * @return
+     */
+    @Override
+    public int setupStream(int channelCount, int sampleRate,
+                           int performanceMode, int sharingMode, int numBufferFrames) {
+        return setupStream(channelCount, sampleRate, numBufferFrames);
+    }
+
+    /**
+     * @param channelCount  The number of channels of audio data to be streamed.
+     * @param sampleRate    The stream sample rate
+     * @param numBufferFrames     The number of frames of audio data in the stream's buffer.
+     * @return              ERROR_NONE if successful, otherwise an error code
+     */
     @Override
     public int setupStream(int channelCount, int sampleRate, int numBufferFrames) {
         if (LOG) {
@@ -215,6 +237,22 @@ public class JavaRecorder extends Recorder {
     public int stopStream() {
         mRecording = false;
         return OK;
+    }
+
+    /**
+     * @return See StreamState constants
+     */
+    public int getStreamState() {
+        //TODO - track state so we can return something meaningful here.
+        return StreamState.UNKNOWN;
+    }
+
+    /**
+     * @return The last error callback result (these must match Oboe). See Oboe constants
+     */
+    public int getLastErrorCallbackResult() {
+        //TODO - track errors so we can return something meaningful here.
+        return ERROR_UNKNOWN;
     }
 
     // @Override
