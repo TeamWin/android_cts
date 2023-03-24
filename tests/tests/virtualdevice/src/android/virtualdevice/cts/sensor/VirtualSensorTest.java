@@ -45,6 +45,8 @@ import android.companion.virtual.VirtualDeviceParams;
 import android.companion.virtual.sensor.VirtualSensor;
 import android.companion.virtual.sensor.VirtualSensorCallback;
 import android.companion.virtual.sensor.VirtualSensorConfig;
+import android.companion.virtual.sensor.VirtualSensorDirectChannelCallback;
+import android.companion.virtual.sensor.VirtualSensorDirectChannelWriter;
 import android.companion.virtual.sensor.VirtualSensorEvent;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -123,8 +125,11 @@ public class VirtualSensorTest {
     private VirtualSensor mVirtualSensor;
     private MemoryFile mMemoryFile;
     private SensorDirectChannel mDirectChannel;
+    private VirtualSensorDirectChannelWriter mVirtualSensorDirectChannelWriter;
     @Mock
     private VirtualSensorCallback mVirtualSensorCallback;
+    @Mock
+    private VirtualSensorDirectChannelCallback mVirtualSensorDirectChannelCallback;
     private VirtualSensorEventListener mSensorEventListener = new VirtualSensorEventListener();
 
     @Before
@@ -148,6 +153,10 @@ public class VirtualSensorTest {
                     .addVirtualSensorConfig(sensorConfig)
                     .setVirtualSensorCallback(
                             BackgroundThread.getExecutor(), mVirtualSensorCallback);
+            if (sensorConfig.getDirectChannelTypesSupported() > 0) {
+                builder = builder.setVirtualSensorDirectChannelCallback(
+                        BackgroundThread.getExecutor(), mVirtualSensorDirectChannelCallback);
+            }
         }
         mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
                 mFakeAssociationRule.getAssociationInfo().getId(), builder.build());
@@ -532,34 +541,35 @@ public class VirtualSensorTest {
 
         ArgumentCaptor<Integer> channelHandle = ArgumentCaptor.forClass(Integer.class);
         ArgumentCaptor<SharedMemory> sharedMemory = ArgumentCaptor.forClass(SharedMemory.class);
-        verify(mVirtualSensorCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
+        verify(mVirtualSensorDirectChannelCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
                 .onDirectChannelCreated(channelHandle.capture(), sharedMemory.capture());
 
         doAnswer((Answer<Void>) i -> {
             sharedMemory.getValue().close();
             return null;
-        }).when(mVirtualSensorCallback).onDirectChannelDestroyed(channelHandle.getValue());
+        }).when(mVirtualSensorDirectChannelCallback)
+                .onDirectChannelDestroyed(channelHandle.getValue());
 
         Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
         int reportToken = mDirectChannel.configure(sensor, RATE_NORMAL);
         assertThat(reportToken).isGreaterThan(0);
 
         ArgumentCaptor<VirtualSensor> virtualSensor = ArgumentCaptor.forClass(VirtualSensor.class);
-        verify(mVirtualSensorCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
+        verify(mVirtualSensorDirectChannelCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
                 .onDirectChannelConfigured(eq(channelHandle.getValue()), virtualSensor.capture(),
                         eq(RATE_NORMAL), eq(reportToken));
         assertThat(virtualSensor.getValue().getHandle()).isEqualTo(mVirtualSensor.getHandle());
 
         assertThat(mDirectChannel.configure(sensor, RATE_STOP)).isEqualTo(1);
 
-        verify(mVirtualSensorCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
+        verify(mVirtualSensorDirectChannelCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
                 .onDirectChannelConfigured(eq(channelHandle.getValue()), virtualSensor.capture(),
                         eq(RATE_STOP), eq(reportToken));
         assertThat(virtualSensor.getValue().getHandle()).isEqualTo(mVirtualSensor.getHandle());
 
         mDirectChannel.close();
         mDirectChannel = null;
-        verify(mVirtualSensorCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
+        verify(mVirtualSensorDirectChannelCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
                 .onDirectChannelDestroyed(eq(channelHandle.getValue()));
     }
 
@@ -570,27 +580,28 @@ public class VirtualSensorTest {
 
         ArgumentCaptor<Integer> channelHandle = ArgumentCaptor.forClass(Integer.class);
         ArgumentCaptor<SharedMemory> sharedMemory = ArgumentCaptor.forClass(SharedMemory.class);
-        verify(mVirtualSensorCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
+        verify(mVirtualSensorDirectChannelCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
                 .onDirectChannelCreated(channelHandle.capture(), sharedMemory.capture());
 
         doAnswer((Answer<Void>) i -> {
             sharedMemory.getValue().close();
             return null;
-        }).when(mVirtualSensorCallback).onDirectChannelDestroyed(channelHandle.getValue());
+        }).when(mVirtualSensorDirectChannelCallback)
+                .onDirectChannelDestroyed(channelHandle.getValue());
 
         Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
         int reportToken = mDirectChannel.configure(sensor, RATE_NORMAL);
         assertThat(reportToken).isGreaterThan(0);
 
         ArgumentCaptor<VirtualSensor> virtualSensor = ArgumentCaptor.forClass(VirtualSensor.class);
-        verify(mVirtualSensorCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
+        verify(mVirtualSensorDirectChannelCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
                 .onDirectChannelConfigured(eq(channelHandle.getValue()), virtualSensor.capture(),
                         eq(RATE_NORMAL), eq(reportToken));
         assertThat(virtualSensor.getValue().getHandle()).isEqualTo(mVirtualSensor.getHandle());
 
         assertThat(mDirectChannel.configure(/*sensor=*/null, RATE_STOP)).isEqualTo(1);
 
-        verify(mVirtualSensorCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
+        verify(mVirtualSensorDirectChannelCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
                 .onDirectChannelConfigured(eq(channelHandle.getValue()), virtualSensor.capture(),
                         eq(RATE_STOP), eq(reportToken));
         assertThat(virtualSensor.getValue().getHandle()).isEqualTo(mVirtualSensor.getHandle());
@@ -602,14 +613,14 @@ public class VirtualSensorTest {
 
         ArgumentCaptor<Integer> channelHandle = ArgumentCaptor.forClass(Integer.class);
         ArgumentCaptor<SharedMemory> sharedMemory = ArgumentCaptor.forClass(SharedMemory.class);
-        verify(mVirtualSensorCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
+        verify(mVirtualSensorDirectChannelCallback, timeout(SENSOR_TIMEOUT_MILLIS).times(1))
                 .onDirectChannelCreated(channelHandle.capture(), sharedMemory.capture());
 
         doAnswer((Answer<Void>) i -> {
             int reportToken = (int) i.getArguments()[3];
             writeDirectChannelEvents(reportToken, sharedMemory.getValue());
             return null;
-        }).when(mVirtualSensorCallback)
+        }).when(mVirtualSensorDirectChannelCallback)
                 .onDirectChannelConfigured(eq(channelHandle.getValue()), any(), anyInt(), anyInt());
 
         Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
@@ -619,7 +630,63 @@ public class VirtualSensorTest {
         doAnswer((Answer<Void>) i -> {
             sharedMemory.getValue().close();
             return null;
-        }).when(mVirtualSensorCallback).onDirectChannelDestroyed(channelHandle.getValue());
+        }).when(mVirtualSensorDirectChannelCallback)
+                .onDirectChannelDestroyed(channelHandle.getValue());
+    }
+
+    @Test
+    public void directConnection_memoryFile_injectEvents_withHelperWriter() throws Exception {
+        mVirtualSensorDirectChannelWriter = new VirtualSensorDirectChannelWriter();
+
+        doAnswer((Answer<Void>) i -> {
+            int channelHandle = (int) i.getArguments()[0];
+            SharedMemory sharedMemory = (SharedMemory) i.getArguments()[1];
+            mVirtualSensorDirectChannelWriter.addChannel(channelHandle, sharedMemory);
+            return null;
+        }).when(mVirtualSensorDirectChannelCallback).onDirectChannelCreated(anyInt(), any());
+
+        doAnswer((Answer<Void>) i -> {
+            int channelHandle = (int) i.getArguments()[0];
+            mVirtualSensorDirectChannelWriter.removeChannel(channelHandle);
+            return null;
+        }).when(mVirtualSensorDirectChannelCallback).onDirectChannelDestroyed(anyInt());
+
+        doAnswer((Answer<Void>) i -> {
+            int channelHandle = (int) i.getArguments()[0];
+            VirtualSensor sensor = (VirtualSensor) i.getArguments()[1];
+            int rateLevel = (int) i.getArguments()[2];
+            int reportToken = (int) i.getArguments()[3];
+            assertThat(mVirtualSensorDirectChannelWriter.configureChannel(
+                    channelHandle, sensor, rateLevel, reportToken)).isTrue();
+            Random random = new Random();
+
+            for (int eventCount = 0; eventCount < SENSOR_EVENT_COUNT * 2; ++eventCount) {
+                float[] values = new float[] {
+                        reportToken + eventCount * 0.01f,
+                        reportToken + eventCount * 0.02f,
+                        reportToken + eventCount * 0.03f,
+                };
+                assertThat(
+                        mVirtualSensorDirectChannelWriter.writeSensorEvent(sensor,
+                                new VirtualSensorEvent.Builder(values)
+                                        .setTimestampNanos(System.nanoTime())
+                                        .build()))
+                        .isTrue();
+                try {
+                    Thread.sleep(random.nextInt(10));  // Sleep random time of 0-20ms.
+                } catch (InterruptedException e) {
+                    fail("Interrupted while writing sensor events: " + e);
+                }
+            }
+            return null;
+        }).when(mVirtualSensorDirectChannelCallback)
+                .onDirectChannelConfigured(anyInt(), any(), anyInt(), anyInt());
+
+        setUpDirectChannel();
+
+        Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
+        int reportToken = mDirectChannel.configure(sensor, RATE_NORMAL);
+        verifyDirectChannelEvents(reportToken);
     }
 
     private class VirtualSensorEventListener implements SensorEventListener {
@@ -705,7 +772,7 @@ public class VirtualSensorTest {
             }
 
             offset += SENSOR_EVENT_SIZE;
-            if (offset + SENSOR_EVENT_SIZE > sharedMemory.getSize()) {
+            if (offset + SENSOR_EVENT_SIZE >= sharedMemory.getSize()) {
                 offset = 0;
             }
         }
@@ -714,7 +781,7 @@ public class VirtualSensorTest {
     private void verifyDirectChannelEvents(int reportToken) throws Exception {
         int offset = 0;
         int eventCount = 0;
-        ByteBuffer byteBuffer = ByteBuffer.allocate(SHARED_MEMORY_SIZE);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(SENSOR_EVENT_SIZE);
         byteBuffer.order(ByteOrder.nativeOrder());
 
         while (eventCount < SENSOR_EVENT_COUNT * 2) {
@@ -751,11 +818,10 @@ public class VirtualSensorTest {
                         .isEqualTo(reportToken + eventCounter * 0.3f);
 
                 offset += SENSOR_EVENT_SIZE;
-                if (offset + SENSOR_EVENT_SIZE > SHARED_MEMORY_SIZE) {
+                if (offset + SENSOR_EVENT_SIZE >= SHARED_MEMORY_SIZE) {
                     offset = 0;
                 }
             }
         }
     }
 }
-
