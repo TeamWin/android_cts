@@ -76,6 +76,10 @@
                   android:showWhenLocked="true">
         </activity>
 
+        <activity android:name=".WallpaperOverlayTestActivity"
+                  android:theme="@style/Theme.Transparent">
+        </activity>
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
