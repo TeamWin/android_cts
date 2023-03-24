@@ -378,6 +378,7 @@ open class PackageInstallerTestBase {
     }
 
     @After
+    @Before
     fun uninstallTestPackage() {
         uninstallPackage(TEST_APK_PACKAGE_NAME)
     }
