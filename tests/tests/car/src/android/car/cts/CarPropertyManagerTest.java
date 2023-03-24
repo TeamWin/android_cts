@@ -2788,8 +2788,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(ImmutableSet.of(Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                        Car.PERMISSION_VENDOR_EXTENSION))
                 .build()
                 .verify();
     }
@@ -2807,8 +2807,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(ImmutableSet.of(Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                        Car.PERMISSION_VENDOR_EXTENSION))
                 .build()
                 .verify();
     }
@@ -2891,8 +2891,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(ImmutableSet.of(Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                        Car.PERMISSION_VENDOR_EXTENSION))
                 .build()
                 .verify();
     }
@@ -2910,8 +2910,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(ImmutableSet.of(Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                        Car.PERMISSION_VENDOR_EXTENSION))
                 .build()
                 .verify();
     }
@@ -2929,8 +2929,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(ImmutableSet.of(Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                        Car.PERMISSION_VENDOR_EXTENSION))
                 .build()
                 .verify();
     }
@@ -2944,8 +2944,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(ImmutableSet.of(Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                        Car.PERMISSION_VENDOR_EXTENSION))
                 .build()
                 .verify();
     }
