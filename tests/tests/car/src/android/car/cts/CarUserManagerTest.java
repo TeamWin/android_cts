@@ -46,6 +46,8 @@ import android.car.test.util.AndroidHelper;
 import android.car.test.util.UserTestingHelper;
 import android.car.testapi.BlockingUserLifecycleListener;
 import android.car.user.CarUserManager;
+import android.car.user.UserRemovalRequest;
+import android.car.user.UserRemovalResult;
 import android.car.user.UserStartRequest;
 import android.car.user.UserStopRequest;
 import android.os.Bundle;
@@ -449,6 +451,31 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
         expectThat(mCarUserManager.lifecycleEventTypeToString(
                 USER_LIFECYCLE_EVENT_TYPE_INVISIBLE)).isEqualTo("INVISIBLE");
         expectThat(mCarUserManager.lifecycleEventTypeToString(0)).isEqualTo("UNKNOWN-0");
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.car.user.CarUserManager#removeUser(UserRemovalRequest, Executor, "
+                    + "ResultCallback)"})
+    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
+    public void testRemoveUserExists() {
+        UserHandle newUser = createUser("TestUserToRemove", false);
+
+        mCarUserManager.removeUser(new UserRemovalRequest.Builder(newUser).build(), Runnable::run,
+                response -> assertThat(response.getStatus()).isEqualTo(
+                        UserRemovalResult.STATUS_SUCCESSFUL)
+        );
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.car.user.CarUserManager#removeUser(UserRemovalRequest, Executor, "
+                    + "ResultCallback)"})
+    public void testRemoveUserDoesNotExist() {
+        mCarUserManager.removeUser(new UserRemovalRequest.Builder(getNonExistentUser()).build(),
+                Runnable::run, response -> assertThat(response.getStatus()).isEqualTo(
+                        UserRemovalResult.STATUS_USER_DOES_NOT_EXIST)
+        );
     }
 
     @NonNull
