@@ -24,6 +24,9 @@ import android.util.Log;
 // For initialization
 import org.hyphonate.megaaudio.player.JavaSourceProxy;
 
+/**
+ * Common base class for all audio streams.
+ */
 public abstract class StreamBase {
     @SuppressWarnings("unused")
     private static final String TAG = StreamBase.class.getSimpleName();
@@ -53,7 +56,8 @@ public abstract class StreamBase {
     public static final int ERROR_UNKNOWN = -1;
     public static final int ERROR_UNSUPPORTED = -2;
     public static final int ERROR_INVALID_STATE = -3;
-
+    public static final int ERROR_DISCONNECTED = -899; // must match Oboe
+    public static final int ERROR_INVALIDSTATE = -895;
     //
     // System Attributes
     //
@@ -75,6 +79,13 @@ public abstract class StreamBase {
     //
     // Initialization
     //
+
+    /**
+     * Forces the load of the MegaAudio (native) library
+     */
+    public static void loadMegaAudioLibrary() {
+        // NOP. This will force the static load
+    }
 
     /**
      * Performs initialization. MUST be called before any Streams are created.
@@ -162,6 +173,19 @@ public abstract class StreamBase {
     //
     // State
     //
+
+    /**
+     * Sets up the stream with the specified attributes.
+     * @param channelCount  The number of channels of audio data to be streamed.
+     * @param sampleRate    The stream sample rate
+     * @param performanceMode See BuilderBase.PERFORMANCE_MODE flags
+     * @param sharingMode     See BuilderBase.SHARING_MODE flags
+     * @param numBufferFrames   The number of frames of audio data in the stream's buffer.
+     * @return
+     */
+    public abstract int setupStream(int channelCount, int sampleRate,
+                                    int performanceMode, int sharingMode, int numBufferFrames);
+
     /**
      * @param channelCount  The number of channels of audio data to be streamed.
      * @param sampleRate    The stream sample rate
@@ -170,6 +194,10 @@ public abstract class StreamBase {
      */
     public abstract int setupStream(int channelCount, int sampleRate, int numFrames);
 
+    /**
+     * Releases resources used by the stream.
+     * @return
+     */
     public abstract int teardownStream();
 
     /**
@@ -185,6 +213,16 @@ public abstract class StreamBase {
      * @return              ERROR_NONE if successful, otherwise an error code
      */
     public abstract int stopStream();
+
+    /**
+     * @return See StreamState constants
+     */
+    public abstract int getStreamState();
+
+    /**
+     * @return The last error callback result (these must match Oboe). See Oboe constants
+     */
+    public abstract int getLastErrorCallbackResult();
 
     //
     // Thread stuff
