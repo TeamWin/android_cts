@@ -1629,24 +1629,6 @@
     <string name="sample_test">Sample Test</string>
     <string name="sample_test_info">This test verifies that bluetooth sharing is working properly.\nThe test assumes the Device Under Test has bluetooth enabled and is already paired with a second device, also with bluetooth enabled.\nStart this test by clicking share, choose bluetooth from the options, and then select a device to share with.\nNote: This is a sample test, used to demonstrate how to write CTS Verifier tests, so just click pass.</string>
 
-    <!-- Strings for UsbDebuggingDialogTapjackingTest -->
-    <string name="usb_tapjacking_button_text">Show overlay</string>
-    <string name="usb_tapjacking_test">Usb Debugging Dialog Tapjacking Test</string>
-    <string name="usb_tapjacking_test_info">This test verifies that tapjacking on the usb dialog is not possible by disallowing users from accepting usb debugging pemissions when dialog is obscured.</string>
-    <string name="usb_tapjacking_test_instructions">
-        1. Connect device via usb to computer.\n
-        2. Click \"Show overlay\" button.  Settings may appear if the CTS Verifier app doesn\'t have display over apps permission.  Enable this permission and then click back to navigate back to the app.\n
-        3. Trigger USB debugging dialog (from computer terminal): \"adb shell am start -e fingerprints placeholder -e key placeholder %s\"\n
-        4. USB debugging dialog should appear.  If the overlay cannot be seen above the USB debugging dialog, PASS this test (no need to proceed to Step 5).  Else, if the overlay does appear on top saying \"This message covers the USB debugging RSA prompt\", continue to Step 5.\n
-        5. Try clicking OK. \n
-        Test pass if you cannot click OK when the text quoted above is on top of the USB debugging dialog.  Toast should appear saying there is an overlay so Settings cannot verify your response. \n
-        Note: Fake message overlay may remain on screen until you leave the test. This is working as intended. \n
-    </string>
-    <string name="usb_tapjacking_usb_debugging_component">com.android.systemui/.UsbDebuggingActivityAlias</string>
-    <string name="usb_tapjacking_overlay_message">This message covers the USB debugging RSA prompt</string>
-    <string name="usb_tapjacking_error_toast">Please restart the application and try again.</string>
-    <string name="usb_tapjacking_error_toast2">Please enable display over apps permission for this application before proceeding.</string>
-
     <!-- Strings for Camera Orientation -->
     <string name="camera_orientation">Camera Orientation</string>
     <string name="co_info">This test verifies the orientation capabilities of
@@ -6980,4 +6962,120 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="audio_clear_preferred_mixer_attributes_failed">Clearing preferred mixer attributes failed.</string>
     <string name="audio_get_preferred_mixer_attributes_should_be_null">Preferred mixer attributes is not null after calling AudioManager#clearPreferredMixerAttributes.</string>
     <string name="audio_no_callback_for_preferred_mixer_attributes_changed">Callback is not called when preferred mixer attributes changed.</string>
+
+    <!-- Strings for CaptureContentForNotes test -->
+    <string name="ccfn_tests">Capture Content For Notes Tests</string>
+    <string name="ccfn_tests_info">
+        This test verifies the support for Content Capture For Notes APIs on devices that have the
+        ROLE_NOTES enabled.
+
+        \n\nIf the ROLE_NOTES is not enabled, no test should be shown in the list below, and you
+        should mark the CTS test as passed.
+
+        \n\nFor this test you need to install CtsDefaultNotesApp.apk and set it as the Default notes
+        app.
+
+        \n\nFor some tests you will need to set up device owner.
+
+        \n\nPlease clear the device owner after all the test cases are run, if it was set up.
+    </string>
+    <!-- Dialogs -->
+    <string name="set_default_notes_button_label">Set default notes app</string>
+    <string name="set_default_notes_button_info">
+        For these tests you need to install CtsDefaultNotesApp.apk.
+        \nThen you need to set it as the Default notes app setting through device settings app.
+        \nThe Default notes app settings is generally under Apps -> Default apps -> Notes app.
+    </string>
+    <string name="setup_device_owner_button_label">Set up device owner</string>
+    <string name="setup_device_owner_button_info">
+        Some tests require to set up device owner in order to enforce device manager policies.
+        Please run:
+        \nadb shell dpm set-device-owner --user 0 com.android.cts.verifier/.capturecontentfornotes.DeviceAdminTestReceiver
+    </string>
+    <!-- Error messages -->
+    <string name="admin_policy_setup_failed">
+        Failed to set up device admin policy, is the device owner set up?
+    </string>
+    <!-- Toasts -->
+    <string name="disable_screenshot_toast">Screenshots disabled successfully</string>
+    <string name="enable_screenshot_toast">Screenshots enabled successfully</string>
+    <string name="clear_device_owner_toast">Successfully cleared device owner</string>
+    <string name="no_command_run_toast">No command run</string>
+    <!-- Other button labels -->
+    <string name="disable_screenshot_button_label">Disable screenshots</string>
+    <string name="enable_screenshot_button_label">Enable screenshots</string>
+    <string name="clear_device_owner_button_label">Clear device owner</string>
+    <!-- Test titles and instructions -->
+    <string name="ccfn_launch_and_add_test">Fire intent action then add screenshot</string>
+    <string name="ccfn_launch_and_add_test_info">
+        1. Open the CtsDefaultNotesApp using certain actions such as the stylus button click.
+        \n2. Then tap on the Fire Intent Action button shown in the CtsDefaultNotesApp.
+        \n3. Android SystemUI should show a UI with a button that lets you add the screenshot to the
+        notes app, tap on this button.
+        \n4. The CtsDefaultNotesApp should be back in focus informing that screenshot was received.
+        \n5. If so, pass this test else fail.
+    </string>
+    <string name="ccfn_launch_and_cancel_test">Fire intent action then cancel screenshot</string>
+    <string name="ccfn_launch_and_cancel_test_info">
+        1. Open the CtsDefaultNotesApp using certain actions such as the stylus button click.
+        \n2. Then tap on the Fire Intent Action button shown in the CtsDefaultNotesApp.
+        \n3. Android SystemUI should show a UI with a button that lets you cancel, tap on this
+        button.
+        \n4. The CtsDefaultNotesApp should be back in focus informing that screenshot was not
+        received.
+        \n5. If so, pass this test else fail.
+    </string>
+    <string name="ccfn_launch_window_unsupported">
+        Fire intent action but window mode not supported
+    </string>
+    <string name="ccfn_launch_window_unsupported_info">
+        1. Open the CtsDefaultNotesApp using the app icon, this should launch the app in regular
+        mode.
+        \n2. Then tap on the Fire Intent Action button shown in the CtsDefaultNotesApp.
+        \n3. Android SystemUI should not be shown, instead the CtsDefaultNotesApp should inform that
+        window mode is unsupported.
+        \n4. If so, pass this test else fail.
+    </string>
+    <string name="ccfn_launch_blocked_by_admin">Fire intent action but blocked by admin</string>
+    <string name="ccfn_launch_blocked_blocked_by_admin_info">
+        1. Ensure device owner is set up by running:
+        \nadb shell dpm set-device-owner --user 0 com.android.cts.verifier/.capturecontentfornotes.DeviceAdminTestReceiver
+        \n2. Tap on the disable screenshot button shown below.
+        \n3. Open the CtsDefaultNotesApp using certain actions such as the stylus button click.
+        \n4. Then tap on the Fire Intent Action button shown in the CtsDefaultNotesApp.
+        \n5. Android SystemUI should not be shown, instead the CtsDefaultNotesApp should inform that
+        screenshot blocked by admin.
+        \n6. If so, pass this test else fail.
+        \n7. Ensure to tap on enable screenshot button otherwise future tests would be impacted.
+    </string>
+    <string name="ccfn_call_can_use_api_true">Trigger can all API which returns true</string>
+    <string name="ccfn_call_can_use_api_true_info">
+        1. Open the CtsDefaultNotesApp using certain actions such as the stylus button click.
+        \n2. Then tap on the Call Can Use API button.
+        \n3. Verify the CtsDefaultNotesApp informs can use API returned true.
+        \n4. If so, pass this test else fail.
+    </string>
+    <string name="ccfn_call_can_use_api_blocked_by_admin">
+        Trigger can call API but blocked by admin
+    </string>
+    <string name="ccfn_call_can_use_api_blocked_by_admin_info">
+        1. Ensure device owner is set up by running:
+        \nadb shell dpm set-device-owner --user 0 com.android.cts.verifier/.capturecontentfornotes.DeviceAdminTestReceiver
+        \n2. Tap on the disable screenshot button shown below.
+        \n3. Open the CtsDefaultNotesApp using certain actions such as the stylus button click.
+        \n4. Tap on the Call Can Use API button.
+        \n5. Verify the CtsDefaultNotesApp informs can use API returned false.
+        \n6. If so, pass this test else fail.
+        \n7. Ensure to tap on enable screenshot button otherwise future tests would be impacted.
+    </string>
+    <string name="ccfn_call_can_use_api_window_unsupported">
+        Trigger can call API but window mode unsupported
+    </string>
+    <string name="ccfn_call_can_use_api_window_unsupported_info">
+        1. Open the CtsDefaultNotesApp using the app icon, this should launch the app in regular
+        mode.
+        \n2. Tap on the Call Can Use API button.
+        \n3. Verify the CtsDefaultNotesApp informs can use API returned false.
+        \n4. If so, pass this test else fail.
+    </string>
 </resources>

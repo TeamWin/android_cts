@@ -51,7 +51,7 @@ public final class UserHelper {
         Context context = InstrumentationRegistry.getTargetContext();
         mUser = context.getUser();
         UserManager userManager = context.getSystemService(UserManager.class);
-        mDisplayId = userManager.getDisplayIdAssignedToUser();
+        mDisplayId = userManager.getMainDisplayIdAssignedToUser();
         boolean visibleBackgroundUsersSupported = userManager
                 .isVisibleBackgroundUsersSupported();
         boolean isVisible = userManager.isUserVisible();

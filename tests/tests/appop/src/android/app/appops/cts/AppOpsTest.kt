@@ -587,16 +587,18 @@ class AppOpsTest {
     }
 
     private fun testPermissionMapping(permission: String, opStr: String) {
-        // Do the public value => internal op code lookups.
-        val mappedOpStr = AppOpsManager.permissionToOp(permission)
-        assertEquals(mappedOpStr, opStr)
+        // Do the permission => op lookups.
+        val mappedOpStr = AppOpsManager.permissionToOp(permission)!!
+        assertEquals(opStr, mappedOpStr)
+        val opCode = AppOpsManager.strOpToOp(opStr)
         val mappedOpCode = AppOpsManager.permissionToOpCode(permission)
-        val mappedOpCode2 = AppOpsManager.strOpToOp(opStr)
-        assertEquals(mappedOpCode, mappedOpCode2)
+        assertEquals(opCode, mappedOpCode)
 
-        // Do the internal op code => public value lookup (reverse lookup).
-        val permissionMappedBack = AppOpsManager.opToPermission(mappedOpCode)
-        assertEquals(permission, permissionMappedBack)
+        // Do the op => permission lookups.
+        val strMappedPermission = AppOpsManager.opToPermission(opStr)
+        assertEquals(permission, strMappedPermission)
+        val codeMappedPermission = AppOpsManager.opToPermission(opCode)
+        assertEquals(permission, codeMappedPermission)
     }
 
     /**

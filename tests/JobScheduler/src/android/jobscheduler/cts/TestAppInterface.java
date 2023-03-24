@@ -86,6 +86,7 @@ class TestAppInterface implements AutoCloseable {
         mContext.sendBroadcast(cancelJobsIntent);
         closeActivity();
         mContext.unregisterReceiver(mReceiver);
+        SystemUtil.runShellCommand("am compat --reset-all" + TEST_APP_PACKAGE);
         mTestJobStates.clear();
     }
 
@@ -170,6 +171,11 @@ class TestAppInterface implements AutoCloseable {
     void forceStopApp() {
         SystemUtil.runShellCommand("am force-stop"
                 + " --user " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE);
+    }
+
+    void cancelJob() throws Exception {
+        SystemUtil.runShellCommand("cmd jobscheduler cancel"
+                + " -u " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE + " " + mJobId);
     }
 
     void startAndKeepTestActivity() {

@@ -23,10 +23,13 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.BitmapRegionDecoder;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.Gainmap;
 import android.graphics.ImageDecoder;
+import android.graphics.Rect;
 import android.os.Parcel;
 
 import androidx.test.filters.SmallTest;
@@ -37,6 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 
 import junitparams.JUnitParamsRunner;
 
@@ -44,6 +48,7 @@ import junitparams.JUnitParamsRunner;
 @RunWith(JUnitParamsRunner.class)
 public class GainmapTest {
     private static final float EPSILON = 0.0001f;
+    private static final int TILE_SIZE = 256;
 
     private static Context sContext;
 
@@ -97,11 +102,7 @@ public class GainmapTest {
         assertEquals(b, value[2], EPSILON);
     }
 
-    @Test
-    public void testDecodeGainmap() throws Exception {
-        Bitmap bitmap = ImageDecoder.decodeBitmap(
-                ImageDecoder.createSource(sContext.getResources(), R.raw.gainmap),
-                (decoder, info, source) -> decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE));
+    private void checkGainmap(Bitmap bitmap) throws Exception {
         assertNotNull(bitmap);
         assertTrue("Missing gainmap", bitmap.hasGainmap());
         assertEquals(Bitmap.Config.ARGB_8888, bitmap.getConfig());
@@ -120,6 +121,28 @@ public class GainmapTest {
         assertAllAre(4f, gainmap.getRatioMax());
         assertAllAre(1.0f, gainmap.getRatioMin());
         assertEquals(5f, gainmap.getDisplayRatioForFullHdr(), EPSILON);
+    }
+
+    @Test
+    public void testDecodeGainmap() throws Exception {
+        Bitmap bitmap = ImageDecoder.decodeBitmap(
+                ImageDecoder.createSource(sContext.getResources(), R.raw.gainmap),
+                (decoder, info, source) -> decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE));
+        checkGainmap(bitmap);
+    }
+
+    @Test
+    public void testDecodeGainmapBitmapFactory() throws Exception {
+        Bitmap bitmap = BitmapFactory.decodeResource(sContext.getResources(), R.raw.gainmap);
+        checkGainmap(bitmap);
+    }
+
+    @Test
+    public void testDecodeGainmapBitmapRegionDecoder() throws Exception {
+        InputStream is = sContext.getResources().openRawResource(R.raw.gainmap);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
+        Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), null);
+        checkGainmap(region);
     }
 
     @Test

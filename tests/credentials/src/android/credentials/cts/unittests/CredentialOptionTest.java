@@ -121,7 +121,7 @@ public class CredentialOptionTest {
         candidateProviders.add(provider1);
         candidateProviders.add(provider2);
 
-        final boolean isSystemProviderRequiredDefault = true;
+        final boolean isSystemProviderRequiredDefault = false;
 
         final CredentialOption opt = new CredentialOption.Builder(type, retrievalData, queryData)
                 .setAllowedProviders(candidateProviders)
@@ -148,7 +148,7 @@ public class CredentialOptionTest {
         ComponentName provider2 = new ComponentName("provider2.package",
                 "provider2.package.servicename");
 
-        final boolean isSystemProviderRequiredDefault = true;
+        final boolean isSystemProviderRequiredDefault = false;
 
         final CredentialOption opt = new CredentialOption.Builder(type, retrievalData, queryData)
                 .addAllowedProvider(provider1)

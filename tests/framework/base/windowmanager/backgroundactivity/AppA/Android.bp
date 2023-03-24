@@ -30,7 +30,7 @@ android_test_helper_app {
 
     srcs: ["src/**/*.java"],
 
-    target_sdk_version: "test_current",
+    target_sdk_version: "current",
 
     test_suites: [
         "cts",

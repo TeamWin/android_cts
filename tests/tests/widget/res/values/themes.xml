@@ -25,7 +25,7 @@
         <item name="themeString">@string/remoteviews_theme_string</item>
     </style>
 
-    <style name="HorizontalScrollViewCtsActivityTheme" parent="@android:style/Theme.DeviceDefault">
+    <style name="HorizontalScrollViewCtsActivityTheme" parent="@android:style/Theme.Material.Light.DarkActionBar">
         <item name="android:windowSwipeToDismiss">false</item>
     </style>
 </resources>

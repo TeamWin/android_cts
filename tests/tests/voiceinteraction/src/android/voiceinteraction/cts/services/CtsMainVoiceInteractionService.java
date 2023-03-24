@@ -16,7 +16,9 @@
 
 package android.voiceinteraction.cts.services;
 
+import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
 import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
+import static android.Manifest.permission.RECORD_AUDIO;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
@@ -49,7 +51,7 @@ public class CtsMainVoiceInteractionService extends BaseVoiceInteractionService 
         mServiceTriggerLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(() -> {
             callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback);
-        }, MANAGE_HOTWORD_DETECTION));
+        }, MANAGE_HOTWORD_DETECTION, CAPTURE_AUDIO_HOTWORD, RECORD_AUDIO));
     }
 
     /**

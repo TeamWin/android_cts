@@ -19,6 +19,8 @@ package android.jobscheduler.cts.jobtestapp;
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_REQUEST_JOB_UID_STATE;
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION;
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION_JOB_END_POLICY;
+import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_SLOW_START;
+import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_SLOW_STOP;
 
 import android.app.ActivityManager;
 import android.app.Notification;
@@ -61,6 +63,13 @@ public class TestJobService extends JobService {
             reportJobStartIntent.putExtras(getJobUidStateExtras());
         }
         sendBroadcast(reportJobStartIntent);
+        if (transientExtras.getBoolean(EXTRA_SLOW_START)) {
+            try {
+                Thread.sleep(60_000);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Interrupted sleeping for slow start");
+            }
+        }
         if (transientExtras.getBoolean(EXTRA_SET_NOTIFICATION)) {
             final NotificationManager notificationManager =
                     getSystemService(NotificationManager.class);
@@ -85,6 +94,13 @@ public class TestJobService extends JobService {
         final Intent reportJobStopIntent = new Intent(ACTION_JOB_STOPPED);
         reportJobStopIntent.putExtra(JOB_PARAMS_EXTRA_KEY, params);
         sendBroadcast(reportJobStopIntent);
+        if (params.getTransientExtras().getBoolean(EXTRA_SLOW_STOP)) {
+            try {
+                Thread.sleep(60_000);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Interrupted sleeping for slow stop");
+            }
+        }
         return true;
     }
 
