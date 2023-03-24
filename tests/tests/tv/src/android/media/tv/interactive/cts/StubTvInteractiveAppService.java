@@ -92,6 +92,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mErrorCount;
         public int mRecordingStartedCount;
         public int mRecordingStoppedCount;
+        public int mRecordingScheduledCount;
         public int mPlaybackParamCount;
         public int mTimeShiftModeCount;
         public int mAvailableSpeedsCount;
@@ -154,6 +155,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mErrorCount = 0;
             mRecordingStartedCount = 0;
             mRecordingStoppedCount = 0;
+            mRecordingScheduledCount = 0;
             mPlaybackParamCount = 0;
             mTimeShiftModeCount = 0;
             mAvailableSpeedsCount = 0;
@@ -247,8 +249,36 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         }
 
         @Override
+        public void requestScheduleRecording(String requestId, String inputId, Uri channelUri,
+                Uri programUri, Bundle params) {
+            super.requestScheduleRecording(requestId, inputId, channelUri, programUri, params);
+        }
+
+        @Override
+        public void requestScheduleRecording(String requestId, String inputId, Uri channelUri,
+                long startTime, long duration, int repeatedDays, Bundle params) {
+            super.requestScheduleRecording(
+                    requestId, inputId, channelUri, startTime, duration, repeatedDays, params);
+        }
+
+        @Override
+        public void requestAvailableSpeeds() {
+            super.requestAvailableSpeeds();
+        }
+
+        @Override
+        public void requestTimeShiftMode() {
+            super.requestTimeShiftMode();
+        }
+
+        @Override
         public void sendPlaybackCommandRequest(String cmdType, Bundle parameters) {
             super.sendPlaybackCommandRequest(cmdType, parameters);
+        }
+
+        @Override
+        public void sendTimeShiftCommandRequest(String cmdType, Bundle parameters) {
+            super.sendTimeShiftCommandRequest(cmdType, parameters);
         }
 
         @Override
@@ -494,6 +524,14 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             super.onRecordingStopped(recordingId);
             mRecordingStoppedCount++;
             mRecordingId = recordingId;
+        }
+
+        @Override
+        public void onRecordingScheduled(String recordingId, String requestId) {
+            super.onRecordingScheduled(recordingId, requestId);
+            mRecordingScheduledCount++;
+            mRecordingId = recordingId;
+            mRequestId = requestId;
         }
 
         @Override
