@@ -35,6 +35,7 @@ public class WallpaperTestUtils {
      * Helper get a bitmap from a drawable
      */
     public static Bitmap getBitmap(Drawable drawable) {
+        if (drawable == null) return null;
         if (drawable instanceof BitmapDrawable) {
             return ((BitmapDrawable) drawable).getBitmap();
         }
@@ -59,9 +60,11 @@ public class WallpaperTestUtils {
      * but strict enough to return false when comparing two different bitmaps unless they are
      * really similar.
      * <br>
-     * It will always return false for two bitmaps with different dimensions.
+     * Always return false for two bitmaps with different dimensions.
+     * Return true if both bitmaps are null.
      */
     public static boolean isSimilar(Bitmap bitmap1, Bitmap bitmap2) {
+        if (bitmap1 == null || bitmap2 == null) return bitmap1 == null && bitmap2 == null;
         int width = bitmap1.getWidth();
         int height = bitmap1.getHeight();
         if (width != bitmap2.getWidth() || height != bitmap2.getHeight()) return false;
@@ -94,6 +97,7 @@ public class WallpaperTestUtils {
      * <br>
      * Use {@link #getBitmap} to convert the drawables to bitmap,
      * then {@link #isSimilar(Bitmap, Bitmap)} to perform the similarity comparison.
+     * Return true if both drawables are null.
      */
     public static boolean isSimilar(Drawable drawable1, Drawable drawable2) {
         return isSimilar(getBitmap(drawable1), getBitmap(drawable2));
@@ -105,6 +109,7 @@ public class WallpaperTestUtils {
      */
     public static boolean areEqual(ParcelFileDescriptor actual, ParcelFileDescriptor expected)
             throws IOException {
+        if (actual == null || expected == null) return actual == null && expected == null;
         ParcelFileDescriptor.AutoCloseInputStream actualStream =
                 new ParcelFileDescriptor.AutoCloseInputStream(actual);
         ParcelFileDescriptor.AutoCloseInputStream expectedStream =
