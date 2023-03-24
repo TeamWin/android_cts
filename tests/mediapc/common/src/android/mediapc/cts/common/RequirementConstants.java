@@ -41,6 +41,7 @@ public class RequirementConstants {
     public static final String R5_1__H_1_14 = "r5_1__h_1_14"; // 5.1/H-1-14
     public static final String R5_1__H_1_15 = "r5_1__h_1_15"; // 5.1/H-1-16
     public static final String R5_1__H_1_16 = "r5_1__h_1_16"; // 5.1/H-1-16
+    public static final String R5_1__H_1_17 = "r5_1__h_1_17"; // 5.1/H-1-17
     public static final String R5_3__H_1_1 = "r5_3__h_1_1"; // 5.3/H-1-1
     public static final String R5_3__H_1_2 = "r5_3__h_1_2"; // 5.3/H-1-2
     public static final String R5_6__H_1_1 = "r5_6__h_1_1"; // 5.6/H-1-1
@@ -91,6 +92,7 @@ public class RequirementConstants {
     public static final String PHYSICAL_MEMORY = "physical_memory_mb";
     public static final String CODEC_INIT_LATENCY = "codec_initialization_latency_ms";
     public static final String AV1_DEC_REQ = "av1_decoder_requirement_boolean";
+    public static final String AVIF_DEC_REQ = "AVIF_image_decoder";
     public static final String NUM_4k_HW_DEC = "number_4k_hw_decoders";
     public static final String NUM_4k_HW_ENC = "number_4k_hw_encoders";
     public static final String SECURE_REQ_SATISFIED = "secure_requirement_satisfied_boolean";

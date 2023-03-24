@@ -16,6 +16,9 @@
 
 package android.mediapc.cts;
 
+import static android.media.MediaCodecInfo.CodecProfileLevel.AV1Level51;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AV1ProfileMain10;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AV1ProfileMain8;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_AV1;
 import static android.mediapc.cts.CodecTestBase.SELECT_HARDWARE;
 import static android.mediapc.cts.CodecTestBase.SELECT_VIDEO;
@@ -24,6 +27,8 @@ import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
 
 import static org.junit.Assert.assertTrue;
 
+import android.graphics.Bitmap;
+import android.graphics.ImageDecoder;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.VideoCapabilities.PerformancePoint;
@@ -41,6 +46,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -51,6 +57,7 @@ public class VideoCodecRequirementsTest {
     private static final String LOG_TAG = VideoCodecRequirementsTest.class.getSimpleName();
     private static final String FILE_AV1_REQ_SUPPORT =
             "dpov_1920x1080_60fps_av1_10bit_film_grain.mp4";
+    private static final String INPUT_FILE = "bbb_3840x2160_AVIF.avif";
 
     @Rule
     public final TestName mTestName = new TestName();
@@ -58,6 +65,12 @@ public class VideoCodecRequirementsTest {
     @Before
     public void isPerformanceClassCandidate() {
         Utils.assumeDeviceMeetsPerformanceClassPreconditions();
+    }
+
+    private boolean decodeAVIF(File inputfile) throws IOException {
+        ImageDecoder.Source src = ImageDecoder.createSource(inputfile);
+        Bitmap bm = ImageDecoder.decodeBitmap(src);
+        return true;
     }
 
     private Set<String> get4k60HwCodecSet(boolean isEncoder) throws IOException {
@@ -145,6 +158,36 @@ public class VideoCodecRequirementsTest {
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.VideoCodecRequirement r4k60HwEncoder = pce.addR4k60HwEncoder();
         r4k60HwEncoder.set4kHwEncoders(encoderSet.size());
+
+        pce.submitAndCheck();
+    }
+
+    /**
+     * MUST have at least 1 hardware image decoder supporting AVIF Baseline Profile.
+     */
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirement = "5.1/H-1-17")
+    public void testAVIFHwDecoderRequirements() throws Exception {
+        int[] profiles = {AV1ProfileMain8, AV1ProfileMain10};
+        ArrayList<MediaFormat> formats = new ArrayList<>();
+        for (int profile : profiles) {
+            MediaFormat format = MediaFormat.createVideoFormat(MIMETYPE_VIDEO_AV1, 3840, 2160);
+            format.setInteger(MediaFormat.KEY_PROFILE, profile);
+            format.setInteger(MediaFormat.KEY_LEVEL, AV1Level51);
+            formats.add(format);
+        }
+        ArrayList<String> av1HwDecoders =
+                selectHardwareCodecs(MIMETYPE_VIDEO_AV1, formats, null, false);
+        boolean isDecoded = false;
+        if (av1HwDecoders.size() != 0) {
+            isDecoded = decodeAVIF(new File(WorkDir.getMediaDirString() + INPUT_FILE));
+        }
+
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.VideoCodecRequirement rAVIFDecoderReq =
+                pce.addRAVIFDecoderReq();
+        rAVIFDecoderReq.setAVIFDecoderReq(isDecoded);
 
         pce.submitAndCheck();
     }
