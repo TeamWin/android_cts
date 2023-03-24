@@ -99,9 +99,11 @@ public class CompatScaleTests extends ActivityManagerTestBase {
     private final float mInvCompatScale;
     private CommandSession.SizeInfo mAppSizesNormal;
     private CommandSession.SizeInfo mAppSizesDownscaled;
+    private CommandSession.SizeInfo mAppSizesUpscaled;
     private CommandSession.ActivitySession mActivity;
     private WindowManagerState.WindowState mWindowStateNormal;
     private WindowManagerState.WindowState mWindowStateDownscaled;
+    private WindowManagerState.WindowState mWindowStateUpscaled;
 
     public CompatScaleTests(String compatChangeName, float compatScale) {
         mCompatChangeName = compatChangeName;
@@ -125,6 +127,14 @@ public class CompatScaleTests extends ActivityManagerTestBase {
         launchActivity();
         mAppSizesDownscaled = getActivityReportedSizes();
         mWindowStateDownscaled = getPackageWindowState();
+
+        // Now launch the same activity with upscaling *enabled* and get the sizes it reports and
+        // its Window state.
+        enableUpscaling(mCompatChangeName);
+        mWmState.waitForActivityRemoved(ACTIVITY_UNDER_TEST);
+        launchActivity();
+        mAppSizesUpscaled = getActivityReportedSizes();
+        mWindowStateUpscaled = getPackageWindowState();
     }
 
     @Test
@@ -166,6 +176,17 @@ public class CompatScaleTests extends ActivityManagerTestBase {
     }
 
     /**
+     * Tests that the Density DPI that the application receives from the
+     * {@link android.content.res.Configuration} is correctly scaled in the upscaled mode.
+     * @see android.content.res.Configuration#densityDpi
+     */
+    @Test
+    public void test_config_densityDpi_scalesCorrectly_inCompatUpscalingMode() {
+        assertScaled("Density DPI should scale by " + mInvCompatScale,
+                mAppSizesNormal.densityDpi, mInvCompatScale, mAppSizesUpscaled.densityDpi);
+    }
+
+    /**
      * Tests that the screen sizes in DPs that the application receives from the
      * {@link android.content.res.Configuration} are NOT scaled in the downscaled mode.
      * @see android.content.res.Configuration#screenWidthDp
@@ -180,6 +201,23 @@ public class CompatScaleTests extends ActivityManagerTestBase {
                 mAppSizesNormal.heightDp, mAppSizesDownscaled.heightDp);
         assertEquals("Smallest Width shouldn't change",
                 mAppSizesNormal.smallestWidthDp, mAppSizesDownscaled.smallestWidthDp);
+    }
+
+    /**
+     * Tests that the screen sizes in DPs that the application receives from the
+     * {@link android.content.res.Configuration} are NOT scaled in the upscaled mode.
+     * @see android.content.res.Configuration#screenWidthDp
+     * @see android.content.res.Configuration#screenHeightDp
+     * @see android.content.res.Configuration#smallestScreenWidthDp
+     */
+    @Test
+    public void test_config_screenSize_inDPs_doesNotChange_inCompatUpscalingMode() {
+        assertEquals("Width shouldn't change",
+                mAppSizesNormal.widthDp, mAppSizesUpscaled.widthDp);
+        assertEquals("Height shouldn't change",
+                mAppSizesNormal.heightDp, mAppSizesUpscaled.heightDp);
+        assertEquals("Smallest Width shouldn't change",
+                mAppSizesNormal.smallestWidthDp, mAppSizesUpscaled.smallestWidthDp);
     }
 
     /**
@@ -202,6 +240,26 @@ public class CompatScaleTests extends ActivityManagerTestBase {
     }
 
     /**
+     * Tests that the Window sizes in PXs that the application receives from the
+     * {@link android.content.res.Configuration} are scaled correctly in the upscaled mode.
+     * @see android.content.res.Configuration#windowConfiguration
+     * @see android.app.WindowConfiguration#getBounds()
+     * @see android.app.WindowConfiguration#getAppBounds()
+     */
+    @Test
+    public void test_config_windowSizes_inPXs_scaleCorrectly_inCompatUpscalingMode() {
+        assertScaled("Width should scale by " + mInvCompatScale,
+                mAppSizesNormal.windowWidth, mInvCompatScale, mAppSizesUpscaled.windowWidth);
+        assertScaled("Height should scale by " + mInvCompatScale,
+                mAppSizesNormal.windowHeight, mInvCompatScale, mAppSizesUpscaled.windowHeight);
+        assertScaled("App width should scale by " + mInvCompatScale,
+                mAppSizesNormal.windowAppWidth, mInvCompatScale, mAppSizesUpscaled.windowAppWidth);
+        assertScaled("App height should scale by " + mInvCompatScale,
+                mAppSizesNormal.windowAppHeight, mInvCompatScale,
+                mAppSizesUpscaled.windowAppHeight);
+    }
+
+    /**
      * Tests that the {@link android.util.DisplayMetrics} in PXs that the application can obtain via
      * {@link android.content.res.Resources#getDisplayMetrics()} are scaled correctly in the
      * downscaled mode.
@@ -217,6 +275,21 @@ public class CompatScaleTests extends ActivityManagerTestBase {
     }
 
     /**
+     * Tests that the {@link android.util.DisplayMetrics} in PXs that the application can obtain via
+     * {@link android.content.res.Resources#getDisplayMetrics()} are scaled correctly in the
+     * upscaled mode.
+     * @see android.util.DisplayMetrics#widthPixels
+     * @see android.util.DisplayMetrics#heightPixels
+     */
+    @Test
+    public void test_displayMetrics_inPXs_scaleCorrectly_inCompatUpscalingMode() {
+        assertScaled("Width should scale by " + mInvCompatScale,
+                mAppSizesNormal.metricsWidth, mInvCompatScale, mAppSizesUpscaled.metricsWidth);
+        assertScaled("Height should scale by " + mInvCompatScale,
+                mAppSizesNormal.metricsHeight, mInvCompatScale, mAppSizesUpscaled.metricsHeight);
+    }
+
+    /**
      * Tests that the dimensions of a {@link android.view.Display} in PXs that the application can
      * obtain via {@link android.view.View#getDisplay()} are scaled correctly in the downscaled
      * mode.
@@ -228,6 +301,20 @@ public class CompatScaleTests extends ActivityManagerTestBase {
                 mAppSizesNormal.displayWidth, mCompatScale, mAppSizesDownscaled.displayWidth);
         assertScaled("Height should scale by " + mCompatScale,
                 mAppSizesNormal.displayHeight, mCompatScale, mAppSizesDownscaled.displayHeight);
+    }
+
+    /**
+     * Tests that the dimensions of a {@link android.view.Display} in PXs that the application can
+     * obtain via {@link android.view.View#getDisplay()} are scaled correctly in the upscaled
+     * mode.
+     * @see android.view.Display#getSize(android.graphics.Point)
+     */
+    @Test
+    public void test_displaySize_inPXs_scaleCorrectly_inCompatUpscalingMode() {
+        assertScaled("Width should scale by " + mInvCompatScale,
+                mAppSizesNormal.displayWidth, mInvCompatScale, mAppSizesUpscaled.displayWidth);
+        assertScaled("Height should scale by " + mInvCompatScale,
+                mAppSizesNormal.displayHeight, mInvCompatScale, mAppSizesUpscaled.displayHeight);
     }
 
     /**
@@ -260,9 +347,40 @@ public class CompatScaleTests extends ActivityManagerTestBase {
                 mWindowStateDownscaled.getRequestedHeight());
     }
 
+    /**
+     * Test that compatibility upscaling is reflected correctly on the WM side.
+     * @see android.server.wm.WindowManagerState.WindowState
+     */
+    @Test
+    public void test_windowState_inCompatUpscalingMode() {
+        // Check the "normal" window's state for disabled compat mode and appropriate global scale.
+        assertFalse("The Window should not be in the size compat mode",
+                mWindowStateNormal.hasCompatScale());
+        assertEquals("The window should not be scaled",
+                1f, mWindowStateNormal.getGlobalScale(), EPSILON_GLOBAL_SCALE);
+
+        // Check the "upscaled" window's state for enabled compat mode and appropriate global
+        // scale.
+        assertTrue("The Window should be in the size compat mode",
+                mWindowStateUpscaled.hasCompatScale());
+        assertEquals("The window should have global scale of " + mCompatScale,
+                mCompatScale, mWindowStateUpscaled.getGlobalScale(), EPSILON_GLOBAL_SCALE);
+
+        // Make sure the frame sizes changed correctly.
+        assertEquals("Window frame on should not change",
+                mWindowStateNormal.getFrame(), mWindowStateUpscaled.getFrame());
+        assertScaled("Requested width should scale by " + mInvCompatScale,
+                mWindowStateNormal.getRequestedWidth(), mInvCompatScale,
+                mWindowStateUpscaled.getRequestedWidth());
+        assertScaled("Requested height should scale by " + mInvCompatScale,
+                mWindowStateNormal.getRequestedHeight(), mInvCompatScale,
+                mWindowStateUpscaled.getRequestedHeight());
+    }
+
     @After
     public void tearDown() {
         disableDownscaling(mCompatChangeName);
+        disableUpscaling(mCompatChangeName);
     }
 
     private void launchActivity() {
@@ -302,6 +420,16 @@ public class CompatScaleTests extends ActivityManagerTestBase {
 
     private static void disableDownscaling(String compatChangeName) {
         executeShellCommand("am compat disable DOWNSCALED " + PACKAGE_UNDER_TEST);
+        executeShellCommand("am compat disable " + compatChangeName + " " + PACKAGE_UNDER_TEST);
+    }
+
+    private static void enableUpscaling(String compatChangeName) {
+        executeShellCommand("am compat enable " + compatChangeName + " " + PACKAGE_UNDER_TEST);
+        executeShellCommand("am compat enable DOWNSCALED_INVERSE " + PACKAGE_UNDER_TEST);
+    }
+
+    private static void disableUpscaling(String compatChangeName) {
+        executeShellCommand("am compat disable DOWNSCALED_INVERSE " + PACKAGE_UNDER_TEST);
         executeShellCommand("am compat disable " + compatChangeName + " " + PACKAGE_UNDER_TEST);
     }
 
