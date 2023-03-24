@@ -39,7 +39,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
-import com.android.compatibility.common.util.SystemUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -177,11 +176,8 @@ public class ScanResultTest extends WifiJUnit3TestBase {
     private void setWifiEnabled(boolean enable) throws Exception {
         synchronized (mMySync) {
             mMySync.expectedState = STATE_WIFI_CHANGING;
-            if (enable) {
-                SystemUtil.runShellCommand("svc wifi enable");
-            } else {
-                SystemUtil.runShellCommand("svc wifi disable");
-            }
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.setWifiEnabled(enable));
             waitForBroadcast(TIMEOUT_MSEC, STATE_WIFI_CHANGED);
        }
     }
