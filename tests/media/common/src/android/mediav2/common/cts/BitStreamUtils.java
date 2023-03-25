@@ -16,6 +16,7 @@
 
 package android.mediav2.common.cts;
 
+import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 import static android.media.MediaFormat.PICTURE_TYPE_B;
 import static android.media.MediaFormat.PICTURE_TYPE_I;
 import static android.media.MediaFormat.PICTURE_TYPE_P;
@@ -23,11 +24,13 @@ import static android.media.MediaFormat.PICTURE_TYPE_UNKNOWN;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
+import android.util.Pair;
 
 import org.junit.Assert;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * This class contains utility functions that parse compressed bitstream and returns metadata
@@ -38,9 +41,15 @@ import java.util.ArrayList;
  * Currently this class hosts utils that can,
  * <ul>
  *     <li>Return frame type of the access units of avc, hevc, av1.</li>
+ *     <li>Return profile/level information of avc, hevc, av1, vp9, mpeg4, h263, aac</li>
  * </ul>
  */
 public class BitStreamUtils {
+    public static int getHashMapVal(HashMap<Integer, Integer> obj, int key) {
+        Integer val = obj.get(key);
+        return val == null ? -1 : val;
+    }
+
     static class ParsableBitArray {
         protected final byte[] mData;
         protected final int mOffset;
@@ -71,9 +80,9 @@ public class BitStreamUtils {
         }
 
         public int readBits(int numBits) {
-            if (numBits > 31) {
-                throw new IllegalArgumentException(
-                        "left shift overflow exception, reading too many bits at one go");
+            if (numBits > 32) {
+                throw new IllegalArgumentException("readBits Exception: maximum storage space of "
+                        + "return value of readBits : 32, less than bits to read : " + numBits);
             }
             int value = 0;
             for (int i = 0; i < numBits; i++) {
@@ -84,9 +93,9 @@ public class BitStreamUtils {
         }
 
         public long readBitsLong(int numBits) {
-            if (numBits > 63) {
-                throw new IllegalArgumentException(
-                        "left shift overflow exception, reading too many bits at one go");
+            if (numBits > 64) {
+                throw new IllegalArgumentException("readBitsLong Exception: maximum storage space "
+                        + "of return value of readBits : 64, less than bits to read : " + numBits);
             }
             long value = 0;
             for (int i = 0; i < numBits; i++) {
@@ -168,10 +177,131 @@ public class BitStreamUtils {
         }
 
         public abstract int getFrameType();
+
+        public abstract Pair<Integer, Integer> getProfileLevel(boolean isCsd);
+
+        // .first = profile, .second = level
+        public Pair<Integer, Integer> plToPair(int profile, int level) {
+            return Pair.create(profile, level);
+        }
+    }
+
+    static class Mpeg4Parser extends ParserBase {
+        @Override
+        public int getFrameType() {
+            return PICTURE_TYPE_UNKNOWN;
+        }
+
+        @Override
+        public Pair<Integer, Integer> getProfileLevel(@SuppressWarnings("unused") boolean isCsd) {
+            ParsableBitArray bitArray = new ParsableBitArray(mData, mOffset, mLimit);
+            Assert.assertEquals(0, bitArray.readBits(8));
+            Assert.assertEquals(0, bitArray.readBits(8));
+            Assert.assertEquals(1, bitArray.readBits(8));
+            Assert.assertEquals(0xb0, bitArray.readBits(8));
+            int profileLevel = bitArray.readBits(8);
+            switch (profileLevel) {
+                case 0x08: return plToPair(MPEG4ProfileSimple, MPEG4Level0);
+                case 0x01: return plToPair(MPEG4ProfileSimple, MPEG4Level1);
+                case 0x02: return plToPair(MPEG4ProfileSimple, MPEG4Level2);
+                case 0x03: return plToPair(MPEG4ProfileSimple, MPEG4Level3);
+                case 0xf0: return plToPair(MPEG4ProfileAdvancedSimple, MPEG4Level0);
+                case 0xf1: return plToPair(MPEG4ProfileAdvancedSimple, MPEG4Level1);
+                case 0xf2: return plToPair(MPEG4ProfileAdvancedSimple, MPEG4Level2);
+                case 0xf3: return plToPair(MPEG4ProfileAdvancedSimple, MPEG4Level3);
+                case 0xf7: return plToPair(MPEG4ProfileAdvancedSimple, MPEG4Level3b);
+                case 0xf4: return plToPair(MPEG4ProfileAdvancedSimple, MPEG4Level4);
+                case 0xf5: return plToPair(MPEG4ProfileAdvancedSimple, MPEG4Level5);
+                default: return null;
+            }
+        }
+    }
+
+    static class H263Parser extends ParserBase {
+        @Override
+        public int getFrameType() {
+            return PICTURE_TYPE_UNKNOWN;
+        }
+
+        @Override
+        public Pair<Integer, Integer> getProfileLevel(@SuppressWarnings("unused") boolean isCsd) {
+            ParsableBitArray bitArray = new ParsableBitArray(mData, mOffset, mLimit);
+            Assert.assertEquals("bad psc", 0x20, bitArray.readBits(22));
+            bitArray.readBits(8); // tr
+            Assert.assertEquals(1, bitArray.readBits(1));
+            Assert.assertEquals(0, bitArray.readBits(1));
+            bitArray.readBits(1);  // split screen
+            bitArray.readBits(1);  // camera indicator
+            bitArray.readBits(1);  // freeze indicator
+            int sourceFormat = bitArray.readBits(3);
+            int picType;
+            int umv = 0, sac = 0, ap = 0, pb = 0;
+            int aic = 0, df = 0, ss = 0, rps = 0, isd = 0, aiv = 0, mq = 0;
+            int rpr = 0, rru = 0;
+            if (sourceFormat == 7) {
+                int ufep = bitArray.readBits(3);
+                if (ufep == 1) {
+                    sourceFormat = bitArray.readBits(3);
+                    bitArray.readBits(1); // custom pcf
+                    umv = bitArray.readBits(1);
+                    sac = bitArray.readBits(1);
+                    ap = bitArray.readBits(1);
+                    aic = bitArray.readBits(1);
+                    df = bitArray.readBits(1);
+                    ss = bitArray.readBits(1);
+                    rps = bitArray.readBits(1);
+                    isd = bitArray.readBits(1);
+                    aiv = bitArray.readBits(1);
+                    mq = bitArray.readBits(1);
+                    Assert.assertEquals(1, bitArray.readBits(1));
+                    Assert.assertEquals(0, bitArray.readBits(3));
+                }
+                picType = bitArray.readBits(3);
+                rpr = bitArray.readBits(1);
+                rru = bitArray.readBits(1);
+                bitArray.readBits(1);  // rtype
+                Assert.assertEquals(0, bitArray.readBits(1));  // reserved
+                Assert.assertEquals(0, bitArray.readBits(1));  // reserved
+                Assert.assertEquals(1, bitArray.readBits(1));  // start code emulation
+            } else {
+                picType = bitArray.readBits(1);
+                umv = bitArray.readBits(1);
+                sac = bitArray.readBits(1);
+                ap = bitArray.readBits(1);
+                pb = bitArray.readBits(1);
+            }
+            int profile = H263ProfileBaseline;
+            if (ap == 1) profile = H263ProfileBackwardCompatible;
+            if (aic == 1 && df == 1 && ss == 1 && mq == 1) profile = H263ProfileISWV2;
+            return plToPair(profile, -1);
+        }
     }
 
     static class AvcParser extends ParserBase {
         private static final int NO_NAL_UNIT_FOUND = -1;
+        private static final HashMap<Integer, Integer> LEVEL_MAP = new HashMap<>() {
+            {
+                put(10, AVCLevel1);
+                put(11, AVCLevel11);
+                put(12, AVCLevel12);
+                put(13, AVCLevel13);
+                put(20, AVCLevel2);
+                put(21, AVCLevel21);
+                put(22, AVCLevel22);
+                put(30, AVCLevel3);
+                put(31, AVCLevel31);
+                put(32, AVCLevel32);
+                put(40, AVCLevel4);
+                put(41, AVCLevel41);
+                put(42, AVCLevel42);
+                put(50, AVCLevel5);
+                put(51, AVCLevel51);
+                put(52, AVCLevel52);
+                put(60, AVCLevel6);
+                put(61, AVCLevel61);
+                put(62, AVCLevel62);
+            }
+        };
 
         private int getNalUnitStartOffset(byte[] dataArray, int start, int limit) {
             for (int pos = start; pos + 3 < limit; pos++) {
@@ -198,7 +328,8 @@ public class BitStreamUtils {
                 int nalUnitType = getNalUnitType(mData, offset);
                 if (nalUnitType == 1 || nalUnitType == 2 || nalUnitType == 5) {  // coded slice
                     NalParsableBitArray bitArray = new NalParsableBitArray(mData, offset, mLimit);
-                    bitArray.readBits(8); // forbidden zero bit + nal_ref_idc + nal_unit_type
+                    Assert.assertEquals(0, bitArray.readBits(1)); // forbidden zero bit
+                    bitArray.readBits(7); // nal_ref_idc + nal_unit_type
                     bitArray.readUEV(); // first_mb_in_slice
                     int sliceType = bitArray.readUEV();
                     if (sliceType % 5 == 0) {
@@ -215,6 +346,77 @@ public class BitStreamUtils {
             }
             return PICTURE_TYPE_UNKNOWN;
         }
+
+        @Override
+        public Pair<Integer, Integer> getProfileLevel(@SuppressWarnings("unused") boolean isCsd) {
+            for (int pos = mOffset; pos < mLimit; ) {
+                int offset = getNalUnitStartOffset(mData, pos, mLimit);
+                if (offset == NO_NAL_UNIT_FOUND) return null;
+                if (getNalUnitType(mData, offset) == 7) { // seq_parameter_set_rbsp
+                    NalParsableBitArray bitArray = new NalParsableBitArray(mData, offset, mLimit);
+                    Assert.assertEquals(0, bitArray.readBits(1)); // forbidden zero bit
+                    bitArray.readBits(7); // nal_ref_idc + nal_unit_type
+                    int profileIdc = bitArray.readBits(8);
+                    int constraintSet0Flag = bitArray.readBits(1);
+                    int constraintSet1Flag = bitArray.readBits(1);
+                    int constraintSet2Flag = bitArray.readBits(1);
+                    int constraintSet3Flag = bitArray.readBits(1);
+                    int constraintSet4Flag = bitArray.readBits(1);
+                    int constraintSet5Flag = bitArray.readBits(1);
+                    Assert.assertEquals(0, bitArray.readBits(2)); // reserved zero 2 bits
+                    int levelIdc = bitArray.readBits(8);
+
+                    int profile = -1;
+                    if (constraintSet0Flag == 1 || profileIdc == 66) {
+                        profile = constraintSet1Flag == 1 ? AVCProfileConstrainedBaseline :
+                                AVCProfileBaseline;
+                    } else if (constraintSet1Flag == 1 || profileIdc == 77) {
+                        profile = AVCProfileMain;
+                    } else if (constraintSet2Flag == 1 || profileIdc == 88) {
+                        profile = AVCProfileExtended;
+                    } else if (profileIdc == 100) {
+                        profile = (constraintSet4Flag == 1 && constraintSet5Flag == 1)
+                                ? AVCProfileConstrainedHigh : AVCProfileHigh;
+                    } else if (profileIdc == 110) {
+                        profile = AVCProfileHigh10;
+                    } else if (profileIdc == 122) {
+                        profile = AVCProfileHigh422;
+                    } else if (profileIdc == 244) {
+                        profile = AVCProfileHigh444;
+                    }
+
+                    // In bitstreams conforming to the Baseline, Constrained Baseline, Main, or
+                    // Extended profiles :
+                    // - If level_idc is equal to 11 and constraint_set3_flag is equal to 1, the
+                    // indicated level is level 1b.
+                    // - Otherwise (level_idc is not equal to 11 or constraint_set3_flag is not
+                    // equal to 1), level_idc is equal to a value of ten times the level number
+                    // (of the indicated level) specified in Table A-1.
+                    int level;
+                    if ((levelIdc == 11) && (profile == AVCProfileBaseline
+                            || profile == AVCProfileConstrainedBaseline || profile == AVCProfileMain
+                            || profile == AVCProfileExtended)) {
+                        level = constraintSet3Flag == 1 ? AVCLevel1b : AVCLevel11;
+                    } else if ((levelIdc == 9) && (profile == AVCProfileHigh
+                            || profile == AVCProfileHigh10 || profile == AVCProfileHigh422
+                            || profile == AVCProfileHigh444)) {
+                        // In bitstreams conforming to the High, High 10, High 4:2:2, High 4:4:4
+                        // Predictive, High 10 Intra, High 4:2:2 Intra, High 4:4:4 Intra, or
+                        // CAVLC 4:4:4 Intra profiles,
+                        // - If level_idc is equal to 9, the indicated level is level 1b.
+                        // - Otherwise (level_idc is not equal to 9), level_idc is equal to a
+                        // value of ten times the level number (of the indicated level) specified
+                        // in Table A-1
+                        level = AVCLevel1b;
+                    } else {
+                        level = getHashMapVal(LEVEL_MAP, levelIdc);
+                    }
+                    return plToPair(profile, level);
+                }
+                pos = offset;
+            }
+            return null;
+        }
     }
 
     static class HevcParser extends ParserBase {
@@ -223,6 +425,35 @@ public class BitStreamUtils {
         private static final int RASL_R = 9;
         private static final int BLA_W_LP = 16;
         private static final int RSV_IRAP_VCL23 = 23;
+        private static final HashMap<Integer, Integer> LEVEL_MAP_MAIN_TIER = new HashMap<>() {
+            {
+                put(30, HEVCMainTierLevel1);
+                put(60, HEVCMainTierLevel2);
+                put(63, HEVCMainTierLevel21);
+                put(90, HEVCMainTierLevel3);
+                put(93, HEVCMainTierLevel31);
+                put(120, HEVCMainTierLevel4);
+                put(123, HEVCMainTierLevel41);
+                put(150, HEVCMainTierLevel5);
+                put(153, HEVCMainTierLevel51);
+                put(156, HEVCMainTierLevel52);
+                put(180, HEVCMainTierLevel6);
+                put(183, HEVCMainTierLevel61);
+                put(186, HEVCMainTierLevel62);
+            }
+        };
+        private static final HashMap<Integer, Integer> LEVEL_MAP_HIGH_TIER = new HashMap<>() {
+            {
+                put(120, HEVCHighTierLevel4);
+                put(123, HEVCHighTierLevel41);
+                put(150, HEVCHighTierLevel5);
+                put(153, HEVCHighTierLevel51);
+                put(156, HEVCHighTierLevel52);
+                put(180, HEVCHighTierLevel6);
+                put(183, HEVCHighTierLevel61);
+                put(186, HEVCHighTierLevel62);
+            }
+        };
 
         private int getNalUnitStartOffset(byte[] dataArray, int start, int limit) {
             for (int pos = start; pos + 3 < limit; pos++) {
@@ -274,6 +505,120 @@ public class BitStreamUtils {
                 pos = offset;
             }
             return PICTURE_TYPE_UNKNOWN;
+        }
+
+        @Override
+        public Pair<Integer, Integer> getProfileLevel(@SuppressWarnings("unused") boolean isCsd) {
+            for (int pos = mOffset; pos < mLimit; ) {
+                int offset = getNalUnitStartOffset(mData, pos, mLimit);
+                if (offset == NO_NAL_UNIT_FOUND) return null;
+                if (getNalUnitType(mData, offset) == 33) { // sps_nut
+                    NalParsableBitArray bitArray = new NalParsableBitArray(mData, offset, mLimit);
+                    bitArray.readBits(16); // nal unit header
+                    bitArray.readBits(4); // sps video parameter set id
+                    bitArray.readBits(3); // sps_max_sub_layers_minus1
+                    bitArray.readBits(1); // sps temporal id nesting flag
+                    // profile_tier_level
+                    bitArray.readBits(2); // generalProfileSpace
+                    int generalTierFlag = bitArray.readBits(1);
+                    int generalProfileIdc = bitArray.readBits(5);
+                    int[] generalProfileCompatibility = new int[32];
+                    for (int j = 0; j < generalProfileCompatibility.length; j++) {
+                        generalProfileCompatibility[j] = bitArray.readBits(1);
+                    }
+                    bitArray.readBits(1); // general progressive source flag
+                    bitArray.readBits(1); // general interlaced source flag
+                    bitArray.readBits(1); // general non packed constraint flag
+                    bitArray.readBits(1); // general frame only constraint flag
+
+                    // interpretation of next 44 bits is dependent on generalProfileIdc and
+                    // generalProfileCompatibility; but we do not use them in this validation
+                    // process, so we're skipping over them.
+                    bitArray.readBitsLong(44);
+                    int generalLevelIdc = bitArray.readBits(8);
+
+                    int profile = -1;
+                    if (generalProfileIdc == 1 || generalProfileCompatibility[1] == 1) {
+                        profile = HEVCProfileMain;
+                    } else if (generalProfileIdc == 2 || generalProfileCompatibility[2] == 1) {
+                        profile = HEVCProfileMain10;
+                    } else if (generalProfileIdc == 3 || generalProfileCompatibility[3] == 1) {
+                        profile = HEVCProfileMainStill;
+                    }
+
+                    return plToPair(profile, getHashMapVal(
+                            generalTierFlag == 0 ? LEVEL_MAP_MAIN_TIER : LEVEL_MAP_HIGH_TIER,
+                            generalLevelIdc));
+                }
+                pos = offset;
+            }
+            return null;
+        }
+    }
+
+    static class Vp9Parser extends ParserBase {
+        private static final HashMap<Integer, Integer> PROFILE_MAP = new HashMap<>() {
+            {
+                put(0, VP9Profile0);
+                put(1, VP9Profile1);
+                put(2, VP9Profile2);
+                put(3, VP9Profile3);
+            }
+        };
+        private static final HashMap<Integer, Integer> LEVEL_MAP = new HashMap<>() {
+            {
+                put(10, VP9Level1);
+                put(11, VP9Level11);
+                put(20, VP9Level2);
+                put(21, VP9Level21);
+                put(30, VP9Level3);
+                put(31, VP9Level31);
+                put(40, VP9Level4);
+                put(41, VP9Level41);
+                put(50, VP9Level5);
+                put(51, VP9Level51);
+                put(60, VP9Level6);
+                put(61, VP9Level61);
+                put(62, VP9Level62);
+            }
+        };
+
+        private Pair<Integer, Integer> getProfileLevelFromCSD() { // parse vp9 codecprivate
+            int profile = -1, level = -1;
+            for (int pos = mOffset; pos < mLimit; ) {
+                ParsableBitArray bitArray = new ParsableBitArray(mData, pos + mOffset, mLimit);
+                int id = bitArray.readBits(8);
+                int len = bitArray.readBits(8);
+                pos += 2;
+                int val = bitArray.readBits(len * 8);
+                pos += len;
+                if (id == 1 || id == 2) {
+                    Assert.assertEquals(1, len);
+                    if (id == 1) profile = val;
+                    else level = val;
+                }
+                if (profile != -1 && level != -1) break;
+            }
+            return plToPair(getHashMapVal(PROFILE_MAP, profile), getHashMapVal(LEVEL_MAP, level));
+        }
+
+        private Pair<Integer, Integer> getProfileFromFrameHeader() { // parse uncompressed header
+            ParsableBitArray bitArray = new ParsableBitArray(mData, mOffset, mLimit);
+            bitArray.readBits(2); // frame marker
+            int profileLBit = bitArray.readBits(1);
+            int profileHBit = bitArray.readBits(1);
+            int profile = profileHBit << 1 + profileLBit;
+            return plToPair(getHashMapVal(PROFILE_MAP, profile), -1);
+        }
+
+        @Override
+        public int getFrameType() {
+            return PICTURE_TYPE_UNKNOWN;
+        }
+
+        @Override
+        public Pair<Integer, Integer> getProfileLevel(boolean isCsd) {
+            return isCsd ? getProfileLevelFromCSD() : getProfileFromFrameHeader();
         }
     }
 
@@ -578,6 +923,48 @@ public class BitStreamUtils {
             return frameHeader;
         }
 
+        // parse av1 codec configuration record
+        private Pair<Integer, Integer> getProfileLevelFromCSD() {
+            int profile = -1;
+            ParsableBitArray bitArray = new ParsableBitArray(mData, mOffset, mLimit);
+            Assert.assertEquals(1, bitArray.readBits(1));  // marker
+            Assert.assertEquals(1, bitArray.readBits(7));  // version
+            int seqProfile = bitArray.readBits(3);
+            int seqLevelIdx0 = bitArray.readBits(5);
+            bitArray.readBits(1);  // seqTier0
+            int highBitDepth = bitArray.readBits(1);
+            bitArray.readBits(1);  // is input 12 bit;
+            if (seqProfile == 0) {
+                profile = highBitDepth == 0 ? AV1ProfileMain8 : AV1ProfileMain10;
+            }
+
+            int level = AV1Level2 << seqLevelIdx0;
+            return plToPair(profile, level);
+        }
+
+        // parse av1 sequence header
+        private Pair<Integer, Integer> getProfileLevelFromSeqHeader() {
+            for (int pos = mOffset; pos < mLimit; ) {
+                ObuInfo obuDetails = parseObuHeader(mData, pos, mLimit);
+                ObuParsableBitArray bitArray =
+                        new ObuParsableBitArray(mData, pos + obuDetails.getObuDataOffset(),
+                                pos + obuDetails.getTotalObuSize());
+                if (obuDetails.mObuType == OBU_SEQUENCE_HEADER) {
+                    int profile = -1;
+                    parseSequenceHeader(bitArray);
+                    if (mSeqHeader.seqProfile == 0) {
+                        profile = mSeqHeader.enableHighBitDepth == 0 ? AV1ProfileMain8 :
+                                AV1ProfileMain10;
+                    }
+
+                    int level = AV1Level2 << mSeqHeader.seqLevelIdx[0];
+                    return plToPair(profile, level);
+                }
+                pos += obuDetails.getTotalObuSize();
+            }
+            return null;
+        }
+
         @Override
         public int getFrameType() {
             ArrayList<FrameHeaderObu> headers = new ArrayList();
@@ -609,26 +996,68 @@ public class BitStreamUtils {
             }
             return PICTURE_TYPE_UNKNOWN;
         }
+
+        @Override
+        public Pair<Integer, Integer> getProfileLevel(boolean isCsd) {
+            return isCsd ? getProfileLevelFromCSD() : getProfileLevelFromSeqHeader();
+        }
+    }
+
+    static class AacParser extends ParserBase {
+        @Override
+        public int getFrameType() {
+            return PICTURE_TYPE_UNKNOWN;
+        }
+
+        @Override
+        public Pair<Integer, Integer> getProfileLevel(@SuppressWarnings("unused") boolean isCsd) {
+            // parse AudioSpecificConfig() of ISO 14496 Part 3
+            ParsableBitArray bitArray = new ParsableBitArray(mData, mOffset, mLimit);
+            int audioObjectType = bitArray.readBits(5);
+            if (audioObjectType == 31) {
+                audioObjectType = 32 + bitArray.readBits(6); // audio object type ext
+            }
+            return plToPair(audioObjectType, -1);
+        }
     }
 
     public static ParserBase getParserObject(String mediaType) {
         switch (mediaType) {
+            case MediaFormat.MIMETYPE_VIDEO_MPEG4:
+                return new Mpeg4Parser();
+            case MediaFormat.MIMETYPE_VIDEO_H263:
+                return new H263Parser();
             case MediaFormat.MIMETYPE_VIDEO_AVC:
                 return new AvcParser();
             case MediaFormat.MIMETYPE_VIDEO_HEVC:
                 return new HevcParser();
             case MediaFormat.MIMETYPE_VIDEO_AV1:
                 return new Av1Parser();
+            case MediaFormat.MIMETYPE_VIDEO_VP9:
+                return new Vp9Parser();
+            case MediaFormat.MIMETYPE_AUDIO_AAC:
+                return new AacParser();
         }
         return null;
     }
 
     public static int getFrameTypeFromBitStream(ByteBuffer buf, MediaCodec.BufferInfo info,
             ParserBase o) {
+        if (o == null) return PICTURE_TYPE_UNKNOWN;
         byte[] dataArray = new byte[info.size];
         buf.position(info.offset);
         buf.get(dataArray);
         o.set(dataArray, 0, info.size);
         return o.getFrameType();
+    }
+
+    public static Pair<Integer, Integer> getProfileLevelFromBitStream(ByteBuffer buf,
+            MediaCodec.BufferInfo info, ParserBase o) {
+        if (o == null) return null;
+        byte[] dataArray = new byte[info.size];
+        buf.position(info.offset);
+        buf.get(dataArray);
+        o.set(dataArray, 0, info.size);
+        return o.getProfileLevel((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0);
     }
 }
