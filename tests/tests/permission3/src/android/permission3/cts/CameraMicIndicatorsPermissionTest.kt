@@ -321,7 +321,9 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
         finishEarly: Boolean = false
     ) {
         // If camera is not available skip the test
-        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA))
+        if (useCamera) {
+            assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA))
+        }
         var chainAttribution: AttributionSource? = null
         openApp(useMic, useCamera, useHotword, finishEarly)
         try {
