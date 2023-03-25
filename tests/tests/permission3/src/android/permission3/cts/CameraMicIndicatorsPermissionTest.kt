@@ -42,6 +42,7 @@ import android.support.test.uiautomator.UiSelector
 import androidx.annotation.RequiresApi
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.compatibility.common.util.CddTest
 import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.eventually
@@ -212,6 +213,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     }
 
     @Test
+    @CddTest(requirement = "9.8.2/H-5-1,T-5-1,A-2-1")
     fun testCameraIndicator() {
         // If camera is not available skip the test
         assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA))
@@ -222,6 +224,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     }
 
     @Test
+    @CddTest(requirement = "9.8.2/H-4-1,T-4-1,A-1-1")
     fun testMicIndicator() {
         changeSafetyCenterFlag(false.toString())
         testCameraAndMicIndicator(useMic = true, useCamera = false)
@@ -237,6 +240,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     }
 
     @Test
+    @CddTest(requirement = "9.8.2/H-5-1,T-5-1,A-2-1")
     fun testHotwordIndicatorBehavior() {
         changeSafetyCenterFlag(false.toString())
         testCameraAndMicIndicator(useMic = false, useCamera = false, useHotword = true)
@@ -317,7 +321,9 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
         finishEarly: Boolean = false
     ) {
         // If camera is not available skip the test
-        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA))
+        if (useCamera) {
+            assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA))
+        }
         var chainAttribution: AttributionSource? = null
         openApp(useMic, useCamera, useHotword, finishEarly)
         try {

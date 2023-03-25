@@ -59,6 +59,7 @@
     <option name="compatibility:exclude-filter" value="CtsBlobStoreTestHelperDiffSig" />
     <option name="compatibility:exclude-filter" value="CtsBlobStoreTestHelperDiffSig2" />
     <option name="compatibility:exclude-filter" value="CtsBootStatsTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsBroadcastTestCases" />
     <option name="compatibility:exclude-filter" value="CtsCalendarcommon2TestCases" />
     <option name="compatibility:exclude-filter" value="CtsCalendarProviderTestCases" />
     <option name="compatibility:exclude-filter" value="CtsClassLoaderFactoryInMemoryDexClassLoaderTestCases" />
