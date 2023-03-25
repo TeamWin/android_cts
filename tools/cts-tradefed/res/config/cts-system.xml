@@ -20,7 +20,7 @@
 
     <include name="cts" />
 
-    <!-- dEQP tests to be excluded in this plan-->
+    <!-- dEQP tests to be included in this plan-->
     <option name="compatibility:module-arg" value="CtsDeqpTestCases:include-filter:dEQP-EGL.*" />
     <option name="compatibility:module-arg" value="CtsDeqpTestCases:include-filter:dEQP-VK.wsi.*" />
     <option name="compatibility:module-arg" value="CtsDeqpTestCases:include-filter:dEQP-GLES2.functional.prerequisite#*" />
