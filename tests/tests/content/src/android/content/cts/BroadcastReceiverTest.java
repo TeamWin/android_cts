@@ -21,6 +21,7 @@ import static android.content.Context.RECEIVER_EXPORTED;
 import android.app.BroadcastOptions;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.BroadcastReceiver.PendingResult;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -42,6 +43,7 @@ import com.android.server.am.nano.ActivityManagerServiceDumpBroadcastsProto;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -188,6 +190,15 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         @Override
         public void onReceive(Context context, Intent intent) {
             COUNT_DOWN_LATCH.countDown();
+        }
+    }
+
+    public static class MockAsyncReceiver extends BroadcastReceiver {
+        public CompletableFuture<PendingResult> pendingResult = new CompletableFuture<>();
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            pendingResult.complete(goAsync());
         }
     }
 
@@ -414,6 +425,28 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         activity.unbindService(msc);
         activity.stopService(intent);
         activity.unregisterReceiver(internalReceiver);
+    }
+
+    public void testAsync() throws Exception {
+        final MockActivity activity = getActivity();
+
+        final MockAsyncReceiver asyncReceiver = new MockAsyncReceiver();
+        final IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_BROADCAST_INTERNAL);
+        activity.registerReceiver(asyncReceiver, filter, RECEIVER_EXPORTED);
+
+        final Intent intent = new Intent(ACTION_BROADCAST_INTERNAL)
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        final MockReceiverInternal resultReceiver = new MockReceiverInternal();
+        activity.sendOrderedBroadcast(intent, null, resultReceiver, null, 24, null, null);
+
+        final PendingResult res = asyncReceiver.pendingResult.get(SEND_BROADCAST_TIMEOUT,
+                TimeUnit.MILLISECONDS);
+        res.setResultCode(42);
+        res.finish();
+
+        resultReceiver.waitForReceiver(SEND_BROADCAST_TIMEOUT);
+        assertEquals(42, resultReceiver.getResultCode());
     }
 
     public void testNewPhotoBroadcast_notReceived() throws InterruptedException {
