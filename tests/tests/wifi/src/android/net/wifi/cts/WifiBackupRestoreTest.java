@@ -47,7 +47,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
-import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
 import org.junit.After;
@@ -138,8 +137,7 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
     }
 
     private void setWifiEnabled(boolean enable) throws Exception {
-        // now trigger the change using shell commands.
-        SystemUtil.runShellCommand("svc wifi " + (enable ? "enable" : "disable"));
+        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(enable));
     }
 
     private void turnScreenOn() throws Exception {

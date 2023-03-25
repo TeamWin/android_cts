@@ -387,13 +387,12 @@ public class AccessibilityNodeInfoTest {
         info.setImportantForAccessibility(true);
         info.setScreenReaderFocusable(true);
 
-        // 7 Boolean properties
+        // 6 Boolean properties
         info.setShowingHintText(true);
         info.setHeading(true);
         info.setTextEntryKey(true);
         info.setTextSelectable(true);
         info.setRequestInitialAccessibilityFocus(true);
-        info.setRequestTouchPassthrough(true);
         info.setAccessibilityDataSensitive(true);
     }
 
@@ -634,7 +633,7 @@ public class AccessibilityNodeInfoTest {
         assertSame("isScreenReaderFocusable has incorrect value",
                 expectedInfo.isScreenReaderFocusable(), receivedInfo.isScreenReaderFocusable());
 
-        // 7 Boolean properties
+        // 6 Boolean properties
         assertSame("isShowingHint has incorrect value",
                 expectedInfo.isShowingHintText(), receivedInfo.isShowingHintText());
         assertSame("isHeading has incorrect value",
@@ -646,9 +645,6 @@ public class AccessibilityNodeInfoTest {
         assertSame("hasRequestInitialAccessibilityFocus has incorrect value",
                 expectedInfo.hasRequestInitialAccessibilityFocus(),
                 receivedInfo.hasRequestInitialAccessibilityFocus());
-        assertSame("hasRequestTouchPassthrough has incorrect value",
-                expectedInfo.hasRequestTouchPassthrough(),
-                receivedInfo.hasRequestTouchPassthrough());
         assertSame("isAccessibilityDataSensitive has incorrect value",
                 expectedInfo.isAccessibilityDataSensitive(),
                 receivedInfo.isAccessibilityDataSensitive());
@@ -743,15 +739,13 @@ public class AccessibilityNodeInfoTest {
                 info.isImportantForAccessibility());
         assertFalse("ScreenReaderFocusable not properly recycled", info.isScreenReaderFocusable());
 
-        // 7 Boolean properties
+        // 6 Boolean properties
         assertFalse("isShowingHint not properly reset", info.isShowingHintText());
         assertFalse("isHeading not properly reset", info.isHeading());
         assertFalse("isTextEntryKey not properly reset", info.isTextEntryKey());
         assertFalse("isTextSelectable not properly reset", info.isTextSelectable());
         assertFalse("hasRequestInitialAccessibilityFocus not properly reset",
                 info.hasRequestInitialAccessibilityFocus());
-        assertFalse("hasRequestTouchPassthrough not properly reset",
-                info.hasRequestTouchPassthrough());
         assertFalse("isAccessibilityDataSensitive not properly reset",
                 info.isAccessibilityDataSensitive());
     }

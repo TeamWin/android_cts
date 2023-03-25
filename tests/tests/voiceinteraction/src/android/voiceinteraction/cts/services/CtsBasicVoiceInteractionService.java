@@ -247,7 +247,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         mHandler.post(() -> runWithShellPermissionIdentity(
                 () -> callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback),
                 RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD
-                ));
+        ));
     }
 
     /**
@@ -379,7 +379,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         final Handler handler = runOnMainThread ? new Handler(Looper.getMainLooper()) : mHandler;
         handler.post(() -> runWithShellPermissionIdentity(() -> {
             mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector(callback, useExecutor);
-        }, MANAGE_HOTWORD_DETECTION));
+        }, MANAGE_HOTWORD_DETECTION, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD));
     }
 
     /**

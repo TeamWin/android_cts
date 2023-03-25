@@ -126,7 +126,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     private static final int ONCHANGE_RATE_EVENT_COUNTER = 1;
     private static final int UI_RATE_EVENT_COUNTER = 5;
     private static final int FAST_OR_FASTEST_EVENT_COUNTER = 10;
-    private static final long ASYNC_WAIT_TIMEOUT_IN_SEC = 15_000;
+    private static final long ASYNC_WAIT_TIMEOUT_IN_SEC = 15;
     private static final ImmutableSet<Integer> PORT_LOCATION_TYPES =
             ImmutableSet.<Integer>builder()
                     .add(
@@ -2788,8 +2788,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(ImmutableSet.of(Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                        Car.PERMISSION_VENDOR_EXTENSION))
                 .build()
                 .verify();
     }
@@ -2807,8 +2807,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(ImmutableSet.of(Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                        Car.PERMISSION_VENDOR_EXTENSION))
                 .build()
                 .verify();
     }
@@ -2891,8 +2891,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(ImmutableSet.of(Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                        Car.PERMISSION_VENDOR_EXTENSION))
                 .build()
                 .verify();
     }
@@ -2910,8 +2910,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(ImmutableSet.of(Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                        Car.PERMISSION_VENDOR_EXTENSION))
                 .build()
                 .verify();
     }
@@ -2929,8 +2929,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .requirePropertyValueTobeInConfigArray()
                 .verifySetterWithConfigArrayValues()
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(ImmutableSet.of(Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                        Car.PERMISSION_VENDOR_EXTENSION))
                 .build()
                 .verify();
     }
@@ -2944,8 +2944,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_CONTROL_DISPLAY_UNITS)
-                .addWritePermission(Car.PERMISSION_VENDOR_EXTENSION)
+                .addWritePermission(ImmutableSet.of(Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                        Car.PERMISSION_VENDOR_EXTENSION))
                 .build()
                 .verify();
     }
@@ -4927,6 +4927,28 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Float[].class, mCarPropertyManager)
+                .setCarPropertyValueVerifier(
+                        (carPropertyConfig, propertyId, areaId, timestampNanos,
+                                temperatureSuggestion) -> {
+                            assertWithMessage(
+                                            "HVAC_TEMPERATURE_VALUE_SUGGESTION Float[] value"
+                                                + " must be size 4.")
+                                    .that(temperatureSuggestion.length)
+                                    .isEqualTo(4);
+
+                            Float requestedTempUnits = temperatureSuggestion[1];
+                            assertWithMessage(
+                                            "The value at index 1 must be one of"
+                                                + " {VehicleUnit#CELSIUS, VehicleUnit#FAHRENHEIT}"
+                                                + " which correspond to values {"
+                                                + (float) VehicleUnit.CELSIUS
+                                                + ", "
+                                                + (float) VehicleUnit.FAHRENHEIT
+                                                + "}.")
+                                    .that(requestedTempUnits)
+                                    .isIn(List.of((float) VehicleUnit.CELSIUS,
+                                            (float) VehicleUnit.FAHRENHEIT));
+                        })
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
@@ -5337,6 +5359,15 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                             .isEqualTo(configMaxValue);
                                 }
                             }
+                        })
+                .setCarPropertyValueVerifier(
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, tempInCelsius) -> {
+                            List<Integer> configArray = carPropertyConfig.getConfigArray();
+                            Integer minTempInCelsius = configArray.get(0);
+                            Integer maxTempInCelsius = configArray.get(1);
+                            Integer incrementInCelsius = configArray.get(2);
+                            VehiclePropertyVerifier.verifyHvacTemperatureIsValid(tempInCelsius,
+                                    minTempInCelsius, maxTempInCelsius, incrementInCelsius);
                         })
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
@@ -6083,14 +6114,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         }
 
         private static String toMsg(int requestId, int propId, int areaId) {
-            return "Request ID: " + requestId + " (propId: " + propId + ", areaId: " + areaId + ")";
+            return "Request ID: " + requestId + " (propId: " + VehiclePropertyIds.toString(propId)
+                    + ", areaId: " + areaId + ")";
         }
 
-        @Override
-        public void onSuccess(@NonNull GetPropertyResult<?> gotPropertyResult) {
-            int requestId = gotPropertyResult.getRequestId();
-            int propId = gotPropertyResult.getPropertyId();
-            int areaId = gotPropertyResult.getAreaId();
+        private void onSuccess(boolean forGet, int requestId, int propId, int areaId,
+                @Nullable Object value, long updateTimestampNanos) {
             synchronized (mLock) {
                 if (!mPendingRequests.contains(requestId)) {
                     mErrorList.add(toMsg(requestId, propId, areaId) + " not present");
@@ -6100,11 +6129,19 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     mResultList.add(toMsg(requestId, propId, areaId)
                             + " complete with onSuccess()");
                 }
-
-                if (gotPropertyResult.getValue() == null) {
-                    mErrorList.add("The property value for " + toMsg(requestId, propId, areaId)
-                            + " is null");
+                String requestInfo = toMsg(requestId, propId, areaId);
+                if (forGet) {
+                    if (value == null) {
+                        mErrorList.add("The property value for " + requestInfo + " must not be"
+                                + " null");
+                    } else {
+                        mReceivedPropIdAreaIds.add(new PropIdAreaId(propId, areaId));
+                    }
                 } else {
+                    if (updateTimestampNanos == 0) {
+                        mErrorList.add("The updateTimestamp value for " + requestInfo + " must"
+                                + " not be 0");
+                    }
                     mReceivedPropIdAreaIds.add(new PropIdAreaId(propId, areaId));
                 }
             }
@@ -6112,8 +6149,16 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         }
 
         @Override
+        public void onSuccess(@NonNull GetPropertyResult<?> gotPropertyResult) {
+            onSuccess(true, gotPropertyResult.getRequestId(), gotPropertyResult.getPropertyId(),
+                    gotPropertyResult.getAreaId(), gotPropertyResult.getValue(), 0L);
+        }
+
+        @Override
         public void onSuccess(@NonNull SetPropertyResult setPropertyResult) {
-            // TODO(b/264719384): Implement this.
+            onSuccess(false, setPropertyResult.getRequestId(), setPropertyResult.getPropertyId(),
+                    setPropertyResult.getAreaId(), null,
+                    setPropertyResult.getUpdateTimestampNanos());
         }
 
         @Override
@@ -7232,17 +7277,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         return spr;
     }
 
-    /**
-     * Test for {@link CarPropertyManager#setPropertiesAsync}
-     *
-     * Generates SetPropertyRequest objects for supported writable properties and verifies if there
-     * are no exceptions or request timeouts.
-     */
-    @Test
-    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#setPropertiesAsync(List, "
-            + "long, CancellationSignal, Executor, SetPropertyCallback)",
-            "android.car.hardware.property.CarPropertyManager#generateSetPropertyRequest"})
-    public void testSetAllSupportedReadWrtePropertiesAsync() throws Exception {
+    private void setAllSupportedReadWritePropertiesAsync(boolean waitForPropertyUpdate) {
         runWithShellPermissionIdentity(() -> {
             Executor executor = Executors.newFixedThreadPool(1);
             Set<Integer> pendingRequests = new ArraySet<>();
@@ -7271,6 +7306,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     if (spr == null) {
                         continue;
                     }
+                    spr.setWaitForPropertyUpdate(waitForPropertyUpdate);
                     pendingRequests.add(spr.getRequestId());
                     requestPropIdAreaIds.add(new PropIdAreaId(propId, areaId));
                 }
@@ -7279,12 +7315,65 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             int expectedResultCount = pendingRequests.size();
 
             TestPropertyAsyncCallback callback = new TestPropertyAsyncCallback(pendingRequests);
-            mCarPropertyManager.setPropertiesAsync(setPropertyRequests, /* timeoutInMs= */ 1000,
+            mCarPropertyManager.setPropertiesAsync(setPropertyRequests,
+                    ASYNC_WAIT_TIMEOUT_IN_SEC * 1000,
                     /* cancellationSignal= */ null, executor, callback);
 
-            // TODO(b/264719384): Add validation for the results.
+            callback.waitAndFinish();
+
+            assertThat(callback.getErrorList()).isEmpty();
+            int resultCount = callback.getResultList().size();
+            assertWithMessage("must receive at least " + expectedResultCount + " results, got "
+                    + resultCount).that(resultCount).isEqualTo(expectedResultCount);
+
+            for (PropIdAreaId receivedPropIdAreaId : callback.getReceivedPropIdAreaIds()) {
+                assertWithMessage("received unexpected result for " + receivedPropIdAreaId)
+                        .that(requestPropIdAreaIds).contains(receivedPropIdAreaId);
+            }
             // TODO(b/274128789): Restore the values to their previous values after the test.
         });
+    }
+
+    /**
+     * Test for {@link CarPropertyManager#setPropertiesAsync}
+     *
+     * Generates SetPropertyRequest objects for supported writable properties and verifies if there
+     * are no exceptions or request timeouts.
+     */
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#setPropertiesAsync(List, "
+            + "long, CancellationSignal, Executor, SetPropertyCallback)",
+            "android.car.hardware.property.CarPropertyManager#generateSetPropertyRequest",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#"
+                        + "setWaitForPropertyUpdate",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyResult#getRequestId",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyResult#getPropertyId",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyResult#getAreaId",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyResult#"
+                        + "getUpdateTimestampNanos"})
+    public void testSetAllSupportedReadWritePropertiesAsync() throws Exception {
+        setAllSupportedReadWritePropertiesAsync(true);
+    }
+
+    /**
+     * Test for {@link CarPropertyManager#setPropertiesAsync}
+     *
+     * Similar to {@link #testSetAllSupportedReadWritePropertiesAsync} but don't wait for property
+     * update before calling the success callback.
+     */
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#setPropertiesAsync(List, "
+            + "long, CancellationSignal, Executor, SetPropertyCallback)",
+            "android.car.hardware.property.CarPropertyManager#generateSetPropertyRequest",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyRequest#"
+                        + "setWaitForPropertyUpdate",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyResult#getRequestId",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyResult#getPropertyId",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyResult#getAreaId",
+            "android.car.hardware.property.CarPropertyManager$SetPropertyResult#"
+                        + "getUpdateTimestampNanos"})
+    public void testSetAllSupportedReadWritePropertiesAsyncNoWaitForUpdate() throws Exception {
+        setAllSupportedReadWritePropertiesAsync(false);
     }
 
     @Test

@@ -23,6 +23,7 @@ import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.bluetooth.Bluetooth;
 import com.android.bedstead.nene.broadcasts.Broadcasts;
 import com.android.bedstead.nene.context.Context;
+import com.android.bedstead.nene.credentials.Credentials;
 import com.android.bedstead.nene.device.Device;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
 import com.android.bedstead.nene.flags.Flags;
@@ -175,6 +176,11 @@ public final class TestApis {
     @Experimental
     public static Logcat logcat() {
         return Logcat.sInstance;
+    }
+
+    /** Access Test APIs related to credential manager. */
+    public static Credentials credentials() {
+        return Credentials.sInstance;
     }
 
     /** @deprecated Use statically */

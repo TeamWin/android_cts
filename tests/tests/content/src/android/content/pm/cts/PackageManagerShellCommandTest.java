@@ -53,6 +53,7 @@ import android.content.IntentSender;
 import android.content.pm.ApkChecksum;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.DataLoaderParams;
+import android.content.pm.InstallSourceInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
@@ -170,6 +171,8 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_VERIFIER_DISABLED = "HelloVerifierDisabled.apk";
 
     private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
+
+    private static final String SHELL_PACKAGE_NAME = "com.android.shell";
 
     static final long DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS = 3 * 1000;
     static final long VERIFICATION_BROADCAST_RECEIVED_TIMEOUT_MS = 10 * 1000;
@@ -1860,6 +1863,24 @@ public class PackageManagerShellCommandTest {
         assertEquals("Success: removed user\n", commandResult);
     }
 
+    @Test
+    public void testShellInitiatingPkgName() throws Exception {
+        installPackage(TEST_HW5);
+        InstallSourceInfo installSourceInfo = getPackageManager()
+                .getInstallSourceInfo(TEST_APP_PACKAGE);
+        assertEquals(SHELL_PACKAGE_NAME, installSourceInfo.getInitiatingPackageName());
+        assertNull(installSourceInfo.getInstallingPackageName());
+    }
+
+    @Test
+    public void testShellInitiatingPkgNameSetInstallerPkgName() throws Exception {
+        installPackageWithInstallerPkgName(TEST_HW5, CTS_PACKAGE_NAME);
+        InstallSourceInfo installSourceInfo = getPackageManager()
+                .getInstallSourceInfo(TEST_APP_PACKAGE);
+        assertEquals(SHELL_PACKAGE_NAME, installSourceInfo.getInitiatingPackageName());
+        assertEquals(CTS_PACKAGE_NAME, installSourceInfo.getInstallingPackageName());
+    }
+
     static class FullyRemovedBroadcastReceiver extends BroadcastReceiver {
         private final String mTargetPackage;
         private final int mTargetUserId;
@@ -2031,6 +2052,13 @@ public class PackageManagerShellCommandTest {
         File file = new File(createApkPath(baseName));
         String result = executeShellCommand("pm " + mInstall + " -t -g " + file.getPath());
         assertTrue(result, result.startsWith(expectedResultStartsWith));
+    }
+
+    private void installPackageWithInstallerPkgName(String baseName, String installerName)
+            throws IOException {
+        File file = new File(createApkPath(baseName));
+        assertEquals("Success\n", executeShellCommand(
+                "pm " + mInstall + "-i " + installerName + " -t -g " + file.getPath()));
     }
 
     private void updatePackage(String packageName, String baseName) throws IOException {

@@ -204,6 +204,19 @@ public class PixelCopyTest {
         mCopyHelper.request(mockWindow, dest);
     }
 
+    @Test
+    public void testRequestGetters() {
+        PixelCopyViewProducerActivity activity = waitForWindowProducerActivity();
+        Bitmap dest = Bitmap.createBitmap(5, 5, Config.ARGB_8888);
+        Rect source = new Rect(3, 3, 40, 50);
+        PixelCopy.Request request = PixelCopy.Request.Builder.ofWindow(activity.getWindow())
+                .setSourceRect(source)
+                .setDestinationBitmap(dest)
+                .build();
+        assertEquals(dest, request.getDestinationBitmap());
+        assertEquals(source, request.getSourceRect());
+    }
+
     private PixelCopyGLProducerCtsActivity waitForGlProducerActivity() {
         CountDownLatch swapFence = new CountDownLatch(2);
 

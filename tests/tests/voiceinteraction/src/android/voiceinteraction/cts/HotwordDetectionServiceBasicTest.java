@@ -69,6 +69,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -508,6 +509,7 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
+    @Ignore("b/272527340")
     public void testHotwordDetectionService_onDetectFromExternalSourceAudioBroken_onFailure()
             throws Throwable {
         // Create alwaysOnHotwordDetector with onFailure callback

@@ -91,8 +91,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
         const val ALLOW_ALL_BUTTON =
             "com.android.permissioncontroller:id/permission_allow_all_button"
-        const val ALLOW_ALL_SINGLETON_BUTTON =
-            "com.android.permissioncontroller:id/permission_allow_all_singleton_button"
+        const val ALWAYS_ALLOW_ALL_BUTTON =
+            "com.android.permissioncontroller:id/permission_always_allow_all_button"
         const val SELECT_BUTTON =
             "com.android.permissioncontroller:id/permission_allow_selected_button"
         const val SELECT_MORE_BUTTON =
@@ -117,8 +117,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 "com.android.permissioncontroller:id/allow_foreground_only_radio_button"
         const val ASK_RADIO_BUTTON = "com.android.permissioncontroller:id/ask_radio_button"
         const val DENY_RADIO_BUTTON = "com.android.permissioncontroller:id/deny_radio_button"
-        const val SELECT_PHOTOS_RADIO_BUTTON =
-            "com.android.permissioncontroller:id/select_photos_radio_button"
+        const val SELECT_RADIO_BUTTON =
+            "com.android.permissioncontroller:id/select_radio_button"
 
         const val NOTIF_TEXT = "permgrouprequest_notifications"
         const val ALLOW_BUTTON_TEXT = "grant_dialog_button_allow"
@@ -209,6 +209,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         @JvmStatic
         protected fun isPhotoPickerPermissionPromptEnabled(): Boolean {
             return SdkLevel.isAtLeastU() &&
+                    !isTv && !isAutomotive && !isWatch &&
                 callWithShellPermissionIdentity {
                     DeviceConfig.getBoolean(
                         DeviceConfig.NAMESPACE_PRIVACY, PICKER_ENABLED_SETTING, true)

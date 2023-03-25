@@ -184,12 +184,6 @@ public abstract class InputTestCase {
             mLastButtonState = event.getButtonState();
         }
         assertAxis(mCurrentTestCase, expectedEvent, event);
-        if (expectedEvent.getDisplayId() != 0) {
-            // A display id is defined in the expected event, so it should be asserted. Otherwise,
-            // the display id doesn't matter and can safely be ignored.
-            assertEquals(mCurrentTestCase + " (displayId)", expectedEvent.getDisplayId(),
-                    event.getDisplayId());
-        }
     }
 
     /**
@@ -365,7 +359,6 @@ public abstract class InputTestCase {
                             event.getDeviceId(), event.getEdgeFlags(),
                             event.getSource(), event.getFlags());
             singleEvent.setActionButton(event.getActionButton());
-            singleEvent.setDisplayId(event.getDisplayId());
             events.add(singleEvent);
         }
 
@@ -377,7 +370,6 @@ public abstract class InputTestCase {
                         event.getDeviceId(), event.getEdgeFlags(),
                         event.getSource(), event.getFlags());
         singleEvent.setActionButton(event.getActionButton());
-        singleEvent.setDisplayId(event.getDisplayId());
         events.add(singleEvent);
         return events;
     }

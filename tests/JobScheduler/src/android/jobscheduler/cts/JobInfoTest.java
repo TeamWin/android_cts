@@ -689,6 +689,7 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         // Test all allowed constraints.
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setUserInitiated(true)
+                .setBackoffCriteria(0, JobInfo.BACKOFF_POLICY_EXPONENTIAL)
                 .setPriority(JobInfo.PRIORITY_MAX)
                 .setPersisted(true)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
@@ -706,6 +707,16 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .build();
         assertEquals(JobInfo.PRIORITY_MAX, ji.getPriority());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        // Confirm linear backoff allowed
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setUserInitiated(true)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setBackoffCriteria(0, JobInfo.BACKOFF_POLICY_LINEAR)
+                .build();
+        assertTrue(ji.isUserInitiated());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
 
@@ -766,11 +777,6 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                         .setExpedited(true)
                         .setUserInitiated(true)
                         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY));
-        assertBuildFails(failureMessage,
-                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                        .setUserInitiated(true)
-                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                        .setBackoffCriteria(0, JobInfo.BACKOFF_POLICY_LINEAR));
         final JobInfo.TriggerContentUri tcu = new JobInfo.TriggerContentUri(
                 Uri.parse("content://" + MediaStore.AUTHORITY + "/"),
                 JobInfo.TriggerContentUri.FLAG_NOTIFY_FOR_DESCENDANTS);

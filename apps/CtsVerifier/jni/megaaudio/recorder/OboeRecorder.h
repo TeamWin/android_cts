@@ -39,9 +39,16 @@ public:
     //
     virtual bool isRecording() override { return mStreamStarted; }
 
+    // Fully specified setup
+    virtual Result setupStream(int32_t channelCount, int32_t sampleRate,
+                    int32_t performanceMode, int32_t sharingMode, int32_t routeDeviceId) override;
+
+    // Simplified setup
     virtual Result setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) override;
 
     virtual Result startStream() override;
+
+    int getStreamState();
 
     static const int DEFAULT_INPUT_NONE = -1;  // from Recorder.java
     void setInputPreset(int inputPreset) { mInputPreset = inputPreset; }

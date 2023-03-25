@@ -47,7 +47,9 @@ public class CtsSelfManagedConnectionServiceControl extends Service {
         }
         @Override
         public void deInit() {
-            CtsSelfManagedConnectionService.getConnectionService().tearDown();
+            CtsSelfManagedConnectionService s = CtsSelfManagedConnectionService
+                    .getConnectionService();
+            if (s != null) s.tearDown();
         }
         @Override
         public boolean waitForBinding() {

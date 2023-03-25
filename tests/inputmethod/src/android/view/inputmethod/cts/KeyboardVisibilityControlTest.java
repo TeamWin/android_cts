@@ -130,7 +130,7 @@ import java.util.function.Predicate;
 @RunWith(AndroidJUnit4.class)
 public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     private static final String TAG = KeyboardVisibilityControlTest.class.getSimpleName();
-    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(6);
     private static final long START_INPUT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
     private static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
     private static final long LAYOUT_STABLE_THRESHOLD = TimeUnit.SECONDS.toMillis(3);

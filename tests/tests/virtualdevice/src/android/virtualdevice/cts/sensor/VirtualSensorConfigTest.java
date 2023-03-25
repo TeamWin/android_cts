@@ -50,6 +50,11 @@ public class VirtualSensorConfigTest {
                         .setVendor(SENSOR_VENDOR)
                         .setHighestDirectReportRateLevel(RATE_VERY_FAST)
                         .setDirectChannelTypesSupported(TYPE_MEMORY_FILE)
+                        .setMaximumRange(1.2f)
+                        .setResolution(3.4f)
+                        .setPower(5.6f)
+                        .setMinDelay(7)
+                        .setMaxDelay(8)
                         .build();
         final Parcel parcel = Parcel.obtain();
         originalConfig.writeToParcel(parcel, /* flags= */ 0);
@@ -61,6 +66,12 @@ public class VirtualSensorConfigTest {
         assertThat(recreatedConfig.getVendor()).isEqualTo(originalConfig.getVendor());
         assertThat(recreatedConfig.getHighestDirectReportRateLevel()).isEqualTo(RATE_VERY_FAST);
         assertThat(recreatedConfig.getDirectChannelTypesSupported()).isEqualTo(TYPE_MEMORY_FILE);
+        assertThat(recreatedConfig.getMaximumRange()).isEqualTo(1.2f);
+        assertThat(recreatedConfig.getResolution()).isEqualTo(3.4f);
+        assertThat(recreatedConfig.getPower()).isEqualTo(5.6f);
+        assertThat(recreatedConfig.getMinDelay()).isEqualTo(7);
+        assertThat(recreatedConfig.getMaxDelay()).isEqualTo(8);
+
         // From hardware/libhardware/include/hardware/sensors-base.h:
         //   0x400 is SENSOR_FLAG_DIRECT_CHANNEL_ASHMEM (i.e. TYPE_MEMORY_FILE)
         //   0x800 is SENSOR_FLAG_DIRECT_CHANNEL_GRALLOC (i.e. TYPE_HARDWARE_BUFFER)
@@ -119,6 +130,11 @@ public class VirtualSensorConfigTest {
         assertThat(config.getVendor()).isNull();
         assertThat(config.getHighestDirectReportRateLevel()).isEqualTo(RATE_STOP);
         assertThat(config.getDirectChannelTypesSupported()).isEqualTo(0);
+        assertThat(config.getMaximumRange()).isEqualTo(0f);
+        assertThat(config.getResolution()).isEqualTo(0f);
+        assertThat(config.getPower()).isEqualTo(0f);
+        assertThat(config.getMinDelay()).isEqualTo(0);
+        assertThat(config.getMaxDelay()).isEqualTo(0);
         assertThat(config.getFlags()).isEqualTo(0);
     }
 }

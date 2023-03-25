@@ -1714,6 +1714,12 @@ public abstract class ActivityManagerTestBase {
                 mRemoveActivitiesOnClose = true;
             }
             mAmbientDisplayConfiguration = new AmbientDisplayConfiguration(mContext);
+
+            // On devices that don't support any insecure locks but supports a secure lock, let's
+            // enable a secure lock.
+            if (!supportsInsecureLock() && supportsSecureLock()) {
+                setLockCredential();
+            }
         }
 
         public LockScreenSession setLockCredential() {
@@ -2984,7 +2990,9 @@ public abstract class ActivityManagerTestBase {
                     mLastError.addSuppressed(new IllegalStateException("Keyguard is locked"));
                     // To clear the credential immediately, the screen need to be turned on.
                     pressWakeupButton();
-                    removeLockCredential();
+                    if (supportsSecureLock()) {
+                        removeLockCredential();
+                    }
                     // Off/on to refresh the keyguard state.
                     pressSleepButton();
                     pressWakeupButton();

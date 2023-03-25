@@ -197,9 +197,6 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     public void testTurnScreenOnActivity() {
 
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        if (!supportsInsecureLock()) {
-            lockScreenSession.setLockCredential();
-        }
         final ActivitySessionClient activityClient = createManagedActivityClientSession();
         testTurnScreenOnActivity(lockScreenSession, activityClient,
                 true /* useWindowFlags */);

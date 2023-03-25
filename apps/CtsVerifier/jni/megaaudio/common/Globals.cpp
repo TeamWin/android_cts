@@ -18,13 +18,40 @@
 #include <android/log.h>
 
 #include <oboe/Oboe.h>
+#include <aaudio/AAudioExtensions.h>
 
 static const char * const TAG = "Globals(native)";
 
 using namespace oboe;
 
+extern "C" {
+
 JNIEXPORT void JNICALL
 Java_org_hyphonate_megaaudio_common_Globals_setOboeWorkaroundsEnabled(
         JNIEnv *env, jclass clazz, jboolean enabled) {
     oboe::OboeGlobals::setWorkaroundsEnabled(enabled);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_org_hyphonate_megaaudio_common_Globals_isMMapSupported(JNIEnv *env, jclass clazz) {
+    return AAudioExtensions::getInstance().isMMapSupported();
+}
+
+JNIEXPORT jboolean JNICALL
+Java_org_hyphonate_megaaudio_common_Globals_isMMapExclusiveSupported(JNIEnv *env, jclass clazz) {
+    return AAudioExtensions::getInstance().isMMapExclusiveSupported();
+}
+
+JNIEXPORT void JNICALL
+Java_org_hyphonate_megaaudio_common_Globals_setMMapEnabled(
+        JNIEnv *env, jclass clazz, jboolean enabled) {
+    AAudioExtensions::getInstance().setMMapEnabled(enabled);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_org_hyphonate_megaaudio_common_Globals_isMMapEnabled(
+        JNIEnv *env, jclass clazz) {
+    return AAudioExtensions::getInstance().isMMapEnabled();
+}
+
 }

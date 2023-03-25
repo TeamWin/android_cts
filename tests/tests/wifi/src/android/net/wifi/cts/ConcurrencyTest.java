@@ -59,7 +59,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
-import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -132,6 +131,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     private MyResponse mMyResponse = new MyResponse();
     private boolean mWasVerboseLoggingEnabled;
     private WifiP2pConfig mTestWifiP2pPeerConfig;
+    private boolean mWasWifiEnabled;
 
     private static final String TAG = "ConcurrencyTest";
     private static final int TIMEOUT_MSEC = 6000;
@@ -233,9 +233,11 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mContext.registerReceiver(mReceiver, mIntentFilter);
         mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         assertNotNull(mWifiManager);
-        if (mWifiManager.isWifiEnabled()) {
-            SystemUtil.runShellCommand("svc wifi disable");
-            Thread.sleep(DURATION);
+
+        mWasWifiEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.isWifiEnabled());
+        if (mWasWifiEnabled) {
+            ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(false));
         }
 
         // turn on verbose logging for tests
@@ -366,7 +368,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
      */
     private void enableWifi() throws InterruptedException {
         if (!mWifiManager.isWifiEnabled()) {
-            SystemUtil.runShellCommand("svc wifi enable");
+            ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(true));
         }
 
         ConnectivityManager cm =

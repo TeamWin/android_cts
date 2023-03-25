@@ -3488,6 +3488,22 @@ public final class DeviceState extends HarrierRule {
     }
 
     private void requireFeatureFlagEnabled(String namespace, String key, FailureMode failureMode) {
+        //TODO(b/274439760): Get rid of this special case when tidying up permission stuff.
+        String coexistenceOption = TestApis.instrumentation().arguments()
+                .getString("COEXISTENCE", "?");
+        // This is to allow for forcing the coexistence flags on in btest.
+        if (namespace == NAMESPACE_DEVICE_POLICY_MANAGER
+                && (key == PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG
+                    || key == ENABLE_DEVICE_POLICY_ENGINE_FLAG)) {
+            if (coexistenceOption.equals("true")) {
+                // Forcing the flags on will happen later, so we should skip the check below.
+                return;
+            } else if (coexistenceOption.equals("false")) {
+                // Definitely fail or skip if the coexistence flags are being forced off.
+                failOrSkip("Feature flag " + namespace + ":" + key + " must be enabled",
+                        failureMode);
+            }
+        }
         checkFailOrSkip("Feature flag " + namespace + ":" + key + " must be enabled",
                 TestApis.flags().isEnabled(namespace, key), failureMode);
     }
@@ -3498,6 +3514,21 @@ public final class DeviceState extends HarrierRule {
 
     private void requireFeatureFlagNotEnabled(
             String namespace, String key, FailureMode failureMode) {
+        //TODO(b/274439760): Get rid of this special case when tidying up permission stuff.
+        String coexistenceOption = TestApis.instrumentation().arguments()
+                .getString("COEXISTENCE", "?");
+        if (namespace == NAMESPACE_DEVICE_POLICY_MANAGER
+                && (key == PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG
+                || key == ENABLE_DEVICE_POLICY_ENGINE_FLAG)) {
+            if (coexistenceOption.equals("false")) {
+                // Forcing the flags off will happen later, so we should skip the check below.
+                return;
+            } else if (coexistenceOption.equals("true")) {
+                // Definitely fail or skip if the coexistence flags are being forced on.
+                failOrSkip("Feature flag " + namespace + ":" + key + " must be enabled",
+                        failureMode);
+            }
+        }
         checkFailOrSkip("Feature flag " + namespace + ":" + key + " must not be enabled",
                 !TestApis.flags().isEnabled(namespace, key), failureMode);
     }

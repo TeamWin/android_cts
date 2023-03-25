@@ -28,6 +28,8 @@
     <uses-sdk android:targetSdkVersion="28" />
     <application android:largeHeap="true">
         <uses-library android:name="android.test.runner" />
+        <property android:name="android.camera.PROPERTY_COMPAT_OVERRIDE_LANDSCAPE_TO_PORTRAIT"
+                  android:value="false" />
 
         <activity android:name="android.hardware.cts.CameraCtsActivity"
             android:label="CameraCtsActivity"

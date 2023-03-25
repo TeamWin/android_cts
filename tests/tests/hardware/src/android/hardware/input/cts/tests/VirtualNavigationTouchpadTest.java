@@ -152,7 +152,6 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
                 /* edgeFlags= */ 0,
                 InputDevice.SOURCE_TOUCH_NAVIGATION,
                 /* flags= */ 0);
-        event.setDisplayId(mVirtualDisplay.getDisplay().getDisplayId());
         return event;
     }
 

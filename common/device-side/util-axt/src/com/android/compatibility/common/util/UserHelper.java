@@ -127,13 +127,13 @@ public final class UserHelper {
         if (mIsVisibleBackgroundFullUser) {
             augmentedOptions.setLaunchDisplayId(mDisplayId);
         }
-        Log.v(TAG, "injectDisplayId(): returning " + augmentedOptions);
+        Log.v(TAG, "injectDisplayIdIfNeeded(): returning " + augmentedOptions);
         return augmentedOptions;
     }
 
     @Override
     public String toString() {
         return getClass().getSimpleName() + "[user=" + mUser + ", displayId=" + mDisplayId
-                + ", isVisibleBackgroundUser=" + mIsVisibleBackgroundFullUser + "]";
+                + ", isVisibleBackgroundFullUser=" + mIsVisibleBackgroundFullUser + "]";
     }
 }

@@ -5851,6 +5851,22 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="audio_aec_instructions">Press [TEST] to play a voice recording twice with different parameters.</string>
     <string name="audio_aec_mandatory_test">Is AEC mandatory in this device?</string>
 
+    <!-- Audio Connection Test -->
+    <string name="audio_disconnect_test">Audio Stream Disconnect Test</string>
+    <string name="audio_disconnect_info">
+        Tests that audio streams generate the correct stream disconnection events. Note that this
+        test is only required for devices that support wired headset.
+        \n\nTest Requirements
+        \nA wired (analog or USB) headset peripheral, or analog loopback adapter.
+        \n\nTest Process:
+        \n1. Press the \"Start\" button.
+        \n2. For each tested audio route:
+        \n a. Connect the headset peripheral when instructed.
+        \n b. Disconnect the headset peripheral when instructed.
+        \n\nTest Criteria:
+        \nThe test passes if all routes demonstrate the correct stream disconnection behavior.
+    </string>
+    <string name="audio_disconnect_wired_prompt">Does this device support an analog or USB audio peripheral?</string>
     <!--Audio Frequency Global strings -->
     <string name="af_button_play">Play</string>
     <string name="af_button_stop">Stop</string>

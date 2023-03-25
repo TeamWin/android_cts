@@ -276,6 +276,16 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:name=".CredentialProviderService"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.BIND_CREDENTIAL_PROVIDER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.credentials.CredentialProviderService"/>
+            </intent-filter>
+        </service>
+
         <receiver android:name="com.android.bedstead.testapp.TestAppBroadcastController"
                   android:exported="true" />
     </application>

@@ -24,4 +24,26 @@ public class Globals {
      * @param enabled if true, turns on Oboe "Workarounds"
      */
     public static native void setOboeWorkaroundsEnabled(boolean enabled);
+
+    /**
+     * @return true if MMAP mode is supported.
+     */
+    public static native boolean isMMapSupported();
+
+    /**
+     * @return true if MMAP Exclusive mode is supported.
+     */
+    public static native boolean isMMapExclusiveSupported();
+
+    /**
+     * Enables/Disables MMAP on any stream
+     * @param enabled Specifies the enable/disable state
+     */
+    public static native void setMMapEnabled(boolean enabled);
+
+    /**
+     * Gets the MMAP enable state
+     * @return true if MMAP is enabled
+     */
+    public static native boolean isMMapEnabled();
 }

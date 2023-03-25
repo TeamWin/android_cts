@@ -90,6 +90,7 @@ android_test {
         ":CtsDeviceServicesTestSecondApp",
         ":CtsDeviceServicesTestThirdApp",
         ":CtsDeviceDeprecatedSdkApp",
+        ":CtsDeviceDeskResourcesApp",
         ":CtsDeviceDisplaySizeApp",
         ":CtsDevicePrereleaseSdkApp",
         ":CtsDeviceProfileableApp",

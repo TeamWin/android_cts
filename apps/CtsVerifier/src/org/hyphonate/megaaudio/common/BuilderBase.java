@@ -36,6 +36,20 @@ public class BuilderBase {
 
     protected int mChannelCount = 2;
 
+    // AAUDIO_PERFORMANCE_MODE_NONE
+    public static final int PERFORMANCE_MODE_NONE = 10;
+    // AAUDIO_PERFORMANCE_MODE_POWER_SAVING,
+    public static final int PERFORMANCE_MODE_POWERSAVING = 11;
+    // AAUDIO_PERFORMANCE_MODE_LOW_LATENCY
+    public static final int PERFORMANCE_MODE_LOWLATENCY = 12;
+    protected int mPerformanceMode = PERFORMANCE_MODE_NONE;
+
+    // AAUDIO_SHARING_MODE_EXCLUSIVE,
+    public static final int SHARING_MODE_EXCLUSIVE = 0;
+    // AAUDIO_SHARING_MODE_SHARED,
+    public static final int SHARING_MODE_SHARED = 1;
+    protected int mSharingMode = SHARING_MODE_EXCLUSIVE;
+
     /**
      * Specifies the sample rate for a stream
      * @param sampleRate The sample rate for this stream

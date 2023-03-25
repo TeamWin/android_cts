@@ -71,12 +71,14 @@ import android.view.inputmethod.InputMethodManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.OverrideAnimationScaleRule;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
@@ -138,6 +140,10 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
                 { navigationBars(), "navigationBars" }
         };
     }
+
+    @Rule
+    public final OverrideAnimationScaleRule mEnableAnimationsRule =
+            new OverrideAnimationScaleRule(1.0f);
 
     public static class ControllerTestActivity extends TestActivity {
         @Override
@@ -260,6 +266,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_andCancel() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             runOnUiThread(() -> {
                 setupAnimationListener();
@@ -280,6 +288,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     @Test
     public void testControl_andImmediatelyCancel() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             runOnUiThread(() -> {
                 setupAnimationListener();
@@ -297,6 +307,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_immediately_show() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             setVisibilityAndWait(mType, false);
 
@@ -320,6 +332,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_immediately_hide() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             setVisibilityAndWait(mType, true);
 
@@ -343,6 +357,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_transition_show() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             setVisibilityAndWait(mType, false);
 
@@ -364,6 +380,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_transition_hide() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             setVisibilityAndWait(mType, true);
 
@@ -385,6 +403,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_transition_show_interpolator() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             mInterpolator = new DecelerateInterpolator();
             setVisibilityAndWait(mType, false);
@@ -407,6 +427,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_transition_hide_interpolator() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             mInterpolator = new AccelerateInterpolator();
             setVisibilityAndWait(mType, true);
@@ -428,6 +450,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     @Test
     public void testControl_andLoseControl() throws Throwable {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars() && mType != ime());
+
         retryIfCancelled(() -> {
             mInterpolator = new AccelerateInterpolator();
             setVisibilityAndWait(mType, true);
