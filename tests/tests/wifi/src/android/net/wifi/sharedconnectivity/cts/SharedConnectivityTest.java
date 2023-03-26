@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiInfo;
@@ -223,7 +224,7 @@ public class SharedConnectivityTest {
 
             assertThat(manager.unregisterCallback(callback)).isTrue();
             // Try to use callback and validate that manager was not updated.
-            service.setSettingsState(buildSettingsState(context));
+            service.setSettingsState(buildSettingsState());
             assertThat(callbackLatch.await(LATCH_TIMEOUT_SECS, TimeUnit.SECONDS)).isFalse();
             assertThat(callback.getSharedConnectivitySettingsState()).isNull();
         } finally {
@@ -357,11 +358,11 @@ public class SharedConnectivityTest {
             manager.registerCallback(Runnable::run, callback);
             assertServiceConnected(callback);
 
-            service.setSettingsState(buildSettingsState(context));
+            service.setSettingsState(buildSettingsState());
 
             assertThat(callbackLatch.await(LATCH_TIMEOUT_SECS, TimeUnit.SECONDS)).isTrue();
             assertThat(callback.getSharedConnectivitySettingsState()).isEqualTo(
-                    buildSettingsState(context));
+                    buildSettingsState());
         } finally {
             dropPermission();
         }
@@ -557,10 +558,13 @@ public class SharedConnectivityTest {
                 TimeUnit.SECONDS)).isTrue();
     }
 
-    private SharedConnectivitySettingsState buildSettingsState(Context context) {
-        return new SharedConnectivitySettingsState.Builder(context)
+    private SharedConnectivitySettingsState buildSettingsState() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        return new SharedConnectivitySettingsState.Builder()
                         .setInstantTetherEnabled(true)
-                        .setInstantTetherSettingsPendingIntent(new Intent())
+                        .setInstantTetherSettingsPendingIntent(
+                                PendingIntent.getActivity(context, 0, new Intent(),
+                                        PendingIntent.FLAG_IMMUTABLE))
                         .setExtras(Bundle.EMPTY)
                         .build();
     }
