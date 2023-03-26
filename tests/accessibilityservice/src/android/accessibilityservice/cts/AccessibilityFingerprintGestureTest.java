@@ -18,6 +18,7 @@ import static android.content.pm.PackageManager.FEATURE_FINGERPRINT;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -95,9 +96,10 @@ public class AccessibilityFingerprintGestureTest {
 
     @Test
     public void testGestureDetectionListener_whenAuthenticationStartsAndStops_calledBack() {
-        if (!mFingerprintGestureController.isGestureDetectionAvailable()) {
-            return;
-        }
+        assumeTrue("Fingerprint gesture detection is not available",
+                mFingerprintGestureController.isGestureDetectionAvailable());
+        assumeTrue("No enrolled fingerprints; cannot open fingerprint prompt",
+                mFingerprintManager.hasEnrolledFingerprints());
         // Launch an activity to make sure we're in the foreground
         mActivityRule.launchActivity(null);
         mFingerprintGestureController.registerFingerprintGestureCallback(
