@@ -1,7 +1,7 @@
 {
     "presubmit": [
         {
-            "name": "CtsBlobStoreTestCases",
+            "name": "CtsBroadcastTestCases",
             "options": [
                 {
                     "exclude-annotation": "androidx.test.filters.LargeTest"
