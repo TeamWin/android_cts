@@ -21,6 +21,7 @@ import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION_JOB_END_POLICY;
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_SLOW_START;
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_SLOW_STOP;
+import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.PACKAGE_NAME;
 
 import android.app.ActivityManager;
 import android.app.Notification;
@@ -39,7 +40,6 @@ import java.io.IOException;
 
 public class TestJobService extends JobService {
     private static final String TAG = TestJobService.class.getSimpleName();
-    private static final String PACKAGE_NAME = "android.jobscheduler.cts.jobtestapp";
     public static final String ACTION_JOB_STARTED = PACKAGE_NAME + ".action.JOB_STARTED";
     public static final String ACTION_JOB_STOPPED = PACKAGE_NAME + ".action.JOB_STOPPED";
     public static final String JOB_PARAMS_EXTRA_KEY = PACKAGE_NAME + ".extra.JOB_PARAMETERS";
