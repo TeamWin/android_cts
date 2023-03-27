@@ -76,10 +76,19 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     private SoundTriggerFailure mSoundTriggerFailure = null;
     private String mUnknownFailure = null;
 
+    private int mSoftwareOnDetectedCount = 0;
+
     public CtsBasicVoiceInteractionService() {
         HandlerThread handlerThread = new HandlerThread("CtsBasicVoiceInteractionService");
         handlerThread.start();
         mHandler = Handler.createAsync(handlerThread.getLooper());
+    }
+
+    /**
+     * Returns the onDetected() callback count for the software detector.
+     */
+    public int getSoftwareOnDetectedCount() {
+        return mSoftwareOnDetectedCount;
     }
 
     public void createAlwaysOnHotwordDetectorNoHotwordDetectionService(boolean useExecutor,
@@ -435,6 +444,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
                 Log.i(TAG, "onDetected");
                 mDetectedResult = eventPayload;
+                mSoftwareOnDetectedCount++;
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
                 if (mOnDetectRejectLatch != null) {
                     mOnDetectRejectLatch.countDown();

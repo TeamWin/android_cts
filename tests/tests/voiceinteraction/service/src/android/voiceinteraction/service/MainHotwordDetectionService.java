@@ -93,6 +93,8 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     @Nullable
     private Runnable mDetectionJob;
 
+    private boolean mIsTestUnexpectedCallback;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -205,7 +207,12 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 // also more realistic to schedule it onto another thread.
                 mDetectionJob = () -> {
                     Log.d(TAG, "Sending detected result");
-
+                    if (mIsTestUnexpectedCallback) {
+                        Log.d(TAG, "callback twice");
+                        callback.onDetected(DETECTED_RESULT);
+                        callback.onDetected(DETECTED_RESULT);
+                        return;
+                    }
                     if (canReadAudio()) {
                         callback.onDetected(DETECTED_RESULT);
                     } else {
@@ -284,6 +291,12 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                     == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH) {
                 Log.d(TAG, "Crash itself. Pid: " + Process.myPid());
                 Process.killProcess(Process.myPid());
+                return;
+            }
+            if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
+                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_UNEXPECTED_CALLBACK) {
+                Log.d(TAG, "options : Test unexpected callback");
+                mIsTestUnexpectedCallback = true;
                 return;
             }
             String fakeData = options.getString(KEY_FAKE_DATA);
