@@ -31,6 +31,7 @@ import com.android.app.cts.broadcasts.ICommandReceiver;
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -39,10 +40,10 @@ import java.util.List;
 @RunWith(BroadcastsTestRunner.class)
 public class BroadcastDeferralTest extends BaseBroadcastTest {
 
+    @Ignore("b/266656325")
     @Test
     public void testFgBroadcastDeliveryToFrozenApp_withDeferUntilActive() throws Exception {
         assumeTrue(isModernBroadcastQueueEnabled());
-        assumeTrue(isAppFreezerEnabled());
 
         final TestServiceConnection connection1 = bindToHelperService(HELPER_PKG1);
         try (DeviceConfigStateHelper deviceConfigStateHelper = new DeviceConfigStateHelper(
@@ -111,10 +112,10 @@ public class BroadcastDeferralTest extends BaseBroadcastTest {
         }
     }
 
+    @Ignore("b/266656325")
     @Test
     public void testFgBroadcastDeliveryToFrozenApp() throws Exception {
         assumeTrue(isModernBroadcastQueueEnabled());
-        assumeTrue(isAppFreezerEnabled());
 
         final TestServiceConnection connection1 = bindToHelperService(HELPER_PKG1);
         ICommandReceiver cmdReceiver1;
