@@ -266,18 +266,33 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         mServiceTriggerLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(
                 () -> callCreateSoftwareHotwordDetector(mNoOpSoftwareDetectorCallback,
-                        /* useExecutor= */ false)));
+                        /* useExecutor= */ false), CAPTURE_AUDIO_HOTWORD));
     }
 
     /**
-     * Create an AlwaysOnHotwordDetector but doesn't hold MANAGE_HOTWORD_DETECTION but hold
-     * BIND_HOTWORD_DETECTION_SERVICE.
+     * Create an SoftwareHotwordDetector holds MANAGE_HOTWORD_DETECTION and
+     * BIND_HOTWORD_DETECTION_SERVICE. The client should have MANAGE_HOTWORD_DETECTION to make the
+     * API call to the system to do BIND_HOTWORD_DETECTION_SERVICE permission checking.
+     */
+    public void createSoftwareHotwordDetectorHoldBindHotwordDetectionPermission() {
+        mServiceTriggerLatch = new CountDownLatch(1);
+        mHandler.post(() -> runWithShellPermissionIdentity(
+                () -> callCreateSoftwareHotwordDetector(mNoOpSoftwareDetectorCallback,
+                        /* useExecutor= */ false), MANAGE_HOTWORD_DETECTION,
+                BIND_HOTWORD_DETECTION_SERVICE));
+    }
+
+    /**
+     * Create an AlwaysOnHotwordDetector holds MANAGE_HOTWORD_DETECTION and
+     * BIND_HOTWORD_DETECTION_SERVICE. The client should have MANAGE_HOTWORD_DETECTION to make the
+     * API call to the system to do BIND_HOTWORD_DETECTION_SERVICE permission checking.
      */
     public void createAlwaysOnHotwordDetectorHoldBindHotwordDetectionPermission() {
         mServiceTriggerLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(
                 () -> callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback),
-                RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD, BIND_HOTWORD_DETECTION_SERVICE));
+                RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD, MANAGE_HOTWORD_DETECTION,
+                BIND_HOTWORD_DETECTION_SERVICE));
     }
 
     /**
