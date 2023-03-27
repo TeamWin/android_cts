@@ -92,7 +92,9 @@ public class AccessibilityDragAndDropTest {
     @After
     public void tearDown() {
         // Reset system drag state
-        mSourceView.cancelDragAndDrop();
+        if (mSourceView != null) {
+            mSourceView.cancelDragAndDrop();
+        }
     }
 
     @Test
