@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.notifications;
 
+import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_LOW;
 import static android.app.NotificationManager.IMPORTANCE_MAX;
 import static android.app.NotificationManager.IMPORTANCE_NONE;
@@ -164,6 +165,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         if (!isAutomotive) {
             tests.add(new ReceiveChannelBlockNoticeTest());
             tests.add(new ReceiveGroupBlockNoticeTest());
+            tests.add(new UpdateChannelWithFilterTest());
+            tests.add(new UpdateChannelWithFilterHalfSheetTest());
         }
         tests.add(new RequestUnbindTest());
         tests.add(new RequestBindTest());
@@ -463,6 +466,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             next();
         }
 
+        @Override
         protected void tearDown() {
             MockListener.getInstance().resetData();
             mNm.deleteNotificationChannel(mChannelId);
@@ -478,6 +482,88 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             return new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
                     .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName())
                     .putExtra(EXTRA_CHANNEL_ID, mChannelId);
+        }
+    }
+
+    /**
+     * Creates a notification channel. Sends the user to the channel settings half-sheet to toggle
+     * vibration settings and waits for that to be done.
+     */
+    protected class UpdateChannelWithFilterTest extends InteractiveTestCase {
+        private String mChannelId;
+        private View mView;
+
+        @Override
+        protected View inflate(ViewGroup parent) {
+            mView = createNlsSettingsItem(parent,
+                    R.string.nls_channel_settings_with_filter_instructions);
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(false);
+            return mView;
+        }
+
+        @Override
+        protected void setUp() {
+            mChannelId = UUID.randomUUID().toString();
+            NotificationChannel channel =
+                    new NotificationChannel(
+                            mChannelId, "UpdateChannelWithFilterTest", IMPORTANCE_DEFAULT);
+            channel.enableVibration(false);
+            mNm.createNotificationChannel(channel);
+            status = READY;
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(true);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            NotificationChannel channel = mNm.getNotificationChannel(mChannelId);
+            status = channel.shouldVibrate() ? PASS : WAIT_FOR_USER;
+            next();
+        }
+
+        @Override
+        protected void tearDown() {
+            mNm.deleteNotificationChannel(mChannelId);
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName())
+                    .putExtra(EXTRA_CHANNEL_ID, mChannelId)
+                    .putStringArrayListExtra(Settings.EXTRA_CHANNEL_FILTER_LIST,
+                            new ArrayList<>(Arrays.asList(
+                                    NotificationChannel.EDIT_SOUND,
+                                    NotificationChannel.EDIT_VIBRATION)));
+        }
+    }
+
+    /**
+     * Asks the user to verify the appearance of the channel settings sheet they just saw.
+     */
+    protected class UpdateChannelWithFilterHalfSheetTest extends InteractiveTestCase {
+
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createPassFailItem(parent,
+                    R.string.nls_channel_settings_with_filter_verification);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            status = WAIT_FOR_USER;
+            next();
         }
     }
 
