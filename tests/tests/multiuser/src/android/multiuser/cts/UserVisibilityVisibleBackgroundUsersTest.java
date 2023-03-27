@@ -42,6 +42,14 @@ import org.junit.Test;
  * as cars with passenger displays), but DON'T support them
  * {@link android.os.UserManager#isVisibleBackgroundUsersOnDefaultDisplaySupported() started in the
  * default display}.
+ *
+ * <p>If you want to run these tests on devices that don't support it, run the following commands
+ * first:
+ * <pre>{@code
+ *   adb shell setprop fw.display_ids_for_starting_users_for_testing_purposes 42
+ *   adb shell setprop fw.visible_bg_users true
+ *   adb shell stop && adb shell start
+ * }</pre>
  */
 @AppModeFull(reason = "it's testing user features, not related to apps")
 @RequireVisibleBackgroundUsers(reason = "Because class is testing exactly that")
