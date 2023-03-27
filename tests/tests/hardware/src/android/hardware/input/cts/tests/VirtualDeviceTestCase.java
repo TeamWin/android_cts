@@ -202,8 +202,10 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
             if (mVirtualDevice != null) {
                 mVirtualDevice.close();
             }
+            if (mInputManager != null) {
+                mInputManager.unregisterInputDeviceListener(mInputDeviceListener);
+            }
             final Context context = InstrumentationRegistry.getTargetContext();
-            mInputManager.unregisterInputDeviceListener(mInputDeviceListener);
             disassociateCompanionDevice(context.getPackageName());
         }
     }
