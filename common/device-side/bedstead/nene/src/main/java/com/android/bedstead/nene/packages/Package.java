@@ -1047,4 +1047,18 @@ public final class Package {
             throw new NeneException("Package " + mPackageName + " not found for user " + user);
         }
     }
+
+    /**
+     * Get the app standby bucket of the package.
+     */
+    @Experimental
+    public int getAppStandbyBucket() {
+        try {
+            return ShellCommand.builder("am get-standby-bucket")
+                .addOperand(mPackageName)
+                .executeAndParseOutput(o -> Integer.parseInt(o.trim()));
+        } catch (AdbException e) {
+            throw new NeneException("Could not get app standby bucket " + this, e);
+        }
+    }
 }
