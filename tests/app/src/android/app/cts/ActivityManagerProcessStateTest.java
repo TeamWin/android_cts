@@ -2370,11 +2370,8 @@ public class ActivityManagerProcessStateTest {
             BiConsumer<WatchUidRunner, WaitForBroadcast> checkKillResult) throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
-        // Depends on the device's memory pressure, the SERVICE_RESTART_DELAY
-        // can be 0 seconds, 10 seconds, 20 seconds, 30 seconds, gradually worse.
-        // set timeout to 25 seconds should work for most memory pressure cases.
         WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
-                (long)(WAITFOR_MSEC * 2.5));
+                WAITFOR_MSEC);
         AmMonitor monitor = new AmMonitor(mInstrumentation,
                 new String[]{AmMonitor.WAIT_FOR_EARLY_ANR, AmMonitor.WAIT_FOR_ANR});
         try {
