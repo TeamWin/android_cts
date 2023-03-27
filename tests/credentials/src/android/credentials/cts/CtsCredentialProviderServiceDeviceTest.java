@@ -107,6 +107,10 @@ public class CtsCredentialProviderServiceDeviceTest {
             "android.credentials.cts/android.credentials.cts.CtsNoOpCredentialProviderSysService";
     private static final List<String> CREDENTIAL_TYPES =
             Arrays.asList(PASSKEY_CREDENTIAL_TYPE, PASSWORD_CREDENTIAL_TYPE);
+    private static final List<String> PASSKEY_CREDENTIAL_TYPE_LIST =
+            Arrays.asList(PASSKEY_CREDENTIAL_TYPE);
+    private static final List<String> PASSWORD_CREDENTIAL_TYPE_LIST =
+            Arrays.asList(PASSWORD_CREDENTIAL_TYPE);
     private static final String PROVIDER_LABEL = "Test Provider Service";
     private static final String PROVIDER_LABEL_ALT = "Test Provider Service Alternate";
     private static final String PROVIDER_LABEL_SYSTEM = "Test Provider Service System";
@@ -553,7 +557,7 @@ public class CtsCredentialProviderServiceDeviceTest {
                     assertThat(cpi2.getLabel(mContext)).isEqualTo(PROVIDER_LABEL_ALT);
                     assertThat(cpi2.getServiceIcon(mContext)).isNotNull();
                     assertThat(cpi2.getServiceInfo()).isNotNull();
-                    assertThat(cpi2.getCapabilities()).containsExactlyElementsIn(CREDENTIAL_TYPES);
+                    assertThat(cpi2.getCapabilities()).containsExactlyElementsIn(PASSWORD_CREDENTIAL_TYPE_LIST);
                 });
     }
 
@@ -586,7 +590,7 @@ public class CtsCredentialProviderServiceDeviceTest {
                     assertThat(cpi2.getLabel(mContext)).isEqualTo(PROVIDER_LABEL_ALT);
                     assertThat(cpi2.getServiceIcon(mContext)).isNotNull();
                     assertThat(cpi2.getServiceInfo()).isNotNull();
-                    assertThat(cpi2.getCapabilities()).containsExactlyElementsIn(CREDENTIAL_TYPES);
+                    assertThat(cpi2.getCapabilities()).containsExactlyElementsIn(PASSWORD_CREDENTIAL_TYPE_LIST);
                 });
     }
 
@@ -607,9 +611,9 @@ public class CtsCredentialProviderServiceDeviceTest {
                     assertThat(cpi.isSystemProvider()).isTrue();
                     assertThat(cpi.getLabel(mContext)).isEqualTo(PROVIDER_LABEL_SYSTEM);
                     assertThat(cpi.getServiceIcon(mContext)).isNotNull();
-                    assertThat(cpi.getSettingsSubtitle()).isNull();
+                    assertThat(cpi.getSettingsSubtitle()).isEqualTo("This is a subtitle");
                     assertThat(cpi.getServiceInfo()).isNotNull();
-                    assertThat(cpi.getCapabilities()).containsExactlyElementsIn(CREDENTIAL_TYPES);
+                    assertThat(cpi.getCapabilities()).containsExactlyElementsIn(PASSKEY_CREDENTIAL_TYPE_LIST);
                 });
     }
 
