@@ -42,6 +42,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.platform.test.annotations.FlakyTest;
 import android.view.MotionEvent;
 import android.widget.FrameLayout;
 
@@ -176,6 +177,7 @@ public class CarTaskViewControllerTest {
 
     @Test
     @ApiTest(apis = {"android.car.app.ControlledRemoteCarTaskViewCallback#onTaskViewReleased()"})
+    @FlakyTest(bugId = 274956283)
     public void multipleControlledCarTaskView_released_whenHostDestroyed() throws Exception {
         // Arrange
         CarTaskViewTestHolder taskViewCallback =
@@ -302,6 +304,7 @@ public class CarTaskViewControllerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 274956283)
     public void remoteCarTaskView_receivesTouchInput() throws Exception {
         // Arrange
         CarTaskViewTestHolder carTaskViewHolder =
