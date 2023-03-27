@@ -41,6 +41,7 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.Preconditions;
@@ -92,6 +93,7 @@ public class MediaCodecBlockModelTest {
     @Presubmit
     @SmallTest
     @RequiresDevice
+    @ApiTest(apis = "MediaCodec#CONFIGURE_FLAG_USE_BLOCK_MODEL")
     @Test
     public void testDecodeShortVideo() throws InterruptedException {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
@@ -112,6 +114,7 @@ public class MediaCodecBlockModelTest {
     @Presubmit
     @SmallTest
     @RequiresDevice
+    @ApiTest(apis = "MediaCodec#CONFIGURE_FLAG_USE_BLOCK_MODEL")
     @Test
     public void testDecodeShortAudio() throws InterruptedException {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
@@ -132,6 +135,7 @@ public class MediaCodecBlockModelTest {
     @Presubmit
     @SmallTest
     @RequiresDevice
+    @ApiTest(apis = "MediaCodec#CONFIGURE_FLAG_USE_BLOCK_MODEL")
     @Test
     public void testEncodeShortAudio() throws InterruptedException {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
@@ -145,6 +149,7 @@ public class MediaCodecBlockModelTest {
     @Presubmit
     @SmallTest
     @RequiresDevice
+    @ApiTest(apis = "MediaCodec#CONFIGURE_FLAG_USE_BLOCK_MODEL")
     @Test
     public void testEncodeShortVideo() throws InterruptedException {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;

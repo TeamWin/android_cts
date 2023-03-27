@@ -26,6 +26,7 @@ import android.util.Log;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Test;
@@ -96,6 +97,7 @@ public class VideoDecoderRotationTest {
         return testParams;
     }
 
+    @ApiTest(apis = "android.media.MediaFormat#KEY_ROTATION")
     @Test
     public void testRendering800x480Rotated() throws Throwable {
         if (mImpl.isConcurrentEncodingDecodingSupported(

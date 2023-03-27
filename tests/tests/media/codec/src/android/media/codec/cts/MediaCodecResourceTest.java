@@ -45,6 +45,8 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -80,6 +82,7 @@ public class MediaCodecResourceTest {
         public final int uid;
     }
 
+    @ApiTest(apis = "MediaCodec#createByCodecNameForClient")
     @Test
     public void testCreateCodecForAnotherProcessWithoutPermissionsThrows() throws Exception {
         CodecInfo codecInfo = getFirstVideoHardwareDecoder();
@@ -102,6 +105,7 @@ public class MediaCodecResourceTest {
 
     // A process with lower priority (e.g. background app) should not be able to reclaim
     // MediaCodec resources from a process with higher priority (e.g. foreground app).
+    @ApiTest(apis = "MediaCodec#createByCodecNameForClient")
     @Test
     public void testLowerPriorityProcessFailsToReclaimResources() throws Exception {
         CodecInfo codecInfo = getFirstVideoHardwareDecoder();
@@ -188,6 +192,7 @@ public class MediaCodecResourceTest {
 
     // A process with higher priority (e.g. foreground app) should be able to reclaim
     // MediaCodec resources from a process with lower priority (e.g. background app).
+    @ApiTest(apis = "MediaCodec#createByCodecNameForClient")
     @Test
     public void testHigherPriorityProcessReclaimsResources() throws Exception {
         CodecInfo codecInfo = getFirstVideoHardwareDecoder();
