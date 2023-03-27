@@ -28,8 +28,8 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.PersistableBundle;
 import android.service.voice.AlwaysOnHotwordDetector;
-import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetectionServiceFailure;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
@@ -41,6 +41,7 @@ import android.service.voice.VoiceInteractionService;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -158,6 +159,16 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      * createAlwaysOnHotwordDetectorWithOnFailureCallback method.
      */
     public void createAlwaysOnHotwordDetector(boolean useExecutor, boolean runOnMainThread) {
+        createAlwaysOnHotwordDetector(useExecutor, runOnMainThread, /* options= */ null);
+    }
+
+    /**
+     * Create an AlwaysOnHotwordDetector, but it will not implement the onFailure method of
+     * AlwaysOnHotwordDetector.Callback. It will implement the onFailure method by using
+     * createAlwaysOnHotwordDetectorWithOnFailureCallback method.
+     */
+    public void createAlwaysOnHotwordDetector(boolean useExecutor, boolean runOnMainThread,
+            @Nullable PersistableBundle options) {
         Log.i(TAG, "createAlwaysOnHotwordDetector!!!!");
         mServiceTriggerLatch = new CountDownLatch(1);
 
@@ -214,9 +225,6 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             @Override
             public void onHotwordDetectionServiceInitialized(int status) {
                 Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
-                if (status != HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
-                    return;
-                }
                 mInitializedStatus = status;
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
                 if (mServiceTriggerLatch != null) {
@@ -235,7 +243,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
 
         final Handler handler = runOnMainThread ? new Handler(Looper.getMainLooper()) : mHandler;
         handler.post(() -> runWithShellPermissionIdentity(() -> {
-            mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector(callback, useExecutor);
+            mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector(callback, useExecutor,
+                    options);
         }, MANAGE_HOTWORD_DETECTION, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD));
     }
 
@@ -360,9 +369,6 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             @Override
             public void onHotwordDetectionServiceInitialized(int status) {
                 Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
-                if (status != HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
-                    return;
-                }
                 mInitializedStatus = status;
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
                 if (mServiceTriggerLatch != null) {
@@ -397,6 +403,16 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      * createSoftwareHotwordDetectorWithOnFailureCallback method.
      */
     public void createSoftwareHotwordDetector(boolean useExecutor, boolean runOnMainThread) {
+        createSoftwareHotwordDetector(useExecutor, runOnMainThread, /* options= */ null);
+    }
+
+    /**
+     * Create a SoftwareHotwordDetector, but it will not implement the onFailure method of
+     * HotwordDetector.Callback. It will implement the onFailure method by using
+     * createSoftwareHotwordDetectorWithOnFailureCallback method.
+     */
+    public void createSoftwareHotwordDetector(boolean useExecutor, boolean runOnMainThread,
+            @Nullable PersistableBundle options) {
         mServiceTriggerLatch = new CountDownLatch(1);
 
         final HotwordDetector.Callback callback = new HotwordDetector.Callback() {
@@ -442,9 +458,6 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             @Override
             public void onHotwordDetectionServiceInitialized(int status) {
                 Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
-                if (status != HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
-                    return;
-                }
                 mInitializedStatus = status;
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
                 if (mServiceTriggerLatch != null) {
@@ -460,7 +473,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
 
         final Handler handler = runOnMainThread ? new Handler(Looper.getMainLooper()) : mHandler;
         handler.post(() -> runWithShellPermissionIdentity(() -> {
-            mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector(callback, useExecutor);
+            mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector(callback, useExecutor,
+                    options);
         }, MANAGE_HOTWORD_DETECTION));
     }
 
@@ -532,9 +546,6 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             @Override
             public void onHotwordDetectionServiceInitialized(int status) {
                 Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
-                if (status != HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
-                    return;
-                }
                 mInitializedStatus = status;
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
                 if (mServiceTriggerLatch != null) {
