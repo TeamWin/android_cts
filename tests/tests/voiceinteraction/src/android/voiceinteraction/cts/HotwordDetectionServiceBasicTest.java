@@ -1074,6 +1074,42 @@ public class HotwordDetectionServiceBasicTest {
         alwaysOnHotwordDetector.destroy();
     }
 
+    @Test
+    public void testHotwordDetectionService_onDetectedTwice_clientOnlyOneOnDetected()
+            throws Throwable {
+        // Create SoftwareHotwordDetector
+        HotwordDetector softwareHotwordDetector =
+                createSoftwareHotwordDetector(/*useOnFailure=*/ false);
+        try {
+            runWithShellPermissionIdentity(() -> {
+                // Update state with test scenario unexpected onDetect callback
+                // HDS will call back onDetected() twice
+                PersistableBundle persistableBundle = new PersistableBundle();
+                persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                        Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_UNEXPECTED_CALLBACK);
+                softwareHotwordDetector.updateState(
+                        persistableBundle,
+                        Helper.createFakeSharedMemoryData());
+            }, MANAGE_HOTWORD_DETECTION);
+
+            adoptShellPermissionIdentityForHotword();
+
+            mService.initDetectRejectLatch();
+            softwareHotwordDetector.startRecognition();
+
+            // wait onDetected() called and only once (even HDS callback onDetected() many times,
+            // only one onDetected() on VIS will be called)
+            mService.waitOnDetectOrRejectCalled();
+            // Wait for a while to make sure no 2nd onDetected() will be called
+            Thread.sleep(500);
+            assertThat(mService.getSoftwareOnDetectedCount()).isEqualTo(1);
+        } finally {
+            softwareHotwordDetector.destroy();
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
     private void verifyOnDetectFromDspSuccess(AlwaysOnHotwordDetector alwaysOnHotwordDetector)
             throws Throwable {
         mService.initDetectRejectLatch();

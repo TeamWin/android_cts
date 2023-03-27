@@ -77,8 +77,10 @@ public class Utils {
 
     /** Indicate which test scenario for testing. */
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH = 1;
-    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_OVER_MAX_INIT_STATUS = 2;
-    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_CUSTOM_INIT_STATUS = 3;
+    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_UNEXPECTED_CALLBACK = 2;
+    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_OVER_MAX_INIT_STATUS = 3;
+    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_CUSTOM_INIT_STATUS = 4;
+
 
     /** Indicate to start a new activity for testing. */
     public static final int ACTIVITY_NEW = 0;
