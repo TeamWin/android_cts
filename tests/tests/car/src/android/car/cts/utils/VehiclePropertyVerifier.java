@@ -404,10 +404,14 @@ public class VehiclePropertyVerifier<T> {
                 () -> {
                     assertThat(mCarPropertyManager.getCarPropertyConfig(mPropertyId)).isNotNull();
                     maybeTurnOnHvac();
-                    verifyCarPropertyValueGetter();
-                    verifyCarPropertyValueCallback();
-                    verifyGetPropertiesAsync();
-                    maybeTurnOffHvac();
+                    try {
+                        verifyCarPropertyValueGetter();
+                        verifyCarPropertyValueCallback();
+                        verifyGetPropertiesAsync();
+                    } finally {
+                        // Restore hvac power even if test fails
+                        maybeTurnOffHvac();
+                    }
                 }, readPermission);
     }
 
@@ -473,10 +477,14 @@ public class VehiclePropertyVerifier<T> {
                 () -> {
                     maybeTurnOnHvac();
                     storeCurrentValues();
-                    verifyCarPropertyValueSetter();
-                    // TODO(b/266000988): verifySetProeprtiesAsync(...)
-                    restoreInitialValues();
-                    maybeTurnOffHvac();
+                    try {
+                        verifyCarPropertyValueSetter();
+                        // TODO(b/266000988): verifySetProeprtiesAsync(...)
+                    } finally {
+                        // Restore property value and hvac power even if test fails
+                        restoreInitialValues();
+                        maybeTurnOffHvac();
+                    }
                 }, ImmutableSet.<String>builder()
                         .addAll(writePermissions)
                         .addAll(readPermissions)
