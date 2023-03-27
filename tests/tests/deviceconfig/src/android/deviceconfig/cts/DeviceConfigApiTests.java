@@ -1163,14 +1163,15 @@ public final class DeviceConfigApiTests {
 
         DeviceConfig.setMonitorCallback(CONTEXT.getContentResolver(),
                 Executors.newSingleThreadExecutor(), callback);
-        // Reading properties triggers the monitor callback function.
-        DeviceConfig.getString(NAMESPACE1, KEY1, null);
         try {
             DeviceConfig.setProperties(new Properties.Builder(NAMESPACE1)
                     .setString(KEY1, VALUE1).setString(KEY2, VALUE2).build());
         } catch (DeviceConfig.BadConfigException e) {
             fail("Callback set strings" + e.toString());
         }
+
+        // Reading properties triggers the monitor callback function.
+        DeviceConfig.getString(NAMESPACE1, KEY1, null);
 
         try {
             if (!latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {

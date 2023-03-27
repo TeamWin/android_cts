@@ -428,8 +428,6 @@ public class Settings_ConfigTest {
 
         Settings.Config.setMonitorCallback(sContentResolver,
                 Executors.newSingleThreadExecutor(), callback);
-        // Reading properties triggers the monitor callback function.
-        Settings.Config.getStrings(NAMESPACE1, Arrays.asList(KEY1));
         try {
             Settings.Config.setStrings(NAMESPACE1, new HashMap<String, String>() {{
                     put(KEY1, VALUE1);
@@ -438,6 +436,8 @@ public class Settings_ConfigTest {
         } catch (DeviceConfig.BadConfigException e) {
             fail("Callback set strings" + e.toString());
         }
+        // Reading properties triggers the monitor callback function.
+        Settings.Config.getStrings(NAMESPACE1, Arrays.asList(KEY1));
 
         try {
             if (!latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {

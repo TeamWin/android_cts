@@ -25,7 +25,7 @@
 
     <target_preparer class="android.provider.cts.preconditions.ExternalStoragePreparer" />
     <target_preparer class="com.android.tradefed.targetprep.RebootTargetPreparer">
-        <option name="pre-reboot" value="true" />
+        <option name="pre-reboot" value="false" />
         <option name="post-reboot" value="true" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
