@@ -63,6 +63,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.UserHelper;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import junit.framework.Assert;
@@ -88,6 +89,8 @@ public class ListPopupWindowTest {
     private ListPopupWindow mPopupWindow;
 
     private AdapterView.OnItemClickListener mItemClickListener;
+
+    private final UserHelper mUserHelper = new UserHelper();
 
     /**
      * Item click listener that dismisses our <code>ListPopupWindow</code> when any item
@@ -500,8 +503,8 @@ public class ListPopupWindowTest {
         final ListView popupListView = mPopupWindow.getListView();
         final Rect rect = new Rect();
         mPopupWindow.getBackground().getPadding(rect);
-        CtsTouchUtils.emulateTapOnView(instrumentation, mActivityRule, popupListView,
-                -rect.left - 20, popupListView.getHeight() / 2);
+        CtsTouchUtils.emulateTapOnView(instrumentation, mUserHelper.getMainDisplayId(),
+                mActivityRule, popupListView, -rect.left - 20, popupListView.getHeight() / 2);
 
         // At this point our popup should not be showing and should have notified its
         // dismiss listener
@@ -914,8 +917,8 @@ public class ListPopupWindowTest {
         int swipeAmount = 2 * popupRowHeight;
 
         // Emulate drag-down gesture with a sequence of motion events
-        CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule, emulatedX, emulatedStartY,
-                0, swipeAmount);
+        CtsTouchUtils.emulateDragGesture(mInstrumentation, mUserHelper.getMainDisplayId(),
+                mActivityRule, emulatedX, emulatedStartY, /* dragAmountX= */ 0, swipeAmount);
 
         // We expect the swipe / drag gesture to result in clicking the second item in our list.
         verify(mPopupWindowBuilder.mOnItemClickListener, times(1)).onItemClick(
