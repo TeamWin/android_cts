@@ -55,8 +55,8 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
     @BeforeClassWithInfo
     public static void beforeClassWithDevice(TestInformation testInfo) throws Exception {
         assertThat(testInfo.getDevice()).isNotNull();
+        assumeTrue(isAtLeastU(testInfo.getDevice()));
         AppCloningBaseHostTest.baseHostSetup(testInfo.getDevice());
-        assumeTrue(isAtLeastU());
         switchOnAppCloningBuildingBlocksFlag();
     }
 
