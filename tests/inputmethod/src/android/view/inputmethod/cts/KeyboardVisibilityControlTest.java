@@ -59,6 +59,7 @@ import android.app.AlertDialog;
 import android.app.Instrumentation;
 import android.app.compat.CompatChanges;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.SystemClock;
@@ -104,6 +105,7 @@ import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.Until;
 
+import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -1392,6 +1394,69 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         } finally {
             // Back to home to clean up states after the test finished.
             UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressHome();
+        }
+    }
+
+    /**
+     * Test the IME visibility when in split-screen mode, switching the focus to the app task with
+     * {@link WindowManager.LayoutParams#SOFT_INPUT_STATE_HIDDEN} flag from the app showing the
+     * IME will expect to be hidden.
+     */
+    @Test
+    public void testImeHiddenWhenFocusToAppWithStateHiddenFlagInMultiWindowMode() throws Exception {
+        assumeTrue(TestUtils.supportsSplitScreenMultiWindow());
+
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String marker = getTestMarker();
+
+            // Launch an editor activity to be on the split primary task.
+            final AtomicReference<EditText> editTextRef = new AtomicReference<>();
+            final TestActivity splitPrimaryActivity = TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+                final EditText editText = new EditText(activity);
+                editTextRef.set(editText);
+                layout.addView(editText);
+                editText.setHint("focused editText");
+                editText.setPrivateImeOptions(marker);
+                editText.requestFocus();
+                return layout;
+            });
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(stream, editorMatcher("onStartInputView", marker), NOT_EXPECT_TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+
+            // Launch another activity with SOFT_INPUT_STATE_HIDDEN flag to be on the split
+            // secondary task, expect the IME won't receive onStartInputView and invisible.
+            final TestActivity splitSecondaryActivity = new TestActivity.Starter()
+                    .asMultipleTask()
+                    .withAdditionalFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT)
+                    .startSync(splitPrimaryActivity, activity -> {
+                        activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_HIDDEN);
+                        return new LinearLayout(activity);
+                    }, TestActivity2.class);
+            notExpectEvent(stream, event -> "onStartInputView".equals(event.getEventName()),
+                    NOT_EXPECT_TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+
+            // Double tap the editor on the split primary task to focus the window and show the IME.
+            CtsTouchUtils.emulateDoubleTapOnViewCenter(InstrumentationRegistry.getInstrumentation(),
+                    null, editTextRef.get());
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            // Tap on the split secondary task to switch focus and expect the IME will be hidden.
+            CtsTouchUtils.emulateTapOnViewCenter(InstrumentationRegistry.getInstrumentation(),
+                    null, splitSecondaryActivity.getWindow().getDecorView());
+            expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
+            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.GONE, TIMEOUT);
+            expectImeInvisible(TIMEOUT);
         }
     }
 

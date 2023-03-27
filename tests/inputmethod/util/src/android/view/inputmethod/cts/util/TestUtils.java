@@ -16,6 +16,7 @@
 
 package android.view.inputmethod.cts.util;
 
+import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowInsets.Type.displayCutout;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
@@ -25,12 +26,15 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import static org.junit.Assert.assertFalse;
 
 import android.app.Activity;
+import android.app.ActivityTaskManager;
 import android.app.Instrumentation;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.view.Display;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -130,6 +134,15 @@ public final class TestUtils {
 
     public static boolean isInputMethodPickerShown(@NonNull InputMethodManager imm) {
         return SystemUtil.runWithShellPermissionIdentity(imm::isInputMethodPickerShown);
+    }
+
+    /** Returns {@code true} if the default display supports split screen multi-window. */
+    public static boolean supportsSplitScreenMultiWindow() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        final DisplayManager dm = context.getSystemService(DisplayManager.class);
+        final Display defaultDisplay = dm.getDisplay(DEFAULT_DISPLAY);
+        return ActivityTaskManager.supportsSplitScreenMultiWindow(
+                context.createDisplayContext(defaultDisplay));
     }
 
     /**

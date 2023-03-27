@@ -45,7 +45,10 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import com.google.common.util.concurrent.SettableFuture;
+
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -57,6 +60,10 @@ public class TestActivity extends Activity {
             new AtomicReference<>();
 
     private Function<TestActivity, View> mInitializer = null;
+
+    private static final AtomicReference<SettableFuture<TestActivity>> sFutureRef =
+            new AtomicReference<>();
+    private static final long WAIT_TIMEOUT_MS = 5000;
 
     private AtomicBoolean mIgnoreBackKey = new AtomicBoolean();
 
@@ -100,6 +107,16 @@ public class TestActivity extends Activity {
     @UiThread
     public long getOnBackPressedCallCount() {
         return mOnBackPressedCallCount;
+    }
+
+    @Override
+    public void onEnterAnimationComplete() {
+        super.onEnterAnimationComplete();
+
+        final SettableFuture<TestActivity> future = sFutureRef.getAndSet(null);
+        if (future != null) {
+            future.set(this);
+        }
     }
 
     /**
@@ -269,6 +286,18 @@ public class TestActivity extends Activity {
         }
 
         /**
+         * Uses {@link Intent#FLAG_ACTIVITY_NEW_TASK} and {@link Intent#FLAG_ACTIVITY_MULTIPLE_TASK}
+         * for {@link Intent#setFlags(int)}.
+         */
+        public Starter asMultipleTask() {
+            if (mFlags != 0) {
+                throw new IllegalStateException("Conflicting flags are specified.");
+            }
+            mFlags = Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
+            return this;
+        }
+
+        /**
          * Uses {@link Intent#FLAG_ACTIVITY_NEW_TASK} and {@link Intent#FLAG_ACTIVITY_CLEAR_TOP}
          * for {@link Intent#setFlags(int)}.
          */
@@ -309,6 +338,50 @@ public class TestActivity extends Activity {
                     () -> (TestActivity) instrumentation.startActivitySync(
                             intent, mOptions == null ? null : mOptions.toBundle());
 
+            try {
+                if (mRequireShellPermission) {
+                    return SystemUtil.callWithShellPermissionIdentity(launcher);
+                } else {
+                    return launcher.call();
+                }
+            } catch (Exception e) {
+                fail("Failed to start TestActivity: " + e);
+                return null;
+            }
+        }
+
+        /**
+         * Launches {@link TestActivity} from the given source activity with the given
+         * initialization logic for content view with already specified parameters.
+         *
+         * <p>As long as you are using {@link androidx.test.runner.AndroidJUnitRunner}, the test
+         * runner automatically calls {@link Activity#finish()} for the {@link Activity} launched
+         * when the test finished. You do not need to explicitly call {@link Activity#finish()}.</p>
+         *
+         * @param fromActivity the source activity requests launching the target
+         * @param activityInitializer initializer to supply {@link View} to be passed to
+         *                            {@link Activity#setContentView(View)}
+         * @param activityClass the target class to start, which extends {@link TestActivity}
+         * @return {@link TestActivity} launched
+         */
+        public TestActivity startSync(@NonNull Activity fromActivity,
+                @NonNull Function<TestActivity, View> activityInitializer,
+                Class<? extends TestActivity> activityClass) {
+            sInitializer.set(activityInitializer);
+
+            if (mFlags == 0) {
+                mFlags = DEFAULT_FLAGS;
+            }
+            final Intent intent = new Intent()
+                    .setAction(Intent.ACTION_MAIN)
+                    .setClass(fromActivity, activityClass)
+                    .addFlags(mFlags | mAdditionalFlags);
+            final Callable<TestActivity> launcher = () -> {
+                fromActivity.startActivity(intent, mOptions == null ? null : mOptions.toBundle());
+                final SettableFuture<TestActivity> future = SettableFuture.create();
+                sFutureRef.set(future);
+                return future.get(WAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            };
             try {
                 if (mRequireShellPermission) {
                     return SystemUtil.callWithShellPermissionIdentity(launcher);
