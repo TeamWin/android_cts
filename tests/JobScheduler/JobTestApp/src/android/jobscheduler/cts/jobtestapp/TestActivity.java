@@ -16,6 +16,8 @@
 
 package android.jobscheduler.cts.jobtestapp;
 
+import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.PACKAGE_NAME;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -31,7 +33,6 @@ import android.util.Log;
  */
 public class TestActivity extends Activity {
     private static final String TAG = TestActivity.class.getSimpleName();
-    private static final String PACKAGE_NAME = "android.jobscheduler.cts.jobtestapp";
 
     static final int FINISH_ACTIVITY_MSG = 1;
     public static final String ACTION_FINISH_ACTIVITY = PACKAGE_NAME + ".action.FINISH_ACTIVITY";

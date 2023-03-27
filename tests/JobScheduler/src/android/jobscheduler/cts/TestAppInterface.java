@@ -40,6 +40,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.jobscheduler.cts.jobtestapp.TestActivity;
+import android.jobscheduler.cts.jobtestapp.TestFgsService;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.os.SystemClock;
 import android.os.UserHandle;
@@ -60,6 +61,7 @@ class TestAppInterface implements AutoCloseable {
 
     static final String TEST_APP_PACKAGE = "android.jobscheduler.cts.jobtestapp";
     private static final String TEST_APP_ACTIVITY = TEST_APP_PACKAGE + ".TestActivity";
+    private static final String TEST_APP_FGS = TEST_APP_PACKAGE + ".TestFgsService";
     static final String TEST_APP_RECEIVER = TEST_APP_PACKAGE + ".TestJobSchedulerReceiver";
 
     private final Context mContext;
@@ -85,9 +87,11 @@ class TestAppInterface implements AutoCloseable {
         cancelJobsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.sendBroadcast(cancelJobsIntent);
         closeActivity();
+        stopFgs();
         mContext.unregisterReceiver(mReceiver);
         SystemUtil.runShellCommand("am compat --reset-all" + TEST_APP_PACKAGE);
         mTestJobStates.clear();
+        forceStopApp(); // Clean up as much internal/temporary system state as possible
     }
 
     @Override
@@ -149,6 +153,18 @@ class TestAppInterface implements AutoCloseable {
                 15 /* 15 seconds */);
     }
 
+    void postFgsStartingAlarm() throws Exception {
+        final Intent intent = new Intent(TestJobSchedulerReceiver.ACTION_SCHEDULE_FGS_START_ALARM);
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        intent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
+
+        final CallbackAsserter resultBroadcastAsserter = CallbackAsserter.forBroadcast(
+                new IntentFilter(TestJobSchedulerReceiver.ACTION_ALARM_SCHEDULED));
+        mContext.sendBroadcast(intent);
+        resultBroadcastAsserter.assertCalled("Didn't get alarm scheduled broadcast",
+                15 /* 15 seconds */);
+    }
+
     /** Asks (not forces) JobScheduler to run the job if constraints are met. */
     void runSatisfiedJob() throws Exception {
         SystemUtil.runShellCommand("cmd jobscheduler run -s"
@@ -204,6 +220,23 @@ class TestAppInterface implements AutoCloseable {
                     new ComponentName(TEST_APP_PACKAGE, TEST_APP_ACTIVITY);
             new WindowManagerStateHelper().waitForActivityRemoved(testComponentName);
         }
+    }
+
+    void startFgs() throws Exception {
+        final Intent testFgs = new Intent(TestFgsService.ACTION_START_FGS);
+        ComponentName testComponentName = new ComponentName(TEST_APP_PACKAGE, TEST_APP_FGS);
+        testFgs.setComponent(testComponentName);
+
+        final CallbackAsserter resultBroadcastAsserter =
+                CallbackAsserter.forBroadcast(new IntentFilter(TestFgsService.ACTION_FGS_STARTED));
+        mContext.startForegroundService(testFgs);
+        resultBroadcastAsserter.assertCalled("Didn't get FGS started broadcast",
+                15 /* 15 seconds */);
+    }
+
+    void stopFgs() {
+        final Intent testFgs = new Intent(TestFgsService.ACTION_STOP_FOREGROUND);
+        mContext.sendBroadcast(testFgs);
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -298,9 +331,13 @@ class TestAppInterface implements AutoCloseable {
     }
 
     boolean awaitJobScheduleResult(long maxWaitMs, int jobResult) throws Exception {
+        return awaitJobScheduleResult(mJobId, maxWaitMs, jobResult);
+    }
+
+    boolean awaitJobScheduleResult(int jobId, long maxWaitMs, int jobResult) throws Exception {
         return waitUntilTrue(maxWaitMs, () -> {
             synchronized (mTestJobStates) {
-                TestJobState jobState = mTestJobStates.get(mJobId);
+                TestJobState jobState = mTestJobStates.get(jobId);
                 return jobState != null && jobState.scheduleResult == jobResult;
             }
         });
