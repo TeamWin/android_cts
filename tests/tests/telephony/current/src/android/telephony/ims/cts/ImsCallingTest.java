@@ -968,6 +968,8 @@ public class ImsCallingTest extends ImsCallingBase {
         mCallSession3.addTestType(TestImsCallSessionImpl.TEST_TYPE_JOIN_EXIST_CONFERENCE);
 
         mCall3.conference(mConferenceCall);
+        // Wait for merge complete for the third call:
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_MERGE_COMPLETE, WAIT_FOR_CALL_STATE));
         isCallActive(mConferenceCall, mConfCallSession);
 
         ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
@@ -1550,8 +1552,12 @@ public class ImsCallingTest extends ImsCallingBase {
         // Wait for merge start first and second call
         callingTestLatchCountdown(LATCH_IS_ON_MERGE_START, WAIT_FOR_CALL_STATE);
         callingTestLatchCountdown(LATCH_IS_ON_MERGE_START, WAIT_FOR_CALL_STATE);
+        // Wait for merge complete background call:
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_MERGE_COMPLETE, WAIT_FOR_CALL_STATE));
         // Wait for remove first call
         callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE);
+        // Wait for merge complete foreground call:
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_MERGE_COMPLETE, WAIT_FOR_CALL_STATE));
         // Wait for conference call added
         assertTrue(
                 callingTestLatchCountdown(LATCH_IS_ON_CONFERENCE_CALL_ADDED, WAIT_FOR_CALL_STATE));
