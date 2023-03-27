@@ -357,6 +357,19 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
+    public void testVoiceInteractionService_createSoftwareBindHotwordDetectionPermission_Failure()
+            throws Throwable {
+        // Create SoftwareHotwordDetector and wait result
+        mService.createSoftwareHotwordDetectorHoldBindHotwordDetectionPermission();
+
+        // Wait the result and verify expected result
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+        // Verify SecurityException throws
+        assertThat(mService.isCreateDetectorSecurityExceptionThrow()).isTrue();
+    }
+
+    @Test
     public void testVoiceInteractionService_disallowCreateAlwaysOnHotwordDetectorTwice()
             throws Throwable {
         final boolean enableMultipleHotwordDetectors = Helper.isEnableMultipleDetectors();
