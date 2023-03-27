@@ -22,6 +22,7 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildca
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotVisible;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
+import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
 import static android.server.wm.lifecycle.LifecycleConstants.ON_CREATE;
 import static android.server.wm.lifecycle.LifecycleConstants.ON_DESTROY;
 import static android.server.wm.lifecycle.LifecycleConstants.ON_PAUSE;
@@ -34,12 +35,16 @@ import static android.server.wm.lifecycle.TransitionVerifier.transition;
 import static androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS;
 import static androidx.window.extensions.embedding.SplitRule.FINISH_NEVER;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.Application;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestActivityWithId2;
@@ -51,6 +56,8 @@ import android.server.wm.lifecycle.EventTracker;
 import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.window.extensions.embedding.ActivityStack;
+import androidx.window.extensions.embedding.SplitInfo;
 import androidx.window.extensions.embedding.SplitPairRule;
 
 import org.junit.Test;
@@ -521,6 +528,57 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         waitAndAssertActivityOnDestroy(TestActivityWithId.class);
         waitAndAssertActivityOnDestroy(TestActivityWithId2.class);
         waitAndAssertSplitStatesUpdated();
+    }
+
+    /**
+     * Tests launching a new activity on an ActivityStack with wildcard split rule, new activity
+     * shows on top.
+     */
+    @Test
+    public void testLaunchActivityInActivityStack() {
+        // Launch primary activity
+        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+
+        // Register wildcard SplitRule and launch a secondary activity to side
+        SplitPairRule splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
+                TestConfigChangeHandlingActivity.class, false /* shouldClearTop */);
+        mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
+        mSplitInfoConsumer.setCount(1);
+        startActivityFromActivity(primaryActivity, TestActivityWithId.class,
+                "secondaryActivity" /* secondActivityId */);
+
+        // A split info callback should report after the activity launched
+        List<SplitInfo> activeSplitStates = null;
+        try {
+            activeSplitStates = mSplitInfoConsumer.waitAndGet();
+        } catch (InterruptedException e) {
+            throw new AssertionError("testLaunchActivityInActivityStack()", e);
+        }
+        assertNotNull("Active Split States cannot be null.", activeSplitStates);
+
+        // Get the primary ActivityStack token
+        IBinder primaryStackToken = null;
+        for (SplitInfo splitInfo : activeSplitStates) {
+            final ActivityStack primaryStack = splitInfo.getPrimaryActivityStack();
+            final List<Activity> activities = primaryStack.getActivities();
+            if (activities.contains(primaryActivity)) {
+                primaryStackToken = primaryStack.getToken();
+                break;
+            }
+        }
+        assertNotNull("Primary stack token cannot be null.", primaryStackToken);
+
+        // Launch an activity to the primary ActivityStack
+        Intent intent = new Intent(primaryActivity, TestActivityWithId2.class);
+        intent.putExtra(KEY_ACTIVITY_ID, "primaryActivity2");
+        ActivityOptions options = ActivityOptions.makeBasic();
+        mActivityEmbeddingComponent.setLaunchingActivityStack(options, primaryStackToken);
+        primaryActivity.startActivity(intent, options.toBundle());
+
+        // The existing primary activity should be occluded by new Activity
+        waitAndAssertResumed("primaryActivity2");
+        waitAndAssertResumed("secondaryActivity");
+        waitAndAssertNotVisible(primaryActivity);
     }
 
     private void waitAndAssertActivityOnDestroy(Class<? extends Activity> activityClass) {
