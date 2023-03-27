@@ -51,6 +51,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -121,6 +122,7 @@ public class CaptureContentForNotesTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.content.Intent#ACTION_LAUNCH_CAPTURE_CONTENT_ACTIVITY_FOR_NOTE"})
     public void whenRoleAvailable_shouldResolveIntentAction() {
         assumeTrue(ROLE_NOTES + " must be available",
                 mRoleManager.isRoleAvailable(ROLE_NOTES));
@@ -133,6 +135,9 @@ public class CaptureContentForNotesTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.content.Intent#EXTRA_CAPTURE_CONTENT_FOR_NOTE_STATUS_CODE",
+            "android.content.Intent#CAPTURE_CONTENT_FOR_NOTE_SUCCESS",
+            "android.content.Intent#ACTION_LAUNCH_CAPTURE_CONTENT_ACTIVITY_FOR_NOTE"})
     public void appBubbleActivityStarted_userConsented_shouldReturnScreenshot()
             throws IOException, UiObjectNotFoundException, ExecutionException,
             InterruptedException {
@@ -164,6 +169,9 @@ public class CaptureContentForNotesTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.content.Intent#EXTRA_CAPTURE_CONTENT_FOR_NOTE_STATUS_CODE",
+            "android.content.Intent#CAPTURE_CONTENT_FOR_NOTE_USER_CANCELED",
+            "android.content.Intent#ACTION_LAUNCH_CAPTURE_CONTENT_ACTIVITY_FOR_NOTE"})
     public void appBubbleActivityStarted_userCanceled_shouldReturnCancelStatus()
             throws IOException, UiObjectNotFoundException, ExecutionException,
             InterruptedException {
@@ -194,6 +202,9 @@ public class CaptureContentForNotesTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.content.Intent#EXTRA_CAPTURE_CONTENT_FOR_NOTE_STATUS_CODE",
+            "android.content.Intent#CAPTURE_CONTENT_FOR_NOTE_WINDOW_MODE_UNSUPPORTED",
+            "android.content.Intent#ACTION_LAUNCH_CAPTURE_CONTENT_ACTIVITY_FOR_NOTE"})
     public void regularActivityStarted_intentActionTriggered_shouldReturnWindowModeUnsupported() {
         assumeTrue(ROLE_NOTES + " must be available",
                 mRoleManager.isRoleAvailable(ROLE_NOTES));
@@ -215,6 +226,8 @@ public class CaptureContentForNotesTest {
     }
 
     @Test
+    @ApiTest(apis =
+            {"android.app.StatusBarManager#canLaunchCaptureContentActivityForNote(Activity)"})
     public void regularActivityStarted_querySupportApi_shouldReturnFalse() {
         assumeTrue(ROLE_NOTES + " must be available",
                 mRoleManager.isRoleAvailable(ROLE_NOTES));
@@ -236,6 +249,8 @@ public class CaptureContentForNotesTest {
     }
 
     @Test
+    @ApiTest(apis =
+            {"android.app.StatusBarManager#canLaunchCaptureContentActivityForNote(Activity)"})
     public void appBubbleActivityStarted_querySupportApi_shouldReturnTrue()
             throws ExecutionException, InterruptedException, IOException {
         assumeTrue(ROLE_NOTES + " must be available",
