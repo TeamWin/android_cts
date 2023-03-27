@@ -26,6 +26,7 @@ import android.media.cts.TestArgs;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Assume;
@@ -625,41 +626,65 @@ public class VideoCodecTest extends VideoCodecTestBase {
         }
     }
 
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_BITRATE_MODE",
+            "android.media.MediaFormat#KEY_BIT_RATE",
+            "android.media.MediaFormat#KEY_COLOR_FORMAT",
+            "android.media.MediaFormat#KEY_FRAME_RATE",
+            "android.media.MediaFormat#KEY_I_FRAME_INTERVAL"})
     @Test
     public void testBasic() throws Exception {
         internalTestBasic(mCodecName, mCodecMimeType, mBitRateMode);
     }
 
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_BITRATE_MODE",
+            "android.media.MediaFormat#KEY_BIT_RATE",
+            "android.media.MediaFormat#KEY_COLOR_FORMAT",
+            "android.media.MediaFormat#KEY_FRAME_RATE",
+            "android.media.MediaFormat#KEY_I_FRAME_INTERVAL"})
     @Test
     public void testAsyncEncode() throws Exception {
         internalTestAsyncEncoding(mCodecName, mCodecMimeType, mBitRateMode);
     }
 
+    @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_REQUEST_SYNC_FRAME")
     @Test
     public void testSyncFrame() throws Exception {
         internalTestSyncFrame(mCodecName, mCodecMimeType, mBitRateMode, false);
     }
 
+    @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_REQUEST_SYNC_FRAME")
     @Test
     public void testSyncFrameNdk() throws Exception {
         internalTestSyncFrame(mCodecName, mCodecMimeType, mBitRateMode, true);
     }
 
+    @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_VIDEO_BITRATE")
     @Test
     public void testDynamicBitrateChange() throws Exception {
         internalTestDynamicBitrateChange(mCodecName, mCodecMimeType, mBitRateMode, false);
     }
 
+    @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_VIDEO_BITRATE")
     @Test
     public void testDynamicBitrateChangeNdk() throws Exception {
         internalTestDynamicBitrateChange(mCodecName, mCodecMimeType, mBitRateMode, true);
     }
 
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_BITRATE_MODE",
+            "android.media.MediaFormat#KEY_BIT_RATE",
+            "android.media.MediaFormat#KEY_COLOR_FORMAT",
+            "android.media.MediaFormat#KEY_FRAME_RATE",
+            "android.media.MediaFormat#KEY_I_FRAME_INTERVAL"})
     @Test
     public void testEncoderQuality() throws Exception {
         internalTestEncoderQuality(mCodecName, mCodecMimeType, mBitRateMode);
     }
 
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_BITRATE_MODE",
+            "android.media.MediaFormat#KEY_BIT_RATE",
+            "android.media.MediaFormat#KEY_COLOR_FORMAT",
+            "android.media.MediaFormat#KEY_FRAME_RATE",
+            "android.media.MediaFormat#KEY_I_FRAME_INTERVAL"})
     @Test
     public void testParallelEncodingAndDecoding() throws Exception {
         Assume.assumeTrue("Parallel Encode Decode test is run only for VBR mode",
