@@ -21,6 +21,7 @@ import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.WindowManagerState.STATE_INITIALIZING;
 import static android.server.wm.backgroundactivity.common.CommonComponents.EVENT_NOTIFIER_EXTRA;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -210,7 +211,6 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 270713916)
     public void testBackgroundActivityBlockedWhenForegroundActivityNotTop() {
         Intent intent = new Intent();
         intent.setComponent(APP_A.FOREGROUND_ACTIVITY);
@@ -219,6 +219,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         mWmState.waitForValidState(APP_A.FOREGROUND_ACTIVITY);
         mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A, APP_B.FOREGROUND_ACTIVITY));
         mWmState.waitForValidState(APP_B.FOREGROUND_ACTIVITY);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         assertTaskStack(new ComponentName[]{
                 APP_B.FOREGROUND_ACTIVITY,
                 APP_A.FOREGROUND_ACTIVITY}, APP_A.FOREGROUND_ACTIVITY);
