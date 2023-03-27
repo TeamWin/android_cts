@@ -203,6 +203,7 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 274818424)
     public void testRemoveTask() throws Exception {
         // setup
         ActivityC testActivity = launchTestActivity(ActivityC.class);
