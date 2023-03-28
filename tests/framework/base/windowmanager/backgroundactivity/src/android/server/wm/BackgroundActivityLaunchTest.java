@@ -190,6 +190,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         assertTrue("Not able to start foreground activity", result);
     }
 
+    @Test
     public void testBackgroundActivityNotBlockedWhenForegroundActivityTop() {
         Intent intent = new Intent();
         intent.setComponent(APP_A.FOREGROUND_ACTIVITY);
