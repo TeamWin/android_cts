@@ -84,6 +84,8 @@ android_test {
         ":CtsDragAndDropTargetApp",
         ":CtsDeviceAlertWindowTestApp",
         ":CtsAlertWindowService",
+        ":CtsPropertyCompatAllowSandboxingViewBoundsApisApp",
+        ":CtsPropertyCompatOptOutSandboxingViewBoundsApisApp",
         ":CtsDeviceServicesTestApp",
         ":CtsDeviceServicesTestApp27",
         ":CtsDeviceServicesTestApp30",
