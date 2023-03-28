@@ -104,6 +104,102 @@ class HardwareBufferRendererTests : ActivityTestBase() {
         assertEquals(0xFF0000FF.toInt(), bitmap.getPixel(0, 0))
     }
 
+    @Test
+    fun testContentsPreservedSRGB() = preservedContentsTest() { bitmap ->
+        assertEquals(Color.RED, bitmap.getPixel(TEST_WIDTH / 2, TEST_HEIGHT / 4))
+        assertEquals(Color.BLUE, bitmap.getPixel(TEST_WIDTH / 2, TEST_HEIGHT / 2 + TEST_HEIGHT / 4))
+    }
+
+    @Test
+    fun testContentsPreservedF16() = preservedContentsTest(
+            format = PixelFormat.RGBA_F16,
+            bitmapConfig = Bitmap.Config.RGBA_F16
+    ) { bitmap ->
+        val buffer = ByteBuffer.allocateDirect(bitmap.allocationByteCount).apply {
+            bitmap.copyPixelsToBuffer(this)
+            rewind()
+            order(ByteOrder.LITTLE_ENDIAN)
+        }
+        val srcColorSpace = ColorSpace.get(ColorSpace.Named.SRGB)
+        val srcToDst = ColorSpace.connect(srcColorSpace, ColorSpace.get(ColorSpace.Named.SRGB))
+
+        val expectedRed = srcToDst.transform(1.0f, 0.0f, 0.0f)
+        val expectedBlue = srcToDst.transform(0.0f, 0.0f, 1.0f)
+
+        assertEqualsRgba16f(
+                "TopMiddle",
+                bitmap,
+                TEST_WIDTH / 2,
+                TEST_HEIGHT / 4,
+                buffer,
+                expectedRed[0],
+                expectedRed[1],
+                expectedRed[2],
+                1.0f
+        )
+        assertEqualsRgba16f(
+                "BottomMiddle",
+                bitmap,
+                TEST_WIDTH / 2,
+                TEST_HEIGHT / 2 + TEST_HEIGHT / 4,
+                buffer,
+                expectedBlue[0],
+                expectedBlue[1],
+                expectedBlue[2],
+                1.0f
+        )
+    }
+
+    @Test
+    fun testContentsPreserved1010102() = preservedContentsTest(
+            format = PixelFormat.RGBA_1010102,
+            bitmapConfig = Bitmap.Config.RGBA_1010102
+    ) { bitmap ->
+        assertEquals(Color.RED, bitmap.getPixel(TEST_WIDTH / 2, TEST_HEIGHT / 4))
+        assertEquals(Color.BLUE, bitmap.getPixel(TEST_WIDTH / 2, TEST_HEIGHT / 2 + TEST_HEIGHT / 4))
+    }
+
+    private fun preservedContentsTest(
+            format: Int = PixelFormat.RGBA_8888,
+            colorSpace: ColorSpace = ColorSpace.get(ColorSpace.Named.SRGB),
+            bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
+            block: (Bitmap) -> Unit
+    ) = hardwareBufferRendererTest(format = format) { hardwareBuffer, renderer ->
+        val contentRoot = RenderNode("content").apply {
+            setPosition(0, 0, TEST_WIDTH, TEST_HEIGHT)
+            record { canvas -> canvas.drawColor(Color.BLUE) }
+        }
+        renderer.setContentRoot(contentRoot)
+        val latch = CountDownLatch(1)
+        renderer.obtainRenderRequest().setColorSpace(colorSpace).draw(mExecutor) { renderResult ->
+            renderResult.fence.awaitForever()
+            latch.countDown()
+        }
+
+        assertTrue(latch.await(3000, TimeUnit.MILLISECONDS))
+
+        val latch2 = CountDownLatch(1)
+        contentRoot.record { canvas ->
+            val paint = Paint().apply { color = Color.RED }
+            canvas.drawRect(0f, 0f, TEST_WIDTH.toFloat(), TEST_HEIGHT / 2f, paint)
+        }
+        renderer.setContentRoot(contentRoot)
+
+        renderer.obtainRenderRequest().setColorSpace(colorSpace).draw(mExecutor) { renderResult ->
+            renderResult.fence.awaitForever()
+            latch2.countDown()
+        }
+
+        assertTrue(latch2.await(3000, TimeUnit.MILLISECONDS))
+
+        val bitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace)!!
+                .copy(bitmapConfig, false)
+
+        assertEquals(TEST_WIDTH, bitmap.width)
+        assertEquals(TEST_HEIGHT, bitmap.height)
+        block(bitmap)
+    }
+
     private fun quadTest(
         transform: Int = SurfaceControl.BUFFER_TRANSFORM_IDENTITY,
         colorSpace: ColorSpace = ColorSpace.get(ColorSpace.Named.SRGB),
