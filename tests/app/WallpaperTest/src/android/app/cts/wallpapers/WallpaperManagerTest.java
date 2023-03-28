@@ -1094,7 +1094,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.getDrawable(FLAG_SYSTEM);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSimilar(actual, expected)).isTrue();
+                isSimilar(actual, expected, true)).isTrue();
     }
 
     @Test
@@ -1112,7 +1112,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.getDrawable(FLAG_LOCK);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSimilar(actual, expected)).isTrue();
+                isSimilar(actual, expected, true)).isTrue();
     }
 
     @Test
@@ -1123,7 +1123,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.getDrawable();
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSimilar(actual, expected)).isTrue();
+                isSimilar(actual, expected, true)).isTrue();
     }
 
     @Test
@@ -1134,7 +1134,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.getFastDrawable(FLAG_SYSTEM);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSimilar(actual, expected)).isTrue();
+                isSimilar(actual, expected, true)).isTrue();
     }
 
     @Test
@@ -1152,7 +1152,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.getFastDrawable(FLAG_LOCK);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSimilar(actual, expected)).isTrue();
+                isSimilar(actual, expected, true)).isTrue();
     }
 
     @Test
@@ -1163,7 +1163,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.getFastDrawable();
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSimilar(actual, expected)).isTrue();
+                isSimilar(actual, expected, true)).isTrue();
     }
 
     @Test
@@ -1174,7 +1174,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.peekDrawable(FLAG_SYSTEM);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSimilar(actual, expected)).isTrue();
+                isSimilar(actual, expected, true)).isTrue();
     }
 
     @Test
@@ -1192,7 +1192,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.peekDrawable(FLAG_LOCK);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSimilar(actual, expected)).isTrue();
+                isSimilar(actual, expected, true)).isTrue();
     }
 
     @Test
@@ -1203,7 +1203,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.peekDrawable();
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSimilar(actual, expected)).isTrue();
+                isSimilar(actual, expected, true)).isTrue();
     }
 
     @Test
@@ -1214,7 +1214,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.peekFastDrawable(FLAG_SYSTEM);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSimilar(actual, expected)).isTrue();
+                isSimilar(actual, expected, true)).isTrue();
     }
 
     @Test
@@ -1232,7 +1232,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.peekFastDrawable(FLAG_LOCK);
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSimilar(actual, expected)).isTrue();
+                isSimilar(actual, expected, true)).isTrue();
     }
 
     @Test
@@ -1243,7 +1243,7 @@ public class WallpaperManagerTest {
         Drawable actual = mWallpaperManager.peekFastDrawable();
 
         assertWithMessage("Drawables must represent the same image").that(
-                isSimilar(actual, expected)).isTrue();
+                isSimilar(actual, expected, true)).isTrue();
     }
 
     /**

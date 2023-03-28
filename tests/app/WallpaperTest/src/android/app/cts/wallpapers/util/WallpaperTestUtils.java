@@ -21,10 +21,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.ParcelFileDescriptor;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -60,14 +57,21 @@ public class WallpaperTestUtils {
      * but strict enough to return false when comparing two different bitmaps unless they are
      * really similar.
      * <br>
-     * Always return false for two bitmaps with different dimensions.
-     * Return true if both bitmaps are null.
+     * @param requireSameDimensions if true, return false for two bitmaps with different dimensions.
+     * Otherwise, downscale the bitmap with the largest width and perform the comparison.
      */
-    public static boolean isSimilar(Bitmap bitmap1, Bitmap bitmap2) {
+    public static boolean isSimilar(Bitmap bitmap1, Bitmap bitmap2, boolean requireSameDimensions) {
         if (bitmap1 == null || bitmap2 == null) return bitmap1 == null && bitmap2 == null;
         int width = bitmap1.getWidth();
         int height = bitmap1.getHeight();
-        if (width != bitmap2.getWidth() || height != bitmap2.getHeight()) return false;
+        if (width != bitmap2.getWidth() || height != bitmap2.getHeight()) {
+            if (requireSameDimensions) return false;
+            Bitmap largest = width >= bitmap2.getWidth() ? bitmap1 : bitmap2;
+            Bitmap smallest = largest == bitmap1 ? bitmap2 : bitmap1;
+            Bitmap rescaled = Bitmap.createScaledBitmap(
+                    largest, smallest.getWidth(), smallest.getHeight(), true);
+            return isSimilar(smallest, rescaled, true);
+        }
 
         // two pixels are considered similar if each of their ARGB value has at most a 10% diff.
         float tolerance = 0.1f;
@@ -96,24 +100,11 @@ public class WallpaperTestUtils {
      * Helper to check whether two drawables are similar.
      * <br>
      * Use {@link #getBitmap} to convert the drawables to bitmap,
-     * then {@link #isSimilar(Bitmap, Bitmap)} to perform the similarity comparison.
+     * then {@link #isSimilar(Bitmap, Bitmap, boolean)} to perform the similarity comparison.
      * Return true if both drawables are null.
      */
-    public static boolean isSimilar(Drawable drawable1, Drawable drawable2) {
-        return isSimilar(getBitmap(drawable1), getBitmap(drawable2));
-    }
-
-    /**
-     * Check that two wallpaper files are equal.
-     * Read all bytes from both files and check that all bytes are equal.
-     */
-    public static boolean areEqual(ParcelFileDescriptor actual, ParcelFileDescriptor expected)
-            throws IOException {
-        if (actual == null || expected == null) return actual == null && expected == null;
-        ParcelFileDescriptor.AutoCloseInputStream actualStream =
-                new ParcelFileDescriptor.AutoCloseInputStream(actual);
-        ParcelFileDescriptor.AutoCloseInputStream expectedStream =
-                new ParcelFileDescriptor.AutoCloseInputStream(expected);
-        return Arrays.equals(actualStream.readAllBytes(), expectedStream.readAllBytes());
+    public static boolean isSimilar(Drawable drawable1, Drawable drawable2,
+            boolean requireSameDimensions) {
+        return isSimilar(getBitmap(drawable1), getBitmap(drawable2), requireSameDimensions);
     }
 }

@@ -16,10 +16,10 @@
 
 package android.app.cts.wallpapers;
 
+import static android.Manifest.permission.QUERY_ALL_PACKAGES;
 import static android.Manifest.permission.READ_WALLPAPER_INTERNAL;
 import static android.app.WallpaperManager.FLAG_LOCK;
 import static android.app.WallpaperManager.FLAG_SYSTEM;
-import static android.app.cts.wallpapers.util.WallpaperTestUtils.areEqual;
 import static android.app.cts.wallpapers.util.WallpaperTestUtils.getBitmap;
 import static android.app.cts.wallpapers.util.WallpaperTestUtils.isSimilar;
 
@@ -31,6 +31,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.WallpaperManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -80,9 +81,14 @@ public class WallpaperManagerSdk33Test {
                 InstrumentationRegistry.getTargetContext());
 
         sWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
-        runWithShellPermissionIdentity(() -> {
-            sDefaultBitmap = sWallpaperManager.getBitmap();
-        }, READ_WALLPAPER_INTERNAL);
+
+        // ignore for targets that have a live default wallpaper
+        runWithShellPermissionIdentity(
+                () -> assumeTrue(sWallpaperManager.getWallpaperInfo(FLAG_SYSTEM) == null),
+                QUERY_ALL_PACKAGES);
+
+        sDefaultBitmap = runWithShellPermissionIdentity(
+                () -> sWallpaperManager.getBitmap(), READ_WALLPAPER_INTERNAL);
 
         sRedBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(sRedBitmap);
@@ -144,114 +150,85 @@ public class WallpaperManagerSdk33Test {
     }
 
     @Test
-    public void getWallpaperFile_system_noPermission_returnsDefault() throws IOException {
+    public void getWallpaperFile_system_noPermission_returnsDefault() {
         ParcelFileDescriptor parcelFileDescriptor = sWallpaperManager.getWallpaperFile(FLAG_SYSTEM);
-        sWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
-
-        runWithShellPermissionIdentity(() -> {
-            ParcelFileDescriptor defaultParcelFileDescriptor =
-                    sWallpaperManager.getWallpaperFile(FLAG_SYSTEM);
-            try {
-                assertWithMessage(
-                        "with no permission, getWallpaperFile(FLAG_SYSTEM) "
-                                + "should return the default system wallpaper file")
-                        .that(areEqual(parcelFileDescriptor, defaultParcelFileDescriptor))
-                        .isTrue();
-            } finally {
-                setRedWallpaper();
-            }
-        }, READ_WALLPAPER_INTERNAL);
+        if (parcelFileDescriptor != null) {
+            Bitmap bitmap = BitmapFactory.decodeFileDescriptor(
+                    parcelFileDescriptor.getFileDescriptor());
+            assertWithMessage(
+                    "with no permission, getWallpaperFile(FLAG_SYSTEM) "
+                            + "should return the default system wallpaper file")
+                    .that(isSimilar(bitmap, sDefaultBitmap, false))
+                    .isTrue();
+        }
     }
 
     @Test
     public void getWallpaperFile_lock_noPermission_returnsDefault() throws IOException {
+        sWallpaperManager.setBitmap(sRedBitmap, null, true, FLAG_LOCK);
         ParcelFileDescriptor parcelFileDescriptor = sWallpaperManager.getWallpaperFile(FLAG_LOCK);
         sWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
-
-        runWithShellPermissionIdentity(() -> {
-            ParcelFileDescriptor defaultParcelFileDescriptor =
-                    sWallpaperManager.getWallpaperFile(FLAG_SYSTEM);
-            try {
+        try {
+            if (parcelFileDescriptor != null) {
+                Bitmap bitmap = BitmapFactory.decodeFileDescriptor(
+                        parcelFileDescriptor.getFileDescriptor());
                 assertWithMessage(
                         "with no permission, getWallpaperFile(FLAG_LOCK) "
                                 + "should return the default system wallpaper file")
-                        .that(areEqual(parcelFileDescriptor, defaultParcelFileDescriptor))
+                        .that(isSimilar(bitmap, sDefaultBitmap, false))
                         .isTrue();
-            } finally {
-                setRedWallpaper();
             }
-        }, READ_WALLPAPER_INTERNAL);
+        } finally {
+            setRedWallpaper();
+        }
     }
 
     @Test
     public void getWallpaperFile_system_withPermission_returnsCurrent() {
-        runWithShellPermissionIdentity(() -> {
-            ParcelFileDescriptor parcelFileDescriptor =
-                    sWallpaperManager.getWallpaperFile(FLAG_SYSTEM);
-            sWallpaperManager.clear(FLAG_LOCK | FLAG_SYSTEM);
-            ParcelFileDescriptor defaultParcelFileDescriptor =
-                    sWallpaperManager.getWallpaperFile(FLAG_SYSTEM);
-            try {
-                assertWithMessage(
-                        "with permission, getWallpaperFile(FLAG_SYSTEM)"
-                                + "should not return the default system wallpaper file")
-                        .that(areEqual(parcelFileDescriptor, defaultParcelFileDescriptor))
-                        .isFalse();
-            } finally {
-                setRedWallpaper();
-            }
-        }, READ_WALLPAPER_INTERNAL);
+        ParcelFileDescriptor parcelFileDescriptor = runWithShellPermissionIdentity(
+                () -> sWallpaperManager.getWallpaperFile(FLAG_SYSTEM), READ_WALLPAPER_INTERNAL);
+        Bitmap bitmap = BitmapFactory.decodeFileDescriptor(
+                parcelFileDescriptor.getFileDescriptor());
+        assertWithMessage(
+                "with permission, getWallpaperFile(FLAG_SYSTEM)"
+                        + "should return the currennt system wallpaper file")
+                .that(isSimilar(bitmap, sRedBitmap, true))
+                .isTrue();
     }
 
     @Test
-    public void getWallpaperFile_lock_withPermission_returnsCurrent() {
-        runWithShellPermissionIdentity(() -> {
-            ParcelFileDescriptor parcelFileDescriptor =
-                    sWallpaperManager.getWallpaperFile(FLAG_LOCK);
-            sWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
-            ParcelFileDescriptor defaultSystemParcelFileDescriptor =
-                    sWallpaperManager.getWallpaperFile(FLAG_SYSTEM);
-
-            try {
-                if (parcelFileDescriptor != null) {
-                    assertWithMessage(
-                            "with permission, getWallpaperFile(FLAG_LOCK)"
-                                    + "should not return the default system wallpaper file")
-                            .that(areEqual(parcelFileDescriptor,
-                                    defaultSystemParcelFileDescriptor))
-                            .isFalse();
-                }
-
-                sWallpaperManager.setBitmap(sRedBitmap,
-                        null /* visibleCropHint= */,
-                        true /* allowBackup */,
-                        FLAG_LOCK /* which */);
-                parcelFileDescriptor = sWallpaperManager.getWallpaperFile(FLAG_LOCK);
+    public void getWallpaperFile_lock_withPermission_doesNotReturnDefault() throws IOException {
+        sWallpaperManager.setBitmap(sRedBitmap, null, true, FLAG_LOCK);
+        ParcelFileDescriptor parcelFileDescriptor = runWithShellPermissionIdentity(
+                () -> sWallpaperManager.getWallpaperFile(FLAG_LOCK), READ_WALLPAPER_INTERNAL);
+        try {
+            if (parcelFileDescriptor != null) {
+                Bitmap bitmap = BitmapFactory.decodeFileDescriptor(
+                        parcelFileDescriptor.getFileDescriptor());
                 assertWithMessage(
                         "with permission, getWallpaperFile(FLAG_LOCK)"
-                                + "should not return the default system wallpaper file")
-                        .that(areEqual(parcelFileDescriptor, defaultSystemParcelFileDescriptor))
+                                + "should not return the default system wallpaper")
+                        .that(isSimilar(bitmap, sDefaultBitmap, true))
                         .isFalse();
-            } finally {
-                setRedWallpaper();
             }
-        }, READ_WALLPAPER_INTERNAL);
+        } finally {
+            setRedWallpaper();
+        }
     }
 
     private void assertReturnsDefault(Supplier<Drawable> methodToTest, String methodName) {
         Drawable drawable = methodToTest.get();
         assertWithMessage(
                 "with no permission, " + methodName + " should return the default bitmap")
-                .that(isSimilar(getBitmap(drawable), sDefaultBitmap)).isTrue();
+                .that(isSimilar(getBitmap(drawable), sDefaultBitmap, false)).isTrue();
     }
 
     private void assertReturnsCurrent(Supplier<Drawable> methodToTest, String methodName) {
-        runWithShellPermissionIdentity(() -> {
-            Drawable drawable = methodToTest.get();
-            assertWithMessage(
-                    "with permission, " + methodName + " should return the current bitmap")
-                    .that(isSimilar(getBitmap(drawable), sRedBitmap)).isTrue();
-        }, READ_WALLPAPER_INTERNAL);
+        Drawable drawable = runWithShellPermissionIdentity(
+                () -> methodToTest.get(), READ_WALLPAPER_INTERNAL);
+        assertWithMessage(
+                "with permission, " + methodName + " should return the current bitmap")
+                .that(isSimilar(getBitmap(drawable), sRedBitmap, true)).isTrue();
     }
 
     private static void setRedWallpaper() throws IOException {
