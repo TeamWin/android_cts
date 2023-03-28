@@ -798,7 +798,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
 
             savedNetworks = mWifiManager.getPrivilegedConfiguredNetworks();
             WifiConfiguration testNetwork =
-                    TestHelper.findMatchingSavedNetworksWithBssid(mWifiManager, savedNetworks)
+                    TestHelper.findMatchingSavedNetworksWithBssid(mWifiManager, savedNetworks, 1)
                             .get(0);
             // Disconnect & disable auto-join on the saved network to prevent auto-connect from
             // interfering with the test.

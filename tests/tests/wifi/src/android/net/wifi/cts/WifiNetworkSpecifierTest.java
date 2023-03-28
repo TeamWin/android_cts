@@ -229,7 +229,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                 .that(savedNetworks.isEmpty()).isFalse();
 
         // Pick any network in range.
-        sTestNetwork = TestHelper.findMatchingSavedNetworksWithBssid(wifiManager, savedNetworks)
+        sTestNetwork = TestHelper.findMatchingSavedNetworksWithBssid(wifiManager, savedNetworks, 2)
                 .get(0);
     }
 
