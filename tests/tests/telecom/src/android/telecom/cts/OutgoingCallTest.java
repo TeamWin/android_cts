@@ -319,6 +319,13 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
             @Override
             public void onCallAdded(Call call, int numCalls) {
                 if (call.getState() == STATE_SELECT_PHONE_ACCOUNT) {
+                    call.phoneAccountSelected(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, false);
+                }
+            }
+
+            public void onCallStateChanged(Call call, int state) {
+                if (TestUtils.TEST_PHONE_ACCOUNT_HANDLE.equals(
+                        call.getDetails().getAccountHandle())) {
                     latch.countDown();
                 }
             }
