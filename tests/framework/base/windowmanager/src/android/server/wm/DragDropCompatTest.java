@@ -16,6 +16,8 @@
 
 package android.server.wm;
 
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
+
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.runner.AndroidJUnit4;

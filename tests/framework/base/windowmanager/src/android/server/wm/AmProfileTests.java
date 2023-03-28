@@ -17,10 +17,12 @@
 package android.server.wm;
 
 import static android.server.wm.ComponentNameUtils.getActivityName;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
+import static android.server.wm.ShellCommandHelper.executeShellCommandAndGetStdout;
 import static android.server.wm.profileable.Components.PROFILEABLE_APP_ACTIVITY;
 import static android.server.wm.profileable.Components.ProfileableAppActivity.COMMAND_WAIT_FOR_PROFILE_OUTPUT;
-import static android.server.wm.profileable.Components.ProfileableAppActivity.OUTPUT_FILE_PATH;
 import static android.server.wm.profileable.Components.ProfileableAppActivity.OUTPUT_DIR;
+import static android.server.wm.profileable.Components.ProfileableAppActivity.OUTPUT_FILE_PATH;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;

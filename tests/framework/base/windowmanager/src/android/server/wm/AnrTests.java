@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.app.Components.HOST_ACTIVITY;
 import static android.server.wm.app.Components.UNRESPONSIVE_ACTIVITY;
 import static android.server.wm.app.Components.UnresponsiveActivity;

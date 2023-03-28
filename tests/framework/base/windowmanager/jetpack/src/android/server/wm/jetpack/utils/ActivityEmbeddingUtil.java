@@ -71,6 +71,10 @@ public class ActivityEmbeddingUtil {
     public static final String TAG = "ActivityEmbeddingTests";
     public static final long WAIT_FOR_LIFECYCLE_TIMEOUT_MS = 3000;
     public static final SplitAttributes DEFAULT_SPLIT_ATTRS = new SplitAttributes.Builder().build();
+
+    public static final SplitAttributes EXPAND_SPLIT_ATTRS = new SplitAttributes.Builder()
+            .setSplitType(new SplitType.ExpandContainersSplitType()).build();
+
     public static final String EMBEDDED_ACTIVITY_ID = "embedded_activity_id";
 
     @NonNull
@@ -150,7 +154,7 @@ public class ActivityEmbeddingUtil {
     public static Activity startActivityAndVerifySplitAttributes(
             @NonNull Activity activityLaunchingFrom, @NonNull Activity expectedPrimaryActivity,
             @NonNull Class<? extends Activity> secondActivityClass,
-            @NonNull SplitPairRule splitPairRule, @NonNull String secondaryActivityId,
+            @NonNull SplitAttributes splitAttributes, @NonNull String secondaryActivityId,
             int expectedCallbackCount,
             @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer) {
         // Set the expected callback count
@@ -175,8 +179,7 @@ public class ActivityEmbeddingUtil {
         final Activity secondaryActivity = getResumedActivityById(secondaryActivityId);
         assertSplitInfoTopSplitIsCorrect(activeSplitStates, expectedPrimaryActivity,
                 secondaryActivity);
-
-        assertValidSplit(expectedPrimaryActivity, secondaryActivity, splitPairRule);
+        assertValidSplit(expectedPrimaryActivity, secondaryActivity, splitAttributes);
 
         // Return second activity for easy access in calling method
         return secondaryActivity;
@@ -197,21 +200,24 @@ public class ActivityEmbeddingUtil {
         assertNull("Received SplitInfo value but did not expect none.", activeSplitStates);
     }
 
-    public static Activity startActivityAndVerifySplitAttributes(@NonNull Activity primaryActivity,
-            @NonNull Class secondActivityClass, @NonNull SplitPairRule splitPairRule,
-            @NonNull String secondActivityId, int expectedCallbackCount,
+    public static Activity startActivityAndVerifySplitAttributes(
+            @NonNull Activity activityLaunchingFrom, @NonNull Activity expectedPrimaryActivity,
+            @NonNull Class<? extends Activity> secondActivityClass,
+            @NonNull SplitRule splitRule, @NonNull String secondaryActivityId,
+            int expectedCallbackCount,
             @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer) {
-        return startActivityAndVerifySplitAttributes(primaryActivity /* activityLaunchingFrom */,
-                primaryActivity, secondActivityClass, splitPairRule, secondActivityId,
+        return startActivityAndVerifySplitAttributes(activityLaunchingFrom, expectedPrimaryActivity,
+                secondActivityClass, splitRule.getDefaultSplitAttributes(), secondaryActivityId,
                 expectedCallbackCount, splitInfoConsumer);
     }
 
     public static Activity startActivityAndVerifySplitAttributes(@NonNull Activity primaryActivity,
-            @NonNull Class secondActivityClass, @NonNull SplitPairRule splitPairRule,
-            @NonNull String secondActivityId,
+            @NonNull Class<? extends Activity> secondActivityClass,
+            @NonNull SplitPairRule splitPairRule, @NonNull String secondActivityId,
             @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer) {
-        return startActivityAndVerifySplitAttributes(primaryActivity, secondActivityClass,
-                splitPairRule, secondActivityId, 1 /* expectedCallbackCount */, splitInfoConsumer);
+        return startActivityAndVerifySplitAttributes(primaryActivity, primaryActivity,
+                secondActivityClass, splitPairRule, secondActivityId, 1 /* expectedCallbackCount */,
+                splitInfoConsumer);
     }
 
     /**
@@ -305,9 +311,17 @@ public class ActivityEmbeddingUtil {
      * a different process, in which case it will only verify the primary one.
      */
     public static void assertValidSplit(@NonNull Activity primaryActivity,
-            @Nullable Activity secondaryActivity, SplitRule splitRule) {
-        final SplitAttributes defaultSplitAttributes = splitRule.getDefaultSplitAttributes();
-        final boolean shouldExpandContainers = defaultSplitAttributes.getSplitType()
+            @Nullable Activity secondaryActivity, @NonNull SplitRule splitRule) {
+        assertValidSplit(primaryActivity, secondaryActivity, splitRule.getDefaultSplitAttributes());
+    }
+
+    /**
+     * Similar to {@link #assertValidSplit(Activity, Activity, SplitRule)}, but verifies
+     * {@link SplitAttributes} instead of {@link SplitRule#getDefaultSplitAttributes}.
+     */
+    public static void assertValidSplit(@NonNull Activity primaryActivity,
+            @Nullable Activity secondaryActivity, @NonNull SplitAttributes splitAttributes) {
+        final boolean shouldExpandContainers = splitAttributes.getSplitType()
                 instanceof SplitType.ExpandContainersSplitType;
         final List<Activity> resumedActivities = new ArrayList<>(2);
         if (secondaryActivity == null) {
@@ -321,7 +335,7 @@ public class ActivityEmbeddingUtil {
         waitAndAssertResumed(resumedActivities);
 
         final Pair<Rect, Rect> expectedBoundsPair = getExpectedBoundsPair(primaryActivity,
-                defaultSplitAttributes);
+                splitAttributes);
 
         final ActivityEmbeddingComponent activityEmbeddingComponent = getWindowExtensions()
                 .getActivityEmbeddingComponent();

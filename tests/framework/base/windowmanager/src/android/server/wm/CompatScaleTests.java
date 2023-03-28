@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.app.Components.UI_SCALING_TEST_ACTIVITY;
 import static android.server.wm.app.Components.UiScalingTestActivity.COMMAND_ADD_SUBVIEW;
 import static android.server.wm.app.Components.UiScalingTestActivity.COMMAND_CLEAR_DEFAULT_VIEW;
