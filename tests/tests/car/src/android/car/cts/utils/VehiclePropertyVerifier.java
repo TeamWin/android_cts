@@ -1854,6 +1854,7 @@ public class VehiclePropertyVerifier<T> {
         private final CountDownLatch mCountDownLatch = new CountDownLatch(1);
         private final long mCreationTimeNanos = SystemClock.elapsedRealtimeNanos();
         private CarPropertyValue<?> mUpdatedCarPropertyValue = null;
+        private T mReceivedValue = null;
 
         SetterCallback(int propertyId, int areaId, T expectedSetValue) {
             mPropertyId = propertyId;
@@ -1862,12 +1863,23 @@ public class VehiclePropertyVerifier<T> {
             mExpectedSetValue = expectedSetValue;
         }
 
+        private String valueToString(T value) {
+            if (value.getClass().isArray()) {
+                return Arrays.toString((Object[]) value);
+            }
+            return value.toString();
+        }
+
         public CarPropertyValue<?> waitForUpdatedCarPropertyValue() {
             try {
                 assertWithMessage(
                         "Never received onChangeEvent(s) for " + mPropertyName + " new value: "
-                                + mExpectedSetValue + " before 5s timeout").that(
-                        mCountDownLatch.await(5, TimeUnit.SECONDS)).isTrue();
+                                + valueToString(mExpectedSetValue) + " before 5s timeout."
+                                + " Received: "
+                                + (mReceivedValue == null
+                                    ? "No value"
+                                    : valueToString(mReceivedValue)))
+                        .that(mCountDownLatch.await(5, TimeUnit.SECONDS)).isTrue();
             } catch (InterruptedException e) {
                 assertWithMessage("Waiting for onChangeEvent set callback for "
                         + mPropertyName + " threw an exception: " + e).fail();
@@ -1881,8 +1893,11 @@ public class VehiclePropertyVerifier<T> {
                     || carPropertyValue.getAreaId() != mAreaId
                     || carPropertyValue.getStatus() != CarPropertyValue.STATUS_AVAILABLE
                     || carPropertyValue.getTimestamp() <= mCreationTimeNanos
-                    || carPropertyValue.getTimestamp() >= SystemClock.elapsedRealtimeNanos()
-                    || !valueEquals(mExpectedSetValue, (T) carPropertyValue.getValue())) {
+                    || carPropertyValue.getTimestamp() >= SystemClock.elapsedRealtimeNanos()) {
+                return;
+            }
+            mReceivedValue = (T) carPropertyValue.getValue();
+            if (!valueEquals(mExpectedSetValue, mReceivedValue)) {
                 return;
             }
             mUpdatedCarPropertyValue = carPropertyValue;
