@@ -20,6 +20,7 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.wm.ComponentNameUtils.getActivityName;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.WindowManagerState.STATE_INITIALIZING;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.ENTRY_POINT_ALIAS_ACTIVITY;

@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.graphics.PixelFormat.TRANSLUCENT;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.view.KeyEvent.ACTION_DOWN;
 import static android.view.KeyEvent.KEYCODE_BACK;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;

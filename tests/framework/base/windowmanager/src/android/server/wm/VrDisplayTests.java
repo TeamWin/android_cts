@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.server.wm.ComponentNameUtils.getActivityName;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.app.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;

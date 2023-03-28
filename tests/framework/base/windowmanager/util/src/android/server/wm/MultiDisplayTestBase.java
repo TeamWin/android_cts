@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.content.pm.ActivityInfo.CONFIG_SCREEN_SIZE;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.UiDeviceUtils.pressSleepButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.app.Components.VIRTUAL_DISPLAY_ACTIVITY;

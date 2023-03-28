@@ -29,6 +29,7 @@ import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getWindowName;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.UiDeviceUtils.pressWindowButton;

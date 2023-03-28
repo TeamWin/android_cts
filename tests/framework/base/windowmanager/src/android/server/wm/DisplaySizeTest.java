@@ -16,6 +16,8 @@
 
 package android.server.wm;
 
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
+import static android.server.wm.ShellCommandHelper.executeShellCommandAndGetStdout;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.displaysize.Components.SMALLEST_WIDTH_ACTIVITY;
 

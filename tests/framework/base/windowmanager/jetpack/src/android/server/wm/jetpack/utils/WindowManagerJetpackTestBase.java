@@ -98,15 +98,19 @@ public class WindowManagerJetpackTestBase {
         return mContext.getPackageManager().hasSystemFeature(requiredFeature);
     }
 
+    /** Assume this device supports rotation */
+    protected void assumeSupportsRotation() {
+        assumeTrue(doesDeviceSupportRotation());
+    }
+
     /**
      * Rotation support is indicated by explicitly having both landscape and portrait
      * features or not listing either at all.
      */
-    protected void assumeSupportsRotation() {
+    protected boolean doesDeviceSupportRotation() {
         final boolean supportsLandscape = hasDeviceFeature(FEATURE_SCREEN_LANDSCAPE);
         final boolean supportsPortrait = hasDeviceFeature(FEATURE_SCREEN_PORTRAIT);
-        assumeTrue((supportsLandscape && supportsPortrait)
-                || (!supportsLandscape && !supportsPortrait));
+        return (supportsLandscape && supportsPortrait) || (!supportsLandscape && !supportsPortrait);
     }
 
     public <T extends Activity> T startActivityNewTask(@NonNull Class<T> activityClass) {
