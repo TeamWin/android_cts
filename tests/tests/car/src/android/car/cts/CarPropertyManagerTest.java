@@ -7310,27 +7310,34 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     pendingRequests.add(spr.getRequestId());
                     requestPropIdAreaIds.add(new PropIdAreaId(propId, areaId));
                 }
+                verifier.storeCurrentValues();
             }
 
             int expectedResultCount = pendingRequests.size();
 
-            TestPropertyAsyncCallback callback = new TestPropertyAsyncCallback(pendingRequests);
-            mCarPropertyManager.setPropertiesAsync(setPropertyRequests,
-                    ASYNC_WAIT_TIMEOUT_IN_SEC * 1000,
-                    /* cancellationSignal= */ null, executor, callback);
+            try {
+                TestPropertyAsyncCallback callback = new TestPropertyAsyncCallback(
+                        pendingRequests);
+                mCarPropertyManager.setPropertiesAsync(setPropertyRequests,
+                        ASYNC_WAIT_TIMEOUT_IN_SEC * 1000,
+                        /* cancellationSignal= */ null, executor, callback);
 
-            callback.waitAndFinish();
+                callback.waitAndFinish();
 
-            assertThat(callback.getErrorList()).isEmpty();
-            int resultCount = callback.getResultList().size();
-            assertWithMessage("must receive at least " + expectedResultCount + " results, got "
-                    + resultCount).that(resultCount).isEqualTo(expectedResultCount);
+                assertThat(callback.getErrorList()).isEmpty();
+                int resultCount = callback.getResultList().size();
+                assertWithMessage("must receive at least " + expectedResultCount + " results, got "
+                        + resultCount).that(resultCount).isEqualTo(expectedResultCount);
 
-            for (PropIdAreaId receivedPropIdAreaId : callback.getReceivedPropIdAreaIds()) {
-                assertWithMessage("received unexpected result for " + receivedPropIdAreaId)
-                        .that(requestPropIdAreaIds).contains(receivedPropIdAreaId);
+                for (PropIdAreaId receivedPropIdAreaId : callback.getReceivedPropIdAreaIds()) {
+                    assertWithMessage("received unexpected result for " + receivedPropIdAreaId)
+                            .that(requestPropIdAreaIds).contains(receivedPropIdAreaId);
+                }
+            } finally {
+                for (int i = 0; i < verifiers.length; i++) {
+                    verifiers[i].restoreInitialValues();
+                }
             }
-            // TODO(b/274128789): Restore the values to their previous values after the test.
         });
     }
 
