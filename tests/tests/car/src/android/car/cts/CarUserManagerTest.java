@@ -465,6 +465,9 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                 response -> assertThat(response.getStatus()).isEqualTo(
                         UserRemovalResult.STATUS_SUCCESSFUL)
         );
+
+        // If user is removed by CarUserManager, then user does not need to be removed in cleanup.
+        mUsersToRemove.remove(newUser);
     }
 
     @Test
