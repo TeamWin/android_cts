@@ -243,6 +243,8 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
         extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
                 TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
         mTelecomManager.placeCall(createTestNumber(), extras);
+        TestUtils.waitOnLocalMainLooper(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        TestUtils.waitOnAllHandlers(getInstrumentation());
         // Assert bind and unbind latch countdown
         assertTrue(TestUtils.waitForLatchCountDown(
                 NullBindingCallRedirectionServiceController.sBindLatch));
