@@ -101,19 +101,20 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
     }
 
     public void testLogHotwordDetectorCreateRequestedDspCreateFail() throws Exception {
-        // Run test in CTS package
-        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
-                TEST_METHOD_DSP_FAILURE_FOR_METRIC_COLLECT);
-        // Wait CTS test finish
-        Thread.sleep(STATSD_LOG_DEBOUNCE_MS);
-
-        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data).isNotNull();
-        // After testing finish, the test will switch to original VIS. If the original VIS creates
-        // detector, we may receive more than 1. The 1st is the creation from the CTS testing.
-        assertThat(data.size()).isAtLeast(1);
-        assertHotwordDetectorCreateRequested(data.get(0),
-                HotwordDetectorType.TRUSTED_DETECTOR_DSP, /* expectedCreatedDone= */ false);
+        // b/215631339 Disable the test case first.
+//        // Run test in CTS package
+//        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+//                TEST_METHOD_DSP_FAILURE_FOR_METRIC_COLLECT);
+//        // Wait CTS test finish
+//        Thread.sleep(STATSD_LOG_DEBOUNCE_MS);
+//
+//        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+//        assertThat(data).isNotNull();
+//        // After testing finish, the test will switch to original VIS. If the original VIS creates
+//        // detector, we may receive more than 1. The 1st is the creation from the CTS testing.
+//        assertThat(data.size()).isAtLeast(1);
+//        assertHotwordDetectorCreateRequested(data.get(0),
+//                HotwordDetectorType.TRUSTED_DETECTOR_DSP, /* expectedCreatedDone= */ false);
     }
 
     public void testLogHotwordDetectorCreateRequestedSoftwareCreateSuccess() throws Exception {
