@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,7 +39,7 @@ import java.util.Set;
 public class RegisterCredentialDescriptionRequestTest {
 
     private static final String CREDENTIAL_TYPE = "MDOC";
-    private static final String FLATTENED_REQUEST = "FLATTENED_REQ";
+    private static final Set<String> FLATTENED_REQUEST = new HashSet<>(List.of("FLATTENED_REQ"));
 
     @Test
     public void testConstructor_nullDescription_shouldThrowNullPointerException() {

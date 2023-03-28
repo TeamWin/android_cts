@@ -29,15 +29,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @SmallTest
 @AppModeFull(reason = "unit test")
 @RunWith(AndroidJUnit4.class)
 public class CredentialDescriptionTest {
 
-
     private static final String CREDENTIAL_TYPE = "MDOC";
-    private static final String FLATTENED_REQUEST = "FLATTENED_REQ";
+    private static final Set<String> FLATTENED_REQUEST = new HashSet<>(List.of("FLATTENED_REQ"));
 
     @Test
     public void testConstructor_nullType_shouldThrowIllegalArgumentException() {
@@ -67,7 +69,7 @@ public class CredentialDescriptionTest {
                 Collections.EMPTY_LIST);
 
         assertEquals(credentialDescription.getType(), CREDENTIAL_TYPE);
-        assertEquals(credentialDescription.getFlattenedRequestString(), FLATTENED_REQUEST);
+        assertEquals(credentialDescription.getSupportedElementKeys(), FLATTENED_REQUEST);
         assertEquals(credentialDescription.getCredentialEntries(), Collections.EMPTY_LIST);
     }
 
@@ -81,7 +83,7 @@ public class CredentialDescriptionTest {
                 TestUtils.cloneParcelable(credentialDescription);
 
         assertEquals(credentialDescription2.getType(), CREDENTIAL_TYPE);
-        assertEquals(credentialDescription2.getFlattenedRequestString(), FLATTENED_REQUEST);
+        assertEquals(credentialDescription2.getSupportedElementKeys(), FLATTENED_REQUEST);
         assertEquals(credentialDescription2.getCredentialEntries(), Collections.EMPTY_LIST);
     }
 
