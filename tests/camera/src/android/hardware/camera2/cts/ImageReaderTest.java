@@ -1274,10 +1274,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                                             Bitmap.Config.ARGB_8888);
                                     dumpFile(fullSizeYuvFileName, fullYUVBmap);
                                 }
-                                fail("Camera " + mCamera.getId() + ": YUV and JPEG image at " +
-                                        "capture size " + captureSz + " for the same frame are " +
-                                        "not similar, center patches have difference metric of " +
-                                        difference + ", tolerance is " + tolerance);
+                                fail("Camera " + mCamera.getId() + ": YUV image at capture size "
+                                        + captureSz + " and JPEG image at capture size "
+                                        + maxJpegSize + " for the same frame are not similar,"
+                                        + " center patches have difference metric of "
+                                        + difference + ", tolerance is " + tolerance);
                             }
 
                             // Stop capture, delete the streams.
