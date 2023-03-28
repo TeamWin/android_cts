@@ -126,6 +126,7 @@ import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CarrierPrivilegeUtils;
 import com.android.compatibility.common.util.CddTest;
@@ -469,6 +470,9 @@ public class TelephonyManagerTest {
         getContext().registerReceiver(mCountryChangedReceiver,
                 new IntentFilter(TelephonyManager.ACTION_NETWORK_COUNTRY_CHANGED),
                 Context.RECEIVER_EXPORTED);
+
+        // Wait previously queued broadcasts to complete before starting the test
+        AmUtils.waitForBroadcastBarrier();
     }
 
     @After
@@ -5720,6 +5724,7 @@ public class TelephonyManagerTest {
     private static class ServiceStateRadioStateListener extends TelephonyCallback
             implements TelephonyCallback.ServiceStateListener,
             TelephonyCallback.RadioPowerStateListener {
+        private final Object mLock = new Object();
         ServiceState mServiceState;
         int mRadioPowerState;
 
@@ -5735,7 +5740,23 @@ public class TelephonyManagerTest {
 
         @Override
         public void onRadioPowerStateChanged(int radioState) {
-            mRadioPowerState = radioState;
+            Log.d(TAG, "onRadioPowerStateChanged to " + radioState);
+            synchronized (mLock) {
+                mRadioPowerState = radioState;
+                mLock.notify();
+            }
+        }
+
+        private void waitForRadioStateIntent(int desiredState) {
+            synchronized (mLock) {
+                if (mRadioPowerState != desiredState) {
+                    try {
+                        mLock.wait(5000);
+                    } catch (Exception e) {
+                        fail(e.getMessage());
+                    }
+                }
+            }
         }
     }
 
@@ -5909,7 +5930,7 @@ public class TelephonyManagerTest {
         Log.i(TAG, "testSetRadioPowerForReasonCarrier: turning radio off due to carrier ...");
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 tm -> tm.setRadioEnabled(false), permission.MODIFY_PHONE_STATE);
-        waitForRadioPowerOffStateChange(callback);
+        callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_OFF);
         assertRadioOffWithReason(callback, TelephonyManager.RADIO_POWER_REASON_CARRIER);
 
         Log.i(TAG, "testSetRadioPowerForReasonCarrier: turning on airplane mode ...");
@@ -5923,7 +5944,7 @@ public class TelephonyManagerTest {
         Log.i(TAG, "testSetRadioPowerForReasonCarrier: turning on radio due to carrier...");
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 tm -> tm.setRadioEnabled(true), permission.MODIFY_PHONE_STATE);
-        waitForRadioPowerOnStateChange(callback);
+        callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_ON);
         assertEquals(TelephonyManager.RADIO_POWER_ON, callback.mRadioPowerState);
 
         if (turnedRadioOn) {
@@ -5989,31 +6010,13 @@ public class TelephonyManagerTest {
     private void turnRadioOn(ServiceStateRadioStateListener callback, int reason) {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 tm -> tm.clearRadioPowerOffForReason(reason), permission.MODIFY_PHONE_STATE);
-        waitForRadioPowerOnStateChange(callback);
+        callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_ON);
     }
 
     private void turnRadioOff(ServiceStateRadioStateListener callback, int reason) {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 tm -> tm.requestRadioPowerOffForReason(reason), permission.MODIFY_PHONE_STATE);
-        waitForRadioPowerOffStateChange(callback);
-    }
-
-    private void waitForRadioPowerOnStateChange(ServiceStateRadioStateListener callback) {
-        int retry = 0;
-        while ((callback.mRadioPowerState != TelephonyManager.RADIO_POWER_ON)
-                && retry < 10) {
-            retry++;
-            waitForMs(1000);
-        }
-    }
-
-    private void waitForRadioPowerOffStateChange(ServiceStateRadioStateListener callback) {
-        int retry = 0;
-        while ((callback.mRadioPowerState != TelephonyManager.RADIO_POWER_OFF)
-                && retry < 10) {
-            retry++;
-            waitForMs(1000);
-        }
+        callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_OFF);
     }
 
     private void assertRadioOffWithReason(ServiceStateRadioStateListener callback, int reason) {
