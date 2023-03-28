@@ -1658,6 +1658,7 @@ public class TvInputServiceTest {
 
             @Override
             public boolean onSelectAudioPresentation(int presentationId, int programId) {
+                super.onSelectAudioPresentation(presentationId, programId);
                 mAudioPresentationSelectCount++;
                 mAudioPresentationId = presentationId;
                 mAudioProgramId = programId;
