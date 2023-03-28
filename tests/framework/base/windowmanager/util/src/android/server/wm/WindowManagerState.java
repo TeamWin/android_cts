@@ -1756,10 +1756,6 @@ public class WindowManagerState {
             return mLastDropInputMode;
         }
 
-        public int getUiMode() {
-            return mFullConfiguration.uiMode;
-        }
-
         @Override
         public Rect getBounds() {
             if (mBounds == null) {
