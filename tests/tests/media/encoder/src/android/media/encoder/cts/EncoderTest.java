@@ -23,7 +23,6 @@ import static android.media.MediaCodecInfo.CodecProfileLevel.AACObjectLC;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -36,6 +35,7 @@ import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.Preconditions;
 
@@ -197,11 +197,13 @@ public class EncoderTest {
         mFormat.setInteger(MediaFormat.KEY_BIT_RATE, mBitrate);
     }
 
+    // "5.1.3" is covered partially. For instance aac is not tested for 5.0 and 5.1, Opus is not
+    // tested for different sample rates.
+    // TODO (b/272014629): Update test accordingly
+    @CddTest(requirements = "5.1.3")
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testEncoders() throws FileNotFoundException {
         setUpFormat();
-        assumeTrue("no encoders found for " + mFormat.toString(),
-                MediaUtils.supports(mEncoderName, mFormat));
         assertEquals(mMime, mFormat.getString(MediaFormat.KEY_MIME));
         testEncoder(mEncoderName, mFormat);
     }

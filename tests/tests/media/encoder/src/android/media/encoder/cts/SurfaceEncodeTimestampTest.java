@@ -43,6 +43,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.After;
@@ -114,13 +115,14 @@ public class SurfaceEncodeTimestampTest {
     }
 
     /*
-     * Test KEY_MAX_PTS_GAP_TO_ENCODER
+     * Test KEY_MAX_PTS_GAP_TO_ENCODER when positive
      *
      * This key is supposed to cap the gap between any two frames fed to the encoder,
      * and restore the output pts back to the original. Since the pts is not supposed
      * to be modified, we can't really verify that the "capping" actually took place.
      * However, we can at least verify that the pts is preserved.
      */
+    @ApiTest(apis = "android.media.MediaFormat#KEY_MAX_PTS_GAP_TO_ENCODER")
     @Test
     public void testMaxPtsGap() throws Throwable {
         long[] inputPts = {1000000, 2000000, 3000000, 4000000};
@@ -131,8 +133,10 @@ public class SurfaceEncodeTimestampTest {
     }
 
     /*
-     * Test that by default backward-going frames get dropped.
+     * Test pts behavior if KEY_MAX_PTS_GAP_TO_ENCODER is unspecified.
+     * (Tests that by default backward-going frames get dropped)
      */
+    @ApiTest(apis = "android.media.MediaFormat#KEY_MAX_PTS_GAP_TO_ENCODER")
     @Test
     public void testBackwardFrameDroppedWithoutFixedPtsGap() throws Throwable {
         long[] inputPts = {33333, 66667, 66000, 100000};
@@ -141,11 +145,12 @@ public class SurfaceEncodeTimestampTest {
     }
 
     /*
-     * Test KEY_MAX_PTS_GAP_TO_ENCODER
+     * Test KEY_MAX_PTS_GAP_TO_ENCODER when negative
      *
-     * Test that when fixed pts gap is used, backward-going frames are accepted
+     * Test that when negative pts gap is used, backward-going frames are accepted
      * and the pts is preserved.
      */
+    @ApiTest(apis = "android.media.MediaFormat#KEY_MAX_PTS_GAP_TO_ENCODER")
     @Test
     public void testBackwardFramePreservedWithFixedPtsGap() throws Throwable {
         long[] inputPts = {33333, 66667, 66000, 100000};
@@ -161,6 +166,7 @@ public class SurfaceEncodeTimestampTest {
      * Input frames are timestamped at 60fps, the key is supposed to drop
      * one every other frame to maintain 30fps output.
      */
+    @ApiTest(apis = "android.media.MediaFormat#KEY_MAX_FPS_TO_ENCODER")
     @Test
     public void testMaxFps() throws Throwable {
         long[] inputPts = {16667, 33333, 50000, 66667, 83333};
@@ -178,6 +184,7 @@ public class SurfaceEncodeTimestampTest {
      * compress) the output timestamp so that the output fps becomes that specified
      * by  KEY_FRAME_RATE.
      */
+    @ApiTest(apis = "android.media.MediaFormat#KEY_CAPTURE_RATE")
     @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
     public void testCaptureFps() throws Throwable {
@@ -213,6 +220,7 @@ public class SurfaceEncodeTimestampTest {
      * Test that the frame is repeated at least once if no new frame arrives after
      * the specified amount of time.
      */
+    @ApiTest(apis = "android.media.MediaFormat#KEY_REPEAT_PREVIOUS_FRAME_AFTER")
     @Test
     public void testRepeatPreviousFrameAfter() throws Throwable {
         long[] inputPts = {16667, 33333, -100000, 133333};
@@ -228,6 +236,8 @@ public class SurfaceEncodeTimestampTest {
      * Start the encoder with KEY_CREATE_INPUT_SURFACE_SUSPENDED set, then resume
      * by PARAMETER_KEY_SUSPEND. Verify only frames after resume are captured.
      */
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_CREATE_INPUT_SURFACE_SUSPENDED",
+            "android.media.MediaCodec#PARAMETER_KEY_SUSPEND"})
     @Test
     public void testCreateInputSurfaceSuspendedResume() throws Throwable {
         // Using PARAMETER_KEY_SUSPEND (instead of PARAMETER_KEY_SUSPEND +
@@ -256,6 +266,9 @@ public class SurfaceEncodeTimestampTest {
      * at specific time using PARAMETER_KEY_SUSPEND + PARAMETER_KEY_SUSPEND_TIME.
      * Verify only frames after the specified time are captured.
      */
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_CREATE_INPUT_SURFACE_SUSPENDED",
+            "android.media.MediaCodec#PARAMETER_KEY_SUSPEND",
+            "android.media.MediaCodec#PARAMETER_KEY_SUSPEND_TIME"})
     @Test
      public void testCreateInputSurfaceSuspendedResumeWithTime() throws Throwable {
          // Unlike using PARAMETER_KEY_SUSPEND alone to resume, using PARAMETER_KEY_SUSPEND
@@ -279,6 +292,7 @@ public class SurfaceEncodeTimestampTest {
       * Suspend/resume during capture, and verify that frames during the suspension
       * period are dropped.
       */
+    @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_SUSPEND")
     @Test
     public void testSuspendedResume() throws Throwable {
         // Using PARAMETER_KEY_SUSPEND (instead of PARAMETER_KEY_SUSPEND +
@@ -307,6 +321,8 @@ public class SurfaceEncodeTimestampTest {
      * Suspend/resume with specified time during capture, and verify that frames during
      * the suspension period are dropped.
      */
+    @ApiTest(apis = {"android.media.MediaCodec#PARAMETER_KEY_SUSPEND",
+            "android.media.MediaCodec#PARAMETER_KEY_SUSPEND_TIME"})
     @Test
     public void testSuspendedResumeWithTime() throws Throwable {
         // Unlike using PARAMETER_KEY_SUSPEND alone to suspend/resume, requests using
@@ -334,6 +350,7 @@ public class SurfaceEncodeTimestampTest {
      * Apply PARAMETER_KEY_OFFSET_TIME during capture, and verify that the pts
      * of frames after the request are adjusted by the offset correctly.
      */
+    @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_OFFSET_TIME")
     @Test
     public void testOffsetTime() throws Throwable {
         long[] inputPts = {33333, 66667, -100000, 100000, 133333};
