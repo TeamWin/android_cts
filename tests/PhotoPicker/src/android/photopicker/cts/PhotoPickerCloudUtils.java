@@ -16,6 +16,7 @@
 
 package android.photopicker.cts;
 
+import static android.Manifest.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG;
 import static android.Manifest.permission.READ_DEVICE_CONFIG;
 import static android.Manifest.permission.WRITE_DEVICE_CONFIG;
 import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
@@ -38,6 +39,8 @@ import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject;
+
+import com.android.modules.utils.build.SdkLevel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,7 +124,11 @@ public class PhotoPickerCloudUtils {
     }
 
     static void setAllowedProvidersDeviceConfig(@Nullable String allowedCloudProviders) {
-        getUiAutomation().adoptShellPermissionIdentity(WRITE_DEVICE_CONFIG);
+        if (SdkLevel.isAtLeastU()) {
+            getUiAutomation().adoptShellPermissionIdentity(ALLOWLISTED_WRITE_DEVICE_CONFIG);
+        } else {
+            getUiAutomation().adoptShellPermissionIdentity(WRITE_DEVICE_CONFIG);
+        }
         try {
             if (allowedCloudProviders == null) {
                 DeviceConfig.deleteProperty(NAMESPACE_STORAGE_NATIVE_BOOT,
