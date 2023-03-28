@@ -519,6 +519,128 @@ public class VcnManagerTest extends VcnTestBase {
         }
     }
 
+    private class NetworkSelectionTestNetworkParams {
+        public final boolean isMetered;
+
+        NetworkSelectionTestNetworkParams(boolean isMetered) {
+            this.isMetered = isMetered;
+        }
+    }
+
+    private TestNetworkWrapper createTestNetworkForNetworkSelection(
+            int subId, NetworkSelectionTestNetworkParams params) throws Exception {
+        return createTestNetworkWrapper(params.isMetered, subId, LOCAL_ADDRESS);
+    }
+
+    private void verifyVcnMigratesToPreferredUnderlyingNetwork(
+            VcnConfig vcnConfig,
+            NetworkSelectionTestNetworkParams lessPreferred,
+            NetworkSelectionTestNetworkParams preferred)
+            throws Exception {
+        final int subId = verifyAndGetValidDataSubId();
+
+        // Start on a less preferred network.
+        try (TestNetworkWrapper testNetworkWrapperLessPreferred =
+                createTestNetworkForNetworkSelection(subId, lessPreferred)) {
+            verifyUnderlyingCellAndRunTest(
+                    subId,
+                    (subGrp, cellNetwork, cellNetworkCb) -> {
+                        final VcnSetupResult vcnSetupResult =
+                                setupAndGetVcnNetwork(
+                                        subGrp,
+                                        cellNetwork,
+                                        cellNetworkCb,
+                                        vcnConfig,
+                                        testNetworkWrapperLessPreferred);
+
+                        // Then bring up a more preferred network, and expect to switch to it.
+                        try (TestNetworkWrapper testNetworkWrapperPreferred =
+                                createTestNetworkForNetworkSelection(subId, preferred)) {
+                            injectAndVerifyIkeMobikePackets(
+                                    testNetworkWrapperPreferred.ikeTunUtils);
+
+                            clearVcnConfigsAndVerifyNetworkTeardown(
+                                    subGrp, cellNetworkCb, vcnSetupResult.vcnNetwork);
+                        }
+                    });
+        }
+    }
+
+    private void verifyVcnDoesNotSelectLessPreferredUnderlyingNetwork(
+            VcnConfig vcnConfig,
+            NetworkSelectionTestNetworkParams lessPreferred,
+            NetworkSelectionTestNetworkParams preferred)
+            throws Exception {
+        final int subId = verifyAndGetValidDataSubId();
+
+        // Start on a more preferred network.
+        try (TestNetworkWrapper testNetworkWrapperPreferred =
+                createTestNetworkForNetworkSelection(subId, preferred)) {
+            verifyUnderlyingCellAndRunTest(
+                    subId,
+                    (subGrp, cellNetwork, cellNetworkCb) -> {
+                        final VcnSetupResult vcnSetupResult =
+                                setupAndGetVcnNetwork(
+                                        subGrp,
+                                        cellNetwork,
+                                        cellNetworkCb,
+                                        vcnConfig,
+                                        testNetworkWrapperPreferred);
+
+                        // Then bring up a less preferred network, and expect the VCN underlying
+                        // network does not change.
+                        try (TestNetworkWrapper testNetworkWrapperLessPreferred =
+                                createTestNetworkForNetworkSelection(subId, lessPreferred)) {
+                            injectAndVerifyIkeDpdPackets(
+                                    testNetworkWrapperPreferred.ikeTunUtils,
+                                    vcnSetupResult.ikeExchangePortPair);
+
+                            clearVcnConfigsAndVerifyNetworkTeardown(
+                                    subGrp, cellNetworkCb, vcnSetupResult.vcnNetwork);
+                        }
+                    });
+        }
+    }
+
+    private void verifyVcnMigratesAfterPreferredUnderlyingNetworkDies(
+            VcnConfig vcnConfig,
+            NetworkSelectionTestNetworkParams lessPreferred,
+            NetworkSelectionTestNetworkParams preferred)
+            throws Exception {
+        final int subId = verifyAndGetValidDataSubId();
+
+        // Start on a more preferred network
+        try (TestNetworkWrapper testNetworkWrapperPreferred =
+                createTestNetworkForNetworkSelection(subId, preferred)) {
+            verifyUnderlyingCellAndRunTest(
+                    subId,
+                    (subGrp, cellNetwork, cellNetworkCb) -> {
+                        final VcnSetupResult vcnSetupResult =
+                                setupAndGetVcnNetwork(
+                                        subGrp,
+                                        cellNetwork,
+                                        cellNetworkCb,
+                                        vcnConfig,
+                                        testNetworkWrapperPreferred);
+
+                        // Bring up a less preferred network
+                        try (TestNetworkWrapper testNetworkWrapperLessPreferred =
+                                createTestNetworkForNetworkSelection(subId, lessPreferred)) {
+                            // Teardown the preferred network
+                            testNetworkWrapperPreferred.close();
+                            testNetworkWrapperPreferred.vcnNetworkCallback.waitForLost();
+
+                            // Verify the VCN switches to the remaining less preferred network
+                            injectAndVerifyIkeMobikePackets(
+                                    testNetworkWrapperLessPreferred.ikeTunUtils);
+
+                            clearVcnConfigsAndVerifyNetworkTeardown(
+                                    subGrp, cellNetworkCb, vcnSetupResult.vcnNetwork);
+                        }
+                    });
+        }
+    }
+
     private VcnConfig createVcnConfigPrefersMetered() throws Exception {
         final List<VcnUnderlyingNetworkTemplate> nwTemplates = new ArrayList<>();
         nwTemplates.add(
@@ -529,98 +651,29 @@ public class VcnManagerTest extends VcnTestBase {
     }
 
     @Test
-    public void testVcnMigratesToPreferredUnderlyingNetwork() throws Exception {
-        final int subId = verifyAndGetValidDataSubId();
-        final VcnConfig vcnConfig = createVcnConfigPrefersMetered();
-
-        // Start on NOT_METERED, less preferred network.
-        try (TestNetworkWrapper testNetworkWrapperNotMetered =
-                createTestNetworkWrapper(false /* isMetered */, subId, LOCAL_ADDRESS)) {
-            verifyUnderlyingCellAndRunTest(subId, (subGrp, cellNetwork, cellNetworkCb) -> {
-                final VcnSetupResult vcnSetupResult =
-                    setupAndGetVcnNetwork(
-                        subGrp,
-                        cellNetwork,
-                        cellNetworkCb,
-                        vcnConfig,
-                        testNetworkWrapperNotMetered);
-
-                // Then bring up a more preferred network, and expect to switch to it.
-                try (TestNetworkWrapper testNetworkWrapperMetered =
-                        createTestNetworkWrapper(true /* isMetered */, subId, LOCAL_ADDRESS)) {
-                    injectAndVerifyIkeMobikePackets(testNetworkWrapperMetered.ikeTunUtils);
-
-                    clearVcnConfigsAndVerifyNetworkTeardown(
-                            subGrp, cellNetworkCb, vcnSetupResult.vcnNetwork);
-                }
-            });
-        }
+    public void testVcnMigratesToPreferredUnderlyingNetwork_preferMetered() throws Exception {
+        verifyVcnMigratesToPreferredUnderlyingNetwork(
+                createVcnConfigPrefersMetered(),
+                new NetworkSelectionTestNetworkParams(false /* isMetered */),
+                new NetworkSelectionTestNetworkParams(true /* isMetered */));
     }
 
     @Test
-    public void testVcnDoesNotSelectLessPreferredUnderlyingNetwork() throws Exception {
-        final int subId = verifyAndGetValidDataSubId();
-        final VcnConfig vcnConfig = createVcnConfigPrefersMetered();
-
-        // Start on METERED, more preferred network
-        try (TestNetworkWrapper testNetworkWrapperMetered =
-                createTestNetworkWrapper(true /* isMetered */, subId, LOCAL_ADDRESS)) {
-            verifyUnderlyingCellAndRunTest(subId, (subGrp, cellNetwork, cellNetworkCb) -> {
-                final VcnSetupResult vcnSetupResult =
-                        setupAndGetVcnNetwork(
-                                subGrp,
-                                cellNetwork,
-                                cellNetworkCb,
-                                vcnConfig,
-                                testNetworkWrapperMetered);
-
-                // Then bring up a less preferred network, and expect the VCN underlying
-                // network does not change.
-                try (TestNetworkWrapper testNetworkWrapperNotMetered =
-                        createTestNetworkWrapper(false /* isMetered */, subId, LOCAL_ADDRESS)) {
-                    injectAndVerifyIkeDpdPackets(
-                            testNetworkWrapperMetered.ikeTunUtils,
-                            vcnSetupResult.ikeExchangePortPair);
-
-                    clearVcnConfigsAndVerifyNetworkTeardown(
-                            subGrp, cellNetworkCb, vcnSetupResult.vcnNetwork);
-                }
-            });
-        }
+    public void testVcnDoesNotSelectLessPreferredUnderlyingNetwork_preferMetered()
+            throws Exception {
+        verifyVcnDoesNotSelectLessPreferredUnderlyingNetwork(
+                createVcnConfigPrefersMetered(),
+                new NetworkSelectionTestNetworkParams(false /* isMetered */),
+                new NetworkSelectionTestNetworkParams(true /* isMetered */));
     }
 
     @Test
-    public void testVcnMigratesAfterPreferredUnderlyingNetworkDies() throws Exception {
-        final int subId = verifyAndGetValidDataSubId();
-        final VcnConfig vcnConfig = createVcnConfigPrefersMetered();
-
-        // Start on METERED, more preferred network
-        try (TestNetworkWrapper testNetworkWrapperMetered =
-                createTestNetworkWrapper(true /* isMetered */, subId, LOCAL_ADDRESS)) {
-            verifyUnderlyingCellAndRunTest(subId, (subGrp, cellNetwork, cellNetworkCb) -> {
-                final VcnSetupResult vcnSetupResult =
-                        setupAndGetVcnNetwork(
-                                subGrp,
-                                cellNetwork,
-                                cellNetworkCb,
-                                vcnConfig,
-                                testNetworkWrapperMetered);
-
-                // Bring up a NOT_METERED, less preferred network
-                try (TestNetworkWrapper testNetworkWrapperNotMetered =
-                        createTestNetworkWrapper(false /* isMetered */, subId, LOCAL_ADDRESS)) {
-                    // Teardown the preferred network
-                    testNetworkWrapperMetered.close();
-                    testNetworkWrapperMetered.vcnNetworkCallback.waitForLost();
-
-                    // Verify the VCN switches to the remaining NOT_METERED network
-                    injectAndVerifyIkeMobikePackets(testNetworkWrapperNotMetered.ikeTunUtils);
-
-                    clearVcnConfigsAndVerifyNetworkTeardown(
-                            subGrp, cellNetworkCb, vcnSetupResult.vcnNetwork);
-                }
-            });
-        }
+    public void testVcnMigratesAfterPreferredUnderlyingNetworkDies_preferMetered()
+            throws Exception {
+        verifyVcnMigratesAfterPreferredUnderlyingNetworkDies(
+                createVcnConfigPrefersMetered(),
+                new NetworkSelectionTestNetworkParams(false /* isMetered */),
+                new NetworkSelectionTestNetworkParams(true /* isMetered */));
     }
 
     @Test
