@@ -662,7 +662,7 @@ public class VehiclePropertyVerifier<T> {
      *
      * The values returned here must not cause {@code IllegalArgumentException} for set.
      *
-     * Returns null or empty array if we don't know possible values.
+     * Returns {@code null} or empty array if we don't know possible values.
      */
     public @Nullable Collection<T> getPossibleValues(int areaId) {
         CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
