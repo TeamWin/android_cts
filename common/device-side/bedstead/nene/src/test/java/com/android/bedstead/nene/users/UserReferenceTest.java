@@ -17,19 +17,23 @@
 package com.android.bedstead.nene.users;
 
 import static android.Manifest.permission.CREATE_USERS;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.os.Build.VERSION_CODES.Q;
 import static android.os.Build.VERSION_CODES.S;
 
 import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.testng.Assert.assertThrows;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.view.Display;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -39,13 +43,16 @@ import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsers;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
+import com.android.bedstead.harrier.annotations.RequireVisibleBackgroundUsers;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.permissions.PermissionContext;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -118,6 +125,7 @@ public class UserReferenceTest {
 
         assertThat(sDeviceState.workProfile().exists()).isFalse();
     }
+
     @Test
     public void start_userDoesNotExist_throwsException() {
         assertThrows(NeneException.class,
@@ -142,6 +150,56 @@ public class UserReferenceTest {
         sDeviceState.secondaryUser().start();
 
         assertThat(sDeviceState.secondaryUser().isUnlocked()).isTrue();
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    @RequireNotVisibleBackgroundUsers(reason = "because otherwise it wouldn't throw")
+    public void start_onDisplay_notSupported_throwsException() {
+        UserReference user = sDeviceState.additionalUser().stop();
+
+        assertThrows(UnsupportedOperationException.class,
+                () -> user.startVisibleOnDisplay(Display.DEFAULT_DISPLAY));
+
+        assertWithMessage("%s is visible", user).that(user.isVisible()).isFalse();
+        assertWithMessage("%s is running", user).that(user.isRunning()).isFalse();
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    @RequireVisibleBackgroundUsers(reason = "because that's what being tested")
+    public void start_onDisplay_success() {
+        UserReference user = sDeviceState.additionalUser().stop();
+        int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+
+        user.startVisibleOnDisplay(displayId);
+
+        try {
+            assertWithMessage("%s is visible", user).that(user.isVisible()).isTrue();
+            assertWithMessage("%s is running", user).that(user.isRunning()).isTrue();
+        } finally {
+            // Need to explicitly stop it, otherwise the display won't be available on failure
+            user.stop();
+        }
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    @RequireVisibleBackgroundUsers(reason = "because that's what being tested")
+    public void start_onDisplay_userAlreadyStarted_doesNothing() {
+        UserReference user = sDeviceState.additionalUser().stop();
+        int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+
+        user.startVisibleOnDisplay(displayId);
+
+        try {
+            user.startVisibleOnDisplay(displayId);
+            assertWithMessage("%s is visible", user).that(user.isVisible()).isTrue();
+            assertWithMessage("%s is running", user).that(user.isRunning()).isTrue();
+        } finally {
+            // Need to explicitly stop it, otherwise the display won't be available on failure
+            user.stop();
+        }
     }
 
     @Test
@@ -287,6 +345,98 @@ public class UserReferenceTest {
         UserReference user = TestApis.users().find(NON_EXISTING_USER_ID);
 
         assertThat(user.isRunning()).isFalse();
+    }
+
+    @Test
+    public void isVisible_currentUser_returnsTrue() {
+        UserReference user = TestApis.users().current();
+
+        assertWithMessage("%s is visible", user).that(user.isVisible()).isTrue();
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    @RequireVisibleBackgroundUsers(reason = "because that's what being tested")
+    public void isVisible_visibleBgUser_returnsTrue() {
+        int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+
+        UserReference user = sDeviceState.additionalUser().startVisibleOnDisplay(displayId);
+
+        try {
+            assertWithMessage("%s is visible", user).that(user.isVisible()).isTrue();
+        } finally {
+            // Need to explicitly stop it, otherwise the display won't be available on failure
+            user.stop();
+        }
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    public void isVisible_nonStartedUser_returnsFalse() {
+        UserReference user = sDeviceState.additionalUser().stop();
+
+        assertWithMessage("%s is visible", user).that(user.isVisible()).isFalse();
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    public void isVisible_bgUser_returnsFalse() {
+        UserReference user = sDeviceState.additionalUser().start();
+
+        assertWithMessage("%s is visible", user).that(user.isVisible()).isFalse();
+    }
+
+    @Test
+    public void isVisible_userDoesNotExist_returnsFalse() {
+        UserReference user = TestApis.users().find(NON_EXISTING_USER_ID);
+
+        assertWithMessage("%s is visible", user).that(user.isVisible()).isFalse();
+    }
+
+    @Test
+    public void isForeground_currentUser_returnsTrue() {
+        UserReference user = TestApis.users().current();
+
+        assertWithMessage("%s is foreground", user).that(user.isForeground()).isTrue();
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    public void isForeground_nonStartedUser_returnsFalse() {
+        UserReference user = sDeviceState.additionalUser().stop();
+
+        assertWithMessage("%s is foreground", user).that(user.isForeground()).isFalse();
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    public void isForeground_bgUser_returnsFalse() {
+        UserReference user = sDeviceState.additionalUser().start();
+
+        assertWithMessage("%s is foreground", user).that(user.isForeground()).isFalse();
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    @RequireVisibleBackgroundUsers(reason = "because that's what being tested")
+    public void isForeground_visibleBgUser_returnsFalse() {
+        int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+
+        UserReference user = sDeviceState.additionalUser().startVisibleOnDisplay(displayId);
+
+        try {
+            assertWithMessage("%s is foreground", user).that(user.isForeground()).isFalse();
+        } finally {
+            // Need to explicitly stop it, otherwise the display won't be available on failure
+            user.stop();
+        }
+    }
+
+    @Test
+    public void isForeground_userDoesNotExist_returnsFalse() {
+        UserReference user = TestApis.users().find(NON_EXISTING_USER_ID);
+
+        assertWithMessage("%s is foreground", user).that(user.isForeground()).isFalse();
     }
 
     @Test
@@ -616,5 +766,18 @@ public class UserReferenceTest {
         } finally {
             TestApis.users().instrumented().clearPattern(PATTERN);
         }
+    }
+
+    // TODO(b/271153404): create new TestApis / users() API for this
+    private int getDisplayIdForStartingVisibleBackgroundUser() {
+        int[] displayIds;
+        try (PermissionContext p =
+                TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
+            displayIds = sContext.getSystemService(ActivityManager.class)
+                .getDisplayIdsForStartingVisibleBackgroundUsers();
+        }
+        assertWithMessage("available displays").that(displayIds).isNotNull();
+        assertWithMessage("# of available displays").that(displayIds.length).isAtLeast(1);
+        return displayIds[0];
     }
 }
