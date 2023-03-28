@@ -35,7 +35,6 @@ import android.media.cts.OutputSurface;
 import android.media.cts.SdkMediaCodec;
 import android.media.cts.TestArgs;
 import android.opengl.GLES20;
-import android.os.Build;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
@@ -43,7 +42,7 @@ import android.util.Log;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SmallTest;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiLevelUtil.Sdk;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -85,9 +84,7 @@ public class EncodeDecodeTest {
     private static final boolean VERBOSE = false;           // lots of logging
     private static final boolean DEBUG_SAVE_FILE = false;   // save copy of encoded movie
     private static final String DEBUG_FILE_NAME_BASE = "/sdcard/test.";
-    //TODO(b/248315681) Remove codenameEquals() check once devices return correct version for U
-    private static final boolean IS_AFTER_T = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)
-            || ApiLevelUtil.codenameEquals("UpsideDownCake");
+    private static final boolean IS_AFTER_T = Sdk.isAfterT();
 
     // parameters for the encoder
     private static final int FRAME_RATE = 15;               // 15fps
