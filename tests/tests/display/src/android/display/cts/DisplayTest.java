@@ -216,8 +216,6 @@ public class DisplayTest {
     @Before
     public void setUp() throws Exception {
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        mUiAutomation.executeShellCommand(
-                "settings put global overlay_display_devices 181x161/214|182x162/214");
 
         mScreenOnActivity = launchScreenOnActivity();
         mContext = getInstrumentation().getTargetContext();
@@ -230,6 +228,8 @@ public class DisplayTest {
         mDefaultDisplay = mDisplayManager.getDisplay(DEFAULT_DISPLAY);
         mSupportedWideGamuts = mDefaultDisplay.getSupportedWideColorGamut();
         mOriginalHdrSettings = new HdrSettings();
+
+        addSecondaryDisplay();
     }
 
     @After
@@ -283,6 +283,32 @@ public class DisplayTest {
             }
         }
         return null;
+    }
+
+    private void addSecondaryDisplay() throws InterruptedException {
+        final CountDownLatch signal = new CountDownLatch(1);
+        Handler handler = new Handler(Looper.getMainLooper());
+        mDisplayManager.registerDisplayListener(new DisplayListener() {
+            @Override
+            public void onDisplayAdded(int displayId) {
+                if (getSecondaryDisplay(mDisplayManager.getDisplays()) != null) {
+                    signal.countDown();
+                }
+            }
+
+            @Override
+            public void onDisplayRemoved(int displayId) {}
+
+            @Override
+            public void onDisplayChanged(int displayId) {}
+        }, handler);
+
+        // Add a secondary display
+        mUiAutomation.executeShellCommand(
+                "settings put global overlay_display_devices 181x161/214|182x162/214");
+
+        // Wait for the secondary display to become available
+        assertTrue(signal.await(5, TimeUnit.SECONDS));
     }
 
     /**
