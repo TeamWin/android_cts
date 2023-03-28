@@ -45,6 +45,9 @@ public class AutofillForAllAppsTest extends
     private DeviceConfigStateManager mDenyListStateManager =
             new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
               AutofillFeatureFlags.DEVICE_CONFIG_PACKAGE_DENYLIST_FOR_UNIMPORTANT_VIEW);
+    private DeviceConfigStateManager mAllowlistStateManager =
+            new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                "package_and_activity_allowlist_for_triggering_fill_request");
     private DeviceConfigStateManager mImeActionFlagStateManager =
             new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
               AutofillFeatureFlags.DEVICE_CONFIG_NON_AUTOFILLABLE_IME_ACTION_IDS);
@@ -61,6 +64,8 @@ public class AutofillForAllAppsTest extends
             "android.autofillservice.cts/.activities.LoginNotImportantForAutofillActivity";
     private static final String TEST_OTHER_ACTIVITY_NAME =
             "android.autofillservice.cts/.activities.LoginActivity";
+    private static final String TEST_IME_ACTION_ACTIVITY_NAME =
+            "android.autofillservice.cts/.activities.ImeOptionActivity";
     private final CannedFillResponse.Builder mLoginResponseBuilder =
             new CannedFillResponse.Builder()
                 .addDataset(new CannedFillResponse.CannedDataset.Builder()
@@ -79,6 +84,7 @@ public class AutofillForAllAppsTest extends
     public void setDenyListImeActionToEmptySetTriggerFillResponseOnUnimportantViewToTrue() {
         setImeActionFlagValue("");
         setDenyListFlagValue("");
+        setAllowlistFlagValue("");
         setIsTriggerFillRequestOnUnimportantViewEnabledFlagValue(Boolean.toString(true));
         setIsApplyHeuristicOnImportantViewEnabledFlagValue("false");
     }
@@ -87,6 +93,7 @@ public class AutofillForAllAppsTest extends
     public void setDenyListImeActionToEmptySetTriggerFillResponseOnUnimportantViewToFalse() {
         setImeActionFlagValue("");
         setDenyListFlagValue("");
+        setAllowlistFlagValue("");
         setIsTriggerFillRequestOnUnimportantViewEnabledFlagValue(Boolean.toString(false));
         setIsApplyHeuristicOnImportantViewEnabledFlagValue("false");
     }
@@ -258,6 +265,68 @@ public class AutofillForAllAppsTest extends
         sReplier.assertOnFillRequestNotCalled();
     }
 
+    @Test
+    public void testAddingPacakgeToAllowlist_ViewWithImeActionGoStillTriggerFillRequest()
+            throws Exception {
+        enableService();
+        setImeActionFlagValue(String.valueOf(EditorInfo.IME_ACTION_GO));
+        setAllowlistFlagValue(TEST_CTS_PACKAGE_NAME + ":;");
+        // Set response with a dataset
+        sReplier.addResponse(mImeOptionResponseBuilder.build());
+        // Start ime option activity.
+        startImeOptionActivity();
+        mUiBot.waitForIdleSync();
+        sReplier.assertNoUnhandledFillRequests();
+
+        mUiBot.selectByRelativeId(ID_IMEACTION_TEXT);
+        mUiBot.waitForIdleSync();
+
+        // assert fill request is triggered since package is in allowlist
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        sReplier.assertNoUnhandledFillRequests();
+    }
+
+    @Test
+    public void testAddingActivityToAllowlist_ViewWithImeActionGoStillTriggerFillRequest()
+            throws Exception {
+        enableService();
+        setImeActionFlagValue(String.valueOf(EditorInfo.IME_ACTION_GO));
+        setAllowlistFlagValue(TEST_CTS_PACKAGE_NAME + ":" + TEST_IME_ACTION_ACTIVITY_NAME + ";");
+        // Set response with a dataset
+        sReplier.addResponse(mImeOptionResponseBuilder.build());
+        // Start ime option activity.
+        startImeOptionActivity();
+        mUiBot.waitForIdleSync();
+        sReplier.assertNoUnhandledFillRequests();
+
+        mUiBot.selectByRelativeId(ID_IMEACTION_TEXT);
+        mUiBot.waitForIdleSync();
+
+        // assert fill request is triggered since package is in allowlist
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        sReplier.assertNoUnhandledFillRequests();
+    }
+
+    @Test
+    public void testAddingOtherActivityToAllowlist_ViewWithImeActionGoDoesntTriggerFillRequest()
+        throws Exception {
+        enableService();
+        setImeActionFlagValue(String.valueOf(EditorInfo.IME_ACTION_GO));
+        setAllowlistFlagValue(TEST_CTS_PACKAGE_NAME + ":" + TEST_OTHER_ACTIVITY_NAME + ";");
+        // Set response with a dataset
+        sReplier.addResponse(mImeOptionResponseBuilder.build());
+        // Start ime option activity.
+        startImeOptionActivity();
+        mUiBot.waitForIdleSync();
+        sReplier.assertNoUnhandledFillRequests();
+
+        mUiBot.selectByRelativeId(ID_IMEACTION_TEXT);
+        mUiBot.waitForIdleSync();
+
+        // assert fill request is not triggered since current activity is not allowed
+        sReplier.assertNoUnhandledFillRequests();
+    }
+
     private void setIsApplyHeuristicOnImportantViewEnabledFlagValue(String value) {
         Helper.setDeviceConfig(mTriggerFillRequestOnSelectedImportantViewsEnabledStateManager,
             value);
@@ -269,6 +338,10 @@ public class AutofillForAllAppsTest extends
 
     private void setDenyListFlagValue(String value) {
         Helper.setDeviceConfig(mDenyListStateManager, value);
+    }
+
+    private void setAllowlistFlagValue(String value) {
+        Helper.setDeviceConfig(mAllowlistStateManager, value);
     }
 
     private void setIsTriggerFillRequestOnUnimportantViewEnabledFlagValue(String value) {
