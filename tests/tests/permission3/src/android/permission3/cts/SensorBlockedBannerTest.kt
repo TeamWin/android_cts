@@ -65,6 +65,7 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
     @Before
     fun setup() {
         Assume.assumeFalse(isTv)
+        Assume.assumeFalse(isWatch)
         // TODO(b/203784852) Auto will eventually support the blocked sensor banner, but there won't
         // be support in T or below
         Assume.assumeFalse(isAutomotive)
