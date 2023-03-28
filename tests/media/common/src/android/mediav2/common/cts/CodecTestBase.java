@@ -26,6 +26,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
+import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.display.DisplayManager;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -115,6 +120,7 @@ public abstract class CodecTestBase {
             SystemProperties.getInt("ro.vndk.version", Build.VERSION_CODES.CUR_DEVELOPMENT)
                     >= Build.VERSION_CODES.TIRAMISU;
     public static final boolean IS_HDR_EDITING_SUPPORTED;
+    public static final boolean IS_HDR_CAPTURE_SUPPORTED;
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();
 
     public static final ArrayList<String> HDR_INFO_IN_BITSTREAM_CODECS = new ArrayList<>();
@@ -280,6 +286,7 @@ public abstract class CodecTestBase {
     static {
         MEDIA_CODEC_LIST_ALL = new MediaCodecList(MediaCodecList.ALL_CODECS);
         MEDIA_CODEC_LIST_REGULAR = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        IS_HDR_CAPTURE_SUPPORTED = isHDRCaptureSupported();
         IS_HDR_EDITING_SUPPORTED = isHDREditingSupported();
         CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("vp8", MediaFormat.MIMETYPE_VIDEO_VP8);
         CODEC_SEL_KEY_MEDIA_TYPE_MAP.put("vp9", MediaFormat.MIMETYPE_VIDEO_VP9);
@@ -455,6 +462,31 @@ public abstract class CodecTestBase {
         return isSupported;
     }
 
+    public static boolean isHDRCaptureSupported() {
+        // If the device supports HDR, hlg support should always return true
+        if (!MediaUtils.hasCamera()) return false;
+        CameraManager cm = CONTEXT.getSystemService(CameraManager.class);
+        try {
+            String[] cameraIds = cm.getCameraIdList();
+            for (String id : cameraIds) {
+                CameraCharacteristics ch = cm.getCameraCharacteristics(id);
+                int[] caps = ch.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+                if (IntStream.of(caps).anyMatch(x -> x
+                        == CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT)) {
+                    Set<Long> profiles =
+                            ch.get(CameraCharacteristics.REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES)
+                                    .getSupportedProfiles();
+                    if (profiles.contains(DynamicRangeProfiles.HLG10)) return true;
+                }
+            }
+        } catch (CameraAccessException e) {
+            Log.e(LOG_TAG, "encountered " + e.getMessage()
+                    + " marking hdr capture to be available to catch your attention");
+            return true;
+        }
+        return false;
+    }
+
     public static boolean isHDREditingSupported() {
         for (MediaCodecInfo codecInfo : MEDIA_CODEC_LIST_REGULAR.getCodecInfos()) {
             if (!codecInfo.isEncoder()) {
@@ -508,7 +540,7 @@ public abstract class CodecTestBase {
     public static boolean canDisplaySupportHDRContent() {
         DisplayManager displayManager = CONTEXT.getSystemService(DisplayManager.class);
         return displayManager.getDisplay(Display.DEFAULT_DISPLAY).getHdrCapabilities()
-                .getSupportedHdrTypes().length != 0;
+                .getSupportedHdrTypes().length > 0;
     }
 
     public static boolean areFormatsSupported(String name, String mediaType,
