@@ -18,9 +18,11 @@ package android.content.cts;
 
 import android.content.Context;
 import android.content.MutableContextWrapper;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.InstrumentationTestCase;
 import android.test.UiThreadTest;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class MutableContextWrapperTest extends InstrumentationTestCase {
 
     MutableContextWrapper mMutableContextWrapper;

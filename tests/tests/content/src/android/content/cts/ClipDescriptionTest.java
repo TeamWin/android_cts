@@ -27,6 +27,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.SpannableString;
 import android.text.style.UnderlineSpan;
 import android.view.textclassifier.TextClassifier;
@@ -55,6 +56,7 @@ import java.util.Calendar;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 //@AppModeFull // TODO(Instant) Should clip board data be visible?
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ClipDescriptionTest {
     private UiDevice mUiDevice;
     private Context mContext;

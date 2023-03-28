@@ -40,6 +40,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.ServiceManager;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.provider.Contacts.People;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
@@ -55,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class IntentTest extends AndroidTestCase {
 
     private Intent mIntent;

@@ -17,8 +17,10 @@
 package android.content.cts;
 
 import android.content.ReceiverCallNotAllowedException;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ReceiverCallNotAllowedExceptionTest extends AndroidTestCase {
     public void testConstructor() {
         new ReceiverCallNotAllowedException("TEST_STRING");
