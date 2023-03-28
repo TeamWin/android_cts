@@ -61,6 +61,7 @@ import android.app.compat.CompatChanges;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.SystemClock;
 import android.os.UserHandle;
@@ -1354,6 +1355,8 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
      */
     @Test
     public void testImeHiddenWhenImeLayeringTargetDelayedToShowInAppSwitch() throws Exception {
+        assumeTrue(hasRecentsScreen());
+
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
@@ -1530,5 +1533,18 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     popup.showAsDropDown(textView);
                     return popup;
                 }), popup -> TestUtils.runOnMainSync(popup::dismiss));
+    }
+
+    /**
+     * Whether the device has supported the recents screen.
+     */
+    private boolean hasRecentsScreen() {
+        try {
+            Context context = InstrumentationRegistry.getInstrumentation().getContext();
+            return context.getResources().getBoolean(
+                    Resources.getSystem().getIdentifier("config_hasRecents", "bool", "android"));
+        } catch (Resources.NotFoundException e) {
+            return false;
+        }
     }
 }
