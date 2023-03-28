@@ -3657,9 +3657,9 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testLandscapeToPortraitOverride() throws Exception {
-        String[] cameraIdArr = mCameraManager.getCameraIdList();
+        String[] cameraIdArr = mCameraManager.getCameraIdListNoLazy();
         ArrayList<String> cameraIdList = new ArrayList<>(Arrays.asList(cameraIdArr));
-        for (String cameraId : cameraIdList) {
+        for (String cameraId : mCameraIdsUnderTest) {
             Log.i(TAG, "testLandscapeToPortraitOverride: Testing camera ID " + cameraId);
             StaticMetadata staticMetadata = mAllStaticInfo.get(cameraId);
 
