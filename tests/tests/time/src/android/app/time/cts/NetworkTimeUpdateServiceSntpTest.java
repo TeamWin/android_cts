@@ -89,6 +89,7 @@ public class NetworkTimeUpdateServiceSntpTest {
     private DeviceConfigShellHelper.PreTestState mPreTestDeviceConfigState;
     private Instant mSetupInstant;
     private long mSetupElapsedRealtimeMillis;
+    private boolean mTearDownRequired;
 
     @Before
     public void setUp() throws Exception {
@@ -105,11 +106,14 @@ public class NetworkTimeUpdateServiceSntpTest {
         mDeviceConfigShellHelper = new DeviceConfigShellHelper(mShellCommandExecutor);
         mPreTestDeviceConfigState = mDeviceConfigShellHelper.setSyncModeForTest(
                 SYNC_DISABLED_MODE_UNTIL_REBOOT, NAMESPACE_SYSTEM_TIME);
+        mTearDownRequired = true;
     }
 
     @After
     public void tearDown() throws Exception {
-        skipOnFormFactorsWithoutService(mNetworkTimeUpdateServiceShellHelper);
+        if (!mTearDownRequired) {
+            return;
+        }
 
         mNetworkTimeUpdateServiceShellHelper.resetServerConfigForTests();
         mTimeDetectorShellHelper.clearNetworkTime();

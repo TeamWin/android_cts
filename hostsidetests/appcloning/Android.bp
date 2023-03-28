@@ -19,11 +19,7 @@ package {
 java_test_host {
     name: "CtsAppCloningHostTest",
     srcs: [
-        "hostside/src/**/AppCloningHostTest.java",
-        "hostside/src/**/BaseHostTestCase.java",
-        "hostside/src/**/AppCloningBaseHostTest.java",
-        "hostside/src/**/IntentRedirectionTest.java",
-        "hostside/src/**/AppCloningPublicVolumeTest.java",
+        "hostside/src/**/*.java",
     ],
     libs: [
         "cts-tradefed",
@@ -43,5 +39,7 @@ java_test_host {
         ":CtsAppCloningIntentRedirectionCloneProfileApp",
         ":CtsAppCloningIntentRedirectionOwnerProfileApp",
         ":CtsIntentRedirectionTestApp",
+        ":CtsAppCloningNotLaunchableCloneProfileApp",
+        ":CtsAppCloningLaunchableCloneProfileApp",
     ],
 }

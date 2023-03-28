@@ -471,6 +471,7 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
     @ApiTest(apis = {
             "android.car.user.CarUserManager#removeUser(UserRemovalRequest, Executor, "
                     + "ResultCallback)"})
+    @EnsureHasPermission({MANAGE_USERS, CREATE_USERS})
     public void testRemoveUserDoesNotExist() {
         mCarUserManager.removeUser(new UserRemovalRequest.Builder(getNonExistentUser()).build(),
                 Runnable::run, response -> assertThat(response.getStatus()).isEqualTo(

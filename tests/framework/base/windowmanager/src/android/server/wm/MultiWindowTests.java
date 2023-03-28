@@ -452,20 +452,16 @@ public class MultiWindowTests extends ActivityManagerTestBase {
                     mAm.getLockTaskModeState() != LOCK_TASK_MODE_NONE);
 
             // Verify specifying non-fullscreen windowing mode will fail.
-            boolean exceptionThrown = false;
-            try {
-                runWithShellPermission(() -> {
-                    final WindowContainerTransaction wct = new WindowContainerTransaction()
-                            .setWindowingMode(
-                                    mTaskOrganizer.getTaskInfo(task.mTaskId).getToken(),
-                                    WINDOWING_MODE_MULTI_WINDOW);
-                    mTaskOrganizer.applyTransaction(wct);
-                });
-            } catch (UnsupportedOperationException e) {
-                exceptionThrown = true;
-            }
-            assertTrue("Not allowed to specify windowing mode while in locked task mode.",
-                    exceptionThrown);
+            runWithShellPermission(() -> {
+                final WindowContainerTransaction wct = new WindowContainerTransaction()
+                        .setWindowingMode(
+                                mTaskOrganizer.getTaskInfo(task.mTaskId).getToken(),
+                                WINDOWING_MODE_MULTI_WINDOW);
+                mTaskOrganizer.applyTransaction(wct);
+            });
+            mWmState.computeState(TEST_ACTIVITY);
+            assertEquals(WINDOWING_MODE_FULLSCREEN,
+                    mWmState.getWindowState(TEST_ACTIVITY).getWindowingMode());
         } finally {
             runWithShellPermission(() -> {
                 mAtm.stopSystemLockTaskMode();

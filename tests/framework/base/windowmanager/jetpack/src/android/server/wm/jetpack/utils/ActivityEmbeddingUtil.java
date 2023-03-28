@@ -32,7 +32,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
@@ -166,11 +165,9 @@ public class ActivityEmbeddingUtil {
         try {
             activeSplitStates = splitInfoConsumer.waitAndGet();
         } catch (InterruptedException e) {
-            fail("startActivityAndVerifySplit() InterruptedException");
+            throw new AssertionError("startActivityAndVerifySplitAttributes()", e);
         }
-        if (activeSplitStates == null) {
-            fail("Didn't receive updated split info");
-        }
+        assertNotNull("Active Split States cannot be null.", activeSplitStates);
 
         // Wait for secondary activity to be resumed and verify that the newly sent split info
         // contains the secondary activity.
@@ -237,7 +234,7 @@ public class ActivityEmbeddingUtil {
         try {
             activeSplitStates = splitInfoConsumer.waitAndGet();
         } catch (InterruptedException e) {
-            fail("startActivityCrossUidInSplit() InterruptedException");
+            throw new AssertionError("startActivityCrossUidInSplit()", e);
         }
         assertNotNull(activeSplitStates);
         assertFalse(activeSplitStates.isEmpty());

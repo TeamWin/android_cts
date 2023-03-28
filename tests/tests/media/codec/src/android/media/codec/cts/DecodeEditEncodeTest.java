@@ -42,6 +42,7 @@ import android.util.Log;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Before;
@@ -270,6 +271,15 @@ public class DecodeEditEncodeTest {
         mUseHighBitDepth = useHighBitDepth;
     }
 
+    @ApiTest(apis = {"android.opengl.GLES20#GL_FRAGMENT_SHADER",
+            "android.opengl.GLES20#glReadPixels",
+            "android.opengl.GLES30#glReadPixels",
+            "android.media.format.MediaFormat#KEY_ALLOW_FRAME_DROP",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_Format32bitABGR2101010",
+            "android.media.MediaFormat#KEY_COLOR_RANGE",
+            "android.media.MediaFormat#KEY_COLOR_STANDARD",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @Test
     public void testVideoEdit() throws Throwable {
         VideoEditWrapper.runTest(this);

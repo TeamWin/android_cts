@@ -50,6 +50,7 @@ import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetectionServiceFailure;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
+import android.service.voice.SandboxedDetectionInitializer;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
@@ -181,6 +182,122 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
+    public void testHotwordDetectionService_createDspDetector_sendOverMaxResult_getException()
+            throws Throwable {
+        PersistableBundle persistableBundle = new PersistableBundle();
+        persistableBundle.putInt(Utils.KEY_TEST_SCENARIO,
+                Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_OVER_MAX_INIT_STATUS);
+
+        try {
+            // Create AlwaysOnHotwordDetector and wait result
+            mService.createAlwaysOnHotwordDetector(/* useExecutor= */ false, /* runOnMainThread= */
+                    false, persistableBundle);
+
+            // Wait the result and verify expected result
+            mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+            // When the HotwordDetectionService sends the initialization status that overs the
+            // getMaxCustomInitializationStatus, the HotwordDetectionService will get the
+            // IllegalArgumentException. In order to test this case, we send the max custom
+            // initialization status when the HotwordDetectionService gets the
+            // IllegalArgumentException.
+            assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
+                    SandboxedDetectionInitializer.getMaxCustomInitializationStatus());
+        } finally {
+            AlwaysOnHotwordDetector alwaysOnHotwordDetector = mService.getAlwaysOnHotwordDetector();
+            if (alwaysOnHotwordDetector != null) {
+                alwaysOnHotwordDetector.destroy();
+            }
+        }
+    }
+
+    @Test
+    public void testHotwordDetectionService_createSoftwareDetector_sendOverMaxResult_getException()
+            throws Throwable {
+        PersistableBundle persistableBundle = new PersistableBundle();
+        persistableBundle.putInt(Utils.KEY_TEST_SCENARIO,
+                Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_OVER_MAX_INIT_STATUS);
+
+        try {
+            // Create SoftwareHotwordDetector and wait result
+            mService.createSoftwareHotwordDetector(/* useExecutor= */ false, /* runOnMainThread= */
+                    false, persistableBundle);
+
+            // Wait the result and verify expected result
+            mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+            // When the HotwordDetectionService sends the initialization status that overs the
+            // getMaxCustomInitializationStatus, the HotwordDetectionService will get the
+            // IllegalArgumentException. In order to test this case, we send the max custom
+            // initialization status when the HotwordDetectionService gets the
+            // IllegalArgumentException.
+            assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
+                    SandboxedDetectionInitializer.getMaxCustomInitializationStatus());
+        } finally {
+            HotwordDetector softwareHotwordDetector = mService.getSoftwareHotwordDetector();
+            if (softwareHotwordDetector != null) {
+                softwareHotwordDetector.destroy();
+            }
+        }
+    }
+
+    @Test
+    public void testHotwordDetectionService_createDspDetector_customResult_getCustomStatus()
+            throws Throwable {
+        final int customStatus = SandboxedDetectionInitializer.INITIALIZATION_STATUS_SUCCESS + 1;
+        PersistableBundle persistableBundle = new PersistableBundle();
+        persistableBundle.putInt(Utils.KEY_TEST_SCENARIO,
+                Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_CUSTOM_INIT_STATUS);
+        persistableBundle.putInt(Utils.KEY_INITIALIZATION_STATUS, customStatus);
+
+        try {
+            // Create AlwaysOnHotwordDetector and wait result
+            mService.createAlwaysOnHotwordDetector(/* useExecutor= */ false, /* runOnMainThread= */
+                    false, persistableBundle);
+
+            // Wait the result and verify expected result
+            mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+            // verify callback result
+            assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
+                    customStatus);
+        } finally {
+            AlwaysOnHotwordDetector alwaysOnHotwordDetector = mService.getAlwaysOnHotwordDetector();
+            if (alwaysOnHotwordDetector != null) {
+                alwaysOnHotwordDetector.destroy();
+            }
+        }
+    }
+
+    @Test
+    public void testHotwordDetectionService_createSoftwareDetector_customResult_getCustomStatus()
+            throws Throwable {
+        final int customStatus = SandboxedDetectionInitializer.INITIALIZATION_STATUS_SUCCESS + 1;
+        PersistableBundle persistableBundle = new PersistableBundle();
+        persistableBundle.putInt(Utils.KEY_TEST_SCENARIO,
+                Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_CUSTOM_INIT_STATUS);
+        persistableBundle.putInt(Utils.KEY_INITIALIZATION_STATUS, customStatus);
+
+        try {
+            // Create SoftwareHotwordDetector and wait result
+            mService.createSoftwareHotwordDetector(/* useExecutor= */ false, /* runOnMainThread= */
+                    false, persistableBundle);
+
+            // Wait the result and verify expected result
+            mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+            // verify callback result
+            assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
+                    customStatus);
+        } finally {
+            HotwordDetector softwareHotwordDetector = mService.getSoftwareHotwordDetector();
+            if (softwareHotwordDetector != null) {
+                softwareHotwordDetector.destroy();
+            }
+        }
+    }
+
+    @Test
     public void testHotwordDetectionService_validHotwordDetectionComponentName_triggerSuccess()
             throws Throwable {
         // Create alwaysOnHotwordDetector and wait result
@@ -231,6 +348,19 @@ public class HotwordDetectionServiceBasicTest {
             throws Throwable {
         // Create SoftwareHotwordDetector and wait result
         mService.createSoftwareHotwordDetectorWithoutManageHotwordDetectionPermission();
+
+        // Wait the result and verify expected result
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+        // Verify SecurityException throws
+        assertThat(mService.isCreateDetectorSecurityExceptionThrow()).isTrue();
+    }
+
+    @Test
+    public void testVoiceInteractionService_createSoftwareBindHotwordDetectionPermission_Failure()
+            throws Throwable {
+        // Create SoftwareHotwordDetector and wait result
+        mService.createSoftwareHotwordDetectorHoldBindHotwordDetectionPermission();
 
         // Wait the result and verify expected result
         mService.waitSandboxedDetectionServiceInitializedCalledOrException();
@@ -942,6 +1072,42 @@ public class HotwordDetectionServiceBasicTest {
 
         // Destroy the always on detector
         alwaysOnHotwordDetector.destroy();
+    }
+
+    @Test
+    public void testHotwordDetectionService_onDetectedTwice_clientOnlyOneOnDetected()
+            throws Throwable {
+        // Create SoftwareHotwordDetector
+        HotwordDetector softwareHotwordDetector =
+                createSoftwareHotwordDetector(/*useOnFailure=*/ false);
+        try {
+            runWithShellPermissionIdentity(() -> {
+                // Update state with test scenario unexpected onDetect callback
+                // HDS will call back onDetected() twice
+                PersistableBundle persistableBundle = new PersistableBundle();
+                persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                        Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_UNEXPECTED_CALLBACK);
+                softwareHotwordDetector.updateState(
+                        persistableBundle,
+                        Helper.createFakeSharedMemoryData());
+            }, MANAGE_HOTWORD_DETECTION);
+
+            adoptShellPermissionIdentityForHotword();
+
+            mService.initDetectRejectLatch();
+            softwareHotwordDetector.startRecognition();
+
+            // wait onDetected() called and only once (even HDS callback onDetected() many times,
+            // only one onDetected() on VIS will be called)
+            mService.waitOnDetectOrRejectCalled();
+            // Wait for a while to make sure no 2nd onDetected() will be called
+            Thread.sleep(500);
+            assertThat(mService.getSoftwareOnDetectedCount()).isEqualTo(1);
+        } finally {
+            softwareHotwordDetector.destroy();
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
     }
 
     private void verifyOnDetectFromDspSuccess(AlwaysOnHotwordDetector alwaysOnHotwordDetector)

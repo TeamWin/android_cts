@@ -41,7 +41,7 @@ import android.view.Surface;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.After;
@@ -69,6 +69,30 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>It also tests the way the codec config buffers need to be passed from the MediaCodec to the
  * MediaMuxer.
  */
+@ApiTest(apis = {"android.opengl.GLES20#GL_FRAGMENT_SHADER",
+        "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface",
+        "android.media.MediaFormat#KEY_BIT_RATE",
+        "android.media.MediaFormat#KEY_COLOR_FORMAT",
+        "android.media.MediaFormat#KEY_FRAME_RATE",
+        "android.media.MediaFormat#KEY_I_FRAME_INTERVAL",
+        "android.media.MediaFormat#KEY_SAMPLE_RATE",
+        "android.media.MediaFormat#KEY_CHANNEL_COUNT",
+        "android.media.MediaFormat#KEY_PROFILE",
+        "android.media.MediaFormat#KEY_AAC_PROFILE",
+        "android.media.MediaExtractor#setDataSource",
+        "android.media.MediaExtractor#getTrackCount",
+        "android.media.MediaExtractor#getTrackFormat",
+        "android.media.MediaExtractor#selectTrack",
+        "android.media.MediaExtractor#readSampleData",
+        "android.media.MediaExtractor#getSampleTime",
+        "android.media.MediaExtractor#getSampleFlags",
+        "android.media.MediaExtractor#advance",
+        "android.media.MediaExtractor#release",
+        "android.media.MediaMuxer#start",
+        "android.media.MediaMuxer#stop",
+        "android.media.MediaMuxer#addTrack",
+        "android.media.MediaMuxer#writeSampleData",
+        "android.media.MediaMuxer#release"})
 @TargetApi(18)
 @AppModeFull(reason = "Instant apps cannot access the SD card")
 @RunWith(AndroidJUnit4.class)
@@ -145,7 +169,6 @@ public class ExtractDecodeEditEncodeMuxTest extends MediaTestBase {
         super.tearDown();
     }
 
-    @CddTest(requirements = {"5.2", "5.3"})
     @Test
     public void testExtractDecodeEditEncodeMuxQCIF() throws Throwable {
         if(!setSize(176, 144)) return;
@@ -155,7 +178,6 @@ public class ExtractDecodeEditEncodeMuxTest extends MediaTestBase {
         TestWrapper.runTest(this);
     }
 
-    @CddTest(requirements = {"5.2", "5.3"})
     @Test
     public void testExtractDecodeEditEncodeMuxQVGA() throws Throwable {
         if(!setSize(320, 240)) return;
@@ -165,7 +187,6 @@ public class ExtractDecodeEditEncodeMuxTest extends MediaTestBase {
         TestWrapper.runTest(this);
     }
 
-    @CddTest(requirements = {"5.2", "5.3"})
     @Test
     public void testExtractDecodeEditEncodeMux720p() throws Throwable {
         if(!setSize(1280, 720)) return;
@@ -175,7 +196,6 @@ public class ExtractDecodeEditEncodeMuxTest extends MediaTestBase {
         TestWrapper.runTest(this);
     }
 
-    @CddTest(requirements = {"5.2", "5.3"})
     @Test
     public void testExtractDecodeEditEncodeMux2160pHevc() throws Throwable {
         if(!setSize(3840, 2160)) return;
@@ -185,7 +205,6 @@ public class ExtractDecodeEditEncodeMuxTest extends MediaTestBase {
         TestWrapper.runTest(this);
     }
 
-    @CddTest(requirements = {"5.1.1", "5.1.2"})
     @Test
     public void testExtractDecodeEditEncodeMuxAudio() throws Throwable {
         if(!setSize(1280, 720)) return;
@@ -195,7 +214,6 @@ public class ExtractDecodeEditEncodeMuxTest extends MediaTestBase {
         TestWrapper.runTest(this);
     }
 
-    @CddTest(requirements = {"5.1.1", "5.1.2", "5.2", "5.3"})
     @Test
     public void testExtractDecodeEditEncodeMuxAudioVideo() throws Throwable {
         if(!setSize(1280, 720)) return;

@@ -76,8 +76,8 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
         return deviceSdkLevel.isDeviceAtLeastT();
     }
 
-    protected static boolean isAtLeastU() throws DeviceNotAvailableException {
-        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(sDevice);
+    protected static boolean isAtLeastU(ITestDevice device) throws DeviceNotAvailableException {
+        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(device);
         return deviceSdkLevel.isDeviceAtLeastU();
     }
 

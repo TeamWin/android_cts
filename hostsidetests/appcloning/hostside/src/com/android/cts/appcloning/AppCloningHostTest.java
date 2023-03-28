@@ -248,7 +248,7 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
     @Test
     public void testDeletionOfPrimaryApp_deleteAppWithParentPropertyTrue_deletesCloneApp()
             throws Exception {
-        assumeTrue(isAtLeastU());
+        assumeTrue(isAtLeastU(sDevice));
 
         int currentUserId = getCurrentUserId();
 

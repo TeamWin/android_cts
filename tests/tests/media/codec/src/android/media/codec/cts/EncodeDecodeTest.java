@@ -44,6 +44,7 @@ import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Before;
@@ -1268,6 +1269,11 @@ public class EncodeDecodeTest {
      * a series of byte[] buffers and decoded into ByteBuffers.  The output is checked for
      * validity.
      */
+    @ApiTest(apis = {"android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Planar",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420PackedPlanar",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420SemiPlanar",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420PackedSemiPlanar",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_TI_FormatYUV420PackedSemiPlanar"})
     @Test
     public void testEncodeDecodeVideoFromBufferToBuffer() throws Exception {
         encodeDecodeVideoFromBuffer(false);
@@ -1285,6 +1291,16 @@ public class EncodeDecodeTest {
      * the test thread, so we have to hand control off to a new thread for the duration of
      * the test.
      */
+    @ApiTest(apis = {"android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Planar",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420PackedPlanar",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420SemiPlanar",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420PackedSemiPlanar",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_TI_FormatYUV420PackedSemiPlanar",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface",
+            "android.opengl.GLES20#glReadPixels",
+            "android.media.MediaFormat#KEY_COLOR_RANGE",
+            "android.media.MediaFormat#KEY_COLOR_STANDARD",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @Test
     public void testEncodeDecodeVideoFromBufferToSurface() throws Throwable {
         BufferToSurfaceWrapper.runTest(this);
@@ -1294,11 +1310,22 @@ public class EncodeDecodeTest {
      * Tests streaming of AVC through the encoder and decoder.  Data is provided through
      * a Surface and decoded onto a Surface.  The output is checked for validity.
      */
+    @ApiTest(apis = {"android.media.MediaCodec#createInputSurface",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface",
+            "android.opengl.GLES20#glReadPixels",
+            "android.media.MediaFormat#KEY_COLOR_RANGE",
+            "android.media.MediaFormat#KEY_COLOR_STANDARD",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @Test
     public void testEncodeDecodeVideoFromSurfaceToSurface() throws Throwable {
         SurfaceToSurfaceWrapper.runTest(this, false, false);
     }
-
+    @ApiTest(apis = {"AMediaCodec_createInputSurface",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface",
+            "android.opengl.GLES20#glReadPixels",
+            "android.media.MediaFormat#KEY_COLOR_RANGE",
+            "android.media.MediaFormat#KEY_COLOR_STANDARD",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @Test
     public void testEncodeDecodeVideoFromSurfaceToSurfaceNdk() throws Throwable {
         SurfaceToSurfaceWrapper.runTest(this, false, USE_NDK);
@@ -1308,11 +1335,25 @@ public class EncodeDecodeTest {
      * Tests streaming of video through the encoder and decoder.  Data is provided through
      * a PersistentSurface and decoded onto a Surface.  The output is checked for validity.
      */
+    @ApiTest(apis = {"android.media.MediaCodec#createPersistentInputSurface",
+            "android.media.MediaCodec#setInputSurface",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface",
+            "android.opengl.GLES20#glReadPixels",
+            "android.media.MediaFormat#KEY_COLOR_RANGE",
+            "android.media.MediaFormat#KEY_COLOR_STANDARD",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @Test
     public void testEncodeDecodeVideoFromSurfaceToPersistentSurface() throws Throwable {
         SurfaceToSurfaceWrapper.runTest(this, true, false);
     }
 
+    @ApiTest(apis = {"AMediaCodec_createPersistentInputSurface",
+            "AMediaCodec_setInputSurface",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface",
+            "android.opengl.GLES20#glReadPixels",
+            "android.media.MediaFormat#KEY_COLOR_RANGE",
+            "android.media.MediaFormat#KEY_COLOR_STANDARD",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @Test
     public void testEncodeDecodeVideoFromSurfaceToPersistentSurfaceNdk() throws Throwable {
         SurfaceToSurfaceWrapper.runTest(this, true, USE_NDK);

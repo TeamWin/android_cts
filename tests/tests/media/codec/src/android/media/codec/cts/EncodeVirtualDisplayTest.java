@@ -48,6 +48,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Before;
@@ -189,6 +190,13 @@ public class EncodeVirtualDisplayTest {
      *
      * @throws Exception
      */
+    @ApiTest(apis = {"AMediaCodec_createInputSurface",
+            "android.hardware.display.DisplayManager#createVirtualDisplay",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface",
+            "android.opengl.GLES20#glReadPixels",
+            "android.media.MediaFormat#KEY_COLOR_RANGE",
+            "android.media.MediaFormat#KEY_COLOR_STANDARD",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @Test
     public void testEncodeVirtualDisplay() throws Throwable {
         if (!MediaUtils.check(sIsAtLeastR, "test needs Android 11")) return;

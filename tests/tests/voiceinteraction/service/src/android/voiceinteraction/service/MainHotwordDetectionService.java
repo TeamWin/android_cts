@@ -32,6 +32,7 @@ import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectedResult;
 import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordRejectedResult;
+import android.service.voice.SandboxedDetectionInitializer;
 import android.system.ErrnoException;
 import android.text.TextUtils;
 import android.util.Log;
@@ -91,6 +92,8 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     @GuardedBy("mLock")
     @Nullable
     private Runnable mDetectionJob;
+
+    private boolean mIsTestUnexpectedCallback;
 
     @Override
     public void onCreate() {
@@ -204,7 +207,12 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 // also more realistic to schedule it onto another thread.
                 mDetectionJob = () -> {
                     Log.d(TAG, "Sending detected result");
-
+                    if (mIsTestUnexpectedCallback) {
+                        Log.d(TAG, "callback twice");
+                        callback.onDetected(DETECTED_RESULT);
+                        callback.onDetected(DETECTED_RESULT);
+                        return;
+                    }
                     if (canReadAudio()) {
                         callback.onDetected(DETECTED_RESULT);
                     } else {
@@ -243,6 +251,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
 
         // Reset mDetectionJob and mStopDetectionCalled when service is initializing.
         synchronized (mLock) {
+            // When the service is initializing, the statusCallback will be not null.
             if (statusCallback != null) {
                 if (mDetectionJob != null) {
                     Log.d(TAG, "onUpdateState mDetectionJob is not null");
@@ -250,6 +259,27 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                     mDetectionJob = null;
                 }
                 mStopDetectionCalled = false;
+
+                if (options != null) {
+                    if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
+                            == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_OVER_MAX_INIT_STATUS) {
+                        Log.d(TAG, "send over the max custom initialization status");
+                        final int initializationStatus =
+                                SandboxedDetectionInitializer.getMaxCustomInitializationStatus();
+                        try {
+                            statusCallback.accept(initializationStatus + 1);
+                        } catch (IllegalArgumentException ex) {
+                            Log.d(TAG, "expect to get IllegalArgumentException here");
+                            statusCallback.accept(initializationStatus);
+                        }
+                        return;
+                    } else if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
+                            == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_CUSTOM_INIT_STATUS) {
+                        Log.d(TAG, "send custom initialization status");
+                        statusCallback.accept(options.getInt(Utils.KEY_INITIALIZATION_STATUS, -1));
+                        return;
+                    }
+                }
             }
             if (options != null) {
                 mDetectionDelayMs = options.getInt(Utils.KEY_DETECTION_DELAY_MS, 0);
@@ -261,6 +291,12 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                     == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH) {
                 Log.d(TAG, "Crash itself. Pid: " + Process.myPid());
                 Process.killProcess(Process.myPid());
+                return;
+            }
+            if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
+                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_UNEXPECTED_CALLBACK) {
+                Log.d(TAG, "options : Test unexpected callback");
+                mIsTestUnexpectedCallback = true;
                 return;
             }
             String fakeData = options.getString(KEY_FAKE_DATA);

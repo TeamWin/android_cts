@@ -3321,7 +3321,9 @@
             <meta-data android:name="CddTest" android:value="2.2.3/3.8.3/H-0-1|3.8.3.1/C-1-5|3.8.3.1/C-3-1|3.8.3.1/C-3-2|3.8.3.2/C-0-1|3.8.3.2/C-0-2|3.8.3.2/C-1-1|3.8.3.1/C-1-8|3.8.3.1/C-1-9" />
             <meta-data android:name="ApiTest"
                 android:value="android.service.notification.NotificationListenerService#cancelNotification|
-                android.service.notification.NotificationListenerService#cancelAllNotifications" />
+                android.service.notification.NotificationListenerService#cancelAllNotifications|
+                android.provider.Service#ACTION_CHANNEL_NOTIFICATION_SETTINGS|
+                android.provider.Service#EXTRA_CHANNEL_FILTER_LIST" />
         </activity>
 
         <activity android:name=".notifications.NotificationPrivacyVerifierActivity"

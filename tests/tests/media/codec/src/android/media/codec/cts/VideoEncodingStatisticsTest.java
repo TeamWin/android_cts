@@ -26,6 +26,7 @@ import android.media.cts.TestArgs;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Assume;
@@ -195,6 +196,9 @@ public class VideoEncodingStatisticsTest extends VideoCodecTestBase {
         }
     }
 
+    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#FEATURE_EncodingStatistics",
+            "android.media.MediaFormat#KEY_VIDEO_ENCODING_STATISTICS_LEVEL",
+            "android.media.MediaFormat#KEY_VIDEO_QP_AVERAGE"})
     @Test
     public void testEncodingStatisticsAvgQp() throws Exception {
        testEncStatRateAvgQp(mCodecName, mCodecMimeType, mBitRateMode);

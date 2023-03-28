@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+/*
  * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- -->
-<resources>
-    <string-array name="capabilities">
-        <item>@string/passwords</item>
-        <item>@string/passkeys</item>
-    </string-array>
-    <string name="passwords">android.credentials.TYPE_PASSWORD_CREDENTIAL</string>
-    <string name="passkeys">android.credentials.TYPE_PUBLIC_KEY_CREDENTIAL</string>
-</resources>
+ */
+
+package com.android.cts.cloneprofile.contacts.app;
+
+import android.app.Activity;
+import android.os.Bundle;
+
+/**
+ * App to be installed in owner user
+ */
+public class CloneProfileActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+}
