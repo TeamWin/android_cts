@@ -65,6 +65,7 @@ import com.android.compatibility.common.util.PollingCheck;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -139,16 +140,18 @@ public class TestHelper {
      * a) If there are more than 2 networks with the same SSID, but different credential type, then
      * this matching may pick the wrong one.
      *
-     * @param wifiManager WifiManager service
+     * @param wifiManager   WifiManager service
      * @param savedNetworks List of saved networks on the device.
      * @return List of WifiConfiguration with matching bssid.
      */
     public static List<WifiConfiguration> findMatchingSavedNetworksWithBssid(
-            @NonNull WifiManager wifiManager, @NonNull List<WifiConfiguration> savedNetworks) {
+            @NonNull WifiManager wifiManager, @NonNull List<WifiConfiguration> savedNetworks,
+            int numberOfApRequested) {
         if (savedNetworks.isEmpty()) return Collections.emptyList();
         List<WifiConfiguration> matchingNetworksWithBssids = new ArrayList<>();
         Map<Integer, List<WifiConfiguration>> networksMap =
-                findMatchingSavedNetworksWithBssidByBand(wifiManager, savedNetworks);
+                findMatchingSavedNetworksWithBssidByBand(wifiManager, savedNetworks,
+                        numberOfApRequested);
         for (List<WifiConfiguration> configs : networksMap.values()) {
             matchingNetworksWithBssids.addAll(configs);
         }
@@ -163,15 +166,18 @@ public class TestHelper {
      * a) If there are more than 2 networks with the same SSID, but different credential type, then
      * this matching may pick the wrong one.
      *
-     * @param wifiManager WifiManager service
+     * @param wifiManager   WifiManager service
      * @param savedNetworks List of saved networks on the device.
      * @return Map from band to the list of WifiConfiguration with matching bssid.
      */
     public static Map<Integer, List<WifiConfiguration>> findMatchingSavedNetworksWithBssidByBand(
-            @NonNull WifiManager wifiManager, @NonNull List<WifiConfiguration> savedNetworks) {
+            @NonNull WifiManager wifiManager, @NonNull List<WifiConfiguration> savedNetworks,
+            int numberOfApRequested) {
         if (savedNetworks.isEmpty()) return Collections.emptyMap();
+        Set<String> bssidSet = new HashSet<>();
         Map<Integer, List<WifiConfiguration>> matchingNetworksWithBssids = new ArrayMap<>();
         for (int i = 0; i < SCAN_RETRY_CNT_TO_FIND_MATCHING_BSSID; i++) {
+            int count = 0;
             // Trigger a scan to get fresh scan results.
             TestScanResultsCallback scanResultsCallback = new TestScanResultsCallback();
             try {
@@ -187,6 +193,9 @@ public class TestHelper {
             sScanResults = wifiManager.getScanResults();
             if (sScanResults == null || sScanResults.isEmpty()) continue;
             for (ScanResult scanResult : sScanResults) {
+                if (bssidSet.contains(scanResult.BSSID)) {
+                    continue;
+                }
                 WifiConfiguration matchingNetwork = savedNetworks.stream()
                         .filter(network -> TextUtils.equals(
                                 scanResult.SSID, WifiInfo.sanitizeSsid(network.SSID)))
@@ -196,16 +205,15 @@ public class TestHelper {
                     // make a copy in case we have 2 bssid's for the same network.
                     WifiConfiguration matchingNetworkCopy = new WifiConfiguration(matchingNetwork);
                     matchingNetworkCopy.BSSID = scanResult.BSSID;
-                    List<WifiConfiguration> bandConfigs = matchingNetworksWithBssids.get(
-                            scanResult.getBand());
-                    if (bandConfigs == null) {
-                        bandConfigs = new ArrayList<>();
-                        matchingNetworksWithBssids.put(scanResult.getBand(), bandConfigs);
-                    }
+                    bssidSet.add(scanResult.BSSID);
+                    List<WifiConfiguration> bandConfigs =
+                            matchingNetworksWithBssids.computeIfAbsent(
+                                    scanResult.getBand(), k -> new ArrayList<>());
                     bandConfigs.add(matchingNetworkCopy);
                 }
             }
-            if (!matchingNetworksWithBssids.isEmpty()) break;
+            if (bssidSet.size() >= numberOfApRequested
+                    && !matchingNetworksWithBssids.isEmpty()) break;
         }
         return matchingNetworksWithBssids;
     }
