@@ -16,7 +16,9 @@
 
 package android.accessibilityservice.cts.utils;
 
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.DisplayUtils.getStatusBarHeight;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_REMOVED;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -80,6 +82,8 @@ public class WindowCreationUtils {
     /**
      * Adds a new window of type TYPE_APPLICATION_PANEL.
      *
+     * <p> Note: Pair with removeWindowAndWaitForEvent to avoid a leaked window. </p>
+     *
      * @param uiAutomation the test automation.
      * @param instrumentation the test instrumentation.
      * @param activity the activity whose window manager will add the window.
@@ -95,6 +99,23 @@ public class WindowCreationUtils {
             throws TimeoutException {
         uiAutomation.executeAndWaitForEvent(() -> instrumentation.runOnMainSync(
                 () -> activity.getWindowManager().addView(view, params)), filter,
+                AsyncUtils.DEFAULT_TIMEOUT_MS);
+    }
+
+    /**
+     * Removes a window.
+     *
+     * @param uiAutomation the test automation.
+     * @param instrumentation the test instrumentation.
+     * @param activity the activity whose window manager will remove the window.
+     * @param view the test window to remove.
+     * @throws TimeoutException
+     */
+    public static void removeWindow(UiAutomation uiAutomation, Instrumentation instrumentation,
+            Activity activity, View view) throws TimeoutException {
+        uiAutomation.executeAndWaitForEvent(() -> instrumentation.runOnMainSync(
+                () -> activity.getWindowManager().removeView(view)),
+                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_REMOVED),
                 AsyncUtils.DEFAULT_TIMEOUT_MS);
     }
 }

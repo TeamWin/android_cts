@@ -177,10 +177,7 @@ public class AccessibilityWindowReportingTest {
                 filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_BOUNDS),
                 TIMEOUT_ASYNC_PROCESSING);
         // Remove the view
-        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
-                () -> mActivity.getWindowManager().removeView(button)),
-                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_REMOVED),
-                TIMEOUT_ASYNC_PROCESSING);
+        WindowCreationUtils.removeWindow(sUiAutomation, sInstrumentation, mActivity, button);
     }
 
     @Test
@@ -335,9 +332,9 @@ public class AccessibilityWindowReportingTest {
         final AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
         sUiAutomation.setServiceInfo(info);
-
+        View topWindowView = null;
         try {
-            showTopWindowAndWaitForItToShowUp();
+            topWindowView = showTopWindowAndWaitForItToShowUp();
 
             final AccessibilityWindowInfo activityWindow =
                     findWindowByTitle(sUiAutomation, mActivityTitle);
@@ -361,6 +358,11 @@ public class AccessibilityWindowReportingTest {
         } finally {
             info.flags &= ~AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
             sUiAutomation.setServiceInfo(info);
+            // Remove the view
+            if (topWindowView != null) {
+                WindowCreationUtils.removeWindow(sUiAutomation, sInstrumentation, mActivity,
+                        topWindowView);
+            }
         }
     }
 

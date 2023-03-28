@@ -22,10 +22,10 @@ import android.os.Bundle;
 /**
  * Activity launched on the default display that is used by AccessibilityProxyTest.
  */
-public class ProxyConcurrentActivity extends AccessibilityTestActivity {
+public class NonProxyActivity extends AccessibilityTestActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.proxy_concurrent_activity);
+        setContentView(R.layout.non_proxy_activity);
     }
 }
