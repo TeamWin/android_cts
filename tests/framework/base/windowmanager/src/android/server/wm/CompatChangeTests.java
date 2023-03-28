@@ -19,8 +19,17 @@ package android.server.wm;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE;
 import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_MEDIUM_VALUE;
+import static android.content.pm.ActivityInfo.OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.provider.DeviceConfig.NAMESPACE_CONSTRAIN_DISPLAY_APIS;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
+import static android.server.wm.allowsandboxingviewboundsapis.Components.ACTION_TEST_VIEW_SANDBOX_ALLOWED_PASSED;
+import static android.server.wm.allowsandboxingviewboundsapis.Components.ACTION_TEST_VIEW_SANDBOX_NOT_ALLOWED_PASSED;
+import static android.server.wm.allowsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY;
+import static android.server.wm.allowsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_ALLOWED_TIMEOUT_MS;
+import static android.server.wm.optoutsandboxingviewboundsapis.Components.ACTION_TEST_VIEW_SANDBOX_OPT_OUT_PASSED;
+import static android.server.wm.optoutsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_OPT_OUT_ACTIVITY;
+import static android.server.wm.optoutsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_OPT_OUT_TIMEOUT_MS;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Surface.ROTATION_90;
 
@@ -35,22 +44,23 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
+import android.app.WindowConfiguration;
 import android.compat.testing.PlatformCompatChangeRule;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
-import android.os.Bundle;
+import android.os.ConditionVariable;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
 import android.provider.DeviceConfig.Properties;
 import android.server.wm.WindowManagerTestBase.FocusableActivity;
 import android.util.Size;
-import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
@@ -61,6 +71,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The test is focused on compatibility changes that have an effect on WM logic, and tests that
@@ -120,6 +134,61 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
                 createManagedDisplayMetricsSession(DEFAULT_DISPLAY);
         createManagedLetterboxAspectRatioSession(FIXED_ORIENTATION_MIN_ASPECT_RATIO);
         createManagedConstrainDisplayApisFlagsSession();
+    }
+
+    /**
+     * Registers broadcast receiver which receives result actions from Activities under test.
+     */
+    private static class BroadcastReceiverCloseable implements AutoCloseable {
+        private final Context mContext;
+        private final Map<String, ConditionVariable> mBroadcastsReceived;
+        private final BroadcastReceiver mAppCommunicator = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                getBroadcastReceivedVariable(intent.getAction()).open();
+            }
+        };
+
+        BroadcastReceiverCloseable(final Context context, final String action) {
+            this.mContext = context;
+            // Keep the received broadcast items in the map.
+            mBroadcastsReceived = Collections.synchronizedMap(new HashMap<>());
+            // Register for broadcast actions.
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(action);
+            mContext.registerReceiver(mAppCommunicator, filter, Context.RECEIVER_EXPORTED);
+        }
+
+        ConditionVariable getBroadcastReceivedVariable(String action) {
+            return mBroadcastsReceived.computeIfAbsent(action, key -> new ConditionVariable());
+        }
+
+        @Override
+        public void close() throws Exception {
+            mContext.unregisterReceiver(mAppCommunicator);
+        }
+    }
+
+    /**
+     * AutoClosable class used for try-with-resources compat change tests, which require a separate
+     * application task to be started.
+     */
+    private static class CompatChangeCloseable implements AutoCloseable {
+        private final long mChangeId;
+        private final String mPackageName;
+
+        CompatChangeCloseable(final long changeId, String packageName) {
+            this.mChangeId = changeId;
+            this.mPackageName = packageName;
+
+            // Enable change
+            executeShellCommand("am compat enable " + changeId + " " + packageName);
+        }
+
+        @Override
+        public void close() throws Exception {
+            executeShellCommand("am compat disable " + mChangeId + " " + mPackageName);
+        }
     }
 
     /**
@@ -318,75 +387,96 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      * SANDBOX_VIEW_BOUNDS_APIS test cases
      * @see #testSandbox_viewApiForLetterboxedActivity
      * @see #testNoSandbox_viewApiForLetterboxedActivity
+     * @see #testNoSandbox_viewApiForLetterboxedActivityOptOut
      * =================
      * Validates that an activity in letterbox mode has sandboxing applied to the
      * view bounds when OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS is set.
-     * Without this flag
+     * Without this flag or with
+     * {@link android.view.WindowManager#PROPERTY_COMPAT_ALLOW_SANDBOXING_VIEW_BOUNDS_APIS}
+     * value=false in AndroidManifest.xml
      * {@link android.view.View#getLocationOnScreen},
      * {@link android.view.View#getWindowDisplayFrame}
      * {@link android.view.View#getBoundsOnScreen}
      * and {@link android.view.View#getWindowVisibleDisplayFrame}
      * return location or display frame offset by the window location on the screen:
-     * {@link android.view.View}.AttachInfo.mWindowLeft
-     * {@link android.view.View}.AttachInfo.mWindowTop
+     * {@link WindowConfiguration#getBounds}
      */
     @Test
-    @EnableCompatChanges({ActivityInfo.OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS})
-    public void testSandbox_viewApiForLetterboxedActivity() {
-        final View view = getViewFromLetterboxedActivityForTestingViewApiSandboxing();
+    public void testSandbox_viewApiForLetterboxedActivity() throws Exception {
+        // Enable OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS changeId for the test application
+        try (var compatChange = new CompatChangeCloseable(
+                OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS,
+                TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY.getPackageName());
+             var receiver = new BroadcastReceiverCloseable(mContext,
+                     ACTION_TEST_VIEW_SANDBOX_ALLOWED_PASSED)) {
+            // Make sure aspect ratio of the screen is correct to enforce letterboxing for
+            // portrait only application
+            syncChangeAspectRatio(2.0f, ORIENTATION_LANDSCAPE);
 
-        final Rect visibleDisplayFrame = new Rect();
-        view.getWindowVisibleDisplayFrame(visibleDisplayFrame);
-        assertThat(visibleDisplayFrame.left).isEqualTo(0);
+            // Start activity in a separate task
+            launchActivity(TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY);
 
-        final Rect displayFrame = new Rect();
-        view.getWindowDisplayFrame(displayFrame);
-        assertThat(displayFrame.left).isEqualTo(0);
+            // Wait for the broadcast action
+            boolean testPassed = receiver
+                    .getBroadcastReceivedVariable(ACTION_TEST_VIEW_SANDBOX_ALLOWED_PASSED)
+                    .block(TEST_VIEW_SANDBOX_ALLOWED_TIMEOUT_MS);
 
-        final Rect boundsOnScreen = new Rect();
-        view.getBoundsOnScreen(boundsOnScreen, true);
-        assertThat(boundsOnScreen.left).isEqualTo(0);
-
-        final int[] location = new int[]{ 0, 0 };
-        view.getLocationOnScreen(location);
-        assertThat(location[0]).isEqualTo(0);
+            assertThat(testPassed).isTrue();
+        }
     }
 
     @Test
-    public void testNoSandbox_viewApiForLetterboxedActivity() {
-        final View view = getViewFromLetterboxedActivityForTestingViewApiSandboxing();
+    public void testNoSandbox_viewApiForLetterboxedActivity() throws Exception {
+        // Enable OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS changeId for the test application
+        try (var receiver = new BroadcastReceiverCloseable(mContext,
+                     ACTION_TEST_VIEW_SANDBOX_NOT_ALLOWED_PASSED)) {
+            // Make sure aspect ratio of the screen is correct to enforce letterboxing for
+            // portrait only application
+            syncChangeAspectRatio(2.0f, ORIENTATION_LANDSCAPE);
 
-        final Rect visibleDisplayFrame = new Rect();
-        view.getWindowVisibleDisplayFrame(visibleDisplayFrame);
-        assertThat(visibleDisplayFrame.left).isGreaterThan(0);
+            // Start activity in a separate task
+            launchActivity(TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY);
 
-        final Rect displayFrame = new Rect();
-        view.getWindowDisplayFrame(displayFrame);
-        assertThat(displayFrame.left).isGreaterThan(0);
+            // Wait for the broadcast action
+            boolean testPassed = receiver
+                    .getBroadcastReceivedVariable(ACTION_TEST_VIEW_SANDBOX_NOT_ALLOWED_PASSED)
+                    .block(TEST_VIEW_SANDBOX_ALLOWED_TIMEOUT_MS);
 
-        final Rect boundsOnScreen = new Rect();
-        view.getBoundsOnScreen(boundsOnScreen, true);
-        assertThat(boundsOnScreen.left).isGreaterThan(0);
-
-        final int[] location = new int[]{ 0, 0 };
-        view.getLocationOnScreen(location);
-        assertThat(location[0]).isGreaterThan(0);
+            assertThat(testPassed).isTrue();
+        }
     }
 
-    private View getViewFromLetterboxedActivityForTestingViewApiSandboxing() {
-        Size originalDisplaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
-        mDisplayMetricsSession.changeAspectRatio(2.0, ORIENTATION_LANDSCAPE);
-        Size currentDisplaySize = mDisplayMetricsSession.getDisplayMetrics().getSize();
-        assumeFalse("If a display size is capped, resizing may be a no-op",
-                originalDisplaySize.equals(currentDisplaySize));
+    @Test
+    public void testNoSandbox_viewApiForLetterboxedActivityOptOut() throws Exception {
+        // Enable OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS changeId for the test application
+        try (var compatChange = new CompatChangeCloseable(
+                OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS,
+                TEST_VIEW_SANDBOX_OPT_OUT_ACTIVITY.getPackageName());
+             var receiver = new BroadcastReceiverCloseable(mContext,
+                     ACTION_TEST_VIEW_SANDBOX_OPT_OUT_PASSED)) {
+            // Make sure aspect ratio of the screen is correct to enforce letterboxing for
+            // portrait only application
+            syncChangeAspectRatio(2.0f, ORIENTATION_LANDSCAPE);
 
-        final TestActivitySession<? extends TestActivityWithView> session =
-                createManagedTestActivitySession();
-        session.launchTestActivityOnDisplaySync(
-                TestPortraitActivityWithView.class.getName(),
-                new Intent(mContext, TestPortraitActivityWithView.class),
-                DEFAULT_DISPLAY);
-        return session.getActivity().mView;
+            // Start activity in a separate task
+            launchActivity(TEST_VIEW_SANDBOX_OPT_OUT_ACTIVITY);
+
+            // Wait for the broadcast action
+            boolean testPassed = receiver
+                    .getBroadcastReceivedVariable(ACTION_TEST_VIEW_SANDBOX_OPT_OUT_PASSED)
+                    .block(TEST_VIEW_SANDBOX_OPT_OUT_TIMEOUT_MS);
+
+            assertThat(testPassed).isTrue();
+        }
+    }
+
+    private void syncChangeAspectRatio(final float aspectRatio, final int orientation) {
+        Size originalDisplaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
+        mDisplayMetricsSession.changeAspectRatio(aspectRatio, orientation);
+        mWmState.waitForWithAmState(wmState -> {
+            Size currentDisplaySize = mDisplayMetricsSession.getDisplayMetrics().getSize();
+            return !originalDisplaySize.equals(currentDisplaySize);
+        }, "waiting for display changing aspect ratio");
     }
 
     // =================
@@ -906,22 +996,4 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
 
     public static class SupportsSizeChangesPortraitActivity extends FocusableActivity {
     }
-
-    public static class TestPortraitActivityWithView extends TestActivityWithView {
-    }
-
-    public static class TestActivityWithView extends Activity {
-        public View mView;
-
-        @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            LinearLayout layout = new LinearLayout(this);
-            layout.addView(new TextView(this));
-
-            mView = layout;
-            setContentView(mView);
-        }
-    }
-
 }
