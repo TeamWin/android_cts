@@ -161,7 +161,7 @@ public class HotwordDetectionServiceBasicTest {
 
         // Wait the original HotwordDetectionService finish clean up to avoid flaky
         // This also waits for mic indicator disappear
-        SystemClock.sleep(10_000);
+        SystemClock.sleep(5_000);
     }
 
     @After
