@@ -78,6 +78,7 @@ genrule {
         " -a com.android.compatibility.common.deviceinfo.GraphicsDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.HapticsDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.InputDeviceInfo " +
+        " -a com.android.compatibility.common.deviceinfo.KeystoreAttestationDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.LocaleDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.MediaDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.MediaOutputDeviceInfo " +
