@@ -16,8 +16,10 @@
 
 package android.devicepolicy.cts;
 
+import static android.app.admin.DevicePolicyManager.EXEMPT_FROM_ACTIVITY_BG_START_RESTRICTION;
 import static android.app.admin.DevicePolicyManager.EXEMPT_FROM_POWER_RESTRICTIONS;
 import static android.app.admin.DevicePolicyManager.EXEMPT_FROM_SUSPENSION;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
@@ -33,6 +35,7 @@ import static org.testng.Assert.assertThrows;
 import android.app.admin.DevicePolicyManager;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.stats.devicepolicy.EventId;
 import android.util.ArrayMap;
@@ -46,7 +49,9 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
+import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstance;
 
 import org.junit.ClassRule;
@@ -249,6 +254,50 @@ public class ApplicationExemptionsTest {
                 .whereAdminPackageName()
                 .isEqualTo(TestApis.context().instrumentedContext().getPackageName()))
                 .wasLogged();
+        }
+    }
+
+    @Test
+    @EnsureHasPermission(MANAGE_DEVICE_POLICY_APP_EXEMPTIONS)
+    @Postsubmit(reason = "new test")
+    public void setApplicationExemptions_noExemption_cannotStartActivityFromBg()
+            throws NameNotFoundException {
+        try (TestAppInstance testApp = sTestApp.install()) {
+            TestAppActivityReference testActivity = testApp.activities().any();
+            Intent intent = new Intent()
+                    .addFlags(FLAG_ACTIVITY_NEW_TASK)
+                    .setComponent(testActivity.component().componentName());
+
+            testApp.context().startActivity(intent);
+
+            Poll.forValue("Start foreground activity from background",
+                    () -> TestApis.activities().foregroundActivity())
+                    .toNotBeEqualTo(testActivity.component()).errorOnFail().await();
+        }
+    }
+
+    @Test
+    @EnsureHasPermission(MANAGE_DEVICE_POLICY_APP_EXEMPTIONS)
+    @Postsubmit(reason = "new test")
+    public void setApplicationExemptions_activityBgStartRestrictionExemption_canStartActivityFromBg()
+            throws NameNotFoundException {
+        Set<Integer> exemptionSet = new HashSet<>(
+                List.of(EXEMPT_FROM_ACTIVITY_BG_START_RESTRICTION));
+
+        try (TestAppInstance testApp = sTestApp.install()) {
+            sLocalDevicePolicyManager.setApplicationExemptions(
+                    sTestApp.packageName(),
+                    exemptionSet);
+            TestAppActivityReference testActivity = testApp.activities().any();
+            Intent intent = new Intent()
+                    .addFlags(FLAG_ACTIVITY_NEW_TASK)
+                    .setComponent(testActivity.component().componentName());
+
+            testApp.context().startActivity(intent);
+
+            Poll.forValue("Start foreground activity from background",
+                    () -> TestApis.activities().foregroundActivity())
+                    .toBeEqualTo(testActivity.component()).errorOnFail().await();
         }
     }
 }
