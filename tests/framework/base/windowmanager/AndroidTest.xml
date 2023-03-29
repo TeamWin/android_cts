@@ -36,6 +36,7 @@
         <option name="test-file-name" value="CtsDeviceServicesTestSecondApp.apk" />
         <option name="test-file-name" value="CtsDeviceServicesTestThirdApp.apk" />
         <option name="test-file-name" value="CtsDeviceDeprecatedSdkApp.apk" />
+        <option name="test-file-name" value="CtsDeviceDeskResourcesApp.apk" />
         <option name="test-file-name" value="CtsDeviceDisplaySizeApp.apk" />
         <option name="test-file-name" value="CtsDevicePrereleaseSdkApp.apk" />
         <option name="test-file-name" value="CtsDeviceProfileableApp.apk" />
