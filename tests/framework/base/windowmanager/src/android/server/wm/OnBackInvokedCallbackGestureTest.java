@@ -31,6 +31,8 @@ import android.window.OnBackAnimationCallback;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -94,6 +96,7 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
     }
 
     @Test
+    @CddTest(requirements = { "7.2.3/H-0-5,H-0-6,H-0-8" })
     public void invokesCallback_invoked() throws InterruptedException {
         int midHeight = mUiDevice.getDisplayHeight() / 2;
         int midWidth = mUiDevice.getDisplayWidth() / 2;
@@ -131,6 +134,7 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
     }
 
     @Test
+    @CddTest(requirements = { "7.2.3/H-0-7" })
     public void invokesCallback_cancelled() throws InterruptedException {
         int midHeight = mUiDevice.getDisplayHeight() / 2;
         int midWidth = mUiDevice.getDisplayWidth() / 2;
