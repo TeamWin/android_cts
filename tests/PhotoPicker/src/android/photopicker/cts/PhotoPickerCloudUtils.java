@@ -16,8 +16,8 @@
 
 package android.photopicker.cts;
 
-import static android.Manifest.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG;
 import static android.Manifest.permission.READ_DEVICE_CONFIG;
+import static android.Manifest.permission.WRITE_ALLOWLISTED_DEVICE_CONFIG;
 import static android.Manifest.permission.WRITE_DEVICE_CONFIG;
 import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
 import static android.photopicker.cts.PickerProviderMediaGenerator.syncCloudProvider;
@@ -125,7 +125,7 @@ public class PhotoPickerCloudUtils {
 
     static void setAllowedProvidersDeviceConfig(@Nullable String allowedCloudProviders) {
         if (SdkLevel.isAtLeastU()) {
-            getUiAutomation().adoptShellPermissionIdentity(ALLOWLISTED_WRITE_DEVICE_CONFIG);
+            getUiAutomation().adoptShellPermissionIdentity(WRITE_ALLOWLISTED_DEVICE_CONFIG);
         } else {
             getUiAutomation().adoptShellPermissionIdentity(WRITE_DEVICE_CONFIG);
         }
