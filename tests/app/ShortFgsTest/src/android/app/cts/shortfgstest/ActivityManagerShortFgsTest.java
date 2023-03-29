@@ -1357,6 +1357,7 @@ public class ActivityManagerShortFgsTest {
                                 ForegroundServiceStartNotAllowedException.class));
 
         waitForAckMessage();
+        waitForMethodCall(FGS_B_0, "onStartCommand");
         assertFgsRunning(FGS_B_0);
     }
 }

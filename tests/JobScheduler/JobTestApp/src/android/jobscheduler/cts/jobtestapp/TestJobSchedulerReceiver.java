@@ -16,6 +16,7 @@
 
 package android.jobscheduler.cts.jobtestapp;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -28,6 +29,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 
 /**
@@ -36,7 +38,7 @@ import android.util.Log;
  */
 public class TestJobSchedulerReceiver extends BroadcastReceiver {
     private static final String TAG = TestJobSchedulerReceiver.class.getSimpleName();
-    private static final String PACKAGE_NAME = "android.jobscheduler.cts.jobtestapp";
+    static final String PACKAGE_NAME = "android.jobscheduler.cts.jobtestapp";
     private static final String NOTIFICATION_CHANNEL_ID = TAG + "_channel";
 
     public static final String ACTION_JOB_SCHEDULE_RESULT =
@@ -60,8 +62,12 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
     public static final String ACTION_CANCEL_JOBS = PACKAGE_NAME + ".action.CANCEL_JOBS";
     public static final String ACTION_POST_UI_INITIATING_NOTIFICATION =
             PACKAGE_NAME + ".action.POST_UI_INITIATING_NOTIFICATION";
+    public static final String ACTION_SCHEDULE_FGS_START_ALARM =
+            PACKAGE_NAME + ".action.SCHEDULE_FGS_START_ALARM";
     public static final String ACTION_NOTIFICATION_POSTED =
             PACKAGE_NAME + ".action.NOTIFICATION_POSTED";
+    public static final String ACTION_ALARM_SCHEDULED =
+            PACKAGE_NAME + ".action.ALARM_SCHEDULED";
     public static final int JOB_INITIAL_BACKOFF = 10_000;
 
     @Override
@@ -140,6 +146,23 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
 
                 final Intent completionIntent = new Intent(ACTION_NOTIFICATION_POSTED);
                 context.sendBroadcast(completionIntent);
+                break;
+            case ACTION_SCHEDULE_FGS_START_ALARM:
+                final Intent startFgsIntent = new Intent(TestFgsService.ACTION_START_FGS);
+                ComponentName testComponentName = new ComponentName(context, TestFgsService.class);
+                startFgsIntent.setComponent(testComponentName);
+
+                PendingIntent startFgsPendingIntent = PendingIntent.getForegroundService(
+                        context, 2, startFgsIntent,
+                        PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+                AlarmManager alarmManager = context.getSystemService(AlarmManager.class);
+                alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        SystemClock.elapsedRealtime(), // Get the alarm to fire immediately
+                        startFgsPendingIntent);
+
+                final Intent alarmScheduledIntent = new Intent(ACTION_ALARM_SCHEDULED);
+                context.sendBroadcast(alarmScheduledIntent);
                 break;
             default:
                 Log.e(TAG, "Unknown action " + intent.getAction());

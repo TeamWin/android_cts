@@ -33,6 +33,7 @@ import com.android.os.StatsLog.EventMetricData;
 import com.android.os.telecom.EmergencyNumberDialed;
 import com.android.os.telecom.TelecomExtensionAtom;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.util.RunUtil;
 
 import com.google.protobuf.ExtensionRegistry;
 
@@ -53,7 +54,7 @@ public class TelecomHostStatsTest extends CompatChangeGatingTestCase {
         assertThat(mCtsBuild).isNotNull();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
     @Override
@@ -80,6 +81,7 @@ public class TelecomHostStatsTest extends CompatChangeGatingTestCase {
                 ".OutgoingCallTest",
                 "testStartCallWithSpeakerphoneTrue_SpeakerphoneOnInCall");
 
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
         // Verify that we have three atoma for  callstatechange
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         AtomsProto.CallStateChanged callStateChangedAtom = null;
@@ -137,6 +139,7 @@ public class TelecomHostStatsTest extends CompatChangeGatingTestCase {
         DeviceUtils.runDeviceTests(
                 getDevice(), TELECOM_CTS_TEST_PKG, ".EmergencyCallTests", "testStartEmergencyCall");
 
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
         ExtensionRegistry registry = ExtensionRegistry.newInstance();
         TelecomExtensionAtom.registerAllExtensions(registry);
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice(), registry);

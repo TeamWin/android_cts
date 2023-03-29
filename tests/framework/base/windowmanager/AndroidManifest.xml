@@ -216,12 +216,6 @@
              android:authorities="android.server.wm.testjournalprovider"
              android:exported="true"/>
 
-        <!--compat tests-->
-        <activity android:name="android.server.wm.CompatChangeTests$TestPortraitActivityWithView"
-            android:maxAspectRatio="1.5"
-            android:resizeableActivity="false"
-            android:screenOrientation="portrait"/>
-
         <!--intent tests-->
         <activity android:name="android.server.wm.intent.Activities$RegularActivity"/>
         <activity android:name="android.server.wm.intent.Activities$SingleTopActivity"
@@ -451,7 +445,8 @@
              android:directBootAware="true"/>
 
         <activity android:name="android.server.wm.WindowInsetsAnimationTestBase$TestActivity"
-             android:theme="@android:style/Theme.Material.NoActionBar"/>
+            android:screenOrientation="locked"
+            android:theme="@android:style/Theme.Material.NoActionBar"/>
         <activity android:name="android.server.wm.WindowInsetsAnimationControllerTests$ControllerTestActivity"
             android:theme="@android:style/Theme.Material.NoActionBar" />
 

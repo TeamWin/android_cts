@@ -20,6 +20,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.server.wm.ComponentNameUtils.getWindowName;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.StateLogger.logE;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
@@ -52,8 +53,8 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
-import android.server.wm.WindowManagerState.Task;
 import android.server.wm.WindowManagerState.DisplayContent;
+import android.server.wm.WindowManagerState.Task;
 
 import org.junit.Before;
 import org.junit.Test;

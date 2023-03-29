@@ -39,8 +39,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
 import android.os.SystemClock;
-import android.util.Log;
-import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
@@ -56,16 +54,12 @@ import com.google.common.collect.ImmutableList;
 
 import org.junit.Rule;
 
-import java.util.Objects;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public abstract class VirtualDeviceTestCase extends InputTestCase {
 
     private static final String TAG = "VirtualDeviceTestCase";
-    private static final int BARRIER_TIMEOUT = 1;
 
     private static final int ARBITRARY_SURFACE_TEX_ID = 1;
 
@@ -73,8 +67,6 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     protected static final int VENDOR_ID = 1;
     protected static final int DISPLAY_WIDTH = 100;
     protected static final int DISPLAY_HEIGHT = 100;
-
-    private InputDevice mInputDevice;
 
     // Uses:
     // Manifest.permission.CREATE_VIRTUAL_DEVICE,
@@ -85,24 +77,16 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation());
 
-    private final CyclicBarrier mBarrier = new CyclicBarrier(2);
+    private final CountDownLatch mLatch = new CountDownLatch(1);
     private final InputManager.InputDeviceListener mInputDeviceListener =
             new InputManager.InputDeviceListener() {
                 @Override
                 public void onInputDeviceAdded(int deviceId) {
-                    mInputDevice = mInputManager.getInputDevice(deviceId);
-                    try {
-                        mBarrier.await();
-                    } catch (InterruptedException | BrokenBarrierException e) {
-                        Log.e(TAG, "Unexpected exception while waiting on CyclicBarrier", e);
-                    }
+                    mLatch.countDown();
                 }
 
                 @Override
                 public void onInputDeviceRemoved(int deviceId) {
-                    if (mInputDevice != null && deviceId == mInputDevice.getId()) {
-                        mInputDevice = null;
-                    }
                 }
 
                 @Override
@@ -202,9 +186,12 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
             if (mVirtualDevice != null) {
                 mVirtualDevice.close();
             }
+            if (mInputManager != null) {
+                mInputManager.unregisterInputDeviceListener(mInputDeviceListener);
+            }
             final Context context = InstrumentationRegistry.getTargetContext();
-            mInputManager.unregisterInputDeviceListener(mInputDeviceListener);
             disassociateCompanionDevice(context.getPackageName());
+            mInputManager.unregisterInputDeviceListener(mInputDeviceListener);
         }
     }
 
@@ -216,18 +203,12 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
                 .toBundle();
     }
 
-    protected InputDevice getInputDevice() {
-        Objects.requireNonNull(mInputDevice, "Failed to get InputDevice");
-        return mInputDevice;
-    }
-
     protected void waitForInputDevice() {
         try {
-            mBarrier.await(BARRIER_TIMEOUT, TimeUnit.SECONDS);
-        } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
-            fail("Virtual input device setup was interrupted or timed out.");
+            mLatch.await(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            fail("Virtual input device setup was interrupted");
         }
-        mBarrier.reset();
     }
 
     private void associateCompanionDevice(String packageName) {

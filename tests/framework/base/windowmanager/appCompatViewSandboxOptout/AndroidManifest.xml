@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Copyright (C) 2023 The Android Open Source Project
+     Copyright (C) 2016 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.server.wm.deskresources">
-
-    <queries>
-        <package android:name="android.server.wm.cts" />
-    </queries>
-
-    <application android:debuggable="true">
-        <activity android:name=".DeskResourcesActivity"
-                  android:exported="true" />
+          package="android.server.wm.optoutsandboxingviewboundsapis">
+    <application>
+        <property android:name="android.window.PROPERTY_COMPAT_ALLOW_SANDBOXING_VIEW_BOUNDS_APIS"
+                  android:value="false"/>
+        <activity android:name=".TestCompatViewSandboxOptOutActivity"
+                  android:exported="true"
+                  android:maxAspectRatio="1.5"
+                  android:resizeableActivity="false"
+                  android:screenOrientation="portrait"/>
     </application>
-
 </manifest>

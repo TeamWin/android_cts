@@ -60,6 +60,8 @@ import android.view.View;
 
 import androidx.test.uiautomator.UiObject2;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Test;
 
 import java.util.List;
@@ -861,6 +863,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
     }
 
     @Test
+    @CddTest(requirement = "9.8.14/C1-1")
     public void testCredentialManagerIntegration() throws Exception {
         enableFillDialogFeature(sContext);
         enableCredentialManagerFeature(sContext);

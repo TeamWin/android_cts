@@ -1644,6 +1644,7 @@ public class TvInputServiceTest {
 
             @Override
             public void onTvMessage(int type, Bundle data) {
+                super.onTvMessage(type, data);
                 mTvMessageCount++;
                 mTvMessageType = type;
                 mTvMessageData = data;
@@ -1651,6 +1652,7 @@ public class TvInputServiceTest {
 
             @Override
             public void onSetTvMessageEnabled(int type, boolean enabled) {
+                super.onSetTvMessageEnabled(type, enabled);
                 mTvMessageEnabledCount++;
                 mTvMessageType = type;
                 mTvMessageEnabled = enabled;
@@ -1658,6 +1660,7 @@ public class TvInputServiceTest {
 
             @Override
             public boolean onSelectAudioPresentation(int presentationId, int programId) {
+                super.onSelectAudioPresentation(presentationId, programId);
                 mAudioPresentationSelectCount++;
                 mAudioPresentationId = presentationId;
                 mAudioProgramId = programId;
@@ -1674,6 +1677,11 @@ public class TvInputServiceTest {
             public void notifyAudioPresentationSelected(
                     final int presentationId, final int programId) {
                 super.notifyAudioPresentationSelected(presentationId, programId);
+            }
+
+            @Override
+            public void notifyTvMessage(int type, Bundle data) {
+                super.notifyTvMessage(type, data);
             }
         }
 

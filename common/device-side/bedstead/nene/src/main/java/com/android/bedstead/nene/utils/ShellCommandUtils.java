@@ -42,7 +42,7 @@ import java.util.function.Function;
  */
 public final class ShellCommandUtils {
 
-    private static final String LOG_TAG = ShellCommandUtils.class.getName();
+    private static final String LOG_TAG = ShellCommandUtils.class.getSimpleName();
 
     private static final int OUT_DESCRIPTOR_INDEX = 0;
     private static final int IN_DESCRIPTOR_INDEX = 1;

@@ -465,13 +465,16 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
                 response -> assertThat(response.getStatus()).isEqualTo(
                         UserRemovalResult.STATUS_SUCCESSFUL)
         );
+
+        // If user is removed by CarUserManager, then user does not need to be removed in cleanup.
+        mUsersToRemove.remove(newUser);
     }
 
     @Test
     @ApiTest(apis = {
             "android.car.user.CarUserManager#removeUser(UserRemovalRequest, Executor, "
                     + "ResultCallback)"})
-    @EnsureHasPermission({MANAGE_USERS, CREATE_USERS})
+    @EnsureHasPermission({CREATE_USERS})
     public void testRemoveUserDoesNotExist() {
         mCarUserManager.removeUser(new UserRemovalRequest.Builder(getNonExistentUser()).build(),
                 Runnable::run, response -> assertThat(response.getStatus()).isEqualTo(

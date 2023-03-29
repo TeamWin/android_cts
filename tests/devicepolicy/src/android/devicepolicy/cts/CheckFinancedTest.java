@@ -17,12 +17,14 @@
 package android.devicepolicy.cts;
 
 
+import static android.app.admin.DevicePolicyManager.ACTION_DEVICE_FINANCING_STATE_CHANGED;
 import static android.app.role.RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP;
 import static android.app.role.RoleManager.ROLE_FINANCED_DEVICE_KIOSK;
 
 import static com.android.bedstead.nene.TestApis.context;
 import static com.android.bedstead.nene.TestApis.permissions;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
+import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -35,9 +37,11 @@ import android.os.UserHandle;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.policies.CheckFinance;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
 import com.android.bedstead.testapp.TestApp;
@@ -139,6 +143,21 @@ public class CheckFinancedTest {
                 sDevicePolicyManager.getFinancedDeviceKioskRoleHolder());
     }
 
+    @CoexistenceFlagsOn(weight = AnnotationRunPrecedence.LAST)
+    @CanSetPolicyTest(policy = CheckFinance.class)
+    public void deviceFinancingStateChanged_roleAdded_ReceivesBroadcast()
+            throws ExecutionException, InterruptedException {
+        try (TestAppInstance testApp = sTestApp.install(UserHandle.SYSTEM)) {
+            setUpFinancedDeviceKioskRole(testApp.packageName());
+
+            assertThat(sDeviceState.dpc().events().broadcastReceived()
+                    .whereIntent().action()
+                    .isEqualTo(ACTION_DEVICE_FINANCING_STATE_CHANGED))
+                    .eventOccurred();
+        } finally {
+            resetFinancedDevicesKioskRole();
+        }
+    }
 
     //TODO(b/273275857): Replace use of this method with an
     // EnsureDoesNotHaveFinancedDeviceKioskRoleHolder annotation.

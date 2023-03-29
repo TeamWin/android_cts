@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.server.wm.ComponentNameUtils.getWindowName;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.app.Components.NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.SLOW_CREATE_ACTIVITY;

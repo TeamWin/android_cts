@@ -258,7 +258,7 @@ public class TestTaskOrganizer extends TaskOrganizer {
         dismissSplitScreen(false /* primaryOnTop */);
     }
 
-    void dismissSplitScreen(boolean primaryOnTop) {
+    public void dismissSplitScreen(boolean primaryOnTop) {
         dismissSplitScreen(new WindowContainerTransaction(), primaryOnTop);
     }
 

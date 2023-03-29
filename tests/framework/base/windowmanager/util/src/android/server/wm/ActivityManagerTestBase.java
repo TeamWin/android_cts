@@ -73,8 +73,9 @@ import static android.server.wm.ActivityLauncher.launchActivityFromExtras;
 import static android.server.wm.CommandSession.KEY_FORWARD;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getLogTag;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
+import static android.server.wm.ShellCommandHelper.executeShellCommandAndGetStdout;
 import static android.server.wm.StateLogger.log;
-import static android.server.wm.StateLogger.logAlways;
 import static android.server.wm.StateLogger.logE;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.UiDeviceUtils.pressEnterButton;
@@ -112,7 +113,6 @@ import static android.server.wm.second.Components.SECOND_ACTIVITY;
 import static android.server.wm.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
-import static android.view.Surface.ROTATION_0;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
 import static android.window.DisplayAreaOrganizer.FEATURE_UNDEFINED;
@@ -138,13 +138,11 @@ import android.app.KeyguardManager;
 import android.app.WallpaperManager;
 import android.app.WindowConfiguration;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
-import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -152,8 +150,6 @@ import android.graphics.Rect;
 import android.hardware.display.AmbientDisplayConfiguration;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.PowerManager;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
@@ -201,7 +197,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -860,27 +855,6 @@ public abstract class ActivityManagerTestBase {
     protected void removeRootTask(int taskId) {
         runWithShellPermission(() -> mAtm.removeTask(taskId));
         waitForIdle();
-    }
-
-    public static void executeShellCommand(String command) {
-        log("Shell command: " + command);
-        try {
-            SystemUtil.runShellCommandOrThrow(command);
-        } catch (AssertionError e) {
-            String message = e.getMessage();
-            if (message != null
-                    && message.contains("Warning: Activity not started")
-                    && !message.toLowerCase(Locale.ROOT).contains("error")) {
-                logAlways(message);
-            } else {
-                throw e;
-            }
-        }
-    }
-
-    public static String executeShellCommandAndGetStdout(String command) {
-        log("Shell command: " + command);
-        return SystemUtil.runShellCommandOrThrow(command);
     }
 
     protected Bitmap takeScreenshot() {
@@ -1551,6 +1525,7 @@ public abstract class ActivityManagerTestBase {
 
     /** @see ObjectTracker#manage(AutoCloseable) */
     protected RotationSession createManagedRotationSession() {
+        mWaitForRotationOnTearDown = true;
         return mObjectTracker.manage(new RotationSession());
     }
 
@@ -1930,124 +1905,6 @@ public abstract class ActivityManagerTestBase {
                     Settings.Global.DEVELOPMENT_ENABLE_NON_RESIZABLE_MULTI_WINDOW),
                     (cr, name) -> Settings.Global.getInt(cr, name, 0 /* def */),
                     Settings.Global::putInt);
-        }
-    }
-
-    /** Helper class to save, set & wait, and restore rotation related preferences. */
-    protected class RotationSession extends SettingsSession<Integer> {
-        private final String FIXED_TO_USER_ROTATION_COMMAND =
-                "cmd window fixed-to-user-rotation ";
-        private final SettingsSession<Integer> mAccelerometerRotation;
-        private final HandlerThread mThread;
-        private final Handler mRunnableHandler;
-        private final SettingsObserver mRotationObserver;
-        private int mPreviousDegree;
-        private String mPreviousFixedToUserRotationMode;
-
-        public RotationSession() {
-            // Save user_rotation and accelerometer_rotation preferences.
-            super(Settings.System.getUriFor(Settings.System.USER_ROTATION),
-                    Settings.System::getInt, Settings.System::putInt);
-            mAccelerometerRotation = new SettingsSession<>(
-                    Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION),
-                    Settings.System::getInt, Settings.System::putInt);
-
-            mThread = new HandlerThread("Observer_Thread");
-            mThread.start();
-            mRunnableHandler = new Handler(mThread.getLooper());
-            mRotationObserver = new SettingsObserver(mRunnableHandler);
-
-            // Disable fixed to user rotation
-            mPreviousFixedToUserRotationMode = executeShellCommandAndGetStdout(
-                    FIXED_TO_USER_ROTATION_COMMAND);
-            executeShellCommand(FIXED_TO_USER_ROTATION_COMMAND + "disabled");
-
-            mPreviousDegree = get();
-            // Disable accelerometer_rotation.
-            mAccelerometerRotation.set(0);
-        }
-
-        @Override
-        public void set(@NonNull Integer value) {
-            set(value, true /* waitDeviceRotation */);
-        }
-
-        /**
-         * Sets the rotation preference.
-         *
-         * @param value The rotation between {@link android.view.Surface#ROTATION_0} ~
-         *              {@link android.view.Surface#ROTATION_270}
-         * @param waitDeviceRotation If {@code true}, it will wait until the display has applied the
-         *                           rotation. Otherwise it only waits for the settings value has
-         *                           been changed.
-         */
-        public void set(@NonNull Integer value, boolean waitDeviceRotation) {
-            // When the rotation is locked and the SystemUI receives the rotation becoming 0deg, it
-            // will call freezeRotation to WMS, which will cause USER_ROTATION be set to zero again.
-            // In order to prevent our test target from being overwritten by SystemUI during
-            // rotation test, wait for the USER_ROTATION changed then continue testing.
-            final boolean waitSystemUI = value == ROTATION_0 && mPreviousDegree != ROTATION_0;
-            final boolean observeRotationSettings = waitSystemUI || !waitDeviceRotation;
-            if (observeRotationSettings) {
-                mRotationObserver.observe();
-            }
-            super.set(value);
-            mPreviousDegree = value;
-
-            if (waitSystemUI) {
-                Condition.waitFor(new Condition<>("rotation notified",
-                        // There will receive USER_ROTATION changed twice because when the device
-                        // rotates to 0deg, RotationContextButton will also set ROTATION_0 again.
-                        () -> mRotationObserver.count == 2).setRetryIntervalMs(500));
-            }
-
-            if (waitDeviceRotation) {
-                // Wait for the display to apply the rotation.
-                mWmState.waitForRotation(value);
-            } else {
-                // Wait for the settings have been changed.
-                Condition.waitFor(new Condition<>("rotation setting changed",
-                        () -> mRotationObserver.count > 0).setRetryIntervalMs(100));
-            }
-
-            if (observeRotationSettings) {
-                mRotationObserver.stopObserver();
-            }
-        }
-
-        @Override
-        public void close() {
-            // Restore fixed to user rotation to default
-            executeShellCommand(FIXED_TO_USER_ROTATION_COMMAND + mPreviousFixedToUserRotationMode);
-            mThread.quitSafely();
-            super.close();
-            // Restore accelerometer_rotation preference.
-            mAccelerometerRotation.close();
-            mWaitForRotationOnTearDown = true;
-        }
-
-        private class SettingsObserver extends ContentObserver {
-            int count;
-
-            SettingsObserver(Handler handler) { super(handler); }
-
-            void observe() {
-                count = 0;
-                final ContentResolver resolver = mContext.getContentResolver();
-                resolver.registerContentObserver(Settings.System.getUriFor(
-                        Settings.System.USER_ROTATION), false, this);
-            }
-
-            void stopObserver() {
-                count = 0;
-                final ContentResolver resolver = mContext.getContentResolver();
-                resolver.unregisterContentObserver(this);
-            }
-
-            @Override
-            public void onChange(boolean selfChange) {
-                count++;
-            }
         }
     }
 

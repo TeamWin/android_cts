@@ -17,14 +17,12 @@ package {
 }
 
 android_test {
-    name: "CtsDeviceDeskResourcesApp",
+    name: "CtsPropertyCompatAllowSandboxingViewBoundsApisApp",
     defaults: ["cts_support_defaults"],
 
     static_libs: ["cts-wm-app-base"],
 
     srcs: ["src/**/*.java"],
-
-    resource_dirs: ["res"],
 
     sdk_version: "test_current",
 

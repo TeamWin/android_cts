@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_ERRORED;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.WindowManagerState.STATE_INITIALIZING;
 import static android.server.wm.backgroundactivity.common.CommonComponents.EVENT_NOTIFIER_EXTRA;
@@ -152,28 +153,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     @FlakyTest(bugId = 155454710)
-    public void testBackgroundActivity_withinGracePeriodAndSdk33_isNotBlocked() {
-        // Start AppA foreground activity
-        Intent firstIntent = new Intent();
-        firstIntent.setComponent(APP_A_33.FOREGROUND_ACTIVITY);
-        firstIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(firstIntent);
-        boolean firstResult = waitForActivityFocused(APP_A_33.FOREGROUND_ACTIVITY);
-        assertTrue("Not able to start foreground activity", firstResult);
-        // Don't press home button to avoid stop app switches
-        mContext.sendBroadcast(new Intent(APP_A_33.FOREGROUND_ACTIVITY_ACTIONS.FINISH_ACTIVITY));
-        mWmState.waitAndAssertActivityRemoved(APP_A_33.FOREGROUND_ACTIVITY);
-        Intent secondIntent = new Intent();
-        secondIntent.setComponent(APP_A_33.START_ACTIVITY_RECEIVER);
-
-        mContext.sendBroadcast(secondIntent);
-        boolean secondResult = waitForActivityFocused(APP_A_33.BACKGROUND_ACTIVITY);
-        assertTrue("Should be able to launch background activity", secondResult);
-    }
-
-    @Test
-    @FlakyTest(bugId = 155454710)
-    public void testBackgroundActivity_withinGracePeriod_isBlocked() {
+    public void testBackgroundActivity_withinGracePeriod_isNotBlocked() {
         // Start AppA foreground activity
         Intent firstIntent = new Intent();
         firstIntent.setComponent(APP_A.FOREGROUND_ACTIVITY);
@@ -189,7 +169,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
         mContext.sendBroadcast(secondIntent);
         boolean secondResult = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
-        assertFalse("Should not be able to launch background activity", secondResult);
+        assertTrue("Should be able to launch background activity", secondResult);
     }
 
     @Test
@@ -210,32 +190,6 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         assertTrue("Not able to start foreground activity", result);
     }
 
-    @Test
-    public void testBackgroundActivityBlockedWhenForegroundActivityNotTop() {
-        Intent intent = new Intent();
-        intent.setComponent(APP_A.FOREGROUND_ACTIVITY);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
-        mWmState.waitForValidState(APP_A.FOREGROUND_ACTIVITY);
-        mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A, APP_B.FOREGROUND_ACTIVITY));
-        mWmState.waitForValidState(APP_B.FOREGROUND_ACTIVITY);
-        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-        assertTaskStack(new ComponentName[]{
-                APP_B.FOREGROUND_ACTIVITY,
-                APP_A.FOREGROUND_ACTIVITY}, APP_A.FOREGROUND_ACTIVITY);
-
-        // Start AppA background activity fails as AppA not on top of stack
-        intent = new Intent();
-        intent.setComponent(APP_A.START_ACTIVITY_RECEIVER);
-        mContext.sendBroadcast(intent);
-        mWmState.waitForValidState(APP_A.BACKGROUND_ACTIVITY);
-        assertTaskStack(new ComponentName[]{
-                APP_B.FOREGROUND_ACTIVITY,
-                APP_A.FOREGROUND_ACTIVITY}, APP_A.FOREGROUND_ACTIVITY);
-        assertTaskStack(null, APP_A.BACKGROUND_ACTIVITY);
-    }
-
-    @Test
     public void testBackgroundActivityNotBlockedWhenForegroundActivityTop() {
         Intent intent = new Intent();
         intent.setComponent(APP_A.FOREGROUND_ACTIVITY);
@@ -255,28 +209,28 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
-    public void testBackgroundActivityWhenForegroundActivityNotTopUsingSdk33_IsNotBlocked() {
+    public void testBackgroundActivityWhenForegroundActivityNotTop_IsNotBlocked() {
         Intent intent = new Intent();
-        intent.setComponent(APP_A_33.FOREGROUND_ACTIVITY);
+        intent.setComponent(APP_A.FOREGROUND_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
-        mWmState.waitForValidState(APP_A_33.FOREGROUND_ACTIVITY);
-        mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A_33, APP_B.FOREGROUND_ACTIVITY));
+        mWmState.waitForValidState(APP_A.FOREGROUND_ACTIVITY);
+        mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A, APP_B.FOREGROUND_ACTIVITY));
         mWmState.waitForValidState(APP_B.FOREGROUND_ACTIVITY);
         assertTaskStack(new ComponentName[]{
                 APP_B.FOREGROUND_ACTIVITY,
-                APP_A_33.FOREGROUND_ACTIVITY}, APP_A_33.FOREGROUND_ACTIVITY);
+                APP_A.FOREGROUND_ACTIVITY}, APP_A.FOREGROUND_ACTIVITY);
 
         // Start AppA background activity successfully as there's a foreground activity
         intent = new Intent();
-        intent.setComponent(APP_A_33.START_ACTIVITY_RECEIVER);
+        intent.setComponent(APP_A.START_ACTIVITY_RECEIVER);
         mContext.sendBroadcast(intent);
-        mWmState.waitForValidState(APP_A_33.BACKGROUND_ACTIVITY);
+        mWmState.waitForValidState(APP_A.BACKGROUND_ACTIVITY);
         assertTaskStack(new ComponentName[]{
                 APP_B.FOREGROUND_ACTIVITY,
-                APP_A_33.FOREGROUND_ACTIVITY}, APP_A_33.FOREGROUND_ACTIVITY);
-        assertTaskStack(new ComponentName[]{APP_A_33.BACKGROUND_ACTIVITY},
-                APP_A_33.BACKGROUND_ACTIVITY);
+                APP_A.FOREGROUND_ACTIVITY}, APP_A.FOREGROUND_ACTIVITY);
+        assertTaskStack(new ComponentName[]{APP_A.BACKGROUND_ACTIVITY},
+                APP_A.BACKGROUND_ACTIVITY);
     }
 
     @Test
@@ -365,7 +319,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
-    public void testActivityBlockedFromBgActivityInFgTask() {
+    @FlakyTest(bugId = 272082654)
+    public void testActivityFromBgActivityInFgTask_isNotBlocked() {
         // Launch Activity A, B in the same task with different processes.
         final Intent intent = new Intent()
                 .setComponent(APP_A.FOREGROUND_ACTIVITY)
@@ -381,50 +336,18 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         pressHomeAndResumeAppSwitch();
         mContext.startActivity(intent);
         mWmState.waitForValidState(APP_B.FOREGROUND_ACTIVITY);
-        // As A is not visible, it can not start activities.
+        // Though process A is in background, it is in a visible Task (top is B) so it should be
+        // able to start activity successfully.
         mContext.sendBroadcast(new Intent(
                 APP_A.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES)
                 .putExtra(APP_A.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_INTENTS,
                         new Intent[]{ new Intent()
                                 .setComponent(APP_A.BACKGROUND_ACTIVITY)
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }));
-        boolean result = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
-        assertFalse("FG activity shouldn't be visible", result);
-        assertTaskStack(new ComponentName[]{APP_B.FOREGROUND_ACTIVITY,
-                APP_A.FOREGROUND_ACTIVITY}, APP_A.FOREGROUND_ACTIVITY);
-
-    }
-
-    @Test
-    @FlakyTest(bugId = 272082654)
-    public void testActivityFromBgActivityInFgTaskSdk33_isNotBlocked() {
-        // Launch Activity A, B in the same task with different processes.
-        final Intent intent = new Intent()
-                .setComponent(APP_A_33.FOREGROUND_ACTIVITY)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
-        mWmState.waitForValidState(APP_A_33.FOREGROUND_ACTIVITY);
-        mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A_33, APP_B.FOREGROUND_ACTIVITY));
-        mWmState.waitForValidState(APP_B.FOREGROUND_ACTIVITY);
-        assertTaskStack(new ComponentName[]{APP_B.FOREGROUND_ACTIVITY,
-                APP_A_33.FOREGROUND_ACTIVITY}, APP_A_33.FOREGROUND_ACTIVITY);
-
-        // Refresh last-stop-app-switch-time by returning to home and then make the task foreground.
-        pressHomeAndResumeAppSwitch();
-        mContext.startActivity(intent);
-        mWmState.waitForValidState(APP_B.FOREGROUND_ACTIVITY);
-        // Though process A is in background, it is in a visible Task (top is B) so it should be
-        // able to start activity successfully.
-        mContext.sendBroadcast(new Intent(
-                APP_A_33.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES)
-                .putExtra(APP_A_33.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_INTENTS,
-                        new Intent[]{ new Intent()
-                                .setComponent(APP_A_33.BACKGROUND_ACTIVITY)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }));
-        mWmState.waitForValidState(APP_A_33.BACKGROUND_ACTIVITY);
+        mWmState.waitForValidState(APP_A.BACKGROUND_ACTIVITY);
         mWmState.assertFocusedActivity(
                 "The background activity must be able to launch from a visible task",
-                APP_A_33.BACKGROUND_ACTIVITY);
+                APP_A.BACKGROUND_ACTIVITY);
     }
 
     @Test

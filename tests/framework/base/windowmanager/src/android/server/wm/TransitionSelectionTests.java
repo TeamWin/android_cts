@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.WindowManagerState.TRANSIT_ACTIVITY_CLOSE;
 import static android.server.wm.WindowManagerState.TRANSIT_ACTIVITY_OPEN;
 import static android.server.wm.WindowManagerState.TRANSIT_TASK_CLOSE;
@@ -41,11 +42,10 @@ import static android.server.wm.app.Components.TRANSLUCENT_TOP_WALLPAPER_ACTIVIT
 import static android.server.wm.app.Components.TopActivity.EXTRA_FINISH_DELAY;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
-import android.os.SystemProperties;
 import android.platform.test.annotations.Presubmit;
 
 import org.junit.Before;

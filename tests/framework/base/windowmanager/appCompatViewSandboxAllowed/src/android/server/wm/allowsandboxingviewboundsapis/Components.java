@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package android.server.wm.deskresources;
+package android.server.wm.allowsandboxingviewboundsapis;
 
 import android.content.ComponentName;
 import android.server.wm.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
-    /** A test activity in a test app that has resources with the -desk qualifier. */
-    public static final ComponentName DESK_RESOURCES_ACTIVITY =
-            component(Components.class, "DeskResourcesActivity");
+    public static final String ACTION_TEST_VIEW_SANDBOX_ALLOWED_PASSED =
+            "TEST_VIEW_SANDBOX_ALLOWED_PASSED";
+
+    public static final String ACTION_TEST_VIEW_SANDBOX_NOT_ALLOWED_PASSED =
+            "TEST_VIEW_SANDBOX_NOT_ALLOWED_PASSED";
+    public static final long TEST_VIEW_SANDBOX_ALLOWED_TIMEOUT_MS = 5000L;
+    public static final ComponentName TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY =
+            component(Components.class, "TestCompatAllowViewSandboxActivity");
 }
