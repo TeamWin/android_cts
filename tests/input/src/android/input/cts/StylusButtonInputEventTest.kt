@@ -17,9 +17,15 @@
 package android.input.cts
 
 import android.app.StatusBarManager
+import android.graphics.Point
+import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.HEIGHT
+import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.WIDTH
+import android.util.Size
+import android.view.InputDevice
 import android.view.InputDevice.SOURCE_KEYBOARD
 import android.view.InputDevice.SOURCE_STYLUS
 import android.view.KeyEvent
+import android.view.MotionEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
@@ -28,18 +34,20 @@ import com.android.compatibility.common.util.SystemUtil
 import com.android.cts.input.UinputDevice
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
  * Create a virtual device that supports stylus buttons, and ensure that interactions with those
- * stylus buttons are sent to the system as [KeyEvent]s when stylus buttons are enabled.
+ * stylus buttons are sent to apps as [MotionEvent]s or system as [KeyEvent]s when stylus buttons
+ * are enabled.
  */
 @MediumTest
 @RunWith(AndroidJUnit4::class)
 class StylusButtonInputEventTest {
-
     private companion object {
         // The settings namespace and key for enabling stylus button interactions.
         const val SETTING_NAMESPACE_KEY = "secure stylus_buttons_enabled"
@@ -57,8 +65,14 @@ class StylusButtonInputEventTest {
                 0x14c to KeyEvent.KEYCODE_STYLUS_BUTTON_SECONDARY, // BTN_STYLUS2
                 0x149 to KeyEvent.KEYCODE_STYLUS_BUTTON_TERTIARY, // BTN_STYLUS3
             )
+        val LINUX_KEYCODE_TO_MOTIONEVENT_BUTTON =
+            mapOf<Int, Int>(
+                0x14b to MotionEvent.BUTTON_STYLUS_PRIMARY, // BTN_STYLUS
+                0x14c to MotionEvent.BUTTON_STYLUS_SECONDARY, // BTN_STYLUS2
+            )
     }
 
+    @get:Rule val virtualDisplayRule = VirtualDisplayActivityScenarioRule()
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private lateinit var statusBarManager: StatusBarManager
     private lateinit var initialStylusButtonsEnabledSetting: String
@@ -134,6 +148,106 @@ class StylusButtonInputEventTest {
         bluetoothStylus.close()
     }
 
+    @Test
+    fun testStylusButtonsEnabledMotionEvents() {
+        enableStylusButtons()
+        val uinputStylus =
+            UinputTouchDevice(
+                instrumentation,
+                virtualDisplayRule.virtualDisplay.display,
+                Size(WIDTH, HEIGHT),
+                R.raw.test_capacitive_stylus_register
+            )
+
+        val pointer = Point(100, 100)
+        for (button in LINUX_KEYCODE_TO_MOTIONEVENT_BUTTON.entries.iterator()) {
+            pointer.offset(1, 1)
+
+            uinputStylus.sendBtnTouch(true)
+            uinputStylus.sendBtn(button.key, true)
+            uinputStylus.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PEN)
+
+            assertNextMotionEventEquals(
+                MotionEvent.ACTION_DOWN,
+                MotionEvent.TOOL_TYPE_STYLUS,
+                button.value,
+                0,
+                InputDevice.SOURCE_STYLUS,
+            )
+            assertNextMotionEventEquals(
+                MotionEvent.ACTION_BUTTON_PRESS,
+                MotionEvent.TOOL_TYPE_STYLUS,
+                button.value,
+                button.value,
+                InputDevice.SOURCE_STYLUS,
+            )
+
+            uinputStylus.sendBtnTouch(false)
+            uinputStylus.sendBtn(button.key, false)
+            uinputStylus.sendUp(0)
+
+            assertNextMotionEventEquals(
+                MotionEvent.ACTION_BUTTON_RELEASE,
+                MotionEvent.TOOL_TYPE_STYLUS,
+                0,
+                button.value,
+                InputDevice.SOURCE_STYLUS,
+            )
+            assertNextMotionEventEquals(
+                MotionEvent.ACTION_UP,
+                MotionEvent.TOOL_TYPE_STYLUS,
+                0,
+                0,
+                InputDevice.SOURCE_STYLUS,
+            )
+        }
+
+        uinputStylus.close()
+    }
+
+    @Test
+    fun testStylusButtonsDisabledMotionEvents() {
+        disableStylusButtons()
+        val uinputStylus =
+            UinputTouchDevice(
+                instrumentation,
+                virtualDisplayRule.virtualDisplay.display,
+                Size(WIDTH, HEIGHT),
+                R.raw.test_capacitive_stylus_register
+            )
+
+        val pointer = Point(100, 100)
+        for (button in LINUX_KEYCODE_TO_MOTIONEVENT_BUTTON.entries.iterator()) {
+            pointer.offset(1, 1)
+
+            uinputStylus.sendBtnTouch(true)
+            uinputStylus.sendBtn(button.key, true)
+            uinputStylus.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PEN)
+
+            assertNextMotionEventEquals(
+                MotionEvent.ACTION_DOWN,
+                MotionEvent.TOOL_TYPE_STYLUS,
+                0,
+                0,
+                InputDevice.SOURCE_STYLUS,
+            )
+
+            uinputStylus.sendBtnTouch(false)
+            uinputStylus.sendBtn(button.key, false)
+            uinputStylus.sendUp(0)
+
+            assertNextMotionEventEquals(
+                MotionEvent.ACTION_UP,
+                MotionEvent.TOOL_TYPE_STYLUS,
+                0,
+                0,
+                InputDevice.SOURCE_STYLUS,
+            )
+        }
+
+        uinputStylus.close()
+    }
+
     private fun assertReceivedSystemKey(keycode: Int) {
         SystemUtil.runWithShellPermissionIdentity {
             PollingCheck.waitFor { statusBarManager.getLastSystemKey() == keycode }
@@ -146,6 +260,22 @@ class StylusButtonInputEventTest {
         SystemUtil.runWithShellPermissionIdentity {
             assertEquals(INITIAL_SYSTEM_KEY, statusBarManager.getLastSystemKey())
         }
+    }
+
+    private fun assertNextMotionEventEquals(
+        action: Int,
+        toolType: Int,
+        buttonState: Int,
+        actionButton: Int,
+        source: Int,
+    ) {
+        val event = virtualDisplayRule.activity.getInputEvent() as MotionEvent
+
+        assertEquals(action, event.action)
+        assertEquals(toolType, event.getToolType(0))
+        assertEquals(buttonState, event.buttonState)
+        assertEquals(actionButton, event.actionButton)
+        assertTrue((source and event.source) == source)
     }
 
     private fun enableStylusButtons() {
