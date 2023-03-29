@@ -74,14 +74,13 @@
         <option name="force-install-mode" value="FULL"/>
         <option name="test-file-name" value="CtsMockA11yInputMethod.apk" />
     </target_preparer>
-    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
-        <option name="cleanup-apks" value="true" />
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
+        <option name="cleanup" value="true" />
         <!--
-            CtsMockLargeResourceInputMethod always needs to be installed as a full package, even when CTS is
-            running for instant apps.
+            CtsMockLargeResourceInputMethod should not always be installed, but the apk must be
+            available.
         -->
-        <option name="force-install-mode" value="FULL"/>
-        <option name="test-file-name" value="CtsMockLargeResourceInputMethod.apk" />
+        <option name="push" value="CtsMockLargeResourceInputMethod.apk->/data/local/tmp/cts/inputmethod/CtsMockLargeResourceInputMethod.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
