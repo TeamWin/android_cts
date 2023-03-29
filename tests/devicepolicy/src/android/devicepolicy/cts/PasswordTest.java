@@ -54,15 +54,7 @@ public final class PasswordTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    @CanSetPolicyTest(policy = PasswordExpirationTimeout.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setPasswordExpirationTimeout")
-    public void setPasswordExpirationTimeout_doesNotThrowException() {
-        sDeviceState.dpc().devicePolicyManager()
-                .setPasswordExpirationTimeout(sDeviceState.dpc().componentName(), TIMEOUT);
-    }
-
-    @CannotSetPolicyTest(policy = PasswordExpirationTimeout.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = PasswordExpirationTimeout.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setPasswordExpirationTimeout")
     public void setPasswordExpirationTimeout_notPermitted_throwsException() {
@@ -113,7 +105,7 @@ public final class PasswordTest {
 
     // TODO: Test effect of PasswordExpirationTimeout
 
-    @CannotSetPolicyTest(policy = FailedPasswordAttempts.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = FailedPasswordAttempts.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getCurrentFailedPasswordAttempts")
     public void getCurrentFailedPasswordAttempts_notPermitted_throwsException() {
@@ -130,15 +122,7 @@ public final class PasswordTest {
 
     // TODO: Create an interactive test to test functionality of getCurrentFailedPasswordAttempts
 
-    @CanSetPolicyTest(policy = StrongAuthTimeout.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredStrongAuthTimeout")
-    public void setRequiredStrongAuthTimeout_doesNotThrowException() {
-        sDeviceState.dpc().devicePolicyManager()
-                .setRequiredStrongAuthTimeout(sDeviceState.dpc().componentName(), TIMEOUT);
-    }
-
-    @CannotSetPolicyTest(policy = StrongAuthTimeout.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = StrongAuthTimeout.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredStrongAuthTimeout")
     public void setRequiredStrongAuthTimeout_notPermitted_throwsException() {

@@ -34,6 +34,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeleg
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.AdminType.PRIMARY;
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.DISABLE_RESOURCES_UPDATABILITY_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.READ_CONTACTS;
 import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
@@ -88,6 +89,7 @@ import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.EnsureSecureSettingSet;
+import com.android.bedstead.harrier.annotations.EnsureTestAppDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
@@ -191,7 +193,7 @@ public class DeviceStateTest {
             TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
 
     private static final String NAMESPACE = NAMESPACE_DEVICE_POLICY_MANAGER;
-    private static final String KEY = DISABLE_RESOURCES_UPDATABILITY_FLAG;
+    private static final String KEY = ENABLE_DEVICE_POLICY_ENGINE_FLAG;
     private static final String VALUE = Flags.ENABLED_VALUE;
 
     // Expects that this package name matches an actual test app
@@ -1243,6 +1245,14 @@ public class DeviceStateTest {
     public void ensureTestAppHasPermissionAnnotation_testAppHasPermission() {
         assertThat(sDeviceState.testApp().context().checkSelfPermission(READ_CONTACTS))
                 .isEqualTo(PERMISSION_GRANTED);
+    }
+
+    @EnsureTestAppInstalled(packageName = TEST_APP_PACKAGE_NAME)
+    @EnsureTestAppDoesNotHavePermission(READ_CONTACTS)
+    @Test
+    public void ensureTestAppDoesNotHavePermissionAnnotation_testAppDoesNotHavePermission() {
+        assertThat(sDeviceState.testApp().context().checkSelfPermission(READ_CONTACTS))
+                .isNotEqualTo(PERMISSION_GRANTED);
     }
 
     @EnsureTestAppInstalled(packageName = TEST_APP_PACKAGE_NAME)

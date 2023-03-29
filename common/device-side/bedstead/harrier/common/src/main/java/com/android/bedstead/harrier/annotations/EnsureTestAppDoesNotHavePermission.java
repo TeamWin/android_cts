@@ -26,21 +26,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Ensure that the given app op is granted to the test app before running the test.
+ * Ensure that the given permission is not granted to the test app before running the test.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(EnsureTestAppHasAppOpGroup.class)
-public @interface EnsureTestAppHasAppOp {
+@Repeatable(EnsureTestAppDoesNotHavePermissionGroup.class)
+public @interface EnsureTestAppDoesNotHavePermission {
     String[] value();
 
     String testAppKey() default DEFAULT_TEST_APP_KEY;
 
-    /** The minimum version where this appOp is required. */
-    int minVersion() default 0;
-
-    /** The maximum version where this appOp is required. */
-    int maxVersion() default Integer.MAX_VALUE;
+    /** The action to be taken if the permission cannot be granted. */
+    FailureMode failureMode() default FailureMode.FAIL;
 
     /**
      * Weight sets the order that annotations will be resolved.

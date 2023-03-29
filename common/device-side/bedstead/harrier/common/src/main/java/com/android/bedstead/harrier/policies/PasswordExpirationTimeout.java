@@ -36,10 +36,10 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * {@code DevicePolicyManager#setPasswordExpirationTimeout()}
  */
 @EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_FINANCED_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER
-        | APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_PROFILE //| APPLIED_BY_DPM_ROLE_HOLDER
-        | APPLIES_TO_OWN_USER | APPLIES_TO_CHILD_PROFILES | APPLIES_TO_PARENT | CANNOT_BE_APPLIED_BY_ROLE_HOLDER)//,
-//        permissions = @EnterprisePolicy.Permission(
-//                appliedWith = MANAGE_DEVICE_POLICY_LOCK_CREDENTIALS, appliesTo = APPLIES_TO_OWN_USER))
-// TODO: Add USES_POLICY_EXPIRE_PASSWORD device admin
+        | APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_PROFILE | APPLIED_BY_DPM_ROLE_HOLDER
+        | APPLIES_TO_OWN_USER | APPLIES_TO_CHILD_PROFILES | APPLIES_TO_PARENT,
+        permissions = @EnterprisePolicy.Permission(
+                appliedWith = MANAGE_DEVICE_POLICY_LOCK_CREDENTIALS, appliesTo = APPLIES_TO_OWN_USER))
+// TODO(266685295): Add USES_POLICY_EXPIRE_PASSWORD device admin
 public final class PasswordExpirationTimeout {
 }

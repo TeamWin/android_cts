@@ -19,6 +19,7 @@ package com.android.bedstead.harrier;
 import static com.android.bedstead.harrier.UserType.SECONDARY_USER;
 import static com.android.bedstead.harrier.UserType.SYSTEM_USER;
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
+import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.DELEGATE_KEY;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER;
@@ -62,10 +63,12 @@ import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLIC
 
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagNotEnabled;
+import com.android.bedstead.harrier.annotations.EnsureTestAppDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.FailureMode;
+import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
@@ -116,8 +119,7 @@ import java.util.stream.Collectors;
  */
 public final class Policy {
 
-    // TODO(b/219750042): If we leave over appops and permissions then the delegate will have them
-    private static final String DELEGATE_KEY = "delegate";
+
     private static final String DELEGATE_PACKAGE_NAME = "com.android.Delegate";
 
     // Delegate scopes to be used for a "CannotSet" state. All delegate scopes except the ones which
@@ -244,6 +246,13 @@ public final class Policy {
     private static EnsureTestAppHasPermission ensureTestAppHasPermission(
             String testAppKey, String[] value, FailureMode failureMode) {
         return new AutoAnnotation_Policy_ensureTestAppHasPermission(testAppKey, value, failureMode);
+    }
+
+    @AutoAnnotation
+    private static EnsureTestAppDoesNotHavePermission ensureTestAppDoesNotHavePermission(
+            String testAppKey, String[] value, FailureMode failureMode) {
+        return new AutoAnnotation_Policy_ensureTestAppDoesNotHavePermission(
+                testAppKey, value, failureMode);
     }
 
     @AutoAnnotation
@@ -379,6 +388,11 @@ public final class Policy {
     }
 
     @AutoAnnotation
+    private static RequireFeatureFlagEnabled requireFeatureFlagEnabled(String namespace, String key) {
+        return new AutoAnnotation_Policy_requireFeatureFlagEnabled(namespace, key);
+    }
+
+    @AutoAnnotation
     private static EnsureFeatureFlagNotEnabled ensureFeatureFlagNotEnabled(String namespace, String key) {
         return new AutoAnnotation_Policy_ensureFeatureFlagNotEnabled(namespace, key);
     }
@@ -393,7 +407,11 @@ public final class Policy {
         return (policy) -> {
             Annotation[] existingAnnotations = annotation.annotationType().getAnnotations();
             Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
-                    existingAnnotations.length + 1);
+                    existingAnnotations.length + 3);
+            newAnnotations[newAnnotations.length - 3] = requireFeatureFlagEnabled(
+                    NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
+            newAnnotations[newAnnotations.length - 2] = requireFeatureFlagEnabled(
+                    NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
             newAnnotations[newAnnotations.length - 1] = ensureHasDevicePolicyManagerRoleHolder(
                     roleHolderUser, /* isPrimary= */ true);
 
@@ -608,13 +626,18 @@ public final class Policy {
                     .toArray(String[]::new);
             Annotation[] existingAnnotations = IncludeRunOnDeviceOwnerUser.class.getAnnotations();
 
+            String[] validPermissions = Arrays.stream(enterprisePolicy.permissions())
+                    .map(p -> p.appliedWith()).toArray(String[]::new);
+
             if (BedsteadJUnit4.isDebug()) {
                 // Add a non-DPC with no delegate scopes
                 Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
-                        existingAnnotations.length + 1);
-                newAnnotations[newAnnotations.length - 1] = ensureHasDelegate(
+                        existingAnnotations.length + 2);
+                newAnnotations[newAnnotations.length - 2] = ensureHasDelegate(
                         EnsureHasDelegate.AdminType.PRIMARY, new String[]{},
                         /* isPrimary= */ true);
+                newAnnotations[newAnnotations.length - 1] = ensureTestAppDoesNotHavePermission(
+                        DELEGATE_KEY, validPermissions, FailureMode.SKIP);
                 annotations.add(
                         new DynamicParameterizedAnnotation("DelegateWithNoScopes", newAnnotations));
 
@@ -629,13 +652,15 @@ public final class Policy {
                 }
             } else {
                 Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
-                        existingAnnotations.length + 3);
-                newAnnotations[newAnnotations.length - 3] = ensureHasDelegate(
+                        existingAnnotations.length + 4);
+                newAnnotations[newAnnotations.length - 4] = ensureHasDelegate(
                         EnsureHasDelegate.AdminType.PRIMARY, scopes, /* isPrimary= */ true);
-                newAnnotations[newAnnotations.length - 2] = ensureFeatureFlagEnabled(
+                newAnnotations[newAnnotations.length - 3] = ensureFeatureFlagEnabled(
                         NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
-                newAnnotations[newAnnotations.length - 1] = ensureFeatureFlagEnabled(
+                newAnnotations[newAnnotations.length - 2] = ensureFeatureFlagEnabled(
                         NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
+                newAnnotations[newAnnotations.length - 1] = ensureTestAppDoesNotHavePermission(
+                        DELEGATE_KEY, validPermissions, FailureMode.SKIP);
                 annotations.add(
                         new DynamicParameterizedAnnotation("DelegateWithoutValidScope",
                                 newAnnotations));

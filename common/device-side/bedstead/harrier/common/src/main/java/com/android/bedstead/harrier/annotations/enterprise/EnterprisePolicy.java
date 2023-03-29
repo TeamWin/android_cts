@@ -138,21 +138,21 @@ public @interface EnterprisePolicy {
     // Modifiers
     /** Internal use only. Do not use */
     // This is to be used to mark specific annotations as not generating PolicyDoesNotApply tests
-    int DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS = 1 << 17;
+    int DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS = 1 << 16;
 
     /** Internal use only. Do not use */
     // This is to be used to mark specific annotations as not generating PolicyDoesNotApply tests
-    int DO_NOT_APPLY_TO_CANNOT_SET_POLICY_TESTS = 1 << 23;
+    int DO_NOT_APPLY_TO_CANNOT_SET_POLICY_TESTS = 1 << 17;
 
     /** A policy that the DPM Role Holder has permission access to */
-    int APPLIED_BY_DPM_ROLE_HOLDER = 1 << 16 | (DO_NOT_APPLY_TO_CANNOT_SET_POLICY_TESTS);
+    int APPLIED_BY_DPM_ROLE_HOLDER = 1 << 18 | (DO_NOT_APPLY_TO_CANNOT_SET_POLICY_TESTS);
 
     /**
      * A policy which applies even when the user is not in the foreground.
      *
      * <p>Note that lacking this flag does not mean a policy does not apply - to indicate that use
      * {@link DOES_NOT_APPLY_IN_BACKGROUND}. */
-    int APPLIES_IN_BACKGROUND = 1 << 18 | (DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS);
+    int APPLIES_IN_BACKGROUND = 1 << 19 | (DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS);
     /**
      * A policy which does not apply when the user is not in the foreground.
      *
@@ -160,7 +160,7 @@ public @interface EnterprisePolicy {
      *
      * <p>Note that lacking this flag does not mean a policy does apply - to indicate that use
      * {@link APPLIES_IN_BACKGROUND}. */
-    int DOES_NOT_APPLY_IN_BACKGROUND = 1 << 19;
+    int DOES_NOT_APPLY_IN_BACKGROUND = 1 << 20;
 
 
     /**
@@ -168,13 +168,13 @@ public @interface EnterprisePolicy {
      *
      * See {@link #delegatedScopes()} for the scopes which enable this.
      */
-    int CAN_BE_DELEGATED = 1 << 20;
+    int CAN_BE_DELEGATED = 1 << 21;
 
     /** A policy that can be applied by a financed device owner. */
-    int APPLIED_BY_FINANCED_DEVICE_OWNER = 1 << 21;
+    int APPLIED_BY_FINANCED_DEVICE_OWNER = 1 << 22;
 
     /** A policy that has not yet been migrated to allow for DPM Role holder access. */
-    int CANNOT_BE_APPLIED_BY_ROLE_HOLDER = 1 << 22;
+    int CANNOT_BE_APPLIED_BY_ROLE_HOLDER = 1 << 23;
 
     /** Flags indicating DPC states which can set the policy. */
     int[] dpc() default {};
