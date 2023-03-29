@@ -18,11 +18,11 @@ package android.virtualdevice.cts;
 
 import static android.Manifest.permission.ACTIVITY_EMBEDDING;
 import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
-import static android.Manifest.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.READ_CLIPBOARD_IN_BACKGROUND;
 import static android.Manifest.permission.READ_DEVICE_CONFIG;
 import static android.Manifest.permission.WAKE_LOCK;
+import static android.Manifest.permission.WRITE_ALLOWLISTED_DEVICE_CONFIG;
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.content.Context.DEVICE_ID_DEFAULT;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
@@ -133,7 +133,7 @@ public class StreamedAppClipboardTest {
             CREATE_VIRTUAL_DEVICE,
             READ_CLIPBOARD_IN_BACKGROUND,
             READ_DEVICE_CONFIG,
-            ALLOWLISTED_WRITE_DEVICE_CONFIG,
+            WRITE_ALLOWLISTED_DEVICE_CONFIG,
             WRITE_SECURE_SETTINGS,
             WAKE_LOCK);
 

@@ -4124,7 +4124,7 @@
 
     <!-- @SystemApi @TestApi @hide Allows an application to modify only allowlisted settings.
     <p>Not for use by third-party applications. -->
-    <permission android:name="android.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG"
+    <permission android:name="android.permission.WRITE_ALLOWLISTED_DEVICE_CONFIG"
         android:protectionLevel="signature|verifier|configurator"/>
 
     <!-- @SystemApi @TestApi @hide Allows an application to read/write sync disabled mode config.

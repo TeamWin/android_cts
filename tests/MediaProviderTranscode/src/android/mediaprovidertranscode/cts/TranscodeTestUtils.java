@@ -16,7 +16,7 @@
 
 package android.mediaprovidertranscode.cts;
 
-import static android.Manifest.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG;
+import static android.Manifest.permission.WRITE_ALLOWLISTED_DEVICE_CONFIG;
 import static android.mediaprovidertranscode.cts.TranscodeTestConstants.INTENT_EXTRA_CALLING_PKG;
 import static android.mediaprovidertranscode.cts.TranscodeTestConstants.INTENT_EXTRA_PATH;
 import static android.mediaprovidertranscode.cts.TranscodeTestConstants.INTENT_QUERY_TYPE;
@@ -168,7 +168,7 @@ public class TranscodeTestUtils {
     }
 
     public static void enableTranscodingForPackage(String packageName) {
-        getUiAutomation().adoptShellPermissionIdentity(ALLOWLISTED_WRITE_DEVICE_CONFIG);
+        getUiAutomation().adoptShellPermissionIdentity(WRITE_ALLOWLISTED_DEVICE_CONFIG);
         try {
             final String newPropertyValue = packageName + ",0";
             DeviceConfig.setProperty(NAMESPACE_STORAGE_NATIVE_BOOT,
@@ -196,7 +196,7 @@ public class TranscodeTestUtils {
     }
 
     public static void disableTranscodingForAllPackages() {
-        getUiAutomation().adoptShellPermissionIdentity(ALLOWLISTED_WRITE_DEVICE_CONFIG);
+        getUiAutomation().adoptShellPermissionIdentity(WRITE_ALLOWLISTED_DEVICE_CONFIG);
         try {
             DeviceConfig.deleteProperty(NAMESPACE_STORAGE_NATIVE_BOOT,
                     TRANSCODE_COMPAT_MANIFEST_DEVICE_CONFIG_PROPERTY_NAME);

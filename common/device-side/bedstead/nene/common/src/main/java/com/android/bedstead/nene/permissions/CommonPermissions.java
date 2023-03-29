@@ -765,9 +765,9 @@ public class CommonPermissions {
     public static final String CHANGE_CONFIGURATION = "android.permission.CHANGE_CONFIGURATION";
     /** See {@code Manifest#WRITE_GSERVICES} */
     public static final String WRITE_GSERVICES = "android.permission.WRITE_GSERVICES";
-    /** See {@code Manifest#ALLOWLISTED_WRITE_DEVICE_CONFIG} */
-    public static final String ALLOWLISTED_WRITE_DEVICE_CONFIG =
-            "android.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG";
+    /** See {@code Manifest#WRITE_ALLOWLISTED_DEVICE_CONFIG} */
+    public static final String WRITE_ALLOWLISTED_DEVICE_CONFIG =
+            "android.permission.WRITE_ALLOWLISTED_DEVICE_CONFIG";
     /** See {@code Manifest#READ_DEVICE_CONFIG} */
     public static final String READ_DEVICE_CONFIG = "android.permission.READ_DEVICE_CONFIG";
     /** See {@code Manifest#READ_APP_SPECIFIC_LOCALES} */
