@@ -47,6 +47,7 @@ import android.graphics.drawable.Drawable;
 import android.os.ConditionVariable;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -87,6 +88,7 @@ import java.util.stream.Stream;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class ToastTest {
+    private static final String TAG = ToastTest.class.getSimpleName();
     private static final String TEST_TOAST_TEXT = "test toast";
     private static final String TEST_CUSTOM_TOAST_TEXT = "test custom toast";
     private static final String SETTINGS_ACCESSIBILITY_UI_TIMEOUT =
@@ -225,11 +227,17 @@ public class ToastTest {
     }
 
     private void makeTextToast() throws Throwable {
+        makeTextToast(mContext);
+    }
+
+    private void makeTextToast(Context context) throws Throwable {
+        Log.d(TAG, "creating Toast on context " + context + " (user=" + context.getUserId()
+                + ", display=" + context.getDisplayId() + ")");
         mToastShown = new ConditionVariable(false);
         mToastHidden = new ConditionVariable(false);
         mActivityRule.runOnUiThread(
                 () -> {
-                    mToast = Toast.makeText(mContext, TEST_TOAST_TEXT, Toast.LENGTH_LONG);
+                    mToast = Toast.makeText(context, TEST_TOAST_TEXT, Toast.LENGTH_LONG);
                     mToast.addCallback(new ConditionCallback(mToastShown, mToastHidden));
                 });
     }
@@ -286,8 +294,29 @@ public class ToastTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.widget.Toast#show"})
     public void testShow_whenTextToast() throws Throwable {
         makeTextToast();
+
+        mActivityRule.runOnUiThread(() -> showToastWithNotificationPermission(mToast));
+
+        assertTextToastShownAndHidden();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.widget.Toast#show"})
+    public void testShow_activityContext_whenTextToast() throws Throwable {
+        makeTextToast(mActivityRule.getActivity());
+
+        mActivityRule.runOnUiThread(() -> showToastWithNotificationPermission(mToast));
+
+        assertTextToastShownAndHidden();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.widget.Toast#show"})
+    public void testShow_appContext_whenTextToast() throws Throwable {
+        makeTextToast(mContext.getApplicationContext());
 
         mActivityRule.runOnUiThread(() -> showToastWithNotificationPermission(mToast));
 
