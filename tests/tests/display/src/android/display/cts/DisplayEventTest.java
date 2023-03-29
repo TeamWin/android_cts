@@ -246,7 +246,9 @@ public class DisplayEventTest {
                 mLatchActivityCached.countDown();
             }
         };
-        mActivityManager.addOnUidImportanceListener(mUidImportanceListener, IMPORTANCE_CACHED);
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                mActivityManager.addOnUidImportanceListener(mUidImportanceListener,
+                        IMPORTANCE_CACHED));
         mDisplayBundles = new SparseArray<>();
         mHandlerThread = new HandlerThread("handler");
         mHandlerThread.start();
