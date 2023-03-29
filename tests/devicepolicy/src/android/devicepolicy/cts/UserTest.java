@@ -16,15 +16,21 @@
 
 package android.devicepolicy.cts;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.CREATE_USERS;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_REMOVE_USER;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.os.UserManager;
+
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
+import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -32,8 +38,8 @@ import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.DisallowRemoveUser;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.ApiTest;
-import com.android.interactive.annotations.Interactive;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -45,6 +51,9 @@ public final class UserTest {
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
+    private static final UserManager sLocalUserManager =
+            TestApis.context().instrumentedContext().getSystemService(UserManager.class);
 
     @CannotSetPolicyTest(policy = DisallowRemoveUser.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
@@ -88,21 +97,33 @@ public final class UserTest {
         }
     }
 
-    @EnsureDoesNotHaveUserRestriction(DISALLOW_REMOVE_USER)
+    @EnsureHasAdditionalUser
+    @EnsureDoesNotHaveUserRestriction(value = DISALLOW_REMOVE_USER, onUser = UserType.ADDITIONAL_USER)
     @Test
     @Postsubmit(reason = "new test")
-    @Interactive
     @ApiTest(apis = "android.os.UserManager#DISALLOW_REMOVE_USER")
-    public void disallowRemoveUserIsNotSet_todo() throws Exception {
-        // TODO: Test
+    @EnsureHasPermission(CREATE_USERS)
+    public void removeUser_disallowRemoveUserIsNotSet_isRemoved() throws Exception {
+        UserReference additionalUser = sDeviceState.additionalUser();
+
+        boolean result = sLocalUserManager.removeUser(additionalUser.userHandle());
+
+        assertThat(result).isTrue();
+        assertThat(additionalUser.exists()).isFalse();
     }
 
-    @EnsureHasUserRestriction(DISALLOW_REMOVE_USER)
+    @EnsureHasAdditionalUser
+    @EnsureHasUserRestriction(value = DISALLOW_REMOVE_USER, onUser = UserType.ADMIN_USER)
     @Test
     @Postsubmit(reason = "new test")
-    @Interactive
     @ApiTest(apis = "android.os.UserManager#DISALLOW_REMOVE_USER")
-    public void disallowRemoveUserIsSet_todo() throws Exception {
-        // TODO: Test
+    @EnsureHasPermission(CREATE_USERS)
+    public void removeUser_disallowRemoveUserIsSetOnAdminUser_returnsFalse() {
+        UserReference additionalUser = sDeviceState.additionalUser();
+
+        boolean result = sLocalUserManager.removeUser(additionalUser.userHandle());
+
+        assertThat(result).isFalse();
+        assertThat(additionalUser.exists()).isTrue();
     }
 }

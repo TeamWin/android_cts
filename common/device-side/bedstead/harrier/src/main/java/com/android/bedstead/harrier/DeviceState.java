@@ -28,6 +28,7 @@ import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DE
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
+import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_MANAGED_PROFILE;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_USER;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
@@ -142,6 +143,7 @@ import com.android.bedstead.nene.permissions.PermissionContextImpl;
 import com.android.bedstead.nene.types.OptionalBoolean;
 import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.Tags;
 import com.android.bedstead.nene.utils.Versions;
@@ -456,6 +458,10 @@ public final class DeviceState extends HarrierRule {
                         dpcQuery);
 
                 if (ensureHasProfileAnnotation.hasProfileOwner()) {
+                    if (isOrganizationOwned(annotation)) {
+                        ensureHasNoDeviceOwner(); // It doesn't make sense to have COPE + DO
+                    }
+
                     ((ProfileOwner) profileOwner(
                             workProfile(forUser)).devicePolicyController()).setIsOrganizationOwned(
                             isOrganizationOwned(annotation));
@@ -556,6 +562,10 @@ public final class DeviceState extends HarrierRule {
                         switchedToParentUser, affiliationIds, dpcQuery);
 
                 if (requireRunOnProfileAnnotation.hasProfileOwner()) {
+                    if (isOrganizationOwned(annotation)) {
+                        ensureHasNoDeviceOwner(); // It doesn't make sense to have COPE + DO
+                    }
+
                     ((ProfileOwner) profileOwner(
                             workProfile()).devicePolicyController()).setIsOrganizationOwned(
                             isOrganizationOwned(annotation));
@@ -2275,6 +2285,10 @@ public final class DeviceState extends HarrierRule {
                 return additionalUser();
             case CLONE_PROFILE:
                 return cloneProfile();
+            case ADMIN_USER:
+                return TestApis.users().all().stream().sorted(Comparator.comparing(u -> u.id()))
+                        .filter(u -> u.isAdmin()).findFirst().orElseThrow(
+                                () -> new IllegalStateException("No admin user on device"));
             case ANY:
                 throw new IllegalStateException("ANY UserType can not be used here");
             default:
@@ -2916,16 +2930,13 @@ public final class DeviceState extends HarrierRule {
             ensureHasNoDeviceOwner();
         }
 
-        if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
-            ensureHasNoAccounts(user);
-        } else {
-            // Prior to U this incorrectly checked the system user
-            ensureHasNoAccounts(UserType.SYSTEM_USER);
-        }
-
         if (RemoteDpc.matchesRemoteDpcQuery(currentProfileOwner, dpcQuery)) {
             mProfileOwners.put(user, currentProfileOwner);
         } else {
+            if (user.parent() != null) {
+                ensureDoesNotHaveUserRestriction(DISALLOW_ADD_MANAGED_PROFILE, user.parent());
+            }
+
             if (!mChangedProfileOwners.containsKey(user)) {
                 mChangedProfileOwners.put(user, currentProfileOwner);
             }
@@ -2938,6 +2949,13 @@ public final class DeviceState extends HarrierRule {
                 mProfileOwners.put(user,
                         RemoteDpc.setAsProfileOwner(user, dpcQuery).devicePolicyController());
             }
+        }
+
+        if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
+            ensureHasNoAccounts(user);
+        } else {
+            // Prior to U this incorrectly checked the system user
+            ensureHasNoAccounts(UserType.SYSTEM_USER);
         }
 
         if (isPrimary) {
@@ -3827,9 +3845,25 @@ public final class DeviceState extends HarrierRule {
             return;
         }
 
-        boolean hasCleared = false;
+        if (restriction.equals(DISALLOW_ADD_MANAGED_PROFILE)) {
+            // Special case - set by the system whenever there is a Device Owner
+            ensureHasNoDeviceOwner();
+        } else if (restriction.equals(DISALLOW_ADD_USER)) {
+            // Special case - set by the system whenever there is a Device Owner or
+            // organization-owned profile owner
+            ensureHasNoDeviceOwner();
 
-        if (onUser.equals(TestApis.users().system())) {
+            ProfileOwner orgOwnedProfileOwner =
+                    TestApis.devicePolicy().getOrganizationOwnedProfileOwner();
+            if (orgOwnedProfileOwner != null) {
+                ensureHasNoProfileOwner(orgOwnedProfileOwner.user());
+                return;
+            }
+        }
+
+        boolean hasCleared = !TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction);
+
+        if (!hasCleared && onUser.equals(TestApis.users().system())) {
             hasCleared = tryClearUserRestrictionWithDeviceOwner(restriction);
         }
 
@@ -3851,19 +3885,6 @@ public final class DeviceState extends HarrierRule {
         }
 
         if (TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction)) {
-            if (restriction.equals(DISALLOW_ADD_USER)) {
-                // Special case - set my the system whenever there is a Device Owner or
-                // organization-owned profile owner
-                ensureHasNoDeviceOwner();
-
-                ProfileOwner orgOwnedProfileOwner =
-                        TestApis.devicePolicy().getOrganizationOwnedProfileOwner();
-                if (orgOwnedProfileOwner != null) {
-                    ensureHasNoProfileOwner(orgOwnedProfileOwner.user());
-                    return;
-                }
-            }
-
             throw new NeneException("Error removing user restriction " + restriction + ". "
                     + "It's possible this is set by the system and cannot be removed");
         }
