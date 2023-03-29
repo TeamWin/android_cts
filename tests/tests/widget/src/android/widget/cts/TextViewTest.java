@@ -5005,9 +5005,77 @@ public class TextViewTest {
     }
 
     @UiThreadTest
+    @Test
+    public void testSetLineHeightInUnits() {
+        mTextView = new TextView(mActivity);
+        mTextView.setText("This is some random text");
+
+        // The line height of RobotoFont is (1900 + 500) / 2048 em.
+        // Not to accidentally divide the line height into half, use the small text size.
+        mTextView.setTextSize(10f);
+
+        final float lineSpacingExtra = 50;
+        final float lineSpacingMultiplier = 0.2f;
+        mTextView.setLineSpacing(lineSpacingExtra, lineSpacingMultiplier);
+
+        mTextView.setLineHeight(TypedValue.COMPLEX_UNIT_PX, 200);
+        assertEquals(200, mTextView.getLineHeight());
+        assertNotEquals(lineSpacingExtra, mTextView.getLineSpacingExtra(), 0);
+        assertNotEquals(lineSpacingMultiplier, mTextView.getLineSpacingMultiplier(), 0);
+
+        mTextView.setLineHeight(TypedValue.COMPLEX_UNIT_SP, 200);
+        assertEquals(
+                TypedValue.applyDimension(
+                        TypedValue.COMPLEX_UNIT_SP,
+                        200f,
+                        mActivity.getResources().getDisplayMetrics()
+                ),
+                mTextView.getLineHeight(),
+                /* delta=*/ 0.05f
+        );
+        assertNotEquals(lineSpacingExtra, mTextView.getLineSpacingExtra(), 0);
+        assertNotEquals(lineSpacingMultiplier, mTextView.getLineSpacingMultiplier(), 0);
+
+        mTextView.setLineHeight(TypedValue.COMPLEX_UNIT_DIP, 200);
+        assertEquals(
+                TypedValue.applyDimension(
+                        TypedValue.COMPLEX_UNIT_DIP,
+                        200f,
+                        mActivity.getResources().getDisplayMetrics()
+                ),
+                mTextView.getLineHeight(),
+                /* delta=*/ 0.05f
+        );
+        assertNotEquals(lineSpacingExtra, mTextView.getLineSpacingExtra(), 0);
+        assertNotEquals(lineSpacingMultiplier, mTextView.getLineSpacingMultiplier(), 0);
+
+        mTextView.setLineSpacing(lineSpacingExtra, lineSpacingMultiplier);
+        assertEquals(lineSpacingExtra, mTextView.getLineSpacingExtra(), 0);
+        assertEquals(lineSpacingMultiplier, mTextView.getLineSpacingMultiplier(), 0);
+    }
+
+    @UiThreadTest
     @Test(expected = IllegalArgumentException.class)
     public void testSetLineHeight_negative() {
         new TextView(mActivity).setLineHeight(-1);
+    }
+
+    @UiThreadTest
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetLineHeight_negativeSp() {
+        new TextView(mActivity).setLineHeight(TypedValue.COMPLEX_UNIT_SP, -1f);
+    }
+
+    @UiThreadTest
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetLineHeight_negativeDp() {
+        new TextView(mActivity).setLineHeight(TypedValue.COMPLEX_UNIT_DIP, -1f);
+    }
+
+    @UiThreadTest
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetLineHeight_negativePx() {
+        new TextView(mActivity).setLineHeight(TypedValue.COMPLEX_UNIT_PX, -1f);
     }
 
     @UiThreadTest
