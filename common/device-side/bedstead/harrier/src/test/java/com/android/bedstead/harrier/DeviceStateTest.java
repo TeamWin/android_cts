@@ -43,6 +43,7 @@ import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.testng.Assert.assertThrows;
 
@@ -113,12 +114,14 @@ import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsers
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunNotOnVisibleBackgroundNonProfileUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnCloneProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
+import com.android.bedstead.harrier.annotations.RequireRunOnVisibleBackgroundNonProfileUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireSystemServiceAvailable;
@@ -638,6 +641,33 @@ public class DeviceStateTest {
     public void requireRunOnSecondaryUserAnnotation_isRunningOnSecondaryUser() {
         assertThat(
                 TestApis.users().instrumented().type().name()).isEqualTo(SECONDARY_USER_TYPE_NAME);
+    }
+
+    // NOTE: this test must be manually run, as Test Bedstead doesn't support the
+    // secondary_user_on_secondary_display metadata (for example, running
+    //   atest --user-type secondary_user_on_secondary_display HarrierTest:com.android.bedstead.harrier.DeviceStateTest#requireRunOnVisibleBackgroundNonProfileUserAnnotation_instrumentedUserIsVisibleBackgroundNonProfileUser
+    // would assumption-fail, even though the module is not annotated to support it). So, you need
+    // to manually execute steps like:
+    //   adb shell pm create-user TestUser // id 42
+    //   adb shell am start-user -w --display 2 42
+    //   adb shell pm install-existing --user 42  com.android.bedstead.harrier.test
+    //   adb shell am instrument --user 42 -e class com.android.bedstead.harrier.DeviceStateTest#requireRunOnVisibleBackgroundNonProfileUserAnnotation_instrumentedUserIsVisibleBackgroundNonProfileUser -w com.android.bedstead.harrier.test/androidx.test.runner.AndroidJUnitRunner
+    @Test
+    @RequireRunOnVisibleBackgroundNonProfileUser
+    public void requireRunOnVisibleBackgroundNonProfileUserAnnotation_instrumentedUserIsVisibleBackgroundNonProfileUser() {
+        UserReference user = TestApis.users().instrumented();
+
+        assertWithMessage("%s is visible bg user", user)
+                .that(user.isVisibleBagroundNonProfileUser()).isTrue();
+    }
+
+    @Test
+    @RequireRunNotOnVisibleBackgroundNonProfileUser
+    public void requireRunNotOnVisibleBackgroundNonProfileUserAnnotation_instrumentedUserIsNotVisibleBackgroundNonProfileUser() {
+        UserReference user = TestApis.users().instrumented();
+
+        assertWithMessage("%s is visible bg user", user)
+                .that(user.isVisibleBagroundNonProfileUser()).isFalse();
     }
 
     @Test

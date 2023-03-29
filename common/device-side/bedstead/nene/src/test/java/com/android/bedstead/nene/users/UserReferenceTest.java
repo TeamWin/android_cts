@@ -394,6 +394,67 @@ public class UserReferenceTest {
     }
 
     @Test
+    public void isVisibleBagroundNonProfileUser_currentUser_returnsTrue() {
+        UserReference user = TestApis.users().current();
+
+        assertWithMessage("%s is visible bg user", user)
+                .that(user.isVisibleBagroundNonProfileUser()).isFalse();
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    @RequireVisibleBackgroundUsers(reason = "because that's what being tested")
+    public void isVisibleBagroundNonProfileUser_visibleBgUser_returnsTrue() {
+        int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+
+        UserReference user = sDeviceState.additionalUser().startVisibleOnDisplay(displayId);
+
+        try {
+            assertWithMessage("%s is visible bg user", user)
+                    .that(user.isVisibleBagroundNonProfileUser()).isTrue();
+        } finally {
+            // Need to explicitly stop it, otherwise the display won't be available on failure
+            user.stop();
+        }
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    public void isVisibleBagroundNonProfileUser_nonStartedUser_returnsFalse() {
+        UserReference user = sDeviceState.additionalUser().stop();
+
+        assertWithMessage("%s is visible bg user", user)
+                .that(user.isVisibleBagroundNonProfileUser()).isFalse();
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    public void isVisibleBagroundNonProfileUser_bgUser_returnsFalse() {
+        UserReference user = sDeviceState.additionalUser().start();
+
+        assertWithMessage("%s is visible bg user", user)
+                .that(user.isVisibleBagroundNonProfileUser()).isFalse();
+    }
+
+    @Test
+    public void isVisibleBagroundNonProfileUser_userDoesNotExist_returnsFalse() {
+        UserReference user = TestApis.users().find(NON_EXISTING_USER_ID);
+
+        assertWithMessage("%s is visible bg user", user)
+                .that(user.isVisibleBagroundNonProfileUser()).isFalse();
+    }
+
+    // TODO(b/239961027): should be @EnsureHasProfile instead of @EnsureHasWorkProfile
+    @Test
+    @EnsureHasWorkProfile
+    public void isVisibleBagroundNonProfileUser_profileUser_returnsFalse() {
+        UserReference user = sDeviceState.workProfile().start();
+
+        assertWithMessage("%s is visible bg user", user)
+                .that(user.isVisibleBagroundNonProfileUser()).isFalse();
+    }
+
+    @Test
     public void isForeground_currentUser_returnsTrue() {
         UserReference user = TestApis.users().current();
 

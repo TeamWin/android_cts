@@ -433,6 +433,14 @@ public final class UserReference implements AutoCloseable {
         }
     }
 
+    /**
+     * Is the user a non-{@link #isProfile() profile} that is running {@link #isVisible()} in the
+     * background?
+     */
+    public boolean isVisibleBagroundNonProfileUser() {
+        return isVisible() && !isForeground() && !isProfile();
+    }
+
     /** Is the user unlocked? */
     public boolean isUnlocked() {
         if (!Versions.meetsMinimumSdkVersionRequirement(S)) {

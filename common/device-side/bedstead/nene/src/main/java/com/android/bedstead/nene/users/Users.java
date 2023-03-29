@@ -165,7 +165,9 @@ public final class Users {
         if (Versions.meetsMinimumSdkVersionRequirement(S)) {
             try (PermissionContext p =
                          TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
-                return find(ActivityManager.getCurrentUser());
+                int currentUserId = ActivityManager.getCurrentUser();
+                Log.d(LOG_TAG, "current(): finding " + currentUserId);
+                return find(currentUserId);
             }
         }
 

@@ -99,7 +99,9 @@ import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsers
 import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsersOnDefaultDisplay;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
+import com.android.bedstead.harrier.annotations.RequireRunNotOnVisibleBackgroundNonProfileUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnVisibleBackgroundNonProfileUser;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireSystemServiceAvailable;
 import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
@@ -735,6 +737,22 @@ public final class DeviceState extends HarrierRule {
                         (RequireNotVisibleBackgroundUsersOnDefaultDisplay) annotation;
                 requireVisibleBackgroundUsersOnDefaultDisplayNotSupported(castedAnnotation.reason(),
                         castedAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequireRunOnVisibleBackgroundNonProfileUser) {
+                if (!isNonProfileUserRunningVisibleOnBackground()) {
+                    failOrSkip("Test only runs non-profile user that's running visible in the "
+                            + "background", FailureMode.SKIP);
+                }
+                continue;
+            }
+
+            if (annotation instanceof RequireRunNotOnVisibleBackgroundNonProfileUser) {
+                if (isNonProfileUserRunningVisibleOnBackground()) {
+                    failOrSkip("Test cannot run on non-profile user that's running visible in the "
+                            + "background", FailureMode.SKIP);
+                }
                 continue;
             }
 
@@ -3331,6 +3349,13 @@ public final class DeviceState extends HarrierRule {
                     + " requires that it doesn't. Reason: " + reason;
             failOrSkip(message, failureMode);
         }
+    }
+
+    private boolean isNonProfileUserRunningVisibleOnBackground() {
+        UserReference user = TestApis.users().instrumented();
+        boolean isIt = user.isVisibleBagroundNonProfileUser();
+        Log.d(LOG_TAG, "isNonProfileUserRunningVisibleOnBackground(" + user + "): " + isIt);
+        return isIt;
     }
 
     private void ensureScreenIsOn() {
