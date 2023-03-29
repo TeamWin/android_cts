@@ -20,9 +20,15 @@ import static android.autofillservice.cts.testcore.Helper.ID_IMEACTION_TEXT;
 import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME_LABEL;
+import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 
 import android.autofillservice.cts.activities.ImeOptionActivity;
 import android.autofillservice.cts.activities.LoginNotImportantForAutofillActivity;
+import android.autofillservice.cts.activities.LoginNotImportantUsernameImportantPasswordActivity;
 import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.Helper;
@@ -42,21 +48,42 @@ import org.junit.Test;
 public class AutofillForAllAppsTest extends
         AutoFillServiceTestCase.ManualActivityLaunch {
 
+    private static final String
+            DEVICE_CONFIG_INCLUDE_ALL_AUTOFILL_TYPE_NOT_NONE_VIEWS_IN_ASSIST_STRUCTURE =
+                "include_all_autofill_type_not_none_views_in_assist_structure";
+    private static final String
+            DEVICE_CONFIG_INCLUDE_ALL_VIEWS_IN_ASSIST_STRUCTURE =
+                "include_all_views_in_assist_structure";
+    private static final String
+            DEVICE_CONFIG_PACKAGE_AND_ACTIVITY_ALLOWLIST_FOR_TRIGGERING_FILL_REQUEST =
+                "package_and_activity_allowlist_for_triggering_fill_request";
+    private static final String
+            DEVICE_CONFIG_TRIGGER_FILL_REQUEST_ON_FILTERED_IMPORTANT_VIEWS =
+                "trigger_fill_request_on_filtered_important_views";
+
     private DeviceConfigStateManager mDenyListStateManager =
             new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
               AutofillFeatureFlags.DEVICE_CONFIG_PACKAGE_DENYLIST_FOR_UNIMPORTANT_VIEW);
     private DeviceConfigStateManager mAllowlistStateManager =
             new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
-                "package_and_activity_allowlist_for_triggering_fill_request");
+                DEVICE_CONFIG_PACKAGE_AND_ACTIVITY_ALLOWLIST_FOR_TRIGGERING_FILL_REQUEST);
     private DeviceConfigStateManager mImeActionFlagStateManager =
             new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
               AutofillFeatureFlags.DEVICE_CONFIG_NON_AUTOFILLABLE_IME_ACTION_IDS);
     private DeviceConfigStateManager mIsTriggerFillRequestOnUnimportantViewEnabledStateManager =
             new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
               AutofillFeatureFlags.DEVICE_CONFIG_TRIGGER_FILL_REQUEST_ON_UNIMPORTANT_VIEW);
-    private DeviceConfigStateManager mTriggerFillRequestOnSelectedImportantViewsEnabledStateManager
-        = new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
-            "trigger_fill_request_on_filtered_important_views");
+    private DeviceConfigStateManager
+                mTriggerFillRequestOnSelectedImportantViewsEnabledStateManager =
+                    new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                            DEVICE_CONFIG_TRIGGER_FILL_REQUEST_ON_FILTERED_IMPORTANT_VIEWS);
+    private DeviceConfigStateManager mSholdIncludeAutofillTypeNotNoneFlagStateManager =
+            new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                    DEVICE_CONFIG_INCLUDE_ALL_AUTOFILL_TYPE_NOT_NONE_VIEWS_IN_ASSIST_STRUCTURE);
+    private DeviceConfigStateManager mShouldIncludeAllViewsInAssistStructureFlagStateManager =
+            new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                    DEVICE_CONFIG_INCLUDE_ALL_VIEWS_IN_ASSIST_STRUCTURE);
+
 
     private static final String TAG = "AutofillForAllAppsTest";
     private static final String TEST_CTS_PACKAGE_NAME = "android.autofillservice.cts";
@@ -87,6 +114,8 @@ public class AutofillForAllAppsTest extends
         setAllowlistFlagValue("");
         setIsTriggerFillRequestOnUnimportantViewEnabledFlagValue(Boolean.toString(true));
         setIsApplyHeuristicOnImportantViewEnabledFlagValue("false");
+        setShouldIncludeAutofillTypeNotNoneFlagValue("false");
+        setShouldIncludeAllViewsInAssistStructure("false");
     }
 
     @After
@@ -96,6 +125,8 @@ public class AutofillForAllAppsTest extends
         setAllowlistFlagValue("");
         setIsTriggerFillRequestOnUnimportantViewEnabledFlagValue(Boolean.toString(false));
         setIsApplyHeuristicOnImportantViewEnabledFlagValue("false");
+        setShouldIncludeAutofillTypeNotNoneFlagValue("false");
+        setShouldIncludeAllViewsInAssistStructure("false");
     }
 
     @Test
@@ -327,6 +358,75 @@ public class AutofillForAllAppsTest extends
         sReplier.assertNoUnhandledFillRequests();
     }
 
+    @Test
+    public void testAssistStructure_includeAutofillTypeNotNoneViews()
+            throws Exception {
+        enableService();
+        // Disable trigger fill request on unimportant view to prevent view included by this flag
+        setIsTriggerFillRequestOnUnimportantViewEnabledFlagValue("false");
+        setShouldIncludeAutofillTypeNotNoneFlagValue("true");
+
+        // Set response for password since only password is important for autofill
+        sReplier.addResponse(mLoginResponseBuilder.build());
+        startLoginNotImportantUsernameImportantPasswordActivity();
+        mUiBot.waitForIdleSync();
+        sReplier.assertNoUnhandledFillRequests();
+
+        mUiBot.selectByRelativeId(Helper.ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+
+        // Username field should be in assist structure, since although it's not important, its
+        // autofill type is text and include autofill type not none flag is turned on.
+        assertNotNull("Username field is not in assist structure",
+                findNodeByResourceId(fillRequest.structure, ID_USERNAME));
+        // Username label should not be in assist structure, since it's not important and autofill
+        // type is none.
+        assertNull("Username label should not be in assist structure when only include autofill "
+                        + "type not none view flag is turned on",
+                            findNodeByResourceId(fillRequest.structure, ID_USERNAME_LABEL));
+        // safe-check
+        sReplier.assertNoUnhandledFillRequests();
+    }
+
+    @Test
+    public void testAssistStructure_includeAllViews()
+            throws Exception {
+        enableService();
+        // Disable trigger fill request on unimportant view to prevent view included by this flag
+        setIsTriggerFillRequestOnUnimportantViewEnabledFlagValue("false");
+        setShouldIncludeAllViewsInAssistStructure("true");
+
+        sReplier.addResponse(mLoginResponseBuilder.build());
+        startLoginNotImportantUsernameImportantPasswordActivity();
+        mUiBot.waitForIdleSync();
+        sReplier.assertNoUnhandledFillRequests();
+
+        mUiBot.selectByRelativeId(Helper.ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+
+        // Both username field and username label should be in assist structure, since although they
+        // are not important for autofill, include all views in assist structure flag is turned on
+        assertNotNull("Username field is not in assist structure",
+                findNodeByResourceId(fillRequest.structure, ID_USERNAME));
+        assertNotNull("Username label is not in assist structure",
+                findNodeByResourceId(fillRequest.structure, ID_USERNAME_LABEL));
+        // safe-check
+        sReplier.assertNoUnhandledFillRequests();
+    }
+
+    private void setShouldIncludeAllViewsInAssistStructure(String value) {
+        Helper.setDeviceConfig(mShouldIncludeAllViewsInAssistStructureFlagStateManager, value);
+    }
+
+    private void setShouldIncludeAutofillTypeNotNoneFlagValue(String value) {
+        Helper.setDeviceConfig(mSholdIncludeAutofillTypeNotNoneFlagStateManager,
+                value);
+    }
+
     private void setIsApplyHeuristicOnImportantViewEnabledFlagValue(String value) {
         Helper.setDeviceConfig(mTriggerFillRequestOnSelectedImportantViewsEnabledStateManager,
             value);
@@ -354,6 +454,16 @@ public class AutofillForAllAppsTest extends
         mContext.startActivity(intent);
         waitSeveralIdleSyncToAssertSpecifiedUiShown(ID_USERNAME_LABEL, 11);
         return LoginNotImportantForAutofillActivity.getCurrentActivity();
+    }
+
+    private LoginNotImportantUsernameImportantPasswordActivity
+            startLoginNotImportantUsernameImportantPasswordActivity()  throws Exception {
+        final Intent intent =
+                new Intent(mContext, LoginNotImportantUsernameImportantPasswordActivity.class)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        waitSeveralIdleSyncToAssertSpecifiedUiShown(ID_USERNAME_LABEL, 11);
+        return LoginNotImportantUsernameImportantPasswordActivity.getCurrentActivity();
     }
 
     private ImeOptionActivity startImeOptionActivity() throws Exception {
