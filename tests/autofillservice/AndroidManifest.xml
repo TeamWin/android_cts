@@ -55,6 +55,7 @@
              android:theme="@style/MyAutofilledHighlight"/>
         <activity android:name=".activities.LoginWithStringsActivity"/>
         <activity android:name=".activities.LoginNotImportantForAutofillActivity"/>
+        <activity android:name=".activities.LoginNotImportantUsernameImportantPasswordActivity"/>
         <activity android:name=".activities.ImeOptionActivity"/>
         <activity android:name=".activities.LoginNotImportantForAutofillWrappedActivityContextActivity"/>
         <activity android:name=".activities.LoginNotImportantForAutofillWrappedApplicationContextActivity"/>
