@@ -25,6 +25,8 @@ import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLa
 import static android.view.Surface.ROTATION_270;
 import static android.view.Surface.ROTATION_90;
 
+import static com.android.compatibility.common.util.PollingCheck.waitFor;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -48,7 +50,6 @@ import androidx.window.extensions.embedding.SplitPairRule;
 import androidx.window.extensions.layout.WindowLayoutInfo;
 
 import com.android.compatibility.common.util.ApiTest;
-import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Test;
 
@@ -285,7 +286,7 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
 
         activityA.enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
 
-        PollingCheck.waitFor(activityA::isInPictureInPictureMode);
+        waitFor(activityA::isInPictureInPictureMode);
         // TODO(b/275526710): find a way to verify calculator is not called without waiting for
         //  2 secs.
         verifier.assertFunctionNotApplied("The calculator function must not be called because"
@@ -298,7 +299,7 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
                 + " activity A leaves PIP.");
     }
 
-    /** Verify the calculator function is called when the host task goes/leaves split screen. */
+    /** Verify the calculator function is called when the host task enters/leaves split screen. */
     @Test
     public void testSplitAttributesCalculatorInvocation_splitScreen() throws InterruptedException {
         final String tag = "testSplitAttributesCalculatorInvocation_screenRotation";
