@@ -29,6 +29,7 @@ import android.util.Log;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.Ignore;
@@ -58,6 +59,7 @@ public class ExtractorUnitTest {
         @Rule
         public TestName testName = new TestName();
 
+        @ApiTest(apis = "android.media.MediaExtractor#getTrackCount")
         @Test
         public void testGetTrackCountBeforeSetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -71,6 +73,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getTrackCount")
         @Test
         public void testGetTrackCountAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -83,6 +86,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#selectTrack")
         @Test
         public void testSelectTrackBeforeSetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -96,6 +100,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#selectTrack")
         @Test
         public void testSelectTrackForInvalidIndex() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -120,6 +125,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#selectTrack")
         @Test
         public void testIdempotentSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -135,6 +141,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#selectTrack")
         @Test
         public void testSelectTrackAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -147,6 +154,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#unselectTrack")
         @Test
         public void testUnselectTrackBeforeSetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -160,6 +168,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#unselectTrack")
         @Test
         public void testUnselectTrackForInvalidIndex() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -184,6 +193,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#unselectTrack")
         @Test
         public void testUnselectTrackForUnSelectedTrackIndex() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -198,6 +208,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#unselectTrack")
         @Test
         public void testIdempotentUnselectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -214,6 +225,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#unselectTrack")
         @Test
         public void testUnselectTrackAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -226,6 +238,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#seekTo")
         @Test
         public void testSeekToBeforeSetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -243,6 +256,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#seekTo")
         @Test
         public void testSeekToBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -262,6 +276,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#seekTo")
         @Test
         public void testSeekToForInvalidMode() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -279,6 +294,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#seekTo")
         @Test
         public void testSeekToAfterRelease() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -293,6 +309,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getCachedDuration")
         @Test
         @Ignore("TODO(b/148205432)")
         public void testGetCachedDurationBeforeSetDataSource() {
@@ -307,6 +324,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getCachedDuration")
         @Test
         public void testGetCachedDurationAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -319,6 +337,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#hasCacheReachedEndOfStream")
         @Test
         @Ignore("TODO(b/148204634)")
         public void testHasCacheReachedEOSBeforeSetDataSource() {
@@ -333,6 +352,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#hasCacheReachedEndOfStream")
         @Test
         public void testHasCacheReachedEOSAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -345,6 +365,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getMetrics")
         @Test
         public void testGetMetricsBeforeSetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -358,6 +379,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getMetrics")
         @Test
         public void testGetMetricsAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -370,6 +392,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#release")
         @Test
         public void testIdempotentRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -381,6 +404,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#advance")
         @Test
         public void testAdvanceBeforeSetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -393,6 +417,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#advance")
         @Test
         public void testAdvanceBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -407,6 +432,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#advance")
         @Test
         public void testAdvanceAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -419,6 +445,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getSampleFlags")
         @Test
         public void testGetSampleFlagsBeforeSetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -432,6 +459,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getSampleFlags")
         @Test
         public void testGetSampleFlagsBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -447,6 +475,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getSampleFlags")
         @Test
         public void testGetSampleFlagsAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -459,6 +488,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getSampleTime")
         @Test
         public void testGetSampleTimeBeforeSetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -472,6 +502,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getSampleTime")
         @Test
         public void testGetSampleTimeBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -487,6 +518,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getSampleTime")
         @Test
         public void testGetSampleTimeAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -499,6 +531,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getSampleSize")
         @Test
         public void testGetSampleSizeBeforeSetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -512,6 +545,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getSampleSize")
         @Test
         public void testGetSampleSizeBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -527,6 +561,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getSampleSize")
         @Test
         public void testGetSampleSizeAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -539,6 +574,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getSampleTrackIndex")
         @Test
         public void testGetSampleTrackIndexBeforeSetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -552,6 +588,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getSampleTrackIndex")
         @Test
         public void testGetSampleTrackIndexBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -567,6 +604,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getSampleTrackIndex")
         @Test
         public void testGetSampleTrackIndexAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -579,6 +617,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getTrackFormat")
         @Test
         public void testGetTrackFormatBeforeSetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -592,6 +631,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getTrackFormat")
         @Test
         public void testGetTrackFormatForInvalidIndex() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -616,6 +656,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#getTrackFormat")
         @Test
         public void testGetTrackFormatAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -628,6 +669,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#readSampleData")
         @Test
         public void testReadSampleDataBeforeSetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -642,6 +684,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#readSampleData")
         @Test
         public void testReadSampleDataBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -658,6 +701,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#readSampleData")
         @Test
         public void testIfInvalidOffsetIsRejectedByReadSampleData() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -688,6 +732,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#readSampleData")
         @Test
         public void testReadSampleDataAfterRelease() {
             MediaExtractor extractor = new MediaExtractor();
@@ -701,6 +746,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#setDataSource")
         @Test
         public void testIfInvalidDataSourceIsRejectedBySetDataSource() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -718,6 +764,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#setDataSource")
         @Test
         public void testIfNullFDIsRejectedBySetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -731,6 +778,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#setDataSource")
         @Test
         public void testIfWriteOnlyAssetFDIsRejectedBySetDataSource() throws IOException {
             File inpFile = File.createTempFile("ExtractorTestApisetDSAFD", ".in");
@@ -749,6 +797,7 @@ public class ExtractorUnitTest {
             inpFile.delete();
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#setDataSource")
         @Test
         public void testIfWriteOnlyFDIsRejectedBySetDataSource() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
@@ -764,6 +813,7 @@ public class ExtractorUnitTest {
             inpFile.delete();
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#setDataSource")
         @Test
         public void testIfNullMediaDataSourceIsRejectedBySetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -777,6 +827,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#setDataSource")
         @Test
         public void testIfNullFileIsRejectedBySetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -790,6 +841,7 @@ public class ExtractorUnitTest {
             }
         }
 
+        @ApiTest(apis = "android.media.MediaExtractor#setDataSource")
         @Test
         public void testIfNullAssetFDIsRejectedBySetDataSource() {
             MediaExtractor extractor = new MediaExtractor();
@@ -813,18 +865,21 @@ public class ExtractorUnitTest {
             System.loadLibrary("ctsmediav2extractor_jni");
         }
 
+        @ApiTest(apis = "AMediaExtractor_getTrackCount")
         @Test
         public void testGetTrackCountBeforeSetDataSource() {
             assertTrue(nativeTestGetTrackCountBeforeSetDataSource());
         }
         private native boolean nativeTestGetTrackCountBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_selectTrack")
         @Test
         public void testSelectTrackBeforeSetDataSource() {
             assertTrue(nativeTestSelectTrackBeforeSetDataSource());
         }
         private native boolean nativeTestSelectTrackBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_selectTrack")
         @Test
         public void testSelectTrackForInvalidIndex() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -832,6 +887,7 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestSelectTrackForInvalidIndex(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_selectTrack")
         @Test
         public void testIdempotentSelectTrack() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -839,12 +895,14 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestIdempotentSelectTrack(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_unselectTrack")
         @Test
         public void testUnselectTrackBeforeSetDataSource() {
             assertTrue(nativeTestUnselectTrackBeforeSetDataSource());
         }
         private native boolean nativeTestUnselectTrackBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_unselectTrack")
         @Test
         public void testUnselectTrackForInvalidIndex() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -852,6 +910,7 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestUnselectTrackForInvalidIndex(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_unselectTrack")
         @Test
         public void testUnselectTrackForUnSelectedTrackIndex() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -859,6 +918,7 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestUnselectTrackForUnSelectedTrackIndex(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_unselectTrack")
         @Test
         public void testIdempotentUnselectTrack() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -866,12 +926,14 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestIdempotentUnselectTrack(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_seekTo")
         @Test
         public void testSeekToBeforeSetDataSource() {
             assertTrue(nativeTestSeekToBeforeSetDataSource());
         }
         private native boolean nativeTestSeekToBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_seekTo")
         @Test
         public void testSeekToBeforeSelectTrack() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -879,6 +941,7 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestSeekToBeforeSelectTrack(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_getCachedDuration")
         @Test
         @Ignore("TODO(b/148205432)")
         public void testGetCachedDurationBeforeSetDataSource() {
@@ -886,18 +949,21 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestGetCachedDurationBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_getFileFormat")
         @Test
         public void testIfGetFileFormatSucceedsBeforeSetDataSource() {
             assertTrue(nativeTestIfGetFileFormatSucceedsBeforeSetDataSource());
         }
         private native boolean nativeTestIfGetFileFormatSucceedsBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_advance")
         @Test
         public void testAdvanceBeforeSetDataSource() {
             assertTrue(nativeTestAdvanceBeforeSetDataSource());
         }
         private native boolean nativeTestAdvanceBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_advance")
         @Test
         public void testAdvanceBeforeSelectTrack() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -905,12 +971,14 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestAdvanceBeforeSelectTrack(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_getSampleFlags")
         @Test
         public void testGetSampleFlagsBeforeSetDataSource() {
             assertTrue(nativeTestGetSampleFlagsBeforeSetDataSource());
         }
         private native boolean nativeTestGetSampleFlagsBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_getSampleFlags")
         @Test
         public void testGetSampleFlagsBeforeSelectTrack() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -918,12 +986,14 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestGetSampleFlagsBeforeSelectTrack(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_getSampleTime")
         @Test
         public void testGetSampleTimeBeforeSetDataSource() {
             assertTrue(nativeTestGetSampleTimeBeforeSetDataSource());
         }
         private native boolean nativeTestGetSampleTimeBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_getSampleTime")
         @Test
         public void testGetSampleTimeBeforeSelectTrack() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -931,12 +1001,14 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestGetSampleTimeBeforeSelectTrack(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_getSampleSize")
         @Test
         public void testGetSampleSizeBeforeSetDataSource() {
             assertTrue(nativeTestGetSampleSizeBeforeSetDataSource());
         }
         private native boolean nativeTestGetSampleSizeBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_getSampleSize")
         @Test
         public void testGetSampleSizeBeforeSelectTrack() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -944,12 +1016,14 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestGetSampleSizeBeforeSelectTrack(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_getSampleFormat")
         @Test
         public void testIfGetSampleFormatBeforeSetDataSource() {
             assertTrue(nativeTestIfGetSampleFormatBeforeSetDataSource());
         }
         private native boolean nativeTestIfGetSampleFormatBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_getSampleFormat")
         @Test
         public void testIfGetSampleFormatBeforeSelectTrack() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -957,12 +1031,14 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestIfGetSampleFormatBeforeSelectTrack(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_getSampleTrackIndex")
         @Test
         public void testGetSampleTrackIndexBeforeSetDataSource() {
             assertTrue(nativeTestGetSampleTrackIndexBeforeSetDataSource());
         }
         private native boolean nativeTestGetSampleTrackIndexBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_getSampleTrackIndex")
         @Test
         public void testGetSampleTrackIndexBeforeSelectTrack() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -971,12 +1047,14 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestGetSampleTrackIndexBeforeSelectTrack(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_getTrackFormat")
         @Test
         public void testGetTrackFormatBeforeSetDataSource() {
             assertTrue(nativeTestGetTrackFormatBeforeSetDataSource());
         }
         private native boolean nativeTestGetTrackFormatBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_getTrackFormat")
         @Test
         public void testGetTrackFormatForInvalidIndex() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -984,12 +1062,14 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestGetTrackFormatForInvalidIndex(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_readSampleData")
         @Test
         public void testReadSampleDataBeforeSetDataSource() {
             assertTrue(nativeTestReadSampleDataBeforeSetDataSource());
         }
         private native boolean nativeTestReadSampleDataBeforeSetDataSource();
 
+        @ApiTest(apis = "AMediaExtractor_readSampleData")
         @Test
         public void testReadSampleDataBeforeSelectTrack() {
             Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
@@ -997,12 +1077,14 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestReadSampleDataBeforeSelectTrack(String srcPath);
 
+        @ApiTest(apis = "AMediaExtractor_setDataSource")
         @Test
         public void testIfNullLocationIsRejectedBySetDataSource() {
             assertTrue(nativeTestIfNullLocationIsRejectedBySetDataSource());
         }
         private native boolean nativeTestIfNullLocationIsRejectedBySetDataSource();
 
+        @ApiTest(apis = "AMEDIAFORMAT_KEY_SAMPLE_FILE_OFFSET")
         @Test
         public void testVideoSampleFileOffsetByGetSampleFormat() {
             if (!sIsAtLeastS) {
@@ -1014,6 +1096,7 @@ public class ExtractorUnitTest {
         }
         private native boolean nativeTestVideoSampleFileOffsetByGetSampleFormat(String srcPath);
 
+        @ApiTest(apis = "AMEDIAFORMAT_KEY_SAMPLE_FILE_OFFSET")
         @Test
         public void testAudioSampleFileOffsetByGetSampleFormat() {
             if (!sIsAtLeastS) {

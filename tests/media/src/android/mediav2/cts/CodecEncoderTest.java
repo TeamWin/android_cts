@@ -288,8 +288,8 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
      * parameters, the test checks for consistency across runs. Although the test collects the
      * output in a byte buffer, no analysis is done that checks the integrity of the bitstream.
      */
-    @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2", "5.1.1"})
-    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
+    @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2", "5.1.1", "5.2/C-1-1"})
+    @ApiTest(apis = {"android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
             "android.media.AudioFormat#ENCODING_PCM_16BIT"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
@@ -341,8 +341,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     /**
      * Test is similar to {@link #testSimpleEncode()} but uses ndk api
      */
-    @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2", "5.1.1"})
-    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
+    @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2", "5.1.1", "5.1.7/C-1-3"})
+    @ApiTest(apis = {"android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420SemiPlanar",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Planar",
             "android.media.AudioFormat#ENCODING_PCM_16BIT"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
@@ -673,7 +674,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
      * file size to be around {sum of (n * Bi) for i in the range [0, (m/n)]} and Bi is the
      * bitrate chosen for the interval 'n' seconds
      */
-    @CddTest(requirements = "5.2/C.2.1")
+    @CddTest(requirements = "5.2/C-2-1")
     @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_VIDEO_BITRATE")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
@@ -735,7 +736,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     /**
      * Test is similar to {@link #testAdaptiveBitRate()} but uses ndk api
      */
-    @CddTest(requirements = "5.2/C.2.1")
+    @CddTest(requirements = "5.2/C-2-1")
     @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_VIDEO_BITRATE")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
