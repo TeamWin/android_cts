@@ -107,7 +107,11 @@ class PermissionHistoryTest : BasePermissionTest() {
             waitFindObject(By.hasChild(By.textContains(MICROPHONE)))
             waitFindObject(By.hasChild(By.textContains(CAMERA)))
             waitFindObject(By.hasChild(By.textContains(LOCATION)))
-            waitFindObject(By.descContains(MORE_OPTIONS))
+            if (!isAutomotive) {
+                // Auto shows a single action item option instead of the overflow menu. The
+                // "Show system" action will only appear when there are system apps not shown.
+                waitFindObject(By.descContains(MORE_OPTIONS))
+            }
         } finally {
             pressBack()
             pressBack()
