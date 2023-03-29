@@ -254,13 +254,58 @@ public class PackagesTest {
             sDeviceState.additionalUser().stop();
 
             assertThrows(NeneException.class, () -> {
-                TestApis.packages().install(
-                        sDeviceState.additionalUser(), TEST_APP_APK_FILE);
+                TestApis.packages().install(sDeviceState.additionalUser(), TEST_APP_APK_FILE);
             });
         } finally {
             sDeviceState.additionalUser().start();
         }
     }
+
+    @Test
+    @EnsureHasAdditionalUser
+    public void install_byteArray_userNotStarted_throwsException() {
+        try {
+            sDeviceState.additionalUser().stop();
+
+            assertThrows(NeneException.class, () -> {
+                TestApis.packages().install(sDeviceState.additionalUser(), TEST_APP_BYTES);
+            });
+        } finally {
+            sDeviceState.additionalUser().start();
+        }
+    }
+
+//    @Test
+//    @EnsureHasAdditionalUser
+//    public void install_userNotStarted_isInstalled() {
+//        sDeviceState.additionalUser().stop();
+//
+//        TestApis.packages().install(sDeviceState.additionalUser(), TEST_APP_APK_FILE);
+//        Package pkg = TestApis.packages().find(TEST_APP_PACKAGE_NAME);
+//
+//        try {
+//            assertThat(pkg.installedOnUser(sDeviceState.additionalUser())).isTrue();
+//        } finally {
+//            pkg.uninstall(sDeviceState.additionalUser());
+//        }
+//    }
+//
+//    @Test
+//    @EnsureHasAdditionalUser
+//    public void install_byteArray_userNotStarted_isInstalled() {
+//        sDeviceState.additionalUser().stop();
+//
+//        Package pkg = null;
+//        try {
+//            pkg = TestApis.packages().install(sDeviceState.additionalUser(), TEST_APP_BYTES);
+//
+//            assertThat(pkg.installedOnUser(sDeviceState.additionalUser())).isTrue();
+//        } finally {
+//            if (pkg != null) {
+//                pkg.uninstallFromAllUsers();
+//            }
+//        }
+//    }
 
     @Test
     public void install_userDoesNotExist_throwsException() {
