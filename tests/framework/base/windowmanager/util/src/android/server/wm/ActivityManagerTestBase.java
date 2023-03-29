@@ -1698,6 +1698,12 @@ public abstract class ActivityManagerTestBase {
         }
 
         public LockScreenSession setLockCredential() {
+            if (mLockCredentialSet) {
+                // "set-pin" command isn't idempotent. We need to provide the old credential in
+                // order to change it to a new one. However we never use a different credential in
+                // CTS so we don't need to do anything if the credential is already set.
+                return this;
+            }
             mLockCredentialSet = true;
             runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
             return this;
