@@ -19,7 +19,12 @@ import static android.autofillservice.cts.testcore.CannedFillResponse.NO_RESPONS
 import static android.autofillservice.cts.testcore.Helper.ID_EMPTY;
 import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Helper.getContext;
 
+import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
+import android.app.role.RoleManager;
 import android.autofillservice.cts.R;
 import android.autofillservice.cts.activities.ClientSuggestionsActivity;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
@@ -29,12 +34,24 @@ import android.autofillservice.cts.testcore.ClientAutofillRequestCallback;
 import android.autofillservice.cts.testcore.OneTimeTextWatcher;
 import android.autofillservice.cts.testcore.UiBot;
 import android.os.Bundle;
+import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * This is the test case covering most scenarios - other test cases will cover characteristics
@@ -46,6 +63,101 @@ public abstract class ClientSuggestionsCommonTestCase
     private static final String TAG = "ClientSuggestions";
     protected ClientSuggestionsActivity mActivity;
     protected ClientAutofillRequestCallback.Replier mClientReplier;
+
+    private static final String APP_PACKAGE_NAME = "android.autofillservice.cts";
+
+    @ClassRule
+    public static final DefaultBrowserRule sDeviceState = new DefaultBrowserRule();
+
+    static class DefaultBrowserRule implements TestRule {
+
+        @Override
+        public Statement apply(Statement base, Description description) {
+            return new Statement() {
+
+                @Override
+                public void evaluate() throws Throwable {
+                    final String previousValue = getBrowserRole();
+                    setBrowserRoleForPackage(APP_PACKAGE_NAME);
+
+                    try {
+                        base.evaluate();
+                    } finally {
+                        final String currentValue = getBrowserRole();
+                        if (!Objects.equals(previousValue, currentValue)) {
+                            // remove the role holder before restore to avoid the error
+                            // "RUNNER ERROR: Instrumentation run failed due to 'Process crashed.'"
+                            // That because when role holder is changed, activtiy process will be
+                            // killed, then the test process will be interrupted.
+                            removeBrowserRole(APP_PACKAGE_NAME);
+                            setBrowserRoleForPackage(previousValue);
+                        }
+                    }
+                }
+            };
+        }
+
+        public void removeBrowserRole(@Nullable String value) {
+            final CallbackFuture future = new CallbackFuture("removeRoleHolderAsUser");
+            try {
+                runWithShellPermissionIdentity(() -> {
+                    getRoleManager().removeRoleHolderAsUser(RoleManager.ROLE_BROWSER, value,
+                            RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP, Process.myUserHandle(),
+                            sContext.getMainExecutor(), future);
+                });
+                future.get(5, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public void setBrowserRoleForPackage(@Nullable String value) {
+            final CallbackFuture future = new CallbackFuture("addBrowserRoleHolder");
+            try {
+                runWithShellPermissionIdentity(() -> {
+                    getRoleManager().addRoleHolderAsUser(RoleManager.ROLE_BROWSER, value,
+                            RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP, Process.myUserHandle(),
+                            sContext.getMainExecutor(), future);
+                });
+                future.get(5, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Nullable
+        public String getBrowserRole() {
+            try {
+                return callWithShellPermissionIdentity(
+                        () -> {
+                            List<String> roleHolders = getRoleManager().getRoleHolders(
+                                    RoleManager.ROLE_BROWSER);
+                            return (roleHolders == null || roleHolders.isEmpty()) ? null
+                                    : roleHolders.get(0);
+                        });
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private RoleManager getRoleManager() {
+            return getContext().getSystemService(RoleManager.class);
+        }
+    }
+
+    private static class CallbackFuture extends CompletableFuture<Boolean>
+            implements Consumer<Boolean> {
+        String mMethodName;
+
+        CallbackFuture(String methodName) {
+            mMethodName = methodName;
+        }
+
+        @Override
+        public void accept(Boolean successful) {
+            complete(successful);
+        }
+    }
 
     protected ClientSuggestionsCommonTestCase() {}
 
