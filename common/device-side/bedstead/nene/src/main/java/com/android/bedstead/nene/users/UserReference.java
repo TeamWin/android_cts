@@ -122,6 +122,13 @@ public final class UserReference implements AutoCloseable {
     }
 
     /**
+     * See {@link UserManager#isAdminUser()}.
+     */
+    public boolean isAdmin() {
+        return userInfo().isAdmin();
+    }
+
+    /**
      * {@code true} if this is a test user which should not include any user data.
      */
     public boolean isForTesting() {

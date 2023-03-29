@@ -107,6 +107,7 @@ public final class DevicePolicy {
         try {
             Retry.logic(command::execute)
                     .terminalException((ex) -> {
+
                         if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
                             return false; // Just retry on old versions as we don't have stderr
                         }
@@ -220,7 +221,7 @@ public final class DevicePolicy {
                     .timeout(Duration.ofMinutes(5))
                     .run();
         } catch (Throwable e) {
-            throw new NeneException("Error setting device owner", e);
+            throw new NeneException("Error setting device owner.", e);
         }
 
         Package deviceOwnerPackage = TestApis.packages().find(

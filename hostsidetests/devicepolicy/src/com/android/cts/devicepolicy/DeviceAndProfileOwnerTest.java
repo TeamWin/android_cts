@@ -817,24 +817,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
         executeDeviceTestClass(".TrustAgentInfoTest");
     }
-
-    @FlakyTest(bugId = 141161038)
-    @Test
-    public void testCannotRemoveUserIfRestrictionSet() throws Exception {
-        assumeCanCreateAdditionalUsers(1);
-        assumeTrue("Outside of the primary user, setting DISALLOW_REMOVE_USER would not work",
-                mUserId == getPrimaryUser());
-
-        final int userId = createUser();
-        try {
-            changeUserRestrictionOrFail(DISALLOW_REMOVE_USER, true, mUserId);
-            assertFalse(getDevice().removeUser(userId));
-        } finally {
-            changeUserRestrictionOrFail(DISALLOW_REMOVE_USER, false, mUserId);
-            assertTrue(getDevice().removeUser(userId));
-        }
-    }
-
     @Test
     public void testCannotEnableOrDisableDeviceOwnerOrProfileOwner() throws Exception {
         // Try to disable a component in device owner/ profile owner.

@@ -932,6 +932,7 @@ def create_work_profile(device_state, args, parent_id):
     return id
 
 def create_clone_profile(device_state, args, parent_id):
+    ensure_no_dpcs(device_state, args) # avoid no_add_clone_profile TODO: Be more specific
     commands = ["adb", "shell", "pm", "create-user", "--profileOf", str(parent_id), "--user-type android.os.usertype.profile.CLONE"]
     if device_state["sdk_version"] >= 33:
         commands.append("--for-testing")
