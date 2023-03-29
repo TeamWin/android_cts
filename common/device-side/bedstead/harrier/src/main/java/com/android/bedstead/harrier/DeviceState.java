@@ -25,6 +25,7 @@ import static com.android.bedstead.harrier.AnnotationExecutorUtil.failOrSkip;
 import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
 import static com.android.bedstead.harrier.annotations.EnsureHasAccount.DEFAULT_ACCOUNT_KEY;
 import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DEFAULT_TEST_APP_KEY;
+import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.DELEGATE_KEY;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
@@ -76,6 +77,7 @@ import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.EnsureSecureSettingSet;
+import com.android.bedstead.harrier.annotations.EnsureTestAppDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
@@ -595,6 +597,17 @@ public final class DeviceState extends HarrierRule {
                         ensureTestAppHasPermissionAnnotation.minVersion(),
                         ensureTestAppHasPermissionAnnotation.maxVersion(),
                         ensureTestAppHasPermissionAnnotation.failureMode()
+                );
+                continue;
+            }
+
+            if (annotation instanceof EnsureTestAppDoesNotHavePermission) {
+                EnsureTestAppDoesNotHavePermission ensureTestAppDoesNotHavePermissionAnnotation =
+                        (EnsureTestAppDoesNotHavePermission) annotation;
+                ensureTestAppDoesNotHavePermission(
+                        ensureTestAppDoesNotHavePermissionAnnotation.testAppKey(),
+                        ensureTestAppDoesNotHavePermissionAnnotation.value(),
+                        ensureTestAppDoesNotHavePermissionAnnotation.failureMode()
                 );
                 continue;
             }
@@ -2615,7 +2628,7 @@ public final class DeviceState extends HarrierRule {
             ensureCanGetPermission(INTERACT_ACROSS_USERS_FULL);
         }
 
-        ensureTestAppInstalled(RemoteDelegate.sTestApp, dpc.user());
+        ensureTestAppInstalled(DELEGATE_KEY, RemoteDelegate.sTestApp, dpc.user());
         RemoteDelegate delegate = new RemoteDelegate(RemoteDelegate.sTestApp, dpc().user());
         dpc.devicePolicyManager().setDelegatedScopes(
                 dpc.componentName(), delegate.packageName(), scopes);
@@ -2690,6 +2703,21 @@ public final class DeviceState extends HarrierRule {
         }
     }
 
+    private void ensureTestAppDoesNotHavePermission(
+            String testAppKey, String[] permissions, FailureMode failureMode) {
+        checkTestAppExistsWithKey(testAppKey);
+
+        try {
+            mTestApps.get(testAppKey).permissions().withoutPermission(permissions);
+        } catch (NeneException e) {
+            if (failureMode.equals(FailureMode.SKIP) && e.getMessage().contains("Cannot deny")) {
+                failOrSkip(e.getMessage(), FailureMode.SKIP);
+            } else {
+                throw e;
+            }
+        }
+    }
+
     private void ensureTestAppHasAppOp(
             String testAppKey, String[] appOps, int minVersion, int maxVersion) {
         checkTestAppExistsWithKey(testAppKey);
@@ -2702,7 +2730,7 @@ public final class DeviceState extends HarrierRule {
         if (!mTestApps.containsKey(testAppKey)) {
             throw new NeneException(
                     "No testapp with key " + testAppKey + ". Use @EnsureTestAppInstalled."
-                            + "Valid Test apps: " + mTestApps);
+                            + " Valid Test apps: " + mTestApps);
         }
     }
 
@@ -2720,14 +2748,22 @@ public final class DeviceState extends HarrierRule {
     }
 
     private TestAppInstance ensureTestAppInstalled(TestApp testApp, UserReference user) {
+        return ensureTestAppInstalled(/* key= */ null, testApp, user);
+    }
+
+    private TestAppInstance ensureTestAppInstalled(String key, TestApp testApp, UserReference user) {
         Package pkg = TestApis.packages().find(testApp.packageName());
+        TestAppInstance testAppInstance = null;
         if (pkg != null && TestApis.packages().find(testApp.packageName()).installedOnUser(
                 user)) {
-            return testApp.instance(user);
+            testAppInstance = testApp.instance(user);
+        } else {
+            testAppInstance = testApp.install(user);
+            mInstalledTestApps.add(testAppInstance);
         }
-
-        TestAppInstance testAppInstance = testApp.install(user);
-        mInstalledTestApps.add(testAppInstance);
+        if (key != null) {
+            mTestApps.put(key, testAppInstance);
+        }
         return testAppInstance;
     }
 

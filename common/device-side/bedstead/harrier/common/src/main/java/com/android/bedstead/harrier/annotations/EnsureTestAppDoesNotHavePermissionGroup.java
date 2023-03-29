@@ -16,31 +16,20 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DEFAULT_TEST_APP_KEY;
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.ENSURE_HAS_DELEGATE_WEIGHT;
 
+import com.android.bedstead.harrier.annotations.meta.RepeatingAnnotation;
+
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Ensure that the given app op is granted to the test app before running the test.
- */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(EnsureTestAppHasAppOpGroup.class)
-public @interface EnsureTestAppHasAppOp {
-    String[] value();
-
-    String testAppKey() default DEFAULT_TEST_APP_KEY;
-
-    /** The minimum version where this appOp is required. */
-    int minVersion() default 0;
-
-    /** The maximum version where this appOp is required. */
-    int maxVersion() default Integer.MAX_VALUE;
+@RepeatingAnnotation
+public @interface EnsureTestAppDoesNotHavePermissionGroup {
+    EnsureTestAppDoesNotHavePermission[] value();
 
     /**
      * Weight sets the order that annotations will be resolved.
