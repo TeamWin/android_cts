@@ -41,9 +41,10 @@ class DomainVerificationWorkProfileCrossProfileIntentTests :
     @Before
     fun saveAndSetPolicy() {
         val manager = deviceState.getWorkDevicePolicyManager()
-        initialAppLinkPolicy = manager.getAppLinkPolicy(deviceState.dpc().componentName()!!)
+        val component = deviceState.getWorkDpcComponent()
+        initialAppLinkPolicy = manager.getAppLinkPolicy(component)
         if (initialAppLinkPolicy != false) {
-            manager.setAppLinkPolicy(deviceState.dpc().componentName()!!, false)
+            manager.setAppLinkPolicy(component, false)
         }
 
         val intentFilter = IntentFilter().apply {
@@ -54,7 +55,7 @@ class DomainVerificationWorkProfileCrossProfileIntentTests :
             addDataAuthority(DOMAIN_1, null)
         }
         manager.addCrossProfileIntentFilter(
-            deviceState.dpc().componentName()!!,
+            component,
             intentFilter,
             DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED
                     or DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT
@@ -64,11 +65,11 @@ class DomainVerificationWorkProfileCrossProfileIntentTests :
     @After
     fun resetPolicy() {
         val manager = deviceState.getWorkDevicePolicyManager()
-        if (initialAppLinkPolicy ?: return != manager.getAppLinkPolicy(
-            deviceState.dpc().componentName()!!)) {
-            manager.setAppLinkPolicy(deviceState.dpc().componentName()!!, initialAppLinkPolicy!!)
+        val component = deviceState.getWorkDpcComponent()
+        if (initialAppLinkPolicy ?: return != manager.getAppLinkPolicy(component)) {
+            manager.setAppLinkPolicy(component, initialAppLinkPolicy!!)
         }
-        manager.clearCrossProfileIntentFilters(deviceState.dpc().componentName()!!)
+        manager.clearCrossProfileIntentFilters(component)
     }
 
     @RequireRunOnInitialUser
