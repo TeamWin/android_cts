@@ -69,6 +69,7 @@ import androidx.window.sidecar.SidecarDisplayFeature;
 import androidx.window.sidecar.SidecarInterface;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.CddTest;
 
 import com.google.common.collect.BoundType;
 import com.google.common.collect.Range;
@@ -282,6 +283,7 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
         assertEquals(windowLayoutInfoFromContext, windowLayoutInfoFromActivity);
     }
 
+    @CddTest(requirements = {"7.1.1.1"})
     @ApiTest(apis = {"androidx.window.extensions.layout.WindowLayoutInfo#getDisplayFeatures"})
     @Test
     public void testGetWindowLayoutInfo_configChanged_windowLayoutUpdates()
@@ -504,6 +506,7 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
      * Tests that if sidecar is also present, then it returns the same display features as
      * extensions.
      */
+    @CddTest(requirements = {"7.1.1.1"})
     @Test
     public void testSidecarHasSameDisplayFeatures() throws InterruptedException {
         TestActivity activity = startFullScreenActivityNewTask(TestActivity.class,
