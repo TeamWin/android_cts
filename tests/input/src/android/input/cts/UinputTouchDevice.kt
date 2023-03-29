@@ -55,6 +55,10 @@ class UinputTouchDevice(
         injectEvent(intArrayOf(EV_KEY, BTN_TOUCH, if (isDown) 1 else 0))
     }
 
+    fun sendBtn(btnCode: Int, isDown: Boolean) {
+        injectEvent(intArrayOf(EV_KEY, btnCode, if (isDown) 1 else 0))
+    }
+
     fun sendDown(id: Int, location: Point, toolType: Int? = null) {
         injectEvent(intArrayOf(EV_ABS, ABS_MT_SLOT, id))
         injectEvent(intArrayOf(EV_ABS, ABS_MT_TRACKING_ID, id))
