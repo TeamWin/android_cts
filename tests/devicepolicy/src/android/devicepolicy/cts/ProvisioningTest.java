@@ -699,6 +699,7 @@ public final class ProvisioningTest {
     }
 
     @EnsureHasAdditionalUser
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
     @EnsureDoesNotHavePermission({MANAGE_USERS, INTERACT_ACROSS_USERS})
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Test
@@ -1090,7 +1091,6 @@ public final class ProvisioningTest {
     @RequireNotHeadlessSystemUserMode(reason = "TODO(b/242189747): Remove or give reason")
     @RequireFeature(FEATURE_DEVICE_ADMIN)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#checkProvisioningPrecondition")
-    // TODO: Think about this on headles... i think maybe "Main user" is fine?
     public void checkProvisioningPreCondition_actionDO_onNonSystemUser_returnsNotSystemUser() {
         boolean setupComplete = TestApis.users().current().getSetupComplete();
         TestApis.users().current().setSetupComplete(false);
