@@ -71,6 +71,18 @@ public class MemtagBootctlTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @CddTest(requirements = {"9.7/C-3-1,9.7/C-3-2,9.7/C-3-3"})
+    public void testMemtagOff() throws Exception {
+        getDevice().setProperty("arm64.memtag.bootctl", "memtag-off");
+        getDevice().reboot();
+        assertThat(getDevice().getProperty("arm64.memtag.bootctl")).isEqualTo("memtag-off");
+        assertThat(getDevice().pullFileContents("/proc/cpuinfo")).doesNotContain(" mte");
+        getDevice().reboot();
+        assertThat(getDevice().getProperty("arm64.memtag.bootctl")).isEqualTo("memtag-off");
+        assertThat(getDevice().pullFileContents("/proc/cpuinfo")).doesNotContain(" mte");
+    }
+
+    @Test
     @CddTest(requirements = {"9.7/C-3-1,9.7/C-3-2,9.7/C-3-3,9.7/C-3-4"})
     public void testMemtag() throws Exception {
         getDevice().setProperty("arm64.memtag.bootctl", "memtag");
