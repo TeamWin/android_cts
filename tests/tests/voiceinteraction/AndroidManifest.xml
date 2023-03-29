@@ -110,6 +110,18 @@
             </intent-filter>
         </service>
         <service
+            android:name="android.voiceinteraction.cts.services.NonSharedIsolatedHotwordDetectionVoiceInteractionService"
+            android:label="NonIsolatedHotwordDetectionVoiceInteractionService"
+            android:permission="android.permission.BIND_VOICE_INTERACTION"
+            android:exported="true"
+            android:visibleToInstantApps="true">
+            <meta-data android:name="android.voice_interaction"
+                       android:resource="@xml/interaction_service_with_non_shared_isolated"/>
+            <intent-filter>
+                <action android:name="android.service.voice.VoiceInteractionService"/>
+            </intent-filter>
+        </service>
+        <service
             android:name=".services.NoSessionVoiceInteractionService"
             android:label="Voice interaction service with no existing session service"
             android:permission="android.permission.BIND_VOICE_INTERACTION"
@@ -147,6 +159,12 @@
             android:permission="android.permission.BIND_HOTWORD_DETECTION_SERVICE"
             android:exported="true">
         </service>
+        <service
+            android:name="android.voiceinteraction.cts.services.NonSharedIsolatedHotwordDetectionService"
+            android:permission="android.permission.BIND_HOTWORD_DETECTION_SERVICE"
+            android:isolatedProcess="true"
+            android:exported="true">
+        </service>
 
         <!-- VisualQueryDetectionService -->
         <service
@@ -154,6 +172,12 @@
             android:permission="android.permission.BIND_VISUAL_QUERY_DETECTION_SERVICE"
             android:isolatedProcess="true"
             android:allowSharedIsolatedProcess="true"
+            android:exported="true">
+        </service>
+        <service
+            android:name="android.voiceinteraction.cts.services.NonSharedIsolatedVisualQueryDetectionService"
+            android:permission="android.permission.BIND_VISUAL_QUERY_DETECTION_SERVICE"
+            android:isolatedProcess="true"
             android:exported="true">
         </service>
 
