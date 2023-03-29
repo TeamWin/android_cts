@@ -32,6 +32,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner
 import com.android.bedstead.harrier.policies.GlobalSecurityLogging;
 import com.android.bedstead.harrier.policies.SecurityLogging;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.ApiTest;
 
@@ -320,11 +321,19 @@ public final class SecurityLoggingTest {
 
     private void ensureNoAdditionalUsers() {
         // TODO(273474964): Move into infra
-        TestApis.users().all().stream()
-                .filter(u -> !u.equals(TestApis.users().instrumented())
-                        && !u.equals(TestApis.users().system())
-                        && !u.equals(TestApis.users().current()))
-                .forEach(UserReference::remove);
+        try {
+            TestApis.users().all().stream()
+                    .filter(u -> !u.equals(TestApis.users().instrumented())
+                            && !u.equals(TestApis.users().system())
+                            && !u.equals(TestApis.users().current()))
+                    .forEach(UserReference::remove);
+        } catch (NeneException e) {
+            // Happens when we can't remove a user
+            throw new NeneException("Error when removing user. Instrumented user is "
+                    + TestApis.users().instrumented() + ", current user is "
+                    + TestApis.users().current() + ", system user is "
+                    + TestApis.users().system(), e);
+        }
     }
 
 }
