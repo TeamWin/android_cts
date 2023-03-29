@@ -60,7 +60,7 @@ public final class SystemErrorDialogsTest {
     private static final long CRASH_DIALOG_WAIT_MILLIS = 2_000;
 
     @CannotSetPolicyTest(
-            policy = DisallowSystemErrorDialogs.class, includeNonDeviceAdminStates = false)
+            policy = DisallowSystemErrorDialogs.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SYSTEM_ERROR_DIALOGS")
     public void addUserRestriction_disallowSystemErrorDialogs_cannotSet_throwsException() {
