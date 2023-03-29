@@ -22,8 +22,6 @@ import android.accounts.RemoteAccountManagerWrapper;
 import android.app.NotificationManager;
 import android.app.RemoteNotificationManager;
 import android.app.RemoteNotificationManagerWrapper;
-import android.content.RemoteRestrictionsManager;
-import android.content.RemoteRestrictionsManagerWrapper;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManagerWrapper;
@@ -35,6 +33,8 @@ import android.content.Context;
 import android.content.IntentFilter;
 import android.content.RemoteContext;
 import android.content.RemoteContextWrapper;
+import android.content.RemoteRestrictionsManager;
+import android.content.RemoteRestrictionsManagerWrapper;
 import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageManager;
 import android.content.pm.RemoteCrossProfileApps;
@@ -59,6 +59,7 @@ import android.telecom.RemoteTelecomManager;
 import android.telecom.RemoteTelecomManagerWrapper;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.appops.AppOps;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.nene.users.UserReference;
@@ -440,6 +441,13 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      */
     public TestAppInstancePermissions permissions() {
         return mTestAppInstancePermissions;
+    }
+
+    /**
+     * Access AppOps for this test app.
+     */
+    public AppOps appOps() {
+        return testApp().pkg().appOps(mUser);
     }
 
     @Override
