@@ -16,7 +16,8 @@
 
 package android.view.inputmethod.cts;
 
-import static android.provider.Settings.Global.STYLUS_HANDWRITING_ENABLED;
+import static android.provider.Settings.Secure.STYLUS_HANDWRITING_DEFAULT_VALUE;
+import static android.provider.Settings.Secure.STYLUS_HANDWRITING_ENABLED;
 import static android.view.inputmethod.InputMethodInfo.ACTION_STYLUS_HANDWRITING_SETTINGS;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -125,11 +126,11 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         assumeFalse(mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_LEANBACK_ONLY));
 
-        mHwInitialState = Settings.Global.getInt(mContext.getContentResolver(),
-                STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_OFF);
+        mHwInitialState = Settings.Secure.getInt(mContext.getContentResolver(),
+                STYLUS_HANDWRITING_ENABLED, STYLUS_HANDWRITING_DEFAULT_VALUE);
         if (mHwInitialState != SETTING_VALUE_ON) {
             SystemUtil.runWithShellPermissionIdentity(() -> {
-                Settings.Global.putInt(mContext.getContentResolver(),
+                Settings.Secure.putInt(mContext.getContentResolver(),
                         STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_ON);
             }, Manifest.permission.WRITE_SECURE_SETTINGS);
             mShouldRestoreInitialHwState = true;
@@ -142,7 +143,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         if (mShouldRestoreInitialHwState) {
             mShouldRestoreInitialHwState = false;
             SystemUtil.runWithShellPermissionIdentity(() -> {
-                Settings.Global.putInt(mContext.getContentResolver(),
+                Settings.Secure.putInt(mContext.getContentResolver(),
                         STYLUS_HANDWRITING_ENABLED, mHwInitialState);
             }, Manifest.permission.WRITE_SECURE_SETTINGS);
         }
@@ -182,7 +183,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
 
             // Disable pref
             SystemUtil.runWithShellPermissionIdentity(() -> {
-                Settings.Global.putInt(mContext.getContentResolver(),
+                Settings.Secure.putInt(mContext.getContentResolver(),
                         STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_OFF);
             }, Manifest.permission.WRITE_SECURE_SETTINGS);
             mShouldRestoreInitialHwState = true;
