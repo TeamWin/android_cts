@@ -1526,7 +1526,7 @@ public abstract class ActivityManagerTestBase {
     /** @see ObjectTracker#manage(AutoCloseable) */
     protected RotationSession createManagedRotationSession() {
         mWaitForRotationOnTearDown = true;
-        return mObjectTracker.manage(new RotationSession());
+        return mObjectTracker.manage(new RotationSession(mWmState));
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */
