@@ -43,7 +43,6 @@ android_test {
         "junit",
         "truth-prebuilt",
         "accountaccesslib",
-        "ub-uiautomator",
         // TODO: remove once Android migrates to JUnit 4.12, which provides assertThrows:
         "testng",
         "androidx.legacy_legacy-support-v4",
