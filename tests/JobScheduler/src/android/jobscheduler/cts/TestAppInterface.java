@@ -32,6 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
+import android.app.AppOpsManager;
 import android.app.job.JobParameters;
 import android.app.job.JobScheduler;
 import android.content.BroadcastReceiver;
@@ -48,6 +49,8 @@ import android.server.wm.WindowManagerStateHelper;
 import android.util.Log;
 import android.util.SparseArray;
 
+import com.android.compatibility.common.util.AppOpsUtils;
+import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.CallbackAsserter;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -79,9 +82,17 @@ class TestAppInterface implements AutoCloseable {
         intentFilter.addAction(ACTION_JOB_STOPPED);
         intentFilter.addAction(ACTION_JOB_SCHEDULE_RESULT);
         mContext.registerReceiver(mReceiver, intentFilter, Context.RECEIVER_EXPORTED_UNAUDITED);
+        if (AppStandbyUtils.isAppStandbyEnabled()) {
+            // Disable the bucket elevation so that we put the app in lower buckets.
+            SystemUtil.runShellCommand(
+                    "am compat enable --no-kill SCHEDULE_EXACT_ALARM_DOES_NOT_ELEVATE_BUCKET "
+                            + TEST_APP_PACKAGE);
+            // Force the test app out of the never bucket.
+            SystemUtil.runShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " rare");
+        }
     }
 
-    void cleanup() {
+    void cleanup() throws Exception {
         final Intent cancelJobsIntent = new Intent(TestJobSchedulerReceiver.ACTION_CANCEL_JOBS);
         cancelJobsIntent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
         cancelJobsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -89,13 +100,14 @@ class TestAppInterface implements AutoCloseable {
         closeActivity();
         stopFgs();
         mContext.unregisterReceiver(mReceiver);
+        AppOpsUtils.reset(TEST_APP_PACKAGE);
         SystemUtil.runShellCommand("am compat --reset-all" + TEST_APP_PACKAGE);
         mTestJobStates.clear();
         forceStopApp(); // Clean up as much internal/temporary system state as possible
     }
 
     @Override
-    public void close() {
+    public void close() throws Exception {
         cleanup();
     }
 
@@ -154,6 +166,8 @@ class TestAppInterface implements AutoCloseable {
     }
 
     void postFgsStartingAlarm() throws Exception {
+        AppOpsUtils.setOpMode(TEST_APP_PACKAGE,
+                AppOpsManager.OPSTR_SCHEDULE_EXACT_ALARM, AppOpsManager.MODE_ALLOWED);
         final Intent intent = new Intent(TestJobSchedulerReceiver.ACTION_SCHEDULE_FGS_START_ALARM);
         intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         intent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
