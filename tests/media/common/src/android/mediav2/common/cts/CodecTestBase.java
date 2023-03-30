@@ -41,7 +41,6 @@ import android.media.MediaFormat;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
-import android.os.SystemProperties;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Display;
@@ -49,7 +48,9 @@ import android.view.Surface;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiLevelUtil.InitialSdk;
+import com.android.compatibility.common.util.ApiLevelUtil.Sdk;
+import com.android.compatibility.common.util.ApiLevelUtil.Vndk;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.After;
@@ -106,19 +107,13 @@ import java.util.stream.IntStream;
  * component trying and testing.
  */
 public abstract class CodecTestBase {
-    public static final boolean IS_Q = ApiLevelUtil.getApiLevel() == Build.VERSION_CODES.Q;
-    public static final boolean IS_AT_LEAST_R = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
-    public static final boolean IS_AT_LEAST_T =
-            ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU);
-    //TODO(b/248315681) Remove codenameEquals() check once devices return correct version for U
-    public static final boolean IS_AT_LEAST_U = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)
-            || ApiLevelUtil.codenameEquals("UpsideDownCake");
-    public static final boolean IS_BEFORE_U = !IS_AT_LEAST_U;
-    public static final boolean FIRST_SDK_IS_AT_LEAST_T =
-            ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU);
-    public static final boolean VNDK_IS_AT_LEAST_T =
-            SystemProperties.getInt("ro.vndk.version", Build.VERSION_CODES.CUR_DEVELOPMENT)
-                    >= Build.VERSION_CODES.TIRAMISU;
+    public static final boolean IS_Q = Sdk.isQ();
+    public static final boolean IS_AT_LEAST_R = Sdk.isAtLeastR();
+    public static final boolean IS_AT_LEAST_T = Sdk.isAtLeastT();
+    public static final boolean IS_AT_LEAST_U = Sdk.isAtLeastU();
+    public static final boolean IS_BEFORE_U = Sdk.isBeforeU();
+    public static final boolean FIRST_SDK_IS_AT_LEAST_T = InitialSdk.isAtLeastT();
+    public static final boolean VNDK_IS_AT_LEAST_T = Vndk.isAtLeastT();
     public static final boolean IS_HDR_EDITING_SUPPORTED;
     public static final boolean IS_HDR_CAPTURE_SUPPORTED;
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();

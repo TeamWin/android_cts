@@ -219,8 +219,9 @@ public class WallpaperManagerSdk33Test {
     private void assertReturnsDefault(Supplier<Drawable> methodToTest, String methodName) {
         Drawable drawable = methodToTest.get();
         assertWithMessage(
-                "with no permission, " + methodName + " should return the default bitmap")
-                .that(isSimilar(getBitmap(drawable), sDefaultBitmap, false)).isTrue();
+                "with no permission, " + methodName + " should return null or the default bitmap")
+                .that(drawable == null || isSimilar(getBitmap(drawable), sDefaultBitmap, false))
+                .isTrue();
     }
 
     private void assertReturnsCurrent(Supplier<Drawable> methodToTest, String methodName) {

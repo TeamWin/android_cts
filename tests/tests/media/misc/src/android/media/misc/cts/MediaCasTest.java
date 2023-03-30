@@ -29,7 +29,6 @@ import android.media.MediaCasException.UnsupportedCasException;
 import android.media.MediaCasStateException;
 import android.media.MediaCodec;
 import android.media.MediaDescrambler;
-import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.platform.test.annotations.AppModeFull;
@@ -41,7 +40,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiLevelUtil.Sdk;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.PropertyUtil;
 
@@ -69,11 +68,9 @@ public class MediaCasTest {
     private static final int sInvalidSystemId = 0;
     private static final int sClearKeySystemId = 0xF6D8;
     private static final int API_LEVEL_BEFORE_CAS_SESSION = 28;
-    private boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
-    private boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
-    //TODO(b/248315681) Remove codenameEquals() check once devices return correct version for U
-    private boolean mIsAtLeastU = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)
-            || ApiLevelUtil.codenameEquals("UpsideDownCake");
+    private boolean mIsAtLeastR = Sdk.isAtLeastR();
+    private boolean mIsAtLeastS = Sdk.isAtLeastS();
+    private boolean mIsAtLeastU = Sdk.isAtLeastU();
 
     // ClearKey CAS/Descrambler test vectors
     private static final String sProvisionStr =

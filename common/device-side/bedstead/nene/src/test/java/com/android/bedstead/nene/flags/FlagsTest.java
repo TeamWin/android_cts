@@ -16,7 +16,7 @@
 
 package com.android.bedstead.nene.flags;
 
-import static android.Manifest.permission.ALLOWLISTED_WRITE_DEVICE_CONFIG;
+import static android.Manifest.permission.WRITE_ALLOWLISTED_DEVICE_CONFIG;
 
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.DISABLE_RESOURCES_UPDATABILITY_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
@@ -61,7 +61,7 @@ public final class FlagsTest {
     }
 
     @Test
-    @EnsureHasPermission(ALLOWLISTED_WRITE_DEVICE_CONFIG)
+    @EnsureHasPermission(WRITE_ALLOWLISTED_DEVICE_CONFIG)
     public void setFlagSyncEnabledFalse_bulkFlagUpdateDoesNotChangeValues() throws Exception {
         TestApis.flags().setFlagSyncEnabled(false);
         TestApis.flags().set(NAMESPACE, KEY, VALUE);
@@ -74,7 +74,7 @@ public final class FlagsTest {
     }
 
     @Test
-    @EnsureHasPermission(ALLOWLISTED_WRITE_DEVICE_CONFIG)
+    @EnsureHasPermission(WRITE_ALLOWLISTED_DEVICE_CONFIG)
     public void setFlagSyncEnabledTrue_bulkFlagUpdateDoesChangeValues() throws Exception {
         TestApis.flags().setFlagSyncEnabled(true);
         TestApis.flags().set(NAMESPACE, KEY, VALUE);

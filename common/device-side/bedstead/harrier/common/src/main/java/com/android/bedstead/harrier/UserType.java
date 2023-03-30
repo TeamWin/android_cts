@@ -90,6 +90,9 @@ public enum UserType {
     /** A {@link UserType#SECONDARY_USER} who is not the {@link UserType#INITIAL_USER}. */
     ADDITIONAL_USER,
 
+    /** A user for whom {@code UserReference#isAdmin} returns true. */
+    ADMIN_USER,
+
     /**
      * A user with type {@code android.os.usertype.profile.CLONE}.
      *

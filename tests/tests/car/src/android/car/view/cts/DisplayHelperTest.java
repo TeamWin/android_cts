@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.car.cts;
+package android.car.view.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 

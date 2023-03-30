@@ -19,8 +19,8 @@ package android.permission3.cts
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.os.Build
 import android.provider.DeviceConfig
-import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
+import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.modules.utils.build.SdkLevel
 import org.junit.Assume

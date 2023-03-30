@@ -365,9 +365,11 @@ public class VehiclePropertyVerifier<T> {
     private void verifyWritePermissions() {
         CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
         for (ImmutableSet<String> writePermissions: mWritePermissions) {
-            if (carPropertyConfig.getAccess()
-                    == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+            if (carPropertyConfig.getAccess() != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
                 verifyWritePermissionsCannotRead(writePermissions, mReadPermissions);
+            }
+            if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
+                return;
             }
             if (writePermissions.size() > 1) {
                 verifyIndividualWritePermissionsCannotWrite(writePermissions);
@@ -521,9 +523,8 @@ public class VehiclePropertyVerifier<T> {
             return;
         }
 
-        // TODO(b/265483050): Reenable once the bug is fixed.
-        // turnOffHvacPower(hvacPowerOnCarPropertyConfig);
-        // verifySetNotAvailable();
+        turnOffHvacPower(hvacPowerOnCarPropertyConfig);
+        verifySetNotAvailable();
         SparseArray<Boolean> hvacPowerStateByAreaId = (SparseArray<Boolean>)
                 mPropertyToAreaIdValues.get(VehiclePropertyIds.HVAC_POWER_ON);
         restoreInitialValuesByAreaId(hvacPowerOnCarPropertyConfig, mCarPropertyManager,

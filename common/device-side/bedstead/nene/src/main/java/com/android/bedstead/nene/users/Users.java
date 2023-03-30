@@ -165,7 +165,9 @@ public final class Users {
         if (Versions.meetsMinimumSdkVersionRequirement(S)) {
             try (PermissionContext p =
                          TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
-                return find(ActivityManager.getCurrentUser());
+                int currentUserId = ActivityManager.getCurrentUser();
+                Log.d(LOG_TAG, "current(): finding " + currentUserId);
+                return find(currentUserId);
             }
         }
 
@@ -297,6 +299,20 @@ public final class Users {
         }
 
         return profiles.iterator().next();
+    }
+
+
+    /**
+     * Find all users which have the given {@link UserType} and the instrumented user as parent.
+     *
+     * <p>If there are no users of the given type and parent, {@code Null} will be returned.
+     *
+     * <p>If there is more than one user of the given type and parent, {@link NeneException} will
+     * be thrown.
+     */
+    @Nullable
+    public UserReference findProfileOfType(UserType userType) {
+        return findProfileOfType(userType, TestApis.users().instrumented());
     }
 
     private void ensureSupportedTypesCacheFilled() {

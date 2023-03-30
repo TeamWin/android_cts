@@ -44,13 +44,20 @@ public class RotationSession extends SettingsSession<Integer> {
     private int mPreviousDegree;
     private final String mPreviousFixedToUserRotationMode;
 
+    private final WindowManagerStateHelper mWmState;
+
     public RotationSession() {
+        this(new WindowManagerStateHelper());
+    }
+
+    public RotationSession(WindowManagerStateHelper wmState) {
         // Save user_rotation and accelerometer_rotation preferences.
         super(Settings.System.getUriFor(Settings.System.USER_ROTATION),
                 Settings.System::getInt, Settings.System::putInt);
         mAccelerometerRotation = new SettingsSession<>(
                 Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION),
                 Settings.System::getInt, Settings.System::putInt);
+        mWmState = wmState;
 
         mThread = new HandlerThread("Observer_Thread");
         mThread.start();
@@ -103,7 +110,7 @@ public class RotationSession extends SettingsSession<Integer> {
 
         if (waitDeviceRotation) {
             // Wait for the display to apply the rotation.
-            new WindowManagerStateHelper().waitForRotation(value);
+            mWmState.waitForRotation(value);
         } else {
             // Wait for the settings have been changed.
             Condition.waitFor(new Condition<>("rotation setting changed",

@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
 /**
  * Mark that a test requires that the given admin delegates the given scope to a test app.
  *
- * <p>You should use {@code Devicestate} to ensure that the device enters
+ * <p>You should use {@code DeviceState} to ensure that the device enters
  * the correct state for the method. You can use {@code Devicestate#delegate()} to interact with
  * the delegate.
  */
@@ -49,7 +49,11 @@ import java.lang.annotation.Target;
         namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
         key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG
 )
+// TODO(b/219750042): If we leave over appops and permissions then the delegate will have them
 public @interface EnsureHasDelegate {
+
+    /** The default key used for the testapp installed as delegate */
+    String DELEGATE_KEY = "delegate";
 
     int ENSURE_HAS_DELEGATE_WEIGHT = DO_PO_WEIGHT + 1; // Should run after setting DO/PO
 

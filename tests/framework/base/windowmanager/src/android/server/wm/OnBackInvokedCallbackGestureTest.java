@@ -18,8 +18,7 @@ package android.server.wm;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
-
+import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertTrue;
@@ -32,7 +31,8 @@ import android.window.OnBackAnimationCallback;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.After;
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -73,7 +73,6 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
             mTracker.trackBackProgressed(e);
         }
     };
-    private String mInitialBackAnimationSetting;
 
     @Before
     public void setup() throws Exception {
@@ -94,16 +93,10 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
 
         mActivity = activitySession.getActivity();
         registerBackCallback(mActivity);
-
-        enableBackAnimation();
-    }
-
-    @After
-    public void tearDown() {
-        restoreBackAnimation();
     }
 
     @Test
+    @CddTest(requirements = { "7.2.3/H-0-5,H-0-6,H-0-8" })
     public void invokesCallback_invoked() throws InterruptedException {
         int midHeight = mUiDevice.getDisplayHeight() / 2;
         int midWidth = mUiDevice.getDisplayWidth() / 2;
@@ -128,7 +121,11 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         for (int i = 0; i < events.size() - 1; i++) {
             // Check that progress events report increasing progress values.
             // TODO(b/258817762): Verify more once the progress clamping behavior is implemented.
-            assertTrue(events.get(i).getProgress() <= events.get(i + 1).getProgress());
+            BackEvent event = events.get(i);
+            assertTrue(event.getProgress() <= events.get(i + 1).getProgress());
+            assertTrue(event.getTouchX() <= events.get(i + 1).getTouchX());
+            assertEquals(midHeight, midHeight, event.getTouchY());
+            assertEquals(BackEvent.EDGE_LEFT, event.getSwipeEdge());
         }
 
         touchSession.finishSwipe();
@@ -137,6 +134,7 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
     }
 
     @Test
+    @CddTest(requirements = { "7.2.3/H-0-7" })
     public void invokesCallback_cancelled() throws InterruptedException {
         int midHeight = mUiDevice.getDisplayHeight() / 2;
         int midWidth = mUiDevice.getDisplayWidth() / 2;
@@ -160,6 +158,19 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         List<BackEvent> events = mTracker.mProgressEvents;
         assertTrue(events.size() > 0);
         assertTrue(events.get(events.size() - 1).getProgress() == 0);
+    }
+
+    @Test
+    public void constructsEvent() {
+        final float x = 200;
+        final float y = 300;
+        final float progress = 0.5f;
+        final int swipeEdge = BackEvent.EDGE_RIGHT;
+        BackEvent event = new BackEvent(x, y, progress, swipeEdge);
+        assertEquals(x, event.getTouchX());
+        assertEquals(y, event.getTouchY());
+        assertEquals(progress, event.getProgress());
+        assertEquals(swipeEdge, event.getSwipeEdge());
     }
 
     private void assertInvoked(CountDownLatch latch) throws InterruptedException {
@@ -226,16 +237,5 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         private void trackBackInvoked() {
             mInvokeLatch.countDown();
         }
-    }
-
-    private void enableBackAnimation() {
-        mInitialBackAnimationSetting =
-                runShellCommand("settings get global enable_back_animation");
-        runShellCommand("settings put global enable_back_animation 1");
-    }
-
-    private void restoreBackAnimation() {
-        runShellCommand("settings put global enable_back_animation "
-                + mInitialBackAnimationSetting);
     }
 }

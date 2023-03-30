@@ -30,17 +30,17 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Build
 import android.os.UserHandle
 import android.provider.Settings
-import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
+import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import java.util.concurrent.CountDownLatch
 import org.junit.After
 import org.junit.Assert
 import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.CountDownLatch
 
 const val EXTRA_DELETE_CHANNELS_ON_CLOSE = "extra_delete_channels_on_close"
 const val EXTRA_CREATE_CHANNELS = "extra_create"

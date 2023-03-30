@@ -122,6 +122,13 @@ public final class UserReference implements AutoCloseable {
     }
 
     /**
+     * See {@link UserManager#isAdminUser()}.
+     */
+    public boolean isAdmin() {
+        return userInfo().isAdmin();
+    }
+
+    /**
      * {@code true} if this is a test user which should not include any user data.
      */
     public boolean isForTesting() {
@@ -431,6 +438,14 @@ public final class UserReference implements AutoCloseable {
             Log.d(LOG_TAG, "isUserForeground(" + this + "): " + isIt);
             return isIt;
         }
+    }
+
+    /**
+     * Is the user a non-{@link #isProfile() profile} that is running {@link #isVisible()} in the
+     * background?
+     */
+    public boolean isVisibleBagroundNonProfileUser() {
+        return isVisible() && !isForeground() && !isProfile();
     }
 
     /** Is the user unlocked? */

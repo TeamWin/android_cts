@@ -283,6 +283,8 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         // check getCurrentInputMethodInfoAsUser(userId)
         assertIme1NotCurrentInputMethodInfo(profileUserId);
         assertIme2InCurrentInputMethodInfo(profileUserId);
+        // Check isStylusHandwritingAvailable() for profile user.
+        assertIsStylusHandwritingAvailable(profileUserId);
 
         // Make sure that IME switches depending on the target user.
         runTestAsUser(DeviceTestConstants.TEST_CONNECTING_TO_THE_SAME_USER_IME, primaryUserId);
@@ -407,6 +409,11 @@ public class MultiUserTest extends BaseHostJUnit4Test {
 
     private void assertIme2InCurrentInputMethodInfo(int userId) throws Exception {
         runTestAsUser(DeviceTestConstants.TEST_IME2_IN_CURRENT_INPUT_METHOD_INFO, userId);
+    }
+
+    private void assertIsStylusHandwritingAvailable(int profileUserId) throws Exception {
+        runTestAsUser(DeviceTestConstants.TEST_IS_STYLUS_HANDWRITING_AVAILABLE_FOR_PROFILE_USER,
+                profileUserId);
     }
 
     private void assertIme2NotCurrentInputMethodInfo(int userId) throws Exception {

@@ -461,6 +461,8 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
     @Override
     protected List<FrameworkMethod> computeTestMethods() {
+        // TODO: It appears that the annotations are computed up to 8 times per run. Figure out how to
+        // cut this out (this method only seems to be called once)
         List<FrameworkMethod> basicTests = getBasicTests(getTestClass());
         List<FrameworkMethod> modifiedTests = new ArrayList<>();
 

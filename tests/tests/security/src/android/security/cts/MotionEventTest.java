@@ -152,14 +152,9 @@ public class MotionEventTest {
 
         List<MotionEvent> outsideEvents = listener.getOutsideEvents();
 
-        if (isRunningInVR()) {
-            // In VR mode we should be prevented from seeing any events.
-            assertEquals(0, outsideEvents.size());
-        } else {
-            assertEquals(2, outsideEvents.size());
-            for (MotionEvent e : outsideEvents) {
-                assertEquals(0, e.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED);
-            }
+        assertEquals(2, outsideEvents.size());
+        for (MotionEvent e : outsideEvents) {
+            assertEquals(0, e.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED);
         }
     }
 

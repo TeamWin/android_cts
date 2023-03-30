@@ -24,8 +24,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
-import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
 
 /**
  * Tests Audio Device Connection events for output devices by prompting the user to

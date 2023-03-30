@@ -131,6 +131,11 @@ public class AudioTap2ToneActivity
     private double[] mLatencyMillis = new double[NUM_TEST_PHASES];
 
     @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
+    @Override
     public String getReportFileName() {
         return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME;
     }

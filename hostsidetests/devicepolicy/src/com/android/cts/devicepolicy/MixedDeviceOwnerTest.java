@@ -138,13 +138,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         super.testDelegatedCertInstaller();
     }
 
-    @FlakyTest(bugId = 141161038)
-    @Override
-    @Test
-    public void testCannotRemoveUserIfRestrictionSet() throws Exception {
-        super.testCannotRemoveUserIfRestrictionSet();
-    }
-
     @FlakyTest(bugId = 137088260)
     @Test
     public void testWifi() throws Exception {

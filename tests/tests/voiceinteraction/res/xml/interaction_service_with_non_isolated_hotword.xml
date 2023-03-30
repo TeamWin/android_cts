@@ -19,7 +19,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:sessionService="android.voiceinteraction.service.MainInteractionSessionService"
     android:recognitionService="android.voiceinteraction.cts.services.MainRecognitionService"
-    android:hotwordDetectionService="android.voiceinteraction.cts.services.NonIsolatedHotwordDetectionVoiceInteractionService"
+    android:hotwordDetectionService="android.voiceinteraction.cts.services.NonIsolatedHotwordDetectionService"
+    android:visualQueryDetectionService="android.voiceinteraction.cts.services.NonIsolatedVisualQueryDetectionService"
     android:settingsActivity=""
     android:supportsAssist="false"
     android:supportsLocalInteraction="true"/>

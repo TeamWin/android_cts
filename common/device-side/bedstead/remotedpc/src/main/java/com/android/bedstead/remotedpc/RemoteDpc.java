@@ -219,6 +219,20 @@ public class RemoteDpc extends RemotePolicyManager {
     }
 
     /**
+     * Set any RemoteDPC as the Profile Owner of the instrumented user.
+     */
+    public static RemoteDpc setAsProfileOwner() {
+        return setAsProfileOwner(TestApis.users().instrumented());
+    }
+
+    /**
+     * Set RemoteDPC that matches the query as the Profile Owner of the instrumented user.
+     */
+    public static RemoteDpc setAsProfileOwner(TestAppQueryBuilder dpcQuery) {
+        return setAsProfileOwner(TestApis.users().instrumented(), dpcQuery);
+    }
+
+    /**
      * Set any RemoteDPC as the Profile Owner.
      */
     public static RemoteDpc setAsProfileOwner(UserHandle user) {

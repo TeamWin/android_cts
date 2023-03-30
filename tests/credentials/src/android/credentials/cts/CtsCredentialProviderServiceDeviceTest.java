@@ -214,7 +214,7 @@ public class CtsCredentialProviderServiceDeviceTest {
         ActivityScenario<TestCredentialActivity> activityScenario =
                 ActivityScenario.launch(TestCredentialActivity.class);
         activityScenario.onActivity(activity -> {
-            mCredentialManager.getCredential(request, activity, null,
+            mCredentialManager.getCredential(activity, request, null,
                     Executors.newSingleThreadExecutor(), callback);
         });
 
@@ -257,7 +257,7 @@ public class CtsCredentialProviderServiceDeviceTest {
         ActivityScenario<TestCredentialActivity> activityScenario =
                 ActivityScenario.launch(TestCredentialActivity.class);
         activityScenario.onActivity(activity -> {
-            mCredentialManager.getCredential(request, activity, null,
+            mCredentialManager.getCredential(activity, request, null,
                     Executors.newSingleThreadExecutor(), callback);
         });
 
@@ -299,7 +299,7 @@ public class CtsCredentialProviderServiceDeviceTest {
         ActivityScenario<TestCredentialActivity> activityScenario =
                 ActivityScenario.launch(TestCredentialActivity.class);
         activityScenario.onActivity(activity -> {
-            mCredentialManager.getCredential(request, activity, null,
+            mCredentialManager.getCredential(activity, request, null,
                     Executors.newSingleThreadExecutor(), callback);
         });
 
@@ -334,7 +334,7 @@ public class CtsCredentialProviderServiceDeviceTest {
         activityScenario.onActivity(activity -> {
 
             assertThrows("expect null request to throw NPE", NullPointerException.class,
-                    () -> mCredentialManager.getCredential(nullRequest, activity, null,
+                    () -> mCredentialManager.getCredential(activity, nullRequest, null,
                     Executors.newSingleThreadExecutor(), callback));
         });
     }
@@ -396,8 +396,8 @@ public class CtsCredentialProviderServiceDeviceTest {
                     }
                 };
         activityScenario.onActivity(activity -> {
-            mCredentialManager.getCredential(
-                    prepareGetCredResponse.get().getPendingGetCredentialHandle(), activity, null,
+            mCredentialManager.getCredential(activity,
+                    prepareGetCredResponse.get().getPendingGetCredentialHandle(), null,
                     Executors.newSingleThreadExecutor(), getCredCallback);
         });
 
@@ -465,7 +465,7 @@ public class CtsCredentialProviderServiceDeviceTest {
         ActivityScenario<TestCredentialActivity> activityScenario =
                 ActivityScenario.launch(TestCredentialActivity.class);
         activityScenario.onActivity(activity -> {
-            mCredentialManager.createCredential(request, activity, null,
+            mCredentialManager.createCredential(activity, request, null,
                     Executors.newSingleThreadExecutor(), callback);
         });
 
@@ -497,7 +497,7 @@ public class CtsCredentialProviderServiceDeviceTest {
         activityScenario.onActivity(activity -> {
 
             assertThrows("expect null request to throw NPE", NullPointerException.class,
-                    () -> mCredentialManager.createCredential(null, activity, null,
+                    () -> mCredentialManager.createCredential(activity, null, null,
                             Executors.newSingleThreadExecutor(), callback));
         });
     }

@@ -285,10 +285,12 @@ class ItsSession(object):
     proc.kill()
     proc.communicate()
 
-  def __init__(self, device_id=None, camera_id=None, hidden_physical_id=None):
+  def __init__(self, device_id=None, camera_id=None, hidden_physical_id=None,
+               override_to_portrait=None):
     self._camera_id = camera_id
     self._device_id = device_id
     self._hidden_physical_id = hidden_physical_id
+    self._override_to_portrait = override_to_portrait
 
     # Initialize device id and adb command.
     self.adb = 'adb -s ' + self._device_id
@@ -346,11 +348,12 @@ class ItsSession(object):
     self.props = data[_OBJ_VALUE_STR]['cameraProperties']
     return data[_OBJ_VALUE_STR]['cameraProperties']
 
-  def get_camera_properties_by_id(self, camera_id):
+  def get_camera_properties_by_id(self, camera_id, override_to_portrait=None):
     """Get the camera properties object for device with camera_id.
 
     Args:
      camera_id: The ID string of the camera
+     override_to_portrait: Optional value for overrideToPortrait
 
     Returns:
      The Python dictionary object for the CameraProperties object. Empty
@@ -359,6 +362,8 @@ class ItsSession(object):
     cmd = {}
     cmd[_CMD_NAME_STR] = 'getCameraPropertiesById'
     cmd[_CAMERA_ID_STR] = camera_id
+    if override_to_portrait is not None:
+      cmd['overrideToPortrait'] = override_to_portrait
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     data, _ = self.__read_response_from_socket()
     if data[_TAG_STR] != 'cameraProperties':
@@ -415,6 +420,8 @@ class ItsSession(object):
 
     logging.debug('Opening camera: %s', self._camera_id)
     cmd = {_CMD_NAME_STR: 'open', _CAMERA_ID_STR: self._camera_id}
+    if self._override_to_portrait is not None:
+      cmd['overrideToPortrait'] = self._override_to_portrait
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     data, _ = self.__read_response_from_socket()
     if data[_TAG_STR] != 'cameraOpened':
@@ -570,6 +577,23 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     if data[_TAG_STR] != 'p3Response':
       raise error_util.CameraItsError('Failed to query P3 support')
+    return data[_STR_VALUE] == 'true'
+
+  def is_landscape_to_portrait_enabled(self):
+    """Query whether the device has enabled the landscape to portrait property.
+
+    Returns:
+      Boolean: True, if the device has the system property enabled. False
+      otherwise.
+    """
+    cmd = {}
+    cmd[_CMD_NAME_STR] = 'isLandscapeToPortraitEnabled'
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+
+    data, _ = self.__read_response_from_socket()
+    if data[_TAG_STR] != 'landscapeToPortraitEnabledResponse':
+      raise error_util.CameraItsError(
+          'Failed to query landscape to portrait system property')
     return data[_STR_VALUE] == 'true'
 
   def do_basic_recording(self, profile_id, quality, duration,

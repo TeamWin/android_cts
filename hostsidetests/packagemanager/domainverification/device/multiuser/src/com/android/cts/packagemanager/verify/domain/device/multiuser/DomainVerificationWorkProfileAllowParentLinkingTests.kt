@@ -36,18 +36,19 @@ class DomainVerificationWorkProfileAllowParentLinkingTests :
     @Before
     fun saveAndSetPolicy() {
         val manager = deviceState.getWorkDevicePolicyManager()
-        initialAppLinkPolicy = manager.getAppLinkPolicy(deviceState.dpc().componentName()!!)
+        val component = deviceState.getWorkDpcComponent()
+        initialAppLinkPolicy = manager.getAppLinkPolicy(component)
         if (initialAppLinkPolicy != true) {
-            manager.setAppLinkPolicy(deviceState.dpc().componentName()!!, true)
+            manager.setAppLinkPolicy(component, true)
         }
     }
 
     @After
     fun resetPolicy() {
         val manager = deviceState.getWorkDevicePolicyManager()
-        if (initialAppLinkPolicy ?: return != manager.getAppLinkPolicy(
-        deviceState.dpc().componentName()!!)) {
-            manager.setAppLinkPolicy(deviceState.dpc().componentName()!!, initialAppLinkPolicy!!)
+        val component = deviceState.getWorkDpcComponent()
+        if (initialAppLinkPolicy ?: return != manager.getAppLinkPolicy(component)) {
+            manager.setAppLinkPolicy(component, initialAppLinkPolicy!!)
         }
     }
 

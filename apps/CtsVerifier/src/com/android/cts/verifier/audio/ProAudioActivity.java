@@ -79,7 +79,6 @@ public class ProAudioActivity
     private static final String KEY_CLAIMS_HDMI = "claims_hdmi";
 
     public ProAudioActivity() {
-        super();
     }
 
     // HDMI Stuff
@@ -246,6 +245,11 @@ public class ProAudioActivity
     //
     // PassFailButtons Overrides
     //
+    @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
     @Override
     public String getReportFileName() { return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME; }
 

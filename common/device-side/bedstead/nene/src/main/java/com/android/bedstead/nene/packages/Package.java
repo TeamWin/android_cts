@@ -382,14 +382,15 @@ public final class Package {
      * <p>You can not deny permissions for the current package on the current user.
      */
     public Package denyPermission(UserReference user, String permission) {
+        if (!hasPermission(user, permission)) {
+            return this; // Already denied
+        }
+
         // There is no readable output upon failure so we need to check ourselves
         checkCanGrantOrRevokePermission(user, permission);
 
         if (packageName().equals(TestApis.context().instrumentedContext().getPackageName())
                 && user.equals(TestApis.users().instrumented())) {
-            if (!hasPermission(user, permission)) {
-                return this; // Already denied
-            }
             throw new NeneException("Cannot deny permission from current package");
         }
 

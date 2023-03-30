@@ -1086,9 +1086,6 @@ public class JobThrottlingTest {
     public void testRestrictingStopReason_RestrictedBucket_idle() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
 
-        assumeTrue(mNetworkingHelper.hasWifiFeature());
-        mNetworkingHelper.ensureSavedWifiNetwork();
-
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
@@ -1099,15 +1096,13 @@ public class JobThrottlingTest {
         mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
 
         // Satisfy all additional constraints.
-        mNetworkingHelper.setAllNetworksEnabled(true);
-        mNetworkingHelper.setWifiMeteredState(false);
         setChargingState(true);
         BatteryUtils.runDumpsysBatterySetLevel(100);
         setScreenState(false);
         triggerJobIdle();
 
         // Idle
-        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_NONE, false);
         runJob();
         assertTrue("New job didn't start in RESTRICTED bucket",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -1126,9 +1121,6 @@ public class JobThrottlingTest {
         // Can't toggle charging state on leanback devices.
         assumeFalse("not testable on leanback device", mLeanbackOnly);
 
-        assumeTrue(mNetworkingHelper.hasWifiFeature());
-        mNetworkingHelper.ensureSavedWifiNetwork();
-
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
@@ -1139,15 +1131,13 @@ public class JobThrottlingTest {
         mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
 
         // Satisfy all additional constraints.
-        mNetworkingHelper.setAllNetworksEnabled(true);
-        mNetworkingHelper.setWifiMeteredState(false);
         setChargingState(true);
         BatteryUtils.runDumpsysBatterySetLevel(100);
         setScreenState(false);
         triggerJobIdle();
 
         // Charging
-        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_NONE, false);
         runJob();
         assertTrue("New job didn't start in RESTRICTED bucket",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -1166,9 +1156,6 @@ public class JobThrottlingTest {
         // Leanback devices typically don't have batteries.
         assumeFalse("not testable on leanback device", mLeanbackOnly);
 
-        assumeTrue(mNetworkingHelper.hasWifiFeature());
-        mNetworkingHelper.ensureSavedWifiNetwork();
-
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
@@ -1179,17 +1166,13 @@ public class JobThrottlingTest {
         mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
 
         // Satisfy all additional constraints.
-        mNetworkingHelper.setAllNetworksEnabled(true);
-        mNetworkingHelper.setWifiMeteredState(false);
         setChargingState(true);
         BatteryUtils.runDumpsysBatterySetLevel(100);
         setScreenState(false);
         triggerJobIdle();
 
         // Battery not low
-        setScreenState(false);
-        triggerJobIdle();
-        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_NONE, false);
         runJob();
         assertTrue("New job didn't start in RESTRICTED bucket",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));

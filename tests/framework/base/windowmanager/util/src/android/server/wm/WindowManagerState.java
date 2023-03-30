@@ -1688,6 +1688,7 @@ public class WindowManagerState {
         private WindowContainer mParent;
         private boolean mEnableRecentsScreenshot;
         private int mLastDropInputMode;
+        private boolean mShouldSendCompatFakeFocus;
 
         Activity(ActivityRecordProto proto, WindowContainer parent) {
             super(proto.windowToken.windowContainer);
@@ -1705,6 +1706,7 @@ public class WindowManagerState {
             translucent = proto.translucent;
             mEnableRecentsScreenshot = proto.enableRecentsScreenshot;
             mLastDropInputMode = proto.lastDropInputMode;
+            mShouldSendCompatFakeFocus = proto.shouldSendCompatFakeFocus;
             mParent = parent;
         }
 
@@ -1754,6 +1756,15 @@ public class WindowManagerState {
 
         public int getLastDropInputMode() {
             return mLastDropInputMode;
+        }
+
+
+        public boolean getShouldSendCompatFakeFocus() {
+            return mShouldSendCompatFakeFocus;
+        }
+
+        public int getUiMode() {
+            return mFullConfiguration.uiMode;
         }
 
         @Override

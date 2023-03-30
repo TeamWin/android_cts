@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package android.accessibilityservice.cts.activities;
+package android.server.wm.deskresources;
 
-import android.accessibilityservice.cts.R;
-import android.os.Bundle;
+import android.content.ComponentName;
+import android.server.wm.component.ComponentsBase;
 
-/**
- * Activity launched on the default display that is used by AccessibilityProxyTest.
- */
-public class ProxyConcurrentActivity extends AccessibilityTestActivity {
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.proxy_concurrent_activity);
-    }
+public class Components extends ComponentsBase {
+    /** A test activity in a test app that has resources with the -desk qualifier. */
+    public static final ComponentName DESK_RESOURCES_ACTIVITY =
+            component(Components.class, "DeskResourcesActivity");
 }

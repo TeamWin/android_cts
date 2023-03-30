@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ Copyright (C) 2023 The Android Open Source Project
   ~
@@ -14,16 +15,14 @@
   ~ limitations under the License.
   -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:gravity="center"
-              android:orientation="vertical">
-    <EditText
-        android:id="@+id/editText"
-        android:text="@string/proxy_concurrent_activity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-    />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+     package="android.localemanager.atom.localeconfig.app">
 
-</LinearLayout>
+    <queries>
+        <package android:name="android.localemanager.app" />
+    </queries>
+
+    <application android:localeConfig="@xml/locales_config">
+    </application>
+
+</manifest>

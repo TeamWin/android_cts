@@ -197,6 +197,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         filter.addAction(ByodHelperActivity.ACTION_SET_USER_RESTRICTION);
         filter.addAction(ByodHelperActivity.ACTION_CLEAR_USER_RESTRICTION);
         filter.addAction(CrossProfileTestActivity.ACTION_CROSS_PROFILE_TO_WORK);
+        filter.addAction(ScreenshotCaptureActivity.ACTION_CAPTURE_SCREENSHOT);
         filter.addAction(
                 PermissionLockdownTestActivity.ACTION_MANAGED_PROFILE_CHECK_PERMISSION_LOCKDOWN);
         filter.addAction(AuthenticationBoundKeyTestActivity.ACTION_AUTH_BOUND_KEY_TEST);
@@ -225,7 +226,8 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         filter.addAction(ByodHelperActivity.ACTION_INSTALL_APK_IN_PRIMARY);
         filter.addAction(ByodFlowTestActivity.ACTION_TEST_RESULT);
         filter.addAction(CrossProfileTestActivity.ACTION_CROSS_PROFILE_TO_PERSONAL);
-
+        filter.addAction(ScreenshotTestActivity.ACTION_SCREENSHOT_TEST);
+        filter.addAction(Intent.ACTION_SEND);
         dpm.addCrossProfileIntentFilter(getWho(context), filter,
                 DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED);
 

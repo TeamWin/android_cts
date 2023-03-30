@@ -154,19 +154,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         verifyBindDeviceAdminServiceAsUser(secondaryUserId);
     }
 
-    @FlakyTest(bugId = 141161038)
-    @Test
-    public void testCannotRemoveUserIfRestrictionSet() throws Exception {
-        assumeCanCreateAdditionalUsers(1);
-
-        int secondaryUserId = setupManagedSecondaryUser();
-        addDisallowRemoveUserRestriction();
-        assertFalse(getDevice().removeUser(secondaryUserId));
-
-        clearDisallowRemoveUserRestriction();
-        assertTrue(getDevice().removeUser(secondaryUserId));
-    }
-
     @Test
     public void testCannotAddProfileIfRestrictionSet() throws Exception {
         // by default, disallow add managed profile users restriction is set.

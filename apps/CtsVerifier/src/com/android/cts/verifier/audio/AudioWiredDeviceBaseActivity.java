@@ -47,6 +47,9 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
     protected static final String KEY_ROUTING_RECEIVED = "routing_received";
     protected static final String KEY_CONNECTED_PERIPHERAL = "routing_connected_peripheral";
 
+    AudioWiredDeviceBaseActivity() {
+    }
+
     private void recordWiredPortFound(boolean found) {
         getReportLog().addValue(
                 "User Reported Wired Port",
@@ -100,6 +103,11 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
     //
     // PassFailButtons Overrides
     //
+    @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
     @Override
     public String getReportFileName() {
         return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME;

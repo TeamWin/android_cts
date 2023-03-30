@@ -17,7 +17,7 @@
 package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DEFAULT_TEST_APP_KEY;
-import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.ENSURE_TEST_APP_INSTALLED_WEIGHT;
+import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.ENSURE_HAS_DELEGATE_WEIGHT;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
@@ -52,5 +52,5 @@ public @interface EnsureTestAppHasAppOp {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default ENSURE_TEST_APP_INSTALLED_WEIGHT + 1;
+    int weight() default ENSURE_HAS_DELEGATE_WEIGHT + 1;
 }

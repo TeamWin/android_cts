@@ -19,6 +19,7 @@ package com.android.bedstead.harrier;
 import static com.android.bedstead.harrier.UserType.SECONDARY_USER;
 import static com.android.bedstead.harrier.UserType.SYSTEM_USER;
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
+import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.DELEGATE_KEY;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER;
@@ -62,10 +63,12 @@ import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLIC
 
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagNotEnabled;
+import com.android.bedstead.harrier.annotations.EnsureTestAppDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.FailureMode;
+import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
@@ -108,6 +111,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -116,8 +120,7 @@ import java.util.stream.Collectors;
  */
 public final class Policy {
 
-    // TODO(b/219750042): If we leave over appops and permissions then the delegate will have them
-    private static final String DELEGATE_KEY = "delegate";
+
     private static final String DELEGATE_PACKAGE_NAME = "com.android.Delegate";
 
     // Delegate scopes to be used for a "CannotSet" state. All delegate scopes except the ones which
@@ -192,21 +195,35 @@ public final class Policy {
     // This must contain one key for every APPLIED_BY that is being used, and maps to the
     // "default" for testing that DPC type
     // in general this will be a state which runs on the same user as the dpc.
-    private static final ImmutableMap<Integer, Function<EnterprisePolicy, Set<Annotation>>>
+    // The key is the APPLIED_BY annotation and the value is a function which takes the policy and
+    // a boolean indicating if this is the "can set" state (if it is false - it must be the
+    // "cannot set" state). It should return a set of annotations to use.
+    private static final ImmutableMap<Integer, BiFunction<EnterprisePolicy, Boolean, Set<Annotation>>>
             DPC_STATE_ANNOTATIONS_BASE =
-            ImmutableMap.<Integer, Function<EnterprisePolicy, Set<Annotation>>>builder()
-                    .put(APPLIED_BY_DEVICE_OWNER, (flags) -> hasFlag(flags.dpc(), APPLIED_BY_DEVICE_OWNER | APPLIES_IN_BACKGROUND) ? ImmutableSet.of(includeRunOnBackgroundDeviceOwnerUser()) : ImmutableSet.of(includeRunOnDeviceOwnerUser()))
-                    .put(APPLIED_BY_AFFILIATED_PROFILE_OWNER, singleAnnotation(includeRunOnAffiliatedProfileOwnerSecondaryUser()))
-                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER, singleAnnotation(includeRunOnProfileOwnerPrimaryUser()))
-                    .put(APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO, singleAnnotation(includeRunOnProfileOwnerPrimaryUser()))
-                    .put(APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE, singleAnnotation(includeRunOnOrganizationOwnedProfileOwner()))
-                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE, singleAnnotation(includeRunOnProfileOwnerProfileWithNoDeviceOwner()))
-                    .put(APPLIED_BY_FINANCED_DEVICE_OWNER, singleAnnotation(includeRunOnFinancedDeviceOwnerUser()))
+            ImmutableMap.<Integer, BiFunction<EnterprisePolicy, Boolean, Set<Annotation>>>builder()
+                    .put(APPLIED_BY_DEVICE_OWNER, (flags, canSet) -> hasFlag(flags.dpc(), APPLIED_BY_DEVICE_OWNER | APPLIES_IN_BACKGROUND) ? generateDevicePolicyManagerRoleHolderAnnotation(includeRunOnBackgroundDeviceOwnerUser(), /* roleHolderUser= */ SYSTEM_USER).apply(flags) : generateDevicePolicyManagerRoleHolderAnnotation(includeRunOnDeviceOwnerUser(), /* roleHolderUser= */ SYSTEM_USER).apply(flags))
+                    .put(APPLIED_BY_AFFILIATED_PROFILE_OWNER, devicePolicyManagerRoleHolderIfCanSet(includeRunOnAffiliatedProfileOwnerSecondaryUser(), /* roleHolderUser= */ SECONDARY_USER))
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER, devicePolicyManagerRoleHolderIfCanSet(includeRunOnProfileOwnerPrimaryUser(), /* roleHolderUser= */ SYSTEM_USER))
+                    .put(APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO, devicePolicyManagerRoleHolderIfCanSet(includeRunOnProfileOwnerPrimaryUser(), /* roleHolderUser= */ SYSTEM_USER))
+                    .put(APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE, devicePolicyManagerRoleHolderIfCanSet(includeRunOnOrganizationOwnedProfileOwner(), /* roleHolderUser= */ WORK_PROFILE))
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE, devicePolicyManagerRoleHolderIfCanSet(includeRunOnProfileOwnerProfileWithNoDeviceOwner(), /* roleHolderUser= */ WORK_PROFILE))
+                    .put(APPLIED_BY_FINANCED_DEVICE_OWNER, devicePolicyManagerRoleHolderIfCanSet(includeRunOnFinancedDeviceOwnerUser(), /* roleHolderUser= */ SYSTEM_USER))
                     // TODO: Add APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE
                     //  and APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE
-                    .put(APPLIED_BY_DPM_ROLE_HOLDER, singleAnnotation(includeRunOnDevicePolicyManagementRoleHolderUser()))
+                    .put(APPLIED_BY_DPM_ROLE_HOLDER, (flags, canSet) -> singleAnnotation(includeRunOnDevicePolicyManagementRoleHolderUser()).apply(flags))
                     .build();
-    private static final Map<Integer, Function<EnterprisePolicy, Set<Annotation>>>
+
+    private static BiFunction<EnterprisePolicy, Boolean, Set<Annotation>> devicePolicyManagerRoleHolderIfCanSet(Annotation annotation, UserType roleHolderUser) {
+        return (flags, canSet) -> {
+            // If the policy already allows the DPM to set it - no need to add the special-cased test
+            if (canSet && (!hasFlag(flags.dpc(), APPLIED_BY_DPM_ROLE_HOLDER))) {
+                return generateDevicePolicyManagerRoleHolderAnnotation(annotation, roleHolderUser).apply(flags);
+            } else {
+                return singleAnnotation(annotation).apply(flags);
+            }
+        };
+    }
+    private static final Map<Integer, BiFunction<EnterprisePolicy, Boolean, Set<Annotation>>>
             DPC_STATE_ANNOTATIONS = DPC_STATE_ANNOTATIONS_BASE.entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, Policy::addGeneratedStates));
     private static final int APPLIED_BY_FLAGS =
@@ -244,6 +261,13 @@ public final class Policy {
     private static EnsureTestAppHasPermission ensureTestAppHasPermission(
             String testAppKey, String[] value, FailureMode failureMode) {
         return new AutoAnnotation_Policy_ensureTestAppHasPermission(testAppKey, value, failureMode);
+    }
+
+    @AutoAnnotation
+    private static EnsureTestAppDoesNotHavePermission ensureTestAppDoesNotHavePermission(
+            String testAppKey, String[] value, FailureMode failureMode) {
+        return new AutoAnnotation_Policy_ensureTestAppDoesNotHavePermission(
+                testAppKey, value, failureMode);
     }
 
     @AutoAnnotation
@@ -379,6 +403,11 @@ public final class Policy {
     }
 
     @AutoAnnotation
+    private static RequireFeatureFlagEnabled requireFeatureFlagEnabled(String namespace, String key) {
+        return new AutoAnnotation_Policy_requireFeatureFlagEnabled(namespace, key);
+    }
+
+    @AutoAnnotation
     private static EnsureFeatureFlagNotEnabled ensureFeatureFlagNotEnabled(String namespace, String key) {
         return new AutoAnnotation_Policy_ensureFeatureFlagNotEnabled(namespace, key);
     }
@@ -391,15 +420,20 @@ public final class Policy {
     private static Function<EnterprisePolicy, Set<Annotation>> generateDevicePolicyManagerRoleHolderAnnotation(
             Annotation annotation, UserType roleHolderUser) {
         return (policy) -> {
-            Annotation[] existingAnnotations = annotation.annotationType().getAnnotations();
-            Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
-                    existingAnnotations.length + 1);
-            newAnnotations[newAnnotations.length - 1] = ensureHasDevicePolicyManagerRoleHolder(
-                    roleHolderUser, /* isPrimary= */ true);
-
-            if (hasFlag(policy.dpc(), CANNOT_BE_APPLIED_BY_ROLE_HOLDER)) {
+            // If DPM role holder is handled elsewhere - we don't special case it here
+            if (hasFlag(policy.dpc(), CANNOT_BE_APPLIED_BY_ROLE_HOLDER)
+                    || hasFlag(policy.dpc(), APPLIED_BY_DPM_ROLE_HOLDER)) {
                 return ImmutableSet.of(annotation);
             }
+            Annotation[] existingAnnotations = annotation.annotationType().getAnnotations();
+            Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
+                    existingAnnotations.length + 3);
+            newAnnotations[newAnnotations.length - 3] = requireFeatureFlagEnabled(
+                    NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
+            newAnnotations[newAnnotations.length - 2] = requireFeatureFlagEnabled(
+                    NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
+            newAnnotations[newAnnotations.length - 1] = ensureHasDevicePolicyManagerRoleHolder(
+                    roleHolderUser, /* isPrimary= */ true);
             return Set.of(annotation,
                     new DynamicParameterizedAnnotation(
                     annotation.annotationType().getSimpleName() + "_DPMRH",
@@ -443,11 +477,11 @@ public final class Policy {
         return b;
     }
 
-    private static Function<EnterprisePolicy, Set<Annotation>> addGeneratedStates(
-            ImmutableMap.Entry<Integer, Function<EnterprisePolicy, Set<Annotation>>> entry) {
-        return (policy) -> {
+    private static BiFunction<EnterprisePolicy, Boolean, Set<Annotation>> addGeneratedStates(
+            ImmutableMap.Entry<Integer, BiFunction<EnterprisePolicy, Boolean, Set<Annotation>>> entry) {
+        return (policy, canSet) -> {
             if (hasFlag(policy.dpc(), entry.getKey() | CAN_BE_DELEGATED)) {
-                Set<Annotation> results = new HashSet<>(entry.getValue().apply(policy));
+                Set<Annotation> results = new HashSet<>(entry.getValue().apply(policy, canSet));
                 results.addAll(results.stream().flatMap(
                         t -> generateDelegateAnnotation(t, /* isPrimary= */ true).apply(
                                 policy).stream())
@@ -455,7 +489,7 @@ public final class Policy {
                 return results;
             }
 
-            return entry.getValue().apply(policy);
+            return entry.getValue().apply(policy, canSet);
         };
     }
 
@@ -579,7 +613,7 @@ public final class Policy {
                 allFlags = allFlags | p;
             }
 
-            for (Map.Entry<Integer, Function<EnterprisePolicy, Set<Annotation>>> appliedByFlag :
+            for (Map.Entry<Integer, BiFunction<EnterprisePolicy, Boolean, Set<Annotation>>> appliedByFlag :
                     DPC_STATE_ANNOTATIONS.entrySet()) {
 
                 if ((appliedByFlag.getKey()
@@ -596,7 +630,7 @@ public final class Policy {
                 }
 
                 if ((appliedByFlag.getKey() & allFlags) == 0) {
-                    annotations.addAll(appliedByFlag.getValue().apply(enterprisePolicy));
+                    annotations.addAll(appliedByFlag.getValue().apply(enterprisePolicy, /* canSet= */ false));
                 }
             }
         }
@@ -608,13 +642,18 @@ public final class Policy {
                     .toArray(String[]::new);
             Annotation[] existingAnnotations = IncludeRunOnDeviceOwnerUser.class.getAnnotations();
 
+            String[] validPermissions = Arrays.stream(enterprisePolicy.permissions())
+                    .map(p -> p.appliedWith()).toArray(String[]::new);
+
             if (BedsteadJUnit4.isDebug()) {
                 // Add a non-DPC with no delegate scopes
                 Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
-                        existingAnnotations.length + 1);
-                newAnnotations[newAnnotations.length - 1] = ensureHasDelegate(
+                        existingAnnotations.length + 2);
+                newAnnotations[newAnnotations.length - 2] = ensureHasDelegate(
                         EnsureHasDelegate.AdminType.PRIMARY, new String[]{},
                         /* isPrimary= */ true);
+                newAnnotations[newAnnotations.length - 1] = ensureTestAppDoesNotHavePermission(
+                        DELEGATE_KEY, validPermissions, FailureMode.SKIP);
                 annotations.add(
                         new DynamicParameterizedAnnotation("DelegateWithNoScopes", newAnnotations));
 
@@ -629,13 +668,15 @@ public final class Policy {
                 }
             } else {
                 Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
-                        existingAnnotations.length + 3);
-                newAnnotations[newAnnotations.length - 3] = ensureHasDelegate(
+                        existingAnnotations.length + 4);
+                newAnnotations[newAnnotations.length - 4] = ensureHasDelegate(
                         EnsureHasDelegate.AdminType.PRIMARY, scopes, /* isPrimary= */ true);
-                newAnnotations[newAnnotations.length - 2] = ensureFeatureFlagEnabled(
+                newAnnotations[newAnnotations.length - 3] = ensureFeatureFlagEnabled(
                         NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
-                newAnnotations[newAnnotations.length - 1] = ensureFeatureFlagEnabled(
+                newAnnotations[newAnnotations.length - 2] = ensureFeatureFlagEnabled(
                         NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
+                newAnnotations[newAnnotations.length - 1] = ensureTestAppDoesNotHavePermission(
+                        DELEGATE_KEY, validPermissions, FailureMode.SKIP);
                 annotations.add(
                         new DynamicParameterizedAnnotation("DelegateWithoutValidScope",
                                 newAnnotations));
@@ -664,16 +705,11 @@ public final class Policy {
             allFlags = allFlags | p;
         }
 
-        for (Map.Entry<Integer, Function<EnterprisePolicy, Set<Annotation>>> appliedByFlag :
+        for (Map.Entry<Integer, BiFunction<EnterprisePolicy, Boolean, Set<Annotation>>> appliedByFlag :
                 DPC_STATE_ANNOTATIONS.entrySet()) {
             if ((appliedByFlag.getKey() & allFlags) == appliedByFlag.getKey()) {
-                annotations.addAll(appliedByFlag.getValue().apply(enterprisePolicy));
+                annotations.addAll(appliedByFlag.getValue().apply(enterprisePolicy, /* canSet= */ true));
             }
-        }
-
-        if (annotations.isEmpty()) {
-            // Don't run the original test unparameterized
-            annotations.add(includeNone());
         }
 
         for (AppOp appOp : enterprisePolicy.appOps()) {
@@ -707,9 +743,14 @@ public final class Policy {
                             "Permission_" + formatPermissionForTestName(permission.appliedWith()), withPermissionAnnotations));
         }
 
-        List<Annotation> annotationList = new ArrayList<>(annotations);
-
         removeShadowingAnnotations(annotations);
+
+        if (annotations.isEmpty()) {
+            // Don't run the original test unparameterized
+            annotations.add(includeNone());
+        }
+
+        List<Annotation> annotationList = new ArrayList<>(annotations);
 
         if (singleTestOnly) {
             // We select one annotation in an arbitrary but deterministic way
@@ -719,7 +760,7 @@ public final class Policy {
 
             // We don't want a delegate to be the representative test
             Annotation firstAnnotation = annotationList.stream()
-                    .filter(i -> !(i instanceof  DynamicParameterizedAnnotation))
+                    .filter(i -> !(i instanceof DynamicParameterizedAnnotation))
                     .findFirst().get();
             annotationList.clear();
             annotationList.add(firstAnnotation);
@@ -781,7 +822,7 @@ public final class Policy {
 
     /**
      * Remove entries from {@code annotations} which are shadowed by another entry
-     * in {@code annotatipns} (directly or indirectly).
+     * in {@code annotations} (directly or indirectly).
      */
     private static void removeShadowedAnnotations(Set<Annotation> annotations) {
         Set<Class<? extends Annotation>> shadowedAnnotations = new HashSet<>();
@@ -802,7 +843,6 @@ public final class Policy {
                 addShadowed(shadowedAnnotations, shadowedAnnotationClass);
             }
         }
-
         annotations.removeIf(a -> shadowedAnnotations.contains(a.annotationType()));
     }
 

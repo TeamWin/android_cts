@@ -53,6 +53,9 @@ public class AudioMicrophoneMuteToggleActivity extends PassFailButtons.Activity 
     private static final String KEY_REC_RATE = "rec_rate";
     private static final String KEY_AUDIO_SOURCE = "audio_source";
 
+    public AudioMicrophoneMuteToggleActivity() {
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
