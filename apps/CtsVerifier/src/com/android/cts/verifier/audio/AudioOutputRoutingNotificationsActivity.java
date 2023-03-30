@@ -32,9 +32,9 @@ import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
 
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
 import org.hyphonate.megaaudio.player.JavaPlayer;

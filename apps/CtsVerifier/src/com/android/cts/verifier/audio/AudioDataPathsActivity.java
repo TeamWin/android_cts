@@ -574,6 +574,11 @@ public class AudioDataPathsActivity
     // PassFailButtons Overrides
     //
     @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
+    @Override
     public String getReportFileName() {
         return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME;
     }
@@ -617,7 +622,7 @@ public class AudioDataPathsActivity
     private static final String KEY_PHASEJITTER = "phase_jitter";
 
     private void recordTestStatus() {
-        CtsVerifierReportLog reportLog = newReportLog();
+        CtsVerifierReportLog reportLog = getReportLog();
 
         // Test General
         reportLog.addValue(

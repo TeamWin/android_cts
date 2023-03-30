@@ -125,6 +125,16 @@ public class USBAudioPeripheralNotificationsTest extends PassFailButtons.Activit
         }
     }
 
+    @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
+    @Override
+    public String getReportFileName() {
+        return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME;
+    }
+
     private void reportPlugIntent(Intent intent) {
         // [ 7.8 .2.2/H-2-1] MUST broadcast Intent ACTION_HEADSET_PLUG with "microphone" extra
         // set to 0 when the USB audio terminal types 0x0302 is detected.

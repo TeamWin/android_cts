@@ -148,8 +148,11 @@ public class PassFailButtons {
         protected boolean mRequireReportLogToPass;
 
         public Activity() {
-            newReportLog();
             this.mHistoryCollection = new TestResultHistoryCollection();
+            if (requiresReportLog()) {
+                // if the subclass reports a report filename, they need a ReportLog object
+                newReportLog();
+            }
         }
 
         @Override
@@ -161,7 +164,7 @@ public class PassFailButtons {
                 mWakeLock.acquire();
             }
 
-            if (!this.mReportLog.isOpen()) {
+            if (mReportLog != null && !mReportLog.isOpen()) {
                 showReportLogWarningDialog(this);
             }
         }
@@ -216,6 +219,14 @@ public class PassFailButtons {
                     getReportFileName(), getReportSectionName());
         }
 
+        /**
+         * Specifies if the test module will write a ReportLog entry
+         * @return true if the test module will write a ReportLog entry
+         */
+        public boolean requiresReportLog() {
+            return false;
+        }
+
         @Override
         public CtsVerifierReportLog getReportLog() {
             return mReportLog;
@@ -226,7 +237,7 @@ public class PassFailButtons {
          * @return true if the ReportLog is open OR if the test does not require that.
          */
         public boolean isReportLogOkToPass() {
-            return !mRequireReportLogToPass || mReportLog.isOpen();
+            return !mRequireReportLogToPass || (mReportLog != null & mReportLog.isOpen());
         }
 
         /**
@@ -273,8 +284,8 @@ public class PassFailButtons {
         private final TestResultHistoryCollection mHistoryCollection;
 
         public ListActivity() {
-            this.mReportLog = new CtsVerifierReportLog(getReportFileName(), getReportSectionName());
-            this.mHistoryCollection = new TestResultHistoryCollection();
+            mHistoryCollection = new TestResultHistoryCollection();
+            mReportLog = null;
         }
 
         @Override
