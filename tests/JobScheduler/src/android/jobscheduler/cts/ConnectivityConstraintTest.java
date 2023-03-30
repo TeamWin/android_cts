@@ -39,6 +39,7 @@ import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -586,6 +587,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         disconnectWifiToConnectToMobile();
+        setDataSaverEnabled(false);
 
         mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
 
@@ -797,7 +799,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     }
 
     /**
-     * Schedule an expedited job that requires a network connection, and verify that it runs even
+     * Schedule an expedited job that requires a network connection, and verify that it doesn't run
      * when Data Saver is on and the device is not connected to WiFi.
      */
     public void testBgExpeditedJobDoesNotBypassDataSaver() throws Exception {
@@ -861,6 +863,119 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         assertFalse("Expedited job fired with multiple firewalls, including data saver.",
                 mTestAppInterface.awaitJobStart(DEFAULT_TIMEOUT_MILLIS));
+    }
+
+    /**
+     * Schedule a user-initiated job that requires a network connection, and verify that it runs
+     * even when Data Saver is on and the device is not connected to WiFi.
+     */
+    public void testBgUiJobBypassesDataSaver() throws Exception {
+        if (hasEthernetConnection()) {
+            Log.d(TAG, "Skipping test since ethernet is connected.");
+            return;
+        }
+        if (mHasWifi) {
+            setWifiMeteredState(true);
+        } else if (checkDeviceSupportsMobileData()) {
+            disconnectWifiToConnectToMobile();
+        } else {
+            Log.d(TAG, "Skipping test that requires a metered network.");
+            return;
+        }
+
+        try (TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(
+                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            setDataSaverEnabled(true);
+
+            mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
+            mTestAppInterface.closeActivity(true);
+            mTestAppInterface.postUiInitiatingNotification(
+                    Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE,
+                            JobInfo.NETWORK_TYPE_ANY
+                    )
+            );
+
+            // Clicking on the notification should put the app into a BAL approved state.
+            notificationHelper.clickNotification();
+
+            assertTrue("BG UI job requiring connectivity didn't fire with Data Saver on.",
+                    mTestAppInterface.awaitJobStart(DEFAULT_TIMEOUT_MILLIS));
+        }
+    }
+
+    /**
+     * Make sure that regular and expedited jobs don't run during data saver
+     * even if a user-initiated job is running at the same time.
+     */
+    public void testBgNonUiJobDoesNotBypassDataSaverWhenUiJobRunning() throws Exception {
+        if (hasEthernetConnection()) {
+            Log.d(TAG, "Skipping test since ethernet is connected.");
+            return;
+        }
+        if (mHasWifi) {
+            setWifiMeteredState(true);
+        } else if (checkDeviceSupportsMobileData()) {
+            disconnectWifiToConnectToMobile();
+        } else {
+            Log.d(TAG, "Skipping test that requires a metered network.");
+            return;
+        }
+
+        try (TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(
+                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            setDataSaverEnabled(true);
+
+            final int uiJobId = CONNECTIVITY_JOB_ID;
+            final int expJobId = CONNECTIVITY_JOB_ID + 1;
+            final int regJobId = CONNECTIVITY_JOB_ID + 2;
+            mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
+            mTestAppInterface.closeActivity(true);
+            // Regular job
+            mTestAppInterface.scheduleJob(
+                    Collections.emptyMap(),
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, regJobId,
+                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE,
+                            JobInfo.NETWORK_TYPE_ANY
+                    )
+            );
+            // EJ
+            mTestAppInterface.scheduleJob(
+                    Map.of(TestJobSchedulerReceiver.EXTRA_AS_EXPEDITED, true),
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, expJobId,
+                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE,
+                            JobInfo.NETWORK_TYPE_ANY
+                    )
+            );
+            // UI job
+            mTestAppInterface.postUiInitiatingNotification(
+                    Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, uiJobId,
+                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE,
+                            JobInfo.NETWORK_TYPE_ANY
+                    )
+            );
+
+            // Clicking on the notification should put the app into a BAL approved state.
+            notificationHelper.clickNotification();
+
+            assertTrue("BG UI job requiring connectivity didn't fire with Data Saver on.",
+                    mTestAppInterface.awaitJobStart(uiJobId, DEFAULT_TIMEOUT_MILLIS));
+            // The UI job may have started immediately, so keep the standard timeout for the
+            // EJ check to give enough time to confirm the job didn't start.
+            assertFalse("BG EJ requiring connectivity fired with Data Saver on.",
+                    mTestAppInterface.awaitJobStart(expJobId, DEFAULT_TIMEOUT_MILLIS));
+            // At this point, there's been enough time for this job to start, so don't have
+            // a long wait time.
+            assertFalse("BG job requiring connectivity fired with Data Saver on.",
+                    mTestAppInterface.awaitJobStart(regJobId, 1000));
+        }
     }
 
     // --------------------------------------------------------------------------------------------
