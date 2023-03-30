@@ -48,7 +48,8 @@ import java.util.List;
 
 public class PhotoPickerCloudUtils {
     private static final String NAMESPACE_STORAGE_NATIVE_BOOT = "storage_native_boot";
-    private static final String ALLOWED_CLOUD_PROVIDERS_KEY = "allowed_cloud_providers";
+    private static final String KEY_ALLOWED_CLOUD_PROVIDERS = "allowed_cloud_providers";
+    private static final String KEY_CLOUD_MEDIA_FEATURE_ENABLED = "cloud_media_feature_enabled";
 
     public static List<String> extractMediaIds(ClipData clipData, int minCount) {
         final int count = clipData.getItemCount();
@@ -112,44 +113,68 @@ public class PhotoPickerCloudUtils {
         assertThat(mediaIds).containsNoneIn(Collections.singletonList(notContained));
     }
 
+    public static boolean isCloudMediaEnabled() {
+        return Boolean.parseBoolean(readDeviceConfigProp(KEY_CLOUD_MEDIA_FEATURE_ENABLED));
+    }
+
     @Nullable
     static String getAllowedProvidersDeviceConfig() {
+        return readDeviceConfigProp(KEY_ALLOWED_CLOUD_PROVIDERS);
+    }
+
+    static void enableCloudMediaAndSetAllowedCloudProviders(@NonNull String allowedPackagesJoined) {
+        writeDeviceConfigProp(KEY_ALLOWED_CLOUD_PROVIDERS, allowedPackagesJoined);
+        assertWithMessage("Failed to update the allowed cloud providers device config")
+                .that(getAllowedProvidersDeviceConfig())
+                .isEqualTo(allowedPackagesJoined);
+
+        writeDeviceConfigProp(KEY_CLOUD_MEDIA_FEATURE_ENABLED, true);
+    }
+
+
+    static void disableCloudMediaAndClearAllowedCloudProviders() {
+        writeDeviceConfigProp(KEY_CLOUD_MEDIA_FEATURE_ENABLED, false);
+
+        deleteDeviceConfigProp(KEY_ALLOWED_CLOUD_PROVIDERS);
+        assertWithMessage("Failed to delete the allowed cloud providers device config")
+                .that(getAllowedProvidersDeviceConfig())
+                .isNull();
+    }
+
+    @NonNull
+    private static UiAutomation getUiAutomation() {
+        return InstrumentationRegistry.getInstrumentation().getUiAutomation();
+    }
+
+    @Nullable
+    private static String readDeviceConfigProp(@NonNull String name) {
         getUiAutomation().adoptShellPermissionIdentity(READ_DEVICE_CONFIG);
         try {
-            return DeviceConfig.getProperty(NAMESPACE_STORAGE_NATIVE_BOOT,
-                    ALLOWED_CLOUD_PROVIDERS_KEY);
+            return DeviceConfig.getProperty(NAMESPACE_STORAGE_NATIVE_BOOT, name);
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
-    static void setAllowedProvidersDeviceConfig(@Nullable String allowedCloudProviders) {
+    private static void writeDeviceConfigProp(@NonNull String name, boolean value) {
+        writeDeviceConfigProp(name, Boolean.toString(value));
+    }
+
+    private static void writeDeviceConfigProp(@NonNull String name, @NonNull String value) {
         if (SdkLevel.isAtLeastU()) {
             getUiAutomation().adoptShellPermissionIdentity(WRITE_ALLOWLISTED_DEVICE_CONFIG);
         } else {
             getUiAutomation().adoptShellPermissionIdentity(WRITE_DEVICE_CONFIG);
         }
         try {
-            if (allowedCloudProviders == null) {
-                DeviceConfig.deleteProperty(NAMESPACE_STORAGE_NATIVE_BOOT,
-                        ALLOWED_CLOUD_PROVIDERS_KEY);
-                assertWithMessage("Failed to delete the allowed cloud providers device config")
-                        .that(getAllowedProvidersDeviceConfig())
-                        .isNull();
-            } else {
-                DeviceConfig.setProperty(NAMESPACE_STORAGE_NATIVE_BOOT, ALLOWED_CLOUD_PROVIDERS_KEY,
-                        allowedCloudProviders, /* makeDefault */ false);
-                assertWithMessage("Failed to update the allowed cloud providers device config")
-                        .that(getAllowedProvidersDeviceConfig())
-                        .isEqualTo(allowedCloudProviders);
-            }
+            DeviceConfig.setProperty(NAMESPACE_STORAGE_NATIVE_BOOT, name, value,
+                    /* makeDefault*/ false);
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
-    @NonNull
-    private static UiAutomation getUiAutomation() {
-        return InstrumentationRegistry.getInstrumentation().getUiAutomation();
+    private static void deleteDeviceConfigProp(@NonNull String name) {
+        DeviceConfig.deleteProperty(NAMESPACE_STORAGE_NATIVE_BOOT, name);
     }
 }
