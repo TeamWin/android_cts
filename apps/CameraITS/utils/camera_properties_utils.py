@@ -399,6 +399,11 @@ def jpeg_orientation(props):
       'android.jpeg.orientation' in props['camera.characteristics.requestKeys'])
 
 
+def sensor_orientation(props):
+  """Returns the sensor orientation of the camera."""
+  return props['android.sensor.orientation']
+
+
 def zoom_ratio_range(props):
   """Returns whether a device supports zoom capabilities.
 
