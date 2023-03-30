@@ -33,7 +33,6 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -138,13 +137,9 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             // Turn device off
             sendDeviceToSleep();
 
-            List<Integer> keycodes = new ArrayList<>();
-            keycodes.add(HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION);
-            keycodes.add(HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION);
-
-            // Send a <UCP>[Power On] immediately followed by a <UCP>[Power Off]
-            hdmiCecClient.sendMultipleUserControlPressAndRelease(
-                    hdmiCecClient.getSelfDevice(), keycodes);
+            device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            TimeUnit.MILLISECONDS.sleep(200);
+            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
 
             String reportPowerStatus =
                     hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_POWER_STATUS);
@@ -198,13 +193,9 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             wakeUpDevice();
             WakeLockHelper.acquirePartialWakeLock(getDevice());
 
-            List<Integer> keycodes = new ArrayList<>();
-            keycodes.add(HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION);
-            keycodes.add(HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION);
-
-            // Send a <UCP>[Power Off] immediately followed by a <UCP>[Power On]
-            hdmiCecClient.sendMultipleUserControlPressAndRelease(
-                    hdmiCecClient.getSelfDevice(), keycodes);
+            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            TimeUnit.MILLISECONDS.sleep(200);
+            device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
 
             String reportPowerStatus =
                     hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_POWER_STATUS);
