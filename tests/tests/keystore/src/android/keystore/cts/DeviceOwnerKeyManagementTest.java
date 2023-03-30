@@ -458,11 +458,7 @@ public class DeviceOwnerKeyManagementTest {
                         }
                         String expectedSecondImei = null;
                         if ((devIdOpt & ID_TYPE_IMEI) != 0) {
-                            // TODO(b/262255219): Remove this condition when StrongBox supports 2nd
-                            // IMEI attestation.
-                            if (!useStrongBox) {
-                                expectedSecondImei = secondImei;
-                            }
+                            expectedSecondImei = secondImei;
                         }
                         validateDeviceIdAttestationData(attestation, expectedSerial,
                                 expectedImei, expectedMeid, expectedSecondImei);
