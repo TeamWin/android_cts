@@ -46,6 +46,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.UserManager;
+import android.service.quicksettings.TileService;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -102,6 +103,7 @@ import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsers
 import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsersOnDefaultDisplay;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
+import com.android.bedstead.harrier.annotations.RequireQuickSettingsSupport;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnVisibleBackgroundNonProfileUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnVisibleBackgroundNonProfileUser;
@@ -1181,6 +1183,15 @@ public final class DeviceState extends HarrierRule {
                 ensureDoesNotHaveUserRestriction(
                         ensureDoesNotHaveUserRestrictionAnnotation.value(),
                         ensureDoesNotHaveUserRestrictionAnnotation.onUser());
+                continue;
+            }
+
+            if (annotation instanceof RequireQuickSettingsSupport) {
+                RequireQuickSettingsSupport requireQuickSettingsSupport =
+                        (RequireQuickSettingsSupport) annotation;
+                checkFailOrSkip("Device does not have quick settings",
+                        TileService.isQuickSettingsSupported(),
+                        requireQuickSettingsSupport.failureMode());
                 continue;
             }
         }

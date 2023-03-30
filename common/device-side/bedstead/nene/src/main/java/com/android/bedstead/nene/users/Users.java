@@ -301,6 +301,20 @@ public final class Users {
         return profiles.iterator().next();
     }
 
+
+    /**
+     * Find all users which have the given {@link UserType} and the instrumented user as parent.
+     *
+     * <p>If there are no users of the given type and parent, {@code Null} will be returned.
+     *
+     * <p>If there is more than one user of the given type and parent, {@link NeneException} will
+     * be thrown.
+     */
+    @Nullable
+    public UserReference findProfileOfType(UserType userType) {
+        return findProfileOfType(userType, TestApis.users().instrumented());
+    }
+
     private void ensureSupportedTypesCacheFilled() {
         if (mCachedUserTypes != null) {
             // SupportedTypes don't change so don't need to be refreshed
