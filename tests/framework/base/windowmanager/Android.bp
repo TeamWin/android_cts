@@ -86,6 +86,8 @@ android_test {
         ":CtsAlertWindowService",
         ":CtsPropertyCompatAllowSandboxingViewBoundsApisApp",
         ":CtsPropertyCompatOptOutSandboxingViewBoundsApisApp",
+        ":CtsPropertyCompatEnableFakeFocusOptInApp",
+        ":CtsPropertyCompatEnableFakeFocusOptOutApp",
         ":CtsDeviceServicesTestApp",
         ":CtsDeviceServicesTestApp27",
         ":CtsDeviceServicesTestApp30",

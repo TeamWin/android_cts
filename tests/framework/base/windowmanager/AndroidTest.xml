@@ -30,6 +30,8 @@
         <option name="test-file-name" value="CtsAlertWindowService.apk"/>
         <option name="test-file-name" value="CtsPropertyCompatAllowSandboxingViewBoundsApisApp.apk"/>
         <option name="test-file-name" value="CtsPropertyCompatOptOutSandboxingViewBoundsApisApp.apk"/>
+        <option name="test-file-name" value="CtsPropertyCompatEnableFakeFocusOptInApp.apk" />
+        <option name="test-file-name" value="CtsPropertyCompatEnableFakeFocusOptOutApp.apk" />
         <option name="test-file-name" value="CtsDeviceServicesTestApp.apk" />
         <option name="test-file-name" value="CtsDeviceServicesTestApp27.apk" />
         <option name="test-file-name" value="CtsDeviceServicesTestApp30.apk" />

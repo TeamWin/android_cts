@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.content.pm.ActivityInfo.OVERRIDE_ENABLE_COMPAT_FAKE_FOCUS;
 import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE;
 import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_MEDIUM_VALUE;
 import static android.content.pm.ActivityInfo.OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS;
@@ -27,6 +28,10 @@ import static android.server.wm.allowsandboxingviewboundsapis.Components.ACTION_
 import static android.server.wm.allowsandboxingviewboundsapis.Components.ACTION_TEST_VIEW_SANDBOX_NOT_ALLOWED_PASSED;
 import static android.server.wm.allowsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY;
 import static android.server.wm.allowsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_ALLOWED_TIMEOUT_MS;
+import static android.server.wm.enablefakefocusoptin.Components.ENABLE_FAKE_FOCUS_OPT_IN_LEFT_ACTIVITY;
+import static android.server.wm.enablefakefocusoptin.Components.ENABLE_FAKE_FOCUS_OPT_IN_RIGHT_ACTIVITY;
+import static android.server.wm.enablefakefocusoptout.Components.ENABLE_FAKE_FOCUS_OPT_OUT_LEFT_ACTIVITY;
+import static android.server.wm.enablefakefocusoptout.Components.ENABLE_FAKE_FOCUS_OPT_OUT_RIGHT_ACTIVITY;
 import static android.server.wm.optoutsandboxingviewboundsapis.Components.ACTION_TEST_VIEW_SANDBOX_OPT_OUT_PASSED;
 import static android.server.wm.optoutsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_OPT_OUT_ACTIVITY;
 import static android.server.wm.optoutsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_OPT_OUT_TIMEOUT_MS;
@@ -42,6 +47,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.WindowConfiguration;
@@ -107,6 +113,10 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             component(NonResizeableLargeAspectRatioActivity.class);
     private static final ComponentName SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY =
             component(SupportsSizeChangesPortraitActivity.class);
+    private static final ComponentName RESIZEABLE_LEFT_ACTIVITY =
+            component(ResizeableLeftActivity.class);
+    private static final ComponentName RESIZEABLE_RIGHT_ACTIVITY =
+            component(ResizeableRightActivity.class);
 
     // Fixed orientation min aspect ratio
     private static final float FIXED_ORIENTATION_MIN_ASPECT_RATIO = 1.03f;
@@ -189,6 +199,60 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         public void close() throws Exception {
             executeShellCommand("am compat disable " + mChangeId + " " + mPackageName);
         }
+    }
+
+    @Test
+    public void testEnableFakeFocus_propertyIsFalse_overrideNotApplied() throws Exception {
+        assumeTrue("Skipping test: no split multi-window support",
+                supportsSplitScreenMultiWindow());
+        try (var compatChange = new CompatChangeCloseable(
+                OVERRIDE_ENABLE_COMPAT_FAKE_FOCUS,
+                ENABLE_FAKE_FOCUS_OPT_OUT_LEFT_ACTIVITY.getPackageName())) {
+
+            launchActivitiesInSplitScreen(
+                    getLaunchActivityBuilder().setTargetActivity(
+                            ENABLE_FAKE_FOCUS_OPT_OUT_LEFT_ACTIVITY),
+                    getLaunchActivityBuilder().setTargetActivity(
+                            ENABLE_FAKE_FOCUS_OPT_OUT_RIGHT_ACTIVITY));
+
+            WindowManagerState.Activity activity =
+                    mWmState.getActivity(ENABLE_FAKE_FOCUS_OPT_OUT_LEFT_ACTIVITY);
+
+            assertFalse(activity.getShouldSendCompatFakeFocus());
+        }
+    }
+
+    @Test
+    public void testEnableFakeFocus_propertyIsTrue_returnsTrue() throws Exception {
+        assumeTrue("Skipping test: no split multi-window support",
+                supportsSplitScreenMultiWindow());
+
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(
+                        ENABLE_FAKE_FOCUS_OPT_IN_LEFT_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(
+                        ENABLE_FAKE_FOCUS_OPT_IN_RIGHT_ACTIVITY));
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(ENABLE_FAKE_FOCUS_OPT_IN_LEFT_ACTIVITY);
+
+        assertTrue(activity.getShouldSendCompatFakeFocus());
+    }
+
+    @Test
+    @EnableCompatChanges({OVERRIDE_ENABLE_COMPAT_FAKE_FOCUS})
+    public void testEnableFakeFocus_overrideApplied_returnsTrue() throws Exception {
+        assumeTrue("Skipping test: no split multi-window support",
+                supportsSplitScreenMultiWindow());
+
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_LEFT_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_RIGHT_ACTIVITY));
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_LEFT_ACTIVITY);
+
+        assertTrue(activity.getShouldSendCompatFakeFocus());
     }
 
     /**
@@ -995,5 +1059,11 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     }
 
     public static class SupportsSizeChangesPortraitActivity extends FocusableActivity {
+    }
+
+    public static class ResizeableLeftActivity extends FocusableActivity {
+    }
+
+    public static class ResizeableRightActivity extends FocusableActivity {
     }
 }
