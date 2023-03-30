@@ -222,6 +222,10 @@ public abstract class CodecTestBase {
         CODEC_ALL, // All codecs must support
         CODEC_ANY, // At least one codec must support
         CODEC_DEFAULT, // Default codec must support
+        CODEC_HW, // If the component is hardware, then it must support
+        CODEC_SHOULD, // Codec support is optional, but recommended
+        CODEC_HW_RECOMMENDED, // Codec support is optional, but strongly recommended if component
+        // is hardware accelerated
         CODEC_OPTIONAL; // Codec support is optional
 
         public static String toString(SupportClass supportRequirements) {
@@ -232,6 +236,12 @@ public abstract class CodecTestBase {
                     return "CODEC_ANY";
                 case CODEC_DEFAULT:
                     return "CODEC_DEFAULT";
+                case CODEC_HW:
+                    return "CODEC_HW";
+                case CODEC_SHOULD:
+                    return "CODEC_SHOULD";
+                case CODEC_HW_RECOMMENDED:
+                    return "CODEC_HW_RECOMMENDED";
                 case CODEC_OPTIONAL:
                     return "CODEC_OPTIONAL";
                 default:
@@ -458,6 +468,23 @@ public abstract class CodecTestBase {
                         fail("format(s) not supported by default codec : " + codecName
                                 + "for mediaType : " + mediaType + " formats: " + formats);
                     }
+                    break;
+                case CODEC_HW:
+                    if (isHardwareAcceleratedCodec(codecName)) {
+                        fail("format(s) not supported by codec: " + codecName + " for mediaType : "
+                                + mediaType + " formats: " + formats);
+                    }
+                    break;
+                case CODEC_SHOULD:
+                    Assume.assumeTrue(String.format("format(s) not supported by codec: %s for"
+                            + " mediaType : %s. It is recommended to support it",
+                            codecName, mediaType), false);
+                    break;
+                case CODEC_HW_RECOMMENDED:
+                    Assume.assumeTrue(String.format(
+                            "format(s) not supported by codec: %s for mediaType : %s. It is %s "
+                                    + "recommended to support it", codecName, mediaType,
+                            isHardwareAcceleratedCodec(codecName) ? "strongly" : ""), false);
                     break;
                 case CODEC_OPTIONAL:
                 default:
