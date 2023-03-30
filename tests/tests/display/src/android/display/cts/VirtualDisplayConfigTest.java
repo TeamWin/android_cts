@@ -25,6 +25,7 @@ import android.graphics.SurfaceTexture;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplayConfig;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.DisplayMetrics;
 import android.view.Surface;
 
@@ -36,6 +37,7 @@ import org.junit.runner.RunWith;
 import java.util.Set;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class VirtualDisplayConfigTest {
 
     private static final String NAME = "VirtualDisplayConfigTest";

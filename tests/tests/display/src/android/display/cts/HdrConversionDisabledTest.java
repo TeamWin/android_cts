@@ -25,6 +25,7 @@ import android.Manifest;
 import android.content.Context;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.HdrConversionMode;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.provider.DeviceConfig;
 
 import androidx.test.InstrumentationRegistry;
@@ -46,6 +47,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class HdrConversionDisabledTest {
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getContext();
