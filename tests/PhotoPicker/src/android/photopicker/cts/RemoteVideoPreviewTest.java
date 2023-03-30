@@ -16,7 +16,6 @@
 
 package android.photopicker.cts;
 
-import static android.photopicker.cts.PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders;
 import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
 import static android.photopicker.cts.PickerProviderMediaGenerator.syncCloudProvider;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
@@ -93,10 +92,6 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
                 mContext, CloudProviderPrimary.AUTHORITY);
         mCloudPrimaryMediaGenerator.resetAll();
         mCloudPrimaryMediaGenerator.setMediaCollectionId(COLLECTION_1);
-
-        // This is a self-instrumentation test, so both "target" package name and "own" package name
-        // should be the same (android.photopicker.cts).
-        enableCloudMediaAndSetAllowedCloudProviders(sTargetPackageName);
 
         setCloudProvider(mContext, CloudProviderPrimary.AUTHORITY);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
