@@ -116,6 +116,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mPatternWorkChallenge;
     private DialogTestListItem mParentProfilePassword;
     private DialogTestListItem mPersonalRingtonesTest;
+    private TestListItem mScreenshotTest;
     private TestListItem mVpnTest;
     private TestListItem mKeyChainTest;
     private TestListItem mAlwaysOnVpnSettingsTest;
@@ -475,6 +476,12 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_personal_ringtones_instruction,
                 new Intent(Settings.ACTION_SOUND_SETTINGS));
 
+        mScreenshotTest = TestListItem.newTest(/* context= */ this,
+                R.string.provisioning_byod_screenshot,
+                ScreenshotTestActivity.class.getName(),
+                new Intent(ScreenshotTestActivity.ACTION_SCREENSHOT_TEST),
+                /* requiredFeatures= */ null);
+
         final Intent policyTransparencyTestIntent = new Intent(this,
                 PolicyTransparencyTestListActivity.class);
         policyTransparencyTestIntent.putExtra(
@@ -695,6 +702,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 "BYOD_LaunchWorkTab",
                 R.string.provisioning_byod_launch_work_tab_instruction,
                 createLaunchWorkTabIntent()));
+
+        adapter.add(mScreenshotTest);
     }
 
     private Intent createInstallWorkProfileAppIntent() {
