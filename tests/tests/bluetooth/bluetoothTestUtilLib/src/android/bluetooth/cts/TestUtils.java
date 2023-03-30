@@ -17,9 +17,8 @@
 package android.bluetooth.cts;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
@@ -30,23 +29,26 @@ import android.provider.Settings;
 import android.sysprop.BluetoothProperties;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import junit.framework.Assert;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Utility class for Bluetooth CTS test.
  */
-class TestUtils {
+public class TestUtils {
     /**
      * Checks whether this device has Bluetooth feature
      * @return true if this device has Bluetooth feature
      */
-    static boolean hasBluetooth() {
+    public static boolean hasBluetooth() {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         return context.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_BLUETOOTH);
@@ -55,7 +57,7 @@ class TestUtils {
     /**
      * Get the current enabled status of a given profile
      */
-    static boolean isProfileEnabled(int profile) {
+    public static boolean isProfileEnabled(int profile) {
         switch (profile) {
             case BluetoothProfile.A2DP:
                 return BluetoothProperties.isProfileA2dpSourceEnabled().orElse(false);
@@ -120,7 +122,7 @@ class TestUtils {
      * Adopt shell UID's permission via {@link android.app.UiAutomation}
      * @param permission permission to adopt
      */
-    static void adoptPermissionAsShellUid(@Nullable String... permission) {
+    public static void adoptPermissionAsShellUid(@Nullable String... permission) {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(permission);
     }
@@ -128,7 +130,7 @@ class TestUtils {
     /**
      * Drop all permissions adopted as shell UID
      */
-    static void dropPermissionAsShellUid() {
+    public static void dropPermissionAsShellUid() {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }
@@ -138,7 +140,7 @@ class TestUtils {
      * Fail the test if {@link BluetoothAdapter} is null
      * @return instance of {@link BluetoothAdapter}
      */
-    @NonNull static BluetoothAdapter getBluetoothAdapterOrDie() {
+    @NonNull public static BluetoothAdapter getBluetoothAdapterOrDie() {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         BluetoothManager manager = context.getSystemService(BluetoothManager.class);
         assertNotNull(manager);
@@ -150,7 +152,7 @@ class TestUtils {
     /**
      * Utility method to call hidden ScanRecord.parseFromBytes method.
      */
-    static ScanRecord parseScanRecord(byte[] bytes) {
+    public static ScanRecord parseScanRecord(byte[] bytes) {
         Class<?> scanRecordClass = ScanRecord.class;
         try {
             Method method = scanRecordClass.getDeclaredMethod("parseFromBytes", byte[].class);
@@ -164,17 +166,17 @@ class TestUtils {
     /**
      * Assert two byte arrays are equal.
      */
-    static void assertArrayEquals(byte[] expected, byte[] actual) {
+    public static void assertArrayEquals(byte[] expected, byte[] actual) {
         if (!Arrays.equals(expected, actual)) {
-            Assert.fail("expected:<" + Arrays.toString(expected) +
-                    "> but was:<" + Arrays.toString(actual) + ">");
+            fail("expected:<" + Arrays.toString(expected)
+                    + "> but was:<" + Arrays.toString(actual) + ">");
         }
     }
 
     /**
      * Get current location mode settings.
      */
-    static int getLocationMode(Context context) {
+    public static int getLocationMode(Context context) {
         return Settings.Secure.getInt(context.getContentResolver(),
                 Settings.Secure.LOCATION_MODE, Settings.Secure.LOCATION_MODE_OFF);
     }
@@ -182,7 +184,7 @@ class TestUtils {
     /**
      * Set location settings mode.
      */
-    static void setLocationMode(Context context, int mode) {
+    public static void setLocationMode(Context context, int mode) {
         Settings.Secure.putInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE,
                 mode);
     }
@@ -190,21 +192,21 @@ class TestUtils {
     /**
      * Return true if location is on.
      */
-    static boolean isLocationOn(Context context) {
+    public static boolean isLocationOn(Context context) {
         return getLocationMode(context) != Settings.Secure.LOCATION_MODE_OFF;
     }
 
     /**
      * Enable location and set the mode to GPS only.
      */
-    static void enableLocation(Context context) {
+    public static void enableLocation(Context context) {
         setLocationMode(context, Settings.Secure.LOCATION_MODE_SENSORS_ONLY);
     }
 
     /**
      * Disable location.
      */
-    static void disableLocation(Context context) {
+    public static void disableLocation(Context context) {
         setLocationMode(context, Settings.Secure.LOCATION_MODE_OFF);
     }
 
@@ -213,7 +215,7 @@ class TestUtils {
      * @param context current device context
      * @return true if BLE is supported, false otherwise
      */
-    static boolean isBleSupported(Context context) {
+    public static boolean isBleSupported(Context context) {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
     }
 
@@ -221,11 +223,113 @@ class TestUtils {
      * Put the current thread to sleep.
      * @param sleepMillis number of milliseconds to sleep for
      */
-    static void sleep(int sleepMillis) {
+    public static void sleep(int sleepMillis) {
         try {
             Thread.sleep(sleepMillis);
         } catch (InterruptedException e) {
             Log.e(TestUtils.class.getSimpleName(), "interrupted", e);
         }
+    }
+
+    /**
+     * Boilerplate class for profile listener
+     */
+    public static class BluetoothCtsServiceConnector {
+        private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
+        private BluetoothProfile mProfileProxy = null;
+        private boolean mIsProfileReady = false;
+        private boolean mIsProfileConnecting = false;
+        private final Condition mConditionProfileConnection;
+        private final ReentrantLock mProfileConnectionLock;
+        private final String mLogTag;
+        private final int mProfileId;
+        private final BluetoothAdapter mAdapter;
+        private final Context mContext;
+        BluetoothCtsServiceConnector(String logTag, int profileId, BluetoothAdapter adapter,
+                Context context) {
+            mLogTag = logTag;
+            mProfileId = profileId;
+            mAdapter = adapter;
+            mContext = context;
+            mProfileConnectionLock = new ReentrantLock();
+            mConditionProfileConnection = mProfileConnectionLock.newCondition();
+            assertNotNull(mLogTag);
+            assertNotNull(mAdapter);
+            assertNotNull(mContext);
+        }
+
+        public BluetoothProfile getProfileProxy() {
+            return mProfileProxy;
+        }
+
+        public void closeProfileProxy() {
+            if (mProfileProxy != null) {
+                mAdapter.closeProfileProxy(mProfileId, mProfileProxy);
+                mProfileProxy = null;
+                mIsProfileReady = false;
+            }
+        }
+
+        public boolean openProfileProxyAsync() {
+            mIsProfileConnecting = mAdapter.getProfileProxy(mContext, mServiceListener, mProfileId);
+            return mIsProfileConnecting;
+        }
+
+        public boolean waitForProfileConnect() {
+            return waitForProfileConnect(PROXY_CONNECTION_TIMEOUT_MS);
+        }
+
+        public boolean waitForProfileConnect(int timeoutMs) {
+            if (!mIsProfileConnecting) {
+                mIsProfileConnecting =
+                        mAdapter.getProfileProxy(mContext, mServiceListener, mProfileId);
+            }
+            if (!mIsProfileConnecting) {
+                return false;
+            }
+            mProfileConnectionLock.lock();
+            try {
+                // Wait for the Adapter to be disabled
+                while (!mIsProfileReady) {
+                    if (!mConditionProfileConnection.await(timeoutMs, TimeUnit.MILLISECONDS)) {
+                        // Timeout
+                        Log.e(mLogTag, "Timeout while waiting for Profile Connect");
+                        break;
+                    } // else spurious wake-ups
+                }
+            } catch (InterruptedException e) {
+                Log.e(mLogTag, "waitForProfileConnect: interrupted");
+            } finally {
+                mProfileConnectionLock.unlock();
+            }
+            mIsProfileConnecting = false;
+            return mIsProfileReady;
+        }
+
+        private final BluetoothProfile.ServiceListener mServiceListener =
+                new BluetoothProfile.ServiceListener() {
+            @Override
+            public void onServiceConnected(int profile, BluetoothProfile proxy) {
+                mProfileConnectionLock.lock();
+                mProfileProxy = proxy;
+                mIsProfileReady = true;
+                try {
+                    mConditionProfileConnection.signal();
+                } finally {
+                    mProfileConnectionLock.unlock();
+                }
+            }
+
+            @Override
+            public void onServiceDisconnected(int profile) {
+                mProfileConnectionLock.lock();
+                mIsProfileReady = false;
+                try {
+                    mConditionProfileConnection.signal();
+                } finally {
+                    mProfileConnectionLock.unlock();
+                }
+            }
+        };
     }
 }
