@@ -34,6 +34,7 @@ import androidx.test.filters.SdkSuppress;
 import android.view.Surface;
 
 import android.media.cts.MediaCodecAsyncHelper;
+import android.media.cts.MediaCodecBlockModelHelper;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -195,7 +196,7 @@ public class MediaCodecCryptoAsyncHelper {
                     mediaExtractor.getSampleTrackIndex());
             String mime = mediaFormat.getString(MediaFormat.KEY_MIME);
             String codecName = MediaCodecAsyncHelper.getDecoderForType(mime, secure);
-            Assume.assumeTrue("No Codec Found for this resource", codecName != null);
+            Assume.assumeTrue("No Codec Found for this format", codecName != null);
             mediaCodec = MediaCodec.createByCodecName(codecName);
             runComponentWithInput(
                     mediaCodec,
@@ -304,6 +305,159 @@ public class MediaCodecCryptoAsyncHelper {
             }
         }
         if (!endOfStream) {
+            throw new Exception("Codec output not complete with end of stream");
+        }
+    }
+
+    // BlockModel Tests
+    public static void runDecodeShortVideoUsingBlockModel(
+            MediaExtractor mediaExtractor,
+            boolean secure,
+            Long lastBufferTimestampUs,
+            MediaCrypto crypto,
+            boolean obtainBlockForEachBuffer) throws Exception{
+        OutputSurface outputSurface = null;
+        MediaCodec mediaCodec = null;
+       final LinkedBlockingQueue<MediaCodec.CryptoInfo>
+              cryptoInfoQueue = new LinkedBlockingQueue<>();
+        try {
+            outputSurface = new OutputSurface(1, 1);
+            MediaFormat mediaFormat = mediaExtractor.getTrackFormat(
+                    mediaExtractor.getSampleTrackIndex());
+            String mime = mediaFormat.getString(MediaFormat.KEY_MIME);
+            String codecName = MediaCodecAsyncHelper.getDecoderForType(mime, secure);
+            Assume.assumeTrue("No Codec Found for this format", codecName != null);
+            mediaCodec = MediaCodec.createByCodecName(codecName);
+
+            List<Long> timestampList = Collections.synchronizedList(new ArrayList<>());
+            runComponentWithLinearInputUsingBlockModel(
+                    mediaCodec,
+                    crypto,
+                    mediaFormat,
+                    outputSurface.getSurface(),
+                    new MediaCodecBlockModelHelper.ExtractorInputSlotListener
+                            .Builder()
+                            .setExtractor(mediaExtractor)
+                            .setLastBufferTimestampUs(lastBufferTimestampUs)
+                            .setObtainBlockForEachBuffer(obtainBlockForEachBuffer)
+                            .setTimestampQueue(timestampList)
+                            .setContentEncrypted(true)
+                            .build(),
+                    new MediaCodecBlockModelHelper.SurfaceOutputSlotListener(
+                            outputSurface, timestampList, null),
+                    cryptoInfoQueue);
+            if (secure) {
+                throw new IllegalStateException("Secure codec should have failed");
+            }
+        } catch (IllegalStateException e) {
+            // this is expected only for secure codec.
+            if (!secure) {
+                throw e;
+            }
+            if (cryptoInfoQueue.poll(500L, TimeUnit.MILLISECONDS) == null) {
+                throw new IllegalStateException("onCryptoError() not called yet");
+            }
+        } catch (CryptoException e) {
+            // this is caught only to revise error message
+            throw new IllegalStateException(
+                    "CryptoException should be thrown in callback", e);
+        } finally {
+            if (mediaCodec != null) {
+                mediaCodec.release();
+            }
+            if (mediaExtractor != null) {
+                mediaExtractor.release();
+            }
+            if (outputSurface != null) {
+                outputSurface.release();
+            }
+            if (crypto != null) {
+                crypto.release();
+            }
+        }
+    }
+
+    public static void runComponentWithLinearInputUsingBlockModel(
+            MediaCodec mediaCodec,
+            MediaCrypto crypto,
+            MediaFormat mediaFormat,
+            Surface surface,
+            MediaCodecBlockModelHelper.ExtractorInputSlotListener inputListener,
+            MediaCodecBlockModelHelper.SurfaceOutputSlotListener outputListener,
+            LinkedBlockingQueue<MediaCodec.CryptoInfo> cryptoInfoQueue)
+            throws InterruptedException, Exception {
+        final LinkedBlockingQueue<MediaCodecAsyncHelper.SlotEvent> queue =
+                new LinkedBlockingQueue<>();
+        mediaCodec.setCallback(new MediaCodec.Callback() {
+            @Override
+            public void onInputBufferAvailable(MediaCodec codec, int index) {
+                queue.offer(new MediaCodecAsyncHelper.SlotEvent(true, index));
+            }
+
+            @Override
+            public void onOutputBufferAvailable(
+                    MediaCodec codec, int index, MediaCodec.BufferInfo info) {
+                queue.offer(new MediaCodecAsyncHelper.SlotEvent(false, index));
+            }
+
+            @Override
+            public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
+            }
+
+            @Override
+            public void onError(MediaCodec codec, CodecException e) {
+            }
+
+            @Override
+            public void onCryptoError(MediaCodec codec, CryptoException e) {
+                 MediaCodec.CryptoInfo info = e.getCryptoInfo();
+                // set to indicate the callback has happened.
+                if (info != null) {
+                    try {
+                        cryptoInfoQueue.put(info);
+                        Log.i(TAG, "MediaCodec fired Crypto Error: "
+                                + e.getErrorCode() + " Detail: " + e.getMessage());
+                    } catch(InterruptedException ex) {/* ignore */}
+                }
+            }
+        });
+        String[] codecNames = new String[]{ mediaCodec.getName() };
+        MediaCodecBlockModelHelper.LinearInputBlock input =
+                new MediaCodecBlockModelHelper.LinearInputBlock();
+        // this is termed in assumeTrue as failure of this is not the objective of this test.
+        if (!mediaCodec.getCodecInfo().isVendor() && mediaCodec.getName().startsWith("c2.")) {
+            Assume.assumeTrue("Google default c2.* codecs are copy-free compatible with" +
+                    "LinearBlocks", MediaCodec.LinearBlock.isCodecCopyFreeCompatible(codecNames));
+        }
+        if (crypto != null) {
+            codecNames[0] = codecNames[0] + ".secure";
+        }
+        input.block = MediaCodec.LinearBlock.obtain(
+                1024 * 1024 /*APP_BUFFER_SIZE*/, codecNames);
+        // this is not the scope of this test case. A failure of isMappable()
+        // is not the objective of this test.
+        Assume.assumeTrue("Blocks obtained through LinearBlock.obtain must be mappable",
+                input.block.isMappable());
+        input.buffer = input.block.map();
+        input.offset = 0;
+
+        int flags = MediaCodec.CONFIGURE_FLAG_USE_BLOCK_MODEL
+                | MediaCodec.CONFIGURE_FLAG_USE_CRYPTO_ASYNC;
+        mediaCodec.configure(mediaFormat, surface, crypto, flags);
+        mediaCodec.start();
+        boolean endOfStream = false;
+        boolean signaledEos = false;
+        while (!endOfStream && !Thread.interrupted()) {
+            MediaCodecAsyncHelper.SlotEvent event;
+            event = queue.take();
+            if (event.input) {
+                inputListener.onInputSlot(mediaCodec, event.index, input);
+            } else {
+                endOfStream = outputListener.onOutputSlot(mediaCodec, event.index);
+            }
+        }
+        input.block.recycle();
+        if(!endOfStream) {
             throw new Exception("Codec output not complete with end of stream");
         }
     }
