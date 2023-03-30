@@ -104,9 +104,10 @@ public class ActivityInterceptionTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         mContext = getApplicationContext();
-        assumeTrue(
-                mContext.getPackageManager()
-                        .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
+        final PackageManager packageManager = mContext.getPackageManager();
+        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
+        assumeTrue(packageManager.hasSystemFeature(
+                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         mVirtualDeviceManager = mContext.getSystemService(VirtualDeviceManager.class);
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
