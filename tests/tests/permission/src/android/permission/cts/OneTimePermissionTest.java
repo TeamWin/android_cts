@@ -16,7 +16,6 @@
 
 package android.permission.cts;
 
-import static org.junit.Assume.assumeFalse;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.CAMERA;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED;
@@ -24,10 +23,11 @@ import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREG
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
-import com.android.compatibility.common.util.FeatureUtil;
 import static com.android.compatibility.common.util.SystemUtil.eventually;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
+import static org.junit.Assume.assumeFalse;
 
 import android.app.ActivityManager;
 import android.app.DreamManager;
@@ -38,15 +38,16 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.DeviceConfig;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject2;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject2;
 
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.SystemUtil;
-import com.android.compatibility.common.util.UiAutomatorUtils;
+import com.android.compatibility.common.util.UiAutomatorUtils2;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -318,7 +319,7 @@ public class OneTimePermissionTest {
     }
 
     private void clickOneTimeButton() throws Throwable {
-        final UiObject2 uiObject = UiAutomatorUtils.waitFindObject(By.res(
+        final UiObject2 uiObject = UiAutomatorUtils2.waitFindObject(By.res(
                 "com.android.permissioncontroller:id/permission_allow_one_time_button"), 10000);
         Thread.sleep(500);
         uiObject.click();

@@ -22,10 +22,10 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.permission.cts.PermissionUtils.install
 import android.platform.test.annotations.AppModeFull
-import android.support.test.uiautomator.UiDevice
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
+import androidx.test.uiautomator.UiDevice
 import com.android.compatibility.common.util.CddTest
 import org.junit.Assert
 import org.junit.Before
@@ -37,13 +37,12 @@ import org.junit.runner.RunWith
 @CddTest(requirement = "9.1/C-0-1")
 @AppModeFull(reason = "Instant apps cannot read state of other packages.")
 class MinMaxSdkVersionTest {
-    private var mInstrumentation: Instrumentation? = null
+    private val mInstrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
     private var mUiDevice: UiDevice? = null
     private var mContext: Context? = null
 
     @Before
     fun setup() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation()
         mUiDevice = UiDevice.getInstance(mInstrumentation)
         mContext = mInstrumentation?.targetContext
     }

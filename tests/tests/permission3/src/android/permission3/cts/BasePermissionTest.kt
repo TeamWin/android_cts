@@ -39,22 +39,22 @@ import android.os.PersistableBundle
 import android.os.SystemClock
 import android.provider.DeviceConfig
 import android.provider.Settings
-import android.support.test.uiautomator.By
-import android.support.test.uiautomator.BySelector
-import android.support.test.uiautomator.StaleObjectException
-import android.support.test.uiautomator.UiDevice
-import android.support.test.uiautomator.UiObject2
 import android.text.Html
 import android.util.Log
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
+import androidx.test.uiautomator.StaleObjectException
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiObject2
 import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.FreezeRotationRule
 import com.android.compatibility.common.util.FutureResultActivity
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
-import com.android.compatibility.common.util.UiAutomatorUtils
+import com.android.compatibility.common.util.UiAutomatorUtils2
 import com.android.modules.utils.build.SdkLevel
 import com.google.common.truth.Truth.assertThat
 import java.io.File
@@ -283,23 +283,23 @@ abstract class BasePermissionTest {
 
     protected fun waitFindObject(selector: BySelector): UiObject2 {
         waitForIdle()
-        return findObjectWithRetry({ t -> UiAutomatorUtils.waitFindObject(selector, t) })!!
+        return findObjectWithRetry({ t -> UiAutomatorUtils2.waitFindObject(selector, t) })!!
     }
 
     protected fun waitFindObject(selector: BySelector, timeoutMillis: Long): UiObject2 {
         waitForIdle()
-        return findObjectWithRetry({ t -> UiAutomatorUtils.waitFindObject(selector, t) },
+        return findObjectWithRetry({ t -> UiAutomatorUtils2.waitFindObject(selector, t) },
                 timeoutMillis)!!
     }
 
     protected fun waitFindObjectOrNull(selector: BySelector): UiObject2? {
         waitForIdle()
-        return findObjectWithRetry({ t -> UiAutomatorUtils.waitFindObjectOrNull(selector, t) })
+        return findObjectWithRetry({ t -> UiAutomatorUtils2.waitFindObjectOrNull(selector, t) })
     }
 
     protected fun waitFindObjectOrNull(selector: BySelector, timeoutMillis: Long): UiObject2? {
         waitForIdle()
-        return findObjectWithRetry({ t -> UiAutomatorUtils.waitFindObjectOrNull(selector, t) },
+        return findObjectWithRetry({ t -> UiAutomatorUtils2.waitFindObjectOrNull(selector, t) },
                 timeoutMillis)
     }
 

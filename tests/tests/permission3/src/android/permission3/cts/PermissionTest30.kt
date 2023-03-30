@@ -19,9 +19,9 @@ package android.permission3.cts
 import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
-import android.support.test.uiautomator.By
-import org.junit.Test
+import androidx.test.uiautomator.By
 import org.junit.Assert.assertNull
+import org.junit.Test
 
 /**
  * Runtime permission behavior apps targeting API 30
