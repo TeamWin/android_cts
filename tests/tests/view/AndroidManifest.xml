@@ -215,7 +215,7 @@
              android:label="PixelCopyViewProducerDialogActivity"
              android:screenOrientation="portrait"
              android:rotationAnimation="jumpcut"
-             android:theme="@android:style/Theme.Material.Dialog.NoActionBar"
+             android:theme="@style/PixelCopyViewProducerDialogActivityTheme"
              android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"/>
 
         <activity android:name="android.view.cts.FocusFinderCtsActivity"
