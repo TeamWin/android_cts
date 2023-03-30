@@ -355,32 +355,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     // TODO: b/223837004
     private static final ImmutableSet<String> BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST =
         ImmutableSet.of(
-                // Already duplicate in BCP.
-                "Landroid/hidl/base/V1_0/DebugInfo;",
-                "Landroid/hidl/base/V1_0/IBase;",
                 // /apex/com.android.btservices/javalib/framework-bluetooth.jar
-                "Lcom/android/bluetooth/x/android/sysprop/AdbProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/ApkVerityProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/BluetoothProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/CarProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/ContactsProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/CryptoProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/DeviceProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/DisplayProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/HdmiProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/HypervisorProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/InputProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/MediaProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/NetworkProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/OtaProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/PowerProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/SetupWizardProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/SocProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/TelephonyProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/TraceProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/VndkProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/VoldProperties;",
-                "Lcom/android/bluetooth/x/android/sysprop/WifiProperties;",
                 "Lcom/android/bluetooth/x/com/android/modules/utils/ISynchronousResultReceiver;",
                 "Lcom/android/bluetooth/x/com/android/modules/utils/SynchronousResultReceiver-IA;",
                 "Lcom/android/bluetooth/x/com/android/modules/utils/SynchronousResultReceiver;",
