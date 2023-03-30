@@ -1987,11 +1987,13 @@ public class UsageStatsTest {
         final long startTime = System.currentTimeMillis();
 
         launchTestActivity(TEST_APP2_PKG, TEST_APP2_CLASS_PIP);
-        SystemClock.sleep(500);
+        final long sleepTime1 = 500;
+        SystemClock.sleep(sleepTime1);
 
         // TEST_APP_PKG should take focus, pausing the TEST_APP2_CLASS_PIP activity.
         launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS);
-        SystemClock.sleep(500);
+        final long sleepTime2 = 500;
+        SystemClock.sleep(sleepTime2);
 
         mWMStateHelper.waitForActivityState(TEST_APP2_PIP_COMPONENT,
                 WindowManagerState.STATE_PAUSED);
@@ -2034,6 +2036,13 @@ public class UsageStatsTest {
         assertEquals("Unexpected number of activity resumes", 1, resumes);
         assertEquals("Unexpected number of activity pauses", 1, pauses);
         assertEquals("Unexpected number of activity stops", 0, stops);
+
+        final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
+                startTime, endTime);
+        final UsageStats stats = map.get(TEST_APP2_PKG);
+        assertNotNull(stats);
+        final long totalTimeVisible = stats.getTotalTimeVisible();
+        assertLessThan(sleepTime1 + sleepTime2, totalTimeVisible);
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
