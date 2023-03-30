@@ -54,7 +54,6 @@ public class AudioFrequencyActivity extends PassFailButtons.Activity {
     // i.e. AudioFrequencyActivity <- RefMicActivity
     private OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

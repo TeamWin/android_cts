@@ -16,9 +16,6 @@
 
 package com.android.cts.verifier.audio;
 
-import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
-import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -85,9 +82,6 @@ public class AudioDisconnectActivity
     private boolean mHasHeadset;
     private boolean mIsAudioRunning;
     private volatile int mPlugCount;
-
-    // ReportLog Schema
-    private static final String SECTION_AUDIO_CONNECTION = "audio_connection_activity";
 
     static {
         StreamBase.loadMegaAudioLibrary();
@@ -531,16 +525,6 @@ public class AudioDisconnectActivity
     //
     // PassFailButtons Overrides
     //
-    @Override
-    public String getReportFileName() {
-        return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME;
-    }
-
-    @Override
-    public final String getReportSectionName() {
-        return setTestNameSuffix(sCurrentDisplayMode, SECTION_AUDIO_CONNECTION);
-    }
-
     private boolean startAudio(TestConfiguration config) {
         if (mIsAudioRunning) {
             stopAudio();
