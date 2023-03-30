@@ -61,6 +61,7 @@ import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageWriter;
+import android.os.Build;
 import android.os.ConditionVariable;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -68,6 +69,7 @@ import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
 import org.junit.Test;
@@ -1944,7 +1946,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             if (mStaticInfo.isCapabilitySupported(
                     CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS)) {
                 StaticMetadata staticInfo = mStaticInfo;
-                if (mStaticInfo.isLogicalMultiCamera()
+                boolean supportActivePhysicalIdConsistency =
+                        PropertyUtil.getFirstApiLevel() >= Build.VERSION_CODES.S;
+                if (mStaticInfo.isLogicalMultiCamera() && supportActivePhysicalIdConsistency
                         && mStaticInfo.isActivePhysicalCameraIdSupported()) {
                     String activePhysicalId =
                             result.get(CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
