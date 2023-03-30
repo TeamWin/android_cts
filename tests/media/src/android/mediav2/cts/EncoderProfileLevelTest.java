@@ -309,6 +309,10 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
                 new Pair<>(new int[]{HEVCProfileMain}, HEVCMainTierLevel3));
         PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_VIDEO_VP9,
                 new Pair<>(new int[]{VP9Profile0}, VP9Level3));
+        if (IS_AT_LEAST_U) {
+            PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_VIDEO_AV1,
+                    new Pair<>(new int[]{AV1ProfileMain8, AV1ProfileMain10}, -1));
+        }
     }
 
     void checkIfTrackFormatIsOk(MediaFormat trackFormat) {
@@ -362,7 +366,7 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
      * Check description of class {@link EncoderProfileLevelTest}
      */
     @CddTest(requirements = {"2.2.2/5.1/H-0-3", "2.2.2/5.1/H-0-4", "2.2.2/5.1/H-0-5", "5/C-0-3",
-            "5.2.1/C-1-1", "5.2.2/C-1-1", "5.2.4/C-1-2", "5.2.5/C-1-1"})
+            "5.2.1/C-1-1", "5.2.2/C-1-1", "5.2.4/C-1-2", "5.2.5/C-1-1", "5.2.6/C-1-1"})
     @ApiTest(apis = {"android.media.MediaFormat#KEY_PROFILE",
             "android.media.MediaFormat#KEY_AAC_PROFILE",
             "android.media.MediaFormat#KEY_LEVEL"})
