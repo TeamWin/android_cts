@@ -23,15 +23,7 @@ public class GwpAsanDefaultActivity extends Activity {
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        try {
-            if (Utils.isGwpAsanEnabled()) {
-                setResult(Utils.TEST_SUCCESS);
-            } else {
-                setResult(Utils.TEST_FAILURE);
-            }
-        } catch (Exception e) {
-            setResult(Utils.TEST_FAILURE);
-        }
+        setResult(Utils.runTest(getIntent().getExtras().getInt("testId")));
         finish();
     }
 }

@@ -24,8 +24,7 @@
 
   <uses-sdk android:targetSdkVersion="30" />
   <application android:debuggable="true"
-               android:extractNativeLibs="true"
-               android:gwpAsanMode="always">
+               android:extractNativeLibs="true">
     <processes>
       <process />
       <process android:process=":gwp_asan_enabled"

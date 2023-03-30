@@ -18,8 +18,10 @@ package android.cts.gwp_asan;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.Parcel;
@@ -27,6 +29,9 @@ import android.os.Parcel;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.ServiceTestRule;
 
+import com.android.compatibility.common.util.DropBoxReceiver;
+
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,26 +39,63 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class GwpAsanServiceTest {
     @Rule public final ServiceTestRule mServiceRule = new ServiceTestRule();
+    private Context mContext;
 
-    private boolean runService(Class<?> cls, int testNum) throws Exception {
+    @Before
+    public void setUp() throws Exception {
+        mContext = getApplicationContext();
+    }
+
+    private void runServiceAndCheckSuccess(Class<?> cls, int testNum) throws Exception {
         Intent serviceIntent = new Intent(getApplicationContext(), cls);
         IBinder binder = mServiceRule.bindService(serviceIntent);
-        final Parcel request = Parcel.obtain();
         final Parcel reply = Parcel.obtain();
-        if (!binder.transact(testNum, request, reply, 0)) {
+        if (!binder.transact(testNum, Parcel.obtain(), reply, 0)) {
             throw new Exception();
         }
-        int res = reply.readInt();
-        if (res < 0) {
-            throw new Exception();
-        }
-        return res != 0;
+        assertEquals(reply.readInt(), Utils.TEST_SUCCESS);
+    }
+
+    private void runService(Class<?> cls, int testNum) throws Exception {
+        Intent serviceIntent = new Intent(getApplicationContext(), cls);
+        IBinder binder = mServiceRule.bindService(serviceIntent);
+        binder.transact(testNum, Parcel.obtain(), Parcel.obtain(), IBinder.FLAG_ONEWAY);
     }
 
     @Test
     public void testEnablement() throws Exception {
-        assertTrue(runService(GwpAsanEnabledService.class, Utils.SERVICE_IS_GWP_ASAN_ENABLED));
-        assertTrue(runService(GwpAsanDefaultService.class, Utils.SERVICE_IS_GWP_ASAN_ENABLED));
-        assertTrue(runService(GwpAsanDisabledService.class, Utils.SERVICE_IS_GWP_ASAN_DISABLED));
+        runServiceAndCheckSuccess(GwpAsanEnabledService.class, Utils.TEST_IS_GWP_ASAN_ENABLED);
+        runServiceAndCheckSuccess(GwpAsanDefaultService.class, Utils.TEST_IS_GWP_ASAN_ENABLED);
+        runServiceAndCheckSuccess(GwpAsanDisabledService.class, Utils.TEST_IS_GWP_ASAN_DISABLED);
+    }
+
+    @Test
+    public void testCrashToDropboxEnabled() throws Exception {
+        DropBoxReceiver receiver = Utils.getDropboxReceiver(mContext, "gwp_asan_enabled");
+        runService(GwpAsanEnabledService.class, Utils.TEST_USE_AFTER_FREE);
+        assertTrue(receiver.await());
+    }
+
+    @Test
+    public void testCrashToDropboxDefault() throws Exception {
+        DropBoxReceiver receiver = Utils.getDropboxReceiver(mContext, "gwp_asan_default");
+        runService(GwpAsanDefaultService.class, Utils.TEST_USE_AFTER_FREE);
+        assertTrue(receiver.await());
+    }
+
+    @Test
+    public void testCrashToDropboxRecoverableEnabled() throws Exception {
+        DropBoxReceiver receiver = Utils.getDropboxReceiver(mContext, "gwp_asan_enabled");
+        runService(GwpAsanEnabledService.class, Utils.TEST_USE_AFTER_FREE);
+        assertTrue(receiver.await());
+    }
+
+    @Test
+    public void testCrashToDropboxRecoverableDefault() throws Exception {
+        DropBoxReceiver receiver =
+                Utils.getDropboxReceiver(
+                        mContext, "gwp_asan_default", Utils.DROPBOX_RECOVERABLE_TAG);
+        runServiceAndCheckSuccess(GwpAsanDefaultService.class, Utils.TEST_USE_AFTER_FREE);
+        assertTrue(receiver.await());
     }
 }

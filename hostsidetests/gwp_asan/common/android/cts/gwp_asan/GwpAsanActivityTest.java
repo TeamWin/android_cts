@@ -23,6 +23,9 @@ import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.DropBoxReceiver;
+
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,8 +51,49 @@ public class GwpAsanActivityTest {
     @Test
     public void testEnablement() throws Exception {
         TestActivityLauncher activity = mTestActivityRule.launchActivity(null);
-        activity.callActivity(GwpAsanEnabledActivity.class);
-        activity.callActivity(GwpAsanDefaultActivity.class);
-        activity.callActivity(GwpAsanDisabledActivity.class);
+        activity.callActivityAndCheckSuccess(
+                GwpAsanEnabledActivity.class, Utils.TEST_IS_GWP_ASAN_ENABLED);
+        activity.callActivityAndCheckSuccess(
+                GwpAsanDefaultActivity.class, Utils.TEST_IS_GWP_ASAN_ENABLED);
+        activity.callActivityAndCheckSuccess(
+                GwpAsanDisabledActivity.class, Utils.TEST_IS_GWP_ASAN_DISABLED);
+    }
+
+    @Test
+    public void testCrashToDropboxRecoverableEnabled() throws Exception {
+        TestActivityLauncher activity = mTestActivityRule.launchActivity(null);
+        DropBoxReceiver receiver = Utils.getDropboxReceiver(mContext, "gwp_asan_enabled");
+        activity.callActivity(GwpAsanEnabledActivity.class, Utils.TEST_USE_AFTER_FREE);
+        Assert.assertTrue(receiver.await());
+    }
+
+    @Test
+    public void testCrashToDropboxRecoverableDefault() throws Exception {
+        TestActivityLauncher activity = mTestActivityRule.launchActivity(null);
+        DropBoxReceiver receiver =
+                Utils.getDropboxReceiver(
+                        mContext, "gwp_asan_default", Utils.DROPBOX_RECOVERABLE_TAG);
+        // Ensure the recoverable mode recovers, and returns success.
+        activity.callActivityAndCheckSuccess(
+                GwpAsanDefaultActivity.class, Utils.TEST_USE_AFTER_FREE);
+        Assert.assertTrue(receiver.await());
+    }
+
+    @Test
+    public void testCrashToDropboxEnabled() throws Exception {
+        TestActivityLauncher activity = mTestActivityRule.launchActivity(null);
+        DropBoxReceiver receiver = Utils.getDropboxReceiver(mContext, "gwp_asan_enabled");
+        activity.callActivity(GwpAsanEnabledActivity.class, Utils.TEST_USE_AFTER_FREE);
+        Assert.assertTrue(receiver.await());
+    }
+
+    @Test
+    public void testCrashToDropboxDefault() throws Exception {
+        TestActivityLauncher activity = mTestActivityRule.launchActivity(null);
+        DropBoxReceiver receiver = Utils.getDropboxReceiver(mContext, "gwp_asan_default");
+        // Inherits from the app-wide property, which was `gwpAsanMode=always`. So, this should
+        // crash.
+        activity.callActivity(GwpAsanDefaultActivity.class, Utils.TEST_USE_AFTER_FREE);
+        Assert.assertTrue(receiver.await());
     }
 }

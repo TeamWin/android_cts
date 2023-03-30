@@ -17,7 +17,6 @@
 package android.cts.gwp_asan;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -41,14 +40,27 @@ public class TestActivityLauncher extends Activity {
         }
     }
 
-    public void callActivity(Class<?> cls) throws Exception {
+    public void callActivity(Class<?> cls, int testId) throws Exception {
+        Thread thread =
+                new Thread() {
+                    @Override
+                    public void run() {
+                        Intent intent = new Intent(getApplicationContext(), cls);
+                        intent.putExtra("testId", testId);
+                        startActivity(intent);
+                    }
+                };
+        thread.start();
+    }
+
+    public void callActivityAndCheckSuccess(Class<?> cls, int testId) throws Exception {
         Thread thread =
                 new Thread() {
                     @Override
                     public void run() {
                         try {
-                            Context context = getApplicationContext();
-                            Intent intent = new Intent(context, cls);
+                            Intent intent = new Intent(getApplicationContext(), cls);
+                            intent.putExtra("testId", testId);
                             startActivityForResult(intent, 0);
 
                             synchronized (mFinishEvent) {
