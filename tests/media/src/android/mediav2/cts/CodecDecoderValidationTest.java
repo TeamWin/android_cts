@@ -19,6 +19,7 @@ package android.mediav2.cts;
 import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ALL;
 import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ANY;
 import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_DEFAULT;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -34,6 +35,7 @@ import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Assume;
 import org.junit.Test;
@@ -86,6 +88,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     private static final String MEDIA_TYPE_VORBIS = MediaFormat.MIMETYPE_AUDIO_VORBIS;
     private static final String MEDIA_TYPE_OPUS = MediaFormat.MIMETYPE_AUDIO_OPUS;
     private static final String MEDIA_TYPE_MPEG2 = MediaFormat.MIMETYPE_VIDEO_MPEG2;
+    private static final String MEDIA_TYPE_H263 = MediaFormat.MIMETYPE_VIDEO_H263;
     private static final String MEDIA_TYPE_MPEG4 = MediaFormat.MIMETYPE_VIDEO_MPEG4;
     private static final String MEDIA_TYPE_AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final String MEDIA_TYPE_VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
@@ -126,6 +129,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
         // mediaType, array list of test files (underlying elementary stream is same, except they
         // are placed in different containers), ref file, rms error, checksum, sample rate,
         // channel count, width, height, SupportClass
+        // TODO(b/275171549) Add tests as per TV multimedia requirements in 2.3.2
         final List<Object[]> exhaustiveArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
                 // vp9 test vectors with no-show frames signalled in alternate ways
                 {MEDIA_TYPE_VP9, new String[]{"bbb_340x280_768kbps_30fps_vp9.webm",
@@ -151,19 +155,10 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                 {MEDIA_TYPE_MP3, new String[]{"bbb_2ch_44kHz_lame_crc.mp3"},
                         "bbb_2ch_44kHz_s16le.raw", 104.089027f, -1L, 44100, 2, -1, -1, CODEC_ALL},
 
-                // vp9 test vectors with AQ mode enabled
-                {MEDIA_TYPE_VP9, new String[]{"bbb_1280x720_800kbps_30fps_vp9.webm"},
-                        null, -1.0f, 1319105122L, -1, -1, 1280, 720, CODEC_ALL},
-                {MEDIA_TYPE_VP9, new String[]{"bbb_1280x720_1200kbps_30fps_vp9.webm"},
-                        null, -1.0f, 4128150660L, -1, -1, 1280, 720, CODEC_ALL},
-                {MEDIA_TYPE_VP9, new String[]{"bbb_1280x720_1600kbps_30fps_vp9.webm"},
-                        null, -1.0f, 156928091L, -1, -1, 1280, 720, CODEC_ALL},
-                {MEDIA_TYPE_VP9, new String[]{"bbb_1280x720_2000kbps_30fps_vp9.webm"},
-                        null, -1.0f, 3902485256L, -1, -1, 1280, 720, CODEC_ALL},
-
                 // video test vectors of non standard sizes
                 {MEDIA_TYPE_MPEG2, new String[]{"bbb_642x642_2mbps_30fps_mpeg2.mp4"},
-                        null, -1.0f, -1L, -1, -1, 642, 642, CODEC_ANY},
+                        null, -1.0f, -1L, -1, -1, 642, 642,
+                        MediaUtils.isTv() ? CODEC_ANY : CODEC_OPTIONAL},
                 {MEDIA_TYPE_AVC, new String[]{"bbb_642x642_1mbps_30fps_avc.mp4"},
                         null, -1.0f, 3947092788L, -1, -1, 642, 642, CODEC_ANY},
                 {MEDIA_TYPE_VP8, new String[]{"bbb_642x642_1mbps_30fps_vp8.webm"},
@@ -176,6 +171,62 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                         null, -1.0f, 3684481474L, -1, -1, 642, 642, CODEC_ANY},
                 {MEDIA_TYPE_MPEG4, new String[]{"bbb_130x130_192kbps_15fps_mpeg4.mp4"},
                         null, -1.0f, -1L, -1, -1, 130, 130, CODEC_ANY},
+
+                // video test vectors covering cdd requirements
+                // @CddTest(requirement="5.3.1/C-1-1")
+                {MEDIA_TYPE_MPEG2, new String[]{"bbb_1920x1080_mpeg2_main_high.mp4"}, null, -1.0f,
+                        -1L, -1, -1, 1920, 1080, MediaUtils.isTv() ? CODEC_ANY : CODEC_OPTIONAL},
+
+                // @CddTest(requirement="5.3.2/C-1-1")
+                {MEDIA_TYPE_H263, new String[]{"bbb_352x288_384kbps_30fps_h263_baseline_l3.mp4"},
+                        null, -1.0f, -1L, -1, -1, 352, 288, CODEC_ALL},
+                {MEDIA_TYPE_H263, new String[]{"bbb_176x144_125kbps_15fps_h263_baseline_l45.mkv"},
+                        null, -1.0f, -1L, -1, -1, 176, 144, CODEC_ALL},
+
+                // @CddTest(requirement="5.3.3/C-1-1")
+                {MEDIA_TYPE_MPEG4, new String[]{"bbb_352x288_384kbps_30fps_mpeg4_simple_l3.mp4"},
+                        null, -1.0f, -1L, -1, -1, 352, 288, CODEC_ALL},
+
+                // @CddTest(requirements={"5.3.4/C-1-1", "5.3.4/C-1-2", "5.3.4/C-2-1"})
+                {MEDIA_TYPE_AVC, new String[]{"bbb_320x240_30fps_avc_baseline_l13.mp4"}, null,
+                        -1.0f, 2227756491L, -1, -1, 320, 240, CODEC_ALL},
+                {MEDIA_TYPE_AVC, new String[]{"bbb_320x240_30fps_avc_main_l31.mp4"}, null, -1.0f,
+                        3167475817L, -1, -1, 320, 240, CODEC_ALL},
+                {MEDIA_TYPE_AVC, new String[]{"bbb_720x480_30fps_avc_baseline_l30.mp4"}, null,
+                        -1.0f, 256699624L, -1, -1, 720, 480, CODEC_ALL},
+                {MEDIA_TYPE_AVC, new String[]{"bbb_720x480_30fps_avc_main_l31.mp4"}, null, -1.0f,
+                        1729385096L, -1, -1, 720, 480, CODEC_ALL},
+                // 5.3.4/C-1-2 mandates 720p support for avc decoders, hence this is being tested
+                // without any resolution check unlike the higher resolution tests for other codecs
+                {MEDIA_TYPE_AVC, new String[]{"bbb_1280x720_30fps_avc_baseline_l31.mp4"}, null,
+                        -1.0f, 4290313980L, -1, -1, 1280, 720, CODEC_ALL},
+                {MEDIA_TYPE_AVC, new String[]{"bbb_1280x720_30fps_avc_main_l31.mp4"}, null, -1.0f,
+                        3895426718L, -1, -1, 1280, 720, CODEC_ALL},
+
+                // @CddTest(requirement="5.3.5/C-1-1")
+                {MEDIA_TYPE_HEVC, new String[]{"bbb_352x288_30fps_hevc_main_l2.mp4"}, null, -1.0f,
+                        40958220L, -1, -1, 352, 288, CODEC_ALL},
+                {MEDIA_TYPE_HEVC, new String[]{"bbb_720x480_30fps_hevc_main_l3.mp4"}, null, -1.0f,
+                        3167173427L, -1, -1, 720, 480, CODEC_ALL},
+
+                // @CddTest(requirement="5.3.6/C-1-1")
+                {MEDIA_TYPE_VP8, new String[]{"bbb_320x180_30fps_vp8.mkv"}, null, -1.0f,
+                        434981332L, -1, -1, 320, 180, CODEC_ALL},
+                {MEDIA_TYPE_VP8, new String[]{"bbb_640x360_512kbps_30fps_vp8.webm"}, null, -1.0f,
+                        1625674868L, -1, -1, 640, 360, CODEC_ALL},
+
+                // @CddTest(requirement="5.3.7/C-1-1")
+                {MEDIA_TYPE_VP9, new String[]{"bbb_320x180_30fps_vp9.mkv"}, null, -1.0f,
+                        2746035687L, -1, -1, 320, 180, CODEC_ALL},
+                {MEDIA_TYPE_VP9, new String[]{"bbb_640x360_512kbps_30fps_vp9.webm"}, null, -1.0f,
+                        2974952943L, -1, -1, 640, 360, CODEC_ALL},
+
+                // @CddTest(requirement="5.3.9/C-1-1")
+                {MEDIA_TYPE_AV1, new String[]{"cosmat_720x480_30fps_av1_10bit.mkv"}, null,
+                        -1.0f, 2380523095L, -1, -1, 720, 480, CODEC_ALL},
+                {MEDIA_TYPE_AV1, new String[]{"bbb_720x480_30fps_av1.mkv"}, null, -1.0f,
+                        3229978305L, -1, -1, 720, 480, CODEC_ALL},
+
 
                 // audio test vectors covering cdd sec 5.1.3
                 // amrnb
@@ -630,6 +681,76 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                             CODEC_ALL},
             }));
         }
+
+        // video test vectors covering cdd requirements
+        if (MAX_DISPLAY_HEIGHT_LAND >= 2160) {
+            exhaustiveArgsList.addAll(Arrays.asList(new Object[][]{
+                    // @CddTest(requirements={"5.3.5/C-1-2", "5.3.5/C-2-1"})
+                    {MEDIA_TYPE_HEVC, new String[]{"bbb_3840x2160_30fps_hevc_main_l50.mp4"}, null,
+                            -1.0f, 2312004815L, -1, -1, 3840, 2160, CODEC_ANY},
+                    {MEDIA_TYPE_VP8, new String[]{"bbb_3840x2160_30fps_vp8.mkv"}, null, -1.0f,
+                            632639587L, -1, -1, 3840, 2160, CODEC_ANY},
+                    // @CddTest(requirements={"5.3.7/C-2-1", "5.3.7/C-3-1"})
+                    {MEDIA_TYPE_VP9, new String[]{"bbb_3840x2160_30fps_vp9.mkv"}, null, -1.0f,
+                            279585450L, -1, -1, 3840, 2160, CODEC_ANY},
+                    // @CddTest(requirements={"5.3.9/C-2-2"})
+                    {MEDIA_TYPE_AV1, new String[]{"bbb_3840x2160_30fps_av1.mkv"}, null, -1.0f,
+                            100543644L, -1, -1, 3840, 2160, CODEC_ANY},
+                    {MEDIA_TYPE_AV1, new String[]{"cosmat_3840x2160_30fps_av1_10bit.mkv"}, null,
+                            -1.0f, 4214931794L, -1, -1, 3840, 2160, CODEC_ANY},
+            }));
+        }
+        if (MAX_DISPLAY_HEIGHT_LAND >= 1080) {
+            exhaustiveArgsList.addAll(Arrays.asList(new Object[][]{
+                    // @CddTest(requirement="5.3.4/C-2-2")
+                    {MEDIA_TYPE_AVC, new String[]{"bbb_1920x1080_avc_baseline_l40.mp4"}, null,
+                            -1.0f, 1332773556L, -1, -1, 1920, 1080, CODEC_ANY},
+                    {MEDIA_TYPE_AVC, new String[]{"bbb_1920x1080_avc_main_l40.mp4"}, null, -1.0f,
+                            2656846432L, -1, -1, 1920, 1080, CODEC_ANY},
+                    // @CddTest(requirements={"5.3.5/C-1-2", "5.3.5/C-2-1"})
+                    {MEDIA_TYPE_HEVC, new String[]{"bbb_1920x1080_hevc_main_l40.mp4"}, null,
+                            -1.0f, 3214459078L, -1, -1, 1920, 1080, CODEC_ANY},
+                    // @CddTest(requirement="5.3.6/C-2-2")
+                    {MEDIA_TYPE_VP8, new String[]{"bbb_1920x1080_30fps_vp8.mkv"}, null, -1.0f,
+                            2302247702L, -1, -1, 1920, 1080, CODEC_ANY},
+                    // @CddTest(requirements={"5.3.7/C-2-1", "5.3.7/C-3-1"})
+                    {MEDIA_TYPE_VP9, new String[]{"bbb_1920x1080_vp9_main_l40.mkv"}, null, -1.0f,
+                            2637993192L, -1, -1, 1920, 1080, CODEC_ANY},
+                    // @CddTest(requirements={"5.3.9/C-2-2"})
+                    {MEDIA_TYPE_AV1, new String[]{"bbb_1920x1080_30fps_av1.mkv"}, null, -1.0f,
+                            3428220318L, -1, -1, 1920, 1080, CODEC_ANY},
+                    {MEDIA_TYPE_AV1, new String[]{"cosmat_1920x1080_30fps_av1_10bit.mkv"}, null,
+                            -1.0f, 3477727836L, -1, -1, 1920, 1080, CODEC_ANY},
+            }));
+        }
+        if (MAX_DISPLAY_HEIGHT_LAND >= 720) {
+            exhaustiveArgsList.addAll(Arrays.asList(new Object[][]{
+                    // @CddTest(requirement="5.3.5/C-1-2")
+                    {MEDIA_TYPE_HEVC, new String[]{"bbb_1280x720_1mbps_30fps_hevc_nob.mp4"},
+                            null, -1.0f, 3576783828L, -1, -1, 1280, 720, CODEC_ANY},
+                    // @CddTest(requirement="5.3.6/C-2-1")
+                    {MEDIA_TYPE_VP8, new String[]{"bbb_1280x720_30fps_vp8.mkv"}, null, -1.0f,
+                            2390565854L, -1, -1, 1280, 720, CODEC_ANY},
+                    // @CddTest(requirements={"5.3.7/C-2-1", "5.3.7/C-3-1"})
+                    {MEDIA_TYPE_VP9, new String[]{"bbb_1280x720_2000kbps_30fps_vp9.webm"}, null,
+                            -1.0f, 3902485256L, -1, -1, 1280, 720, CODEC_ANY},
+                    // @CddTest(requirements={"5.3.9/C-2-1"})
+                    {MEDIA_TYPE_AV1, new String[]{"bbb_1280x720_1mbps_30fps_av1.webm"}, null, -1.0f,
+                            4202081555L, -1, -1, 1280, 720, CODEC_ANY},
+                    {MEDIA_TYPE_AV1, new String[]{"cosmat_1280x720_24fps_1200kbps_av1_10bit.mkv"},
+                            null, -1.0f, 2039973562L, -1, -1, 1280, 720, CODEC_ANY},
+
+                    // vp9 test vectors with AQ mode enabled
+                    {MEDIA_TYPE_VP9, new String[]{"bbb_1280x720_800kbps_30fps_vp9.webm"},
+                            null, -1.0f, 1319105122L, -1, -1, 1280, 720, CODEC_ANY},
+                    {MEDIA_TYPE_VP9, new String[]{"bbb_1280x720_1200kbps_30fps_vp9.webm"},
+                            null, -1.0f, 4128150660L, -1, -1, 1280, 720, CODEC_ANY},
+                    {MEDIA_TYPE_VP9, new String[]{"bbb_1280x720_1600kbps_30fps_vp9.webm"},
+                            null, -1.0f, 156928091L, -1, -1, 1280, 720, CODEC_ANY},
+                    {MEDIA_TYPE_VP9, new String[]{"bbb_1280x720_2000kbps_30fps_vp9.webm"},
+                            null, -1.0f, 3902485256L, -1, -1, 1280, 720, CODEC_ANY},
+            }));
+        }
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
 
@@ -642,7 +763,11 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     // "5.1.3", "5.1.2/C-1-11" are covered partially
     @CddTest(requirements = {"5.1.2/C-1-1", "5.1.2/C-1-2", "5.1.2/C-1-3", "5.1.2/C-1-4",
             "5.1.2/C-1-11", "5.1.2/C-1-5", "5.1.2/C-1-6", "5.1.2/C-1-8", "5.1.2/C-1-9",
-            "5.1.2/C-1-10", "5.1.2/C-2-1", "5.1.2/C-6-1", "5.1.3"})
+            "5.1.2/C-1-10", "5.1.2/C-2-1", "5.1.2/C-6-1", "5.1.3", "5.3.1/C-1-1", "5.3.2/C-1-1",
+            "5.3.3/C-1-1", "5.3.4/C-1-1", "5.3.4/C-1-2", "5.3.4/C-2-1", "5.3.4/C-2-2",
+            "5.3.5/C-1-1", "5.3.5/C-1-2", "5.3.5/C-2-1", "5.3.6/C-1-1", "5.3.6/C-2-1",
+            "5.3.6/C-2-2", "5.3.7/C-1-1", "5.3.7/C-2-1", "5.3.7/C-3-1", "5.3.9/C-1-1",
+            "5.3.9/C-2-1", "5.3.9/C-2-2"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testDecodeAndValidate() throws IOException, InterruptedException {

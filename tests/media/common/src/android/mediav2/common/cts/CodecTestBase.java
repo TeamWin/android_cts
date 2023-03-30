@@ -63,6 +63,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -71,6 +72,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * This class comprises of routines that are generic to media codec component trying and testing.
@@ -192,6 +194,26 @@ public abstract class CodecTestBase {
             AACObjectLD, AACObjectELD, AACObjectXHE};
     public static final Context CONTEXT =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+    public static final int MAX_DISPLAY_HEIGHT_CURRENT =
+            Arrays.stream(CONTEXT.getSystemService(DisplayManager.class).getDisplays())
+                    .map(Display::getSupportedModes)
+                    .flatMap(Stream::of)
+                    .max(Comparator.comparing(Display.Mode::getPhysicalHeight))
+                    .orElseThrow(() -> new RuntimeException("Failed to determine max height"))
+                    .getPhysicalHeight();
+    public static final int MAX_DISPLAY_WIDTH_CURRENT =
+            Arrays.stream(CONTEXT.getSystemService(DisplayManager.class).getDisplays())
+                    .map(Display::getSupportedModes)
+                    .flatMap(Stream::of)
+                    .max(Comparator.comparing(Display.Mode::getPhysicalHeight))
+                    .orElseThrow(() -> new RuntimeException("Failed to determine max height"))
+                    .getPhysicalWidth();
+    public static final int MAX_DISPLAY_WIDTH_LAND =
+            Math.max(MAX_DISPLAY_WIDTH_CURRENT, MAX_DISPLAY_HEIGHT_CURRENT);
+    public static final int MAX_DISPLAY_HEIGHT_LAND =
+            Math.min(MAX_DISPLAY_WIDTH_CURRENT, MAX_DISPLAY_HEIGHT_CURRENT);
+
     public static String mediaTypeSelKeys;
     public static String codecPrefix;
     public static String mediaTypePrefix;
