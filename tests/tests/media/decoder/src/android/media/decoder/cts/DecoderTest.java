@@ -65,7 +65,7 @@ import android.view.Surface;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 
-import com.android.compatibility.common.util.ApiLevelUtil.Sdk;
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
@@ -106,9 +106,10 @@ import java.util.zip.CRC32;
 public class DecoderTest extends MediaTestBase {
     private static final String TAG = "DecoderTest";
     private static final String REPORT_LOG_NAME = "CtsMediaDecoderTestCases";
-    private static boolean sIsAtLeastR = Sdk.isAtLeastR();
-    private static boolean sIsBeforeS = Sdk.isBeforeS();
-    private static boolean sIsAfterT = Sdk.isAfterT();
+    private static boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+    private static boolean sIsBeforeS = ApiLevelUtil.isBefore(Build.VERSION_CODES.S);
+    private static boolean sIsAfterT = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)
+            || ApiLevelUtil.codenameEquals("UpsideDownCake");
 
     private static final int RESET_MODE_NONE = 0;
     private static final int RESET_MODE_RECONFIGURE = 1;
@@ -367,7 +368,7 @@ public class DecoderTest extends MediaTestBase {
     private void verifyChannelsAndRates(String[] mimetypes, int[] sampleRates,
                                        int[] channelMasks) throws Exception {
 
-        if (!MediaUtils.check(sIsAtLeastR, "test invalid before Android 11")) return;
+        if (!MediaUtils.check(mIsAtLeastR, "test invalid before Android 11")) return;
 
         for (String mimetype : mimetypes) {
             // ensure we find a codec for all listed mime/channel/rate combinations
