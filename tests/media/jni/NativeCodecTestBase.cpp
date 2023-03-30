@@ -186,6 +186,20 @@ void CodecAsyncHandler::setOutputFormat(AMediaFormat* format) {
     }
     mOutFormat = format;
     mSignalledOutFormatChanged = true;
+    mCondition.notify_all();
+}
+
+bool CodecAsyncHandler::waitOnFormatChange() {
+    int retry = kRetryLimit;
+    std::unique_lock<std::mutex> lock{mMutex};
+    while (!mSignalledError) {
+        if (mSignalledOutFormatChanged || retry == 0) break;
+        if (std::cv_status::timeout ==
+            mCondition.wait_for(lock, std::chrono::microseconds(kQDeQTimeOutUs))) {
+            retry--;
+        }
+    }
+    return !mSignalledError && mSignalledOutFormatChanged;
 }
 
 AMediaFormat* CodecAsyncHandler::getOutputFormat() {

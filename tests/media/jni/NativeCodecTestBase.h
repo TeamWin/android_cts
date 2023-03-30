@@ -97,6 +97,7 @@ class CodecAsyncHandler {
     void setOutputFormat(AMediaFormat* format);
     AMediaFormat* getOutputFormat();
     bool hasOutputFormatChanged();
+    bool waitOnFormatChange();
     void setError(bool status, std::string& msg);
     bool getError() const;
     void resetContext();
