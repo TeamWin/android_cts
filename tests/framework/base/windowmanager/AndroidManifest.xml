@@ -484,6 +484,14 @@
         <activity android:name="android.server.wm.DisplayHashManagerTest$TestActivity"
                    android:exported="true"/>
 
+        <activity android:name="android.server.wm.CompatChangeTests$ResizeableLeftActivity"
+                  android:resizeableActivity="true"
+                  android:exported="true"/>
+
+        <activity android:name="android.server.wm.CompatChangeTests$ResizeableRightActivity"
+                  android:resizeableActivity="true"
+                  android:exported="true"/>
+
         <activity android:name="android.server.wm.CompatChangeTests$ResizeablePortraitActivity"
                   android:resizeableActivity="true"
                   android:screenOrientation="portrait"
