@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.ContentResolver;
 import android.content.res.AssetManager;
@@ -340,6 +341,42 @@ public class AImageDecoderTest {
             return;
         }
         final int resId = R.raw.heifimage_10bit;
+        Bitmap bm = null;
+        switch (bitmapFormat) {
+            case ANDROID_BITMAP_FORMAT_NONE:
+            case ANDROID_BITMAP_FORMAT_RGBA_1010102:
+                bm = decode(resId, unpremul);
+                break;
+            case ANDROID_BITMAP_FORMAT_RGB_565:
+                bm = decode(resId, Bitmap.Config.RGB_565);
+                break;
+            case ANDROID_BITMAP_FORMAT_RGBA_F16:
+                BitmapFactory.Options opt = new BitmapFactory.Options();
+                opt.inPreferredConfig = Bitmap.Config.RGBA_F16;
+                opt.inPremultiplied = !unpremul;
+                bm = BitmapFactory.decodeStream(getResources().openRawResource(resId), null, opt);
+                break;
+            default:
+                fail("Unsupported Bitmap format: " + bitmapFormat);
+        }
+        assertNotNull(bm);
+
+        try (ParcelFileDescriptor pfd = open(resId)) {
+            long aimagedecoder = nCreateFromFd(pfd.getFd());
+            nTestDecode(aimagedecoder, bitmapFormat, unpremul, bm);
+        } catch (FileNotFoundException e) {
+            fail("Could not open " + Utils.getAsResourceUri(resId));
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    @Parameters(method = "getBitMapFormatsUnpremul")
+    public void testDecode10BitAvif(int bitmapFormat, boolean unpremul) throws IOException {
+        assumeTrue("AVIF is not supported on this device, skip this test.",
+                ImageDecoder.isMimeTypeSupported("image/avif"));
+
+        final int resId = R.raw.avif_yuv_420_10bit;
         Bitmap bm = null;
         switch (bitmapFormat) {
             case ANDROID_BITMAP_FORMAT_NONE:
