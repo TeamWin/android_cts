@@ -80,7 +80,9 @@ import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.Vibrator;
 import android.util.Log;
 import android.util.Pair;
@@ -221,7 +223,7 @@ public class ItsService extends Service implements SensorEventListener {
     private CameraManager mCameraManager = null;
     private HandlerThread mCameraThread = null;
     private Handler mCameraHandler = null;
-    private BlockingCameraManager mBlockingCameraManager = null;
+    private ItsService.BlockingCameraManager mBlockingCameraManager = null;
     private BlockingStateCallback mCameraListener = null;
     private CameraDevice mCamera = null;
     private CameraCaptureSession mSession = null;
@@ -405,7 +407,7 @@ public class ItsService extends Service implements SensorEventListener {
             if (mCameraManager == null) {
                 throw new ItsException("Failed to connect to camera manager");
             }
-            mBlockingCameraManager = new BlockingCameraManager(mCameraManager);
+            mBlockingCameraManager = new ItsService.BlockingCameraManager(mCameraManager);
             mCameraListener = new BlockingStateCallback();
 
             // Register for motion events.
@@ -516,7 +518,39 @@ public class ItsService extends Service implements SensorEventListener {
         }
     }
 
-    public void openCameraDevice(String cameraId) throws ItsException {
+    private static class BlockingCameraManager
+            extends com.android.ex.camera2.blocking.BlockingCameraManager {
+
+        BlockingCameraManager(CameraManager manager) {
+            super(manager);
+        }
+
+        public CameraDevice openCamera(String cameraId, boolean overrideToPortrait,
+                CameraDevice.StateCallback listener, Handler handler)
+                throws CameraAccessException, BlockingOpenException {
+            if (handler == null) {
+                throw new IllegalArgumentException("handler must not be null");
+            } else if (handler.getLooper() == Looper.myLooper()) {
+                throw new IllegalArgumentException(
+                        "handler's looper must not be the current looper");
+            }
+
+            return (new OpenListener(mManager, cameraId, overrideToPortrait, listener, handler))
+                    .blockUntilOpen();
+        }
+
+        protected class OpenListener
+                extends com.android.ex.camera2.blocking.BlockingCameraManager.OpenListener {
+            OpenListener(CameraManager manager, String cameraId, boolean overrideToPortrait,
+                    CameraDevice.StateCallback listener, Handler handler)
+                    throws CameraAccessException {
+                super(cameraId, listener);
+                manager.openCamera(cameraId, overrideToPortrait, handler, this);
+            }
+        }
+    }
+
+    public void openCameraDevice(String cameraId, JSONObject cmdObj) throws ItsException {
         Logt.i(TAG, String.format("Opening camera %s", cameraId));
 
         // Get initial physical unavailable callbacks without opening camera
@@ -550,7 +584,13 @@ public class ItsService extends Service implements SensorEventListener {
             mUnavailablePhysicalCameras = getUnavailablePhysicalCameras(
                     unavailablePhysicalCamEventQueue, cameraId);
             Log.i(TAG, "Unavailable cameras:" + Arrays.asList(mUnavailablePhysicalCameras.toString()));
-            mCamera = mBlockingCameraManager.openCamera(cameraId, mCameraListener, mCameraHandler);
+            if (cmdObj.has("overrideToPortrait")) {
+                mCamera = mBlockingCameraManager.openCamera(cameraId,
+                        cmdObj.getBoolean("overrideToPortrait"), mCameraListener, mCameraHandler);
+            } else {
+                mCamera = mBlockingCameraManager.openCamera(cameraId, mCameraListener,
+                        mCameraHandler);
+            }
             mCameraCharacteristics = mCameraManager.getCameraCharacteristics(cameraId);
             mCameraExtensionCharacteristics = mCameraManager.getCameraExtensionCharacteristics(
                     cameraId);
@@ -573,6 +613,8 @@ public class ItsService extends Service implements SensorEventListener {
             throw new ItsException("Failed to open camera", e);
         } catch (BlockingOpenException e) {
             throw new ItsException("Failed to open camera (after blocking)", e);
+        } catch (org.json.JSONException e) {
+            throw new ItsException("Failed to read open camera command", e);
         } catch (Exception e) {
             throw new ItsException("Failed to get unavailable physical cameras", e);
         }
@@ -848,7 +890,7 @@ public class ItsService extends Service implements SensorEventListener {
                 Logt.i(TAG, "Start processing command" + cmdObj.getString("cmdName"));
                 if ("open".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
-                    openCameraDevice(cameraId);
+                    openCameraDevice(cameraId, cmdObj);
                 } else if ("close".equals(cmdObj.getString("cmdName"))) {
                     closeCameraDevice();
                 } else if ("getCameraProperties".equals(cmdObj.getString("cmdName"))) {
@@ -931,6 +973,8 @@ public class ItsService extends Service implements SensorEventListener {
                 } else if ("isP3Supported".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     doCheckP3Support(cameraId);
+                } else if ("isLandscapeToPortraitEnabled".equals(cmdObj.getString("cmdName"))) {
+                    doCheckLandscapeToPortraitEnabled();
                 } else if ("doCaptureWithFlash".equals(cmdObj.getString("cmdName"))) {
                     doCaptureWithFlash(cmdObj);
                 } else if ("doGetUnavailablePhysicalCameras".equals(cmdObj.getString("cmdName"))) {
@@ -1231,8 +1275,13 @@ public class ItsService extends Service implements SensorEventListener {
 
         try {
             String cameraId = params.getString("cameraId");
-            CameraCharacteristics characteristics =
-                    mCameraManager.getCameraCharacteristics(cameraId);
+            CameraCharacteristics characteristics = null;
+            if (params.has("overrideToPortrait")) {
+                characteristics = mCameraManager.getCameraCharacteristics(cameraId,
+                        params.getBoolean("overrideToPortrait"));
+            } else {
+                characteristics = mCameraManager.getCameraCharacteristics(cameraId);
+            }
             mSocketRunnableObj.sendResponse(characteristics);
         } catch (org.json.JSONException e) {
             throw new ItsException("JSON error: ", e);
@@ -1560,6 +1609,13 @@ public class ItsService extends Service implements SensorEventListener {
         }
 
         mSocketRunnableObj.sendResponse("p3Response", cameraP3OutputSupported ? "true" : "false");
+    }
+
+    private void doCheckLandscapeToPortraitEnabled() throws ItsException {
+        boolean enabled = SystemProperties.getBoolean(CameraManager.LANDSCAPE_TO_PORTRAIT_PROP,
+                false);
+        mSocketRunnableObj.sendResponse("landscapeToPortraitEnabledResponse",
+                enabled ? "true" : "false");
     }
 
     private void doCheckPerformanceClass() throws ItsException {

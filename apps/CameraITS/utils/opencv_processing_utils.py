@@ -228,7 +228,8 @@ class Chart(object):
       distance=None,
       scale_start=None,
       scale_stop=None,
-      scale_step=None):
+      scale_step=None,
+      rotation=None):
     """Initial constructor for class.
 
     Args:
@@ -241,6 +242,7 @@ class Chart(object):
      scale_start: float; start value for scaling for chart search
      scale_stop: float; stop value for scaling for chart search
      scale_step: float; step value for scaling for chart search
+     rotation: clockwise rotation in degrees (multiple of 90) or None
     """
     self._file = chart_file or CHART_FILE
     if math.isclose(
@@ -253,7 +255,8 @@ class Chart(object):
     self._scale_start = scale_start or CHART_SCALE_START
     self._scale_stop = scale_stop or CHART_SCALE_STOP
     self._scale_step = scale_step or CHART_SCALE_STEP
-    self.locate(cam, props, log_path)
+    self.opt_val = None
+    self.locate(cam, props, log_path, rotation)
 
   def _set_scale_factors_to_one(self):
     """Set scale factors to 1.0 for skipped tests."""
@@ -263,7 +266,7 @@ class Chart(object):
     self.ynorm = 0.0
     self.scale = 1.0
 
-  def _calc_scale_factors(self, cam, props, fmt, log_path):
+  def _calc_scale_factors(self, cam, props, fmt, log_path, rotation):
     """Take an image with s, e, & fd to find the chart location.
 
     Args:
@@ -271,6 +274,8 @@ class Chart(object):
      props: Properties of cam
      fmt: Image format for the capture
      log_path: log path to save the captured images.
+     rotation: clockwise rotation of template in degrees (multiple of 90) or
+       None
 
     Returns:
       template: numpy array; chart template for locator
@@ -285,6 +290,9 @@ class Chart(object):
     af_scene_name = os.path.join(log_path, 'af_scene.jpg')
     image_processing_utils.write_image(img_3a, af_scene_name)
     template = cv2.imread(self._file, cv2.IMREAD_ANYDEPTH)
+    if rotation is not None:
+      logging.debug('Rotating template by %d degrees', rotation)
+      template = numpy.rot90(template, k=rotation / 90)
     focal_l = cap_chart['metadata']['android.lens.focalLength']
     pixel_pitch = (
         props['android.sensor.info.physicalSize']['height'] / img_3a.shape[0])
@@ -292,19 +300,22 @@ class Chart(object):
     logging.debug('Chart height: %.2fcm', self._height)
     logging.debug('Focal length: %.2fmm', focal_l)
     logging.debug('Pixel pitch: %.2fum', pixel_pitch * 1E3)
+    logging.debug('Template width: %dpixels', template.shape[1])
     logging.debug('Template height: %dpixels', template.shape[0])
     chart_pixel_h = self._height * focal_l / (self._distance * pixel_pitch)
     scale_factor = template.shape[0] / chart_pixel_h
     logging.debug('Chart/image scale factor = %.2f', scale_factor)
     return template, img_3a, scale_factor
 
-  def locate(self, cam, props, log_path):
+  def locate(self, cam, props, log_path, rotation):
     """Find the chart in the image, and append location to chart object.
 
     Args:
       cam: Open its session.
       props: Camera properties object.
       log_path: log path to store the captured images.
+      rotation: clockwise rotation of template in degrees (multiple of 90) or
+        None
 
     The values appended are:
     xnorm: float; [0, 1] left loc of chart in scene
@@ -312,10 +323,12 @@ class Chart(object):
     wnorm: float; [0, 1] width of chart in scene
     hnorm: float; [0, 1] height of chart in scene
     scale: float; scale factor to extract chart
+    opt_val: float; The normalized match optimization value [0, 1]
     """
     fmt = {'format': 'yuv', 'width': VGA_WIDTH, 'height': VGA_HEIGHT}
     cam.do_3a()
-    chart, scene, s_factor = self._calc_scale_factors(cam, props, fmt, log_path)
+    chart, scene, s_factor = self._calc_scale_factors(cam, props, fmt, log_path,
+                                                      rotation)
     scale_start = self._scale_start * s_factor
     scale_stop = self._scale_stop * s_factor
     scale_step = self._scale_step * s_factor
@@ -338,9 +351,9 @@ class Chart(object):
             'Skipped scale %.3f. scene_scaled shape: %s, chart shape: %s',
             scale, scene_scaled.shape, chart.shape)
         continue
-      result = cv2.matchTemplate(scene_scaled, chart, cv2.TM_CCOEFF)
+      result = cv2.matchTemplate(scene_scaled, chart, cv2.TM_CCOEFF_NORMED)
       _, opt_val, _, top_left_scaled = cv2.minMaxLoc(result)
-      logging.debug(' scale factor: %.3f, opt val: %.f', scale, opt_val)
+      logging.debug(' scale factor: %.3f, opt val: %.3f', scale, opt_val)
       max_match.append((opt_val, scale, top_left_scaled))
 
     # determine if optimization results are valid
@@ -358,11 +371,17 @@ class Chart(object):
         logging.warning(estring)
       # find max and draw bbox
       matched_scale_and_loc = max(max_match, key=lambda x: x[0])
+      self.opt_val = matched_scale_and_loc[0]
       self.scale = matched_scale_and_loc[1]
       logging.debug('Optimum scale factor: %.3f', self.scale)
+      logging.debug('Opt val: %.3f', self.opt_val)
       top_left_scaled = matched_scale_and_loc[2]
+      logging.debug('top_left_scaled: %d, %d', top_left_scaled[0],
+                    top_left_scaled[1])
       h, w = chart.shape
       bottom_right_scaled = (top_left_scaled[0] + w, top_left_scaled[1] + h)
+      logging.debug('bottom_right_scaled: %d, %d', bottom_right_scaled[0],
+                    bottom_right_scaled[1])
       top_left = ((top_left_scaled[0] // self.scale),
                   (top_left_scaled[1] // self.scale))
       bottom_right = ((bottom_right_scaled[0] // self.scale),
@@ -371,6 +390,11 @@ class Chart(object):
       self.hnorm = ((bottom_right[1]) - top_left[1]) / scene.shape[0]
       self.xnorm = (top_left[0]) / scene.shape[1]
       self.ynorm = (top_left[1]) / scene.shape[0]
+      patch = image_processing_utils.get_image_patch(scene, self.xnorm,
+                                                     self.ynorm, self.wnorm,
+                                                     self.hnorm)
+      template_scene_name = os.path.join(log_path, 'template_scene.jpg')
+      image_processing_utils.write_image(patch, template_scene_name)
 
 
 def component_shape(contour):
