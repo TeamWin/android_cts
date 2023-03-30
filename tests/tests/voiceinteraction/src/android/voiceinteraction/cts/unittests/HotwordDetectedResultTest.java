@@ -38,6 +38,8 @@ import android.voiceinteraction.common.Utils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -53,6 +55,7 @@ public class HotwordDetectedResultTest {
     }
 
     @Test
+    @CddTest(requirement = "9.8/H-1-6")
     public void testHotwordDetectedResult_totalSize() throws Exception {
         final int bitsForConfidenceLevel = Utils.bitCount(
                 HotwordDetectedResult.CONFIDENCE_LEVEL_VERY_HIGH);
