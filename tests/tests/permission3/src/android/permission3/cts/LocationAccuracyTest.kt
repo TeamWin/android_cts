@@ -19,7 +19,7 @@ package android.permission3.cts
 import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
-import android.support.test.uiautomator.By
+import androidx.test.uiautomator.By
 import com.android.modules.utils.build.SdkLevel
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue

@@ -25,17 +25,17 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.ResultReceiver
-import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
+import androidx.test.uiautomator.By
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class PermissionReviewTest : BaseUsePermissionTest() {

@@ -29,8 +29,8 @@ import android.net.Uri
 import android.os.Build
 import android.provider.DeviceConfig
 import android.provider.DeviceConfig.NAMESPACE_PRIVACY
-import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
+import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import org.junit.AfterClass

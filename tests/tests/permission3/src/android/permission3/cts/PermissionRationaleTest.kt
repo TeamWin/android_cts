@@ -23,11 +23,11 @@ import android.content.Intent
 import android.os.Build
 import android.provider.DeviceConfig
 import android.safetylabel.SafetyLabelConstants.PERMISSION_RATIONALE_ENABLED
-import android.support.test.uiautomator.By
 import android.text.Spanned
 import android.text.style.ClickableSpan
 import android.view.View
 import androidx.test.filters.SdkSuppress
+import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.eventually

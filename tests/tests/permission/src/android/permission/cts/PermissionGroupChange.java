@@ -34,14 +34,14 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiScrollable;
-import android.support.test.uiautomator.UiSelector;
 import android.widget.ScrollView;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SdkSuppress;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiScrollable;
+import androidx.test.uiautomator.UiSelector;
 
 import com.android.compatibility.common.util.SystemUtil;
 

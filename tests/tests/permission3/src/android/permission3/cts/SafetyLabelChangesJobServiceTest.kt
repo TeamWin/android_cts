@@ -34,9 +34,9 @@ import android.permission3.cts.AppMetadata.createAppMetadataWithNoSharing
 import android.provider.DeviceConfig
 import android.safetylabel.SafetyLabelConstants
 import android.safetylabel.SafetyLabelConstants.SAFETY_LABEL_CHANGE_NOTIFICATIONS_ENABLED
-import android.support.test.uiautomator.By
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
+import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.eventually

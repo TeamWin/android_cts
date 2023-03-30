@@ -26,11 +26,11 @@ import android.os.UserHandle
 import android.provider.DeviceConfig
 import android.safetycenter.SafetyCenterIssue
 import android.safetycenter.SafetyCenterManager
-import android.support.test.uiautomator.By
 import androidx.annotation.RequiresApi
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
-import com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject
+import com.android.compatibility.common.util.UiAutomatorUtils2.waitFindObject
 import com.android.safetycenter.internaldata.SafetyCenterIds
 import com.android.safetycenter.internaldata.SafetyCenterIssueId
 import com.android.safetycenter.internaldata.SafetyCenterIssueKey
