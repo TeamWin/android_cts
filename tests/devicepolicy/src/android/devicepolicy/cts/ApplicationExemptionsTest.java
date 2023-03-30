@@ -47,12 +47,17 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
+import com.android.bedstead.harrier.policies.ApplicationExemptions;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -216,26 +221,67 @@ public class ApplicationExemptionsTest {
         }
     }
 
-    @Test
-    @EnsureHasPermission(MANAGE_DEVICE_POLICY_APP_EXEMPTIONS)
+    @PolicyAppliesTest(policy = ApplicationExemptions.class)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setApplicationExemption"})
     public void setApplicationExemptions_powerRestrictionExemption_exemptedAppStandbyBucket()
             throws NameNotFoundException {
         Set<Integer> exemptionSet = new HashSet<>(List.of(EXEMPT_FROM_POWER_RESTRICTIONS));
 
         try (TestAppInstance testApp = sTestApp.install()) {
-            sLocalDevicePolicyManager.setApplicationExemptions(
+            sDeviceState.dpc().devicePolicyManager().setApplicationExemptions(
                     sTestApp.packageName(),
                     exemptionSet);
 
-            assertThat(sTestApp.pkg().getAppStandbyBucket()).isEqualTo(
-                    UsageStatsManager.STANDBY_BUCKET_EXEMPTED);
+            Poll.forValue("App standby bucket ",
+                    () -> sTestApp.pkg().getAppStandbyBucket())
+                    .toBeEqualTo(UsageStatsManager.STANDBY_BUCKET_EXEMPTED)
+                    .errorOnFail()
+                    .await();
+        }
+    }
+
+    @PolicyDoesNotApplyTest(policy = ApplicationExemptions.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setApplicationExemption"})
+    public void setApplicationExemptions_powerRestrictionExemption_notApplicable_isNotInExemptedAppStandbyBucket()
+            throws NameNotFoundException {
+        Set<Integer> exemptionSet = new HashSet<>(List.of(EXEMPT_FROM_POWER_RESTRICTIONS));
+
+        try (TestAppInstance localApp = sTestApp.install();
+             TestAppInstance dpcUserApp = sTestApp.install(sDeviceState.dpc().user())) {
+
+            sDeviceState.dpc().devicePolicyManager().setApplicationExemptions(
+                    sTestApp.packageName(),
+                    exemptionSet);
+
+            assertThat(localApp.appOps()
+                    .get(APPLICATION_EXEMPTION_CONSTANTS_TO_APP_OPS.get(
+                            EXEMPT_FROM_POWER_RESTRICTIONS)))
+                    .isEqualTo(DEFAULT);
+        }
+    }
+
+    @CannotSetPolicyTest(policy = ApplicationExemptions.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setApplicationExemption"})
+    public void setApplicationExemptions_notPermitted_throwsException() {
+        Set<Integer> exemptionSet = new HashSet<>(List.of(EXEMPT_FROM_SUSPENSION));
+
+        try (TestAppInstance app = sTestApp.install()) {
+
+            assertThrows(SecurityException.class, () -> {
+                sDeviceState.dpc().devicePolicyManager().setApplicationExemptions(
+                        sTestApp.packageName(),
+                        exemptionSet);
+            });
         }
     }
 
     @Test
     @EnsureHasPermission(MANAGE_DEVICE_POLICY_APP_EXEMPTIONS)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setApplicationExemption"})
     public void setApplicationExemptions_validExemptionSet_logsEvent(
             @ApplicationExemptionConstants int exemption) throws NameNotFoundException {
         Set<Integer> exemptionSet = new HashSet<>(List.of(exemption));
