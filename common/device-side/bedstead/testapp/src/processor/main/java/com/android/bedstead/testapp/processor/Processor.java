@@ -155,6 +155,7 @@ public final class Processor extends AbstractProcessor {
         } catch (MirroredTypesException e) {
             return e.getTypeMirrors().stream()
                     .map(t -> (TypeElement) types.asElement(t))
+                    .sorted()
                     .collect(Collectors.toList());
         }
         throw new AssertionError("Could not extract classes from annotation");
@@ -830,10 +831,12 @@ public final class Processor extends AbstractProcessor {
         }
     }
 
-    private Set<ExecutableElement> getMethods(TypeElement interfaceClass, Elements elements) {
+    private List<ExecutableElement> getMethods(TypeElement interfaceClass, Elements elements) {
         Map<String, ExecutableElement> methods = new HashMap<>();
         getMethods(methods, interfaceClass, elements);
-        return new HashSet<>(methods.values());
+        ArrayList<ExecutableElement> methodList = new ArrayList<>(methods.values());
+        methodList.sort((e1, e2) -> Integer.compare(e1.getSimpleName().hashCode(), e2.getSimpleName().hashCode()));
+        return methodList;
     }
 
     private void getMethods(Map<String, ExecutableElement> methods, TypeElement interfaceClass,
