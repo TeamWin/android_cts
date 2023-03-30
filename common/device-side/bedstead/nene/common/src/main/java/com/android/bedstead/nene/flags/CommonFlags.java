@@ -136,5 +136,7 @@ public final class CommonFlags {
         public static final String ENABLE_COEXISTENCE_FLAG = "enable_coexistence";
         public static final String ENABLE_DEVICE_POLICY_ENGINE_FLAG =
                 "enable_device_policy_engine";
+        public static final String ENABLE_WORK_PROFILE_TELEPHONY_FLAG =
+                "enable_work_profile_telephony";
     }
 }
