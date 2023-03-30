@@ -39,6 +39,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.DETECT_SCREEN_CAPTURE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA"/>
@@ -5201,6 +5202,30 @@
             </intent-filter>
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+        </activity>
+
+        <activity android:name=".managedprovisioning.ScreenshotTestActivity"
+                  android:label="@string/provisioning_byod_screenshot"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.SCREENSHOT_TEST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="3.9.2/C-1-10" />
+        </activity>
+
+        <activity android:name=".managedprovisioning.ScreenshotCaptureActivity"
+                  android:label="@string/provisioning_byod_screenshot_work_app"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.CAPTURE_SCREENSHOT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data android:name="CddTest" android:value="3.9.2/C-1-10" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.NfcTestActivity">

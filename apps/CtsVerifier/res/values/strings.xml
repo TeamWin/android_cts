@@ -3009,6 +3009,37 @@ You should be prompted to select credentials; choose the ones you just installed
         Mark the test as passed if the text at the bottom shows \"PASSED (2/2)\"\n
     </string>
 
+    <string name="provisioning_byod_screenshot">Work profile Screenshot Test</string>
+    <string name="provisioning_byod_screenshot_info">
+        This test verifies how screenshots are saved when using work profile apps.\n
+        \n
+        Whenever a screenshot is taken while a work application is in the foreground,\n
+        the resulting image should:\n
+        \n
+        *  include only the work application\n
+        *  be saved to the work profile
+    </string>
+    <string name="provisioning_byod_screenshot_start">
+        Press \'Open Work App\', to launch an activity in the work profile.\n
+    </string>
+    <string name="provisioning_byod_screenshot_open">Open Work App</string>
+    <string name="provisioning_byod_screenshot_work_app">Work App</string>
+    <string name="provisioning_byod_screenshot_capture">Capture Screenshot</string>
+    <string name="provisioning_byod_screenshot_verify">
+        Examine the screenshot image contained within the checkerboard area below.\n
+        \n
+        Verify the image contains only the work app and does not contain:\n
+            \t* any other application windows\n
+            \t* foreground status or navigation bar content (back, home, clock, battery, signal)\n
+        \n
+        If these conditions are met, pass the test.\n
+    </string>
+    <string name="provisioning_byod_screenshot_capture_title"> Take a screenshot now using the device\'s physical buttons.</string>
+    <string name="provisioning_byod_screenshot_capture_open">Choose Screenshot</string>
+    <string name="provisioning_byod_screenshot_capture_cancel">Cancel Test</string>
+    <string name="provisioning_byod_screenshot_select_title">A screenshot was detected.</string>
+    <string name="provisioning_byod_screenshot_select_message">Press the button to choose the screenshot image just captured. If no images appear, press \'Back\' to cancel this and fail the test.</string>
+
     <!-- Strings for DeskClock -->
     <string name="deskclock_tests">Alarms and Timers Tests</string>
     <string name="deskclock_tests_info">
