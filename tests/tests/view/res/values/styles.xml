@@ -184,6 +184,10 @@
         <item name="android:windowAnimationStyle">@null</item>
     </style>
 
+    <style name="PixelCopyViewProducerDialogActivityTheme" parent="@android:style/Theme.Material.Dialog.NoActionBar">
+        <item name="android:windowLayoutInDisplayCutoutMode">default</item>
+    </style>
+
     <style name="ViewAttributeTestTheme" parent="@android:Theme.Material"/>
 
     <style name="ExplicitStyle1" parent="@style/ParentOfExplicitStyle1">
