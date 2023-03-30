@@ -16,10 +16,6 @@
 
 package android.photopicker.cts;
 
-import static android.photopicker.cts.PhotoPickerCloudUtils.disableCloudMediaAndClearAllowedCloudProviders;
-import static android.photopicker.cts.PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders;
-import static android.photopicker.cts.PhotoPickerCloudUtils.getAllowedProvidersDeviceConfig;
-import static android.photopicker.cts.PhotoPickerCloudUtils.isCloudMediaEnabled;
 import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImage;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
@@ -56,30 +52,22 @@ import org.junit.Test;
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
 
-    private static boolean sCloudMediaPreviouslyEnabled;
     private static String sPreviouslyAllowedCloudProviders;
     private Uri mLocalMediaFileUri;
 
     @BeforeClass
     public static void setUpBeforeClass() {
-        // Store the current CMP configs, so that we can reset them at the end of the test.
-        sCloudMediaPreviouslyEnabled = isCloudMediaEnabled();
-        if (sCloudMediaPreviouslyEnabled) {
-            sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
-        }
+        // Store the current allowed cloud providers for reset at the end of tests.
+        sPreviouslyAllowedCloudProviders = PhotoPickerCloudUtils.getAllowedProvidersDeviceConfig();
 
         // Override the allowed cloud providers config to enable the banners.
-        enableCloudMediaAndSetAllowedCloudProviders(sTargetPackageName);
+        PhotoPickerCloudUtils.setAllowedProvidersDeviceConfig(sTargetPackageName);
     }
 
     @AfterClass
     public static void tearDownClass() {
-        // Reset CloudMedia configs.
-        if (sCloudMediaPreviouslyEnabled) {
-            enableCloudMediaAndSetAllowedCloudProviders(sPreviouslyAllowedCloudProviders);
-        } else {
-            disableCloudMediaAndClearAllowedCloudProviders();
-        }
+        // Reset the allowed cloud providers device config.
+        PhotoPickerCloudUtils.setAllowedProvidersDeviceConfig(sPreviouslyAllowedCloudProviders);
     }
 
     @Before
