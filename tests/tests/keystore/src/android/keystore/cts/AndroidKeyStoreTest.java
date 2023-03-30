@@ -40,6 +40,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.bedstead.nene.annotations.Nullable;
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -2807,6 +2808,7 @@ public class AndroidKeyStoreTest {
      * Create large number of Keystore entries with long aliases and try to list aliases of all the
      * entries in the keystore.
      */
+    @ApiTest(apis = {"java.security.KeyStore#aliases"})
     @Test
     public void testKeyStore_LargeNumberOfLongAliases() throws Exception {
         final int maxNumberOfKeys = 100;
@@ -2818,6 +2820,7 @@ public class AndroidKeyStoreTest {
      * Create limited number of Keystore entries with long aliases and try to list aliases of all
      * the entries in the keystore. Test should successfully list all the Keystore entries aliases.
      */
+    @ApiTest(apis = {"java.security.KeyStore#aliases"})
     @Test
     public void testKeyStore_LimitedNumberOfLongAliasesSuccess() throws Exception {
         final int maxNumberOfKeys = 10;
@@ -2829,6 +2832,7 @@ public class AndroidKeyStoreTest {
      * all the entries in the keystore. Test should successfully list all the Keystore entries
      * aliases.
      */
+    @ApiTest(apis = {"java.security.KeyStore#aliases"})
     @Test
     public void testKeyStore_LargeNumberShortAliasesSuccess() throws Exception {
         final int maxNumberOfKeys = 2500;
