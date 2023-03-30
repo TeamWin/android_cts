@@ -85,6 +85,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -3691,6 +3692,45 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                                 physicalSensorOrientationOverride);
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Validate that the rear/world facing cameras in automotive devices are oriented so that the
+     * long dimension of the camera aligns with the X-Y plane of Android automotive sensor axes.
+     */
+    @CddTest(requirements = "7.5/A-1-1")
+    @Test
+    public void testAutomotiveCameraOrientation() throws Exception {
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE));
+        for (int i = 0; i < mAllCameraIds.length; i++) {
+            CameraCharacteristics c = mCharacteristics.get(i);
+            int facing = c.get(CameraCharacteristics.LENS_FACING);
+            if (facing == CameraMetadata.LENS_FACING_BACK) {
+                // Camera size
+                Size pixelArraySize = c.get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
+                // Camera orientation
+                int sensorOrientation = c.get(CameraCharacteristics.SENSOR_ORIENTATION);
+                // For square sensor, test is guaranteed to pass.
+                if (pixelArraySize.getWidth() == pixelArraySize.getHeight()) {
+                    continue;
+                }
+                // Camera size adjusted for device native orientation.
+                Size adjustedSensorSize;
+                if (sensorOrientation == 90 || sensorOrientation == 270) {
+                    adjustedSensorSize = new Size(
+                            pixelArraySize.getHeight(), pixelArraySize.getWidth());
+                } else {
+                    adjustedSensorSize = pixelArraySize;
+                }
+                boolean isCameraLandscape =
+                        adjustedSensorSize.getWidth() > adjustedSensorSize.getHeight();
+                // Automotive camera orientation should be landscape for rear/world facing camera.
+                assertTrue("Automotive camera "  + mAllCameraIds[i] + " which is rear/world facing"
+                        + " must align with the X-Y plane of Android automotive sensor axes",
+                        isCameraLandscape);
             }
         }
     }
