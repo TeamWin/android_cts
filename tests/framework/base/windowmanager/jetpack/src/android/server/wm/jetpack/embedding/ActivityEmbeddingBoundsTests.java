@@ -18,13 +18,12 @@ package android.server.wm.jetpack.embedding;
 
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EXPAND_SPLIT_ATTRS;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.HINGE_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assertValidSplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotVisible;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForFillsTask;
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeHasDisplayFeatures;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLayoutInfo;
 import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
 
 import static org.junit.Assert.assertTrue;
@@ -45,7 +44,6 @@ import androidx.window.extensions.embedding.SplitAttributes;
 import androidx.window.extensions.embedding.SplitAttributes.LayoutDirection;
 import androidx.window.extensions.embedding.SplitAttributes.SplitType;
 import androidx.window.extensions.embedding.SplitPairRule;
-import androidx.window.extensions.layout.WindowLayoutInfo;
 
 import com.android.compatibility.common.util.ApiTest;
 
@@ -279,21 +277,15 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
 
     @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes.HingeSplitType")
     @Test
-    public void testHingeSplitType() throws InterruptedException {
-        // Start an activity to collect the window layout info.
+    public void testHingeSplitType() {
         TestConfigChangeHandlingActivity primaryActivity = startFullScreenActivityNewTask(
                 TestConfigChangeHandlingActivity.class);
-        WindowLayoutInfo windowLayoutInfo = getExtensionWindowLayoutInfo(primaryActivity);
-        assumeHasDisplayFeatures(windowLayoutInfo);
 
         SplitPairRule splitPairRule = createSplitPairRuleBuilder(
                 activityActivityPair -> true,
                 activityIntentPair -> true,
-                windowMetrics -> true
-        )
-                .setDefaultSplitAttributes(new SplitAttributes.Builder().setSplitType(
-                        new SplitType.HingeSplitType(SplitType.RatioSplitType.splitEqually()))
-                        .build())
+                windowMetrics -> true)
+                .setDefaultSplitAttributes(HINGE_SPLIT_ATTRS)
                 .build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
