@@ -89,9 +89,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         }
         setDataSaverEnabled(false);
         mNetworkingHelper.setAllNetworksEnabled(true);
-        // Force the test app out of the never bucket.
-        SystemUtil.runShellCommand("am set-standby-bucket "
-                + TestAppInterface.TEST_APP_PACKAGE + " rare");
     }
 
     @Override
