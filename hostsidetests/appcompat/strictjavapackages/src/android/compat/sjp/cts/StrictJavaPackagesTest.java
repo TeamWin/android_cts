@@ -339,14 +339,6 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Lorg/chromium/net/UrlRequest;",
                     "Lorg/chromium/net/UrlResponseInfo;"
             );
-    // TODO: b/223837004
-    private static final ImmutableSet<String> BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST =
-        ImmutableSet.of(
-                // /apex/com.android.btservices/javalib/framework-bluetooth.jar
-                "Lcom/android/bluetooth/x/com/android/modules/utils/ISynchronousResultReceiver;",
-                "Lcom/android/bluetooth/x/com/android/modules/utils/SynchronousResultReceiver-IA;",
-                "Lcom/android/bluetooth/x/com/android/modules/utils/SynchronousResultReceiver;"
-        );
     private static final ImmutableSet<String> PERMISSION_CONTROLLER_APK_IN_APEX_BURNDOWN_LIST =
             ImmutableSet.of(
                 "Lcom/android/modules/utils/build/SdkLevel;",
@@ -448,14 +440,6 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
 
     private static final ImmutableMap<String, ImmutableSet<String>> FULL_APK_IN_APEX_BURNDOWN =
         new ImmutableMap.Builder<String, ImmutableSet<String>>()
-            .put("/apex/com.android.btservices/app/Bluetooth/Bluetooth.apk",
-                BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST)
-            .put("/apex/com.android.btservices/app/BluetoothArc/BluetoothArc.apk",
-                BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST)
-            .put("/apex/com.android.btservices/app/BluetoothGoogle/BluetoothGoogle.apk",
-                BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST)
-            .put("/apex/com.android.bluetooth/app/BluetoothGoogle/BluetoothGoogle.apk",
-                BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.permission/priv-app/PermissionController/PermissionController.apk",
                 PERMISSION_CONTROLLER_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.permission/priv-app/GooglePermissionController/GooglePermissionController.apk",
