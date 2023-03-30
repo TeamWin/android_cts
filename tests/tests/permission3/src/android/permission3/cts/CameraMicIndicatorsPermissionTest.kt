@@ -75,8 +75,6 @@ private const val USE_HOTWORD = "use_hotword"
 private const val FINISH_EARLY = "finish_early"
 private const val USE_INTENT_ACTION = "test.action.USE_CAMERA_OR_MIC"
 private const val PRIVACY_CHIP_ID = "com.android.systemui:id/privacy_chip"
-private const val CAR_MIC_PRIVACY_CHIP_ID = "com.android.systemui:id/mic_privacy_chip"
-private const val CAR_CAMERA_PRIVACY_CHIP_ID = "com.android.systemui:id/camera_privacy_chip"
 private const val PRIVACY_ITEM_ID = "com.android.systemui:id/privacy_item"
 private const val SAFETY_CENTER_ITEM_ID = "com.android.permissioncontroller:id/parent_card_view"
 private const val INDICATORS_FLAG = "camera_mic_icons_enabled"
@@ -109,6 +107,8 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     private var wasEnabled = false
     private var isScreenOn = false
     private var screenTimeoutBeforeTest: Long = 0L
+    private lateinit var carMicPrivacyChipId: String
+    private lateinit var carCameraPrivacyChipId: String
 
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()
@@ -414,8 +414,10 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     ) {
         eventually {
             // Ensure the privacy chip is present (or not)
-            var micPrivacyChip = uiDevice.findObject(By.res(CAR_MIC_PRIVACY_CHIP_ID))
-            var cameraPrivacyChip = uiDevice.findObject(By.res(CAR_CAMERA_PRIVACY_CHIP_ID))
+            carMicPrivacyChipId = context.getString(R.string.car_mic_privacy_chip_id)
+            carCameraPrivacyChipId = context.getString(R.string.car_camera_privacy_chip_id)
+            var micPrivacyChip = uiDevice.findObject(By.res(carMicPrivacyChipId))
+            var cameraPrivacyChip = uiDevice.findObject(By.res(carCameraPrivacyChipId))
             if (useMic) {
                 assertNotNull("Did not find mic chip", micPrivacyChip)
                 // Click to chip to show the panel.
