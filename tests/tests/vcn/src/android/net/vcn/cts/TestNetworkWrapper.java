@@ -99,7 +99,7 @@ public class TestNetworkWrapper implements AutoCloseable {
     public TestNetworkWrapper(
             @NonNull Context context,
             int mtu,
-            boolean isMetered,
+            @NonNull Set<Integer> capabilities,
             @NonNull Set<Integer> subIds,
             @NonNull InetAddress localAddress)
             throws Exception {
@@ -125,7 +125,7 @@ public class TestNetworkWrapper implements AutoCloseable {
             mConnectivityManager.requestNetwork(nr, vcnNetworkCallback);
 
             final NetworkCapabilities nc =
-                    createNetworkCapabilitiesForIface(iface, isMetered, subIds);
+                    createNetworkCapabilitiesForIface(iface, capabilities, subIds);
             final LinkProperties lp = createLinkPropertiesForIface(iface, mtu);
 
             final VcnNetworkPolicyResult policy = mVcnManager.applyVcnNetworkPolicy(nc, lp);
@@ -150,21 +150,19 @@ public class TestNetworkWrapper implements AutoCloseable {
     }
 
     private static NetworkCapabilities createNetworkCapabilitiesForIface(
-            @NonNull String iface, boolean isMetered, Set<Integer> subIds) {
+            @NonNull String iface, Set<Integer> capabilities, Set<Integer> subIds) {
         NetworkCapabilities.Builder builder =
                 NetworkCapabilities.Builder.withoutDefaultCapabilities()
                         .addTransportType(NetworkCapabilities.TRANSPORT_TEST)
                         .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)
                         .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
                         .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VCN_MANAGED)
-                        .addCapability(NetworkCapabilities.NET_CAPABILITY_MMS)
-                        .addCapability(NetworkCapabilities.NET_CAPABILITY_DUN)
-                        .addCapability(NetworkCapabilities.NET_CAPABILITY_FOTA)
                         .setNetworkSpecifier(new TestNetworkSpecifier(iface))
                         .setSubscriptionIds(subIds);
-        if (!isMetered) {
-            builder.addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED);
+        for (int cap : capabilities) {
+            builder.addCapability(cap);
         }
+
         return builder.build();
     }
 
