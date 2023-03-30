@@ -30,6 +30,7 @@ java_test_host {
     ],
     data: [
         ":CtsGwpAsanEnabled",
+        ":CtsGwpAsanRecoverable",
     ],
 }
 
@@ -49,5 +50,5 @@ java_defaults {
         "general-tests",
     ],
     jni_libs: ["libgwp_asan_cts_library_jni"],
-    sdk_version: "current",
+    sdk_version: "test_current",
 }

@@ -19,12 +19,12 @@ package {
 java_library {
     name: "gwp_asan_cts_common",
     srcs: ["android/**/*.java"],
-    sdk_version: "current",
     static_libs: [
-        "ctstestrunner-axt",
         "androidx.test.rules",
         "androidx.test.core",
         "androidx.test.ext.junit",
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
     ],
 }
 

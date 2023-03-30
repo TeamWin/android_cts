@@ -91,3 +91,14 @@ extern "C" JNIEXPORT jboolean JNICALL Java_android_cts_gwp_1asan_Utils_isGwpAsan
     std::unique_ptr<char[]> gwp_asan_ptr = get_gwp_asan_pointer();
     return gwp_asan_ptr.get() == nullptr ? JNI_FALSE : JNI_TRUE;
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_android_cts_gwp_1asan_Utils_instrumentedUseAfterFree(JNIEnv*) {
+    char* volatile p = nullptr;
+    {
+        std::unique_ptr<char[]> gwp_asan_ptr = get_gwp_asan_pointer();
+        p = gwp_asan_ptr.get();
+    }
+    if (!p) return;
+    __attribute__((unused)) volatile char c = *p;
+}

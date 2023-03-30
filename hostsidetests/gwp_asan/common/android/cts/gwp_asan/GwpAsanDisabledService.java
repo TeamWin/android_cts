@@ -32,16 +32,9 @@ public class GwpAsanDisabledService extends Service {
 
     public class LocalBinder extends Binder {
         @Override
-        public boolean onTransact(int code, Parcel data, Parcel reply, int flags) {
-            if (code == Utils.SERVICE_IS_GWP_ASAN_DISABLED) {
-                try {
-                    reply.writeInt(Utils.isGwpAsanDisabled() ? 1 : 0);
-                } catch (Exception e) {
-                    reply.writeInt(-1);
-                }
-                return true;
-            }
-            return false;
+        public boolean onTransact(int testId, Parcel data, Parcel reply, int flags) {
+            reply.writeInt(Utils.runTest(testId));
+            return true;
         }
     }
 }

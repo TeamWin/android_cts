@@ -18,7 +18,10 @@ package android.cts.gwp_asan;
 
 import android.app.Activity;
 import android.app.Application;
+import android.content.Context;
 import android.util.Log;
+
+import com.android.compatibility.common.util.DropBoxReceiver;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -32,15 +35,17 @@ public class Utils {
     public static final int TEST_SUCCESS = Activity.RESULT_FIRST_USER + 100;
     public static final int TEST_FAILURE = Activity.RESULT_FIRST_USER + 101;
 
-    public static final int SERVICE_IS_GWP_ASAN_ENABLED = 42;
-    public static final int SERVICE_IS_GWP_ASAN_DISABLED = 43;
+    public static final int TEST_IS_GWP_ASAN_ENABLED = 42;
+    public static final int TEST_IS_GWP_ASAN_DISABLED = 43;
+    public static final int TEST_USE_AFTER_FREE = 44;
 
-    // Check that GWP-ASan is enabled by allocating a whole bunch of heap
-    // pointers and making sure one of them is a GWP-ASan allocation (by
-    // comparing with /proc/self/maps).
+    public static final String DROPBOX_TAG = "data_app_native_crash";
+    public static final String DROPBOX_RECOVERABLE_TAG = "data_app_native_recoverable_crash";
+
+    // Check that GWP-ASan is enabled by allocating a whole bunch of heap pointers and making sure
+    // one of them is a GWP-ASan allocation (by comparing with /proc/self/maps).
     public static native boolean isGwpAsanEnabled();
-    // Check that GWP-ASan is disabled by ensuring there's no GWP-ASan mappings
-    // in /proc/self/maps.
+    // Check that GWP-ASan is disabled by ensuring there's no GWP-ASan mappings in /proc/self/maps.
     public static boolean isGwpAsanDisabled() throws IOException {
         try (FileReader fr = new FileReader("/proc/self/maps");
                 BufferedReader reader = new BufferedReader(fr)) {
@@ -54,5 +59,45 @@ public class Utils {
             }
         }
         return true;
+    }
+
+    // Trigger a GWP-ASan instrumented use-after-free. This should always trigger a GWP-ASan report
+    // if it's enabled. In non-recoverable mode (i.e. gwpAsanMode=always), then this will crash the
+    // app with SEGV. In recoverable mode (i.e. gwpAsanMode=default), then this won't crash, but
+    // should still trigger all the dropbox/debuggerd entries.
+    public static native void instrumentedUseAfterFree();
+
+    public static int runTest(int testId) {
+        try {
+            if (testId == TEST_IS_GWP_ASAN_ENABLED) {
+                return Utils.isGwpAsanEnabled() ? Utils.TEST_SUCCESS : Utils.TEST_FAILURE;
+            }
+            if (testId == TEST_IS_GWP_ASAN_DISABLED) {
+                return Utils.isGwpAsanDisabled() ? Utils.TEST_SUCCESS : Utils.TEST_FAILURE;
+            }
+            if (testId == TEST_USE_AFTER_FREE) {
+                Utils.instrumentedUseAfterFree();
+                return Utils.TEST_SUCCESS;
+            }
+        } catch (Exception e) {
+            return Utils.TEST_FAILURE;
+        }
+        return Utils.TEST_FAILURE;
+    }
+
+    public static DropBoxReceiver getDropboxReceiver(
+            Context context, String processNameSuffix, String crashTag) {
+        return new DropBoxReceiver(
+                context,
+                crashTag,
+                context.getPackageName() + ":" + processNameSuffix,
+                "SEGV_ACCERR",
+                "Cause: [GWP-ASan]: Use After Free",
+                "deallocated by",
+                "backtrace:");
+    }
+
+    public static DropBoxReceiver getDropboxReceiver(Context context, String processNameSuffix) {
+        return getDropboxReceiver(context, processNameSuffix, DROPBOX_TAG);
     }
 }
