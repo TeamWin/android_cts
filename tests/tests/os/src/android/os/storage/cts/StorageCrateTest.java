@@ -19,6 +19,7 @@ package android.os.storage.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -38,6 +39,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class StorageCrateTest {
     private static final String CRATES_ROOT = "crates";
     @Rule
