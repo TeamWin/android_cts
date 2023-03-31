@@ -24,12 +24,16 @@ import android.content.IntentFilter
 import android.content.pm.PackageInstaller
 import android.icu.util.ULocale
 import android.platform.test.annotations.AppModeFull
+import android.provider.DeviceConfig
 import androidx.test.runner.AndroidJUnit4
+import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import java.io.File
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
+import org.junit.Assume
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -44,15 +48,29 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         const val TEST_APP_LABEL_PL = "Empty Test App Polish"
         const val TEST_APP_LABEL_V2 = "Empty Test App V2"
         const val TEST_FAKE_APP_LABEL = "Fake Test App"
+        const val PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE = "is_preapproval_available"
     }
 
     private val apkFile_pl = File(context.filesDir, TEST_APK_NAME_PL)
     private val apkFile_v2 = File(context.filesDir, TEST_APK_NAME_V2)
 
+    @get:Rule
+    val deviceConfigPreApprovalRequestAvailable = DeviceConfigStateChangerRule(
+        context, DeviceConfig.NAMESPACE_PACKAGE_MANAGER_SERVICE,
+            PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE, true.toString())
+
     @Before
     fun copyOtherTestApks() {
         File(TEST_APK_LOCATION, TEST_APK_NAME_PL).copyTo(target = apkFile_pl, overwrite = true)
         File(TEST_APK_LOCATION, TEST_APK_NAME_V2).copyTo(target = apkFile_v2, overwrite = true)
+    }
+
+    @Before
+    fun checkPreconditions() {
+        val res = context.getResources()
+        val isPreapprovalAvailable = res.getBoolean(
+            res.getIdentifier("config_isPreApprovalRequestAvailable", "bool", "android"))
+        Assume.assumeTrue("Pre-approval is not available", isPreapprovalAvailable)
     }
 
     /**
