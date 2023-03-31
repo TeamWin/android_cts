@@ -114,13 +114,6 @@ public class MediaTranscodingManagerTest {
 
     // Copy the resource to cache.
     private Uri resourceToUri(Context context, int resId, String name) throws IOException {
-        Uri resUri = new Uri.Builder()
-                .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
-                .authority(context.getResources().getResourcePackageName(resId))
-                .appendPath(context.getResources().getResourceTypeName(resId))
-                .appendPath(context.getResources().getResourceEntryName(resId))
-                .build();
-
         Uri cacheUri = Uri.parse(ContentResolver.SCHEME_FILE + "://"
                 + mContext.getCacheDir().getAbsolutePath() + "/" + name);
 

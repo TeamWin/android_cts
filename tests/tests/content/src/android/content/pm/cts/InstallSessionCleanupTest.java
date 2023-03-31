@@ -24,12 +24,12 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.uiautomator.By;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.By;
 
-import com.android.compatibility.common.util.UiAutomatorUtils;
+import com.android.compatibility.common.util.UiAutomatorUtils2;
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.TestApp;
 import com.android.cts.install.lib.Uninstall;
@@ -94,7 +94,7 @@ public class InstallSessionCleanupTest {
 
         InstrumentationRegistry
                 .getInstrumentation().getContext().startActivity(intent);
-        UiAutomatorUtils.waitFindObject(By.pkg(INSTALLER_APP_PACKAGE_NAME).depth(0));
+        UiAutomatorUtils2.waitFindObject(By.pkg(INSTALLER_APP_PACKAGE_NAME).depth(0));
         assertThat(getNumSessions(INSTALLER_APP_PACKAGE_NAME)).isAtLeast(NUM_NEW_SESSIONS);
         Uninstall.packages(INSTALLER_APP_PACKAGE_NAME);
         // Due to the asynchronous nature of abandoning sessions, sessions don't get deleted

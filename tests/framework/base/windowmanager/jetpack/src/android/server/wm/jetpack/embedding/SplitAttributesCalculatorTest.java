@@ -18,10 +18,9 @@ package android.server.wm.jetpack.embedding;
 
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EXPAND_SPLIT_ATTRS;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.HINGE_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeHasDisplayFeatures;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLayoutInfo;
 import static android.view.Surface.ROTATION_270;
 import static android.view.Surface.ROTATION_90;
 
@@ -33,7 +32,6 @@ import static org.junit.Assert.assertTrue;
 import android.app.Activity;
 import android.app.PictureInPictureParams;
 import android.content.Intent;
-import android.platform.test.annotations.Presubmit;
 import android.server.wm.NestedShellPermission;
 import android.server.wm.RotationSession;
 import android.server.wm.TestTaskOrganizer;
@@ -43,11 +41,8 @@ import androidx.annotation.NonNull;
 import androidx.window.extensions.core.util.function.Function;
 import androidx.window.extensions.embedding.ActivityEmbeddingComponent;
 import androidx.window.extensions.embedding.SplitAttributes;
-import androidx.window.extensions.embedding.SplitAttributes.SplitType.HingeSplitType;
-import androidx.window.extensions.embedding.SplitAttributes.SplitType.RatioSplitType;
 import androidx.window.extensions.embedding.SplitAttributesCalculatorParams;
 import androidx.window.extensions.embedding.SplitPairRule;
-import androidx.window.extensions.layout.WindowLayoutInfo;
 
 import com.android.compatibility.common.util.ApiTest;
 
@@ -65,7 +60,6 @@ import java.util.concurrent.TimeUnit;
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:SplitAttributesCalculatorTest
  */
-@Presubmit
 @ApiTest(apis = {
         "androidx.window.extensions.embedding.ActivityEmbeddingComponent"
                 + "#setSplitAttributesCalculator",
@@ -146,7 +140,7 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
     @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes"
             + ".ExpandContainersSplitType")
     @Test
-    public void testCalculatorSplitAttributesCustomization_expand() throws InterruptedException {
+    public void testCalculatorSplitAttributesCustomization_expand() {
         testSplitAttributesCustomizationByCalculator(EXPAND_SPLIT_ATTRS);
     }
 
@@ -156,13 +150,12 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
      */
     @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes.HingeSplitType")
     @Test
-    public void testCalculatorSplitAttributesCustomization_hinge() throws InterruptedException {
-        testSplitAttributesCustomizationByCalculator(new SplitAttributes.Builder().setSplitType(
-                new HingeSplitType(RatioSplitType.splitEqually())).build());
+    public void testCalculatorSplitAttributesCustomization_hinge() {
+        testSplitAttributesCustomizationByCalculator(HINGE_SPLIT_ATTRS);
     }
 
     private void testSplitAttributesCustomizationByCalculator(
-            @NonNull SplitAttributes customizedSplitAttributes) throws InterruptedException {
+            @NonNull SplitAttributes customizedSplitAttributes) {
         final String tag = "testSplitAttributesCustomizationByCalculator"
                 + customizedSplitAttributes;
 
@@ -195,11 +188,6 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
         // customizedSplitAttributes.
         Activity activityA = startFullScreenActivityNewTask(TestActivityWithId.class,
                 ACTIVITY_A_ID);
-        if (customizedSplitAttributes.getSplitType()
-                instanceof SplitAttributes.SplitType.HingeSplitType) {
-            WindowLayoutInfo windowLayoutInfo = getExtensionWindowLayoutInfo(activityA);
-            assumeHasDisplayFeatures(windowLayoutInfo);
-        }
 
         startActivityAndVerifySplitAttributes(activityA, activityA, /* expectedPrimaryActivity */
                 TestActivityWithId.class, customizedSplitAttributes, ACTIVITY_B_ID,

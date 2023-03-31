@@ -269,6 +269,9 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         mWmState.assertFocusedActivity("Launched to side activity must be in front.",
                 TEST_ACTIVITY);
 
+        // Set secondary split as launch root
+        mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());
+
         // Launch another activity to side to cover first one.
         launchActivityInSecondarySplit(NO_RELAUNCH_ACTIVITY);
         mWmState.assertFocusedActivity("Launched to side covering activity must be in front.",

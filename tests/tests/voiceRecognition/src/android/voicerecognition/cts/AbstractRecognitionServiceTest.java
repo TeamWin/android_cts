@@ -280,7 +280,9 @@ abstract class AbstractRecognitionServiceTest {
                 SequenceExecutionInfo.Scenario.START_START,
                 SequenceExecutionInfo.Scenario.START_STOP_CANCEL,
                 SequenceExecutionInfo.Scenario.START_ERROR_CANCEL,
+                SequenceExecutionInfo.Scenario.START_STOP_DESTROY,
                 SequenceExecutionInfo.Scenario.START_ERROR_DESTROY,
+                SequenceExecutionInfo.Scenario.START_DESTROY_DESTROY,
                 SequenceExecutionInfo.Scenario.START_DETECTION_STOP_RESULTS};
     }
 
@@ -306,6 +308,8 @@ abstract class AbstractRecognitionServiceTest {
                 SequenceExecutionInfo.Scenario.START_CANCEL,
                 SequenceExecutionInfo.Scenario.START_START,
                 SequenceExecutionInfo.Scenario.START_STOP_CANCEL,
+                SequenceExecutionInfo.Scenario.START_STOP_DESTROY,
+                SequenceExecutionInfo.Scenario.START_DESTROY_DESTROY,
                 SequenceExecutionInfo.Scenario.START_DETECTION_STOP_RESULTS);
 
         List<Object[]> scenarios = new ArrayList<>();
@@ -563,12 +567,10 @@ abstract class AbstractRecognitionServiceTest {
             START_START,
             START_STOP_CANCEL,
             START_ERROR_CANCEL,
-            START_ERROR_DESTROY,
-            START_DETECTION_STOP_RESULTS,
-
-            // TODO(kiridza): Investigate why these scenarios are flaky (5-10% failure).
             START_STOP_DESTROY,
+            START_ERROR_DESTROY,
             START_DESTROY_DESTROY,
+            START_DETECTION_STOP_RESULTS,
 
             // Sad scenarios.
             START_ERROR

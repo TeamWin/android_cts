@@ -389,7 +389,7 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
     public void testGetOccupantZoneForInvalidUser() {
         UserHandle invalidUser = UserHandle.of(UserHandle.USER_NULL);
 
-        assertWithMessage("Occupant Zone for a invalid user(%s)", invalidUser)
+        assertWithMessage("Occupant Zone for an invalid user(%s)", invalidUser)
                 .that(mCarOccupantZoneManager.getOccupantZoneForUser(invalidUser))
                 .isNull();
     }
@@ -420,6 +420,25 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
             expectWithMessage("Occupant zone for user: %s", userId)
                     .that(result).isEqualTo(info);
         }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getOccupantZoneForDisplayId"})
+    public void testGetOccupantZoneForInvalidDisplayId() {
+        assertWithMessage("Occupant Zone for an invalid display id (%s)", Display.INVALID_DISPLAY)
+                .that(mCarOccupantZoneManager.getOccupantZoneForDisplayId(Display.INVALID_DISPLAY))
+                .isNull();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getOccupantZoneForDisplayId"})
+    public void testGetOccupantZoneForDriverDisplayId() {
+        assumeDriverZone();
+
+        int displayId = getDriverDisplay().getDisplayId();
+        assertWithMessage("Occupant zone for driver display id (%s)", displayId)
+                .that(mCarOccupantZoneManager.getOccupantZoneForDisplayId(displayId))
+                .isEqualTo(mDriverZoneInfo);
     }
 
     @Test

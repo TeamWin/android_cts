@@ -55,6 +55,7 @@ public class CallStreamingTest extends BaseTelecomTestWithMockServices {
     public void tearDown() throws Exception {
         cleanup();
         super.tearDown();
+        mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_1);
     }
 
     public void testStartCallStreaming() {
