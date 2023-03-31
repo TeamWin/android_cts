@@ -87,7 +87,7 @@ class StylusButtonInputEventTest {
         // Send an unrelated system key to the status bar so last stylus system key history is not
         // preserved between tests.
         SystemUtil.runWithShellPermissionIdentity {
-            statusBarManager.handleSystemKey(INITIAL_SYSTEM_KEY)
+            statusBarManager.handleSystemKey(KeyEvent(KeyEvent.ACTION_DOWN, INITIAL_SYSTEM_KEY))
         }
     }
 
