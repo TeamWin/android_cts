@@ -138,8 +138,6 @@ public class VirtualSensorTest {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final PackageManager packageManager = context.getPackageManager();
         assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
-        assumeTrue(packageManager.hasSystemFeature(
-                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         mSensorManager = context.getSystemService(SensorManager.class);
 
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
