@@ -161,7 +161,7 @@ public class NotificationManager29Test {
         int id = 6000;
         final Notification notification =
                 new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                        .setSmallIcon(android.R.id.icon)
+                        .setSmallIcon(android.R.drawable.sym_def_app_icon)
                         .setWhen(System.currentTimeMillis())
                         .setFullScreenIntent(getPendingIntent(), true)
                         .setContentText("This is #FSI notification")
