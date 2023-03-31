@@ -240,6 +240,9 @@
                 android:resource="@xml/syncadapter" />
         </service>
 
+        <activity android:name="android.security.cts.CVE_2023_20953.PocActivity"
+            android:exported="true" />
+
         <activity android:name="android.security.cts.CVE_2021_0642.PocActivity"
             android:exported="true">
             <intent-filter>
