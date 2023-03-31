@@ -1050,6 +1050,7 @@ public class JobThrottlingTest {
         // Tests cannot disable ethernet network.
         assumeFalse("not testable, since ethernet is connected", hasEthernetConnection());
 
+        assumeTrue(BatteryUtils.hasBattery());
         assumeTrue(mNetworkingHelper.hasWifiFeature());
         mNetworkingHelper.ensureSavedWifiNetwork();
 
