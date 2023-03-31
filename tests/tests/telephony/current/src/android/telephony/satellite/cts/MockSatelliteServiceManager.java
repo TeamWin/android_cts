@@ -1,0 +1,352 @@
+/*
+ * Copyright (C) 2023 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.telephony.satellite.cts;
+
+import android.annotation.NonNull;
+import android.annotation.Nullable;
+import android.app.Instrumentation;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+import android.telephony.Rlog;
+import android.telephony.cts.util.TelephonyUtils;
+import android.telephony.satellite.stub.PointingInfo;
+import android.telephony.satellite.stub.SatelliteDatagram;
+import android.telephony.satellite.stub.SatelliteError;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * This class is responsible for connecting Telephony framework and CTS to the MockSatelliteService.
+ */
+class MockSatelliteServiceManager {
+    private static final String TAG = "MockSatelliteServiceManager";
+    private static final String PACKAGE = "android.telephony.cts";
+    private static final String SET_SATELLITE_SERVICE_PACKAGE_NAME_CMD =
+            "cmd phone set-satellite-service-package-name -s ";
+    private static final long TIMEOUT = 5000;
+
+    private MockSatelliteService mSatelliteService;
+    private TestSatelliteServiceConnection mSatelliteServiceConn;
+    private CountDownLatch mRemoteServiceConnectedLatch;
+    private Instrumentation mInstrumentation;
+    private final Semaphore mStartSendingPointingInfoSemaphore = new Semaphore(0);
+    private final Semaphore mStopSendingPointingInfoSemaphore = new Semaphore(0);
+    private final Semaphore mPollPendingDatagramsSemaphore = new Semaphore(0);
+    private final Semaphore mSendDatagramsSemaphore = new Semaphore(0);
+    private List<SatelliteDatagram> mSentSatelliteDatagrams = new ArrayList<>();
+    private List<Boolean> mSentIsEmergencyList = new ArrayList<>();
+    private final Object mSendDatagramLock = new Object();
+
+    @NonNull private final ILocalSatelliteListener mSatelliteListener =
+            new ILocalSatelliteListener.Stub() {
+                @Override
+                public void onRemoteServiceConnected() {
+                    logd("onRemoteServiceConnected");
+                    mRemoteServiceConnectedLatch.countDown();
+                }
+
+                @Override
+                public void onStartSendingSatellitePointingInfo() {
+                    logd("onStartSendingSatellitePointingInfo");
+                    try {
+                        mStartSendingPointingInfoSemaphore.release();
+                    } catch (Exception ex) {
+                        logd("onStartSendingSatellitePointingInfo: Got exception, ex=" + ex);
+                    }
+                }
+
+                @Override
+                public void onStopSendingSatellitePointingInfo() {
+                    logd("onStopSendingSatellitePointingInfo");
+                    try {
+                        mStopSendingPointingInfoSemaphore.release();
+                    } catch (Exception ex) {
+                        logd("onStopSendingSatellitePointingInfo: Got exception, ex=" + ex);
+                    }
+                }
+
+                @Override
+                public void onPollPendingSatelliteDatagrams() {
+                    logd("onPollPendingSatelliteDatagrams");
+                    try {
+                        mPollPendingDatagramsSemaphore.release();
+                    } catch (Exception ex) {
+                        logd("onPollPendingSatelliteDatagrams: Got exception, ex=" + ex);
+                    }
+                }
+
+                @Override
+                public void onSendSatelliteDatagram(
+                        SatelliteDatagram datagram, boolean isEmergency) {
+                    logd("onSendSatelliteDatagram");
+                    synchronized (mSendDatagramLock) {
+                        mSentSatelliteDatagrams.add(datagram);
+                        mSentIsEmergencyList.add(isEmergency);
+                    }
+                    try {
+                        mSendDatagramsSemaphore.release();
+                    } catch (Exception ex) {
+                        logd("onSendSatelliteDatagram: Got exception, ex=" + ex);
+                    }
+                }
+            };
+
+    private class TestSatelliteServiceConnection implements ServiceConnection {
+        private final CountDownLatch mLatch;
+
+        TestSatelliteServiceConnection(CountDownLatch latch) {
+            mLatch = latch;
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            logd("onServiceConnected");
+            mSatelliteService = ((MockSatelliteService.LocalBinder) service).getService();
+            mRemoteServiceConnectedLatch = new CountDownLatch(1);
+            mSatelliteService.setLocalSatelliteListener(mSatelliteListener);
+            mLatch.countDown();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            logd("onServiceDisconnected");
+            mSatelliteService = null;
+        }
+    }
+
+    MockSatelliteServiceManager(Instrumentation instrumentation) {
+        mInstrumentation = instrumentation;
+    }
+
+    boolean connectSatelliteService() {
+        logd("connectSatelliteService starting ...");
+        if (!setupLocalSatelliteService()) {
+            loge("Failed to set up local satellite service");
+            return false;
+        }
+
+        try {
+            if (!setSatelliteServicePackageName(PACKAGE)) {
+                loge("Failed to set satellite service package name");
+                return false;
+            }
+        } catch (Exception ex) {
+            loge("connectSatelliteService: Got exception with setSatelliteServicePackageName "
+                    + "ex=" + ex);
+            return false;
+        }
+
+        // Wait for SatelliteModemInterface connecting to MockSatelliteService.
+        try {
+            boolean result = mRemoteServiceConnectedLatch.await(TIMEOUT, TimeUnit.MILLISECONDS);
+            if (!result) {
+                loge("connectSatelliteService: latch await failed");
+            }
+            return result;
+        } catch (InterruptedException e) {
+            loge("connectSatelliteService: Got InterruptedException e=" + e);
+            return false;
+        }
+    }
+
+    boolean restoreSatelliteServicePackageName() {
+        logd("restoreSatelliteServicePackageName");
+        try {
+            if (!setSatelliteServicePackageName(null)) {
+                loge("Failed to restore satellite service package name");
+                return false;
+            }
+        } catch (Exception ex) {
+            loge("restoreSatelliteServicePackageName: Got exception with "
+                    + "setSatelliteServicePackageName ex=" + ex);
+            return false;
+        }
+        return true;
+    }
+
+    Boolean getSentIsEmergency(int index) {
+        synchronized (mSendDatagramLock) {
+            if (index >= mSentIsEmergencyList.size()) return null;
+            return mSentIsEmergencyList.get(index);
+        }
+    }
+
+    SatelliteDatagram getSentSatelliteDatagram(int index) {
+        synchronized (mSendDatagramLock) {
+            if (index >= mSentSatelliteDatagrams.size()) return null;
+            return mSentSatelliteDatagrams.get(index);
+        }
+    }
+
+    void clearSentSatelliteDatagramInfo() {
+        synchronized (mSendDatagramLock) {
+            mSentSatelliteDatagrams.clear();
+            mSentIsEmergencyList.clear();
+        }
+    }
+
+    int getTotalCountOfSentSatelliteDatagrams() {
+        synchronized (mSendDatagramLock) {
+            return mSentSatelliteDatagrams.size();
+        }
+    }
+
+    boolean waitForEventOnStartSendingSatellitePointingInfo(int expectedNumberOfEvents) {
+        for (int i = 0; i < expectedNumberOfEvents; i++) {
+            try {
+                if (!mStartSendingPointingInfoSemaphore.tryAcquire(
+                        TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    loge("Timeout to receive onStartSendingSatellitePointingInfo");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("onStartSendingSatellitePointingInfo: Got exception=" + ex);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    boolean waitForEventOnStopSendingSatellitePointingInfo(int expectedNumberOfEvents) {
+        for (int i = 0; i < expectedNumberOfEvents; i++) {
+            try {
+                if (!mStopSendingPointingInfoSemaphore.tryAcquire(
+                        TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    loge("Timeout to receive onStopSendingSatellitePointingInfo");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("onStopSendingSatellitePointingInfo: Got exception=" + ex);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    boolean waitForEventOnPollPendingSatelliteDatagrams(int expectedNumberOfEvents) {
+        for (int i = 0; i < expectedNumberOfEvents; i++) {
+            try {
+                if (!mPollPendingDatagramsSemaphore.tryAcquire(
+                        TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    loge("Timeout to receive onPollPendingSatelliteDatagrams");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("onPollPendingSatelliteDatagrams: Got exception=" + ex);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    boolean waitForEventOnSendSatelliteDatagram(int expectedNumberOfEvents) {
+        for (int i = 0; i < expectedNumberOfEvents; i++) {
+            try {
+                if (!mSendDatagramsSemaphore.tryAcquire(
+                        TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    loge("Timeout to receive onSendSatelliteDatagram");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("onSendSatelliteDatagram: Got exception=" + ex);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void setErrorCode(@SatelliteError int errorCode) {
+        logd("setErrorCode: errorCode=" + errorCode);
+        if (mSatelliteService == null) {
+            loge("setErrorCode: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.setErrorCode(errorCode);
+    }
+
+    void setSatelliteSupport(boolean supported) {
+        logd("setSatelliteSupport: supported=" + supported);
+        if (mSatelliteService == null) {
+            loge("setErrorCode: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.setSatelliteSupport(supported);
+    }
+
+    void sendOnSatelliteDatagramReceived(SatelliteDatagram datagram, int pendingCount) {
+        logd("sendOnSatelliteDatagramReceived");
+        if (mSatelliteService == null) {
+            loge("setErrorCode: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.sendOnSatelliteDatagramReceived(datagram, pendingCount);
+    }
+
+    void sendOnPendingDatagrams() {
+        logd("sendOnPendingDatagrams");
+        if (mSatelliteService == null) {
+            loge("setErrorCode: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.sendOnPendingDatagrams();
+    }
+
+    void sendOnSatellitePositionChanged(PointingInfo pointingInfo) {
+        logd("sendOnSatellitePositionChanged");
+        mSatelliteService.sendOnSatellitePositionChanged(pointingInfo);
+    }
+
+    private boolean setupLocalSatelliteService() {
+        if (mSatelliteService != null) {
+            logd("setupLocalSatelliteService: local service is already set up");
+            return true;
+        }
+        CountDownLatch latch = new CountDownLatch(1);
+        mSatelliteServiceConn = new TestSatelliteServiceConnection(latch);
+        mInstrumentation.getContext().bindService(new Intent(mInstrumentation.getContext(),
+                MockSatelliteService.class), mSatelliteServiceConn, Context.BIND_AUTO_CREATE);
+        try {
+            return latch.await(TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            loge("setupLocalSatelliteService: Got InterruptedException e=" + e);
+            return false;
+        }
+    }
+
+    private boolean setSatelliteServicePackageName(@Nullable String packageName) throws Exception {
+        String result =
+                TelephonyUtils.executeShellCommand(
+                        mInstrumentation, SET_SATELLITE_SERVICE_PACKAGE_NAME_CMD + packageName);
+        logd("setSatelliteServicePackageName: result = " + result);
+        return "true".equals(result);
+    }
+
+    private static void logd(@NonNull String log) {
+        Rlog.d(TAG, log);
+    }
+
+    private static void loge(@NonNull String log) {
+        Rlog.e(TAG, log);
+    }
+}
