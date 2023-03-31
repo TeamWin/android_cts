@@ -191,7 +191,6 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
             }
             final Context context = InstrumentationRegistry.getTargetContext();
             disassociateCompanionDevice(context.getPackageName());
-            mInputManager.unregisterInputDeviceListener(mInputDeviceListener);
         }
     }
 
