@@ -75,8 +75,8 @@ public class ContactsShellCommandHelper {
      */
     public static String getInsertTestContactCommand(String endpoint, List<ColumnBindings> bindings,
             String user) {
-        return buildContentOperationCommand(ContentOperationType.INSERT.operation, endpoint, false,
-               bindings, /* whereOperation */ null, user);
+        return buildContentOperationCommand(ContentOperationType.INSERT.operation, endpoint,
+                /* callerIsSyncAdapter */false, bindings, /* whereOperation */ null, user);
     }
 
     /**
@@ -86,11 +86,26 @@ public class ContactsShellCommandHelper {
      * @param whereClause String that specifies the where clause to identify the rows that the
      *                    query will be run on
      * @param user user identifier to redirect to the correct content provider
-     * @return String corresponding to the content insert shell command
+     * @return String corresponding to the content delete shell command
      */
     public static String getDeleteContactCommand(String endpoint, String whereClause, String user) {
-        return buildContentOperationCommand(ContentOperationType.DELETE.operation, endpoint, true,
-               /* bindValues */ null, whereClause, user);
+        return buildContentOperationCommand(ContentOperationType.DELETE.operation, endpoint,
+                /* callerIsSyncAdapter */ true, /* bindValues */ null, whereClause, user);
+    }
+
+    /**
+     *
+     * @param endpoint Contacts endpoint that the uri would access
+     * @param whereClause String that specifies the where clause to identify the rows that the
+     *                    query will be run on
+     * @param user user identifier to redirect to the correct content provider
+     * @return String corresponding to the content query shell command
+     * @return
+     */
+    public static String getQueryTestContactsCommand(String endpoint, String whereClause,
+            String user) {
+        return buildContentOperationCommand(ContentOperationType.QUERY.operation, endpoint,
+                /* callerIsSyncAdapter */ false, /* bindValues */ null, whereClause, user);
     }
 
     /**
