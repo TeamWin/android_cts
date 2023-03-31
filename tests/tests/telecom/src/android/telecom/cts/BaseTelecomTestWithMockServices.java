@@ -413,6 +413,8 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             }
 
         } catch (Exception e) {
+            // Clear static cts connection service state: its ok to do this if setUp itself throws.
+            CtsConnectionService.tearDown();
             unregisterTelephonyCallbacks();
             throw e;
         }
