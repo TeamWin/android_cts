@@ -460,6 +460,9 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
                             " SYSTEM_CAMERA permissons", mAdoptShellPerm);
                 }
                 return;
+             case REQUEST_AVAILABLE_CAPABILITIES_OFFLINE_PROCESSING:
+                //Tested in OfflineSessionTest
+                return;
             default:
                 capabilityName = "Unknown";
                 assertTrue(String.format("Unknown capability set: %d", capability),
