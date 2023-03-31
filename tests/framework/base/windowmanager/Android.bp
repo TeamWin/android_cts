@@ -80,6 +80,10 @@ android_test {
 
     sdk_version: "test_current",
     data: [
+        ":CtsPropertyCompatAllowOrientationOverrideApp",
+        ":CtsPropertyCompatAllowDisplayOrientationOverrideApp",
+        ":CtsPropertyIgnoreOrientationRequestOverrideOptOutApp",
+        ":CtsPropertyIgnoreOrientationRequestOverrideOptInApp",
         ":CtsDragAndDropSourceApp",
         ":CtsDragAndDropTargetApp",
         ":CtsDeviceAlertWindowTestApp",

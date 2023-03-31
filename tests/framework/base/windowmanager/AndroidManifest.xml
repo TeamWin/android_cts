@@ -497,6 +497,9 @@
                   android:screenOrientation="portrait"
                   android:exported="true"/>
 
+        <activity android:name="android.server.wm.CompatChangeTests$ResponsiveActivity"
+                  android:exported="true"/>
+
         <activity android:name="android.server.wm.CompatChangeTests$NonResizeablePortraitActivity"
                   android:resizeableActivity="false"
                   android:screenOrientation="portrait"
@@ -530,6 +533,9 @@
         <meta-data android:name="android.supports_size_changes"
                        android:value="true"/>
         </activity>
+
+        <activity android:name="android.server.wm.CompatChangeTests$NoPropertyChangeOrientationWhileRelaunchingActivity"
+                  android:exported="true"/>
 
         <service android:name="android.server.wm.WindowContextTests$TestWindowService"
                  android:exported="true"
