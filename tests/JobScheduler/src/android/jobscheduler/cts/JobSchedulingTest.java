@@ -369,6 +369,25 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
 
         js = getContext().getSystemService(JobScheduler.class);
         assertNull(js.getNamespace());
+
+        try {
+            js.forNamespace(null);
+            fail("Successfully retrieved instance with null namespace");
+        } catch (NullPointerException expected) {
+            // Expected
+        }
+        try {
+            js.forNamespace("");
+            fail("Successfully retrieved instance with empty namespace");
+        } catch (IllegalArgumentException expected) {
+            // Expected
+        }
+        try {
+            js.forNamespace("        ");
+            fail("Successfully retrieved instance with whitespace-only namespace");
+        } catch (IllegalArgumentException expected) {
+            // Expected
+        }
     }
 
     public void testNamespace_schedule() {
