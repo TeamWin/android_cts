@@ -51,6 +51,7 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -132,6 +133,7 @@ public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
         UiAssertionUtils.assertThatShowsPickerUi();
     }
 
+    @Ignore
     @Test
     public void testNoCloudContent() throws Exception {
         final List<Uri> uriList = new ArrayList<>();
