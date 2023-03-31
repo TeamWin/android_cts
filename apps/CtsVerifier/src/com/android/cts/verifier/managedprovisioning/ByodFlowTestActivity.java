@@ -97,6 +97,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mWiFiDataUsageSettingsVisibleTest;
     private DialogTestListItem mCellularDataUsageSettingsVisibleTest;
     private DialogTestListItem mCredSettingsVisibleTest;
+    private DialogTestListItem mAllowNonDismissibleNotificationTest;
     private DialogTestListItem mPrintSettingsVisibleTest;
     private DialogTestListItem mIntentFiltersTest;
     private DialogTestListItem mPermissionLockdownTest;
@@ -293,6 +294,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                     "BYOD_ConfirmWorkCredentials",
                     R.string.provisioning_byod_confirm_work_credentials_description,
                     new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
+
             mPatternWorkChallenge = new DialogTestListItem(this,
                     R.string.provisioning_byod_pattern_work_challenge,
                     "BYOD_PatternWorkChallenge",
@@ -338,6 +340,12 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 "BYOD_CredSettingsVisibleTest",
                 R.string.provisioning_byod_cred_settings_instruction,
                 new Intent(Settings.ACTION_SECURITY_SETTINGS));
+
+        mAllowNonDismissibleNotificationTest = new DialogTestListItem(this,
+                R.string.provisioning_byod_allow_nondismissible_notification,
+                "BYOD_AllowNonDismissibleNotificationTest",
+                R.string.provisioning_byod_allow_nondismissible_notification_instructions,
+                new Intent(this, NotificationActivity.class));
 
         mLocationSettingsVisibleTest = new DialogTestListItem(this,
                 R.string.provisioning_byod_location_settings,
@@ -704,6 +712,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 createLaunchWorkTabIntent()));
 
         adapter.add(mScreenshotTest);
+        adapter.add(mAllowNonDismissibleNotificationTest);
     }
 
     private Intent createInstallWorkProfileAppIntent() {
