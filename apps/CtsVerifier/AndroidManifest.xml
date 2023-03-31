@@ -4864,6 +4864,14 @@
                        android:value="single_display_mode" />
         </activity>
 
+        <activity android:name=".managedprovisioning.NotificationActivity"
+                  android:label="@string/provisioning_byod_allow_nondismissible_notification">
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.app.admin.DevicePolicyManager#setApplicationExemption" />
+        </activity>
+
         <activity android:name=".managedprovisioning.KeyguardDisabledFeaturesActivity"
                 android:label="@string/provisioning_byod_keyguard_disabled_features">
             <meta-data android:name="display_mode"

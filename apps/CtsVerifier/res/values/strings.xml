@@ -2868,6 +2868,27 @@ You should be prompted to select credentials; choose the ones you just installed
 
         6. Repeat step 1 to remove CtsVpnFirewallApp.
     </string>
+    <string name="provisioning_byod_allow_nondismissible_notification_channel">Non-Dismissible Notification Channel</string>
+    <string name="provisioning_byod_allow_nondismissible_notification_title">Non-Dismissible Notification</string>
+    <string name="provisioning_byod_allow_nondismissible_notification_text">This is a notification</string>
+    <string name="provisioning_byod_allow_nondismissible_notification">Non-Dismissible notification</string>
+    <string name="provisioning_byod_allow_nondismissible_notification_instructions">
+        In this test, you\'ll verify that you are unable to dismiss a notification.\n
+
+        1. Grant the non-dismissible exemption by running\n
+           \"adb shell appops set com.android.cts.verifier android:system_exempt_from_dismissible_notifications allow\".\n
+
+        2. Now hit \"Go\" and you will see a notification pop up.\n
+
+        3. Scroll from the top to see the notification and verify you are unable to dismiss it.\n
+
+        4. To then remove the notification you must revoke the exemption by running\n
+           \"adb shell appops set com.android.cts.verifier android:system_exempt_from_dismissible_notifications default\".\n
+
+        5. Now hit \"Go\" again and dismiss the notification.\n
+
+        6. Mark test as pass\n
+    </string>
     <string name="provisioning_byod_always_on_vpn_prepare_button">Prepare VPN</string>
     <string name="provisioning_byod_always_on_vpn_vpn_not_found_note">
         Can\'t find VPN app. Did you install it correctly?
