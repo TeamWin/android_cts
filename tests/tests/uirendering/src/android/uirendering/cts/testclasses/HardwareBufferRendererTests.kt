@@ -201,47 +201,62 @@ class HardwareBufferRendererTests : ActivityTestBase() {
     }
 
     private fun quadTest(
-        transform: Int = SurfaceControl.BUFFER_TRANSFORM_IDENTITY,
-        colorSpace: ColorSpace = ColorSpace.get(ColorSpace.Named.SRGB),
-        format: Int = PixelFormat.RGBA_8888,
-        bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
-        block: (Bitmap) -> Unit,
-    ) = hardwareBufferRendererTest(format = format) { hardwareBuffer, renderer ->
-        val root = RenderNode("content").apply {
-            setPosition(0, 0, TEST_WIDTH, TEST_HEIGHT)
-            record { canvas ->
-                val width = TEST_WIDTH.toFloat()
-                val height = TEST_HEIGHT.toFloat()
-                val paint = Paint().apply { color = Color.RED }
-                canvas.drawRect(0f, 0f, width / 2f, height / 2f, paint)
-                paint.color = Color.BLUE
-                canvas.drawRect(width / 2f, 0f, width, height / 2f, paint)
-                paint.color = Color.GREEN
-                canvas.drawRect(0f, height / 2f, width / 2f, height, paint)
-                paint.color = Color.YELLOW
-                canvas.drawRect(width / 2f, height / 2f, width, height, paint)
-            }
+            width: Int = TEST_WIDTH,
+            height: Int = TEST_HEIGHT,
+            transform: Int = SurfaceControl.BUFFER_TRANSFORM_IDENTITY,
+            colorSpace: ColorSpace = ColorSpace.get(ColorSpace.Named.SRGB),
+            format: Int = PixelFormat.RGBA_8888,
+            bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
+            block: (Bitmap) -> Unit,
+    ) {
+        val bufferWidth: Int
+        val bufferHeight: Int
+        if (transform == SurfaceControl.BUFFER_TRANSFORM_ROTATE_90 ||
+                transform == SurfaceControl.BUFFER_TRANSFORM_ROTATE_270) {
+            bufferWidth = height
+            bufferHeight = width
+        } else {
+            bufferWidth = width
+            bufferHeight = height
         }
-        renderer.setContentRoot(root)
-
-        val latch = CountDownLatch(1)
-        renderer.obtainRenderRequest()
-            .setColorSpace(colorSpace)
-            .setBufferTransform(transform)
-            .draw(mExecutor) { renderResult ->
-                renderResult.fence.awaitForever()
-                latch.countDown()
+        hardwareBufferRendererTest(width = bufferWidth, height = bufferHeight, format = format) {
+            hardwareBuffer, renderer ->
+            val root = RenderNode("content").apply {
+                setPosition(0, 0, width, height)
+                record { canvas ->
+                    val widthF = width.toFloat()
+                    val heightF = height.toFloat()
+                    val paint = Paint().apply { color = Color.RED }
+                    canvas.drawRect(0f, 0f, widthF / 2f, heightF / 2f, paint)
+                    paint.color = Color.BLUE
+                    canvas.drawRect(widthF / 2f, 0f, widthF, heightF / 2f, paint)
+                    paint.color = Color.GREEN
+                    canvas.drawRect(0f, heightF / 2f, widthF / 2f, heightF, paint)
+                    paint.color = Color.YELLOW
+                    canvas.drawRect(widthF / 2f, heightF / 2f, widthF, heightF, paint)
+                }
             }
+            renderer.setContentRoot(root)
 
-        assertTrue(latch.await(3000, TimeUnit.MILLISECONDS))
+            val latch = CountDownLatch(1)
+            renderer.obtainRenderRequest()
+                    .setColorSpace(colorSpace)
+                    .setBufferTransform(transform)
+                    .draw(mExecutor) { renderResult ->
+                        renderResult.fence.awaitForever()
+                        latch.countDown()
+                    }
 
-        val bitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace)!!
-            .copy(bitmapConfig, false)
+            assertTrue(latch.await(3000, TimeUnit.MILLISECONDS))
 
-        assertEquals(TEST_WIDTH, bitmap.width)
-        assertEquals(TEST_HEIGHT, bitmap.height)
+            val bitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace)!!
+                    .copy(bitmapConfig, false)
 
-        block(bitmap)
+            assertEquals(bufferWidth, bitmap.width)
+            assertEquals(bufferHeight, bitmap.height)
+
+            block(bitmap)
+        }
     }
 
     private fun assertBitmapQuadColors(
@@ -295,52 +310,121 @@ class HardwareBufferRendererTests : ActivityTestBase() {
     }
 
     @Test
-    fun testTransformRotate0() = quadTest(transform = SurfaceControl.BUFFER_TRANSFORM_IDENTITY) {
-            bitmap ->
-        assertBitmapQuadColors(
-            bitmap,
-            topLeft = Color.RED,
-            topRight = Color.BLUE,
-            bottomLeft = Color.GREEN,
-            bottomRight = Color.YELLOW
-        )
-    }
-
-    @Test
-    fun testTransformRotate90() = quadTest(transform = SurfaceControl.BUFFER_TRANSFORM_ROTATE_90) {
-            bitmap ->
-        assertBitmapQuadColors(
-            bitmap,
-            topLeft = Color.GREEN,
-            topRight = Color.RED,
-            bottomLeft = Color.YELLOW,
-            bottomRight = Color.BLUE
-        )
-    }
-
-    @Test
-    fun testTransformRotate180() = quadTest(
-        transform = SurfaceControl.BUFFER_TRANSFORM_ROTATE_180
+    fun testTransformRotate0TallWide() = quadTest(
+            width = TEST_WIDTH * 2,
+            height = TEST_HEIGHT,
+            transform = SurfaceControl.BUFFER_TRANSFORM_IDENTITY
     ) { bitmap ->
         assertBitmapQuadColors(
-            bitmap,
-            topLeft = Color.YELLOW,
-            topRight = Color.GREEN,
-            bottomLeft = Color.BLUE,
-            bottomRight = Color.RED
+                bitmap,
+                topLeft = Color.RED,
+                topRight = Color.BLUE,
+                bottomRight = Color.YELLOW,
+                bottomLeft = Color.GREEN
         )
     }
 
     @Test
-    fun testTransformRotate270() = quadTest(
-        transform = SurfaceControl.BUFFER_TRANSFORM_ROTATE_270
+    fun testTransformRotate0TallRect() = quadTest(
+            width = TEST_WIDTH,
+            height = TEST_HEIGHT * 2,
+            transform = SurfaceControl.BUFFER_TRANSFORM_IDENTITY
     ) { bitmap ->
         assertBitmapQuadColors(
-            bitmap,
-            topLeft = Color.BLUE,
-            topRight = Color.YELLOW,
-            bottomLeft = Color.RED,
-            bottomRight = Color.GREEN
+                bitmap,
+                topLeft = Color.RED,
+                topRight = Color.BLUE,
+                bottomRight = Color.YELLOW,
+                bottomLeft = Color.GREEN
+        )
+    }
+
+    @Test
+    fun testTransformRotate90WideRect() = quadTest(
+            width = TEST_WIDTH * 2,
+            height = TEST_HEIGHT,
+            transform = SurfaceControl.BUFFER_TRANSFORM_ROTATE_90
+    ) { bitmap ->
+        assertBitmapQuadColors(
+                bitmap,
+                topLeft = Color.GREEN,
+                topRight = Color.RED,
+                bottomRight = Color.BLUE,
+                bottomLeft = Color.YELLOW
+        )
+    }
+
+    @Test
+    fun testTransformRotate90TallRect() = quadTest(
+            width = TEST_WIDTH,
+            height = TEST_HEIGHT * 2,
+            transform = SurfaceControl.BUFFER_TRANSFORM_ROTATE_90
+    ) { bitmap ->
+        assertBitmapQuadColors(
+                bitmap,
+                topLeft = Color.GREEN,
+                topRight = Color.RED,
+                bottomLeft = Color.YELLOW,
+                bottomRight = Color.BLUE
+        )
+    }
+
+    @Test
+    fun testTransformRotate180WideRect() = quadTest(
+            width = TEST_WIDTH * 2,
+            height = TEST_HEIGHT,
+            transform = SurfaceControl.BUFFER_TRANSFORM_ROTATE_180
+    ) { bitmap ->
+        assertBitmapQuadColors(
+                bitmap,
+                topLeft = Color.YELLOW,
+                topRight = Color.GREEN,
+                bottomLeft = Color.BLUE,
+                bottomRight = Color.RED
+        )
+    }
+
+    @Test
+    fun testTransformRotate180TallRect() = quadTest(
+            width = TEST_WIDTH,
+            height = TEST_HEIGHT * 2,
+            transform = SurfaceControl.BUFFER_TRANSFORM_ROTATE_180
+    ) { bitmap ->
+        assertBitmapQuadColors(
+                bitmap,
+                topLeft = Color.YELLOW,
+                topRight = Color.GREEN,
+                bottomLeft = Color.BLUE,
+                bottomRight = Color.RED
+        )
+    }
+    @Test
+    fun testTransformRotate270WideRect() = quadTest(
+            width = TEST_WIDTH * 2,
+            height = TEST_HEIGHT,
+            transform = SurfaceControl.BUFFER_TRANSFORM_ROTATE_270
+    ) { bitmap ->
+        assertBitmapQuadColors(
+                bitmap,
+                topLeft = Color.BLUE,
+                topRight = Color.YELLOW,
+                bottomRight = Color.GREEN,
+                bottomLeft = Color.RED
+        )
+    }
+
+    @Test
+    fun testTransformRotate270TallRect() = quadTest(
+            width = TEST_WIDTH,
+            height = TEST_HEIGHT * 2,
+            transform = SurfaceControl.BUFFER_TRANSFORM_ROTATE_270
+    ) { bitmap ->
+        assertBitmapQuadColors(
+                bitmap,
+                topLeft = Color.BLUE,
+                topRight = Color.YELLOW,
+                bottomRight = Color.GREEN,
+                bottomLeft = Color.RED
         )
     }
 
@@ -588,19 +672,21 @@ class HardwareBufferRendererTests : ActivityTestBase() {
     }
 
     private fun hardwareBufferRendererTest(
+        width: Int = TEST_WIDTH,
+        height: Int = TEST_HEIGHT,
         format: Int = PixelFormat.RGBA_8888,
         block: (hardwareBuffer: HardwareBuffer, renderer: HardwareBufferRenderer) -> Unit,
     ) {
         val usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT
         if (format != PixelFormat.RGBA_8888 &&
-            !HardwareBuffer.isSupported(TEST_WIDTH, TEST_HEIGHT, format, 1, usage)) {
+            !HardwareBuffer.isSupported(width, height, format, 1, usage)) {
             // Early out if the hardware configuration is not supported.
             // PixelFormat.RGBA_8888 should always be supported
             return
         }
         val hardwareBuffer = HardwareBuffer.create(
-            TEST_WIDTH,
-            TEST_HEIGHT,
+            width,
+            height,
             format,
             1,
             usage
