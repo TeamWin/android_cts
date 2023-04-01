@@ -222,9 +222,12 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     @Test
     fun clickLearnMore_opensHelpCenter() {
+        Assume.assumeFalse(getPermissionControllerResString(HELP_CENTER_URL_ID).isNullOrEmpty())
+
         installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithNoSharing())
         installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
         grantFineLocationPermission(APP_PACKAGE_NAME)
+
         startAppDataSharingUpdatesActivity()
 
         try {
@@ -237,6 +240,25 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
             waitForIdle()
 
             eventually { assertHelpCenterLinkClickSuccessful() }
+        } finally {
+            pressBack()
+            pressBack()
+        }
+    }
+
+    @Test
+    fun noHelpCenterLinkAvailable_noHelpCenterClickAction() {
+        Assume.assumeTrue(getPermissionControllerResString(HELP_CENTER_URL_ID).isNullOrEmpty())
+
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithNoSharing())
+        installAndWaitTillPackageAdded(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
+        grantFineLocationPermission(APP_PACKAGE_NAME)
+
+        startAppDataSharingUpdatesActivity()
+
+        try {
+            findView(By.descContains(DATA_SHARING_UPDATES), true)
+            findView(By.textContains(LEARN_ABOUT_DATA_SHARING), false)
         } finally {
             pressBack()
             pressBack()
@@ -318,7 +340,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
         findView(By.textContains(DATA_SHARING_UPDATES_SUBTITLE), true)
         findView(By.textContains(UPDATES_IN_LAST_30_DAYS), true)
         findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
-        findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
+        findView(By.textContains(LEARN_ABOUT_DATA_SHARING), shouldShowLearnMoreLink())
     }
 
     private fun assertNoUpdatesPresent() {
@@ -328,7 +350,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
         findView(By.textContains(APP_PACKAGE_NAME_SUBSTRING), false)
         findView(By.textContains(UPDATES_IN_LAST_30_DAYS), false)
         findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
-        findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
+        findView(By.textContains(LEARN_ABOUT_DATA_SHARING), shouldShowLearnMoreLink())
     }
 
     private fun grantFineLocationPermission(packageName: String) {
@@ -357,17 +379,21 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
             assertEquals("Unexpected intent action", Intent.ACTION_VIEW, observedIntentAction)
 
+            val expectedUrl = getPermissionControllerResString(HELP_CENTER_URL_ID)!!
             assertFalse(observedIntentDataString.isNullOrEmpty())
-            assertTrue(observedIntentDataString?.startsWith(EXPECTED_HELP_CENTER_URL) ?: false)
+            assertTrue(observedIntentDataString?.startsWith(expectedUrl) ?: false)
 
             assertFalse(observedIntentScheme.isNullOrEmpty())
             assertEquals("https", observedIntentScheme)
         }
     }
 
+    private fun shouldShowLearnMoreLink(): Boolean {
+        return !getPermissionControllerResString(HELP_CENTER_URL_ID).isNullOrEmpty()
+    }
+
     /** Companion object for [AppDataSharingUpdatesTest]. */
     companion object {
-        private const val EXPECTED_HELP_CENTER_URL =
-            "https://support.google.com/android?p=data_sharing"
+        private const val HELP_CENTER_URL_ID = "data_sharing_help_center_link"
     }
 }
