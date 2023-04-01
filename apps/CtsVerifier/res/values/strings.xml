@@ -331,21 +331,6 @@
     <string name="clipboard_preview_test_secret">FAIL</string>
     <string name="clipboard_preview_test_copy_button">Copy</string>
 
-    <!-- Strings for SharesheetTest -->
-    <string name="sharesheet_test">Sharesheet Test</string>
-    <string name="sharesheet_test_info">The sharesheet test validates that the user
-        is presented with the option of modifying the share if the source app indicates it.</string>
-    <string name="sharesheet_test_instructions">When you press "Share" below, you will be shown
-        the system sharesheet sharing an image of the letter \'A\'. On this
-        sharesheet, there should be something you can tap to modify the share (e.g. by selecting
-        different images, a different format, etc). It can have different names
-        on different devices or be instead represented by an icon. Tap on that to
-        complete the test. If it works correctly, the sharesheet will dismiss
-        and you\'ll be able to mark the test as complete. No need to share the image
-        to any app targets or otherwise interact with the sharesheet. If you can\'t see a way to do
-        this, mark the test as failed.</string>
-    <string name="share">Share</string>
-
     <!-- Strings for BiometricTest -->
     <string name="biometric_test">Biometric Tests</string>
 
