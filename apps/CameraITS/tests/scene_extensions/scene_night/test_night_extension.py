@@ -307,12 +307,12 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       tablet_name = str(tablet_name_unencoded.decode('utf-8')).strip()
       logging.debug('Tablet name: %s', tablet_name)
 
-      if tablet_name == its_base_test.LEGACY_TABLET_NAME:
+      if tablet_name == its_session_utils.LEGACY_TABLET_NAME:
         raise AssertionError(f'Incompatible tablet! Please use a tablet with '
                              'display brightness of at least '
-                             f'{its_base_test.DEFAULT_TABLET_BRIGHTNESS} '
+                             f'{its_session_utils.DEFAULT_TABLET_BRIGHTNESS} '
                              'according to '
-                             f'{its_base_test.TABLET_REQUIREMENTS_URL}.')
+                             f'{its_session_utils.TABLET_REQUIREMENTS_URL}.')
 
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet, self.chart_distance,
