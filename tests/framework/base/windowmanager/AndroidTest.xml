@@ -24,6 +24,8 @@
         <option name="cleanup-apks" value="true"/>
         <option name="install-arg" value="-t" />
         <option name="test-file-name" value="CtsWindowManagerDeviceTestCases.apk"/>
+        <option name="test-file-name" value="CtsPropertyCompatAllowOrientationOverrideApp.apk" />
+        <option name="test-file-name" value="CtsPropertyCompatAllowDisplayOrientationOverrideApp.apk" />
         <option name="test-file-name" value="CtsDragAndDropSourceApp.apk"/>
         <option name="test-file-name" value="CtsDragAndDropTargetApp.apk"/>
         <option name="test-file-name" value="CtsDeviceAlertWindowTestApp.apk"/>
@@ -32,6 +34,12 @@
         <option name="test-file-name" value="CtsPropertyCompatOptOutSandboxingViewBoundsApisApp.apk"/>
         <option name="test-file-name" value="CtsPropertyCompatEnableFakeFocusOptInApp.apk" />
         <option name="test-file-name" value="CtsPropertyCompatEnableFakeFocusOptOutApp.apk" />
+        <option name="test-file-name" value="CtsPropertyIgnoreOrientationRequestOverrideOptInApp.apk"/>
+        <option name="test-file-name" value="CtsPropertyIgnoreOrientationRequestOverrideOptOutApp.apk"/>
+        <option name="test-file-name" value="CtsPropertyCameraCompatAllowForceRotationApp.apk"/>
+        <option name="test-file-name" value="CtsPropertyCameraCompatAllowRefreshApp.apk"/>
+        <option name="test-file-name" value="CtsPropertyCameraCompatEnableRefreshViaPauseOptInApp.apk"/>
+        <option name="test-file-name" value="CtsPropertyCameraCompatEnableRefreshViaPauseOptOutApp.apk"/>
         <option name="test-file-name" value="CtsDeviceServicesTestApp.apk" />
         <option name="test-file-name" value="CtsDeviceServicesTestApp27.apk" />
         <option name="test-file-name" value="CtsDeviceServicesTestApp30.apk" />

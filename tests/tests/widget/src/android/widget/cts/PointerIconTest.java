@@ -69,7 +69,7 @@ public class PointerIconTest {
         final int x = targetPos[0] + target.getWidth() / 2 - topPos[0];
         final int y = targetPos[1] + target.getHeight() / 2 - topPos[1];
         final MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_HOVER_MOVE, x, y, 0);
-        event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        event.setSource(InputDevice.SOURCE_MOUSE);
         assertEquals(message, expectedIcon, mTopView.onResolvePointerIcon(event, 0));
     }
 

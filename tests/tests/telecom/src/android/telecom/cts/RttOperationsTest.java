@@ -48,10 +48,10 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
         if (mShouldTestTelecom) {
             setRttMasterSwitch(mInitialRttMode);
         }
+        super.tearDown();
     }
 
     public void testOutgoingRttCall() throws Exception {

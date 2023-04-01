@@ -21,9 +21,18 @@ import static android.content.pm.ActivityInfo.OVERRIDE_ENABLE_COMPAT_FAKE_FOCUS;
 import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE;
 import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_MEDIUM_VALUE;
 import static android.content.pm.ActivityInfo.OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_NOSENSOR;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static android.provider.DeviceConfig.NAMESPACE_CONSTRAIN_DISPLAY_APIS;
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
+import static android.server.wm.allowdisplayorientationoverride.Components.ALLOW_DISPLAY_ORIENTATION_OVERRIDE_ACTIVITY;
+import static android.server.wm.alloworientationoverride.Components.ALLOW_ORIENTATION_OVERRIDE_LANDSCAPE_ACTIVITY;
+import static android.server.wm.alloworientationoverride.Components.ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY;
 import static android.server.wm.allowsandboxingviewboundsapis.Components.ACTION_TEST_VIEW_SANDBOX_ALLOWED_PASSED;
 import static android.server.wm.allowsandboxingviewboundsapis.Components.ACTION_TEST_VIEW_SANDBOX_NOT_ALLOWED_PASSED;
 import static android.server.wm.allowsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY;
@@ -32,10 +41,17 @@ import static android.server.wm.enablefakefocusoptin.Components.ENABLE_FAKE_FOCU
 import static android.server.wm.enablefakefocusoptin.Components.ENABLE_FAKE_FOCUS_OPT_IN_RIGHT_ACTIVITY;
 import static android.server.wm.enablefakefocusoptout.Components.ENABLE_FAKE_FOCUS_OPT_OUT_LEFT_ACTIVITY;
 import static android.server.wm.enablefakefocusoptout.Components.ENABLE_FAKE_FOCUS_OPT_OUT_RIGHT_ACTIVITY;
+import static android.server.wm.ignorerequestedorientationoverrideoptin.Components.OPT_IN_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY;
+import static android.server.wm.ignorerequestedorientationoverrideoptout.Components.OPT_OUT_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY;
 import static android.server.wm.optoutsandboxingviewboundsapis.Components.ACTION_TEST_VIEW_SANDBOX_OPT_OUT_PASSED;
 import static android.server.wm.optoutsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_OPT_OUT_ACTIVITY;
 import static android.server.wm.optoutsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_OPT_OUT_TIMEOUT_MS;
+import static android.server.wm.propertycameracompatallowforcerotation.Components.CAMERA_COMPAT_ALLOW_FORCE_ROTATION_ACTIVITY;
+import static android.server.wm.propertycameracompatallowrefresh.Components.CAMERA_COMPAT_ALLOW_REFRESH_ACTIVITY;
+import static android.server.wm.propertycameracompatenablerefreshviapauseoptin.Components.CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_IN_ACTIVITY;
+import static android.server.wm.propertycameracompatenablerefreshviapauseoptout.Components.CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_90;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -59,7 +75,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
@@ -117,6 +135,10 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             component(ResizeableLeftActivity.class);
     private static final ComponentName RESIZEABLE_RIGHT_ACTIVITY =
             component(ResizeableRightActivity.class);
+    private static final ComponentName RESPONSIVE_ACTIVITY =
+            component(ResponsiveActivity.class);
+    private static final ComponentName NO_PROPERTY_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY =
+            component(NoPropertyChangeOrientationWhileRelaunchingActivity.class);
 
     // Fixed orientation min aspect ratio
     private static final float FIXED_ORIENTATION_MIN_ASPECT_RATIO = 1.03f;
@@ -146,58 +168,120 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         createManagedConstrainDisplayApisFlagsSession();
     }
 
-    /**
-     * Registers broadcast receiver which receives result actions from Activities under test.
-     */
-    private static class BroadcastReceiverCloseable implements AutoCloseable {
-        private final Context mContext;
-        private final Map<String, ConditionVariable> mBroadcastsReceived;
-        private final BroadcastReceiver mAppCommunicator = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                getBroadcastReceivedVariable(intent.getAction()).open();
-            }
-        };
+    @Test
+    public void testOverrideUndefinedOrientationToPortrait_propertyIsFalse_overrideNotApplied()
+             throws Exception {
+        try (var compatChange = new CompatChangeCloseable(
+                ActivityInfo.OVERRIDE_UNDEFINED_ORIENTATION_TO_PORTRAIT,
+                ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY.getPackageName())) {
+            launchActivity(ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY);
 
-        BroadcastReceiverCloseable(final Context context, final String action) {
-            this.mContext = context;
-            // Keep the received broadcast items in the map.
-            mBroadcastsReceived = Collections.synchronizedMap(new HashMap<>());
-            // Register for broadcast actions.
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(action);
-            mContext.registerReceiver(mAppCommunicator, filter, Context.RECEIVER_EXPORTED);
-        }
+            WindowManagerState.Activity activity =
+                    mWmState.getActivity(ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY);
 
-        ConditionVariable getBroadcastReceivedVariable(String action) {
-            return mBroadcastsReceived.computeIfAbsent(action, key -> new ConditionVariable());
-        }
-
-        @Override
-        public void close() throws Exception {
-            mContext.unregisterReceiver(mAppCommunicator);
+            assertEquals(SCREEN_ORIENTATION_UNSPECIFIED, activity.getOverrideOrientation());
         }
     }
 
-    /**
-     * AutoClosable class used for try-with-resources compat change tests, which require a separate
-     * application task to be started.
-     */
-    private static class CompatChangeCloseable implements AutoCloseable {
-        private final long mChangeId;
-        private final String mPackageName;
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_UNDEFINED_ORIENTATION_TO_PORTRAIT})
+    public void testOverrideUndefinedOrientationToPortrait() {
+        launchActivity(RESPONSIVE_ACTIVITY);
 
-        CompatChangeCloseable(final long changeId, String packageName) {
-            this.mChangeId = changeId;
-            this.mPackageName = packageName;
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESPONSIVE_ACTIVITY);
 
-            // Enable change
-            executeShellCommand("am compat enable " + changeId + " " + packageName);
+        assertEquals(SCREEN_ORIENTATION_PORTRAIT, activity.getOverrideOrientation());
+    }
+
+    @Test
+    public void testOverrideUndefinedOrientationToNoSensor_propertyIsFalse_overrideNotApplied()
+            throws Exception  {
+        try (var compatChange = new CompatChangeCloseable(
+                ActivityInfo.OVERRIDE_UNDEFINED_ORIENTATION_TO_NOSENSOR,
+                ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY.getPackageName())) {
+            launchActivity(ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY);
+
+            WindowManagerState.Activity activity =
+                    mWmState.getActivity(ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY);
+
+            assertEquals(SCREEN_ORIENTATION_UNSPECIFIED, activity.getOverrideOrientation());
         }
+    }
 
-        @Override
-        public void close() throws Exception {
-            executeShellCommand("am compat disable " + mChangeId + " " + mPackageName);
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_UNDEFINED_ORIENTATION_TO_NOSENSOR})
+    public void testOverrideUndefinedOrientationToNosensor() {
+        launchActivity(RESPONSIVE_ACTIVITY);
+
+        WindowManagerState.Activity activity = mWmState.getActivity(RESPONSIVE_ACTIVITY);
+
+        assertEquals(SCREEN_ORIENTATION_NOSENSOR, activity.getOverrideOrientation());
+    }
+
+    @Test
+    public void testOverrideLandscapeOrientationToReverseLandscape_propertyIsFalse_overrideNotApplied()
+            throws Exception {
+        try (var compatChange = new CompatChangeCloseable(
+                ActivityInfo.OVERRIDE_LANDSCAPE_ORIENTATION_TO_REVERSE_LANDSCAPE,
+                ALLOW_ORIENTATION_OVERRIDE_LANDSCAPE_ACTIVITY.getPackageName())) {
+            launchActivity(ALLOW_ORIENTATION_OVERRIDE_LANDSCAPE_ACTIVITY);
+
+            WindowManagerState.Activity activity =
+                    mWmState.getActivity(ALLOW_ORIENTATION_OVERRIDE_LANDSCAPE_ACTIVITY);
+
+            assertEquals(SCREEN_ORIENTATION_LANDSCAPE, activity.getOverrideOrientation());
+        }
+    }
+
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_LANDSCAPE_ORIENTATION_TO_REVERSE_LANDSCAPE})
+    public void testOverrideLandscapeOrientationToReverseLandscape() {
+        launchActivity(NON_RESIZEABLE_LANDSCAPE_ACTIVITY);
+
+        WindowManagerState.Activity activity = mWmState.getActivity(NON_RESIZEABLE_LANDSCAPE_ACTIVITY);
+
+        assertEquals(SCREEN_ORIENTATION_REVERSE_LANDSCAPE, activity.getOverrideOrientation());
+    }
+
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_USE_DISPLAY_LANDSCAPE_NATURAL_ORIENTATION})
+    public void testOverrideUseDisplayLandscapeNaturalOrientation()
+            throws Exception {
+        // Run this test only when natural orientation is landscape
+        Size displaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
+        assumeTrue(displaySize.getHeight() < displaySize.getWidth());
+
+        // Rotating away from natural orientation (ROTATION_0)
+        final RotationSession rotationSession = createManagedRotationSession();
+        rotationSession.set(ROTATION_90);
+        mWmState.waitForDisplayOrientation(ORIENTATION_PORTRAIT);
+
+        launchActivity(RESPONSIVE_ACTIVITY);
+
+        // Verifying that orientation is overridden
+        assertEquals(mWmState.getRotation(), ROTATION_0);
+    }
+
+    @Test
+    public void testOverrideUseDisplayLandscapeNaturalOrientation_propertyIsFalse_overrideNotApplied()
+            throws Exception {
+        // Run this test only when natural orientation is landscape
+        Size displaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
+        assumeTrue(displaySize.getHeight() < displaySize.getWidth());
+
+        // Rotating away from natural orientation (ROTATION_0)
+        final RotationSession rotationSession = createManagedRotationSession();
+        rotationSession.set(ROTATION_90);
+        mWmState.waitForDisplayOrientation(ORIENTATION_PORTRAIT);
+
+        try (var compatChange = new CompatChangeCloseable(
+                ActivityInfo.OVERRIDE_USE_DISPLAY_LANDSCAPE_NATURAL_ORIENTATION,
+                ALLOW_DISPLAY_ORIENTATION_OVERRIDE_ACTIVITY.getPackageName())) {
+            launchActivity(ALLOW_DISPLAY_ORIENTATION_OVERRIDE_ACTIVITY);
+
+            // Verifying that orientation not overridden
+            assertEquals(mWmState.getRotation(), ROTATION_90);
         }
     }
 
@@ -253,6 +337,171 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
                 mWmState.getActivity(RESIZEABLE_LEFT_ACTIVITY);
 
         assertTrue(activity.getShouldSendCompatFakeFocus());
+    }
+
+    @Test
+    public void testOverrideIgnoreRequestedOrientation_propertyIsFalse_overrideNotApplied()
+            throws Exception  {
+        try (var compatChange = new CompatChangeCloseable(
+                ActivityInfo.OVERRIDE_ENABLE_COMPAT_IGNORE_REQUESTED_ORIENTATION,
+                OPT_OUT_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY.getPackageName())) {
+            launchActivity(OPT_OUT_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
+
+            WindowManagerState.Activity activity =
+                    mWmState.getActivity(OPT_OUT_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
+
+            assertEquals(SCREEN_ORIENTATION_LANDSCAPE, activity.getOverrideOrientation());
+        }
+    }
+
+    @Test
+    public void testOverrideIgnoreRequestedOrientation_isDisabled_propertyIsTrue_overrideApplied()
+            throws Exception  {
+        launchActivity(OPT_IN_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(OPT_IN_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
+
+        assertEquals(SCREEN_ORIENTATION_PORTRAIT, activity.getOverrideOrientation());
+    }
+
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_ENABLE_COMPAT_IGNORE_REQUESTED_ORIENTATION})
+    public void testOverrideIgnoreRequestedOrientation()
+            throws Exception {
+        launchActivity(NO_PROPERTY_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(NO_PROPERTY_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
+
+        assertEquals(SCREEN_ORIENTATION_PORTRAIT, activity.getOverrideOrientation());
+    }
+
+    @Test
+    public void testOptOutPropertyCameraCompatForceRotation_rotationDisabled() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                getCameraCompatForceRotationTreatmentConfig());
+
+        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        // Activity without property or override is eligible for force rotation.
+        assertTrue(activity.getShouldForceRotateForCameraCompat());
+
+        launchActivity(CAMERA_COMPAT_ALLOW_FORCE_ROTATION_ACTIVITY);
+
+        activity = mWmState.getActivity(CAMERA_COMPAT_ALLOW_FORCE_ROTATION_ACTIVITY);
+
+        assertFalse(activity.getShouldForceRotateForCameraCompat());
+    }
+
+
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_CAMERA_COMPAT_DISABLE_FORCE_ROTATION})
+    public void testOverrideForCameraCompatForceRotation_rotationDisabled() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                getCameraCompatForceRotationTreatmentConfig());
+
+        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        assertFalse(activity.getShouldForceRotateForCameraCompat());
+    }
+
+    @Test
+    public void testOptOutPropertyCameraCompatRefresh() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                getCameraCompatForceRotationTreatmentConfig());
+
+        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        // Activity without property or override is eligible for refresh.
+        assertTrue(activity.getShouldRefreshActivityForCameraCompat());
+
+        launchActivity(CAMERA_COMPAT_ALLOW_REFRESH_ACTIVITY);
+
+        activity = mWmState.getActivity(CAMERA_COMPAT_ALLOW_REFRESH_ACTIVITY);
+
+        assertFalse(activity.getShouldRefreshActivityForCameraCompat());
+    }
+
+
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_CAMERA_COMPAT_DISABLE_REFRESH})
+    public void testOverrideForCameraCompatRefresh() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                getCameraCompatForceRotationTreatmentConfig());
+
+        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        assertFalse(activity.getShouldRefreshActivityForCameraCompat());
+    }
+
+    @Test
+    public void testOptInPropertyCameraCompatRefreshViaPause() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                getCameraCompatForceRotationTreatmentConfig());
+
+        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        // Activity without property or override doesn't refresh via "resumed -> paused -> resumed".
+        assertFalse(activity.getShouldRefreshActivityViaPauseForCameraCompat());
+
+        launchActivity(CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_IN_ACTIVITY);
+
+        activity = mWmState.getActivity(CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_IN_ACTIVITY);
+
+        assertTrue(activity.getShouldRefreshActivityViaPauseForCameraCompat());
+    }
+
+
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE})
+    public void testOverrideForCameraCompatRefreshViaPause() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                getCameraCompatForceRotationTreatmentConfig());
+
+        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        assertTrue(activity.getShouldRefreshActivityViaPauseForCameraCompat());
+    }
+
+    @Test
+    public void testOptOutPropertyCameraCompatRefreshViaPause()
+            throws Exception  {
+        try (var compatChange = new CompatChangeCloseable(
+                ActivityInfo.OVERRIDE_CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE,
+                CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY.getPackageName())) {
+            launchActivity(CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY);
+
+            WindowManagerState.Activity activity =
+                    mWmState.getActivity(CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY);
+
+            assertFalse(activity.getShouldRefreshActivityViaPauseForCameraCompat());
+        }
+    }
+
+    boolean getCameraCompatForceRotationTreatmentConfig() {
+        return mContext.getResources().getBoolean(
+                Resources.getSystem().getIdentifier(
+                        "config_isWindowManagerCameraCompatTreatmentEnabled",
+                        "bool", "android"));
     }
 
     /**
@@ -1043,6 +1292,9 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     public static class ResizeablePortraitActivity extends FocusableActivity {
     }
 
+    public static class ResponsiveActivity extends FocusableActivity {
+    }
+
     public static class NonResizeablePortraitActivity extends FocusableActivity {
     }
 
@@ -1065,5 +1317,83 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     }
 
     public static class ResizeableRightActivity extends FocusableActivity {
+    }
+
+    public static class NoPropertyChangeOrientationWhileRelaunchingActivity extends Activity {
+
+        private static boolean sHasChangeOrientationInOnResume;
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onStart();
+            // When OVERRIDE_ENABLE_COMPAT_IGNORE_REQUESTED_ORIENTATION is enabled this request
+            // should be ignored if sHasChangeOrientationInOnResume is true.
+            setRequestedOrientation(SCREEN_ORIENTATION_LANDSCAPE);
+        }
+
+        @Override
+        protected void onResume() {
+            super.onResume();
+            if (!sHasChangeOrientationInOnResume) {
+                setRequestedOrientation(SCREEN_ORIENTATION_PORTRAIT);
+                sHasChangeOrientationInOnResume = true;
+            }
+        }
+
+    }
+
+    /**
+     * Registers broadcast receiver which receives result actions from Activities under test.
+     */
+    private static class BroadcastReceiverCloseable implements AutoCloseable {
+        private final Context mContext;
+        private final Map<String, ConditionVariable> mBroadcastsReceived;
+        private final BroadcastReceiver mAppCommunicator = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                getBroadcastReceivedVariable(intent.getAction()).open();
+            }
+        };
+
+        BroadcastReceiverCloseable(final Context context, final String action) {
+            this.mContext = context;
+            // Keep the received broadcast items in the map.
+            mBroadcastsReceived = Collections.synchronizedMap(new HashMap<>());
+            // Register for broadcast actions.
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(action);
+            mContext.registerReceiver(mAppCommunicator, filter, Context.RECEIVER_EXPORTED);
+        }
+
+        ConditionVariable getBroadcastReceivedVariable(String action) {
+            return mBroadcastsReceived.computeIfAbsent(action, key -> new ConditionVariable());
+        }
+
+        @Override
+        public void close() throws Exception {
+            mContext.unregisterReceiver(mAppCommunicator);
+        }
+    }
+
+    /**
+     * AutoClosable class used for try-with-resources compat change tests, which require a separate
+     * application task to be started.
+     */
+    private static class CompatChangeCloseable implements AutoCloseable {
+        private final long mChangeId;
+        private final String mPackageName;
+
+        CompatChangeCloseable(final long changeId, String packageName) {
+            this.mChangeId = changeId;
+            this.mPackageName = packageName;
+
+            // Enable change
+            executeShellCommand("am compat enable " + changeId + " " + packageName);
+        }
+
+        @Override
+        public void close() throws Exception {
+            executeShellCommand("am compat disable " + mChangeId + " " + mPackageName);
+        }
     }
 }

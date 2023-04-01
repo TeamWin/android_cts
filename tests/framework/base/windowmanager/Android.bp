@@ -80,6 +80,14 @@ android_test {
 
     sdk_version: "test_current",
     data: [
+        ":CtsPropertyCompatAllowOrientationOverrideApp",
+        ":CtsPropertyCompatAllowDisplayOrientationOverrideApp",
+        ":CtsPropertyIgnoreOrientationRequestOverrideOptOutApp",
+        ":CtsPropertyIgnoreOrientationRequestOverrideOptInApp",
+        ":CtsPropertyCameraCompatAllowForceRotationApp",
+        ":CtsPropertyCameraCompatAllowRefreshApp",
+        ":CtsPropertyCameraCompatEnableRefreshViaPauseOptInApp",
+        ":CtsPropertyCameraCompatEnableRefreshViaPauseOptOutApp",
         ":CtsDragAndDropSourceApp",
         ":CtsDragAndDropTargetApp",
         ":CtsDeviceAlertWindowTestApp",

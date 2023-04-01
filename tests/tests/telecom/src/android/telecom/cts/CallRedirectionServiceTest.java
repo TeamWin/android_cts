@@ -102,20 +102,19 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
-        if (!mShouldTestTelecom) {
-            return;
-        }
-        if (mCallRedirectionServiceController != null) {
-            mCallRedirectionServiceController.reset();
-        }
-        // Remove the test app from the redirection role.
-        removeRoleHolder(ROLE_CALL_REDIRECTION,
-                CtsCallRedirectionService.class.getPackage().getName());
+        if (mShouldTestTelecom) {
+            if (mCallRedirectionServiceController != null) {
+                mCallRedirectionServiceController.reset();
+            }
+            // Remove the test app from the redirection role.
+            removeRoleHolder(ROLE_CALL_REDIRECTION,
+                    CtsCallRedirectionService.class.getPackage().getName());
 
-        if (!TextUtils.isEmpty(mPreviousCallRedirectionPackage)) {
-            addRoleHolder(ROLE_CALL_REDIRECTION, mPreviousCallRedirectionPackage);
+            if (!TextUtils.isEmpty(mPreviousCallRedirectionPackage)) {
+                addRoleHolder(ROLE_CALL_REDIRECTION, mPreviousCallRedirectionPackage);
+            }
         }
+        super.tearDown();
     }
 
     public void testRedirectedCallWithRedirectedGateway()

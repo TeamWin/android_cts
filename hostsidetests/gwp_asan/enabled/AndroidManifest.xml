@@ -18,6 +18,10 @@
           package="android.cts.gwp_asan"
           android:targetSandboxVersion="2">
 
+  <!-- Needed for DropBoxManager.getNextEntry(...) -->
+  <uses-permission android:name="android.permission.READ_LOGS"/>
+  <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
+
   <uses-sdk android:targetSdkVersion="30" />
   <application android:debuggable="true"
                android:extractNativeLibs="true"

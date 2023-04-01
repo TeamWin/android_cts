@@ -26,6 +26,7 @@ import android.hardware.input.VirtualTouchEvent;
 import android.hardware.input.VirtualTouchscreen;
 import android.hardware.input.VirtualTouchscreenConfig;
 import android.view.InputDevice;
+import android.view.InputEvent;
 import android.view.MotionEvent;
 
 import androidx.test.filters.SmallTest;
@@ -34,7 +35,9 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -72,36 +75,55 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
     @Test
     public void sendTouchEvent() {
         final float inputSize = 1f;
+        // Convert the input axis size to its equivalent fraction of the total screen.
+        final float computedSize = inputSize / (DISPLAY_WIDTH - 1f);
         final float x = 50f;
         final float y = 50f;
-        mVirtualTouchscreen.sendTouchEvent(new VirtualTouchEvent.Builder()
-                .setAction(VirtualTouchEvent.ACTION_DOWN)
+
+        // The number of move events that are sent between the down and up event.
+        int moveEventCount = 5;
+        List<InputEvent> expectedEvents = new ArrayList<>(moveEventCount + 2);
+        // The builder is used for all events in this test. So properties all events have in common
+        // are set here.
+        VirtualTouchEvent.Builder builder = new VirtualTouchEvent.Builder()
                 .setPointerId(1)
+                .setMajorAxisSize(inputSize)
+                .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER);
+
+        // Down event
+        mVirtualTouchscreen.sendTouchEvent(builder
+                .setAction(VirtualTouchEvent.ACTION_DOWN)
                 .setX(x)
                 .setY(y)
                 .setPressure(255f)
-                .setMajorAxisSize(inputSize)
-                .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
                 .build());
-        mVirtualTouchscreen.sendTouchEvent(new VirtualTouchEvent.Builder()
-                .setAction(VirtualTouchEvent.ACTION_UP)
-                .setPointerId(1)
-                .setX(x)
-                .setY(y)
-                .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
-                .build());
-        // Convert the input axis size to its equivalent fraction of the total screen.
-        final float computedSize = inputSize / (DISPLAY_WIDTH - 1f);
+        expectedEvents.add(
+                createMotionEvent(MotionEvent.ACTION_DOWN, x, y, 1.0f, computedSize, inputSize));
 
-        // There's an extraneous ACTION_HOVER_ENTER event in builds before T QPR1. We fixed the
-        // related bug (b/244744917) so the hover event is not generated anymore. In order to make
-        // the test permissive to existing and new behaviors we only verify the first 2 events here.
-        // In U we should continue to use verifyEvents().
-        verifyFirstEvents(Arrays.asList(
-                createMotionEvent(MotionEvent.ACTION_DOWN, /* x= */ x, /* y= */ y,
-                        /* pressure= */ 1f, /* size= */ computedSize, /* axisSize= */ inputSize),
-                createMotionEvent(MotionEvent.ACTION_UP, /* x= */ x, /* y= */ y,
-                        /* pressure= */ 1f, /* size= */ computedSize, /* axisSize= */ inputSize)));
+        // Next we send a bunch of ACTION_MOVE events. Each one with a different x and y coordinate.
+        // If no property changes (i.e. the same VirtualTouchEvent is sent multiple times) then the
+        // kernel drops the event as there is no point in delivering a new event if nothing changed.
+        builder.setAction(VirtualTouchEvent.ACTION_MOVE);
+        for (int i = 1; i <= moveEventCount; i++) {
+            builder.setX(x + i)
+                    .setY(y + i)
+                    .setPressure(255f);
+            mVirtualTouchscreen.sendTouchEvent(builder.build());
+            expectedEvents.add(
+                    createMotionEvent(MotionEvent.ACTION_MOVE, x + i, y + i, 1.0f, computedSize,
+                            inputSize));
+        }
+
+        mVirtualTouchscreen.sendTouchEvent(builder
+                .setAction(VirtualTouchEvent.ACTION_UP)
+                .setX(x + moveEventCount)
+                .setY(y + moveEventCount)
+                .build());
+        expectedEvents.add(
+                createMotionEvent(MotionEvent.ACTION_UP, x + moveEventCount, y + moveEventCount,
+                        1.0f, computedSize, inputSize));
+
+        verifyEvents(expectedEvents);
     }
 
     @Test

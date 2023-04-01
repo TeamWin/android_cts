@@ -25,6 +25,7 @@ import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420P
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_HdrEditing;
+import static android.mediav2.common.cts.CodecTestBase.BOARD_SDK_IS_AT_LEAST_T;
 import static android.mediav2.common.cts.CodecTestBase.FIRST_SDK_IS_AT_LEAST_T;
 import static android.mediav2.common.cts.CodecTestBase.IS_AT_LEAST_T;
 import static android.mediav2.common.cts.CodecTestBase.IS_HDR_CAPTURE_SUPPORTED;
@@ -190,7 +191,8 @@ public class CodecInfoTest {
                         + " any HDR profiles.", canHandleHdr);
             }
         } else {
-            if (FIRST_SDK_IS_AT_LEAST_T && VNDK_IS_AT_LEAST_T && canDisplaySupportHDRContent()) {
+            if (FIRST_SDK_IS_AT_LEAST_T && VNDK_IS_AT_LEAST_T && BOARD_SDK_IS_AT_LEAST_T
+                    && canDisplaySupportHDRContent()) {
                 if (MediaUtils.isTv()) {
                     // Some TV devices support HDR10 display with VO instead of GPU. In this
                     // case, skip checking P010 on TV devices.

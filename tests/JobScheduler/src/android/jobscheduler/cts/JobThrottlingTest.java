@@ -450,8 +450,7 @@ public class JobThrottlingTest {
     @Test
     public void testJobsInRestrictedBucket_ParoleSession() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
+        assumeTrue("device doesn't have battery", BatteryUtils.hasBattery());
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
@@ -513,8 +512,7 @@ public class JobThrottlingTest {
     @Test
     public void testJobsInRestrictedBucket_DeferredUntilFreeResources() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
+        assumeTrue("device doesn't have battery", BatteryUtils.hasBattery());
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
@@ -556,8 +554,7 @@ public class JobThrottlingTest {
     @Test
     public void testJobsInRestrictedBucket_NoRequiredNetwork() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
+        assumeTrue("device doesn't have battery", BatteryUtils.hasBattery());
         assumeFalse("not testable, since ethernet is connected", hasEthernetConnection());
 
         // This test is designed for the old quota system.
@@ -596,8 +593,7 @@ public class JobThrottlingTest {
     @Test
     public void testJobsInRestrictedBucket_WithRequiredNetwork() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
+        assumeTrue("device doesn't have battery", BatteryUtils.hasBattery());
         assumeFalse("not testable, since ethernet is connected", hasEthernetConnection());
         assumeTrue(mNetworkingHelper.hasWifiFeature());
         mNetworkingHelper.ensureSavedWifiNetwork();
@@ -648,8 +644,7 @@ public class JobThrottlingTest {
     @Test
     public void testJobsInNeverApp() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
+        assumeTrue("device doesn't have battery", BatteryUtils.hasBattery());
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
@@ -663,8 +658,8 @@ public class JobThrottlingTest {
 
     @Test
     public void testUidActiveBypassesStandby() throws Exception {
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
+        assumeTrue("device doesn't have battery", BatteryUtils.hasBattery());
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
@@ -680,9 +675,6 @@ public class JobThrottlingTest {
 
     @Test
     public void testBatterySaverOff() throws Exception {
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
-
         BatteryUtils.assumeBatterySaverFeature();
 
         setChargingState(false);
@@ -694,9 +686,6 @@ public class JobThrottlingTest {
 
     @Test
     public void testBatterySaverOn() throws Exception {
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
-
         BatteryUtils.assumeBatterySaverFeature();
 
         setChargingState(false);
@@ -708,9 +697,6 @@ public class JobThrottlingTest {
 
     @Test
     public void testUidActiveBypassesBatterySaverOn() throws Exception {
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
-
         BatteryUtils.assumeBatterySaverFeature();
 
         setChargingState(false);
@@ -723,9 +709,6 @@ public class JobThrottlingTest {
 
     @Test
     public void testBatterySaverOnThenUidActive() throws Exception {
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
-
         BatteryUtils.assumeBatterySaverFeature();
 
         // Enable battery saver, and schedule a job. It shouldn't run.
@@ -743,9 +726,6 @@ public class JobThrottlingTest {
 
     @Test
     public void testExpeditedJobBypassesBatterySaverOn() throws Exception {
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
-
         BatteryUtils.assumeBatterySaverFeature();
 
         setChargingState(false);
@@ -757,9 +737,6 @@ public class JobThrottlingTest {
 
     @Test
     public void testExpeditedJobBypassesBatterySaver_toggling() throws Exception {
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
-
         BatteryUtils.assumeBatterySaverFeature();
 
         setChargingState(false);
@@ -944,8 +921,6 @@ public class JobThrottlingTest {
 
     @Test
     public void testUserInitiatedJobBypassesBatterySaverOn() throws Exception {
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
         BatteryUtils.assumeBatterySaverFeature();
         mNetworkingHelper.setAllNetworksEnabled(true);
 
@@ -969,8 +944,6 @@ public class JobThrottlingTest {
 
     @Test
     public void testUserInitiatedJobBypassesBatterySaver_toggling() throws Exception {
-        assumeFalse("not testable in automotive device", mAutomotiveDevice);
-        assumeFalse("not testable in leanback device", mLeanbackOnly);
         BatteryUtils.assumeBatterySaverFeature();
         mNetworkingHelper.setAllNetworksEnabled(true);
 
@@ -1050,6 +1023,7 @@ public class JobThrottlingTest {
         // Tests cannot disable ethernet network.
         assumeFalse("not testable, since ethernet is connected", hasEthernetConnection());
 
+        assumeTrue(BatteryUtils.hasBattery());
         assumeTrue(mNetworkingHelper.hasWifiFeature());
         mNetworkingHelper.ensureSavedWifiNetwork();
 
@@ -1116,10 +1090,8 @@ public class JobThrottlingTest {
     @Test
     public void testRestrictingStopReason_RestrictedBucket_charging() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
-        // Can't toggle charging state on automotive devices.
-        assumeFalse("not testable on automotive device", mAutomotiveDevice);
-        // Can't toggle charging state on leanback devices.
-        assumeFalse("not testable on leanback device", mLeanbackOnly);
+        // Can't toggle charging state if there's no battery.
+        assumeTrue("device doesn't have battery", BatteryUtils.hasBattery());
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
@@ -1151,10 +1123,7 @@ public class JobThrottlingTest {
     @Test
     public void testRestrictingStopReason_RestrictedBucket_batteryNotLow() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
-        // Automotive devices typically don't have batteries.
-        assumeFalse("not testable on automotive device", mAutomotiveDevice);
-        // Leanback devices typically don't have batteries.
-        assumeFalse("not testable on leanback device", mLeanbackOnly);
+        assumeTrue("device doesn't have battery", BatteryUtils.hasBattery());
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
@@ -1186,8 +1155,7 @@ public class JobThrottlingTest {
     @Test
     public void testRestrictingStopReason_Quota() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
-        assumeFalse("not testable in automotive device", mAutomotiveDevice); // Test needs battery
-        assumeFalse("not testable in leanback device", mLeanbackOnly); // Test needs battery
+        assumeTrue("device doesn't have battery", BatteryUtils.hasBattery());
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");

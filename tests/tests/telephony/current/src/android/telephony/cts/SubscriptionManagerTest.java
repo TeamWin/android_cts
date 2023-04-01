@@ -1330,7 +1330,7 @@ public class SubscriptionManagerTest {
                 synchronized (lock) {
                     if (condition.getAsBoolean()) lock.notifyAll();
                 }
-                Looper.loop();
+                if (!condition.getAsBoolean()) Looper.loop();
             } finally {
                 mSm.removeOnSubscriptionsChangedListener(listener);
             }

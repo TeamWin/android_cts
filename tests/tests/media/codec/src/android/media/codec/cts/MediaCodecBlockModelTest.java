@@ -28,6 +28,7 @@ import android.media.MediaCodec.CodecException;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.cts.MediaCodecAsyncHelper;
 import android.media.cts.MediaCodecBlockModelHelper;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
@@ -302,18 +303,18 @@ public class MediaCodecBlockModelTest {
 
             List<Long> timestampList = Collections.synchronizedList(new ArrayList<>());
 
-            final LinkedBlockingQueue<MediaCodecBlockModelHelper.SlotEvent> queue =
+            final LinkedBlockingQueue<MediaCodecAsyncHelper.SlotEvent> queue =
                 new LinkedBlockingQueue<>();
             mediaCodec.setCallback(new MediaCodec.Callback() {
                 @Override
                 public void onInputBufferAvailable(MediaCodec codec, int index) {
-                    queue.offer(new MediaCodecBlockModelHelper.SlotEvent(true, index));
+                    queue.offer(new MediaCodecAsyncHelper.SlotEvent(true, index));
                 }
 
                 @Override
                 public void onOutputBufferAvailable(
                         MediaCodec codec, int index, MediaCodec.BufferInfo info) {
-                    queue.offer(new MediaCodecBlockModelHelper.SlotEvent(false, index));
+                    queue.offer(new MediaCodecAsyncHelper.SlotEvent(false, index));
                 }
 
                 @Override
@@ -334,7 +335,7 @@ public class MediaCodecBlockModelTest {
             boolean signaledEos = false;
             int frameIndex = 0;
             while (!eos && !Thread.interrupted()) {
-                MediaCodecBlockModelHelper.SlotEvent event;
+                MediaCodecAsyncHelper.SlotEvent event;
                 try {
                     event = queue.take();
                 } catch (InterruptedException e) {

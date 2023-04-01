@@ -19,11 +19,16 @@ package android.net.vcn.cts;
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 import static android.ipsec.ike.cts.IkeTunUtils.PortPair;
 import static android.net.ConnectivityDiagnosticsManager.DataStallReport.DETECTION_METHOD_DNS_EVENTS;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_CBS;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_VCN_MANAGED;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_RCS;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
+import static android.net.NetworkCapabilities.TRANSPORT_TEST;
 import static android.net.vcn.VcnGatewayConnectionConfig.VCN_GATEWAY_OPTION_ENABLE_DATA_STALL_RECOVERY_WITH_MOBILITY;
+import static android.net.vcn.VcnUnderlyingNetworkTemplate.MATCH_ANY;
 import static android.net.vcn.VcnUnderlyingNetworkTemplate.MATCH_FORBIDDEN;
 import static android.net.vcn.VcnUnderlyingNetworkTemplate.MATCH_REQUIRED;
 import static android.telephony.SubscriptionManager.INVALID_SUBSCRIPTION_ID;
@@ -38,6 +43,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -51,8 +57,10 @@ import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.net.vcn.VcnCellUnderlyingNetworkTemplate;
 import android.net.vcn.VcnConfig;
 import android.net.vcn.VcnManager;
+import android.net.vcn.VcnNetworkPolicyResult;
 import android.net.vcn.VcnUnderlyingNetworkTemplate;
 import android.net.vcn.VcnWifiUnderlyingNetworkTemplate;
 import android.net.vcn.cts.TestNetworkWrapper.VcnTestNetworkCallback;
@@ -77,7 +85,9 @@ import org.junit.runner.RunWith;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -263,6 +273,190 @@ public class VcnManagerTest extends VcnTestBase {
                 android.Manifest.permission.MANAGE_TEST_NETWORKS);
     }
 
+    private TestNetworkWrapper createTestNetworkWrapperForPolicyTest(
+            boolean isRestricted, int subId) throws Exception {
+        final Set<Integer> capabilities = new HashSet<>();
+        capabilities.add(NET_CAPABILITY_CBS);
+        if (!isRestricted) {
+            capabilities.add(NET_CAPABILITY_NOT_RESTRICTED);
+        }
+
+        return createTestNetworkWrapper(subId, LOCAL_ADDRESS, capabilities);
+    }
+
+    private VcnConfig buildVcnConfigWithTransportTestRestricted() {
+        return buildVcnConfigBase()
+                .setIsTestModeProfile()
+                .setRestrictedUnderlyingNetworkTransports(Set.of(TRANSPORT_TEST))
+                .build();
+    }
+
+    @Test
+    public void testApplyVcnNetworkPolicyDuringVcnSetup_onUnrestrictedNetwork() throws Exception {
+        final int subId = verifyAndGetValidDataSubId();
+        final VcnConfig vcnConfig = buildVcnConfigWithTransportTestRestricted();
+
+        try (TestNetworkWrapper networkWrapperUnrestricted =
+                createTestNetworkWrapperForPolicyTest(false /* isRestricted */, subId)) {
+            verifyUnderlyingCellAndRunTest(
+                    subId,
+                    (subGrp, cellNetwork, cellNetworkCb) -> {
+                        cellNetworkCb.waitForAvailable();
+
+                        // Attempt VCN setup on an unrestricted network; expect the network to
+                        // change to be restricted
+                        mVcnManager.setVcnConfig(subGrp, vcnConfig);
+
+                        VcnNetworkPolicyResult policyResult =
+                                networkWrapperUnrestricted.awaitVcnNetworkPolicyChange();
+
+                        // Expect teardown due to restriction capability change
+                        assertTrue(policyResult.isTeardownRequested());
+                        assertFalse(
+                                policyResult
+                                        .getNetworkCapabilities()
+                                        .hasCapability(NET_CAPABILITY_NOT_RESTRICTED));
+
+                        // Verify underlying network is lost
+                        networkWrapperUnrestricted.vcnNetworkCallback.waitForLost();
+
+                        mVcnManager.clearVcnConfig(subGrp);
+                    });
+        }
+    }
+
+    @Test
+    public void testApplyVcnNetworkPolicyDuringVcnSetup_onRestrictedNetwork() throws Exception {
+        final int subId = verifyAndGetValidDataSubId();
+        final VcnConfig vcnConfig = buildVcnConfigWithTransportTestRestricted();
+
+        try (TestNetworkWrapper networkWrapperRestricted =
+                createTestNetworkWrapperForPolicyTest(true /* isRestricted */, subId)) {
+
+            verifyUnderlyingCellAndRunTest(
+                    subId,
+                    (subGrp, cellNetwork, cellNetworkCb) -> {
+                        // Set up VCN on a restricted network
+                        final VcnSetupResult vcnSetupResult =
+                                setupAndGetVcnNetwork(
+                                        subGrp,
+                                        cellNetwork,
+                                        cellNetworkCb,
+                                        vcnConfig,
+                                        networkWrapperRestricted);
+
+                        VcnNetworkPolicyResult policyResult =
+                                networkWrapperRestricted.awaitVcnNetworkPolicyChange();
+
+                        // Do not expect teardown since the restriction capability does not change
+                        assertFalse(policyResult.isTeardownRequested());
+                        assertFalse(
+                                policyResult
+                                        .getNetworkCapabilities()
+                                        .hasCapability(NET_CAPABILITY_NOT_RESTRICTED));
+
+                        clearVcnConfigsAndVerifyNetworkTeardown(
+                                subGrp, cellNetworkCb, vcnSetupResult.vcnNetwork);
+                    });
+        }
+    }
+
+    private void waitForSafeMode(TestNetworkWrapper networkWrapper) throws Exception {
+        // Once VCN starts, the test network should lose NOT_VCN_MANAGED
+        waitForExpectedUnderlyingNetworkWithCapabilities(
+                networkWrapper,
+                false /* expectNotVcnManaged */,
+                false /* expectNotMetered */,
+                TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
+
+        // After VCN has started up, wait for safemode to kick in and expect the
+        // underlying Test Network to regain NOT_VCN_MANAGED.
+        waitForExpectedUnderlyingNetworkWithCapabilities(
+                networkWrapper,
+                true /* expectNotVcnManaged */,
+                false /* expectNotMetered */,
+                SAFEMODE_TIMEOUT_MILLIS);
+    }
+
+    private void verifyApplyVcnNetworkPolicyPostVcnSetupChangeNetworkRestriction(
+            boolean isSafeMode, boolean isRestrictedBefore, boolean expectRestrictedAfter)
+            throws Exception {
+        final int subId = verifyAndGetValidDataSubId();
+        final VcnConfig vcnConfig = buildVcnConfigWithTransportTestRestricted();
+
+        try (TestNetworkWrapper networkWrapperRestricted =
+                createTestNetworkWrapperForPolicyTest(true /* isRestricted */, subId)) {
+
+            verifyUnderlyingCellAndRunTest(
+                    subId,
+                    (subGrp, cellNetwork, cellNetworkCb) -> {
+                        // Set up VCN on a restricted network
+                        final VcnSetupResult vcnSetupResult =
+                                setupAndGetVcnNetwork(
+                                        subGrp,
+                                        cellNetwork,
+                                        cellNetworkCb,
+                                        vcnConfig,
+                                        networkWrapperRestricted);
+
+                        if (isSafeMode) {
+                            waitForSafeMode(networkWrapperRestricted);
+                        }
+
+                        // Bring up another test network and verify its restriction capability
+                        // change.
+                        try (TestNetworkWrapper testNetworkWrapper =
+                                createTestNetworkWrapperForPolicyTest(isRestrictedBefore, subId)) {
+
+                            // The requested NetworkCapabilities should have been changed by
+                            // VcnManager before the test network was brought up. Verify it by
+                            // checking the NetworkCapabilities after the network setup.
+                            final NetworkCapabilities nc =
+                                    mConnectivityManager.getNetworkCapabilities(
+                                            testNetworkWrapper.tunNetwork);
+                            assertEquals(
+                                    !expectRestrictedAfter,
+                                    nc.hasCapability(NET_CAPABILITY_NOT_RESTRICTED));
+                        }
+
+                        clearVcnConfigsAndVerifyNetworkTeardown(
+                                subGrp, cellNetworkCb, vcnSetupResult.vcnNetwork);
+                    });
+        }
+    }
+
+    @Test
+    public void testApplyVcnNetworkPolicy_activeMode_onRestrictedNetwork() throws Exception {
+        verifyApplyVcnNetworkPolicyPostVcnSetupChangeNetworkRestriction(
+                false /* isSafeMode */,
+                true /* isRestrictedBefore */,
+                true /* expectRestrictedAfter */);
+    }
+
+    @Test
+    public void testApplyVcnNetworkPolicy_safeMode_onRestrictedNetwork() throws Exception {
+        verifyApplyVcnNetworkPolicyPostVcnSetupChangeNetworkRestriction(
+                true /* isSafeMode */,
+                true /* isRestrictedBefore */,
+                true /* expectRestrictedAfter */);
+    }
+
+    @Test
+    public void testApplyVcnNetworkPolicy_activeMode_onUnrestrictedNetwork() throws Exception {
+        verifyApplyVcnNetworkPolicyPostVcnSetupChangeNetworkRestriction(
+                false /* isSafeMode */,
+                false /* isRestrictedBefore */,
+                true /* expectRestrictedAfter */);
+    }
+
+    @Test
+    public void testApplyVcnNetworkPolicy_safeMode_onUnrestrictedNetwork() throws Exception {
+        verifyApplyVcnNetworkPolicyPostVcnSetupChangeNetworkRestriction(
+                true /* isSafeMode */,
+                false /* isRestrictedBefore */,
+                false /* expectRestrictedAfter */);
+    }
+
     /** Test implementation of VcnStatusCallback for verification purposes. */
     private static class TestVcnStatusCallback extends VcnManager.VcnStatusCallback {
         private final CompletableFuture<Integer> mFutureOnStatusChanged =
@@ -364,16 +558,27 @@ public class VcnManagerTest extends VcnTestBase {
     }
 
     private TestNetworkWrapper createTestNetworkWrapper(
-            boolean isMetered, int subId, InetAddress localAddress) throws Exception {
+            int subId, InetAddress localAddress, Set<Integer> capabilities) throws Exception {
         TestNetworkWrapper testNetworkWrapper =
                 new TestNetworkWrapper(
                         mContext,
                         TEST_NETWORK_MTU,
-                        isMetered,
+                        capabilities,
                         Collections.singleton(subId),
                         localAddress);
         assertNotNull("No test network found", testNetworkWrapper.tunNetwork);
         return testNetworkWrapper;
+    }
+
+    private TestNetworkWrapper createTestNetworkWrapper(
+            boolean isMetered, int subId, InetAddress localAddress) throws Exception {
+        final Set<Integer> capabilities = new HashSet<>();
+        capabilities.add(NET_CAPABILITY_CBS);
+        if (!isMetered) {
+            capabilities.add(NET_CAPABILITY_NOT_METERED);
+        }
+
+        return createTestNetworkWrapper(subId, localAddress, capabilities);
     }
 
     @Test
@@ -519,29 +724,19 @@ public class VcnManagerTest extends VcnTestBase {
         }
     }
 
-    private class NetworkSelectionTestNetworkParams {
-        public final boolean isMetered;
-
-        NetworkSelectionTestNetworkParams(boolean isMetered) {
-            this.isMetered = isMetered;
-        }
-    }
-
     private TestNetworkWrapper createTestNetworkForNetworkSelection(
-            int subId, NetworkSelectionTestNetworkParams params) throws Exception {
-        return createTestNetworkWrapper(params.isMetered, subId, LOCAL_ADDRESS);
+            int subId, Set<Integer> capabilities) throws Exception {
+        return createTestNetworkWrapper(subId, LOCAL_ADDRESS, capabilities);
     }
 
     private void verifyVcnMigratesToPreferredUnderlyingNetwork(
-            VcnConfig vcnConfig,
-            NetworkSelectionTestNetworkParams lessPreferred,
-            NetworkSelectionTestNetworkParams preferred)
+            VcnConfig vcnConfig, Set<Integer> capSetLessPreferred, Set<Integer> capSetPreferred)
             throws Exception {
         final int subId = verifyAndGetValidDataSubId();
 
         // Start on a less preferred network.
         try (TestNetworkWrapper testNetworkWrapperLessPreferred =
-                createTestNetworkForNetworkSelection(subId, lessPreferred)) {
+                createTestNetworkForNetworkSelection(subId, capSetLessPreferred)) {
             verifyUnderlyingCellAndRunTest(
                     subId,
                     (subGrp, cellNetwork, cellNetworkCb) -> {
@@ -555,7 +750,7 @@ public class VcnManagerTest extends VcnTestBase {
 
                         // Then bring up a more preferred network, and expect to switch to it.
                         try (TestNetworkWrapper testNetworkWrapperPreferred =
-                                createTestNetworkForNetworkSelection(subId, preferred)) {
+                                createTestNetworkForNetworkSelection(subId, capSetPreferred)) {
                             injectAndVerifyIkeMobikePackets(
                                     testNetworkWrapperPreferred.ikeTunUtils);
 
@@ -567,15 +762,13 @@ public class VcnManagerTest extends VcnTestBase {
     }
 
     private void verifyVcnDoesNotSelectLessPreferredUnderlyingNetwork(
-            VcnConfig vcnConfig,
-            NetworkSelectionTestNetworkParams lessPreferred,
-            NetworkSelectionTestNetworkParams preferred)
+            VcnConfig vcnConfig, Set<Integer> capSetLessPreferred, Set<Integer> capSetPreferred)
             throws Exception {
         final int subId = verifyAndGetValidDataSubId();
 
         // Start on a more preferred network.
         try (TestNetworkWrapper testNetworkWrapperPreferred =
-                createTestNetworkForNetworkSelection(subId, preferred)) {
+                createTestNetworkForNetworkSelection(subId, capSetPreferred)) {
             verifyUnderlyingCellAndRunTest(
                     subId,
                     (subGrp, cellNetwork, cellNetworkCb) -> {
@@ -590,7 +783,7 @@ public class VcnManagerTest extends VcnTestBase {
                         // Then bring up a less preferred network, and expect the VCN underlying
                         // network does not change.
                         try (TestNetworkWrapper testNetworkWrapperLessPreferred =
-                                createTestNetworkForNetworkSelection(subId, lessPreferred)) {
+                                createTestNetworkForNetworkSelection(subId, capSetLessPreferred)) {
                             injectAndVerifyIkeDpdPackets(
                                     testNetworkWrapperPreferred.ikeTunUtils,
                                     vcnSetupResult.ikeExchangePortPair);
@@ -603,15 +796,13 @@ public class VcnManagerTest extends VcnTestBase {
     }
 
     private void verifyVcnMigratesAfterPreferredUnderlyingNetworkDies(
-            VcnConfig vcnConfig,
-            NetworkSelectionTestNetworkParams lessPreferred,
-            NetworkSelectionTestNetworkParams preferred)
+            VcnConfig vcnConfig, Set<Integer> capSetLessPreferred, Set<Integer> capSetPreferred)
             throws Exception {
         final int subId = verifyAndGetValidDataSubId();
 
         // Start on a more preferred network
         try (TestNetworkWrapper testNetworkWrapperPreferred =
-                createTestNetworkForNetworkSelection(subId, preferred)) {
+                createTestNetworkForNetworkSelection(subId, capSetPreferred)) {
             verifyUnderlyingCellAndRunTest(
                     subId,
                     (subGrp, cellNetwork, cellNetworkCb) -> {
@@ -625,7 +816,7 @@ public class VcnManagerTest extends VcnTestBase {
 
                         // Bring up a less preferred network
                         try (TestNetworkWrapper testNetworkWrapperLessPreferred =
-                                createTestNetworkForNetworkSelection(subId, lessPreferred)) {
+                                createTestNetworkForNetworkSelection(subId, capSetLessPreferred)) {
                             // Teardown the preferred network
                             testNetworkWrapperPreferred.close();
                             testNetworkWrapperPreferred.vcnNetworkCallback.waitForLost();
@@ -641,12 +832,23 @@ public class VcnManagerTest extends VcnTestBase {
         }
     }
 
+    private VcnCellUnderlyingNetworkTemplate.Builder createCellTemplateBaseBuilder()
+            throws Exception {
+        return new VcnCellUnderlyingNetworkTemplate.Builder().setInternet(MATCH_ANY);
+    }
+
     private VcnConfig createVcnConfigPrefersMetered() throws Exception {
         final List<VcnUnderlyingNetworkTemplate> nwTemplates = new ArrayList<>();
         nwTemplates.add(
-                new VcnWifiUnderlyingNetworkTemplate.Builder().setMetered(MATCH_REQUIRED).build());
+                createCellTemplateBaseBuilder()
+                        .setCbs(MATCH_REQUIRED)
+                        .setMetered(MATCH_REQUIRED)
+                        .build());
         nwTemplates.add(
-                new VcnWifiUnderlyingNetworkTemplate.Builder().setMetered(MATCH_FORBIDDEN).build());
+                createCellTemplateBaseBuilder()
+                        .setCbs(MATCH_REQUIRED)
+                        .setMetered(MATCH_FORBIDDEN)
+                        .build());
         return buildVcnConfigBase(nwTemplates).setIsTestModeProfile().build();
     }
 
@@ -654,8 +856,8 @@ public class VcnManagerTest extends VcnTestBase {
     public void testVcnMigratesToPreferredUnderlyingNetwork_preferMetered() throws Exception {
         verifyVcnMigratesToPreferredUnderlyingNetwork(
                 createVcnConfigPrefersMetered(),
-                new NetworkSelectionTestNetworkParams(false /* isMetered */),
-                new NetworkSelectionTestNetworkParams(true /* isMetered */));
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_CBS),
+                Set.of(NET_CAPABILITY_CBS));
     }
 
     @Test
@@ -663,8 +865,8 @@ public class VcnManagerTest extends VcnTestBase {
             throws Exception {
         verifyVcnDoesNotSelectLessPreferredUnderlyingNetwork(
                 createVcnConfigPrefersMetered(),
-                new NetworkSelectionTestNetworkParams(false /* isMetered */),
-                new NetworkSelectionTestNetworkParams(true /* isMetered */));
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_CBS),
+                Set.of(NET_CAPABILITY_CBS));
     }
 
     @Test
@@ -672,8 +874,106 @@ public class VcnManagerTest extends VcnTestBase {
             throws Exception {
         verifyVcnMigratesAfterPreferredUnderlyingNetworkDies(
                 createVcnConfigPrefersMetered(),
-                new NetworkSelectionTestNetworkParams(false /* isMetered */),
-                new NetworkSelectionTestNetworkParams(true /* isMetered */));
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_CBS),
+                Set.of(NET_CAPABILITY_CBS));
+    }
+
+    private VcnConfig createVcnConfigPrefersCbs() throws Exception {
+        final List<VcnUnderlyingNetworkTemplate> nwTemplates = new ArrayList<>();
+        nwTemplates.add(createCellTemplateBaseBuilder().setCbs(MATCH_REQUIRED).build());
+        nwTemplates.add(createCellTemplateBaseBuilder().setRcs(MATCH_REQUIRED).build());
+
+        return buildVcnConfigBase(nwTemplates).setIsTestModeProfile().build();
+    }
+
+    @Test
+    public void testVcnMigratesToPreferredUnderlyingNetwork_preferCbs() throws Exception {
+        verifyVcnMigratesToPreferredUnderlyingNetwork(
+                createVcnConfigPrefersCbs(),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_RCS),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_CBS));
+    }
+
+    @Test
+    public void testVcnDoesNotSelectLessPreferredUnderlyingNetwork_preferCbs() throws Exception {
+        verifyVcnDoesNotSelectLessPreferredUnderlyingNetwork(
+                createVcnConfigPrefersCbs(),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_RCS),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_CBS));
+    }
+
+    @Test
+    public void testVcnMigratesAfterPreferredUnderlyingNetworkDies_preferCbs() throws Exception {
+        verifyVcnMigratesAfterPreferredUnderlyingNetworkDies(
+                createVcnConfigPrefersCbs(),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_RCS),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_CBS));
+    }
+
+    private VcnConfig createVcnConfigPrefersNonCbs() throws Exception {
+        final List<VcnUnderlyingNetworkTemplate> nwTemplates = new ArrayList<>();
+        nwTemplates.add(
+                createCellTemplateBaseBuilder()
+                        .setRcs(MATCH_REQUIRED)
+                        .setCbs(MATCH_FORBIDDEN)
+                        .build());
+        nwTemplates.add(
+                createCellTemplateBaseBuilder().setRcs(MATCH_REQUIRED).setCbs(MATCH_ANY).build());
+
+        return buildVcnConfigBase(nwTemplates).setIsTestModeProfile().build();
+    }
+
+    @Test
+    public void testVcnMigratesToPreferredUnderlyingNetwork_preferNonCbs() throws Exception {
+        verifyVcnMigratesToPreferredUnderlyingNetwork(
+                createVcnConfigPrefersNonCbs(),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_RCS, NET_CAPABILITY_CBS),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_RCS));
+    }
+
+    @Test
+    public void testVcnDoesNotSelectLessPreferredUnderlyingNetwork_preferNonCbs() throws Exception {
+        verifyVcnDoesNotSelectLessPreferredUnderlyingNetwork(
+                createVcnConfigPrefersNonCbs(),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_RCS, NET_CAPABILITY_CBS),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_RCS));
+    }
+
+    @Test
+    public void testVcnMigratesAfterPreferredUnderlyingNetworkDies_preferNonCbs() throws Exception {
+        verifyVcnMigratesAfterPreferredUnderlyingNetworkDies(
+                createVcnConfigPrefersNonCbs(),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_RCS, NET_CAPABILITY_CBS),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_RCS));
+    }
+
+    @Test
+    public void testSetVcnWithCbsMatchAny_preferCbsNetworkOverUnmatchedNetwork() throws Exception {
+        final List<VcnUnderlyingNetworkTemplate> nwTemplates = new ArrayList<>();
+        nwTemplates.add(
+                createCellTemplateBaseBuilder().setRcs(MATCH_REQUIRED).setCbs(MATCH_ANY).build());
+
+        final VcnConfig vcnConfig = buildVcnConfigBase(nwTemplates).setIsTestModeProfile().build();
+
+        verifyVcnMigratesToPreferredUnderlyingNetwork(
+                vcnConfig,
+                Set.of(NET_CAPABILITY_NOT_METERED),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_RCS, NET_CAPABILITY_CBS));
+    }
+
+    @Test
+    public void testSetVcnWithCbsMatchAny_preferNonCbsNetworkOverUnmatchedNetwork()
+            throws Exception {
+        final List<VcnUnderlyingNetworkTemplate> nwTemplates = new ArrayList<>();
+        nwTemplates.add(
+                createCellTemplateBaseBuilder().setRcs(MATCH_REQUIRED).setCbs(MATCH_ANY).build());
+
+        final VcnConfig vcnConfig = buildVcnConfigBase(nwTemplates).setIsTestModeProfile().build();
+
+        verifyVcnMigratesToPreferredUnderlyingNetwork(
+                vcnConfig,
+                Set.of(NET_CAPABILITY_NOT_METERED),
+                Set.of(NET_CAPABILITY_NOT_METERED, NET_CAPABILITY_RCS));
     }
 
     @Test

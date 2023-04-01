@@ -16,27 +16,35 @@
 
 package android.car.cts;
 
+import static android.car.CarOccupantZoneManager.INVALID_USER_ID;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
 import android.car.CarRemoteDeviceManager;
+import android.car.CarRemoteDeviceManager.StateCallback;
 import android.car.test.ApiCheckerRule;
 import android.content.pm.PackageInfo;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @SmallTest
@@ -45,9 +53,12 @@ import java.util.List;
 public final class CarRemoteDeviceManagerTest extends AbstractCarTestCase {
 
     private static final String TAG = CarRemoteDeviceManagerTest.class.getSimpleName();
+    private static final int WAIT_TIME_MS = 2000;
 
     private CarRemoteDeviceManager mRemoteDeviceManager;
     private CarOccupantZoneManager mOccupantZoneManager;
+    private OccupantZoneInfo mMyZone;
+    private List<OccupantZoneInfo> mAllZones;
 
     // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
     @Override
@@ -57,7 +68,7 @@ public final class CarRemoteDeviceManagerTest extends AbstractCarTestCase {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         mRemoteDeviceManager = getCar().getCarManager(CarRemoteDeviceManager.class);
         // CarRemoteDeviceManager is available on multi-display builds only.
         // TODO(b/265091454): annotate the test with @RequireMultipleUsersOnMultipleDisplays.
@@ -66,13 +77,54 @@ public final class CarRemoteDeviceManagerTest extends AbstractCarTestCase {
                 mRemoteDeviceManager);
 
         mOccupantZoneManager = getCar().getCarManager(CarOccupantZoneManager.class);
+        assumeTrue("It should have passenger zones to run the test",
+                mOccupantZoneManager.hasPassengerZones());
+
+        mMyZone = mOccupantZoneManager.getMyOccupantZone();
+        mAllZones = mOccupantZoneManager.getAllOccupantZones();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.CarRemoteDeviceManager#registerStateCallback",
+            "android.car.CarRemoteDeviceManager#unregisterStateCallback"})
+    public void testStateCallback() {
+        List<OccupantZoneInfo> activePeerZones = getActivePeerZones();
+        assumeTrue("Skip the test because there is no passenger zone assigned with a valid user",
+                !activePeerZones.isEmpty());
+
+        List<OccupantZoneInfo> allPeerZones = new ArrayList<>(mAllZones);
+        allPeerZones.remove(mMyZone);
+
+        // Note: there is no need to guard the lists with a lock because the lists are updated and
+        // verified on the same thread (main thread).
+        List<OccupantZoneInfo> zoneStateChangedZones = new ArrayList<>();
+        List<OccupantZoneInfo> appStateChangedZones = new ArrayList<>();
+
+        mRemoteDeviceManager.registerStateCallback(mContext.getMainExecutor(), new StateCallback() {
+            @Override
+            public void onOccupantZoneStateChanged(@NonNull OccupantZoneInfo occupantZone,
+                    int occupantZoneStates) {
+                zoneStateChangedZones.add(occupantZone);
+            }
+
+            @Override
+            public void onAppStateChanged(@NonNull OccupantZoneInfo occupantZone, int appStates) {
+                appStateChangedZones.add(occupantZone);
+            }
+        });
+
+        // onOccupantZoneStateChanged() should be invoked for all peer zones.
+        PollingCheck.waitFor(WAIT_TIME_MS, () -> zoneStateChangedZones.equals(allPeerZones));
+        // appStateChangedZones() should be invoked for all active peer zones.
+        PollingCheck.waitFor(WAIT_TIME_MS, () -> appStateChangedZones.equals(activePeerZones));
+
+        mRemoteDeviceManager.unregisterStateCallback();
     }
 
     @Test
     @ApiTest(apis = {"android.car.CarRemoteDeviceManager#getEndpointPackageInfo"})
     public void testGetEndpointPackageInfo() {
-        OccupantZoneInfo myZone = mOccupantZoneManager.getMyOccupantZone();
-        PackageInfo myPackageInfo = mRemoteDeviceManager.getEndpointPackageInfo(myZone);
+        PackageInfo myPackageInfo = mRemoteDeviceManager.getEndpointPackageInfo(mMyZone);
 
         assertThat(myPackageInfo).isNotNull();
 
@@ -90,5 +142,41 @@ public final class CarRemoteDeviceManagerTest extends AbstractCarTestCase {
                         .isEqualTo(myPackageInfo.getLongVersionCode());
             }
         }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.CarRemoteDeviceManager#setOccupantZonePower",
+            "android.car.CarRemoteDeviceManager#isOccupantZonePowerOn"})
+    public void testSetOccupantZonePower() {
+        for (OccupantZoneInfo zone : mAllZones) {
+            if (zone.equals(mMyZone)
+                    || zone.occupantType == CarOccupantZoneManager.OCCUPANT_TYPE_DRIVER) {
+                continue;
+            }
+
+            mRemoteDeviceManager.setOccupantZonePower(zone, false);
+            PollingCheck.waitFor(WAIT_TIME_MS,
+                    () -> !mRemoteDeviceManager.isOccupantZonePowerOn(zone));
+
+            mRemoteDeviceManager.setOccupantZonePower(zone, true);
+            PollingCheck.waitFor(WAIT_TIME_MS,
+                    () -> mRemoteDeviceManager.isOccupantZonePowerOn(zone));
+        }
+    }
+
+    /** Returns the peer occupant zones that have a non-system user assigned. */
+    private List<OccupantZoneInfo> getActivePeerZones() {
+        List<OccupantZoneInfo> activePeerZones = new ArrayList<>();
+        for (int i = 0; i < mAllZones.size(); i++) {
+            OccupantZoneInfo zone = mAllZones.get(i);
+            if (zone.equals(mMyZone)) {
+                continue;
+            }
+            int userId = mOccupantZoneManager.getUserForOccupant(zone);
+            if (userId != INVALID_USER_ID && !UserHandle.of(userId).isSystem()) {
+                activePeerZones.add(zone);
+            }
+        }
+        return activePeerZones;
     }
 }

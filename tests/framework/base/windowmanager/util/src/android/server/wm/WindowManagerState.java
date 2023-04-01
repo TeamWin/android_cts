@@ -1689,6 +1689,10 @@ public class WindowManagerState {
         private boolean mEnableRecentsScreenshot;
         private int mLastDropInputMode;
         private boolean mShouldSendCompatFakeFocus;
+        private int mOverrideOrientation;
+        private boolean mShouldForceRotateForCameraCompat;
+        private boolean mShouldRefreshActivityForCameraCompat;
+        private boolean mShouldRefreshActivityViaPauseForCameraCompat;
 
         Activity(ActivityRecordProto proto, WindowContainer parent) {
             super(proto.windowToken.windowContainer);
@@ -1707,7 +1711,12 @@ public class WindowManagerState {
             mEnableRecentsScreenshot = proto.enableRecentsScreenshot;
             mLastDropInputMode = proto.lastDropInputMode;
             mShouldSendCompatFakeFocus = proto.shouldSendCompatFakeFocus;
+            mOverrideOrientation = proto.overrideOrientation;
             mParent = parent;
+            mShouldForceRotateForCameraCompat = proto.shouldForceRotateForCameraCompat;
+            mShouldRefreshActivityForCameraCompat = proto.shouldRefreshActivityForCameraCompat;
+            mShouldRefreshActivityViaPauseForCameraCompat =
+                    proto.shouldRefreshActivityViaPauseForCameraCompat;
         }
 
         @NonNull
@@ -1758,13 +1767,28 @@ public class WindowManagerState {
             return mLastDropInputMode;
         }
 
-
         public boolean getShouldSendCompatFakeFocus() {
             return mShouldSendCompatFakeFocus;
         }
 
         public int getUiMode() {
             return mFullConfiguration.uiMode;
+        }
+
+        public int getOverrideOrientation() {
+            return mOverrideOrientation;
+        }
+
+        public boolean getShouldForceRotateForCameraCompat() {
+            return mShouldForceRotateForCameraCompat;
+        }
+
+        public boolean getShouldRefreshActivityForCameraCompat() {
+            return mShouldRefreshActivityForCameraCompat;
+        }
+
+        public boolean getShouldRefreshActivityViaPauseForCameraCompat() {
+            return mShouldRefreshActivityViaPauseForCameraCompat;
         }
 
         @Override

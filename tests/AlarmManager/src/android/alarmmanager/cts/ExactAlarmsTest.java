@@ -523,9 +523,9 @@ public class ExactAlarmsTest {
     }
 
     private static void assertTempWhitelistState(boolean whitelisted) {
-        final String selfUid = String.valueOf(Process.myUid());
+        final String selfAppId = String.valueOf(UserHandle.getAppId(Process.myUid()));
         SystemUtil.runShellCommand("cmd deviceidle tempwhitelist",
-                output -> (output.contains(selfUid) == whitelisted));
+                output -> (output.contains(selfAppId) == whitelisted));
     }
 
     @Test

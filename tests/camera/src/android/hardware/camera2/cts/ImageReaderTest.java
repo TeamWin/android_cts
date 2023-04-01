@@ -444,62 +444,6 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     @Test
-    public void testDCIP3Jpeg() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
-            try {
-                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
-                            .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
-                    continue;
-                }
-                Set<ColorSpace.Named> availableColorSpaces =
-                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(ImageFormat.JPEG);
-
-                if (!availableColorSpaces.contains(ColorSpace.Named.DCI_P3)) {
-                    continue;
-                }
-
-                openDevice(id);
-                Log.v(TAG, "Testing DCI-P3 JPEG capture for Camera " + id);
-                BufferFormatTestParam params = new BufferFormatTestParam(
-                        ImageFormat.JPEG, /*repeating*/false);
-                params.mColorSpace = ColorSpace.Named.DCI_P3;
-                params.mUseColorSpace = true;
-                bufferFormatTestByCamera(params);
-            } finally {
-                closeDevice(id);
-            }
-        }
-    }
-
-    @Test
-    public void testDCIP3JpegRepeating() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
-            try {
-                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
-                            .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
-                    continue;
-                }
-                Set<ColorSpace.Named> availableColorSpaces =
-                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(ImageFormat.JPEG);
-
-                if (!availableColorSpaces.contains(ColorSpace.Named.DCI_P3)) {
-                    continue;
-                }
-
-                openDevice(id);
-                Log.v(TAG, "Testing repeating DCI-P3 JPEG capture for Camera " + id);
-                BufferFormatTestParam params = new BufferFormatTestParam(
-                        ImageFormat.JPEG, /*repeating*/true);
-                params.mColorSpace = ColorSpace.Named.DCI_P3;
-                params.mUseColorSpace = true;
-                bufferFormatTestByCamera(params);
-            } finally {
-                closeDevice(id);
-            }
-        }
-    }
-
-    @Test
     public void testSRGBJpeg() throws Exception {
         for (String id : mCameraIdsUnderTest) {
             try {

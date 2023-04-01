@@ -18,9 +18,9 @@ package android.server.wm;
 
 import static android.server.wm.ActivityManagerTestBase.launchHomeActivityNoWait;
 import static android.server.wm.BarTestUtils.assumeHasStatusBar;
+import static android.server.wm.CtsWindowInfoUtils.waitForWindowOnTop;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
-import static android.server.wm.WaitForWindowInfo.waitForWindowOnTop;
 import static android.server.wm.WindowUntrustedTouchTest.MIN_POSITIVE_OPACITY;
 import static android.server.wm.app.Components.OverlayTestService.EXTRA_LAYOUT_PARAMS;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
