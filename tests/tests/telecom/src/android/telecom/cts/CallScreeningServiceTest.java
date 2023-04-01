@@ -230,11 +230,17 @@ public class CallScreeningServiceTest extends InstrumentationTestCase {
     private void setupConnectionService() throws Exception {
         mConnectionService = new MockConnectionService();
         CtsConnectionService.setUp(mConnectionService);
-
-        mTelecomManager.registerPhoneAccount(TEST_PHONE_ACCOUNT);
-        TestUtils.enablePhoneAccount(getInstrumentation(), TEST_PHONE_ACCOUNT_HANDLE);
-        // Wait till the adb commands have executed and account is enabled in Telecom database.
-        assertPhoneAccountEnabled(TEST_PHONE_ACCOUNT_HANDLE);
+        try {
+            mTelecomManager.registerPhoneAccount(TEST_PHONE_ACCOUNT);
+            TestUtils.enablePhoneAccount(getInstrumentation(), TEST_PHONE_ACCOUNT_HANDLE);
+            // Wait till the adb commands have executed and account is enabled in Telecom database.
+            assertPhoneAccountEnabled(TEST_PHONE_ACCOUNT_HANDLE);
+        } catch (Exception e) {
+            // Don't leak a set-up CtsConnectionService if registration fails, since its static
+            // state breaks following tests and hides the original culprit.
+            CtsConnectionService.tearDown();
+            throw e;
+        }
     }
 
     private void assertPhoneAccountEnabled(final PhoneAccountHandle handle) {
