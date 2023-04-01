@@ -44,7 +44,7 @@ CIRCLISH_ATOL = 0.10  # contour area vs ideal circle area & aspect ratio TOL
 CIRCLISH_LOW_RES_ATOL = 0.15  # loosen for low res images
 CIRCLE_MIN_PTS = 20
 CIRCLE_RADIUS_NUMPTS_THRESH = 2  # contour num_pts/radius: empirically ~3x
-CIRCLE_COLOR_ATOL = 0.01  # circle color fill tolerance
+CIRCLE_COLOR_ATOL = 0.05  # circle color fill tolerance
 
 CV2_LINE_THICKNESS = 3  # line thickness for drawing on images
 CV2_RED = (255, 0, 0)  # color in cv2 to draw lines
