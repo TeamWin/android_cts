@@ -16,7 +16,6 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventTypeWithAction;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangTypesAndWindowId;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangeTypesAndWindowTitle;
@@ -33,7 +32,6 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBIL
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_LONG_CLICKED;
-import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOWS_CHANGED;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ADDED;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS;
@@ -64,6 +62,7 @@ import android.accessibilityservice.cts.activities.NonDefaultDisplayActivity;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.LocaleManager;
+import android.app.PictureInPictureParams;
 import android.app.UiAutomation;
 import android.graphics.Rect;
 import android.os.LocaleList;
@@ -583,14 +582,18 @@ public class AccessibilityWindowQueryTest {
                 .hasSystemFeature(FEATURE_PICTURE_IN_PICTURE)) {
             return;
         }
-        sUiAutomation.executeAndWaitForEvent(() -> {
-            sInstrumentation.runOnMainSync(() -> {
-                mActivity.enterPictureInPictureMode();
-            });
-        }, filterForEventType(TYPE_WINDOWS_CHANGED), DEFAULT_TIMEOUT_MS);
-        sInstrumentation.waitForIdleSync();
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                () -> mActivity.enterPictureInPictureMode(
+                        new PictureInPictureParams.Builder().build())),
+                event -> (event.getWindowChanges() & AccessibilityEvent.WINDOWS_CHANGE_PIP) != 0
+                        && sUiAutomation.getWindows().stream().anyMatch(
+                                info -> info.getId() == event.getWindowId()
+                                        && info.isInPictureInPictureMode()
+                ),
+                DEFAULT_TIMEOUT_MS);
 
         // We should be able to find a picture-in-picture window now
+
         int numPictureInPictureWindows = 0;
         final List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
         final int windowCount = windows.size();
@@ -600,7 +603,7 @@ public class AccessibilityWindowQueryTest {
                 numPictureInPictureWindows++;
             }
         }
-        assertTrue(numPictureInPictureWindows >= 1);
+        assertTrue(numPictureInPictureWindows > 0);
     }
 
     @Test
