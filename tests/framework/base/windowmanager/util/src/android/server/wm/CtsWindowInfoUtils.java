@@ -17,15 +17,21 @@
 package android.server.wm;
 
 import android.Manifest;
+import android.app.Instrumentation;
+import android.app.UiAutomation;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.view.Window;
 import android.window.WindowInfosListenerForTest;
 import android.window.WindowInfosListenerForTest.WindowInfo;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
@@ -41,7 +47,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class WaitForWindowInfo {
+public class CtsWindowInfoUtils {
     /**
      * Calls the provided predicate each time window information changes.
      *
@@ -123,7 +129,7 @@ public class WaitForWindowInfo {
     }
 
     /**
-     * Calls {@link WaitForWindowInfo#waitForWindowOnTop(int, TimeUnit, Supplier)}. Adopts
+     * Calls {@link CtsWindowInfoUtils#waitForWindowOnTop(int, TimeUnit, Supplier)}. Adopts
      * required permissions and waits five seconds before timing out.
      *
      * @param window The window to wait on.
@@ -265,5 +271,86 @@ public class WaitForWindowInfo {
         }
 
         return satisfied.get();
+    }
+
+    /**
+     * Tap on the center coordinates of the specified window.
+     * </p>
+     * @param instrumentation Instrumentation object to use for tap.
+     * @param windowTokenSupplier Supplies the window token for the window to wait on. The
+     *                            supplier is called each time window infos change. If the
+     *                            supplier returns null, the window is assumed not visible
+     *                            yet.
+     * @return true if successfully tapped on the coordinates, false otherwise.
+     *
+     * @throws InterruptedException if failed to wait for WindowInfo
+     */
+    public static boolean tapOnWindowCenter(Instrumentation instrumentation,
+            @NonNull Supplier<IBinder> windowTokenSupplier) throws InterruptedException {
+        Rect bounds = getWindowBounds(windowTokenSupplier);
+        if (bounds == null) {
+            return false;
+        }
+
+        final Point coord = new Point(bounds.left + bounds.width() / 2,
+                bounds.top + bounds.height() / 2);
+        sendTap(instrumentation, coord);
+        return true;
+    }
+
+    /**
+     * Tap on the coordinates of the specified window, offset by the value passed in.
+     * </p>
+     * @param instrumentation Instrumentation object to use for tap.
+     * @param windowTokenSupplier Supplies the window token for the window to wait on. The
+     *                            supplier is called each time window infos change. If the
+     *                            supplier returns null, the window is assumed not visible
+     *                            yet.
+     * @param offset The offset from 0,0 of the window to tap on. If null, it will be ignored and
+     *               0,0 will be tapped.
+     * @return true if successfully tapped on the coordinates, false otherwise.
+     * @throws InterruptedException if failed to wait for WindowInfo
+     */
+    public static boolean tapOnWindow(Instrumentation instrumentation,
+            @NonNull Supplier<IBinder> windowTokenSupplier, @Nullable Point offset)
+            throws InterruptedException {
+        Rect bounds = getWindowBounds(windowTokenSupplier);
+        if (bounds == null) {
+            return false;
+        }
+
+        final Point coord = new Point(bounds.left + (offset != null ? offset.x : 0),
+                bounds.top + (offset != null ? offset.y : 0));
+        sendTap(instrumentation, coord);
+        return true;
+    }
+
+    private static Rect getWindowBounds(@NonNull Supplier<IBinder> windowTokenSupplier)
+            throws InterruptedException {
+        Rect bounds = new Rect();
+        Predicate<WindowInfo> predicate = windowInfo -> {
+            if (!windowInfo.bounds.isEmpty()) {
+                bounds.set(windowInfo.bounds);
+                return true;
+            }
+            return false;
+        };
+
+        if (!waitForWindowInfo(predicate, 5, TimeUnit.SECONDS, windowTokenSupplier)) {
+            return null;
+        }
+        return bounds;
+    }
+
+    private static void sendTap(Instrumentation instrumentation, Point coord) {
+        // Get anchor coordinates on the screen
+        final long downTime = SystemClock.uptimeMillis();
+
+        UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        CtsTouchUtils.injectDownEvent(uiAutomation, downTime, coord.x, coord.y, true, null);
+        CtsTouchUtils.injectUpEvent(uiAutomation, downTime, false, coord.x, coord.y,
+                true, null);
+
+        instrumentation.waitForIdleSync();
     }
 }

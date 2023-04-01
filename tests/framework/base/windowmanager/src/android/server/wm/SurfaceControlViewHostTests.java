@@ -16,9 +16,11 @@
 
 package android.server.wm;
 
+import static android.server.wm.CtsWindowInfoUtils.tapOnWindow;
+import static android.server.wm.CtsWindowInfoUtils.tapOnWindowCenter;
+import static android.server.wm.CtsWindowInfoUtils.waitForWindowInfo;
+import static android.server.wm.CtsWindowInfoUtils.waitForWindowInfos;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
-import static android.server.wm.WaitForWindowInfo.waitForWindowInfo;
-import static android.server.wm.WaitForWindowInfo.waitForWindowInfos;
 import static android.view.SurfaceControlViewHost.SurfacePackage;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
@@ -269,17 +271,20 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         }
     }
 
-    private void waitUntilEmbeddedViewDrawn() throws Throwable {
+    private void waitUntilViewDrawn(View view) throws Throwable {
         // We use frameCommitCallback because we need to ensure HWUI
         // has actually queued the frame.
         final CountDownLatch latch = new CountDownLatch(1);
         mActivityRule.runOnUiThread(() -> {
-            mEmbeddedView.getViewTreeObserver().registerFrameCommitCallback(
-                latch::countDown);
-            mEmbeddedView.invalidate();
+            view.getViewTreeObserver().registerFrameCommitCallback(
+                    latch::countDown);
+            view.invalidate();
         });
         assertTrue(latch.await(1, TimeUnit.SECONDS));
+    }
 
+    private void waitUntilEmbeddedViewDrawn() throws Throwable {
+        waitUntilViewDrawn(mEmbeddedView);
     }
 
     private String getTouchableRegionFromDump() {
@@ -540,6 +545,103 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         assertWindowFocused(mEmbeddedView, false);
         // assert host has focus
         assertWindowFocused(mSurfaceView, true);
+    }
+
+    @Test
+    public void testFocusWithTouch() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        // Tap where the embedded window is placed to ensure focus is given via touch
+        assertTrue("Failed to tap on embedded",
+                tapOnWindowCenter(mInstrumentation, () -> mEmbeddedView.getWindowToken()));
+        assertWindowFocused(mEmbeddedView, true);
+        // assert host does not have focus
+        assertWindowFocused(mSurfaceView, false);
+
+        // Tap where the host window is placed to ensure focus is given back to host when touched
+        assertTrue("Failed to tap on host",
+                tapOnWindowCenter(mInstrumentation, () -> mViewParent.getWindowToken()));
+        assertWindowFocused(mEmbeddedView, false);
+        // assert host does not have focus
+        assertWindowFocused(mViewParent, true);
+    }
+
+    @Test
+    public void testChildWindowFocusable() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        mEmbeddedView.setBackgroundColor(Color.BLUE);
+        View embeddedViewChild = new Button(mActivity);
+        embeddedViewChild.setBackgroundColor(Color.RED);
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        mActivityRule.runOnUiThread(() -> {
+            final WindowManager.LayoutParams embeddedViewChildParams =
+                    new WindowManager.LayoutParams(25, 25,
+                            WindowManager.LayoutParams.TYPE_APPLICATION, 0, PixelFormat.OPAQUE);
+            embeddedViewChildParams.token = mEmbeddedView.getWindowToken();
+            WindowManager wm = mActivity.getSystemService(WindowManager.class);
+            wm.addView(embeddedViewChild, embeddedViewChildParams);
+        });
+
+        waitUntilViewDrawn(embeddedViewChild);
+
+        assertTrue("Failed to tap on embedded child",
+                tapOnWindowCenter(mInstrumentation, () -> embeddedViewChild.getWindowToken()));
+        // When tapping on the child embedded window, it should gain focus.
+        assertWindowFocused(embeddedViewChild, true);
+        // assert parent embedded window does not have focus.
+        assertWindowFocused(mEmbeddedView, false);
+        // assert host does not have focus
+        assertWindowFocused(mSurfaceView, false);
+
+        assertTrue("Failed to tap on embedded parent",
+                tapOnWindow(mInstrumentation, () -> mEmbeddedView.getWindowToken(),
+                        null /* offset */));
+        // When tapping on the parent embedded window, it should gain focus.
+        assertWindowFocused(mEmbeddedView, true);
+        // assert child embedded window does not have focus.
+        assertWindowFocused(embeddedViewChild, false);
+        // assert host does not have focus
+        assertWindowFocused(mSurfaceView, false);
+    }
+
+    @Test
+    public void testWindowResumes_FocusTransfersToEmbedded() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        // When surface view is focused, it should transfer focus to the embedded view.
+        requestSurfaceViewFocus();
+        assertWindowFocused(mEmbeddedView, true);
+        // assert host does not have focus
+        assertWindowFocused(mSurfaceView, false);
+
+        WindowManager wm = mActivity.getSystemService(WindowManager.class);
+        View childView = new Button(mActivity);
+        mActivityRule.runOnUiThread(() -> {
+            final WindowManager.LayoutParams childWindowParams =
+                    new WindowManager.LayoutParams(25, 25,
+                            WindowManager.LayoutParams.TYPE_APPLICATION, 0, PixelFormat.OPAQUE);
+            wm.addView(childView, childWindowParams);
+        });
+        waitUntilViewDrawn(childView);
+        assertWindowFocused(childView, true);
+        // Neither host or embedded should be focus
+        assertWindowFocused(mSurfaceView, false);
+        assertWindowFocused(mEmbeddedView, false);
+
+        mActivityRule.runOnUiThread(() -> wm.removeView(childView));
+        mInstrumentation.waitForIdleSync();
+
+        assertWindowFocused(mEmbeddedView, true);
+        assertWindowFocused(mSurfaceView, false);
     }
 
     @Test
