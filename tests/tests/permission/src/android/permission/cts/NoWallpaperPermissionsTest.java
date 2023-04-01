@@ -17,11 +17,8 @@
 
 package android.permission.cts;
 
-import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 import static android.app.WallpaperManager.FLAG_LOCK;
 import static android.app.WallpaperManager.FLAG_SYSTEM;
-
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static org.junit.Assert.assertThrows;
 
@@ -155,34 +152,29 @@ public class NoWallpaperPermissionsTest extends AndroidTestCase {
         if (wallpaperNotSupported()) {
             return;
         }
+        String message = "with no permissions, getDrawable should throw a SecurityException";
+        assertSecurityException(mWM::getDrawable, message);
+        assertSecurityException(() -> mWM.getDrawable(FLAG_SYSTEM), message);
+        assertSecurityException(() -> mWM.getDrawable(FLAG_LOCK), message);
 
-        runWithShellPermissionIdentity(() -> {
-            String message = "getDrawable did not enforce READ_WALLPAPER_INTERNAL";
-            assertSecurityException(mWM::getDrawable, message);
-            assertSecurityException(() -> mWM.getDrawable(FLAG_SYSTEM), message);
-            assertSecurityException(() -> mWM.getDrawable(FLAG_LOCK), message);
+        message = "with no permissions, peekDrawable should throw a SecurityException";
+        assertSecurityException(mWM::peekDrawable, message);
+        assertSecurityException(() -> mWM.peekDrawable(FLAG_SYSTEM), message);
+        assertSecurityException(() -> mWM.peekDrawable(FLAG_LOCK), message);
 
-            message = "peekDrawable did not enforce READ_WALLPAPER_INTERNAL";
-            assertSecurityException(mWM::peekDrawable, message);
-            assertSecurityException(() -> mWM.peekDrawable(FLAG_SYSTEM), message);
-            assertSecurityException(() -> mWM.peekDrawable(FLAG_LOCK), message);
+        message = "with no permissions, getFastDrawable should throw a SecurityException";
+        assertSecurityException(mWM::getFastDrawable, message);
+        assertSecurityException(() -> mWM.getFastDrawable(FLAG_SYSTEM), message);
+        assertSecurityException(() -> mWM.getFastDrawable(FLAG_LOCK), message);
 
-            message = "getFastDrawable did not enforce READ_WALLPAPER_INTERNAL";
-            assertSecurityException(mWM::getFastDrawable, message);
-            assertSecurityException(() -> mWM.getFastDrawable(FLAG_SYSTEM), message);
-            assertSecurityException(() -> mWM.getFastDrawable(FLAG_LOCK), message);
+        message = "with no permissions, peekFastDrawable should throw a SecurityException";
+        assertSecurityException(mWM::peekFastDrawable, message);
+        assertSecurityException(() -> mWM.peekFastDrawable(FLAG_SYSTEM), message);
+        assertSecurityException(() -> mWM.peekFastDrawable(FLAG_LOCK), message);
 
-            message = "peekFastDrawable did not enforce READ_WALLPAPER_INTERNAL";
-            assertSecurityException(mWM::peekFastDrawable, message);
-            assertSecurityException(() -> mWM.peekFastDrawable(FLAG_SYSTEM), message);
-            assertSecurityException(() -> mWM.peekFastDrawable(FLAG_LOCK), message);
-
-            message = "getWallpaperFile did not enforce READ_WALLPAPER_INTERNAL";
-            assertSecurityException(() -> mWM.getWallpaperFile(FLAG_SYSTEM), message);
-            assertSecurityException(() -> mWM.getWallpaperFile(FLAG_LOCK), message);
-        }, MANAGE_EXTERNAL_STORAGE);
-
-
+        message = "with no permissions, getWallpaperFile should throw a SecurityException";
+        assertSecurityException(() -> mWM.getWallpaperFile(FLAG_SYSTEM), message);
+        assertSecurityException(() -> mWM.getWallpaperFile(FLAG_LOCK), message);
     }
 
     // ---------- Utility methods ----------
