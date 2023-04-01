@@ -88,18 +88,20 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void tearDown() throws Exception {
+        if (mShouldTestTelecom) {
+            ContentResolver resolver = getInstrumentation().getTargetContext().getContentResolver();
+
+            if (mPersonRecord != null) {
+                resolver.delete(mPersonRecord, null, null);
+            }
+            if (mPhoneRecord != null) {
+                resolver.delete(mPhoneRecord, null, null);
+            }
+
+            TestUtils.clearSystemDialerOverride(getInstrumentation());
+            TestUtils.removeTestEmergencyNumber(getInstrumentation(), TEST_EMERGENCY_NUMBER);
+        }
         super.tearDown();
-        ContentResolver resolver = getInstrumentation().getTargetContext().getContentResolver();
-
-        if (mPersonRecord != null) {
-            resolver.delete(mPersonRecord, null, null);
-        }
-        if(mPhoneRecord != null) {
-            resolver.delete(mPhoneRecord, null, null);
-        }
-
-        TestUtils.clearSystemDialerOverride(getInstrumentation());
-        TestUtils.removeTestEmergencyNumber(getInstrumentation(), TEST_EMERGENCY_NUMBER);
     }
 
     /* TODO: Need to send some commands to the UserManager via adb to do setup

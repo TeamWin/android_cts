@@ -35,6 +35,7 @@ public class MissedCallTest extends BaseTelecomTestWithMockServices {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        if (!mShouldTestTelecom) return;
         mContext = getInstrumentation().getContext();
 
         MockMissedCallNotificationReceiver.setIntentListener(new IntentListener() {
@@ -51,7 +52,9 @@ public class MissedCallTest extends BaseTelecomTestWithMockServices {
 
     @Override
     public void tearDown() throws Exception {
-        MockMissedCallNotificationReceiver.setIntentListener(null);
+        if (mShouldTestTelecom) {
+            MockMissedCallNotificationReceiver.setIntentListener(null);
+        }
         super.tearDown();
     }
 
