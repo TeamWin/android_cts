@@ -46,6 +46,10 @@ import static android.server.wm.ignorerequestedorientationoverrideoptout.Compone
 import static android.server.wm.optoutsandboxingviewboundsapis.Components.ACTION_TEST_VIEW_SANDBOX_OPT_OUT_PASSED;
 import static android.server.wm.optoutsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_OPT_OUT_ACTIVITY;
 import static android.server.wm.optoutsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_OPT_OUT_TIMEOUT_MS;
+import static android.server.wm.propertycameracompatallowforcerotation.Components.CAMERA_COMPAT_ALLOW_FORCE_ROTATION_ACTIVITY;
+import static android.server.wm.propertycameracompatallowrefresh.Components.CAMERA_COMPAT_ALLOW_REFRESH_ACTIVITY;
+import static android.server.wm.propertycameracompatenablerefreshviapauseoptin.Components.CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_IN_ACTIVITY;
+import static android.server.wm.propertycameracompatenablerefreshviapauseoptout.Components.CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_90;
@@ -71,6 +75,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.ConditionVariable;
@@ -370,6 +375,133 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
                 mWmState.getActivity(NO_PROPERTY_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
 
         assertEquals(SCREEN_ORIENTATION_PORTRAIT, activity.getOverrideOrientation());
+    }
+
+    @Test
+    public void testOptOutPropertyCameraCompatForceRotation_rotationDisabled() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                getCameraCompatForceRotationTreatmentConfig());
+
+        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        // Activity without property or override is eligible for force rotation.
+        assertTrue(activity.getShouldForceRotateForCameraCompat());
+
+        launchActivity(CAMERA_COMPAT_ALLOW_FORCE_ROTATION_ACTIVITY);
+
+        activity = mWmState.getActivity(CAMERA_COMPAT_ALLOW_FORCE_ROTATION_ACTIVITY);
+
+        assertFalse(activity.getShouldForceRotateForCameraCompat());
+    }
+
+
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_CAMERA_COMPAT_DISABLE_FORCE_ROTATION})
+    public void testOverrideForCameraCompatForceRotation_rotationDisabled() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                getCameraCompatForceRotationTreatmentConfig());
+
+        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        assertFalse(activity.getShouldForceRotateForCameraCompat());
+    }
+
+    @Test
+    public void testOptOutPropertyCameraCompatRefresh() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                getCameraCompatForceRotationTreatmentConfig());
+
+        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        // Activity without property or override is eligible for refresh.
+        assertTrue(activity.getShouldRefreshActivityForCameraCompat());
+
+        launchActivity(CAMERA_COMPAT_ALLOW_REFRESH_ACTIVITY);
+
+        activity = mWmState.getActivity(CAMERA_COMPAT_ALLOW_REFRESH_ACTIVITY);
+
+        assertFalse(activity.getShouldRefreshActivityForCameraCompat());
+    }
+
+
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_CAMERA_COMPAT_DISABLE_REFRESH})
+    public void testOverrideForCameraCompatRefresh() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                getCameraCompatForceRotationTreatmentConfig());
+
+        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        assertFalse(activity.getShouldRefreshActivityForCameraCompat());
+    }
+
+    @Test
+    public void testOptInPropertyCameraCompatRefreshViaPause() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                getCameraCompatForceRotationTreatmentConfig());
+
+        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        // Activity without property or override doesn't refresh via "resumed -> paused -> resumed".
+        assertFalse(activity.getShouldRefreshActivityViaPauseForCameraCompat());
+
+        launchActivity(CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_IN_ACTIVITY);
+
+        activity = mWmState.getActivity(CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_IN_ACTIVITY);
+
+        assertTrue(activity.getShouldRefreshActivityViaPauseForCameraCompat());
+    }
+
+
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE})
+    public void testOverrideForCameraCompatRefreshViaPause() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                getCameraCompatForceRotationTreatmentConfig());
+
+        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        WindowManagerState.Activity activity =
+                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+
+        assertTrue(activity.getShouldRefreshActivityViaPauseForCameraCompat());
+    }
+
+    @Test
+    public void testOptOutPropertyCameraCompatRefreshViaPause()
+            throws Exception  {
+        try (var compatChange = new CompatChangeCloseable(
+                ActivityInfo.OVERRIDE_CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE,
+                CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY.getPackageName())) {
+            launchActivity(CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY);
+
+            WindowManagerState.Activity activity =
+                    mWmState.getActivity(CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY);
+
+            assertFalse(activity.getShouldRefreshActivityViaPauseForCameraCompat());
+        }
+    }
+
+    boolean getCameraCompatForceRotationTreatmentConfig() {
+        return mContext.getResources().getBoolean(
+                Resources.getSystem().getIdentifier(
+                        "config_isWindowManagerCameraCompatTreatmentEnabled",
+                        "bool", "android"));
     }
 
     /**
