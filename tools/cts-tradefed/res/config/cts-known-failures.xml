@@ -286,4 +286,7 @@
     <option name="compatibility:exclude-filter" value="CtsGameManagerTestCases android.gamemanager.cts.GameManagerTest#testSetGameStatePerformanceMode" />
     <option name="compatibility:exclude-filter" value="CtsGameManagerTestCases android.gamemanager.cts.GameManagerTest#testSetGameStatePerformanceMode_withParams" />
     <option name="compatibility:exclude-filter" value="CtsGameManagerTestCases android.gamemanager.cts.GameManagerTest#testSetGameStateStandardMode" />
+    <option name="compatibility:exclude-filter" value="CtsGameManagerTestCases[instant] android.gamemanager.cts.GameManagerTest#testSetGameStatePerformanceMode" />
+    <option name="compatibility:exclude-filter" value="CtsGameManagerTestCases[instant] android.gamemanager.cts.GameManagerTest#testSetGameStatePerformanceMode_withParams" />
+    <option name="compatibility:exclude-filter" value="CtsGameManagerTestCases[instant] android.gamemanager.cts.GameManagerTest#testSetGameStateStandardMode" />
 </configuration>

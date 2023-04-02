@@ -40,6 +40,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
 public class SatelliteManagerTest extends SatelliteManagerTestBase {
     private boolean mIsSatelliteSupported = false;
     private boolean mOriginalIsSatelliteEnabled = false;

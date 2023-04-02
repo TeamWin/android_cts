@@ -51,6 +51,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public class SatelliteManagerTestBase {
     protected static String TAG = "SatelliteManagerTestBase";
@@ -229,11 +230,42 @@ public class SatelliteManagerTestBase {
     }
 
     protected static class SatelliteDatagramCallbackTest implements SatelliteDatagramCallback {
+        public SatelliteDatagram mDatagram;
+        private final Semaphore mSemaphore = new Semaphore(0);
+
         @Override
         public void onSatelliteDatagramReceived(long datagramId, SatelliteDatagram datagram,
-                int pendingCount, ILongConsumer callback) {
+                int pendingCount, Consumer<Void> callback) {
             logd("onSatelliteDatagramReceived: datagramId=" + datagramId + ", datagram="
                     + datagram + ", pendingCount=" + pendingCount);
+            mDatagram = datagram;
+            if (callback != null) {
+                logd("onSatelliteDatagramReceived: callback.accept() datagramId=" + datagramId);
+                callback.accept(null);
+            } else {
+                logd("onSatelliteDatagramReceived: callback is null datagramId=" + datagramId);
+            }
+
+            try {
+                mSemaphore.release();
+            } catch (Exception e) {
+                loge("onSatelliteDatagramReceived: Got exception, ex=" + e);
+            }
+        }
+
+        public boolean waitUntilResult(int expectedNumberOfEvents) {
+            for (int i = 0; i < expectedNumberOfEvents; i++) {
+                try {
+                    if (!mSemaphore.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
+                        loge("Timeout to receive onSatelliteDatagramReceived");
+                        return false;
+                    }
+                } catch (Exception ex) {
+                    loge("onSatelliteDatagramReceived: Got exception=" + ex);
+                    return false;
+                }
+            }
+            return true;
         }
     }
 
