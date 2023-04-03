@@ -20,6 +20,7 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.INTERNET;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
 import android.stats.devicepolicy.EventId;
@@ -29,23 +30,22 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
-import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.GlobalNetworkLogging;
-import com.android.bedstead.harrier.policies.GlobalSecurityLogging;
 import com.android.bedstead.harrier.policies.NetworkLogging;
-import com.android.bedstead.harrier.policies.SecurityLogging;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.compatibility.common.util.ApiTest;
 
+import org.junit.Assume;
 import org.junit.AssumptionViolatedException;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -82,7 +82,7 @@ public final class NetworkLoggingTest {
     @CannotSetPolicyTest(policy = {GlobalNetworkLogging.class, NetworkLogging.class})
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#isNetworkLoggingEnabled")
     public void isNetworkLoggingEnabled_notAllowed_throwsException() {
-        ensureNoAdditionalUsers();
+        ensureNoUnaffiliatedAdditionalUsers();
 
         assertThrows(SecurityException.class, () -> sDeviceState.dpc().devicePolicyManager()
                 .isNetworkLoggingEnabled(sDeviceState.dpc().componentName()));
@@ -93,7 +93,7 @@ public final class NetworkLoggingTest {
     @EnsureHasNoAdditionalUser
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#isNetworkLoggingEnabled")
     public void isNetworkLoggingEnabled_networkLoggingIsEnabled_returnsTrue() throws Exception {
-        ensureNoAdditionalUsers();
+        ensureNoUnaffiliatedAdditionalUsers();
 
         try {
             sDeviceState.dpc().devicePolicyManager().setNetworkLoggingEnabled(
@@ -111,7 +111,7 @@ public final class NetworkLoggingTest {
     @CanSetPolicyTest(policy = {GlobalNetworkLogging.class, NetworkLogging.class})
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#isNetworkLoggingEnabled")
     public void isNetworkLoggingEnabled_networkLoggingIsNotEnabled_returnsFalse() throws Exception {
-        ensureNoAdditionalUsers();
+        ensureNoUnaffiliatedAdditionalUsers();
 
         sDeviceState.dpc().devicePolicyManager().setNetworkLoggingEnabled(
                 sDeviceState.dpc().componentName(), false);
@@ -124,7 +124,7 @@ public final class NetworkLoggingTest {
     @PolicyAppliesTest(policy = {GlobalNetworkLogging.class, NetworkLogging.class})
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setNetworkLoggingEnabled")
     public void setNetworkLoggingEnabled_networkLoggingIsEnabled() throws Exception {
-        ensureNoAdditionalUsers();
+        ensureNoUnaffiliatedAdditionalUsers();
 
         try {
             sDeviceState.dpc().devicePolicyManager().setNetworkLoggingEnabled(
@@ -158,7 +158,7 @@ public final class NetworkLoggingTest {
             throw new AssertionError("Error receiving batch token. Relevant logs: "
                     + TestApis.logcat().dump(
                             l -> l.contains("NetworkLoggingHandler")
-                                    || l.contains("sendDeviceOwnerOrProfileOwnerCommand")));
+                                    || l.contains("sendDeviceOwnerOrProfileOwnerCommand")), e);
         }
     }
 
@@ -182,7 +182,7 @@ public final class NetworkLoggingTest {
     @CannotSetPolicyTest(policy = {GlobalNetworkLogging.class, NetworkLogging.class})
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setNetworkLoggingEnabled")
     public void setNetworkLoggingEnabled_notAllowed_throwsException() {
-        ensureNoAdditionalUsers();
+        ensureNoUnaffiliatedAdditionalUsers();
 
         assertThrows(SecurityException.class, () -> sDeviceState.dpc().devicePolicyManager()
                 .setNetworkLoggingEnabled(sDeviceState.dpc().componentName(), true));
@@ -192,7 +192,7 @@ public final class NetworkLoggingTest {
     @CannotSetPolicyTest(policy = {GlobalNetworkLogging.class, NetworkLogging.class})
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrieveNetworkLogs")
     public void retrieveNetworkLogs_notAllowed_throwsException() {
-        ensureNoAdditionalUsers();
+        ensureNoUnaffiliatedAdditionalUsers();
 
         assertThrows(SecurityException.class, () -> sDeviceState.dpc().devicePolicyManager()
                 .retrieveNetworkLogs(sDeviceState.dpc().componentName(), /*batchToken= */ 0));
@@ -244,7 +244,7 @@ public final class NetworkLoggingTest {
     @CanSetPolicyTest(policy = {GlobalNetworkLogging.class, NetworkLogging.class})
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrieveNetworkLogs")
     public void retrieveNetworkLogs_logsEvent() throws Exception {
-        ensureNoAdditionalUsers();
+        ensureNoUnaffiliatedAdditionalUsers();
 
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
             sDeviceState.dpc().devicePolicyManager().setNetworkLoggingEnabled(
@@ -327,7 +327,7 @@ public final class NetworkLoggingTest {
     @EnsureHasNoAdditionalUser
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrieveNetworkLogs")
     public void retrieveNetworkLogs_noAdditionalUser_doesNotThrowException() {
-        ensureNoAdditionalUsers();
+        ensureNoUnaffiliatedAdditionalUsers();
 
         try {
             sDeviceState.dpc().devicePolicyManager().setNetworkLoggingEnabled(
@@ -341,8 +341,14 @@ public final class NetworkLoggingTest {
         }
     }
 
-    private void ensureNoAdditionalUsers() {
+    private void ensureNoUnaffiliatedAdditionalUsers() {
         // TODO(273474964): Move into infra
+
+        // We need to skip tests on an unaffiliated user - this should be expressible in
+        // annotation so it doesn't generate the incorrect test
+        assumeTrue(
+                "Cannot run on an unaffiliate user", TestApis.devicePolicy().isAffiliated());
+
         TestApis.users().all().stream()
                 .filter(u -> !u.equals(TestApis.users().instrumented())
                         && !u.equals(TestApis.users().system())

@@ -24,6 +24,7 @@ import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLIC
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -46,6 +47,7 @@ import java.lang.annotation.Target;
         namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
         key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG
 )
+@EnsureHasNoDelegate
 public @interface IncludeRunOnPrimaryUser {
     /**
      * Weight sets the order that annotations will be resolved.

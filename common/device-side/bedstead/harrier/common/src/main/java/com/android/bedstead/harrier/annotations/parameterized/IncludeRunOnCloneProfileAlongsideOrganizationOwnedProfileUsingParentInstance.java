@@ -25,6 +25,7 @@ import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnCloneProfile;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -51,6 +52,7 @@ import java.lang.annotation.Target;
         namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
         key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG
 )
+@EnsureHasNoDelegate
 public @interface IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance {
     /**
      * Weight sets the order that annotations will be resolved.
