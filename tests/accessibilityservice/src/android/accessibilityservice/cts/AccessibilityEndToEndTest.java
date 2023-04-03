@@ -962,7 +962,8 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         final Button buttonWithTooltip = mActivity.findViewById(R.id.buttonWithTooltip);
         final int[] buttonWithTooltipLocation = new int[2];
         buttonWithTooltip.getLocationOnScreen(buttonWithTooltipLocation);
-        final int touchableSize = 48;
+        final int touchableSize = resources.getDimensionPixelSize(
+                R.dimen.button_touchable_width_increment_amount);
         final int hoverRight = buttonWithTooltipLocation[0] + touchableSize / 2;
         final int hoverLeft = buttonLocation[0] + button.getWidth() + touchableSize / 2;
         final int hoverMiddle = (hoverLeft + hoverRight) / 2;
@@ -1020,8 +1021,9 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
             throws Throwable {
         mActivity.waitForEnterAnimationComplete();
 
-        final int touchableSize = 48;
         final Resources resources = sInstrumentation.getTargetContext().getResources();
+        final int touchableSize = resources.getDimensionPixelSize(
+                R.dimen.button_touchable_width_increment_amount);
         final String targetResourceName = resources.getResourceName(R.id.buttonDelegated);
         final View textView = mActivity.findViewById(R.id.delegateText);
         final Button target = mActivity.findViewById(R.id.buttonDelegated);
