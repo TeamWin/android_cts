@@ -31,6 +31,8 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.stubs.LocalForegroundService.ACTION_START_FGS_RESULT;
 import static android.app.stubs.LocalForegroundServiceSticky.ACTION_RESTART_FGS_STICKY_RESULT;
 
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
@@ -199,6 +201,9 @@ public class ActivityManagerProcessStateTest {
                 am.forceStopPackage(pkgName);
             });
         }
+
+        // Override the memory pressure level, force it staying at normal.
+        runShellCommand(mInstrumentation, "am memory-factor set NORMAL");
     }
 
     @After
@@ -215,6 +220,9 @@ public class ActivityManagerProcessStateTest {
                 am.forceStopPackage(pkgName);
             });
         }
+
+        // Reset the memory pressure override
+        runShellCommand(mInstrumentation, "am memory-factor reset");
     }
 
     /**
