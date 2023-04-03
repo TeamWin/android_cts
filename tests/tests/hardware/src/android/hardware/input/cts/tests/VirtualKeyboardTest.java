@@ -29,6 +29,7 @@ import android.hardware.input.VirtualKeyboard;
 import android.hardware.input.VirtualKeyboardConfig;
 import android.os.Handler;
 import android.os.Looper;
+import android.platform.test.annotations.FlakyTest;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.InputDevice;
@@ -158,6 +159,7 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    @FlakyTest(bugId = 275149895)
     public void createVirtualKeyboard_layoutSelected() {
         setNewSettingsUiFlag(mInstrumentation.getTargetContext(), "true");
         mVirtualKeyboard.close();
