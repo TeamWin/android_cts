@@ -21,15 +21,10 @@ import android.media.MediaDrm;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.MediaCodecBlockModelHelper;
-import android.media.cts.Utils;
-import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.Presubmit;
-import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
-import android.util.Log;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
@@ -113,8 +108,7 @@ public class MediaDrmCodecBlockModelTest extends AndroidTestCase {
         MediaExtractor extractor = new MediaExtractor();
 
         try (final MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID)) {
-            Uri uri = Uri.parse(Utils.getMediaPath() + "/clearkey/llama_h264_main_720p_8000.mp4");
-            extractor.setDataSource(uri.toString(), null);
+            extractor.setDataSource(mInpPrefix + "llama_h264_main_720p_8000.mp4", null);
             extractor.selectTrack(0);
             extractor.seekTo(12083333, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
             drm.setOnEventListener(

@@ -16,6 +16,10 @@
 
 package android.media.drmframework.cts;
 
+import static junit.framework.Assert.assertTrue;
+
+import static org.testng.Assert.assertEquals;
+
 import android.media.MediaCrypto;
 import android.media.MediaCryptoException;
 import android.media.MediaDrm;
@@ -27,22 +31,18 @@ import android.media.metrics.MediaMetricsManager;
 import android.media.metrics.PlaybackSession;
 import android.os.PersistableBundle;
 import android.util.Log;
+
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.NonMainlineTest;
 
-import java.util.List;
-import java.util.UUID;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static junit.framework.Assert.assertTrue;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertThrows;
+import java.util.List;
+import java.util.UUID;
 
 @NonMainlineTest
 @RunWith(AndroidJUnit4.class)
