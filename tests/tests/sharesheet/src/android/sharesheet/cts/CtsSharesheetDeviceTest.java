@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -227,6 +228,10 @@ public class CtsSharesheetDeviceTest {
      */
     @Test
     public void bulkTest1() {
+        // Skip the test for automotive platform
+        assumeFalse("Skip test: does not apply to automotive",
+            mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+
         if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
 
         final CountDownLatch appStarted = new CountDownLatch(1);
@@ -261,6 +266,9 @@ public class CtsSharesheetDeviceTest {
 
     @Test
     public void bulkTest2() {
+        // Skip the test for automotive platform
+        assumeFalse("Skip test: does not apply to automotive",
+            mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
         if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
         runAndExecuteCleanupBeforeAnyThrow(() -> {
             addShortcuts(1);
