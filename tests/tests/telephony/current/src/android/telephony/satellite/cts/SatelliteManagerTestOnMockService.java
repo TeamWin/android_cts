@@ -127,8 +127,10 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         logd("testProvisionSatelliteService: provision and cancel");
         satelliteProvisionStateCallback.clearProvisionedStates();
         CancellationSignal cancellationSignal = new CancellationSignal();
-        mSatelliteManager.provisionSatelliteService(
-                TOKEN, REGION, cancellationSignal, getContext().getMainExecutor(), error::offer);
+        String mText = "This is test provision data.";
+        byte[] testProvisionData = mText.getBytes();
+        mSatelliteManager.provisionSatelliteService(TOKEN, testProvisionData, cancellationSignal,
+                getContext().getMainExecutor(), error::offer);
         cancellationSignal.cancel();
 
         Integer errorCode;

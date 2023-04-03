@@ -239,9 +239,11 @@ public class SatelliteManagerTestBase {
 
     protected boolean provisionSatellite() {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
+        String mText = "This is test provision data.";
+        byte[] testProvisionData = mText.getBytes();
 
         mSatelliteManager.provisionSatelliteService(
-                TOKEN, REGION, null, getContext().getMainExecutor(), error::offer);
+                TOKEN, testProvisionData, null, getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
             errorCode = error.poll(TIMEOUT, TimeUnit.MILLISECONDS);

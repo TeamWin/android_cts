@@ -140,11 +140,14 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
     @Test
     public void testProvisionSatelliteService() {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
+        String mText = "This is a test provision data.";
+        byte[] testProvisionData = mText.getBytes();
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class,
                 () -> mSatelliteManager.provisionSatelliteService(
-                        "", "", null, getContext().getMainExecutor(), error::offer));
+                        "", testProvisionData, null,
+                        getContext().getMainExecutor(), error::offer));
 
         if (!mIsSatelliteSupported) {
             Log.d(TAG, "testProvisionSatelliteService: Satellite is not supported "
@@ -170,8 +173,8 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
         }
 
         CancellationSignal cancellationSignal = new CancellationSignal();
-        mSatelliteManager.provisionSatelliteService(
-                TOKEN, REGION, cancellationSignal, getContext().getMainExecutor(), error::offer);
+        mSatelliteManager.provisionSatelliteService(TOKEN, testProvisionData, cancellationSignal,
+                getContext().getMainExecutor(), error::offer);
         cancellationSignal.cancel();
         Integer errorCode;
         try {
