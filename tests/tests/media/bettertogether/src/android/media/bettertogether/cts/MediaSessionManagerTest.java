@@ -48,6 +48,7 @@ import android.view.KeyEvent;
 
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
@@ -179,18 +180,20 @@ public class MediaSessionManagerTest {
         assertThat(keyEventSessionListener.mCountDownLatch
                 .await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         assertThat(keyEventSessionListener.mSessionToken).isNull();
-        assertThat(keyEventSessionListener.mPackageName).isEmpty();
+        if (ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)) {
+            assertThat(keyEventSessionListener.mPackageName).isEmpty();
+        }
 
         assertThat(mSessionManager.getMediaKeyEventSession()).isNull();
         assertThat(mSessionManager.getMediaKeyEventSessionPackageName()).isEqualTo("");
     }
 
     @Test
+    @NonMainlineTest
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testOnMediaKeyEventSessionChangedListener_noSession_passesEmptyPackageAndNullToken()
             throws InterruptedException {
         // The permission can be held only on S+
-        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
-
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.MEDIA_CONTENT_CONTROL);
 
@@ -202,7 +205,6 @@ public class MediaSessionManagerTest {
                 .await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         assertThat(keyEventSessionListener.mSessionToken).isNull();
         assertThat(keyEventSessionListener.mPackageName).isEmpty();
-
 
         // Clean up listener.
         mSessionManager.removeOnMediaKeyEventSessionChangedListener(keyEventSessionListener);
@@ -819,7 +821,11 @@ public class MediaSessionManagerTest {
         @Override
         public void onMediaKeyEventSessionChanged(String packageName,
                 MediaSession.Token sessionToken) {
-            assertWithMessage("The package name cannot be null.").that(packageName).isNotNull();
+            if (ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)) {
+                assertWithMessage("The package name cannot be null.")
+                        .that(packageName)
+                        .isNotNull();
+            }
             mSessionToken = sessionToken;
             mPackageName = packageName;
             mCountDownLatch.countDown();
