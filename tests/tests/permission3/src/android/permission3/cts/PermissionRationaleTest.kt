@@ -136,14 +136,28 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
 
     @Test
     fun clickLinkToHelpCenter_opensHelpCenter() {
+        Assume.assumeFalse(getPermissionControllerResString(HELP_CENTER_URL_ID).isNullOrEmpty())
+
         navigateToPermissionRationaleActivity()
+
         assertPermissionRationaleActivityTitleIsVisible(true)
+        assertHelpCenterLinkAvailable(true)
 
         clickHelpCenterLink()
 
         eventually {
             assertHelpCenterLinkClickSuccessful()
         }
+    }
+
+    @Test
+    fun noHelpCenterLinkAvailable_noHelpCenterClickAction() {
+        Assume.assumeTrue(getPermissionControllerResString(HELP_CENTER_URL_ID).isNullOrEmpty())
+
+        navigateToPermissionRationaleActivity()
+
+        assertPermissionRationaleActivityTitleIsVisible(true)
+        assertHelpCenterLinkAvailable(false)
     }
 
     @Test
@@ -283,6 +297,29 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
         pressBack()
     }
 
+    private fun assertHelpCenterLinkAvailable(expected: Boolean) {
+        // Message should always be visible
+        findView(By.res(LEARN_MORE_MESSAGE_ID), true)
+
+        // Verify the link is (or isn't) in message
+        eventually {
+            // UiObject2 doesn't expose CharSequence.
+            val node = uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByViewId(
+                LEARN_MORE_MESSAGE_ID
+            )[0]
+            assertTrue(node.isVisibleToUser)
+            val text = node.text as Spanned
+            val clickableSpans = text.getSpans(0, text.length, ClickableSpan::class.java)
+
+            if (expected) {
+                assertFalse("Expected help center link, but none found",
+                    clickableSpans.isEmpty())
+            } else {
+                assertTrue("Expected no links, but found one", clickableSpans.isEmpty())
+            }
+        }
+    }
+
     private fun assertPermissionSettingsVisible(expected: Boolean) {
         findView(By.res(DENY_RADIO_BUTTON), expected = expected)
     }
@@ -330,8 +367,9 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
                 Intent.ACTION_VIEW,
                 observedIntentAction)
 
+            val expectedUrl = getPermissionControllerResString(HELP_CENTER_URL_ID)!!
             assertFalse(observedIntentDataString.isNullOrEmpty())
-            assertTrue(observedIntentDataString?.startsWith(EXPECTED_HELP_CENTER_URL) ?: false)
+            assertTrue(observedIntentDataString?.startsWith(expectedUrl) ?: false)
 
             assertFalse(observedIntentScheme.isNullOrEmpty())
             assertEquals("https", observedIntentScheme)
@@ -346,7 +384,6 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
         private const val SETTINGS_MESSAGE_ID =
             "com.android.permissioncontroller:id/settings_message"
 
-        private const val EXPECTED_HELP_CENTER_URL =
-            "https://support.google.com/android?p=data_sharing"
+        private const val HELP_CENTER_URL_ID = "data_sharing_help_center_link"
     }
 }
