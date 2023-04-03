@@ -27,6 +27,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -42,6 +43,7 @@ import org.junit.runner.RunWith;
  * ensure a secondary user with a different icon is available, and because fetching the user's icon
  * to compare against requires the privileged MANAGE_USERS permission which can't be granted.
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4.class)
 public class PackageItemInfoIconTest {
 

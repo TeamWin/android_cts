@@ -20,11 +20,13 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ApplicationInfo.DisplayNameComparator;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 
 /**
  * Test {@link DisplayNameComparator}.
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ApplicationInfo_DisplayNameComparatorTest extends AndroidTestCase {
     private static final String PACKAGE_NAME = "android.content.cts";
     DisplayNameComparator mDisplayNameComparator;

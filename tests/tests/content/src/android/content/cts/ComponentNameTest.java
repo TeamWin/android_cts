@@ -19,11 +19,13 @@ package android.content.cts;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 
 /**
  * Test {@link ComponentName}.
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ComponentNameTest extends AndroidTestCase {
     public void testConstructor() {
         // new the ComponentName instance

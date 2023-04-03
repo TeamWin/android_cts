@@ -466,14 +466,16 @@
         </provider>
         <provider android:name="android.content.cts.MockSRSProvider"
              android:authorities="android.content.cts.MockSRSProvider"
-             android:exported="false"
+             android:exported="true"
              android:multiprocess="false"/>
         <provider android:name="android.content.cts.DummyProvider"
              android:authorities="android.content.cts.dummyprovider"
+             android:exported="true"
              android:multiprocess="true"/>
         <provider android:name="android.content.cts.MockRemoteContentProvider"
              android:authorities="remotectstest"
              android:process=":remoteprovider"
+             android:exported="true"
              android:multiprocess="false"/>
         <provider android:name="androidx.core.content.FileProvider"
              android:authorities="android.content.cts.fileprovider"
@@ -485,6 +487,7 @@
         <provider android:name="android.content.cts.TestPagingContentProvider"
              android:authorities="android.content.cts.testpagingprovider"
              android:process=":testpagingprovider"
+             android:exported="true"
              android:multiprocess="false"/>
 
         <provider android:name="android.content.cts.MockBuggyProvider"

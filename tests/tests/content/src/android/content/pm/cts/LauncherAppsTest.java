@@ -37,6 +37,7 @@ import android.content.pm.PackageManager;
 import android.os.Process;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -53,6 +54,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /** Some tests in this class are ignored until b/126946674 is fixed. */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4.class)
 public class LauncherAppsTest {
 

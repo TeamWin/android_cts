@@ -25,6 +25,7 @@ import android.content.ClipDescription;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 
 import androidx.test.filters.SmallTest;
@@ -35,6 +36,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ClipDataTest {
     private static final String LOG_TAG = "ClipDataTest";
 

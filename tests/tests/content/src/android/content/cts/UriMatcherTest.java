@@ -18,8 +18,10 @@ package android.content.cts;
 
 import android.content.UriMatcher;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class UriMatcherTest extends AndroidTestCase {
     UriMatcher mUriMatcher;
 

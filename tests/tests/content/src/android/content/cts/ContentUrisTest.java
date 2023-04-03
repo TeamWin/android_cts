@@ -19,8 +19,10 @@ package android.content.cts;
 import android.content.ContentUris;
 import android.net.Uri;
 import android.net.Uri.Builder;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ContentUrisTest extends AndroidTestCase {
     private static final String AUTHORITY = "ctstest";
     private static final String PATH1 = "testPath1";

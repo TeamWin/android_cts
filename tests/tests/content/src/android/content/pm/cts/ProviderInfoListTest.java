@@ -21,12 +21,14 @@ import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ProviderInfoList;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ProviderInfoListTest extends AndroidTestCase {
     private static final String PACKAGE_NAME = "android.content.cts";
 

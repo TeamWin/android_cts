@@ -25,6 +25,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 import android.util.Printer;
 import android.util.StringBuilderPrinter;
@@ -35,6 +36,7 @@ import com.android.compatibility.common.util.WidgetTestUtils;
 /**
  * Test {@link ComponentInfo}.
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ComponentInfoTest extends AndroidTestCase {
     private final String PACKAGE_NAME = "android.content.cts";
     private ComponentInfo mComponentInfo;

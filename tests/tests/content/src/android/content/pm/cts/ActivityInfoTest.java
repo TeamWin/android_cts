@@ -16,19 +16,20 @@
 
 package android.content.pm.cts;
 
-
-import android.content.cts.MockActivity;
 import android.content.ComponentName;
+import android.content.cts.MockActivity;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 import android.util.StringBuilderPrinter;
 
 /**
  * Test {@link ActivityInfo}.
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ActivityInfoTest extends AndroidTestCase {
     ActivityInfo mActivityInfo;
 

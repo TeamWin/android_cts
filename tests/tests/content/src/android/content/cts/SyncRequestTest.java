@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 import android.content.ContentResolver;
 import android.content.SyncRequest;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -30,6 +31,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class SyncRequestTest {
 
     @Test

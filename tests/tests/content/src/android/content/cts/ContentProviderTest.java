@@ -43,6 +43,7 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
@@ -73,6 +74,7 @@ import java.io.InputStream;
  * Test {@link ContentProvider}.
  */
 @RunWith(BedsteadJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ContentProviderTest {
     private static final String TEST_PACKAGE_NAME = "android.content.cts";
     private static final String TEST_FILE_NAME = "testFile.tmp";

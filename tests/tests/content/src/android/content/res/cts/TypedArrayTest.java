@@ -25,6 +25,7 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.Typeface;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -36,6 +37,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class TypedArrayTest extends AndroidTestCase {
     private static final int DEFINT = -1;
     private static final float DEFFLOAT = -1.0f;
