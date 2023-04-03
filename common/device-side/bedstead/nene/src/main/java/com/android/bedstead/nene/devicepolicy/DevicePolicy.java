@@ -796,4 +796,19 @@ public final class DevicePolicy {
             return configurations == null ? Set.of() : Set.copyOf(configurations);
         }
     }
+
+    /**
+     * True if either this is the system user or the user is affiliated with a device owner on
+     * the device.
+     */
+    @Experimental
+    public boolean isAffiliated() {
+        return isAffiliated(TestApis.users().instrumented());
+    }
+
+    // TODO(276248451): Make user handle aware so it'll work cross-user
+    @Experimental
+    private boolean isAffiliated(UserReference user) {
+        return devicePolicyManager(user).isAffiliatedUser();
+    }
 }

@@ -316,7 +316,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteDevicePolicyManager devicePolicyManager() {
-        return new RemoteDevicePolicyManagerWrapper(mConnector);
+        return new RemoteDevicePolicyManagerWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -325,7 +325,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteUserManager userManager() {
-        return new RemoteUserManagerWrapper(mConnector);
+        return new RemoteUserManagerWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -334,7 +334,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteWifiManager wifiManager() {
-        return new RemoteWifiManagerWrapper(mConnector);
+        return new RemoteWifiManagerWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -343,7 +343,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteHardwarePropertiesManager hardwarePropertiesManager() {
-        return new RemoteHardwarePropertiesManagerWrapper(mConnector);
+        return new RemoteHardwarePropertiesManagerWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -352,7 +352,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemotePackageManager packageManager() {
-        return new RemotePackageManagerWrapper(mConnector);
+        return new RemotePackageManagerWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -361,7 +361,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteCrossProfileApps crossProfileApps() {
-        return new RemoteCrossProfileAppsWrapper(mConnector);
+        return new RemoteCrossProfileAppsWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -370,7 +370,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteLauncherApps launcherApps() {
-        return new RemoteLauncherAppsWrapper(mConnector);
+        return new RemoteLauncherAppsWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -379,7 +379,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteAccountManager accountManager() {
-        return new RemoteAccountManagerWrapper(mConnector);
+        return new RemoteAccountManagerWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -388,7 +388,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteContext context() {
-        return new RemoteContextWrapper(mConnector);
+        return new RemoteContextWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -397,7 +397,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteKeyChain keyChain() {
-        return new RemoteKeyChainWrapper(mConnector);
+        return new RemoteKeyChainWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -406,7 +406,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteBluetoothManager bluetoothManager() {
-        return new RemoteBluetoothManagerWrapper(mConnector);
+        return new RemoteBluetoothManagerWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -415,7 +415,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteNotificationManager notificationManager() {
-        return new RemoteNotificationManagerWrapper(mConnector);
+        return new RemoteNotificationManagerWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -424,7 +424,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteTelecomManager telecomManager() {
-        return new RemoteTelecomManagerWrapper(mConnector);
+        return new RemoteTelecomManagerWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
@@ -433,7 +433,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * <p>Almost all methods are available. Those that are not will be missing from the interface.
      */
     public RemoteRestrictionsManager restrictionsManager() {
-        return new RemoteRestrictionsManagerWrapper(mConnector);
+        return new RemoteRestrictionsManagerWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**

@@ -71,6 +71,7 @@ import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.AppOp;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.Permission;
@@ -445,7 +446,8 @@ public final class Policy {
     private static Function<EnterprisePolicy, Set<Annotation>> generateDelegateAnnotation(
             Annotation annotation, boolean isPrimary) {
         return (policy) -> {
-            Annotation[] existingAnnotations = annotation.annotationType().getAnnotations();
+            Annotation[] existingAnnotations = filterAnnotations(
+                    annotation.annotationType().getAnnotations(), EnsureHasNoDelegate.class);
             return Arrays.stream(policy.delegatedScopes())
                     .map(scope -> {
                         Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
@@ -640,7 +642,8 @@ public final class Policy {
             String[] scopes = ALL_DELEGATE_SCOPES.stream()
                     .filter(i -> !validScopes.contains(i))
                     .toArray(String[]::new);
-            Annotation[] existingAnnotations = IncludeRunOnDeviceOwnerUser.class.getAnnotations();
+            Annotation[] existingAnnotations = filterAnnotations(
+                    IncludeRunOnDeviceOwnerUser.class.getAnnotations(), EnsureHasNoDelegate.class);
 
             String[] validPermissions = Arrays.stream(enterprisePolicy.permissions())
                     .map(p -> p.appliedWith()).toArray(String[]::new);
@@ -691,6 +694,15 @@ public final class Policy {
         }
 
         return new ArrayList<>(annotations);
+    }
+
+    /** Return {@code annotations} excluding any which are of type
+     * {@code filteredAnnotationClass}. */
+    private static Annotation[] filterAnnotations(Annotation[] annotations,
+            Class<? extends Annotation> filteredAnnotationClass) {
+        return Arrays.stream(annotations).filter(
+                f -> !f.annotationType().equals(filteredAnnotationClass))
+                .toArray(Annotation[]::new);
     }
 
     /**
