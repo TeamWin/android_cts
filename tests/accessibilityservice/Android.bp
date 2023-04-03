@@ -47,6 +47,7 @@ android_test {
         ":CtsInputMethod1",
         ":CtsAccessibilityMultipleServicesApp",
         ":CtsAccessibilityWidgetProvider",
+        ":CtsAccessibilityProxyApp",
     ],
 }
 
