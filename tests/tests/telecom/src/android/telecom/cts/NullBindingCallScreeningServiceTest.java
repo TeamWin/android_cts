@@ -56,14 +56,13 @@ public class NullBindingCallScreeningServiceTest extends BaseTelecomTestWithMock
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
-        if (!mShouldTestTelecom) {
-            return;
+        if (mShouldTestTelecom) {
+            // Remove the app from the screening role.
+            removeRoleHolder(ROLE_CALL_SCREENING,
+                    NullBindingCallScreeningService.class.getPackage().getName());
+            NullBindingCallScreeningService.disableNullBindingCallScreeningService(mContext);
         }
-        // Remove the app from the screening role.
-        removeRoleHolder(ROLE_CALL_SCREENING,
-                NullBindingCallScreeningService.class.getPackage().getName());
-        NullBindingCallScreeningService.disableNullBindingCallScreeningService(mContext);
+        super.tearDown();
     }
 
     public void testNullBindingOnIncomingCall() throws Exception {

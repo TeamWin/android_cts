@@ -79,33 +79,30 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void tearDown() throws Exception {
-        if (!mShouldTestTelecom) {
-            return;
-        }
-        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-            return;
-        }
-
         try {
-            disableAndVerifyCarMode(mCarModeIncallServiceControlOne,
-                    Configuration.UI_MODE_TYPE_NORMAL);
-            disableAndVerifyCarMode(mCarModeIncallServiceControlTwo,
-                    Configuration.UI_MODE_TYPE_NORMAL);
-            disconnectAllCallsAndVerify(mCarModeIncallServiceControlOne);
-            disconnectAllCallsAndVerify(mCarModeIncallServiceControlTwo);
+            if (mShouldTestTelecom
+                    && !mContext.getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_WATCH)) {
+                disableAndVerifyCarMode(mCarModeIncallServiceControlOne,
+                        Configuration.UI_MODE_TYPE_NORMAL);
+                disableAndVerifyCarMode(mCarModeIncallServiceControlTwo,
+                        Configuration.UI_MODE_TYPE_NORMAL);
+                disconnectAllCallsAndVerify(mCarModeIncallServiceControlOne);
+                disconnectAllCallsAndVerify(mCarModeIncallServiceControlTwo);
 
-            if (mCarModeIncallServiceControlOne != null) {
-                mCarModeIncallServiceControlOne.reset();
+                if (mCarModeIncallServiceControlOne != null) {
+                    mCarModeIncallServiceControlOne.reset();
+                }
+
+                if (mCarModeIncallServiceControlTwo != null) {
+                    mCarModeIncallServiceControlTwo.reset();
+                }
+
+                assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
+
+                InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                        .dropShellPermissionIdentity();
             }
-
-            if (mCarModeIncallServiceControlTwo != null) {
-                mCarModeIncallServiceControlTwo.reset();
-            }
-
-            assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
-
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity();
         } finally {
             super.tearDown();
         }

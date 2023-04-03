@@ -80,10 +80,10 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
 
     @Override
     protected void tearDown() throws Exception {
+        if (mShouldTestTelecom) {
+            mTelecomManager.unregisterPhoneAccount(TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
+        }
         super.tearDown();
-        if (!mShouldTestTelecom) return;
-
-        mTelecomManager.unregisterPhoneAccount(TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
     }
 
     public void testQueryLocationException() {

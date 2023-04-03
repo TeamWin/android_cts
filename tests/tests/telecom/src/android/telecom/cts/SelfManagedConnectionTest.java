@@ -185,24 +185,24 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void tearDown() throws Exception {
-        if (!mShouldTestTelecom) {
-            return;
+        if (mShouldTestTelecom) {
+            disableAndVerifyCarMode(mCarModeIncallServiceControlOne,
+                    Configuration.UI_MODE_TYPE_NORMAL);
+            disableAndVerifyCarMode(mCarModeIncallServiceControlTwo,
+                    Configuration.UI_MODE_TYPE_NORMAL);
+
+            disconnectAllCallsAndVerify(mCarModeIncallServiceControlOne);
+            disconnectAllCallsAndVerify(mCarModeIncallServiceControlTwo);
+
+            CtsSelfManagedConnectionService connectionService =
+                    CtsSelfManagedConnectionService.getConnectionService();
+            if (connectionService != null) {
+                connectionService.tearDown();
+                mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_4);
+                assertTrue(setDefaultDialer(mDefaultDialer));
+            }
         }
         super.tearDown();
-
-        disableAndVerifyCarMode(mCarModeIncallServiceControlOne, Configuration.UI_MODE_TYPE_NORMAL);
-        disableAndVerifyCarMode(mCarModeIncallServiceControlTwo, Configuration.UI_MODE_TYPE_NORMAL);
-
-        disconnectAllCallsAndVerify(mCarModeIncallServiceControlOne);
-        disconnectAllCallsAndVerify(mCarModeIncallServiceControlTwo);
-
-        CtsSelfManagedConnectionService connectionService =
-                CtsSelfManagedConnectionService.getConnectionService();
-        if (connectionService != null) {
-            connectionService.tearDown();
-            mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_4);
-            assertTrue(setDefaultDialer(mDefaultDialer));
-        }
     }
 
     /**
