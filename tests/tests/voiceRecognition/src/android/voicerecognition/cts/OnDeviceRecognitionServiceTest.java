@@ -61,8 +61,12 @@ public final class OnDeviceRecognitionServiceTest extends AbstractRecognitionSer
             mRecognizers.clear();
         }
 
-        getNonNullUiAutomation(UIAUTOMATION_CONNECTION_TIMEOUT_MILLIS)
-                .dropShellPermissionIdentity();
+        try {
+            getNonNullUiAutomation(UIAUTOMATION_CONNECTION_TIMEOUT_MILLIS)
+                    .dropShellPermissionIdentity();
+        } catch (Exception e) {
+            Log.w(TAG, "Tear down failed.", e);
+        }
     }
 
     @Override
