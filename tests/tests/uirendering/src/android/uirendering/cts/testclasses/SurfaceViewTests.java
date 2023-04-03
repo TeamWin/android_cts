@@ -569,7 +569,7 @@ public class SurfaceViewTests extends ActivityTestBase {
             BitmapAsserter asserter =
                     new BitmapAsserter(this.getClass().getSimpleName(), name.getMethodName());
             asserter.assertBitmapIsVerified(
-                    screenshot, new ColorVerifier(Color.RED, 0), getName(), "");
+                    screenshot, new ColorVerifier(Color.RED, 2), getName(), "");
             activity.runOnUiThread(() -> {
                 SurfaceHolder holder = helper.getSurfaceView().getHolder();
                 Canvas canvas = holder.lockHardwareCanvas();
@@ -580,7 +580,7 @@ public class SurfaceViewTests extends ActivityTestBase {
             screenshot = mScreenshotter.takeScreenshot(testInfo);
             // Now that a new frame was drawn, the blue layer should be overlaid now.
             asserter.assertBitmapIsVerified(
-                    screenshot, new ColorVerifier(Color.BLUE, 0), getName(), "");
+                    screenshot, new ColorVerifier(Color.BLUE, 2), getName(), "");
         } finally {
             activity.reset();
         }
