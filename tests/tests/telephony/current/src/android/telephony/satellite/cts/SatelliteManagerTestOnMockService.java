@@ -16,6 +16,7 @@
 
 package android.telephony.satellite.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -220,6 +221,30 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback1.modemState);
         }
         mSatelliteManager.unregisterForSatelliteModemStateChanged(callback1);
+
+        revokeSatellitePermission();
+    }
+
+    @Test
+    public void testSatelliteDatagramReceivedAck() {
+        grantSatellitePermission();
+
+        assertTrue(isSatelliteProvisioned());
+
+        SatelliteDatagramCallbackTest satelliteDatagramCallback =
+                new SatelliteDatagramCallbackTest();
+        mSatelliteManager.registerForSatelliteDatagram(
+                getContext().getMainExecutor(), satelliteDatagramCallback);
+
+        String receivedText = "This is a test datagram message from satellite";
+        android.telephony.satellite.stub.SatelliteDatagram receivedDatagram =
+                new android.telephony.satellite.stub.SatelliteDatagram();
+        receivedDatagram.data = receivedText.getBytes();
+        mMockSatelliteServiceManager.sendOnSatelliteDatagramReceived(receivedDatagram, 0);
+
+        assertTrue(satelliteDatagramCallback.waitUntilResult(1));
+        assertArrayEquals(satelliteDatagramCallback.mDatagram.getSatelliteDatagram(),
+                receivedText.getBytes());
 
         revokeSatellitePermission();
     }
