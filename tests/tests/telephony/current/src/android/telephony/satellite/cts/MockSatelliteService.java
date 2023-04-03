@@ -254,7 +254,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     }
 
     @Override
-    public void provisionSatelliteService(@NonNull String token, @NonNull String regionId,
+    public void provisionSatelliteService(@NonNull String token, @NonNull byte[] provisionData,
             @NonNull IIntegerConsumer errorCallback) {
         logd("provisionSatelliteService: mErrorCode=" + mErrorCode);
         if (mErrorCode != SatelliteError.ERROR_NONE) {
