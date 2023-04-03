@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.telephony.cts;
+package android.telephony.satellite.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -23,51 +23,24 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeNoException;
-import static org.junit.Assume.assumeTrue;
 
-import android.Manifest;
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.CancellationSignal;
 import android.os.OutcomeReceiver;
-import android.telephony.TelephonyManager;
-import android.telephony.satellite.PointingInfo;
 import android.telephony.satellite.SatelliteCapabilities;
 import android.telephony.satellite.SatelliteDatagram;
-import android.telephony.satellite.SatelliteDatagramCallback;
 import android.telephony.satellite.SatelliteManager;
-import android.telephony.satellite.SatelliteProvisionStateCallback;
-import android.telephony.satellite.SatelliteStateCallback;
-import android.telephony.satellite.SatelliteTransmissionUpdateCallback;
 import android.util.Log;
-
-import androidx.test.InstrumentationRegistry;
-
-import com.android.internal.telephony.ILongConsumer;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-public class SatelliteManagerTest {
-    private static final String TAG = "SatelliteManagerTest";
-
-    private static final String TOKEN = "TEST_TOKEN";
-    private static final String REGION = "TEST_REGION";
-
-    private static final long TIMEOUT = 1000;
-
-    private SatelliteManager mSatelliteManager;
+public class SatelliteManagerTest extends SatelliteManagerTestBase {
     private boolean mIsSatelliteSupported = false;
     private boolean mOriginalIsSatelliteEnabled = false;
     private boolean mOriginalIsSatelliteProvisioned = false;
@@ -75,15 +48,7 @@ public class SatelliteManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        assumeTrue(getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_TELEPHONY_SATELLITE));
-        try {
-            getContext().getSystemService(TelephonyManager.class)
-                    .getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
-        } catch (IllegalStateException e) {
-            assumeNoException("Skipping tests because Telephony service is null", e);
-        }
-        mSatelliteManager = getContext().getSystemService(SatelliteManager.class);
+        super.setUp();
 
         grantSatellitePermission();
         mIsSatelliteSupported = isSatelliteSupported();
@@ -101,7 +66,7 @@ public class SatelliteManagerTest {
                 provisioned = provisionSatellite();
                 if (provisioned) {
                     mIsProvisionable = true;
-                    assertTrue(satelliteProvisionStateCallback.waitUntilResult());
+                    assertTrue(satelliteProvisionStateCallback.waitUntilResult(1));
                     assertTrue(satelliteProvisionStateCallback.isProvisioned);
                 }
                 mSatelliteManager.unregisterForSatelliteProvisionStateChanged(
@@ -200,7 +165,7 @@ public class SatelliteManagerTest {
                 Log.d(TAG, "testProvisionSatelliteService: deprovisionSatellite failed");
                 return;
             }
-            assertTrue(satelliteProvisionStateCallback.waitUntilResult());
+            assertTrue(satelliteProvisionStateCallback.waitUntilResult(1));
             assertFalse(satelliteProvisionStateCallback.isProvisioned);
         }
 
@@ -390,16 +355,28 @@ public class SatelliteManagerTest {
         }
 
         boolean originalEnabledState = isSatelliteEnabled();
+        boolean registerCallback = false;
         if (originalEnabledState) {
+            registerCallback = true;
+
+            long registerResult = mSatelliteManager.registerForSatelliteModemStateChanged(
+                    getContext().getMainExecutor(), callback);
+            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertTrue(callback.waitUntilResult(1));
+
             requestSatelliteEnabled(false);
             assertFalse(isSatelliteEnabled());
+            assertTrue(callback.waitUntilResult(1));
+            assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
         }
-
-        long registerResult = mSatelliteManager
-                .registerForSatelliteModemStateChanged(getContext().getMainExecutor(), callback);
-        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
-        assertTrue(callback.waitUntilResult(1));
-        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+        if (!registerCallback) {
+            long registerResult = mSatelliteManager
+                    .registerForSatelliteModemStateChanged(getContext().getMainExecutor(),
+                            callback);
+            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertTrue(callback.waitUntilResult(1));
+            assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+        }
 
         requestSatelliteEnabled(true);
         assertTrue(isSatelliteEnabled());
@@ -407,7 +384,7 @@ public class SatelliteManagerTest {
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
 
         SatelliteStateCallbackTest callback1 = new SatelliteStateCallbackTest();
-        registerResult = mSatelliteManager
+        long registerResult = mSatelliteManager
                 .registerForSatelliteModemStateChanged(getContext().getMainExecutor(), callback1);
         assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
         assertTrue(callback1.waitUntilResult(1));
@@ -556,315 +533,5 @@ public class SatelliteManagerTest {
         assertThrows(SecurityException.class,
                 () -> mSatelliteManager.requestTimeForNextSatelliteVisibility(
                         getContext().getMainExecutor(), receiver));
-    }
-
-    private Context getContext() {
-        return InstrumentationRegistry.getContext();
-    }
-
-    private void grantSatellitePermission() {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(Manifest.permission.SATELLITE_COMMUNICATION);
-    }
-
-    private void revokeSatellitePermission() {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .dropShellPermissionIdentity();
-    }
-
-    private static class SatelliteTransmissionUpdateCallbackTest implements
-            SatelliteTransmissionUpdateCallback {
-        @Override
-        public void onSatellitePositionChanged(PointingInfo pointingInfo) {
-            Log.d(TAG, "onSatellitePositionChanged: pointingInfo=" + pointingInfo);
-        }
-
-        @Override
-        public void onSendDatagramStateChanged(int state, int sendPendingCount, int errorCode) {
-            Log.d(TAG, "onSendDatagramStateChanged: state=" + state + ", sendPendingCount="
-                    + sendPendingCount + ", errorCode=" + errorCode);
-        }
-
-        @Override
-        public void onReceiveDatagramStateChanged(int state, int receivePendingCount, int errorCode) {
-            Log.d(TAG, "onReceiveDatagramStateChanged: state=" + state + ", "
-                    + "receivePendingCount=" + receivePendingCount + ", errorCode=" + errorCode);
-        }
-    }
-
-    private static class SatelliteProvisionStateCallbackTest implements
-            SatelliteProvisionStateCallback {
-        public boolean isProvisioned = false;
-        private final Semaphore mSemaphore = new Semaphore(0);
-
-        @Override
-        public void onSatelliteProvisionStateChanged(boolean provisioned) {
-            Log.d(TAG, "onSatelliteProvisionStateChanged: provisioned=" + provisioned);
-            isProvisioned = provisioned;
-            try {
-                mSemaphore.release();
-            } catch (Exception ex) {
-                Log.d(TAG, "onSatelliteProvisionStateChanged: Got exception, ex=" + ex);
-            }
-        }
-
-        public boolean waitUntilResult() {
-            try {
-                if (!mSemaphore.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
-                    Log.d(TAG, "Timeout to receive onSatelliteProvisionStateChanged");
-                    return false;
-                }
-                return true;
-            } catch (Exception ex) {
-                Log.d(TAG, "onSatelliteProvisionStateChanged: Got exception=" + ex);
-                return false;
-            }
-        }
-    }
-
-    private static class SatelliteStateCallbackTest implements SatelliteStateCallback {
-        public int modemState = SatelliteManager.SATELLITE_MODEM_STATE_OFF;
-        private List<Integer> mModemStates = new ArrayList<>();
-        private final Object mModemStatesLock = new Object();
-        private final Semaphore mSemaphore = new Semaphore(0);
-
-        @Override
-        public void onSatelliteModemStateChanged(int state) {
-            Log.d(TAG, "onSatelliteModemStateChanged: state=" + state);
-            modemState = state;
-            synchronized (mModemStatesLock) {
-                mModemStates.add(state);
-            }
-            try {
-                mSemaphore.release();
-            } catch (Exception ex) {
-                Log.d(TAG, "onSatelliteModemStateChanged: Got exception, ex=" + ex);
-            }
-        }
-
-        public boolean waitUntilResult(int count) {
-            for (int i = 0; i < count; i++) {
-                try {
-                    if (!mSemaphore.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
-                        Log.d(TAG, "Timeout to receive onSatelliteModemStateChanged");
-                        return false;
-                    }
-                } catch (Exception ex) {
-                    Log.d(TAG, "onSatelliteModemStateChanged: Got exception=" + ex);
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        public void clearModemStates() {
-            synchronized (mModemStatesLock) {
-                mModemStates.clear();
-            }
-        }
-
-        public int getModemState(int index) {
-            synchronized (mModemStatesLock) {
-                if (index < mModemStates.size()) {
-                    return mModemStates.get(index);
-                } else {
-                    Log.e(TAG, "getModemState: invalid index=" + index
-                            + ", mModemStates.size=" + mModemStates.size());
-                    return -1;
-                }
-            }
-        }
-
-        public int getTotalCountOfModemStates() {
-            synchronized (mModemStatesLock) {
-                return mModemStates.size();
-            }
-        }
-    }
-
-    private static class SatelliteDatagramCallbackTest implements SatelliteDatagramCallback {
-        @Override
-        public void onSatelliteDatagramReceived(long datagramId, SatelliteDatagram datagram,
-                int pendingCount, ILongConsumer callback) {
-            Log.d(TAG, "onSatelliteDatagramReceived: datagramId=" + datagramId + ", datagram="
-                    + datagram + ", pendingCount=" + pendingCount);
-        }
-    }
-
-    private boolean provisionSatellite() {
-        LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
-
-        mSatelliteManager.provisionSatelliteService(
-                TOKEN, REGION, null, getContext().getMainExecutor(), error::offer);
-        Integer errorCode;
-        try {
-            errorCode = error.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ex) {
-            Log.d(TAG, "provisionSatellite ex=" + ex);
-            return false;
-        }
-        if (errorCode == null || errorCode != SatelliteManager.SATELLITE_ERROR_NONE) {
-            Log.d(TAG, "provisionSatellite failed with errorCode=" + errorCode);
-            return false;
-        }
-        return true;
-    }
-
-    private boolean deprovisionSatellite() {
-        LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
-
-        mSatelliteManager.deprovisionSatelliteService(
-                TOKEN, getContext().getMainExecutor(), error::offer);
-        Integer errorCode;
-        try {
-            errorCode = error.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ex) {
-            Log.d(TAG, "deprovisionSatellite ex=" + ex);
-            return false;
-        }
-        if (errorCode == null || errorCode != SatelliteManager.SATELLITE_ERROR_NONE) {
-            Log.d(TAG, "deprovisionSatellite failed with errorCode=" + errorCode);
-            return false;
-        }
-        return true;
-    }
-
-    private boolean isSatelliteProvisioned() {
-        final AtomicReference<Boolean> provisioned = new AtomicReference<>();
-        final AtomicReference<Integer> errorCode = new AtomicReference<>();
-        CountDownLatch latch = new CountDownLatch(1);
-        OutcomeReceiver<Boolean, SatelliteManager.SatelliteException> receiver =
-                new OutcomeReceiver<>() {
-                    @Override
-                    public void onResult(Boolean result) {
-                        provisioned.set(result);
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onError(SatelliteManager.SatelliteException exception) {
-                        errorCode.set(exception.getErrorCode());
-                        latch.countDown();
-                    }
-                };
-
-        mSatelliteManager.requestIsSatelliteProvisioned(
-                getContext().getMainExecutor(), receiver);
-        try {
-            assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
-        } catch (InterruptedException ex) {
-            Log.d(TAG, "isSatelliteProvisioned ex=" + ex);
-            return false;
-        }
-
-        Integer error = errorCode.get();
-        Boolean isProvisioned = provisioned.get();
-        if (error == null) {
-            assertNotNull(isProvisioned);
-            return isProvisioned;
-        } else {
-            assertNull(isProvisioned);
-            Log.d(TAG, "isSatelliteProvisioned error=" + error);
-            return false;
-        }
-    }
-
-    private boolean isSatelliteEnabled() {
-        final AtomicReference<Boolean> enabled = new AtomicReference<>();
-        final AtomicReference<Integer> errorCode = new AtomicReference<>();
-        CountDownLatch latch = new CountDownLatch(1);
-        OutcomeReceiver<Boolean, SatelliteManager.SatelliteException> receiver =
-                new OutcomeReceiver<>() {
-                    @Override
-                    public void onResult(Boolean result) {
-                        enabled.set(result);
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onError(SatelliteManager.SatelliteException exception) {
-                        errorCode.set(exception.getErrorCode());
-                        latch.countDown();
-                    }
-                };
-
-
-        mSatelliteManager.requestIsSatelliteEnabled(
-                getContext().getMainExecutor(), receiver);
-        try {
-            assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
-        } catch (InterruptedException ex) {
-            Log.d(TAG, "isSatelliteEnabled ex=" + ex);
-            return false;
-        }
-
-        Integer error = errorCode.get();
-        Boolean isEnabled = enabled.get();
-        if (error == null) {
-            assertNotNull(isEnabled);
-            return isEnabled;
-        } else {
-            assertNull(isEnabled);
-            Log.d(TAG, "isSatelliteEnabled error=" + error);
-            return false;
-        }
-    }
-
-    private void requestSatelliteEnabled(boolean enabled) {
-        LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
-        mSatelliteManager.requestSatelliteEnabled(
-                enabled, true, getContext().getMainExecutor(), error::offer);
-        Integer errorCode;
-        try {
-            errorCode = error.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ex) {
-            Log.d(TAG, "requestSatelliteEnabled: ex=" + ex);
-            fail("requestSatelliteEnabled failed with ex=" + ex);
-            return;
-        }
-        assertNotNull(errorCode);
-        Log.d(TAG, "requestSatelliteEnabled: errorCode=" + errorCode);
-        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, (long) errorCode);
-    }
-
-    private boolean isSatelliteSupported() {
-        final AtomicReference<Boolean> supported = new AtomicReference<>();
-        final AtomicReference<Integer> errorCode = new AtomicReference<>();
-        CountDownLatch latch = new CountDownLatch(1);
-        OutcomeReceiver<Boolean, SatelliteManager.SatelliteException> receiver =
-                new OutcomeReceiver<>() {
-                    @Override
-                    public void onResult(Boolean result) {
-                        supported.set(result);
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onError(SatelliteManager.SatelliteException exception) {
-                        errorCode.set(exception.getErrorCode());
-                        latch.countDown();
-                    }
-                };
-
-        mSatelliteManager.requestIsSatelliteSupported(getContext().getMainExecutor(),
-                receiver);
-        try {
-            assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
-        } catch (InterruptedException ex) {
-            Log.d(TAG, "isSatelliteSupported ex=" + ex);
-            return false;
-        }
-
-        Integer error = errorCode.get();
-        Boolean isSupported = supported.get();
-        if (error == null) {
-            assertNotNull(isSupported);
-            Log.d(TAG, "isSatelliteSupported isSupported=" + isSupported);
-            return isSupported;
-        } else {
-            assertNull(isSupported);
-            Log.d(TAG, "isSatelliteSupported error=" + error);
-            return false;
-        }
     }
 }
