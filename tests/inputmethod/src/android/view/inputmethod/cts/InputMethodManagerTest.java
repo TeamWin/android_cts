@@ -39,6 +39,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Debug;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.SecurityTest;
 import android.text.TextUtils;
 import android.view.View;
@@ -79,6 +80,7 @@ import java.util.stream.Collectors;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputMethodManagerTest {
     private static final String MOCK_IME_ID = "com.android.cts.mockime/.MockIme";
     private static final String MOCK_IME_LABEL = "Mock IME";

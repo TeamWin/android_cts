@@ -32,6 +32,7 @@ import static org.junit.Assert.fail;
 
 import android.graphics.Color;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
@@ -66,6 +67,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class EditTextImeSupportTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 

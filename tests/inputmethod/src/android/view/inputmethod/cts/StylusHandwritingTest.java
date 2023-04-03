@@ -48,6 +48,7 @@ import android.inputmethodservice.InputMethodService;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Pair;
@@ -98,6 +99,7 @@ import java.util.function.Predicate;
 /**
  * IMF and end-to-end Stylus handwriting tests.
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class StylusHandwritingTest extends EndToEndImeTestBase {
     private static final long TIMEOUT_IN_SECONDS = 5;
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(TIMEOUT_IN_SECONDS);

@@ -61,6 +61,7 @@ import android.graphics.RectF;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.server.wm.DisplayMetricsSession;
 import android.support.test.uiautomator.UiObject2;
 import android.text.TextUtils;
@@ -96,7 +97,6 @@ import androidx.window.extensions.layout.DisplayFeature;
 import androidx.window.extensions.layout.WindowLayoutInfo;
 
 import com.android.compatibility.common.util.ApiTest;
-import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEvent;
@@ -125,6 +125,7 @@ import java.util.function.Predicate;
  */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputMethodServiceTest extends EndToEndImeTestBase {
     private static final String TAG = "InputMethodServiceTest";
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(20);

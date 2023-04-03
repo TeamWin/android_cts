@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.KeyEvent;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.CompletionInfo;
@@ -54,6 +55,7 @@ import java.util.function.IntConsumer;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputConnectionDefaultMethodTest {
     @Mock private InputConnection mMockInputConnection;
     @Mock private IntConsumer mMockIntConsumer;

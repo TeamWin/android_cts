@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.Annotation;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -38,6 +39,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ExtractedTextTest {
 
     private static final int EXPECTED_FLAGS = ExtractedText.FLAG_SINGLE_LINE;

@@ -29,6 +29,7 @@ import static org.testng.Assert.expectThrows;
 import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.Editable;
 import android.text.Selection;
 import android.text.Spannable;
@@ -55,6 +56,7 @@ import org.junit.runner.RunWith;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class BaseInputConnectionTest {
 
     private static final int CAPS_MODE_MASK = TextUtils.CAP_MODE_CHARACTERS

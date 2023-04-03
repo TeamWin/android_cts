@@ -28,6 +28,7 @@ import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.MockTestActivityUtil;
 import android.view.inputmethod.cts.util.UnlockScreenRule;
@@ -51,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public final class PackageVisibilityTest extends EndToEndImeTestBase {
     static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 

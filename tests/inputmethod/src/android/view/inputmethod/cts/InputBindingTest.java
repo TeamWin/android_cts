@@ -22,6 +22,7 @@ import static org.junit.Assert.assertSame;
 
 import android.os.Binder;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.View;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.InputBinding;
@@ -35,6 +36,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputBindingTest {
     @Test
     public void testInputBinding() {

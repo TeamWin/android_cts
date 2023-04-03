@@ -20,6 +20,7 @@ import android.app.UiAutomation
 import android.content.Context
 import android.os.Bundle
 import android.os.Looper
+import android.platform.test.annotations.AppModeSdkSandbox
 import android.provider.Settings
 import android.text.style.SuggestionSpan
 import android.text.style.SuggestionSpan.FLAG_GRAMMAR_ERROR
@@ -66,6 +67,12 @@ import com.android.cts.mockspellchecker.MockSpellCheckerClient
 import com.android.cts.mockspellchecker.MockSpellCheckerProto
 import com.android.cts.mockspellchecker.MockSpellCheckerProto.MockSpellCheckerConfiguration
 import com.google.common.truth.Truth.assertThat
+import java.lang.IllegalArgumentException
+import java.util.Locale
+import java.util.concurrent.Executor
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import kotlin.collections.ArrayList
 import org.junit.Assert.assertThrows
 import org.junit.Assert.fail
 import org.junit.Assume
@@ -73,15 +80,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.lang.IllegalArgumentException
-import java.util.Locale
-import java.util.concurrent.Executor
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
-import kotlin.collections.ArrayList
 
 @MediumTest
 @RunWith(AndroidJUnit4::class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 class SpellCheckerTest : EndToEndImeTestBase() {
 
     private val TAG = "SpellCheckerTest"

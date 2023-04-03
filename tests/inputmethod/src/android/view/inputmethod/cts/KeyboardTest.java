@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.Keyboard.Key;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -32,6 +33,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class KeyboardTest {
     @Test
     public void testKeyOnPressedAndReleased() {

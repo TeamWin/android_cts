@@ -49,6 +49,7 @@ import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Process;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.Annotation;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -132,6 +133,7 @@ import java.util.function.Predicate;
  */
 @LargeTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     private static final long TIME_SLICE = TimeUnit.MILLISECONDS.toMillis(125);
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);

@@ -67,6 +67,7 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.server.wm.WindowManagerState;
 import android.support.test.uiautomator.UiObject2;
 import android.text.TextUtils;
@@ -132,6 +133,7 @@ import java.util.function.Predicate;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     private static final String TAG = KeyboardVisibilityControlTest.class.getSimpleName();
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(6);
