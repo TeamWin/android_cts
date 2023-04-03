@@ -16,6 +16,9 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
+import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
+import static android.Manifest.permission.INTERNAL_SYSTEM_WINDOW;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 
 import static org.junit.Assert.fail;
@@ -33,6 +36,7 @@ import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.hardware.display.VirtualDisplayConfig;
 import android.hardware.input.InputManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -68,14 +72,12 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     protected static final int DISPLAY_WIDTH = 100;
     protected static final int DISPLAY_HEIGHT = 100;
 
-    // Uses:
-    // Manifest.permission.CREATE_VIRTUAL_DEVICE,
-    // Manifest.permission.ADD_TRUSTED_DISPLAY
-    // These cannot be specified as part of the call as ADD_TRUSTED_DISPLAY is hidden and therefore
-    // not visible to CTS.
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
-            InstrumentationRegistry.getInstrumentation().getUiAutomation());
+            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+            INTERNAL_SYSTEM_WINDOW,  // in order to start activities on any display
+            CREATE_VIRTUAL_DEVICE,
+            ADD_TRUSTED_DISPLAY);
 
     private final CountDownLatch mLatch = new CountDownLatch(1);
     private final InputManager.InputDeviceListener mInputDeviceListener =
@@ -109,7 +111,10 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         @Override
         public void close() {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity();
+                    .adoptShellPermissionIdentity(
+                            INTERNAL_SYSTEM_WINDOW,
+                            CREATE_VIRTUAL_DEVICE,
+                            ADD_TRUSTED_DISPLAY);
         }
     }
 
@@ -253,12 +258,11 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     }
 
     public VirtualDisplay createUnownedVirtualDisplay() {
-        return DisplayManager.createVirtualDisplay(
-                "test",
-                /* width= */ DISPLAY_WIDTH,
-                /* height= */ DISPLAY_HEIGHT,
-                /* displayIdToMirror= */ 50,
-                /* surface= */ null
-        );
+        Context context = InstrumentationRegistry.getTargetContext();
+        DisplayManager displayManager = context.getSystemService(DisplayManager.class);
+        VirtualDisplayConfig config = new VirtualDisplayConfig.Builder(
+                "testVirtualDisplay", DISPLAY_WIDTH, DISPLAY_HEIGHT, /*densityDpi=*/100)
+                .build();
+        return displayManager.createVirtualDisplay(config);
     }
 }
