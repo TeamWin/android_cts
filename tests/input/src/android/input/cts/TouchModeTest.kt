@@ -21,6 +21,7 @@ import android.app.Activity
 import android.app.ActivityOptions
 import android.app.Instrumentation
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
@@ -110,6 +111,11 @@ class TouchModeTest {
         return activity.window.decorView.isInTouchMode
     }
 
+    fun isRunningActivitiesOnSecondaryDisplaysSupported(): Boolean {
+        return instrumentation.context.packageManager.hasSystemFeature(
+                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS)
+    }
+
     @Test
     fun testFocusedWindowOwnerCanChangeTouchMode() {
         instrumentation.setInTouchMode(true)
@@ -182,6 +188,7 @@ class TouchModeTest {
      */
     @Test
     fun testTouchModeUpdate_PerDisplayFocusDisabled() {
+        assumeTrue(isRunningActivitiesOnSecondaryDisplaysSupported())
         assumeFalse("This test requires config_perDisplayFocusEnabled to be false",
                 targetContext.resources.getBoolean(targetContext.resources.getIdentifier(
                         "config_perDisplayFocusEnabled", "bool", "android")))
@@ -204,6 +211,7 @@ class TouchModeTest {
      */
     @Test
     fun testTouchModeUpdate_PerDisplayFocusEnabled() {
+        assumeTrue(isRunningActivitiesOnSecondaryDisplaysSupported())
         assumeTrue("This test requires config_perDisplayFocusEnabled to be true",
                 targetContext.resources.getBoolean(targetContext.resources.getIdentifier(
                         "config_perDisplayFocusEnabled", "bool", "android")))
@@ -228,6 +236,7 @@ class TouchModeTest {
      */
     @Test
     fun testTouchModeUpdate_DisplayHasOwnFocus() {
+        assumeTrue(isRunningActivitiesOnSecondaryDisplaysSupported())
         createVirtualDisplay(VIRTUAL_DISPLAY_FLAG_OWN_FOCUS or VIRTUAL_DISPLAY_FLAG_TRUSTED)
         injectMotionEventOnMainDisplay()
 
