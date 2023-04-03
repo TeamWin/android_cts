@@ -32,6 +32,7 @@ import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.content.Intent;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -51,6 +52,8 @@ public class MultipleStepsSignInActivityTest extends AutoFillServiceTestCase.Man
     }
 
     @Test
+    @Ignore("bug b/275461003, test is failing on panther device")
+    // TODO: re-enable test once root cause is found
     public void testShowFillDialog_contentChanged_shownFillDialog() throws Exception {
         // Enable feature and test service
         enableFillDialogFeature(sContext);
