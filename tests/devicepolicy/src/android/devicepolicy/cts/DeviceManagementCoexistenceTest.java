@@ -314,9 +314,9 @@ public final class DeviceManagementCoexistenceTest {
         }
     }
 
-    // If ResetPasswordWithTokenTest for managed profile is executed before device owner and
-    // primary user profile owner tests, password reset token would have been disabled for the
-    // primary user, disabling this test until this gets fixed.
+    @Ignore("If ResetPasswordWithTokenTest for managed profile is executed before device owner "
+            + "and primary user profile owner tests, password reset token would have been disabled "
+            + "for the primary user, disabling this test until this gets fixed.")
     @Test
     @EnsureHasDevicePolicyManagerRoleHolder
     @EnsureHasDeviceOwner
