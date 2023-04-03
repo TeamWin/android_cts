@@ -334,18 +334,6 @@ public class DisplayTest {
     }
 
     /**
-     * Verify that the supported HDR types for each mode match the display's supported HDR types
-     */
-    @Test
-    public void testModeHdrTypesMatchDisplayHdrTypes() {
-        int[] supportedHdrTypes = mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes();
-
-        for (Display.Mode mode : mDefaultDisplay.getSupportedModes()) {
-            assertArrayEquals(supportedHdrTypes, mode.getSupportedHdrTypes());
-        }
-    }
-
-    /**
      * Verify that the WindowManager returns the default display.
      */
     @Presubmit
@@ -772,6 +760,8 @@ public class DisplayTest {
         assertEquals(targetMode.getPhysicalWidth(), currentMode.mWidth);
         assertEquals(targetMode.getRefreshRate(), currentMode.mRefreshRate, REFRESH_RATE_TOLERANCE);
         assertArrayEquals(targetMode.getSupportedHdrTypes(), currentMode.mSupportedHdrTypes);
+        assertArrayEquals(mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes(),
+                currentMode.mSupportedHdrTypes);
 
 
         boolean isResolutionSwitch = initialMode.mHeight != targetMode.getPhysicalHeight()
