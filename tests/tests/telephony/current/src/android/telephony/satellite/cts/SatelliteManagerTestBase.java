@@ -21,8 +21,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeNoException;
-import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.annotation.NonNull;
@@ -42,8 +40,6 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
-import com.android.internal.telephony.ILongConsumer;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -57,25 +53,34 @@ public class SatelliteManagerTestBase {
     protected static String TAG = "SatelliteManagerTestBase";
 
     protected static final String TOKEN = "TEST_TOKEN";
-    protected static final String REGION = "TEST_REGION";
-
     protected static final long TIMEOUT = 1000;
+    protected static SatelliteManager sSatelliteManager;
 
-    protected SatelliteManager mSatelliteManager;
+    protected static void beforeAllTestsBase() {
+        sSatelliteManager = getContext().getSystemService(SatelliteManager.class);
+    }
 
-    public void setUp() throws Exception {
-        assumeTrue(getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_TELEPHONY_SATELLITE));
+    protected static void afterAllTestsBase() {
+        sSatelliteManager = null;
+    }
+
+    protected static boolean shouldTestSatellite() {
+        if (!getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY_SATELLITE)) {
+            logd("Skipping tests because because FEATURE_TELEPHONY_SATELLITE is not available");
+            return false;
+        }
         try {
             getContext().getSystemService(TelephonyManager.class)
                     .getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
         } catch (IllegalStateException e) {
-            assumeNoException("Skipping tests because Telephony service is null", e);
+            logd("Skipping tests because Telephony service is null, exception=" + e);
+            return false;
         }
-        mSatelliteManager = getContext().getSystemService(SatelliteManager.class);
+        return true;
     }
 
-    protected Context getContext() {
+    protected static Context getContext() {
         return InstrumentationRegistry.getContext();
     }
 
@@ -274,7 +279,7 @@ public class SatelliteManagerTestBase {
         String mText = "This is test provision data.";
         byte[] testProvisionData = mText.getBytes();
 
-        mSatelliteManager.provisionSatelliteService(
+        sSatelliteManager.provisionSatelliteService(
                 TOKEN, testProvisionData, null, getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
@@ -293,7 +298,7 @@ public class SatelliteManagerTestBase {
     protected boolean deprovisionSatellite() {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
 
-        mSatelliteManager.deprovisionSatelliteService(
+        sSatelliteManager.deprovisionSatelliteService(
                 TOKEN, getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
@@ -328,7 +333,7 @@ public class SatelliteManagerTestBase {
                     }
                 };
 
-        mSatelliteManager.requestIsSatelliteProvisioned(
+        sSatelliteManager.requestIsSatelliteProvisioned(
                 getContext().getMainExecutor(), receiver);
         try {
             assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
@@ -369,7 +374,7 @@ public class SatelliteManagerTestBase {
                 };
 
 
-        mSatelliteManager.requestIsSatelliteEnabled(
+        sSatelliteManager.requestIsSatelliteEnabled(
                 getContext().getMainExecutor(), receiver);
         try {
             assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
@@ -392,7 +397,7 @@ public class SatelliteManagerTestBase {
 
     protected void requestSatelliteEnabled(boolean enabled) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
-        mSatelliteManager.requestSatelliteEnabled(
+        sSatelliteManager.requestSatelliteEnabled(
                 enabled, true, getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
@@ -424,7 +429,7 @@ public class SatelliteManagerTestBase {
                     }
                 };
 
-        mSatelliteManager.requestIsSatelliteSupported(getContext().getMainExecutor(),
+        sSatelliteManager.requestIsSatelliteSupported(getContext().getMainExecutor(),
                 receiver);
         try {
             assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
