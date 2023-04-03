@@ -1,4 +1,15 @@
 {
+  "presubmit": [
+    {
+      "name": "CtsHardwareTestCases",
+      "options": [
+        {
+          "exclude-annotation": "android.platform.test.annotations.FlakyTest"
+        }
+      ]
+    }
+  ],
+
   "kernel-presubmit": [
     {
       "name": "CtsHardwareTestCases",
