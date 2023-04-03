@@ -1711,6 +1711,14 @@ public class CameraTestUtils extends Assert {
      * Check if image size and format match given size and format.
      */
     public static void checkImage(Image image, int width, int height, int format) {
+        checkImage(image, width, height, format, /*colorSpace*/null);
+    }
+
+    /**
+     * Check if image size and format match given size and format.
+     */
+    public static void checkImage(Image image, int width, int height, int format,
+            ColorSpace colorSpace) {
         // Image reader will wrap YV12/NV21 image by YUV_420_888
         if (format == ImageFormat.NV21 || format == ImageFormat.YV12) {
             format = ImageFormat.YUV_420_888;
@@ -1719,6 +1727,17 @@ public class CameraTestUtils extends Assert {
         assertEquals("Format doesn't match", format, image.getFormat());
         assertEquals("Width doesn't match", width, image.getWidth());
         assertEquals("Height doesn't match", height, image.getHeight());
+
+        if (colorSpace != null && format != ImageFormat.JPEG && format != ImageFormat.JPEG_R
+                && format != ImageFormat.HEIC) {
+            int dataSpace = image.getDataSpace();
+            ColorSpace actualColorSpace = ColorSpace.getFromDataSpace(dataSpace);
+            assertNotNull("getFromDataSpace() returned null for format "
+                    + format + ", dataSpace " + dataSpace, actualColorSpace);
+            assertEquals("colorSpace " + actualColorSpace.getId()
+                    + " does not match expected color space "
+                    + colorSpace.getId(), colorSpace.getId(), actualColorSpace.getId());
+        }
     }
 
     /**
@@ -2515,7 +2534,7 @@ public class CameraTestUtils extends Assert {
      */
     public static void validateImage(Image image, int width, int height, int format,
             String filePath, ColorSpace colorSpace) {
-        checkImage(image, width, height, format);
+        checkImage(image, width, height, format, colorSpace);
 
         /**
          * TODO: validate timestamp:
