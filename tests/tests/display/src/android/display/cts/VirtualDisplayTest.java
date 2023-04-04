@@ -43,6 +43,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
@@ -76,6 +77,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * are required.  See also framework VirtualDisplayTest unit tests.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class VirtualDisplayTest {
     private static final String TAG = "VirtualDisplayTest";
 

@@ -37,6 +37,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -63,6 +64,7 @@ import java.util.concurrent.TimeUnit;
  * Tests that applications can receive display events correctly.
  */
 @RunWith(Parameterized.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class DisplayEventTest {
     private static final String TAG = "DisplayEventTest";
 
