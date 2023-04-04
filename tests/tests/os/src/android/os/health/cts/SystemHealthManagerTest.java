@@ -20,6 +20,7 @@ import android.content.Context;
 import android.os.Process;
 import android.os.health.HealthStats;
 import android.os.health.SystemHealthManager;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
@@ -28,6 +29,7 @@ import junit.framework.Assert;
 /**
  * Provides test cases for android.os.health.TimerStat.
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class SystemHealthManagerTest extends InstrumentationTestCase {
     /**
      * Tests that takeMyUidSnapshot returns a HealthStats object.
