@@ -467,12 +467,12 @@ public class AccessibilityDisplayProxyTest {
     public void testGetFocus_proxyGetsAccessibilityFocus() throws TimeoutException {
         registerProxyAndEnableTouchExploration();
 
-        final EditText editText = mProxyedVirtualDisplayActivity.findViewById(R.id.edit_text);
-        setAccessibilityFocus(editText);
+        final EditText proxyEditText = mProxyedVirtualDisplayActivity.findViewById(R.id.edit_text);
+        setAccessibilityFocus(proxyEditText);
 
         final AccessibilityNodeInfo a11yFocusedNode = mA11yProxy.findFocus(
                 AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
-        assertThat(a11yFocusedNode).isEqualTo(editText.createAccessibilityNodeInfo());
+        assertThat(a11yFocusedNode).isEqualTo(proxyEditText.createAccessibilityNodeInfo());
     }
 
     @Test
@@ -484,12 +484,13 @@ public class AccessibilityDisplayProxyTest {
             registerProxyAndEnableTouchExploration();
             // Launch an activity on the default display.
             mNonProxyedConcurrentActivity = launchProxyConcurrentActivityOnDefaultDisplay(service);
-            final EditText editText = mNonProxyedConcurrentActivity.findViewById(R.id.editText);
-            setAccessibilityFocus(editText);
+            final EditText serviceEditText = mNonProxyedConcurrentActivity.findViewById(
+                    R.id.editText);
+            setAccessibilityFocus(serviceEditText);
 
             final AccessibilityNodeInfo a11yFocusedNode = service.findFocus(
                     AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
-            assertThat(a11yFocusedNode).isEqualTo(editText.createAccessibilityNodeInfo());
+            assertThat(a11yFocusedNode).isEqualTo(serviceEditText.createAccessibilityNodeInfo());
             assertThat(mA11yProxy.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)).isNull();
         } finally {
             service.disableSelfAndRemove();
@@ -503,12 +504,13 @@ public class AccessibilityDisplayProxyTest {
         try {
             registerProxyAndEnableTouchExploration();
 
-            final EditText editText = mProxyedVirtualDisplayActivity.findViewById(R.id.edit_text);
-            setAccessibilityFocus(editText);
+            final EditText proxyEditText =
+                    mProxyedVirtualDisplayActivity.findViewById(R.id.edit_text);
+            setAccessibilityFocus(proxyEditText);
 
             final AccessibilityNodeInfo a11yFocusedNode = mA11yProxy.findFocus(
                     AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
-            assertThat(a11yFocusedNode).isEqualTo(editText.createAccessibilityNodeInfo());
+            assertThat(a11yFocusedNode).isEqualTo(proxyEditText.createAccessibilityNodeInfo());
 
             assertThat(service.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)).isNull();
         } finally {
@@ -518,15 +520,14 @@ public class AccessibilityDisplayProxyTest {
 
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#onAccessibilityEvent"})
-    public void testGetFocus_proxyDoesNotGetWindowFocusChangeEvent_withinWindow() throws Exception {
+    public void testGetFocus_proxyDoesNotGetWindowFocusChangeEvent_withinWindow() {
         registerProxyAndEnableTouchExploration();
 
         final EditText editText = mProxyedVirtualDisplayActivity.findViewById(R.id.edit_text);
-        setAccessibilityFocus(editText);
-
-        final AccessibilityNodeInfo a11yFocusedNode = mA11yProxy.findFocus(
-                AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
-        assertThat(a11yFocusedNode).isEqualTo(editText.createAccessibilityNodeInfo());
+        // Avoid using setAccessibilityFocus/waiting for events on UiAutomation's thread, since
+        // the WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED event from the EditText may be captured by the
+        // filter below.
+        setInitialAccessibilityFocusAndWaitForProxyEvents(editText);
 
         mA11yProxy.setEventFilter(
                 filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED));
@@ -562,7 +563,7 @@ public class AccessibilityDisplayProxyTest {
         registerProxyAndEnableTouchExploration();
 
         final EditText editText = mProxyedVirtualDisplayActivity.findViewById(R.id.edit_text);
-        setAccessibilityFocus(editText);
+        setInitialAccessibilityFocusAndWaitForProxyEvents(editText);
 
         final View topWindowView = showTopWindowAndWaitForItToShowUp();
         final AccessibilityWindowInfo topWindow = findWindowByTitleWithList(TOP_WINDOW_TITLE,
@@ -1220,6 +1221,23 @@ public class AccessibilityDisplayProxyTest {
         }
     }
 
+    private void setInitialAccessibilityFocusAndWaitForProxyEvents(EditText proxyEditText) {
+        mA11yProxy.setEventFilter(filterWaitForAll(
+                filterForEventType(TYPE_VIEW_ACCESSIBILITY_FOCUSED),
+                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED)));
+        if (!proxyEditText.isAccessibilityFocused()) {
+            proxyEditText.performAccessibilityAction(
+                    AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null);
+            waitOn(mA11yProxy.mWaitObject, ()-> mA11yProxy.mReceivedEvent.get(), TIMEOUT_MS,
+                    "Expected event was not received within " + TIMEOUT_MS + " ms");
+        }
+
+        final AccessibilityNodeInfo a11yFocusedNode = mA11yProxy.findFocus(
+                AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
+        assertThat(a11yFocusedNode).isEqualTo(proxyEditText.createAccessibilityNodeInfo());
+
+    }
+
     private void setInputFocusIfNeeded(View view) throws TimeoutException {
         if (!view.isFocused()) {
             sUiAutomation.executeAndWaitForEvent(
@@ -1442,6 +1460,7 @@ public class AccessibilityDisplayProxyTest {
 
         @Override
         public void onAccessibilityEvent(@NonNull AccessibilityEvent event) {
+            // TODO(b/276745079): Collect failing events.
             if (mEventFilter != null) {
                 if (mEventFilter.accept(event)) {
                     synchronized (mWaitObject) {
@@ -1469,8 +1488,8 @@ public class AccessibilityDisplayProxyTest {
         }
 
         public void setEventFilter(@NonNull UiAutomation.AccessibilityEventFilter filter) {
+            mReceivedEvent.set(false);
             mEventFilter = filter;
         }
-
     }
 }
