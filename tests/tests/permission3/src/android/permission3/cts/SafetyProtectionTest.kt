@@ -24,6 +24,7 @@ import com.android.modules.utils.build.SdkLevel
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
@@ -47,6 +48,7 @@ class SafetyProtectionTest : BaseUsePermissionTest() {
         assumeFalse(isWatch)
     }
 
+    @Ignore("b/276944839")
     @Test
     fun testSafetyProtectionSectionView_safetyProtection_belowT() {
         assumeFalse("Safety Protection should only be enabled on T+", SdkLevel.isAtLeastT())
