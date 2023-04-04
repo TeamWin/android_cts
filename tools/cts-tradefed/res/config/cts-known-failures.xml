@@ -23,6 +23,10 @@
     <option name="compatibility:exclude-filter" value="CtsLocationTestCases android.location.cts.GnssTtffTests#testTtffWithNetwork" />
     <option name="compatibility:exclude-filter" value="CtsLocationTestCases[instant] android.location.cts.GnssTtffTests#testTtffWithNetwork" />
 
+    <!-- b/17989532 -->
+    <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.SurfaceViewPreviewTest#testPreparePerformance" />
+    <option name="compatibility:exclude-filter" value="CtsCameraTestCases[instant] android.hardware.camera2.cts.SurfaceViewPreviewTest#testPreparePerformance" />
+
     <!-- b/23776893 -->
     <option name="compatibility:exclude-filter" value="CtsDumpsysHostTestCases android.dumpsys.cts.DumpsysHostTest#testBatterystatsOutput" />
     <option name="compatibility:exclude-filter" value="CtsDumpsysHostTestCases android.dumpsys.cts.DumpsysHostTest#testGfxinfoFramestats" />
