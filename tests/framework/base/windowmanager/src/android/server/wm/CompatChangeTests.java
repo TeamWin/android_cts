@@ -289,6 +289,9 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     public void testEnableFakeFocus_propertyIsFalse_overrideNotApplied() throws Exception {
         assumeTrue("Skipping test: no split multi-window support",
                 supportsSplitScreenMultiWindow());
+        assumeTrue("Skipping test: config_isCompatFakeFocusEnabled not enabled",
+                getFakeFocusEnabledConfig());
+
         try (var compatChange = new CompatChangeCloseable(
                 OVERRIDE_ENABLE_COMPAT_FAKE_FOCUS,
                 ENABLE_FAKE_FOCUS_OPT_OUT_LEFT_ACTIVITY.getPackageName())) {
@@ -310,6 +313,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     public void testEnableFakeFocus_propertyIsTrue_returnsTrue() throws Exception {
         assumeTrue("Skipping test: no split multi-window support",
                 supportsSplitScreenMultiWindow());
+        assumeTrue("Skipping test: config_isCompatFakeFocusEnabled not enabled",
+                getFakeFocusEnabledConfig());
 
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(
@@ -328,6 +333,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     public void testEnableFakeFocus_overrideApplied_returnsTrue() throws Exception {
         assumeTrue("Skipping test: no split multi-window support",
                 supportsSplitScreenMultiWindow());
+        assumeTrue("Skipping test: config_isCompatFakeFocusEnabled not enabled",
+                getFakeFocusEnabledConfig());
 
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_LEFT_ACTIVITY),
@@ -337,6 +344,13 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
                 mWmState.getActivity(RESIZEABLE_LEFT_ACTIVITY);
 
         assertTrue(activity.getShouldSendCompatFakeFocus());
+    }
+
+    boolean getFakeFocusEnabledConfig() {
+        return mContext.getResources().getBoolean(
+                Resources.getSystem().getIdentifier(
+                        "config_isCompatFakeFocusEnabled",
+                        "bool", "android"));
     }
 
     @Test
