@@ -62,6 +62,8 @@ public class TooltipTest {
     private static final long TIMEOUT_DELTA = 10000;
     private static final long WAIT_MARGIN = 100;
 
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private ViewGroup mTopmostView;
@@ -175,11 +177,11 @@ public class TooltipTest {
     }
 
     private void injectShortClick(View target) {
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, target);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, target);
     }
 
     private void injectLongClick(View target) {
-        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, mActivityRule, target,
+        mCtsTouchUtils.emulateLongPressOnView(mInstrumentation, mActivityRule, target,
                 target.getWidth() / 2, target.getHeight() / 2);
     }
 

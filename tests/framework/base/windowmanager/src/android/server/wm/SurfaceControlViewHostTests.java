@@ -105,6 +105,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
     public static class TestActivity extends Activity {}
 
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
     private final ActivityTestRule<TestActivity> mActivityRule = new ActivityTestRule<>(
             TestActivity.class);
 
@@ -351,7 +352,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         mInstrumentation.waitForIdleSync();
         waitUntilEmbeddedViewDrawn();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
     }
 
@@ -381,9 +382,9 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             final int displayX = surfaceLocation[0] + viewX;
             final int displayY = surfaceLocation[1] + viewY;
             final long downTime = SystemClock.uptimeMillis();
-            CtsTouchUtils.injectDownEvent(uiAutomation, downTime, displayX, displayY,
+            mCtsTouchUtils.injectDownEvent(uiAutomation, downTime, displayX, displayY,
                     null /*eventInjectionListener*/);
-            CtsTouchUtils.injectUpEvent(uiAutomation, downTime, true /*useCurrentEventTime*/,
+            mCtsTouchUtils.injectUpEvent(uiAutomation, downTime, true /*useCurrentEventTime*/,
                     displayX, displayY, null /*eventInjectionListener*/);
 
             assertEquals("Expected to capture all injected events.", 2, events.size());
@@ -457,7 +458,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         addSurfaceView(bigEdgeLength, bigEdgeLength);
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertFalse(mClicked);
 
         mActivityRule.runOnUiThread(() -> {
@@ -467,7 +468,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         waitUntilEmbeddedViewDrawn();
 
         // But after the click should hit.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
     }
 
@@ -481,7 +482,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
 
         mActivityRule.runOnUiThread(() -> {
@@ -490,7 +491,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         mInstrumentation.waitForIdleSync();
 
         mClicked = false;
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertFalse(mClicked);
     }
 
@@ -514,7 +515,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         });
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertFalse(mClicked);
 
         mActivityRule.runOnUiThread(() -> {
@@ -523,7 +524,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         });
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
     }
 
@@ -662,7 +663,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         // assert host does not have focus
         assertWindowFocused(mSurfaceView, false);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         final ImeEventStream stream = mImeSession.openEventStream();
         expectEvent(stream, editorMatcher("onStartInputView",
             editText.getPrivateImeOptions()), TIMEOUT_MS);
@@ -741,7 +742,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         // Check if SurfacePackage copy remains valid even though the original package has
         // been released.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
     }
 
@@ -822,7 +823,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         // Check if SurfacePackage copy remains valid even though the original package has
         // been released and the original surface view removed.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule,
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule,
                 secondSurfaceRef.get());
         assertTrue(mClicked);
     }
@@ -877,7 +878,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         // Check to see if the click went through - this only would happen if the surface package
         // was replaced
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
     }
 
@@ -998,7 +999,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         addMotionRecordingSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
         mInstrumentation.waitForIdleSync();
         waitUntilEmbeddedViewDrawn();
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         mInstrumentation.waitForIdleSync();
 
         MotionRecordingSurfaceView mrsv = (MotionRecordingSurfaceView)mSurfaceView;
@@ -1007,7 +1008,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             tpv.punchHoleInTouchableRegion();
         });
         mInstrumentation.waitForIdleSync();
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         mInstrumentation.waitForIdleSync();
         assertTrue(mrsv.gotEvent());
     }
@@ -1068,7 +1069,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         waitUntilEmbeddedViewDrawn();
 
         // We should receive no input until we punch a hole
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         mInstrumentation.waitForIdleSync();
         assertFalse(mClicked);
 
@@ -1088,7 +1089,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         // operations
         waitForTouchableRegionChanged(originalRegion);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         mInstrumentation.waitForIdleSync();
         assertTrue(mClicked);
     }
@@ -1127,7 +1128,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             mSurfaceView.getRootSurfaceControl().setTouchableRegion(new Region());
         });
         mInstrumentation.waitForIdleSync();
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         mInstrumentation.waitForIdleSync();
 
         assertTrue(mTestService.getViewIsTouchedAndObscured());
@@ -1144,7 +1145,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             mSurfaceView.getRootSurfaceControl().setTouchableRegion(new Region());
         });
         mInstrumentation.waitForIdleSync();
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         mInstrumentation.waitForIdleSync();
 
         assertFalse(mTestService.getViewIsTouched());
@@ -1174,7 +1175,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         });
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mPopupClicked);
         assertFalse(mClicked);
 
@@ -1183,7 +1184,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         });
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         mInstrumentation.waitForIdleSync();
         assertTrue(mClicked);
     }
@@ -1386,7 +1387,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         long downTime = SystemClock.uptimeMillis();
 
         // We inject a down event
-        CtsTouchUtils.injectDownEvent(uiAutomation, downTime, injectedX, injectedY, null);
+        mCtsTouchUtils.injectDownEvent(uiAutomation, downTime, injectedX, injectedY, null);
 
 
         // And this down event should arrive on the embedded view, which should transfer the touch
@@ -1396,7 +1397,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         downTime = SystemClock.uptimeMillis();
         // Now we inject an up event
-        CtsTouchUtils.injectUpEvent(uiAutomation, downTime, false, injectedX, injectedY, null);
+        mCtsTouchUtils.injectUpEvent(uiAutomation, downTime, false, injectedX, injectedY, null);
         // This should arrive on the host now, since we have transferred the touch focus
         synchronized (this) {
             if (!mHostGotEvent) {

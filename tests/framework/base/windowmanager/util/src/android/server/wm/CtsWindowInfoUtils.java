@@ -347,8 +347,9 @@ public class CtsWindowInfoUtils {
         final long downTime = SystemClock.uptimeMillis();
 
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
-        CtsTouchUtils.injectDownEvent(uiAutomation, downTime, coord.x, coord.y, true, null);
-        CtsTouchUtils.injectUpEvent(uiAutomation, downTime, false, coord.x, coord.y,
+        CtsTouchUtils ctsTouchUtils = new CtsTouchUtils();
+        ctsTouchUtils.injectDownEvent(uiAutomation, downTime, coord.x, coord.y, true, null);
+        ctsTouchUtils.injectUpEvent(uiAutomation, downTime, false, coord.x, coord.y,
                 true, null);
 
         instrumentation.waitForIdleSync();

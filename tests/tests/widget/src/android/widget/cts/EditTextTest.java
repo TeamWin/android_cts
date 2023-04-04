@@ -84,6 +84,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class EditTextTest {
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
     private Activity mActivity;
     private EditText mEditText1;
     private EditText mEditText2;
@@ -500,7 +502,7 @@ public class EditTextTest {
 
         // Simulate a drag gesture. The cursor should end up at the position where the finger is
         // lifted.
-        CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule, dragStartEnd.get());
+        mCtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule, dragStartEnd.get());
         assertCursorPosition(mEditText1, text.indexOf("el"));
     }
 
