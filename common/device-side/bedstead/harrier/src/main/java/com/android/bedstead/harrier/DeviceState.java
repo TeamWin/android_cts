@@ -2361,6 +2361,24 @@ public final class DeviceState extends HarrierRule {
         mUsers.clear();
         mAnnotationHasSwitchedUser = false;
 
+        for (Map.Entry<UserReference, Set<String>> userRestrictions
+                : mAddedUserRestrictions.entrySet()) {
+            for (String restriction : userRestrictions.getValue()) {
+                ensureDoesNotHaveUserRestriction(restriction, userRestrictions.getKey());
+            }
+        }
+
+        for (Map.Entry<UserReference, Set<String>> userRestrictions
+                : mRemovedUserRestrictions.entrySet()) {
+            for (String restriction : userRestrictions.getValue()) {
+                ensureHasUserRestriction(restriction, userRestrictions.getKey());
+            }
+        }
+
+        mAddedUserRestrictions.clear();
+        mRemovedUserRestrictions.clear();
+
+
         for (BlockingBroadcastReceiver broadcastReceiver : mRegisteredBroadcastReceivers) {
             broadcastReceiver.unregisterQuietly();
         }
@@ -2393,23 +2411,6 @@ public final class DeviceState extends HarrierRule {
 
     private void teardownShareableState() {
         mCreatedAccounts.forEach(AccountReference::remove);
-
-        for (Map.Entry<UserReference, Set<String>> userRestrictions
-                : mAddedUserRestrictions.entrySet()) {
-            for (String restriction : userRestrictions.getValue()) {
-                ensureDoesNotHaveUserRestriction(restriction, userRestrictions.getKey());
-            }
-        }
-
-        for (Map.Entry<UserReference, Set<String>> userRestrictions
-                : mRemovedUserRestrictions.entrySet()) {
-            for (String restriction : userRestrictions.getValue()) {
-                ensureHasUserRestriction(restriction, userRestrictions.getKey());
-            }
-        }
-
-        mAddedUserRestrictions.clear();
-        mRemovedUserRestrictions.clear();
 
         if (mHasChangedDeviceOwner) {
             if (mOriginalDeviceOwner == null) {
