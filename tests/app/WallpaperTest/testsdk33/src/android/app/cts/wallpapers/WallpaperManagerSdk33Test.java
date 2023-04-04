@@ -27,9 +27,12 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.WallpaperManager;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -77,9 +80,15 @@ public class WallpaperManagerSdk33Test {
      */
     @BeforeClass
     public static void setUpClass() throws IOException {
-        sWallpaperManager = WallpaperManager.getInstance(
-                InstrumentationRegistry.getTargetContext());
+        Context context = InstrumentationRegistry.getTargetContext();
 
+        // ignore for TV targets
+        PackageManager packageManager = context.getPackageManager();
+        assumeFalse(packageManager != null
+                && (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)));
+
+        sWallpaperManager = WallpaperManager.getInstance(context);
         sWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
 
         // ignore for targets that have a live default wallpaper
