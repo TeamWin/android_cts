@@ -62,6 +62,7 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.metrics.LogMaker;
 import android.metrics.MetricsReader;
+import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySessionClient;
@@ -135,7 +136,8 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         final int windowsDrawnDelayMs =
                 (int) metricsLog.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS);
         final String expectedLog =
-                "Displayed " + TEST_ACTIVITY.flattenToShortString()
+                "Displayed " + TEST_ACTIVITY.flattenToShortString()  + " for user "
+                        + Process.myUserHandle().getIdentifier()
                         + ": " + formatDuration(windowsDrawnDelayMs);
         assertLogsContain(deviceLogs, expectedLog);
         assertEventLogsContainsLaunchTime(eventLogs, TEST_ACTIVITY, windowsDrawnDelayMs);
