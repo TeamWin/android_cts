@@ -53,7 +53,6 @@ import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArrayMap;
-import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
@@ -2183,11 +2182,7 @@ public class BroadcastResponseStatsTest {
                 + "--user %d android.app.role.ASSISTANT %s", userId, pkgName);
         SystemUtil.runShellCommand(cmd);
         TestUtils.waitUntil(cmd + " failed", DEFAULT_TIMEOUT_MS,
-                () -> {
-                    return SystemUtil
-                            .runShellCommand("cmd role get-role-holders android.app.role.ASSISTANT")
-                            .contains(pkgName);
-                });
+                () -> isAssistantRoleHolder(pkgName, userId));
     }
 
     protected void removeAssistRoleHolder(String pkgName, int userId) throws Exception {
@@ -2195,11 +2190,13 @@ public class BroadcastResponseStatsTest {
                 + "--user %d android.app.role.ASSISTANT %s", userId, pkgName);
         SystemUtil.runShellCommand(cmd);
         TestUtils.waitUntil(cmd + " failed", DEFAULT_TIMEOUT_MS,
-                () -> {
-                    return !SystemUtil
-                            .runShellCommand("cmd role get-role-holders android.app.role.ASSISTANT")
-                            .contains(pkgName);
-                });
+                () -> !isAssistantRoleHolder(pkgName, userId));
+    }
+
+    protected boolean isAssistantRoleHolder(String pkgName, int userId) {
+        final String cmd = String.format(
+                "cmd role get-role-holders --user %d android.app.role.ASSISTANT", userId);
+        return SystemUtil.runShellCommand(cmd).contains(pkgName);
     }
 
     private void wakeUpAndDismissKeyguard() throws Exception {
