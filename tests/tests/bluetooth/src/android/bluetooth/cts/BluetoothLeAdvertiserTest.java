@@ -49,6 +49,12 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
     private static final AdvertisingSetParameters ADVERTISING_SET_PARAMETERS =
             new AdvertisingSetParameters.Builder().setLegacyMode(true).build();
 
+    private static final AdvertisingSetParameters ADVERTISING_SET_USING_NRPA_PARAMETERS =
+            new AdvertisingSetParameters.Builder()
+                    .setLegacyMode(true)
+                    .setOwnAddressType(AdvertisingSetParameters.ADDRESS_TYPE_RANDOM_NON_RESOLVABLE)
+                    .build();
+
     private boolean mHasBluetooth;
     private UiAutomation mUiAutomation;
     private BluetoothManager mManager;
@@ -118,13 +124,13 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
                 mManager.openGattServer(getContext(), new BluetoothGattServerCallback() {});
 
         assertThrows("No BLUETOOTH_PRIVILEGED permission", SecurityException.class,
-                () -> mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null,
+                () -> mAdvertiser.startAdvertisingSet(ADVERTISING_SET_USING_NRPA_PARAMETERS, null, null,
                                 null, null, 0, 0, gattServer, mCallback,
                                 new Handler(Looper.getMainLooper())));
 
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_PRIVILEGED);
 
-        mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null,
+        mAdvertiser.startAdvertisingSet(ADVERTISING_SET_USING_NRPA_PARAMETERS, null, null,
                 null, null, 0, 0, gattServer, mCallback,
                 new Handler(Looper.getMainLooper()));
         assertTrue(mCallback.mAdvertisingSetStartedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
