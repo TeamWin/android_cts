@@ -105,17 +105,24 @@ public final class RecognitionPartTest {
         long timestamp = 500;
         int confidenceLevel = RecognitionPart.CONFIDENCE_LEVEL_HIGH;
 
-        final RecognitionPart part = new RecognitionPart.Builder(rawText)
+        // A recognition part with rawText set in the Builder constructor.
+        final RecognitionPart part1 = new RecognitionPart.Builder(rawText)
                 .setFormattedText(formattedText)
                 .setTimestampMillis(timestamp)
                 .setConfidenceLevel(confidenceLevel)
                 .build();
 
         // Check that the retrieved values are the same as the provided ones.
-        assertThat(part.getRawText()).isEqualTo(rawText);
-        assertThat(part.getFormattedText()).isEqualTo(formattedText);
-        assertThat(part.getTimestampMillis()).isEqualTo(timestamp);
-        assertThat(part.getConfidenceLevel()).isEqualTo(confidenceLevel);
+        assertThat(part1.getRawText()).isEqualTo(rawText);
+        assertThat(part1.getFormattedText()).isEqualTo(formattedText);
+        assertThat(part1.getTimestampMillis()).isEqualTo(timestamp);
+        assertThat(part1.getConfidenceLevel()).isEqualTo(confidenceLevel);
+
+        // A RecognitionPart with rawText set in the Builder setter.
+        final RecognitionPart part2 = new RecognitionPart.Builder("").setRawText(rawText).build();
+
+        // Check that the retrieved values are the same as the provided ones.
+        assertThat(part2.getRawText()).isEqualTo(rawText);
     }
 
     /**
