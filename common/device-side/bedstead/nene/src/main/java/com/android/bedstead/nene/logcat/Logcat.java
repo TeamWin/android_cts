@@ -18,6 +18,7 @@ package com.android.bedstead.nene.logcat;
 
 import android.util.Log;
 
+import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.utils.ShellCommand;
 
 import java.util.ArrayList;
@@ -39,10 +40,19 @@ public final class Logcat {
 
     }
 
+    /** Clear the logcat buffer. */
+    @Experimental
+    public void clear() {
+        ShellCommand.builder("logcat")
+                .addOperand("-c")
+                .validate(String::isEmpty)
+                .executeOrThrowNeneException("Error clearing logcat buffer");
+    }
+
     /**
      * Get an instant dump from logcat.
      */
-    public String dump() {
+    private String dump() {
         return ShellCommand.builder("logcat")
                 .addOperand("-d") // Dump - don't stream
                 .executeOrThrowNeneException("Error dumping logcat");

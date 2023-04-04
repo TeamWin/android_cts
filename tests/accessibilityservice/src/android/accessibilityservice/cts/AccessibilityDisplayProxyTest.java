@@ -20,6 +20,7 @@ import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.MANAGE_ACCESSIBILITY;
 import static android.Manifest.permission.WAKE_LOCK;
+import static android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK;
 import static android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_AUDIBLE;
 import static android.accessibilityservice.AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
@@ -30,15 +31,21 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActi
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.supportsMultiDisplay;
+import static android.accessibilityservice.cts.utils.MultiProcessUtils.SEPARATE_PROCESS_ACTIVITY_TITLE;
+import static android.accessibilityservice.cts.utils.MultiProcessUtils.TOUCH_EXPLORATION_CHANGE_EVENT_TEXT;
 import static android.accessibilityservice.cts.utils.WindowCreationUtils.TOP_WINDOW_TITLE;
 import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
+import static android.view.accessibility.AccessibilityEvent.TYPE_ANNOUNCEMENT;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOWS_CHANGED;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ACTIVE;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ADDED;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_FOCUSED;
+import static android.view.accessibility.AccessibilityManager.FLAG_CONTENT_CONTROLS;
+import static android.view.accessibility.AccessibilityManager.FLAG_CONTENT_TEXT;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.TestUtils.waitOn;
@@ -60,11 +67,14 @@ import android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils;
 import android.accessibilityservice.cts.utils.DisplayUtils;
 import android.accessibilityservice.cts.utils.WindowCreationUtils;
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityOptions;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
@@ -83,6 +93,8 @@ import android.view.WindowManager;
 import android.view.accessibility.AccessibilityDisplayProxy;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
+import android.view.accessibility.AccessibilityManager.AccessibilityServicesStateChangeListener;
+import android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.virtualdevice.cts.common.FakeAssociationRule;
@@ -96,6 +108,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -112,29 +125,63 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** Ensure AccessibilityDisplayProxy APIs work.
  *
- * AccessibilityDisplayProxy is in android.view.accessibility since apps take advantage of it.
+ * <p>
+ * Note: AccessibilityDisplayProxy is in android.view.accessibility since apps take advantage of it.
  * AccessibilityDisplayProxyTest is in android.accessibilityservice.cts, not
  * android.view.accessibility.cts, since the proxy behaves likes an a11y service and this package
  * gives access to a suite of helpful utils for testing service-like behavior.
+ * <p>
+ * This class tests a variety of interactions:
+ * <ul>
+ *     <li> When consumers of accessibility data for a display registers or unregisters an
+ *     AccessibilityDisplayProxy. They must have the MANAGE_ACCESSIBILITY or
+ *     CREATE_VIRTUAL_DEVICE permission.
+ *     <li> When AccessibilityDisplayProxy uses its class APIs.
+ *     <li> When a service and proxy are active at the same time. An AccessibilityServices should
+ *     not have access to a proxy-ed display's data and vice versa.
+ *     <li> When a service and proxy are active and want accessibility focus. These should be
+ *     separate focuses.
+ *     <li> When apps are notified of changes to accessibility state. An app belonging to a
+ *     virtual device that has a registered proxy should maintain different a11y state than that on
+ *     the phone. There is one AccessibilityManager per process, so to test these notifications we
+ *     must have different processes (associated with different devices). So we spin up a separate
+ *     app outside of the instrumentation process. This prevents direct access to the app's
+ *     components like Activities, so we test state changes via AccessibilityEvents. In the
+ *     long-term, we should be able to modify these tests and access the Activities directly.
+ * </ul>
+ *
+ * Note: NonProxyActivity and NonProxySeparateAppActivity both exist because NonProxyActivity
+ * belongs to the instrumentation process, meaning its AccessibilityManager will reflect the same
+ * state as the proxy. Accessibility focus separation tests can use NonProxyActivity since touch
+ * exploration is required for both the proxy and the service. NonProxySeparateAppActivity is
+ * needed to test different AccessibilityManager states.
+ * TODO(271639633): Test a11y is enabled/disabled, potentially focus appearance changes and event
+ * types changes for the non-proxy app. (This will be easier in the long term when a11y managers are
+ * split within processes and we can directly access them here.)
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 @Presubmit
 public class AccessibilityDisplayProxyTest {
-    private static final int TIMEOUT_MS = 5000;
     private static final int INVALID_DISPLAY_ID = 10000;
+    private static final int TIMEOUT_MS = 5000;
 
-    public static final int NON_INTERACTIVE_UI_TIMEOUT = 100;
-    public static final int INTERACTIVE_UI_TIMEOUT = 200;
-    public static final int NOTIFICATION_TIMEOUT = 100;
-    public static final String PACKAGE_1 = "package 1";
-    public static final String PACKAGE_2 = "package 2";
+    private static final int NON_INTERACTIVE_UI_TIMEOUT = 100;
+    private static final int INTERACTIVE_UI_TIMEOUT = 200;
+    private static final int NOTIFICATION_TIMEOUT = 100;
+    private static final String PACKAGE_1 = "package 1";
+    private static final String PACKAGE_2 = "package 2";
+    private static final int NON_PROXY_SERVICE_TIMEOUT = 20000;
+
+    private static final String SEPARATE_PROCESS_PACKAGE_NAME = "foo.bar.proxy";
+    private static final String SEPARATE_PROCESS_ACTIVITY = ".NonProxySeparateAppActivity";
 
     private static Instrumentation sInstrumentation;
-    private static  UiAutomation sUiAutomation;
+    private static UiAutomation sUiAutomation;
     private static String sEnabledServices;
 
     // The manager representing the app registering/unregistering the proxy.
@@ -153,6 +200,11 @@ public class AccessibilityDisplayProxyTest {
     // process is not required, since touch exploration is enabled for both the proxy and non-proxy
     // i.e. the AccessibilityManagers have the same state.
     private Activity mNonProxyedConcurrentActivity;
+
+    private Intent mSeparateProcessActivityIntent = new Intent(Intent.ACTION_MAIN)
+                .setClassName(SEPARATE_PROCESS_PACKAGE_NAME,
+            SEPARATE_PROCESS_PACKAGE_NAME + SEPARATE_PROCESS_ACTIVITY)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);;
 
     // Virtual Device variables.
     private VirtualDeviceManager mVirtualDeviceManager;
@@ -204,7 +256,6 @@ public class AccessibilityDisplayProxyTest {
         ShellCommandBuilder.create(sInstrumentation)
                 .putSecureSetting(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, sEnabledServices)
                 .run();
-        sUiAutomation.destroy();
     }
 
     @Before
@@ -217,10 +268,10 @@ public class AccessibilityDisplayProxyTest {
         assertThat(mVirtualDisplay).isNotNull();
         mVirtualDisplayId = mVirtualDisplay.getDisplay().getDisplayId();
         final List<AccessibilityServiceInfo> infos = new ArrayList<>();
-        final AccessibilityServiceInfo info = new AccessibilityServiceInfo();
-        info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
-        info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK;
-        infos.add(info);
+        final AccessibilityServiceInfo proxyInfo = new AccessibilityServiceInfo();
+        proxyInfo.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+        proxyInfo.eventTypes = AccessibilityEvent.TYPES_ALL_MASK;
+        infos.add(proxyInfo);
         mA11yProxy = new MyA11yProxy(mVirtualDisplayId, Executors.newSingleThreadExecutor(), infos);
         mProxyedVirtualDisplayActivity = launchActivityOnVirtualDisplay(
                 mVirtualDisplay.getDisplay().getDisplayId());
@@ -677,6 +728,331 @@ public class AccessibilityDisplayProxyTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
+            + ".AccessibilityServicesStateChangeListener#onAccessibilityServicesStateChanged"})
+    public void testProxyServicesStateChange_registerProxy_a11yManagerNotified() {
+        // Test that the proxy activity is notified that the services state is changed after
+        // proxy registration.
+        registerProxyWithTestServiceInfoAndWaitForServicesStateChange();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
+            + ".AccessibilityServicesStateChangeListener#onAccessibilityServicesStateChanged"})
+    public void testProxyServicesStateChange_setInstalledAndEnabledServices_a11yManagerNotified() {
+        // Test that the proxy activity is notified that the services state is changed after
+        // a proxy update of installed and enabled services.
+        registerProxyAndWaitForConnection();
+        final MyAccessibilityServicesStateChangeListener listener =
+                new MyAccessibilityServicesStateChangeListener(INTERACTIVE_UI_TIMEOUT,
+                        NON_INTERACTIVE_UI_TIMEOUT);
+        mProxyActivityA11yManager.addAccessibilityServicesStateChangeListener(listener);
+        try {
+            mA11yProxy.setInstalledAndEnabledServices(getTestAccessibilityServiceInfoAsList());
+            waitOn(listener.mWaitObject, () -> listener.mAtomicBoolean.get(), TIMEOUT_MS,
+                    "Services state listener should be called when proxy installed and"
+                            + "enabled services are updated");
+            assertTestAccessibilityServiceInfo(
+                    mProxyActivityA11yManager.getInstalledAccessibilityServiceList());
+            assertTestAccessibilityServiceInfo(
+                    mProxyActivityA11yManager.getEnabledAccessibilityServiceList(
+                            FEEDBACK_ALL_MASK));
+        } finally {
+            mProxyActivityA11yManager.removeAccessibilityServicesStateChangeListener(listener);
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
+            + ".TouchExplorationStateChangeListener#onTouchExplorationStateChanged"})
+    public void testProxyTouchExplorationChange_a11yManagerNotified() {
+        // Test that the proxy activity is notified that touch exploration is enabled after
+        // proxy registration.
+        registerProxyAndEnableTouchExploration();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
+            + ".AccessibilityServicesStateChangeListener#onAccessibilityServicesStateChanged"})
+    public void testProxyServicesStateChange_proxyRegisteredUnregistered_a11yManagerReset() {
+        // Tests that if a proxy is unregistered, the proxy app is updated to the non-proxy service
+        // state.
+        final StubProxyConcurrentAccessibilityService service =
+                mNonProxyServiceRule.enableService();
+        try {
+            // Set up the service info with timeouts.
+            final AccessibilityServiceInfo nonProxyInfo = service.getServiceInfo();
+            nonProxyInfo.setInteractiveUiTimeoutMillis(NON_PROXY_SERVICE_TIMEOUT);
+            nonProxyInfo.setNonInteractiveUiTimeoutMillis(NON_PROXY_SERVICE_TIMEOUT);
+            service.setServiceInfo(nonProxyInfo);
+            // Register a proxy with different timeouts and make sure the activity is updated.
+            registerProxyWithTestServiceInfoAndWaitForServicesStateChange();
+
+            // When the proxy is unregistered, the a11y manager should be updated with the
+            // StubProxyConcurrentAccessibilityService's timeouts.
+            final MyAccessibilityServicesStateChangeListener listener =
+                    new MyAccessibilityServicesStateChangeListener(NON_PROXY_SERVICE_TIMEOUT,
+                            NON_PROXY_SERVICE_TIMEOUT);
+            mProxyActivityA11yManager.addAccessibilityServicesStateChangeListener(listener);
+            try {
+                runWithShellPermissionIdentity(sUiAutomation, () ->
+                        mA11yManager.unregisterDisplayProxy(mA11yProxy));
+                waitOn(listener.mWaitObject, () -> listener.mAtomicBoolean.get(), TIMEOUT_MS,
+                        "Services state change listener should be called when proxy is"
+                                + " unregistered");
+                // The service infos should no longer reflect the proxy and instead reflect
+                // StubProxyConcurrentAccessibilityService.
+                final List<AccessibilityServiceInfo> installedServices =
+                        mProxyActivityA11yManager.getInstalledAccessibilityServiceList();
+                final List<AccessibilityServiceInfo> enabledServices =
+                        mProxyActivityA11yManager.getEnabledAccessibilityServiceList(
+                                FEEDBACK_ALL_MASK);
+                boolean installedServicesHasConcurrentService = false;
+                for (AccessibilityServiceInfo installedInfo : installedServices) {
+                    if (installedInfo.equals(nonProxyInfo)) {
+                        installedServicesHasConcurrentService = true;
+                        break;
+                    }
+                }
+                assertThat(installedServicesHasConcurrentService).isTrue();
+                assertThat(enabledServices.get(0)).isEqualTo(nonProxyInfo);
+            } finally {
+                mProxyActivityA11yManager.removeAccessibilityServicesStateChangeListener(listener);
+            }
+        } finally {
+            service.disableSelfAndRemove();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
+            + ".TouchExplorationStateChangeListener#onTouchExplorationStateChanged"})
+    public void testProxyTouchExplorationChange_proxyRegisteredUnregistered_a11yManagerReset()  {
+        registerProxyAndEnableTouchExploration();
+        final MyTouchExplorationStateChangeListener listener =
+                new MyTouchExplorationStateChangeListener(/* initialState */ true);
+        mProxyActivityA11yManager.addTouchExplorationStateChangeListener(listener);
+        try {
+            // Test that touch exploration is disabled for the app when the proxy is unregistered.
+            runWithShellPermissionIdentity(sUiAutomation, () ->
+                    mA11yManager.unregisterDisplayProxy(mA11yProxy));
+            waitOn(listener.mWaitObject, () -> !listener.mAtomicBoolean.get(), TIMEOUT_MS,
+                    "The touch exploration listener should be notified when the proxy is"
+                            + " unregistered");
+            assertThat(mProxyActivityA11yManager.isTouchExplorationEnabled()).isFalse();
+        } finally {
+            mProxyActivityA11yManager.removeTouchExplorationStateChangeListener(listener);
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
+            + ".AccessibilityServicesStateChangeListener#onAccessibilityServicesStateChanged"})
+    public void testNonProxyServicesStateChange_proxyA11yManagerNotNotified() {
+        // Note: A service has to be enabled before registering a proxy, otherwise the installed
+        // list won't contain this service and enableService() fails. This is because the
+        // instrumentation process would be associated with the proxy device id and the proxy's
+        // services (A11yManager#getInstalledAccessibilityServiceList would belong to the proxy).
+        final StubProxyConcurrentAccessibilityService service =
+                mNonProxyServiceRule.enableService();
+        try {
+            registerProxyWithTestServiceInfoAndWaitForServicesStateChange();
+            final MyAccessibilityServicesStateChangeListener listener =
+                    new MyAccessibilityServicesStateChangeListener(NON_PROXY_SERVICE_TIMEOUT,
+                            NON_PROXY_SERVICE_TIMEOUT);
+            mProxyActivityA11yManager.addAccessibilityServicesStateChangeListener(listener);
+            try {
+                final AccessibilityServiceInfo nonProxyInfo = service.getServiceInfo();
+                nonProxyInfo.setInteractiveUiTimeoutMillis(NON_PROXY_SERVICE_TIMEOUT);
+                nonProxyInfo.setNonInteractiveUiTimeoutMillis(NON_PROXY_SERVICE_TIMEOUT);
+                service.setServiceInfo(nonProxyInfo);
+
+                assertThrows("The A11yManager of the proxy-ed app was notified of a"
+                                + " non-proxy service change.", AssertionError.class,
+                        () -> waitOn(listener.mWaitObject, () -> listener.mAtomicBoolean.get(),
+                                TIMEOUT_MS, "(expected to timeout)"));
+                // Verify the activity has the proxy timeouts.
+                assertThat(mProxyActivityA11yManager.getRecommendedTimeoutMillis(
+                        /* originalTimeout */0,
+                        FLAG_CONTENT_CONTROLS)).isEqualTo(INTERACTIVE_UI_TIMEOUT);
+                assertThat(mProxyActivityA11yManager.getRecommendedTimeoutMillis(
+                        /* originalTimeout */ 0,
+                        FLAG_CONTENT_TEXT)).isEqualTo(NON_INTERACTIVE_UI_TIMEOUT);
+            } finally {
+                mProxyActivityA11yManager.removeAccessibilityServicesStateChangeListener(listener);
+            }
+
+        } finally {
+            service.disableSelfAndRemove();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
+            + ".TouchExplorationStateChangeListener#onTouchExplorationStateChanged"})
+    public void testNonProxyTouchExplorationChange_proxyA11yManagerNotNotified() {
+        final StubProxyConcurrentAccessibilityService service =
+                mNonProxyServiceRule.enableService();
+        try {
+            registerProxyAndWaitForConnection();
+            final MyTouchExplorationStateChangeListener listener =
+                    new MyTouchExplorationStateChangeListener(/* initialState */ false);
+            mProxyActivityA11yManager.addTouchExplorationStateChangeListener(listener);
+            try {
+                final AccessibilityServiceInfo info = service.getServiceInfo();
+                info.flags &=
+                        ~AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+                service.setServiceInfo(info);
+                assertThrows("A proxy-ed app with touch exploration enabled was notified"
+                                + " of a non-proxy service disabling touch exploration.",
+                        AssertionError.class, () ->
+                        waitOn(listener.mWaitObject, () -> listener.mAtomicBoolean.get(),
+                                TIMEOUT_MS, "(expected to timeout)"));
+            } finally {
+                mProxyActivityA11yManager.removeTouchExplorationStateChangeListener(listener);
+            }
+        } finally {
+            // Reset touch exploration for the non-proxy service.
+            final AccessibilityServiceInfo info = service.getServiceInfo();
+            info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+            service.setServiceInfo(info);
+            service.disableSelfAndRemove();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
+            + ".AccessibilityServicesStateChangeListener#onAccessibilityServicesStateChanged"})
+    public void testNonProxyServicesStateChange_separateProcessAppSendEventWithName()
+            throws TimeoutException {
+        // Verify that enabling a non-proxy service will update the non-proxy AccessibilityManager.
+        // On the service state change, the activity will emit a TYPE_ANNOUNCEMENT event with its
+        // enabled services. Use TYPE_ANNOUNCEMENT instead of window events since enableService()
+        // will indirectly disconnect the UI automation and reset its
+        // FLAG_RETRIEVE_INTERACTIVE_WINDOWS.
+        final AtomicReference<StubProxyConcurrentAccessibilityService> service =
+                new AtomicReference<>();
+        AtomicReference<CharSequence> serviceName = new AtomicReference<>();
+        try {
+            startActivityInSeparateProcess();
+            sUiAutomation.executeAndWaitForEvent(() ->
+                            service.set(mNonProxyServiceRule.enableService()),
+                    (event -> {
+                        if (event.getEventType() == TYPE_ANNOUNCEMENT) {
+                            final CharSequence name = service.get()
+                                    .getServiceInfo().getResolveInfo().serviceInfo.name;
+                            serviceName.set(name);
+                            return eventTextHasText(event.getText(), name);
+                        }
+                        return false;
+                    }), TIMEOUT_MS);
+            assertThat(service.get()).isNotNull();
+            assertThat(serviceName.get()).isNotNull();
+            sUiAutomation.executeAndWaitForEvent(() -> service.get().disableSelfAndRemove(),
+                    (event -> event.getEventType() == TYPE_ANNOUNCEMENT
+                            && !eventTextHasText(event.getText(), serviceName.get())), TIMEOUT_MS);
+        } finally {
+            if (service.get() != null) {
+                service.get().disableSelfAndRemove();
+            }
+            stopSeparateProcess();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
+            + ".TouchExplorationStateChangeListener#onTouchExplorationStateChanged"})
+    public void testNonProxyTouchExplorationStateChange_separateProcessAppSendEventWithName()
+            throws TimeoutException {
+        // Verify that enabling and disabling touch exploration for a non-proxy a11y service will
+        // update the non-proxy AccessibilityManager.
+        // On touch exploration state change, the activity will emit a TYPE_ANNOUNCEMENT event with
+        // its touch exploration state. Use TYPE_ANNOUNCEMENT instead of window events since
+        // enableService() will indirectly disconnect the UI automation and reset its
+        // FLAG_RETRIEVE_INTERACTIVE_WINDOWS.
+        final AtomicReference<StubProxyConcurrentAccessibilityService> service =
+                new AtomicReference<>();
+        try {
+            startActivityInSeparateProcess();
+            sUiAutomation.executeAndWaitForEvent(() ->
+                            service.set(mNonProxyServiceRule.enableService()),
+                    (event -> event.getEventType() == TYPE_ANNOUNCEMENT
+                            && eventTextHasText(event.getText(),
+                            TOUCH_EXPLORATION_CHANGE_EVENT_TEXT + true)) , TIMEOUT_MS);
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> {
+                        InstrumentedAccessibilityService a11yService = service.get();
+                        final AccessibilityServiceInfo info = a11yService.getServiceInfo();
+                        info.flags &= ~AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+                        a11yService.setServiceInfo(info);
+                    },
+                    (event -> event.getEventType() == TYPE_ANNOUNCEMENT
+                    && eventTextHasText(event.getText(),
+                    TOUCH_EXPLORATION_CHANGE_EVENT_TEXT + false)) , TIMEOUT_MS);
+        } finally {
+            if (service.get() != null) {
+                // Reset touch exploration for the non-proxy service.
+                final AccessibilityServiceInfo info = service.get().getServiceInfo();
+                info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+                service.get().setServiceInfo(info);
+                service.get().disableSelfAndRemove();
+            }
+            stopSeparateProcess();
+        }
+    }
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
+            + ".AccessibilityServicesStateChangeListener#onAccessibilityServicesStateChanged"})
+    public void testProxyServicesStateChange_separateProcessA11yManagerNotNotified()
+            throws TimeoutException {
+        final StubProxyConcurrentAccessibilityService service =
+                mNonProxyServiceRule.enableService();
+        try {
+            startActivityInSeparateProcess();
+            assertThrows("A non-proxy-ed app was notified of a proxy change and sent out an"
+                            + " event.",
+                    TimeoutException.class,
+                    () -> sUiAutomation.executeAndWaitForEvent(
+                        () -> registerProxyAndWaitForConnection(),
+                        (event -> {
+                            final CharSequence name =
+                                    mA11yProxy.getInstalledAndEnabledServices().get(0)
+                                            .getResolveInfo().serviceInfo.name;
+                            return event.getEventType() == TYPE_ANNOUNCEMENT
+                                    && eventTextHasText(event.getText(), name);
+                        }), TIMEOUT_MS));
+        } finally {
+            service.disableSelfAndRemove();
+            stopSeparateProcess();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
+            + ".TouchExplorationStateChangeListener#onTouchExplorationStateChanged"})
+    public void testProxyTouchExplorationChange_separateProcessA11yManagerNotNotified()
+            throws TimeoutException {
+        // A service has touch exploration enabled by default.
+        final StubProxyConcurrentAccessibilityService service =
+                mNonProxyServiceRule.enableService();
+        try {
+            assertThat((service.getServiceInfo().flags
+                    & AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE) != 0).isTrue();
+            startActivityInSeparateProcess();
+            assertThrows("The non-proxy-ed app with touch exploration enabled was "
+                            + "notified of a proxy that does not have touch exploration enabled.",
+                    TimeoutException.class, () -> sUiAutomation.executeAndWaitForEvent(
+                            () -> registerProxyAndWaitForConnection(),
+                            (event -> event.getEventType() == TYPE_ANNOUNCEMENT
+                                    && eventTextHasText(event.getText(),
+                                    TOUCH_EXPLORATION_CHANGE_EVENT_TEXT + false)) , TIMEOUT_MS));
+        } finally {
+            service.disableSelfAndRemove();
+            stopSeparateProcess();
+        }
+    }
+
+    @Test
     @ApiTest(apis = {
             "android.view.accessibility.AccessibilityDisplayProxy#setInstalledAndEnabledServices",
             "android.view.accessibility.AccessibilityDisplayProxy#getInstalledAndEnabledServices"})
@@ -756,6 +1132,31 @@ public class AccessibilityDisplayProxyTest {
                         == focusStrokeWidthValue
                         && mProxyActivityA11yManager.getAccessibilityFocusColor()
                         == focusColorValue);
+    }
+
+    private void registerProxyWithTestServiceInfoAndWaitForServicesStateChange() {
+        mA11yProxy = new MyA11yProxy(mVirtualDisplayId, Executors.newSingleThreadExecutor(),
+                getTestAccessibilityServiceInfoAsList());
+
+        // Test that the A11yManager is notified when the timeouts have successfully propagated.
+        final MyAccessibilityServicesStateChangeListener listener =
+                new MyAccessibilityServicesStateChangeListener(INTERACTIVE_UI_TIMEOUT,
+                        NON_INTERACTIVE_UI_TIMEOUT);
+        mProxyActivityA11yManager.addAccessibilityServicesStateChangeListener(listener);
+        try {
+            runWithShellPermissionIdentity(sUiAutomation,
+                    () -> mA11yManager.registerDisplayProxy(mA11yProxy));
+            waitOn(listener.mWaitObject, () -> listener.mAtomicBoolean.get(), TIMEOUT_MS,
+                    "Services state listener called when proxy is registered");
+            // Make sure the installed and enabled services are correct.
+            assertTestAccessibilityServiceInfo(
+                    mProxyActivityA11yManager.getInstalledAccessibilityServiceList());
+            assertTestAccessibilityServiceInfo(
+                    mProxyActivityA11yManager.getEnabledAccessibilityServiceList(
+                            FEEDBACK_ALL_MASK));
+        } finally {
+            mProxyActivityA11yManager.removeAccessibilityServicesStateChangeListener(listener);
+        }
     }
 
     private AccessibilityEvent getProxyClickAccessibilityEvent() {
@@ -861,14 +1262,14 @@ public class AccessibilityDisplayProxyTest {
     private NonProxyActivity launchProxyConcurrentActivityOnDefaultDisplay(
             InstrumentedAccessibilityService service)
             throws Exception {
-        final NonProxyActivity concurrentToProxyActivity =
+        final NonProxyActivity nonProxyActivity =
                 launchActivityAndWaitForItToBeOnscreen(
                         sInstrumentation, sUiAutomation,
                         mNonProxyActivityRule);
         final List<AccessibilityWindowInfo> serviceWindows = service.getWindows();
         assertThat(findWindowByTitleWithList(getActivityTitle(sInstrumentation,
-                concurrentToProxyActivity), serviceWindows)).isNotNull();
-        return concurrentToProxyActivity;
+                nonProxyActivity), serviceWindows)).isNotNull();
+        return nonProxyActivity;
     }
 
     private View showTopWindowAndWaitForItToShowUp() throws TimeoutException {
@@ -917,39 +1318,116 @@ public class AccessibilityDisplayProxyTest {
         return activityOnVirtualDisplay;
     }
 
+    private void startActivityInSeparateProcess() throws TimeoutException {
+        final AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
+        info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+        sUiAutomation.setServiceInfo(info);
+
+        // Specify the default display, else this may get launched on the virtual display.
+        ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchDisplayId(Display.DEFAULT_DISPLAY);
+
+        sUiAutomation.executeAndWaitForEvent(() ->
+                        sInstrumentation.getContext().startActivity(
+                                mSeparateProcessActivityIntent, options.toBundle()),
+                AccessibilityEventFilterUtils.filterWindowsChangeTypesAndWindowTitle(sUiAutomation,
+                        WINDOWS_CHANGE_ADDED, SEPARATE_PROCESS_ACTIVITY_TITLE), TIMEOUT_MS);
+    }
+
+    private void stopSeparateProcess() {
+        // Make sure to kill off the separate process.
+        final List<String> allPackageNames = new ArrayList<>();
+        allPackageNames.add(SEPARATE_PROCESS_PACKAGE_NAME);
+        final ActivityManager am =
+                sInstrumentation.getContext().getSystemService(ActivityManager.class);
+        for (final String pkgName : allPackageNames) {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                am.forceStopPackage(pkgName);
+            });
+        }
+    }
+
+    private boolean eventTextHasText(List<CharSequence> text, CharSequence name) {
+        if (text == null) {
+            return false;
+        }
+        for (CharSequence textSegment : text) {
+            if (textSegment.equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private void registerProxyAndEnableTouchExploration() {
         registerProxyAndWaitForConnection();
-
-        final AccessibilityManager proxyActivityA11yManager =
-                mProxyedVirtualDisplayActivity.getSystemService(AccessibilityManager.class);
-        // This may be the case when the concurrent service is enabled.
-        if (proxyActivityA11yManager.isTouchExplorationEnabled()) {
-            return;
+        assertVirtualDisplayActivityExistsToProxy();
+        final MyTouchExplorationStateChangeListener listener =
+                new MyTouchExplorationStateChangeListener(/* initialState */ false);
+        mProxyActivityA11yManager.addTouchExplorationStateChangeListener(listener);
+        try {
+            final List<AccessibilityServiceInfo> serviceInfos =
+                    mA11yProxy.getInstalledAndEnabledServices();
+            serviceInfos.get(0).flags |=
+                    AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+            mA11yProxy.setInstalledAndEnabledServices(serviceInfos);
+            waitOn(listener.mWaitObject, () -> listener.mAtomicBoolean.get(), TIMEOUT_MS,
+                    "Touch exploration state listener called");
+            assertThat(mProxyActivityA11yManager.isTouchExplorationEnabled()).isTrue();
+        } finally {
+            mProxyActivityA11yManager.removeTouchExplorationStateChangeListener(listener);
         }
-        final Object waitObject = new Object();
-        final AtomicBoolean atomicBoolean = new AtomicBoolean(false);
-        final AccessibilityManager.TouchExplorationStateChangeListener touchExplorationListener =
-                (boolean b) -> {
-                    synchronized (waitObject) {
-                        atomicBoolean.set(b);
-                        waitObject.notifyAll();
-                    }
-                };
-
-        proxyActivityA11yManager.addTouchExplorationStateChangeListener(touchExplorationListener);
-        final List<AccessibilityServiceInfo> serviceInfos =
-                mA11yProxy.getInstalledAndEnabledServices();
-        serviceInfos.get(0).flags |=
-                AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
-        mA11yProxy.setInstalledAndEnabledServices(serviceInfos);
-
-        waitOn(waitObject, () -> atomicBoolean.get(), TIMEOUT_MS,
-                "Touch exploration state listener called");
-        assertThat(proxyActivityA11yManager.isTouchExplorationEnabled()).isTrue();
-        proxyActivityA11yManager.removeTouchExplorationStateChangeListener(
-                touchExplorationListener);
     }
+
+    class MyAccessibilityServicesStateChangeListener
+            implements AccessibilityServicesStateChangeListener {
+        AtomicBoolean mAtomicBoolean = new AtomicBoolean(false);
+        Object mWaitObject = new Object();
+        int mExpectedInteractiveTimeout;
+        int mExpectedNonInteractiveTimeout;
+
+        MyAccessibilityServicesStateChangeListener(int expectedInteractiveTimeout,
+                int expectedNonInteractiveTimeout) {
+            mExpectedInteractiveTimeout = expectedInteractiveTimeout;
+            mExpectedNonInteractiveTimeout = expectedNonInteractiveTimeout;
+        }
+
+        @Override
+        public void onAccessibilityServicesStateChanged(@NonNull AccessibilityManager manager) {
+            final int recommendedInteractiveUiTimeout =
+                    mProxyActivityA11yManager.getRecommendedTimeoutMillis(
+                            0, FLAG_CONTENT_CONTROLS);
+            final int recommendedNonInteractiveUiTimeout =
+                    mProxyActivityA11yManager.getRecommendedTimeoutMillis(
+                            0, FLAG_CONTENT_TEXT);
+            final boolean updatedTimeouts =
+                    recommendedInteractiveUiTimeout == mExpectedInteractiveTimeout
+                            && recommendedNonInteractiveUiTimeout == mExpectedNonInteractiveTimeout;
+            synchronized (mWaitObject) {
+                mAtomicBoolean.set(updatedTimeouts);
+                mWaitObject.notifyAll();
+            }
+        }
+    }
+
+
+    class MyTouchExplorationStateChangeListener implements
+            TouchExplorationStateChangeListener {
+        AtomicBoolean mAtomicBoolean;
+        Object mWaitObject = new Object();
+
+        MyTouchExplorationStateChangeListener(boolean initialState) {
+            mAtomicBoolean = new AtomicBoolean(initialState);
+        }
+        @Override
+        public void onTouchExplorationStateChanged(boolean enabled) {
+            synchronized (mWaitObject) {
+                mAtomicBoolean.set(enabled);
+                mWaitObject.notifyAll();
+            }
+        }
+    }
+
     /**
      * Class for testing AccessibilityDisplayProxy.
      */

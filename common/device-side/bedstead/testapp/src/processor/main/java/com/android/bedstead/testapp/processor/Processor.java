@@ -71,6 +71,10 @@ import javax.tools.JavaFileObject;
 @AutoService(javax.annotation.processing.Processor.class)
 public final class Processor extends AbstractProcessor {
     public static final String PACKAGE_NAME = "com.android.bedstead.testapp";
+    private static final ClassName USER_REFERENCE_CLASSNAME =
+            ClassName.get("com.android.bedstead.nene.users", "UserReference");
+    private static final ClassName PACKAGE_CLASSNAME =
+            ClassName.get("com.android.bedstead.nene.packages", "Package");
     private static final ClassName RETRY_CLASSNAME =
             ClassName.get("com.android.bedstead.nene.utils", "Retry");
     private static final ClassName CONTEXT_CLASSNAME =
@@ -118,6 +122,11 @@ public final class Processor extends AbstractProcessor {
             ClassName.get(
                     "com.google.android.enterprise.connectedapps",
                     "ProfileConnectionHolder");
+
+    private static final ClassName TESTAPP_UTILS_CLASSNAME =
+            ClassName.get(
+                    "com.android.bedstead.testapp",
+                    "Utils");
     private static final ClassName NENE_EXCEPTION_CLASSNAME =
             ClassName.get(
                     "com.android.bedstead.nene.exceptions",
@@ -256,11 +265,23 @@ public final class Processor extends AbstractProcessor {
                 FieldSpec.builder(TEST_APP_CONNECTOR_CLASSNAME, "mConnector")
                         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                         .build());
+        classBuilder.addField(
+                FieldSpec.builder(USER_REFERENCE_CLASSNAME, "mUser")
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
+        classBuilder.addField(
+                FieldSpec.builder(PACKAGE_CLASSNAME, "mPackage")
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
 
         classBuilder.addMethod(MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(TEST_APP_CONNECTOR_CLASSNAME, "connector")
+                .addParameter(USER_REFERENCE_CLASSNAME, "user")
+                .addParameter(PACKAGE_CLASSNAME, "pkg")
                 .addStatement("mConnector = connector")
+                .addStatement("mUser = user")
+                .addStatement("mPackage = pkg")
                 .addStatement(
                         "mProfileClass = $T.create(connector)",
                         profileClassName)
@@ -319,7 +340,7 @@ public final class Processor extends AbstractProcessor {
                 logicLambda.addStatement(
                         "mProfileClass.other().$L($L)",
                         method.getSimpleName(), String.join(", ", params));
-                logicLambda.addStatement("return new $T(mConnector)",
+                logicLambda.addStatement("return new $T(mConnector, mUser, mPackage)",
                         REMOTE_CONTENT_RESOLVER_WRAPPER_CLASSNAME);
             } else if (method.getReturnType().toString().equals(
                     "android.bluetooth.RemoteBluetoothAdapter")
@@ -330,7 +351,7 @@ public final class Processor extends AbstractProcessor {
                 logicLambda.addStatement(
                         "mProfileClass.other().$L($L)",
                         method.getSimpleName(), String.join(", ", params));
-                logicLambda.addStatement("return new $T(mConnector)",
+                logicLambda.addStatement("return new $T(mConnector, mUser, mPackage)",
                         REMOTE_BLUETOOTH_ADAPTER_WRAPPER_CLASSNAME);
             } else if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 logicLambda.addStatement("mProfileClass.other().$L($L)", method.getSimpleName(),
@@ -372,9 +393,8 @@ public final class Processor extends AbstractProcessor {
 
             methodBuilder
                     .nextControlFlow("catch ($T e)", Throwable.class)
-                    .addStatement(
-                            "throw new $T($S, e)",
-                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
+                    .addStatement("throw $T.dealWithConnectedAppsSdkException(mUser, mPackage, e)",
+                            TESTAPP_UTILS_CLASSNAME)
                     .endControlFlow();
 
             classBuilder.addMethod(methodBuilder.build());
@@ -485,9 +505,8 @@ public final class Processor extends AbstractProcessor {
                     "catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
                     .addStatement("throw ($T) e.getCause()", RuntimeException.class)
                     .nextControlFlow("catch ($T e)", Throwable.class)
-                    .addStatement(
-                            "throw new $T($S, e)",
-                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
+                    .addStatement("throw $T.dealWithConnectedAppsSdkException(null, null, e)",
+                            TESTAPP_UTILS_CLASSNAME)
                     .endControlFlow();
 
             classBuilder.addMethod(methodBuilder.build());
@@ -642,9 +661,8 @@ public final class Processor extends AbstractProcessor {
 
             methodBuilder
                     .nextControlFlow("catch ($T e)", Throwable.class)
-                    .addStatement(
-                            "throw new $T($S, e)",
-                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
+                    .addStatement("throw $T.dealWithConnectedAppsSdkException(null, null, e)",
+                            TESTAPP_UTILS_CLASSNAME)
                     .endControlFlow();
 
             classBuilder.addMethod(methodBuilder.build());

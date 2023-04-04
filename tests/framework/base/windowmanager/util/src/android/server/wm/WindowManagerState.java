@@ -979,7 +979,7 @@ public class WindowManagerState {
                 .collect(Collectors.toList());
     }
 
-    private Stream<WindowState> getMatchingWindows(Predicate<WindowState> condition) {
+    public Stream<WindowState> getMatchingWindows(Predicate<WindowState> condition) {
         return mWindowStates.stream().filter(condition);
     }
 

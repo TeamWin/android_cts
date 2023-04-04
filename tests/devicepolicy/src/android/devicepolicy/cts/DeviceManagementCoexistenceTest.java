@@ -19,6 +19,7 @@ package android.devicepolicy.cts;
 import static android.Manifest.permission.READ_CALENDAR;
 import static android.app.admin.DevicePolicyIdentifiers.APPLICATION_RESTRICTIONS_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.AUTO_TIMEZONE_POLICY;
+import static android.app.admin.DevicePolicyIdentifiers.KEYGUARD_DISABLED_FEATURES_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.LOCK_TASK_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.PACKAGE_UNINSTALL_BLOCKED_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.PERMISSION_GRANT_POLICY;
@@ -27,9 +28,12 @@ import static android.app.admin.DevicePolicyIdentifiers.RESET_PASSWORD_TOKEN_POL
 import static android.app.admin.DevicePolicyIdentifiers.USER_CONTROL_DISABLED_PACKAGES_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.getIdentifierForUserRestriction;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
+import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FEATURES_NONE;
+import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_SECURE_CAMERA;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_DENIED;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;
+import static android.app.admin.FlagUnion.FLAG_UNION;
 import static android.app.admin.TargetUser.GLOBAL_USER_ID;
 import static android.app.admin.TargetUser.LOCAL_USER_ID;
 import static android.os.UserManager.DISALLOW_MODIFY_ACCOUNTS;
@@ -42,6 +46,7 @@ import static org.junit.Assert.fail;
 import android.app.admin.DevicePolicyState;
 import android.app.admin.DpcAuthority;
 import android.app.admin.EnforcingAdmin;
+import android.app.admin.FlagUnion;
 import android.app.admin.IntentFilterPolicyKey;
 import android.app.admin.LockTaskPolicy;
 import android.app.admin.MostRestrictive;
@@ -109,6 +114,7 @@ public final class DeviceManagementCoexistenceTest {
 
     private static final int LOCK_TASK_FEATURES = LOCK_TASK_FEATURE_HOME;
 
+    private static final int KEYGUARD_DISABLED_FEATURE = KEYGUARD_DISABLE_SECURE_CAMERA;
     private static final TestApp sTestApp = sDeviceState.testApps().any();
 
     private static TestAppInstance sTestAppInstance = sTestApp.install();
@@ -314,9 +320,9 @@ public final class DeviceManagementCoexistenceTest {
         }
     }
 
-    // If ResetPasswordWithTokenTest for managed profile is executed before device owner and
-    // primary user profile owner tests, password reset token would have been disabled for the
-    // primary user, disabling this test until this gets fixed.
+    @Ignore("If ResetPasswordWithTokenTest for managed profile is executed before device owner "
+            + "and primary user profile owner tests, password reset token would have been disabled "
+            + "for the primary user, disabling this test until this gets fixed.")
     @Test
     @EnsureHasDevicePolicyManagerRoleHolder
     @EnsureHasDeviceOwner
@@ -393,6 +399,27 @@ public final class DeviceManagementCoexistenceTest {
                 sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
                         sDeviceState.dpc().componentName(), GLOBAL_USER_RESTRICTION);
             }
+        }
+    }
+
+    @Test
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void getDevicePolicyState_setKeyguardDisabledFeatures_returnsPolicy() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
+                    sDeviceState.dpc().componentName(), KEYGUARD_DISABLED_FEATURE);
+
+            PolicyState<Integer> policyState = getIntegerPolicyState(
+                    new NoArgsPolicyKey(
+                            KEYGUARD_DISABLED_FEATURES_POLICY),
+                    sDeviceState.dpc().user().userHandle());
+
+            assertThat(policyState.getCurrentResolvedPolicy()).isEqualTo(KEYGUARD_DISABLED_FEATURE);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
+                    sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_FEATURES_NONE);
         }
     }
 
@@ -585,6 +612,27 @@ public final class DeviceManagementCoexistenceTest {
                 sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
                         sDeviceState.dpc().componentName(), LOCAL_USER_RESTRICTION);
             }
+        }
+    }
+
+    @Test
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void getDevicePolicyState_setKeyguardDisabledFeatures_returnsCorrectResolutionMechanism() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
+                    sDeviceState.dpc().componentName(), KEYGUARD_DISABLED_FEATURE);
+
+            PolicyState<Integer> policyState = getIntegerPolicyState(
+                    new NoArgsPolicyKey(
+                            KEYGUARD_DISABLED_FEATURES_POLICY),
+                    sDeviceState.dpc().user().userHandle());
+
+            assertThat(getFlagUnionMechanism(policyState)).isEqualTo(FLAG_UNION);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
+                    sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_FEATURES_NONE);
         }
     }
 
@@ -811,6 +859,25 @@ public final class DeviceManagementCoexistenceTest {
         }
     }
 
+    @Test
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void policyUpdateReceiver_setKeyguardDisabledFeatures_receivedPolicySetBroadcast() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
+                    sDeviceState.dpc().componentName(), KEYGUARD_DISABLED_FEATURE);
+
+            PolicySetResultUtils.assertPolicySetResultReceived(
+                    sDeviceState,
+                    KEYGUARD_DISABLED_FEATURES_POLICY,
+                    PolicyUpdateResult.RESULT_POLICY_SET, LOCAL_USER_ID, new Bundle());
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
+                    sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_FEATURES_NONE);
+        }
+    }
+
     private PolicyState<Long> getLongPolicyState(PolicyKey policyKey, UserHandle user) {
         try {
             DevicePolicyState state =
@@ -915,6 +982,16 @@ public final class DeviceManagementCoexistenceTest {
             return (TopPriority<?>) policyState.getResolutionMechanism();
         } catch (ClassCastException e) {
             fail("Returned resolution mechanism is not of type TopPriority<>: " + e);
+            return null;
+        }
+    }
+
+    private FlagUnion getFlagUnionMechanism(
+            PolicyState<Integer> policyState) {
+        try {
+            return (FlagUnion) policyState.getResolutionMechanism();
+        } catch (ClassCastException e) {
+            fail("Returned resolution mechanism is not of type FlagUnion: " + e);
             return null;
         }
     }

@@ -26,6 +26,7 @@ import com.android.bedstead.harrier.annotations.EnsureFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
@@ -52,6 +53,7 @@ import java.lang.annotation.Target;
         namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
         key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG
 )
+@EnsureHasNoDelegate
 public @interface IncludeRunOnUnaffiliatedProfileOwnerSecondaryUser {
     /**
      * Weight sets the order that annotations will be resolved.

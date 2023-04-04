@@ -82,8 +82,6 @@ import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.WindowManagerState.Task;
 import android.view.SurfaceView;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -651,7 +649,6 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
      * matching task on some other display - that task will moved to the target display.
      */
     @Test
-    @FlakyTest(bugId = 271984010)
     public void testMoveToEmptyDisplayOnLaunch() {
         // Launch activity with unique affinity, so it will the only one in its task. And choose
         // resizeable activity to prevent the test activity be relaunched when launch it to another
