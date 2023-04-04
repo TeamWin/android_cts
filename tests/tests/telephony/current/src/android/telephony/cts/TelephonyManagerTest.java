@@ -420,8 +420,9 @@ public class TelephonyManagerTest {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (TelephonyManager.ACTION_NETWORK_COUNTRY_CHANGED.equals(intent.getAction())) {
-                mLatch.countDown();
+                Log.d(TAG, "testLastKnownCountryIso received ACTION_NETWORK_COUNTRY_CHANGED");
                 mBundle = intent.getExtras();
+                mLatch.countDown();
             }
         }
 
