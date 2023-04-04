@@ -54,6 +54,8 @@ class PermissionHistoryTest : BasePermissionTest() {
 
     @Before
     fun checkPreconditions() {
+        // Wear does not currently support the permission dashboard
+        assumeFalse(isWatch)
         assumeFalse(isTv)
         assumeFalse(isAutomotive && !SdkLevel.isAtLeastT())
     }
@@ -101,6 +103,7 @@ class PermissionHistoryTest : BasePermissionTest() {
 
     @Test
     fun openPrivacyDashboard_showsPermissionEntries() {
+
         openPrivacyDashboard()
 
         try {
