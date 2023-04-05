@@ -87,9 +87,10 @@ class ItsBaseTest(base_test.BaseTestClass):
     else:
       self.lighting_cntl = 'None'
       self.lighting_ch = '1'
+    if self.user_params.get('tablet_device'):
+      self.tablet_device = self.user_params['tablet_device'] == 'True'
     if self.user_params.get('debug_mode'):
-      self.debug_mode = True if self.user_params[
-          'debug_mode'] == 'True' else False
+      self.debug_mode = self.user_params['debug_mode'] == 'True'
     if self.user_params.get('scene'):
       self.scene = self.user_params['scene']
     camera_id_combo = self.parse_hidden_camera_id()
