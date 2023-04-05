@@ -61,6 +61,7 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -219,6 +220,12 @@ public class VirtualAudioTest {
         assertThat(audioInjection.getPlayState()).isEqualTo(PLAYSTATE_PLAYING);
         audioInjection.stop();
         assertThat(audioInjection.getPlayState()).isEqualTo(PLAYSTATE_STOPPED);
+    }
+
+    @Test
+    public void audioInjection_createWithNull() {
+        assertThrows(NullPointerException.class, () -> mVirtualDevice.createVirtualAudioDevice(
+                null, /* executor= */ null, /* callback= */ null));
     }
 
     @Test

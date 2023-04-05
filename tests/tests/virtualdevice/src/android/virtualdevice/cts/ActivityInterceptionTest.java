@@ -25,6 +25,7 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -327,6 +328,27 @@ public class ActivityInterceptionTest {
 
         mVirtualDevice.unregisterIntentInterceptor(mInterceptor);
         mVirtualDevice.unregisterIntentInterceptor(interceptorOther);
+    }
+
+    @Test
+    public void registerIntentInterceptor_nullArguments_shouldThrow() {
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.registerIntentInterceptor(null,
+                        Executors.newSingleThreadExecutor(), mInterceptor));
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.registerIntentInterceptor(new IntentFilter(),
+                        null, mInterceptor));
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.registerIntentInterceptor(new IntentFilter(),
+                        Executors.newSingleThreadExecutor(), null));
+    }
+
+    @Test
+    public void unregisterIntentInterceptor_nullArguments_shouldThrow() {
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.unregisterIntentInterceptor(null));
     }
 
     private static Intent createInterceptedIntent() {
