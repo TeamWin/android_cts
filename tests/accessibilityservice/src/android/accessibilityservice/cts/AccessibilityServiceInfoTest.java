@@ -16,6 +16,8 @@
 
 package android.accessibilityservice.cts;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
@@ -154,6 +156,14 @@ public class AccessibilityServiceInfoTest extends StsExtraBusinessLogicTestCase 
         } finally {
             InstrumentedAccessibilityService.disableAllServices();
         }
+    }
+
+    @Test
+    public void testDefaultConstructor() throws Exception {
+        AccessibilityServiceInfo info = new AccessibilityServiceInfo();
+
+        assertWithMessage("info.getId()").that(info.getId()).isNull();
+        assertWithMessage("info.toString()").that(info.toString()).isNotNull();
     }
 
     /**
