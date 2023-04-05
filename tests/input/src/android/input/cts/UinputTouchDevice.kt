@@ -32,7 +32,8 @@ class UinputTouchDevice(
     instrumentation: Instrumentation,
     display: Display,
     size: Size,
-    private val rawResource: Int = R.raw.test_touchscreen_register
+    private val rawResource: Int = R.raw.test_touchscreen_register,
+    private val source: Int = InputDevice.SOURCE_TOUCHSCREEN,
 ) :
     AutoCloseable {
 
@@ -113,7 +114,7 @@ class UinputTouchDevice(
         // Create the uinput device.
         val registerCommand = json.toString()
         return UinputDevice(instrumentation, resourceDeviceId,
-                vendorId, productId, InputDevice.SOURCE_TOUCHSCREEN, registerCommand)
+                vendorId, productId, source, registerCommand)
     }
 
     private fun associateWith(display: Display) {
