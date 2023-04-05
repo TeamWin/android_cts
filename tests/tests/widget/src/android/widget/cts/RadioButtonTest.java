@@ -46,6 +46,8 @@ import org.junit.runner.RunWith;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class RadioButtonTest {
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private RadioButton mRadioButton;
@@ -170,13 +172,13 @@ public class RadioButtonTest {
         assertFalse(mRadioButton.isChecked());
 
         // tap to checked
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mRadioButton);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mRadioButton);
         // wait for the posted onClick() after the tap
         verify(mockCheckedChangeListener, timeout(5000)).onCheckedChanged(mRadioButton, true);
         assertTrue(mRadioButton.isChecked());
 
         // tap to not checked - this should leave the radio button in checked state
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mRadioButton);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mRadioButton);
         assertTrue(mRadioButton.isChecked());
 
         verifyNoMoreInteractions(mockCheckedChangeListener);

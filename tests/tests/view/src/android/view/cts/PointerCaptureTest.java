@@ -63,6 +63,8 @@ import org.mockito.InOrder;
 public class PointerCaptureTest {
     private static final long TIMEOUT_DELTA = 10000;
 
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
     private Instrumentation mInstrumentation;
     private PointerCaptureCtsActivity mActivity;
 
@@ -242,7 +244,7 @@ public class PointerCaptureTest {
         // TODO(kaznacheev) replace the below line with a call to showContextMenu once b/65487689
         // is fixed. Meanwhile, emulate a long press which takes long enough time to avoid the race
         // condition.
-        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mActivityRule, mTarget, 0);
+        mCtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mActivityRule, mTarget, 0);
         PollingCheck.waitFor(TIMEOUT_DELTA, () -> !mOuter.hasWindowFocus());
         PollingCheck.waitFor(TIMEOUT_DELTA,
                 () -> !mTarget.hasPointerCapture() && !mActivity.hasPointerCapture());

@@ -70,7 +70,6 @@ import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -177,7 +176,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             TestUtils.unlockScreen();
             TestUtils.waitOnMainUntil(() -> screenStateCallbackRef.get() == SCREEN_STATE_ON
                             && editText.getWindowVisibility() == VISIBLE, TIMEOUT);
-            CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
+            mCtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
 
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             if (MockImeSession.isFinishInputNoFallbackConnectionEnabled()) {

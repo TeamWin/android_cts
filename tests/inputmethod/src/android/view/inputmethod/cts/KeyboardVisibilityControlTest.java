@@ -148,6 +148,8 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     private static final String ENABLE_AUTO_ROTATE_CMD =
             "settings put system accelerometer_rotation 1";
 
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
     @Rule
@@ -1455,13 +1457,13 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             expectImeInvisible(TIMEOUT);
 
             // Double tap the editor on the split primary task to focus the window and show the IME.
-            CtsTouchUtils.emulateDoubleTapOnViewCenter(mInstrumentation,
+            mCtsTouchUtils.emulateDoubleTapOnViewCenter(mInstrumentation,
                     null, editTextRef.get());
             expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
             expectImeVisible(TIMEOUT);
 
             // Tap on the split secondary task to switch focus and expect the IME will be hidden.
-            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation,
+            mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation,
                     null, splitSecondaryActivity.getWindow().getDecorView());
             expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
             expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
@@ -1514,7 +1516,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                         }, TestActivity2.class);
 
                 // Tap on the first activity to change focus
-                CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation,
+                mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation,
                         null, splitPrimaryActivity.getWindow().getDecorView());
 
                 notExpectEvent(stream, event -> "onStartInputView".equals(event.getEventName()),
@@ -1522,7 +1524,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 expectImeInvisible(TIMEOUT);
 
                 // Tap on the edit text in the split dialog to show the IME.
-                CtsTouchUtils.emulateDoubleTapOnViewCenter(mInstrumentation,
+                mCtsTouchUtils.emulateDoubleTapOnViewCenter(mInstrumentation,
                         null, editTextRef.get());
 
                 expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);

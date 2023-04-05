@@ -33,6 +33,7 @@ import android.platform.test.annotations.AppModeInstant;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -47,6 +48,9 @@ public class EndToEndImeTestBase {
 
     @Rule
     public TestName mTestName = new TestName();
+
+    protected final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
 
     /** Returns a unique marker based on the concrete class name and elapsed time. */
     protected String createUniqueMarker() {
