@@ -45,6 +45,7 @@ import android.companion.virtual.VirtualDeviceParams;
 import android.companion.virtual.sensor.VirtualSensor;
 import android.companion.virtual.sensor.VirtualSensorCallback;
 import android.companion.virtual.sensor.VirtualSensorConfig;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.display.VirtualDisplay;
@@ -52,6 +53,7 @@ import android.hardware.display.VirtualDisplayConfig;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 
+import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -70,6 +72,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -495,6 +498,144 @@ public class VirtualDeviceManagerBasicTest {
 
         assertThat(soundEffectListener.waitUntilCalled(/*nrTimes=1*/1)).isFalse();
         assertThat(soundEffectListener.getObservedSoundEffects()).isEmpty();
+    }
+
+    @Test
+    public void createVirtualDevice_nullArguments_shouldThrow() {
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(), null));
+    }
+
+    @Test
+    public void createVirtualDisplay_nullArguments_shouldThrow() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualDisplay(null, null, null));
+    }
+
+    @Test
+    public void addSoundEffectListener_nullArguments_shouldThrow() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.addSoundEffectListener(null, effectType -> {
+                }));
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.addSoundEffectListener(Executors.newSingleThreadExecutor(),
+                        null));
+    }
+
+    @Test
+    public void removeSoundEffectListener_nullArguments_shouldThrow() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.removeSoundEffectListener(null));
+    }
+
+    @Test
+    public void addActivityListener_nullArguments_shouldThrow() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.addActivityListener(null,
+                        new VirtualDeviceManager.ActivityListener() {
+                            @Override
+                            public void onTopActivityChanged(int displayId,
+                                    @NonNull ComponentName topActivity) {
+
+                            }
+
+                            @Override
+                            public void onDisplayEmpty(int displayId) {
+
+                            }
+                        }));
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.addActivityListener(Executors.newSingleThreadExecutor(),
+                        null));
+    }
+
+    @Test
+    public void removeActivityListener_nullArguments_shouldThrow() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.removeActivityListener(null));
+    }
+
+    @Test
+    public void createVirtualMouse_nullArguments_shouldThrow() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualMouse(null));
+    }
+
+    @Test
+    public void createVirtualTouchscreen_nullArguments_shouldThrow() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualTouchscreen(null));
+    }
+
+    @Test
+    public void createVirtualDpad_nullArguments_shouldThrow() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualDpad(null));
+    }
+
+    @Test
+    public void createVirtualKeyboard_nullArguments_shouldThrow() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualKeyboard(null));
+    }
+
+    @Test
+    public void createVirtualNavigationTouchpad_nullArguments_shouldThrow() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualNavigationTouchpad(null));
     }
 
     private static class SoundEffectListenerForTest

@@ -134,6 +134,11 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void keyEvent_nullEvent_throwsNpe() {
+        assertThrows(NullPointerException.class, () -> mVirtualKeyboard.sendKeyEvent(null));
+    }
+
+    @Test
     public void rejectsUnsupportedKeyCodes() {
         assertThrows(
                 IllegalArgumentException.class,
