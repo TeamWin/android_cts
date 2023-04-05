@@ -34,7 +34,8 @@
     <!-- Add a network security config that trusts user added CAs for tests -->
     <application android:testOnly="true"
                  android:appComponentFactory="com.android.eventlib.premade.EventLibAppComponentFactory"
-                 android:networkSecurityConfig="@xml/network_security_config">
+                 android:networkSecurityConfig="@xml/network_security_config"
+                 android:requestLegacyExternalStorage="true">
         <uses-library android:name="android.test.runner" />
 
         <activity android:name=".MainActivity"
