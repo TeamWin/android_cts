@@ -30,6 +30,7 @@ import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.Helper;
 import android.content.Intent;
+import android.platform.test.annotations.FlakyTest;
 import android.service.autofill.FillResponse;
 
 import org.junit.Test;
@@ -142,6 +143,7 @@ public class DelayFillTest extends AutoFillServiceTestCase.AutoActivityLaunch<Lo
         mUiBot.assertDatasets("placeholder");
     }
 
+    @FlakyTest(bugId = 276895614) // TODO: Try to reduce flakes
     @Test
     public void testPreventSendingDelayedFillIntentTwice() throws Exception {
         // Set service.

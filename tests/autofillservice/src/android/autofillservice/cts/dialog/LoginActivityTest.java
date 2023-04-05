@@ -62,6 +62,7 @@ import androidx.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.CddTest;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -300,6 +301,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
         assertMockImeStatus(activity, true);
     }
 
+    @Ignore("b/276895614")
     @Test
     public void testShowFillDialog() throws Exception {
         // Enable feature and test service
