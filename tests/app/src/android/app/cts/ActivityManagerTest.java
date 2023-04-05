@@ -114,6 +114,7 @@ import android.util.Log;
 import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -522,6 +523,7 @@ public final class ActivityManagerTest {
         assertFalse(am.isBackgroundRestricted());
     }
 
+    @FlakyTest(detail = "Known fail on cuttleshish b/275888802 and other devices b/255817314.")
     @Test
     public void testGetMemoryInfo() {
         ActivityManager.MemoryInfo outInfo = new ActivityManager.MemoryInfo();
