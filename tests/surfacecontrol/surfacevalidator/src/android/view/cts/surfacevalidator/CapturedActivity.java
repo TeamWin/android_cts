@@ -158,6 +158,8 @@ public class CapturedActivity extends Activity {
         if (acceptButton != null) {
             Log.d(TAG, "found permission dialog after searching all windows, clicked");
             acceptButton.click();
+        } else {
+            Log.e(TAG, "Failed to find permission dialog");
         }
     }
 
@@ -203,6 +205,9 @@ public class CapturedActivity extends Activity {
         }
         mIsSharingScreenDenied.set(resultCode != RESULT_OK);
         if (mIsSharingScreenDenied.get()) {
+            Log.e(TAG, "Failed to start screenshare permission Activity result="
+                    + mIsSharingScreenDenied.get());
+
             return;
         }
         Log.d(TAG, "onActivityResult");
