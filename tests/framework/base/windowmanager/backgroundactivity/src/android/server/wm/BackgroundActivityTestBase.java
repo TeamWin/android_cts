@@ -152,34 +152,17 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
         return waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
     }
 
-    /**
-     * @deprecated use {@link #assertTaskStackHasComponents(ComponentName, ComponentName...)}
-     * instead
-     */
-    @Deprecated
-    void assertTaskStack(ComponentName[] expectedComponents, ComponentName sourceComponent) {
-        if (expectedComponents == null) {
-            assertNull(mWmState.getTaskByActivity(sourceComponent));
-            return;
-        }
-        List<WindowManagerState.Activity> actual = mWmState.getTaskByActivity(
-                sourceComponent).mActivities;
-        assertEquals(expectedComponents.length, actual.size());
-        int size = expectedComponents.length;
-        for (int i = 0; i < size; i++) {
-            assertEquals(expectedComponents[i].flattenToShortString(), actual.get(i).getName());
-        }
+    void assertTaskStackIsEmpty(ComponentName sourceComponent) {
+        Task task = mWmState.getTaskByActivity(sourceComponent);
+        assertWithMessage("task for %s", sourceComponent.flattenToShortString()).that(task)
+                .isNull();
     }
 
     void assertTaskStackHasComponents(ComponentName sourceComponent,
             ComponentName... expectedComponents) {
         Task task = mWmState.getTaskByActivity(sourceComponent);
-        Log.d(TAG, "Task for " + sourceComponent.flattenToShortString() + ": " + task);
-        if (expectedComponents == null) {
-            assertWithMessage("mWmState.getTaskByActivity(%s)", sourceComponent)
-                    .that(task).isNull();
-            return;
-        }
+        assertWithMessage("task for %s", sourceComponent.flattenToShortString()).that(task)
+                .isNotNull();
         Log.d(TAG, "Task for " + sourceComponent.flattenToShortString() + ": " + task
                 + " Activities: " + task.mActivities);
         List<String> actualNames = getActivityNames(task.mActivities);
@@ -345,8 +328,8 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
         }
 
         ActivityStartVerifier thenAssertTaskStack(ComponentName... expectedComponents) {
-            BackgroundActivityTestBase.this.assertTaskStack(expectedComponents,
-                    expectedComponents[expectedComponents.length - 1]);
+            assertTaskStackHasComponents(expectedComponents[expectedComponents.length - 1],
+                    expectedComponents);
             return this;
         }
 
