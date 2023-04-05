@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
@@ -37,6 +38,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.PendingIntent;
@@ -53,9 +55,9 @@ import android.content.pm.UserInfo;
 import android.os.IBinder;
 import android.os.ResultReceiver;
 import android.os.SystemProperties;
+import android.os.UserHandle;
 import android.os.UserManager;
 import android.platform.test.annotations.Presubmit;
-import android.platform.test.annotations.SystemUserOnly;
 import android.provider.Settings;
 import android.server.wm.backgroundactivity.appa.Components;
 import android.server.wm.backgroundactivity.appa.IBackgroundActivityTestService;
@@ -689,15 +691,9 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
-    @SystemUserOnly(reason = "Device owner must be SYSTEM user")
     public void testDeviceOwner() throws Exception {
-        Assume.assumeFalse("Headless system user doesn't launch activities",
-                UserManager.isHeadlessSystemUserMode());
-        // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
-        // activity in App A
-        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN)) {
-            return;
-        }
+        assumeTrue("Device doesn't support FEATURE_DEVICE_ADMIN",
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN));
 
         // Remove existing guest user. The device may already have a guest present if it is
         // configured with config_guestUserAutoCreated.
@@ -708,28 +704,51 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // Owner (DO) creation in a similar manner as that of production flow.
         removeGuestUser();
 
+        // This test might be running as current user (on devices that use headless system user
+        // mode), so it needs to get the context for the system user.
+        Context context = runWithShellPermissionIdentity(
+                () -> mContext.createContextAsUser(UserHandle.SYSTEM, /* flags= */ 0),
+                INTERACT_ACROSS_USERS);
+
+        String doComponent = APP_A.SIMPLE_ADMIN_RECEIVER.flattenToString();
+        Log.d(TAG, "Setting DO as " + doComponent);
+        String cmd = "dpm set-device-owner --user " + UserHandle.USER_SYSTEM + " " + doComponent;
         try {
-            String cmdResult = runShellCommandOrThrow("dpm set-device-owner --user 0 "
-                + APP_A.SIMPLE_ADMIN_RECEIVER.flattenToString());
-            assertThat(cmdResult).contains("Success");
+            String cmdResult = runShellCommandOrThrow(cmd);
+            assertWithMessage("Result of '%s'", cmd).that(cmdResult).contains("Success");
         } catch (AssertionError e) {
             assertThat(e).hasMessageThat().contains(
                     "Not allowed to set the device owner because this device has already paired");
             throw new AssumptionViolatedException("This test needs to be able to set device owner");
         }
+
+        // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
+        // activity in App A
         EventReceiver receiver = new EventReceiver(
                 Event.APP_A_START_BACKGROUND_ACTIVITY_BROADCAST_RECEIVED);
-        Intent intent = new Intent();
-        intent.setComponent(APP_A.START_ACTIVITY_RECEIVER);
-        intent.putExtra(EVENT_NOTIFIER_EXTRA, receiver.getNotifier());
+        Intent intent = new Intent()
+                .setComponent(APP_A.START_ACTIVITY_RECEIVER)
+                .putExtra(EVENT_NOTIFIER_EXTRA, receiver.getNotifier());
 
-        mContext.sendBroadcast(intent);
+        Log.d(TAG, "Launching " + intent + " on " + context.getUser());
+        // Must run with IAC permission as it might be a context from other user
+        runWithShellPermissionIdentity(() -> context.sendBroadcast(intent), INTERACT_ACROSS_USERS);
 
         // Waits for final hoop in AppA to start looking for activity
         receiver.waitForEventOrThrow(BROADCAST_DELIVERY_TIMEOUT_MS);
-        boolean result = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
-        assertTrue("Not able to launch background activity", result);
-        assertTaskStack(new ComponentName[]{APP_A.BACKGROUND_ACTIVITY}, APP_A.BACKGROUND_ACTIVITY);
+        boolean actualResult = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+
+        if (UserManager.isHeadlessSystemUserMode()) {
+            assertWithMessage("Launched bg activity (%s) for (headless) system user",
+                    APP_A.BACKGROUND_ACTIVITY).that(actualResult).isFalse();
+            assertTaskDoesNotHaveVisibleComponents(APP_A.BACKGROUND_ACTIVITY,
+                    APP_A.BACKGROUND_ACTIVITY);
+        } else {
+            assertWithMessage("Launched bg activity (%s) for (full) system user",
+                    APP_A.BACKGROUND_ACTIVITY).that(actualResult).isTrue();
+            assertTaskStackHasComponents(APP_A.BACKGROUND_ACTIVITY,
+                    APP_A.BACKGROUND_ACTIVITY);
+        }
     }
 
     @Test

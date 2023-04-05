@@ -102,7 +102,7 @@ public class MediaCodecAsyncHelper {
                 }
             }
         }
-        if (firstDecoderName != null) {
+        if ((firstDecoderName != null) && secure) {
             firstDecoderName = firstDecoderName + ".secure";
         }
         return firstDecoderName;

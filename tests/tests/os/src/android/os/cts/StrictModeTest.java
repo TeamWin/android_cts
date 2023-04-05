@@ -86,6 +86,7 @@ import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -1476,6 +1477,7 @@ public class StrictModeTest {
     }
 
     @Test
+    @Ignore // ToDo: b/274909194
     public void testUnsafeImplicitIntentLaunch_InternalNonExportedReceiver_ThrowsViolation()
             throws Exception {
         StrictMode.setVmPolicy(

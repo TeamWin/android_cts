@@ -21,6 +21,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -124,8 +126,6 @@ public class CtsSharesheetDeviceTest {
             mExtraInitialIntentsLabelBase, mPreviewTitle, mPreviewText;
     private Set<ComponentName> mTargetsToExclude;
 
-    private boolean mMeetsResolutionRequirements;
-
     /**
      * To validate Sharesheet API and API behavior works as intended, UI tests are required. It is
      * impossible to know how the Sharesheet UI will be modified by end partners, so these tests
@@ -145,19 +145,20 @@ public class CtsSharesheetDeviceTest {
     @Before
     public void init() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mDevice = UiDevice.getInstance(mInstrumentation);
         mContext = mInstrumentation.getTargetContext();
+
+        assumeTrue(
+                "Skip test: Device doesn't meet minimum resolution",
+                meetsResolutionRequirements(mDevice));
+        assumeFalse("Skip test: does not apply to automotive",
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+
         mPkg = mContext.getPackageName();
         mExcludePkg = mPkg + ".packages.excludetester";
         mActivityLabelTesterPkg = mPkg + ".packages.activitylabeltester";
         mIntentFilterLabelTesterPkg = mPkg + ".packages.intentfilterlabeltester";
-
-        mDevice = UiDevice.getInstance(mInstrumentation);
         mAutomation = mInstrumentation.getUiAutomation();
-
-        // The the device resolution is too low skip the unneeded init
-        mMeetsResolutionRequirements = meetsResolutionRequirements();
-        if (!mMeetsResolutionRequirements) return;
-
         mActivityManager = mContext.getSystemService(ActivityManager.class);
         mShortcutManager = mContext.getSystemService(ShortcutManager.class);
         PackageManager pm = mContext.getPackageManager();
@@ -227,8 +228,6 @@ public class CtsSharesheetDeviceTest {
      */
     @Test
     public void bulkTest1() {
-        if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
-
         final CountDownLatch appStarted = new CountDownLatch(1);
         final AtomicReference<Intent> targetLaunchIntent = new AtomicReference<>();
 
@@ -261,7 +260,6 @@ public class CtsSharesheetDeviceTest {
 
     @Test
     public void bulkTest2() {
-        if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
         runAndExecuteCleanupBeforeAnyThrow(() -> {
             addShortcuts(1);
             launchSharesheet(createShareIntent(false /* do not test preview */,
@@ -285,7 +283,6 @@ public class CtsSharesheetDeviceTest {
      */
     @Test
     public void contentPreviewTest() {
-        if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
         runAndExecuteCleanupBeforeAnyThrow(() -> {
             launchSharesheet(createShareIntent(true /* test content preview */,
                     0 /* do not test EIIs */,
@@ -301,8 +298,6 @@ public class CtsSharesheetDeviceTest {
     // then verify that the alternate type is seen by the activity in the end.
     @Test
     public void testRefinementIntentSender() {
-        if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
-
         final CountDownLatch broadcastInvoked = new CountDownLatch(1);
         final CountDownLatch chooserCallbackInvoked = new CountDownLatch(1);
         final CountDownLatch appStarted = new CountDownLatch(1);
@@ -392,9 +387,8 @@ public class CtsSharesheetDeviceTest {
 
     @Test
     public void testShortcutSelection() {
-        if (!mMeetsResolutionRequirements || mActivityManager.isLowRamDevice()) {
-            return;  // Skip test if the device doesn't support shortcut targets.
-        }
+        assumeFalse(
+                "Direct share not required on low RAM devices", mActivityManager.isLowRamDevice());
 
         final String testShortcutId = "TEST_SHORTCUT";
         addShortcuts(createShortcut(testShortcutId));
@@ -419,9 +413,8 @@ public class CtsSharesheetDeviceTest {
 
     @Test
     public void testShortcutSelectionRefinedToAlternate() {
-        if (!mMeetsResolutionRequirements || mActivityManager.isLowRamDevice()) {
-            return;  // Skip test if the device doesn't support shortcut targets.
-        }
+        assumeFalse(
+                "Direct share not required on low RAM devices", mActivityManager.isLowRamDevice());
 
         final String testShortcutId = "TEST_SHORTCUT";
         addShortcuts(createShortcut(testShortcutId));
@@ -522,8 +515,6 @@ public class CtsSharesheetDeviceTest {
     // "test/cts_alternate" shows up and can be chosen.
     @Test
     public void testAlternateTargetsShown() {
-        if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
-
         final CountDownLatch chooserCallbackInvoked = new CountDownLatch(1);
         final AtomicReference<ComponentName> chosenComponent = new AtomicReference<>();
 
@@ -562,10 +553,6 @@ public class CtsSharesheetDeviceTest {
     @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_TARGETS")
     public void testChooserTargets() throws Throwable {
-        if (!mMeetsResolutionRequirements) {
-            return;  // Skip test if resolution is too low
-        }
-
         final CountDownLatch appStarted = new CountDownLatch(1);
         final AtomicReference<Intent> targetLaunchIntent = new AtomicReference<>();
 
@@ -605,10 +592,6 @@ public class CtsSharesheetDeviceTest {
     @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_TARGETS")
     public void testChooserTargetsRefinement() throws Throwable {
-        if (!mMeetsResolutionRequirements) {
-            return;  // Skip test if resolution is too low
-        }
-
         final CountDownLatch broadcastInvoked = new CountDownLatch(1);
         final CountDownLatch appStarted = new CountDownLatch(1);
         final AtomicReference<Intent> targetLaunchIntent = new AtomicReference<>();
@@ -690,11 +673,6 @@ public class CtsSharesheetDeviceTest {
     @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_CUSTOM_ACTIONS")
     public void testCustomAction() {
-        if (!mMeetsResolutionRequirements) {
-            // Skip test if resolution is too low
-            return;
-        }
-
         final CountDownLatch broadcastInvoked = new CountDownLatch(1);
         BroadcastReceiver customActionReceiver = new BroadcastReceiver() {
             @Override
@@ -748,10 +726,6 @@ public class CtsSharesheetDeviceTest {
     @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_MODIFY_SHARE_ACTION")
     public void testModifyShare() {
-        if (!mMeetsResolutionRequirements) {
-            // Skip test if resolution is too low
-            return;
-        }
         final CountDownLatch broadcastInvoked = new CountDownLatch(1);
         BroadcastReceiver modifyShareActionReceiver = new BroadcastReceiver() {
             @Override
@@ -979,8 +953,8 @@ public class CtsSharesheetDeviceTest {
      *
      * @return if min resolution requirements are met
      */
-    private boolean meetsResolutionRequirements() {
-        final Point displaySizeDp = mDevice.getDisplaySizeDp();
+    private static boolean meetsResolutionRequirements(UiDevice device) {
+        final Point displaySizeDp = device.getDisplaySizeDp();
         return displaySizeDp.y >= 700; // dp
     }
 

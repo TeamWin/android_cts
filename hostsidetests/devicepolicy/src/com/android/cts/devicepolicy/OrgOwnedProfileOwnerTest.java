@@ -32,9 +32,6 @@ import android.stats.devicepolicy.EventId;
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.result.ByteArrayInputStreamSource;
-import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.util.RunUtil;
 
@@ -42,7 +39,6 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -266,18 +262,11 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
             // Ensure user is initialized before rebooting, otherwise it won't start.
             waitForUserInitialized(mUserId);
-            // STOPSHIP(b/266588263) wait until idle so that data is serialized.
+            // Wait until idle so that the flag is persisted to disk.
             waitForBroadcastIdle();
             // Reboot to ensure ro.organization_owned is set to true in logd and logging is on.
             rebootAndWaitUntilReady();
-            collectUserStateDebugLogs("before_reboot");
-            try {
-                waitForUserUnlock(mUserId);
-            } catch (AssertionError e) {
-                // STOPSHIP(b/266588263): debug logs for "User is not unlocked" investigation.
-                collectUserStateDebugLogs("unlock_timeout");
-                throw e;
-            }
+            waitForUserUnlock(mUserId);
 
             // Generate various types of events on device side and check that they are logged.
             runDeviceTestsAsUser(packageName, testClassName, "testGenerateLogs", mUserId);
@@ -303,24 +292,10 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         final long deadline = start + TimeUnit.MINUTES.toNanos(5);
         while ((getUserFlags(userId) & FLAG_INITIALIZED) == 0) {
             if (System.nanoTime() > deadline) {
-                collectUserStateDebugLogs("initialize_timeout");
                 fail("Timed out waiting for user to become initialized");
             }
             RunUtil.getDefault().sleep(100);
         }
-        CLog.i("Spent %dms waiting for user %d to get FLAG_INITIALIZED".formatted(
-                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start), userId));
-    }
-
-    private void collectUserStateDebugLogs(String nameSuffix) throws Exception {
-        String content = String.join("\n--------------------------------------\n",
-                getDevice().executeShellCommand("dumpsys activity users"),
-                getDevice().executeShellCommand("dumpsys user"),
-                getDevice().executeShellCommand("dumpsys device_policy"),
-                getDevice().executeShellCommand("dumpsys lock_settings"),
-                getDevice().executeShellCommand("dumpsys activity broadcasts"));
-        mLogger.addTestLog("user_state_debug_%s.txt".formatted(nameSuffix), LogDataType.DUMPSYS,
-                new ByteArrayInputStreamSource(content.getBytes(StandardCharsets.UTF_8)));
     }
 
     @FlakyTest(bugId = 137088260)

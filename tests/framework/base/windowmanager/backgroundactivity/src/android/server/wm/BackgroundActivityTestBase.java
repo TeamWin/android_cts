@@ -32,6 +32,8 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.UserManager;
+import android.server.wm.WindowManagerState.Task;
+import android.util.Log;
 
 import androidx.annotation.CallSuper;
 
@@ -41,10 +43,15 @@ import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import org.junit.After;
 import org.junit.Before;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase {
+
+    private static final String TAG = BackgroundActivityTestBase.class.getSimpleName();
+
     static final String APP_A_PACKAGE = "android.server.wm.backgroundactivity.appa";
     static final android.server.wm.backgroundactivity.appa.Components APP_A =
             android.server.wm.backgroundactivity.appa.Components.get(APP_A_PACKAGE);
@@ -145,8 +152,12 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
         return waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
     }
 
-    void assertTaskStack(ComponentName[] expectedComponents,
-            ComponentName sourceComponent) {
+    /**
+     * @deprecated use {@link #assertTaskStackHasComponents(ComponentName, ComponentName...)}
+     * instead
+     */
+    @Deprecated
+    void assertTaskStack(ComponentName[] expectedComponents, ComponentName sourceComponent) {
         if (expectedComponents == null) {
             assertNull(mWmState.getTaskByActivity(sourceComponent));
             return;
@@ -158,6 +169,51 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
         for (int i = 0; i < size; i++) {
             assertEquals(expectedComponents[i].flattenToShortString(), actual.get(i).getName());
         }
+    }
+
+    void assertTaskStackHasComponents(ComponentName sourceComponent,
+            ComponentName... expectedComponents) {
+        Task task = mWmState.getTaskByActivity(sourceComponent);
+        Log.d(TAG, "Task for " + sourceComponent.flattenToShortString() + ": " + task);
+        if (expectedComponents == null) {
+            assertWithMessage("mWmState.getTaskByActivity(%s)", sourceComponent)
+                    .that(task).isNull();
+            return;
+        }
+        Log.d(TAG, "Task for " + sourceComponent.flattenToShortString() + ": " + task
+                + " Activities: " + task.mActivities);
+        List<String> actualNames = getActivityNames(task.mActivities);
+        List<String> expectedNames = Arrays.stream(expectedComponents)
+                .map((c) -> c.flattenToShortString()).collect(Collectors.toList());
+
+        assertWithMessage("task activities").that(actualNames)
+                .containsExactlyElementsIn(expectedNames).inOrder();
+    }
+
+    void assertTaskDoesNotHaveVisibleComponents(ComponentName sourceComponent,
+            ComponentName... expectedComponents) {
+        Task task = mWmState.getTaskByActivity(sourceComponent);
+        Log.d(TAG, "Task for " + sourceComponent.flattenToShortString() + ": " + task);
+        List<WindowManagerState.Activity> actual = getVisibleActivities(task.mActivities);
+        Log.v(TAG, "Task activities: all=" + task.mActivities + ", visible=" + actual);
+        if (actual == null) {
+            return;
+        }
+        List<String> actualNames = getActivityNames(actual);
+        List<String> expectedNames = Arrays.stream(expectedComponents)
+                .map((c) -> c.flattenToShortString()).collect(Collectors.toList());
+
+        assertWithMessage("task activities").that(actualNames).containsNoneIn(expectedNames);
+    }
+
+    List<WindowManagerState.Activity> getVisibleActivities(
+            List<WindowManagerState.Activity> activities) {
+        return activities.stream().filter(WindowManagerState.Activity::isVisible)
+                .collect(Collectors.toList());
+    }
+
+    List<String> getActivityNames(List<WindowManagerState.Activity> activities) {
+        return activities.stream().map(a -> a.getName()).collect(Collectors.toList());
     }
 
     Intent getLaunchActivitiesBroadcast(android.server.wm.backgroundactivity.appa.Components appA,
