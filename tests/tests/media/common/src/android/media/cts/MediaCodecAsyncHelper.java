@@ -23,7 +23,7 @@ import android.media.MediaExtractor;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-
+import org.junit.AssumptionViolatedException;
 import static org.junit.Assert.assertTrue;
 /**
  * MediaCodecAsyncHelper class
@@ -48,7 +48,11 @@ public class MediaCodecAsyncHelper {
         thread.join(TIMEOUT_MS);
         Throwable t = throwable.get();
         if (t != null) {
-            throw new RuntimeException("Test failed", t);
+            if (t instanceof AssumptionViolatedException ) {
+                throw new AssumptionViolatedException("Assumption Violated", t);
+            } else {
+                throw new RuntimeException("Test failed", t);
+            }
         }
     }
 
@@ -80,21 +84,23 @@ public class MediaCodecAsyncHelper {
 
     public static String getDecoderForType(String mime, boolean secure) {
         String firstDecoderName = null;
-        int n = MediaCodecList.getCodecCount();
-        for (int i = 0; i < n; ++i) {
-            MediaCodecInfo info = MediaCodecList.getCodecInfoAt(i);
+        MediaCodecList codecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
+        for (MediaCodecInfo info : codecInfos) {
             if (info.isEncoder()) {
                 continue;
             }
             String capability = MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback;
             if (secure) {
-              capability = MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
+                capability = MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
             }
             String[] supportedTypes = info.getSupportedTypes();
             for (int j = 0; j < supportedTypes.length; ++j) {
                 if (supportedTypes[j].equalsIgnoreCase(mime)) {
                     if (info.getCapabilitiesForType(mime).isFeatureSupported(
-                        capability)) {
+                            capability)) {
+                        return info.getName();
+                    } else if (secure && info.getName().endsWith(".secure")) {
                         return info.getName();
                     } else if (firstDecoderName == null) {
                         firstDecoderName = info.getName();
@@ -102,8 +108,8 @@ public class MediaCodecAsyncHelper {
                 }
             }
         }
-        if ((firstDecoderName != null) && secure) {
-            firstDecoderName = firstDecoderName + ".secure";
+        if (secure) {
+          return null;
         }
         return firstDecoderName;
     }
