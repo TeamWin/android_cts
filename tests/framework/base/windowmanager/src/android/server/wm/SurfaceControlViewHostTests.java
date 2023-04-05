@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.server.wm.CtsWindowInfoUtils.tapOnWindow;
 import static android.server.wm.CtsWindowInfoUtils.tapOnWindowCenter;
+import static android.server.wm.CtsWindowInfoUtils.waitForWindowFocus;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowInfo;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowInfos;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
@@ -30,6 +31,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -51,6 +53,7 @@ import android.graphics.Rect;
 import android.graphics.Region;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
@@ -64,7 +67,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -77,7 +79,6 @@ import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
-import com.android.compatibility.common.util.WidgetTestUtils;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;
 
@@ -143,6 +144,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
     Consumer<MotionEvent> mSurfaceViewMotionConsumer = null;
 
+    private CountDownLatch mSvCreatedLatch;
+
     class MotionConsumingSurfaceView extends SurfaceView {
         MotionConsumingSurfaceView(Context c) {
             super(c);
@@ -180,6 +183,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         // This is necessary to call waitForWindowInfos
         mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
                 android.Manifest.permission.ACCESS_SURFACE_FLINGER);
+
+        mSvCreatedLatch = new CountDownLatch(1);
     }
 
     @After
@@ -242,32 +247,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
     }
 
     private void assertWindowFocused(final View view, boolean hasWindowFocus) {
-        final CountDownLatch latch = new CountDownLatch(1);
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
-                view, () -> {
-                    if (view.hasWindowFocus() == hasWindowFocus) {
-                        latch.countDown();
-                        return;
-                    }
-                    view.getViewTreeObserver().addOnWindowFocusChangeListener(
-                            new ViewTreeObserver.OnWindowFocusChangeListener() {
-                                @Override
-                                public void onWindowFocusChanged(boolean newFocusState) {
-                                    if (hasWindowFocus == newFocusState) {
-                                        view.getViewTreeObserver()
-                                                .removeOnWindowFocusChangeListener(this);
-                                        latch.countDown();
-                                    }
-                                }
-                            });
-                }
-        );
-
-        try {
-            if (!latch.await(3, TimeUnit.SECONDS)) {
-                fail();
-            }
-        } catch (InterruptedException e) {
+        if (!waitForWindowFocus(view, hasWindowFocus)) {
             fail();
         }
     }
@@ -330,6 +310,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         } else {
             mSurfaceView.setChildSurfacePackage(mRemoteSurfacePackage);
         }
+        mSvCreatedLatch.countDown();
     }
 
     @Override
@@ -609,6 +590,35 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         assertWindowFocused(embeddedViewChild, false);
         // assert host does not have focus
         assertWindowFocused(mSurfaceView, false);
+    }
+
+    @Test
+    public void testFocusWithTouchCrossProcess() throws Throwable {
+        mTestService = getService();
+        assertNotNull(mTestService);
+
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mSvCreatedLatch.await(5, TimeUnit.SECONDS);
+
+        // Tap where the embedded window is placed to ensure focus is given via touch
+        assertTrue("Failed to tap on embedded",
+                tapOnWindowCenter(mInstrumentation, () -> {
+                    try {
+                        return mTestService.getWindowToken();
+                    } catch (RemoteException e) {
+                        return null;
+                    }
+                }));
+        assertTrue(mTestService.waitForFocus(true));
+        // assert host does not have focus
+        assertWindowFocused(mSurfaceView, false);
+
+        // Tap where the host window is placed to ensure focus is given back to host when touched
+        assertTrue("Failed to tap on host",
+                tapOnWindowCenter(mInstrumentation, () -> mViewParent.getWindowToken()));
+        assertTrue(mTestService.waitForFocus(false));
+        // assert host does not have focus
+        assertWindowFocused(mViewParent, true);
     }
 
     @Test
