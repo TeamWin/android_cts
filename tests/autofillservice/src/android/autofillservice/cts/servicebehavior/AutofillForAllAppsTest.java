@@ -29,6 +29,7 @@ import static org.junit.Assert.assertNull;
 import android.autofillservice.cts.activities.ImeOptionActivity;
 import android.autofillservice.cts.activities.LoginNotImportantForAutofillActivity;
 import android.autofillservice.cts.activities.LoginNotImportantUsernameImportantPasswordActivity;
+import android.autofillservice.cts.activities.MultilineLoginActivity;
 import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.Helper;
@@ -60,6 +61,7 @@ public class AutofillForAllAppsTest extends
     private static final String
             DEVICE_CONFIG_TRIGGER_FILL_REQUEST_ON_FILTERED_IMPORTANT_VIEWS =
                 "trigger_fill_request_on_filtered_important_views";
+    private static final String DEVICE_CONFIG_MULTILINE_FILTER_ENABLED = "multiline_filter_enabled";
 
     private DeviceConfigStateManager mDenyListStateManager =
             new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
@@ -67,6 +69,9 @@ public class AutofillForAllAppsTest extends
     private DeviceConfigStateManager mAllowlistStateManager =
             new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
                 DEVICE_CONFIG_PACKAGE_AND_ACTIVITY_ALLOWLIST_FOR_TRIGGERING_FILL_REQUEST);
+    private DeviceConfigStateManager mMultilineFilterEnabledStateManager =
+            new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                DEVICE_CONFIG_MULTILINE_FILTER_ENABLED);
     private DeviceConfigStateManager mImeActionFlagStateManager =
             new DeviceConfigStateManager(mContext, DeviceConfig.NAMESPACE_AUTOFILL,
               AutofillFeatureFlags.DEVICE_CONFIG_NON_AUTOFILLABLE_IME_ACTION_IDS);
@@ -116,6 +121,7 @@ public class AutofillForAllAppsTest extends
         setIsApplyHeuristicOnImportantViewEnabledFlagValue("false");
         setShouldIncludeAutofillTypeNotNoneFlagValue("false");
         setShouldIncludeAllViewsInAssistStructure("false");
+        setMultilineFilterFlagValue("false");
     }
 
     @After
@@ -127,6 +133,7 @@ public class AutofillForAllAppsTest extends
         setIsApplyHeuristicOnImportantViewEnabledFlagValue("false");
         setShouldIncludeAutofillTypeNotNoneFlagValue("false");
         setShouldIncludeAllViewsInAssistStructure("false");
+        setMultilineFilterFlagValue("false");
     }
 
     @Test
@@ -359,6 +366,48 @@ public class AutofillForAllAppsTest extends
     }
 
     @Test
+    public void testMultilineFilterCanStopViewTriggerFillRequest()
+            throws Exception {
+        enableService();
+        setMultilineFilterFlagValue("true");
+        setIsApplyHeuristicOnImportantViewEnabledFlagValue("true");
+        // Set response with a dataset
+        sReplier.addResponse(mLoginResponseBuilder.build());
+        // Start ime option activity.
+        MultilineLoginActivity tempActivity = startMultilineLoginActivity();
+        mUiBot.waitForIdleSync();
+        sReplier.assertNoUnhandledFillRequests();
+
+        // focus on username field
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+        // assert fill request is not triggered since it should be filterd by multiline check
+        sReplier.assertNoUnhandledFillRequests();
+    }
+
+    @Test
+    public void testSelectedViewsStrillTriggerFillRequest() throws Exception {
+        enableService();
+        setIsApplyHeuristicOnImportantViewEnabledFlagValue("true");
+        setMultilineFilterFlagValue("true");
+        // Set response with a dataset
+        sReplier.addResponse(mLoginResponseBuilder.build());
+        // Start Login Activity
+        startLoginActivity();
+        mUiBot.waitForIdleSync();
+        sReplier.assertNoUnhandledFillRequests();
+
+        // focus on username field
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+        // assert fill request is triggered since the views passes heuristic and multiline check
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        sReplier.assertNoUnhandledFillRequests();
+    }
+
+    @Test
     public void testAssistStructure_includeAutofillTypeNotNoneViews()
             throws Exception {
         enableService();
@@ -418,6 +467,10 @@ public class AutofillForAllAppsTest extends
         sReplier.assertNoUnhandledFillRequests();
     }
 
+    private void setMultilineFilterFlagValue(String value) {
+        Helper.setDeviceConfig(mMultilineFilterEnabledStateManager, value);
+    }
+
     private void setShouldIncludeAllViewsInAssistStructure(String value) {
         Helper.setDeviceConfig(mShouldIncludeAllViewsInAssistStructureFlagStateManager, value);
     }
@@ -472,6 +525,14 @@ public class AutofillForAllAppsTest extends
         mContext.startActivity(intent);
         waitSeveralIdleSyncToAssertSpecifiedUiShown(ID_IMEACTION_LABEL, 11);
         return ImeOptionActivity.getCurrentActivity();
+    }
+
+    private MultilineLoginActivity startMultilineLoginActivity() throws Exception {
+        final Intent intent = new Intent(mContext, MultilineLoginActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        waitSeveralIdleSyncToAssertSpecifiedUiShown(ID_USERNAME, 11);
+        return MultilineLoginActivity.getCurrentActivity();
     }
 
     private void waitSeveralIdleSyncToAssertSpecifiedUiShown(String labelId, int numOfRounds) {
