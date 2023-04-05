@@ -97,13 +97,14 @@ public class ActivityManagerShortFgsTimeoutTest {
 
         int sleep = 125;
         final long timeout = SystemClock.uptimeMillis() + timeoutSecond * 1000;
-        while (SystemClock.uptimeMillis() < timeout) {
+        while (true) {
 
             final var keyValues = extractShortFgsSettings();
             try {
                 assertConfigAtLeast(keyValues, "short_fgs_timeout_duration", 3 * 60_000);
                 assertConfigAtLeast(keyValues, "short_fgs_proc_state_extra_wait_duration", 5_000);
                 assertConfigAtLeast(keyValues, "short_fgs_anr_extra_wait_duration", 10_000);
+                return;
             } catch (Throwable th) {
                 if (SystemClock.uptimeMillis() >= timeout) {
                     throw th;
