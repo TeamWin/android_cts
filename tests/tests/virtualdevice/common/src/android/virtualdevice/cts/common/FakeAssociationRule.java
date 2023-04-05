@@ -68,7 +68,11 @@ public class FakeAssociationRule extends ExternalResource {
     protected void after() {
         super.after();
         if (mAssociationInfo != null) {
-            mCompanionDeviceManager.disassociate(mAssociationInfo.getId());
+            for (AssociationInfo associationInfo : mCompanionDeviceManager.getMyAssociations()) {
+                if (associationInfo.getId() == mAssociationInfo.getId()) {
+                    mCompanionDeviceManager.disassociate(mAssociationInfo.getId());
+                }
+            }
         }
     }
 
@@ -82,5 +86,9 @@ public class FakeAssociationRule extends ExternalResource {
 
     public AssociationInfo getAssociationInfo() {
         return mAssociationInfo;
+    }
+
+    public void disassociate() {
+        mCompanionDeviceManager.disassociate(mAssociationInfo.getId());
     }
 }
