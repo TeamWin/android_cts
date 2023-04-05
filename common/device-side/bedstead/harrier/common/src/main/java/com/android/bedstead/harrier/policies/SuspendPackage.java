@@ -23,6 +23,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.INHERITABLE;
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_PACKAGE_ACCESS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_PACKAGE_STATE;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
@@ -35,6 +36,8 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
         APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER
                 | APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | CAN_BE_DELEGATED
                 | CANNOT_BE_APPLIED_BY_ROLE_HOLDER | INHERITABLE},
-        delegatedScopes = DELEGATION_PACKAGE_ACCESS)
+        delegatedScopes = DELEGATION_PACKAGE_ACCESS,
+        permissions = @EnterprisePolicy.Permission(
+                appliedWith = MANAGE_DEVICE_POLICY_PACKAGE_STATE, appliesTo = APPLIES_TO_OWN_USER))
 public final class SuspendPackage {
 }

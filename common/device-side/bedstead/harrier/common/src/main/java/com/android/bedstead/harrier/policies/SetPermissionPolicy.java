@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,24 @@
 package com.android.bedstead.harrier.policies;
 
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DPM_ROLE_HOLDER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.INHERITABLE;
-import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_PACKAGE_ACCESS;
-import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_PACKAGE_STATE;
+import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_PERMISSION_GRANT;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /**
- * Policy for hiding applications.
+ * Policies around setting the grant state of a basic permission.
  *
- * <p>This is used by methods
- * {@code DevicePolicyManager#setApplicationHidden(ComponentName, String, boolean)} and
- * {@code DevicePolicyManager#isApplicationHidden(ComponentName, String)}.
+ * <p>This is used by
+ * {@code DevicePolicyManager#setPermissionGrantState(ComponentName, String, String, int)} when
+ * granting permissions not covered by other policies.
  */
 @EnterprisePolicy(
-        dpc = {
-                APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | CAN_BE_DELEGATED
-                        | APPLIED_BY_DPM_ROLE_HOLDER | APPLIES_TO_OWN_USER | INHERITABLE},
-        delegatedScopes = DELEGATION_PACKAGE_ACCESS,
-        permissions = @EnterprisePolicy.Permission(
-                appliedWith = MANAGE_DEVICE_POLICY_PACKAGE_STATE, appliesTo = APPLIES_TO_OWN_USER)
-)
-public class ApplicationHidden {
+        dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER
+                | CAN_BE_DELEGATED | CANNOT_BE_APPLIED_BY_ROLE_HOLDER,
+        delegatedScopes = DELEGATION_PERMISSION_GRANT)
+public final class SetPermissionPolicy {
 }
