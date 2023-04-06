@@ -18,6 +18,8 @@ package android.cts.statsdatom.voiceinteraction;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.cts.statsdatom.lib.DeviceUtils;
+
 import com.android.tradefed.device.ITestDevice;
 
 import java.util.regex.Matcher;
@@ -37,6 +39,8 @@ public class HotwordMetricsTestUtils {
     // duration to avoid test flaky.
     public static final long STATSD_LOG_DEBOUNCE_MS = 25_000;
 
+    private static final String FEATURE_MICROPHONE = "android.hardware.microphone";
+
     public static int getTestAppUid(ITestDevice device) throws Exception {
         final int currentUser = device.getCurrentUser();
         final String uidLine = device.executeShellCommand(
@@ -45,5 +49,17 @@ public class HotwordMetricsTestUtils {
         final Matcher matcher = pattern.matcher(uidLine);
         assertWithMessage("Pkg not found: " + TEST_PKG).that(matcher.find()).isTrue();
         return Integer.parseInt(matcher.group(1));
+    }
+
+    /**
+     * Check whether the device is supported or not. Currently, the device needs to have
+     * FEATURE_MICROPHONE.
+     *
+     * @param device the device
+     * @return {@code True} if the device is supported. Otherwise, return {@code false}.
+     * @throws Exception
+     */
+    public static boolean isSupportedDevice(ITestDevice device) throws Exception {
+        return DeviceUtils.hasFeature(device, FEATURE_MICROPHONE);
     }
 }
