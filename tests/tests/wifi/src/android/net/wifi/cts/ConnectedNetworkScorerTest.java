@@ -362,7 +362,10 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                             } catch (NoSuchElementException e) {
                                 // pass - Device does not support the field.
                             }
-
+                            assertThat(statsEntry.getTotalCcaBusyFreqTimeMillis(link)).isAtLeast(
+                                    0L);
+                            assertThat(statsEntry.getTotalRadioOnFreqTimeMillis(link)).isAtLeast(
+                                    0L);
                             assertThat(statsEntry.getContentionTimeStats(link,
                                     WME_ACCESS_CATEGORY_BE).getContentionTimeMinMicros()).isAtLeast(
                                     0);
