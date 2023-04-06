@@ -561,7 +561,7 @@ public class AudioDataPathsActivity
                 if (devInfo != null) {
                     mMagnitudes[localTestStep] = mAnalyzer.getMagnitude();
                     mMaxMagnitudes[localTestStep] = mAnalyzer.getMaxMagnitude();
-                    mPhases[localTestStep] = mAnalyzer.getPhase();
+                    mPhases[localTestStep] = mAnalyzer.getPhaseOffset();
                     mPhaseJitters[localTestStep] = mAnalyzer.getPhaseJitter();
 
                     recordTestStatus();
@@ -577,10 +577,11 @@ public class AudioDataPathsActivity
                                     currentResultsText,
                                     testSpec.getDescription(),
                                     String.format(Locale.getDefault(),
-                                            "[mag:%f, maxMag:%f, phase:%f]",
+                                            "[mag:%f, maxMag:%f, phase:%f, jitter:%f]",
                                             mMagnitudes[localTestStep],
                                             mMaxMagnitudes[localTestStep],
-                                            mPhases[localTestStep]));
+                                            mPhases[localTestStep],
+                                            mPhaseJitters[localTestStep]));
                             mResultsTx.setText(newResultsText);
                         }
                     });
@@ -656,7 +657,7 @@ public class AudioDataPathsActivity
     // Analysis
     private static final String KEY_MAXMAGNITUDE = "max_magnitude";
     private static final String KEY_MAGNITUDE = "magnitude";
-    private static final String KEY_PHASE = "phase";
+    private static final String KEY_PHASEOFFSET = "phase_offset";
     private static final String KEY_PHASEJITTER = "phase_jitter";
 
     private void recordTestStatus() {
@@ -754,8 +755,8 @@ public class AudioDataPathsActivity
                 ResultUnit.NONE);
 
         reportLog.addValue(
-                KEY_PHASE,
-                mAnalyzer.getPhase(),
+                KEY_PHASEOFFSET,
+                mAnalyzer.getPhaseOffset(),
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
