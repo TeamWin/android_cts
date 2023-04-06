@@ -76,13 +76,14 @@ public class ThirdPartyInCallServiceAppOpsPermissionTest extends BaseTelecomTest
 
     @Override
     public void tearDown() throws Exception {
-        if (mShouldTestTelecom) {
-            mICtsThirdPartyInCallServiceControl.resetCalls();
-            if (mExpectedTearDownBindingStatus) {
-                assertBindStatus(/* true: bind, false: unbind */false, /* expected result */true);
-            }
-        }
+        resetRemoteCalls();
         super.tearDown();
+        if (mShouldTestTelecom && mExpectedTearDownBindingStatus) {
+            // A bind status of false (unbound) requires tearDown() to run to tear down the
+            // ConnectionService. If tearDown generates an exception, this assert will also fail,
+            // so it is safe after tearDown.
+            assertBindStatus(/* true: bind, false: unbind */false, /* expected result */true);
+        }
     }
 
     public void testWithoutAppOpsPermission() throws Exception {
@@ -183,6 +184,16 @@ public class ThirdPartyInCallServiceAppOpsPermissionTest extends BaseTelecomTest
             }
         }, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "Unable to " + (bind ? "Bind" : "Unbind")
                 + " third party in call service");
+    }
+
+    private void resetRemoteCalls() {
+        if (mICtsThirdPartyInCallServiceControl != null) {
+            try {
+                mICtsThirdPartyInCallServiceControl.resetCalls();
+            } catch (Exception e) {
+                Log.w(TAG, "resetRemoteCalls ran into an exception: " + e);
+            }
+        }
     }
 
     private void assertCallCount(int expected) {

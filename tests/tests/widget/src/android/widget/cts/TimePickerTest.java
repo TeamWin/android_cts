@@ -65,6 +65,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class TimePickerTest {
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private TimePicker mTimePicker;
@@ -431,7 +433,7 @@ public class TimePickerTest {
 
         // Input valid hour.
         assertEquals(initialHour, mTimePicker.getHour());
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule,
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule,
                 mTimePicker.getHourView());
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_1);
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_0);
@@ -510,7 +512,7 @@ public class TimePickerTest {
 
         // Input valid hour.
         assertEquals(initialHour, mTimePicker.getHour());
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule,
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule,
                 mTimePicker.getHourView());
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_1);
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_0);

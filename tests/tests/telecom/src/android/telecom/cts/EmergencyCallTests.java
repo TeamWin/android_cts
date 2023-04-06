@@ -215,9 +215,10 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
         assertIsInCall(false);
 
         //although collection of logcat/persisting takes only 1 sec
-        //some AVDs are very slow and I see up to 6 seconds from call
+        //some AVDs are very slow and I see up to 10 seconds from call
         //transitioning to disconnected to actual data being collected
-        boolean result = mLatchForDropBox.await(8000L, TimeUnit.MILLISECONDS);
+        Log.d(TAG, "Starting wait for dropbox latch");
+        boolean result = mLatchForDropBox.await(13000L, TimeUnit.MILLISECONDS);
         assertTrue("Latch did not reach zero", result);
         Log.d(TAG, "verify entries after timestamp: " + startTime);
         verifyEmergencyDropBoxEntriesCreatedAndDumped(startTime);

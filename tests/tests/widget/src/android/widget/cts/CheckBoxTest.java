@@ -53,6 +53,8 @@ public class CheckBoxTest {
     public ActivityTestRule<CheckBoxCtsActivity> mActivityRule =
             new ActivityTestRule<>(CheckBoxCtsActivity.class);
 
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -169,12 +171,12 @@ public class CheckBoxTest {
         assertFalse(mCheckBox.isChecked());
 
         // tap to checked
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mCheckBox);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mCheckBox);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, true);
         assertTrue(mCheckBox.isChecked());
 
         // tap to not checked
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mCheckBox);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mCheckBox);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, false);
         assertFalse(mCheckBox.isChecked());
 

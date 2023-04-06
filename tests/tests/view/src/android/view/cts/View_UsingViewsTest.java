@@ -92,6 +92,8 @@ public class View_UsingViewsTest {
      */
     private static final String CHINA_SYMBOL = "table tennis";
 
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
     private Instrumentation mInstrumentation;
     private Activity mActivity;
 
@@ -389,7 +391,7 @@ public class View_UsingViewsTest {
 
         // long click the edit text
         mInstrumentation.waitForIdleSync();
-        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mActivityRule, mEditText);
+        mCtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mActivityRule, mEditText);
         verify(onLongClickListener, within(1000)).onLongClick(mEditText);
 
         // Wait for the UI Thread to become idle.
@@ -400,7 +402,7 @@ public class View_UsingViewsTest {
         mInstrumentation.waitForIdleSync();
         device.waitForIdle();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonCancel);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonCancel);
         assertEquals("", mEditText.getText().toString());
 
         mInstrumentation.waitForIdleSync();
@@ -410,25 +412,25 @@ public class View_UsingViewsTest {
         mActivityRule.runOnUiThread(() -> mEditText.setText(ARGENTINA));
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonOk);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonOk);
         assertEquals(ARGENTINA_SYMBOL, mSymbolTextView.getText().toString());
 
         mActivityRule.runOnUiThread(() -> mEditText.setText(AMERICA));
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonOk);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonOk);
         assertEquals(AMERICA_SYMBOL, mSymbolTextView.getText().toString());
 
         mActivityRule.runOnUiThread(() -> mEditText.setText(CHINA));
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonOk);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonOk);
         assertEquals(CHINA_SYMBOL, mSymbolTextView.getText().toString());
 
         mActivityRule.runOnUiThread(() -> mEditText.setText("Unknown"));
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonOk);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonOk);
         assertEquals(View.VISIBLE, mWarningTextView.getVisibility());
     }
 

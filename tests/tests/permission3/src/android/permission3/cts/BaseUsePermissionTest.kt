@@ -91,12 +91,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
         const val ALLOW_ALL_BUTTON =
             "com.android.permissioncontroller:id/permission_allow_all_button"
-        const val ALWAYS_ALLOW_ALL_BUTTON =
-            "com.android.permissioncontroller:id/permission_always_allow_all_button"
         const val SELECT_BUTTON =
             "com.android.permissioncontroller:id/permission_allow_selected_button"
-        const val SELECT_MORE_BUTTON =
-            "com.android.permissioncontroller:id/permission_allow_more_selected_button"
+        const val DONT_SELECT_MORE_BUTTON =
+            "com.android.permissioncontroller:id/permission_dont_allow_more_selected_button"
         const val ALLOW_BUTTON =
                 "com.android.permissioncontroller:id/permission_allow_button"
         const val ALLOW_FOREGROUND_BUTTON =

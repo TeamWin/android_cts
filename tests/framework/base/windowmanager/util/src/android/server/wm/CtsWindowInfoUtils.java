@@ -23,6 +23,8 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.window.WindowInfosListenerForTest;
 import android.window.WindowInfosListenerForTest.WindowInfo;
@@ -347,10 +349,45 @@ public class CtsWindowInfoUtils {
         final long downTime = SystemClock.uptimeMillis();
 
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
-        CtsTouchUtils.injectDownEvent(uiAutomation, downTime, coord.x, coord.y, true, null);
-        CtsTouchUtils.injectUpEvent(uiAutomation, downTime, false, coord.x, coord.y,
+        CtsTouchUtils ctsTouchUtils = new CtsTouchUtils();
+        ctsTouchUtils.injectDownEvent(uiAutomation, downTime, coord.x, coord.y, true, null);
+        ctsTouchUtils.injectUpEvent(uiAutomation, downTime, false, coord.x, coord.y,
                 true, null);
 
         instrumentation.waitForIdleSync();
     }
+
+    public static boolean waitForWindowFocus(final View view, boolean hasWindowFocus) {
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        view.getHandler().post(() -> {
+            if (view.hasWindowFocus() == hasWindowFocus) {
+                latch.countDown();
+                return;
+            }
+            view.getViewTreeObserver().addOnWindowFocusChangeListener(
+                    new ViewTreeObserver.OnWindowFocusChangeListener() {
+                        @Override
+                        public void onWindowFocusChanged(boolean newFocusState) {
+                            if (hasWindowFocus == newFocusState) {
+                                view.getViewTreeObserver()
+                                        .removeOnWindowFocusChangeListener(this);
+                                latch.countDown();
+                            }
+                        }
+                    });
+
+            view.invalidate();
+        });
+
+        try {
+            if (!latch.await(3, TimeUnit.SECONDS)) {
+                return false;
+            }
+        } catch (InterruptedException e) {
+            return false;
+        }
+        return true;
+    }
+
 }

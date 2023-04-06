@@ -24,7 +24,9 @@ import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualNavigationTouchpad;
 import android.hardware.input.VirtualNavigationTouchpadConfig;
 import android.hardware.input.VirtualTouchEvent;
+import android.os.SystemClock;
 import android.view.InputDevice;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import androidx.test.filters.SmallTest;
@@ -107,8 +109,7 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
         final float inputSize = 1f;
         final float x = 30f;
         final float y = 30f;
-
-        try (DropShellPermissionsTemporarily drop = new DropShellPermissionsTemporarily()) {
+        try (DropShellPermissionsTemporarily ignored = new DropShellPermissionsTemporarily()) {
             assertThrows(SecurityException.class,
                     () ->
                             mVirtualNavigationTouchpad.sendTouchEvent(
@@ -122,6 +123,168 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
                                             .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
                                             .build()));
         }
+    }
+
+    @Test
+    public void createVirtualNavigationTouchpad_defaultDisplay_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> createVirtualNavigationTouchpad(DEFAULT_DISPLAY));
+    }
+
+    @Test
+    public void createVirtualNavigationTouchpad_unownedDisplay_throwsException() {
+        VirtualDisplay unownedDisplay = createUnownedVirtualDisplay();
+        assertThrows(SecurityException.class,
+                () -> createVirtualNavigationTouchpad(unownedDisplay.getDisplay().getDisplayId()));
+        unownedDisplay.release();
+    }
+
+    @Test
+    public void sendTap_motionEventNotConsumed_getsConvertedToDpadCenter() {
+        setConsumeGenericMotionEvents(false);
+
+        final float x = 30f;
+        final float y = 30f;
+        mVirtualNavigationTouchpad.sendTouchEvent(new VirtualTouchEvent.Builder()
+                .setAction(VirtualTouchEvent.ACTION_DOWN)
+                .setPointerId(1)
+                .setX(x)
+                .setY(y)
+                .setPressure(255f)
+                .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
+                .build());
+        mVirtualNavigationTouchpad.sendTouchEvent(new VirtualTouchEvent.Builder()
+                .setAction(VirtualTouchEvent.ACTION_UP)
+                .setPointerId(1)
+                .setX(x)
+                .setY(y)
+                .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
+                .build());
+
+        verifyEvents(Arrays.asList(
+                createKeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER),
+                createKeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER)));
+    }
+
+    @Test
+    public void sendFlingUp_motionEventNotConsumed_getsConvertedToDpadUp() {
+        setConsumeGenericMotionEvents(false);
+
+        sendFlingEvents(/* startX= */ 30f, /* startY= */ 30f, /* diffX= */ -10f, /* diffY= */ -30f);
+
+        verifyEvents(Arrays.asList(
+                        createKeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_UP),
+                        createKeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_UP)));
+    }
+
+    @Test
+    public void sendFlingDown_motionEventNotConsumed_getsConvertedToDpadDown() {
+        setConsumeGenericMotionEvents(false);
+
+        sendFlingEvents(/* startX= */ 30f, /* startY= */ 30f, /* diffX= */ 10f, /* diffY= */ 30f);
+
+        verifyEvents(Arrays.asList(
+                        createKeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_DOWN),
+                        createKeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_DOWN)));
+    }
+
+    @Test
+    public void sendFlingRight_motionEventNotConsumed_getsConvertedToDpadRight() {
+        setConsumeGenericMotionEvents(false);
+
+        sendFlingEvents(/* startX= */ 40f, /* startY= */ 40f, /* diffX= */ 30f, /* diffY= */ 10f);
+
+        verifyEvents(Arrays.asList(
+                        createKeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT),
+                        createKeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_RIGHT)));
+    }
+
+    @Test
+    public void sendFlingLeft_motionEventNotConsumed_getsConvertedToDpadLeft() {
+        setConsumeGenericMotionEvents(false);
+
+        sendFlingEvents(/* startX= */ 30f, /* startY= */ 30f, /* diffX= */ -30f, /* diffY= */ 10f);
+
+        verifyEvents(Arrays.asList(
+                        createKeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT),
+                        createKeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_LEFT)));
+    }
+
+    @Test
+    public void sendLongPress_motionEventNotConsumed_getsIgnored() {
+        setConsumeGenericMotionEvents(false);
+
+        float x = 30f;
+        float y = 30f;
+        mVirtualNavigationTouchpad.sendTouchEvent(new VirtualTouchEvent.Builder()
+                .setAction(VirtualTouchEvent.ACTION_DOWN)
+                .setPointerId(1)
+                .setX(x)
+                .setY(y)
+                .setPressure(255f)
+                .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
+                .build());
+        // TODO(b/277040837): Use custom timestamps for virtual input events instead of sleep.
+        SystemClock.sleep(600);
+        mVirtualNavigationTouchpad.sendTouchEvent(new VirtualTouchEvent.Builder()
+                .setAction(VirtualTouchEvent.ACTION_UP)
+                .setPointerId(1)
+                .setX(x)
+                .setY(y)
+                .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
+                .build());
+
+        verifyNoKeyEvents();
+    }
+
+    @Test
+    public void sendSlowScroll_motionEventNotConsumed_getsIgnored() {
+        setConsumeGenericMotionEvents(false);
+
+        sendContinuousEvents(/* startX= */ 30f, /* startY= */ 30f, /* diffX= */ 2f, /* diffY= */ 1f,
+                /* eventTimeGapMs= */ 300);
+
+        verifyNoKeyEvents();
+    }
+
+    private void sendFlingEvents(float startX, float startY, float diffX, float diffY) {
+        sendContinuousEvents(startX, startY, diffX, diffY, /* eventTimeGapMs= */ 7);
+    }
+
+    private void sendContinuousEvents(float startX, float startY, float diffX, float diffY,
+            long eventTimeGapMs) {
+        int eventCount = 4;
+        // Starts with ACTION_DOWN.
+        mVirtualNavigationTouchpad.sendTouchEvent(new VirtualTouchEvent.Builder()
+                .setAction(VirtualTouchEvent.ACTION_DOWN)
+                .setPointerId(1)
+                .setX(startX)
+                .setY(startY)
+                .setPressure(255f)
+                .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
+                .build());
+        SystemClock.sleep(eventTimeGapMs);
+
+        for (int i = 1; i <= eventCount; i++) {
+            mVirtualNavigationTouchpad.sendTouchEvent(new VirtualTouchEvent.Builder()
+                    .setAction(VirtualTouchEvent.ACTION_MOVE)
+                    .setPointerId(1)
+                    .setX(startX + i * diffX / eventCount)
+                    .setY(startY + i * diffY / eventCount)
+                    .setPressure(255f)
+                    .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
+                    .build());
+            SystemClock.sleep(eventTimeGapMs);
+        }
+
+        // Ends with ACTION_UP.
+        mVirtualNavigationTouchpad.sendTouchEvent(new VirtualTouchEvent.Builder()
+                .setAction(VirtualTouchEvent.ACTION_UP)
+                .setPointerId(1)
+                .setX(startX + diffX)
+                .setY(startY + diffY)
+                .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
+                .build());
     }
 
     private MotionEvent createMotionEvent(int action, float x, float y, float pressure, float size,
@@ -155,17 +318,10 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
         return event;
     }
 
-    @Test
-    public void createVirtualNavigationTouchpad_defaultDisplay_throwsException() {
-        assertThrows(SecurityException.class,
-                () -> createVirtualNavigationTouchpad(DEFAULT_DISPLAY));
-    }
-
-    @Test
-    public void createVirtualNavigationTouchpad_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = createUnownedVirtualDisplay();
-        assertThrows(SecurityException.class,
-                () -> createVirtualNavigationTouchpad(unownedDisplay.getDisplay().getDisplayId()));
-        unownedDisplay.release();
+    private KeyEvent createKeyEvent(int action, int code) {
+        KeyEvent event = new KeyEvent(action, code);
+        event.setSource(InputDevice.SOURCE_TOUCH_NAVIGATION);
+        event.setDisplayId(mVirtualDisplay.getDisplay().getDisplayId());
+        return event;
     }
 }

@@ -64,6 +64,8 @@ import org.junit.runner.RunWith;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class SearchView_CursorTest {
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private SearchView mSearchView;
@@ -223,7 +225,7 @@ public class SearchView_CursorTest {
         // Emulate click on the first suggestion - which should be Dido
         final int suggestionRowHeight = mActivity.getResources().getDimensionPixelSize(
                 R.dimen.search_view_suggestion_row_height);
-        CtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, mSearchView,
+        mCtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, mSearchView,
                 mSearchView.getWidth() / 2, mSearchView.getHeight() + suggestionRowHeight / 2);
 
         // At this point we expect the click on the first suggestion to have activated a sequence

@@ -18,21 +18,34 @@ package android.app.cts;
 
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeFalse;
+
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.provider.Settings;
-import android.test.AndroidTestCase;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class ManageFsiTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ManageFsiTest {
 
     private static final String STUB_PACKAGE_NAME = "android.app.stubs";
 
+    @Test
     public void testManageAppUseFsiIntent_ResolvesToActivity() {
-        final PackageManager pm = mContext.getPackageManager();
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        final PackageManager pm = context.getPackageManager();
+        assumeFalse("TV does not support fullscreen intents",
+                pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK));
+
         final Intent intent = new Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT);
         intent.setData(Uri.parse("package:" + STUB_PACKAGE_NAME));
         final ResolveInfo resolveInfo = pm.resolveActivity(intent, MATCH_DEFAULT_ONLY);

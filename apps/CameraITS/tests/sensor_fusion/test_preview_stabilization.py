@@ -37,13 +37,14 @@ _MIN_PHONE_MOVEMENT_ANGLE = 5  # degrees
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_ROTATIONS = 24
 _START_FRAME = 30  # give 3A some frames to warm up
+_TABLET_SERVO_SPEED = 20
 _VIDEO_DELAY_TIME = 5.5  # seconds
 _VIDEO_DURATION = 5.5  # seconds
 _PREVIEW_STABILIZATION_FACTOR = 0.7  # 70% of gyro movement allowed
 _PREVIEW_STABILIZATION_MODE_PREVIEW = 2
 
 
-def _collect_data(cam, video_size, rot_rig):
+def _collect_data(cam, tablet_device, video_size, rot_rig):
   """Capture a new set of data from the device.
 
   Captures camera preview frames while the user is moving the device in
@@ -51,6 +52,7 @@ def _collect_data(cam, video_size, rot_rig):
 
   Args:
     cam: camera object
+    tablet_device: boolean; based on config file
     video_size: str; video resolution. ex. '1920x1080'
     rot_rig: dict with 'cntl' and 'ch' defined
 
@@ -61,6 +63,10 @@ def _collect_data(cam, video_size, rot_rig):
   logging.debug('Starting sensor event collection')
 
   # Start camera vibration
+  if tablet_device:
+    servo_speed = _TABLET_SERVO_SPEED
+  else:
+    servo_speed = _ARDUINO_SERVO_SPEED
   p = multiprocessing.Process(
       target=sensor_fusion_utils.rotation_rig,
       args=(
@@ -68,7 +74,7 @@ def _collect_data(cam, video_size, rot_rig):
           rot_rig['ch'],
           _NUM_ROTATIONS,
           _ARDUINO_ANGLES,
-          _ARDUINO_SERVO_SPEED,
+          servo_speed,
           _ARDUINO_MOVE_TIME,
       ),
   )
@@ -165,7 +171,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
       max_cam_gyro_angles = {}
 
       for video_size in supported_preview_sizes:
-        recording_obj = _collect_data(cam, video_size, rot_rig)
+        recording_obj = _collect_data(cam, self.tablet_device, video_size, rot_rig)
 
         # Grab the video from the save location on DUT
         self.dut.adb.pull([recording_obj['recordedOutputPath'], log_path])

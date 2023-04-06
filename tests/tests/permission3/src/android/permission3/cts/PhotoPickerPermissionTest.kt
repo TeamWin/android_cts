@@ -171,7 +171,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         uiAutomation.grantRuntimePermission(APP_PACKAGE_NAME, READ_MEDIA_VISUAL_USER_SELECTED)
 
         requestAppPermissions(READ_MEDIA_IMAGES) {
-            waitFindObject(By.res(SELECT_MORE_BUTTON))
+            waitFindObject(By.res(DONT_SELECT_MORE_BUTTON))
             uiDevice.pressBack()
         }
     }
@@ -201,7 +201,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         }
 
         requestAppPermissions(READ_MEDIA_IMAGES) {
-            click(By.res(SELECT_MORE_BUTTON))
+            click(By.res(SELECT_BUTTON))
             clickImageOrVideo()
             clickAllow()
         }
@@ -344,7 +344,7 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
             clickAllow()
         }
         requestAppPermissions(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO) {
-            click(By.res(ALWAYS_ALLOW_ALL_BUTTON))
+            click(By.res(ALLOW_ALL_BUTTON))
         }
     }
 
@@ -368,8 +368,8 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         }
 
         requestAppPermissions(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO) {
-            findView(By.res(SELECT_MORE_BUTTON), expected = true)
-            click(By.res(ALWAYS_ALLOW_ALL_BUTTON))
+            findView(By.res(DONT_SELECT_MORE_BUTTON), expected = true)
+            click(By.res(ALLOW_ALL_BUTTON))
         }
     }
 

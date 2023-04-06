@@ -23,9 +23,12 @@ import android.content.Context;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
+import android.view.MotionEvent;
 
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
+
+import java.util.Objects;
 
 /**
  * Helper class providing methods to interact with the user under test.
@@ -40,36 +43,51 @@ public final class UserHelper {
 
     private static final String TAG = "CtsUserHelper";
 
+    private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
+    private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
+
+    private final boolean mVisibleBackgroundUsersSupported;
     private final UserHandle mUser;
-    private final boolean mIsVisibleBackgroundFullUser;
+    private final boolean mIsVisibleBackgroundUser;
     private final int mDisplayId;
 
     /**
      * Creates a helper using {@link InstrumentationRegistry#getTargetContext()}.
      */
     public UserHelper() {
-        Context context = InstrumentationRegistry.getTargetContext();
-        mUser = context.getUser();
+        this(InstrumentationRegistry.getTargetContext());
+    }
+
+    /**
+     * Creates a helper for the given context.
+     */
+    public UserHelper(Context context) {
+        mUser = Objects.requireNonNull(context).getUser();
         UserManager userManager = context.getSystemService(UserManager.class);
         mDisplayId = userManager.getMainDisplayIdAssignedToUser();
-        boolean visibleBackgroundUsersSupported = userManager
+        mVisibleBackgroundUsersSupported = userManager
                 .isVisibleBackgroundUsersSupported();
         boolean isVisible = userManager.isUserVisible();
         boolean isForeground = userManager.isUserForeground();
         boolean isProfile = userManager.isProfile();
-        Log.v(TAG, "Constructor: mUser=" + mUser + ", visible=" + isVisible + ", isForeground="
-                + isForeground + ", isProfile=" + isProfile + ", mDisplayId=" + mDisplayId
-                + ", visibleBackgroundUsersSupported=" + visibleBackgroundUsersSupported);
-        if (visibleBackgroundUsersSupported && isVisible && !isForeground && !isProfile) {
+        if (DEBUG) {
+            Log.d(TAG, "Constructor: mUser=" + mUser + ", visible=" + isVisible + ", isForeground="
+                    + isForeground + ", isProfile=" + isProfile + ", mDisplayId=" + mDisplayId
+                    + ", mVisibleBackgroundUsersSupported=" + mVisibleBackgroundUsersSupported);
+        }
+        if (mVisibleBackgroundUsersSupported && isVisible && !isForeground && !isProfile) {
             if (mDisplayId == INVALID_DISPLAY) {
                 throw new IllegalStateException("UserManager returned INVALID_DISPLAY for visible"
                         + "background user " + mUser);
             }
-            mIsVisibleBackgroundFullUser = true;
+            mIsVisibleBackgroundUser = true;
             Log.i(TAG, "Test user " + mUser + " is running on background, visible on display "
                     + mDisplayId);
         } else {
-            mIsVisibleBackgroundFullUser = false;
+            mIsVisibleBackgroundUser = false;
+        }
+        if (DEBUG) {
+            Log.d(TAG, "Constructor: mIsVisibleBackgroundUser=" + mIsVisibleBackgroundUser);
         }
     }
 
@@ -81,7 +99,14 @@ public final class UserHelper {
      * full user running in background but not {@link UserManager#isUserVisible() visible}.
      */
     public boolean isVisibleBackgroundUser() {
-        return mIsVisibleBackgroundFullUser;
+        return mIsVisibleBackgroundUser;
+    }
+
+    /**
+     * Convenience method to return {@link UserManager#isVisibleBackgroundUsersSupported()}.
+     */
+    public boolean isVisibleBackgroundUserSupported() {
+        return mVisibleBackgroundUsersSupported;
     }
 
     /**
@@ -115,7 +140,7 @@ public final class UserHelper {
      * test.
      */
     public ActivityOptions getActivityOptions() {
-        return injectDisplayIdIfNeeded(/* options= */ null);
+        return injectDisplayIdIfNeeded((ActivityOptions) null);
     }
 
     /**
@@ -124,16 +149,46 @@ public final class UserHelper {
      */
     public ActivityOptions injectDisplayIdIfNeeded(@Nullable ActivityOptions options) {
         ActivityOptions augmentedOptions = options != null ? options : ActivityOptions.makeBasic();
-        if (mIsVisibleBackgroundFullUser) {
+        if (mIsVisibleBackgroundUser) {
             augmentedOptions.setLaunchDisplayId(mDisplayId);
         }
         Log.v(TAG, "injectDisplayIdIfNeeded(): returning " + augmentedOptions);
         return augmentedOptions;
     }
 
+    /**
+     * Sets the display id of the event if the test is running in a visible background user.
+     */
+    public MotionEvent injectDisplayIdIfNeeded(MotionEvent event) {
+        if (!isVisibleBackgroundUserSupported()) {
+            return event;
+        }
+        int eventDisplayId = event.getDisplayId();
+
+        // TODO(b/271153404): use TestApis.users().instrument() to check if it's visible bg
+        if (!mIsVisibleBackgroundUser) {
+            if (DEBUG) {
+                Log.d(TAG, "Not replacing display id (" + eventDisplayId + "->" + mDisplayId
+                        + ") as user is not running visible on background");
+            }
+            return event;
+        }
+        event.setDisplayId(mDisplayId);
+        if (VERBOSE) {
+            Log.v(TAG, "Replaced displayId (" + eventDisplayId + "->" + mDisplayId + ") on "
+                    + event);
+        } else if (DEBUG) {
+            Log.d(TAG, "Replaced displayId (" + eventDisplayId + "->" + mDisplayId + ") on "
+                    + MotionEvent.actionToString(event.getAction()));
+        }
+        return event;
+    }
+
     @Override
     public String toString() {
         return getClass().getSimpleName() + "[user=" + mUser + ", displayId=" + mDisplayId
-                + ", isVisibleBackgroundFullUser=" + mIsVisibleBackgroundFullUser + "]";
+                + ", isVisibleBackgroundUser=" + mIsVisibleBackgroundUser
+                + ", isVisibleBackgroundUsersSupported" + mVisibleBackgroundUsersSupported
+                + "]";
     }
 }

@@ -17,6 +17,7 @@
 package android.devicepolicy.cts;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.devicepolicy.cts.utils.TestArtifactUtils.dumpWindowHierarchy;
 import static android.location.LocationManager.FUSED_PROVIDER;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.ACCESS_BACKGROUND_LOCATION;
@@ -43,7 +44,9 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 
-import androidx.test.uiautomator.UiSelector;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.Until;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -107,6 +110,7 @@ public class QuietModeTest {
     @Test
     public void startActivityInQuietProfile_quietModeDialogShown() throws Exception {
         UserReference workProfile = sDeviceState.workProfile();
+        String titleText = sContext.getString(R.string.test_string_1);
         try (TestAppInstance instance = sTestApp.install(workProfile)) {
             // Override "Turn on work apps" dialog title to avoid depending on a particular string.
             TestApis.devicePolicy().resources().strings().set(
@@ -122,9 +126,12 @@ public class QuietModeTest {
                     .setComponent(activityReference.component().componentName());
             sContext.startActivityAsUser(intent, new Bundle(), workProfile.userHandle());
 
-            assertThat(TestApis.ui().device()
-                    .findObject(new UiSelector().text("test string 1"))
-                    .exists()).isTrue();
+            UiObject2 dialogTitle = TestApis.ui().device().wait(
+                    Until.findObject(By.text(titleText)), 5000 /* 5s */);
+            assertWithMessage("Work mode dialog not shown").that(dialogTitle).isNotNull();
+        } catch (AssertionError e) {
+            dumpWindowHierarchy("startActivityInQuietProfile_quietModeDialogShown");
+            throw e;
         } finally {
             TestApis.devicePolicy().resources().strings()
                     .reset("Core.UNLAUNCHABLE_APP_WORK_PAUSED_TITLE");

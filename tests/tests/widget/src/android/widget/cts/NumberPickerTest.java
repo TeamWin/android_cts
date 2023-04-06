@@ -79,6 +79,8 @@ public class NumberPickerTest {
     private static final String[] NUMBER_NAMES_ALT3 = {"Three", "Four", "Five"};
     private static final String[] NUMBER_NAMES5 = {"One", "Two", "Three", "Four", "Five"};
 
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
     private Instrumentation mInstrumentation;
     private NumberPickerCtsActivity mActivity;
     private NumberPicker mNumberPicker;
@@ -376,7 +378,7 @@ public class NumberPickerTest {
                     + mNumberPicker.getWidth() / 2;
             int numberPickerStartY = numberPickerLocationOnScreen[1] + 1;
 
-            CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule,
+            mCtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule,
                     numberPickerMiddleX,
                     numberPickerStartY,
                     0,
@@ -446,7 +448,7 @@ public class NumberPickerTest {
             int numberPickerMiddleX =
                     numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2;
             int numberPickerEndY = numberPickerLocationOnScreen[1] + mNumberPicker.getHeight() - 1;
-            CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule,
+            mCtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule,
                     numberPickerMiddleX,
                     numberPickerEndY,
                     0,

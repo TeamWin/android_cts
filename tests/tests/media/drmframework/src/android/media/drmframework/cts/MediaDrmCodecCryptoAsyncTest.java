@@ -42,6 +42,7 @@ import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Test;
 import org.junit.Assume;
+import org.junit.AssumptionViolatedException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -207,6 +208,8 @@ public class MediaDrmCodecCryptoAsyncTest {
             MediaCodecCryptoAsyncHelper.runDecodeShortClearKeyVideo(extractor,
                     secure /*secure*/, ENCRYPTED_CONTENT_LAST_BUFFER_TIMESTAMP_US,
                     crypto);
+        } catch (AssumptionViolatedException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -225,6 +228,8 @@ public class MediaDrmCodecCryptoAsyncTest {
                     ENCRYPTED_CONTENT_LAST_BUFFER_TIMESTAMP_US,
                     crypto,
                     false);
+        } catch (AssumptionViolatedException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -97,6 +97,7 @@ public class WindowInputTests {
     private static final int PARTIAL_OBSCURING_WINDOW_SIZE = 30;
 
     private Instrumentation mInstrumentation;
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
     private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
     private TestActivity mActivity;
     private InputManager mInputManager;
@@ -162,7 +163,7 @@ public class WindowInputTests {
             mInstrumentation.waitForIdleSync();
             int previousCount = mClickCount;
 
-            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+            mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             mInstrumentation.waitForIdleSync();
             if (mClickCount != previousCount + 1) {
@@ -222,7 +223,7 @@ public class WindowInputTests {
         });
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
         assertEquals(0, mClickCount);
     }
 
@@ -262,7 +263,7 @@ public class WindowInputTests {
             mActivity.addWindow(overlay, p);
         });
         mInstrumentation.waitForIdleSync();
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
         assertTrue(touchReceived.get());
         assertEquals(0, eventFlags.get(EVENT_FLAGS_WAIT_TIME, TimeUnit.SECONDS)
@@ -314,7 +315,7 @@ public class WindowInputTests {
             });
             mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
-            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+            mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             // Touch not received due to setFilterTouchesWhenObscured(true)
             assertFalse(touchReceived.get());
@@ -369,7 +370,7 @@ public class WindowInputTests {
             });
             mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
-            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+            mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             assertTrue(touchReceived.get());
             assertEquals(MotionEvent.FLAG_WINDOW_IS_OBSCURED,
@@ -419,7 +420,7 @@ public class WindowInputTests {
             });
             mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
-            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+            mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             assertTrue(touchReceived.get());
             assertEquals(0, eventFlags.get(EVENT_FLAGS_WAIT_TIME, TimeUnit.SECONDS)
@@ -473,7 +474,7 @@ public class WindowInputTests {
             });
             mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
-            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+            mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             assertTrue(touchReceived.get());
             assertEquals(MotionEvent.FLAG_WINDOW_IS_OBSCURED,
@@ -529,7 +530,7 @@ public class WindowInputTests {
             });
             mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
-            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+            mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             assertTrue(touchReceived.get());
             assertEquals(MotionEvent.FLAG_WINDOW_IS_PARTIALLY_OBSCURED,
@@ -581,7 +582,7 @@ public class WindowInputTests {
             });
             mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
-            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+            mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             assertTrue(touchReceived.get());
             assertEquals(0, eventFlags.get(EVENT_FLAGS_WAIT_TIME, TimeUnit.SECONDS)
@@ -629,7 +630,7 @@ public class WindowInputTests {
             });
             mInstrumentation.waitForIdleSync();
 
-            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+            mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
         }
         assertEquals(1, mClickCount);
     }
@@ -661,7 +662,7 @@ public class WindowInputTests {
         });
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
         assertEquals(0, mClickCount);
 
         mActivityRule.runOnUiThread(() -> {
@@ -670,7 +671,7 @@ public class WindowInputTests {
         });
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
         assertEquals(1, mClickCount);
     }
 
@@ -694,7 +695,7 @@ public class WindowInputTests {
         });
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
         assertEquals(1, events.size());
         MotionEvent event = events.iterator().next();
@@ -722,7 +723,7 @@ public class WindowInputTests {
         });
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, mView, size + 5, size + 5);
+        mCtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, mView, size + 5, size + 5);
 
         assertEquals(1, events.size());
         MotionEvent event = events.iterator().next();

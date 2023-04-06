@@ -102,6 +102,8 @@ public class CommandReceiver extends BroadcastReceiver {
     /** The child process, started via {@link #COMMAND_START_CHILD_PROCESS} */
     private static Process sChildProcess;
 
+    private static MediaSession mMediaSession = null;
+
     /**
      * Handle the different types of binding/unbinding requests.
      * @param context The Context in which the receiver is running.
@@ -437,8 +439,8 @@ public class CommandReceiver extends BroadcastReceiver {
     }
 
     private void doStartMediaPlayback(Context context, RemoteCallback callback) {
-        final MediaSession mediaSession = new MediaSession(context, TAG);
-        mediaSession.setCallback(new MediaSession.Callback() {
+        mMediaSession = new MediaSession(context, TAG);
+        mMediaSession.setCallback(new MediaSession.Callback() {
             @Override
             public void onPlay() {
                 super.onPlay();
@@ -466,10 +468,10 @@ public class CommandReceiver extends BroadcastReceiver {
                 super.onStop();
                 final Intent intent = new Intent(context, LocalForegroundService.class);
                 context.stopService(intent);
-                mediaSession.release();
+                mMediaSession.release();
             }
         });
-        mediaSession.setActive(true);
+        mMediaSession.setActive(true);
 
         callback.sendResult(null);
     }

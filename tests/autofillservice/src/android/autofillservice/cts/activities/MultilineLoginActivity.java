@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.autofillservice.cts.activities;
 
-package android.server.wm.shared;
+import android.autofillservice.cts.R;
 
-import android.os.IBinder;
-import android.view.SurfaceControlViewHost;
+/**
+ * Same as {@link LoginActivity}, but username and password have input type of multiline
+ */
+public class MultilineLoginActivity extends LoginActivity {
 
-interface ICrossProcessSurfaceControlViewHostTestService {
-    SurfaceControlViewHost.SurfacePackage getSurfacePackage(IBinder hostInputToken);
-    boolean getViewIsTouched();
-    boolean getViewIsTouchedAndObscured();
-    void resetViewIsTouched();
-    IBinder getWindowToken();
-    boolean waitForFocus(boolean waitForFocus);
+    @Override
+    protected int getContentView() {
+        return R.layout.login_activity_multiline;
+    }
 }

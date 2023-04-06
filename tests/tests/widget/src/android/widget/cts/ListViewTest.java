@@ -127,6 +127,8 @@ public class ListViewTest {
         Color.BLUE, Color.CYAN, Color.GREEN, Color.YELLOW, Color.RED, Color.MAGENTA
     };
 
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private ListView mListView;
@@ -1305,7 +1307,7 @@ public class ListViewTest {
 
 
         // Cause a stretch
-        CtsTouchUtils.emulateDragGesture(
+        mCtsTouchUtils.emulateDragGesture(
                 mInstrumentation,
                 mActivityRule,
                 screenX + mListViewStretch.getWidth() / 2,
@@ -1319,7 +1321,7 @@ public class ListViewTest {
         );
 
         // Now scroll the other direction
-        CtsTouchUtils.emulateDragGesture(
+        mCtsTouchUtils.emulateDragGesture(
                 mInstrumentation,
                 mActivityRule,
                 screenX + mListViewStretch.getWidth() / 2,

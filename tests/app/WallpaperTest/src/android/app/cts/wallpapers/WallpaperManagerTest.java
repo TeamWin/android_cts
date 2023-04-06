@@ -100,6 +100,8 @@ public class WallpaperManagerTest {
     private static final ComponentName DEFAULT_COMPONENT_NAME = new ComponentName(
             TestLiveWallpaper.class.getPackageName(), TestLiveWallpaper.class.getName());
 
+    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+
     private WallpaperManager mWallpaperManager;
     private Context mContext;
     private Handler mHandler;
@@ -969,7 +971,7 @@ public class WallpaperManagerTest {
         mWallpaperManager.setWallpaperZoomOut(windowToken, 0.5f);
 
         // trigger Engine.onTouchEvent
-        CtsTouchUtils.emulateTapOnViewCenter(
+        mCtsTouchUtils.emulateTapOnViewCenter(
                 InstrumentationRegistry.getInstrumentation(), null,
                 activity.findViewById(android.R.id.content));
 

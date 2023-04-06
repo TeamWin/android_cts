@@ -28,6 +28,7 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
@@ -159,4 +160,30 @@ public class StartActivitiesTest {
             }
         }
     }
+
+    @Test
+    public void launchPendingIntent_nullArguments_shouldThrow() {
+        final int displayId = mVirtualDisplay.getDisplay().getDisplayId();
+        final int requestCode = 1;
+        final Intent[] intents = TestAppHelper.createStartActivitiesIntents(mResultReceiver);
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.launchPendingIntent(displayId,
+                        null,
+                        Runnable::run,
+                        mLaunchCompleteListener));
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.launchPendingIntent(displayId,
+                        PendingIntent.getActivities(mContext, requestCode, intents, FLAG_IMMUTABLE),
+                        null,
+                        mLaunchCompleteListener));
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.launchPendingIntent(displayId,
+                        PendingIntent.getActivities(mContext, requestCode, intents, FLAG_IMMUTABLE),
+                        Runnable::run,
+                        null));
+    }
+
 }
