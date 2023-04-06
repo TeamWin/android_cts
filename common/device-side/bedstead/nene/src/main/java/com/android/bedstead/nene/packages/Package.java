@@ -1062,4 +1062,24 @@ public final class Package {
             throw new NeneException("Could not get app standby bucket " + this, e);
         }
     }
+
+    /** Approves all links for an auto verifiable app */
+    @Experimental
+    public void setAppLinksToAllApproved() {
+        try {
+            ShellCommand.builder("pm set-app-links")
+                    .addOption("--package", this.mPackageName)
+                    .addOperand(2) // 2 = STATE_APPROVED
+                    .addOperand("all")
+                    .execute();
+        } catch (AdbException e) {
+            throw new NeneException("Error verifying links ", e);
+        }
+    }
+
+    /** Checks if the current package is a role holder for the given role*/
+    @Experimental
+    public boolean isRoleHolder(String role) {
+        return TestApis.roles().getRoleHolders(role).contains(this.mPackageName);
+    }
 }
