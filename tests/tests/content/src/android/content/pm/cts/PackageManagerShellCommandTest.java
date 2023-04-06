@@ -662,6 +662,7 @@ public class PackageManagerShellCommandTest {
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
+            params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
             params.setAppPackageName(TEST_APP_PACKAGE);
             params.setDontKillApp(true);
 
@@ -673,6 +674,7 @@ public class PackageManagerShellCommandTest {
 
             final CompletableFuture<Boolean> result = new CompletableFuture<>();
             final CompletableFuture<Integer> status = new CompletableFuture<>();
+            final CompletableFuture<String> statusMessage = new CompletableFuture<>();
             session.commit(new IntentSender((IIntentSender) new IIntentSender.Stub() {
                 @Override
                 public void send(int code, Intent intent, String resolvedType,
@@ -680,16 +682,18 @@ public class PackageManagerShellCommandTest {
                         String requiredPermission, Bundle options) throws RemoteException {
                     boolean dontKillApp =
                             (session.getInstallFlags() & PackageManager.INSTALL_DONT_KILL_APP) != 0;
-                    result.complete(dontKillApp);
                     status.complete(
                             intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE));
+                    statusMessage.complete(
+                            intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE));
+                    result.complete(dontKillApp);
                 }
             }));
 
             // We are adding split. OK to have the flag.
             assertTrue(result.get());
             // Verify that the return status is set
-            assertEquals(PackageInstaller.STATUS_SUCCESS, (int) status.get());
+            assertEquals(statusMessage.get(), PackageInstaller.STATUS_SUCCESS, (int) status.get());
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
