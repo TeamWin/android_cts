@@ -156,8 +156,8 @@ public final class UserSettings {
             delete(key);
             return;
         }
-        runShellCommand("settings put --user %d %s %s %s default", mUserId, mNamespace.get(), key,
-                value);
+        runShellCommand("settings put --user %d %s %s %s%s", mUserId, mNamespace.get(), key,
+                value, mNamespace.mDefaultSuffix);
     }
 
     /**
@@ -216,15 +216,17 @@ public final class UserSettings {
      * Abstracts the Settings namespace.
      */
     public enum Namespace {
-        SECURE(NAMESPACE_SECURE),
-        GLOBAL(NAMESPACE_GLOBAL),
-        SYSTEM(NAMESPACE_SYSTEM);
+        SECURE(NAMESPACE_SECURE, " default"),
+        GLOBAL(NAMESPACE_GLOBAL, " default"),
+        SYSTEM(NAMESPACE_SYSTEM, "");
 
         // TODO(b/123885378): remove if it's not used anymore (after using Settings APIs)
         private final String mName;
+        private final String mDefaultSuffix;
 
-        Namespace(String name) {
+        Namespace(String name, String defaultSuffix) {
             mName = name;
+            mDefaultSuffix = defaultSuffix;
         }
 
         /**
