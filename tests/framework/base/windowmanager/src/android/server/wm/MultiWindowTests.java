@@ -50,8 +50,6 @@ import android.view.WindowManager;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -260,7 +258,6 @@ public class MultiWindowTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 269538773)
     public void testLaunchToSideAndBringToFront() {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
