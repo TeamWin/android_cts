@@ -55,7 +55,6 @@ public class LocaleConfigTest extends ActivityManagerTestBase {
     private static final String TEST_PACKAGE = "com.android.cts.localeconfig";
     private static final String TEST_PACKAGE_WITHOUT_LOCALECONFIG =
             "com.android.cts.localeconfiginorout";
-    private static final String EXTRA_SET_LOCALECONFIG = "set_localeconfig";
     private static final List<String> RESOURCE_LOCALES = Arrays.asList(
             new String[]{"en-US", "zh-Hant-TW", "pt-PT", "fr-FR", "zh-Hans-SG"});
     public static final LocaleList OVERRIDE_LOCALES =
