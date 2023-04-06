@@ -21,6 +21,7 @@ import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TE
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_CLASS;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_PKG;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.getTestAppUid;
+import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.isSupportedDevice;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -64,6 +65,8 @@ public class HotwordDetectionServiceInitResultReportedStatsTest extends DeviceTe
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        if (!isSupportedDevice(getDevice())) return;
+
         assertThat(mCtsBuild).isNotNull();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
@@ -78,6 +81,8 @@ public class HotwordDetectionServiceInitResultReportedStatsTest extends DeviceTe
 
     @Override
     protected void tearDown() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.uninstallStatsdTestApp(getDevice());
@@ -86,6 +91,8 @@ public class HotwordDetectionServiceInitResultReportedStatsTest extends DeviceTe
     }
 
     public void testLogHotwordDetectionServiceInitResultReportedDspInitSuccess() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_DSP_INIT_SUCCESS_FOR_METRIC_COLLECT);
@@ -114,6 +121,8 @@ public class HotwordDetectionServiceInitResultReportedStatsTest extends DeviceTe
 
     public void testLogHotwordDetectionServiceInitResultReportedSoftwareInitSuccess()
             throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_SOFTWARE_INIT_SUCCESS_FOR_METRIC_COLLECT);
