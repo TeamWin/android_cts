@@ -34,10 +34,6 @@ public class HotwordMetricsTestUtils {
     public static final String TEST_APK = "CtsVoiceInteractionTestCases.apk";
     public static final String TEST_CLASS =
             "android.voiceinteraction.cts.HotwordDetectionServiceBasicTest";
-    // HotwordDetectionServiceBasicTest usually takes around 15 secs to complete the test, we need
-    // to wait for the test and logging behavior to complete, so the test here uses a longer
-    // duration to avoid test flaky.
-    public static final long STATSD_LOG_DEBOUNCE_MS = 25_000;
 
     private static final String FEATURE_MICROPHONE = "android.hardware.microphone";
 
