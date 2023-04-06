@@ -35,6 +35,7 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.analyzers.BaseSineAnalyzer;
 import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
+import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 import com.android.cts.verifier.audio.audiolib.WaveScopeView;
 
 // MegaAudio
@@ -67,6 +68,9 @@ public class AudioDataPathsActivity
 
     // ReportLog Schema
     private static final String SECTION_AUDIO_DATAPATHS = "audio_datapaths";
+
+    private boolean mHasMic;
+    private boolean mHasSpeaker;
 
     // UI
     View mStartBtn;
@@ -101,6 +105,16 @@ public class AudioDataPathsActivity
         // MegaAudio Initialization
         StreamBase.setup(this);
 
+        mHasMic = AudioSystemFlags.claimsInput(this);
+        mHasSpeaker = AudioSystemFlags.claimsOutput(this);
+
+        String yesString = getResources().getString(R.string.audio_general_yes);
+        String noString = getResources().getString(R.string.audio_general_no);
+        ((TextView) findViewById(R.id.audio_datapaths_mic))
+                .setText(mHasMic ? yesString : noString);
+        ((TextView) findViewById(R.id.audio_datapaths_speaker))
+                .setText(mHasSpeaker ? yesString : noString);
+
         mStartBtn = findViewById(R.id.audio_datapaths_start);
         mStartBtn.setOnClickListener(this);
         mStopBtn = findViewById(R.id.audio_datapaths_stop);
@@ -128,20 +142,23 @@ public class AudioDataPathsActivity
         getPassButton().setEnabled(false);
     }
 
+    void enableTestButtons(boolean startEnabled, boolean stopEnabled) {
+        mStartBtn.setEnabled(startEnabled);
+        mStopBtn.setEnabled(stopEnabled);
+    }
+
     private void startTest() {
         if (mDuplexAudioManager == null) {
             mDuplexAudioManager = new DuplexAudioManager(null, null);
         }
 
-        mStartBtn.setEnabled(false);
-        mStopBtn.setEnabled(true);
+        enableTestButtons(false, true);
 
         mTestManager.startTest();
     }
 
     private void stopTest() {
-        mStartBtn.setEnabled(true);
-        mStopBtn.setEnabled(false);
+        mTestManager.displayTestDevices();
     }
 
     private void calculateTestPass() {
@@ -389,7 +406,10 @@ public class AudioDataPathsActivity
                 // Check to see if we have a (physical) device of this type
                 for (AudioDeviceInfo devInfo : outputDevices) {
                     testSpec.mOutDeviceInfo = null;
-                    if (testSpec.mOutDeviceType == devInfo.getType()) {
+                    if (testSpec.mOutDeviceType == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+                            && !mHasSpeaker) {
+                        break;
+                    } else if (testSpec.mOutDeviceType == devInfo.getType()) {
                         testSpec.mOutDeviceInfo = devInfo;
                         break;
                     }
@@ -403,12 +423,25 @@ public class AudioDataPathsActivity
                 // Check to see if we have a (physical) device of this type
                 for (AudioDeviceInfo devInfo : inputDevices) {
                     testSpec.mInDeviceInfo = null;
-                    if (testSpec.mInDeviceType == devInfo.getType()) {
+                    if (testSpec.mInDeviceType == AudioDeviceInfo.TYPE_BUILTIN_MIC
+                            && !mHasMic) {
+                        break;
+                    } else if (testSpec.mInDeviceType == devInfo.getType()) {
                         testSpec.mInDeviceInfo = devInfo;
                         break;
                     }
                 }
             }
+        }
+
+        public int countValidTestSpecs() {
+            int numValid = 0;
+            for (TestSpec testSpec : mTestSpecs) {
+                if (testSpec.mOutDeviceInfo != null && testSpec.mInDeviceInfo != null) {
+                    numValid++;
+                }
+            }
+            return numValid;
         }
 
         public void displayTestDevices() {
@@ -432,6 +465,13 @@ public class AudioDataPathsActivity
                 testStep++;
             }
             mRoutesTx.setText(sb.toString());
+
+            int numValidSpecs = countValidTestSpecs();
+            if (numValidSpecs == 0) {
+                enableTestButtons(false, false);
+                mResultsTx.setText(getResources().getString(R.string.audio_datapaths_noio));
+                getPassButton().setEnabled(true);
+            }
         }
 
         public TestSpec getActiveTestSpec() {
@@ -439,8 +479,6 @@ public class AudioDataPathsActivity
         }
 
         public boolean runTest(TestSpec testSpec) {
-            Log.i(TAG, "runTest()");
-
             AudioDeviceInfo outDevInfo = testSpec.mOutDeviceInfo;
             AudioDeviceInfo inDevInfo = testSpec.mInDeviceInfo;
             if (outDevInfo != null && inDevInfo != null) {
@@ -502,11 +540,11 @@ public class AudioDataPathsActivity
         }
 
         public void completeTest() {
+            Log.i(TAG, "completeTest()");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mStartBtn.setEnabled(true);
-                    mStopBtn.setEnabled(false);
+                    enableTestButtons(true, false);
 
                     calculateTestPass();
                 }
@@ -746,8 +784,9 @@ public class AudioDataPathsActivity
             startTest();
         } else if (id == R.id.audio_datapaths_stop) {
             stopTest();
-        } else {
+        } else if (id == R.id.audioJavaApiBtn || id == R.id.audioNativeApiBtn) {
             super.onClick(view);
+            mTestManager.displayTestDevices();
         }
     }
 
