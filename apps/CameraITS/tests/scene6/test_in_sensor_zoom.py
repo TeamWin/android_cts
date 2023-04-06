@@ -42,7 +42,7 @@ class InSensorZoomTest(its_base_test.ItsBaseTest):
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
-      name_with_log_path = os.path.join(self.log.path, _NAME)
+      name_with_log_path = os.path.join(self.log_path, _NAME)
       # Skip the test if CROPPED_RAW is not present in stream use cases
       camera_properties_utils.skip_unless(
           camera_properties_utils.cropped_raw_stream_use_case(props))
