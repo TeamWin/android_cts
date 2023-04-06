@@ -40,7 +40,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import libcore.util.EmptyArray
@@ -246,7 +245,6 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         confirmationUi.waitUntilGone()
         // Check the result code and the data delivered via onActivityResult()
         val (_: Int, associationData: Intent?) = CompanionActivity.waitForActivityResult()
-        CompanionActivity.clearResult()
         assertNotNull(associationData)
         val association: AssociationInfo? = associationData.getParcelableExtra(
                 CompanionDeviceManager.EXTRA_ASSOCIATION,
