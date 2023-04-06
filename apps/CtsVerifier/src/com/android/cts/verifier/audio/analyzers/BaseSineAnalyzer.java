@@ -15,7 +15,6 @@
  */
 package com.android.cts.verifier.audio.analyzers;
 
-
 import java.util.Random;
 
 /**
@@ -40,7 +39,6 @@ public class BaseSineAnalyzer implements SignalAnalyzer {
 
     double mMagnitude = 0.0;
     double mMaxMagnitude = 0.0;
-    double mPhase = 0.0;
 
     double mPhaseErrorSum;
     double mPhaseErrorCount;
@@ -147,8 +145,12 @@ public class BaseSineAnalyzer implements SignalAnalyzer {
         return mMaxMagnitude;
     }
 
-    public double getPhase() {
-        return mPhase;
+    public double getPhaseOffset() {
+        return mPhaseOffset;
+    }
+
+    public double getOutputPhase() {
+        return mOutputPhase;
     }
 
     public double getPhaseJitter() {
@@ -180,8 +182,9 @@ public class BaseSineAnalyzer implements SignalAnalyzer {
         }
         double sinMean = mSinAccumulator / mFramesAccumulated;
         double cosMean = mCosAccumulator / mFramesAccumulated;
+
         double magnitude = 2.0 * Math.sqrt((sinMean * sinMean) + (cosMean * cosMean));
-        magphase.mPhase = (Math.PI * 2.0) - Math.atan2(sinMean, cosMean);
+        magphase.mPhase = Math.atan2(cosMean, sinMean);
         return magphase.mMagnitude = magnitude;
     }
 
@@ -194,14 +197,13 @@ public class BaseSineAnalyzer implements SignalAnalyzer {
     }
 
     double calculatePhaseError(double p1, double p2) {
-        double diff = Math.abs(p1 - p2);
+        double diff = p1 - p2;
         // Wrap around the circle.
-        while (diff > (2 * Math.PI)) {
-            diff -= (2 * Math.PI);
+        while (diff > Math.PI) {
+            diff -= 2 * Math.PI;
         }
-        // A phase error close to 2*PI is actually a small phase error.
-        if (diff > Math.PI) {
-            diff = (2 * Math.PI) - diff;
+        while (diff < -Math.PI) {
+            diff += 2 * Math.PI;
         }
         return diff;
     }
@@ -225,6 +227,9 @@ public class BaseSineAnalyzer implements SignalAnalyzer {
         mSinAccumulator += ((double) sample) * Math.sin(referencePhase);
         mCosAccumulator += ((double) sample) * Math.cos(referencePhase);
         mFramesAccumulated++;
+
+        incrementOutputPhase();
+
         // Must be a multiple of the period or the calculation will not be accurate.
         if (mFramesAccumulated == mSinePeriod) {
             final double coefficient = 0.1;
@@ -240,69 +245,38 @@ public class BaseSineAnalyzer implements SignalAnalyzer {
     }
 
     /**
-     * @param frameData upon return, contains the reference sine wave
-     * @param channelCount
-     */
-    RESULT_CODE processOutputFrame(float[] frameData, int offset, int channelCount) {
-        double output = 0.0f;
-        // Output sine wave so we can measure it.
-        double sinOut = Math.sin(mOutputPhase);
-        incrementOutputPhase();
-        output = (sinOut * mOutputAmplitude)
-                + (mWhiteNoise.nextDouble() * getNoiseAmplitude());
-        // Log.i(TAG, "mOutputPhase:" + mOutputPhase + " sinOut:" + sinOut + " output:" + output);
-        // ALOGD("sin(%f) = %f, %f\n", mOutputPhase, sinOut,  mPhaseIncrement);
-        for (int i = 0; i < channelCount; i++) {
-            frameData[offset + i] = (i == mOutputChannel) ? (float) output : 0.0f;
-        }
-        return RESULT_CODE.RESULT_OK;
-    }
-
-    /**
      * @param frameData contains microphone data with sine signal feedback
      * @param channelCount
      */
     RESULT_CODE processInputFrame(float[] frameData, int offset) {
         RESULT_CODE result = RESULT_CODE.RESULT_OK;
 
-        float sample = frameData[offset + getInputChannel()];
+        float sample = frameData[offset];
         mInfiniteRecording.write(sample);
 
         if (transformSample(sample, mOutputPhase)) {
             resetAccumulator();
-            // Analyze magnitude and phase on every period.
-            double diff = calculatePhaseError(mPhaseOffset, mPreviousPhaseOffset);
-            if (diff < mPhaseTolerance) {
-                mMaxMagnitude = Math.max(mMagnitude, mMaxMagnitude);
+            if (mMagnitude >= MIN_REQUIRED_MAGNITUDE) {
+                // Analyze magnitude and phase on every period.
+                double phaseError =
+                        Math.abs(calculatePhaseError(mPhaseOffset, mPreviousPhaseOffset));
+                if (phaseError < mPhaseTolerance) {
+                    mMaxMagnitude = Math.max(mMagnitude, mMaxMagnitude);
+                }
+                mPreviousPhaseOffset = mPhaseOffset;
+
+                // Only look at the phase if we have a signal.
+                if (mPhaseCount > 3) {
+                    // Accumulate phase error and average.
+                    mPhaseErrorSum += phaseError;
+                    mPhaseErrorCount++;
+                    mPhaseJitter = getAveragePhaseError();
+                }
+
+                mPhaseCount++;
             }
-            mPreviousPhaseOffset = mPhaseOffset;
         }
         return result;
-    }
-
-    void process(float[] inputData, int inputChannelCount, int numInputFrames,
-                 float[] outputData, int outputChannelCount, int numOutputFrames) {
-        int numBoth = Math.min(numInputFrames, numOutputFrames);
-        // Process one frame at a time.
-        int inputOffset = 0;
-        int outputOffset = 0;
-        for (int i = 0; i < numBoth; i++) {
-            processInputFrame(inputData, inputOffset);
-            inputOffset += inputChannelCount;
-            processOutputFrame(outputData, outputOffset, outputChannelCount);
-            outputOffset += outputChannelCount;
-        }
-        // If there is more input than output.
-        for (int i = numBoth; i < numInputFrames; i++) {
-            processInputFrame(inputData, inputOffset);
-            inputOffset += inputChannelCount;
-        }
-
-        // If there is more output than input.
-        for (int i = numBoth; i < numOutputFrames; i++) {
-            processOutputFrame(outputData, outputOffset, outputChannelCount);
-            outputOffset += outputChannelCount;
-        }
     }
 
     @Override
@@ -316,7 +290,8 @@ public class BaseSineAnalyzer implements SignalAnalyzer {
 
         mMagnitude = 0.0;
         mMaxMagnitude = 0.0;
-        mPhase = 0.0;
+        mPhaseOffset = 0.0;
+        mPreviousPhaseOffset = 0.0;
         mPhaseJitter = INITIAL_JITTER;
         mPhaseCount = 0;
         mPhaseErrorSum = 0.0;
@@ -332,19 +307,19 @@ public class BaseSineAnalyzer implements SignalAnalyzer {
             offset += numChannels;
         }
 
-        // Only look at the phase if we have a signal.
-        if (mMagnitude >= MIN_REQUIRED_MAGNITUDE) {
-            double phase = mPhaseOffset;
-            if (mPhaseCount > 3) {
-                double phaseError = calculatePhaseError(phase, mPhase);
-                // Accumulate phase error and average.
-                mPhaseErrorSum += phaseError;
-                mPhaseErrorCount++;
-                mPhaseJitter = getAveragePhaseError();
-            }
-
-            mPhase = phase;
-            mPhaseCount++;
-        }
+//        // Only look at the phase if we have a signal.
+//        if (mMagnitude >= MIN_REQUIRED_MAGNITUDE) {
+//            double phase = mPhaseOffset;
+//            if (mPhaseCount > 3) {
+//                double phaseError = calculatePhaseError(phase, mPhaseOffset);
+//                // Accumulate phase error and average.
+//                mPhaseErrorSum += phaseError;
+//                mPhaseErrorCount++;
+//                mPhaseJitter = getAveragePhaseError();
+//            }
+//
+//            mPhaseOffset = phase;
+//            mPhaseCount++;
+//        }
     }
 }
