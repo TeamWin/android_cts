@@ -65,7 +65,7 @@ _OBJ_VALUE_STR = 'objValue'
 _STR_VALUE = 'strValue'
 _TAG_STR = 'tag'
 _CAMERA_ID_STR = 'cameraId'
-
+_USE_CASE_CROPPED_RAW = 6
 
 def validate_tablet_brightness(tablet_name, brightness):
   """Ensures tablet brightness is set according to documentation.
@@ -154,6 +154,7 @@ class ItsSession(object):
 
   CAP_JPEG = {'format': 'jpeg'}
   CAP_RAW = {'format': 'raw'}
+  CAP_CROPPED_RAW = {'format': 'raw', 'useCase': _USE_CASE_CROPPED_RAW}
   CAP_YUV = {'format': 'yuv'}
   CAP_RAW_YUV = [{'format': 'raw'}, {'format': 'yuv'}]
 
