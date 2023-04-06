@@ -25,7 +25,9 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivit
 import android.app.Activity;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 
+import androidx.window.extensions.core.util.function.Function;
 import androidx.window.extensions.embedding.SplitAttributes;
+import androidx.window.extensions.embedding.SplitAttributesCalculatorParams;
 import androidx.window.extensions.embedding.SplitInfo;
 import androidx.window.extensions.embedding.SplitPairRule;
 
@@ -99,7 +101,7 @@ public class SplitAttributesRuntimeApisTests extends ActivityEmbeddingTestBase {
         // Register the split pair rule.
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
-        mActivityEmbeddingComponent.setSplitAttributesCalculator(params -> {
+        Function<SplitAttributesCalculatorParams, SplitAttributes> calculator = params -> {
             // Only make the customized split attributes apply to the split rule with test tag in
             // case other tests are affected.
             if (tag.equals(params.getSplitRuleTag())) {
@@ -110,7 +112,8 @@ public class SplitAttributesRuntimeApisTests extends ActivityEmbeddingTestBase {
                 return EXPAND_SPLIT_ATTRS;
             }
             return params.getDefaultSplitAttributes();
-        });
+        };
+        mActivityEmbeddingComponent.setSplitAttributesCalculator(calculator);
 
         // Launch the activity A and B split and verify that the split pair matches
         // customizedSplitAttributes.
