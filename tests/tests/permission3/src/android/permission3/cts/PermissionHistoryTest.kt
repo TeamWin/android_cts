@@ -58,6 +58,7 @@ class PermissionHistoryTest : BasePermissionTest() {
         assumeFalse(isWatch)
         assumeFalse(isTv)
         assumeFalse(isAutomotive && !SdkLevel.isAtLeastT())
+        assumeFalse(isWatch)
     }
 
     @Before
