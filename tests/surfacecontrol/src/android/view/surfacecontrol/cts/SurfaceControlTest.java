@@ -27,18 +27,25 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
+import android.graphics.ImageFormat;
+import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.hardware.DataSpace;
 import android.hardware.HardwareBuffer;
 import android.hardware.SyncFence;
+import android.media.Image;
+import android.media.ImageReader;
+import android.media.ImageWriter;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.Display;
+import android.view.Surface;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
@@ -46,8 +53,8 @@ import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecke
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.RectChecker;
 import android.view.cts.surfacevalidator.PixelColor;
 
+import androidx.annotation.NonNull;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.WidgetTestUtils;
 import com.android.cts.hardware.SyncFenceUtil;
@@ -58,43 +65,22 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
+import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-
-import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
-import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.RectChecker;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Rect;
-import android.platform.test.annotations.Presubmit;
-import android.view.Surface;
-import android.view.SurfaceControl;
-import android.view.SurfaceHolder;
-import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
-import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecker;
-import android.view.cts.surfacevalidator.PixelColor;
-
-import androidx.annotation.NonNull;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-
-import java.util.concurrent.Executor;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
 @LargeTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(JUnitParamsRunner.class)
 public class SurfaceControlTest {
     static {
         System.loadLibrary("ctssurfacecontrol_jni");
@@ -1737,6 +1723,180 @@ public class SurfaceControlTest {
             if (listenerErrors[0] != null) {
                 throw listenerErrors[0];
             }
+        }
+    }
+
+    private static final class DefaultDataSpaceParameters {
+        private final int mPixelFormat;
+        private final byte[] mColor;
+        private final int mExpectedColor;
+
+        DefaultDataSpaceParameters(int pixelFormat, byte[] color, int expectedColor) {
+            mPixelFormat = pixelFormat;
+            mColor = color;
+            mExpectedColor = expectedColor;
+        }
+
+        int getPixelFormat() {
+            return mPixelFormat;
+        }
+
+        byte[] getColor() {
+            return mColor;
+        }
+
+        int getExpectedColor() {
+            return mExpectedColor;
+        }
+    }
+
+    private static Object[] defaultDataSpaceForRGBParameters() {
+        byte[] red = {(byte) 255, 0, 0};
+        byte[] green = {0, (byte) 255, 0};
+        byte[] blue = {0, 0, (byte) 255};
+
+        byte[][] colors = {red, green, blue};
+        int[] expectedColors = {Color.RED, Color.GREEN, Color.BLUE};
+
+        return IntStream.range(0, colors.length)
+                .mapToObj(index -> new DefaultDataSpaceParameters(
+                        PixelFormat.RGBA_8888, colors[index], expectedColors[index]))
+                .toArray();
+    }
+
+    @Test
+    @Parameters(method = "defaultDataSpaceForRGBParameters")
+    public void testDefaultDataSpaceForRGBBufferIssRGB(DefaultDataSpaceParameters parameters) {
+        byte[] color = parameters.getColor();
+        ImageReader reader = new ImageReader.Builder(DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)
+                .setImageFormat(parameters.getPixelFormat())
+                .setUsage(
+                        HardwareBuffer.USAGE_COMPOSER_OVERLAY
+                                | HardwareBuffer.USAGE_CPU_WRITE_OFTEN
+                                | HardwareBuffer.USAGE_CPU_READ_OFTEN
+                                | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE)
+                .build();
+        ImageWriter writer = new ImageWriter.Builder(reader.getSurface()).build();
+        Image image = writer.dequeueInputImage();
+
+        Image.Plane[] planes = image.getPlanes();
+        assertEquals(1, planes.length);
+        Image.Plane plane = planes[0];
+        ByteBuffer buffer = plane.getBuffer();
+        for (int row = 0; row < image.getHeight(); row++) {
+            int rowOffset = row * plane.getRowStride();
+            for (int col = 0; col < image.getWidth(); col++) {
+                buffer.put(rowOffset + col * plane.getPixelStride(), color[0]);
+                buffer.put(rowOffset + col * plane.getPixelStride() + 1, color[1]);
+                buffer.put(rowOffset + col * plane.getPixelStride() + 2, color[2]);
+                buffer.put(rowOffset + col * plane.getPixelStride() + 3, (byte) 255);
+            }
+        }
+        image.setDataSpace(DataSpace.DATASPACE_UNKNOWN);
+        writer.queueInputImage(image);
+
+        try (Image acquiredImage = reader.acquireLatestImage()) {
+            HardwareBuffer queuedBuffer = acquiredImage.getHardwareBuffer();
+            verifyTest(
+                    new BasicSurfaceHolderCallback() {
+                        @Override
+                        public void surfaceCreated(SurfaceHolder holder) {
+                            SurfaceControl surfaceControl = createFromWindow(holder);
+                            new SurfaceControl.Transaction()
+                                    .setBuffer(surfaceControl, queuedBuffer)
+                                    .setDataSpace(surfaceControl, DataSpace.DATASPACE_UNKNOWN)
+                                    .apply();
+                            queuedBuffer.close();
+                        }
+                    },
+                    new PixelChecker(parameters.getExpectedColor()) {
+                        @Override
+                        public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                            return matchingPixelCount > 9000 && matchingPixelCount < 11000;
+                        }
+                    }
+            );
+        }
+    }
+
+    private static Object[] defaultDataSpaceForYUVParameters() {
+        // Computed from BT. 709-6, but quantized to full range 8-bit rather than limited range
+        // TODO: add more colors to disambiguate from BT. 601, but this is okay for now
+        // since we should just make sure the colors aren't obviously wrong.
+        byte[] blue = {18, (byte) 255, 116};
+        byte[][] colors = {blue};
+        int[] expectedColors = {Color.BLUE};
+
+        return Stream.of(ImageFormat.YV12, ImageFormat.YUV_420_888)
+                .flatMap(format ->
+                    IntStream.range(0, colors.length)
+                            .mapToObj(index -> new DefaultDataSpaceParameters(
+                                    format, colors[index], expectedColors[index]))
+                )
+                .toArray();
+    }
+
+    @Test
+    @Parameters(method = "defaultDataSpaceForYUVParameters")
+    public void testDefaultDataSpaceForYUVBufferIssRGB(DefaultDataSpaceParameters parameters) {
+        // This is just blue
+        int format = parameters.getPixelFormat();
+        long usage = HardwareBuffer.USAGE_COMPOSER_OVERLAY
+                | HardwareBuffer.USAGE_CPU_WRITE_OFTEN
+                | HardwareBuffer.USAGE_CPU_READ_OFTEN
+                | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE;
+
+        // YV12 should always be supported with this usage bit combination.
+        // We also want to test with as many YUV formats as feasible.
+        assumeTrue(format == ImageFormat.YV12
+                || HardwareBuffer.isSupported(16, 16, format, 1, usage));
+        byte[] yuv = parameters.getColor();
+        ImageReader reader = new ImageReader.Builder(DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)
+                .setImageFormat(format)
+                .setUsage(usage)
+                .build();
+        ImageWriter writer = new ImageWriter.Builder(reader.getSurface()).build();
+        Image image = writer.dequeueInputImage();
+
+        Image.Plane[] planes = image.getPlanes();
+        assertEquals(3, planes.length);
+        for (int i = 0; i < planes.length; i++) {
+            Image.Plane plane = planes[i];
+            ByteBuffer buffer = plane.getBuffer();
+            int planeHeight = i == 0 ? image.getHeight() : image.getHeight() / 2;
+            int planeWidth = i == 0 ? image.getWidth() : image.getWidth() / 2;
+            for (int row = 0; row < planeHeight; row++) {
+                int rowOffset = row * plane.getRowStride();
+                for (int col = 0; col < planeWidth; col++) {
+                    buffer.put(rowOffset + col * plane.getPixelStride(), yuv[i]);
+                }
+            }
+        }
+
+        image.setDataSpace(DataSpace.DATASPACE_UNKNOWN);
+        writer.queueInputImage(image);
+
+        try (Image acquiredImage = reader.acquireLatestImage()) {
+            HardwareBuffer queuedBuffer = acquiredImage.getHardwareBuffer();
+            verifyTest(
+                    new BasicSurfaceHolderCallback() {
+                        @Override
+                        public void surfaceCreated(SurfaceHolder holder) {
+                            SurfaceControl surfaceControl = createFromWindow(holder);
+                            new SurfaceControl.Transaction()
+                                    .setBuffer(surfaceControl, queuedBuffer)
+                                    .setDataSpace(surfaceControl, DataSpace.DATASPACE_UNKNOWN)
+                                    .apply();
+                            queuedBuffer.close();
+                        }
+                    },
+                    new PixelChecker(parameters.getExpectedColor()) {
+                        @Override
+                        public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                            return matchingPixelCount > 9000 && matchingPixelCount < 11000;
+                        }
+                    }
+            );
         }
     }
 
