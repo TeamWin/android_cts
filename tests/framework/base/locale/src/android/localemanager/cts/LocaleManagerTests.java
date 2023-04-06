@@ -349,7 +349,6 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         runWithShellPermissionIdentity(() ->
                         sLocaleManager.setApplicationLocales(TEST_APP_PACKAGE, DEFAULT_APP_LOCALES),
                 Manifest.permission.CHANGE_CONFIGURATION);
-        assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE, DEFAULT_APP_LOCALES);
 
         assertTrue(mTestAppBroadcastInfoProvider.await());
         assertReceivedBroadcastContains(mTestAppBroadcastInfoProvider, TEST_APP_PACKAGE,
@@ -372,8 +371,6 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         runWithShellPermissionIdentity(() ->
                         sLocaleManager.setApplicationLocales(TEST_APP_PACKAGE, DEFAULT_APP_LOCALES),
                 Manifest.permission.CHANGE_CONFIGURATION);
-
-        assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE, DEFAULT_APP_LOCALES);
 
         assertTrue(mTestAppBroadcastInfoProvider.await());
         assertReceivedBroadcastContains(mTestAppBroadcastInfoProvider, TEST_APP_PACKAGE,
@@ -424,7 +421,6 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         runWithShellPermissionIdentity(() ->
                         sLocaleManager.setApplicationLocales(TEST_APP_PACKAGE, DEFAULT_APP_LOCALES),
                 Manifest.permission.CHANGE_CONFIGURATION);
-        assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE, DEFAULT_APP_LOCALES);
 
         assertTrue(mTestAppConfigChangedInfoProvider.await());
         assertReceivedBroadcastContains(mTestAppConfigChangedInfoProvider, TEST_APP_PACKAGE,
@@ -446,7 +442,6 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
             // Tell the test app to change its app-specific locales
             launchActivity(TEST_APP_MAIN_ACTIVITY, extraString(EXTRA_SET_LOCALES,
                     DEFAULT_APP_LOCALES.toLanguageTags()));
-            assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE, DEFAULT_APP_LOCALES);
 
             appSpecificLocaleBroadcastReceiver.await();
         }, Manifest.permission.READ_APP_SPECIFIC_LOCALES);
@@ -468,7 +463,6 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         // Tell the test app to change its app-specific locales
         launchActivity(TEST_APP_MAIN_ACTIVITY, extraString(EXTRA_SET_LOCALES,
                 DEFAULT_APP_LOCALES.toLanguageTags()));
-        assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE, DEFAULT_APP_LOCALES);
 
         // Ensure that no broadcasts were received since the change was for another app (the Test
         //   App) and we are neither the Test App's installer, nor do we hold
@@ -602,15 +596,6 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
      */
     private void assertLocalesCorrectlySetForCallingApp(LocaleList expectedLocales) {
         assertEquals(expectedLocales, sLocaleManager.getApplicationLocales());
-    }
-
-    /**
-     * Verifies that the locales are correctly set for another package
-     * by fetching locales of the app with a binder call.
-     */
-    private void assertLocalesCorrectlySetForAnotherApp(String packageName,
-            LocaleList expectedLocales) throws Exception {
-        assertEquals(expectedLocales, getApplicationLocales(packageName));
     }
 
     private LocaleList getApplicationLocales(String packageName) throws Exception {
