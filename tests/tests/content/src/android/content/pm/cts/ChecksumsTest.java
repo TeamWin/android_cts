@@ -919,6 +919,7 @@ public class ChecksumsTest {
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
+            params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
             params.setAppPackageName(V4_PACKAGE_NAME);
 
             final int sessionId = installer.createSession(params);
@@ -1101,6 +1102,7 @@ public class ChecksumsTest {
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
+            params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
             params.setAppPackageName(V4_PACKAGE_NAME);
 
             final int sessionId = installer.createSession(params);
