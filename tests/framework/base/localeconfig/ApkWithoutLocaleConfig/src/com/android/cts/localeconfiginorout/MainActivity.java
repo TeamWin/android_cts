@@ -16,6 +16,11 @@
 
 package com.android.cts.localeconfiginorout;
 
+import static android.localeconfig.cts.util.LocaleConstants.APP_CREATION_INFO_PROVIDER_ACTION;
+import static android.localeconfig.cts.util.LocaleConstants.EXTRA_QUERY_LOCALES;
+import static android.localeconfig.cts.util.LocaleConstants.EXTRA_SET_LOCALES;
+import static android.localeconfig.cts.util.LocaleUtils.constructResultIntent;
+
 import android.app.Activity;
 import android.app.LocaleManager;
 import android.content.Intent;
@@ -25,20 +30,27 @@ import android.os.LocaleList;
 import androidx.annotation.Nullable;
 
 /**
- * An activity used by {@link LocaleConfigAppUpdateTest} to set locales for a package without the
- * LocaleConfig
+ * An activity used by {@link LocaleConfigTest} and {@link LocaleConfigAppUpdateTest}
  */
 public class MainActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        LocaleManager localeManager = getSystemService(LocaleManager.class);
         Intent intent = getIntent();
-        if (intent != null && intent.hasExtra("set_locales")) {
-            LocaleManager localeManager = getSystemService(LocaleManager.class);
+        if (intent != null && intent.hasExtra(EXTRA_SET_LOCALES)) {
             localeManager.setApplicationLocales(LocaleList.forLanguageTags(
-                    intent.getStringExtra("set_locales")));
-            finish();
+                    intent.getStringExtra(EXTRA_SET_LOCALES)));
+        } else if (intent != null && intent.hasExtra(EXTRA_QUERY_LOCALES)) {
+            String packageName = intent.getStringExtra(EXTRA_QUERY_LOCALES);
+            try {
+                LocaleList locales = localeManager.getApplicationLocales(packageName);
+                sendBroadcast(constructResultIntent(APP_CREATION_INFO_PROVIDER_ACTION,
+                        packageName, locales));
+            } catch (SecurityException e) {
+            }
         }
+        finish();
     }
 }
