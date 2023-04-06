@@ -16,7 +16,6 @@
 
 package android.cts.statsdatom.voiceinteraction;
 
-import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.STATSD_LOG_DEBOUNCE_MS;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_APK;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_CLASS;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_PKG;
@@ -97,9 +96,6 @@ public class HotwordDetectionServiceInitResultReportedStatsTest extends DeviceTe
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_DSP_INIT_SUCCESS_FOR_METRIC_COLLECT);
 
-        // Wait CTS test finish
-        Thread.sleep(STATSD_LOG_DEBOUNCE_MS);
-
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).isNotNull();
 
@@ -126,9 +122,6 @@ public class HotwordDetectionServiceInitResultReportedStatsTest extends DeviceTe
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_SOFTWARE_INIT_SUCCESS_FOR_METRIC_COLLECT);
-
-        // Wait CTS test finish
-        Thread.sleep(STATSD_LOG_DEBOUNCE_MS);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).isNotNull();
