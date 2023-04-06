@@ -258,13 +258,15 @@ int MidiTestManager::matchStream(uint8_t* bytes, int count) {
 }
 
 #define THROTTLE_PERIOD_MS 10
+#define THROTTLE_MAX_PACKET_SIZE 15
 
 int portSend(AMidiInputPort* sendPort, uint8_t* msg, int length, bool throttle) {
 
     int numSent = 0;
     if (throttle) {
-        for(int index = 0; index < length; index++) {
-            AMidiInputPort_send(sendPort, msg + index, 1);
+        for(int index = 0; index < length; index += THROTTLE_MAX_PACKET_SIZE) {
+            int packetSize = std::min(length - index, THROTTLE_MAX_PACKET_SIZE);
+            AMidiInputPort_send(sendPort, msg + index, packetSize);
             usleep(THROTTLE_PERIOD_MS * 1000);
         }
         numSent = length;
