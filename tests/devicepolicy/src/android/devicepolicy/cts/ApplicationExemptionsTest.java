@@ -29,6 +29,7 @@ import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_SYSTEM_EXEMPT_
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_APP_EXEMPTIONS;
+import static com.android.queryable.queries.ActivityQuery.activity;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -86,7 +87,9 @@ public class ApplicationExemptionsTest {
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final DevicePolicyManager sLocalDevicePolicyManager =
             sContext.getSystemService(DevicePolicyManager.class);
-    private static final TestApp sTestApp = sDeviceState.testApps().any();
+    private static final TestApp sTestApp =
+            sDeviceState.testApps().query().whereActivities().contains(
+                    activity().where().exported().isTrue()).get();
 
     private static final String INVALID_PACKAGE_NAME = "com.google.android.notapackage";
     private static final Set<Integer> INVALID_EXEMPTIONS = new HashSet<>(List.of(-1));
