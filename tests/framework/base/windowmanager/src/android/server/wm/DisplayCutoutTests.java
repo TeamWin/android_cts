@@ -128,8 +128,12 @@ public class DisplayCutoutTests {
 
     @ClassRule
     public static ActivityManagerTestBase.DisableImmersiveModeConfirmationRule
-            mDisableImmersiveModeConfirmationRule =
+            sDisableImmersiveModeConfirmationRule =
             new ActivityManagerTestBase.DisableImmersiveModeConfirmationRule();
+
+    @ClassRule
+    public static SetRequestedOrientationRule sSetRequestedOrientationRule =
+            new SetRequestedOrientationRule();
 
     @Rule
     public final ErrorCollector mErrorCollector = new ErrorCollector();
