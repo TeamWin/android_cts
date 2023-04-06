@@ -102,8 +102,7 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
         final SplitAttributes customizedSplitAttributes = new SplitAttributes.Builder()
                 .setSplitType(new SplitAttributes.SplitType.RatioSplitType(0.7f))
                 .build();
-
-        mActivityEmbeddingComponent.setSplitAttributesCalculator(params -> {
+        Function<SplitAttributesCalculatorParams, SplitAttributes> calculator = params -> {
             // Only make the customized split attributes apply to the split rule with test tag in
             // case other tests are affected.
             if (tag.equals(params.getSplitRuleTag())) {
@@ -114,7 +113,8 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
                 return EXPAND_SPLIT_ATTRS;
             }
             return params.getDefaultSplitAttributes();
-        });
+        };
+        mActivityEmbeddingComponent.setSplitAttributesCalculator(calculator);
 
         // Start another Activity to trigger the calculator function, and verify if the split pair
         // matches the customized split attributes.
@@ -158,8 +158,7 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
             @NonNull SplitAttributes customizedSplitAttributes) {
         final String tag = "testSplitAttributesCustomizationByCalculator"
                 + customizedSplitAttributes;
-
-        mActivityEmbeddingComponent.setSplitAttributesCalculator(params -> {
+        Function<SplitAttributesCalculatorParams, SplitAttributes> calculator = params -> {
             // Only make the customized split attributes apply to the split rule with test tag in
             // case other tests are affected.
             if (tag.equals(params.getSplitRuleTag())) {
@@ -170,7 +169,8 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
                 return EXPAND_SPLIT_ATTRS;
             }
             return params.getDefaultSplitAttributes();
-        });
+        };
+        mActivityEmbeddingComponent.setSplitAttributesCalculator(calculator);
 
         // Create a split rule for activity A and activity B where the split ratio is 0.5.
         final SplitPairRule splitPairRule = createSplitPairRuleBuilder(
