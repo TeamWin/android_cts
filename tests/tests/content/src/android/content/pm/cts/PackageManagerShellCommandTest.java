@@ -1852,19 +1852,27 @@ public class PackageManagerShellCommandTest {
     @Test
     public void testCreateUserCurAsType() throws Exception {
         assumeTrue(UserManager.supportsMultipleUsers());
-        Pattern pattern = Pattern.compile("Success: created user id (\\d+)\\R*");
-        String commandResult = executeShellCommand("pm create-user --profileOf cur "
-                + "--user-type android.os.usertype.profile.CLONE test");
-        Matcher matcher = pattern.matcher(commandResult);
-        assertTrue(matcher.find());
-        commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
-        assertEquals("Success: removed user\n", commandResult);
-        commandResult = executeShellCommand("pm create-user --profileOf current "
-                + "--user-type android.os.usertype.profile.CLONE test");
-        matcher = pattern.matcher(commandResult);
-        assertTrue(matcher.find());
-        commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
-        assertEquals("Success: removed user\n", commandResult);
+        final String oldPropertyValue = getSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY);
+        setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY, "1");
+        try {
+            Pattern pattern = Pattern.compile("Success: created user id (\\d+)\\R*");
+            String commandResult = executeShellCommand("pm create-user --profileOf cur "
+                    + "--user-type android.os.usertype.profile.CLONE test");
+            Matcher matcher = pattern.matcher(commandResult);
+            assertTrue(matcher.find());
+            commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
+            assertEquals("Success: removed user\n", commandResult);
+            commandResult = executeShellCommand("pm create-user --profileOf current "
+                    + "--user-type android.os.usertype.profile.CLONE test");
+            matcher = pattern.matcher(commandResult);
+            assertTrue(matcher.find());
+            commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
+            assertEquals("Success: removed user\n", commandResult);
+        } finally {
+            if (!oldPropertyValue.isEmpty()) {
+                setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY, oldPropertyValue);
+            }
+        }
     }
 
     @Test
@@ -2172,6 +2180,10 @@ public class PackageManagerShellCommandTest {
 
     public static void setSystemProperty(String name, String value) throws Exception {
         assertEquals("", executeShellCommand("setprop " + name + " " + value));
+    }
+
+    private static String getSystemProperty(String prop) throws Exception {
+        return executeShellCommand("getprop " + prop).replace("\n", "");
     }
 
     private void disablePackage(String packageName) {
