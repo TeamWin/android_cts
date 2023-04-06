@@ -27,6 +27,7 @@ import static org.junit.Assert.fail;
 import android.os.Bundle;
 import android.os.LocaleList;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.MoreAsserts;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -59,6 +60,7 @@ import java.util.stream.Stream;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class EditorInfoTest {
     private static final int TEST_TEXT_LENGTH = 2048;
     /** A text with 1 million chars! This is way too long. */

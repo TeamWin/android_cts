@@ -27,6 +27,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.graphics.Matrix;
 import android.graphics.RectF;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.Layout;
 import android.text.SegmentFinder;
 import android.view.inputmethod.TextBoundsInfo;
@@ -41,6 +42,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class TextBoundsInfoMethodTest {
     // In this test, we assume that:
     //   * all characters' height is 20f.
