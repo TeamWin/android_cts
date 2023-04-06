@@ -677,6 +677,17 @@ def stream_use_case(props):
   return 'android.request.availableCapabilities' in props and 19 in props[
       'android.request.availableCapabilities']
 
+def cropped_raw_stream_use_case(props):
+  """Returns whether a device supports the CROPPED_RAW stream use case.
+
+  Args:
+    props: Camera properties object.
+
+  Returns:
+     Boolean. True if the device supports the CROPPED_RAW stream use case.
+  """
+  return stream_use_case(props) and 6 in props['android.scaler.availableStreamUseCases']
+
 
 def intrinsic_calibration(props):
   """Returns whether a device supports android.lens.intrinsicCalibration.
