@@ -81,6 +81,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             new HotwordRejectedResult.Builder()
                     .setConfidenceLevel(HotwordRejectedResult.CONFIDENCE_LEVEL_MEDIUM)
                     .build();
+
     @NonNull
     private final Object mLock = new Object();
     private Handler mHandler;
@@ -94,6 +95,8 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     private Runnable mDetectionJob;
 
     private boolean mIsTestUnexpectedCallback;
+
+    private boolean mIsTestAudioEgress;
 
     @Override
     public void onCreate() {
@@ -136,7 +139,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             synchronized (mLock) {
                 mHandler.postDelayed(() -> {
                     try {
-                        callback.onDetected(hotwordDetectedResult);
+                        if (mIsTestAudioEgress) {
+                            callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                        } else {
+                            callback.onDetected(hotwordDetectedResult);
+                        }
                     } catch (IllegalArgumentException e) {
                         callback.onDetected(DETECTED_RESULT);
                     }
@@ -299,6 +306,14 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 mIsTestUnexpectedCallback = true;
                 return;
             }
+
+            if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
+                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS) {
+                Log.d(TAG, "options : Test audio egress");
+                mIsTestAudioEgress = true;
+                return;
+            }
+
             String fakeData = options.getString(KEY_FAKE_DATA);
             if (!TextUtils.equals(fakeData, VALUE_FAKE_DATA)) {
                 Log.d(TAG, "options : data is not the same");
