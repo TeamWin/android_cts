@@ -65,9 +65,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class TimePickerTest {
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
     private Activity mActivity;
     private TimePicker mTimePicker;
 
@@ -78,6 +77,7 @@ public class TimePickerTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_clock);
         WindowUtil.waitForFocus(mActivity);

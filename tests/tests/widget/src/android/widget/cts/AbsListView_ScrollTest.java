@@ -72,8 +72,7 @@ public class AbsListView_ScrollTest {
     public ActivityTestRule<ListViewFixedCtsActivity> mActivityRule =
             new ActivityTestRule<>(ListViewFixedCtsActivity.class);
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
+    private CtsTouchUtils mCtsTouchUtils;
     private Instrumentation mInstrumentation;
     private AbsListView mListView;
     private Context mContext;
@@ -89,6 +88,7 @@ public class AbsListView_ScrollTest {
     public void setup() throws Throwable {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
+        mCtsTouchUtils = new CtsTouchUtils(mContext);
 
         final Activity activity = mActivityRule.getActivity();
 

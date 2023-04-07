@@ -49,8 +49,8 @@ public class EndToEndImeTestBase {
     @Rule
     public TestName mTestName = new TestName();
 
-    protected final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
+    protected final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils(
+            InstrumentationRegistry.getInstrumentation().getTargetContext());
 
     /** Returns a unique marker based on the concrete class name and elapsed time. */
     protected String createUniqueMarker() {

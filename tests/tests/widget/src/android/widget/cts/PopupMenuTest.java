@@ -71,9 +71,8 @@ import java.util.concurrent.TimeUnit;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class PopupMenuTest {
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
     private Activity mActivity;
 
     private Builder mBuilder;
@@ -88,6 +87,7 @@ public class PopupMenuTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
 
         // Disable and remove focusability on the first child of our activity so that

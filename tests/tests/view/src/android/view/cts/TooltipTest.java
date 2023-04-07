@@ -62,9 +62,9 @@ public class TooltipTest {
     private static final long TIMEOUT_DELTA = 10000;
     private static final long WAIT_MARGIN = 100;
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
+
     private Activity mActivity;
     private ViewGroup mTopmostView;
     private ViewGroup mGroupView;
@@ -84,6 +84,7 @@ public class TooltipTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         mTopmostView = (ViewGroup) mActivity.findViewById(R.id.tooltip_layout);
         mGroupView = (ViewGroup) mActivity.findViewById(R.id.tooltip_group);
