@@ -39,15 +39,15 @@ ITS_SUPPORTED_QUALITIES = (
     'VGA'
 )
 
-LOW_RESOLUTION_SIZES = {
-    'W': ('176x144', '192x144'),
-    'UW': ('176x144', '192x144', '352x288', '384x288', '320x240'),
-}
+LOW_RESOLUTION_SIZES = (
+    '176x144',
+    '192x144',
+    '352x288',
+    '384x288',
+    '320x240',
+)
 
-LOWEST_RES_TESTED_AREA = {
-    'W': 320*180,
-    'UW': 640*360,
-}
+LOWEST_RES_TESTED_AREA = 640*360
 
 
 VIDEO_QUALITY_SIZE = {
