@@ -18,7 +18,11 @@ package android.graphics.cts;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -138,11 +142,60 @@ public class GainmapTest {
     }
 
     @Test
+    public void testDecodeGainmapBitmapFactoryReuse() throws Exception {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inMutable = true;
+        options.inDensity = 160;
+        options.inTargetDensity = 160;
+
+        Bitmap bitmap = BitmapFactory.decodeResource(sContext.getResources(), R.raw.gainmap,
+                options);
+        checkGainmap(bitmap);
+        options.inBitmap = bitmap;
+        assertSame(bitmap, BitmapFactory.decodeResource(
+                sContext.getResources(), R.drawable.baseline_jpeg, options));
+        assertEquals(1280, bitmap.getWidth());
+        assertEquals(960, bitmap.getHeight());
+        assertFalse(bitmap.hasGainmap());
+        assertNull(bitmap.getGainmap());
+        assertSame(bitmap, BitmapFactory.decodeResource(
+                sContext.getResources(), R.raw.gainmap, options));
+        checkGainmap(bitmap);
+    }
+
+    @Test
     public void testDecodeGainmapBitmapRegionDecoder() throws Exception {
         InputStream is = sContext.getResources().openRawResource(R.raw.gainmap);
         BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
         Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), null);
         checkGainmap(region);
+    }
+
+    @Test
+    public void testDecodeGainmapBitmapRegionDecoderReuse() throws Exception {
+        InputStream is = sContext.getResources().openRawResource(R.raw.gainmap);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inMutable = true;
+        options.inDensity = 160;
+        options.inTargetDensity = 160;
+        Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE),
+                options);
+        checkGainmap(region);
+        Bitmap previousGainmap = region.getGainmap().getGainmapContents();
+        options.inBitmap = region;
+
+        is = sContext.getResources().openRawResource(R.drawable.baseline_jpeg);
+        BitmapRegionDecoder secondDecoder = BitmapRegionDecoder.newInstance(is);
+        assertSame(region, secondDecoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE),
+                options));
+        assertFalse(region.hasGainmap());
+        assertNull(region.getGainmap());
+
+        assertSame(region, decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE),
+                options));
+        checkGainmap(region);
+        assertNotSame(previousGainmap, region.getGainmap().getGainmapContents());
     }
 
     @Test
