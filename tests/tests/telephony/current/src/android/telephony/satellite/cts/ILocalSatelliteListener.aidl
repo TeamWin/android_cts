@@ -24,31 +24,37 @@ import android.telephony.satellite.stub.SatelliteDatagram;
 oneway interface ILocalSatelliteListener {
     /**
      * Indicates that the remote service - SatelliteModemInterface - has successfully connected to
-     * the TestSatelliteService.
+     * the MockSatelliteService.
      */
     void onRemoteServiceConnected();
 
     /**
-     * Indicates that TestSatelliteService has just received the request
+     * Indicates that MockSatelliteService has just received the request
      * startSendingSatellitePointingInfo from Telephony.
      */
     void onStartSendingSatellitePointingInfo();
 
     /**
-     * Indicates that TestSatelliteService has just received the request
+     * Indicates that MockSatelliteService has just received the request
      * stopSendingSatellitePointingInfo from Telephony.
      */
     void onStopSendingSatellitePointingInfo();
 
     /**
-     * Indicates that TestSatelliteService has just received the request
+     * Indicates that MockSatelliteService has just received the request
      * pollPendingSatelliteDatagrams from Telephony.
      */
     void onPollPendingSatelliteDatagrams();
 
     /**
-     * Indicates that TestSatelliteService has just received the request
+     * Indicates that MockSatelliteService has just received the request
      * sendSatelliteDatagram from Telephony.
      */
     void onSendSatelliteDatagram(in SatelliteDatagram datagram, in boolean isEmergency);
+
+    /**
+     * Indicates that MockSatelliteService has just received the request
+     * requestSatelliteListeningEnabled from Telephony.
+     */
+    void onSatelliteListeningEnabled(in boolean enabled);
 }

@@ -44,6 +44,8 @@ class MockSatelliteServiceManager {
     private static final String PACKAGE = "android.telephony.cts";
     private static final String SET_SATELLITE_SERVICE_PACKAGE_NAME_CMD =
             "cmd phone set-satellite-service-package-name -s ";
+    private static final String SET_SATELLITE_LISTENING_TIMEOUT_DURATION_CMD =
+            "cmd phone set-satellite-listening-timeout-duration -t ";
     private static final long TIMEOUT = 5000;
 
     private MockSatelliteService mSatelliteService;
@@ -57,8 +59,12 @@ class MockSatelliteServiceManager {
     private List<SatelliteDatagram> mSentSatelliteDatagrams = new ArrayList<>();
     private List<Boolean> mSentIsEmergencyList = new ArrayList<>();
     private final Object mSendDatagramLock = new Object();
+    private final Semaphore mListeningEnabledSemaphore = new Semaphore(0);
+    private List<Boolean> mListeningEnabledList = new ArrayList<>();
+    private final Object mListeningEnabledLock = new Object();
 
-    @NonNull private final ILocalSatelliteListener mSatelliteListener =
+    @NonNull
+    private final ILocalSatelliteListener mSatelliteListener =
             new ILocalSatelliteListener.Stub() {
                 @Override
                 public void onRemoteServiceConnected() {
@@ -108,6 +114,19 @@ class MockSatelliteServiceManager {
                         mSendDatagramsSemaphore.release();
                     } catch (Exception ex) {
                         logd("onSendSatelliteDatagram: Got exception, ex=" + ex);
+                    }
+                }
+
+                @Override
+                public void onSatelliteListeningEnabled(boolean enabled) {
+                    logd("onSatelliteListeningEnabled: enabled=" + enabled);
+                    synchronized (mListeningEnabledLock) {
+                        mListeningEnabledList.add(enabled);
+                    }
+                    try {
+                        mListeningEnabledSemaphore.release();
+                    } catch (Exception ex) {
+                        logd("onSatelliteListeningEnabled: Got exception, ex=" + ex);
                     }
                 }
             };
@@ -212,6 +231,25 @@ class MockSatelliteServiceManager {
         }
     }
 
+    Boolean getListeningEnabled(int index) {
+        synchronized (mListeningEnabledLock) {
+            if (index >= mListeningEnabledList.size()) return null;
+            return mListeningEnabledList.get(index);
+        }
+    }
+
+    int getTotalCountOfListeningEnabledList() {
+        synchronized (mListeningEnabledLock) {
+            return mListeningEnabledList.size();
+        }
+    }
+
+    void clearListeningEnabledList() {
+        synchronized (mListeningEnabledLock) {
+            mListeningEnabledList.clear();
+        }
+    }
+
     boolean waitForEventOnStartSendingSatellitePointingInfo(int expectedNumberOfEvents) {
         for (int i = 0; i < expectedNumberOfEvents; i++) {
             try {
@@ -276,6 +314,22 @@ class MockSatelliteServiceManager {
         return true;
     }
 
+    boolean waitForEventOnSatelliteListeningEnabled(int expectedNumberOfEvents) {
+        for (int i = 0; i < expectedNumberOfEvents; i++) {
+            try {
+                if (!mListeningEnabledSemaphore.tryAcquire(
+                        TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    loge("Timeout to receive onSatelliteListeningEnabled");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("onSatelliteListeningEnabled: Got exception=" + ex);
+                return false;
+            }
+        }
+        return true;
+    }
+
     void setErrorCode(@SatelliteError int errorCode) {
         logd("setErrorCode: errorCode=" + errorCode);
         if (mSatelliteService == null) {
@@ -315,6 +369,19 @@ class MockSatelliteServiceManager {
     void sendOnSatellitePositionChanged(PointingInfo pointingInfo) {
         logd("sendOnSatellitePositionChanged");
         mSatelliteService.sendOnSatellitePositionChanged(pointingInfo);
+    }
+
+    boolean setSatelliteListeningTimeoutDuration(long timeoutMillis) {
+        try {
+            String result =
+                    TelephonyUtils.executeShellCommand(mInstrumentation,
+                            SET_SATELLITE_LISTENING_TIMEOUT_DURATION_CMD + timeoutMillis);
+            logd("setSatelliteListeningTimeoutDuration: result = " + result);
+            return "true".equals(result);
+        } catch (Exception e) {
+            loge("setSatelliteListeningTimeoutDuration: e=" + e);
+            return false;
+        }
     }
 
     private boolean setupLocalSatelliteService() {
