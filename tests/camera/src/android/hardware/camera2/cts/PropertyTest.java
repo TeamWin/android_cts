@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.camera2.CameraManager;
 import android.os.SystemProperties;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -108,6 +109,7 @@ public class PropertyTest {
     }
 
     @Test
+    @AppModeFull
     public void testLandscapeToPortraitEnabled() throws Exception {
         if (SystemProperties.getBoolean(CameraManager.LANDSCAPE_TO_PORTRAIT_PROP, false)) {
             Log.i(TAG, "System property enabled, testing shouldOverrideToPortrait");
@@ -118,6 +120,7 @@ public class PropertyTest {
     }
 
     @Test
+    @AppModeFull
     public void testLandscapeToPortraitDisabled() throws Exception {
         if (SystemProperties.getBoolean(CameraManager.LANDSCAPE_TO_PORTRAIT_PROP, false)) {
             Log.i(TAG, "System property enabled, testing shouldOverrideToPortrait");
