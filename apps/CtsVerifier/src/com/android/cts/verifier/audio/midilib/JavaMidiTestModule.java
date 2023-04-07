@@ -54,6 +54,7 @@ public abstract class JavaMidiTestModule extends MidiTestModule {
     // In some instances, Bluetooth MIDI in particular, it is possible to overrun
     // the bandwidth, resulting in lost data. In this case, slow the data stream
     // down.
+    private static final int THROTTLE_MAX_PACKET_SIZE = 15;
     private static final int THROTTLE_PERIOD_MS = 10;
 
     private static final int MESSAGE_MAX_BYTES = 4096;
@@ -295,8 +296,9 @@ public abstract class JavaMidiTestModule extends MidiTestModule {
         try {
             if (throttle) {
                 try {
-                    for (int index = 0; index < length; index++) {
-                        inputPort.send(bytes, offset + index, 1);
+                    for (int index = 0; index < length; index += THROTTLE_MAX_PACKET_SIZE) {
+                        int packetSize = Math.min(length - index, THROTTLE_MAX_PACKET_SIZE);
+                        inputPort.send(bytes, offset + index, packetSize);
                         Thread.sleep(THROTTLE_PERIOD_MS);
                     }
                 } catch (InterruptedException ex) {
@@ -324,13 +326,13 @@ public abstract class JavaMidiTestModule extends MidiTestModule {
                 // Send a warm-up message...
                 logByteArray("warm-up: ", mWarmUpMsg, 0, mWarmUpMsg.length);
                 portSend(mIODevice.mSendPort, mWarmUpMsg, 0, mWarmUpMsg.length,
-                        false /* throttle */);
+                        mDeviceType == TESTID_BTLOOPBACK);
                 for (TestMessage msg : mTestMessages) {
                     if (DEBUG) {
                         logByteArray("send: ", msg.mMsgBytes, 0, msg.mMsgBytes.length);
                     }
                     portSend(mIODevice.mSendPort, msg.mMsgBytes, 0, msg.mMsgBytes.length,
-                            false /* throttle */);
+                            mDeviceType == TESTID_BTLOOPBACK);
                     totalSent += msg.mMsgBytes.length;
                 }
             }
