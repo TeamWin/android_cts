@@ -65,9 +65,13 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
 
     private final CountDownLatch mReadyToStart = new CountDownLatch(1);
 
-    public SyncValidatorSCVHTestCase(long delayMs, boolean overrideDefaultDuration) {
+    private boolean mInProcess;
+
+    public SyncValidatorSCVHTestCase(long delayMs, boolean overrideDefaultDuration,
+            boolean inProcess) {
         mDelayMs = delayMs;
         mOverrideDefaultDuration = overrideDefaultDuration;
+        mInProcess = inProcess;
     }
 
     private final Runnable mResizeWithSurfaceSyncGroup = new Runnable() {
@@ -128,7 +132,7 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
         mSurfaceControlViewHostHelper = new SurfaceControlViewHostHelper(TAG, mReadyToStart,
                 context, mDelayMs, mSizes[0]);
 
-        mSurfaceControlViewHostHelper.bindEmbeddedService();
+        mSurfaceControlViewHostHelper.bindEmbeddedService(mInProcess);
 
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(mSizes[0].getWidth(),
                 mSizes[0].getHeight());

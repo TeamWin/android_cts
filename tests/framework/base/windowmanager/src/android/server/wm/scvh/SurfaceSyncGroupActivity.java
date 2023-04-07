@@ -55,7 +55,7 @@ public class SurfaceSyncGroupActivity extends Activity {
         mSurfaceControlViewHostHelper = new SurfaceControlViewHostHelper(TAG, mCountDownLatch, this,
                 0, size);
 
-        mSurfaceControlViewHostHelper.bindEmbeddedService();
+        mSurfaceControlViewHostHelper.bindEmbeddedService(false /* inProcess */);
 
         FrameLayout frameLayout = new FrameLayout(this);
         setContentView(frameLayout);
