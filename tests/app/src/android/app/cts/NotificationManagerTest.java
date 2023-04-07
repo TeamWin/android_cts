@@ -427,8 +427,11 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
-    public void testCanSendFullScreenIntent_modeDefault_returnsTrue() throws Exception {
-        verifyCanUseFullScreenIntent(MODE_DEFAULT, /*canSend=*/ true);
+    public void testCanSendFullScreenIntent_modeDefault_returnsIsPermissionGranted()
+            throws Exception {
+        final boolean isPermissionGranted = PermissionUtils.isPermissionGranted(STUB_PACKAGE_NAME,
+                Manifest.permission.USE_FULL_SCREEN_INTENT);
+        verifyCanUseFullScreenIntent(MODE_DEFAULT, /*canSend=*/ isPermissionGranted);
     }
 
     public void testCanSendFullScreenIntent_modeAllowed_returnsTrue() throws Exception {
