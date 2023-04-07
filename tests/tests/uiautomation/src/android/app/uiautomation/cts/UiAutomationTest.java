@@ -216,7 +216,7 @@ public final class UiAutomationTest {
                     .that(uiAutomation.clearWindowContentFrameStats(windowId)).isTrue();
 
             // Find the list to scroll around.
-            final ListView listView = (ListView) activity.findViewById(R.id.list_view);
+            final ListView listView = activity.findViewById(R.id.list_view);
 
             // Scroll a bit.
             scrollListView(uiAutomation, listView, listView.getAdapter().getCount() - 1);
