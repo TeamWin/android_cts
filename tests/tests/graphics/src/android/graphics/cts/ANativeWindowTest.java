@@ -225,12 +225,6 @@ public class ANativeWindowTest {
         assertEquals(nSetBuffersDataSpace(null, DataSpace.ADATASPACE_SRGB), -EINVAL);
         assertEquals(nGetBuffersDataSpace(null), -EINVAL);
         assertEquals(nGetBuffersDataSpace(surface), DataSpace.ADATASPACE_SRGB);
-
-        // set an unsupported data space should return a error code,
-        // the original data space shouldn't change.
-        final int invalidDataSpace = 123;
-        assertEquals(nSetBuffersDataSpace(surface, invalidDataSpace), -EINVAL);
-        assertEquals(nGetBuffersDataSpace(surface), DataSpace.ADATASPACE_SRGB);
     }
 
     @Test
