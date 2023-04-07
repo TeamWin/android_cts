@@ -127,9 +127,8 @@ public class ListViewTest {
         Color.BLUE, Color.CYAN, Color.GREEN, Color.YELLOW, Color.RED, Color.MAGENTA
     };
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
     private Activity mActivity;
     private ListView mListView;
     private ListView mListViewStretch;
@@ -152,6 +151,7 @@ public class ListViewTest {
         mPreviousDurationScale = ValueAnimator.getDurationScale();
         ValueAnimator.setDurationScale(1.0f);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         XmlPullParser parser = mActivity.getResources().getXml(R.layout.listview_layout);
         mAttributeSet = Xml.asAttributeSet(parser);

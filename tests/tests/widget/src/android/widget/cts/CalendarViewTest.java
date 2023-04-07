@@ -54,7 +54,7 @@ import java.util.GregorianCalendar;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class CalendarViewTest {
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+    private CtsTouchUtils mCtsTouchUtils;
 
     private Instrumentation mInstrumentation;
     private CalendarViewCtsActivity mActivity;
@@ -69,6 +69,7 @@ public class CalendarViewTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         mCalendarViewMaterial = (CalendarView) mActivity.findViewById(R.id.calendar_view_material);
         mCalendarViewHolo = (CalendarView) mActivity.findViewById(R.id.calendar_view_holoyolo);

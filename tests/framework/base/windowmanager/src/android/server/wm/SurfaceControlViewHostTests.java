@@ -106,11 +106,11 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
     public static class TestActivity extends Activity {}
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
     private final ActivityTestRule<TestActivity> mActivityRule = new ActivityTestRule<>(
             TestActivity.class);
 
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
     private Activity mActivity;
     private SurfaceView mSurfaceView;
     private ViewGroup mViewParent;
@@ -177,6 +177,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         }
 
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.launchActivity(null);
         mInstrumentation.waitForIdleSync();
 

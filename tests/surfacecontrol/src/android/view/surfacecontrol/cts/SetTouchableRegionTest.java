@@ -42,9 +42,8 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class SetTouchableRegionTest {
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
     private Activity mActivity;
     @Rule
     public ActivityTestRule<CtsActivity> mActivityRule =
@@ -80,6 +79,7 @@ public class SetTouchableRegionTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
     }
 

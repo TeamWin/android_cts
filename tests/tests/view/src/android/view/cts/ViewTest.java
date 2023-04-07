@@ -150,9 +150,8 @@ public class ViewTest {
 
     private static final String LOG_TAG = "ViewTest";
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
     private ViewTestCtsActivity mActivity;
     private Resources mResources;
     private MockViewParent mMockParent;
@@ -170,6 +169,7 @@ public class ViewTest {
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
+        mCtsTouchUtils = new CtsTouchUtils(mContext);
         mActivity = mActivityRule.getActivity();
         WindowUtil.waitForFocus(mActivity);
         mResources = mActivity.getResources();

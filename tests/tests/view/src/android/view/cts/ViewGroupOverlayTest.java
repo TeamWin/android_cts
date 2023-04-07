@@ -56,9 +56,9 @@ import java.util.List;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class ViewGroupOverlayTest {
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
+
     private Activity mActivity;
     private ViewGroup mViewGroupWithOverlay;
     private ViewGroupOverlay mViewGroupOverlay;
@@ -70,6 +70,7 @@ public class ViewGroupOverlayTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         mViewGroupWithOverlay = (ViewGroup) mActivity.findViewById(R.id.viewgroup_with_overlay);
         mViewGroupOverlay = mViewGroupWithOverlay.getOverlay();

@@ -92,7 +92,7 @@ class SpellCheckerTest : EndToEndImeTestBase() {
     private val context: Context = instrumentation.getTargetContext()
     private val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
     private val uiAutomation: UiAutomation = instrumentation.uiAutomation
-    private val ctsTouchUtils: CtsTouchUtils = CtsTouchUtils()
+    private val ctsTouchUtils: CtsTouchUtils = CtsTouchUtils(context)
 
     @Rule
     fun unlockScreenRule() = UnlockScreenRule()

@@ -52,9 +52,8 @@ import java.util.concurrent.TimeUnit;
 public class ZoomButtonTest {
     private static long NANOS_IN_MILLI = 1000000;
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
     private ZoomButton mZoomButton;
     private Activity mActivity;
 
@@ -65,6 +64,7 @@ public class ZoomButtonTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         mZoomButton = (ZoomButton) mActivity.findViewById(R.id.zoombutton_test);
     }

@@ -121,9 +121,8 @@ public class AbsListViewTest {
     public ActivityTestRule<ListViewCtsActivity> mActivityRule =
             new ActivityTestRule<>(ListViewCtsActivity.class);
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
     private AbsListView mListView;
     private Context mContext;
     private AttributeSet mAttributeSet;
@@ -139,6 +138,7 @@ public class AbsListViewTest {
         final Activity activity = mActivityRule.getActivity();
         // Always use the activity context
         mContext = activity;
+        mCtsTouchUtils = new CtsTouchUtils(mContext);
 
         WindowUtil.waitForFocus(activity);
 

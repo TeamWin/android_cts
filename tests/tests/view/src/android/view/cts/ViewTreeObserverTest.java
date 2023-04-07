@@ -55,9 +55,9 @@ import org.junit.runner.RunWith;
 public class ViewTreeObserverTest {
     private static int TIMEOUT_MS = 2000;
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
+
     private Activity mActivity;
     private ViewTreeObserver mViewTreeObserver;
 
@@ -71,6 +71,7 @@ public class ViewTreeObserverTest {
     @Before
     public void setup() throws Throwable {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         WindowUtil.waitForFocus(mActivity);
         layout(R.layout.viewtreeobserver_layout);
