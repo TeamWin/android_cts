@@ -29,6 +29,8 @@ import android.os.Process
 import android.os.SystemClock
 import android.permission.PermissionManager
 import android.platform.test.annotations.AsbSecurityTest
+import android.platform.test.rule.ScreenRecordRule
+import android.platform.test.rule.ScreenRecordRule.ScreenRecord
 import android.provider.DeviceConfig
 import android.provider.Settings
 import android.safetycenter.SafetyCenterManager
@@ -87,6 +89,7 @@ private const val MIC_LABEL_NAME = "microphone_toggle_label_qs"
 private const val CAMERA_LABEL_NAME = "camera_toggle_label_qs"
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
+@ScreenRecord
 class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context: Context = instrumentation.context
@@ -109,6 +112,9 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     private var screenTimeoutBeforeTest: Long = 0L
     private lateinit var carMicPrivacyChipId: String
     private lateinit var carCameraPrivacyChipId: String
+
+    @get:Rule
+    public val screenRecordRule = ScreenRecordRule()
 
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()
