@@ -22,7 +22,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Binder;
-import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.view.Gravity;
 import android.view.SurfaceControlViewHost;
 import android.view.SurfaceView;
@@ -34,7 +33,6 @@ import android.widget.FrameLayout;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -59,17 +57,7 @@ public class SurfacePackageFlickerTest {
     @Before
     public void setup() {
         mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
-        mActivity.dismissPermissionDialog();
         mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
-    }
-
-    /**
-     * Want to be especially sure we don't leave up the permission dialog, so try and dismiss
-     * after test.
-     */
-    @After
-    public void tearDown() throws UiObjectNotFoundException {
-        mActivity.dismissPermissionDialog();
     }
 
     class SurfacePackageTestCase implements ISurfaceValidatorTestCase {

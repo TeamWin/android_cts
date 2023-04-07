@@ -21,7 +21,6 @@ import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.view.Gravity;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
@@ -34,7 +33,6 @@ import android.widget.FrameLayout;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -57,17 +55,7 @@ public class SurfaceViewSurfaceValidatorTest {
     @Before
     public void setup() {
         mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
-        mActivity.dismissPermissionDialog();
         mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
-    }
-
-    /**
-     * Want to be especially sure we don't leave up the permission dialog, so try and dismiss
-     * after test.
-     */
-    @After
-    public void tearDown() throws UiObjectNotFoundException {
-        mActivity.dismissPermissionDialog();
     }
 
     class SurfaceFiller implements SurfaceHolder.Callback {

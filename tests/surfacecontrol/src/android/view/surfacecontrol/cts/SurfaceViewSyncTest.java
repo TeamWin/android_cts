@@ -25,7 +25,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.media.MediaPlayer;
-import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -44,7 +43,6 @@ import androidx.test.filters.RequiresDevice;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -73,15 +71,6 @@ public class SurfaceViewSyncTest {
         mActivity = mActivityRule.getActivity();
         mMediaPlayer = mActivity.getMediaPlayer();
         mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
-    }
-
-    /**
-     * Want to be especially sure we don't leave up the permission dialog, so try and dismiss
-     * after test.
-     */
-    @After
-    public void tearDown() throws UiObjectNotFoundException {
-        mActivity.dismissPermissionDialog();
     }
 
     private static ValueAnimator makeInfinite(ValueAnimator a) {
