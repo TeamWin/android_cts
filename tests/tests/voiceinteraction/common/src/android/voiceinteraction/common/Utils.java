@@ -17,14 +17,23 @@ package android.voiceinteraction.common;
 
 import android.app.VoiceInteractor.PickOptionRequest.Option;
 import android.content.LocusId;
+import android.media.AudioFormat;
+import android.media.AudioTimestamp;
 import android.os.Bundle;
 import android.os.Parcel;
+import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
+import android.os.PersistableBundle;
+import android.service.voice.HotwordAudioStream;
+import android.service.voice.HotwordDetectedResult;
 import android.util.Log;
 
 import com.android.compatibility.common.util.PropertyUtil;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -80,6 +89,7 @@ public class Utils {
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_UNEXPECTED_CALLBACK = 2;
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_OVER_MAX_INIT_STATUS = 3;
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_CUSTOM_INIT_STATUS = 4;
+    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS = 5;
 
 
     /** Indicate to start a new activity for testing. */
@@ -204,6 +214,78 @@ public class Utils {
                     + PROXY_VOICE_INTERACTION_SERVICE_CLASS_NAME;
     public static final String VOICE_INTERACTION_SERVICE_BINDING_HELPER_CLASS_NAME =
             "android.voiceinteraction.service.VoiceInteractionServiceBindingHelper";
+
+    private static final String KEY_FAKE_DATA = "fakeData";
+    private static final String VALUE_FAKE_DATA = "fakeData";
+
+    private static final long FRAME_POSITION = 0;
+    private static final long NANO_TIME_NS = 1000;
+
+    private static final byte[] FAKE_HOTWORD_AUDIO_DATA =
+            new byte[]{'h', 'o', 't', 'w', 'o', 'r', 'd', '!'};
+
+    private static final HotwordAudioStream HOTWORD_AUDIO_STREAM =
+            new HotwordAudioStream.Builder(createFakeAudioFormat(), createFakeAudioStream())
+                    .setInitialAudio(FAKE_HOTWORD_AUDIO_DATA)
+                    .setMetadata(createFakePersistableBundleData())
+                    .setTimestamp(createFakeAudioTimestamp())
+                    .build();
+
+    public static final HotwordDetectedResult AUDIO_EGRESS_DETECTED_RESULT =
+            new HotwordDetectedResult.Builder().setAudioStreams(
+                    List.of(HOTWORD_AUDIO_STREAM)).build();
+
+    /**
+     * Returns the PersistableBundle data that is used for testing.
+     */
+    private static PersistableBundle createFakePersistableBundleData() {
+        // TODO : Add more data for testing
+        PersistableBundle persistableBundle = new PersistableBundle();
+        persistableBundle.putString(KEY_FAKE_DATA, VALUE_FAKE_DATA);
+        return persistableBundle;
+    }
+
+    /**
+     * Returns the AudioFormat data that is used for testing.
+     */
+    private static AudioFormat createFakeAudioFormat() {
+        return new AudioFormat.Builder()
+                .setSampleRate(32000)
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setChannelMask(AudioFormat.CHANNEL_IN_MONO).build();
+    }
+
+    /**
+     * Returns the ParcelFileDescriptor data that is used for testing.
+     */
+    private static ParcelFileDescriptor createFakeAudioStream() {
+        ParcelFileDescriptor[] tempParcelFileDescriptors = null;
+        try {
+            tempParcelFileDescriptors = ParcelFileDescriptor.createPipe();
+            try (OutputStream fos =
+                         new ParcelFileDescriptor.AutoCloseOutputStream(
+                                 tempParcelFileDescriptors[1])) {
+                fos.write(FAKE_HOTWORD_AUDIO_DATA, 0, 8);
+            } catch (IOException e) {
+                Log.w(TAG, "Failed to pipe audio data : ", e);
+                throw new IllegalStateException();
+            }
+            return tempParcelFileDescriptors[0];
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to create a pipe : " + e);
+        }
+        throw new IllegalStateException();
+    }
+
+    /**
+     * Returns the AudioTimestamp for test
+     */
+    private static AudioTimestamp createFakeAudioTimestamp() {
+        final AudioTimestamp timestamp = new AudioTimestamp();
+        timestamp.framePosition = FRAME_POSITION;
+        timestamp.nanoTime = NANO_TIME_NS;
+        return timestamp;
+    }
 
     public static final String toBundleString(Bundle bundle) {
         if (bundle == null) {
