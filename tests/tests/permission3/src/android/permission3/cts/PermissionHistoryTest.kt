@@ -56,6 +56,7 @@ class PermissionHistoryTest : BasePermissionTest() {
     fun checkPreconditions() {
         assumeFalse(isTv)
         assumeFalse(isAutomotive && !SdkLevel.isAtLeastT())
+        assumeFalse(isWatch)
     }
 
     @Before

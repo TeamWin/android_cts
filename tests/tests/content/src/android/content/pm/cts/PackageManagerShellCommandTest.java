@@ -662,6 +662,7 @@ public class PackageManagerShellCommandTest {
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
+            params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
             params.setAppPackageName(TEST_APP_PACKAGE);
             params.setDontKillApp(true);
 
@@ -673,6 +674,7 @@ public class PackageManagerShellCommandTest {
 
             final CompletableFuture<Boolean> result = new CompletableFuture<>();
             final CompletableFuture<Integer> status = new CompletableFuture<>();
+            final CompletableFuture<String> statusMessage = new CompletableFuture<>();
             session.commit(new IntentSender((IIntentSender) new IIntentSender.Stub() {
                 @Override
                 public void send(int code, Intent intent, String resolvedType,
@@ -680,16 +682,18 @@ public class PackageManagerShellCommandTest {
                         String requiredPermission, Bundle options) throws RemoteException {
                     boolean dontKillApp =
                             (session.getInstallFlags() & PackageManager.INSTALL_DONT_KILL_APP) != 0;
-                    result.complete(dontKillApp);
                     status.complete(
                             intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE));
+                    statusMessage.complete(
+                            intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE));
+                    result.complete(dontKillApp);
                 }
             }));
 
             // We are adding split. OK to have the flag.
             assertTrue(result.get());
             // Verify that the return status is set
-            assertEquals(PackageInstaller.STATUS_SUCCESS, (int) status.get());
+            assertEquals(statusMessage.get(), PackageInstaller.STATUS_SUCCESS, (int) status.get());
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
@@ -1848,19 +1852,27 @@ public class PackageManagerShellCommandTest {
     @Test
     public void testCreateUserCurAsType() throws Exception {
         assumeTrue(UserManager.supportsMultipleUsers());
-        Pattern pattern = Pattern.compile("Success: created user id (\\d+)\\R*");
-        String commandResult = executeShellCommand("pm create-user --profileOf cur "
-                + "--user-type android.os.usertype.profile.CLONE test");
-        Matcher matcher = pattern.matcher(commandResult);
-        assertTrue(matcher.find());
-        commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
-        assertEquals("Success: removed user\n", commandResult);
-        commandResult = executeShellCommand("pm create-user --profileOf current "
-                + "--user-type android.os.usertype.profile.CLONE test");
-        matcher = pattern.matcher(commandResult);
-        assertTrue(matcher.find());
-        commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
-        assertEquals("Success: removed user\n", commandResult);
+        final String oldPropertyValue = getSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY);
+        setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY, "1");
+        try {
+            Pattern pattern = Pattern.compile("Success: created user id (\\d+)\\R*");
+            String commandResult = executeShellCommand("pm create-user --profileOf cur "
+                    + "--user-type android.os.usertype.profile.CLONE test");
+            Matcher matcher = pattern.matcher(commandResult);
+            assertTrue(matcher.find());
+            commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
+            assertEquals("Success: removed user\n", commandResult);
+            commandResult = executeShellCommand("pm create-user --profileOf current "
+                    + "--user-type android.os.usertype.profile.CLONE test");
+            matcher = pattern.matcher(commandResult);
+            assertTrue(matcher.find());
+            commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
+            assertEquals("Success: removed user\n", commandResult);
+        } finally {
+            if (!oldPropertyValue.isEmpty()) {
+                setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY, oldPropertyValue);
+            }
+        }
     }
 
     @Test
@@ -2168,6 +2180,10 @@ public class PackageManagerShellCommandTest {
 
     public static void setSystemProperty(String name, String value) throws Exception {
         assertEquals("", executeShellCommand("setprop " + name + " " + value));
+    }
+
+    private static String getSystemProperty(String prop) throws Exception {
+        return executeShellCommand("getprop " + prop).replace("\n", "");
     }
 
     private void disablePackage(String packageName) {

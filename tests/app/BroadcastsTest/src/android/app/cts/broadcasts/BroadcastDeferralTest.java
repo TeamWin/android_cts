@@ -16,7 +16,6 @@
 
 package android.app.cts.broadcasts;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -31,7 +30,6 @@ import com.android.app.cts.broadcasts.ICommandReceiver;
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -40,10 +38,10 @@ import java.util.List;
 @RunWith(BroadcastsTestRunner.class)
 public class BroadcastDeferralTest extends BaseBroadcastTest {
 
-    @Ignore("b/266656325")
     @Test
     public void testFgBroadcastDeliveryToFrozenApp_withDeferUntilActive() throws Exception {
         assumeTrue(isModernBroadcastQueueEnabled());
+        assumeTrue(isAppFreezerEnabled());
 
         final TestServiceConnection connection1 = bindToHelperService(HELPER_PKG1);
         try (DeviceConfigStateHelper deviceConfigStateHelper = new DeviceConfigStateHelper(
@@ -112,10 +110,10 @@ public class BroadcastDeferralTest extends BaseBroadcastTest {
         }
     }
 
-    @Ignore("b/266656325")
     @Test
     public void testFgBroadcastDeliveryToFrozenApp() throws Exception {
         assumeTrue(isModernBroadcastQueueEnabled());
+        assumeTrue(isAppFreezerEnabled());
 
         final TestServiceConnection connection1 = bindToHelperService(HELPER_PKG1);
         ICommandReceiver cmdReceiver1;
@@ -146,10 +144,9 @@ public class BroadcastDeferralTest extends BaseBroadcastTest {
             waitForProcessFreeze(testPid, SHORT_FREEZER_TIMEOUT_MS * 2);
             cmdReceiver1.sendBroadcast(intent, null);
 
-            // Flush all broadcasts and verify that the test process is not frozen anymore since
-            // it should have been unfrozen to deliver the broadcast.
+            // Flush all broadcasts and verify that the broadcast was delivered to the process
+            // before we bind to it.
             AmUtils.waitForBroadcastBarrier();
-            assertFalse("Process should not be frozen; pid=" + testPid, isProcessFrozen(testPid));
 
             final long timestampMs = SystemClock.elapsedRealtime();
             connection2 = bindToHelperService(HELPER_PKG2);

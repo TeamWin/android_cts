@@ -16,6 +16,7 @@
 
 package android.media.misc.cts;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
@@ -23,6 +24,7 @@ import android.test.ActivityInstrumentationTestCase2;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.NonMainlineTest;
 
 @SmallTest
@@ -32,17 +34,23 @@ import com.android.compatibility.common.util.NonMainlineTest;
 public class ResourceManagerTest
         extends ActivityInstrumentationTestCase2<ResourceManagerStubActivity> {
 
+    public static final boolean FIRST_SDK_IS_AT_LEAST_U =
+            ApiLevelUtil.isFirstApiAfter(Build.VERSION_CODES.TIRAMISU);
+
     public ResourceManagerTest() {
         super("android.media.misc.cts", ResourceManagerStubActivity.class);
     }
 
     private void doTestReclaimResource(int type1, int type2, boolean highResolution)
             throws Exception {
-        Bundle extras = new Bundle();
-        ResourceManagerStubActivity activity = launchActivity(
-                "android.media.misc.cts", ResourceManagerStubActivity.class, extras);
-        activity.testReclaimResource(type1, type2, highResolution);
-        activity.finish();
+        // Run high resolution test case only when the devices first shipped on U.
+        if (FIRST_SDK_IS_AT_LEAST_U || !highResolution) {
+            Bundle extras = new Bundle();
+            ResourceManagerStubActivity activity = launchActivity(
+                    "android.media.misc.cts", ResourceManagerStubActivity.class, extras);
+            activity.testReclaimResource(type1, type2, highResolution);
+            activity.finish();
+        }
     }
 
     public void testReclaimResourceNonsecureVsNonsecure() throws Exception {

@@ -16,11 +16,11 @@
 
 package android.cts.statsdatom.voiceinteraction;
 
-import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.STATSD_LOG_DEBOUNCE_MS;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_APK;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_CLASS;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_PKG;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.getTestAppUid;
+import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.isSupportedDevice;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -71,6 +71,8 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        if (!isSupportedDevice(getDevice())) return;
+
         assertThat(mCtsBuild).isNotNull();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
@@ -85,6 +87,8 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
 
     @Override
     protected void tearDown() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.uninstallStatsdTestApp(getDevice());
@@ -93,12 +97,11 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
     }
 
     public void testLogHotwordDetectorKeyphraseTriggeredDspDetected() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_DSP_DETECTED_FOR_METRIC_COLLECT);
-
-        // Wait CTS test finish
-        Thread.sleep(STATSD_LOG_DEBOUNCE_MS);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).isNotNull();
@@ -121,12 +124,11 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
 
     public void testLogHotwordDetectorKeyphraseTriggeredSoftwareDetectorDetected()
             throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_SOFTWARE_DETECTED_FOR_METRIC_COLLECT);
-
-        // Wait CTS test finish
-        Thread.sleep(STATSD_LOG_DEBOUNCE_MS);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).isNotNull();
@@ -148,12 +150,11 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
     }
 
     public void testLogHotwordDetectorKeyphraseTriggeredDspRejected() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_DSP_REJECTED_FOR_METRIC_COLLECT);
-
-        // Wait CTS test finish
-        Thread.sleep(STATSD_LOG_DEBOUNCE_MS);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).isNotNull();
@@ -175,12 +176,11 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
     }
 
     public void testLogHotwordDetectorKeyphraseTriggeredDspDetectTimeout() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_DSP_DETECT_TIMEOUT_FOR_METRIC_COLLECT);
-
-        // Wait CTS test finish
-        Thread.sleep(STATSD_LOG_DEBOUNCE_MS);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).isNotNull();
@@ -202,12 +202,11 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
     }
 
     public void testLogHotwordDetectorKeyphraseTriggeredServiceCrash() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_SERVICE_CRASH_FOR_METRIC_COLLECT);
-
-        // Wait CTS test finish
-        Thread.sleep(STATSD_LOG_DEBOUNCE_MS);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).isNotNull();

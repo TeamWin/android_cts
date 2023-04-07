@@ -21,7 +21,10 @@ android_test_helper_app {
     defaults: ["cts_support_defaults"],
     sdk_version: "test_current",
     srcs: ["src/**/*.java"],
-    static_libs: ["androidx.legacy_legacy-support-v4"],
+    static_libs: [
+        "androidx.legacy_legacy-support-v4",
+        "cts-localeconfig-util",
+    ],
     libs: ["android.test.base"],
     test_suites: [
         "cts",

@@ -18,6 +18,8 @@ package android.cts.statsdatom.voiceinteraction;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.cts.statsdatom.lib.DeviceUtils;
+
 import com.android.tradefed.device.ITestDevice;
 
 import java.util.regex.Matcher;
@@ -32,10 +34,8 @@ public class HotwordMetricsTestUtils {
     public static final String TEST_APK = "CtsVoiceInteractionTestCases.apk";
     public static final String TEST_CLASS =
             "android.voiceinteraction.cts.HotwordDetectionServiceBasicTest";
-    // HotwordDetectionServiceBasicTest usually takes around 15 secs to complete the test, we need
-    // to wait for the test and logging behavior to complete, so the test here uses a longer
-    // duration to avoid test flaky.
-    public static final long STATSD_LOG_DEBOUNCE_MS = 25_000;
+
+    private static final String FEATURE_MICROPHONE = "android.hardware.microphone";
 
     public static int getTestAppUid(ITestDevice device) throws Exception {
         final int currentUser = device.getCurrentUser();
@@ -45,5 +45,17 @@ public class HotwordMetricsTestUtils {
         final Matcher matcher = pattern.matcher(uidLine);
         assertWithMessage("Pkg not found: " + TEST_PKG).that(matcher.find()).isTrue();
         return Integer.parseInt(matcher.group(1));
+    }
+
+    /**
+     * Check whether the device is supported or not. Currently, the device needs to have
+     * FEATURE_MICROPHONE.
+     *
+     * @param device the device
+     * @return {@code True} if the device is supported. Otherwise, return {@code false}.
+     * @throws Exception
+     */
+    public static boolean isSupportedDevice(ITestDevice device) throws Exception {
+        return DeviceUtils.hasFeature(device, FEATURE_MICROPHONE);
     }
 }

@@ -121,10 +121,8 @@ public class Settings_ConfigTest {
     @After
     public void cleanUp() throws Exception {
         Settings.Config.setSyncDisabledMode(SYNC_DISABLED_MODE_NONE);
-        deleteProperty(NAMESPACE1, KEY1);
-        deleteProperty(NAMESPACE2, KEY1);
-        deleteProperty(NAMESPACE1, KEY2);
-        deleteProperty(NAMESPACE2, KEY2);
+        deleteProperties(NAMESPACE1, Arrays.asList(KEY1, KEY2));
+        deleteProperties(NAMESPACE2, Arrays.asList(KEY1, KEY2));
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }
@@ -508,6 +506,19 @@ public class Settings_ConfigTest {
 
     private static void deleteProperty(String namespace, String key) {
         Settings.Config.deleteString(namespace, key);
+    }
+
+    private static void deleteProperties(String namespace, List<String> keys) {
+        HashMap<String, String> deletedKeys = new HashMap<String, String>();
+        for (String key : keys) {
+            deletedKeys.put(key, null);
+        }
+
+        try {
+            Settings.Config.setStrings(namespace, deletedKeys);
+        } catch (DeviceConfig.BadConfigException e) {
+            fail("Failed to delete the properties " + e.toString());
+        }
     }
 
     private static class MockContentObserver extends ContentObserver {

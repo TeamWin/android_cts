@@ -16,11 +16,11 @@
 
 package android.cts.statsdatom.voiceinteraction;
 
-import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.STATSD_LOG_DEBOUNCE_MS;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_APK;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_CLASS;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.TEST_PKG;
 import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.getTestAppUid;
+import static android.cts.statsdatom.voiceinteraction.HotwordMetricsTestUtils.isSupportedDevice;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -62,6 +62,8 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        if (!isSupportedDevice(getDevice())) return;
+
         assertThat(mCtsBuild).isNotNull();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
@@ -76,6 +78,8 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
 
     @Override
     protected void tearDown() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.uninstallStatsdTestApp(getDevice());
@@ -84,11 +88,11 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
     }
 
     public void testLogHotwordDetectorCreateRequestedspCreateSuccess() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_DSP_SUCCESS_FOR_METRIC_COLLECT);
-        // Wait CTS test finish
-        Thread.sleep(STATSD_LOG_DEBOUNCE_MS);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).isNotNull();
@@ -101,12 +105,12 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
     }
 
     public void testLogHotwordDetectorCreateRequestedDspCreateFail() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // b/215631339 Disable the test case first.
 //        // Run test in CTS package
 //        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
 //                TEST_METHOD_DSP_FAILURE_FOR_METRIC_COLLECT);
-//        // Wait CTS test finish
-//        Thread.sleep(STATSD_LOG_DEBOUNCE_MS);
 //
 //        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 //        assertThat(data).isNotNull();
@@ -118,11 +122,11 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
     }
 
     public void testLogHotwordDetectorCreateRequestedSoftwareCreateSuccess() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_SOFTWARE_SUCCESS_FOR_METRIC_COLLECT);
-        // Wait CTS test finish
-        Thread.sleep(STATSD_LOG_DEBOUNCE_MS);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).isNotNull();

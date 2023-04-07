@@ -5619,7 +5619,7 @@ You should be prompted to select credentials; choose the ones you just installed
         \nTest Completion:
         \n - Once each of the data paths and APIs have been measured, the test can be marked successful.
     </string>
-
+    <string name="audio_datapaths_noio">"No valid datapaths. PASS."</string>
     <string name="audio_datapaths_results">%1$s\n%2$s -> %3$s</string>
 
     <!-- Audio Loopback Latency Test -->
@@ -5939,8 +5939,9 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="audio_tap2tone_too_few">Not enough edges. Use fingernail.</string>
     <string name="audio_tap2tone_too_many">Too many edges. Use fingernail. Ensure there is
     no background noise.</string>
-    <string name="audio_tap2tone_buffer_frames">Buffer Frames:</string>
+    <string name="audio_tap2tone_buffer_frames">Buffer Frames: </string>
     <string name="audio_tap2tone_bad_streams">Can\'t open streams.</string>
+    <string name="audio_tap2tone_noio">No mic and/or speaker. PASS</string>
 
     <!-- Strings for 6DoF test -->
     <string name="six_dof_test">6DoF Test</string>

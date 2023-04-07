@@ -24,6 +24,7 @@ import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_DEFAULT;
 import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.app.Notification.FLAG_FOREGROUND_SERVICE;
+import static android.app.Notification.FLAG_USER_INITIATED_JOB;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
 import static android.app.NotificationManager.IMPORTANCE_LOW;
@@ -2659,6 +2660,26 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 "testFlagForegroundServiceNeedsRealFgs", 1, SEARCH_TYPE.POSTED);
 
         assertEquals(0, (sbn.getNotification().flags & FLAG_FOREGROUND_SERVICE));
+    }
+
+    public void testFlagUserInitiatedJobNeedsRealUij() throws Exception {
+        toggleListenerAccess(true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        final Notification n =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setFlag(FLAG_USER_INITIATED_JOB, true)
+                        .build();
+        mNotificationManager.notify("testFlagUserInitiatedJobNeedsRealUij", 1, n);
+
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(
+                "testFlagUserInitiatedJobNeedsRealUij", 1, SEARCH_TYPE.POSTED);
+
+        assertFalse(sbn.getNotification().isUserInitiatedJob());
     }
 
     private static class EventCallback extends Handler {
