@@ -127,9 +127,16 @@ public class MockSatelliteService extends SatelliteImplBase {
     }
 
     @Override
-    public void requestSatelliteListeningEnabled(boolean enable, int timeout,
+    public void requestSatelliteListeningEnabled(boolean enabled, int timeout,
             @NonNull IIntegerConsumer errorCallback) {
         logd("requestSatelliteListeningEnabled: mErrorCode=" + mErrorCode);
+
+        if (mLocalListener != null) {
+            runWithExecutor(() -> mLocalListener.onSatelliteListeningEnabled(enabled));
+        } else {
+            loge("requestSatelliteListeningEnabled: mLocalListener is null");
+        }
+
         if (!verifySatelliteModemState(errorCallback)) {
             return;
         }
@@ -138,7 +145,7 @@ public class MockSatelliteService extends SatelliteImplBase {
             return;
         }
 
-        if (enable) {
+        if (enabled) {
             updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_LISTENING);
         } else {
             updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_IDLE);

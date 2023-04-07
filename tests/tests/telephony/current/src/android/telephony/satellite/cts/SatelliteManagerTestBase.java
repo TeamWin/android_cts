@@ -67,7 +67,7 @@ public class SatelliteManagerTestBase {
     protected static boolean shouldTestSatellite() {
         if (!getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_TELEPHONY_SATELLITE)) {
-            logd("Skipping tests because because FEATURE_TELEPHONY_SATELLITE is not available");
+            logd("Skipping tests because FEATURE_TELEPHONY_SATELLITE is not available");
             return false;
         }
         try {
@@ -84,12 +84,12 @@ public class SatelliteManagerTestBase {
         return InstrumentationRegistry.getContext();
     }
 
-    protected void grantSatellitePermission() {
+    protected static void grantSatellitePermission() {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.SATELLITE_COMMUNICATION);
     }
 
-    protected void revokeSatellitePermission() {
+    protected static void revokeSatellitePermission() {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }
@@ -274,7 +274,7 @@ public class SatelliteManagerTestBase {
         }
     }
 
-    protected boolean provisionSatellite() {
+    protected static boolean provisionSatellite() {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
         String mText = "This is test provision data.";
         byte[] testProvisionData = mText.getBytes();
@@ -295,7 +295,7 @@ public class SatelliteManagerTestBase {
         return true;
     }
 
-    protected boolean deprovisionSatellite() {
+    protected static boolean deprovisionSatellite() {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
 
         sSatelliteManager.deprovisionSatelliteService(
@@ -314,7 +314,7 @@ public class SatelliteManagerTestBase {
         return true;
     }
 
-    protected boolean isSatelliteProvisioned() {
+    protected static boolean isSatelliteProvisioned() {
         final AtomicReference<Boolean> provisioned = new AtomicReference<>();
         final AtomicReference<Integer> errorCode = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
@@ -354,7 +354,7 @@ public class SatelliteManagerTestBase {
         }
     }
 
-    protected boolean isSatelliteEnabled() {
+    protected static boolean isSatelliteEnabled() {
         final AtomicReference<Boolean> enabled = new AtomicReference<>();
         final AtomicReference<Integer> errorCode = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
@@ -395,7 +395,7 @@ public class SatelliteManagerTestBase {
         }
     }
 
-    protected void requestSatelliteEnabled(boolean enabled) {
+    protected static void requestSatelliteEnabled(boolean enabled) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
         sSatelliteManager.requestSatelliteEnabled(
                 enabled, true, getContext().getMainExecutor(), error::offer);
@@ -410,7 +410,7 @@ public class SatelliteManagerTestBase {
         assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, (long) errorCode);
     }
 
-    protected boolean isSatelliteSupported() {
+    protected static boolean isSatelliteSupported() {
         final AtomicReference<Boolean> supported = new AtomicReference<>();
         final AtomicReference<Integer> errorCode = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
