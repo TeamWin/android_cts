@@ -156,10 +156,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
             f'You must use the arduino controller for {_NAME}.')
 
       # List of video resolutions to test
-      if camera_fov > opencv_processing_utils.FOV_THRESH_WFOV:
-        lowest_res_tested = video_processing_utils.LOWEST_RES_TESTED_AREA['UW']
-      else:
-        lowest_res_tested = video_processing_utils.LOWEST_RES_TESTED_AREA['W']
+      lowest_res_tested = video_processing_utils.LOWEST_RES_TESTED_AREA
       resolution_to_area = lambda s: int(s.split('x')[0])*int(s.split('x')[1])
       supported_preview_sizes = cam.get_supported_preview_sizes(self.camera_id)
       supported_preview_sizes = [size for size in supported_preview_sizes
