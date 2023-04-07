@@ -110,7 +110,7 @@ public class LocaleManagerOverrideLocaleConfigTest extends ActivityManagerTestBa
     }
 
     @Test
-    @ApiTest(apis = {"android.app.LocaleManager.Manager#setOverrideLocaleConfig"})
+    @ApiTest(apis = {"android.app.LocaleManager#setOverrideLocaleConfig"})
     public void testSetOverrideLocaleConfig_overrideByTestApp_getCorrectLocaleConfig()
             throws Exception {
         // Verify where a LocaleConfig of the test app can be read successfully
@@ -134,7 +134,7 @@ public class LocaleManagerOverrideLocaleConfigTest extends ActivityManagerTestBa
     }
 
     @Test
-    @ApiTest(apis = {"android.app.LocaleManager.Manager#getOverrideLocaleConfig"})
+    @ApiTest(apis = {"android.app.LocaleManager#getOverrideLocaleConfig"})
     public void testGetOverrideLocaleConfig_getOverrideFromTestApp_returnCorrectLocaleConfig()
             throws Exception {
         // Tell the test app to set the override LocaleConfig
