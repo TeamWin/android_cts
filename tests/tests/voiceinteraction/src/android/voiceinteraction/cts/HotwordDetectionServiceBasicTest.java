@@ -62,6 +62,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.RequiresDevice;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DisableAnimationRule;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.SystemUtil;
@@ -739,6 +740,7 @@ public class HotwordDetectionServiceBasicTest {
 
     @Test
     @RequiresDevice
+    @CddTest(requirement = "9.8/H-1-2,H-1-8,H-1-14")
     public void testHotwordDetectionService_onDetectFromDsp_success() throws Throwable {
         startWatchingNoted();
         // Create AlwaysOnHotwordDetector
@@ -798,6 +800,7 @@ public class HotwordDetectionServiceBasicTest {
 
     @Test
     @RequiresDevice
+    @CddTest(requirement = "9.8/H-1-3")
     public void testHotwordDetectionService_onDetectFromDsp_timeout() throws Throwable {
         startWatchingNoted();
         // Create AlwaysOnHotwordDetector
@@ -866,6 +869,7 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
+    @CddTest(requirement = "9.8/H-1-2,H-1-8,H-1-14")
     public void testHotwordDetectionService_onDetectFromExternalSource_success() throws Throwable {
         startWatchingNoted();
         // Create AlwaysOnHotwordDetector
@@ -901,6 +905,7 @@ public class HotwordDetectionServiceBasicTest {
 
     @Test
     @RequiresDevice
+    @CddTest(requirement = "9.8/H-1-2,H-1-8,H-1-14")
     public void testHotwordDetectionService_onDetectFromMic_success() throws Throwable {
         startWatchingNoted();
         // Create SoftwareHotwordDetector
