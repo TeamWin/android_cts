@@ -39,4 +39,13 @@ public final class UserRemovalRequestTest extends AbstractExpectableTestCase {
     public void testUserRemovalRequestUserhandleNull() {
         assertThrows(NullPointerException.class, () -> new UserRemovalRequest.Builder(null));
     }
+
+    @Test
+    public void testToString() {
+        UserRemovalRequest userRemovalRequest = new UserRemovalRequest.Builder(USER_HANDLE).build();
+
+        expectWithMessage("userRemovalRequest.toString()").that(
+                userRemovalRequest.toString()).containsMatch(
+                ".*UserHandle.*" + USER_HANDLE.getIdentifier());
+    }
 }
