@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyFloat;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -1974,7 +1973,7 @@ public class TextViewHandwritingGestureTest {
         assertThat(mEditText.getLayout().getText().toString()).isEqualTo(expectedDisplayText);
     }
 
-    private void assertInsertModeHighlightColor(Paint paint) {
+    private void assertGestureInsertModeHighlightRange(int start, int end) {
         final TypedValue typedValue = new TypedValue();
         mEditText.getContext().getTheme()
                 .resolveAttribute(android.R.attr.colorPrimary, typedValue, true);
@@ -1982,42 +1981,7 @@ public class TextViewHandwritingGestureTest {
         final int expectedColor = ColorUtils.setAlphaComponent(colorPrimary,
                 (int) (0.12f * Color.alpha(colorPrimary)));
 
-        assertThat(paint.getColor()).isEqualTo(expectedColor);
-
-    }
-
-    private void assertGestureInsertModeHighlightRange(int start, int end) {
-        final Canvas canvas = prepareMockCanvas();
-        mEditText.draw(canvas);
-
-        final ArgumentCaptor<Float> leftCaptor = ArgumentCaptor.forClass(Float.class);
-        final ArgumentCaptor<Float> topCaptor = ArgumentCaptor.forClass(Float.class);
-        final ArgumentCaptor<Float> rightCaptor = ArgumentCaptor.forClass(Float.class);
-        final ArgumentCaptor<Float> bottomCaptor = ArgumentCaptor.forClass(Float.class);
-        final ArgumentCaptor<Paint> paintCaptor = ArgumentCaptor.forClass(Paint.class);
-        verify(canvas, atLeastOnce()).drawRect(leftCaptor.capture(), topCaptor.capture(),
-                rightCaptor.capture(), bottomCaptor.capture(), paintCaptor.capture());
-
-        // Check that each paint used have the expected color.
-        final List<Paint> paints = paintCaptor.getAllValues();
-        for (Paint paint : paints) {
-            assertInsertModeHighlightColor(paint);
-        }
-
-        final Path actualPath = new Path();
-
-        final List<Float> lefts = leftCaptor.getAllValues();
-        final List<Float> tops = topCaptor.getAllValues();
-        final List<Float> rights = rightCaptor.getAllValues();
-        final List<Float> bottom = bottomCaptor.getAllValues();
-        for (int index = 0; index < lefts.size(); ++index) {
-            actualPath.addRect(lefts.get(index), tops.get(index), rights.get(index),
-                    bottom.get(index), Path.Direction.CW);
-        }
-
-        final Path expectedPath = new Path();
-        mEditText.getLayout().getSelectionPath(start, end, expectedPath);
-        assertPathEquals(expectedPath, actualPath);
+        assertGestureHighlightRange(start, end, expectedColor);
     }
 
     private void assertCursorOffset(int offset) {
@@ -2050,17 +2014,17 @@ public class TextViewHandwritingGestureTest {
 
     private void assertSelectGesturePreviewHighlightRange(int start, int end) {
         // Selection preview highlight color is the same as selection highlight color.
-        assertGesturePreviewHighlightRange(start, end, mEditText.getHighlightColor());
+        assertGestureHighlightRange(start, end, mEditText.getHighlightColor());
     }
 
     private void assertDeleteGesturePreviewHighlightRange(int start, int end) {
         // Deletion preview highlight color is 20% opacity of the default text color.
         int color = mEditText.getTextColors().getDefaultColor();
         color = ColorUtils.setAlphaComponent(color, (int) (0.2f * Color.alpha(color)));
-        assertGesturePreviewHighlightRange(start, end, color);
+        assertGestureHighlightRange(start, end, color);
     }
 
-    private void assertGesturePreviewHighlightRange(int start, int end, int color) {
+    private void assertGestureHighlightRange(int start, int end, int color) {
         Canvas canvas = prepareMockCanvas();
         mEditText.draw(canvas);
 
