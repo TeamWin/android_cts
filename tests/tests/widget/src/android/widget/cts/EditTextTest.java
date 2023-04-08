@@ -84,13 +84,13 @@ import java.util.concurrent.atomic.AtomicReference;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class EditTextTest {
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
 
     private Activity mActivity;
     private EditText mEditText1;
     private EditText mEditText2;
     private AttributeSet mAttributeSet;
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
 
     @Rule
     public ActivityTestRule<EditTextCtsActivity> mActivityRule =
@@ -101,6 +101,7 @@ public class EditTextTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         mEditText1 = (EditText) mActivity.findViewById(R.id.edittext_simple1);
         mEditText2 = (EditText) mActivity.findViewById(R.id.edittext_simple2);

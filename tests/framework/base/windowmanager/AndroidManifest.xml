@@ -652,6 +652,7 @@
 
         <service android:name="android.server.wm.scvh.EmbeddedSCVHService"
             android:process="com.android.server.wm.scvh.embedded_process" />
+        <service android:name="android.server.wm.scvh.SurfaceControlViewHostHelper$InProcessEmbeddedSCVHService" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

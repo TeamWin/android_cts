@@ -31,6 +31,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -83,6 +85,7 @@ public class BluetoothCddTest {
         TestUtils.dropPermissionAsShellUid();
     }
 
+    @CddTest(requirements = {"7.4.3/C-3-1", "7.4.3/C-3-2", "7.4.3/C-3-6"})
     @Test
     public void test_C_3_BleRequirements() {
         Assume.assumeTrue(mHasBluetooth);
@@ -93,6 +96,7 @@ public class BluetoothCddTest {
                 BluetoothProfile.HEARING_AID);
     }
 
+    @CddTest(requirements = {"7.4.3/C-5-1"})
     @Test
     public void test_C_5_1_AshaRequirements() {
         Assume.assumeTrue(mHasBluetooth);
@@ -111,6 +115,7 @@ public class BluetoothCddTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-7-3", "7.4.3/C-7-5"})
     @Test
     public void test_C_7_LeAudioUnicastRequirements() {
         Assume.assumeTrue(mHasBluetooth);
@@ -131,6 +136,7 @@ public class BluetoothCddTest {
         assertThat(mAdapter.isLeExtendedAdvertisingSupported()).isTrue();
     }
 
+    @CddTest(requirements = {"7.4.3/C-8-2", "7.4.3/C-8-3"})
     @Test
     public void test_C_8_LeAudioBroadcastSourceRequirements() {
         Assume.assumeTrue(mHasBluetooth);
@@ -151,6 +157,7 @@ public class BluetoothCddTest {
 
     }
 
+    @CddTest(requirements = {"7.4.3/C-9-2"})
     @Test
     public void test_C_9_LeAudioBroadcastAssistantRequirements() {
         Assume.assumeTrue(mHasBluetooth);

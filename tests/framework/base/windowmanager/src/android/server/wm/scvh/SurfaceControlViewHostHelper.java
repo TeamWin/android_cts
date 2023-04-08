@@ -21,11 +21,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.RemoteException;
 import android.util.Log;
-import android.util.Pair;
 import android.util.Size;
 import android.view.SurfaceControlViewHost;
 import android.view.SurfaceHolder;
@@ -59,6 +58,8 @@ public class SurfaceControlViewHostHelper {
 
     private final Context mContext;
 
+    HandlerThread mHandlerThread;
+
     SurfaceControlViewHostHelper(String tag, CountDownLatch countDownLatch, Context context,
             long delayMs, Size initialSize) {
         mTag = tag;
@@ -67,6 +68,8 @@ public class SurfaceControlViewHostHelper {
         mDelayMs = delayMs;
         mInitialSize = initialSize;
         mReadyLatch = countDownLatch;
+        mHandlerThread = new HandlerThread("SurfaceControlViewHostHelper");
+        mHandlerThread.start();
     }
 
     public SurfaceView attachSurfaceView(ViewGroup parent, ViewGroup.LayoutParams layoutParams) {
@@ -81,9 +84,7 @@ public class SurfaceControlViewHostHelper {
         // Called when the connection with the service is established
         public void onServiceConnected(ComponentName className, IBinder service) {
             Log.d(mTag, "Service Connected");
-            synchronized (mLock) {
-                mIAttachEmbeddedWindow = IAttachEmbeddedWindow.Stub.asInterface(service);
-            }
+            mIAttachEmbeddedWindow = IAttachEmbeddedWindow.Stub.asInterface(service);
             if (isReadyToAttach()) {
                 attachEmbedded();
             }
@@ -139,19 +140,18 @@ public class SurfaceControlViewHostHelper {
         synchronized (mLock) {
             mIsAttached = true;
         }
-        try {
-            mSurfacePackage = mIAttachEmbeddedWindow.attachEmbedded(mSurfaceView.getHostToken(),
-                    mInitialSize.getWidth(), mInitialSize.getHeight(), mDisplayId, mDelayMs);
-            mSurfaceView.setChildSurfacePackage(mSurfacePackage);
-        } catch (RemoteException e) {
-            Log.e(mTag, "Failed to attach embedded window");
-        }
+        Handler handler = new Handler(mHandlerThread.getLooper());
+        handler.post(() -> {
+            try {
+                mSurfacePackage = mIAttachEmbeddedWindow.attachEmbedded(mSurfaceView.getHostToken(),
+                        mInitialSize.getWidth(), mInitialSize.getHeight(), mDisplayId, mDelayMs);
+                mSurfaceView.setChildSurfacePackage(mSurfacePackage);
+            } catch (RemoteException e) {
+                Log.e(mTag, "Failed to attach embedded window");
+            }
 
-        mReadyLatch.countDown();
-    }
-
-    public Pair<SurfaceControlViewHost.SurfacePackage, IAttachEmbeddedWindow> waitForReady() {
-        return new Pair<>(mSurfacePackage, mIAttachEmbeddedWindow);
+            mReadyLatch.countDown();
+        });
     }
 
     public SurfaceControlViewHost.SurfacePackage getSurfacePackage() {
@@ -162,9 +162,19 @@ public class SurfaceControlViewHostHelper {
         return mIAttachEmbeddedWindow;
     }
 
-    public void bindEmbeddedService() {
-        Intent intent = new Intent(mContext, EmbeddedSCVHService.class);
-        intent.setAction(EmbeddedSCVHService.class.getName());
+    public void bindEmbeddedService(boolean inProcess) {
+        Class<? extends EmbeddedSCVHService> classToBind;
+        if (inProcess) {
+            classToBind = InProcessEmbeddedSCVHService.class;
+        } else {
+            classToBind = EmbeddedSCVHService.class;
+        }
+        Intent intent = new Intent(mContext, classToBind);
+        intent.setAction(classToBind.getName());
         mContext.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    // Use this one for in process requests.
+    public static class InProcessEmbeddedSCVHService extends EmbeddedSCVHService {
     }
 }

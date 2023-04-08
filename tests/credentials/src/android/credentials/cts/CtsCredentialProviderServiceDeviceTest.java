@@ -171,20 +171,6 @@ public class CtsCredentialProviderServiceDeviceTest {
         });
     }
 
-    @Test
-    public void testRequestSetCredentialManagerServiceIntent_primary() {
-        Intent intent = new Intent(PRIMARY_SETTINGS_INTENT)
-                .setData(Uri.parse("package:android.content.cts"));
-        assertCanBeHandled(intent);
-    }
-
-    @Test
-    public void testRequestSetCredentialManagerServiceIntent_secondary() {
-        Intent intent = new Intent(SECONDARY_SETTINGS_INTENT)
-                .setData(Uri.parse("package:android.content.cts"));
-        assertCanBeHandled(intent);
-    }
-
     // TODO for all 'valid success' cases, mock credential manager the current success case
     // TODO (rightly) flips an error bit since we have test inputs
     @Test

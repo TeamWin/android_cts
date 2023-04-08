@@ -42,6 +42,7 @@ import android.server.wm.ActivityManagerTestBase;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
@@ -109,6 +110,7 @@ public class LocaleManagerOverrideLocaleConfigTest extends ActivityManagerTestBa
     }
 
     @Test
+    @ApiTest(apis = {"android.app.LocaleManager#setOverrideLocaleConfig"})
     public void testSetOverrideLocaleConfig_overrideByTestApp_getCorrectLocaleConfig()
             throws Exception {
         // Verify where a LocaleConfig of the test app can be read successfully
@@ -132,6 +134,7 @@ public class LocaleManagerOverrideLocaleConfigTest extends ActivityManagerTestBa
     }
 
     @Test
+    @ApiTest(apis = {"android.app.LocaleManager#getOverrideLocaleConfig"})
     public void testGetOverrideLocaleConfig_getOverrideFromTestApp_returnCorrectLocaleConfig()
             throws Exception {
         // Tell the test app to set the override LocaleConfig
@@ -155,6 +158,11 @@ public class LocaleManagerOverrideLocaleConfigTest extends ActivityManagerTestBa
                 OVERRIDE_LOCALES);
     }
 
+    /**
+     * Tests the scenario where we set the per-app locales first, then set the override LocaleConfig
+     * that the per-app locales don't exist in the override LocaleConfig. The per-app locales should
+     * be cleared since they don't exist in the override LocaleConfig.
+     */
     @Test
     public void testSetOverrideLocaleConfig_appLocalesNotInOverrideLocaleConfig_clearAppLocales()
             throws Exception {

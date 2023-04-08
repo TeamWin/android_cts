@@ -131,10 +131,17 @@ public class EmbeddedSCVHService extends Service {
 
         @Override
         public void relayout(WindowManager.LayoutParams lp) {
-            mHandler.post(() -> {
+            Runnable runnable = () -> {
                 mSlowView.setText(lp.width + "x" + lp.height);
                 mVr.relayout(lp);
-            });
+            };
+
+            if (Thread.currentThread() == mHandler.getLooper().getThread()) {
+                runnable.run();
+            } else {
+                mHandler.post(runnable);
+            }
+
         }
 
         @Override

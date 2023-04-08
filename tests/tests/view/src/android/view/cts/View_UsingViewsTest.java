@@ -92,9 +92,9 @@ public class View_UsingViewsTest {
      */
     private static final String CHINA_SYMBOL = "table tennis";
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
+
     private Activity mActivity;
 
     private EditText mEditText;
@@ -110,6 +110,7 @@ public class View_UsingViewsTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
 
         mEditText = (EditText) mActivity.findViewById(R.id.entry);

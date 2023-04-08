@@ -45,6 +45,8 @@ public abstract class MidiTestModule {
 
     protected int mTestStatus = TESTSTATUS_NOTRUN;
 
+    protected int mDeviceType;
+
     // The Test Peripheral
     protected MidiIODevice                mIODevice;
 
@@ -59,6 +61,7 @@ public abstract class MidiTestModule {
 
     public MidiTestModule(int deviceType) {
         mIODevice = new MidiIODevice(deviceType);
+        mDeviceType = deviceType;
     }
 
     /**

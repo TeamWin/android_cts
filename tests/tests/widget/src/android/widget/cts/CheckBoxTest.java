@@ -46,6 +46,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class CheckBoxTest {
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
     private Activity mActivity;
     private CheckBox mCheckBox;
 
@@ -53,11 +54,10 @@ public class CheckBoxTest {
     public ActivityTestRule<CheckBoxCtsActivity> mActivityRule =
             new ActivityTestRule<>(CheckBoxCtsActivity.class);
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         mCheckBox = (CheckBox) mActivity.findViewById(R.id.check_box);
     }

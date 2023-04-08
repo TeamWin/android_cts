@@ -63,11 +63,10 @@ import org.mockito.InOrder;
 public class PointerCaptureTest {
     private static final long TIMEOUT_DELTA = 10000;
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
-    private PointerCaptureCtsActivity mActivity;
+    private CtsTouchUtils mCtsTouchUtils;
 
+    private PointerCaptureCtsActivity mActivity;
     private PointerCaptureGroup mOuter;
     private PointerCaptureGroup mInner;
     private PointerCaptureView mTarget;
@@ -209,6 +208,7 @@ public class PointerCaptureTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
 
         mOuter = (PointerCaptureGroup) mActivity.findViewById(R.id.outer);

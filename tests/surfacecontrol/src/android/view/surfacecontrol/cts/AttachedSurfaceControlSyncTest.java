@@ -27,7 +27,6 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.Region;
-import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.util.IntProperty;
 import android.util.Property;
 import android.view.Gravity;
@@ -50,7 +49,6 @@ import androidx.test.filters.RequiresDevice;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -191,15 +189,6 @@ public class AttachedSurfaceControlSyncTest {
     public void setup() {
         mActivity = mActivityRule.getActivity();
         mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
-    }
-
-    /**
-     * Want to be especially sure we don't leave up the permission dialog, so try and dismiss
-     * after test.
-     */
-    @After
-    public void tearDown() throws UiObjectNotFoundException {
-        mActivity.dismissPermissionDialog();
     }
 
     /** Draws a moving 10x10 green rectangle with hole punch, make sure we don't get any sync errors */

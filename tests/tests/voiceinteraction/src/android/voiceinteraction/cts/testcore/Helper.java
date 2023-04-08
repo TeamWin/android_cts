@@ -21,6 +21,7 @@ import static android.media.AudioFormat.CHANNEL_IN_FRONT;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import android.app.compat.CompatChanges;
 import android.hardware.soundtrigger.SoundTrigger;
@@ -32,6 +33,7 @@ import android.os.Process;
 import android.os.SharedMemory;
 import android.provider.DeviceConfig;
 import android.service.voice.AlwaysOnHotwordDetector;
+import android.service.voice.HotwordAudioStream;
 import android.service.voice.HotwordDetectedResult;
 import android.service.voice.HotwordRejectedResult;
 import android.support.test.uiautomator.By;
@@ -46,7 +48,9 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import com.google.common.collect.ImmutableList;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -77,6 +81,7 @@ public final class Helper {
     private static final String KEY_FAKE_DATA = "fakeData";
     private static final String VALUE_FAKE_DATA = "fakeData";
     private static final byte[] FAKE_BYTE_ARRAY_DATA = new byte[]{1, 2, 3};
+
     public static final int DEFAULT_PHRASE_ID = 5;
     public static byte[] FAKE_HOTWORD_AUDIO_DATA =
             new byte[]{'h', 'o', 't', 'w', 'o', 'r', 'd', '!'};
@@ -210,7 +215,7 @@ public final class Helper {
         // If the change Id is not present, then isChangeEnabled will return true. To bypass this,
         // the change is set to "false" if present.
         if (SystemUtil.callWithShellPermissionIdentity(() -> CompatChanges.isChangeEnabled(
-                Helper.PERMISSION_INDICATORS_NOT_PRESENT, Process.SYSTEM_UID))) {
+                PERMISSION_INDICATORS_NOT_PRESENT, Process.SYSTEM_UID))) {
             return;
         }
         // Ensure the privacy chip is present (or not)
@@ -228,7 +233,14 @@ public final class Helper {
         // TODO: Implement HotwordDetectedResult#equals to override the Bundle equality check; then
         // simply check that the HotwordDetectedResults are equal.
         HotwordDetectedResult hotwordDetectedResult = detectedResult.getHotwordDetectedResult();
+        verifyHotwordDetectedResult(expectedDetectedResult, hotwordDetectedResult);
+
         ParcelFileDescriptor audioStream = detectedResult.getAudioStream();
+        assertThat(audioStream).isNull();
+    }
+
+    private static void verifyHotwordDetectedResult(HotwordDetectedResult expectedDetectedResult,
+            HotwordDetectedResult hotwordDetectedResult) {
         assertThat(hotwordDetectedResult).isNotNull();
         assertThat(hotwordDetectedResult.getAudioChannel())
                 .isEqualTo(expectedDetectedResult.getAudioChannel());
@@ -247,7 +259,67 @@ public final class Helper {
         assertThat(hotwordDetectedResult.getScore()).isEqualTo(expectedDetectedResult.getScore());
         assertThat(hotwordDetectedResult.getBackgroundAudioPower())
                 .isEqualTo(expectedDetectedResult.getBackgroundAudioPower());
+    }
+
+    /**
+     * Verify Audio Egress HotwordDetectedResult.
+     */
+    public static void verifyAudioEgressDetectedResult(
+            AlwaysOnHotwordDetector.EventPayload detectedResult,
+            HotwordDetectedResult expectedDetectedResult) throws Exception {
+        // TODO: Implement HotwordDetectedResult#equals to override the Bundle equality check; then
+        // simply check that the HotwordDetectedResults are equal.
+        HotwordDetectedResult hotwordDetectedResult = detectedResult.getHotwordDetectedResult();
+        verifyHotwordDetectedResult(expectedDetectedResult, hotwordDetectedResult);
+
+        // Verify the HotwordAudioStream result
+        verifyHotwordAudioStream(hotwordDetectedResult.getAudioStreams().get(0),
+                expectedDetectedResult.getAudioStreams().get(0));
+
+        ParcelFileDescriptor audioStream = detectedResult.getAudioStream();
         assertThat(audioStream).isNull();
+    }
+
+    private static void verifyHotwordAudioStream(HotwordAudioStream detectedAudioStream,
+            HotwordAudioStream expectedAudioStream) throws Exception {
+        assertThat(detectedAudioStream.getAudioFormat()).isNotNull();
+        assertThat(detectedAudioStream.getAudioStreamParcelFileDescriptor()).isNotNull();
+        assertThat(detectedAudioStream.getAudioFormat()).isEqualTo(
+                expectedAudioStream.getAudioFormat());
+        assertThat(detectedAudioStream.getInitialAudio()).isNotNull();
+        assertThat(detectedAudioStream.getInitialAudio()).isEqualTo(
+                expectedAudioStream.getInitialAudio());
+        assertAudioStream(detectedAudioStream.getAudioStreamParcelFileDescriptor(),
+                FAKE_HOTWORD_AUDIO_DATA);
+        assertThat(detectedAudioStream.getTimestamp().framePosition).isEqualTo(
+                expectedAudioStream.getTimestamp().framePosition);
+        assertThat(detectedAudioStream.getTimestamp().nanoTime).isEqualTo(
+                expectedAudioStream.getTimestamp().nanoTime);
+        assertThat(detectedAudioStream.getMetadata().size()).isEqualTo(
+                expectedAudioStream.getMetadata().size());
+        assertThat(detectedAudioStream.getMetadata().getString(KEY_FAKE_DATA)).isEqualTo(
+                VALUE_FAKE_DATA);
+    }
+
+    private static void assertAudioStream(ParcelFileDescriptor audioStream, byte[] expected)
+            throws IOException {
+        try (InputStream audioSource = new ParcelFileDescriptor.AutoCloseInputStream(audioStream)) {
+            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int count;
+            while ((count = audioSource.read(buffer)) != -1) {
+                result.write(buffer, 0, count);
+            }
+            assertThat(result.toByteArray()).isEqualTo(expected);
+        }
+
+        try (OutputStream audioSource = new ParcelFileDescriptor.AutoCloseOutputStream(
+                audioStream)) {
+            audioSource.write(1);
+            fail("The parcelFileDescriptor should be ready only!");
+        } catch (IOException exception) {
+            // expected
+        }
     }
 
     /**

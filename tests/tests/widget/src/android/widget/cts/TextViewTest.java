@@ -185,9 +185,8 @@ import java.util.Objects;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class TextViewTest {
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
     private Activity mActivity;
     private TextView mTextView;
     private TextView mSecondTextView;
@@ -218,6 +217,7 @@ public class TextViewTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         PollingCheck.waitFor(TIMEOUT, mActivity::hasWindowFocus);
     }

@@ -99,7 +99,7 @@ public class CapturedActivity extends Activity {
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private volatile boolean mOnEmbedded;
     private volatile boolean mOnWatch;
-    private CountDownLatch mCountDownLatch;
+    private CountDownLatch mMediaProjectionCreatedLatch;
     private Point mLogicalDisplaySize = new Point();
     private long mMinimumCaptureDurationMs = 0;
 
@@ -136,7 +136,7 @@ public class CapturedActivity extends Activity {
         mProjectionManager =
                 (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
-        mCountDownLatch = new CountDownLatch(1);
+        mMediaProjectionCreatedLatch = new CountDownLatch(1);
 
         KeyguardManager keyguardManager = getSystemService(KeyguardManager.class);
         if (keyguardManager != null) {
@@ -150,7 +150,7 @@ public class CapturedActivity extends Activity {
         mLogicalDisplaySize.set(logicalDisplaySize.x, logicalDisplaySize.y);
     }
 
-    public void dismissPermissionDialog() {
+    public boolean dismissPermissionDialog() {
         // The permission dialog will be auto-opened by the activity - find it and accept
         UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         UiObject2 acceptButton = uiDevice.wait(Until.findObject(By.res(ACCEPT_RESOURCE_ID)),
@@ -158,8 +158,10 @@ public class CapturedActivity extends Activity {
         if (acceptButton != null) {
             Log.d(TAG, "found permission dialog after searching all windows, clicked");
             acceptButton.click();
+            return true;
         } else {
             Log.e(TAG, "Failed to find permission dialog");
+            return false;
         }
     }
 
@@ -219,7 +221,7 @@ public class CapturedActivity extends Activity {
     private void createMediaProjection() {
         mMediaProjection = mProjectionManager.getMediaProjection(mResultCode, mResultData);
         mMediaProjection.registerCallback(new MediaProjectionCallback(), null);
-        mCountDownLatch.countDown();
+        mMediaProjectionCreatedLatch.countDown();
     }
 
     public long getCaptureDurationMs() {
@@ -261,10 +263,16 @@ public class CapturedActivity extends Activity {
             if (mIsSharingScreenDenied.get()) {
                 throw new IllegalStateException("User denied screen sharing permission.");
             }
-            assertTrue("Can't get the permission", count <= RETRY_COUNT);
-            dismissPermissionDialog();
+            if (dismissPermissionDialog()) {
+                break;
+            }
             count++;
-        } while (!mCountDownLatch.await(timeOutMs, TimeUnit.MILLISECONDS));
+            Thread.sleep(1000);
+        } while (count <= RETRY_COUNT);
+
+        assertTrue("Can't get the permission", count <= RETRY_COUNT);
+        assertTrue("Failed to create mediaProjection",
+                mMediaProjectionCreatedLatch.await(timeOutMs, TimeUnit.MILLISECONDS));
 
         FrameLayout marginedLayout = new FrameLayout(this);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(

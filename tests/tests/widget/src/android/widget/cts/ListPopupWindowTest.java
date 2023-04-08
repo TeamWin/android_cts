@@ -79,9 +79,9 @@ import java.util.concurrent.TimeUnit;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class ListPopupWindowTest {
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
 
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
     private Activity mActivity;
     private Builder mPopupWindowBuilder;
     private View promptView;
@@ -111,6 +111,7 @@ public class ListPopupWindowTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         mItemClickListener = new PopupItemClickListener();
         mActivity.getApplicationInfo().setEnableOnBackInvokedCallback(false);

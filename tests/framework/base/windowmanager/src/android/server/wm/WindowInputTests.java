@@ -97,7 +97,7 @@ public class WindowInputTests {
     private static final int PARTIAL_OBSCURING_WINDOW_SIZE = 30;
 
     private Instrumentation mInstrumentation;
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+    private CtsTouchUtils mCtsTouchUtils;
     private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
     private TestActivity mActivity;
     private InputManager mInputManager;
@@ -114,6 +114,7 @@ public class WindowInputTests {
         launchHomeActivityNoWait();
 
         mInstrumentation = getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.launchActivity(null);
         mInputManager = mActivity.getSystemService(InputManager.class);
         mInstrumentation.waitForIdleSync();

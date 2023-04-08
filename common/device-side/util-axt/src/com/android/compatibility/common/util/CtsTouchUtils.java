@@ -46,15 +46,6 @@ public final class CtsTouchUtils {
 
     private final UserHelper mUserHelper;
 
-    // TODO(b/271153404): remove once all callers are converted
-    /**
-     * @deprecated use {@link #CtsTouchUtils(UserHelper)} / {@link #CtsTouchUtils(Context)} instead.
-     */
-    @Deprecated
-    public CtsTouchUtils() {
-        this(new UserHelper());
-    }
-
     public CtsTouchUtils(Context context) {
         this(new UserHelper(context));
     }

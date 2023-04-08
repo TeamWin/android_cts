@@ -149,15 +149,11 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
       if rot_rig['cntl'].lower() != 'arduino':
         raise AssertionError(f'You must use an arduino controller for {_NAME}.')
 
-      if camera_fov > opencv_processing_utils.FOV_THRESH_WFOV:
-        excluded_sizes = video_processing_utils.LOW_RESOLUTION_SIZES['UW']
-      else:
-        excluded_sizes = video_processing_utils.LOW_RESOLUTION_SIZES['W']
+      # Create list of video qualities to test
+      excluded_sizes = video_processing_utils.LOW_RESOLUTION_SIZES
       excluded_qualities = [
           _SIZE_TO_PROFILE[s] for s in excluded_sizes if s in _SIZE_TO_PROFILE
       ]
-
-      # Create list of video qualities to test
       supported_video_qualities = cam.get_supported_video_qualities(
           self.camera_id)
       logging.debug('Supported video qualities: %s', supported_video_qualities)

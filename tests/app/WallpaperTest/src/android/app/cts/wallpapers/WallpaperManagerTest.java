@@ -100,10 +100,9 @@ public class WallpaperManagerTest {
     private static final ComponentName DEFAULT_COMPONENT_NAME = new ComponentName(
             TestLiveWallpaper.class.getPackageName(), TestLiveWallpaper.class.getName());
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
-
     private WallpaperManager mWallpaperManager;
     private Context mContext;
+    private CtsTouchUtils mCtsTouchUtils;
     private Handler mHandler;
     private BroadcastReceiver mBroadcastReceiver;
     private CountDownLatch mCountDownLatch;
@@ -123,6 +122,7 @@ public class WallpaperManagerTest {
                 .adoptShellPermissionIdentity(READ_WALLPAPER_INTERNAL);
 
         mContext = InstrumentationRegistry.getTargetContext();
+        mCtsTouchUtils = new CtsTouchUtils(mContext);
         mWallpaperManager = WallpaperManager.getInstance(mContext);
         assumeTrue("Device does not support wallpapers", mWallpaperManager.isWallpaperSupported());
 

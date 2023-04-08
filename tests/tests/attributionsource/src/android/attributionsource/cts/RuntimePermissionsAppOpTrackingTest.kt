@@ -52,7 +52,6 @@ import org.junit.After
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.mockito.ArgumentMatcher
 import org.mockito.Mockito.eq
@@ -510,8 +509,6 @@ class RuntimePermissionsAppOpTrackingTest {
     }
 
     @Test
-    // TODO b/263329310: Remove once test is fixed
-    @Ignore
     @Throws(Exception::class)
     fun testMicRecognitionMicRecoWithAttribution() {
         runWithAuxiliaryApps {

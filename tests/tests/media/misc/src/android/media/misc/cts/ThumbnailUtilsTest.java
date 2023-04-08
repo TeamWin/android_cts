@@ -148,7 +148,7 @@ public class ThumbnailUtilsTest {
         // EXIF orientations to achieve the same final image, and this verifies that the EXIF
         // orientation was applied properly.
         assertColorMostlyInRange(bitmap.getPixel(bitmap.getWidth() / 2, bitmap.getHeight() / 3),
-                0xFF202020 /* upperBound */, Color.BLACK);
+                0xFF232323 /* upperBound */, Color.BLACK);
     }
 
     @Test

@@ -99,7 +99,6 @@ public class ASurfaceControlBackPressureTest {
 
     @After
     public void tearDown() throws UiObjectNotFoundException {
-        mActivity.dismissPermissionDialog();
         mActivity.restoreSettings();
     }
 

@@ -54,6 +54,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.cts.mockime.ImeEventStream;
@@ -74,7 +76,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     private final static long TIMEOUT_IME = TimeUnit.SECONDS.toMillis(5);
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
+    private final CtsTouchUtils mCtsTouchUtils =
+            new CtsTouchUtils(InstrumentationRegistry.getTargetContext());
 
     @Before
     @Override

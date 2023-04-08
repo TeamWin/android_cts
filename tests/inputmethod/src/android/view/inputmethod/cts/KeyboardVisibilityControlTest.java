@@ -148,7 +148,6 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     private static final String ENABLE_AUTO_ROTATE_CMD =
             "settings put system accelerometer_rotation 1";
 
-    private final CtsTouchUtils mCtsTouchUtils = new CtsTouchUtils();
 
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
@@ -160,10 +159,12 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             "android.view.inputmethod.cts.KeyboardVisibilityControlTest";
 
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
 
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
     }
 
     private static String getTestMarker() {

@@ -74,7 +74,6 @@ abstract class BasePermissionTest {
         private const val TAG = "BasePermissionTest"
 
         private const val INSTALL_ACTION_CALLBACK = "BasePermissionTest.install_callback"
-        private const val PACKAGE_INSTALLER_PACKAGE_NAME = "com.android.packageinstaller"
 
         const val APK_DIRECTORY = "/data/local/tmp/cts/permission3"
 
@@ -259,8 +258,8 @@ abstract class BasePermissionTest {
         apkName: String,
         appMetadata: PersistableBundle? = null
     ) {
+        val (sessionId, session) = createPackageInstallerSession()
         runWithShellPermissionIdentity {
-            val (sessionId, session) = createPackageInstallerSession()
             writePackageInstallerSession(session, apkName)
             if (appMetadata != null) {
                 setAppMetadata(session, appMetadata)
