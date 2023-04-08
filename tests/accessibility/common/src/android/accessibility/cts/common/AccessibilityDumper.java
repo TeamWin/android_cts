@@ -153,7 +153,8 @@ public class AccessibilityDumper {
     private void dumpScreen(UiAutomation automation) {
         assertNotEmpty(mName);
         final Bitmap screenshot = automation.takeScreenshot();
-        final String filename = String.format("%s_%s__screenshot.png", mName, LocalTime.now());
+        final String filename = String.format("%s_%s__screenshot.png", mName,
+                LocalTime.now().toString().replace(':', '.'));
         BitmapUtils.saveBitmap(screenshot, mRoot.toString(), filename);
     }
 
