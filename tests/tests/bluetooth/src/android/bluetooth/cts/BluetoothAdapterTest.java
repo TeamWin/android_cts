@@ -44,6 +44,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -75,6 +76,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BluetoothAdapterTest {
     private static final String TAG = "BluetoothAdapterTest";
     private static final int SET_NAME_TIMEOUT = 5000; // ms timeout for setting adapter name
+    private static final String ENABLE_DUAL_MODE_AUDIO =
+            "persist.bluetooth.enable_dual_mode_audio";
 
     private Context mContext;
     private boolean mHasBluetooth;
@@ -777,11 +780,17 @@ public class BluetoothAdapterTest {
 
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
 
-        // Try the happy path
-        assertEquals(BluetoothStatusCodes.SUCCESS,
-                mAdapter.registerPreferredAudioProfilesChangedCallback(executor, callback));
-        assertEquals(BluetoothStatusCodes.SUCCESS,
-                mAdapter.unregisterPreferredAudioProfilesChangedCallback(callback));
+        if (isDualModeAudioEnabled()) {
+            assertEquals(BluetoothStatusCodes.SUCCESS,
+                    mAdapter.registerPreferredAudioProfilesChangedCallback(executor, callback));
+            assertEquals(BluetoothStatusCodes.SUCCESS,
+                    mAdapter.unregisterPreferredAudioProfilesChangedCallback(callback));
+        } else {
+            assertEquals(BluetoothStatusCodes.FEATURE_NOT_SUPPORTED,
+                    mAdapter.registerPreferredAudioProfilesChangedCallback(executor, callback));
+            assertThrows(IllegalArgumentException.class, () ->
+                    mAdapter.unregisterPreferredAudioProfilesChangedCallback(callback));
+        }
     }
 
     @Test
@@ -847,6 +856,10 @@ public class BluetoothAdapterTest {
 
         assertEquals(BluetoothStatusCodes.ERROR_BLUETOOTH_NOT_ALLOWED,
                 mAdapter.notifyActiveDeviceChangeApplied(device));
+    }
+
+    private boolean isDualModeAudioEnabled() {
+        return SystemProperties.getBoolean(ENABLE_DUAL_MODE_AUDIO, false);
     }
 
     private static void sleep(long t) {
