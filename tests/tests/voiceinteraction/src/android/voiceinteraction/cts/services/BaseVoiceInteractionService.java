@@ -18,6 +18,8 @@ package android.voiceinteraction.cts.services;
 
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 
+import android.hardware.soundtrigger.SoundTrigger.KeyphraseSoundModel;
+import android.hardware.soundtrigger.SoundTrigger.ModuleProperties;
 import android.os.Bundle;
 import android.os.Looper;
 import android.os.PersistableBundle;
@@ -46,6 +48,8 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
 
     private final String mTag = getClass().getSimpleName();
     public static final int STATUS_NO_CALLBACK_CALLED = -1;
+    public static final Locale KEYPHRASE_LOCALE = Locale.forLanguageTag("en-US");
+    public static final String KEYPHRASE_TEXT = "Hello Android";
 
     // The service instance
     public static VoiceInteractionService sService;
@@ -480,16 +484,16 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                 "callCreateAlwaysOnHotwordDetectorNoHotwordDetectionService() useExecutor = "
                         + useExecutor);
         try {
+            setTestModuleForAlwaysOnHotwordDetectorEnabled(true);
             resetValues();
-            final Locale locale = Locale.forLanguageTag("en-US");
             if (useExecutor) {
-                return createAlwaysOnHotwordDetector(/* keyphrase */ "Hello Android",
-                        locale,
+                return createAlwaysOnHotwordDetector(KEYPHRASE_TEXT,
+                        KEYPHRASE_LOCALE,
                         getDetectorCallbackExecutor(),
                         callback);
             }
-            return createAlwaysOnHotwordDetector(/* keyphrase */ "Hello Android",
-                    locale,
+            return createAlwaysOnHotwordDetector(KEYPHRASE_TEXT,
+                    KEYPHRASE_LOCALE,
                     callback);
         } catch (IllegalStateException | SecurityException e) {
             if (e instanceof IllegalStateException) {
@@ -497,10 +501,12 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
             } else {
                 mIsCreateDetectorSecurityExceptionThrow = true;
             }
-            Log.w(mTag, "callCreateAlwaysOnHotwordDetector() exception: " + e);
+            Log.w(mTag, "callCreateAlwaysOnHotwordDetector() exception: ", e);
             if (mServiceTriggerLatch != null) {
                 mServiceTriggerLatch.countDown();
             }
+        } finally {
+            setTestModuleForAlwaysOnHotwordDetectorEnabled(false);
         }
         return null;
     }
@@ -522,18 +528,19 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                 "callCreateAlwaysOnHotwordDetector() useExecutor = " + useExecutor + ", options = "
                         + options);
         try {
+            setTestModuleForAlwaysOnHotwordDetectorEnabled(true);
             resetValues();
-            final Locale locale = Locale.forLanguageTag("en-US");
             if (useExecutor) {
-                return createAlwaysOnHotwordDetector(/* keyphrase */ "Hello Android",
-                        locale,
+                return createAlwaysOnHotwordDetector(KEYPHRASE_TEXT,
+                        KEYPHRASE_LOCALE,
                         options != null ? options : Helper.createFakePersistableBundleData(),
                         Helper.createFakeSharedMemoryData(),
                         getDetectorCallbackExecutor(),
                         callback);
             }
-            return createAlwaysOnHotwordDetector(/* keyphrase */ "Hello Android",
-                    locale,
+
+            return createAlwaysOnHotwordDetector(KEYPHRASE_TEXT,
+                    KEYPHRASE_LOCALE,
                     options != null ? options : Helper.createFakePersistableBundleData(),
                     Helper.createFakeSharedMemoryData(),
                     callback);
@@ -543,10 +550,12 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
             } else {
                 mIsCreateDetectorSecurityExceptionThrow = true;
             }
-            Log.w(mTag, "callCreateAlwaysOnHotwordDetector() exception: " + e);
+            Log.w(mTag, "callCreateAlwaysOnHotwordDetector() exception: ", e);
             if (mServiceTriggerLatch != null) {
                 mServiceTriggerLatch.countDown();
             }
+        } finally {
+            setTestModuleForAlwaysOnHotwordDetectorEnabled(false);
         }
         return null;
     }
