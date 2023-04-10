@@ -25,6 +25,8 @@ import static android.net.wifi.sharedconnectivity.app.NetworkProviderInfo.DEVICE
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.net.wifi.sharedconnectivity.app.KnownNetwork;
 import android.net.wifi.sharedconnectivity.app.NetworkProviderInfo;
 import android.os.Build;
@@ -126,6 +128,43 @@ public class KnownNetworkTest {
         KnownNetwork network2 = buildKnownNetworkBuilder().build();
 
         assertThat(network1.hashCode()).isEqualTo(network2.hashCode());
+    }
+
+    @Test
+    public void illegalNetworkSourceValueIsSet_shouldThrowException() {
+        KnownNetwork.Builder builder = new KnownNetwork.Builder();
+        builder.setNetworkSource(1000);
+
+        Exception e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("Illegal network source");
+    }
+
+    @Test
+    public void ssidNotSet_shouldThrowException() {
+        KnownNetwork.Builder builder = new KnownNetwork.Builder();
+        builder.setNetworkSource(NETWORK_SOURCE);
+
+        Exception e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("SSID must be set");
+    }
+
+    @Test
+    public void securityTypesNotSet_shouldThrowException() {
+        KnownNetwork.Builder builder = new KnownNetwork.Builder();
+        builder.setNetworkSource(NETWORK_SOURCE).setSsid(SSID);
+
+        Exception e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("SecurityTypes must be set");
+    }
+
+    @Test
+    public void networkProviderInfoNotSetWhenNetworkSourceIsNearbySelf_shouldThrowException() {
+        KnownNetwork.Builder builder = new KnownNetwork.Builder();
+        builder.setNetworkSource(NETWORK_SOURCE_NEARBY_SELF).setSsid(SSID);
+        Arrays.stream(SECURITY_TYPES).forEach(builder::addSecurityType);
+
+        Exception e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("Device info must be provided");
     }
 
     private KnownNetwork.Builder buildKnownNetworkBuilder() {

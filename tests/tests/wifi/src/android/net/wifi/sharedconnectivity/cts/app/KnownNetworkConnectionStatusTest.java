@@ -24,6 +24,8 @@ import static android.net.wifi.sharedconnectivity.app.NetworkProviderInfo.DEVICE
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.net.wifi.sharedconnectivity.app.KnownNetwork;
 import android.net.wifi.sharedconnectivity.app.KnownNetworkConnectionStatus;
 import android.net.wifi.sharedconnectivity.app.NetworkProviderInfo;
@@ -104,6 +106,15 @@ public class KnownNetworkConnectionStatusTest {
         KnownNetworkConnectionStatus status2 = buildConnectionStatusBuilder().build();
 
         assertThat(status1.hashCode()).isEqualTo(status2.hashCode());
+    }
+
+    @Test
+    public void illegalStatusValueIsSet_shouldThrowException() {
+        KnownNetworkConnectionStatus.Builder builder = buildConnectionStatusBuilder();
+        builder.setStatus(1000);
+
+        Exception e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("Illegal connection status");
     }
 
     private KnownNetworkConnectionStatus.Builder buildConnectionStatusBuilder() {

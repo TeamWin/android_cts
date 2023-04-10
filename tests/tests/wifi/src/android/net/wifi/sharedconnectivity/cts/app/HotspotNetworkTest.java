@@ -147,6 +147,35 @@ public class HotspotNetworkTest {
     }
 
     @Test
+    public void deviceIdNotSet_shouldThrowException() {
+        HotspotNetwork.Builder builder = new HotspotNetwork.Builder();
+        builder.setNetworkProviderInfo(NETWORK_PROVIDER_INFO);
+
+        Exception e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("DeviceId must be set");
+    }
+
+    @Test
+    public void illegalNetworkTypeValueIsSet_shouldThrowException() {
+        HotspotNetwork.Builder builder = new HotspotNetwork.Builder();
+        builder.setNetworkProviderInfo(NETWORK_PROVIDER_INFO)
+                .setDeviceId(DEVICE_ID).setHostNetworkType(1000);
+
+        Exception e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("Illegal network type");
+    }
+
+    @Test
+    public void networkNameNotSet_shouldThrowException() {
+        HotspotNetwork.Builder builder = new HotspotNetwork.Builder();
+        builder.setNetworkProviderInfo(NETWORK_PROVIDER_INFO)
+                .setDeviceId(DEVICE_ID).setHostNetworkType(NETWORK_TYPE);
+
+        Exception e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("NetworkName must be set");
+    }
+
+    @Test
     public void networkProviderInfoNotSet_shouldThrowException() {
         Exception e = assertThrows(IllegalArgumentException.class,
                 () -> buildHotspotNetworkBuilder(false).build());
