@@ -42,6 +42,7 @@ import android.service.voice.VoiceInteractionService;
 import android.util.Log;
 
 import androidx.annotation.GuardedBy;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.io.IOException;
@@ -51,6 +52,8 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -212,19 +215,28 @@ public class ProxyVoiceInteractionService extends VoiceInteractionService {
         static FakeAlwaysOnHotwordDetector create(String keyphrase, Locale locale,
                 PersistableBundle options, SharedMemory sharedMemory,
                 IProxyDetectorCallback callback, VoiceInteractionService service, Handler handler) {
-            return create(() -> runWithShellPermissionIdentity(
-                    () -> service.createAlwaysOnHotwordDetector(keyphrase, locale, options,
-                    sharedMemory, createDetectorCallback(callback)),
-                    RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD /** required perms **/
+            return create(() -> runWithShellPermissionIdentity(() -> {
+                        service.setTestModuleForAlwaysOnHotwordDetectorEnabled(true);
+                        var aohd = service.createAlwaysOnHotwordDetector(keyphrase, locale, options,
+                                sharedMemory,
+                                new HandlerExecutor(new Handler(Looper.myLooper())),
+                                createDetectorCallback(callback));
+                        service.setTestModuleForAlwaysOnHotwordDetectorEnabled(false);
+                        return aohd;
+                        }, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD /** required perms **/
                 ), handler);
         }
 
         static FakeAlwaysOnHotwordDetector create(String keyphrase, Locale locale,
                 IProxyDetectorCallback callback, VoiceInteractionService service, Handler handler) {
-            return create(() -> runWithShellPermissionIdentity(
-                    () -> service.createAlwaysOnHotwordDetector(keyphrase, locale,
-                    createDetectorCallback(callback)),
-                    RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD /** required perms */
+            return create(() -> runWithShellPermissionIdentity(() -> {
+                    service.setTestModuleForAlwaysOnHotwordDetectorEnabled(true);
+                    var aohd = service.createAlwaysOnHotwordDetector(keyphrase, locale,
+                        new HandlerExecutor(new Handler(Looper.myLooper())),
+                        createDetectorCallback(callback));
+                    service.setTestModuleForAlwaysOnHotwordDetectorEnabled(false);
+                    return aohd;
+                    }, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD /** required perms */
                 ), handler);
         }
 
@@ -413,4 +425,24 @@ public class ProxyVoiceInteractionService extends VoiceInteractionService {
             }
         }
     }
+
+    /**
+     * An adapter {@link Executor} that posts all executed tasks onto the given
+     * {@link Handler}.
+     */
+    private static class HandlerExecutor implements Executor {
+        private final Handler mHandler;
+
+        public HandlerExecutor(@NonNull Handler handler) {
+            mHandler = requireNonNull(handler);
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            if (!mHandler.post(command)) {
+                throw new RejectedExecutionException(mHandler + " is shutting down");
+            }
+        }
+    }
+
 }
