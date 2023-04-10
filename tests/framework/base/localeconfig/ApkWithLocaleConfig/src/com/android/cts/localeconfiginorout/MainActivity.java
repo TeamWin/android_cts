@@ -16,12 +16,6 @@
 
 package com.android.cts.localeconfiginorout;
 
-import static android.localeconfig.cts.util.LocaleConstants.APP_CREATION_INFO_PROVIDER_ACTION;
-import static android.localeconfig.cts.util.LocaleConstants.EXTRA_QUERY_LOCALES;
-import static android.localeconfig.cts.util.LocaleConstants.EXTRA_SET_LOCALECONFIG;
-import static android.localeconfig.cts.util.LocaleConstants.EXTRA_SET_LOCALES;
-import static android.localeconfig.cts.util.LocaleUtils.constructResultIntent;
-
 import android.app.Activity;
 import android.app.LocaleConfig;
 import android.app.LocaleManager;
@@ -32,31 +26,22 @@ import android.os.LocaleList;
 import androidx.annotation.Nullable;
 
 /**
- * An activity used by {@link LocaleConfigTest} and {@link LocaleConfigAppUpdateTest}
+ * An activity used by {@link LocaleConfigTest} to override the LocaleConfig for a package
  */
 public class MainActivity extends Activity {
+
+    private static final String EXTRA_SET_LOCALECONFIG = "set_localeconfig";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        LocaleManager localeManager = getSystemService(LocaleManager.class);
         Intent intent = getIntent();
-        if (intent != null && intent.hasExtra(EXTRA_SET_LOCALES)) {
-            localeManager.setApplicationLocales(LocaleList.forLanguageTags(
-                    intent.getStringExtra(EXTRA_SET_LOCALES)));
-        } else if (intent != null && intent.hasExtra(EXTRA_SET_LOCALECONFIG)) {
+        if (intent != null && intent.hasExtra(EXTRA_SET_LOCALECONFIG)) {
+            LocaleManager localeManager = getSystemService(LocaleManager.class);
             localeManager.setOverrideLocaleConfig(new LocaleConfig(
                     LocaleList.forLanguageTags(intent.getStringExtra(EXTRA_SET_LOCALECONFIG))));
-        } else if (intent != null && intent.hasExtra(EXTRA_QUERY_LOCALES)) {
-            String packageName = intent.getStringExtra(EXTRA_QUERY_LOCALES);
-            try {
-                LocaleList locales = localeManager.getApplicationLocales(packageName);
-                sendBroadcast(constructResultIntent(APP_CREATION_INFO_PROVIDER_ACTION,
-                        packageName, locales));
-            } catch (SecurityException e) {
-            }
+            finish();
         }
-        finish();
     }
 }
