@@ -53,6 +53,7 @@ import org.junit.Test;
  */
 @FlakyTest(detail = "Promote once confirmed non-flaky")
 @Presubmit
+@android.server.wm.annotation.Group2
 public class WindowInsetsLayoutTests extends WindowManagerTestBase {
 
     private final static long TIMEOUT = 1000; // milliseconds
