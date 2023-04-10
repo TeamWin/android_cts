@@ -47,10 +47,10 @@ import java.util.List;
 public class GetCredentialRequestTest {
     private CallingAppInfo mCallingAppInfo;
     private List<CredentialOption> mCredentialOptions = List.of(
-            new CredentialOption("type1", createTestBundle(), createTestBundle(),
-                    true),
-            new CredentialOption("type2", createTestBundle(), createTestBundle(),
-                    false));
+            new CredentialOption.Builder("type1", createTestBundle(), createTestBundle())
+                    .setIsSystemProviderRequired(true).build(),
+            new CredentialOption.Builder("type2", createTestBundle(), createTestBundle())
+                    .build());
 
     @Before
     public void setup() throws PackageManager.NameNotFoundException {

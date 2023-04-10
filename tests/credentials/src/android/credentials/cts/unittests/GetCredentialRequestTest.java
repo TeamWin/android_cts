@@ -40,9 +40,16 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class GetCredentialRequestTest {
     private static final List<CredentialOption> sCredOptions = List.of(
-            new CredentialOption("type", createTestBundle(), createTestBundle(), true),
-            new CredentialOption("type2", createTestBundle(), createTestBundle(), false),
-            new CredentialOption("type3", createTestBundle(), createTestBundle(), true));
+            new CredentialOption.Builder("type", createTestBundle(), createTestBundle())
+                    .setIsSystemProviderRequired(true)
+                    .build(),
+            new CredentialOption.Builder("type2", createTestBundle(), createTestBundle())
+                    .setIsSystemProviderRequired(false)
+                    .build(),
+            new CredentialOption.Builder("type3", createTestBundle(), createTestBundle())
+                    .setIsSystemProviderRequired(false)
+                    .build()
+    );
 
     private static final String ORIGIN = "origin";
 
