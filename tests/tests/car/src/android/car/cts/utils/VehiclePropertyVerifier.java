@@ -405,14 +405,14 @@ public class VehiclePropertyVerifier<T> {
         runWithShellPermissionIdentity(
                 () -> {
                     assertThat(mCarPropertyManager.getCarPropertyConfig(mPropertyId)).isNotNull();
-                    maybeTurnOnHvac();
+                    turnOnHvacPowerIfHvacPowerDependent();
                     try {
                         verifyCarPropertyValueGetter();
                         verifyCarPropertyValueCallback();
                         verifyGetPropertiesAsync();
                     } finally {
-                        // Restore hvac power even if test fails
-                        maybeTurnOffHvac();
+                        // Restore HVAC power even if test fails.
+                        turnOffHvacPowerIfHvacPowerDependent();
                     }
                 }, readPermission);
     }
@@ -477,15 +477,15 @@ public class VehiclePropertyVerifier<T> {
             ImmutableSet<String> readPermissions) {
         runWithShellPermissionIdentity(
                 () -> {
-                    maybeTurnOnHvac();
+                    turnOnHvacPowerIfHvacPowerDependent();
                     storeCurrentValues();
                     try {
                         verifyCarPropertyValueSetter();
                         // TODO(b/266000988): verifySetProeprtiesAsync(...)
                     } finally {
-                        // Restore property value and hvac power even if test fails
+                        // Restore property value and HVAC power even if test fails.
                         restoreInitialValues();
-                        maybeTurnOffHvac();
+                        turnOffHvacPowerIfHvacPowerDependent();
                     }
                 }, ImmutableSet.<String>builder()
                         .addAll(writePermissions)
@@ -493,7 +493,7 @@ public class VehiclePropertyVerifier<T> {
                         .build().toArray(new String[0]));
     }
 
-    private void maybeTurnOnHvac() {
+    private void turnOnHvacPowerIfHvacPowerDependent() {
         if (!mPossiblyDependentOnHvacPowerOn) {
             return;
         }
@@ -508,10 +508,12 @@ public class VehiclePropertyVerifier<T> {
         SparseArray<Boolean> hvacPowerStateByAreaId = (SparseArray<Boolean>)
                 getInitialValuesByAreaId(hvacPowerOnCarPropertyConfig, mCarPropertyManager);
         mPropertyToAreaIdValues.put(VehiclePropertyIds.HVAC_POWER_ON, hvacPowerStateByAreaId);
-        turnOnHvacPower(hvacPowerOnCarPropertyConfig);
+
+        // Turn the power on for all supported HVAC area IDs.
+        setBooleanPropertyInAllAreaIds(hvacPowerOnCarPropertyConfig, /* setValue: */ Boolean.TRUE);
     }
 
-    private void maybeTurnOffHvac() {
+    private void turnOffHvacPowerIfHvacPowerDependent() {
         if (!mPossiblyDependentOnHvacPowerOn) {
             return;
         }
@@ -523,8 +525,10 @@ public class VehiclePropertyVerifier<T> {
             return;
         }
 
-        turnOffHvacPower(hvacPowerOnCarPropertyConfig);
+        // Turn the power off for all supported HVAC area IDs.
+        setBooleanPropertyInAllAreaIds(hvacPowerOnCarPropertyConfig, /* setValue: */ Boolean.FALSE);
         verifySetNotAvailable();
+
         SparseArray<Boolean> hvacPowerStateByAreaId = (SparseArray<Boolean>)
                 mPropertyToAreaIdValues.get(VehiclePropertyIds.HVAC_POWER_ON);
         restoreInitialValuesByAreaId(hvacPowerOnCarPropertyConfig, mCarPropertyManager,
@@ -590,33 +594,20 @@ public class VehiclePropertyVerifier<T> {
         return areaIdToInitialValue;
     }
 
-    // Turn the power on for all hvac areas.
-    private void turnOnHvacPower(CarPropertyConfig<Boolean> hvacPowerOnCarPropertyConfig) {
-        for (int areaId : hvacPowerOnCarPropertyConfig.getAreaIds()) {
-            if (mCarPropertyManager.getBooleanProperty(VehiclePropertyIds.HVAC_POWER_ON, areaId)) {
+    /**
+     * Set boolean property to a desired value in all supported area IDs.
+     */
+    private void setBooleanPropertyInAllAreaIds(CarPropertyConfig<Boolean> booleanCarPropertyConfig,
+            Boolean setValue) {
+        int propertyId = booleanCarPropertyConfig.getPropertyId();
+        for (int areaId : booleanCarPropertyConfig.getAreaIds()) {
+            if (mCarPropertyManager.getBooleanProperty(propertyId, areaId) == setValue) {
                 continue;
             }
             CarPropertyValue<Boolean> carPropertyValue = setPropertyAndWaitForChange(
-                    mCarPropertyManager, VehiclePropertyIds.HVAC_POWER_ON,
-                    Boolean.class, areaId, Boolean.TRUE);
+                    mCarPropertyManager, propertyId, Boolean.class, areaId, setValue);
             assertWithMessage(
-                    VehiclePropertyIds.toString(VehiclePropertyIds.HVAC_POWER_ON)
-                            + " carPropertyValue is null for area id: " + areaId)
-                    .that(carPropertyValue).isNotNull();
-        }
-    }
-
-    // Turn the power off for all hvac areas.
-    private void turnOffHvacPower(CarPropertyConfig<Boolean> hvacPowerOnCarPropertyConfig) {
-        for (int areaId : hvacPowerOnCarPropertyConfig.getAreaIds()) {
-            if (!mCarPropertyManager.getBooleanProperty(VehiclePropertyIds.HVAC_POWER_ON, areaId)) {
-                continue;
-            }
-            CarPropertyValue<Boolean> carPropertyValue = setPropertyAndWaitForChange(
-                    mCarPropertyManager, VehiclePropertyIds.HVAC_POWER_ON,
-                    Boolean.class, areaId, Boolean.FALSE);
-            assertWithMessage(
-                    VehiclePropertyIds.toString(VehiclePropertyIds.HVAC_POWER_ON)
+                    VehiclePropertyIds.toString(propertyId)
                             + " carPropertyValue is null for area id: " + areaId)
                     .that(carPropertyValue).isNotNull();
         }
