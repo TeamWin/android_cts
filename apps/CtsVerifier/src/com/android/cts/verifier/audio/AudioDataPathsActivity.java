@@ -273,6 +273,7 @@ public class AudioDataPathsActivity
 
             //TODO - Also add test specs for MMAP vs Legacy
             TestSpec testSpec;
+
             //
             // Built-in Speaker/Mic
             //
