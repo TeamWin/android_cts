@@ -1827,7 +1827,10 @@ public class SurfaceControlTest {
         byte[][] colors = {blue};
         int[] expectedColors = {Color.BLUE};
 
-        return Stream.of(ImageFormat.YV12, ImageFormat.YUV_420_888)
+        // TODO(b/277348717): Check additional YUV formats. At the very least, YUV420, although
+        // on some devices YUV420 is not supported in ImageReader even when
+        // HardwareBuffer#isSupported returns true.
+        return Stream.of(ImageFormat.YV12)
                 .flatMap(format ->
                     IntStream.range(0, colors.length)
                             .mapToObj(index -> new DefaultDataSpaceParameters(
