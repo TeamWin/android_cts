@@ -320,6 +320,7 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
+    @CddTest(requirements = {"9.8/H-1-9"})
     public void testVoiceInteractionService_withoutManageHotwordDetectionPermission_triggerFailure()
             throws Throwable {
         // Create alwaysOnHotwordDetector and wait result
@@ -346,6 +347,7 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
+    @CddTest(requirements = {"9.8/H-1-9"})
     public void testVoiceInteractionService_createSoftwareWithoutPermission_triggerFailure()
             throws Throwable {
         // Create SoftwareHotwordDetector and wait result
