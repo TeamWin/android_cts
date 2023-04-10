@@ -100,6 +100,23 @@ public class BaseSineAnalyzer implements SignalAnalyzer {
         return mSampleRate;
     }
 
+    /**
+     * Set the assumed sample rate for the analysis
+     * @param sampleRate
+     */
+    public void setSampleRate(int sampleRate) {
+        mSampleRate = sampleRate;
+        updatePhaseIncrement();
+    }
+
+    /**
+     * @return output frequency that will have an integer period on input
+     */
+    public double getAdjustedFrequency() {
+        updatePhaseIncrement();
+        return mInverseSinePeriod * getSampleRate();
+    }
+
     public void setInputChannel(int inputChannel) {
         mInputChannel = inputChannel;
     }
@@ -279,15 +296,17 @@ public class BaseSineAnalyzer implements SignalAnalyzer {
         return result;
     }
 
+    private void updatePhaseIncrement() {
+        mSinePeriod = getSampleRate() / TARGET_GLITCH_FREQUENCY;
+        mInverseSinePeriod = 1.0 / mSinePeriod;
+        mPhaseIncrement = 2.0 * Math.PI * mInverseSinePeriod;
+    }
+
     @Override
     public void reset() {
         resetAccumulator();
 
-        mSinePeriod = getSampleRate() / TARGET_GLITCH_FREQUENCY;
         mOutputPhase = 0.0f;
-        mInverseSinePeriod = 1.0 / mSinePeriod;
-        mPhaseIncrement = 2.0 * Math.PI * mInverseSinePeriod;
-
         mMagnitude = 0.0;
         mMaxMagnitude = 0.0;
         mPhaseOffset = 0.0;
@@ -296,6 +315,8 @@ public class BaseSineAnalyzer implements SignalAnalyzer {
         mPhaseCount = 0;
         mPhaseErrorSum = 0.0;
         mPhaseErrorCount = 0.0;
+
+        updatePhaseIncrement();
     }
 
     @Override

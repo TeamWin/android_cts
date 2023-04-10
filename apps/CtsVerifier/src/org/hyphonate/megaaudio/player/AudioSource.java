@@ -28,6 +28,12 @@ public abstract class AudioSource {
     // This may be relevant to concrete classes which produce a sound with a notion of pitch
     public void setSampleRate(int sampleRate) {}
 
+    /**
+     * (for period sources) sets the frequency of the signal
+     * @param freq
+     */
+    public void setFreq(float freq) {}
+
     public void start() {}
     public void stop() {}
 
