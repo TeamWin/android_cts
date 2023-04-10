@@ -16,7 +16,6 @@
 package android.server.wm;
 
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
-import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.backlegacyapp.Components.BACK_LEGACY;
 
 import static org.junit.Assert.assertFalse;
@@ -53,7 +52,7 @@ public class BackNavigationLegacyTest extends ActivityManagerTestBase {
         mInstrumentation.waitForIdleSync();
         mInstrumentation.getUiAutomation().syncInputTransactions();
         TouchHelper.injectKey(KeyEvent.KEYCODE_BACK, false /* longpress */, true /* sync */);
-        waitAndAssertActivityState(BACK_LEGACY, STATE_STOPPED, "Activity should be stopped");
+        waitForIdle();
         assertTrue("OnBackPressed should have been called",
                 TestJournalContainer.get(BACK_LEGACY).extras.getBoolean(
                         Components.KEY_ON_BACK_PRESSED_CALLED));

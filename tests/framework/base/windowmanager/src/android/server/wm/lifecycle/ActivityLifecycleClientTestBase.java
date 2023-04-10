@@ -655,8 +655,4 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
         return launchOptions;
     }
-
-    // An activity that has intent action MAIN and category LAUNCHER that can be launched from home.
-    public static class LaunchFromHomeActivity extends LifecycleTrackingActivity {
-    }
 }
