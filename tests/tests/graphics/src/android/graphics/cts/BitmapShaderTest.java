@@ -16,6 +16,7 @@
 package android.graphics.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
@@ -242,5 +243,22 @@ public class BitmapShaderTest {
         // Configuring the anisotropic value should override the default filter mode
         shader.setMaxAnisotropy(4);
         assertEquals(BitmapShader.FILTER_MODE_DEFAULT, shader.getFilterMode());
+    }
+
+    @Test
+    public void testRecycledBitmapThrowsISE() {
+        Bitmap bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+        BitmapShader shader = new BitmapShader(bitmap,
+                Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        Paint paint = new Paint();
+        Canvas canvas = new Canvas(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888));
+        bitmap.recycle();
+        assertThrows(IllegalStateException.class, () -> {
+            paint.setShader(shader);
+            canvas.drawPaint(paint);
+        });
+        assertThrows(IllegalStateException.class, () -> {
+            new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        });
     }
 }
