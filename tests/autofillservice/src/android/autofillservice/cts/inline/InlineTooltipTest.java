@@ -140,6 +140,7 @@ public class InlineTooltipTest extends AbstractLoginActivityTestCase {
 
     @Test
     public void testShowTooltipWithSecondDataset() throws Exception {
+        mUiBot.assumeMinimumResolution(500);
         // Set service.
         enableService();
 
