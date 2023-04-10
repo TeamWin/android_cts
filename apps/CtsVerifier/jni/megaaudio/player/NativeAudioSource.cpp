@@ -39,6 +39,13 @@ Java_org_hyphonate_megaaudio_player_NativeAudioSource_setSampleRateN(
 }
 
 JNIEXPORT void JNICALL
+Java_org_hyphonate_megaaudio_player_NativeAudioSource_setFreqN(
+        JNIEnv *env, jobject thiz, jlong native_source_ptr, jfloat freq) {
+    AudioSource* audioSource = (AudioSource*)native_source_ptr;
+    audioSource->setFreq(freq);
+}
+
+JNIEXPORT void JNICALL
 Java_org_hyphonate_megaaudio_player_NativeAudioSource_resetN(
         JNIEnv *env, jobject thiz, jlong native_source_ptr) {
     // TODO: implement reset()

@@ -45,6 +45,8 @@ public:
 
     virtual void setSampleRate(int sampleRate) {}
 
+    virtual void setFreq(float freq) {}
+
     /**
      * Reset the stream to its beginning
      */
