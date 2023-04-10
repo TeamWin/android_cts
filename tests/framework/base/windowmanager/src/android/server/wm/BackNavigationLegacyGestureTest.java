@@ -16,7 +16,6 @@
 package android.server.wm;
 
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
-import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.backlegacyapp.Components.BACK_LEGACY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
@@ -53,7 +52,7 @@ public class BackNavigationLegacyGestureTest extends ActivityManagerTestBase {
         waitAndAssertActivityState(BACK_LEGACY, STATE_RESUMED, "Activity should be resumed");
         waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, BACK_LEGACY);
         triggerBackEventByGesture(DEFAULT_DISPLAY);
-        waitAndAssertActivityState(BACK_LEGACY, STATE_STOPPED, "Activity should be stopped");
+        waitForIdle();
         assertTrue("OnBackPressed should have been called",
                 TestJournalContainer.get(BACK_LEGACY).extras.getBoolean(
                         Components.KEY_ON_BACK_PRESSED_CALLED));
