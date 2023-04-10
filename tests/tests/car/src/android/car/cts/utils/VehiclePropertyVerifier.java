@@ -901,18 +901,23 @@ public class VehiclePropertyVerifier<T> {
                 // is thrown here.
                 // It is also possible that this may throw IllegalArgumentException if the value to
                 // set is not valid.
-                assertWithMessage("If exception is thrown for setting hvac property that is not "
-                        + "available, the exception type is correct").that(
-                        e.getClass()).isAnyOf(PropertyNotAvailableException.class,
-                        IllegalArgumentException.class);
+                assertWithMessage(
+                                "Setting property " + mPropertyName + " when it's not available"
+                                    + " should throw either PropertyNotAvailableException or"
+                                    + " IllegalArgumentException.")
+                        .that(e.getClass())
+                        .isAnyOf(PropertyNotAvailableException.class,
+                                IllegalArgumentException.class);
             }
             if (currentValue == null) {
                 // If the property is not available for getting, continue.
                 continue;
             }
             CarPropertyValue<T> newValue = mCarPropertyManager.getProperty(mPropertyId, areaId);
-            assertWithMessage("setting HVAC dependent property: " + mPropertyName
-                    + "  while hvac power is off must have no effect").that(newValue.getValue())
+            assertWithMessage(
+                            "Setting property " + mPropertyName + " while power is off or required"
+                                + " property is disabled must have no effect.")
+                    .that(newValue.getValue())
                     .isEqualTo(currentValue.getValue());
         }
 
