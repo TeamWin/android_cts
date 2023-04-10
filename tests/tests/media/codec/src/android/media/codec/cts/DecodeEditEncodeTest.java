@@ -793,7 +793,7 @@ public class DecodeEditEncodeTest {
         if (VERBOSE) Log.d(TAG, "checkVideoFile");
 
         try {
-            surface = new OutputSurface(mWidth, mHeight);
+            surface = new OutputSurface(mWidth, mHeight, mUseHighBitDepth);
 
             MediaFormat format = inputData.getMediaFormat();
             decoder = MediaCodec.createByCodecName(mDecoderName);
