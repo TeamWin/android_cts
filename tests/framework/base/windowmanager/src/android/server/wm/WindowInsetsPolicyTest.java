@@ -61,6 +61,7 @@ import org.junit.rules.ErrorCollector;
 import java.util.function.Supplier;
 
 @Presubmit
+@android.server.wm.annotation.Group2
 public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
     private static final String TAG = WindowInsetsPolicyTest.class.getSimpleName();
 
