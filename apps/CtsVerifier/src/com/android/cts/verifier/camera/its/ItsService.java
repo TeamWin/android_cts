@@ -3007,11 +3007,13 @@ public class ItsService extends Service implements SensorEventListener {
                         config.setStreamUseCase(mStreamUseCaseMap.get(i));
                     }
                     if (jsonOutputSpecs != null) {
-                        JSONObject surfaceObj = jsonOutputSpecs.getJSONObject(i);
-                        int colorSpaceInt = surfaceObj.optInt(
+                        if (i < jsonOutputSpecs.length()) {
+                            JSONObject surfaceObj = jsonOutputSpecs.getJSONObject(i);
+                            int colorSpaceInt = surfaceObj.optInt(
                                 "colorSpace", ColorSpaceProfiles.UNSPECIFIED);
-                        if (colorSpaceInt != ColorSpaceProfiles.UNSPECIFIED) {
-                            config.setColorSpace(ColorSpace.Named.values()[colorSpaceInt]);
+                            if (colorSpaceInt != ColorSpaceProfiles.UNSPECIFIED) {
+                                config.setColorSpace(ColorSpace.Named.values()[colorSpaceInt]);
+                            }
                         }
                     }
                     outputConfigs.add(config);
