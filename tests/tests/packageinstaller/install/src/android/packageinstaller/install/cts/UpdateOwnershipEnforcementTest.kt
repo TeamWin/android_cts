@@ -290,6 +290,7 @@ class UpdateOwnershipEnforcementTest : UpdateOwnershipEnforcementTestBase() {
         // Install the test app and enable update ownership enforcement with another package
         installTestPackage("--update-ownership -i $TEST_INSTALLER_APK_PACKAGE_NAME")
 
+        copyTestNotAllowUpdateOwnershipApk()
         try {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(Manifest.permission.INSTALL_PACKAGES)
