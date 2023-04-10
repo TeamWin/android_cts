@@ -252,6 +252,8 @@ public class AtomTests {
                 131);
         // Op 132 was deprecated
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_USE_FULL_SCREEN_INTENT, 133);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_CAMERA_SANDBOXED, 134);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_RECORD_AUDIO_SANDBOXED, 135);
     }
 
     @Test
