@@ -70,6 +70,7 @@ import java.util.List;
 import java.util.Locale;
 
 @LargeTest
+@android.server.wm.annotation.Group2
 public class WindowInsetsAnimationSynchronicityTests {
     private static final int APP_COLOR = 0xff01fe10; // green
     private static final int BEHIND_IME_COLOR = 0xfffeef00; // yellow

@@ -61,6 +61,7 @@ import java.util.Collections;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 @Presubmit
+@android.server.wm.annotation.Group2
 public class WindowInsetsTest {
 
     private static final DisplayCutout CUTOUT = new DisplayCutout(new Rect(0, 10, 0, 0),
