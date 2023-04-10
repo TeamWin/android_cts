@@ -80,10 +80,11 @@ class ConsistencyTest(its_base_test.ItsBaseTest):
       else:
         iso_exp_tol = _ISO_EXP_ISP_TOL
 
-      # Do 3A and save data.
       iso_exps = []
       g_gains = []
       fds = []
+      cam.do_3a()  # do 3A 1x up front to 'prime the pump'
+      # Do 3A _NUM_TEST_ITERATIONS times and save data.
       for i in range(_NUM_TEST_ITERATIONS):
         try:
           iso, exposure, awb_gains, awb_transform, focus_distance = cam.do_3a(
