@@ -32,7 +32,6 @@ import android.mediav2.common.cts.EncoderConfigParams;
 import android.mediav2.common.cts.EncoderProfileLevelTestBase;
 import android.mediav2.common.cts.OutputManager;
 import android.util.Log;
-import android.util.Pair;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
@@ -75,8 +74,45 @@ import java.util.Objects;
 @RunWith(Parameterized.class)
 public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
     private static final String LOG_TAG = EncoderProfileLevelTest.class.getSimpleName();
-    private static final HashMap<String, Pair<int[], Integer>> PROFILE_LEVEL_CDD = new HashMap<>();
+    private static final HashMap<String, CddRequirements> CDD_REQUIREMENTS_MAP = new HashMap<>();
 
+    private static class CddRequirements {
+        private int[] mProfiles;
+        private int mLevel;
+        private int mHeight;
+        private int mWidth;
+
+        CddRequirements(int[] profiles, int level, int width, int height) {
+            mProfiles = profiles;
+            mLevel = level;
+            mWidth = width;
+            mHeight = height;
+        }
+
+        CddRequirements(int[] profiles) {
+            this(profiles, -1 /* level */, -1 /* width */, -1 /* height */);
+        }
+
+        CddRequirements(int[] profiles, int level) {
+            this(profiles, level, -1 /* width */, -1 /* height */);
+        }
+
+        public int[] getProfiles() {
+            return mProfiles;
+        }
+
+        public int getLevel() {
+            return mLevel;
+        }
+
+        public int getWidth() {
+            return mWidth;
+        }
+
+        public int getHeight() {
+            return mHeight;
+        }
+    }
     public EncoderProfileLevelTest(String encoder, String mediaType,
             EncoderConfigParams[] encCfgParams, @SuppressWarnings("unused") String testLabel,
             String allTestParams) {
@@ -92,6 +128,7 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
         final int param1 = (int) arg[2];
         final int param2 = (int) arg[3];
         final int fps = (int) arg[4];
+        final int level = (int) arg[5];
         if (isVideo) {
             for (int maxBframe : maxBFrames) {
                 if (maxBframe != 0) {
@@ -103,9 +140,10 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
                 Object[] testArgs = new Object[3];
                 testArgs[0] = arg[0];
                 testArgs[1] = getVideoEncoderCfgParams(mediaType, br, param1, param2, fps,
-                        colorFormat, maxBframe, profiles);
-                testArgs[2] = String.format("%dkbps_%dx%d_%dfps_%s_%d-bframes", br / 1000, param1,
-                        param2, fps, colorFormatToString(colorFormat, -1), maxBframe);
+                        colorFormat, maxBframe, profiles, level);
+                testArgs[2] = String.format("%dkbps_%dx%d_%dfps_%s_%d_%d-bframes", br / 1000,
+                        param1, param2, fps, colorFormatToString(colorFormat, -1),
+                        level, maxBframe);
                 argsList.add(testArgs);
             }
         } else {
@@ -119,10 +157,10 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
     }
 
     private static EncoderConfigParams[] getVideoEncoderCfgParams(String mediaType, int bitRate,
-            int width, int height, int frameRate, int colorFormat, int maxBframe, int[] profiles) {
+            int width, int height, int frameRate, int colorFormat, int maxBframe, int[] profiles,
+            int level) {
         ArrayList<EncoderConfigParams> cfgParams = new ArrayList<>();
         for (int profile : profiles) {
-            int level = getMinLevel(mediaType, width, height, frameRate, bitRate, profile);
             if (maxBframe != 0) {
                 if (mediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC) && (
                         profile == AVCProfileBaseline
@@ -164,96 +202,96 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
         final boolean needAudio = true;
         final boolean needVideo = true;
         final Object[][] exhaustiveArgsList = new Object[][]{
-                // Audio - CodecMediaType, bit-rate, sample rate, channel count
-                {MediaFormat.MIMETYPE_AUDIO_AAC, 64000, 48000, 1, -1},
-                {MediaFormat.MIMETYPE_AUDIO_AAC, 128000, 48000, 2, -1},
-                // Video - CodecMediaType, bit-rate, height, width, frame-rate
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 64000, 128, 96, 30},  // AVCLevel1
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 128000, 176, 144, 15}, // AVCLevel1b
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 192000, 320, 240, 10},  // AVCLevel11
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 384000, 320, 240, 20},  // AVCLevel12
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 512000, 352, 240, 30},  // AVCLevel13
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 832000, 352, 288, 30},  // AVCLevel2
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 1000000, 352, 576, 25},  // AVCLevel21
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 1500000, 640, 480, 15},  // AVCLevel22
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 2000000, 720, 480, 30},  // AVCLevel3
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 3000000, 1280, 720, 30},  // AVCLevel31
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 6000000, 1280, 1024, 42},  // AVCLevel32
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 10000000, 1920, 1088, 30},  // AVCLevel4
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 25000000, 2048, 1024, 30},  // AVCLevel41
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 50000000, 2048, 1088, 60},  // AVCLevel42
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 60000000, 2560, 1920, 30},  // AVCLevel5
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 80000000, 4096, 2048, 30},  // AVCLevel51
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 120000000, 4096, 2160, 60},  // AVCLevel52
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 240000000, 8192, 4320, 30},  // AVCLevel6
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 480000000, 8192, 4320, 60},  // AVCLevel61
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 800000000, 8192, 4320, 120},  // AVCLevel62
+                // Audio - CodecMediaType, bit-rate, sample rate, channel count, level
+                {MediaFormat.MIMETYPE_AUDIO_AAC, 64000, 48000, 1, -1, -1},
+                {MediaFormat.MIMETYPE_AUDIO_AAC, 128000, 48000, 2, -1, -1},
+                // Video - CodecMediaType, bit-rate, height, width, frame-rate, level
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 64000, 128, 96, 30, AVCLevel1},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 128000, 176, 144, 15, AVCLevel1b},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 192000, 320, 240, 10, AVCLevel11},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 384000, 320, 240, 20, AVCLevel12},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 512000, 352, 240, 30, AVCLevel13},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 832000, 352, 288, 30, AVCLevel2},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 1000000, 576, 352, 25, AVCLevel21},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 1500000, 640, 480, 15, AVCLevel22},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 2000000, 720, 480, 30, AVCLevel3},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 3000000, 1280, 720, 30, AVCLevel31},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 6000000, 1280, 1024, 42, AVCLevel32},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 10000000, 1920, 1088, 30, AVCLevel4},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 25000000, 2048, 1024, 30, AVCLevel41},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 50000000, 2048, 1088, 60, AVCLevel42},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 60000000, 2560, 1920, 30, AVCLevel5},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 80000000, 4096, 2048, 30, AVCLevel51},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 120000000, 4096, 2160, 60, AVCLevel52},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 240000000, 8192, 4320, 30, AVCLevel6},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 480000000, 8192, 4320, 60, AVCLevel61},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 800000000, 8192, 4320, 120, AVCLevel62},
 
-                {MediaFormat.MIMETYPE_VIDEO_MPEG2, 4000000, 352, 288, 30},  // MPEG2LevelLL
-                {MediaFormat.MIMETYPE_VIDEO_MPEG2, 15000000, 720, 480, 30},  // MPEG2LevelML
-                {MediaFormat.MIMETYPE_VIDEO_MPEG2, 60000000, 1440, 1088, 30},  // MPEG2LevelH14
-                {MediaFormat.MIMETYPE_VIDEO_MPEG2, 80000000, 1920, 1088, 30},  // MPEG2LevelHL
-                {MediaFormat.MIMETYPE_VIDEO_MPEG2, 80000000, 1920, 1088, 60},  // MPEG2LevelHP
+                {MediaFormat.MIMETYPE_VIDEO_MPEG2, 4000000, 352, 288, 30, MPEG2LevelLL},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG2, 15000000, 720, 480, 30, MPEG2LevelML},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG2, 60000000, 1440, 1088, 30, MPEG2LevelH14},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG2, 80000000, 1920, 1088, 30, MPEG2LevelHL},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG2, 80000000, 1920, 1088, 60, MPEG2LevelHP},
 
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 200000, 256, 144, 15},  // VP9Level1
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 512000, 384, 192, 30},  // VP9Level11
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 1000000, 480, 256, 30},  // VP9Level2
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 1500000, 640, 384, 30},  // VP9Level21
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 1600000, 720, 480, 30},  // VP9Level3
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 4000000, 1280, 720, 30},  // VP9Level31
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 5000000, 1920, 1080, 30},  // VP9Level4
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 16000000, 2048, 1088, 60},  // VP9Level41
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 20000000, 3840, 2160, 30},  // VP9Level5
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 80000000, 4096, 2176, 60},  // VP9Level51
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 160000000, 4096, 2176, 120},  // VP9Level52
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 180000000, 8192, 4352, 30},  // VP9Level6
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 240000000, 8192, 4352, 60},  // VP9Level61
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 480000000, 8192, 4352, 120},  // VP9Level62
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 200000, 256, 144, 15, VP9Level1},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 512000, 384, 192, 30, VP9Level11},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 1000000, 480, 256, 30, VP9Level2},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 1500000, 640, 384, 30, VP9Level21},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 1600000, 720, 480, 30, VP9Level3},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 4000000, 1280, 720, 30, VP9Level31},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 5000000, 1920, 1080, 30, VP9Level4},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 16000000, 2048, 1088, 60, VP9Level41},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 20000000, 3840, 2160, 30, VP9Level5},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 80000000, 4096, 2176, 60, VP9Level51},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 160000000, 4096, 2176, 120, VP9Level52},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 180000000, 8192, 4352, 30, VP9Level6},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 240000000, 8192, 4352, 60, VP9Level61},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 480000000, 8192, 4352, 120, VP9Level62},
 
-                {MediaFormat.MIMETYPE_VIDEO_H263, 64000, 176, 144, 15},  // H263Level10
-                {MediaFormat.MIMETYPE_VIDEO_H263, 128000, 176, 144, 15},  // H263Level45
-                {MediaFormat.MIMETYPE_VIDEO_H263, 128000, 352, 288, 15},  // H263Level20
-                {MediaFormat.MIMETYPE_VIDEO_H263, 384000, 352, 288, 30},  // H263Level30
-                {MediaFormat.MIMETYPE_VIDEO_H263, 2048000, 352, 288, 30},  // H263Level40
-                {MediaFormat.MIMETYPE_VIDEO_H263, 4096000, 352, 240, 60},  // H263Level50
-                {MediaFormat.MIMETYPE_VIDEO_H263, 8192000, 720, 240, 60},  // H263Level60
-                {MediaFormat.MIMETYPE_VIDEO_H263, 16384000, 720, 576, 50},  // H263Level70
+                {MediaFormat.MIMETYPE_VIDEO_H263, 64000, 176, 144, 15, H263Level10},
+                {MediaFormat.MIMETYPE_VIDEO_H263, 128000, 176, 144, 15, H263Level45},
+                {MediaFormat.MIMETYPE_VIDEO_H263, 128000, 352, 288, 15, H263Level20},
+                {MediaFormat.MIMETYPE_VIDEO_H263, 384000, 352, 288, 30, H263Level30},
+                {MediaFormat.MIMETYPE_VIDEO_H263, 2048000, 352, 288, 30, H263Level40},
+                {MediaFormat.MIMETYPE_VIDEO_H263, 4096000, 352, 240, 60, H263Level50},
+                {MediaFormat.MIMETYPE_VIDEO_H263, 8192000, 720, 240, 60, H263Level60},
+                {MediaFormat.MIMETYPE_VIDEO_H263, 16384000, 720, 576, 50, H263Level70},
 
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 128000, 176, 144, 15},  // HEVCMainTierLevel1
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 512000, 352, 288, 30},  // HEVCMainTierLevel2
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1000000, 640, 360, 30},  // HEVCMainTierLevel21
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1000000, 512, 512, 30},  // HEVCMainTierLevel3
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1600000, 720, 480, 30},  // HEVCMainTierLevel3
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 4000000, 1280, 720, 30},  // HEVCMainTierLevel31
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 5000000, 1920, 1080, 30},  // HEVCMainTierLevel4
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 16000000, 1920, 1080, 30},  // HEVCHighTierLevel4
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 20000000, 1920, 1080, 60},  // HEVCMainTierLevel41
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 30000000, 1920, 1080, 60},  // HEVCHighTierLevel41
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 20000000, 3840, 2160, 30},  // HEVCMainTierLevel5
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 3840, 2160, 30},  // HEVCHighTierLevel5
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 40000000, 3840, 2160, 60},  // HEVCMainTierLevel51
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 80000000, 3840, 2160, 60},  // HEVCHighTierLevel51
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 3840, 2160, 120}, // HEVCMainTierLevel52
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 100000000, 3840, 2160, 120}, //HEVCHighTierLevel52
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 7680, 4320, 30},  // HEVCMainTierLevel6
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 80000000, 7680, 4320, 30},  // HEVCHighTierLevel6
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 100000000, 7680, 4320, 60}, // HEVCMainTierLevel61
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 240000000, 7680, 4320, 60}, // HEVCHighTierLevel61
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 200000000, 7680, 4320, 120}, //HEVCMainTierLevel62
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 360000000, 7680, 4320, 120}, //HEVCHighTierLevel62
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 128000, 176, 144, 15, HEVCMainTierLevel1},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 512000, 352, 288, 30, HEVCMainTierLevel2},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1000000, 640, 360, 30, HEVCMainTierLevel21},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1000000, 512, 512, 30, HEVCMainTierLevel3},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1600000, 720, 480, 30, HEVCMainTierLevel3},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 4000000, 1280, 720, 30, HEVCMainTierLevel31},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 5000000, 1920, 1080, 30, HEVCMainTierLevel4},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 16000000, 1920, 1080, 30, HEVCHighTierLevel4},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 20000000, 1920, 1080, 60, HEVCMainTierLevel41},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 30000000, 1920, 1080, 60, HEVCHighTierLevel41},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 20000000, 3840, 2160, 30, HEVCMainTierLevel5},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 3840, 2160, 30, HEVCHighTierLevel5},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 40000000, 3840, 2160, 60, HEVCMainTierLevel51},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 80000000, 3840, 2160, 60, HEVCHighTierLevel51},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 3840, 2160, 120, HEVCMainTierLevel52},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 100000000, 3840, 2160, 120, HEVCHighTierLevel52},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 7680, 4320, 30, HEVCMainTierLevel6},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 80000000, 7680, 4320, 30, HEVCHighTierLevel6},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 100000000, 7680, 4320, 60, HEVCMainTierLevel61},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 240000000, 7680, 4320, 60, HEVCHighTierLevel61},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 200000000, 7680, 4320, 120, HEVCMainTierLevel62},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 360000000, 7680, 4320, 120, HEVCHighTierLevel62},
 
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 1500000, 426, 240, 30},  // AV1Level2
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 3000000, 640, 360, 30},  // AV1Level21
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 6000000, 854, 480, 30},  // AV1Level3
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 10000000, 1280, 720, 30},  // AV1Level31
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 12000000, 1920, 1080, 30},  // AV1Level4
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 20000000, 1920, 1080, 60},  // AV1Level41
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 30000000, 3840, 2160, 30},  // AV1Level5
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 40000000, 3840, 2160, 60},  // AV1Level51
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 60000000, 3840, 2160, 120},  // AV1Level52
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 60000000, 7680, 4320, 30},  // AV1Level6
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 100000000, 7680, 4320, 60},  // AV1Level61
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 160000000, 7680, 4320, 120},  // AV1Level62
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 1500000, 426, 240, 30, AV1Level2},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 3000000, 640, 360, 30, AV1Level21},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 6000000, 854, 480, 30, AV1Level3},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 10000000, 1280, 720, 30, AV1Level31},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 12000000, 1920, 1080, 30, AV1Level4},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 20000000, 1920, 1080, 60, AV1Level41},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 30000000, 3840, 2160, 30, AV1Level5},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 40000000, 3840, 2160, 60, AV1Level51},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 60000000, 3840, 2160, 120, AV1Level52},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 60000000, 7680, 4320, 30, AV1Level6},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 100000000, 7680, 4320, 60, AV1Level61},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 160000000, 7680, 4320, 120, AV1Level62},
         };
         final List<Object[]> argsList = new ArrayList<>();
         for (Object[] arg : exhaustiveArgsList) {
@@ -270,26 +308,26 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
             }
         }
         final Object[][] mpeg4SimpleProfileArgsList = new Object[][]{
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 64000, 176, 144, 15},  // MPEG4Level0 @sp
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 128000, 176, 144, 15},  // MPEG4Level0b @sp
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 64000, 128, 96, 30},  // MPEG4Level1 @sp
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 128000, 352, 288, 15},  // MPEG4Level2 @sp
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 384000, 352, 288, 30},  // MPEG4Level3 @sp
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 4000000, 640, 480, 30},  // MPEG4Level4a @sp
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 8000000, 720, 576, 24},  // MPEG4Level5 @sp
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 12000000, 1280, 720, 30},  // MPEG4Level6 @sp
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 64000, 176, 144, 15, MPEG4Level0},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 128000, 176, 144, 15, MPEG4Level0b},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 64000, 128, 96, 30, MPEG4Level1},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 128000, 352, 288, 15, MPEG4Level2},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 384000, 352, 288, 30, MPEG4Level3},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 4000000, 640, 480, 30, MPEG4Level4a},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 8000000, 720, 576, 24, MPEG4Level5},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 12000000, 1280, 720, 30, MPEG4Level6},
         };
         for (Object[] arg : mpeg4SimpleProfileArgsList) {
             argsList.addAll(prepareTestArgs(arg, new int[]{MPEG4ProfileSimple},
                     COLOR_FormatYUV420Flexible));
         }
         final Object[][] mpeg4AdvSimpleProfileArgsList = new Object[][]{
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 128000, 176, 144, 30},  // MPEG4Level1 @ asp
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 384000, 352, 288, 15},  // MPEG4Level2 @ asp
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 768000, 352, 288, 30},  // MPEG4Level3 @ asp
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 1500000, 352, 288, 30},  // MPEG4Level3b @ asp
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 3000000, 704, 576, 15},  // MPEG4Level4 @ asp
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 8000000, 720, 576, 30},  // MPEG4Level5 @ asp
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 128000, 176, 144, 30, MPEG4Level1},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 384000, 352, 288, 15, MPEG4Level2},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 768000, 352, 288, 30, MPEG4Level3},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 1500000, 352, 288, 30, MPEG4Level3b},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 3000000, 704, 576, 15, MPEG4Level4},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, 8000000, 720, 576, 30, MPEG4Level5},
         };
         for (Object[] arg : mpeg4AdvSimpleProfileArgsList) {
             argsList.addAll(prepareTestArgs(arg, new int[]{MPEG4ProfileAdvancedSimple},
@@ -299,19 +337,21 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
     }
 
     static {
-        PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_AUDIO_AAC,
-                new Pair<>(new int[]{AACObjectLC, AACObjectHE, AACObjectELD}, -1));
-        PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_VIDEO_H263,
-                new Pair<>(new int[]{H263ProfileBaseline}, H263Level45));
-        PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_VIDEO_AVC,
-                new Pair<>(new int[]{AVCProfileBaseline}, AVCLevel3));
-        PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_VIDEO_HEVC,
-                new Pair<>(new int[]{HEVCProfileMain}, HEVCMainTierLevel3));
-        PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_VIDEO_VP9,
-                new Pair<>(new int[]{VP9Profile0}, VP9Level3));
+        // Following lists profiles, level, maxWidth and maxHeight mandated by the CDD.
+        // CodecMediaType, profiles, level, maxWidth, maxHeight
+        CDD_REQUIREMENTS_MAP.put(MediaFormat.MIMETYPE_AUDIO_AAC,
+                new CddRequirements(new int[]{AACObjectLC, AACObjectHE, AACObjectELD}));
+        CDD_REQUIREMENTS_MAP.put(MediaFormat.MIMETYPE_VIDEO_H263,
+                new CddRequirements(new int[]{H263ProfileBaseline}, H263Level45));
+        CDD_REQUIREMENTS_MAP.put(MediaFormat.MIMETYPE_VIDEO_AVC,
+                new CddRequirements(new int[]{AVCProfileBaseline}, AVCLevel3));
+        CDD_REQUIREMENTS_MAP.put(MediaFormat.MIMETYPE_VIDEO_HEVC,
+                new CddRequirements(new int[]{HEVCProfileMain}, HEVCMainTierLevel3, 512, 512));
+        CDD_REQUIREMENTS_MAP.put(MediaFormat.MIMETYPE_VIDEO_VP9,
+                new CddRequirements(new int[]{VP9Profile0}, VP9Level3));
         if (IS_AT_LEAST_U) {
-            PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_VIDEO_AV1,
-                    new Pair<>(new int[]{AV1ProfileMain8, AV1ProfileMain10}, -1));
+            CDD_REQUIREMENTS_MAP.put(MediaFormat.MIMETYPE_VIDEO_AV1,
+                    new CddRequirements(new int[]{AV1ProfileMain8, AV1ProfileMain10}));
         }
     }
 
@@ -339,10 +379,21 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
     }
 
     private boolean shallSupportProfileAndLevel(EncoderConfigParams cfg) {
-        Pair<int[], Integer> cddProfileLevel =
-                Objects.requireNonNull(PROFILE_LEVEL_CDD.get(cfg.mMediaType));
-        int[] profileCdd = cddProfileLevel.first;
-        int levelCdd = cddProfileLevel.second;
+        CddRequirements requirement =
+                Objects.requireNonNull(CDD_REQUIREMENTS_MAP.get(cfg.mMediaType));
+        int[] profileCdd = requirement.getProfiles();
+        int levelCdd = requirement.getLevel();
+        int widthCdd = requirement.getWidth();
+        int heightCdd = requirement.getHeight();
+
+        // Check if CDD doesn't require support beyond certain resolutions.
+        if (widthCdd != -1 && mActiveEncCfg.mWidth > widthCdd) {
+            return false;
+        }
+        if (heightCdd != -1 && mActiveEncCfg.mHeight > heightCdd) {
+            return false;
+        }
+
         for (int cddProfile : profileCdd) {
             if (cfg.mProfile == cddProfile) {
                 if (!cfg.mIsAudio) {
@@ -372,6 +423,11 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
             "android.media.MediaFormat#KEY_LEVEL"})
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testValidateProfileLevel() throws IOException, InterruptedException {
+        int minLevel = getMinLevel(mMediaType, mEncCfgParams[0].mWidth, mEncCfgParams[0].mHeight,
+                mEncCfgParams[0].mFrameRate, mEncCfgParams[0].mBitRate, mEncCfgParams[0].mProfile);
+        assertEquals("Calculated minimum acceptable level does not match the entry in test table "
+                + mTestConfig, mEncCfgParams[0].mLevel, minLevel);
+
         if (mIsVideo && mEncCfgParams[0].mInputBitDepth != 8) {
             Assume.assumeTrue(mCodecName + " doesn't support " + colorFormatToString(
                             mEncCfgParams[0].mColorFormat, mEncCfgParams[0].mInputBitDepth),
@@ -384,8 +440,7 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
             Assume.assumeFalse("Disable frame rate > 30 for " + mCodecName,
                     mEncCfgParams[0].mFrameRate > 30);
         }
-        boolean cddSupportedMediaType = PROFILE_LEVEL_CDD.get(mMediaType) != null;
-
+        boolean cddSupportedMediaType = CDD_REQUIREMENTS_MAP.get(mMediaType) != null;
         {
             mActiveRawRes = EncoderInput.getRawResource(mEncCfgParams[0]);
             assertNotNull("no raw resource found for testing config : "
