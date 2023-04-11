@@ -300,7 +300,7 @@ def convert_to_world_coordinates(x, y, r, t, k, z_w):
   a = np.array([[x*r[2][0]-k_x1, x*r[2][1]-k_x2],
                 [y*r[2][0]-k_y1, y*r[2][1]-k_y2]])
   b = np.array([[k_x3-x*c_1], [k_y3-y*c_1]])
-  return np.dot(np.linalg.inv(a), b)
+  return (float(x) for x in np.dot(np.linalg.inv(a), b))
 
 
 def convert_to_image_coordinates(p_w, r, t, k):
