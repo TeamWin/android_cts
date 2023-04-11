@@ -18,15 +18,9 @@ package com.android.cts.servicekilltest;
 
 import static com.android.cts.servicekilltestapp.ServiceKillTestService.Benchmark.Measure.*;
 import static com.android.cts.servicekilltestapp.ServiceKillTestService.logDebug;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import org.junit.runner.RunWith;
-import org.junit.After;
-
-import com.android.cts.servicekilltestapp.ServiceKillTestService;
-
-import com.android.compatibility.common.util.PollingCheck;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -34,25 +28,26 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
-import android.os.Build;
-import android.platform.test.annotations.AppModeFull;
-import android.util.Log;
-import android.os.BatteryManager;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.UiDevice;
+
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.cts.servicekilltestapp.ServiceKillTestService;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.Before;
-
-import android.support.test.uiautomator.UiDevice;
 
 @AppModeFull
 @LargeTest
