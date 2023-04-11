@@ -137,6 +137,9 @@ public class VideoEncoderDecoderTest {
     private static final int PIXEL_CHECK_PER_FRAME = 1000;
     // RMS error in pixel values above this will be treated as error.
     private static final double PIXEL_RMS_ERROR_MARGIN = 20.0;
+    // offset legitimate timestamps away from 0, so that we'll never confuse them
+    // with a missing or otherwise erroneous timestamp.
+    private static final int TIMESTAMP_OFFSET = 132;
     private double mRmsErrorMargin;
     private Random mRandom;
 
@@ -911,7 +914,7 @@ public class VideoEncoderDecoderTest {
                     lastOutputTimeUs = nowUs;
 
                     if (mTestConfig.mTestPixels) {
-                        Point origin = getOrigin(outFrameCount, runId);
+                        Point origin = getOrigin(computeFrameIndex(info.presentationTimeUs), runId);
                         int i;
 
                         // if decoder supports planar or semiplanar, check output with
@@ -1206,6 +1209,15 @@ public class VideoEncoderDecoderTest {
      * Generates the presentation time for frame N, in microseconds.
      */
     private long computePresentationTime(int frameIndex) {
-        return 132 + frameIndex * 1000000L / mFrameRate;
+        return TIMESTAMP_OFFSET + frameIndex * 1000000L / mFrameRate;
     }
+
+    /**
+     * Generates the frameIndex from presentation time
+     */
+    private int computeFrameIndex(long ptsUsec) {
+        assertTrue("value for PtsUsec too low: " + ptsUsec, ptsUsec >= TIMESTAMP_OFFSET);
+        return (int) ((ptsUsec - TIMESTAMP_OFFSET) * mFrameRate / 1000000.0 + 0.5);
+    }
+
 }

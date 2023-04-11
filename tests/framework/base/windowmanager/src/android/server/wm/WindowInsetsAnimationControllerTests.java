@@ -105,6 +105,7 @@ import java.util.stream.Collectors;
  */
 //TODO(b/159167851) @Presubmit
 @RunWith(Parameterized.class)
+@android.server.wm.annotation.Group2
 public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase {
 
     ControllerTestActivity mActivity;

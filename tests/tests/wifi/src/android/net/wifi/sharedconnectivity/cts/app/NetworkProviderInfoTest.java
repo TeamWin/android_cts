@@ -21,6 +21,8 @@ import static android.net.wifi.sharedconnectivity.app.NetworkProviderInfo.DEVICE
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.net.wifi.sharedconnectivity.app.NetworkProviderInfo;
 import android.os.Build;
 import android.os.Parcel;
@@ -109,6 +111,61 @@ public class NetworkProviderInfoTest {
         NetworkProviderInfo info2 = buildNetworkProviderInfoBuilder().build();
 
         assertThat(info1.hashCode()).isEqualTo(info2.hashCode());
+    }
+
+    @Test
+    public void deviceNameIsSetAsNull_shouldThrowException() {
+        assertThrows(NullPointerException.class, () -> new NetworkProviderInfo.Builder(
+                null, DEVICE_MODEL));
+    }
+
+    @Test
+    public void deviceModelIsSetAsNull_shouldThrowException() {
+        assertThrows(NullPointerException.class, () -> new NetworkProviderInfo.Builder(
+                DEVICE_NAME, null));
+    }
+
+    @Test
+    public void illegalDeviceTypeValueIsSet_shouldThrowException() {
+        NetworkProviderInfo.Builder builder = new NetworkProviderInfo.Builder(DEVICE_NAME,
+                DEVICE_MODEL);
+        builder.setDeviceType(1000);
+
+        Exception e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("Illegal device type");
+    }
+
+    @Test
+    public void illegalBatteryPercentageValueIsSet_shouldThrowException() {
+        NetworkProviderInfo.Builder builder = new NetworkProviderInfo.Builder(DEVICE_NAME,
+                DEVICE_MODEL);
+        builder.setDeviceType(DEVICE_TYPE);
+        builder.setBatteryPercentage(-1);
+
+        Exception e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("BatteryPercentage must be");
+
+        builder.setBatteryPercentage(101);
+
+        e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("BatteryPercentage must be");
+    }
+
+    @Test
+    public void illegalConnectionStrengthValueIsSet_shouldThrowException() {
+        NetworkProviderInfo.Builder builder = new NetworkProviderInfo.Builder(DEVICE_NAME,
+                DEVICE_MODEL);
+        builder.setDeviceType(DEVICE_TYPE);
+        builder.setBatteryPercentage(BATTERY_PERCENTAGE);
+        builder.setConnectionStrength(-1);
+
+        Exception e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("ConnectionStrength must be");
+
+        builder.setConnectionStrength(5);
+
+        e = assertThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage()).contains("ConnectionStrength must be");
     }
 
     private NetworkProviderInfo.Builder buildNetworkProviderInfoBuilder() {

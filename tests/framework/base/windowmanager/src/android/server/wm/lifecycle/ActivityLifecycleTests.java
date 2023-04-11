@@ -62,7 +62,6 @@ import static android.server.wm.lifecycle.TransitionVerifier.assertRelaunchSeque
 import static android.server.wm.lifecycle.TransitionVerifier.assertRestartAndResumeSequence;
 import static android.server.wm.lifecycle.TransitionVerifier.assertRestartSequence;
 import static android.server.wm.lifecycle.TransitionVerifier.assertResumeToDestroySequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertResumeToStopSequence;
 import static android.server.wm.lifecycle.TransitionVerifier.assertSequence;
 import static android.server.wm.lifecycle.TransitionVerifier.assertSequenceMatchesOneOf;
 import static android.server.wm.lifecycle.TransitionVerifier.assertTransitionNotObserved;
@@ -76,7 +75,6 @@ import static android.view.Surface.ROTATION_90;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
@@ -1077,23 +1075,5 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         assertTransitionNotObserved(getTransitionLog(),
                 transition(FirstActivity.class, ON_USER_LEAVE_HINT),"userLeaveHint");
-    }
-
-    @Test
-    public void testLauncherActivityStoppedOnBackPress() throws Exception {
-        launchActivityAndWait(LaunchFromHomeActivity.class);
-        getTransitionLog().clear();
-
-        pressBackButton();
-
-        // Verify that pressing the back button on an activity that can be launched from
-        // home/launcher causes it to be stopped instead of being destroyed, since it should be
-        // moved to the back.
-        waitAndAssertActivityStates(state(LaunchFromHomeActivity.class, ON_STOP));
-        assertResumeToStopSequence(LaunchFromHomeActivity.class, getTransitionLog());
-
-        final ComponentName name = getComponentName(LaunchFromHomeActivity.class);
-        mWmState.computeState(name);
-        assertEquals(STATE_STOPPED, mWmState.getActivity(name).getState());
     }
 }

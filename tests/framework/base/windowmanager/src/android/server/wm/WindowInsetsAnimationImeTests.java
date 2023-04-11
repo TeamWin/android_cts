@@ -51,6 +51,7 @@ import org.mockito.InOrder;
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsAnimationImeTests
  */
 @Presubmit
+@android.server.wm.annotation.Group2
 public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase {
 
     private static final int KEYBOARD_HEIGHT = 600;

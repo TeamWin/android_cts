@@ -35,11 +35,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.DeviceConfig;
 
-import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
@@ -233,7 +231,6 @@ public class OneTimePermissionTest {
 
     @Test
     @AsbSecurityTest(cveBugId = 237405974L)
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
     public void testCustomPermissionIsGrantedOneTime() throws Throwable {
         Intent startApp = new Intent()
                 .setComponent(new ComponentName(CUSTOM_CAMERA_PERM_APP_PKG_NAME,

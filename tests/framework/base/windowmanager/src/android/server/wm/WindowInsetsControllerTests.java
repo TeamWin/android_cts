@@ -101,6 +101,7 @@ import java.util.function.Supplier;
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsControllerTests
  */
 @Presubmit
+@android.server.wm.annotation.Group2
 public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     private final static long TIMEOUT = 1000; // milliseconds

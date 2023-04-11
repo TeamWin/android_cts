@@ -17,7 +17,6 @@
 package android.localemanager.cts;
 
 import static android.localemanager.cts.util.LocaleConstants.EXTRA_QUERY_LOCALECONFIG;
-import static android.localemanager.cts.util.LocaleConstants.EXTRA_QUERY_LOCALES;
 import static android.localemanager.cts.util.LocaleConstants.EXTRA_SET_LOCALECONFIG;
 import static android.localemanager.cts.util.LocaleConstants.TEST_APP_CREATION_INFO_PROVIDER_ACTION;
 import static android.localemanager.cts.util.LocaleConstants.TEST_APP_MAIN_ACTIVITY;
@@ -172,17 +171,16 @@ public class LocaleManagerOverrideLocaleConfigTest extends ActivityManagerTestBa
                         LocaleList.forLanguageTags("pt-PT")),
                 Manifest.permission.CHANGE_CONFIGURATION);
 
+        assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE,
+                LocaleList.forLanguageTags("pt-PT"));
+
         // Tell the test app to set the override LocaleConfig
         launchActivity(TEST_APP_MAIN_ACTIVITY,
                 extraString(EXTRA_SET_LOCALECONFIG, OVERRIDE_LOCALES.toLanguageTags()));
         mResetOverride = true;
 
-        // Re-start the app by starting an activity and check if locales correctly
-        // received by the app and listen to the broadcast for result from the app.
-        launchActivity(TEST_APP_MAIN_ACTIVITY, extraString(EXTRA_QUERY_LOCALES, "true"));
-
-        assertTrue(mTestAppCreationInfoProvider.await());
-        assertReceivedBroadcastContains(mTestAppCreationInfoProvider, TEST_APP_PACKAGE,
+        // Check whether the app locales has been set to follow the system default locales
+        assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE,
                 LocaleList.getEmptyLocaleList());
     }
 
@@ -205,14 +203,13 @@ public class LocaleManagerOverrideLocaleConfigTest extends ActivityManagerTestBa
                         LocaleList.forLanguageTags("ja-JP")),
                 Manifest.permission.CHANGE_CONFIGURATION);
 
+        assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE,
+                LocaleList.forLanguageTags("ja-JP"));
+
         cleanTestAppOverride();
 
-        // Re-start the app by starting an activity and check if locales correctly
-        // received by the app and listen to the broadcast for result from the app.
-        launchActivity(TEST_APP_MAIN_ACTIVITY, extraString(EXTRA_QUERY_LOCALES, "true"));
-
-        assertTrue(mTestAppCreationInfoProvider.await());
-        assertReceivedBroadcastContains(mTestAppCreationInfoProvider, TEST_APP_PACKAGE,
+        // Check whether the app locales has been set to follow the system default locales
+        assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE,
                 LocaleList.getEmptyLocaleList());
     }
 
@@ -228,20 +225,19 @@ public class LocaleManagerOverrideLocaleConfigTest extends ActivityManagerTestBa
         launchActivity(TEST_APP_MAIN_ACTIVITY,
                 extraString(EXTRA_SET_LOCALECONFIG, OVERRIDE_LOCALES.toLanguageTags()));
 
-        // Set the app locales which are existed in the app's LocaleConfig
+        // Set the app locales which are not existed in the app's LocaleConfig
         runWithShellPermissionIdentity(
                 () -> sLocaleManager.setApplicationLocales(TEST_APP_PACKAGE,
                         LocaleList.forLanguageTags("fr-FR")),
                 Manifest.permission.CHANGE_CONFIGURATION);
 
+        assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE,
+                LocaleList.forLanguageTags("fr-FR"));
+
         cleanTestAppOverride();
 
-        // Re-start the app by starting an activity and check if locales correctly
-        // received by the app and listen to the broadcast for result from the app.
-        launchActivity(TEST_APP_MAIN_ACTIVITY, extraString(EXTRA_QUERY_LOCALES, "true"));
-
-        assertTrue(mTestAppCreationInfoProvider.await());
-        assertReceivedBroadcastContains(mTestAppCreationInfoProvider, TEST_APP_PACKAGE,
+        // Check whether the app locales is kept without setting to the system default locales.
+        assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE,
                 LocaleList.forLanguageTags("fr-FR"));
     }
 
@@ -263,6 +259,15 @@ public class LocaleManagerOverrideLocaleConfigTest extends ActivityManagerTestBa
                         new ArrayList<String>(Arrays.asList(new LocaleConfig(
                                 sTestAppContext).getSupportedLocales().toLanguageTags().split(
                                 ","))).stream().sorted().collect(Collectors.toList())));
+    }
+
+    /**
+     * Verifies that the locales are correctly set for another package
+     * by fetching locales of the app with a binder call.
+     */
+    private void assertLocalesCorrectlySetForAnotherApp(String packageName,
+            LocaleList expectedLocales) throws Exception {
+        assertEquals(expectedLocales, getApplicationLocales(packageName));
     }
 
     private LocaleList getApplicationLocales(String packageName) throws Exception {
