@@ -1546,12 +1546,14 @@ public class ImsCallingTest extends ImsCallingBase {
     }
 
     private void makeConferenceCall() throws Exception {
+        // Initialize the MERGE_START latch with a count of 2 (one for each call of the conference):
+        overrideLatchCount(LATCH_IS_ON_MERGE_START, 2);
+
         addOutgoingCalls();
         addConferenceCall(mCall1, mCall2);
 
         // Wait for merge start first and second call
-        callingTestLatchCountdown(LATCH_IS_ON_MERGE_START, WAIT_FOR_CALL_STATE);
-        callingTestLatchCountdown(LATCH_IS_ON_MERGE_START, WAIT_FOR_CALL_STATE);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_MERGE_START, WAIT_FOR_CALL_STATE));
         // Wait for merge complete background call:
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_MERGE_COMPLETE, WAIT_FOR_CALL_STATE));
         // Wait for remove first call
