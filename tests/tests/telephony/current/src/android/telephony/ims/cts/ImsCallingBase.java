@@ -105,7 +105,7 @@ public class ImsCallingBase {
     private static SubscriptionManager sSubscriptionManager;
 
     protected int mParticipantCount = 0;
-    protected final Object mLock = new Object();
+    protected static final Object mLock = new Object();
     protected InCallServiceCallbacks mServiceCallBack;
     protected Context mContext;
     protected ConcurrentHashMap<String, Call> mCalls = new ConcurrentHashMap<String, Call>();
@@ -114,10 +114,19 @@ public class ImsCallingBase {
     protected static final CountDownLatch[] sLatches = new CountDownLatch[LATCH_MAX];
 
     protected static void initializeLatches() {
-        for (int i = 0; i < LATCH_MAX; i++) {
-            sLatches[i] = new CountDownLatch(1);
+        synchronized (mLock) {
+            for (int i = 0; i < LATCH_MAX; i++) {
+                sLatches[i] = new CountDownLatch(1);
+            }
         }
     }
+
+    protected static void overrideLatchCount(int latchIndex, int count) {
+        synchronized (mLock) {
+            sLatches[latchIndex] = new CountDownLatch(count);
+        }
+    }
+
 
     public boolean callingTestLatchCountdown(int latchIndex, int waitMs) {
         boolean complete = false;
