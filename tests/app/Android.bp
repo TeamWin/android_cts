@@ -164,7 +164,7 @@ android_test {
         "android.test.base",
     ],
     static_libs: [
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "CtsExternalServiceCommon",
@@ -205,7 +205,7 @@ android_test {
         "android.test.base",
     ],
     static_libs: [
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "CtsExternalServiceCommon",

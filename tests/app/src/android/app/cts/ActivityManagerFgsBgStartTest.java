@@ -69,12 +69,12 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
-import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.SystemUtil;
 

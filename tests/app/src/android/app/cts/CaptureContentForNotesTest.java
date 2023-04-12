@@ -40,16 +40,16 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.UserHandle;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiSelector;
-import android.support.test.uiautomator.Until;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiObjectNotFoundException;
+import androidx.test.uiautomator.UiSelector;
+import androidx.test.uiautomator.Until;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.SystemUtil;

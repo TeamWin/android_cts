@@ -77,7 +77,6 @@ import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
-import android.support.test.uiautomator.UiDevice;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -85,6 +84,7 @@ import android.widget.RemoteViews;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;

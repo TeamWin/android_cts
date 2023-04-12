@@ -22,11 +22,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.support.test.uiautomator.UiDevice;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
+
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.CddTest;
 
