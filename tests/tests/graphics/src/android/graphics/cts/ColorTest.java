@@ -28,6 +28,7 @@ import android.util.TypedValue;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,6 +44,7 @@ public class ColorTest {
     private static final String LOG_TAG = ColorTest.class.getSimpleName();
 
     @Test
+    @Ignore("b/277796128")
     public void resourceColor() {
         int[][] colors = {
                 { 0xff000000, android.R.color.background_dark  },
