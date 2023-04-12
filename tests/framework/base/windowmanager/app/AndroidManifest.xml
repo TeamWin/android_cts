@@ -88,9 +88,6 @@
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|fontScale|colorMode|density|touchscreen"
              android:exported="true"
              android:taskAffinity="nobody.but.NoRelaunchActivity"/>
-        <activity android:name=".SlowCreateActivity"
-             android:resizeableActivity="true"
-             android:exported="true"/>
         <activity android:name=".LaunchingActivity"
              android:resizeableActivity="true"
              android:exported="true"
