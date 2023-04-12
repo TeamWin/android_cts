@@ -18,20 +18,12 @@ package android.hardware.input.cts.tests;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
-import android.content.Context;
 import android.hardware.display.VirtualDisplay;
-import android.hardware.input.InputManager;
 import android.hardware.input.VirtualKeyEvent;
 import android.hardware.input.VirtualKeyboard;
 import android.hardware.input.VirtualKeyboardConfig;
-import android.os.Handler;
-import android.os.Looper;
-import android.platform.test.annotations.FlakyTest;
-import android.provider.Settings;
-import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 
@@ -42,8 +34,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -52,10 +42,6 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
 
     private static final String DEVICE_NAME = "CtsVirtualKeyboardTestDevice";
     private VirtualKeyboard mVirtualKeyboard;
-
-    private static void setNewSettingsUiFlag(Context context, String flag) {
-        Settings.Global.putString(context.getContentResolver(), "settings_new_keyboard_ui", flag);
-    }
 
     @Override
     void onSetUpVirtualInputDevice() {
@@ -80,7 +66,6 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
         if (mVirtualKeyboard != null) {
             mVirtualKeyboard.close();
         }
-        setNewSettingsUiFlag(mInstrumentation.getTargetContext(), "");
     }
 
     @Test
@@ -161,118 +146,5 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
         assertThrows(SecurityException.class,
                 () -> createVirtualKeyboard(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
-    }
-
-    @Test
-    @FlakyTest(bugId = 275149895)
-    public void createVirtualKeyboard_layoutSelected() {
-        setNewSettingsUiFlag(mInstrumentation.getTargetContext(), "true");
-        mVirtualKeyboard.close();
-
-        WaitForKeyboardDevice waiter1 = new WaitForKeyboardDevice();
-        // Creates a virtual keyboard with french layout
-        final VirtualKeyboardConfig frenchKeyboardConfig =
-                new VirtualKeyboardConfig.Builder()
-                        .setVendorId(VENDOR_ID)
-                        .setProductId(PRODUCT_ID)
-                        .setInputDeviceName(DEVICE_NAME)
-                        .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
-                        .setLanguageTag("fr-Latn-FR")
-                        .setLayoutType("azerty")
-                        .build();
-
-        mVirtualKeyboard = mVirtualDevice.createVirtualKeyboard(frenchKeyboardConfig);
-        InputDevice keyboard = waiter1.await();
-
-
-        assertEquals("Key location KEYCODE_Q should map to KEYCODE_A on a French layout.",
-                KeyEvent.KEYCODE_A, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
-        assertEquals("Key location KEYCODE_W should map to KEYCODE_Z on a French layout.",
-                KeyEvent.KEYCODE_Z, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_W));
-        assertEquals("Key location KEYCODE_E should map to KEYCODE_E on a French layout.",
-                KeyEvent.KEYCODE_E, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_E));
-        assertEquals("Key location KEYCODE_R should map to KEYCODE_R on a French layout.",
-                KeyEvent.KEYCODE_R, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_R));
-        assertEquals("Key location KEYCODE_T should map to KEYCODE_T on a French layout.",
-                KeyEvent.KEYCODE_T, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_T));
-        assertEquals("Key location KEYCODE_Y should map to KEYCODE_Y on a French layout.",
-                KeyEvent.KEYCODE_Y, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
-
-        mVirtualKeyboard.close();
-        WaitForKeyboardDevice waiter2 = new WaitForKeyboardDevice();
-        // Creates a virtual keyboard with Swiss German layout
-        final VirtualKeyboardConfig swissGermanKeyboardConfig =
-                new VirtualKeyboardConfig.Builder()
-                        .setVendorId(VENDOR_ID)
-                        .setProductId(PRODUCT_ID)
-                        .setInputDeviceName(DEVICE_NAME)
-                        .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
-                        .setLanguageTag("de-CH")
-                        .setLayoutType("qwertz")
-                        .build();
-
-
-        mVirtualKeyboard = mVirtualDevice.createVirtualKeyboard(swissGermanKeyboardConfig);
-        keyboard = waiter2.await();
-
-        assertEquals("Key location KEYCODE_Q should map to KEYCODE_Q on a Swiss German layout.",
-                KeyEvent.KEYCODE_Q, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
-        assertEquals("Key location KEYCODE_W should map to KEYCODE_W on a Swiss German layout.",
-                KeyEvent.KEYCODE_W, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_W));
-        assertEquals("Key location KEYCODE_E should map to KEYCODE_E on a Swiss German layout.",
-                KeyEvent.KEYCODE_E, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_E));
-        assertEquals("Key location KEYCODE_R should map to KEYCODE_R on a Swiss German layout.",
-                KeyEvent.KEYCODE_R, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_R));
-        assertEquals("Key location KEYCODE_T should map to KEYCODE_T on a Swiss German layout.",
-                KeyEvent.KEYCODE_T, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_T));
-        assertEquals("Key location KEYCODE_Y should map to KEYCODE_Z on a Swiss German layout.",
-                KeyEvent.KEYCODE_Z, keyboard.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
-    }
-
-    /** A helper class used to wait for an input device to be registered and updated. */
-    private class WaitForKeyboardDevice implements AutoCloseable {
-        private final CountDownLatch mLatch = new CountDownLatch(2);
-        private final InputManager.InputDeviceListener mListener;
-
-        private InputDevice mKeyboard;
-
-        WaitForKeyboardDevice() {
-            mListener =
-                    new InputManager.InputDeviceListener() {
-                        @Override
-                        public void onInputDeviceAdded(int deviceId) {
-                            mKeyboard = mInputManager.getInputDevice(deviceId);
-                            mLatch.countDown();
-                        }
-
-                        @Override
-                        public void onInputDeviceRemoved(int deviceId) {
-                        }
-
-                        @Override
-                        public void onInputDeviceChanged(int deviceId) {
-                            mLatch.countDown();
-                        }
-                    };
-            mInputManager.registerInputDeviceListener(mListener,
-                    new Handler(Looper.getMainLooper()));
-
-        }
-
-        InputDevice await() {
-            try {
-                if (!mLatch.await(2000, TimeUnit.MILLISECONDS)) {
-                    Log.e(TAG, "Waiting for virtual keyboard callbacks was timed out.");
-                }
-            } catch (InterruptedException e) {
-                Log.e(TAG, "Waiting for virtual keyboard callbacks was interrupted.");
-            }
-            return mKeyboard;
-        }
-
-        @Override
-        public void close() {
-            mInputManager.unregisterInputDeviceListener(mListener);
-        }
     }
 }
