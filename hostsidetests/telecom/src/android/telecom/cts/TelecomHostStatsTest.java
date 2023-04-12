@@ -47,6 +47,7 @@ public class TelecomHostStatsTest extends CompatChangeGatingTestCase {
 
     private static final String TELECOM_CTS_TEST_PKG = "android.telecom.cts";
     private static final String FEATURE_TELECOM = "android.software.telecom";
+    private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
 
     @Override
     protected void setUp() throws Exception {
@@ -67,7 +68,8 @@ public class TelecomHostStatsTest extends CompatChangeGatingTestCase {
     // basic verification of CallStateChanged atom
     // being logged to statsd when a call is made
     public void testCallStateChangedAtom_basicTest() throws Exception {
-        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELECOM)) {
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELECOM) || !DeviceUtils.hasFeature(
+                getDevice(), FEATURE_TELEPHONY)) {
             return;
         }
 
@@ -127,7 +129,8 @@ public class TelecomHostStatsTest extends CompatChangeGatingTestCase {
     // Verification for EmergencyNumberDialed atom
     // being logged to statsd when a sos call is made
     public void testEmergencyNumberDialedAtom() throws Exception {
-        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELECOM)) {
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELECOM) || !DeviceUtils.hasFeature(
+                getDevice(), FEATURE_TELEPHONY)) {
             return;
         }
 
