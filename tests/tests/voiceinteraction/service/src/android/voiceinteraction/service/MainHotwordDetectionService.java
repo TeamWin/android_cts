@@ -290,6 +290,17 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             }
             if (options != null) {
                 mDetectionDelayMs = options.getInt(Utils.KEY_DETECTION_DELAY_MS, 0);
+
+                if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
+                        == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_CLEAR_SOFTWARE_DETECTION_JOB) {
+                    Log.d(TAG, "options : Clear software detection job");
+                    if (mDetectionJob != null) {
+                        Log.d(TAG, "Clear mDetectionJob");
+                        mHandler.removeCallbacks(mDetectionJob);
+                        mDetectionJob = null;
+                    }
+                    return;
+                }
             }
         }
 
@@ -306,7 +317,6 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 mIsTestUnexpectedCallback = true;
                 return;
             }
-
             if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
                     == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS) {
                 Log.d(TAG, "options : Test audio egress");
