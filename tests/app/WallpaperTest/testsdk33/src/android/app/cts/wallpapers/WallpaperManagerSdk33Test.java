@@ -113,8 +113,8 @@ public class WallpaperManagerSdk33Test {
 
     @AfterClass
     public static void tearDownClass() throws IOException {
-        sRedBitmap.recycle();
-        sWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
+        if (sRedBitmap != null && !sRedBitmap.isRecycled()) sRedBitmap.recycle();
+        if (sWallpaperManager != null) sWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
         sWallpaperManager = null;
     }
 
