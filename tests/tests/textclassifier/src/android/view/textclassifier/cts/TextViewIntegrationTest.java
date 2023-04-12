@@ -20,15 +20,7 @@ import static android.content.pm.PackageManager.FEATURE_TOUCHSCREEN;
 import static android.provider.Settings.Global.ANIMATOR_DURATION_SCALE;
 import static android.provider.Settings.Global.TRANSITION_ANIMATION_SCALE;
 
-import static androidx.test.espresso.Espresso.onView;
-import static androidx.test.espresso.assertion.ViewAssertions.matches;
-import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static androidx.test.espresso.matcher.ViewMatchers.withId;
-import static androidx.test.espresso.matcher.ViewMatchers.withText;
-
 import static com.google.common.truth.Truth.assertThat;
-
-import static org.hamcrest.CoreMatchers.allOf;
 
 import android.app.PendingIntent;
 import android.app.RemoteAction;
@@ -36,12 +28,12 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.Settings;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
-import android.util.Log;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextLinks;
@@ -72,7 +64,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class TextViewIntegrationTest {
     private static final String LOG_TAG = "TextViewIntegrationTest";
@@ -153,7 +144,6 @@ public class TextViewIntegrationTest {
         ActivityScenario<TextViewActivity> scenario = rule.getScenario();
         // Linkify the text.
         final String TEXT = "Link: https://www.android.com";
-        AtomicInteger clickIndex = new AtomicInteger();
         Spannable linkifiedText = createLinkifiedText(TEXT);
         scenario.onActivity(activity -> {
             TextView textView = activity.findViewById(R.id.textview);
@@ -163,22 +153,14 @@ public class TextViewIntegrationTest {
             TextLinks.TextLinkSpan[] spans = linkifiedText.getSpans(0, TEXT.length(),
                     TextLinks.TextLinkSpan.class);
             assertThat(spans).hasLength(1);
-            TextLinks.TextLinkSpan span = spans[0];
-            clickIndex.set(
-                    (span.getTextLink().getStart() + span.getTextLink().getEnd()) / 2);
         });
         // To wait for the rendering of the activity to be completed, so that the upcoming click
         // action will work.
         Thread.sleep(2000);
         try {
-            onView(allOf(withId(R.id.textview), withText(TEXT))).check(matches(isDisplayed()));
-        } catch (Throwable t) {
-            dumpScreenInformation("smartLinkify");
-            throw t;
-        }
-        Log.d(LOG_TAG, "clickIndex = " + clickIndex.get());
-        onView(withId(R.id.textview)).perform(TextViewActions.tapOnTextAtIndex(clickIndex.get()));
-        try {
+            UiObject2 textview = waitForObject(By.text(linkifiedText.toString()));
+            textview.click();
+
             assertFloatingToolbarIsDisplayed();
         } catch (Throwable t) {
             dumpScreenInformation("smartLinkify");
@@ -196,7 +178,7 @@ public class TextViewIntegrationTest {
 
     @Test
     public void smartSelection_suggestSelectionIncludeTextClassification() throws Exception {
-        Assume.assumeTrue(BuildCompat.isAtLeastS());
+        Assume.assumeTrue(isAtLeastS());
         mSimpleTextClassifier.setIncludeTextClassification(true);
         smartSelectionInternal("smartSelection_suggestSelectionIncludeTextClassification");
 
@@ -206,9 +188,12 @@ public class TextViewIntegrationTest {
     @Test
     @Ignore  // Enable the test once b/187862341 is fixed.
     public void smartSelection_cancelSelectionDoesNotInvokeClassifyText() throws Exception {
-        Assume.assumeTrue(BuildCompat.isAtLeastS());
+        Assume.assumeTrue(isAtLeastS());
         smartSelectionInternal("smartSelection_cancelSelectionDoesNotInvokeClassifyText");
-        onView(withId(R.id.textview)).perform(TextViewActions.tapOnTextAtIndex(0));
+        final String text = "Link: https://www.android.com";
+        UiObject2 textview = waitForObject(By.text(text));
+        textview.click();
+
         Thread.sleep(1000);
 
         assertThat(mSimpleTextClassifier.getClassifyTextInvocationCount()).isEqualTo(1);
@@ -228,32 +213,27 @@ public class TextViewIntegrationTest {
 
     private void smartSelectionInternal(String testName) throws Exception {
         ActivityScenario<TextViewActivity> scenario = rule.getScenario();
-        AtomicInteger clickIndex = new AtomicInteger();
-        //                   0123456789
         final String TEXT = "Link: https://www.android.com";
         scenario.onActivity(activity -> {
             TextView textView = activity.findViewById(R.id.textview);
             textView.setTextIsSelectable(true);
             textView.setText(TEXT);
             textView.setTextClassifier(mSimpleTextClassifier);
-            clickIndex.set(9);
         });
-        try {
-            onView(allOf(withId(R.id.textview), withText(TEXT))).check(matches(isDisplayed()));
-        } catch (Throwable t) {
-            dumpScreenInformation(testName);
-            throw t;
-        }
         // Long press the url to perform smart selection.
-        Log.d(LOG_TAG, "clickIndex = " + clickIndex.get());
-        onView(withId(R.id.textview)).perform(
-                TextViewActions.longTapOnTextAtIndex(clickIndex.get()));
         try {
+            UiObject2 textview = waitForObject(By.text(TEXT));
+            textview.click(3_000);
+
             assertFloatingToolbarIsDisplayed();
         } catch (Throwable t) {
             dumpScreenInformation(testName);
             throw t;
         }
+    }
+
+    private boolean isAtLeastS() {
+        return Build.VERSION.SDK_INT >= 31;
     }
 
     private Spannable createLinkifiedText(CharSequence text) {
