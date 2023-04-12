@@ -113,6 +113,7 @@ public class HotwordDetectionServiceBasicTest {
 
     private static String sWasIndicatorEnabled;
     private static String sDefaultScreenOffTimeoutValue;
+    private static String sDefaultHotwordDetectionServiceRestartPeriodValue;
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
     private static final PackageManager sPkgMgr = sInstrumentation.getContext().getPackageManager();
@@ -151,6 +152,18 @@ public class HotwordDetectionServiceBasicTest {
     public static void restoreScreenOffTimeout() {
         SystemUtil.runShellCommand(
                 "settings put system screen_off_timeout " + sDefaultScreenOffTimeoutValue);
+    }
+
+    @BeforeClass
+    public static void getHotwordDetectionServiceRestartPeriodValue() {
+        sDefaultHotwordDetectionServiceRestartPeriodValue =
+                Helper.getHotwordDetectionServiceRestartPeriod();
+    }
+
+    @AfterClass
+    public static void resetHotwordDetectionServiceRestartPeriodValue() {
+        Helper.setHotwordDetectionServiceRestartPeriod(
+                sDefaultHotwordDetectionServiceRestartPeriodValue);
     }
 
     @Before
@@ -1127,6 +1140,70 @@ public class HotwordDetectionServiceBasicTest {
 
         // Destroy the always on detector
         alwaysOnHotwordDetector.destroy();
+    }
+
+    @Test
+    public void testHotwordDetectionService_dspDetector_serviceScheduleRestarted()
+            throws Throwable {
+        // Change the period of restarting hotword detection
+        final String restartPeriod = Helper.getHotwordDetectionServiceRestartPeriod();
+        Helper.setHotwordDetectionServiceRestartPeriod("8");
+
+        try {
+            mService.initOnHotwordDetectionServiceRestartedLatch();
+
+            // Create AlwaysOnHotwordDetector and wait result
+            mService.createAlwaysOnHotwordDetector(/* useExecutor= */ false, /* runOnMainThread= */
+                    false);
+
+            // Wait the result and verify expected result
+            mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+            // Verify callback result
+            assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
+                    HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
+
+            // Wait onHotwordDetectionServiceRestarted() called
+            mService.waitOnHotwordDetectionServiceRestartedCalled();
+        } finally {
+            Helper.setHotwordDetectionServiceRestartPeriod(restartPeriod);
+            AlwaysOnHotwordDetector alwaysOnHotwordDetector = mService.getAlwaysOnHotwordDetector();
+            if (alwaysOnHotwordDetector != null) {
+                alwaysOnHotwordDetector.destroy();
+            }
+        }
+    }
+
+    @Test
+    public void testHotwordDetectionService_softwareDetector_serviceScheduleRestarted()
+            throws Throwable {
+        // Change the period of restarting hotword detection
+        final String restartPeriod = Helper.getHotwordDetectionServiceRestartPeriod();
+        Helper.setHotwordDetectionServiceRestartPeriod("8");
+
+        try {
+            mService.initOnHotwordDetectionServiceRestartedLatch();
+
+            // Create AlwaysOnHotwordDetector and wait result
+            mService.createSoftwareHotwordDetector(/* useExecutor= */ false, /* runOnMainThread= */
+                    false);
+
+            // Wait the result and verify expected result
+            mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+            // Verify callback result
+            assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
+                    HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
+
+            // Wait onHotwordDetectionServiceRestarted() called
+            mService.waitOnHotwordDetectionServiceRestartedCalled();
+        } finally {
+            Helper.setHotwordDetectionServiceRestartPeriod(restartPeriod);
+            HotwordDetector softwareHotwordDetector = mService.getSoftwareHotwordDetector();
+            if (softwareHotwordDetector != null) {
+                softwareHotwordDetector.destroy();
+            }
+        }
     }
 
     @Test
