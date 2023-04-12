@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.server.wm.StateLogger.log;
+import static android.server.wm.StateLogger.logAlways;
 import static android.server.wm.StateLogger.logE;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.FONT_SCALE_ACTIVITY;
@@ -317,6 +318,9 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
     private static int scaledPixelsToPixels(float sp, float fontScale, int densityDpi) {
         final int DEFAULT_DENSITY = 160;
         float f = densityDpi * (1.0f / DEFAULT_DENSITY) * fontScale * sp;
+        logAlways("scaledPixelsToPixels, f=" + f + ", densityDpi=" + densityDpi
+                + ", fontScale=" + fontScale + ", sp=" + sp
+                + ", Math.nextUp(f)=" + Math.nextUp(f));
         // Use the next up adjacent number to prevent precision loss of the float number.
         f = Math.nextUp(f);
         return (int) ((f >= 0) ? (f + 0.5f) : (f - 0.5f));

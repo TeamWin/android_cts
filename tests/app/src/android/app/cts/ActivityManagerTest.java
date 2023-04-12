@@ -107,7 +107,6 @@ import android.platform.test.annotations.RestrictedBuildTest;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
-import android.support.test.uiautomator.UiDevice;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.Log;
@@ -117,6 +116,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.AmMonitor;
 import com.android.compatibility.common.util.AmUtils;

@@ -16,6 +16,8 @@
 
 package android.telephony.satellite.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -26,7 +28,11 @@ import static org.junit.Assume.assumeTrue;
 
 import android.os.Build;
 import android.os.CancellationSignal;
+import android.os.OutcomeReceiver;
 import android.os.SystemProperties;
+import android.telephony.satellite.AntennaDirection;
+import android.telephony.satellite.AntennaPosition;
+import android.telephony.satellite.SatelliteCapabilities;
 import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteManager;
 import android.telephony.satellite.stub.SatelliteError;
@@ -39,8 +45,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase {
     private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
@@ -51,6 +62,27 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     private static MockSatelliteServiceManager sMockSatelliteServiceManager;
     private static boolean sOriginalIsSatelliteEnabled = false;
     private static boolean sOriginalIsSatelliteProvisioned = false;
+    /** SatelliteCapabilities constant indicating that the radio technology is proprietary. */
+    private static final Set<Integer> SUPPORTED_RADIO_TECHNOLOGIES;
+    static {
+        SUPPORTED_RADIO_TECHNOLOGIES = new HashSet<>();
+        SUPPORTED_RADIO_TECHNOLOGIES.add(SatelliteManager.NT_RADIO_TECHNOLOGY_PROPRIETARY);
+    }
+    /** SatelliteCapabilities constant indicating that pointing to satellite is required. */
+    private static final boolean POINTING_TO_SATELLITE_REQUIRED = true;
+    /** SatelliteCapabilities constant indicating the maximum number of characters per datagram. */
+    private static final int MAX_BYTES_PER_DATAGRAM = 339;
+    /** SatelliteCapabilites constant antenna position map received from satellite modem. */
+    private static final Map<Integer, AntennaPosition> ANTENNA_POSITION_MAP;
+    static {
+        ANTENNA_POSITION_MAP = new HashMap<>();
+        ANTENNA_POSITION_MAP.put(SatelliteManager.DISPLAY_MODE_OPENED,
+                new AntennaPosition(new AntennaDirection(1,1,1),
+                        SatelliteManager.DEVICE_HOLD_POSITION_PORTRAIT));
+        ANTENNA_POSITION_MAP.put(SatelliteManager.DISPLAY_MODE_CLOSED,
+                new AntennaPosition(new AntennaDirection(2,2,2),
+                        SatelliteManager.DEVICE_HOLD_POSITION_LANDSCAPE_LEFT));
+    }
 
 
     @BeforeClass
@@ -350,6 +382,48 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(satelliteDatagramCallback.waitUntilResult(1));
         assertArrayEquals(satelliteDatagramCallback.mDatagram.getSatelliteDatagram(),
                 receivedText.getBytes());
+
+        revokeSatellitePermission();
+    }
+
+    @Test
+    public void  testRequestSatelliteCapabilities() {
+        if (!shouldTestSatellite()) return;
+
+        logd("testRequestSatelliteCapabilities");
+        grantSatellitePermission();
+
+        assertTrue(isSatelliteProvisioned());
+
+        final AtomicReference<SatelliteCapabilities> capabilities = new AtomicReference<>();
+        final AtomicReference<Integer> errorCode = new AtomicReference<>();
+        OutcomeReceiver<SatelliteCapabilities, SatelliteManager.SatelliteException> receiver =
+                new OutcomeReceiver<>() {
+                    @Override
+                    public void onResult(SatelliteCapabilities result) {
+                        logd("testRequestSatelliteCapabilities: onResult");
+                        capabilities.set(result);
+
+                        assertNotNull(result);
+                        assertNotNull(result.getSupportedRadioTechnologies());
+                        assertThat(SUPPORTED_RADIO_TECHNOLOGIES)
+                                .isEqualTo(result.getSupportedRadioTechnologies());
+                        assertThat(POINTING_TO_SATELLITE_REQUIRED)
+                                .isEqualTo(result.isPointingRequired());
+                        assertThat(MAX_BYTES_PER_DATAGRAM)
+                                .isEqualTo(result.getMaxBytesPerOutgoingDatagram());
+                        assertNotNull(result.getAntennaPositionMap());
+                        assertThat(ANTENNA_POSITION_MAP).isEqualTo(result.getAntennaPositionMap());
+                    }
+
+                    @Override
+                    public void onError(SatelliteManager.SatelliteException exception) {
+                        logd("testRequestSatelliteCapabilities: onError");
+                        errorCode.set(exception.getErrorCode());
+                    }
+                };
+
+        sSatelliteManager.requestSatelliteCapabilities(getContext().getMainExecutor(), receiver);
 
         revokeSatellitePermission();
     }

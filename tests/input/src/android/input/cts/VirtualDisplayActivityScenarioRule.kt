@@ -26,6 +26,7 @@ import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.os.Handler
 import android.os.Looper
+import android.server.wm.CtsWindowInfoUtils
 import android.server.wm.WindowManagerStateHelper
 import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
@@ -83,6 +84,7 @@ class VirtualDisplayActivityScenarioRule : ExternalResource() {
         SystemUtil.runWithShellPermissionIdentity({
             activity = instrumentation.startActivitySync(intent, bundle) as CaptureEventActivity
         }, Manifest.permission.INTERNAL_SYSTEM_WINDOW)
+        waitUntilActivityReadyForInput()
     }
 
     /**
@@ -107,10 +109,7 @@ class VirtualDisplayActivityScenarioRule : ExternalResource() {
         val initialUserRotation =
             SystemUtil.runShellCommandOrThrow("wm user-rotation -d $displayId")!!
         SystemUtil.runShellCommandOrThrow("wm user-rotation -d $displayId lock $orientation")
-        // Ensure the orientation change has propagated.
-        WindowManagerStateHelper().waitForAppTransitionIdleOnDisplay(displayId)
-        instrumentation.uiAutomation.syncInputTransactions()
-        instrumentation.waitForIdleSync()
+        waitUntilActivityReadyForInput()
 
         try {
             runnable()
@@ -149,5 +148,16 @@ class VirtualDisplayActivityScenarioRule : ExternalResource() {
     private fun releaseDisplay() {
         virtualDisplay.release()
         reader.close()
+    }
+
+    private fun waitUntilActivityReadyForInput() {
+        // If we requested an orientation change, just waiting for the window to be visible is not
+        // sufficient. We should first wait for the transitions to stop, and the for app's UI thread
+        // to process them before making sure the window is visible.
+        WindowManagerStateHelper().waitForAppTransitionIdleOnDisplay(displayId)
+        instrumentation.uiAutomation.syncInputTransactions()
+        instrumentation.waitForIdleSync()
+        assertTrue("Window did not become visible",
+            CtsWindowInfoUtils.waitForWindowOnTop(activity.window!!))
     }
 }

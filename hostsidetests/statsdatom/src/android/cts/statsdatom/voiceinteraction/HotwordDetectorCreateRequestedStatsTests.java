@@ -37,6 +37,7 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,9 +49,11 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
     private static final String TEST_METHOD_DSP_SUCCESS_FOR_METRIC_COLLECT =
             "testHotwordDetectionService_validHotwordDetectionComponentName_triggerSuccess";
     private static final String TEST_METHOD_DSP_FAILURE_FOR_METRIC_COLLECT =
-            "testVoiceInteractionService_withoutManageHotwordDetectionPermission_triggerFailure";
+            "testVoiceInteractionService_holdBindHotwordDetectionPermission_triggerFailure";
     private static final String TEST_METHOD_SOFTWARE_SUCCESS_FOR_METRIC_COLLECT =
             "testHotwordDetectionService_onDetectFromMic_success";
+    private static final String TEST_METHOD_SOFTWARE_FAILURE_FOR_METRIC_COLLECT =
+            "testVoiceInteractionService_createSoftwareBindHotwordDetectionPermission_Failure";
 
     protected IBuildInfo mCtsBuild;
 
@@ -96,29 +99,35 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).isNotNull();
-        // After the voice CTS test executes completely. the test will switch to original VIS. If
-        // the original VIS creates detector, the test may receive more than 1 metric. Only the 1st
-        // is the creation from the CTS testing.
-        assertThat(data.size()).isAtLeast(1);
-        assertHotwordDetectorCreateRequested(data.get(0),
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(1);
+
+        assertHotwordDetectorCreateRequested(filteredData.get(0),
                 HotwordDetectorType.TRUSTED_DETECTOR_DSP, /* expectedCreatedDone= */ true);
     }
 
     public void testLogHotwordDetectorCreateRequestedDspCreateFail() throws Exception {
         if (!isSupportedDevice(getDevice())) return;
 
-        // b/215631339 Disable the test case first.
-//        // Run test in CTS package
-//        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
-//                TEST_METHOD_DSP_FAILURE_FOR_METRIC_COLLECT);
-//
-//        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-//        assertThat(data).isNotNull();
-//        // After testing finish, the test will switch to original VIS. If the original VIS creates
-//        // detector, we may receive more than 1. The 1st is the creation from the CTS testing.
-//        assertThat(data.size()).isAtLeast(1);
-//        assertHotwordDetectorCreateRequested(data.get(0),
-//                HotwordDetectorType.TRUSTED_DETECTOR_DSP, /* expectedCreatedDone= */ false);
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_DSP_FAILURE_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(1);
+
+        assertHotwordDetectorCreateRequested(filteredData.get(0),
+                HotwordDetectorType.TRUSTED_DETECTOR_DSP, /* expectedCreatedDone= */ false);
     }
 
     public void testLogHotwordDetectorCreateRequestedSoftwareCreateSuccess() throws Exception {
@@ -130,11 +139,33 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).isNotNull();
-        // After testing finish, the test will switch to original VIS. If the original VIS creates
-        // detector, we may receive more than 1. The 1st is the creation from the CTS testing.
-        assertThat(data.size()).isAtLeast(1);
-        assertHotwordDetectorCreateRequested(data.get(0),
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(1);
+
+        assertHotwordDetectorCreateRequested(filteredData.get(0),
                 HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, /* expectedCreatedDone= */ true);
+    }
+
+    public void testLogHotwordDetectorCreateRequestedSoftwareCreateFail() throws Exception {
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_SOFTWARE_FAILURE_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(1);
+
+        assertHotwordDetectorCreateRequested(filteredData.get(0),
+                HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, /* expectedCreatedDone= */ false);
     }
 
     private void assertHotwordDetectorCreateRequested(StatsLog.EventMetricData metric,
@@ -148,5 +179,16 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
         assertThat(detectorType).isEqualTo(expectedType);
         assertThat(isCreatedDone).isEqualTo(expectedCreatedDone);
         assertThat(uid).isEqualTo(getTestAppUid(getDevice()));
+    }
+
+    private List<StatsLog.EventMetricData> filterTestAppMetrics(int appId,
+            List<StatsLog.EventMetricData> metricData) {
+        List<StatsLog.EventMetricData> data = new ArrayList<>();
+        for (StatsLog.EventMetricData metric:  metricData) {
+            if (metric.getAtom().getHotwordDetectorCreateRequested().getUid() == appId) {
+                data.add(metric);
+            }
+        }
+        return data;
     }
 }

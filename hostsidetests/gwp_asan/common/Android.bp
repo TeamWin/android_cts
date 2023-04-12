@@ -17,6 +17,20 @@ package {
 }
 
 java_library {
+    name: "gwp_asan_proto_common",
+    sdk_version: "core_current",
+    proto: {
+        type: "lite",
+        include_dirs: ["external/protobuf/src"],
+    },
+    srcs: ["proto/tombstone.proto"],
+    // Protos have lots of MissingOverride and similar.
+    errorprone: {
+        enabled: false,
+    },
+}
+
+java_library {
     name: "gwp_asan_cts_common",
     srcs: ["android/**/*.java"],
     static_libs: [
@@ -25,6 +39,7 @@ java_library {
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "gwp_asan_proto_common",
     ],
 }
 

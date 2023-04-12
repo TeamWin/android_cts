@@ -45,11 +45,11 @@ import android.os.Process;
 import android.os.UserHandle;
 
 import android.platform.test.annotations.Presubmit;
-import android.support.test.uiautomator.UiDevice;
 import android.util.ArrayMap;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;

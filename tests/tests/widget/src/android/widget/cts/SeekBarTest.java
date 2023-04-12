@@ -38,6 +38,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.UserHelper;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
@@ -54,7 +55,8 @@ import java.util.List;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class SeekBarTest {
-    private Instrumentation mInstrumentation;
+    private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
+    private final UserHelper mUserHelper = new UserHelper(mInstrumentation.getTargetContext());
     private Activity mActivity;
     private SeekBar mSeekBar;
 
@@ -64,7 +66,6 @@ public class SeekBarTest {
 
     @Before
     public void setup() throws Throwable {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         mSeekBar = mActivity.findViewById(R.id.seekBar);
         if (mSeekBar.isAttachedToWindow()) {
@@ -125,6 +126,7 @@ public class SeekBarTest {
         mSeekBar.getLocationOnScreen(seekBarXY);
         MotionEvent event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_DOWN,
                 seekBarXY[0], seekBarXY[1], 0);
+        mUserHelper.injectDisplayIdIfNeeded(event);
         mInstrumentation.sendPointerSync(event);
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSeekBar, null);
         verify(mockChangeListener, times(1)).onStartTrackingTouch(mSeekBar);
@@ -137,6 +139,7 @@ public class SeekBarTest {
         eventTime = SystemClock.uptimeMillis();
         event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_MOVE,
                 seekBarXY[0] + (mSeekBar.getWidth() >> 1), seekBarXY[1], 0);
+        mUserHelper.injectDisplayIdIfNeeded(event);
         mInstrumentation.sendPointerSync(event);
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSeekBar, null);
         verify(mockChangeListener, atLeastOnce()).onProgressChanged(eq(mSeekBar), anyInt(),
@@ -147,6 +150,7 @@ public class SeekBarTest {
         eventTime = SystemClock.uptimeMillis();
         event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_UP,
                 seekBarXY[0] + (mSeekBar.getWidth() >> 1), seekBarXY[1], 0);
+        mUserHelper.injectDisplayIdIfNeeded(event);
         mInstrumentation.sendPointerSync(event);
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSeekBar, null);
         verify(mockChangeListener, times(1)).onStopTrackingTouch(mSeekBar);

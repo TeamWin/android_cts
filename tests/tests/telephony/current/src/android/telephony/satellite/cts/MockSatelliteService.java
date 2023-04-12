@@ -21,6 +21,9 @@ import android.annotation.Nullable;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import android.telephony.satellite.AntennaDirection;
+import android.telephony.satellite.AntennaPosition;
+import android.telephony.satellite.SatelliteManager;
 import android.telephony.satellite.stub.ISatelliteCapabilitiesConsumer;
 import android.telephony.satellite.stub.ISatelliteListener;
 import android.telephony.satellite.stub.NTRadioTechnology;
@@ -54,6 +57,16 @@ public class MockSatelliteService extends SatelliteImplBase {
     private static final boolean POINTING_TO_SATELLITE_REQUIRED = true;
     /** SatelliteCapabilities constant indicating the maximum number of characters per datagram. */
     private static final int MAX_BYTES_PER_DATAGRAM = 339;
+    /** SatelliteCapabilities constant keys which are used to fill mAntennaPositionMap. */
+    private static final int[] ANTENNA_POSITION_KEYS = new int[]{
+            SatelliteManager.DISPLAY_MODE_OPENED, SatelliteManager.DISPLAY_MODE_CLOSED};
+    /** SatelliteCapabilities constant values which are used to fill mAntennaPositionMap. */
+    private static final AntennaPosition[] ANTENNA_POSITION_VALUES = new AntennaPosition[] {
+            new AntennaPosition(new AntennaDirection(1,1,1),
+                    SatelliteManager.DEVICE_HOLD_POSITION_PORTRAIT),
+            new AntennaPosition(new AntennaDirection(2,2,2),
+                    SatelliteManager.DEVICE_HOLD_POSITION_LANDSCAPE_LEFT)
+    };
 
     @NonNull
     private final Map<IBinder, ISatelliteListener> mRemoteListeners = new HashMap<>();
@@ -216,6 +229,8 @@ public class MockSatelliteService extends SatelliteImplBase {
         capabilities.supportedRadioTechnologies = SUPPORTED_RADIO_TECHNOLOGIES;
         capabilities.isPointingRequired = POINTING_TO_SATELLITE_REQUIRED;
         capabilities.maxBytesPerOutgoingDatagram = MAX_BYTES_PER_DATAGRAM;
+        capabilities.antennaPositionKeys = ANTENNA_POSITION_KEYS;
+        capabilities.antennaPositionValues = ANTENNA_POSITION_VALUES;
         runWithExecutor(() -> callback.accept(capabilities));
     }
 

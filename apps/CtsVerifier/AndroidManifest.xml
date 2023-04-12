@@ -20,7 +20,7 @@
           android:versionCode="5"
           android:versionName="14_r1">
 
-    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="33"/>
+    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="34"/>
 
     <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
     <uses-permission android:name="android.car.permission.READ_CAR_POWER_POLICY" />

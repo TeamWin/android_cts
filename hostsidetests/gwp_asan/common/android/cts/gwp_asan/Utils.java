@@ -17,8 +17,11 @@
 package android.cts.gwp_asan;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Application;
+import android.app.ApplicationExitInfo;
 import android.content.Context;
+import android.cts.gwp_asan.Android13Tombstone.Tombstone;
 import android.util.Log;
 
 import com.android.compatibility.common.util.DropBoxReceiver;
@@ -26,6 +29,8 @@ import com.android.compatibility.common.util.DropBoxReceiver;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
 public class Utils {
     static {
@@ -99,5 +104,28 @@ public class Utils {
 
     public static DropBoxReceiver getDropboxReceiver(Context context, String processNameSuffix) {
         return getDropboxReceiver(context, processNameSuffix, DROPBOX_TAG);
+    }
+
+    public static boolean appExitInfoHasReport(Context context, String processNameSuffix)
+            throws Exception {
+        ActivityManager am = context.getSystemService(ActivityManager.class);
+        List<ApplicationExitInfo> exitReasons =
+                am.getHistoricalProcessExitReasons(
+                        processNameSuffix == null
+                                ? null
+                                : context.getPackageName() + ":" + processNameSuffix,
+                        0,
+                        0);
+        for (ApplicationExitInfo exitReason : exitReasons) {
+            if (exitReason.getReason() != ApplicationExitInfo.REASON_CRASH_NATIVE) continue;
+            InputStream data = exitReason.getTraceInputStream();
+            if (data == null) continue;
+            Tombstone tombstone = Android13Tombstone.Tombstone.parseFrom(data.readAllBytes());
+            String cause = tombstone.getCauses(0).getHumanReadable();
+            if (cause.contains("[GWP-ASan]: Use After Free")) {
+                return true;
+            }
+        }
+        return false;
     }
 }

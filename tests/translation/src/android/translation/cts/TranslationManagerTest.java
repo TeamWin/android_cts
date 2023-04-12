@@ -549,8 +549,8 @@ public class TranslationManagerTest {
         final AtomicReference<Translator> translatorRef = new AtomicReference<>();
         manager.createOnDeviceTranslator(translationContext, Runnable::run,
                 translator -> {
-                    createTranslatorLatch.countDown();
                     translatorRef.set(translator);
+                    createTranslatorLatch.countDown();
                 });
 
         createTranslatorLatch.await(5_000, TimeUnit.MILLISECONDS);

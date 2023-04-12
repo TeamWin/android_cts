@@ -187,6 +187,8 @@ def get_available_output_sizes(fmt, props, max_size=None, match_ar_size=None):
       'yuv': 0x23,
       'jpg': 0x100,
       'jpeg': 0x100,
+      'jpeg_r': 0x1005,
+      'priv': 0x22,
       'y8': 0x20203859
   }
   configs = props[

@@ -39,10 +39,10 @@ import android.os.Bundle;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.permission.cts.PermissionUtils;
-import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.SystemUtil;
 

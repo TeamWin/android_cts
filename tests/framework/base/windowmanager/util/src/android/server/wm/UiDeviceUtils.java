@@ -30,9 +30,10 @@ import android.graphics.Point;
 import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 import android.view.KeyEvent;
+
+import androidx.test.uiautomator.UiDevice;
 
 import java.util.function.BooleanSupplier;
 

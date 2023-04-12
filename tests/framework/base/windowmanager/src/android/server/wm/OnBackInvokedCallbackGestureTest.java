@@ -24,12 +24,12 @@ import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
-import android.support.test.uiautomator.UiDevice;
 import android.view.MotionEvent;
 import android.window.BackEvent;
 import android.window.OnBackAnimationCallback;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.CddTest;
 
