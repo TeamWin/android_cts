@@ -33,11 +33,14 @@ public class ResourceManagerTestActivityBase extends Activity {
     public static final int TYPE_NONSECURE = 0;
     public static final int TYPE_SECURE = 1;
     public static final int TYPE_MIX = 2;
-
-    protected String TAG;
     private static final int FRAME_RATE = 10;
-    private static final int IFRAME_INTERVAL = 10;  // 10 seconds between I-frames
-    private static final String MIME = MediaFormat.MIMETYPE_VIDEO_AVC;
+    // 10 seconds between I-frames
+    private static final int IFRAME_INTERVAL = 10;
+
+    private int mWidth = 0;
+    private int mHeight = 0;
+    protected String TAG;
+    private String mMime = MediaFormat.MIMETYPE_VIDEO_AVC;
 
     private Vector<MediaCodec> mCodecs = new Vector<MediaCodec>();
 
@@ -69,21 +72,23 @@ public class ResourceManagerTestActivityBase extends Activity {
     private MediaFormat getTestFormat(CodecCapabilities caps, boolean securePlayback,
             boolean highResolution) {
         VideoCapabilities vcaps = caps.getVideoCapabilities();
-        int width = 0;
-        int height = 0;
         int bitrate = 0;
 
         if (highResolution) {
-            width = vcaps.getSupportedWidths().getUpper();
-            height = vcaps.getSupportedHeightsFor(width).getUpper();
+            if (mWidth == 0 || mHeight == 0) {
+                mWidth = vcaps.getSupportedWidths().getUpper();
+                mHeight = vcaps.getSupportedHeightsFor(mWidth).getUpper();
+            }
             bitrate = vcaps.getBitrateRange().getUpper();
         } else {
-            width = vcaps.getSupportedWidths().getLower();
-            height = vcaps.getSupportedHeightsFor(width).getLower();
+            if (mWidth == 0 || mHeight == 0) {
+                mWidth = vcaps.getSupportedWidths().getLower();
+                mHeight = vcaps.getSupportedHeightsFor(mWidth).getLower();
+            }
             bitrate = vcaps.getBitrateRange().getLower();
         }
 
-        MediaFormat format = MediaFormat.createVideoFormat(MIME, width, height);
+        MediaFormat format = MediaFormat.createVideoFormat(mMime, mWidth, mHeight);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, caps.colorFormats[0]);
         format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
         format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
@@ -103,7 +108,7 @@ public class ResourceManagerTestActivityBase extends Activity {
             }
             CodecCapabilities caps;
             try {
-                caps = info.getCapabilitiesForType(MIME);
+                caps = info.getCapabilitiesForType(mMime);
                 boolean securePlaybackSupported =
                         caps.isFeatureSupported(CodecCapabilities.FEATURE_SecurePlayback);
                 boolean securePlaybackRequired =
@@ -131,7 +136,19 @@ public class ResourceManagerTestActivityBase extends Activity {
         boolean highResolution = false;
         if (extras != null) {
             type = extras.getInt("test-type", type);
-            highResolution = extras.getBoolean("high-resolution", highResolution);
+            // Check if mime has been passed.
+            mMime = extras.getString("mime", mMime);
+            // Check if resolution has been passed.
+            mWidth = extras.getInt("width");
+            mHeight = extras.getInt("height");
+            if (mWidth == 0 || mHeight == 0) {
+                // Either no resolution has been passed or its invalid.
+                // So, look for high-resolution flag.
+                highResolution = extras.getBoolean("high-resolution", highResolution);
+            } else if (mHeight >= 1080) {
+                highResolution = true;
+            }
+
             Log.d(TAG, "type is: " + type + " high-resolution: " + highResolution);
         }
 
@@ -171,7 +188,7 @@ public class ResourceManagerTestActivityBase extends Activity {
     protected void allocateCodecs(int max, MediaCodecInfo info, boolean securePlayback,
             boolean highResolution) {
         String name = info.getName();
-        CodecCapabilities caps = info.getCapabilitiesForType(MIME);
+        CodecCapabilities caps = info.getCapabilitiesForType(mMime);
         MediaFormat format = getTestFormat(caps, securePlayback, highResolution);
         MediaCodec codec = null;
         for (int i = mCodecs.size(); i < max; ++i) {
