@@ -64,6 +64,7 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
             PACKAGE_NAME + ".action.POST_UI_INITIATING_NOTIFICATION";
     public static final String ACTION_SCHEDULE_FGS_START_ALARM =
             PACKAGE_NAME + ".action.SCHEDULE_FGS_START_ALARM";
+    public static final String ACTION_START_FGS = PACKAGE_NAME + ".action.START_FGS";
     public static final String ACTION_NOTIFICATION_POSTED =
             PACKAGE_NAME + ".action.NOTIFICATION_POSTED";
     public static final String ACTION_ALARM_SCHEDULED =
@@ -147,8 +148,8 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                 final Intent completionIntent = new Intent(ACTION_NOTIFICATION_POSTED);
                 context.sendBroadcast(completionIntent);
                 break;
-            case ACTION_SCHEDULE_FGS_START_ALARM:
-                final Intent startFgsIntent = new Intent(TestFgsService.ACTION_START_FGS);
+            case ACTION_SCHEDULE_FGS_START_ALARM: {
+                final Intent startFgsIntent = new Intent(ACTION_START_FGS);
                 ComponentName testComponentName = new ComponentName(context, TestFgsService.class);
                 startFgsIntent.setComponent(testComponentName);
 
@@ -164,6 +165,15 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                 final Intent alarmScheduledIntent = new Intent(ACTION_ALARM_SCHEDULED);
                 context.sendBroadcast(alarmScheduledIntent);
                 break;
+            }
+            case ACTION_START_FGS: {
+                final Intent startFgsIntent = new Intent();
+                ComponentName testComponentName = new ComponentName(context, TestFgsService.class);
+                startFgsIntent.setComponent(testComponentName);
+
+                context.startForegroundService(startFgsIntent);
+                break;
+            }
             default:
                 Log.e(TAG, "Unknown action " + intent.getAction());
         }
