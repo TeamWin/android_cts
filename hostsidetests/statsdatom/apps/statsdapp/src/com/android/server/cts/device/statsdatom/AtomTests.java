@@ -249,7 +249,7 @@ public class AtomTests {
                 130);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_CAPTURE_CONSENTLESS_BUGREPORT_ON_USERDEBUG_BUILD,
                 131);
-        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_BODY_SENSORS_WRIST_TEMPERATURE, 132);
+        // Op 132 was deprecated
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_USE_FULL_SCREEN_INTENT, 133);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_CAMERA_SANDBOXED, 134);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_RECORD_AUDIO_SANDBOXED, 135);
@@ -560,7 +560,7 @@ public class AtomTests {
 
         for (int i = 0; i < opsList.length; i++) {
             String op = opsList[i];
-            if (TextUtils.isEmpty(op)) {
+            if (TextUtils.isEmpty(op) || op.startsWith("android:deprecated")) {
                 // Operation removed/deprecated
                 continue;
             }
