@@ -962,6 +962,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @FlakyTest(bugId = 275112488)
     @Test
     @AppModeFull(reason = "testAutofillCallbacks() is enough")
     public void testAutofillCallbackDisabled() throws Exception {
