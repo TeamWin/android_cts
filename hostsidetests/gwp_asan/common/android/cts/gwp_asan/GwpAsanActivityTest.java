@@ -96,4 +96,9 @@ public class GwpAsanActivityTest {
         activity.callActivity(GwpAsanDefaultActivity.class, Utils.TEST_USE_AFTER_FREE);
         Assert.assertTrue(receiver.await());
     }
+
+    @Test
+    public void checkAppExitInfo() throws Exception {
+        Assert.assertTrue(Utils.appExitInfoHasReport(mContext, null));
+    }
 }

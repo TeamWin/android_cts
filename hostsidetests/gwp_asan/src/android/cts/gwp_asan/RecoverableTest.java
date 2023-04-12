@@ -19,7 +19,6 @@ package android.cts.gwp_asan;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,33 +54,22 @@ public class RecoverableTest extends GwpAsanBaseTest {
 
     @Test
     public void testGwpAsanRecoverable() throws Exception {
-        Assert.assertTrue(
-                runDeviceTests(TEST_PKG, TEST_PKG + ".GwpAsanActivityTest", "testEnablement"));
-        Assert.assertTrue(
-                runDeviceTests(TEST_PKG, TEST_PKG + ".GwpAsanServiceTest", "testEnablement"));
+        runTest(".GwpAsanActivityTest", "testEnablement");
+        runTest(".GwpAsanServiceTest", "testEnablement");
     }
 
     @Test
     public void testCrashToDropboxRecoverable() throws Exception {
-        Assert.assertTrue(
-                runDeviceTests(
-                        TEST_PKG,
-                        TEST_PKG + ".GwpAsanActivityTest",
-                        "testCrashToDropboxRecoverableEnabled"));
-        Assert.assertTrue(
-                runDeviceTests(
-                        TEST_PKG,
-                        TEST_PKG + ".GwpAsanActivityTest",
-                        "testCrashToDropboxRecoverableDefault"));
-        Assert.assertTrue(
-                runDeviceTests(
-                        TEST_PKG,
-                        TEST_PKG + ".GwpAsanServiceTest",
-                        "testCrashToDropboxRecoverableEnabled"));
-        Assert.assertTrue(
-                runDeviceTests(
-                        TEST_PKG,
-                        TEST_PKG + ".GwpAsanServiceTest",
-                        "testCrashToDropboxRecoverableDefault"));
+        runTest(".GwpAsanActivityTest", "testCrashToDropboxRecoverableEnabled");
+        runTest(".GwpAsanActivityTest", "testCrashToDropboxRecoverableDefault");
+        runTest(".GwpAsanServiceTest", "testCrashToDropboxRecoverableEnabled");
+        runTest(".GwpAsanServiceTest", "testCrashToDropboxRecoverableDefault");
+    }
+
+    @Test
+    public void testAppExitInfo() throws Exception {
+        resetAppExitInfo();
+        runTest(".GwpAsanActivityTest", "testCrashToDropboxRecoverableDefault");
+        runTest(".GwpAsanActivityTest", "checkAppExitInfo");
     }
 }

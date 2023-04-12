@@ -21,6 +21,7 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
@@ -47,5 +48,13 @@ public abstract class GwpAsanBaseTest extends BaseHostJUnit4Test {
     @After
     public void tearDown() throws Exception {
         uninstallPackage(mDevice, TEST_PKG);
+    }
+
+    public void resetAppExitInfo() throws Exception {
+        mDevice.executeShellCommand("am clear-exit-info");
+    }
+
+    public void runTest(String testClass, String testName) throws Exception {
+        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_PKG + testClass, testName));
     }
 }
