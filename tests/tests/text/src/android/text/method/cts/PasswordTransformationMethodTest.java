@@ -82,6 +82,8 @@ public class PasswordTransformationMethodTest {
         "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
 
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
+    private CtsKeyEventUtil mCtsKeyEventUtil =
+            new CtsKeyEventUtil(mInstrumentation.getTargetContext());
     private final UserHelper mUserHelper = new UserHelper(mInstrumentation.getTargetContext());
     private final Handler mUiHandler = new Handler(Looper.getMainLooper());
 
@@ -181,11 +183,11 @@ public class PasswordTransformationMethodTest {
         KeyCharacterMap keymap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
         if (keymap.getKeyboardType() == KeyCharacterMap.NUMERIC) {
             // "HELLO" in case of 12-key(NUMERIC) keyboard
-            CtsKeyEventUtil.sendKeys(mInstrumentation, mEditText,
+            mCtsKeyEventUtil.sendKeys(mInstrumentation, mEditText,
                     "6*4 6*3 7*5 DPAD_RIGHT 7*5 7*6 DPAD_RIGHT");
         }
         else {
-            CtsKeyEventUtil.sendKeys(mInstrumentation, mEditText, "H E 2*L O");
+            mCtsKeyEventUtil.sendKeys(mInstrumentation, mEditText, "H E 2*L O");
         }
         verify(mMethod, atLeastOnce()).beforeTextChanged(any(), anyInt(), anyInt(), anyInt());
         verify(mMethod, atLeastOnce()).onTextChanged(any(), anyInt(), anyInt(), anyInt());

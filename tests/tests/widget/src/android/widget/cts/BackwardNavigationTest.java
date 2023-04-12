@@ -30,13 +30,13 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Test {@link View} backward navigation.
@@ -45,6 +45,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class BackwardNavigationTest {
     private Instrumentation mInstrumentation;
+    private CtsKeyEventUtil mCtsKeyEventUtil;
     private Activity mActivity;
     private View mRoot;
     private View mOrderedButton1;
@@ -57,6 +58,7 @@ public class BackwardNavigationTest {
     @Before
     public void setUp() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsKeyEventUtil = new CtsKeyEventUtil(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         mRoot = mActivity.findViewById(R.id.root);
         View orderedButtons = mRoot.findViewById(R.id.ordered_buttons);
@@ -72,13 +74,13 @@ public class BackwardNavigationTest {
         View focusedView = mActivity.getCurrentFocus();
         do {
             mFocusedViews.add(focusedView);
-            CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mRoot, KeyEvent.KEYCODE_TAB);
+            mCtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mRoot, KeyEvent.KEYCODE_TAB);
             focusedView = mActivity.getCurrentFocus();
         } while (focusedView != mOrderedButton1);
 
         // Press SHIFT + TAB to go through them, and verify that they're focused in reversed order.
         for (int i = mFocusedViews.size() - 1; i >= 0; i--) {
-            CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mRoot,
+            mCtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mRoot,
                     KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_SHIFT_LEFT);
             assertTrue(mFocusedViews.get(i).hasFocus());
         }

@@ -34,8 +34,6 @@ import android.widget.TextView.BufferType;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.CtsKeyEventUtil;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -146,29 +144,27 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
 
         // Delete the first character '1'
         prepTextViewSync(TEST_STRING, mockBaseKeyListener, true, 1, 1);
-        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_DEL);
+        sendKeys(mTextView, KeyEvent.KEYCODE_DEL);
         assertEquals("23456", mTextView.getText().toString());
 
         // Delete character '2' and '3'
         prepTextViewSync(TEST_STRING, mockBaseKeyListener, true, 1, 3);
-        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_DEL);
+        sendKeys(mTextView, KeyEvent.KEYCODE_DEL);
         assertEquals("1456", mTextView.getText().toString());
 
         // Delete everything on the line the cursor is on.
         prepTextViewSync(TEST_STRING, mockBaseKeyListener, true, 0, 0);
-        CtsKeyEventUtil.sendKeyWhileHoldingModifier(
-                mInstrumentation, mTextView, KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_ALT_LEFT);
+        sendKeyWhileHoldingModifier(mTextView, KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_ALT_LEFT);
         assertEquals("", mTextView.getText().toString());
 
         // ALT+DEL deletes the selection only.
         prepTextViewSync(TEST_STRING, mockBaseKeyListener, true, 2, 4);
-        CtsKeyEventUtil.sendKeyWhileHoldingModifier(
-                mInstrumentation, mTextView, KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_ALT_LEFT);
+        sendKeyWhileHoldingModifier(mTextView, KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_ALT_LEFT);
         assertEquals("1256", mTextView.getText().toString());
 
         // DEL key does not take effect when TextView does not have BaseKeyListener.
         prepTextViewSync(TEST_STRING, null, true, 1, 1);
-        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_DEL);
+        sendKeys(mTextView, KeyEvent.KEYCODE_DEL);
         assertEquals(TEST_STRING, mTextView.getText().toString());
     }
 
@@ -521,19 +517,19 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
 
         // press '0' key.
         prepTextViewSync(TEST_STRING, mockBaseKeyListener, true, 0, 0);
-        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_0);
+        sendKeys(mTextView, KeyEvent.KEYCODE_0);
         assertEquals("123456", mTextView.getText().toString());
 
         // delete character '2'
         prepTextViewSync(mTextView.getText(), mockBaseKeyListener, true, 1, 2);
-        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_DEL);
+        sendKeys(mTextView, KeyEvent.KEYCODE_DEL);
         assertEquals("13456", mTextView.getText().toString());
 
         // test ACTION_MULTIPLE KEYCODE_UNKNOWN key event.
         KeyEvent event = new KeyEvent(SystemClock.uptimeMillis(), "abcd",
                 KeyCharacterMap.BUILT_IN_KEYBOARD, 0);
         prepTextViewSync(mTextView.getText(), mockBaseKeyListener, true, 2, 2);
-        CtsKeyEventUtil.sendKey(mInstrumentation, mTextView, event);
+        sendKey(mTextView, event);
         mInstrumentation.waitForIdleSync();
         // the text of TextView is never changed, onKeyOther never works.
 //        assertEquals("13abcd456", mTextView.getText().toString());
