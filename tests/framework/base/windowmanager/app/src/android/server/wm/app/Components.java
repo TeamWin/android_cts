@@ -137,7 +137,6 @@ public class Components extends ComponentsBase {
             component("SingleSecondaryHomeActivity");
     public static final ComponentName SINGLE_TASK_ACTIVITY = component("SingleTaskActivity");
     public static final ComponentName SINGLE_TOP_ACTIVITY = component("SingleTopActivity");
-    public static final ComponentName SLOW_CREATE_ACTIVITY = component("SlowCreateActivity");
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
     public static final ComponentName DISABLE_PREVIEW_ACTIVITY =
             component("DisablePreviewActivity");

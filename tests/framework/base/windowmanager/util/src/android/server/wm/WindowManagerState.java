@@ -1018,12 +1018,6 @@ public class WindowManagerState {
         return getMatchingWindows(ws -> type == ws.mType).collect(Collectors.toList());
     }
 
-    List<String> getMatchingWindowTokens(final String windowName) {
-        return getMatchingWindows(ws -> windowName.equals(ws.getName()))
-                .map(WindowState::getToken)
-                .collect(Collectors.toList());
-    }
-
     List<WindowState> getAllNavigationBarStates() {
         return getMatchingWindows(WindowManagerState::isValidNavBarType)
                 .collect(Collectors.toList());
