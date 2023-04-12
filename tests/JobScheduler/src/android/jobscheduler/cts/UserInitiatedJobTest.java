@@ -182,7 +182,7 @@ public class UserInitiatedJobTest {
         mTestAppInterface.closeActivity(true);
         // FGS started while the app was TOP. The app should be allowed to schedule a UI job
         // because the FGS is still running, even though it's no longer TOP.
-        Thread.sleep(7000); // Wait a bit so that Activity-close BAL allowance disappears.
+        Thread.sleep(10000); // Wait a bit so that Activity-close BAL allowance disappears.
         mTestAppInterface.scheduleJob(
                 Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
                 Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
