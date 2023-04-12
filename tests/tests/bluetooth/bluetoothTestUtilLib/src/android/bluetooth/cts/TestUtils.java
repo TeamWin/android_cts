@@ -79,7 +79,10 @@ public class TestUtils {
             case BluetoothProfile.HEADSET_CLIENT:
                 return BluetoothProperties.isProfileHfpHfEnabled().orElse(false);
             case BluetoothProfile.HEARING_AID:
-                return BluetoothProperties.isProfileAshaCentralEnabled().orElse(false);
+                if (!isBleSupported(InstrumentationRegistry.getInstrumentation().getContext())) {
+                    return false;
+                }
+                return BluetoothProperties.isProfileAshaCentralEnabled().orElse(true);
             case BluetoothProfile.HID_DEVICE:
                 return BluetoothProperties.isProfileHidDeviceEnabled().orElse(false);
             case BluetoothProfile.HID_HOST:
