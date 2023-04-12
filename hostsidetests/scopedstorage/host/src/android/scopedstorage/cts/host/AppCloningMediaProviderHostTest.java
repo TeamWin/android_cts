@@ -62,9 +62,8 @@ public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
      * Provide different name to Files being created, on each execution of the test, so that
      * flakiness from previously existing files can be avoided.
      */
-    private static final String NONCE = String.valueOf(System.nanoTime());
+    private static String sNonce;
     private static String sCloneUserId;
-
     @BeforeClassWithInfo
     public static void beforeClassWithDevice(TestInformation testInfo) throws Exception {
         final ITestDevice sDevice = testInfo.getDevice();
@@ -93,6 +92,7 @@ public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
         // Check that the clone user directories have been created
         eventually(() -> sDevice.doesFileExist(sCloneUserStoragePath, mCloneUserIdInt),
                 CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+        sNonce = String.valueOf(System.nanoTime());
     }
 
     @AfterClassWithInfo
@@ -111,7 +111,7 @@ public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
         installPackage(SCOPED_STORAGE_TEST_APP_B_APK, "--user all");
 
         int currentUserId = getCurrentUserId();
-        final String fileName = "tmpFileToPush" + NONCE + ".png";
+        final String fileName = "tmpFileToPush" + sNonce + ".png";
 
         // We add the file in DCIM directory of User 0.
         Map<String, String> ownerArgs = new HashMap<>();
@@ -121,7 +121,7 @@ public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
                 currentUserId, ownerArgs);
 
         // We add the file in DCIM directory of Cloned User.
-        final String fileNameClonedUser = "tmpFileToPushClonedUser" + NONCE + ".png";
+        final String fileNameClonedUser = "tmpFileToPushClonedUser" + sNonce + ".png";
         Map<String, String> cloneArgs = new HashMap<>();
         cloneArgs.put(CURRENT_USER_ID, sCloneUserId);
         cloneArgs.put(FILE_TO_BE_CREATED, fileNameClonedUser);
