@@ -734,6 +734,14 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     }
 
     /**
+     * Resets the onDetected() and OnRejected() result.
+     */
+    public void resetHotwordServiceOnDetectedAndOnRejectedResult() {
+        mDetectedResult = null;
+        mRejectedResult = null;
+    }
+
+    /**
      * Returns the OnQueryDetected() result.
      */
     public ArrayList<String> getStreamedQueriesResult() {
