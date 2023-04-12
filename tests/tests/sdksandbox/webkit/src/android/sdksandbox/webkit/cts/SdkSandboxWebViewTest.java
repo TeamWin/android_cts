@@ -23,7 +23,6 @@ import android.platform.test.annotations.Presubmit;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
-import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,11 +32,6 @@ import org.junit.runner.RunWith;
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxWebViewTest {
-    // TODO(b/230340812): IME does not currently work correctly in the SDK RUntime. We should enable
-    // impacted tests once this is fixed.
-    // This prevents some tests from running.
-    private static final boolean CAN_INJECT_KEY_EVENTS = false;
-
     @ClassRule
     public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
             new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
@@ -386,7 +380,6 @@ public class SdkSandboxWebViewTest {
 
     @Test
     public void testRequestFocusNodeHref() throws Exception {
-        Assume.assumeTrue(CAN_INJECT_KEY_EVENTS);
         sdkTester.assertSdkTestRunPasses("testRequestFocusNodeHref");
     }
 
@@ -397,7 +390,6 @@ public class SdkSandboxWebViewTest {
 
     @Test
     public void testGetHitTestResult() throws Exception {
-        Assume.assumeTrue(CAN_INJECT_KEY_EVENTS);
         sdkTester.assertSdkTestRunPasses("testGetHitTestResult");
     }
 }
