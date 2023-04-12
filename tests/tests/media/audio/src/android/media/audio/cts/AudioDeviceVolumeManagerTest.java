@@ -49,7 +49,8 @@ public class AudioDeviceVolumeManagerTest extends CtsAndroidTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(Manifest.permission.MODIFY_AUDIO_ROUTING);
+                .adoptShellPermissionIdentity(Manifest.permission.MODIFY_AUDIO_ROUTING,
+                        Manifest.permission.STATUS_BAR_SERVICE);
         mADVmgr = (AudioDeviceVolumeManager) getContext().getSystemService(
                 Context.AUDIO_DEVICE_VOLUME_SERVICE);
     }
@@ -110,6 +111,8 @@ public class AudioDeviceVolumeManagerTest extends CtsAndroidTestCase {
         final VolumeInfo volMin = new VolumeInfo.Builder(volMedia).setVolumeIndex(minIndex).build();
         final VolumeInfo volMid = new VolumeInfo.Builder(volMedia).setVolumeIndex(midIndex).build();
 
+        // safe media can block the raising to volMid, disable it
+        am.disableSafeMediaVolume();
         mADVmgr.setDeviceVolume(volMin, BT_DEV);
         Thread.sleep(VOLUME_UPDATE_TIME_MAX_MS);
         VolumeInfo resVI = mADVmgr.getDeviceVolume(volMid, BT_DEV);
