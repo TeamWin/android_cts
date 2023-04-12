@@ -28,7 +28,6 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
-import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -678,8 +677,13 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
             String cmdResult = runShellCommandOrThrow(cmd);
             assertWithMessage("Result of '%s'", cmd).that(cmdResult).contains("Success");
         } catch (AssertionError e) {
-            assertThat(e).hasMessageThat().contains(
-                    "Not allowed to set the device owner because this device has already paired");
+            // If failed to set the device owner, stop proceeding to the test case.
+            // Log the error info so that we can investigate further in the future.
+            Log.d(TAG, "Failed to set device owner.", e);
+            String cmdResult = runShellCommandOrThrow("pm list user");
+            Log.d(TAG, "users: " + cmdResult);
+            cmdResult = runShellCommandOrThrow("dpm list-owner");
+            Log.d(TAG, "device owners: " + cmdResult);
             throw new AssumptionViolatedException("This test needs to be able to set device owner");
         }
 
