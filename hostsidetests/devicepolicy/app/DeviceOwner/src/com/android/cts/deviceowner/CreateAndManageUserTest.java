@@ -703,7 +703,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                     getComponentName(context),
                     serviceIntent,
                     serviceConnection,
-                    Context.BIND_AUTO_CREATE,
+                    Context.BindServiceFlags.of(Context.BIND_AUTO_CREATE),
                     target);
             assertWithMessage("bound to user %s using intent %s", target, serviceIntent).that(bound)
                     .isTrue();
