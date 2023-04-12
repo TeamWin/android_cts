@@ -30,11 +30,11 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.DisallowInstallUnknownSources;
+import com.android.bedstead.harrier.policies.DisallowInstallUnknownSourcesGlobally;
 import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
@@ -50,7 +50,7 @@ public class InstallUnknownSourcesTest {
             includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_INSTALL_UNKNOWN_SOURCES")
-    public void setUserRestriction_disallowInstallUnknownSources_cannotSet_throwsException() {
+    public void addUserRestriction_disallowInstallUnknownSources_cannotSet_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().addUserRestriction(
                         sDeviceState.dpc().componentName(), DISALLOW_INSTALL_UNKNOWN_SOURCES));
@@ -59,7 +59,7 @@ public class InstallUnknownSourcesTest {
     @PolicyAppliesTest(policy = DisallowInstallUnknownSources.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_INSTALL_UNKNOWN_SOURCES")
-    public void setUserRestriction_disallowInstallUnknownSources_isSet() {
+    public void addUserRestriction_disallowInstallUnknownSources_isSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
                     sDeviceState.dpc().componentName(), DISALLOW_INSTALL_UNKNOWN_SOURCES);
@@ -76,7 +76,7 @@ public class InstallUnknownSourcesTest {
     @PolicyDoesNotApplyTest(policy = DisallowInstallUnknownSources.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_INSTALL_UNKNOWN_SOURCES")
-    public void setUserRestriction_disallowInstallUnknownSources_isNotSet() {
+    public void addUserRestriction_disallowInstallUnknownSources_isNotSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
                     sDeviceState.dpc().componentName(), DISALLOW_INSTALL_UNKNOWN_SOURCES);
@@ -91,25 +91,13 @@ public class InstallUnknownSourcesTest {
         }
     }
 
-    @CannotSetPolicyTest(policy = DisallowInstallUnknownSources.class,
-            includeNonDeviceAdminStates = false)
+    @PolicyAppliesTest(policy = DisallowInstallUnknownSourcesGlobally.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY")
-    @Ignore
-    public void setUserRestriction_disallowInstallUnknownSourcesGlobally_cannotSet_throwsException() {
-        assertThrows(SecurityException.class,
-                () -> sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
-                        DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY));
-    }
-
-    @PolicyAppliesTest(policy = DisallowInstallUnknownSources.class)
-    @Postsubmit(reason = "new test")
-    @ApiTest(apis = "android.os.UserManager#DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY")
-    @Ignore
-    public void setUserRestriction_disallowInstallUnknownSourcesGlobally_isSet() {
+    public void addUserRestriction_disallowInstallUnknownSourcesGlobally_isSet() {
         try {
-            sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
-                    DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY);
+            sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY);
 
             assertThat(TestApis.devicePolicy().userRestrictions().isSet(
                     DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY))
@@ -119,23 +107,5 @@ public class InstallUnknownSourcesTest {
                     sDeviceState.dpc().componentName(), DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY);
         }
     }
-
-    @PolicyDoesNotApplyTest(policy = DisallowInstallUnknownSources.class)
-    @Postsubmit(reason = "new test")
-    @ApiTest(apis = "android.os.UserManager#DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY")
-    @Ignore
-    public void setUserRestriction_disallowInstallUnknownSourcesGlobally_isNotSet() {
-        try {
-            sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
-                    DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY);
-
-            assertThat(TestApis.devicePolicy().userRestrictions().isSet(
-                    DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY))
-                    .isFalse();
-        } finally {
-
-            sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
-                    sDeviceState.dpc().componentName(), DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY);
-        }
-    }
+     // TODO(b/277701935): Add tests for addUserRestrictionGlobally
 }
