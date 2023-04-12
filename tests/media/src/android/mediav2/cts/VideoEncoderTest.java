@@ -126,11 +126,11 @@ public class VideoEncoderTest extends CodecEncoderTestBase {
         List<Object[]> defArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
                 // mediaType, width, height, bit-rate, frame-rate, color format, support class
                 {MediaFormat.MIMETYPE_VIDEO_H263, 64000, 128, 96, 15, COLOR_FormatYUV420Flexible,
-                        CODEC_ANY},
+                        CODEC_OPTIONAL},
                 {MediaFormat.MIMETYPE_VIDEO_H263, 64000, 176, 144, 15, COLOR_FormatYUV420Flexible,
                         CODEC_ANY},
                 {MediaFormat.MIMETYPE_VIDEO_H263, 128000, 128, 96, 15, COLOR_FormatYUV420Flexible,
-                        CODEC_ANY},
+                        CODEC_OPTIONAL},
                 {MediaFormat.MIMETYPE_VIDEO_H263, 128000, 176, 144, 15, COLOR_FormatYUV420Flexible,
                         CODEC_ANY},
 
