@@ -235,6 +235,7 @@ class AccessibilityPrivacySourceTest {
     fun testNotificationClickOpenSafetyCenter() {
         mAccessibilityServiceRule.enableService()
         runJobAndWaitUntilCompleted()
+        assertNotificationExist(permissionControllerPackage, ACCESSIBILITY_NOTIFICATION_ID)
         val statusBarNotification =
             getNotification(permissionControllerPackage, ACCESSIBILITY_NOTIFICATION_ID)
         Assert.assertNotNull(statusBarNotification)
