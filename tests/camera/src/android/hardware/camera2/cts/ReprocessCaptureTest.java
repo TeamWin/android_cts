@@ -20,6 +20,7 @@ import static android.hardware.camera2.cts.CameraTestUtils.*;
 
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
@@ -1162,6 +1163,9 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
                         mFirstImageReaderListener.getImage(CAPTURE_TIMEOUT_MS));
 
                 CaptureRequest.Builder builder = mCamera.createReprocessCaptureRequest(result);
+                assertEquals("Default capture intent for a reprocessing request should be "
+                        + "STILL_CAPTURE", (int) builder.get(CaptureRequest.CONTROL_CAPTURE_INTENT),
+                        (int) CameraMetadata.CONTROL_CAPTURE_INTENT_STILL_CAPTURE);
                 builder.addTarget(getReprocessOutputImageReader().getSurface());
 
                 // Set reprocess request keys
