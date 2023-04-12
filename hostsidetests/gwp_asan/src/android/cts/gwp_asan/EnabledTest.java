@@ -18,7 +18,6 @@ package android.cts.gwp_asan;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -30,25 +29,22 @@ public class EnabledTest extends GwpAsanBaseTest {
 
     @Test
     public void testGwpAsanEnabled() throws Exception {
-        Assert.assertTrue(
-                runDeviceTests(TEST_PKG, TEST_PKG + ".GwpAsanActivityTest", "testEnablement"));
-        Assert.assertTrue(
-                runDeviceTests(TEST_PKG, TEST_PKG + ".GwpAsanServiceTest", "testEnablement"));
+        runTest(".GwpAsanActivityTest", "testEnablement");
+        runTest(".GwpAsanServiceTest", "testEnablement");
     }
 
     @Test
     public void testCrashToDropbox() throws Exception {
-        Assert.assertTrue(
-                runDeviceTests(
-                        TEST_PKG, TEST_PKG + ".GwpAsanActivityTest", "testCrashToDropboxEnabled"));
-        Assert.assertTrue(
-                runDeviceTests(
-                        TEST_PKG, TEST_PKG + ".GwpAsanActivityTest", "testCrashToDropboxDefault"));
-        Assert.assertTrue(
-                runDeviceTests(
-                        TEST_PKG, TEST_PKG + ".GwpAsanServiceTest", "testCrashToDropboxEnabled"));
-        Assert.assertTrue(
-                runDeviceTests(
-                        TEST_PKG, TEST_PKG + ".GwpAsanServiceTest", "testCrashToDropboxDefault"));
+        runTest(".GwpAsanActivityTest", "testCrashToDropboxEnabled");
+        runTest(".GwpAsanActivityTest", "testCrashToDropboxDefault");
+        runTest(".GwpAsanServiceTest", "testCrashToDropboxEnabled");
+        runTest(".GwpAsanServiceTest", "testCrashToDropboxDefault");
+    }
+
+    @Test
+    public void testAppExitInfo() throws Exception {
+        resetAppExitInfo();
+        runTest(".GwpAsanActivityTest", "testCrashToDropboxDefault");
+        runTest(".GwpAsanActivityTest", "checkAppExitInfo");
     }
 }
