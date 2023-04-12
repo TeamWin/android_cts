@@ -22,6 +22,7 @@ import android.content.AttributionSource
 import android.content.Context
 import android.content.ContextParams
 import android.content.pm.PackageManager
+import android.os.Binder
 import android.os.Process
 import android.os.UserHandle
 import android.permission.PermissionManager
@@ -83,12 +84,11 @@ class RenouncedPermissionsTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun testCannotRequestRenouncePermissions() {
-        val renouncedPermissions = ArraySet<String>()
-        renouncedPermissions.add(Manifest.permission.READ_CONTACTS)
+        val renouncedPermissions = arrayOf(Manifest.permission.READ_CONTACTS)
         val activity =
-            createActivityWithAttributionSource(
-                AttributionSource(
-                    Process.myUid(), context.packageName, null, renouncedPermissions, null))
+            createActivityWithAttributionSource(AttributionSource(Process.myUid(),
+                    Process.myPid(), context.packageName, /*attributionTag*/ null,
+                    /*token*/ Binder(), renouncedPermissions, /*next*/ null))
 
         // Requesting renounced permissions throws
         activity.requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), 1)
