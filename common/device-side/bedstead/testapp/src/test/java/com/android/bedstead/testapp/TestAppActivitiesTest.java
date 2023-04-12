@@ -35,7 +35,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-public class TestAppActivitiesTest {
+public final class TestAppActivitiesTest {
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -112,5 +112,21 @@ public class TestAppActivitiesTest {
                 testAppInstance2.activities().query()
                         .whereActivity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
                         .get()).isNotNull();
+    }
+
+    @Test
+    public void queryBuilderIsEmpty_isEmpty_returnsTrue() {
+        TestAppActivitiesQueryBuilder queryBuilder = sTestAppInstance.activities().query();
+
+        assertThat(queryBuilder.isEmptyQuery()).isTrue();
+    }
+
+    @Test
+    public void queryBuilderIsEmpty_hasActivityQuery_returnsFalse() {
+        TestAppActivitiesQueryBuilder queryBuilder = sTestAppInstance.activities().query();
+
+        queryBuilder.whereActivity().activityClass().className().isNull();
+
+        assertThat(queryBuilder.isEmptyQuery()).isFalse();
     }
 }

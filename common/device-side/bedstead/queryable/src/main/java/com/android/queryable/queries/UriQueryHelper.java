@@ -85,6 +85,12 @@ public final class UriQueryHelper<E extends Queryable>
     }
 
     @Override
+    public boolean isEmptyQuery() {
+        return mEqualsValue == null
+                && Queryable.isEmptyQuery(mStringValue);
+    }
+
+    @Override
     public boolean matches(Uri value) {
         if (mEqualsValue != null && !mEqualsValue.equals(value)) {
             return false;

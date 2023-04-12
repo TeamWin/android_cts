@@ -17,6 +17,7 @@
 package com.android.bedstead.testapp;
 
 import com.android.queryable.Queryable;
+import com.android.queryable.annotations.Query;
 import com.android.queryable.info.ActivityInfo;
 import com.android.queryable.info.ServiceInfo;
 import com.android.queryable.queries.BooleanQuery;
@@ -29,6 +30,8 @@ import com.android.queryable.queries.SetQuery;
 import com.android.queryable.queries.SetQueryHelper;
 import com.android.queryable.queries.StringQuery;
 import com.android.queryable.queries.StringQueryHelper;
+
+import com.google.auto.value.AutoAnnotation;
 
 /** Builder for progressively building {@link TestApp} queries. */
 public final class TestAppQueryBuilder implements Queryable {
@@ -51,11 +54,40 @@ public final class TestAppQueryBuilder implements Queryable {
     StringQueryHelper<TestAppQueryBuilder> mSharedUserId = new StringQueryHelper<>(this);
     private boolean mAllowInternalBedsteadTestApps = false;
 
+    /**
+     * Returns a {@link TestAppQueryBuilder} not linked to a specific {@link TestAppProvider}.
+     *
+     * <p>Note that attempts to resolve this query will fail.
+     */
+    public static TestAppQueryBuilder queryBuilder() {
+        return new TestAppQueryBuilder();
+    }
+
+    private TestAppQueryBuilder() {
+        mProvider = null;
+    }
+
     TestAppQueryBuilder(TestAppProvider provider) {
         if (provider == null) {
             throw new NullPointerException();
         }
         mProvider = provider;
+    }
+
+    /**
+     * Apply the query parameters inside the {@link Query} to this {@link TestAppQueryBuilder}.
+     */
+    public TestAppQueryBuilder applyAnnotation(Query query) {
+        if (query == null) {
+            return this;
+        }
+
+        TestAppQueryBuilder queryBuilder = this;
+        queryBuilder = queryBuilder.whereTargetSdkVersion().matchesAnnotation(query.targetSdkVersion());
+        queryBuilder = queryBuilder.whereMinSdkVersion().matchesAnnotation(query.minSdkVersion());
+        queryBuilder = queryBuilder.whereMaxSdkVersion().matchesAnnotation(query.maxSdkVersion());
+        queryBuilder = queryBuilder.wherePackageName().matchesAnnotation(query.packageName());
+        return queryBuilder;
     }
 
     /**
@@ -173,6 +205,12 @@ public final class TestAppQueryBuilder implements Queryable {
     }
 
     private TestAppDetails resolveQuery() {
+        if (mProvider == null) {
+            throw new IllegalStateException("Cannot resolve testApps in an empty query. You must"
+                    + " create the query using a testAppProvider.query() rather than "
+                    + "TestAppQueryBuilder.query() in order to get results");
+        }
+
         for (TestAppDetails details : mProvider.testApps()) {
             if (!matches(details)) {
                 continue;
@@ -183,6 +221,22 @@ public final class TestAppQueryBuilder implements Queryable {
         }
 
         throw new NotFoundException(this);
+    }
+
+    @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mPackageName)
+                && Queryable.isEmptyQuery(mLabel)
+                && Queryable.isEmptyQuery(mMetadata)
+                && Queryable.isEmptyQuery(mMinSdkVersion)
+                && Queryable.isEmptyQuery(mMaxSdkVersion)
+                && Queryable.isEmptyQuery(mTargetSdkVersion)
+                && Queryable.isEmptyQuery(mActivities)
+                && Queryable.isEmptyQuery(mServices)
+                && Queryable.isEmptyQuery(mPermissions)
+                && Queryable.isEmptyQuery(mTestOnly)
+                && Queryable.isEmptyQuery(mIsDeviceAdmin)
+                && Queryable.isEmptyQuery(mSharedUserId);
     }
 
     private boolean matches(TestAppDetails details) {
@@ -278,5 +332,22 @@ public final class TestAppQueryBuilder implements Queryable {
     @Override
     public String toString() {
         return "TestAppQueryBuilder" + describeQuery(null);
+    }
+
+    public Query toAnnotation() {
+        return query(mPackageName.toAnnotation(),
+                mTargetSdkVersion.toAnnotation(),
+                mMinSdkVersion.toAnnotation(),
+                mMaxSdkVersion.toAnnotation());
+    }
+
+    @AutoAnnotation
+    private static Query query(
+            com.android.queryable.annotations.StringQuery packageName,
+            com.android.queryable.annotations.IntegerQuery targetSdkVersion,
+            com.android.queryable.annotations.IntegerQuery minSdkVersion,
+            com.android.queryable.annotations.IntegerQuery maxSdkVersion) {
+        return new AutoAnnotation_TestAppQueryBuilder_query(
+                packageName, targetSdkVersion, minSdkVersion, maxSdkVersion);
     }
 }

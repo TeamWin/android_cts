@@ -33,12 +33,12 @@ import java.lang.annotation.Target;
 @EnsureFeatureFlagEnabled(
         namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
         key = ENABLE_DEVICE_POLICY_ENGINE_FLAG,
-        weight = MIDDLE
+        weight = LAST
 )
 @EnsureFeatureFlagEnabled(
         namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
         key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG,
-        weight = MIDDLE
+        weight = LAST
 )
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

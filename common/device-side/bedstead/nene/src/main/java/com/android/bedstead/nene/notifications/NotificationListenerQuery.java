@@ -124,6 +124,12 @@ public final class NotificationListenerQuery implements Queryable {
     }
 
     @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mPackageName)
+                && Queryable.isEmptyQuery(mNotification);
+    }
+
+    @Override
     public String describeQuery(String fieldName) {
         return "{" + Queryable.joinQueryStrings(
                 mPackageName.describeQuery("packageName"),

@@ -23,26 +23,32 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.nene.types.OptionalBoolean;
 import com.android.queryable.annotations.IntegerQuery;
 import com.android.queryable.annotations.Query;
 import com.android.queryable.annotations.StringQuery;
 
 import com.google.auto.value.AutoAnnotation;
-import com.google.auto.value.AutoBuilder;
 
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@RunWith(JUnit4.class)
-public class TestAppProviderTest {
+@RunWith(BedsteadJUnit4.class)
+public final class TestAppProviderTest {
+
+    @ClassRule
+    @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     // Expects that this package name matches an actual test app
     private static final String EXISTING_PACKAGENAME = "com.android.bedstead.testapp.EmptyTestApp";

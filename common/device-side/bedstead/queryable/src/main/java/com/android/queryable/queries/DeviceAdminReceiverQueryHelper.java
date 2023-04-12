@@ -73,6 +73,11 @@ public final class DeviceAdminReceiverQueryHelper<E extends Queryable>
         return mBroadcastReceiverQueryHelper;
     }
 
+    @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mBroadcastReceiverQueryHelper);
+    }
+
     /** {@code true} if all filters are met by {@code value}. */
     @Override
     public boolean matches(DeviceAdminReceiverInfo value) {

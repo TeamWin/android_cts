@@ -82,6 +82,16 @@ public final class BundleQueryHelper<E extends Queryable> implements BundleQuery
     }
 
     @Override
+    public boolean isEmptyQuery() {
+        for (Map.Entry<String, BundleKeyQueryHelper<E>> keyQueries : mKeyQueryHelpers.entrySet()) {
+            if (!Queryable.isEmptyQuery(keyQueries.getValue())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
     public boolean matches(Bundle value) {
         for (Map.Entry<String, BundleKeyQueryHelper<E>> keyQueries : mKeyQueryHelpers.entrySet()) {
             if (!keyQueries.getValue().matches(value, keyQueries.getKey())) {

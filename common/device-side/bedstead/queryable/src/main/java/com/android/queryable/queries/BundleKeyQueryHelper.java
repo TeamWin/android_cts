@@ -164,6 +164,19 @@ public final class BundleKeyQueryHelper<E extends Queryable> implements BundleKe
         }
     }
 
+    @Override
+    public boolean isEmptyQuery() {
+        return mExpectsToExist == null
+                && Queryable.isEmptyQuery(mStringQuery)
+                && Queryable.isEmptyQuery(mSerializableQuery)
+                && Queryable.isEmptyQuery(mBundleQuery)
+                && Queryable.isEmptyQuery(mIntegerQuery)
+                && Queryable.isEmptyQuery(mLongQuery)
+                && Queryable.isEmptyQuery(mBooleanQuery)
+                && Queryable.isEmptyQuery(mStringListQuery)
+                && Queryable.isEmptyQuery(mIntegerListQuery);
+    }
+
     public boolean matches(Bundle value, String key) {
         if (mExpectsToExist != null && value.containsKey(key) != mExpectsToExist) {
             return false;

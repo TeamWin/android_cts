@@ -43,7 +43,8 @@ import java.lang.annotation.Target;
 @RequireRunOnCloneProfile
 @EnsureHasWorkProfile(dpcIsPrimary = true,
         useParentInstanceOfDpc = true,
-        isOrganizationOwned = true)
+        isOrganizationOwned = true,
+        dpcKey = "dpc")
 @EnsureFeatureFlagEnabled(
         namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
         key = ENABLE_DEVICE_POLICY_ENGINE_FLAG

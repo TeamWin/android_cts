@@ -18,6 +18,7 @@ package com.android.bedstead.testapp;
 
 import static android.app.AppOpsManager.OPSTR_START_FOREGROUND;
 import static android.app.admin.DevicePolicyManager.OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
+import static android.content.Context.RECEIVER_EXPORTED;
 import static android.content.PermissionChecker.PERMISSION_GRANTED;
 import static android.os.Build.VERSION_CODES.Q;
 import static android.os.Build.VERSION_CODES.S;
@@ -55,7 +56,7 @@ import org.junit.runner.RunWith;
 import java.time.Duration;
 
 @RunWith(BedsteadJUnit4.class)
-public class TestAppInstanceTest {
+public final class TestAppInstanceTest {
 
     @ClassRule
     @Rule
@@ -188,7 +189,7 @@ public class TestAppInstanceTest {
     @Test
     public void registerReceiver_receivesBroadcast() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
-            testAppInstance.registerReceiver(INTENT_FILTER);
+            testAppInstance.registerReceiver(INTENT_FILTER, RECEIVER_EXPORTED);
 
             sContext.sendBroadcast(INTENT);
 
@@ -201,8 +202,8 @@ public class TestAppInstanceTest {
     @Test
     public void registerReceiver_multipleIntentFilters_receivesAllMatchingBroadcasts() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
-            testAppInstance.registerReceiver(INTENT_FILTER);
-            testAppInstance.registerReceiver(INTENT_FILTER_2);
+            testAppInstance.registerReceiver(INTENT_FILTER, RECEIVER_EXPORTED);
+            testAppInstance.registerReceiver(INTENT_FILTER_2, RECEIVER_EXPORTED);
 
             sContext.sendBroadcast(INTENT);
             sContext.sendBroadcast(INTENT_2);
@@ -220,7 +221,7 @@ public class TestAppInstanceTest {
     public void registerReceiver_processIsRunning() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
 
-            testAppInstance.registerReceiver(INTENT_FILTER);
+            testAppInstance.registerReceiver(INTENT_FILTER, RECEIVER_EXPORTED);
 
             assertThat(sTestApp.pkg().runningProcess(sUser)).isNotNull();
         }
@@ -229,7 +230,7 @@ public class TestAppInstanceTest {
     @Test
     public void stop_registeredReceiver_doesNotReceiveBroadcast() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
-            testAppInstance.registerReceiver(INTENT_FILTER);
+            testAppInstance.registerReceiver(INTENT_FILTER, RECEIVER_EXPORTED);
 
             testAppInstance.stop();
             sContext.sendBroadcast(INTENT);
@@ -244,7 +245,7 @@ public class TestAppInstanceTest {
     @Test
     public void unregisterReceiver_registeredReceiver_doesNotReceiveBroadcast() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
-            testAppInstance.registerReceiver(INTENT_FILTER);
+            testAppInstance.registerReceiver(INTENT_FILTER, RECEIVER_EXPORTED);
 
             testAppInstance.unregisterReceiver(INTENT_FILTER);
             sContext.sendBroadcast(INTENT);
@@ -259,8 +260,8 @@ public class TestAppInstanceTest {
     @Test
     public void unregisterReceiver_doesNotUnregisterOtherReceivers() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
-            testAppInstance.registerReceiver(INTENT_FILTER);
-            testAppInstance.registerReceiver(INTENT_FILTER_2);
+            testAppInstance.registerReceiver(INTENT_FILTER, RECEIVER_EXPORTED);
+            testAppInstance.registerReceiver(INTENT_FILTER_2, RECEIVER_EXPORTED);
 
             testAppInstance.unregisterReceiver(INTENT_FILTER);
             sContext.sendBroadcast(INTENT);
@@ -291,7 +292,7 @@ public class TestAppInstanceTest {
     @Ignore("b/203758521 need to re-add support for killing processes")
     public void registerReceiver_appIsKilled_stillReceivesBroadcast() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
-            testAppInstance.registerReceiver(INTENT_FILTER);
+            testAppInstance.registerReceiver(INTENT_FILTER, RECEIVER_EXPORTED);
             sTestApp.pkg().runningProcess(sUser).kill();
             Poll.forValue("running process", () -> sTestApp.pkg().runningProcess(sUser))
                     .toNotBeNull()

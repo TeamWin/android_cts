@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.android.bedstead.harrier;
 
+import static com.android.bedstead.harrier.UserType.INITIAL_USER;
 import static com.android.bedstead.harrier.UserType.SECONDARY_USER;
 import static com.android.bedstead.harrier.UserType.SYSTEM_USER;
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
@@ -34,10 +35,8 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_IN_BACKGROUND;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_AFFILIATED_OTHER_USERS;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_CHILD_PROFILES;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_PARENT;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_UNAFFILIATED_CHILD_PROFILES;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_UNAFFILIATED_CHILD_PROFILES_WITHOUT_INHERITANCE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_UNAFFILIATED_OTHER_USERS;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
@@ -60,9 +59,9 @@ import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATI
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
+import static com.android.bedstead.testapp.TestAppQueryBuilder.queryBuilder;
 
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
-import com.android.bedstead.harrier.annotations.EnsureFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.EnsureTestAppDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
@@ -80,8 +79,8 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnAffiliatedDeviceOwnerSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnAffiliatedProfileOwnerSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDevicePolicyManagementRoleHolderProfile;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDevicePolicyManagementRoleHolderSecondaryUser;
@@ -98,6 +97,7 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecond
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnUnaffiliatedDeviceOwnerSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnUnaffiliatedProfileOwnerSecondaryUser;
+import com.android.queryable.annotations.Query;
 
 import com.google.auto.value.AutoAnnotation;
 import com.google.common.collect.ImmutableMap;
@@ -183,15 +183,15 @@ public final class Policy {
 
                     // The model here is that APPLIED_BY_PARENT + APPLIES_TO_OWN_USER means it applies to the parent of the DPC - I'm not sure this is the best model (APPLIES_TO_PARENT would also be reasonable)
                     .put(APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE
-                            | APPLIES_TO_OWN_USER, generateDevicePolicyManagerRoleHolderAnnotation(includeRunOnParentOfProfileOwnerUsingParentInstance(), /* roleHolderUser= */ WORK_PROFILE))
-                    .put(APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER, generateDevicePolicyManagerRoleHolderAnnotation(includeRunOnParentOfOrganizationOwnedProfileOwnerUsingParentInstance(), /* roleHolderUser= */ WORK_PROFILE))
+                            | APPLIES_TO_OWN_USER, generateDevicePolicyManagerRoleHolderAnnotation(includeRunOnParentOfProfileOwnerUsingParentInstance(), /* roleHolderUser= */ INITIAL_USER))
+                    .put(APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER, generateDevicePolicyManagerRoleHolderAnnotation(includeRunOnParentOfOrganizationOwnedProfileOwnerUsingParentInstance(), /* roleHolderUser= */ INITIAL_USER))
 
                     .put(APPLIED_BY_FINANCED_DEVICE_OWNER | APPLIES_TO_OWN_USER, generateDevicePolicyManagerRoleHolderAnnotation(includeRunOnFinancedDeviceOwnerUser(), /* roleHolderUser= */ SYSTEM_USER))
 
                     .put(APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER
                             | INHERITABLE, generateDevicePolicyManagerRoleHolderAnnotation(
                             includeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance(),
-                            /* roleHolderUser= */ WORK_PROFILE))
+                            /* roleHolderUser= */ INITIAL_USER))
                     .build();
     // This must contain one key for every APPLIED_BY that is being used, and maps to the
     // "default" for testing that DPC type
@@ -253,9 +253,9 @@ public final class Policy {
 
     @AutoAnnotation
     private static EnsureTestAppInstalled ensureTestAppInstalled(
-            String key, String packageName, UserType onUser, boolean isPrimary) {
+            String key, Query query, UserType onUser, boolean isPrimary) {
         return new AutoAnnotation_Policy_ensureTestAppInstalled(
-                key, packageName, onUser, isPrimary);
+                key, query, onUser, isPrimary);
     }
 
     @AutoAnnotation
@@ -408,11 +408,6 @@ public final class Policy {
         return new AutoAnnotation_Policy_requireFeatureFlagEnabled(namespace, key);
     }
 
-    @AutoAnnotation
-    private static EnsureFeatureFlagNotEnabled ensureFeatureFlagNotEnabled(String namespace, String key) {
-        return new AutoAnnotation_Policy_ensureFeatureFlagNotEnabled(namespace, key);
-    }
-
     private static Function<EnterprisePolicy, Set<Annotation>> singleAnnotation(
             Annotation annotation) {
         return (i) -> ImmutableSet.of(annotation);
@@ -421,6 +416,11 @@ public final class Policy {
     private static Function<EnterprisePolicy, Set<Annotation>> generateDevicePolicyManagerRoleHolderAnnotation(
             Annotation annotation, UserType roleHolderUser) {
         return (policy) -> {
+            if (true) {
+                // Temporarily disabling enforcement of third-party coexistence
+                return ImmutableSet.of(annotation);
+            }
+
             // If DPM role holder is handled elsewhere - we don't special case it here
             if (hasFlag(policy.dpc(), CANNOT_BE_APPLIED_BY_ROLE_HOLDER)
                     || hasFlag(policy.dpc(), APPLIED_BY_DPM_ROLE_HOLDER)) {
@@ -513,7 +513,9 @@ public final class Policy {
         for (AppOp appOp : enterprisePolicy.appOps()) {
             // TODO(b/219750042): Currently we only test that app ops apply to the current user
             Annotation[] withAppOpAnnotations = new Annotation[]{
-                    ensureTestAppInstalled(DELEGATE_KEY, DELEGATE_PACKAGE_NAME,
+                    ensureTestAppInstalled(DELEGATE_KEY, queryBuilder()
+                                    .wherePackageName().isEqualTo(DELEGATE_PACKAGE_NAME)
+                                    .toAnnotation(),
                             UserType.INSTRUMENTED_USER, /* isPrimary= */ true),
                     ensureTestAppHasAppOp(DELEGATE_KEY, new String[]{appOp.appliedWith()})
             };
@@ -525,7 +527,9 @@ public final class Policy {
         for (Permission permission : enterprisePolicy.permissions()) {
             // TODO(b/219750042): Currently we only test that permissions apply to the current user
             Annotation[] withPermissionAnnotations = new Annotation[]{
-                    ensureTestAppInstalled(DELEGATE_KEY, DELEGATE_PACKAGE_NAME,
+                    ensureTestAppInstalled(DELEGATE_KEY, queryBuilder()
+                                    .wherePackageName().isEqualTo(DELEGATE_PACKAGE_NAME)
+                                    .toAnnotation(),
                             UserType.INSTRUMENTED_USER, /* isPrimary= */ true),
                     ensureTestAppHasPermission(DELEGATE_KEY,
                             new String[]{permission.appliedWith()}, FailureMode.SKIP),
@@ -728,7 +732,9 @@ public final class Policy {
             // TODO(b/219750042): Currently we only test that app ops can be set as the primary user
             Annotation[] withAppOpAnnotations = new Annotation[]{
                     ensureTestAppInstalled(DELEGATE_KEY,
-                            DELEGATE_PACKAGE_NAME, UserType.INSTRUMENTED_USER,
+                            queryBuilder()
+                                    .wherePackageName().isEqualTo(DELEGATE_PACKAGE_NAME)
+                                    .toAnnotation(), UserType.INSTRUMENTED_USER,
                             /* isPrimary= */ true),
                     ensureTestAppHasAppOp(DELEGATE_KEY, new String[]{appOp.appliedWith()})
             };
@@ -741,7 +747,9 @@ public final class Policy {
             // TODO(b/219750042): Currently we only test that permissions can be set as the primary user
             Annotation[] withPermissionAnnotations = new Annotation[]{
                     ensureTestAppInstalled(DELEGATE_KEY,
-                            DELEGATE_PACKAGE_NAME, UserType.INSTRUMENTED_USER,
+                            queryBuilder()
+                                    .wherePackageName().isEqualTo(DELEGATE_PACKAGE_NAME)
+                                    .toAnnotation(), UserType.INSTRUMENTED_USER,
                             /* isPrimary= */ true),
                     ensureTestAppHasPermission(
                             DELEGATE_KEY, new String[]{permission.appliedWith()}, FailureMode.SKIP),

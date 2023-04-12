@@ -338,9 +338,20 @@ public final class UserReference implements AutoCloseable {
 
             if (Versions.meetsMinimumSdkVersionRequirement(R)) {
                 broadcastReceiver.awaitForBroadcast();
+
+                Poll.forValue("current user", () -> TestApis.users().current())
+                        .toBeEqualTo(this)
+                        .await();
+
+                if (!TestApis.users().current().equals(this)) {
+                    throw new NeneException("Error switching user to " + this
+                            + " (state not changed). Relevant logcat: " + TestApis.logcat().dump(
+                            (line) -> line.contains("ActivityManager")));
+                }
             } else {
                 Thread.sleep(20000);
             }
+
         } catch (InterruptedException e) {
             Log.e(LOG_TAG, "Interrupted while switching user", e);
         } finally {
