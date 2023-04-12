@@ -144,6 +144,25 @@ public final class UserHelper {
     }
 
     /**
+     * Get a {@code cmd input} for the given {@code source}, setting the proper display (if needed).
+     */
+    public String getInputCmd(String source) {
+        StringBuilder cmd = new StringBuilder("cmd input ").append(source);
+        if (mIsVisibleBackgroundUser) {
+            cmd.append(" -d ").append(mDisplayId);
+        }
+
+        return cmd.toString();
+    }
+
+    /**
+     * Get the proper {@code cmd appops} with the user id set, including the trailing space.
+     */
+    public String getAppopsCmd(String command) {
+        return "cmd appops " + command + " --user " + getUserId() + " ";
+    }
+
+    /**
      * Augments a existing {@link ActivityOptions} (or create a new one), injecting the
      * {{@link #getMainDisplayId()} if needed.
      */
