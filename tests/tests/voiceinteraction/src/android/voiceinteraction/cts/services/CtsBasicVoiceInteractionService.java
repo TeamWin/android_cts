@@ -84,6 +84,25 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         mHandler = Handler.createAsync(handlerThread.getLooper());
     }
 
+    @Override
+    public void resetState() {
+        super.resetState();
+        mAvailabilityChangeLatch = null;
+        mOnDetectRejectLatch = null;
+        mOnErrorLatch = null;
+        mOnFailureLatch = null;
+        mOnQueryFinishRejectLatch = null;
+        mOnHotwordDetectionServiceRestartedLatch = null;
+        mDetectedResult = null;
+        mRejectedResult = null;
+        mStreamedQueries.clear();
+        mCurrentQuery = "";
+        mHotwordDetectionServiceFailure = null;
+        mSoundTriggerFailure = null;
+        mUnknownFailure = null;
+        mSoftwareOnDetectedCount = 0;
+    }
+
     /**
      * Returns the onDetected() callback count for the software detector.
      */

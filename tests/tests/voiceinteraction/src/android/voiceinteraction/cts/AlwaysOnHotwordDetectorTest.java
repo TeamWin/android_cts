@@ -32,36 +32,37 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 import android.hardware.soundtrigger.SoundTrigger;
-import android.hardware.soundtrigger.SoundTrigger.ModuleProperties;
+import android.media.soundtrigger.SoundTriggerInstrumentation;
 import android.media.soundtrigger.SoundTriggerInstrumentation.ModelSession;
 import android.media.soundtrigger.SoundTriggerInstrumentation.RecognitionSession;
-import android.media.soundtrigger.SoundTriggerInstrumentation;
 import android.media.soundtrigger.SoundTriggerManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
 import android.util.Log;
+import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
-import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
+import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedClassRule;
+import android.voiceinteraction.cts.testcore.VoiceInteractionServiceOverrideEnrollmentRule;
 
+import androidx.annotation.GuardedBy;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.UUID;
 
-/**
- * Tests for {@link AlwaysOnHotwordDetector} APIs.
- */
+/** Tests for {@link AlwaysOnHotwordDetector} APIs. */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "No real use case for instant mode hotword detector")
 public class AlwaysOnHotwordDetectorTest {
@@ -70,147 +71,183 @@ public class AlwaysOnHotwordDetectorTest {
     // The VoiceInteractionService used by this test
     private static final String SERVICE_COMPONENT =
             "android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService";
-    // This is not exposed as an API.
-    // TODO(b/273567812)
-    private static final String MANAGE_VOICE_KEYPHRASES =
-        "android.permission.MANAGE_VOICE_KEYPHRASES";
-    protected final Context mContext = getInstrumentation().getTargetContext();
 
     private static final int KEYPHRASE_ID = 1234;
 
-    private CtsBasicVoiceInteractionService mService;
-    private SoundTrigger.Keyphrase[] mKeyphrases;
+    private static final Context sContext = getInstrumentation().getTargetContext();
+    private static final SoundTrigger.Keyphrase[] KEYPHRASES =
+            new SoundTrigger.Keyphrase[] {
+                new SoundTrigger.Keyphrase(
+                        KEYPHRASE_ID,
+                        SoundTrigger.RECOGNITION_MODE_VOICE_TRIGGER,
+                        BaseVoiceInteractionService.KEYPHRASE_LOCALE,
+                        BaseVoiceInteractionService.KEYPHRASE_TEXT,
+                        new int[] {sContext.getUserId()})
+            };
+
+    private SoundTriggerInstrumentation mInstrumentation = null;
 
     private Object mLock = new Object();
-    private SoundTriggerInstrumentation mInjection = null;
+
+    @GuardedBy("mLock")
     private ModelSession mModelSession = null;
+
+    @GuardedBy("mLock")
     private RecognitionSession mRecognitionSession = null;
+
+    // For destroying in teardown
+    private AlwaysOnHotwordDetector mAlwaysOnHotwordDetector = null;
 
     @Rule
     public RequiredFeatureRule REQUIRES_MIC_RULE = new RequiredFeatureRule(FEATURE_MICROPHONE);
 
     @Rule
-    public VoiceInteractionServiceConnectedRule mConnectedRule =
-            new VoiceInteractionServiceConnectedRule(mContext, getTestVoiceInteractionService());
+    public VoiceInteractionServiceOverrideEnrollmentRule mEnrollOverrideRule =
+            new VoiceInteractionServiceOverrideEnrollmentRule(getService());
 
-    public String getTestVoiceInteractionService() {
-        Log.d(TAG, "getTestVoiceInteractionService()");
+    @ClassRule
+    public static final VoiceInteractionServiceConnectedClassRule sServiceRule =
+            new VoiceInteractionServiceConnectedClassRule(
+                    sContext, getTestVoiceInteractionServiceName());
+
+    private static String getTestVoiceInteractionServiceName() {
+        Log.d(TAG, "getTestVoiceInteractionServiceName()");
         return CTS_SERVICE_PACKAGE + "/" + SERVICE_COMPONENT;
+    }
+
+    private static CtsBasicVoiceInteractionService getService() {
+        return (CtsBasicVoiceInteractionService) sServiceRule.getService();
+    }
+
+    private void adoptSoundTriggerPermissions() {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(
+                        RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD, MANAGE_HOTWORD_DETECTION);
+    }
+
+    private void createAndEnrollAlwaysOnHotwordDetector() throws InterruptedException {
+        mAlwaysOnHotwordDetector = null;
+        // Wait onAvailabilityChanged() callback called following AOHD creation.
+        getService().initAvailabilityChangeLatch();
+
+        // Load appropriate keyphrase model
+        // Required for the model to enter the enrolled state
+        runWithShellPermissionIdentity(
+                () ->
+                        mEnrollOverrideRule
+                                .getModelManager()
+                                .updateKeyphraseSoundModel(
+                                        new SoundTrigger.KeyphraseSoundModel(
+                                                new UUID(5, 7),
+                                                new UUID(7, 5),
+                                                /* data= */ null,
+                                                KEYPHRASES)),
+                VoiceInteractionServiceOverrideEnrollmentRule.MANAGE_VOICE_KEYPHRASES);
+
+        // Create alwaysOnHotwordDetector and wait onHotwordDetectionServiceInitialized() callback
+        getService()
+                .createAlwaysOnHotwordDetectorWithOnFailureCallback(
+                        /* useExecutor= */ true, /* mainThread= */ true);
+
+        getService().waitSandboxedDetectionServiceInitializedCalledOrException();
+        // Verify that detector creation didn't throw
+        assertThat(getService().isCreateDetectorIllegalStateExceptionThrow()).isFalse();
+        assertThat(getService().isCreateDetectorSecurityExceptionThrow()).isFalse();
+
+        // verify callback result
+        assertThat(getService().getSandboxedDetectionServiceInitializedResult())
+                .isEqualTo(HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
+
+        // The AlwaysOnHotwordDetector should be created correctly
+        mAlwaysOnHotwordDetector = getService().getAlwaysOnHotwordDetector();
+        assertThat(mAlwaysOnHotwordDetector).isNotNull();
+
+        // verify we have entered the ENROLLED state
+        getService().waitAvailabilityChangedCalled();
+        assertThat(getService().getHotwordDetectionServiceAvailabilityResult())
+                .isEqualTo(AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED);
+    }
+
+    @BeforeClass
+    public static void setupClass() {
+        // TODO(b/276393203) delete this
+        SystemClock.sleep(8_000);
     }
 
     @Before
     public void setup() {
-        // VoiceInteractionServiceConnectedRule handles the service connected, we should be
-        // able to get service
-        mService = (CtsBasicVoiceInteractionService) CtsBasicVoiceInteractionService.getService();
-        // Limited to single keyphrase
-        mKeyphrases = new SoundTrigger.Keyphrase[] {new SoundTrigger.Keyphrase(KEYPHRASE_ID,
-                SoundTrigger.RECOGNITION_MODE_VOICE_TRIGGER,
-                mService.KEYPHRASE_LOCALE,
-                mService.KEYPHRASE_TEXT,
-                new int[] {mContext.getUserId()}
-                )};
-
         // Hook up SoundTriggerInstrumentation to inject/observe STHAL operations.
-        runWithShellPermissionIdentity(() -> {
-            mInjection = mContext.getSystemService(SoundTriggerManager.class)
-                    .attachInstrumentation(
-                        (Runnable r) -> r.run(),
-                        (ModelSession modelSession) -> {
-                            synchronized (mLock) {
-                                mModelSession = modelSession;
-                                mModelSession.setModelCallback((Runnable r) -> r.run(),
-                                        (RecognitionSession recogSession) -> {
-                                            synchronized (mLock) {
-                                                mRecognitionSession = recogSession;
-                                                mLock.notifyAll();
-                                            }
-                                        });
-                            }
-                        });
-        }, MANAGE_SOUND_TRIGGER, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
-        // Check we can get the service, we need service object to call the service provided method
-        Objects.requireNonNull(mService);
-        // Wait the original HotwordDetectionService finish clean up to avoid flaky
-        // TODO delete this
-        SystemClock.sleep(5_000);
+        runWithShellPermissionIdentity(
+                () -> {
+                    mInstrumentation =
+                            sContext.getSystemService(SoundTriggerManager.class)
+                                    .attachInstrumentation(
+                                            (Runnable r) -> r.run(),
+                                            (ModelSession modelSession) -> {
+                                                synchronized (mLock) {
+                                                    mModelSession = modelSession;
+                                                    mModelSession.setModelCallback(
+                                                            (Runnable r) -> r.run(),
+                                                            (RecognitionSession recogSession) -> {
+                                                                synchronized (mLock) {
+                                                                    mRecognitionSession =
+                                                                            recogSession;
+                                                                    mLock.notifyAll();
+                                                                }
+                                                            });
+                                                }
+                                            });
+                },
+                MANAGE_SOUND_TRIGGER,
+                RECORD_AUDIO,
+                CAPTURE_AUDIO_HOTWORD);
     }
 
     @After
     public void tearDown() {
-        runWithShellPermissionIdentity(() ->
-                mService.createKeyphraseModelManager().setModelDatabaseForTestEnabled(false),
-            MANAGE_VOICE_KEYPHRASES);
+        // Clean up any unexpected HAL state
+        mInstrumentation.triggerRestart();
+
+        // Destroy the framework session
+        if (mAlwaysOnHotwordDetector != null) {
+            runWithShellPermissionIdentity(
+                    () -> mAlwaysOnHotwordDetector.destroy(),
+                    RECORD_AUDIO,
+                    CAPTURE_AUDIO_HOTWORD,
+                    MANAGE_HOTWORD_DETECTION);
+        }
+
+        // Clear the service state
+        getService().resetState();
+        // Drop any permissions we may still have
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        mService = null;
     }
 
-    // TODO(b/272118137)
-    // Splitting into several tests relies on detach being plumbed to AOHD.
     @Test
     public void testAlwaysOnHotwordDetector_startRecognitionWithData() throws Exception {
-
-        // Wait onAvailabilityChanged() callback called following AOHD creation.
-        mService.initAvailabilityChangeLatch();
-
-        // Override enrolled model with a custom model for test purposes.
-        runWithShellPermissionIdentity(() -> {
-            final var manager = mService.createKeyphraseModelManager();
-            manager.setModelDatabaseForTestEnabled(true);
-            manager.updateKeyphraseSoundModel(new SoundTrigger.KeyphraseSoundModel(
-                        new UUID(5,7), new UUID(7,5), /* data= */ null, mKeyphrases));
-        }, MANAGE_VOICE_KEYPHRASES);
-
-        // Create alwaysOnHotwordDetector and wait onHotwordDetectionServiceInitialized() callback
-        mService.createAlwaysOnHotwordDetector(/* useExecutor= */ true, /* mainThread= */ true);
-
-        // verify callback result
-        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
-        assertThat(mService.getSandboxedDetectionServiceInitializedResult()).isEqualTo(
-                HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
-
-        // The AlwaysOnHotwordDetector should be created correctly
-        AlwaysOnHotwordDetector alwaysOnHotwordDetector = mService.getAlwaysOnHotwordDetector();
-        Objects.requireNonNull(alwaysOnHotwordDetector);
-        // verify we have entered the ENROLLED state
-        mService.waitAvailabilityChangedCalled();
-        assertThat(mService.getHotwordDetectionServiceAvailabilityResult()).isEqualTo(
-                AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED);
-
+        createAndEnrollAlwaysOnHotwordDetector();
         // Grab permissions for more than a single call since we get callbacks
-        getInstrumentation().getUiAutomation().
-                adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD,
-                        MANAGE_HOTWORD_DETECTION);
-
+        adoptSoundTriggerPermissions();
         // Start recognition
-        boolean startRecognitionThrowException = true;
-        try {
-            synchronized (mLock) {
-                alwaysOnHotwordDetector.startRecognition(0,
-                        new byte[]{1, 2, 3, 4, 5});
-                mLock.wait(WAIT_TIMEOUT_IN_MS);
-                // We received model load, recog start
-                assertThat(mModelSession).isNotNull();
-                assertThat(mRecognitionSession).isNotNull();
-                mService.initDetectRejectLatch();
-                mRecognitionSession.triggerRecognitionEvent(
-                        new byte[] {0x11, 0x22},
-                        /* must include the keyphrase id enrolled by AOHD */
-                        Arrays.asList(new SoundTrigger.KeyphraseRecognitionExtra(KEYPHRASE_ID,
-                                SoundTrigger.RECOGNITION_MODE_VOICE_TRIGGER,
-                                10 /* coarse confidence */))
-                        );
-            }
-            // TODO(b/272791099)
-            // can't verify callback data because HDS will reject the injected event.
-            mService.waitOnDetectOrRejectCalled();
-            startRecognitionThrowException = false;
-        } catch (UnsupportedOperationException | IllegalStateException e) {
-            startRecognitionThrowException = true;
-        } finally {
-            alwaysOnHotwordDetector.destroy();
+        synchronized (mLock) {
+            mAlwaysOnHotwordDetector.startRecognition(0, new byte[] {1, 2, 3, 4, 5});
+            mLock.wait(WAIT_TIMEOUT_IN_MS);
+            // We received model load, recog start
+            assertThat(mModelSession).isNotNull();
+            assertThat(mRecognitionSession).isNotNull();
+            getService().initDetectRejectLatch();
+            mRecognitionSession.triggerRecognitionEvent(
+                    new byte[] {0x11, 0x22},
+                    /* must include the keyphrase id enrolled by AOHD */
+                    Arrays.asList(
+                            new SoundTrigger.KeyphraseRecognitionExtra(
+                                    KEYPHRASE_ID,
+                                    SoundTrigger.RECOGNITION_MODE_VOICE_TRIGGER,
+                                    10 /* coarse confidence */)));
         }
-        // verify recognition result
-        assertThat(startRecognitionThrowException).isFalse();
+        // TODO(b/272791099)
+        // can't verify callback data because HDS will reject the injected event.
+        getService().waitOnDetectOrRejectCalled();
     }
 }
