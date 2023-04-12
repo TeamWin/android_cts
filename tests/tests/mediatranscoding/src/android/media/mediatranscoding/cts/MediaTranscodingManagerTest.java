@@ -113,7 +113,7 @@ public class MediaTranscodingManagerTest {
     private static final int PSNR_THRESHOLD = 20;
 
     // Copy the resource to cache.
-    private Uri resourceToUri(Context context, int resId, String name) throws IOException {
+    private Uri resourceToUri(int resId, String name) throws IOException {
         Uri cacheUri = Uri.parse(ContentResolver.SCHEME_FILE + "://"
                 + mContext.getCacheDir().getAbsolutePath() + "/" + name);
 
@@ -192,11 +192,11 @@ public class MediaTranscodingManagerTest {
                 InstrumentationRegistry.getInstrumentation(), new Bundle());
 
         // Setup default source HEVC 480p file uri.
-        mSourceHEVCVideoUri = resourceToUri(mContext, R.raw.Video_HEVC_480p_30Frames,
+        mSourceHEVCVideoUri = resourceToUri(R.raw.Video_HEVC_480p_30Frames,
                 "Video_HEVC_480p_30Frames.mp4");
 
         // Setup source AVC file uri.
-        mSourceAVCVideoUri = resourceToUri(mContext, R.raw.Video_AVC_30Frames,
+        mSourceAVCVideoUri = resourceToUri(R.raw.Video_AVC_30Frames,
                 "Video_AVC_30Frames.mp4");
 
         // Setup destination file.
@@ -392,52 +392,52 @@ public class MediaTranscodingManagerTest {
 
     @Test
     public void testHevcTranscoding720PVideo30FramesWithoutAudio() throws Exception {
-        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_720p_30Frames,
+        transcodeFile(resourceToUri(R.raw.Video_HEVC_720p_30Frames,
                 "Video_HEVC_720p_30Frames.mp4"), false /* testFileDescriptor */);
     }
 
     @Test
     public void testAvcTranscoding1080PVideo30FramesWithoutAudio() throws Exception {
-        transcodeFile(resourceToUri(mContext, R.raw.Video_AVC_30Frames, "Video_AVC_30Frames.mp4"),
+        transcodeFile(resourceToUri(R.raw.Video_AVC_30Frames, "Video_AVC_30Frames.mp4"),
                 false /* testFileDescriptor */);
     }
 
     @Test
     public void testHevcTranscoding1080PVideo30FramesWithoutAudio() throws Exception {
         transcodeFile(
-                resourceToUri(mContext, R.raw.Video_HEVC_30Frames, "Video_HEVC_30Frames.mp4"),
+                resourceToUri(R.raw.Video_HEVC_30Frames, "Video_HEVC_30Frames.mp4"),
                 false /* testFileDescriptor */);
     }
 
     // Enable this after fixing b/175641397
     @Test
     public void testHevcTranscoding1080PVideo1FrameWithAudio() throws Exception {
-        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_1Frame_Audio,
+        transcodeFile(resourceToUri(R.raw.Video_HEVC_1Frame_Audio,
                 "Video_HEVC_1Frame_Audio.mp4"), false /* testFileDescriptor */);
     }
 
     @Test
     public void testHevcTranscoding1080PVideo37FramesWithAudio() throws Exception {
-        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_37Frames_Audio,
+        transcodeFile(resourceToUri(R.raw.Video_HEVC_37Frames_Audio,
                 "Video_HEVC_37Frames_Audio.mp4"), false /* testFileDescriptor */);
     }
 
     @Test
     public void testHevcTranscoding1080PVideo72FramesWithAudio() throws Exception {
-        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_72Frames_Audio,
+        transcodeFile(resourceToUri(R.raw.Video_HEVC_72Frames_Audio,
                 "Video_HEVC_72Frames_Audio.mp4"), false /* testFileDescriptor */);
     }
 
     // This test will only run when the device support decoding and encoding 4K video.
     @Test
     public void testHevcTranscoding4KVideo64FramesWithAudio() throws Exception {
-        transcodeFile(resourceToUri(mContext, R.raw.Video_4K_HEVC_64Frames_Audio,
+        transcodeFile(resourceToUri(R.raw.Video_4K_HEVC_64Frames_Audio,
                 "Video_4K_HEVC_64Frames_Audio.mp4"), false /* testFileDescriptor */);
     }
 
     @Test
     public void testHevcTranscodingWithFileDescriptor() throws Exception {
-        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_37Frames_Audio,
+        transcodeFile(resourceToUri(R.raw.Video_HEVC_37Frames_Audio,
                 "Video_HEVC_37Frames_Audio.mp4"), true /* testFileDescriptor */);
     }
 
@@ -551,6 +551,13 @@ public class MediaTranscodingManagerTest {
                 MediaTranscodingTestUtil.computeStats(mContext, fileUri, destinationUri, DEBUG_YUV);
         assertTrue("PSNR: " + stats.mAveragePSNR + " is too low",
                 stats.mAveragePSNR >= PSNR_THRESHOLD);
+
+        if (srcFd != null) {
+            srcFd.close();
+        }
+        if (dstFd != null) {
+            dstFd.close();
+        }
     }
 
     private void testVideoFormatResolverShouldTranscode(String mime, int width, int height,
