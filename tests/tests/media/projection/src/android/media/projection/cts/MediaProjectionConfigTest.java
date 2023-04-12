@@ -34,9 +34,9 @@ import org.junit.Test;
 @NonMainlineTest
 public class MediaProjectionConfigTest {
 
-    @ApiTest(apis = "android.media.projection.MediaProjectionConfig#createConfigForDisplay")
+    @ApiTest(apis = "android.media.projection.MediaProjectionConfig#createConfigForDefaultDisplay")
     @Test
-    public void testCreateConfigForDisplay() {
+    public void testCreateConfigForDefaultDisplay() {
         assertThat(MediaProjectionConfig.createConfigForDefaultDisplay()).isNotNull();
     }
 
