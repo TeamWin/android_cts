@@ -123,6 +123,7 @@ public class AbsListViewTest {
 
     private Instrumentation mInstrumentation;
     private CtsTouchUtils mCtsTouchUtils;
+    private CtsKeyEventUtil mCtsKeyEventUtil;
     private AbsListView mListView;
     private Context mContext;
     private AttributeSet mAttributeSet;
@@ -135,10 +136,11 @@ public class AbsListViewTest {
     @Before
     public void setup() throws Throwable {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
+        mCtsKeyEventUtil = new CtsKeyEventUtil(mInstrumentation.getTargetContext());
         final Activity activity = mActivityRule.getActivity();
         // Always use the activity context
         mContext = activity;
-        mCtsTouchUtils = new CtsTouchUtils(mContext);
 
         WindowUtil.waitForFocus(activity);
 
@@ -1306,7 +1308,7 @@ public class AbsListViewTest {
         // KEYCODE_ENTER is handled by isConfirmKey, so it comsumed before sendToTextFilter called.
         // because of this, make keyevent with repeat count.
         KeyEvent event = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER, 1);
-        CtsKeyEventUtil.sendKey(mInstrumentation, listView, event);
+        mCtsKeyEventUtil.sendKey(mInstrumentation, listView, event);
         assertTrue(listView.isTextFilterEnabled());
 
         // we expect keyevent will be passed with nothing to do
@@ -1316,7 +1318,7 @@ public class AbsListViewTest {
         // KEYCODE_NUMPAD_ENTER is handled by isConfirmKey, too.
         // so make keyevent with repeat count.
         event = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_NUMPAD_ENTER, 1);
-        CtsKeyEventUtil.sendKey(mInstrumentation, listView, event);
+        mCtsKeyEventUtil.sendKey(mInstrumentation, listView, event);
         assertTrue(listView.isTextFilterEnabled());
 
         // we expect keyevent will be passed with nothing to do, like KEYCODE_ENTER
