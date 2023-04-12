@@ -55,6 +55,7 @@ import android.autofillservice.cts.testcore.IdMode;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.content.Intent;
+import android.platform.test.annotations.FlakyTest;
 import android.service.autofill.FillEventHistory;
 import android.view.View;
 
@@ -107,6 +108,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
         sReplier.setIdMode(IdMode.RESOURCE_ID);
     }
 
+    @FlakyTest(bugId = 277539840) // TODO: Try to reduce flakes
     @Test
     public void testPccRequest_setForAllHints() throws Exception {
         // Set service.
