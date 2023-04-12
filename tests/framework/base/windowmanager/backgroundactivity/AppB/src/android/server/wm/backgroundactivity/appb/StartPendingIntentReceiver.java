@@ -62,14 +62,7 @@ public class StartPendingIntentReceiver extends BroadcastReceiver {
             Log.d(TAG, "sending " + pendingIntent + " with " + bundle + " from "
                     + context.getPackageName() + " at "
                     + context.getApplicationInfo().targetSdkVersion);
-            pendingIntent.send(
-                    /* context */ null, /* code */
-                    0, /* intent */
-                    null, /* onFinished */
-                    null, /* handler */
-                    null, /* requiredPermission */
-                    null,
-                    bundle);
+            pendingIntent.send(bundle);
         } catch (PendingIntent.CanceledException e) {
             e.printStackTrace();
         }

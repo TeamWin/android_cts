@@ -55,9 +55,7 @@ public class StartPendingIntentActivity extends Activity {
                 bundle = ActivityOptions.makeBasic().toBundle();
             }
             Log.i(TAG, "pendingIntent.send with bundle: " + bundle);
-            pendingIntent.send(/* context */ null, /* code */0, /* intent */
-                    null, /* onFinished */null, /* handler */
-                    null, /* requiredPermission */ null, bundle);
+            pendingIntent.send(bundle);
         } catch (PendingIntent.CanceledException e) {
             throw new AssertionError(e);
         }
