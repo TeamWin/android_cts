@@ -144,12 +144,12 @@ class ItsSession(object):
 
   IMAGE_FORMAT_LIST_1 = [
       'jpegImage', 'rawImage', 'raw10Image', 'raw12Image', 'rawStatsImage',
-      'dngImage', 'y8Image'
+      'dngImage', 'y8Image', 'jpeg_rImage'
   ]
 
   IMAGE_FORMAT_LIST_2 = [
       'jpegImage', 'rawImage', 'raw10Image', 'raw12Image', 'rawStatsImage',
-      'yuvImage'
+      'yuvImage', 'jpeg_rImage'
   ]
 
   CAP_JPEG = {'format': 'jpeg'}
@@ -1273,6 +1273,7 @@ class ItsSession(object):
             'rawStats': [],
             'dng': [],
             'jpeg': [],
+            'jpeg_r': [],
             'y8': []
         }
 
@@ -1369,6 +1370,10 @@ class ItsSession(object):
         fmt = json_obj[_TAG_STR][:-5]
         bufs[self._camera_id][fmt].append(buf)
         nbufs += 1
+      elif json_obj[_TAG_STR] == 'privImage':
+        # The private image format buffers are opaque to camera clients
+        # and cannot be accessed.
+        nbufs += 1
       elif json_obj[_TAG_STR] == 'yuvImage':
         buf_size = numpy.product(buf.shape)
         yuv_bufs[self._camera_id][buf_size].append(buf)
@@ -1421,7 +1426,7 @@ class ItsSession(object):
         if fmt == 'yuv':
           buf_size = (widths[j] * heights[j] * 3) // 2
           obj['data'] = yuv_bufs[cam_id][buf_size][i]
-        else:
+        elif fmt != 'priv':
           obj['data'] = bufs[cam_id][fmt][i]
         objs.append(obj)
       rets.append(objs if ncap > 1 else objs[0])
