@@ -97,7 +97,7 @@ def convert_capture_to_rgb_image(cap,
     u = cap['data'][w * h: w * h * 5//4]
     v = cap['data'][w * h * 5//4: w * h * 6//4]
     return convert_yuv420_planar_to_rgb_image(y, u, v, w, h)
-  elif cap['format'] == 'jpeg':
+  elif cap['format'] == 'jpeg' or cap['format'] == 'jpeg_r':
     return decompress_jpeg_to_rgb_image(cap['data'])
   elif cap['format'] == 'raw' or cap['format'] == 'rawStats':
     assert_props_is_not_none(props)

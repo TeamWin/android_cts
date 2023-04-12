@@ -1157,6 +1157,10 @@ public class ItsService extends Service implements SensorEventListener {
                         jsonSurface.put("format", "raw12");
                     } else if (format == ImageFormat.JPEG) {
                         jsonSurface.put("format", "jpeg");
+                    } else if (format == ImageFormat.JPEG_R) {
+                        jsonSurface.put("format", "jpeg_r");
+                    } else if (format == ImageFormat.PRIVATE) {
+                        jsonSurface.put("format", "priv");
                     } else if (format == ImageFormat.YUV_420_888) {
                         jsonSurface.put("format", "yuv");
                     } else if (format == ImageFormat.Y8) {
@@ -2090,14 +2094,16 @@ public class ItsService extends Service implements SensorEventListener {
      * image readers for the parsed output surface sizes, output formats, and the given input
      * size and format.
      */
-    private void prepareImageReadersWithOutputSpecs(JSONArray jsonOutputSpecs, Size inputSize,
-            int inputFormat, int maxInputBuffers, boolean backgroundRequest) throws ItsException {
+    private boolean prepareImageReadersWithOutputSpecs(JSONArray jsonOutputSpecs,
+            Size inputSize, int inputFormat, int maxInputBuffers,
+            boolean backgroundRequest) throws ItsException {
         Size outputSizes[];
         int outputFormats[];
         int numSurfaces = 0;
         mPhysicalStreamMap.clear();
         mStreamUseCaseMap.clear();
 
+        boolean is10bitOutputPresent = false;
         if (jsonOutputSpecs != null) {
             try {
                 numSurfaces = jsonOutputSpecs.length();
@@ -2134,6 +2140,13 @@ public class ItsService extends Service implements SensorEventListener {
                         sizes = ItsUtils.getYuvOutputSizes(cameraCharacteristics);
                     } else if ("jpg".equals(sformat) || "jpeg".equals(sformat)) {
                         outputFormats[i] = ImageFormat.JPEG;
+                        sizes = ItsUtils.getJpegOutputSizes(cameraCharacteristics);
+                    } else if ("jpeg_r".equals(sformat)) {
+                        outputFormats[i] = ImageFormat.JPEG_R;
+                        sizes = ItsUtils.getJpegOutputSizes(cameraCharacteristics);
+                        is10bitOutputPresent = true;
+                    } else if ("priv".equals(sformat)) {
+                        outputFormats[i] = ImageFormat.PRIVATE;
                         sizes = ItsUtils.getJpegOutputSizes(cameraCharacteristics);
                     } else if ("raw".equals(sformat)) {
                         outputFormats[i] = ImageFormat.RAW_SENSOR;
@@ -2211,6 +2224,8 @@ public class ItsService extends Service implements SensorEventListener {
         }
 
         prepareImageReaders(outputSizes, outputFormats, inputSize, inputFormat, maxInputBuffers);
+
+        return is10bitOutputPresent;
     }
 
     /**
@@ -2990,8 +3005,9 @@ public class ItsService extends Service implements SensorEventListener {
 
                 JSONArray jsonOutputSpecs = ItsUtils.getOutputSpecs(params);
 
-                prepareImageReadersWithOutputSpecs(jsonOutputSpecs, /*inputSize*/null,
-                        /*inputFormat*/0, /*maxInputBuffers*/0, backgroundRequest);
+                boolean is10bitOutputPresent = prepareImageReadersWithOutputSpecs(jsonOutputSpecs,
+                        /*inputSize*/null, /*inputFormat*/0, /*maxInputBuffers*/0,
+                        backgroundRequest);
                 numSurfaces = mOutputImageReaders.length;
                 numCaptureSurfaces = numSurfaces - (backgroundRequest ? 1 : 0);
 
@@ -3015,6 +3031,10 @@ public class ItsService extends Service implements SensorEventListener {
                                 config.setColorSpace(ColorSpace.Named.values()[colorSpaceInt]);
                             }
                         }
+                    }
+                    if (is10bitOutputPresent) {
+                        // HLG10 is mandatory for all 10-bit output capable devices
+                        config.setDynamicRangeProfile(DynamicRangeProfiles.HLG10);
                     }
                     outputConfigs.add(config);
                 }
@@ -3294,7 +3314,20 @@ public class ItsService extends Service implements SensorEventListener {
                     byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
                     ByteBuffer buf = ByteBuffer.wrap(img);
                     int count = mCountJpg.getAndIncrement();
-                    mSocketRunnableObj.sendResponseCaptureBuffer("jpegImage"+physicalCameraId, buf);
+                    mSocketRunnableObj.sendResponseCaptureBuffer("jpegImage" + physicalCameraId,
+                            buf);
+                } else if (format == ImageFormat.JPEG_R) {
+                    Logt.i(TAG, "Received JPEG/R capture");
+                    byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
+                    ByteBuffer buf = ByteBuffer.wrap(img);
+                    int count = mCountJpg.getAndIncrement();
+                    mSocketRunnableObj.sendResponseCaptureBuffer("jpeg_rImage"+physicalCameraId,
+                            buf);
+                } else if (format == ImageFormat.PRIVATE) {
+                    Logt.i(TAG, "Received PRIVATE capture");
+                    // Private images have client opaque buffers
+                    mSocketRunnableObj.sendResponseCaptureBuffer("privImage"+physicalCameraId,
+                            null);
                 } else if (format == ImageFormat.YUV_420_888) {
                     Logt.i(TAG, "Received YUV capture");
                     byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
