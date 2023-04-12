@@ -71,13 +71,13 @@ import android.os.UserHandle;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerStateHelper;
-import android.support.test.uiautomator.BySelector;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiSelector;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiSelector;
 
 import com.android.compatibility.common.util.AmMonitor;
 import com.android.compatibility.common.util.SystemUtil;

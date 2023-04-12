@@ -22,11 +22,11 @@ import android.app.UiAutomation
 import android.content.Context
 import android.media.MediaRoute2Info
 import android.net.Uri
-import android.support.test.uiautomator.By
-import android.support.test.uiautomator.UiDevice
 import androidx.test.InstrumentationRegistry
 import androidx.test.InstrumentationRegistry.getInstrumentation
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
 import com.android.compatibility.common.util.AdoptShellPermissionsRule
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity

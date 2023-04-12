@@ -47,15 +47,15 @@ import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiSelector;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.Pair;
 
 import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiObjectNotFoundException;
+import androidx.test.uiautomator.UiSelector;
 
 import com.android.compatibility.common.util.CddTest;
 

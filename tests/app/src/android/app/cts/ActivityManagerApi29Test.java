@@ -49,10 +49,10 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.permission.cts.PermissionUtils;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
-import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.UiDevice;
 
 import org.junit.After;
 import org.junit.Before;
