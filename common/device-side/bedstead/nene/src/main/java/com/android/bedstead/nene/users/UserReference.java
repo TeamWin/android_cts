@@ -696,6 +696,7 @@ public final class UserReference implements AutoCloseable {
      * Clear the lock credential for the user.
      */
     private void clearLockCredential(String lockCredential, String lockType) {
+        if (lockCredential == null || lockCredential.length() == 0) return;
         if (!lockType.equals(mLockType) && mLockType != null) {
             String lockTypeSentenceCase = Character.toUpperCase(lockType.charAt(0))
                     + lockType.substring(1);
