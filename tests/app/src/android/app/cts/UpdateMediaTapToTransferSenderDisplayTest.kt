@@ -33,7 +33,6 @@ import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionId
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -77,6 +76,13 @@ class UpdateMediaTapToTransferSenderDisplayTest {
                 null,
                 null
             )
+
+            // And wait until the chip does disappear. (Some states may ignore the FAR_FROM_RECEIVER
+            // event and need to time out before disappearing.)
+            eventually {
+                val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+                assertThat(chip).isNull()
+            }
         }
     }
 
@@ -133,7 +139,6 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
-    @Ignore("b/228329159")
     fun almostCloseToStartCast_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_ALMOST_CLOSE_TO_START_CAST,
@@ -149,7 +154,6 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
-    @Ignore("b/228329159")
     fun almostCloseToEndCast_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_ALMOST_CLOSE_TO_END_CAST,
@@ -165,7 +169,6 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
-    @Ignore("b/228329159")
     fun transferToReceiverTriggered_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_TRIGGERED,
@@ -181,7 +184,6 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
-    @Ignore("b/228329159")
     fun transferToThisDeviceTriggered_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_TRIGGERED,
@@ -197,8 +199,15 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
-    @Ignore("b/228329159")
     fun transferToReceiverSucceeded_nullCallback_displaysChip() {
+        // Required to display the TRIGGERED state before the SUCCEEDED state
+        statusBarManager.updateMediaTapToTransferSenderDisplay(
+            StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_TRIGGERED,
+            ROUTE_INFO,
+            /* executor= */ null,
+            /* callback= */ null,
+        )
+
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_SUCCEEDED,
             ROUTE_INFO,
@@ -213,8 +222,15 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
-    @Ignore("b/228329159")
     fun transferToReceiverSucceeded_withCallbackAndExecutor_displaysChip() {
+        // Required to display the TRIGGERED state before the SUCCEEDED state
+        statusBarManager.updateMediaTapToTransferSenderDisplay(
+            StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_TRIGGERED,
+            ROUTE_INFO,
+            /* executor= */ null,
+            /* callback= */ null,
+        )
+
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_SUCCEEDED,
             ROUTE_INFO,
@@ -229,8 +245,15 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
-    @Ignore("b/228329159")
     fun transferToThisDeviceSucceeded_nullCallback_displaysChip() {
+        // Required to display the TRIGGERED state before the SUCCEEDED state
+        statusBarManager.updateMediaTapToTransferSenderDisplay(
+            StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_TRIGGERED,
+            ROUTE_INFO,
+            /* executor= */ null,
+            /* callback= */ null,
+        )
+
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_SUCCEEDED,
             ROUTE_INFO,
@@ -245,8 +268,15 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
-    @Ignore("b/228329159")
     fun transferToThisDeviceSucceeded_withCallbackAndExecutor_displaysChip() {
+        // Required to display the TRIGGERED state before the SUCCEEDED state
+        statusBarManager.updateMediaTapToTransferSenderDisplay(
+            StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_TRIGGERED,
+            ROUTE_INFO,
+            /* executor= */ null,
+            /* callback= */ null,
+        )
+
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_SUCCEEDED,
             ROUTE_INFO,
@@ -261,8 +291,15 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
-    @Ignore("b/228329159")
     fun transferToReceiverFailed_displaysChip() {
+        // Required to display the TRIGGERED state before the FAILED state
+        statusBarManager.updateMediaTapToTransferSenderDisplay(
+            StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_TRIGGERED,
+            ROUTE_INFO,
+            /* executor= */ null,
+            /* callback= */ null,
+        )
+
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_FAILED,
             ROUTE_INFO,
@@ -277,8 +314,15 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
-    @Ignore("b/228329159")
     fun transferToThisDeviceFailed_displaysChip() {
+        // Required to display the TRIGGERED state before the FAILED state
+        statusBarManager.updateMediaTapToTransferSenderDisplay(
+            StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_TRIGGERED,
+            ROUTE_INFO,
+            /* executor= */ null,
+            /* callback= */ null,
+        )
+
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_FAILED,
             ROUTE_INFO,
@@ -293,7 +337,6 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
-    @Ignore("b/228329159")
     fun farFromReceiver_hidesChip() {
         // First, make sure we display the chip
         statusBarManager.updateMediaTapToTransferSenderDisplay(
@@ -323,7 +366,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 }
 
-private const val MEDIA_SENDER_CHIP_ID = "com.android.systemui:id/media_ttt_sender_chip"
+private const val MEDIA_SENDER_CHIP_ID = "com.android.systemui:id/chipbar_root_view"
 private val MEDIA_PERMISSION: String = android.Manifest.permission.MEDIA_CONTENT_CONTROL
 private val ROUTE_INFO = MediaRoute2Info.Builder("id", "Test Name")
     .addFeature("feature")
