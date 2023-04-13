@@ -109,7 +109,8 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
     }
 
     /**
-     * Place an outgoing emergency call and ensure any incoming call is rejected automatically and
+     * Place an outgoing emergency call and ensure any incoming call is rejected
+     * automatically and
      * logged in call log as a new missed call.
      *
      * Note: PSAPs have requirements that active emergency calls can not be put on hold, so if for

@@ -133,7 +133,7 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
      * @throws Exception
      */
     public void testRingOnIncomingCall() throws Exception {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
         }
         ShellIdentityUtils.invokeStaticMethodWithShellPermissions(
