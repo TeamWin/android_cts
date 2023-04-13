@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static android.server.wm.CtsWindowInfoUtils.waitForWindowOnTop;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -92,7 +94,7 @@ public class NumberPickerTest {
             new ActivityTestRule<>(NumberPickerCtsActivity.class);
 
     @Before
-    public void setup() {
+    public void setup() throws Throwable {
         MockitoAnnotations.initMocks(this);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
@@ -100,6 +102,7 @@ public class NumberPickerTest {
         // Create a UiAutomation, which will enable accessibility and allow us to test ally events.
         mInstrumentation.getUiAutomation();
         mActivity = mActivityRule.getActivity();
+        assertTrue("Window did not become visible", waitForWindowOnTop(mActivity.getWindow()));
         mNumberPicker = (NumberPicker) mActivity.findViewById(R.id.number_picker);
     }
 

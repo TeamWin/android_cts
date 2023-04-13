@@ -16,6 +16,9 @@
 
 package android.widget.cts;
 
+import static android.server.wm.CtsWindowInfoUtils.waitForWindowOnTop;
+
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.eq;
@@ -67,6 +70,7 @@ public class SeekBarTest {
     @Before
     public void setup() throws Throwable {
         mActivity = mActivityRule.getActivity();
+        assertTrue("Window did not become visible", waitForWindowOnTop(mActivity.getWindow()));
         mSeekBar = mActivity.findViewById(R.id.seekBar);
         if (mSeekBar.isAttachedToWindow()) {
             updateExclusionRects();
