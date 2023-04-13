@@ -27,6 +27,7 @@ public class RootOfTrust {
     private static final int VERIFIED_BOOT_KEY_INDEX = 0;
     private static final int DEVICE_LOCKED_INDEX = 1;
     private static final int VERIFIED_BOOT_STATE_INDEX = 2;
+    private static final int VERIFIED_BOOT_HASH_INDEX = 3;
 
     public static final int KM_VERIFIED_BOOT_VERIFIED = 0;
     public static final int KM_VERIFIED_BOOT_SELF_SIGNED = 1;
@@ -36,6 +37,7 @@ public class RootOfTrust {
     private final byte[] verifiedBootKey;
     private final boolean deviceLocked;
     private final int verifiedBootState;
+    private final byte[] verifiedBootHash;
 
     public RootOfTrust(ASN1Encodable asn1Encodable) throws CertificateParsingException {
         this(asn1Encodable, true);
@@ -55,13 +57,17 @@ public class RootOfTrust {
                 sequence.getObjectAt(DEVICE_LOCKED_INDEX), strictParsing);
         verifiedBootState =
                 Asn1Utils.getIntegerFromAsn1(sequence.getObjectAt(VERIFIED_BOOT_STATE_INDEX));
+        verifiedBootHash =
+              Asn1Utils.getByteArrayFromAsn1(sequence.getObjectAt(VERIFIED_BOOT_HASH_INDEX));
     }
 
 
-    RootOfTrust(byte[] verifiedBootKey, boolean deviceLocked, int verifiedBootState) {
+    RootOfTrust(byte[] verifiedBootKey, boolean deviceLocked, int verifiedBootState,
+                byte[] verifiedBootHash) {
         this.verifiedBootKey = verifiedBootKey;
         this.deviceLocked = deviceLocked;
         this.verifiedBootState = verifiedBootState;
+        this.verifiedBootHash = verifiedBootHash;
     }
 
     public static String verifiedBootStateToString(int verifiedBootState) {
@@ -91,17 +97,25 @@ public class RootOfTrust {
         return verifiedBootState;
     }
 
+    public byte[] getVerifiedBootHash() {
+        return verifiedBootHash;
+    }
+
     @Override
     public String toString() {
         return new StringBuilder()
                 .append("\nVerified boot Key: ")
-                .append(verifiedBootKey != null ?
-                            BaseEncoding.base64().encode(verifiedBootKey) :
-                            "null")
+                .append(verifiedBootKey != null
+                            ? BaseEncoding.base64().encode(verifiedBootKey)
+                            : "null")
                 .append("\nDevice locked: ")
                 .append(deviceLocked)
                 .append("\nVerified boot state: ")
                 .append(verifiedBootStateToString(verifiedBootState))
+                .append("\nVerified boot hash: ")
+                .append(verifiedBootHash != null
+                            ? BaseEncoding.base64().encode(verifiedBootHash)
+                            : "null")
                 .toString();
     }
 
@@ -109,6 +123,7 @@ public class RootOfTrust {
         private byte[] verifiedBootKey;
         private boolean deviceLocked = false;
         private int verifiedBootState = -1;
+        private byte[] verifiedBootHash;
 
         public Builder setVerifiedBootKey(byte[] verifiedBootKey) {
             this.verifiedBootKey = verifiedBootKey;
@@ -122,8 +137,13 @@ public class RootOfTrust {
             this.verifiedBootState = verifiedBootState;
             return this;
         }
+        public Builder setVerifiedBootHash(byte[] verifiedBootHash) {
+            this.verifiedBootHash = verifiedBootHash;
+            return this;
+        }
         public RootOfTrust build() {
-            return new RootOfTrust(verifiedBootKey, deviceLocked, verifiedBootState);
+            return new RootOfTrust(verifiedBootKey, deviceLocked,
+                                   verifiedBootState, verifiedBootHash);
         }
     }
 }
