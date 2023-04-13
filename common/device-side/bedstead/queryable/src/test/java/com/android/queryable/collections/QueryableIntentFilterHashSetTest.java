@@ -21,12 +21,21 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.IntentFilter;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public class QueryableIntentFilterHashSetTest {
+
+    @ClassRule
+    @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     private static final String CATEGORY_1 = "Category1";
     private static final String CATEGORY_2 = "Category2";

@@ -50,6 +50,7 @@ android_library {
         "TestApp_TestApps",
         "TestApp_JavaProtos",
         "QueryableCommonAndroid",
+        "auto_value_annotations"
     ],
     manifest: "src/library/main/AndroidManifest.xml",
     min_sdk_version: "29",
@@ -57,6 +58,7 @@ android_library {
     plugins: [
         "ConnectedAppsSDK_Processor",
         "TestApp_Processor",
+        "auto_annotation_plugin"
     ],
 }
 

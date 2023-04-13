@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -522,6 +521,15 @@ public final class Processor extends AbstractProcessor {
                         .addSuperinterface(TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                         .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
+        classBuilder.addField(FieldSpec.builder(CONTEXT_CLASSNAME, "mContext")
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                .build());
+
+        classBuilder.addMethod(MethodSpec.constructorBuilder()
+                        .addParameter(CONTEXT_CLASSNAME, "context")
+                        .addStatement("mContext = context")
+                .build());
+
         for (ExecutableElement method : getMethods(neneActivityInterface,
                 processingEnv.getElementUtils())) {
             MethodSpec.Builder methodBuilder =
@@ -550,11 +558,11 @@ public final class Processor extends AbstractProcessor {
 
             if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 methodBuilder.addStatement(
-                        "BaseTestAppActivity.findActivity(activityClassName).$L($L)",
+                        "BaseTestAppActivity.findActivity(mContext, activityClassName).$L($L)",
                         method.getSimpleName(), String.join(", ", paramNames));
             } else {
                 methodBuilder.addStatement(
-                        "return BaseTestAppActivity.findActivity(activityClassName).$L($L)",
+                        "return BaseTestAppActivity.findActivity(mContext, activityClassName).$L($L)",
                         method.getSimpleName(), String.join(", ", paramNames));
             }
 
@@ -774,10 +782,11 @@ public final class Processor extends AbstractProcessor {
                         .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
         classBuilder.addMethod(MethodSpec.methodBuilder("provideTargetedRemoteActivity")
+                        .addParameter(CONTEXT_CLASSNAME, "context")
                 .returns(TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(CrossProfileProvider.class)
-                .addCode("return new $T();", TARGETED_REMOTE_ACTIVITY_IMPL_CLASSNAME)
+                .addCode("return new $T(context);", TARGETED_REMOTE_ACTIVITY_IMPL_CLASSNAME)
                 .build());
 
         classBuilder.addMethod(MethodSpec.methodBuilder("provideTestAppController")

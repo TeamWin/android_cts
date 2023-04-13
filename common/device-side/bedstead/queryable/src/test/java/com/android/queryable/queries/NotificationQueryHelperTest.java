@@ -98,4 +98,22 @@ public final class NotificationQueryHelperTest {
                 .where().channelId().isEqualTo(STRING_VALUE)
                 .matches(notification)).isTrue();
     }
+
+    @Test
+    public void isEmptyQuery_isEmpty_returnsTrue() {
+        NotificationQueryHelper<Queryable> notificationQueryHelper =
+                new NotificationQueryHelper<>(mQuery);
+
+        assertThat(notificationQueryHelper.isEmptyQuery()).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_hasChannelIdQuery_returnsFalse() {
+        NotificationQueryHelper<Queryable> notificationQueryHelper =
+                new NotificationQueryHelper<>(mQuery);
+
+        notificationQueryHelper.channelId().isEqualTo("");
+
+        assertThat(notificationQueryHelper.isEmptyQuery()).isFalse();
+    }
 }

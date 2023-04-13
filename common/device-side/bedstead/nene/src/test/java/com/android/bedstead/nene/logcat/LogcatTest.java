@@ -16,17 +16,18 @@
 
 package com.android.bedstead.nene.logcat;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.testng.Assert.fail;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.nene.TestApis;
 import com.android.interactive.annotations.Interactive;
-
-import com.google.common.truth.Truth;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -55,9 +56,18 @@ public final class LogcatTest {
             SystemServerException systemServerException =
                     TestApis.logcat().findSystemServerException(expected);
 
-            Truth.assertThat(systemServerException).hasMessageThat().contains("does not exist");
-            Truth.assertThat(systemServerException).hasCauseThat().isInstanceOf(SecurityException.class);
+            assertThat(systemServerException).hasMessageThat().contains("does not exist");
+            assertThat(systemServerException).hasCauseThat().isInstanceOf(SecurityException.class);
         }
+    }
+
+    @Test
+    public void dump_filtersCorrectly() {
+        TestApis.logcat().clear();
+
+        Log.e("testlog", "TEST123");
+
+        assertThat(TestApis.logcat().dump(l -> l.contains("TEST123"))).isNotEmpty();
     }
 
 }

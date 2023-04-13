@@ -23,14 +23,21 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.os.PersistableBundle;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
 import com.android.queryable.Queryable;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class PersistableBundleQueryHelperTest {
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
     private static final String KEY = "Key";
     private static final String KEY2 = "Key2";
     private static final String STRING_VALUE = "value";
@@ -110,5 +117,23 @@ public final class PersistableBundleQueryHelperTest {
         assertThat(persistableBundle()
                 .where().key(KEY).stringValue().isEqualTo(STRING_VALUE)
                 .matches(mPersistableBundle)).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_isEmpty_returnsTrue() {
+        PersistableBundleQueryHelper<Queryable> persistableBundleQueryHelper =
+                new PersistableBundleQueryHelper<>(mQuery);
+
+        assertThat(persistableBundleQueryHelper.isEmptyQuery()).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_hasDoesNotExistQuery_returnsFalse() {
+        PersistableBundleQueryHelper<Queryable> persistableBundleQueryHelper =
+                new PersistableBundleQueryHelper<>(mQuery);
+
+        persistableBundleQueryHelper.key("A").stringValue().isNotNull();
+
+        assertThat(persistableBundleQueryHelper.isEmptyQuery()).isFalse();
     }
 }

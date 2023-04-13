@@ -37,6 +37,8 @@ import com.android.interactive.steps.enterprise.settings.NavigateToDeviceAdminAp
 import com.android.interactive.steps.enterprise.settings.NavigateToPersonalAccountSettingsStep;
 import com.android.interactive.steps.enterprise.settings.NavigateToWorkAccountSettingsStep;
 import com.android.interactive.steps.enterprise.settings.NavigateToWorkSecuritySettingsStep;
+import com.android.queryable.annotations.Query;
+import com.android.queryable.annotations.StringQuery;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -83,7 +85,9 @@ public final class SettingsAppTest {
     @Interactive
     // TODO(b/221134166): Annotate correct Cdd requirement
     // Available Device Admin not in the managed profile
-    @EnsureTestAppInstalled(packageName = "com.android.bedstead.testapp.DeviceAdminTestApp")
+    @EnsureTestAppInstalled(query = @Query(
+            packageName = @StringQuery(
+                    isEqualTo = "com.android.bedstead.testapp.DeviceAdminTestApp")))
     public void deviceAdminSettings_correctlyListsManagedProfileAndNonManagedProfileAdmins()
             throws Exception {
         // Remove RemoteDPC from the primary user so only one entry is listed

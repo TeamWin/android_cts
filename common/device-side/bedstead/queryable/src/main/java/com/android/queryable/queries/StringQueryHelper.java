@@ -27,6 +27,8 @@ import com.android.queryable.Queryable;
 import com.android.queryable.QueryableBaseWithMatch;
 import com.android.queryable.util.ParcelableUtils;
 
+import com.google.auto.value.AutoAnnotation;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -122,6 +124,29 @@ public final class StringQueryHelper<E extends Queryable>
         return mQuery;
     }
 
+    public com.android.queryable.annotations.StringQuery toAnnotation() {
+        return stringQuery(
+                mStartsWithValue == null ? DEFAULT_STRING_QUERY_PARAMETERS_VALUE : mStartsWithValue,
+                mEqualsIsSpecified ? mEqualsValue : DEFAULT_STRING_QUERY_PARAMETERS_VALUE);
+    }
+
+    @AutoAnnotation
+    private static com.android.queryable.annotations.StringQuery stringQuery(
+            String startsWith, String isEqualTo) {
+        // TODO: Add support for isNotEqualTo
+        // TODO: Add support for isNull/isNotNull
+        return new AutoAnnotation_StringQueryHelper_stringQuery(
+                startsWith, isEqualTo
+        );
+    }
+
+    @Override
+    public boolean isEmptyQuery() {
+        return !mEqualsIsSpecified
+                && mNotEqualsValues.isEmpty()
+                && (mStartsWithValue == null || mStartsWithValue.isEmpty());
+    }
+
     @Override
     public boolean matches(String value) {
         if (mEqualsIsSpecified && !Objects.equals(mEqualsValue, value)) {
@@ -167,7 +192,7 @@ public final class StringQueryHelper<E extends Queryable>
         }
 
         if (mStartsWithValue != null) {
-            queryStrings.add(fieldName + "starts with \"" + mStartsWithValue + "\"");
+            queryStrings.add(fieldName + " starts with \"" + mStartsWithValue + "\"");
         }
 
         return Queryable.joinQueryStrings(queryStrings);

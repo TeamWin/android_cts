@@ -26,7 +26,6 @@ import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 import com.android.bedstead.harrier.annotations.RequireNotWatch;
 import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
 import com.android.queryable.annotations.Query;
-import com.android.queryable.annotations.StringQuery;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -76,15 +75,24 @@ public @interface EnsureHasDeviceOwner {
 
     int DO_PO_WEIGHT = MIDDLE;
 
+    String DEFAULT_KEY = "deviceOwner";
+
+    /**
+     * The key used to identify this DPC.
+     *
+     * <p>This can be used with {@link AdditionalQueryParameters} to modify the requirements for
+     * the DPC. */
+    String key() default DEFAULT_KEY;
+
     /** Behaviour if the device owner cannot be set. */
     FailureMode failureMode() default FailureMode.FAIL;
 
     /**
-     * Requirements for the DPC
+     * Requirements for the DPC.
+     *
+     * <p>Defaults to the default version of RemoteDPC.
      */
-    // Default to latest version
-    Query dpc() default @Query(
-            packageName = @StringQuery(isEqualTo = "com.android.cts.RemoteDPC"));
+    Query dpc() default @Query();
 
     /**
      * Whether this DPC should be returned by calls to {@code Devicestate#dpc()}.

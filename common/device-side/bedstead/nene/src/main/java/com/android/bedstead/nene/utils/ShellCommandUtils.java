@@ -30,10 +30,15 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.compatibility.common.util.FileUtils;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Utilities for interacting with adb shell commands.
@@ -90,6 +95,33 @@ public final class ShellCommandUtils {
         return uiAutomation().executeShellCommandRwe(command);
     }
 
+    /**
+     * Execute a shell command and receive a stream of lines.
+     *
+     * <p>Note that this will not deal with errors in the output.
+     *
+     * <p>Make sure you close the returned {@link StreamingShellOutput} after reading.
+     */
+    public static StreamingShellOutput executeCommandForStream(String command, byte[] stdInBytes)
+            throws AdbException {
+        try {
+            ParcelFileDescriptor[] fds = executeShellCommandRwe(command);
+            ParcelFileDescriptor fdOut = fds[OUT_DESCRIPTOR_INDEX];
+            ParcelFileDescriptor fdIn = fds[IN_DESCRIPTOR_INDEX];
+            ParcelFileDescriptor fdErr = fds[ERR_DESCRIPTOR_INDEX];
+
+            writeStdInAndClose(fdIn, stdInBytes);
+            fdErr.close();
+
+            FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(fdOut);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
+
+            return new StreamingShellOutput(fis, reader.lines());
+        } catch (IOException e) {
+            throw new AdbException("Error executing command", command, e);
+        }
+    }
+
     static String executeCommand(String command, boolean allowEmptyOutput, byte[] stdInBytes)
             throws AdbException {
         logCommand(command, allowEmptyOutput, stdInBytes);
@@ -98,9 +130,7 @@ public final class ShellCommandUtils {
             return executeCommandPreS(command, allowEmptyOutput, stdInBytes);
         }
 
-        // TODO(scottjonathan): Add argument to force errors to stderr
         try {
-
             ParcelFileDescriptor[] fds = executeShellCommandRwe(command);
             ParcelFileDescriptor fdOut = fds[OUT_DESCRIPTOR_INDEX];
             ParcelFileDescriptor fdIn = fds[IN_DESCRIPTOR_INDEX];
@@ -301,5 +331,28 @@ public final class ShellCommandUtils {
      */
     public static UiAutomation uiAutomation() {
         return instrumentation().getUiAutomation();
+    }
+
+    /** Wrapper around {@link Stream} of lines output from a shell command. */
+    public static final class StreamingShellOutput implements AutoCloseable {
+
+        private final FileInputStream mFileInputStream;
+        private final Stream<String> mStream;
+
+        StreamingShellOutput(FileInputStream fileInputStream, Stream<String> stream) {
+            mFileInputStream = fileInputStream;
+            mStream = stream;
+        }
+
+        public Stream<String> stream() {
+            return mStream;
+        }
+
+
+        @Override
+        public void close() throws IOException {
+            mFileInputStream.close();
+            mStream.close();
+        }
     }
 }

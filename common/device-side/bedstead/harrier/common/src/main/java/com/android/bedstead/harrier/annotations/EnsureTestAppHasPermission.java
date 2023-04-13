@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DEFAULT_TEST_APP_KEY;
+import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DEFAULT_KEY;
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.ENSURE_HAS_DELEGATE_WEIGHT;
 
 import java.lang.annotation.ElementType;
@@ -34,7 +34,7 @@ import java.lang.annotation.Target;
 public @interface EnsureTestAppHasPermission {
     String[] value();
 
-    String testAppKey() default DEFAULT_TEST_APP_KEY;
+    String testAppKey() default DEFAULT_KEY;
 
     /** The minimum version where this permission is required. */
     int minVersion() default 0;

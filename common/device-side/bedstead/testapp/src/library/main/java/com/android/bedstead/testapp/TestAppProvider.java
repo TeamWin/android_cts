@@ -56,17 +56,7 @@ public final class TestAppProvider {
 
     /** Create a query for a {@link TestApp} starting with a {@link Query}. */
     public TestAppQueryBuilder query(Query query) {
-        TestAppQueryBuilder queryBuilder = query();
-
-        if (query == null) {
-            return queryBuilder;
-        }
-
-        queryBuilder = queryBuilder.whereTargetSdkVersion().matchesAnnotation(query.targetSdkVersion());
-        queryBuilder = queryBuilder.whereMinSdkVersion().matchesAnnotation(query.minSdkVersion());
-        queryBuilder = queryBuilder.whereMaxSdkVersion().matchesAnnotation(query.maxSdkVersion());
-        queryBuilder = queryBuilder.wherePackageName().matchesAnnotation(query.packageName());
-        return queryBuilder;
+        return query().applyAnnotation(query);
     }
 
     /** Get any {@link TestApp}. */
@@ -82,7 +72,6 @@ public final class TestAppProvider {
 
     /** Save the state of the provider, to be reset by {@link #restore()}. */
     public void snapshot() {
-        mTestAppsSnapshot = new HashSet<>(mTestApps);
         mTestAppsSnapshot = new HashSet<>(mTestApps);
     }
 

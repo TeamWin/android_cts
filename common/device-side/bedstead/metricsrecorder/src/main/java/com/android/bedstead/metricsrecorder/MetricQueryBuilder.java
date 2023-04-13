@@ -16,7 +16,6 @@
 
 package com.android.bedstead.metricsrecorder;
 
-import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -163,6 +162,15 @@ public class MetricQueryBuilder implements Queryable {
      */
     public Set<EnterpriseMetricInfo> nonMatchingMetrics() {
         return mNonMatchingMetrics;
+    }
+
+    @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mAdminPackageNameQuery)
+                && Queryable.isEmptyQuery(mTypeQuery)
+                && Queryable.isEmptyQuery(mBooleanQuery)
+                && Queryable.isEmptyQuery(mStringsQuery)
+                && Queryable.isEmptyQuery(mIntegerQuery);
     }
 
     private boolean matches(EnterpriseMetricInfo metric) {

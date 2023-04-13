@@ -74,6 +74,11 @@ public final class BroadcastReceiverQueryHelper<E extends Queryable>
         return mReceiverClassQueryHelper;
     }
 
+    @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mReceiverClassQueryHelper);
+    }
+
     /** {@code true} if all filters are met by {@code value}. */
     @Override
     public boolean matches(BroadcastReceiverInfo value) {

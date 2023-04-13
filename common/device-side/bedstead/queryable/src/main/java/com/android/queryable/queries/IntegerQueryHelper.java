@@ -26,6 +26,8 @@ import android.os.Parcelable;
 import com.android.queryable.Queryable;
 import com.android.queryable.QueryableBaseWithMatch;
 
+import com.google.auto.value.AutoAnnotation;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -146,6 +148,32 @@ public final class IntegerQueryHelper<E extends Queryable> implements IntegerQue
         }
 
         return mQuery;
+    }
+
+    public com.android.queryable.annotations.IntegerQuery toAnnotation() {
+        return integerQuery(
+                mEqualToValue == null ? DEFAULT_INT_QUERY_PARAMETERS_VALUE : mEqualToValue,
+                mGreaterThanValue == null ? DEFAULT_INT_QUERY_PARAMETERS_VALUE : mGreaterThanValue,
+                mGreaterThanOrEqualToValue == null ? DEFAULT_INT_QUERY_PARAMETERS_VALUE : mGreaterThanOrEqualToValue,
+                mLessThanValue == null ? DEFAULT_INT_QUERY_PARAMETERS_VALUE : mLessThanValue,
+                mLessThanOrEqualToValue == null ? DEFAULT_INT_QUERY_PARAMETERS_VALUE : mLessThanOrEqualToValue);
+    }
+
+    @AutoAnnotation
+    private static com.android.queryable.annotations.IntegerQuery integerQuery(
+            int isEqualTo, int isGreaterThan, int isGreaterThanOrEqualTo, int isLessThan, int isLessThanOrEqualTo) {
+        return new AutoAnnotation_IntegerQueryHelper_integerQuery(
+                isEqualTo, isGreaterThan, isGreaterThanOrEqualTo, isLessThan, isLessThanOrEqualTo
+        );
+    }
+
+    @Override
+    public boolean isEmptyQuery() {
+        return mEqualToValue == null
+                && mGreaterThanValue == null
+                && mGreaterThanOrEqualToValue == null
+                && mLessThanValue == null
+                && mLessThanOrEqualToValue == null;
     }
 
     @Override
