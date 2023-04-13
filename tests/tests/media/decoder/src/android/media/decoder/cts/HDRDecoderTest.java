@@ -30,6 +30,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
+import android.media.cts.TestUtils;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -193,6 +194,10 @@ public class HDRDecoderTest extends MediaTestBase {
             String[] decoderNames = MediaUtils.getDecoderNames(format);
 
             for (String decoder : decoderNames) {
+                if (TestUtils.isMtsMode() && !TestUtils.isMainlineCodec(decoder)) {
+                    Log.i(TAG, "operating as MTS; skipping non-mainline codec " + decoder);
+                    continue;
+                }
                 Object[] testArgs = new Object[argLength + 2];
                 testArgs[0] = decoder;
                 testArgs[1] = dynamic ? "dynamic" : "static";
