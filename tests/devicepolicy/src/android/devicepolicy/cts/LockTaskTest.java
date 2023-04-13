@@ -57,8 +57,6 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.ForceCoexistenceFlagsOff;
-import com.android.bedstead.harrier.annotations.enterprise.ForceCoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.annotations.enterprise.RequireHasPolicyExemptApps;
@@ -1074,10 +1072,10 @@ public final class LockTaskTest {
                 activity.stopLockTask();
             }
         } finally {
-            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
-                    sDeviceState.dpc().componentName(), originalLockTaskPackages);
             sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(
                     sDeviceState.dpc().componentName(), originalLockTaskFeatures);
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    sDeviceState.dpc().componentName(), originalLockTaskPackages);
         }
     }
 
