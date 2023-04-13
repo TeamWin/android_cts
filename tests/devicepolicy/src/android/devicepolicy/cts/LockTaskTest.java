@@ -144,6 +144,7 @@ public final class LockTaskTest {
         }
     }
 
+    // b/278061827 This currently fails for permission based access
     @PolicyAppliesTest(policy = LockTaskFinance.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startLockTask_recordsMetric() {
@@ -162,7 +163,7 @@ public final class LockTaskTest {
 
                 assertThat(metrics.query()
                         .whereType().isEqualTo(EventId.SET_LOCKTASK_MODE_ENABLED_VALUE)
-                        .whereAdminPackageName().isEqualTo(sDeviceState.dpc().componentName().getPackageName())
+                        .whereAdminPackageName().isEqualTo(sDeviceState.dpc().packageName())
                         .whereBoolean().isTrue()
                         .whereStrings().contains(sTestApp.packageName())
                 ).wasLogged();
