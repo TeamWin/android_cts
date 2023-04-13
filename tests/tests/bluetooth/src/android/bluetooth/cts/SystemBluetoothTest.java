@@ -146,23 +146,35 @@ public class SystemBluetoothTest {
 
     @Test
     public void testDiscoveryEndMillis() {
-        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
+        boolean recoverOffState = false;
+        try {
+            assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
-        mDiscoveryStartedLock = new ReentrantLock();
-        mConditionDiscoveryStarted = mDiscoveryStartedLock.newCondition();
+            if (!TestUtils.isLocationOn(mContext)) {
+                TestUtils.enableLocation(mContext);
+                recoverOffState = true;
+            }
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-        filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
-        mContext.registerReceiver(mDiscoveryStartedReceiver, filter);
+            mDiscoveryStartedLock = new ReentrantLock();
+            mConditionDiscoveryStarted = mDiscoveryStartedLock.newCondition();
 
-        mAdapter.startDiscovery();
-        assertTrue(waitForDiscoveryStart());
-        long discoveryEndTime = mAdapter.getDiscoveryEndMillis();
-        long currentTime = System.currentTimeMillis();
-        assertTrue(discoveryEndTime > currentTime);
-        assertTrue(discoveryEndTime - currentTime < DEFAULT_DISCOVERY_TIMEOUT_MS);
-        mContext.unregisterReceiver(mDiscoveryStartedReceiver);
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
+            filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
+            mContext.registerReceiver(mDiscoveryStartedReceiver, filter);
+
+            mAdapter.startDiscovery();
+            assertTrue(waitForDiscoveryStart());
+            long discoveryEndTime = mAdapter.getDiscoveryEndMillis();
+            long currentTime = System.currentTimeMillis();
+            assertTrue(discoveryEndTime > currentTime);
+            assertTrue(discoveryEndTime - currentTime < DEFAULT_DISCOVERY_TIMEOUT_MS);
+            mContext.unregisterReceiver(mDiscoveryStartedReceiver);
+        } finally {
+            if (recoverOffState) {
+                TestUtils.disableLocation(mContext);
+            }
+        }
     }
 
     /**
