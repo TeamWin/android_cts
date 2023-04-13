@@ -1281,13 +1281,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     }
 
     private void launchActivity(ComponentName activity, int windowingMode) {
-        getLaunchActivityBuilder()
-                .setDisplayId(DEFAULT_DISPLAY)
-                .setTargetActivity(activity)
-                .setWindowingMode(windowingMode)
-                .setUseInstrumentation()
-                .allowMultipleInstances(false)
-                .execute();
+        launchActivityOnDisplay(activity, windowingMode, DEFAULT_DISPLAY);
     }
 
     private long getPackageVersion(ComponentName activity) {
