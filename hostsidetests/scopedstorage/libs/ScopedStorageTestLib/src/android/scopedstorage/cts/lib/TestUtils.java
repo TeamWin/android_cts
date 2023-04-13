@@ -153,6 +153,7 @@ public class TestUtils {
 
     private static final long POLLING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(20);
     private static final long POLLING_SLEEP_MILLIS = 100;
+    private static final long APP_INSTALL_TIMEOUT_MILLIS = TimeUnit.MINUTES.toMillis(8);
 
     /**
      * Creates the top level default directories.
@@ -652,7 +653,7 @@ public class TestUtils {
             if (isAppInstalled(testApp)) {
                 Uninstall.packages(packageName);
             }
-            Install.single(testApp).commit();
+            Install.single(testApp).setTimeout(APP_INSTALL_TIMEOUT_MILLIS).commit();
             assertThat(InstallUtils.getInstalledVersion(packageName)).isEqualTo(1);
             if (grantStoragePermission) {
                 grantPermission(packageName, Manifest.permission.READ_EXTERNAL_STORAGE);
