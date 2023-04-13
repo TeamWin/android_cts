@@ -101,7 +101,8 @@ _SCENE_REQ = {
     'scene4': 'A test chart of a circle covering at least the middle 50% of '
               'the scene. See tests/scene4/scene4.png',
     'scene5': 'Capture images with a diffuser attached to the camera. '
-              'See CameraITS.pdf section 2.3.4 for more details',
+              'See source.android.com/docs/compatibility/cts/camera-its-tests#scene5/diffuser '
+              'for more details',
     'scene6': 'A grid of black circles on a white background. '
               'See tests/scene6/scene6.png',
     # Use os.path to avoid confusion on other platforms
