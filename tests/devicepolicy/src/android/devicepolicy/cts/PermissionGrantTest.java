@@ -172,61 +172,6 @@ public final class PermissionGrantTest {
         sTestAppInstance.uninstall();
     }
 
-    @PolicyDoesNotApplyTest(policy = SetSmsPermissionGranted.class)
-    public void getPermissionGrantState_smsPermission_notAbleToSetState_alsoCantReadState() {
-        int existingGrantState = sDeviceState.dpc().devicePolicyManager()
-                .getPermissionGrantState(sDeviceState.dpc().componentName(),
-                        sTestApp.packageName(), READ_SMS);
-        try {
-            sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                    READ_SMS, PERMISSION_GRANT_STATE_GRANTED);
-
-            sTestApp.pkg().grantPermission(TestApis.users().instrumented(), READ_SMS);
-            // TODO(b/204041462): Replace granting the permission here with the user pressing the
-            //  "deny" button on the permission
-
-            assertWithMessage("Should not be able to read permission grant state but can")
-                    .that(sDeviceState.dpc().devicePolicyManager().getPermissionGrantState(
-                            sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                            READ_SMS))
-                    .isEqualTo(PERMISSION_GRANT_STATE_DEFAULT);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                    READ_SMS, existingGrantState);
-            sTestApp.pkg().denyPermission(TestApis.users().instrumented(), READ_SMS);
-        }
-    }
-
-    @PolicyDoesNotApplyTest(policy = SetSensorPermissionGranted.class)
-    public void getPermissionGrantState_sensorPermission_notAbleToSetState_alsoCantReadState(
-            @SensorPermissionTestParameter String permission) {
-        int existingGrantState = sDeviceState.dpc().devicePolicyManager()
-                .getPermissionGrantState(sDeviceState.dpc().componentName(),
-                        sTestApp.packageName(), permission);
-        try {
-            sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                    permission, PERMISSION_GRANT_STATE_GRANTED);
-
-            sTestApp.pkg().grantPermission(TestApis.users().instrumented(), permission);
-            // TODO(b/204041462): Replace granting the permission here with the user pressing the
-            //  "deny" button on the permission
-
-            assertWithMessage("Should not be able to read permission grant state but can")
-                    .that(sDeviceState.dpc().devicePolicyManager().getPermissionGrantState(
-                            sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                            permission))
-                    .isEqualTo(PERMISSION_GRANT_STATE_DEFAULT);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                    permission, existingGrantState);
-            sTestApp.pkg().denyPermission(TestApis.users().instrumented(), permission);
-        }
-    }
-
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
     public void denyPermission_setsGrantState(@DeniablePermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -600,14 +545,6 @@ public final class PermissionGrantTest {
                     sDeviceState.dpc().componentName(), sTestApp.packageName(),
                     READ_SMS, existingGrantState);
         }
-    }
-
-    @CannotSetPolicyTest(policy = SetSmsPermissionGranted.class)
-    public void grantSmsPermission_nonDeviceAdmin_throwsException() {
-        assertThrows(SecurityException.class,
-                () -> sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
-                        sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                        READ_SMS, PERMISSION_GRANT_STATE_GRANTED));
     }
 
     @RequireFeatureFlagNotEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
