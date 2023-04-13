@@ -58,6 +58,7 @@ import android.autofillservice.cts.testcore.OneTimeCancellationSignalListener;
 import android.content.ComponentName;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.util.ArraySet;
 import android.view.View;
@@ -89,6 +90,7 @@ public class AugmentedLoginActivityTest
         };
     }
 
+    @FlakyTest(bugId = 277687005) // TODO: Try to reduce flakes
     @Presubmit
     @Test
     public void testServiceLifecycle() throws Exception {
@@ -159,6 +161,7 @@ public class AugmentedLoginActivityTest
         mAugmentedUiBot.assertUiNeverShown();
     }
 
+    @FlakyTest(bugId = 277687005) // TODO: Try to reduce flakes
     @Test
     @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAutoFill_neitherServiceCanAutofill_thenManualRequest() throws Exception {
@@ -540,6 +543,7 @@ public class AugmentedLoginActivityTest
         mAugmentedUiBot.assertUiGone();
     }
 
+    @FlakyTest(bugId = 277687005) // TODO: Try to reduce flakes
     @Test
     @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAugmentedAutoFill_multipleRequests() throws Exception {
@@ -653,6 +657,7 @@ public class AugmentedLoginActivityTest
         mActivity.onUsername((v) -> v.setText("I AM GROOT"));
         assertViewAutofillState(mActivity.getUsername(), false);
     }
+
 
     @Presubmit
     @Test
