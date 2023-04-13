@@ -31,7 +31,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.RotationSession;
 import android.server.wm.jetpack.utils.TestActivity;
@@ -42,6 +41,7 @@ import android.view.WindowMetrics;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.window.extensions.embedding.ActivityEmbeddingComponent;
 import androidx.window.extensions.embedding.SplitPlaceholderRule;
 
