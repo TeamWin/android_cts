@@ -60,6 +60,7 @@
         <option name="push" value="CtsStoragePermissionsPreservedUserOptOutSdk30.apk->/data/local/tmp/cts/permissions2/CtsStoragePermissionsPreservedUserOptOutSdk30.apk" />
         <option name="push" value="CtsSMSRestrictedWithSharedUid.apk->/data/local/tmp/cts/permissions2/CtsSMSRestrictedWithSharedUid.apk" />
         <option name="push" value="CtsSMSNotRestrictedWithSharedUid.apk->/data/local/tmp/cts/permissions2/CtsSMSNotRestrictedWithSharedUid.apk" />
+        <option name="push" value="CtsProcessOutgoingCalls.apk->/data/local/tmp/cts/permissions2/CtsProcessOutgoingCalls.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
