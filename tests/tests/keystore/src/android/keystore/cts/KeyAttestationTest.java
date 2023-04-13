@@ -70,7 +70,6 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.keystore.cts.Attestation;
 import android.keystore.cts.util.TestUtils;
 import android.os.Build;
-import android.os.SystemProperties;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.security.KeyStoreException;
 import android.security.keystore.AttestationUtils;
@@ -86,6 +85,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.compatibility.common.util.PropertyUtil;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -419,8 +419,7 @@ public class KeyAttestationTest {
             // Feature Version is required on devices launching with Android 12 (API Level
             // 31) but may be reported on devices launching with an earlier version. If it's
             // present, it must match what is reported in attestation.
-            int firstApiLevel = SystemProperties.getInt("ro.product.first_api_level", 0);
-            if (firstApiLevel >= 31) {
+            if (PropertyUtil.getFirstApiLevel() >= 31) {
                 assertNotEquals(0, keyStoreFeatureVersion);
             }
             if (keyStoreFeatureVersion != 0) {
@@ -473,8 +472,7 @@ public class KeyAttestationTest {
             // Feature Version is required on devices launching with Android 12 (API Level
             // 31) but may be reported on devices launching with an earlier version. If it's
             // present, it must match what is reported in attestation.
-            int firstApiLevel = SystemProperties.getInt("ro.product.first_api_level", 0);
-            if (firstApiLevel >= 31) {
+            if (PropertyUtil.getFirstApiLevel() >= 31) {
                 assertNotEquals(0, keyStoreFeatureVersionStrongBox);
             }
             if (keyStoreFeatureVersionStrongBox != 0) {
@@ -1359,8 +1357,7 @@ public class KeyAttestationTest {
 
                 // Devices launched in Android 10.0 (API level 29) and after should run CTS
                 // in LOCKED state.
-                boolean requireLocked = (
-                        SystemProperties.getInt("ro.product.first_api_level", 0) >= 29);
+                boolean requireLocked = PropertyUtil.getFirstApiLevel() >= 29;
                 checkRootOfTrust(attestation, requireLocked);
                 break;
 
@@ -1385,6 +1382,14 @@ public class KeyAttestationTest {
             assertTrue(unlockedDeviceMessage, rootOfTrust.isDeviceLocked());
             checkEntropy(rootOfTrust.getVerifiedBootKey());
             assertEquals(KM_VERIFIED_BOOT_VERIFIED, rootOfTrust.getVerifiedBootState());
+            if (PropertyUtil.getFirstApiLevel() < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                // Verified boot hash was not previously checked in CTS, so set an api level check
+                // to avoid running into waiver issues.
+                return;
+            }
+            assertNotNull(rootOfTrust.getVerifiedBootHash());
+            assertEquals(32, rootOfTrust.getVerifiedBootHash().length);
+            checkEntropy(rootOfTrust.getVerifiedBootHash());
         }
     }
 
