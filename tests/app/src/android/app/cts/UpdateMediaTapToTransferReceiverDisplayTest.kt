@@ -33,7 +33,6 @@ import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionId
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -77,6 +76,12 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
                 null,
                 null
             )
+
+            // And wait until the chip does disappear.
+            eventually {
+                val chip = uiDevice.findObject(By.res(MEDIA_RECEIVER_CHIP_ID))
+                assertThat(chip).isNull()
+            }
         }
     }
 
@@ -92,7 +97,6 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
-    @Ignore("b/252781795")
     fun closeToSender_displaysChip() {
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
             StatusBarManager.MEDIA_TRANSFER_RECEIVER_STATE_CLOSE_TO_SENDER,
@@ -108,7 +112,6 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
-    @Ignore("b/252781795")
     fun farFromSender_hidesChip() {
         // First, make sure we display the chip
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
@@ -138,7 +141,6 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
-    @Ignore("b/236292909")
     fun transferToReceiverSucceeded_hidesChip() {
         // First, make sure we display the chip
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
@@ -168,7 +170,6 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
-    @Ignore("b/236292909")
     fun transferToReceiverFailed_hidesChip() {
         // First, make sure we display the chip
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
