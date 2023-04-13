@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static android.server.wm.CtsWindowInfoUtils.waitForWindowOnTop;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -118,9 +120,10 @@ public class PopupWindowTest {
             new ActivityTestRule<>(PopupWindowCtsActivity.class);
 
     @Before
-    public void setup() {
+    public void setup() throws Throwable {
         mContext = InstrumentationRegistry.getContext();
         mActivity = mActivityRule.getActivity();
+        assertTrue("Window did not become visible", waitForWindowOnTop(mActivity.getWindow()));
     }
 
     @Test

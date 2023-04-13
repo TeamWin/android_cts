@@ -64,6 +64,7 @@ public final class Helper {
 
     // The timeout to wait for async result
     public static final long WAIT_TIMEOUT_IN_MS = 10_000;
+    public static final long WAIT_LONG_TIMEOUT_IN_MS = 15_000;
 
     // The test package
     public static final String CTS_SERVICE_PACKAGE = "android.voiceinteraction.cts";
@@ -77,6 +78,8 @@ public final class Helper {
     private static final String PRIVACY_CHIP_PKG = "com.android.systemui";
     private static final String PRIVACY_CHIP_ID = "privacy_chip";
     private static final String INDICATORS_FLAG = "camera_mic_icons_enabled";
+    private static final String NAMESPACE_VOICE_INTERACTION = "voice_interaction";
+    private static final String KEY_RESTART_PERIOD_IN_SECONDS = "restart_period_in_seconds";
 
     private static final String KEY_FAKE_DATA = "fakeData";
     private static final String VALUE_FAKE_DATA = "fakeData";
@@ -205,6 +208,29 @@ public final class Helper {
             Log.v(TAG, "setIndicatorEnabledState()=" + shouldEnable);
             DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY, INDICATORS_FLAG, shouldEnable,
                     false);
+        });
+    }
+
+    /**
+     * Returns the period of restarting the hotword detection service.
+     */
+    public static String getHotwordDetectionServiceRestartPeriod() {
+        return SystemUtil.runWithShellPermissionIdentity(() -> {
+            String currentPeriod = DeviceConfig.getProperty(NAMESPACE_VOICE_INTERACTION,
+                    KEY_RESTART_PERIOD_IN_SECONDS);
+            Log.v(TAG, "getHotwordDetectionServiceRestartPeriod()=" + currentPeriod);
+            return currentPeriod;
+        });
+    }
+
+    /**
+     * Sets the period of restarting the hotword detection service.
+     */
+    public static void setHotwordDetectionServiceRestartPeriod(String period) {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            Log.v(TAG, "setHotwordDetectionServiceRestartPeriod()=" + period);
+            DeviceConfig.setProperty(NAMESPACE_VOICE_INTERACTION, KEY_RESTART_PERIOD_IN_SECONDS,
+                    period, false);
         });
     }
 

@@ -131,6 +131,14 @@ public class CtsWindowInfoUtils {
     }
 
     /**
+     * Waits for the window associated with the view to be present.
+     */
+    public static boolean waitForWindowVisible(@NonNull View view) throws InterruptedException {
+        return waitForWindowInfo(windowInfo -> true, 5, TimeUnit.SECONDS,
+                view::getWindowToken);
+    }
+
+    /**
      * Calls {@link CtsWindowInfoUtils#waitForWindowOnTop(int, TimeUnit, Supplier)}. Adopts
      * required permissions and waits five seconds before timing out.
      *

@@ -21,6 +21,8 @@ import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
 import static android.Manifest.permission.MANAGE_SOUND_TRIGGER;
 import static android.Manifest.permission.RECORD_AUDIO;
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
+import static android.service.voice.SoundTriggerFailure.ERROR_CODE_MODULE_DIED;
+import static android.service.voice.SoundTriggerFailure.ERROR_CODE_RECOGNITION_RESUME_FAILED;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 
@@ -249,5 +251,56 @@ public class AlwaysOnHotwordDetectorTest {
         // TODO(b/272791099)
         // can't verify callback data because HDS will reject the injected event.
         getService().waitOnDetectOrRejectCalled();
+    }
+
+    @Test
+    public void isCorrectOnFailureReceived_onHalDeath() throws Exception {
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+
+        // We don't get callbacks if we don't have a recognition started
+        synchronized (mLock) {
+            mAlwaysOnHotwordDetector.startRecognition(0,
+                    new byte[]{1, 2, 3, 4, 5});
+            mLock.wait(WAIT_TIMEOUT_IN_MS);
+            // We received model load, recog start
+            assertThat(mModelSession).isNotNull();
+            assertThat(mRecognitionSession).isNotNull();
+        }
+
+        // Cause a restart
+        getService().initOnFailureLatch();
+        mInstrumentation.triggerRestart();
+        getService().waitOnFailureCalled();
+        var failure = getService().getSoundTriggerFailure();
+        assertThat(failure.getErrorCode()).isEqualTo(ERROR_CODE_MODULE_DIED);
+    }
+
+    // TODO(b/271391924) test recognition pause callback, since this test relies on it working
+    @Test
+    public void isCorrectOnFailureReceived_onResumeFailed() throws Exception {
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+
+        synchronized (mLock) {
+            getService().initOnFailureLatch();
+            mAlwaysOnHotwordDetector.startRecognition(0,
+                    new byte[]{1, 2, 3, 4, 5});
+            mLock.wait(WAIT_TIMEOUT_IN_MS);
+            // We received model load, recog start
+            assertThat(mModelSession).isNotNull();
+            assertThat(mRecognitionSession).isNotNull();
+            mInstrumentation.setResourceContention(true);
+            // Induce a recognition pause
+            mRecognitionSession.triggerAbortRecognition();
+            // Framework will attempt to resume recognition, but will fail due to set contention
+            mInstrumentation.triggerOnResourcesAvailable();
+            getService().waitOnFailureCalled();
+            var failure = getService().getSoundTriggerFailure();
+            assertThat(failure.getErrorCode()).isEqualTo(ERROR_CODE_RECOGNITION_RESUME_FAILED);
+            mInstrumentation.setResourceContention(false);
+        }
     }
 }

@@ -237,13 +237,12 @@ class TestAppInterface implements AutoCloseable {
     }
 
     void startFgs() throws Exception {
-        final Intent testFgs = new Intent(TestFgsService.ACTION_START_FGS);
-        ComponentName testComponentName = new ComponentName(TEST_APP_PACKAGE, TEST_APP_FGS);
-        testFgs.setComponent(testComponentName);
+        final Intent intent = new Intent(TestJobSchedulerReceiver.ACTION_START_FGS);
+        intent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
 
         final CallbackAsserter resultBroadcastAsserter =
                 CallbackAsserter.forBroadcast(new IntentFilter(TestFgsService.ACTION_FGS_STARTED));
-        mContext.startForegroundService(testFgs);
+        mContext.sendBroadcast(intent);
         resultBroadcastAsserter.assertCalled("Didn't get FGS started broadcast",
                 15 /* 15 seconds */);
     }

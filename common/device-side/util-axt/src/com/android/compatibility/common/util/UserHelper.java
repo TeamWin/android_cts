@@ -23,12 +23,15 @@ import android.content.Context;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
+import android.view.InputEvent;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Helper class providing methods to interact with the user under test.
@@ -144,6 +147,25 @@ public final class UserHelper {
     }
 
     /**
+     * Get a {@code cmd input} for the given {@code source}, setting the proper display (if needed).
+     */
+    public String getInputCmd(String source) {
+        StringBuilder cmd = new StringBuilder("cmd input ").append(source);
+        if (mIsVisibleBackgroundUser) {
+            cmd.append(" -d ").append(mDisplayId);
+        }
+
+        return cmd.toString();
+    }
+
+    /**
+     * Get the proper {@code cmd appops} with the user id set, including the trailing space.
+     */
+    public String getAppopsCmd(String command) {
+        return "cmd appops " + command + " --user " + getUserId() + " ";
+    }
+
+    /**
      * Augments a existing {@link ActivityOptions} (or create a new one), injecting the
      * {{@link #getMainDisplayId()} if needed.
      */
@@ -160,6 +182,20 @@ public final class UserHelper {
      * Sets the display id of the event if the test is running in a visible background user.
      */
     public MotionEvent injectDisplayIdIfNeeded(MotionEvent event) {
+        return injectDisplayIdIfNeeded(event, MotionEvent.class,
+                (e) -> MotionEvent.actionToString(event.getAction()));
+    }
+
+    /**
+     * Sets the display id of the event if the test is running in a visible background user.
+     */
+    public KeyEvent injectDisplayIdIfNeeded(KeyEvent event) {
+        return injectDisplayIdIfNeeded(event, KeyEvent.class,
+                (e) -> KeyEvent.actionToString(event.getAction()));
+    }
+
+    private <T extends InputEvent> T injectDisplayIdIfNeeded(T event,  Class<T> clazz,
+            Function<T, String> liteStringGenerator) {
         if (!isVisibleBackgroundUserSupported()) {
             return event;
         }
@@ -179,7 +215,7 @@ public final class UserHelper {
                     + event);
         } else if (DEBUG) {
             Log.d(TAG, "Replaced displayId (" + eventDisplayId + "->" + mDisplayId + ") on "
-                    + MotionEvent.actionToString(event.getAction()));
+                    + liteStringGenerator.apply(event));
         }
         return event;
     }

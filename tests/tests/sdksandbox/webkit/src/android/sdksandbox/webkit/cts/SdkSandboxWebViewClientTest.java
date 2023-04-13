@@ -20,7 +20,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,11 +27,6 @@ import org.junit.runner.RunWith;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxWebViewClientTest {
-    // TODO(b/260196711): IME does not currently work correctly in the SDK RUntime. We should enable
-    // impacted tests once this is fixed.
-    // This prevents some tests from running.
-    private static final boolean CAN_INJECT_KEY_EVENTS = false;
-
     // TODO(b/266051278): Uncomment this when we work out why preserving
     // the SDK sandbox manager between tests cases {@link testOnRenderProcessGone}
     // to fail.
@@ -107,7 +101,6 @@ public class SdkSandboxWebViewClientTest {
 
     @Test
     public void testOnUnhandledKeyEvent() throws Exception {
-        Assume.assumeTrue(CAN_INJECT_KEY_EVENTS);
         sdkTester.assertSdkTestRunPasses("testOnUnhandledKeyEvent");
     }
 

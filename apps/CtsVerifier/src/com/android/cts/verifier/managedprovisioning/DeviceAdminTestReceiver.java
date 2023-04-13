@@ -278,7 +278,8 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         };
         final Intent serviceIntent = new Intent(context, PrimaryUserService.class);
         devicePolicyManager.bindDeviceAdminServiceAsUser(getReceiverComponentName(), serviceIntent,
-                serviceConnection, Context.BIND_AUTO_CREATE, primaryUser);
+                serviceConnection, Context.BindServiceFlags.of(Context.BIND_AUTO_CREATE),
+                primaryUser);
     }
 
     public static final class PrimaryUserService extends Service {

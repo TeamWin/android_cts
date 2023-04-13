@@ -709,12 +709,6 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
 
         // Start activity in a new top foreground process
         if (splitScreen) {
-            // Requires @AppModeFull.
-            mTaskOrganizer.putTaskInSplitPrimary(a.getTaskId());
-            ComponentName primaryActivityComponent = new ComponentName(
-                    a.getPackageName(), a.getClass().getName());
-            mWmState.waitForValidState(primaryActivityComponent);
-
             // startActivity(intent) doesn't work with TestTaskOrganizer's split screen,
             // have to go through shell command.
             // Also, android:exported must be true for this to work, see:
@@ -725,9 +719,17 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
             mWmState.waitForValidState(secondActivityComponent);
             int taskId = mWmState.getTaskByActivity(secondActivityComponent)
                     .getTaskId();
+
+            // Requires @AppModeFull.
+            mTaskOrganizer.putTaskInSplitPrimary(a.getTaskId());
+            ComponentName primaryActivityComponent = new ComponentName(
+                    a.getPackageName(), a.getClass().getName());
+            mWmState.waitForValidState(primaryActivityComponent);
+
             // The taskAffinity of the secondary activity must be differ with the taskAffinity
             // of the primary activity, otherwise it will replace the primary activity instead.
             mTaskOrganizer.putTaskInSplitSecondary(taskId);
+            mWmState.waitForValidState(secondActivityComponent);
         } else {
             Intent activityIntent = new Intent(a, klass);
             activityIntent.putExtra(TestConstants.EXTRA_IGNORE_CAMERA_ACCESS, true);
