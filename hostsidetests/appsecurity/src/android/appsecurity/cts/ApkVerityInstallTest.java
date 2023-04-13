@@ -87,13 +87,16 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         };
     }
 
-    private int mLaunchApiLevel;
     @Before
     public void setUp() throws DeviceNotAvailableException {
         ITestDevice device = getDevice();
         String apkVerityMode = device.getProperty("ro.apk_verity.mode");
-        mLaunchApiLevel = device.getLaunchApiLevel();
-        assumeTrue(mLaunchApiLevel >= 30 || APK_VERITY_STANDARD_MODE.equals(apkVerityMode));
+        assumeTrue(
+                // Force opt-in, or...
+                APK_VERITY_STANDARD_MODE.equals(apkVerityMode)
+                // is on a supported device until deprecated in V
+                || (device.getLaunchApiLevel() >= 30 /* R */
+                        && device.getApiLevel() <= 34 /* U */));
         assumeSecurityModelCompat();
     }
 
