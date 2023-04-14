@@ -21,12 +21,27 @@ import android.os.IBinder;
 import android.telecom.Call;
 import android.telecom.InCallService;
 
+import com.android.eventlib.events.CustomEvent;
 import com.android.eventlib.events.services.ServiceBoundEvent;
 
 /**
  * Test {@link InCallService} to receive updates about Call events during tests
+ *
+ * TODO(b/276891195): Move this to EventLib
  */
 public class TestInCallService extends InCallService {
+
+    public static String TAG = "TestInCallService";
+    private final Call.Callback mCallBack = new Call.Callback() {
+        @Override
+        public void onStateChanged(Call call, int state) {
+            CustomEvent.logger(getApplicationContext()).setTag(TAG).setData(
+                    "onStateChanged:" + state).log();
+            if (state == Call.STATE_ACTIVE) {
+                call.disconnect();
+            }
+        }
+    };
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -36,6 +51,6 @@ public class TestInCallService extends InCallService {
 
     @Override
     public void onCallAdded(Call call) {
-        call.disconnect();
+        call.registerCallback(mCallBack);
     }
 }

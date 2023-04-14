@@ -17,8 +17,11 @@
 package android.devicepolicy.cts.telephony;
 
 import static android.Manifest.permission.CALL_PHONE;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_PHONE_STATE;
 import static android.Manifest.permission.READ_SMS;
+import static android.Manifest.permission.WRITE_CALL_LOG;
 import static android.app.role.RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP;
 import static android.app.role.RoleManager.ROLE_SMS;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -27,6 +30,7 @@ import static android.provider.DeviceConfig.NAMESPACE_TELEPHONY;
 
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
 import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_CALL_PHONE;
+import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 import static com.android.queryable.queries.ActivityQuery.activity;
 import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
@@ -50,7 +54,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserHandle;
+import android.provider.CallLog;
 import android.provider.Telephony;
+import android.telecom.Call;
 import android.telecom.InCallService;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -74,8 +80,10 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.bedstead.testapp.TestInCallService;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.eventlib.events.CustomEvent;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -83,6 +91,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -368,6 +377,9 @@ public class WorkProfileTelephonyTest {
 
             dialerApp.telecomManager().placeCall(Uri.fromParts("tel", mDestinationNumber, null),
                     null);
+            customEvents(dialerApp.packageName(), dialerApp.user()).whereTag().isEqualTo(
+                    TestInCallService.TAG).whereData().isEqualTo(
+                    "onStateChanged:" + Call.STATE_DISCONNECTED).poll();
 
             assertThat(dialerApp.events().serviceBound().whereIntent().action().isEqualTo(
                     InCallService.SERVICE_INTERFACE)).eventOccurred();
@@ -487,6 +499,95 @@ public class WorkProfileTelephonyTest {
         }
     }
 
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
+            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @RequireRunOnWorkProfile(isOrganizationOwned = true)
+    @Postsubmit(reason = "new test")
+    @Test
+    @CddTest(requirements = {"7.4.1.4/C-2-1"})
+    public void allManagedSubscriptions_accessWorkCallLogFromWorkProfile_works() throws Exception {
+        assumeCallCapableDevice();
+        assertSimCardPresent();
+        sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager().setManagedSubscriptionsPolicy(
+                new ManagedSubscriptionsPolicy(
+                        ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
+        try (TestAppInstance dialerApp = sDialerApp.install(sDeviceState.workProfile());
+             DefaultDialerContext dc = TestApis.telecom().setDefaultDialerForAllUsers(
+                     dialerApp.packageName());
+             PermissionContext p = dialerApp.permissions().withPermission(CALL_PHONE).withAppOp(
+                     OPSTR_CALL_PHONE)) {
+            // This will create a call log in work profile
+            dialerApp.telecomManager().placeCall(Uri.fromParts("tel", mDestinationNumber, null),
+                    null);
+            customEvents(dialerApp.packageName(), dialerApp.user()).whereTag().isEqualTo(
+                    TestInCallService.TAG).whereData().isEqualTo(
+                    "onStateChanged:" + Call.STATE_DISCONNECTED).poll();
+
+            try (PermissionContext pc = TestApis.permissions().withPermission(READ_CALL_LOG)) {
+                Poll.forValue(() -> numCallLogs()).timeout(Duration.ofSeconds(10)).toNotBeEqualTo(
+                        0).errorOnFail().await();
+            }
+        } finally {
+            try (PermissionContext pc = TestApis.permissions().withPermission(WRITE_CALL_LOG)) {
+                TestApis.context().instrumentedContext().getContentResolver().delete(
+                        CallLog.Calls.CONTENT_URI, null, null);
+            }
+            sDeviceState.profileOwner(
+                    WORK_PROFILE).devicePolicyManager().setManagedSubscriptionsPolicy(
+                    new ManagedSubscriptionsPolicy(
+                            ManagedSubscriptionsPolicy.TYPE_ALL_PERSONAL_SUBSCRIPTIONS));
+        }
+    }
+
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
+            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureHasWorkProfile(isOrganizationOwned = true, installInstrumentedApp = TRUE)
+    @RequireRunOnInitialUser
+    @Postsubmit(reason = "new test")
+    @Test
+    @CddTest(requirements = {"7.4.1.4/C-2-1"})
+    public void allManagedSubscriptions_accessWorkCallLogFromPersonalProfile_fails()
+            throws Exception {
+        assumeCallCapableDevice();
+        assertSimCardPresent();
+        sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager().setManagedSubscriptionsPolicy(
+                new ManagedSubscriptionsPolicy(
+                        ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
+        try (TestAppInstance dialerApp = sDialerApp.install(sDeviceState.workProfile());
+             DefaultDialerContext dc = TestApis.telecom().setDefaultDialerForAllUsers(
+                     dialerApp.packageName());
+             PermissionContext p = dialerApp.permissions().withPermission(CALL_PHONE).withAppOp(
+                     OPSTR_CALL_PHONE)) {
+            // This will create a call log in work profile
+            dialerApp.telecomManager().placeCall(Uri.fromParts("tel", mDestinationNumber, null),
+                    null);
+            customEvents(dialerApp.packageName(), dialerApp.user()).whereTag().isEqualTo(
+                    TestInCallService.TAG).whereData().isEqualTo(
+                    "onStateChanged:" + Call.STATE_DISCONNECTED).poll();
+
+            try (PermissionContext pc = TestApis.permissions().withPermission(READ_CALL_LOG)) {
+                Poll.forValue(() -> numCallLogs()).timeout(Duration.ofSeconds(10)).toNotBeEqualTo(
+                        0).await();
+                assertThat(numCallLogs()).isEqualTo(0);
+            }
+        } finally {
+            try (PermissionContext p2 = TestApis.permissions().withPermission(
+                    WRITE_CALL_LOG).withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                TestApis.context().instrumentedContextAsUser(
+                        sDeviceState.workProfile()).getContentResolver().delete(
+                        CallLog.Calls.CONTENT_URI, null, null);
+            }
+            sDeviceState.profileOwner(
+                    WORK_PROFILE).devicePolicyManager().setManagedSubscriptionsPolicy(
+                    new ManagedSubscriptionsPolicy(
+                            ManagedSubscriptionsPolicy.TYPE_ALL_PERSONAL_SUBSCRIPTIONS));
+        }
+    }
+
     private void setPackageAsSmsRoleHolderForUser(String packageName, UserHandle userHandle)
             throws ExecutionException, InterruptedException {
         CompletableFuture<Boolean> roleUpdateFuture = new CompletableFuture<>();
@@ -522,4 +623,13 @@ public class WorkProfileTelephonyTest {
         return mTelephonyManager.getSimState() == TelephonyManager.SIM_STATE_ABSENT;
     }
 
+    private CustomEvent.CustomEventQuery customEvents(String packageName, UserReference user) {
+        return CustomEvent.queryPackage(packageName).onUser(user);
+    }
+
+    private int numCallLogs() {
+        Cursor cursor = TestApis.context().instrumentedContext().getContentResolver().query(
+                CallLog.Calls.CONTENT_URI, null, null, null, null);
+        return cursor.getCount();
+    }
 }
