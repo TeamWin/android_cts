@@ -53,6 +53,8 @@ import com.google.common.truth.Truth.assertWithMessage
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertFailsWith
+import org.junit.Assert.fail
+import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -77,6 +79,17 @@ class UserRestrictionInstallTest : PackageInstallerTestBase() {
     init {
         TestApis.devicePolicy().resources().strings().set("Settings.DISABLED_BY_IT_ADMIN_TITLE",
                 R.string.disabled_by_policy_title)
+    }
+
+    @Before
+    fun uninstallTestApp() {
+        val cmd = ShellCommand.builder("pm uninstall")
+        cmd.addOperand(TEST_APK_PACKAGE_NAME)
+        try {
+            cmd.execute()
+        } catch (_: AdbException) {
+            fail("Could not uninstall $TEST_APK_PACKAGE_NAME")
+        }
     }
 
     @Test
