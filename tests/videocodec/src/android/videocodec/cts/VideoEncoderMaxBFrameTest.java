@@ -19,6 +19,7 @@ package android.videocodec.cts;
 import static android.media.MediaFormat.PICTURE_TYPE_B;
 import static android.media.MediaFormat.PICTURE_TYPE_I;
 import static android.media.MediaFormat.PICTURE_TYPE_P;
+import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -113,7 +114,7 @@ public class VideoEncoderMaxBFrameTest extends VideoEncoderValidationTestBase {
                         maxBFrames), BIRTHDAY_FULLHD_LANDSCAPE, label});
             }
         }
-        return prepareParamList(exhaustiveArgsList, true, false, true, false);
+        return prepareParamList(exhaustiveArgsList, true, false, true, false, HARDWARE);
     }
 
     public VideoEncoderMaxBFrameTest(String encoder, String mediaType, EncoderConfigParams cfg,
