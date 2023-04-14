@@ -116,7 +116,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
         }
 
         // TODO: Check the capture session (needs to be reflectively accessed).
-        byte[] data = eventPayload.getTriggerAudio();
+        byte[] data = eventPayload.getData();
         if (data != null && data.length > 0) {
             // Create the unaccepted HotwordDetectedResult first to test the protection in the
             // onDetected callback function of HotwordDetectionService. When the bundle data of
