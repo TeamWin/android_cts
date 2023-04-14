@@ -120,7 +120,8 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
         mCtsCompilationAppApkFile = copyResourceToFile(
                 "/CtsCompilationApp.apk", File.createTempFile("CtsCompilationApp", ".apk"));
         mDevice.uninstallPackage(APPLICATION_PACKAGE); // in case it's still installed
-        String error = mDevice.installPackage(mCtsCompilationAppApkFile, false);
+        String error = mDevice.installPackage(
+                mCtsCompilationAppApkFile, false /* reinstall */, "--abi", getAbi().getName());
         assertNull("Got install error: " + error, error);
 
         mDevice.executeShellV2Command("rm -rf " + TEMP_DIR);  // Make sure we have a clean state.
@@ -232,15 +233,15 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
         mAppUsedByOtherAppDmFile = constructDmFile(
                 "/app_used_by_other_app_1.prof.txt", mAppUsedByOtherAppApkFile);
         // We cannot use `mDevice.installPackage` here because it doesn't support DM file.
-        String result = mDevice.executeAdbCommand(
-                "install-multiple",
+        String result = mDevice.executeAdbCommand("install-multiple", "--abi", getAbi().getName(),
                 mAppUsedByOtherAppApkFile.getAbsolutePath(),
                 mAppUsedByOtherAppDmFile.getAbsolutePath());
         assertWithMessage("Failed to install AppUsedByOtherApp").that(result).isNotNull();
 
         mAppUsingOtherAppApkFile = copyResourceToFile(
                 "/AppUsingOtherApp.apk", File.createTempFile("AppUsingOtherApp", ".apk"));
-        result = mDevice.installPackage(mAppUsingOtherAppApkFile, false /* reinstall */);
+        result = mDevice.installPackage(
+                mAppUsingOtherAppApkFile, false /* reinstall */, "--abi", getAbi().getName());
         assertWithMessage(result).that(result).isNull();
 
         String odexFilePath = getOdexFilePath(APP_USED_BY_OTHER_APP_PACKAGE);
