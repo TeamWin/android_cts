@@ -114,10 +114,12 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
         // After the voice CTS test executes completely, the test will switch to original VIS
         // Focus on our expected app metrics
         List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
-        assertThat(filteredData.size()).isEqualTo(1);
+        assertThat(filteredData.size()).isEqualTo(2);
 
         // Verify metric
         assertHotwordDetectorKeyphraseTriggered(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.KEYPHRASE_TRIGGER);
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(1),
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.DETECTED);
     }
 
