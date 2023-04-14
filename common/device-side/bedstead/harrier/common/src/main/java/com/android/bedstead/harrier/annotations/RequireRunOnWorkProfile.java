@@ -21,11 +21,10 @@ import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_DEVICE_A
 import static com.android.bedstead.nene.types.OptionalBoolean.ANY;
 import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
 
-import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
+import com.android.bedstead.harrier.annotations.enterprise.AdditionalQueryParameters;
 import com.android.bedstead.harrier.annotations.meta.RequireRunOnProfileAnnotation;
 import com.android.bedstead.nene.types.OptionalBoolean;
 import com.android.queryable.annotations.Query;
-import com.android.queryable.annotations.StringQuery;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -48,17 +47,25 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @RequireRunOnProfileAnnotation(value = "android.os.usertype.profile.MANAGED",
         hasProfileOwner = true)
-@EnsureHasProfileOwner
 @RequireFeature(FEATURE_DEVICE_ADMIN)
 public @interface RequireRunOnWorkProfile {
     OptionalBoolean installInstrumentedAppInParent() default ANY;
 
+    String DEFAULT_KEY = "profileOwner";
+
+    /**
+     * The key used to identify the profile owner.
+     *
+     * <p>This can be used with {@link AdditionalQueryParameters} to modify the requirements for
+     * the DPC. */
+    String dpcKey() default DEFAULT_KEY;
+
     /**
      * Requirements for the Profile Owner.
+     *
+     * <p>Defaults to the default version of RemoteDPC.
      */
-    // Default to latest version
-    Query dpc() default @Query(
-            packageName = @StringQuery(isEqualTo = "com.android.cts.RemoteDPC"));
+    Query dpc() default @Query();
 
     /**
      * Whether the profile owner's DPC should be returned by calls to {@code Devicestate#dpc()}.

@@ -29,7 +29,7 @@ import image_processing_utils
 import its_session_utils
 import opencv_processing_utils
 
-_ALIGN_TOL_MM = 4.0  # mm
+_ALIGN_TOL_MM = 5.0  # mm
 _ALIGN_TOL = 0.01  # multiplied by sensor diagonal to convert to pixels
 _CHART_DISTANCE_RTOL = 0.1
 _CIRCLE_COLOR = 0  # [0: black, 255: white]

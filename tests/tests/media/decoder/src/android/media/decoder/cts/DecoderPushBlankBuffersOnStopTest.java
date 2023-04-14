@@ -37,6 +37,7 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.screenshot.ScreenCapture;
 import androidx.test.runner.screenshot.Screenshot;
 
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.Assert;
@@ -67,6 +68,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "There should be no instant apps specific behavior related to decoders")
+@NonMainlineTest        // blank buffer semantics are in framework, not module
 public class DecoderPushBlankBuffersOnStopTest {
     private static final String TAG = "DecoderPushBlankBufferOnStopTest";
     private static final String mInpPrefix = WorkDir.getMediaDirString();

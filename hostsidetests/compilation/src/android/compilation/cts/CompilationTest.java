@@ -19,6 +19,8 @@ package android.compilation.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.compilation.cts.annotation.CtsTestCase;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -32,6 +34,7 @@ import org.junit.runner.RunWith;
  * Compilation tests that don't require root access.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
+@CtsTestCase
 public class CompilationTest extends BaseHostJUnit4Test {
     private static final String APPLICATION_PACKAGE = "android.compilation.cts.statuscheckerapp";
 

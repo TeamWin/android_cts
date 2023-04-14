@@ -4,7 +4,10 @@ package {
 
 java_library_host {
     name: "QueryableCommon",
-    static_libs: ["NeneCommon"],
+    static_libs: [
+        "NeneCommon",
+        "auto_value_annotations"
+    ],
     srcs: [
         "common/src/main/java/**/*.java",
     ],
@@ -13,12 +16,16 @@ java_library_host {
 
 android_library {
     name: "QueryableCommonAndroid",
-    static_libs: ["NeneCommonAndroid"],
+    static_libs: [
+        "NeneCommonAndroid",
+         "auto_value_annotations"
+    ],
     srcs: [
         "common/src/main/java/**/*.java",
     ],
     manifest: "src/main/AndroidManifest.xml",
-    min_sdk_version: "29"
+    min_sdk_version: "29",
+    plugins: ["auto_annotation_plugin"]
 }
 
 android_library {
@@ -32,7 +39,8 @@ android_library {
         "QueryableCommonAndroid"
     ],
     manifest: "src/main/AndroidManifest.xml",
-    min_sdk_version: "29"
+    min_sdk_version: "29",
+    plugins: ["auto_annotation_plugin"]
 }
 
 android_test {

@@ -28,6 +28,7 @@ import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.bedstead.nene.utils.Versions;
 
 /** Test APIs related to flags. */
 public final class Flags {
@@ -49,6 +50,7 @@ public final class Flags {
      * @see #getFlagSyncEnabled()
      */
     public void setFlagSyncEnabled(boolean enabled) {
+        Versions.requireMinimumVersion(Versions.T);
         ShellCommand.builder("device_config")
                 .addOperand("set_sync_disabled_for_tests")
                 .addOperand(enabled ? "none" : "persistent")
@@ -63,6 +65,9 @@ public final class Flags {
      * @see #setFlagSyncEnabled(boolean)
      */
     public boolean getFlagSyncEnabled() {
+        if (!Versions.meetsMinimumSdkVersionRequirement(Versions.T)) {
+            return true;
+        }
         try {
             return ShellCommand.builder("device_config")
                     .addOperand("get_sync_disabled_for_tests")

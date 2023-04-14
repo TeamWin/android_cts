@@ -296,6 +296,11 @@ static bool check_path(JNIEnv* env,
       }
 
       std::string path = dir + "/" + dp->d_name;
+      // We cannot just load hwasan libraries into a non-hwasan process, so
+      // we are skipping those.
+      if (path.find("hwasan") != std::string::npos) {
+        continue;
+      }
       struct stat sb;
       // Use lstat to not dereference a symlink. If it links out of library_path
       // it can be ignored because the Bionic linker derefences symlinks before

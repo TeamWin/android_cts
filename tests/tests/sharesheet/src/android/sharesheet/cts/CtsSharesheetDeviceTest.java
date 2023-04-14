@@ -73,6 +73,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -885,8 +886,12 @@ public class CtsSharesheetDeviceTest {
     }
 
     private void clickText(String label) {
+        clickText(label, false);
+    }
+
+    private void clickText(String label, boolean caseSensitive) {
         UiObject2 customAction = mSharesheet.wait(
-                Until.findObject(By.textContains(label)),
+                Until.findObject(By.text(textContainsPattern(label, caseSensitive))),
                 WAIT_AND_ASSERT_FOUND_TIMEOUT_MS);
         assertNotNull(customAction);
         Log.d(TAG, "clicking on the custom action");
@@ -1122,7 +1127,19 @@ public class CtsSharesheetDeviceTest {
     }
 
     private void waitAndAssertTextContains(String containsText) {
-        waitAndAssertFound(By.textContains(containsText));
+        waitAndAssertTextContains(containsText, false);
+    }
+
+    private void waitAndAssertTextContains(String text, boolean caseSensitive) {
+        waitAndAssertFound(By.text(textContainsPattern(text, caseSensitive)));
+    }
+
+    private static Pattern textContainsPattern(String text, boolean caseSensitive) {
+        int flags = Pattern.DOTALL;
+        if (!caseSensitive) {
+            flags |= Pattern.CASE_INSENSITIVE;
+        }
+        return Pattern.compile(String.format("^.*%s.*$", Pattern.quote(text)), flags);
     }
 
     private void waitAndAssertNoTextContains(String containsText) {

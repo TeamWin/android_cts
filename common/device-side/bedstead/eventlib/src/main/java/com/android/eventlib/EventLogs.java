@@ -22,6 +22,10 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 
 import android.util.Log;
 
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.exceptions.PollValueFailedException;
+
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
@@ -95,7 +99,23 @@ public abstract class EventLogs<E extends Event> implements Serializable {
      * matching event is logged.
      */
     public E waitForEvent(Duration timeout) {
-        return assertThat(this).eventOccurredWithin(timeout);
+        try {
+            return assertThat(this).eventOccurredWithin(timeout);
+        } catch (PollValueFailedException e) {
+            if (e.getMessage().contains("No existing activity")) {
+                String activityName = e.getMessage().split(
+                        "named ", 2)[1].split(". ", 2)[0];
+                String packageName = e.getMessage().split("package ", 2)[1]
+                        .split(". ", 2)[0];
+
+                throw new NeneException("Error finding launched activity " + activityName
+                        + " in test app " + packageName
+                        + " (this could mean it didn't launch or the"
+                        + " package crashed). Relevant logs: " + TestApis.logcat().dump(
+                                l -> l.contains(activityName) || l.contains(packageName)), e);
+            }
+            throw e;
+        }
     }
 
     /**

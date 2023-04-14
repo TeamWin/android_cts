@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
 @RequireRunOnCloneProfile
-@EnsureHasWorkProfile(dpcIsPrimary = true, useParentInstanceOfDpc = true)
+@EnsureHasWorkProfile(dpcIsPrimary = true, useParentInstanceOfDpc = true, dpcKey = "dpc")
 @EnsureFeatureFlagEnabled(
         namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
         key = ENABLE_DEVICE_POLICY_ENGINE_FLAG

@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static org.testng.Assert.assertThrows;
+
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.UserType;
@@ -26,18 +28,12 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.policies.RequestBugReport;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.users.UserReference;
-import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
-
-import static org.testng.Assert.assertThrows;
-
-import android.util.Log;
 
 import java.util.HashSet;
 import java.util.Set;

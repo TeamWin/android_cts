@@ -98,6 +98,11 @@ public final class BooleanQueryHelper<E extends Queryable> implements BooleanQue
     }
 
     @Override
+    public boolean isEmptyQuery() {
+        return mTargetValue == null;
+    }
+
+    @Override
     public boolean matches(Boolean value) {
         return (mTargetValue == null) || mTargetValue.equals(value);
     }

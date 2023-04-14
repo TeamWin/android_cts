@@ -368,16 +368,14 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
-     * Ensure the state transitions of a successful outgoing call are correct.
-     * State Transitions:  New -> Connecting  -> Active -> Inactive ->
-     * Disconnecting -> Disconnected
+     * Ensure transactional calls can transition from inactive to active multiple times
      */
     @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#addCall",
             "android.telecom.CallControl#setInactive",
             "android.telecom.CallControl#setActive",
             "android.telecom.CallControl#disconnect"})
-    public void testAddOutgoingCallAndSetInactive() {
+    public void testToggleActiveAndInactive() {
         if (!mShouldTestTelecom) {
             return;
         }
@@ -386,11 +384,14 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
             // set the call active
             callControlAction(SET_ACTIVE, mCall1);
-            assertNumCalls(getInCallService(), 1);
-            assertEquals(Call.STATE_ACTIVE, getLastAddedCall().getState());
-            // hold call
+            assertCallState(getLastAddedCall(), Call.STATE_ACTIVE);
+            // toggle hold
             callControlAction(SET_INACTIVE, mCall1);
-            assertEquals(Call.STATE_HOLDING, getLastAddedCall().getState());
+            assertCallState(getLastAddedCall(), Call.STATE_HOLDING);
+            callControlAction(SET_ACTIVE, mCall1);
+            assertCallState(getLastAddedCall(), Call.STATE_ACTIVE);
+            callControlAction(SET_INACTIVE, mCall1);
+            assertCallState(getLastAddedCall(), Call.STATE_HOLDING);
             // disconnect
             callControlAction(DISCONNECT, mCall1);
             assertNumCalls(getInCallService(), 0);

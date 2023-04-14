@@ -24,17 +24,24 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.Service;
 import android.content.IntentFilter;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
 import com.android.queryable.Queryable;
 import com.android.queryable.info.ServiceInfo;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.Set;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class ServiceQueryHelperTest {
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     private final Queryable mQuery = null;
 
@@ -131,5 +138,33 @@ public final class ServiceQueryHelperTest {
         assertThat(ServiceQuery.service()
                 .where().serviceClass().isSameClassAs(CLASS_1)
                 .matches(CLASS_1_SERVICE_INFO)).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_isEmpty_returnsTrue() {
+        ServiceQueryHelper<Queryable> serviceQueryHelper =
+                new ServiceQueryHelper<>(mQuery);
+
+        assertThat(serviceQueryHelper.isEmptyQuery()).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_hasServiceClassQuery_returnsFalse() {
+        ServiceQueryHelper<Queryable> serviceQueryHelper =
+                new ServiceQueryHelper<>(mQuery);
+
+        serviceQueryHelper.serviceClass().className().isEqualTo("");
+
+        assertThat(serviceQueryHelper.isEmptyQuery()).isFalse();
+    }
+
+    @Test
+    public void isEmptyQuery_hasIntentFiltersQuery_returnsFalse() {
+        ServiceQueryHelper<Queryable> serviceQueryHelper =
+                new ServiceQueryHelper<>(mQuery);
+
+        serviceQueryHelper.intentFilters().isEmpty();
+
+        assertThat(serviceQueryHelper.isEmptyQuery()).isFalse();
     }
 }

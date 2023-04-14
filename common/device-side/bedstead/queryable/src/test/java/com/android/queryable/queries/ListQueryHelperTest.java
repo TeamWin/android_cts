@@ -18,22 +18,30 @@ package com.android.queryable.queries;
 
 import static com.android.bedstead.nene.utils.ParcelTest.assertParcelsCorrectly;
 import static com.android.queryable.queries.BundleQuery.bundle;
+import static com.android.queryable.queries.IntegerQuery.integer;
 import static com.android.queryable.queries.ListQuery.list;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.os.Bundle;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
 import com.android.queryable.Queryable;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.List;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class ListQueryHelperTest {
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     private final Queryable mQuery = null;
     private static final String BUNDLE_KEY = "key";
@@ -210,8 +218,8 @@ public final class ListQueryHelperTest {
         listQueryHelper.size().isEqualTo(1);
         listQueryHelper.contains(1);
         listQueryHelper.doesNotContain(1);
-        listQueryHelper.contains(IntegerQuery.integer().where().isEqualTo(1));
-        listQueryHelper.doesNotContain(IntegerQuery.integer().where().isEqualTo(1));
+        listQueryHelper.contains(integer().where().isEqualTo(1));
+        listQueryHelper.doesNotContain(integer().where().isEqualTo(1));
 
         assertParcelsCorrectly(ListQueryHelper.class, listQueryHelper);
     }
@@ -221,5 +229,53 @@ public final class ListQueryHelperTest {
         assertThat(list(Integer.class)
                 .where().contains(1)
                 .matches(List.of(1))).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_isEmpty_returnsTrue() {
+        ListQueryHelper<Queryable, Integer> listQueryHelper =
+                new ListQueryHelper<>(mQuery);
+
+        assertThat(listQueryHelper.isEmptyQuery()).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_hasContainsByQueryQuery_returnsFalse() {
+        ListQueryHelper<Queryable, Integer> listQueryHelper =
+                new ListQueryHelper<>(mQuery);
+
+        listQueryHelper.contains(integer().where().isEqualTo(1));
+
+        assertThat(listQueryHelper.isEmptyQuery()).isFalse();
+    }
+
+    @Test
+    public void isEmptyQuery_hasDoesNotContainByQueryQuery_returnsFalse() {
+        ListQueryHelper<Queryable, Integer> listQueryHelper =
+                new ListQueryHelper<>(mQuery);
+
+        listQueryHelper.doesNotContain(integer().where().isEqualTo(1));
+
+        assertThat(listQueryHelper.isEmptyQuery()).isFalse();
+    }
+
+    @Test
+    public void isEmptyQuery_hasContainsByTypeQuery_returnsFalse() {
+        ListQueryHelper<Queryable, Integer> listQueryHelper =
+                new ListQueryHelper<>(mQuery);
+
+        listQueryHelper.contains(1);
+
+        assertThat(listQueryHelper.isEmptyQuery()).isFalse();
+    }
+
+    @Test
+    public void isEmptyQuery_hasDoesNotContainByType_returnsFalse() {
+        ListQueryHelper<Queryable, Integer> listQueryHelper =
+                new ListQueryHelper<>(mQuery);
+
+        listQueryHelper.doesNotContain(1);
+
+        assertThat(listQueryHelper.isEmptyQuery()).isFalse();
     }
 }

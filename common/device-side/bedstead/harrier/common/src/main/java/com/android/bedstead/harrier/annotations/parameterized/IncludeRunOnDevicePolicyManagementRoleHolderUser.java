@@ -53,6 +53,7 @@ import java.lang.annotation.Target;
         key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG
 )
 @EnsureHasNoDelegate
+// TODO(276740719): Support custom queries
 public @interface IncludeRunOnDevicePolicyManagementRoleHolderUser {
     /**
      * Weight sets the order that annotations will be resolved.

@@ -146,7 +146,7 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
      * (i.e. the base state of the device is different than the current state, and that current
      * state is the RearDisplay state), then it should receive the
      * {@link WindowAreaStatus#STATUS_AVAILABLE} value, otherwise it should receive the
-     * {@link WindowAreaStatus#STATUS_UNAVAILABLE} value.
+     * {@link WindowAreaStatus#STATUS_ACTIVE} value.
      */
     @ApiTest(apis = {
             "androidx.window.extensions.area.WindowAreaComponent#addRearDisplayStatusListener",
@@ -171,7 +171,7 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
                             () -> mWindowAreaStatus == WindowAreaComponent.STATUS_AVAILABLE);
                 } else {
                     waitAndAssert(
-                            () -> mWindowAreaStatus == WindowAreaComponent.STATUS_UNAVAILABLE);
+                            () -> mWindowAreaStatus == WindowAreaComponent.STATUS_ACTIVE);
                 }
             }
         }

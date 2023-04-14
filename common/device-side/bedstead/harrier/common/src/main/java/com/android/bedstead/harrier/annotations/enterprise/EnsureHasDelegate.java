@@ -55,6 +55,14 @@ public @interface EnsureHasDelegate {
     /** The default key used for the testapp installed as delegate */
     String DELEGATE_KEY = "delegate";
 
+    // TODO(276740719): Add support for customisable delegates
+//    /**
+//     * The key used to identify this delegate.
+//     *
+//     * <p>This can be used with {@link AdditionalQueryParameters} to modify the requirements for
+//     * the delegate. */
+//    String key() default DELEGATE_KEY;
+
     int ENSURE_HAS_DELEGATE_WEIGHT = DO_PO_WEIGHT + 1; // Should run after setting DO/PO
 
     enum AdminType {
@@ -62,6 +70,8 @@ public @interface EnsureHasDelegate {
         PROFILE_OWNER,
         PRIMARY
     }
+
+    // TODO(276740719): Add support for querying for the delegate
 
     /**
      * The admin that should delegate this scope.
