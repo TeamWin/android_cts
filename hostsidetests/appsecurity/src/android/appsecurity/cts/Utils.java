@@ -188,7 +188,8 @@ public class Utils {
                 return;
             }
             Log.d(LOG_TAG, "Waiting for system ready...");
-            RunUtil.getDefault().sleep(1000);
+            // For low performance devices
+            RunUtil.getDefault().sleep(10*1000);
         }
         throw new AssertionError("System failed to become ready!");
     }
