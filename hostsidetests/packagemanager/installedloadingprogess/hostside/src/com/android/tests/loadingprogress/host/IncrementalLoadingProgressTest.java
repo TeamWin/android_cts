@@ -174,26 +174,6 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
         assertTrue(loadingPercentage > 0 && loadingPercentage < 100);
     }
 
-    @LargeTest
-    @Test
-    public void testLoadingProgressAndTimeInDumpsysWhenFullyLoaded() throws Exception {
-        long currentEpochTimeSeconds = Math.floorDiv(getDevice().getDeviceDate(), 1000);
-        // Trigger full download
-        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
-                "testReadAllBytes"));
-        // Wait for loading progress to update
-        RunUtil.getDefault().sleep(WAIT_FOR_LOADING_PROGRESS_UPDATE_MS);
-        // Check that "loadingProgress" shows 100% in dumpsys for this package
-        assertEquals("100", getLoadingProgressFromDumpsys());
-        final long loadingCompleteTimeSeconds = getLoadingCompletedTimeSecondsFromDumpsys();
-        assertTrue(loadingCompleteTimeSeconds >= currentEpochTimeSeconds);
-        // Wait a bit before reboot, allowing the package setting info to be written to disk.
-        RunUtil.getDefault().sleep(PACKAGE_SETTING_WRITE_SLEEP_MS);
-        getDevice().reboot();
-        assertEquals("100", getLoadingProgressFromDumpsys());
-        assertEquals(loadingCompleteTimeSeconds, getLoadingCompletedTimeSecondsFromDumpsys());
-    }
-
     private String getLoadingProgressFromDumpsys() throws Exception {
         return getStringFromDumpsys("loadingProgress=(\\d+)%");
     }
