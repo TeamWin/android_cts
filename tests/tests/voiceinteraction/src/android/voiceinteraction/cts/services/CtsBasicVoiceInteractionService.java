@@ -66,6 +66,10 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     private CountDownLatch mOnFailureLatch;
     // The CountDownLatch waits for vqds
     private CountDownLatch mOnQueryFinishRejectLatch;
+    // The CountDownLatch waits for a service onRecognitionPaused called
+    private CountDownLatch mOnRecognitionPausedLatch;
+    // The CountDownLatch waits for a service onRecognitionResumed called
+    private CountDownLatch mOnRecognitionResumedLatch;
     // The CountDownLatch waits for a service onHotwordDetectionServiceRestarted called
     private CountDownLatch mOnHotwordDetectionServiceRestartedLatch;
 
@@ -93,6 +97,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         mOnErrorLatch = null;
         mOnFailureLatch = null;
         mOnQueryFinishRejectLatch = null;
+        mOnRecognitionPausedLatch = null;
+        mOnRecognitionResumedLatch = null;
         mOnHotwordDetectionServiceRestartedLatch = null;
         mDetectedResult = null;
         mRejectedResult = null;
@@ -404,11 +410,17 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             @Override
             public void onRecognitionPaused() {
                 Log.i(TAG, "onRecognitionPaused");
+                if (mOnRecognitionPausedLatch != null) {
+                    mOnRecognitionPausedLatch.countDown();
+                }
             }
 
             @Override
             public void onRecognitionResumed() {
                 Log.i(TAG, "onRecognitionResumed");
+                if (mOnRecognitionResumedLatch != null) {
+                    mOnRecognitionResumedLatch.countDown();
+                }
             }
 
             @Override
@@ -753,6 +765,20 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     }
 
     /**
+     * Create a CountDownLatch that is used to wait for onRecognitionPaused()
+     */
+    public void initOnRecognitionPausedLatch() {
+        mOnRecognitionPausedLatch = new CountDownLatch(1);
+    }
+
+    /**
+     * Create a CountDownLatch that is used to wait for OnRecognitionResumed()
+     */
+    public void initOnRecognitionResumedLatch() {
+        mOnRecognitionResumedLatch = new CountDownLatch(1);
+    }
+
+    /**
      * Returns the onDetected() result.
      */
     public AlwaysOnHotwordDetector.EventPayload getHotwordServiceOnDetectedResult() {
@@ -888,5 +914,32 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             throw new AssertionError("OnFailure() fail.");
         }
         mOnFailureLatch = null;
+    }
+
+    /**
+     * Wait for onRecognitionPaused() callback called.
+     */
+    public void waitOnRecognitionPausedCalled() throws InterruptedException {
+        Log.d(TAG, "waitOnRecognitionPausedCalled(), latch=" + mOnRecognitionPausedLatch);
+        if (mOnRecognitionPausedLatch == null
+                || !mOnRecognitionPausedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
+            mOnRecognitionPausedLatch = null;
+            throw new AssertionError("onRecognitionPaused() fail.");
+        }
+        mOnRecognitionPausedLatch = null;
+    }
+
+
+    /**
+     * Wait for onRecognitionResumed() callback called.
+     */
+    public void waitOnRecognitionResumedCalled() throws InterruptedException {
+        Log.d(TAG, "waitOnRecognitionResumedCalled(), latch=" + mOnRecognitionResumedLatch);
+        if (mOnRecognitionResumedLatch == null
+                || !mOnRecognitionResumedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
+            mOnRecognitionResumedLatch = null;
+            throw new AssertionError("onRecognitionResumed() fail.");
+        }
+        mOnRecognitionResumedLatch = null;
     }
 }
