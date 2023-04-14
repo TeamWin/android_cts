@@ -1014,7 +1014,7 @@ public class WindowManagerState {
         return new ArrayList<>(mWindowStates);
     }
 
-    List<WindowState> getMatchingWindowType(int type) {
+    public List<WindowState> getMatchingWindowType(int type) {
         return getMatchingWindows(ws -> type == ws.mType).collect(Collectors.toList());
     }
 
