@@ -2985,6 +2985,13 @@ public final class DeviceState extends HarrierRule {
                     allowedNonTestUsers--;
                     continue;
                 }
+
+                if (u.equals(TestApis.users().instrumented())) {
+                    throw new IllegalStateException(
+                            "Cannot set Device Owner when running on a "
+                                    + "non-for-testing secondary user");
+                }
+
                 try {
                     removeAndRecordUser(u);
                 } catch (NeneException e) {
