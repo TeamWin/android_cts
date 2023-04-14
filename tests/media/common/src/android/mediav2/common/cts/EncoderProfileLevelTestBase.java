@@ -19,6 +19,7 @@ package android.mediav2.common.cts;
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -492,8 +493,19 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
     }
 
     protected void validateMinLevel(int min, int got, String msg) {
-        assertTrue(String.format(msg + "Level information unexpected, Expected at least %d,"
-                + " Got %d ", min, got) + mTestConfig + mTestEnv, min <= got);
+        String log = String.format(msg + "Level information unexpected, Expected at least %d,"
+                + " Got %d ", min, got) + mTestConfig + mTestEnv;
+        // H263 level 45 is out of order.
+        if (mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_H263) && min == H263Level45) {
+            // If we are expecting a min level45, then any level other than the ones below
+            // level45 (level10) should be ok
+            assertNotEquals(log, H263Level10, got);
+        } else if (mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_H263) && got == H263Level45) {
+            // If we got level45, then min level must be level10 or level45
+            assertEquals(log, H263Level10, min);
+        } else {
+            assertTrue(log, min <= got);
+        }
     }
 
     protected void validateBitStreamForProfileAndLevel(int cfgProfile, int cfgLevel) {
