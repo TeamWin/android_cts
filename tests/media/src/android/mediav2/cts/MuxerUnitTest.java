@@ -224,13 +224,12 @@ public class MuxerUnitTest {
         }
 
         @Test
-        @Ignore("TODO(b/146923138)")
         public void testIfCorruptMediaFormatIsRejected() throws IOException {
             MediaMuxer muxer = new MediaMuxer(mOutLoc, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 
-             /* TODO: Audio/Video formats, have certain keys required to be set. It is noticed
-                that even when these keys are not set, no exceptions were raised. Do we need to
-                add fixtures for those cases. */
+             /* TODO(b/278260304): Audio/Video formats, have certain keys required to be set. It
+                is noticed that even when these keys are not set, no exceptions were raised. Do we
+                need to add fixtures for those cases. */
             try {
                 MediaFormat format = new MediaFormat();
                 format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_AAC);
@@ -800,7 +799,6 @@ public class MuxerUnitTest {
         }
 
         @Test
-        @Ignore("TODO(b/146923138)")
         public void testIfCorruptMediaFormatIsRejected() {
             assertTrue(nativeTestIfCorruptMediaFormatIsRejected(mOutLoc));
         }
