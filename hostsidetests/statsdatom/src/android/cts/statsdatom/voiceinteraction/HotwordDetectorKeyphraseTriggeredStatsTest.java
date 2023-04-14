@@ -147,6 +147,8 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
 
     public void testLogHotwordDetectorKeyphraseTriggeredSoftwareDetectorUnexpectedDetected()
             throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_SOFTWARE_UNEXPECTED_DETECTED_FOR_METRIC_COLLECT);
@@ -237,6 +239,8 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
 
     public void testLogHotwordDetectorKeyphraseTriggeredSoftwareDetectorServiceCrash()
             throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_SOFTWARE_SERVICE_CRASH_FOR_METRIC_COLLECT);
