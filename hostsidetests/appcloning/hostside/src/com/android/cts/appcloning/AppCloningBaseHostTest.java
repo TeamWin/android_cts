@@ -19,15 +19,18 @@ package com.android.cts.appcloning;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 import com.android.tradefed.util.CommandResult;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
@@ -39,8 +42,6 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
     private static final String TEST_CLASS_A = APP_A_PACKAGE + ".AppCloningDeviceTest";
     private static final long DEFAULT_INSTRUMENTATION_TIMEOUT_MS = 600_000; // 10min
 
-    protected static final String CONTENT_PROVIDER_URL =
-            "content://android.tradefed.contentprovider";
     protected static final String MEDIA_PROVIDER_URL = "content://media";
 
     protected static String sCloneUserId;
@@ -58,6 +59,16 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
 
         CommandResult out = sDevice.executeShellV2Command("am start-user -w " + sCloneUserId);
         assertThat(isSuccessful(out)).isTrue();
+    }
+
+    protected static void waitForBroadcastIdle() throws DeviceNotAvailableException {
+        CommandResult out = sDevice.executeShellV2Command(
+                "am wait-for-broadcast-idle", 120, TimeUnit.SECONDS);
+        assertThat(isSuccessful(out)).isTrue();
+        if (!out.getStdout().contains("All broadcast queues are idle!")) {
+            LogUtil.CLog.e("Output from 'am wait-for-broadcast-idle': %s", out);
+            fail("'am wait-for-broadcase-idle' did not complete.");
+        }
     }
 
     protected static void removeCloneUser() throws Exception {

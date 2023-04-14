@@ -82,6 +82,7 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
         // TODO(b/253449368) Run the tests only if the device supports app-cloning. This would
         //  require adding the app-cloning building blocks config and using it in framework code.
         AppCloningBaseHostTest.baseHostSetup(testInfo.getDevice());
+        waitForBroadcastIdle();
         setupTestContacts();
         switchAppCloningBuildingBlocksFlag(true);
     }
