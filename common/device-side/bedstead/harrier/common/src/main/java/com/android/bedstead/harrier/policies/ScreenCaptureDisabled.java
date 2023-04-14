@@ -35,9 +35,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * {@code DevicePolicyManager#setScreenCaptureDisabled(ComponentName, boolean)}.
  */
 @EnterprisePolicy(dpc = {
-        //TODO: Remove finance DO - It shouldn't have access.
-        APPLIED_BY_DEVICE_OWNER | APPLIED_BY_FINANCED_DEVICE_OWNER
-                | APPLIED_BY_DPM_ROLE_HOLDER
+        APPLIED_BY_DEVICE_OWNER | APPLIED_BY_DPM_ROLE_HOLDER
                 | APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE
                 | APPLIES_GLOBALLY,
         APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER | CANNOT_BE_APPLIED_BY_ROLE_HOLDER},
