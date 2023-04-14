@@ -38,8 +38,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityOptions;
+import android.app.ActivityTaskManager;
 import android.app.Application;
 import android.app.Instrumentation;
 import android.app.PictureInPictureParams;
@@ -56,10 +58,13 @@ import androidx.annotation.Nullable;
 import androidx.window.extensions.layout.FoldingFeature;
 import androidx.window.sidecar.SidecarDeviceState;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.After;
 import org.junit.Before;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 
@@ -84,6 +89,7 @@ public class WindowManagerJetpackTestBase {
         assertNotNull(mContext);
         mApplication = (Application) mContext.getApplicationContext();
         assertNotNull(mApplication);
+        clearLaunchParams();
         // Register activity lifecycle callbacks to know which activities are resumed
         registerActivityLifecycleCallbacks();
     }
@@ -334,6 +340,13 @@ public class WindowManagerJetpackTestBase {
                 && sidecarDeviceStatePosture == SidecarDeviceState.POSTURE_OPENED)
                 || (extensionDeviceState == FoldingFeature.STATE_HALF_OPENED
                 && sidecarDeviceStatePosture == SidecarDeviceState.POSTURE_HALF_OPENED);
+    }
+
+    private void clearLaunchParams() {
+        final ActivityTaskManager atm = mContext.getSystemService(ActivityTaskManager.class);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            atm.clearLaunchParamsForPackages(List.of(mContext.getPackageName()));
+        }, Manifest.permission.MANAGE_ACTIVITY_TASKS);
     }
 
     private void registerActivityLifecycleCallbacks() {

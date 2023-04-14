@@ -59,7 +59,6 @@ public class ActivityEmbeddingTestBase extends WindowManagerJetpackTestBase {
         mSplitInfoConsumer = new TestValueCountConsumer<>();
         mActivityEmbeddingComponent.setSplitInfoCallback(mSplitInfoConsumer);
 
-
         UiDeviceUtils.pressWakeupButton();
         UiDeviceUtils.pressUnlockButton();
     }
