@@ -157,6 +157,10 @@ public final class UserReference implements AutoCloseable {
             profileOwner.remove();
         }
 
+        if (TestApis.users().instrumented().equals(this)) {
+            throw new NeneException("Cannot remove instrumented user");
+        }
+
         try {
             // Expected success string is "Success: removed user"
             ShellCommand.builder("pm remove-user")
