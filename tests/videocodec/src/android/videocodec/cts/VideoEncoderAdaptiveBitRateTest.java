@@ -71,6 +71,7 @@ import java.util.List;
  */
 @RunWith(Parameterized.class)
 public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestBase {
+    private static final String LOG_TAG = VideoEncoderAdaptiveBitRateTest.class.getSimpleName();
     private static final List<Object[]> exhaustiveArgsList = new ArrayList<>();
     private static final HashMap<String, RawResource> RES_YUV_MAP = new HashMap<>();
     private static final int SEGMENT_DURATION = 3;
@@ -126,7 +127,7 @@ public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestB
         for (Object[] arg : exhaustiveArgsList) {
             resources.add((CompressedResource) arg[3]);
         }
-        decodeStreamsToYuv(resources, RES_YUV_MAP);
+        decodeStreamsToYuv(resources, RES_YUV_MAP, LOG_TAG);
     }
 
     @AfterClass
@@ -201,7 +202,7 @@ public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestB
 
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
         assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
-                + mTestEnv, res);
+                + mTestEnv + DIAGNOSTICS, res);
         int limit = mSegmentBitRates.length * SEGMENT_DURATION * mEncCfgParams[0].mFrameRate;
         encodeToMemory(mCodecName, mEncCfgParams[0], res, limit, true, false);
         assertEquals("encoder did not encode the requested number of frames \n" + mTestConfig

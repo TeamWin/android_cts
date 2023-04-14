@@ -61,6 +61,7 @@ import java.util.List;
  */
 @RunWith(Parameterized.class)
 public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
+    private static final String LOG_TAG = VideoEncoderPsnrTest.class.getSimpleName();
     private static final float MIN_ACCEPTABLE_QUALITY = 30.0f;  // dB
     private static final float AVG_ACCEPTABLE_QUALITY = 35.0f;  // dB
     private static final int KEY_FRAME_INTERVAL = 1;
@@ -74,7 +75,7 @@ public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
         for (Object[] arg : exhaustiveArgsList) {
             resources.add((CompressedResource) arg[2]);
         }
-        decodeStreamsToYuv(resources, RES_YUV_MAP);
+        decodeStreamsToYuv(resources, RES_YUV_MAP, LOG_TAG);
     }
 
     @AfterClass
@@ -141,7 +142,7 @@ public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
                 areFormatsSupported(mCodecName, mMediaType, formats));
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
         assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
-                + mTestEnv, res);
+                + mTestEnv + DIAGNOSTICS, res);
         encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, false, true);
         CompareStreams cs = null;
         StringBuilder msg = new StringBuilder();
