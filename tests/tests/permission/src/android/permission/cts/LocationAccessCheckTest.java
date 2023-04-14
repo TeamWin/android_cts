@@ -584,7 +584,7 @@ public class LocationAccessCheckTest {
     private static void resetPermissionController() throws Throwable {
         unbindService();
         PermissionUtils.resetPermissionControllerJob(sUiAutomation, PERMISSION_CONTROLLER_PKG,
-                LOCATION_ACCESS_CHECK_JOB_ID, UNEXPECTED_TIMEOUT_MILLIS,
+                LOCATION_ACCESS_CHECK_JOB_ID, 45000,
                 ACTION_SET_UP_LOCATION_ACCESS_CHECK, LocationAccessCheckOnBootReceiver);
     }
 
