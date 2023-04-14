@@ -49,14 +49,13 @@ CIRCLE_COLOR_ATOL = 0.05  # circle color fill tolerance
 CV2_LINE_THICKNESS = 3  # line thickness for drawing on images
 CV2_RED = (255, 0, 0)  # color in cv2 to draw lines
 
+CV2_HOME_DIRECTORY = os.path.dirname(cv2.__file__)
+HAARCASCADE_FILE_NAME = 'haarcascade_frontalface_default.xml'
+
 FOV_THRESH_TELE25 = 25
 FOV_THRESH_TELE40 = 40
 FOV_THRESH_TELE = 60
 FOV_THRESH_WFOV = 90
-
-HAARCASCADE_FILE = os.path.join(
-    os.path.dirname(os.path.abspath(cv2.__file__)), 'opencv', 'haarcascades',
-    'haarcascade_frontalface_default.xml')
 
 LOW_RES_IMG_THRESH = 320 * 240
 
@@ -116,12 +115,16 @@ def binarize_image(img_gray):
 
 def _load_opencv_haarcascade_file():
   """Return Haar Cascade file for face detection."""
-  logging.info('Haar Cascade file location: %s', HAARCASCADE_FILE)
-  if os.path.isfile(HAARCASCADE_FILE):
-    return HAARCASCADE_FILE
+  for path, _, files in os.walk(CV2_HOME_DIRECTORY):
+    if HAARCASCADE_FILE_NAME in files:
+      haarcascade_file = os.path.join(path, HAARCASCADE_FILE_NAME)
+      break
+  if os.path.isfile(haarcascade_file):
+    logging.debug('Haar Cascade file location: %s', haarcascade_file)
+    return haarcascade_file
   else:
     raise error_util.CameraItsError('haarcascade_frontalface_default.xml file '
-                                    f'must be in {HAARCASCADE_FILE}')
+                                    f'must be in {haarcascade_file}')
 
 
 def find_opencv_faces(img, scale_factor, min_neighbors):
