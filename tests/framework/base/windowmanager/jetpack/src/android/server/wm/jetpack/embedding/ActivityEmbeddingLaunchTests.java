@@ -29,7 +29,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.ActivityEmbeddingUtil;
 import android.server.wm.jetpack.utils.TestActivityWithId;
@@ -38,6 +37,7 @@ import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.window.extensions.embedding.ActivityRule;
 import androidx.window.extensions.embedding.SplitInfo;
 import androidx.window.extensions.embedding.SplitPairRule;
