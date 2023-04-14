@@ -154,7 +154,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         mImeiType = new int[mNumOfPhone];
 
         // IRadioSim caches
-        mCardStatus = new CardStatus[mNumOfSim];
+        mCardStatus = new CardStatus[mNumOfPhone];
         mSimSlotStatus = new SimSlotStatus[mNumOfSim];
         mLogicalSimIdMap = new int[mNumOfSim];
         mFdnStatus = new int[mNumOfSim];
@@ -162,7 +162,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         mSimAppList = (ArrayList<SimAppData>[]) new ArrayList[mNumOfSim];
 
         // IRadioVoice caches
-        mVoiceService = new MockVoiceService[mNumOfSim];
+        mVoiceService = new MockVoiceService[mNumOfPhone];
 
         // Caches initializtion
         for (int i = 0; i < mNumOfPhone; i++) {
@@ -1015,8 +1015,8 @@ public class MockModemConfigBase implements MockModemConfigInterface {
             String[] urns,
             int routing,
             String client) {
-        return dialEccVoiceCall(logicalSlotId, address, categories, urns, routing,
-                mCallControlInfo, client);
+        return dialEccVoiceCall(
+                logicalSlotId, address, categories, urns, routing, mCallControlInfo, client);
     }
 
     @Override
@@ -1070,16 +1070,22 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     }
 
     @Override
-    public void setLastCallFailCause(int logicalSlotId,
-            @Annotation.DisconnectCauses int cause, String client) {
-        Log.d(mTAG, "setLastCallFailCause[" + logicalSlotId + "]: cause = " + cause
-                + "  from: " + client);
+    public void setLastCallFailCause(
+            int logicalSlotId, @Annotation.DisconnectCauses int cause, String client) {
+        Log.d(
+                mTAG,
+                "setLastCallFailCause["
+                        + logicalSlotId
+                        + "]: cause = "
+                        + cause
+                        + "  from: "
+                        + client);
         mVoiceService[logicalSlotId].setLastCallFailCause(cause);
     }
 
     @Override
-    public void clearAllCalls(int logicalSlotId,
-            @Annotation.DisconnectCauses int cause, String client) {
+    public void clearAllCalls(
+            int logicalSlotId, @Annotation.DisconnectCauses int cause, String client) {
         Log.d(mTAG, "clearAllCalls[" + logicalSlotId + "]: cause = " + cause + "  from: " + client);
         mVoiceService[logicalSlotId].clearAllCalls(cause);
     }

@@ -102,9 +102,14 @@ public class MockModemService extends Service {
         mNumOfPhone = mTelephonyManager.getActiveModemCount();
         Log.d(TAG, "Support number of phone = " + mNumOfPhone + ", number of SIM = " + mNumOfSim);
 
-        mLock = new Object();
+        // Number of physical Sim slot should be equals to or greater than number of phone.
+        if (mNumOfSim < mNumOfPhone) {
+            mNumOfSim = mNumOfPhone;
+        }
 
+        mLock = new Object();
         sLatches = new CountDownLatch[LATCH_MAX];
+
         for (int i = 0; i < LATCH_MAX; i++) {
             sLatches[i] = new CountDownLatch(1);
             if (i == LATCH_RADIO_INTERFACES_READY) {
@@ -278,7 +283,7 @@ public class MockModemService extends Service {
                             + MockSimService.MOCK_SIM_SLOT_MAX
                             + ").");
             numPhysicalSlots = MockSimService.MOCK_SIM_SLOT_MAX;
-        } else if (numPhysicalSlots <= MockSimService.MOCK_SIM_SLOT_MIN) {
+        } else if (numPhysicalSlots < MockSimService.MOCK_SIM_SLOT_MIN) {
             Log.d(
                     TAG,
                     "Number of physical Slot ("
