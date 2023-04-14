@@ -75,9 +75,6 @@ public class DistanceMeasurementParamsTest {
         if (!mHasBluetooth) {
             return;
         }
-        if (mAdapter != null) {
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        }
         TestUtils.dropPermissionAsShellUid();
         mAdapter = null;
     }
