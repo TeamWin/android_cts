@@ -2213,6 +2213,9 @@ public final class ActivityManagerTest {
     @Test
     public void testSwitchToSystemUserIsRestrictedWhenItsNotAFullUser() {
         assumeHeadlessSystemUserMode();
+        assumeFalse("Switch to Non-full headless SYSTEM user is only restricted when "
+                        + "config_canSwitchToHeadlessSystemUser is disabled.",
+                canSwitchToHeadlessSystemUser());
 
         runWithShellPermissionIdentity(() ->
                 assertFalse(mActivityManager.switchUser(UserHandle.SYSTEM)));
@@ -2222,11 +2225,12 @@ public final class ActivityManagerTest {
     public void testSwitchToSystemUserIsAllowedWhenItsAFullUser() {
         assumeNonHeadlessSystemUserMode();
 
-        runWithShellPermissionIdentity(() ->
-                assertTrue(mActivityManager.switchUser(UserHandle.SYSTEM)));
-
+        runWithShellPermissionIdentity(() -> {
+            int currentUser = mActivityManager.getCurrentUser();
+            assertTrue(mActivityManager.switchUser(UserHandle.SYSTEM));
+            mActivityManager.switchUser(UserHandle.of(currentUser));
+        });
     }
-
 
     @Test
     public void testSwitchToHeadlessSystemUser_whenCanSwitchToHeadlessSystemUserEnabled() {
@@ -2599,7 +2603,7 @@ public final class ActivityManagerTest {
     }
 
     /**
-     * Gets the value of {@link com.android.internal.R.bool.config_canSwitchToHeadlessSystemUser}.
+     * Gets the value of {@link com.android.internal.R.bool#config_canSwitchToHeadlessSystemUser}.
      * @return {@code true} If headless system user is allowed to run in the foreground
      * even though it is not a full user.
      */
