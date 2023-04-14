@@ -103,7 +103,8 @@ public class VideoEncoderQualityRegressionTest {
 
     @BeforeClass
     public static void decodeResourceToYuv() throws IOException, InterruptedException {
-        DecodeStreamToYuv yuvRes = new DecodeStreamToYuv(RES.mMediaType, RES.mResFile, FRAME_LIMIT);
+        DecodeStreamToYuv yuvRes = new DecodeStreamToYuv(RES.mMediaType, RES.mResFile, FRAME_LIMIT,
+                LOG_TAG);
         sActiveRawRes = yuvRes.getDecodedYuv();
     }
 

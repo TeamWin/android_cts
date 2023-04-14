@@ -42,25 +42,42 @@ public class DecodeStreamToYuv extends CodecDecoderTestBase {
     private static final String LOG_TAG = DecodeStreamToYuv.class.getSimpleName();
 
     private final int mFrameLimit;
+    private final String mOutputPrefix;
 
     private String mOutputFile;
     private int mWidth;
     private int mHeight;
     private int mBytesPerSample;
 
+    public DecodeStreamToYuv(String mediaType, String inpFile, int frameLimit, String outYuvPrefix)
+            throws IOException {
+        super(findDecoderForStream(mediaType, inpFile), mediaType, inpFile, LOG_TAG);
+        mFrameLimit = frameLimit;
+        mOutputPrefix = outYuvPrefix;
+    }
+
+    public DecodeStreamToYuv(String mediaType, String inpFile, int frameLimit) throws IOException {
+        this(mediaType, inpFile, frameLimit, "test" + LOG_TAG);
+    }
+
     public DecodeStreamToYuv(String mediaType, String inpFile) throws IOException {
         this(mediaType, inpFile, Integer.MAX_VALUE);
     }
 
-    public DecodeStreamToYuv(String mediaType, String inpFile, int frameLimit) throws IOException {
-        super(findDecoderForStream(mediaType, inpFile), mediaType, inpFile, LOG_TAG);
-        mFrameLimit = frameLimit;
-    }
-
-    public RawResource getDecodedYuv() throws IOException, InterruptedException {
-        File tmp = File.createTempFile("test" + LOG_TAG, ".yuv");
-        mOutputFile = tmp.getAbsolutePath();
-        decodeToMemory(mTestFile, mCodecName, 0, MediaExtractor.SEEK_TO_CLOSEST_SYNC, mFrameLimit);
+    public RawResource getDecodedYuv() {
+        File tmp = null;
+        try {
+            tmp = File.createTempFile(mOutputPrefix, ".yuv");
+            mOutputFile = tmp.getAbsolutePath();
+            decodeToMemory(mTestFile, mCodecName, 0, MediaExtractor.SEEK_TO_CLOSEST_SYNC,
+                    mFrameLimit);
+        } catch (Exception e) {
+            if (tmp != null && tmp.exists()) assertTrue(tmp.delete());
+            throw new RuntimeException(e.getMessage());
+        } catch (AssertionError e) {
+            if (tmp != null && tmp.exists()) assertTrue(tmp.delete());
+            throw new AssertionError(e.getMessage());
+        }
         return new RawResource.Builder()
                 .setFileName(mOutputFile, false)
                 .setDimension(mWidth, mHeight)

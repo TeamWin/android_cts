@@ -755,12 +755,13 @@ public class VideoDecodeEditEncodeTest {
         } finally {
             if (cs != null) cs.cleanUp();
         }
-        DecodeStreamToYuv yuvRes = new DecodeStreamToYuv(mMediaType, tmpPathA);
+        DecodeStreamToYuv yuvRes = new DecodeStreamToYuv(mMediaType, tmpPathA, Integer.MAX_VALUE,
+                LOG_TAG);
         RawResource yuv = yuvRes.getDecodedYuv();
         mTmpFiles.add(yuv.mFileName);
         double varA = computeVariance(yuv);
 
-        yuvRes = new DecodeStreamToYuv(mMediaType, tmpPathB);
+        yuvRes = new DecodeStreamToYuv(mMediaType, tmpPathB, Integer.MAX_VALUE, LOG_TAG);
         yuv = yuvRes.getDecodedYuv();
         mTmpFiles.add(yuv.mFileName);
         double varB = computeVariance(yuv);

@@ -62,6 +62,7 @@ import java.util.List;
  */
 @RunWith(Parameterized.class)
 public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
+    private static final String LOG_TAG = VideoEncoderMultiResTest.class.getSimpleName();
     private static final float MIN_ACCEPTABLE_QUALITY = 20.0f;  // psnr in dB
     private static final int FRAME_LIMIT = 30;
     private static final int BIT_RATE = 5000000;
@@ -74,7 +75,7 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
         for (Object[] arg : exhaustiveArgsList) {
             resources.add((CompressedResource) arg[2]);
         }
-        decodeStreamsToYuv(resources, RES_YUV_MAP, FRAME_LIMIT);
+        decodeStreamsToYuv(resources, RES_YUV_MAP, FRAME_LIMIT, LOG_TAG);
     }
 
     @AfterClass
@@ -186,7 +187,7 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
                 areFormatsSupported(mCodecName, mMediaType, formats));
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
         assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
-                + mTestEnv, res);
+                + mTestEnv + DIAGNOSTICS, res);
         encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, false, true);
         assertEquals("Output width is different from configured width \n" + mTestConfig
                 + mTestEnv, mEncCfgParams[0].mWidth, getWidth(getOutputFormat()));
