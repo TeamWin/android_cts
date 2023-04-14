@@ -15,3 +15,4 @@ android.bluetooth.BluetoothAdapter
 android.app.NotificationManager
 android.telecom.TelecomManager
 android.content.RestrictionsManager
+android.telephony.SmsManager

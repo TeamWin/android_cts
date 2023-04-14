@@ -43,5 +43,5 @@
     <option name="compatibility:include-filter" value="CtsTetheringTest" />
     <option name="compatibility:include-filter" value="CtsUsageStatsTestCases" />
     <option name="compatibility:include-filter" value="CtsVcnTestCases" />
-
+    <option name="compatibility:include-filter" value="CtsDevicePolicySimTestCases" />
 </configuration>

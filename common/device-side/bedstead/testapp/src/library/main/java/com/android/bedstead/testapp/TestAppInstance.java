@@ -57,6 +57,8 @@ import android.security.RemoteKeyChain;
 import android.security.RemoteKeyChainWrapper;
 import android.telecom.RemoteTelecomManager;
 import android.telecom.RemoteTelecomManagerWrapper;
+import android.telephony.RemoteSmsManager;
+import android.telephony.RemoteSmsManagerWrapper;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.appops.AppOps;
@@ -416,6 +418,15 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      */
     public RemoteNotificationManager notificationManager() {
         return new RemoteNotificationManagerWrapper(mConnector, mUser, mTestApp.pkg());
+    }
+
+    /**
+     * Access the {@link android.telephony.SmsManager} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
+    public RemoteSmsManager smsManager() {
+        return new RemoteSmsManagerWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
