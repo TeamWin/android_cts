@@ -37,11 +37,13 @@ import androidx.annotation.NonNull;
 
 import com.android.compatibility.common.util.Preconditions;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.TreeMap;
 
 /**
@@ -51,7 +53,8 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
     private static final String LOG_TAG = VideoEncoderValidationTestBase.class.getSimpleName();
     private static final String MEDIA_DIR = WorkDir.getMediaDirString();
 
-    static final boolean ENABLE_LOGS = false;
+    protected static final boolean ENABLE_LOGS = false;
+    protected static final StringBuilder DIAGNOSTICS = new StringBuilder();
 
     protected final CompressedResource mCRes;
     protected BitStreamUtils.ParserBase mParser;
@@ -89,21 +92,40 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
             new CompressedResource(MediaFormat.MIMETYPE_VIDEO_AVC, MEDIA_DIR
                     + "AVICON-MOBILE-SelfieGroupGarden-SF15-CF01-P-420-8bit-SDR-1080p-30fps.mp4");
 
-    static void decodeStreamsToYuv(ArrayList<CompressedResource> resources,
-            HashMap<String, RawResource> streamYuvMap) {
-        decodeStreamsToYuv(resources, streamYuvMap, Integer.MAX_VALUE);
+    static void logAllFilesInCacheDir(boolean isStartOfTest) {
+        if (isStartOfTest) DIAGNOSTICS.setLength(0);
+        String cacheDir = CONTEXT.getCacheDir().toString();
+        DIAGNOSTICS.append(String.format("\nThe state of cache dir : %s, %s is :", cacheDir,
+                isStartOfTest ? "at start" : "now"));
+        File dir = new File(cacheDir);
+        if (dir.exists()) {
+            for (File f : Objects.requireNonNull(dir.listFiles())) {
+                DIAGNOSTICS.append(f.getName()).append("\n");
+            }
+        } else {
+            DIAGNOSTICS.append(" directory not present");
+        }
     }
 
     static void decodeStreamsToYuv(ArrayList<CompressedResource> resources,
-            HashMap<String, RawResource> streamYuvMap, int frameLimit) {
+            HashMap<String, RawResource> streamYuvMap, String prefix) {
+        decodeStreamsToYuv(resources, streamYuvMap, Integer.MAX_VALUE, prefix);
+    }
+
+    static void decodeStreamsToYuv(ArrayList<CompressedResource> resources,
+            HashMap<String, RawResource> streamYuvMap, int frameLimit, String prefix) {
+        logAllFilesInCacheDir(true);
         for (CompressedResource res : resources) {
             if (!(streamYuvMap.containsKey(res.uniqueLabel()))) {
                 try {
-                    DecodeStreamToYuv yuv =
-                            new DecodeStreamToYuv(res.mMediaType, res.mResFile, frameLimit);
+                    DecodeStreamToYuv yuv = new DecodeStreamToYuv(res.mMediaType, res.mResFile,
+                            frameLimit, prefix);
                     streamYuvMap.put(res.uniqueLabel(), yuv.getDecodedYuv());
                 } catch (Exception e) {
                     streamYuvMap.put(res.uniqueLabel(), null);
+                    DIAGNOSTICS.append(String.format("\nWhile decoding the resource : %s,"
+                            + " encountered exception :  %s was thrown", res, e));
+                    logAllFilesInCacheDir(false);
                 }
             }
         }
