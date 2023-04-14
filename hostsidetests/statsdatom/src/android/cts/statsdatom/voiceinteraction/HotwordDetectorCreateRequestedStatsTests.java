@@ -151,6 +151,8 @@ public class HotwordDetectorCreateRequestedStatsTests extends DeviceTestCase imp
     }
 
     public void testLogHotwordDetectorCreateRequestedSoftwareCreateFail() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
         // Run test in CTS package
         DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
                 TEST_METHOD_SOFTWARE_FAILURE_FOR_METRIC_COLLECT);
