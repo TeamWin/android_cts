@@ -19,6 +19,8 @@ package android.widget.cts;
 import static android.widget.cts.util.StretchEdgeUtil.dragAndHoldExecute;
 import static android.widget.cts.util.StretchEdgeUtil.fling;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -33,6 +35,7 @@ import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.util.AttributeSet;
@@ -40,6 +43,7 @@ import android.util.Xml;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
@@ -963,6 +967,47 @@ public class ScrollViewTest {
                 0,
                 3000
         ));
+    }
+
+    @Test
+    public void testSurfaceViewStretchAtEnd() throws Throwable {
+        showOnlyStretch();
+
+        mActivityRule.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                SurfaceView surfaceView = mActivity.findViewById(R.id.surfaceview_stretch_target);
+                surfaceView.setVisibility(View.VISIBLE);
+            }
+        });
+
+        mActivityRule.runOnUiThread(() -> {
+            // Scroll all the way to the bottom
+            mScrollViewStretch.scrollTo(0, mScrollViewStretch.getMaxScrollAmount());
+        });
+
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+
+        mScrollViewStretch.mEdgeGlowBottom = edgeEffect;
+
+        StretchEdgeUtil.dragAndHoldExecute(
+                mActivityRule,
+                mScrollViewStretch,
+                edgeEffect,
+                0,
+                -3000,
+                null,
+                () -> {
+                    int[] coords = new int[2];
+                    mScrollViewStretch.getLocationInWindow(coords);
+                    Bitmap screenshot = getInstrumentation().getUiAutomation().takeScreenshot(
+                            mActivityRule.getActivity().getWindow());
+
+                    assertEquals(Color.RED, screenshot.getPixel(
+                            coords[0] + mScrollViewStretch.getWidth() / 2 - 1,
+                            coords[1] + mScrollViewStretch.getHeight() - 1));
+                }
+        );
     }
 
     @LargeTest
