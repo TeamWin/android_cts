@@ -16,26 +16,29 @@
 
 package android.bluetooth.cts;
 
+import static org.junit.Assert.assertEquals;
+
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.test.AndroidTestCase;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.UUID;
 
-public class BluetoothGattCharacteristicTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class BluetoothGattCharacteristicTest {
     private final UUID TEST_UUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
     private BluetoothGattCharacteristic mBluetoothGattCharacteristic;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
         mBluetoothGattCharacteristic = new BluetoothGattCharacteristic(TEST_UUID, 0x0A, 0x11);
     }
 
-    @Override
-    public void tearDown() throws Exception {
-        mBluetoothGattCharacteristic = null;
-    }
-
+    @Test
     public void test_getInstanceId() {
         assertEquals(mBluetoothGattCharacteristic.getInstanceId(), 0);
     }
