@@ -1349,6 +1349,9 @@ public class SubscriptionManagerTest {
         final String liechtensteinIso = "li";
         final String faroeIslandsIso = "fo";
 
+        final TelephonyManager tm = InstrumentationRegistry.getContext()
+                .getSystemService(TelephonyManager.class).createForSubscriptionId(mSubId);
+
         final long maxWaitMillis = 5000;
         final String isoUT = liechtensteinIso.equals(getSubscriptionIso(mSubId))
                 ? faroeIslandsIso : liechtensteinIso;
@@ -1362,6 +1365,7 @@ public class SubscriptionManagerTest {
                     maxWaitMillis);
 
             assertEquals(isoUT, getSubscriptionIso(mSubId));
+            assertEquals(isoUT, tm.getSimCountryIso());
         } finally {
             overrideCarrierConfig(null, mSubId);
         }
