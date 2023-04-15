@@ -1860,6 +1860,19 @@ public class TestUtils {
         }
     }
 
+    public static boolean isAdoptableStorageSupported() throws Exception {
+        return hasAdoptableStorageFeature() || hasAdoptableStorageFstab();
+    }
+
+    private static boolean hasAdoptableStorageFstab() throws Exception {
+        return Boolean.parseBoolean(executeShellCommand("sm has-adoptable").trim());
+    }
+
+    private static boolean hasAdoptableStorageFeature() throws Exception {
+        return getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_ADOPTABLE_STORAGE);
+    }
+
     /**
      * Unmount app's obb and data dirs.
      */

@@ -433,6 +433,9 @@ public class RemoteDpc extends RemotePolicyManager {
                             new ManagedProfileProvisioningParams.Builder(
                                     new ComponentName(testApp.packageName(), TEST_APP_CLASS_NAME),
                                     "RemoteDPC").build())));
+
+            dpc.devicePolicyManager().setProfileEnabled(dpc.componentName());
+
             dpc.mShouldRemoveUserWhenRemoved = true;
             return dpc;
 

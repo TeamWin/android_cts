@@ -102,3 +102,4 @@ android.content.pm.dex.ArtManager
 android.content.pm.PackageManager.DexModuleRegisterCallback
 android.security.KeyChainAliasCallback
 android.app.Activity
+android.telephony.SmsManager

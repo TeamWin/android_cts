@@ -157,6 +157,10 @@ public final class UserReference implements AutoCloseable {
             profileOwner.remove();
         }
 
+        if (TestApis.users().instrumented().equals(this)) {
+            throw new NeneException("Cannot remove instrumented user");
+        }
+
         try {
             // Expected success string is "Success: removed user"
             ShellCommand.builder("pm remove-user")
@@ -214,6 +218,7 @@ public final class UserReference implements AutoCloseable {
     //TODO(scottjonathan): Deal with users who won't unlock
     private UserReference startUser(int displayId) {
         boolean visibleOnDisplay = displayId != Display.INVALID_DISPLAY;
+
         try {
             // Expected success string is "Success: user started"
             Builder builder = ShellCommand.builder("am start-user")
@@ -244,7 +249,12 @@ public final class UserReference implements AutoCloseable {
                         .await();
             }
         } catch (AdbException | PollValueFailedException e) {
-            throw new NeneException("Could not start user " + this, e);
+            if (!userInfo().isEnabled()) {
+                throw new NeneException("Could not start user " + this + ". User is not enabled.");
+            }
+
+            throw new NeneException("Could not start user " + this + ". Relevant logcat: "
+                    + TestApis.logcat().dump(l -> l.contains("ActivityManager")), e);
         }
 
         return this;

@@ -16,10 +16,12 @@
 
 package android.voiceinteraction.cts.services;
 
+import static android.voiceinteraction.cts.testcore.Helper.KEYPHRASE_LOCALE;
+import static android.voiceinteraction.cts.testcore.Helper.KEYPHRASE_TEXT;
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 
 import android.hardware.soundtrigger.SoundTrigger.KeyphraseSoundModel;
-import android.hardware.soundtrigger.SoundTrigger.ModuleProperties;
+import android.media.voice.KeyphraseModelManager;
 import android.os.Bundle;
 import android.os.Looper;
 import android.os.PersistableBundle;
@@ -35,7 +37,6 @@ import android.voiceinteraction.cts.testcore.Helper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -48,8 +49,6 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
 
     private final String mTag = getClass().getSimpleName();
     public static final int STATUS_NO_CALLBACK_CALLED = -100;
-    public static final Locale KEYPHRASE_LOCALE = Locale.forLanguageTag("en-US");
-    public static final String KEYPHRASE_TEXT = "Hello Android";
 
     // The service instance
     public static VoiceInteractionService sService;
@@ -497,6 +496,27 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
         return mInitializedStatus;
     }
 
+
+    /**
+     * Enable override the model enrollment database one which has a specific mode registered.
+     * Need to have "android.permission.MANAGE_VOICE_KEYPHRASES" permission.
+     *
+     * @see #disableOverrideRegisterModel()
+     */
+    public void enableOverrideRegisterModel(KeyphraseSoundModel model) {
+        final KeyphraseModelManager manager = createKeyphraseModelManager();
+        manager.setModelDatabaseForTestEnabled(/* enabled= */ true);
+        manager.updateKeyphraseSoundModel(model);
+    }
+
+    /**
+     * Disable model override started in
+     * {@link #enableOverrideRegisterModel(KeyphraseSoundModel)}
+     */
+    public void disableOverrideRegisterModel() {
+        createKeyphraseModelManager().setModelDatabaseForTestEnabled(/* enabled= */ false);
+    }
+
     AlwaysOnHotwordDetector callCreateAlwaysOnHotwordDetectorNoHotwordDetectionService(
             AlwaysOnHotwordDetector.Callback callback, boolean useExecutor) {
         Log.i(mTag,
@@ -511,9 +531,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                         getDetectorCallbackExecutor(),
                         callback);
             }
-            return createAlwaysOnHotwordDetector(KEYPHRASE_TEXT,
-                    KEYPHRASE_LOCALE,
-                    callback);
+            return createAlwaysOnHotwordDetector(KEYPHRASE_TEXT, KEYPHRASE_LOCALE, callback);
         } catch (IllegalStateException | SecurityException e) {
             if (e instanceof IllegalStateException) {
                 mIsCreateDetectorIllegalStateExceptionThrow = true;
@@ -557,7 +575,6 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                         getDetectorCallbackExecutor(),
                         callback);
             }
-
             return createAlwaysOnHotwordDetector(KEYPHRASE_TEXT,
                     KEYPHRASE_LOCALE,
                     options != null ? options : Helper.createFakePersistableBundleData(),

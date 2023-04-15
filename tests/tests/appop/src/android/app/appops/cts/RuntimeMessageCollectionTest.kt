@@ -16,13 +16,12 @@
 
 package android.app.appops.cts
 
-import org.junit.Assert.fail
 import android.app.AppOpsManager
 import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
+import org.junit.Assert.fail
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import java.lang.Thread.sleep
 
@@ -51,19 +50,18 @@ class RuntimeMessageCollectionTest {
     }
 
     @Test
-    @Ignore
     fun collectAsyncStackTrace() {
-        for (attempt in 0..24) {
-            installApk("CtsAppToCollect.apk")
+        installApk("CtsAppToCollect.apk")
+        for (attempt in 0..48) {
             val start = System.currentTimeMillis()
-            runWithShellPermissionIdentity {
-                appOpsManager.noteOp(AppOpsManager.OPSTR_READ_CONTACTS, appUid, APP_PKG,
-                        TEST_ATTRIBUTION_TAG, null)
-            }
-            while (System.currentTimeMillis() - start < TIMEOUT_MILLIS) {
-                sleep(200)
 
+            while (System.currentTimeMillis() - start < TIMEOUT_MILLIS) {
                 runWithShellPermissionIdentity {
+                    appOpsManager.noteOp(AppOpsManager.OPSTR_READ_CONTACTS, appUid, APP_PKG,
+                        TEST_ATTRIBUTION_TAG, null)
+
+                    sleep(50)
+
                     val message = appOpsManager.collectRuntimeAppOpAccessMessage()
                     if (message != null && message.packageName.equals(APP_PKG)) {
                         assertThat(message.op).isEqualTo(AppOpsManager.OPSTR_READ_CONTACTS)

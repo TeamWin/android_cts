@@ -40,7 +40,7 @@ private const val ACTION_MANAGE_APP_PERMISSIONS = "android.intent.action.MANAGE_
  * location permission for location a service provider app (e.g., usually GMS, but we use a custom
  * app in this test).
  */
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.Q)
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
     @Before
     fun setup() {

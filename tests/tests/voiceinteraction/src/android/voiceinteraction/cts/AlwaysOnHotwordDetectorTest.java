@@ -24,7 +24,10 @@ import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static android.service.voice.SoundTriggerFailure.ERROR_CODE_MODULE_DIED;
 import static android.service.voice.SoundTriggerFailure.ERROR_CODE_RECOGNITION_RESUME_FAILED;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
+import static android.voiceinteraction.cts.testcore.Helper.MANAGE_VOICE_KEYPHRASES;
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
+import static android.voiceinteraction.cts.testcore.Helper.createKeyphraseRecognitionExtraList;
+import static android.voiceinteraction.cts.testcore.Helper.createKeyprhaseArray;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -43,14 +46,15 @@ import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
 import android.util.Log;
-import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
+import android.voiceinteraction.cts.testcore.Helper;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedClassRule;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceOverrideEnrollmentRule;
 
-import androidx.annotation.GuardedBy;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
@@ -61,8 +65,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /** Tests for {@link AlwaysOnHotwordDetector} APIs. */
 @RunWith(AndroidJUnit4.class)
@@ -74,27 +79,15 @@ public class AlwaysOnHotwordDetectorTest {
     private static final String SERVICE_COMPONENT =
             "android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService";
 
-    private static final int KEYPHRASE_ID = 1234;
-
     private static final Context sContext = getInstrumentation().getTargetContext();
-    private static final SoundTrigger.Keyphrase[] KEYPHRASES =
-            new SoundTrigger.Keyphrase[] {
-                new SoundTrigger.Keyphrase(
-                        KEYPHRASE_ID,
-                        SoundTrigger.RECOGNITION_MODE_VOICE_TRIGGER,
-                        BaseVoiceInteractionService.KEYPHRASE_LOCALE,
-                        BaseVoiceInteractionService.KEYPHRASE_TEXT,
-                        new int[] {sContext.getUserId()})
-            };
+    private static final SoundTrigger.Keyphrase[] KEYPHRASE_ARRAY = createKeyprhaseArray(sContext);
 
     private SoundTriggerInstrumentation mInstrumentation = null;
 
-    private Object mLock = new Object();
+    private CountDownLatch mSoundTriggerInjectedLatch;
 
-    @GuardedBy("mLock")
     private ModelSession mModelSession = null;
 
-    @GuardedBy("mLock")
     private RecognitionSession mRecognitionSession = null;
 
     // For destroying in teardown
@@ -136,20 +129,13 @@ public class AlwaysOnHotwordDetectorTest {
         // Load appropriate keyphrase model
         // Required for the model to enter the enrolled state
         runWithShellPermissionIdentity(
-                () ->
-                        mEnrollOverrideRule
-                                .getModelManager()
-                                .updateKeyphraseSoundModel(
-                                        new SoundTrigger.KeyphraseSoundModel(
-                                                new UUID(5, 7),
-                                                new UUID(7, 5),
-                                                /* data= */ null,
-                                                KEYPHRASES)),
-                VoiceInteractionServiceOverrideEnrollmentRule.MANAGE_VOICE_KEYPHRASES);
+                () -> mEnrollOverrideRule.getModelManager().updateKeyphraseSoundModel(
+                        new SoundTrigger.KeyphraseSoundModel(new UUID(5, 7),
+                                new UUID(7, 5), /* data= */ null, KEYPHRASE_ARRAY)),
+                MANAGE_VOICE_KEYPHRASES);
 
         // Create alwaysOnHotwordDetector and wait onHotwordDetectionServiceInitialized() callback
-        getService()
-                .createAlwaysOnHotwordDetectorWithOnFailureCallback(
+        getService().createAlwaysOnHotwordDetectorWithOnFailureCallback(
                         /* useExecutor= */ true, /* mainThread= */ true);
 
         getService().waitSandboxedDetectionServiceInitializedCalledOrException();
@@ -179,31 +165,22 @@ public class AlwaysOnHotwordDetectorTest {
 
     @Before
     public void setup() {
+        // initial soundTrigger injection latch
+        mSoundTriggerInjectedLatch = new CountDownLatch(2);
+
         // Hook up SoundTriggerInstrumentation to inject/observe STHAL operations.
-        runWithShellPermissionIdentity(
-                () -> {
-                    mInstrumentation =
-                            sContext.getSystemService(SoundTriggerManager.class)
-                                    .attachInstrumentation(
-                                            (Runnable r) -> r.run(),
-                                            (ModelSession modelSession) -> {
-                                                synchronized (mLock) {
-                                                    mModelSession = modelSession;
-                                                    mModelSession.setModelCallback(
-                                                            (Runnable r) -> r.run(),
-                                                            (RecognitionSession recogSession) -> {
-                                                                synchronized (mLock) {
-                                                                    mRecognitionSession =
-                                                                            recogSession;
-                                                                    mLock.notifyAll();
-                                                                }
-                                                            });
-                                                }
-                                            });
-                },
-                MANAGE_SOUND_TRIGGER,
-                RECORD_AUDIO,
-                CAPTURE_AUDIO_HOTWORD);
+        runWithShellPermissionIdentity(() -> {
+            mInstrumentation = sContext.getSystemService(SoundTriggerManager.class)
+                    .attachInstrumentation((Runnable r) -> r.run(), (ModelSession modelSession) -> {
+                        mModelSession = modelSession;
+                        mSoundTriggerInjectedLatch.countDown();
+                        mModelSession.setModelCallback((Runnable r) -> r.run(),
+                                (RecognitionSession recogSession) -> {
+                                    mRecognitionSession = recogSession;
+                                    mSoundTriggerInjectedLatch.countDown();
+                                });
+                    });
+        }, MANAGE_SOUND_TRIGGER, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
     }
 
     @After
@@ -213,13 +190,10 @@ public class AlwaysOnHotwordDetectorTest {
 
         // Destroy the framework session
         if (mAlwaysOnHotwordDetector != null) {
-            runWithShellPermissionIdentity(
-                    () -> mAlwaysOnHotwordDetector.destroy(),
-                    RECORD_AUDIO,
-                    CAPTURE_AUDIO_HOTWORD,
-                    MANAGE_HOTWORD_DETECTION);
+            mAlwaysOnHotwordDetector.destroy();
         }
 
+        mSoundTriggerInjectedLatch = null;
         // Clear the service state
         getService().resetState();
         // Drop any permissions we may still have
@@ -227,47 +201,53 @@ public class AlwaysOnHotwordDetectorTest {
     }
 
     @Test
-    public void testAlwaysOnHotwordDetector_startRecognitionWithData() throws Exception {
+    public void testStartRecognition_success() throws Exception {
         createAndEnrollAlwaysOnHotwordDetector();
         // Grab permissions for more than a single call since we get callbacks
         adoptSoundTriggerPermissions();
         // Start recognition
-        synchronized (mLock) {
-            mAlwaysOnHotwordDetector.startRecognition(0, new byte[] {1, 2, 3, 4, 5});
-            mLock.wait(WAIT_TIMEOUT_IN_MS);
-            // We received model load, recog start
-            assertThat(mModelSession).isNotNull();
-            assertThat(mRecognitionSession).isNotNull();
-            getService().initDetectRejectLatch();
-            mRecognitionSession.triggerRecognitionEvent(
-                    new byte[] {0x11, 0x22},
-                    /* must include the keyphrase id enrolled by AOHD */
-                    Arrays.asList(
-                            new SoundTrigger.KeyphraseRecognitionExtra(
-                                    KEYPHRASE_ID,
-                                    SoundTrigger.RECOGNITION_MODE_VOICE_TRIGGER,
-                                    10 /* coarse confidence */)));
+        mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+
+        try {
+            // wait for soundTrigger injection is ready
+            mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            throw new AssertionError("SoundTrigger Injection timeout");
         }
-        // TODO(b/272791099)
-        // can't verify callback data because HDS will reject the injected event.
+
+        // We received model load, recog start
+        assertThat(mModelSession).isNotNull();
+        assertThat(mRecognitionSession).isNotNull();
+        getService().initDetectRejectLatch();
+        mRecognitionSession.triggerRecognitionEvent(
+                new byte[]{0x11, 0x22},
+                createKeyphraseRecognitionExtraList());
         getService().waitOnDetectOrRejectCalled();
+        AlwaysOnHotwordDetector.EventPayload detectResult =
+                getService().getHotwordServiceOnDetectedResult();
+
+        Helper.verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
     }
 
     @Test
-    public void isCorrectOnFailureReceived_onHalDeath() throws Exception {
+    public void testHalIsDead_onFailureReceived() throws Exception {
         createAndEnrollAlwaysOnHotwordDetector();
         // Grab permissions for more than a single call since we get callbacks
         adoptSoundTriggerPermissions();
 
         // We don't get callbacks if we don't have a recognition started
-        synchronized (mLock) {
-            mAlwaysOnHotwordDetector.startRecognition(0,
-                    new byte[]{1, 2, 3, 4, 5});
-            mLock.wait(WAIT_TIMEOUT_IN_MS);
-            // We received model load, recog start
-            assertThat(mModelSession).isNotNull();
-            assertThat(mRecognitionSession).isNotNull();
+        mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+
+        try {
+            // wait for soundTrigger injection is ready
+            mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            throw new AssertionError("SoundTrigger Injection timeout");
         }
+
+        // We received model load, recog start
+        assertThat(mModelSession).isNotNull();
+        assertThat(mRecognitionSession).isNotNull();
 
         // Cause a restart
         getService().initOnFailureLatch();
@@ -277,30 +257,108 @@ public class AlwaysOnHotwordDetectorTest {
         assertThat(failure.getErrorCode()).isEqualTo(ERROR_CODE_MODULE_DIED);
     }
 
-    // TODO(b/271391924) test recognition pause callback, since this test relies on it working
     @Test
-    public void isCorrectOnFailureReceived_onResumeFailed() throws Exception {
+    public void testRecognitionResumedFailed_onFailureReceived() throws Exception {
         createAndEnrollAlwaysOnHotwordDetector();
         // Grab permissions for more than a single call since we get callbacks
         adoptSoundTriggerPermissions();
 
-        synchronized (mLock) {
-            getService().initOnFailureLatch();
-            mAlwaysOnHotwordDetector.startRecognition(0,
-                    new byte[]{1, 2, 3, 4, 5});
-            mLock.wait(WAIT_TIMEOUT_IN_MS);
+        mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+
+        try {
+            // wait for soundTrigger injection is ready
+            mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            throw new AssertionError("SoundTrigger Injection timeout");
+        }
+
+        // We received model load, recog start
+        assertThat(mModelSession).isNotNull();
+        assertThat(mRecognitionSession).isNotNull();
+
+        mInstrumentation.setResourceContention(true);
+
+        getService().initOnRecognitionPausedLatch();
+        // Induce a recognition pause
+        mRecognitionSession.triggerAbortRecognition();
+        getService().waitOnRecognitionPausedCalled();
+
+        getService().initOnFailureLatch();
+        // Framework will attempt to resume recognition, but will fail due to set contention
+        mInstrumentation.triggerOnResourcesAvailable();
+
+        getService().waitOnFailureCalled();
+        var failure = getService().getSoundTriggerFailure();
+        assertThat(failure.getErrorCode()).isEqualTo(ERROR_CODE_RECOGNITION_RESUME_FAILED);
+        mInstrumentation.setResourceContention(false);
+    }
+
+    @ApiTest(apis = {"AlwaysOnHotwordDetector.Callback#onRecognitionPaused",
+            "AlwaysOnHotwordDetector.Callback#onRecognitionResumed"})
+    @Test
+    public void testOnRecognitionResumedAndOnRecognitionPaused() throws Exception {
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+
+        mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+
+        try {
+            // wait for soundTrigger injection is ready
+            mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            throw new AssertionError("SoundTrigger Injection timeout");
+        }
+
+        // We received model load, recog start
+        assertThat(mModelSession).isNotNull();
+        assertThat(mRecognitionSession).isNotNull();
+
+        getService().initOnRecognitionPausedLatch();
+        // Induce a recognition pause
+        mRecognitionSession.triggerAbortRecognition();
+        getService().waitOnRecognitionPausedCalled();
+
+        getService().initOnRecognitionResumedLatch();
+        mInstrumentation.triggerOnResourcesAvailable();
+        getService().waitOnRecognitionResumedCalled();
+    }
+
+    @Test
+    public void testStartRecognitionNoFlagInBatterySaver_recognitionPausedAndResumed()
+            throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+        try {
+            mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+            try {
+                // wait for soundTrigger injection is ready
+                mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ex) {
+                throw new AssertionError("SoundTrigger Injection timeout");
+            }
+
             // We received model load, recog start
             assertThat(mModelSession).isNotNull();
             assertThat(mRecognitionSession).isNotNull();
-            mInstrumentation.setResourceContention(true);
-            // Induce a recognition pause
-            mRecognitionSession.triggerAbortRecognition();
-            // Framework will attempt to resume recognition, but will fail due to set contention
-            mInstrumentation.triggerOnResourcesAvailable();
-            getService().waitOnFailureCalled();
-            var failure = getService().getSoundTriggerFailure();
-            assertThat(failure.getErrorCode()).isEqualTo(ERROR_CODE_RECOGNITION_RESUME_FAILED);
-            mInstrumentation.setResourceContention(false);
+
+            BatteryUtils.runDumpsysBatteryUnplug();
+
+            // enable battery saver, onRecognitionPaused called
+            getService().initOnRecognitionPausedLatch();
+            BatteryUtils.enableBatterySaver(/* isEnabled= */ true);
+            getService().waitOnRecognitionPausedCalled();
+
+            // disable battery saver, onRecognitionResumed called
+            getService().initOnRecognitionResumedLatch();
+            BatteryUtils.enableBatterySaver(/* isEnabled= */ false);
+            getService().waitOnRecognitionResumedCalled();
+        } finally {
+            BatteryUtils.runDumpsysBatteryReset();
+            BatteryUtils.resetBatterySaver();
         }
     }
 }

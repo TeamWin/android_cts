@@ -160,6 +160,14 @@
                     android:background="#F0F"
                     android:layout_width="90px"
                     android:layout_height="50px"/>
+
+                <SurfaceView
+                    android:id="@+id/surfaceview_stretch_target"
+                    android:visibility="gone"
+                    android:background="#FFFF0000"
+                    android:layout_weight="1"
+                    android:layout_width="90px"
+                    android:layout_height="50px"/>
             </LinearLayout>
         </ScrollView>
     </view>

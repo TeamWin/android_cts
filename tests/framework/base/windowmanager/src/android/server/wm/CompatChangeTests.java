@@ -79,7 +79,6 @@ import android.content.res.Resources;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.ConditionVariable;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
 import android.provider.DeviceConfig.Properties;
@@ -87,6 +86,7 @@ import android.server.wm.WindowManagerTestBase.FocusableActivity;
 import android.util.Size;
 
 import androidx.annotation.Nullable;
+import androidx.test.filters.FlakyTest;
 
 import libcore.junit.util.compat.CoreCompatChangeRule.DisableCompatChanges;
 import libcore.junit.util.compat.CoreCompatChangeRule.EnableCompatChanges;

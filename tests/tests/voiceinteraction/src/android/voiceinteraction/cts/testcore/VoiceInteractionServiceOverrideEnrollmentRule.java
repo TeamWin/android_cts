@@ -16,6 +16,8 @@
 
 package android.voiceinteraction.cts.testcore;
 
+import static android.voiceinteraction.cts.testcore.Helper.MANAGE_VOICE_KEYPHRASES;
+
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import android.media.voice.KeyphraseModelManager;
@@ -25,10 +27,6 @@ import org.junit.rules.ExternalResource;
 
 /** Rule which manages overriding the model enrollment database with a in-mem fake. */
 public class VoiceInteractionServiceOverrideEnrollmentRule extends ExternalResource {
-    // This is not exposed as an API.
-    // TODO(b/273567812)
-    public static final String MANAGE_VOICE_KEYPHRASES =
-            "android.permission.MANAGE_VOICE_KEYPHRASES";
 
     /**
      * Create the rule.
@@ -55,8 +53,7 @@ public class VoiceInteractionServiceOverrideEnrollmentRule extends ExternalResou
                 () -> {
                     mKeyphraseModelManager = mService.createKeyphraseModelManager();
                     mKeyphraseModelManager.setModelDatabaseForTestEnabled(true);
-                },
-                MANAGE_VOICE_KEYPHRASES);
+                }, MANAGE_VOICE_KEYPHRASES);
     }
 
     @Override

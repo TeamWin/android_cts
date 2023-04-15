@@ -212,7 +212,8 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
         UiObject mediaButton = sDevice.findObject(new UiSelector().text(photoPickerAppName));
 
         assertWithMessage("Timed out waiting for " + photoPickerAppName + " app icon to appear")
-                .that(new UiScrollable(appList).scrollIntoView(mediaButton)).isTrue();
+                .that(new UiScrollable(appList).setAsHorizontalList().scrollIntoView(mediaButton))
+                .isTrue();
         sDevice.waitForIdle();
 
         clickAndWait(sDevice, mediaButton);

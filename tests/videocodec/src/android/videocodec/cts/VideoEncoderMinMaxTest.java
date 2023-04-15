@@ -64,6 +64,7 @@ import java.util.List;
  */
 @RunWith(Parameterized.class)
 public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
+    private static final String LOG_TAG = VideoEncoderMinMaxTest.class.getSimpleName();
     private static final float MIN_ACCEPTABLE_QUALITY = 20.0f;  // psnr in dB
     private static final int FRAME_LIMIT = 300;
     private static final int TARGET_WIDTH = 1280;
@@ -79,7 +80,7 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
         for (Object[] arg : exhaustiveArgsList) {
             resources.add((CompressedResource) arg[2]);
         }
-        decodeStreamsToYuv(resources, RES_YUV_MAP);
+        decodeStreamsToYuv(resources, RES_YUV_MAP, LOG_TAG);
     }
 
     @AfterClass
@@ -291,7 +292,7 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
                 areFormatsSupported(mCodecName, mMediaType, formats));
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
         assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0]
-                + mTestConfig + mTestEnv, res);
+                + mTestConfig + mTestEnv + DIAGNOSTICS, res);
         encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, false, true);
         CompareStreams cs = null;
         StringBuilder msg = new StringBuilder();

@@ -183,7 +183,7 @@ public abstract class CodecTestBase {
     static final int[] VP9_HDR_PROFILES =
             combine(VP9_HLG_PROFILES, combine(VP9_HDR10_PROFILES, VP9_HDR10_PLUS_PROFILES));
     static final int[] VP9_PROFILES = combine(VP9_SDR_PROFILES, VP9_HDR_PROFILES);
-    static final int[] HEVC_SDR_PROFILES = new int[]{HEVCProfileMain, HEVCProfileMainStill};
+    static final int[] HEVC_SDR_PROFILES = new int[]{HEVCProfileMain};
     static final int[] HEVC_HLG_PROFILES = new int[]{HEVCProfileMain10};
     static final int[] HEVC_HDR10_PROFILES = new int[]{HEVCProfileMain10HDR10};
     static final int[] HEVC_HDR10_PLUS_PROFILES = new int[]{HEVCProfileMain10HDR10Plus};

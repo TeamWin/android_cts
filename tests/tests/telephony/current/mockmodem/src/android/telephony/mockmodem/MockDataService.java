@@ -58,6 +58,9 @@ public class MockDataService {
     // data call list
     static List<SetupDataCallResult> sDataCallLists = new ArrayList<>();
 
+    // Supported capability in physical layer
+    static List<String> sSupportedCapabilities = new ArrayList<>();
+
     /* Mock Data Config XML TAG definition */
     private static final String MOCK_DATA_CONFIG_TAG = "MockDataConfig";
     private static final String MOCK_CUTTLEFISH_CONFIG_TAG = "CuttlefishConfig";
@@ -416,6 +419,7 @@ public class MockDataService {
                 String capabilities = getCapabilities(str);
                 if (capabilities.contains("INTERNET")) {
                     Log.d(TAG, "[internet]:" + str);
+                    sSupportedCapabilities.add("internet");
                     this.mInternetCid = getCid(str);
                     this.mInternetIfname = getInterfaceName(str);
                     this.mDefaultLinkAddress = getIpAddress(str);
@@ -425,6 +429,7 @@ public class MockDataService {
                     this.mInternetMtuV6 = getMtu(str);
                 } else if (capabilities.contains("IMS")) {
                     Log.d(TAG, "[ims]:" + str);
+                    sSupportedCapabilities.add("ims");
                     this.mImsCid = getCid(str);
                     this.mImsIfname = getInterfaceName(str);
                     this.mImsLinkAddress = getIpAddress(str);
@@ -437,6 +442,16 @@ public class MockDataService {
         } catch (Exception e) {
             Log.e(TAG, "Exception error: [No NetworkAgentInfo]" + e);
         }
+    }
+
+    public synchronized boolean isSupportedCapability(String capability) {
+        for (String cap : sSupportedCapabilities) {
+            Log.d(TAG, "Supported Capability:" + cap + ", Requested Capability:" + capability);
+            if (cap.contains(capability)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public synchronized void setDataCallFailCause(int failcause) {

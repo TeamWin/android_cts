@@ -47,14 +47,16 @@ import java.util.List;
 @NonApiTest(exemptionReasons = {}, justification = "METRIC")
 public class HotwordDetectionServiceInitResultReportedStatsTest extends DeviceTestCase implements
         IBuildReceiver {
-
-    protected IBuildInfo mCtsBuild;
-    // CTS only has a test to verify the success case, so the test here will only verify the
-    // CALLBACK_INIT_STATE_SUCCESS.
     private static final String TEST_METHOD_DSP_INIT_SUCCESS_FOR_METRIC_COLLECT =
             "testHotwordDetectionService_onDetectFromDsp_success";
     private static final String TEST_METHOD_SOFTWARE_INIT_SUCCESS_FOR_METRIC_COLLECT =
             "testHotwordDetectionService_onDetectFromMic_success";
+    private static final String TEST_METHOD_DSP_INIT_ERROR_FOR_METRIC_COLLECT =
+            "testHotwordDetectionService_createDspDetector_customResult_getCustomStatus";
+    private static final String TEST_METHOD_SOFTWARE_INIT_ERROR_FOR_METRIC_COLLECT =
+            "testHotwordDetectionService_createSoftwareDetector_customResult_getCustomStatus";
+
+    protected IBuildInfo mCtsBuild;
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
@@ -140,6 +142,59 @@ public class HotwordDetectionServiceInitResultReportedStatsTest extends DeviceTe
 
         Result result = metric.getAtom().getHotwordDetectionServiceInitResultReported().getResult();
         assertThat(result).isEqualTo(Result.CALLBACK_INIT_STATE_SUCCESS);
+    }
+
+    public void testLogHotwordDetectionServiceInitResultReportedDspInitError() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_DSP_INIT_ERROR_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(1);
+
+        // Verify metric
+        StatsLog.EventMetricData metric = filteredData.get(0);
+        Enums.HotwordDetectorType detectorType =
+                metric.getAtom().getHotwordDetectionServiceInitResultReported().getDetectorType();
+        assertThat(detectorType).isEqualTo(Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP);
+
+        Result result = metric.getAtom().getHotwordDetectionServiceInitResultReported().getResult();
+        assertThat(result).isEqualTo(Result.CALLBACK_INIT_STATE_ERROR);
+    }
+
+    public void testLogHotwordDetectionServiceInitResultReportedSoftwareInitError()
+            throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_SOFTWARE_INIT_ERROR_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(1);
+
+        // Verify metric
+        StatsLog.EventMetricData metric = filteredData.get(0);
+        Enums.HotwordDetectorType detectorType =
+                metric.getAtom().getHotwordDetectionServiceInitResultReported().getDetectorType();
+        assertThat(detectorType).isEqualTo(Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE);
+
+        Result result = metric.getAtom().getHotwordDetectionServiceInitResultReported().getResult();
+        assertThat(result).isEqualTo(Result.CALLBACK_INIT_STATE_ERROR);
     }
 
     private List<StatsLog.EventMetricData> filterTestAppMetrics(int appId,

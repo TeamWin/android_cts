@@ -335,4 +335,10 @@ public class WallpaperManagerTestUtils {
                 new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.LIVE1, false)
         );
     }
+
+    public static final WallpaperState TWO_DIFFERENT_LIVE_WALLPAPERS = new WallpaperState(
+            TestWallpaper.LIVE1, TestWallpaper.LIVE3, false);
+
+    public static final WallpaperState TWO_SAME_LIVE_WALLPAPERS = new WallpaperState(
+            TestWallpaper.LIVE2, TestWallpaper.LIVE2, true);
 }

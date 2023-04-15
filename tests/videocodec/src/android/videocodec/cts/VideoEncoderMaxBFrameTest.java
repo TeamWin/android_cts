@@ -61,6 +61,7 @@ import java.util.Map;
  */
 @RunWith(Parameterized.class)
 public class VideoEncoderMaxBFrameTest extends VideoEncoderValidationTestBase {
+    private static final String LOG_TAG = VideoEncoderMaxBFrameTest.class.getSimpleName();
     private static final int FRAME_LIMIT = 600;
     private static final int BIT_RATE = 5000000;
     private static final int WIDTH = 1920;
@@ -74,7 +75,7 @@ public class VideoEncoderMaxBFrameTest extends VideoEncoderValidationTestBase {
         for (Object[] arg : exhaustiveArgsList) {
             resources.add((CompressedResource) arg[2]);
         }
-        decodeStreamsToYuv(resources, RES_YUV_MAP);
+        decodeStreamsToYuv(resources, RES_YUV_MAP, LOG_TAG);
     }
 
     @AfterClass
@@ -137,7 +138,7 @@ public class VideoEncoderMaxBFrameTest extends VideoEncoderValidationTestBase {
                 areFormatsSupported(mCodecName, mMediaType, formats));
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
         assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
-                + mTestEnv, res);
+                + mTestEnv + DIAGNOSTICS, res);
         encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, false, false);
         assertEquals("encoder did not encode the requested number of frames \n"
                 + mTestConfig + mTestEnv, FRAME_LIMIT, mOutputCount);

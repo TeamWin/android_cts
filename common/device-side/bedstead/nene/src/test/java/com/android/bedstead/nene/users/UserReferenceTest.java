@@ -841,4 +841,9 @@ public class UserReferenceTest {
         assertWithMessage("# of available displays").that(displayIds.length).isAtLeast(1);
         return displayIds[0];
     }
+
+    @Test
+    public void remove_instrumentedUser_throwsException() {
+        assertThrows(NeneException.class, ()->TestApis.users().instrumented().remove());
+    }
 }
