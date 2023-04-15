@@ -16,13 +16,25 @@
 
 package android.bluetooth.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanResult;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 
 /**
  * Unit test cases for Bluetooth LE scans.
@@ -30,20 +42,30 @@ import android.test.suitebuilder.annotation.SmallTest;
  * To run this test, use adb shell am instrument -e class 'android.bluetooth.ScanResultTest' -w
  * 'com.android.bluetooth.tests/android.bluetooth.BluetoothTestRunner'
  */
-public class ScanResultTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ScanResultTest {
     private static final String DEVICE_ADDRESS = "01:02:03:04:05:06";
     private static final byte[] SCAN_RECORD = new byte[] {
             1, 2, 3 };
     private static final int RSSI = -10;
     private static final long TIMESTAMP_NANOS = 10000L;
 
+    private Context mContext;
+
+    @Before
+    public void setUp() {
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
     /**
      * Test read and write parcel of ScanResult
      */
     @SmallTest
+    @Test
     public void testScanResultParceling() {
-        if (! mContext.getPackageManager().
-                  hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) return;
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
+            return;
+        }
 
         BluetoothDevice device =
                 BluetoothAdapter.getDefaultAdapter().getRemoteDevice(DEVICE_ADDRESS);
@@ -62,9 +84,11 @@ public class ScanResultTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testDescribeContents() {
-        if (! mContext.getPackageManager().
-                  hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) return;
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
+            return;
+        }
 
         BluetoothDevice device =
                 BluetoothAdapter.getDefaultAdapter().getRemoteDevice(DEVICE_ADDRESS);
@@ -74,9 +98,11 @@ public class ScanResultTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testConstructor() {
-        if (!mContext.getPackageManager().
-                  hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) return;
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
+            return;
+        }
 
         BluetoothDevice device =
                 BluetoothAdapter.getDefaultAdapter().getRemoteDevice(DEVICE_ADDRESS);

@@ -16,12 +16,20 @@
 
 package android.bluetooth.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.bluetooth.le.ScanRecord;
 import android.os.ParcelUuid;
-import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import com.android.internal.util.ArrayUtils;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Unit test cases for {@link ScanRecord}.
@@ -29,9 +37,11 @@ import com.android.internal.util.ArrayUtils;
  * To run this test, use adb shell am instrument -e class 'android.bluetooth.ScanRecordTest' -w
  * 'com.android.bluetooth.tests/android.bluetooth.BluetoothTestRunner'
  */
-public class ScanRecordTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ScanRecordTest {
 
     @SmallTest
+    @Test
     public void testParser() {
         byte[] partialScanRecord = new byte[] {
                 0x02, 0x01, 0x1a, // advertising flags

@@ -417,6 +417,11 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
         final TestActivity activity = startActivity(TestActivity.class);
         final View controlTarget = activity.getWindow().getDecorView();
+
+        // Assume we have at least one visible system bar.
+        assumeTrue(controlTarget.getRootWindowInsets().isVisible(statusBars()) ||
+                controlTarget.getRootWindowInsets().isVisible(navigationBars()));
+
         final int[] targetSysUiVis = new int[1];
         final View nonControlTarget = new View(mTargetContext);
         final int[] nonTargetSysUiVis = new int[1];
@@ -741,6 +746,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testDispatchApplyWindowInsetsCount_systemBars() throws InterruptedException {
+        assumeFalse(isCar() && remoteInsetsControllerControlsSystemBars());
+
         final TestActivity activity = startActivityInWindowingModeFullScreen(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
         getInstrumentation().waitForIdleSync();

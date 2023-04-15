@@ -16,12 +16,15 @@
 
 package android.bluetooth.cts;
 
-import static org.junit.Assert.assertThrows;
-
 import static android.Manifest.permission.BLUETOOTH_ADVERTISE;
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 import static android.bluetooth.le.AdvertisingSetCallback.ADVERTISE_SUCCESS;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
@@ -32,19 +35,26 @@ import android.bluetooth.le.AdvertisingSet;
 import android.bluetooth.le.AdvertisingSetCallback;
 import android.bluetooth.le.AdvertisingSetParameters;
 import android.bluetooth.le.BluetoothLeAdvertiser;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
-import android.test.AndroidTestCase;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class BluetoothLeAdvertiserTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class BluetoothLeAdvertiserTest {
     private static final int TIMEOUT_MS = 5000;
     private static final AdvertisingSetParameters ADVERTISING_SET_PARAMETERS =
             new AdvertisingSetParameters.Builder().setLegacyMode(true).build();
@@ -55,6 +65,7 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
                     .setOwnAddressType(AdvertisingSetParameters.ADDRESS_TYPE_RANDOM_NON_RESOLVABLE)
                     .build();
 
+    private Context mContext;
     private boolean mHasBluetooth;
     private UiAutomation mUiAutomation;
     private BluetoothManager mManager;
@@ -63,24 +74,25 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
     private TestAdvertisingSetCallback mCallback;
 
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
-        mHasBluetooth = getContext().getPackageManager().hasSystemFeature(
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+
+        mHasBluetooth = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_BLUETOOTH);
         if (!mHasBluetooth) return;
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_ADVERTISE);
 
-        mManager = getContext().getSystemService(BluetoothManager.class);
+        mManager = mContext.getSystemService(BluetoothManager.class);
         mAdapter = mManager.getAdapter();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
         mAdvertiser = mAdapter.getBluetoothLeAdvertiser();
         mCallback = new TestAdvertisingSetCallback();
     }
 
+    @After
     public void tearDown() throws Exception {
-        super.tearDown();
         if (mHasBluetooth) {
             mAdvertiser.stopAdvertisingSet(mCallback);
             assertTrue(mCallback.mAdvertisingSetStoppedLatch.await(TIMEOUT_MS,
@@ -92,6 +104,7 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void test_startAdvertisingSetWithCallbackAndHandler() throws InterruptedException {
         mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null,
                 mCallback, new Handler(Looper.getMainLooper()));
@@ -100,7 +113,7 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
         assertNotNull(mCallback.mAdvertisingSet);
     }
 
-
+    @Test
     public void test_startAdvertisingSetWithDurationAndCallback() throws InterruptedException {
         mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null,
                 0, 0, mCallback);
@@ -109,6 +122,7 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
         assertNotNull(mCallback.mAdvertisingSet);
     }
 
+    @Test
     public void test_startAdvertisingSetWithDurationCallbackAndHandler()
             throws InterruptedException {
         mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null,
@@ -118,10 +132,11 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
         assertNotNull(mCallback.mAdvertisingSet);
     }
 
+    @Test
     public void test_startAdvertisingSetWithDurationCallbackGattServerAndHandler()
             throws InterruptedException {
         BluetoothGattServer gattServer =
-                mManager.openGattServer(getContext(), new BluetoothGattServerCallback() {});
+                mManager.openGattServer(mContext, new BluetoothGattServerCallback() {});
 
         assertThrows("No BLUETOOTH_PRIVILEGED permission", SecurityException.class,
                 () -> mAdvertiser.startAdvertisingSet(ADVERTISING_SET_USING_NRPA_PARAMETERS, null, null,
@@ -138,6 +153,7 @@ public class BluetoothLeAdvertiserTest extends AndroidTestCase {
         assertNotNull(mCallback.mAdvertisingSet);
     }
 
+    @Test
     public void test_getAdvertisingSetId() throws InterruptedException {
         mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null, 0, 0,
                 mCallback, new Handler(Looper.getMainLooper()));

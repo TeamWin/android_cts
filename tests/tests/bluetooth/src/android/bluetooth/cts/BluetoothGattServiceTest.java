@@ -16,33 +16,36 @@
 
 package android.bluetooth.cts;
 
+import static org.junit.Assert.assertEquals;
+
 import android.bluetooth.BluetoothGattService;
-import android.test.AndroidTestCase;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.UUID;
 
-public class BluetoothGattServiceTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class BluetoothGattServiceTest {
 
     private UUID TEST_UUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
     private BluetoothGattService mBluetoothGattService;
 
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() {
         mBluetoothGattService = new BluetoothGattService(TEST_UUID,
                 BluetoothGattService.SERVICE_TYPE_PRIMARY);
     }
 
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        mBluetoothGattService = null;
-    }
-
+    @Test
     public void test_getInstanceId() {
-       assertEquals(mBluetoothGattService.getInstanceId(), 0);
+        assertEquals(mBluetoothGattService.getInstanceId(), 0);
     }
 
+    @Test
     public void test_getType() {
         assertEquals(mBluetoothGattService.getType(), BluetoothGattService.SERVICE_TYPE_PRIMARY);
     }

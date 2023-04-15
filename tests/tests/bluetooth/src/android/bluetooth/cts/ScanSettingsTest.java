@@ -16,19 +16,27 @@
 
 package android.bluetooth.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
 import android.bluetooth.le.ScanSettings;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 
 /**
  * Test for Bluetooth LE {@link ScanSettings}.
  */
-public class ScanSettingsTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ScanSettingsTest {
 
     @SmallTest
+    @Test
     public void testDefaultSettings() {
         ScanSettings settings = new ScanSettings.Builder().build();
         assertEquals(ScanSettings.CALLBACK_TYPE_ALL_MATCHES, settings.getCallbackType());
@@ -40,6 +48,7 @@ public class ScanSettingsTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testBuilderSettings() {
         ScanSettings.Builder builder = new ScanSettings.Builder();
 
@@ -110,12 +119,14 @@ public class ScanSettingsTest extends AndroidTestCase {
 
 
     @SmallTest
+    @Test
     public void testDescribeContents() {
         ScanSettings settings = new ScanSettings.Builder().build();
         assertEquals(0, settings.describeContents());
     }
 
     @SmallTest
+    @Test
     public void testReadWriteParcel() {
         final long reportDelayMillis = 60 * 1000;
         Parcel parcel = Parcel.obtain();
