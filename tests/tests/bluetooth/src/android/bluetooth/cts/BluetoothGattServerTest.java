@@ -18,7 +18,10 @@ package android.bluetooth.cts;
 
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
@@ -27,33 +30,41 @@ import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattServerCallback;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
-import android.test.AndroidTestCase;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class BluetoothGattServerTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class BluetoothGattServerTest {
 
     private final UUID TEST_UUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
+    private Context mContext;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothGattServer mBluetoothGattServer;
     private BluetoothManager mBluetoothManager;
     private UiAutomation mUIAutomation;
     private boolean mHasBluetooth;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        mHasBluetooth = getContext().getPackageManager().hasSystemFeature(
+        mHasBluetooth = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_BLUETOOTH);
         mUIAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUIAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
         if (!mHasBluetooth) return;
-        mBluetoothAdapter = getContext().getSystemService(BluetoothManager.class).getAdapter();
+        mBluetoothAdapter = mContext.getSystemService(BluetoothManager.class).getAdapter();
         assertTrue(BTAdapterUtils.enableAdapter(mBluetoothAdapter, mContext));
         mBluetoothManager = mContext.getSystemService(BluetoothManager.class);
         mBluetoothGattServer = mBluetoothManager.openGattServer(mContext,
@@ -61,9 +72,8 @@ public class BluetoothGattServerTest extends AndroidTestCase {
                 });
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
-        super.tearDown();
         if (mHasBluetooth) {
             mUIAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
             if (mBluetoothAdapter != null && mBluetoothGattServer != null) {
@@ -75,34 +85,40 @@ public class BluetoothGattServerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetConnectedDevices() {
         if (!mHasBluetooth) return;
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGattServer.getConnectedDevices());
     }
 
+    @Test
     public void testGetConnectionState() {
         if (!mHasBluetooth) return;
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGattServer.getConnectionState(null));
     }
 
+    @Test
     public void testGetDevicesMatchingConnectionStates() {
         if (!mHasBluetooth) return;
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGattServer.getDevicesMatchingConnectionStates(null));
     }
 
+    @Test
     public void testGetService() {
         if (!mHasBluetooth) return;
         assertNull(mBluetoothGattServer.getService(TEST_UUID));
     }
 
+    @Test
     public void testGetServices() {
         if (!mHasBluetooth) return;
         assertEquals(mBluetoothGattServer.getServices(), new ArrayList<BluetoothGattService>());
     }
 
+    @Test
     public void testReadPhy() {
         if (!mHasBluetooth) return;
         BluetoothDevice testDevice = mBluetoothAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
@@ -110,6 +126,7 @@ public class BluetoothGattServerTest extends AndroidTestCase {
         assertThrows(SecurityException.class, () -> mBluetoothGattServer.readPhy(testDevice));
     }
 
+    @Test
     public void testSetPreferredPhy() {
         if (!mHasBluetooth) return;
         BluetoothDevice testDevice = mBluetoothAdapter.getRemoteDevice("00:11:22:AA:BB:CC");

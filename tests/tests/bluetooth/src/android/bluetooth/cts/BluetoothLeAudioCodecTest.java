@@ -16,11 +16,19 @@
 
 package android.bluetooth.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import android.bluetooth.BluetoothLeAudioCodecConfig;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 
-public class BluetoothLeAudioCodecTest extends AndroidTestCase {
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class BluetoothLeAudioCodecTest {
     private int[] mCodecTypeArray = new int[] {
         BluetoothLeAudioCodecConfig.SOURCE_CODEC_TYPE_LC3,
         BluetoothLeAudioCodecConfig.SOURCE_CODEC_TYPE_INVALID,
@@ -61,6 +69,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         BluetoothLeAudioCodecConfig.FRAME_DURATION_10000
     };
 
+    @Test
     public void testGetCodecNameAndType() {
         try {
             for (int codecIdx = 0; codecIdx < mCodecTypeArray.length; codecIdx++) {
@@ -85,6 +94,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetCodecPriority() {
         for (int priorityIdx = 0; priorityIdx < mCodecPriorityArray.length; priorityIdx++) {
             int codecPriority = mCodecPriorityArray[priorityIdx];
@@ -98,6 +108,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetSampleRate() {
         for (int sampleRateIdx = 0; sampleRateIdx < mSampleRateArray.length; sampleRateIdx++) {
             int sampleRate = mSampleRateArray[sampleRateIdx];
@@ -111,6 +122,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetBitsPerSample() {
         for (int bitsPerSampleIdx = 0; bitsPerSampleIdx < mBitsPerSampleArray.length;
                 bitsPerSampleIdx++) {
@@ -125,6 +137,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetChannelCount() {
         for (int channelCountIdx = 0; channelCountIdx < mChannelCountArray.length;
                 channelCountIdx++) {
@@ -139,6 +152,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetFrameDuration() {
         for (int frameDurationIdx = 0; frameDurationIdx < mFrameDurationArray.length;
                 frameDurationIdx++) {
@@ -153,6 +167,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetOctetsPerFrame() {
         final int octetsPerFrame = 100;
         BluetoothLeAudioCodecConfig leAudioCodecConfig =
@@ -163,6 +178,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         assertEquals(octetsPerFrame, leAudioCodecConfig.getOctetsPerFrame());
     }
 
+    @Test
     public void testGetMinOctetsPerFrame() {
         final int minOctetsPerFrame = 100;
         BluetoothLeAudioCodecConfig leAudioCodecConfig =
@@ -173,6 +189,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         assertEquals(minOctetsPerFrame, leAudioCodecConfig.getMinOctetsPerFrame());
     }
 
+    @Test
     public void testGetMaxOctetsPerFrame() {
         final int maxOctetsPerFrame = 100;
         BluetoothLeAudioCodecConfig leAudioCodecConfig =
@@ -183,12 +200,14 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         assertEquals(maxOctetsPerFrame, leAudioCodecConfig.getMaxOctetsPerFrame());
     }
 
+    @Test
     public void testDescribeContents() {
         BluetoothLeAudioCodecConfig leAudioCodecConfig =
             new BluetoothLeAudioCodecConfig.Builder().build();
         assertEquals(0, leAudioCodecConfig.describeContents());
     }
 
+    @Test
     public void testReadWriteParcel() {
         final int octetsPerFrame = 100;
         Parcel parcel = Parcel.obtain();
@@ -220,6 +239,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         assertEquals(octetsPerFrame, leAudioCodecConfigFromParcel.getOctetsPerFrame());
     }
 
+    @Test
     public void testBuilderWithExistingObject() {
         final int octetsPerFrame = 100;
         final int minOctectsPerFrame = 50;
