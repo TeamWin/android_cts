@@ -281,7 +281,6 @@ public class ActivityEmbeddingLaunchTests extends ActivityEmbeddingTestBase {
      * Tests launching an activity that is set to always expand when it is launched over an existing
      * split from the current secondary activity.
      */
-    @FlakyTest(bugId = 213322133)
     @Test
     public void testAlwaysExpandOverSplit_launchFromSecondary() {
         // Create activity rule that sets the target activity to always expand
