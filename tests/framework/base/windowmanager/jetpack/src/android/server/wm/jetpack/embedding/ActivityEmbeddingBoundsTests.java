@@ -39,7 +39,6 @@ import android.util.Size;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 import androidx.window.extensions.embedding.SplitAttributes;
 import androidx.window.extensions.embedding.SplitAttributes.LayoutDirection;
 import androidx.window.extensions.embedding.SplitAttributes.SplitType;
@@ -72,7 +71,6 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
      * Tests that when two activities are in a split and the parent bounds shrink such that
      * they can no longer support split activities, then the activities become stacked.
      */
-    @FlakyTest(bugId = 272276329)
     @ApiTest(apis = "androidx.window.extensions.embedding.SplitRule")
     @Test
     public void testParentWindowMetricsPredicate() {
@@ -224,7 +222,6 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
      * {@link SplitPairRule}, and is not assumed to be 0.5 or match the split ratio of the previous
      * top-most activity split.
      */
-    @FlakyTest(bugId = 213322133)
     @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes"
             + ".SplitType.RatioSplitType")
     @Test
