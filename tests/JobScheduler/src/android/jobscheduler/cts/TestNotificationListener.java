@@ -66,12 +66,15 @@ public class TestNotificationListener extends NotificationListenerService {
     @Override
     public void onListenerConnected() {
         super.onListenerConnected();
+        Log.d(TAG, "onListenerConnected #" + this.hashCode());
         sNotificationListenerInstance = this;
         mIsConnected = true;
     }
 
     @Override
     public void onListenerDisconnected() {
+        Log.d(TAG, "onListenerDisconnected #" + this.hashCode());
+        sNotificationListenerInstance = null;
         mIsConnected = false;
     }
 
@@ -118,6 +121,8 @@ public class TestNotificationListener extends NotificationListenerService {
     public void onNotificationPosted(StatusBarNotification sbn, RankingMap rankingMap) {
         Log.v(TAG, "notification posted: " + sbn);
         if (!mTestPackages.contains(sbn.getPackageName())) {
+            Log.d(TAG, "Ignoring notification from " + sbn.getPackageName()
+                    + " because it's not in " + mTestPackages);
             return;
         }
         Log.v(TAG, "adding to added: " + sbn);
