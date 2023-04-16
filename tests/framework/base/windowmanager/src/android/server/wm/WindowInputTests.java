@@ -122,7 +122,6 @@ public class WindowInputTests {
     }
 
     @Test
-    @FlakyTest(bugId = 188207199)
     public void testMoveWindowAndTap() throws Throwable {
         final WindowManager wm = mActivity.getWindowManager();
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
@@ -144,9 +143,13 @@ public class WindowInputTests {
         });
         mInstrumentation.waitForIdleSync();
 
+        // The window location will be picked randomly from the selectBounds. Because the x, y of
+        // LayoutParams is the offset from the gravity edge, make sure it offsets to (0,0) in case
+        // the activity is not fullscreen, and insets system bar and window width.
         final WindowMetrics windowMetrics = wm.getCurrentWindowMetrics();
         final WindowInsets windowInsets = windowMetrics.getWindowInsets();
         final Rect selectBounds = new Rect(windowMetrics.getBounds());
+        selectBounds.offsetTo(0, 0);
         final Insets insets = windowInsets.getInsetsIgnoringVisibility(p.getFitInsetsTypes());
         selectBounds.inset(0, 0, insets.left + insets.right + p.width,
                 insets.top + insets.bottom + p.height);
