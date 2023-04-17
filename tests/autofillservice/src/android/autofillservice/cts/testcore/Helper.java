@@ -48,6 +48,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.hardware.devicestate.DeviceStateManager;
+import android.hardware.devicestate.DeviceStateManager.DeviceStateCallback;
 import android.icu.util.Calendar;
 import android.os.Bundle;
 import android.os.Environment;
@@ -92,6 +94,7 @@ import com.android.compatibility.common.util.Timeout;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -1733,6 +1736,69 @@ public final class Helper {
             });
             return result.isEmpty() ? null : Boolean.TRUE;
         });
+    }
+
+    /**
+     * Test if the device is in half-folded pose.
+     */
+    private static final class DeviceStateAssessor implements DeviceStateCallback {
+        DeviceStateManager mDeviceStateManager;
+        int[] mHalfFoldedStates;
+        int mCurrentState = -1;
+
+        DeviceStateAssessor(Context context) {
+            Resources systemRes = Resources.getSystem();
+            int halfFoldedStatesArrayIdentifier = systemRes.getIdentifier(
+                    "config_halfFoldedDeviceStates", "array", "android");
+            if (halfFoldedStatesArrayIdentifier == 0) {
+                mHalfFoldedStates = new int[0];
+            } else {
+                mHalfFoldedStates = systemRes.getIntArray(halfFoldedStatesArrayIdentifier);
+            }
+            mDeviceStateManager = context.getSystemService(DeviceStateManager.class);
+            mDeviceStateManager.registerCallback(context.getMainExecutor(), this);
+            Log.v(TAG, "DeviceStateAssessor initialized with id=" + halfFoldedStatesArrayIdentifier
+                    + ", halfFoldedStates.length=" + mHalfFoldedStates.length);
+        }
+
+        public void onStateChanged(int state) {
+            synchronized (this) {
+                mCurrentState = state;
+                this.notify();
+            }
+        }
+
+        void close() {
+            mDeviceStateManager.unregisterCallback(this);
+        }
+
+        boolean isDeviceHalfFolded() throws InterruptedException {
+            if (mHalfFoldedStates.length == 0) {
+                return false;
+            }
+            synchronized (this) {
+                if (mCurrentState == -1) {
+                    this.wait(1000);
+                }
+            }
+            if (mCurrentState == -1) {
+                Log.w(TAG, "DeviceStateCallback not called within 1 second");
+            }
+            Log.v(TAG, "Current state=" + mCurrentState + ", halfFoldedStates[0]="
+                    + mHalfFoldedStates[0]);
+            return Arrays.stream(mHalfFoldedStates).anyMatch(x -> x == mCurrentState);
+        }
+    }
+
+    public static boolean isDeviceHalfFolded(Context context) {
+        DeviceStateAssessor deviceStateAssessor = new DeviceStateAssessor(context);
+        try {
+            return deviceStateAssessor.isDeviceHalfFolded();
+        } catch (InterruptedException e) {
+            return false;
+        } finally {
+            deviceStateAssessor.close();
+        }
     }
 
     private Helper() {
