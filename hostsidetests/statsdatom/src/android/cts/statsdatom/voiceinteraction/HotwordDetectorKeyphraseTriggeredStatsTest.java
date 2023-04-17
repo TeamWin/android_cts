@@ -66,6 +66,10 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
             "testHotwordDetectionService_processDied_triggerOnError";
     private static final String TEST_METHOD_SOFTWARE_SERVICE_CRASH_FOR_METRIC_COLLECT =
             "testHotwordDetectionService_softwareDetector_processDied_triggerOnFailure";
+    private static final String TEST_METHOD_DSP_DETECT_SECURITY_EXCEPTION_FOR_METRIC_COLLECT =
+            "testHotwordDetectionService_onDetectFromDspSecurityException_onFailure";
+    private static final String TEST_METHOD_SOFTWARE_DETECT_SECURITY_EXCEPTION_FOR_METRIC_COLLECT =
+            "testHotwordDetectionService_onDetectFromMicSecurityException_onFailure";
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
@@ -257,6 +261,55 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
         // Verify metric
         assertHotwordDetectorKeyphraseTriggered(filteredData.get(0),
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Result.SERVICE_CRASH);
+    }
+
+    public void testLogHotwordDetectorKeyphraseTriggeredDspDetectedSecurityException()
+            throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_DSP_DETECT_SECURITY_EXCEPTION_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(2);
+
+        // Verify metric
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.DETECTED);
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.DETECT_SECURITY_EXCEPTION);
+    }
+
+    public void testLogHotwordDetectorKeyphraseTriggeredSoftwareDetectorDetectedSecurityException()
+            throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_SOFTWARE_DETECT_SECURITY_EXCEPTION_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(2);
+
+        // Verify metric
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Result.DETECTED);
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE,
+                Result.DETECT_SECURITY_EXCEPTION);
     }
 
     private void assertHotwordDetectorKeyphraseTriggered(StatsLog.EventMetricData metric,
