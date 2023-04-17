@@ -36,7 +36,7 @@ public class NavigateToDeviceAdminAppsSectionStepAutomation implements Automatio
         UiScrollable settingsItem = new UiScrollable(new UiSelector()
                 .className("androidx.recyclerview.widget.RecyclerView"));
         settingsItem.getChildByText(new UiSelector()
-                .className(TextView.class), "More security settings").click();
+                .className(TextView.class), "More security & privacy").click();
 
         // Move to Device Admin Apps screen
         TestApis.ui().device().findObject(new UiSelector().text("Device admin apps").className(
