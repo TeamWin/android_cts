@@ -73,25 +73,47 @@ public final class Automator {
         mAutomationFile = automationFile;
     }
 
+    private void copy(InputStream source, OutputStream target) throws IOException {
+        byte[] buf = new byte[1024];
+        int length;
+        while ((length = source.read(buf)) != -1) {
+            target.write(buf, 0, length);
+        }
+    }
+
     /**
      * If we're not on the system user, we try to fetch the automation file from the system user.
      */
-    private void ensureAutomationFileExists() {
+    private File copyAutomationFileToInternalStorage() {
         try (PermissionContext p = TestApis.permissions()
                 .withPermission(READ_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE,
                         INTERACT_ACROSS_USERS_FULL)) {
             UserReference systemUser = TestApis.users().system();
+            File apk = new File(mContext.getCacheDir(), "InteractiveAutomation.apk");
 
             if (TestApis.users().instrumented().equals(systemUser)) {
-                // Already on the system user so nothing else to do
-                return;
+                // Just need to copy to internal
+
+                if (!new File(mAutomationFile).exists()) {
+                    return new File(mAutomationFile); // Doesn't exist
+                }
+
+                try (FileInputStream is = new FileInputStream(mAutomationFile);
+                     FileOutputStream os = new FileOutputStream(apk)) {
+                    apk.setReadOnly();
+                    copy(is, os);
+                } catch (IOException e) {
+                    // Handle error
+                }
+
+                return apk;
             }
 
             Package pkg = TestApis.packages().instrumented();
             // Otherwise, let's try to fetch the file from the system user
             boolean mustBeUninstalled = false;
             try {
-                mustBeUninstalled = pkg.installedOnUser(systemUser);
+                mustBeUninstalled = !pkg.installedOnUser(systemUser);
 
                 if (mustBeUninstalled) {
                     pkg.installExisting(systemUser);
@@ -106,16 +128,15 @@ public final class Automator {
                                         + ".interactive.automation"), "r",
                         new CancellationSignal());
                      InputStream fileStream = new FileInputStream(remoteFile.getFileDescriptor());
-                     OutputStream outputStream = new FileOutputStream(mAutomationFile)) {
+                     OutputStream outputStream = new FileOutputStream(apk)) {
 
-                    byte[] buffer = new byte[1024];
-                    int length;
-                    while ((length = fileStream.read(buffer)) > 0) {
-                        outputStream.write(buffer, 0, length);
-                    }
+                    apk.setReadOnly();
+                    copy(fileStream, outputStream);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
+                return apk;
             } finally {
                 if (mustBeUninstalled) {
                     pkg.uninstall(systemUser);
@@ -134,16 +155,16 @@ public final class Automator {
         try (PermissionContext p = TestApis.permissions()
                 .withPermission(READ_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE)) {
 
-            ensureAutomationFileExists();
+            File automation = copyAutomationFileToInternalStorage();
 
-            if (!new File(mAutomationFile).exists()) {
+            if (!automation.exists()) {
                 Log.e(LOG_TAG, "Automation file does not exist");
                 return;
             }
 
             final File optimizedDexOutputPath = mContext.getDir("outdex", 0);
             DexClassLoader dLoader =
-                    new DexClassLoader(mAutomationFile, optimizedDexOutputPath.getAbsolutePath(),
+                    new DexClassLoader(automation.getAbsolutePath(), optimizedDexOutputPath.getAbsolutePath(),
                     null, ClassLoader.getSystemClassLoader());
 
             try {
@@ -159,7 +180,7 @@ public final class Automator {
             }
 
             DexFile dx = DexFile
-                    .loadDex(mAutomationFile, File.createTempFile("opt", "dex",
+                    .loadDex(automation.getAbsolutePath(), File.createTempFile("opt", "dex",
                             mContext.getCacheDir()).getPath(), 0);
             for (Enumeration<String> classNames = dx.entries(); classNames.hasMoreElements();) {
                 String className = classNames.nextElement();
