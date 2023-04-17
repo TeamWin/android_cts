@@ -47,6 +47,7 @@ import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.logcat.BlockingLogcatListener;
 import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.CommonPermissions;
@@ -810,5 +811,17 @@ public final class DevicePolicy {
     @Experimental
     private boolean isAffiliated(UserReference user) {
         return devicePolicyManager(user).isAffiliatedUser();
+    }
+
+    /**
+     * Recalculate the "hasIncompatibleAccounts" cache inside DevicePolicyManager.
+     */
+    @Experimental
+    public void calculateHasIncompatibleAccounts() {
+        try (BlockingLogcatListener b =
+                     TestApis.logcat().listen(
+                             l -> l.contains("Finished calculating hasIncompatibleAccountsTask"))) {
+            sDevicePolicyManager.calculateHasIncompatibleAccounts();
+        }
     }
 }

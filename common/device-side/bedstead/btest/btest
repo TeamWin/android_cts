@@ -741,8 +741,12 @@ class Test:
                         return
 
             debug(self.args, "Waiting for tests to stop running...")
+            wait_to_end_timer = time.monotonic_ns()
             while self.tests_are_running():
-                pass
+                if time.monotonic_ns() - wait_to_end_timer > 10000000000:
+                    print("(Waited 10 seconds for test process to end. Killing)")
+                    self.test_process.kill()
+                    break
             debug(self.args, "Done")
 
             if self.next_test <= num_tests:

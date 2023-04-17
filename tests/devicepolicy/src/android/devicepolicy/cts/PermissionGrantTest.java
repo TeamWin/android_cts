@@ -706,7 +706,6 @@ public final class PermissionGrantTest {
         }
     }
 
-
     @PolicyAppliesTest(policy = SetSensorPermissionGranted.class)
     @NotificationsTest
     public void grantLocationPermission_userNotified(
