@@ -134,7 +134,10 @@ public class HotwordDetectorEventsStatsTest extends DeviceTestCase implements IB
         // Focus on our expected app metrics
         List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
 
-        assertThat(filteredData.size()).isEqualTo(4);
+        // If the testHotwordDetectionService_softwareDetector_serviceScheduleRestarted is run
+        // before this test, the ON_DISCONNECTED will be logged, then there are 5 events here.
+        // The test will only focus on the previous 4 events.
+        assertThat(filteredData.size()).isAtLeast(4);
         assertHotwordDetectorType(filteredData.get(0),
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.REQUEST_BIND_SERVICE);
         assertHotwordDetectorType(filteredData.get(1),
