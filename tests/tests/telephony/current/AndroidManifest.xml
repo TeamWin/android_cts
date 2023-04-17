@@ -207,6 +207,16 @@
             </intent-filter>
         </service>
 
+        <service android:name="android.telephony.satellite.cts.MockSatelliteGatewayService"
+             android:directBootAware="true"
+             android:persistent="true"
+             android:permission="android.permission.BIND_SATELLITE_GATEWAY_SERVICE"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.telephony.satellite.SatelliteGatewayService"/>
+            </intent-filter>
+        </service>
+
         <activity android:name="android.telephony.cts.StubDialerActvity"
              android:exported="true">
             <intent-filter>

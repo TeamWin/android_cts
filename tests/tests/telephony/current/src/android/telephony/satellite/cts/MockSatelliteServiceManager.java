@@ -44,6 +44,8 @@ class MockSatelliteServiceManager {
     private static final String PACKAGE = "android.telephony.cts";
     private static final String SET_SATELLITE_SERVICE_PACKAGE_NAME_CMD =
             "cmd phone set-satellite-service-package-name -s ";
+    private static final String SET_SATELLITE_GATEWAY_SERVICE_PACKAGE_NAME_CMD =
+            "cmd phone set-satellite-gateway-service-package-name -s ";
     private static final String SET_SATELLITE_LISTENING_TIMEOUT_DURATION_CMD =
             "cmd phone set-satellite-listening-timeout-duration -t ";
     private static final long TIMEOUT = 5000;
@@ -51,6 +53,10 @@ class MockSatelliteServiceManager {
     private MockSatelliteService mSatelliteService;
     private TestSatelliteServiceConnection mSatelliteServiceConn;
     private CountDownLatch mRemoteServiceConnectedLatch;
+    private MockSatelliteGatewayService mSatelliteGatewayService;
+    private TestSatelliteGatewayServiceConnection mSatelliteGatewayServiceConn;
+    private final Semaphore mRemoteGatewayServiceConnectedSemaphore = new Semaphore(0);
+    private final Semaphore mRemoteGatewayServiceDisconnectedSemaphore = new Semaphore(0);
     private Instrumentation mInstrumentation;
     private final Semaphore mStartSendingPointingInfoSemaphore = new Semaphore(0);
     private final Semaphore mStopSendingPointingInfoSemaphore = new Semaphore(0);
@@ -131,6 +137,22 @@ class MockSatelliteServiceManager {
                 }
             };
 
+    @NonNull
+    private final ILocalSatelliteGatewayListener mSatelliteGatewayListener =
+            new ILocalSatelliteGatewayListener.Stub() {
+                @Override
+                public void onRemoteServiceConnected() {
+                    logd("ILocalSatelliteGatewayListener: onRemoteServiceConnected");
+                    mRemoteGatewayServiceConnectedSemaphore.release();
+                }
+
+                @Override
+                public void onRemoteServiceDisconnected() {
+                    logd("ILocalSatelliteGatewayListener: onRemoteServiceDisconnected");
+                    mRemoteGatewayServiceDisconnectedSemaphore.release();
+                }
+            };
+
     private class TestSatelliteServiceConnection implements ServiceConnection {
         private final CountDownLatch mLatch;
 
@@ -151,6 +173,29 @@ class MockSatelliteServiceManager {
         public void onServiceDisconnected(ComponentName name) {
             logd("onServiceDisconnected");
             mSatelliteService = null;
+        }
+    }
+
+    private class TestSatelliteGatewayServiceConnection implements ServiceConnection {
+        private final CountDownLatch mLatch;
+
+        TestSatelliteGatewayServiceConnection(CountDownLatch latch) {
+            mLatch = latch;
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            logd("GatewayService: onServiceConnected");
+            mSatelliteGatewayService =
+                    ((MockSatelliteGatewayService.LocalBinder) service).getService();
+            mSatelliteGatewayService.setLocalSatelliteListener(mSatelliteGatewayListener);
+            mLatch.countDown();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            logd("GatewayService: onServiceDisconnected");
+            mSatelliteGatewayService = null;
         }
     }
 
@@ -189,6 +234,26 @@ class MockSatelliteServiceManager {
         }
     }
 
+    boolean connectSatelliteGatewayService() {
+        logd("connectSatelliteGatewayService starting ...");
+        if (!setupLocalSatelliteGatewayService()) {
+            loge("Failed to set up local satellite gateway service");
+            return false;
+        }
+
+        try {
+            if (!setSatelliteGatewayServicePackageName(PACKAGE)) {
+                loge("Failed to set satellite gateway service package name");
+                return false;
+            }
+        } catch (Exception ex) {
+            loge("connectSatelliteGatewayService: Got exception with "
+                    + "setSatelliteGatewayServicePackageName, ex=" + ex);
+            return false;
+        }
+        return true;
+    }
+
     boolean restoreSatelliteServicePackageName() {
         logd("restoreSatelliteServicePackageName");
         try {
@@ -199,6 +264,21 @@ class MockSatelliteServiceManager {
         } catch (Exception ex) {
             loge("restoreSatelliteServicePackageName: Got exception with "
                     + "setSatelliteServicePackageName ex=" + ex);
+            return false;
+        }
+        return true;
+    }
+
+    boolean restoreSatelliteGatewayServicePackageName() {
+        logd("restoreSatelliteGatewayServicePackageName");
+        try {
+            if (!setSatelliteGatewayServicePackageName(null)) {
+                loge("Failed to restore satellite gateway service package name");
+                return false;
+            }
+        } catch (Exception ex) {
+            loge("restoreSatelliteGatewayServicePackageName: Got exception with "
+                    + "setSatelliteGatewayServicePackageName ex=" + ex);
             return false;
         }
         return true;
@@ -330,6 +410,38 @@ class MockSatelliteServiceManager {
         return true;
     }
 
+    boolean waitForRemoteSatelliteGatewayServiceConnected(int expectedNumberOfEvents) {
+        for (int i = 0; i < expectedNumberOfEvents; i++) {
+            try {
+                if (!mRemoteGatewayServiceConnectedSemaphore.tryAcquire(
+                        TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    loge("Timeout to receive RemoteSatelliteGatewayServiceConnected");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("RemoteSatelliteGatewayServiceConnected: Got exception=" + ex);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    boolean waitForRemoteSatelliteGatewayServiceDisconnected(int expectedNumberOfEvents) {
+        for (int i = 0; i < expectedNumberOfEvents; i++) {
+            try {
+                if (!mRemoteGatewayServiceDisconnectedSemaphore.tryAcquire(
+                        TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    loge("Timeout to receive RemoteGatewayServiceDisconnected");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("RemoteGatewayServiceDisconnected: Got exception=" + ex);
+                return false;
+            }
+        }
+        return true;
+    }
+
     void setErrorCode(@SatelliteError int errorCode) {
         logd("setErrorCode: errorCode=" + errorCode);
         if (mSatelliteService == null) {
@@ -401,11 +513,38 @@ class MockSatelliteServiceManager {
         }
     }
 
+    private boolean setupLocalSatelliteGatewayService() {
+        if (mSatelliteGatewayService != null) {
+            logd("setupLocalSatelliteGatewayService: local service is already set up");
+            return true;
+        }
+        CountDownLatch latch = new CountDownLatch(1);
+        mSatelliteGatewayServiceConn = new TestSatelliteGatewayServiceConnection(latch);
+        mInstrumentation.getContext().bindService(new Intent(mInstrumentation.getContext(),
+                MockSatelliteGatewayService.class), mSatelliteGatewayServiceConn,
+                Context.BIND_AUTO_CREATE);
+        try {
+            return latch.await(TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            loge("setupLocalSatelliteGatewayService: Got InterruptedException e=" + e);
+            return false;
+        }
+    }
+
     private boolean setSatelliteServicePackageName(@Nullable String packageName) throws Exception {
         String result =
                 TelephonyUtils.executeShellCommand(
                         mInstrumentation, SET_SATELLITE_SERVICE_PACKAGE_NAME_CMD + packageName);
         logd("setSatelliteServicePackageName: result = " + result);
+        return "true".equals(result);
+    }
+
+    private boolean setSatelliteGatewayServicePackageName(
+            @Nullable String packageName) throws Exception {
+        String result =
+                TelephonyUtils.executeShellCommand(mInstrumentation,
+                        SET_SATELLITE_GATEWAY_SERVICE_PACKAGE_NAME_CMD + packageName);
+        logd("setSatelliteGatewayServicePackageName: result = " + result);
         return "true".equals(result);
     }
 
