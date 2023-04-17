@@ -21,6 +21,7 @@
     <option name="compatibility:include-filter" value="signed-CtsSecureElementAccessControlTestCases2" />
     <option name="compatibility:include-filter" value="signed-CtsSecureElementAccessControlTestCases3" />
     <option name="compatibility:include-filter" value="CtsCarrierApiTestCases" />
+    <option name="compatibility:include-filter" value="CtsHostsideNetworkTests" />
     <option name="compatibility:include-filter" value="CtsJobSchedulerTestCases" />
     <option name="compatibility:include-filter" value="CtsNetTestCases" />
     <option name="compatibility:include-filter" value="CtsNetTestCasesLegacyApi22" />
