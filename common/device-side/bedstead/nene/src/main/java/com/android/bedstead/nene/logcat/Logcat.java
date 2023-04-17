@@ -18,6 +18,7 @@ package com.android.bedstead.nene.logcat;
 
 import android.util.Log;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -26,13 +27,11 @@ import com.android.bedstead.nene.utils.ShellCommandUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * TestApis related to logcat.
@@ -61,7 +60,12 @@ public final class Logcat {
      */
     public String dump(Predicate<String> lineFilter) {
         try (ShellCommandUtils.StreamingShellOutput sso = dump()){
-            return sso.stream().filter(lineFilter).collect(Collectors.joining("\n"));
+            String log = sso.stream().filter(lineFilter)
+                    .collect(Collectors.joining("\n"));
+
+            // We only take the last 500 characters - this can be relaxed once we properly block
+            // out the start and end of the time we care about
+            return log.substring(Math.max(0, log.length() - 500));
         } catch (IOException e) {
             throw new NeneException("Error dumping logcat", e);
         }
@@ -178,5 +182,23 @@ public final class Logcat {
 
         return new StackTraceElement(
                 className, methodName, fileParts[0], Integer.parseInt(fileParts[1]));
+    }
+
+    /**
+     * Begin listening for a particular entry in logcat.
+     *
+     * <p>Example usage:
+     *
+     * try (BlockingLogcatListener l = TestApis.logcat().listen(l -> l.contains("line")) {
+     *     // Some code which will cause line to appear in the output
+     * } // this will block until line appears
+     */
+    @Experimental
+    public BlockingLogcatListener listen(Predicate<String> lineFilter) {
+        // TODO: Replace this with actually filtering on an ongoing basis - so we don't clear
+        // the logcat and so it can run longer than a single logcat buffer
+        TestApis.logcat().clear();
+
+        return new BlockingLogcatListener(lineFilter);
     }
 }

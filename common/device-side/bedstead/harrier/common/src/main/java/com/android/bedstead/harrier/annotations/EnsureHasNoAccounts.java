@@ -34,6 +34,8 @@ import java.lang.annotation.Target;
 // TODO: Add options (features of the user, type of the user, etc.)
 public @interface EnsureHasNoAccounts {
 
+    int ENSURE_HAS_NO_ACCOUNTS_WEIGHT = ENSURE_HAS_ACCOUNT_AUTHENTICATOR_WEIGHT + 1;
+
     /** Which user type the account must not be present added on. */
     UserType onUser() default ANY;
 
@@ -47,5 +49,5 @@ public @interface EnsureHasNoAccounts {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default ENSURE_HAS_ACCOUNT_AUTHENTICATOR_WEIGHT + 1;
+    int weight() default ENSURE_HAS_NO_ACCOUNTS_WEIGHT;
 }

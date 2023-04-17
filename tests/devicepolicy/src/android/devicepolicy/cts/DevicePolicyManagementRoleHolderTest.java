@@ -37,10 +37,12 @@ import android.app.admin.ProvisioningException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.UserHandle;
+import android.util.Log;
 
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureCanAddUser;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasAccount;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
@@ -86,7 +88,6 @@ public class DevicePolicyManagementRoleHolderTest {
     private static final String FEATURE_ALLOW =
             "android.account.DEVICE_OR_PROFILE_OWNER_ALLOWED";
 
-    @Ignore("b/268616097 fix issue with pre-existing accounts on the device")
     @Postsubmit(reason = "new test")
     @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
@@ -107,11 +108,10 @@ public class DevicePolicyManagementRoleHolderTest {
             }
     }
 
-    @Ignore("b/268616097 fix issue with pre-existing accounts on the device")
     @Postsubmit(reason = "new test")
     @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasDeviceOwner
-    @RequireMultiUserSupport
+    @EnsureCanAddUser
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = SYSTEM_USER)
     @Test
     @CddTest(requirements = {"3.9.4/C-3-1"})
@@ -131,7 +131,6 @@ public class DevicePolicyManagementRoleHolderTest {
         }
     }
 
-    @Ignore("b/268616097 fix issue with pre-existing accounts on the device")
     @Postsubmit(reason = "new test")
     @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
@@ -149,7 +148,6 @@ public class DevicePolicyManagementRoleHolderTest {
                 .eventOccurred();
     }
 
-    @Ignore("b/268616097 fix issue with pre-existing accounts on the device")
     @Postsubmit(reason = "new test")
     @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
@@ -168,7 +166,6 @@ public class DevicePolicyManagementRoleHolderTest {
         }
     }
 
-    @Ignore("b/268616097 fix issue with pre-existing accounts on the device")
     @Postsubmit(reason = "new test")
     @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
@@ -189,7 +186,6 @@ public class DevicePolicyManagementRoleHolderTest {
         }
     }
 
-    @Ignore("b/268616097 fix issue with pre-existing accounts on the device")
     @Postsubmit(reason = "New test")
     @Test
     @EnsureHasPermission(MANAGE_ROLE_HOLDERS)
@@ -197,12 +193,15 @@ public class DevicePolicyManagementRoleHolderTest {
     @EnsureHasNoAccounts(onUser = ANY)
     public void shouldAllowBypassingDevicePolicyManagementRoleQualification_noUsersAndAccounts_returnsTrue()
             throws Exception {
-        assertThat(
-                sDevicePolicyManager.shouldAllowBypassingDevicePolicyManagementRoleQualification())
-                .isTrue();
+        // We don't want to reset the cache too early in case the account state hasn't been cached
+        Poll.forValue("shouldAllowBypassingDevicePolicyManagementRoleQualification", () -> {
+                    TestApis.devicePolicy().resetShouldAllowBypassingDevicePolicyManagementRoleQualificationState();
+                    return sDevicePolicyManager.shouldAllowBypassingDevicePolicyManagementRoleQualification();
+                }).toBeEqualTo(true)
+                .errorOnFail()
+                .await();
     }
 
-    @Ignore("b/268616097 fix issue with pre-existing accounts on the device")
     @Postsubmit(reason = "New test")
     @Test
     @EnsureHasPermission(MANAGE_ROLE_HOLDERS)
@@ -222,7 +221,6 @@ public class DevicePolicyManagementRoleHolderTest {
         }
     }
 
-    @Ignore("b/268616097 fix issue with pre-existing accounts on the device")
     @Postsubmit(reason = "New test")
     @Test
     @EnsureHasPermission(MANAGE_ROLE_HOLDERS)
@@ -242,7 +240,6 @@ public class DevicePolicyManagementRoleHolderTest {
         }
     }
 
-    @Ignore("b/268616097 fix issue with pre-existing accounts on the device")
     @Postsubmit(reason = "New test")
     @Test
     @EnsureHasPermission(MANAGE_ROLE_HOLDERS)
@@ -251,30 +248,33 @@ public class DevicePolicyManagementRoleHolderTest {
     @EnsureHasAccount(onUser = ADDITIONAL_USER, features = {})
     public void shouldAllowBypassingDevicePolicyManagementRoleQualification_withNonAllowedAccounts_returnsFalse()
             throws Exception {
-        TestApis.devicePolicy().resetShouldAllowBypassingDevicePolicyManagementRoleQualificationState();
-
-        assertThat(
-                sDevicePolicyManager.shouldAllowBypassingDevicePolicyManagementRoleQualification())
-                .isFalse();
+        // We don't want to reset the cache too early in case the account state hasn't been cached - REMOVE THIS ONCE ADD ACOCUNT AND REMOVE ACCOUNT IS BLOCKING CORRECTLY
+        Poll.forValue("shouldAllowBypassingDevicePolicyManagementRoleQualification", () -> {
+            TestApis.devicePolicy().resetShouldAllowBypassingDevicePolicyManagementRoleQualificationState();
+            return sDevicePolicyManager.shouldAllowBypassingDevicePolicyManagementRoleQualification();
+        }).toBeEqualTo(false)
+          .errorOnFail()
+          .await();
     }
 
-    @Ignore("b/268616097 fix issue with pre-existing accounts on the device")
     @Postsubmit(reason = "New test")
     @Test
     @EnsureHasPermission(MANAGE_ROLE_HOLDERS)
     @EnsureHasAdditionalUser
     @EnsureHasNoDpc
+    @EnsureHasNoAccounts // TODO: Specify no accounts that don't match the account we actually want
     @EnsureHasAccount(onUser = ADDITIONAL_USER, features = FEATURE_ALLOW)
     public void shouldAllowBypassingDevicePolicyManagementRoleQualification_withAllowedAccounts_returnsTrue()
             throws Exception {
-        TestApis.devicePolicy().resetShouldAllowBypassingDevicePolicyManagementRoleQualificationState();
-
-        assertThat(
-                sDevicePolicyManager.shouldAllowBypassingDevicePolicyManagementRoleQualification())
-                .isTrue();
+        // We don't want to reset the cache too early in case the account state hasn't been cached
+        Poll.forValue("shouldAllowBypassingDevicePolicyManagementRoleQualification", () -> {
+                    TestApis.devicePolicy().resetShouldAllowBypassingDevicePolicyManagementRoleQualificationState();
+                    return sDevicePolicyManager.shouldAllowBypassingDevicePolicyManagementRoleQualification();
+                }).toBeEqualTo(true)
+                .errorOnFail()
+                .await();
     }
 
-    @Ignore("b/268616097 fix issue with pre-existing accounts on the device")
     @Postsubmit(reason = "New test")
     @Test
     @EnsureDoesNotHavePermission(MANAGE_ROLE_HOLDERS)

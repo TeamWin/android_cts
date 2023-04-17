@@ -33,6 +33,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(EnsureCanAddUserGroup.class)
+@RequireMultiUserSupport
 public @interface EnsureCanAddUser {
     /** The number of users we need space for. Defaults to 1. */
     int number() default 1;
