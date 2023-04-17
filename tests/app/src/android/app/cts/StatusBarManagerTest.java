@@ -76,6 +76,7 @@ public class StatusBarManagerTest {
             mStatusBarManager.collapsePanels();
             mStatusBarManager.setDisabledForSetup(false);
             mStatusBarManager.setExpansionDisabledForSimNetworkLock(false);
+            mStatusBarManager.setNavBarMode(StatusBarManager.NAV_BAR_MODE_DEFAULT);
         }
 
         mUiAutomation.dropShellPermissionIdentity();
