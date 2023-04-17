@@ -21,4 +21,6 @@ android_test_helper_app {
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
     sdk_version: "current",
+    target_sdk_version: "34",
+    min_sdk_version: "34",
 }
