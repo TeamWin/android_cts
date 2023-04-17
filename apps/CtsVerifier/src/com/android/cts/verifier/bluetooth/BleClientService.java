@@ -122,6 +122,10 @@ public class BleClientService extends Service {
             "com.android.cts.verifier.bluetooth.BLE_PHY_READ";
     public static final String BLE_PHY_READ_SKIPPED =
             "com.android.cts.verifier.bluetooth.BLE_PHY_READ_SKIPPED";
+    public static final String BLE_PHY_UPDATE =
+            "com.android.cts.verifier.bluetooth.BLE_PHY_UPDATE";
+    public static final String BLE_PHY_UPDATE_SKIPPED =
+            "com.android.cts.verifier.bluetooth.BLE_PHY_UPDATE_SKIPPED";
     public static final String BLE_ON_SERVICE_CHANGED =
             "com.android.cts.verifier.bluetooth.BLE_ON_SERVICE_CHANGED";
     public static final String BLE_CHARACTERISTIC_READ_NOPERMISSION =
@@ -182,6 +186,8 @@ public class BleClientService extends Service {
             "com.android.cts.verifier.bluetooth.BLE_CLIENT_ACTION_READ_RSSI";
     public static final String BLE_CLIENT_ACTION_READ_PHY =
             "com.android.cts.verifier.bluetooth.BLE_CLIENT_ACTION_READ_PHY";
+    public static final String BLE_CLIENT_ACTION_SET_PREFERRED_PHY =
+            "com.android.cts.verifier.bluetooth.BLE_CLIENT_ACTION_SET_PREFERRED_PHY";
     public static final String BLE_CLIENT_ACTION_TRIGGER_SERVICE_CHANGED =
             "com.android.cts.verifier.bluetooth.BLE_CLIENT_ACTION_TRIGGER_SERVICE_CHANGED";
     public static final String BLE_CLIENT_ACTION_CLIENT_DISCONNECT =
@@ -511,6 +517,13 @@ public class BleClientService extends Service {
                 case BLE_CLIENT_ACTION_READ_PHY:
                     if (mBluetoothGatt != null) {
                         mBluetoothGatt.readPhy();
+                    }
+                    break;
+                case BLE_CLIENT_ACTION_SET_PREFERRED_PHY:
+                    if (mBluetoothGatt != null) {
+                        mBluetoothGatt.setPreferredPhy(BluetoothDevice.PHY_LE_1M_MASK,
+                                BluetoothDevice.PHY_LE_1M_MASK,
+                                BluetoothDevice.PHY_OPTION_NO_PREFERRED);
                     }
                     break;
                 case BLE_CLIENT_ACTION_TRIGGER_SERVICE_CHANGED:
@@ -915,6 +928,20 @@ public class BleClientService extends Service {
         sendBroadcast(intent);
     }
 
+    private void notifyPhyUpdate(int txPhy, int rxPhy) {
+        showMessage("Phy update: txPhy=" + txPhy + ", rxPhy=" + rxPhy);
+        Intent intent = new Intent(BLE_PHY_UPDATE);
+        intent.putExtra(EXTRA_TX_PHY_VALUE, txPhy);
+        intent.putExtra(EXTRA_RX_PHY_VALUE, rxPhy);
+        sendBroadcast(intent);
+    }
+
+    private void notifyPhyUpdateSkipped() {
+        showMessage("Phy update not supported. Skipping the test.");
+        Intent intent = new Intent(BLE_PHY_UPDATE_SKIPPED);
+        sendBroadcast(intent);
+    }
+
     private void notifyServiceChanged() {
         showMessage("Remote service changed");
         Intent intent = new Intent(BLE_ON_SERVICE_CHANGED);
@@ -1034,6 +1061,7 @@ public class BleClientService extends Service {
     }
 
     private int mBleState = BluetoothProfile.STATE_DISCONNECTED;
+
     private final BluetoothGattCallback mGattCallbacks = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
@@ -1450,12 +1478,16 @@ public class BleClientService extends Service {
 
         @Override
         public void onPhyUpdate(BluetoothGatt gatt, int txPhy, int rxPhy, int status) {
-            // TODO: Currently this is not called when BluetoothGatt.setPreferredPhy() is called.
-            // It is because the path is not wired in native code. (acl_legacy_interface.cc)
-            // Add a proper implementation and related test.
             super.onPhyUpdate(gatt, txPhy, rxPhy, status);
             if (DEBUG) {
-                Log.d(TAG, "onPhyUpdate");
+                Log.d(TAG, "onPhyUpdate status=" + status);
+            }
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                notifyPhyUpdate(txPhy, rxPhy);
+            } else if (status == BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED) {
+                notifyPhyUpdateSkipped();
+            } else {
+                notifyError("Failed to update phy");
             }
         }
 

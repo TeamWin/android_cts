@@ -685,6 +685,7 @@
     <string name="ble_write_descriptor_name">Bluetooth LE Write Descriptor</string>
     <string name="ble_read_rssi_name">Bluetooth LE Read RSSI</string>
     <string name="ble_read_phy_name">Bluetooth LE Read PHY</string>
+    <string name="ble_set_preferred_phy_name">Bluetooth LE Set Preferred PHY</string>
     <string name="ble_on_service_changed">Bluetooth LE On Service Changed</string>
     <string name="ble_client_disconnect_name">Bluetooth LE Client Disconnect</string>
     <string name="ble_insecure_client_test_info">
