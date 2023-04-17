@@ -21,6 +21,7 @@ import static android.Manifest.permission.BIND_VISUAL_QUERY_DETECTION_SERVICE;
 import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
 import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
 import static android.Manifest.permission.RECORD_AUDIO;
+import static android.voiceinteraction.cts.testcore.Helper.WAIT_EXPECTED_NO_CALL_TIMEOUT_IN_MS;
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_LONG_TIMEOUT_IN_MS;
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 
@@ -929,7 +930,6 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         mOnRecognitionPausedLatch = null;
     }
 
-
     /**
      * Wait for onRecognitionResumed() callback called.
      */
@@ -941,5 +941,19 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             throw new AssertionError("onRecognitionResumed() fail.");
         }
         mOnRecognitionResumedLatch = null;
+    }
+
+    /**
+     * Wait for no onRecognitionPaused() callback called.
+     */
+    public boolean waitNoOnRecognitionPausedCalled() throws InterruptedException {
+        Log.d(TAG, "waitNoOnRecognitionPausedCalled(), latch=" + mOnRecognitionPausedLatch);
+        if (mOnRecognitionPausedLatch == null) {
+            throw new AssertionError("mOnRecognitionPausedLatch is not initialized.");
+        }
+        boolean result = mOnRecognitionPausedLatch.await(WAIT_EXPECTED_NO_CALL_TIMEOUT_IN_MS,
+                TimeUnit.MILLISECONDS);
+        mOnRecognitionPausedLatch = null;
+        return !result;
     }
 }

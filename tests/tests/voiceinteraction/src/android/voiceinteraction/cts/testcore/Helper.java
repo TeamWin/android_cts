@@ -68,6 +68,7 @@ public final class Helper {
     // The timeout to wait for async result
     public static final long WAIT_TIMEOUT_IN_MS = 10_000;
     public static final long WAIT_LONG_TIMEOUT_IN_MS = 15_000;
+    public static final long WAIT_EXPECTED_NO_CALL_TIMEOUT_IN_MS = 3_000;
 
     // The test package
     public static final String CTS_SERVICE_PACKAGE = "android.voiceinteraction.cts";
