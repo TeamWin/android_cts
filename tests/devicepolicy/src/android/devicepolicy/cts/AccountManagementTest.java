@@ -149,6 +149,7 @@ public final class AccountManagementTest {
 
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = AccountManagement.class)
+    // Not passing for permission based caller as AccountManagerService is special casing DO/PO
     public void addAccount_fromDpcWithAccountManagementDisabled_accountAdded()
             throws Exception {
         try {
@@ -173,6 +174,7 @@ public final class AccountManagementTest {
 
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = AccountManagement.class)
+    // Not passing for permission based caller as AccountManagerService is special casing DO/PO
     public void addAccount_fromDpcWithDisallowModifyAccountsRestriction_accountAdded()
             throws Exception {
         try {
@@ -194,6 +196,7 @@ public final class AccountManagementTest {
 
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = AccountManagement.class)
+    // Not passing for permission based caller as AccountManagerService is special casing DO/PO
     public void removeAccount_fromDpcWithDisallowModifyAccountsRestriction_accountRemoved()
             throws Exception {
         try {
