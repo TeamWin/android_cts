@@ -925,6 +925,8 @@
                 android:value="android.hardware.bluetooth_le" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest"
+                       android:value="7.4.3/C-3-2" />
         </activity>
 
         <!--
@@ -1205,6 +1207,8 @@
                 android:value="android.hardware.bluetooth_le" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest"
+                       android:value="7.4.3/C-3-2" />
         </activity>
 
         <!--
