@@ -424,6 +424,47 @@ public class JobThrottlingTest {
     }
 
     @Test
+    public void testBackgroundUIJsThermal() throws Exception {
+        try (TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(
+                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            mTestAppInterface.postUiInitiatingNotification(
+                    Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
+                    Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
+            notificationHelper.clickNotification();
+
+            assertTrue("Job did not start after scheduling",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+            ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_MODERATE);
+            assertFalse("Job stopped below thermal throttling threshold",
+                    mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+
+            ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_SEVERE);
+            assertTrue("Job did not stop on thermal throttling",
+                    mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+            final long jobStopTime = System.currentTimeMillis();
+
+            ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_CRITICAL);
+            runJob();
+            assertFalse("Job started above thermal throttling threshold",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+            ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_EMERGENCY);
+            runJob();
+            assertFalse("Job started above thermal throttling threshold",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+            Thread.sleep(Math.max(0, TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF
+                    - (System.currentTimeMillis() - jobStopTime)));
+            ThermalUtils.overrideThermalNotThrottling();
+            runJob();
+            assertTrue("Job did not start back from throttling",
+                    mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        }
+    }
+
+    @Test
     public void testForegroundJobsThermal() throws Exception {
         // Turn the screen on to ensure the app gets into the TOP state.
         setScreenState(true);
