@@ -17,9 +17,13 @@
 package android.photopicker.cts;
 
 import static android.photopicker.cts.PhotoPickerCloudUtils.containsExcept;
+import static android.photopicker.cts.PhotoPickerCloudUtils.disableCloudMediaAndClearAllowedCloudProviders;
+import static android.photopicker.cts.PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders;
 import static android.photopicker.cts.PhotoPickerCloudUtils.extractMediaIds;
 import static android.photopicker.cts.PhotoPickerCloudUtils.fetchPickerMedia;
+import static android.photopicker.cts.PhotoPickerCloudUtils.getAllowedProvidersDeviceConfig;
 import static android.photopicker.cts.PhotoPickerCloudUtils.initCloudProviderWithImage;
+import static android.photopicker.cts.PhotoPickerCloudUtils.isCloudMediaEnabled;
 import static android.photopicker.cts.PhotoPickerCloudUtils.selectAndAddPickerMedia;
 import static android.photopicker.cts.PickerProviderMediaGenerator.getMediaGenerator;
 import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
@@ -47,10 +51,13 @@ import android.photopicker.cts.util.UiAssertionUtils;
 import android.provider.MediaStore;
 import android.util.Pair;
 
+import androidx.annotation.Nullable;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -61,6 +68,35 @@ import java.util.List;
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 @RunWith(AndroidJUnit4.class)
 public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
+
+    private static boolean sCloudMediaPreviouslyEnabled;
+    @Nullable
+    private static String sPreviouslyAllowedCloudProviders;
+
+    @BeforeClass
+    public static void setUpClass() {
+        // Store the current Cloud-Media feature configs which we will override during the test,
+        // and will need to restore after the test finished.
+        sCloudMediaPreviouslyEnabled = isCloudMediaEnabled();
+        if (sCloudMediaPreviouslyEnabled) {
+            sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
+        }
+
+        // Override the allowed cloud providers config to enable the banners
+        // (this is a self-instrumenting test, so "target" package name and "own" package name are
+        // same: android.photopicker.cts).
+        enableCloudMediaAndSetAllowedCloudProviders(sTargetPackageName);
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+        // Restore Cloud-Media feature configs.
+        if (sCloudMediaPreviouslyEnabled) {
+            enableCloudMediaAndSetAllowedCloudProviders(sPreviouslyAllowedCloudProviders);
+        } else {
+            disableCloudMediaAndClearAllowedCloudProviders();
+        }
+    }
 
     @After
     public void tearDown() throws Exception {
