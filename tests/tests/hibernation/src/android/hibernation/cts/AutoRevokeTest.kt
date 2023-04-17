@@ -77,6 +77,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThat
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Ignore
@@ -440,6 +441,7 @@ class AutoRevokeTest {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     @Test
     fun testAutoRevoke_showsUpInSafetyCenter() {
+        assumeTrue(deviceSupportsSafetyCenter())
         withSafetyCenterEnabled {
             withUnusedThresholdMs(3L) {
                 withDummyApp {
@@ -478,6 +480,7 @@ class AutoRevokeTest {
     @Test
     @Ignore
     fun testAutoRevoke_goToUnusedAppsPage_removesSafetyCenterIssue() {
+        assumeTrue(deviceSupportsSafetyCenter())
         withSafetyCenterEnabled {
             withUnusedThresholdMs(3L) {
                 withDummyApp {
@@ -529,6 +532,11 @@ class AutoRevokeTest {
 
     private fun isAutomotiveDevice(): Boolean {
         return context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    }
+
+    private fun deviceSupportsSafetyCenter(): Boolean {
+        return context.resources.getBoolean(
+            Resources.getSystem().getIdentifier("config_enableSafetyCenter", "bool", "android"))
     }
 
     private fun installApp() {
