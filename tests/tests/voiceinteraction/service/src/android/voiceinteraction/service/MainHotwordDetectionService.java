@@ -98,6 +98,8 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
 
     private boolean mIsTestAudioEgress;
 
+    private boolean mIsNoNeedActionDuringDetection;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -109,6 +111,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     public void onDetect(@NonNull AlwaysOnHotwordDetector.EventPayload eventPayload,
             long timeoutMillis, @NonNull Callback callback) {
         Log.d(TAG, "onDetect for DSP source");
+
+        if (mIsNoNeedActionDuringDetection) {
+            mIsNoNeedActionDuringDetection = false;
+            return;
+        }
 
         if (!canReadAudio()) {
             callback.onDetected(DETECTED_RESULT_FOR_MIC_FAILURE);
@@ -335,6 +342,12 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                     == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS) {
                 Log.d(TAG, "options : Test audio egress");
                 mIsTestAudioEgress = true;
+                return;
+            }
+            if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
+                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_No_NEED_ACTION_DURING_DETECTION) {
+                Log.d(TAG, "options : Test no need action during detection");
+                mIsNoNeedActionDuringDetection = true;
                 return;
             }
 
