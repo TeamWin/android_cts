@@ -116,6 +116,8 @@ public class TestUtils {
     public static final String CREATE_IMAGE_ENTRY_QUERY =
             "android.scopedstorage.cts.createimageentry";
     public static final String DELETE_FILE_QUERY = "android.scopedstorage.cts.deletefile";
+    public static final String DELETE_MEDIA_BY_URI_QUERY =
+            "android.scopedstorage.cts.deletemediabyuri";
     public static final String DELETE_RECURSIVE_QUERY = "android.scopedstorage.cts.deleteRecursive";
     public static final String CAN_OPEN_FILE_FOR_READ_QUERY =
             "android.scopedstorage.cts.can_openfile_read";
@@ -396,6 +398,18 @@ public class TestUtils {
     public static int queryWithArgsAs(TestApp testApp, Uri uri, Bundle queryArgs) throws Exception {
         final String actionName = QUERY_WITH_ARGS;
         return getFromTestApp(testApp, uri, actionName, queryArgs).getInt(actionName);
+    }
+
+    /**
+     * Makes the given {@code testApp} delete media rows by the provided {@code uri}.
+     *
+     * Returns the number of deleted rows.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static int deleteMediaByUriAs(TestApp testApp, Uri uri) throws Exception {
+        final String actionName = DELETE_MEDIA_BY_URI_QUERY;
+        return getFromTestApp(testApp, uri, actionName).getInt(actionName);
     }
 
     /**

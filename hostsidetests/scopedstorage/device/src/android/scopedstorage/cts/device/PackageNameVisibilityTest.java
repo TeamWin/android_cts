@@ -43,12 +43,19 @@ import java.util.Arrays;
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 public final class PackageNameVisibilityTest {
 
-    private static Uri sQueryableMediaUri;
-    private static Uri sNotQueryableMediaUri;
-
     private static final String TAG = PackageNameVisibilityTest.class.getSimpleName();
 
-    private static final TestApp TEST_APP_WITH_QUERIES_TAG = new TestApp(
+    /**
+     * The idea of this test is to create 2 media files by TEST_APP_A and TEST_APP_B and then
+     * query them from all 4 different apps to verify owner_package_name filtering.
+     * 1. Only owner_package_name of sMediaUriCreatedByAppB should be
+     * visible to TEST_APP_WITH_APP_B_IN_QUERIES_TAG.
+     * 2. Owner_package_name of both media files should be visible to
+     * TEST_APP_WITH_QUERY_ALL_PACKAGES_TAG.
+     * 3. Only owner_package_name of sMediaUriCreatedByAppA should be visible to TEST_APP_A.
+     * 4. Only owner_package_name of sMediaUriCreatedByAppB should be visible to TEST_APP_B.
+     */
+    private static final TestApp TEST_APP_WITH_APP_B_IN_QUERIES_TAG = new TestApp(
             "TestAppWithQueriesTag",
             "android.scopedstorage.cts.testapp.withqueriestag", 1, false,
             "CtsTestAppWithQueriesTag.apk");
@@ -65,29 +72,27 @@ public final class PackageNameVisibilityTest {
             "android.scopedstorage.cts.testapp.B.noperms", 1, false,
             "CtsScopedStorageTestAppB.apk");
 
+    private static Uri sMediaUriCreatedByAppA;
+    private static Uri sMediaUriCreatedByAppB;
 
     @BeforeClass
     public static void setUp() throws Exception {
         TestUtils.waitForMountedAndIdleState(getTargetContext().getContentResolver());
 
-        // Media file created by an app that is present in
-        // the queries tag of TEST_APP_WITH_QUERIES_TAG
-        sQueryableMediaUri = createMediaAs(TEST_APP_B);
-        // Media file created by an app that is not present in
-        // the queries tag of TEST_APP_WITH_QUERIES_TAG
-        sNotQueryableMediaUri = createMediaAs(TEST_APP_A);
+        sMediaUriCreatedByAppA = createMediaAs(TEST_APP_A);
+        sMediaUriCreatedByAppB = createMediaAs(TEST_APP_B);
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
-        TestUtils.deleteFileAs(TEST_APP_B, sQueryableMediaUri.getPath());
-        TestUtils.deleteFileAs(TEST_APP_A, sNotQueryableMediaUri.getPath());
+        TestUtils.deleteMediaByUriAs(TEST_APP_A, sMediaUriCreatedByAppA);
+        TestUtils.deleteMediaByUriAs(TEST_APP_B, sMediaUriCreatedByAppB);
     }
 
     @Test
     public void testNotQueryableOwnerPackageName() throws Exception {
         final String[] ownerPackageNames = TestUtils.queryForOwnerPackageNamesAs(
-                TEST_APP_WITH_QUERIES_TAG, sNotQueryableMediaUri);
+                TEST_APP_WITH_APP_B_IN_QUERIES_TAG, sMediaUriCreatedByAppA);
 
         assertEquals(0, ownerPackageNames.length);
     }
@@ -95,7 +100,7 @@ public final class PackageNameVisibilityTest {
     @Test
     public void testQueryableOwnerPackageName() throws Exception {
         final String[] ownerPackageNames = TestUtils.queryForOwnerPackageNamesAs(
-                TEST_APP_WITH_QUERIES_TAG, sQueryableMediaUri);
+                TEST_APP_WITH_APP_B_IN_QUERIES_TAG, sMediaUriCreatedByAppB);
 
         assertEquals(Arrays.asList(TEST_APP_B.getPackageName()),
                 Arrays.asList(ownerPackageNames));
@@ -104,7 +109,7 @@ public final class PackageNameVisibilityTest {
     @Test
     public void testMultipleRows() throws Exception {
         final String[] ownerPackageNames = TestUtils.queryForOwnerPackageNamesAs(
-                TEST_APP_WITH_QUERIES_TAG,
+                TEST_APP_WITH_APP_B_IN_QUERIES_TAG,
                 MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL));
 
         // Should only get a queryable owner package name and filter out the other one
@@ -114,14 +119,14 @@ public final class PackageNameVisibilityTest {
     @Test
     public void testQueryAllPackagesTag() throws Exception {
         final String[] ownerPackageNames = TestUtils.queryForOwnerPackageNamesAs(
-                TEST_APP_WITH_QUERY_ALL_PACKAGES_TAG, sNotQueryableMediaUri);
+                TEST_APP_WITH_QUERY_ALL_PACKAGES_TAG, sMediaUriCreatedByAppA);
 
         assertEquals(Arrays.asList(TEST_APP_A.getPackageName()), Arrays.asList(ownerPackageNames));
     }
 
     @Test
-    public void testSimpleQueryWithoutQueryArgs() throws Exception {
-        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_A, sQueryableMediaUri, null);
+    public void testSimpleQueryWithoutPackageNameInQueryArgs() throws Exception {
+        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_A, sMediaUriCreatedByAppB, null);
 
         // Make sure that a regular simple query works and not filters the result
         assertEquals(1, resultSize);
@@ -135,7 +140,7 @@ public final class PackageNameVisibilityTest {
         queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
                 new String[]{TEST_APP_B.getPackageName()});
 
-        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_A, sQueryableMediaUri, queryArgs);
+        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_A, sMediaUriCreatedByAppB, queryArgs);
 
         // Requested media is filtered because it's not self-owned
         assertEquals(0, resultSize);
@@ -149,7 +154,7 @@ public final class PackageNameVisibilityTest {
         queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
                 new String[]{TEST_APP_B.getPackageName()});
 
-        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_B, sQueryableMediaUri, queryArgs);
+        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_B, sMediaUriCreatedByAppB, queryArgs);
 
         // Requested media is present because it's self-owned
         assertEquals(1, resultSize);
@@ -174,11 +179,10 @@ public final class PackageNameVisibilityTest {
         queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SORT_ORDER,
                 MediaStore.MediaColumns.OWNER_PACKAGE_NAME + " ASC");
 
-        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_A,
-                MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL), queryArgs);
+        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_B, sMediaUriCreatedByAppA, queryArgs);
 
-        // Only self-owned media is present, everything else is filtered
-        assertEquals(1, resultSize);
+        // Requested media is filtered because it's not self-owned
+        assertEquals(0, resultSize);
     }
 
     @Test
@@ -190,7 +194,7 @@ public final class PackageNameVisibilityTest {
                 MediaStore.MediaColumns.OWNER_PACKAGE_NAME + " = '"
                         + TEST_APP_B.getPackageName() + "'");
 
-        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_A, sQueryableMediaUri, queryArgs);
+        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_A, sMediaUriCreatedByAppB, queryArgs);
 
         // Requested media is filtered because it's not self-owned
         assertEquals(0, resultSize);
@@ -203,7 +207,7 @@ public final class PackageNameVisibilityTest {
         queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
                 new String[]{TEST_APP_B.getPackageName()});
 
-        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_A, sQueryableMediaUri, queryArgs);
+        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_A, sMediaUriCreatedByAppB, queryArgs);
 
         // Requested media is filtered because it's not self-owned
         assertEquals(0, resultSize);
@@ -216,7 +220,7 @@ public final class PackageNameVisibilityTest {
         queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
                 new String[]{TEST_APP_B.getPackageName()});
 
-        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_A, sQueryableMediaUri, queryArgs);
+        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_A, sMediaUriCreatedByAppB, queryArgs);
 
         // Requested media is filtered because it's not self-owned
         assertEquals(0, resultSize);
@@ -231,7 +235,7 @@ public final class PackageNameVisibilityTest {
                 new String[]{TEST_APP_B.getPackageName()});
 
         int resultSize = TestUtils.queryWithArgsAs(TEST_APP_WITH_QUERY_ALL_PACKAGES_TAG,
-                sQueryableMediaUri, queryArgs);
+                sMediaUriCreatedByAppB, queryArgs);
 
         // Requested not self-owned media is present because of QUERY_ALL_PACKAGES permission
         assertEquals(1, resultSize);

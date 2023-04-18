@@ -24,6 +24,7 @@ import static android.scopedstorage.cts.lib.TestUtils.CHECK_DATABASE_ROW_EXISTS_
 import static android.scopedstorage.cts.lib.TestUtils.CREATE_FILE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.CREATE_IMAGE_ENTRY_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.DELETE_FILE_QUERY;
+import static android.scopedstorage.cts.lib.TestUtils.DELETE_MEDIA_BY_URI_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.DELETE_RECURSIVE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.FILE_EXISTS_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXCEPTION;
@@ -127,6 +128,9 @@ public class ScopedStorageTestHelper extends Activity {
                 case SETATTR_QUERY:
                     returnIntent = accessFile(queryType);
                     break;
+                case DELETE_MEDIA_BY_URI_QUERY:
+                    returnIntent = deleteMediaByUri(queryType);
+                    break;
                 case EXIF_METADATA_QUERY:
                     returnIntent = sendMetadata(queryType);
                     break;
@@ -219,6 +223,20 @@ public class ScopedStorageTestHelper extends Activity {
                 }
             }
             intent.putExtra(queryType, ownerPackageNames.toArray(new String[0]));
+        } catch (Exception e) {
+            intent.putExtra(INTENT_EXCEPTION, e);
+        }
+
+        return intent;
+    }
+
+    private Intent deleteMediaByUri(String queryType) {
+        final Intent intent = new Intent(queryType);
+        final Uri uri = getIntent().getParcelableExtra(INTENT_EXTRA_URI);
+
+        try {
+            int rowsDeleted = getContentResolver().delete(uri, null);
+            intent.putExtra(queryType, rowsDeleted);
         } catch (Exception e) {
             intent.putExtra(INTENT_EXCEPTION, e);
         }
