@@ -1365,6 +1365,69 @@ public class HotwordDetectionServiceBasicTest {
         }
     }
 
+    @Test
+    @RequiresDevice
+    public void testHotwordDetectionService_dspDetector_duringOnDetect_serviceRestart()
+            throws Throwable {
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
+        try {
+            runWithShellPermissionIdentity(() -> {
+                // Inform the HotwordDetectionService to ignore the onDetect
+                PersistableBundle persistableBundle = new PersistableBundle();
+                persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                        Utils.EXTRA_HOTWORD_DETECTION_SERVICE_No_NEED_ACTION_DURING_DETECTION);
+                alwaysOnHotwordDetector.updateState(
+                        persistableBundle,
+                        Helper.createFakeSharedMemoryData());
+            }, MANAGE_HOTWORD_DETECTION);
+
+            adoptShellPermissionIdentityForHotword();
+
+            // Initial soundTrigger injection latch
+            mSoundTriggerInjectedLatch = new CountDownLatch(2);
+
+            alwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+
+            try {
+                // Wait for soundTrigger injection is ready
+                mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ex) {
+                throw new AssertionError("SoundTrigger Injection timeout");
+            }
+
+            // Verify we received model load, recognition start
+            assertThat(mModelSession).isNotNull();
+            assertThat(mRecognitionSession).isNotNull();
+
+            mRecognitionSession.triggerRecognitionEvent(new byte[1024],
+                    createKeyphraseRecognitionExtraList());
+
+            // Wait for a while to make sure onDetect() will be called in the
+            // MainHotwordDetectionService
+            Thread.sleep(500);
+
+            mService.initDetectRejectLatch();
+
+            // Force re-start by shell command
+            runShellCommand("cmd voiceinteraction restart-detection");
+
+            // Wait onRejected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            HotwordRejectedResult rejectedResult =
+                    mService.getHotwordServiceOnRejectedResult();
+
+            assertThat(rejectedResult).isNotNull();
+        } finally {
+            // Destroy detector
+            alwaysOnHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
     /**
      * Before using this method, please call {@link #adoptShellPermissionIdentityForHotword()} to
      * grant permissions. And please use

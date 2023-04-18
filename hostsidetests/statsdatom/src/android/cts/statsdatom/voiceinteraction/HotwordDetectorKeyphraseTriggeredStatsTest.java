@@ -74,6 +74,8 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
             "testHotwordDetectionService_onDetectFromDspSecurityException_onFailure";
     private static final String TEST_METHOD_SOFTWARE_DETECT_SECURITY_EXCEPTION_FOR_METRIC_COLLECT =
             "testHotwordDetectionService_onDetectFromMicSecurityException_onFailure";
+    private static final String TEST_METHOD_DSP_REJECTED_FROM_RESTART_FOR_METRIC_COLLECT =
+            "testHotwordDetectionService_dspDetector_duringOnDetect_serviceRestart";
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
@@ -373,6 +375,30 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
         assertHotwordDetectorKeyphraseTriggered(filteredData.get(1),
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE,
                 Result.DETECT_SECURITY_EXCEPTION);
+    }
+
+    public void testLogHotwordDetectorKeyphraseTriggeredDspRejectedFromRestart()
+            throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_DSP_REJECTED_FROM_RESTART_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isAtLeast(2);
+
+        // Verify metric
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.KEYPHRASE_TRIGGER);
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.REJECTED_FROM_RESTART);
     }
 
     private void assertHotwordDetectorKeyphraseTriggered(StatsLog.EventMetricData metric,
