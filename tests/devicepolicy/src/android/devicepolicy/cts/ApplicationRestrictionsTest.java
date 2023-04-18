@@ -41,10 +41,12 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.ApplicationRestrictions;
 import com.android.bedstead.harrier.policies.ApplicationRestrictionsManagingPackage;
+import com.android.bedstead.harrier.policies.DpcOnlyApplicationRestrictions;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
@@ -69,7 +71,7 @@ public final class ApplicationRestrictionsTest {
     private static final TestApp sDifferentTestApp = sDeviceState.testApps().any();
 
     @Postsubmit(reason = "New test")
-    @PolicyAppliesTest(policy = ApplicationRestrictions.class)
+    @PolicyAppliesTest(policy = DpcOnlyApplicationRestrictions.class)
     public void setApplicationRestrictions_applicationRestrictionsAreSet() {
         Bundle originalApplicationRestrictions =
                 sDeviceState.dpc().devicePolicyManager()
@@ -95,7 +97,7 @@ public final class ApplicationRestrictionsTest {
     }
 
     @Postsubmit(reason = "New test")
-    @PolicyAppliesTest(policy = ApplicationRestrictions.class)
+    @PolicyAppliesTest(policy = DpcOnlyApplicationRestrictions.class)
     public void setApplicationRestrictions_applicationRestrictionsAlreadySet_setsNewRestrictions() {
         Bundle originalApplicationRestrictions =
                 sDeviceState.dpc().devicePolicyManager()
