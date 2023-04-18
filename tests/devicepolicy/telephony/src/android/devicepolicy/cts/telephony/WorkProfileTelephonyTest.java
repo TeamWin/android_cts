@@ -37,7 +37,7 @@ import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
@@ -615,12 +615,12 @@ public class WorkProfileTelephonyTest {
     }
 
     private void assertSimCardPresent() {
-        assertFalse("[RERUN] This test requires SIM card to be present", isSimCardAbsent());
+        assertTrue("[RERUN] This test requires SIM card to be present", isSimCardPresent());
 
     }
 
-    private boolean isSimCardAbsent() {
-        return mTelephonyManager.getSimState() == TelephonyManager.SIM_STATE_ABSENT;
+    private boolean isSimCardPresent() {
+        return mTelephonyManager.getSimState() == TelephonyManager.SIM_STATE_READY;
     }
 
     private CustomEvent.CustomEventQuery customEvents(String packageName, UserReference user) {
