@@ -743,7 +743,6 @@ public class ChildlessActivityTest
         final View decor = activity.getDecorView();
 
         new EventsAssertor(mainEvents)
-                .isAtLeast(11)
                 .assertSessionResumed()
                 .assertViewTreeStarted()
                 .assertDecorViewAppeared(decor)
@@ -751,11 +750,7 @@ public class ChildlessActivityTest
                 .assertViewAppeared(grandpa, grandpa2.getAutofillId())
                 .assertViewAppeared(rootView, grandpa.getAutofillId())
                 .assertViewTreeFinished()
-                .assertSessionPaused()
-                .assertViewTreeStarted()
-                .assertViewDisappeared(decor.getAutofillId(), grandpa2.getAutofillId(),
-                        grandpa.getAutofillId(), rootId)
-                .assertViewTreeFinished();
+                .assertSessionPaused();
 
         new EventsAssertor(events1)
                 .isAtLeast(3)

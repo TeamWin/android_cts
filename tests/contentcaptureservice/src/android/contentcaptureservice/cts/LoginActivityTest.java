@@ -46,6 +46,7 @@ import android.content.ContextParams;
 import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.text.Editable;
 import android.text.Spannable;
@@ -404,6 +405,8 @@ public class LoginActivityTest
             activity.mUsername.setText("USER");
             activity.mPassword.setText("PASS");
         });
+        // wait to sent event
+        sleep();
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -445,6 +448,8 @@ public class LoginActivityTest
 
             activity.mUsername.setText("abc");
         });
+        // wait to sent event
+        sleep();
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -493,6 +498,8 @@ public class LoginActivityTest
             appendText(activity.mUsername, "i");
             appendText(activity.mUsername, "d");
         });
+        // wait to sent event
+        sleep();
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -532,6 +539,8 @@ public class LoginActivityTest
             appendText(activity.mUsername, "m");
             appendText(activity.mUsername, "orning");
         });
+        // wait to sent event
+        sleep();
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -575,6 +584,8 @@ public class LoginActivityTest
             appendText(activity.mUsername, " morning");
             appendText(activity.mPassword, " are you");
         });
+        // wait to sent event
+        sleep();
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -614,6 +625,8 @@ public class LoginActivityTest
             activity.mUsername.setText("end");
             // TODO: Test setComposingText.
         });
+        // wait to sent event
+        sleep();
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -889,6 +902,8 @@ public class LoginActivityTest
         final Context newContext = activity.createContext(new ContextParams.Builder().build());
         final TextView child = newImportantView(newContext, "Important I am");
         activity.runOnUiThread(() -> rootView.addView(child));
+        // wait to sent event
+        sleep();
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -928,6 +943,9 @@ public class LoginActivityTest
         final LoginActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
 
+        // Wait to make sure the animation is complete
+        sleep();
+
         activity.finish();
         watcher.waitFor(DESTROYED);
 
@@ -953,6 +971,11 @@ public class LoginActivityTest
                         activity.mUsernameLabel.getAutofillId(), activity.mUsername.getAutofillId(),
                         activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId(),
                         children[0].getAutofillId(), children[1].getAutofillId());
+    }
+
+    private void sleep() {
+        Log.d(TAG, "sleeping 0.5s ");
+        SystemClock.sleep(500);
     }
 
     @Test

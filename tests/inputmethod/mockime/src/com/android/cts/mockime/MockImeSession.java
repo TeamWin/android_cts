@@ -178,6 +178,7 @@ public class MockImeSession implements AutoCloseable {
 
     private static String executeShellCommand(
             @NonNull UiAutomation uiAutomation, @NonNull String command) throws IOException {
+        Log.d(TAG, "executeShellCommand(): command=" + command);
         try (ParcelFileDescriptor.AutoCloseInputStream in =
                      new ParcelFileDescriptor.AutoCloseInputStream(
                              uiAutomation.executeShellCommand(command))) {
@@ -190,15 +191,30 @@ public class MockImeSession implements AutoCloseable {
                 }
                 sb.append(new String(buffer, 0, numRead));
             }
-            return sb.toString();
+            String result = sb.toString();
+            Log.d(TAG, "executeShellCommand(): result=" + result);
+            return result;
         }
+    }
+
+    private String executeImeCmd(String cmd, @Nullable String...args) throws IOException {
+        StringBuilder fullCmd = new StringBuilder("ime ").append(cmd);
+        fullCmd.append(" --user ").append(mContext.getUserId()).append(' ');
+        for (String arg : args) {
+            // Ideally it should check if there's more args, but adding an extra space is fine
+            fullCmd.append(' ').append(arg);
+        }
+        return executeShellCommand(mUiAutomation, fullCmd.toString());
     }
 
     @Nullable
     private String getCurrentInputMethodId() {
         // TODO: Replace this with IMM#getCurrentInputMethodIdForTesting()
-        return Settings.Secure.getString(mContext.getContentResolver(),
+        String settingsValue = Settings.Secure.getString(mContext.getContentResolver(),
                 Settings.Secure.DEFAULT_INPUT_METHOD);
+        Log.v(TAG, "getCurrentInputMethodId(): returning " + settingsValue + " for user "
+                + mContext.getUser().getIdentifier());
+        return settingsValue;
     }
 
     @Nullable
@@ -255,7 +271,7 @@ public class MockImeSession implements AutoCloseable {
                 .getInputMethodList()
                 .stream()
                 .anyMatch(info -> getMockImeComponentName().equals(info.getComponent()))) {
-            executeShellCommand(mUiAutomation, "ime reset");
+            executeImeCmd("reset");
         }
         if (mContext.getSystemService(InputMethodManager.class)
                 .getEnabledInputMethodList()
@@ -304,11 +320,18 @@ public class MockImeSession implements AutoCloseable {
                     new Handler(mHandlerThread.getLooper()));
         }
 
-        executeShellCommand(mUiAutomation, "ime enable " + getImeId());
-        executeShellCommand(mUiAutomation, "ime set " + getImeId());
+        String imeId = getImeId();
+        executeImeCmd("enable", imeId);
+        executeImeCmd("set", imeId);
 
         PollingCheck.check("Make sure that MockIME becomes available", TIMEOUT,
                 () -> getImeId().equals(getCurrentInputMethodId()));
+    }
+
+    @Override
+    public String toString() {
+        return TAG + "{active=" + mActive + ", handlerThread=" + mHandlerThread
+                + ", stickyBroadcasts=" + mStickyBroadcasts + "}";
     }
 
     /** @see #create(Context, UiAutomation, ImeSettings.Builder) */
@@ -410,7 +433,7 @@ public class MockImeSession implements AutoCloseable {
         mStickyBroadcasts.forEach(mContext::removeStickyBroadcast);
         mStickyBroadcasts.clear();
 
-        executeShellCommand(mUiAutomation, "ime reset");
+        executeImeCmd("reset");
 
         PollingCheck.check("Make sure that MockIME becomes unavailable", TIMEOUT, () ->
                 mContext.getSystemService(InputMethodManager.class)

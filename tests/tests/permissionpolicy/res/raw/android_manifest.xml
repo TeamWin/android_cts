@@ -1015,6 +1015,11 @@
     <permission android:name="android.permission.BIND_SATELLITE_SERVICE"
                 android:protectionLevel="signature|privileged|vendorPrivileged" />
 
+    <!-- @hide Allows an application to bind with satellite gateway service.
+         Only granted if the application is a system app.-->
+    <permission android:name="android.permission.BIND_SATELLITE_GATEWAY_SERVICE"
+                android:protectionLevel="signature" />
+
     <!-- ====================================================================== -->
     <!-- Permissions for accessing external storage                             -->
     <!-- ====================================================================== -->

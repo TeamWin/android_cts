@@ -17,7 +17,7 @@
 package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.UserType.INSTRUMENTED_USER;
-import static com.android.bedstead.harrier.annotations.EnsureHasAccountAuthenticator.ENSURE_HAS_ACCOUNT_AUTHENTICATOR_WEIGHT;
+import static com.android.bedstead.harrier.annotations.EnsureHasNoAccounts.ENSURE_HAS_NO_ACCOUNTS_WEIGHT;
 
 import com.android.bedstead.harrier.UserType;
 
@@ -59,5 +59,5 @@ public @interface EnsureHasAccount {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default ENSURE_HAS_ACCOUNT_AUTHENTICATOR_WEIGHT + 1;
+    int weight() default ENSURE_HAS_NO_ACCOUNTS_WEIGHT + 1;
 }

@@ -26,6 +26,7 @@ import static org.junit.Assert.assertThrows;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasAccount;
 import com.android.bedstead.harrier.annotations.EnsureHasAccountAuthenticator;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
@@ -125,13 +126,10 @@ public final class ProfileOwnerTest {
 
     @EnsureHasNoDpc
     @EnsureHasNoAccounts(onUser = ANY)
-    @EnsureHasAccountAuthenticator(onUser = INITIAL_USER)
+    @EnsureHasAccount(features = FEATURE_DISALLOW, onUser = INITIAL_USER)
     @Test
     public void setProfileOwnerViaAdb_invalidAccountOnParent_sets() throws Exception {
-        try (AccountReference account = sDeviceState.accounts(INITIAL_USER).addAccount()
-                .addFeature(FEATURE_DISALLOW)
-                .add();
-             UserReference profile = TestApis.users().createUser()
+        try (UserReference profile = TestApis.users().createUser()
                      .parent(TestApis.users().instrumented())
                      .type(MANAGED_PROFILE_TYPE_NAME)
                      .createAndStart()) {
@@ -149,11 +147,10 @@ public final class ProfileOwnerTest {
 
     @EnsureHasNoDpc
     @EnsureHasNoAccounts(onUser = ANY)
-    @EnsureHasAccountAuthenticator
+    @EnsureHasAccount(features = {}, onUser = INITIAL_USER)
     @Test
     public void setProfileOwnerViaAdb_accountExistsWithNoFeatures_doesNotSet() {
-        try (AccountReference account = sDeviceState.accounts().addAccount().add();
-             TestAppInstance dpcApp = TEST_ONLY_DPC.install()) {
+        try (TestAppInstance dpcApp = TEST_ONLY_DPC.install()) {
             try {
                 assertThrows(AdbException.class, () ->
                         ShellCommand
@@ -181,13 +178,10 @@ public final class ProfileOwnerTest {
 
     @EnsureHasNoDpc
     @EnsureHasNoAccounts(onUser = ANY)
-    @EnsureHasAccountAuthenticator
+    @EnsureHasAccount(features = FEATURE_DISALLOW, onUser = INITIAL_USER)
     @Test
     public void setProfileOwnerViaAdb_accountExistsWithDisallowFeature_doesNotSet() {
-        try (AccountReference account = sDeviceState.accounts().addAccount()
-                .addFeature(FEATURE_DISALLOW)
-                .add();
-             TestAppInstance dpcApp = TEST_ONLY_DPC.install()) {
+        try (TestAppInstance dpcApp = TEST_ONLY_DPC.install()) {
             try {
                 assertThrows(AdbException.class, () ->
                         ShellCommand
@@ -215,14 +209,10 @@ public final class ProfileOwnerTest {
 
     @EnsureHasNoDpc
     @EnsureHasNoAccounts(onUser = ANY)
-    @EnsureHasAccountAuthenticator
+    @EnsureHasAccount(features = {FEATURE_ALLOW, FEATURE_DISALLOW}, onUser = INITIAL_USER)
     @Test
     public void setProfileOwnerViaAdb_accountExistsWithDisallowAndAllowFeatures_doesNotSet() {
-        try (AccountReference account = sDeviceState.accounts().addAccount()
-                .addFeature(FEATURE_DISALLOW)
-                .addFeature(FEATURE_ALLOW)
-                .add();
-             TestAppInstance dpcApp = TEST_ONLY_DPC.install()) {
+        try (TestAppInstance dpcApp = TEST_ONLY_DPC.install()) {
             try {
                 assertThrows(AdbException.class, () ->
                         ShellCommand
@@ -250,13 +240,10 @@ public final class ProfileOwnerTest {
 
     @EnsureHasNoDpc
     @EnsureHasNoAccounts(onUser = ANY)
-    @EnsureHasAccountAuthenticator
+    @EnsureHasAccount(features = FEATURE_ALLOW, onUser = INITIAL_USER)
     @Test
     public void setProfileOwnerViaAdb_accountExistsWithAllowFeature_testOnly_sets() throws Exception {
-        try (AccountReference account = sDeviceState.accounts().addAccount()
-                .addFeature(FEATURE_ALLOW)
-                .add();
-             TestAppInstance dpcApp = TEST_ONLY_DPC.install()) {
+        try (TestAppInstance dpcApp = TEST_ONLY_DPC.install()) {
             try {
                 ShellCommand
                         .builderForUser(TestApis.users().instrumented(), SET_PROFILE_OWNER_COMMAND)
@@ -276,13 +263,10 @@ public final class ProfileOwnerTest {
 
     @EnsureHasNoDpc
     @EnsureHasNoAccounts(onUser = ANY)
-    @EnsureHasAccountAuthenticator
+    @EnsureHasAccount(features = FEATURE_ALLOW, onUser = INITIAL_USER)
     @Test
     public void setProfileOwnerViaAdb_accountExistsWithAllowFeature_notTestOnly_doesNotSet() {
-        try (AccountReference account = sDeviceState.accounts().addAccount()
-                .addFeature(FEATURE_ALLOW)
-                .add();
-             TestAppInstance dpcApp = NOT_TEST_ONLY_DPC.install()) {
+        try (TestAppInstance dpcApp = NOT_TEST_ONLY_DPC.install()) {
             try {
                 assertThrows(AdbException.class, () ->
                         ShellCommand

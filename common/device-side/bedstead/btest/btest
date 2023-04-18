@@ -84,7 +84,7 @@ class SecondaryUserState:
         return "RUN_ON_SECONDARY_USER"
 
     def is_active(self, device_state):
-        if not is_secondary_user(device_state["users"][device_state["current_user"]]):
+        if not is_secondary_user(device_state, device_state["users"][device_state["current_user"]]):
             return False
         if not self.args.headless:
             return True
@@ -217,7 +217,7 @@ class CloneProfileState:
         return "RUN_ON_CLONE_PROFILE"
 
     def is_active(self, device_state):
-        if not is_clone_user(device_state["users"][device_state["current_user"]]):
+        if not is_clone_profile(device_state, device_state["users"][device_state["current_user"]]):
             return False
         if self.args.headless:
             return False
@@ -245,7 +245,7 @@ class CloneProfileState:
     def _get_or_create_clone_profile(self, device_state):
         users = get_users(self.args)
         for user in users.values():
-            if self._is_clone_profile(user):
+            if is_clone_profile(device_state, user):
                 return user
 
         parent_id = 0 # Clone user only supported on system user only as of now.
@@ -258,9 +258,6 @@ class CloneProfileState:
 
     def _has_clone_profile(self, user):
         return "clone_profile_id" in user
-
-    def _is_clone_profile(self, user):
-        return user["type"] == "profile.CLONE"
 
     def all_supported_annotations(self, args):
         return self.include_annotations(args)
@@ -741,8 +738,12 @@ class Test:
                         return
 
             debug(self.args, "Waiting for tests to stop running...")
+            wait_to_end_timer = time.monotonic_ns()
             while self.tests_are_running():
-                pass
+                if time.monotonic_ns() - wait_to_end_timer > 10000000000:
+                    print("(Waited 10 seconds for test process to end. Killing)")
+                    self.test_process.kill()
+                    break
             debug(self.args, "Done")
 
             if self.next_test <= num_tests:
@@ -872,7 +873,7 @@ def execute_shell_command(stage, args, command, **extra_args):
 
 def get_or_create_additional_user(device_state, args):
     users = get_users(args)
-    secondary_users = sorted([u for u in users.keys() if is_secondary_user(users[u])])
+    secondary_users = sorted([u for u in users.keys() if is_secondary_user(device_state, users[u])])
     if (len(secondary_users) == 0):
         create_user(device_state, args)
     if len(secondary_users) < 2:
@@ -882,29 +883,36 @@ def get_or_create_additional_user(device_state, args):
 
 def get_or_create_secondary_user(device_state, args):
     users = get_users(args)
-    secondary_users = sorted([u for u in users.keys() if is_secondary_user(users[u])])
+    secondary_users = sorted([u for u in users.keys() if is_secondary_user(device_state, users[u])])
     if len(secondary_users) > 0:
         return secondary_users[0]
     return create_user(device_state, args)
 
 def is_additional_user(device_state, user):
-    if not is_secondary_user(user):
+    if not is_secondary_user(device_state, user):
         return False
 
-    secondary_users = sorted([u for u in device_state["users"].keys() if is_secondary_user(device_state["users"][u])])
+    secondary_users = sorted([u for u in device_state["users"].keys() if is_secondary_user(device_state, device_state["users"][u])])
     return user["id"] != secondary_users[0]
 
-def is_secondary_user(user):
-    return user["type"] == "full.SECONDARY"
+def is_for_testing(device_state, user):
+    """ FOR_TESTING introduced in SDK 34 - before that we can assume all users are suitable """
+    return device_state["sdk_version"] < 34 or "FOR_TESTING" in user["flags"]
 
-def is_clone_user(user):
-    return user["type"] == "profile.CLONE"
+def is_secondary_user(device_state, user):
+    return is_for_testing(device_state, user) and user["type"] == "full.SECONDARY"
+
+def is_clone_profile(device_state, user):
+    return is_for_testing(device_state, user) and user["type"] == "profile.CLONE"
+
+def remove_user(args, id):
+    execute_shell_command("Test", args, ["adb", "shell", "pm", "remove-user", str(id)])
 
 def create_user(device_state, args):
     ensure_no_dpcs(device_state, args) # avoid no_add_user TODO: Be more specific
     commands = ["adb", "shell", "pm", "create-user"]
 
-    if device_state["sdk_version"] >= 33:
+    if device_state["sdk_version"] >= 34:
         commands.append("--for-testing")
 
     commands.append("user")
@@ -923,7 +931,7 @@ def create_work_profile(device_state, args, parent_id):
 
     commands = ["adb", "shell", "pm", "create-user", "--managed", "--profileOf", str(parent_id)]
 
-    if device_state["sdk_version"] >= 33:
+    if device_state["sdk_version"] >= 34:
         commands.append("--for-testing")
 
     commands.append("user")
@@ -939,7 +947,7 @@ def create_work_profile(device_state, args, parent_id):
 def create_clone_profile(device_state, args, parent_id):
     ensure_no_dpcs(device_state, args) # avoid no_add_clone_profile TODO: Be more specific
     commands = ["adb", "shell", "pm", "create-user", "--profileOf", str(parent_id), "--user-type android.os.usertype.profile.CLONE"]
-    if device_state["sdk_version"] >= 33:
+    if device_state["sdk_version"] >= 34:
         commands.append("--for-testing")
     commands.append("user")
 
@@ -1013,6 +1021,8 @@ def run_tests(args):
 
     device_state = gather_device_state(args)
     args.headless = "HEADLESS" in device_state["users"][0]["type"]
+
+    ensure_correct_number_of_non_for_testing_users(args, device_state)
 
     if args.headless:
         if RUN_ON_CLONE_PROFILE in args.states:
@@ -1107,6 +1117,24 @@ def run_tests(args):
         raise e
 
     return btest_run, has_quit
+
+def ensure_correct_number_of_non_for_testing_users(args, device_state):
+    allowed_non_for_testing_users = 1
+    if args.headless:
+        allowed_non_for_testing_users = 2
+    has_changed_users = False
+
+    for user_id in sorted(device_state["users"].keys()):
+        if is_for_testing(device_state, device_state["users"][user_id]):
+            continue
+        if allowed_non_for_testing_users <= 0:
+            print("Removing user " + str(user_id) + " as exceeded supported non-for-testing users")
+            remove_user(args, user_id)
+            has_changed_users = True
+        allowed_non_for_testing_users -= 1
+
+    if has_changed_users:
+        device_state["users"] = get_users(args)
 
 def main():
     args = get_args()

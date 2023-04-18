@@ -49,8 +49,8 @@ public class CredentialDescriptionTest {
     }
 
     @Test
-    public void testConstructor_nullFlattenedRequest_shouldThrowIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class,
+    public void testConstructor_nullFlattenedRequest_shouldThrowNullPointerException() {
+        assertThrows(NullPointerException.class,
                 () -> new CredentialDescription(CREDENTIAL_TYPE, null,
                         Collections.emptyList()));
     }

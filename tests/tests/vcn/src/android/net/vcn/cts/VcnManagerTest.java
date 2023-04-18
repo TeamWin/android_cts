@@ -50,6 +50,7 @@ import static org.junit.Assume.assumeTrue;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.ipsec.ike.cts.IkeTunUtils;
 import android.net.ConnectivityManager;
 import android.net.InetAddresses;
@@ -1173,17 +1174,22 @@ public class VcnManagerTest extends VcnTestBase {
                 true /* expectedUseEncap */,
                 ikeUpdateSaResp);
 
-        ikeTunUtils.awaitReqAndInjectResp(
-                IKE_DETERMINISTIC_INITIATOR_SPI,
-                3 /* expectedMsgId */,
-                true /* expectedUseEncap */,
-                ikeCreateChildResp);
+        // If Kernel migration enabled, it will be used instead of MOBIKE-rekey
+        // TODO (b/277939911): Decouple VCN CTS from IKE implementation behavior
+        if (!mContext.getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_IPSEC_TUNNEL_MIGRATION)) {
+            ikeTunUtils.awaitReqAndInjectResp(
+                    IKE_DETERMINISTIC_INITIATOR_SPI,
+                    3 /* expectedMsgId */,
+                    true /* expectedUseEncap */,
+                    ikeCreateChildResp);
 
-        ikeTunUtils.awaitReqAndInjectResp(
-                IKE_DETERMINISTIC_INITIATOR_SPI,
-                4 /* expectedMsgId */,
-                true /* expectedUseEncap */,
-                ikeDeleteChildResp);
+            ikeTunUtils.awaitReqAndInjectResp(
+                    IKE_DETERMINISTIC_INITIATOR_SPI,
+                    4 /* expectedMsgId */,
+                    true /* expectedUseEncap */,
+                    ikeDeleteChildResp);
+        }
     }
 
     private void injectAndVerifyIkeDpdPackets(

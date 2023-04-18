@@ -62,6 +62,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     private static MockSatelliteServiceManager sMockSatelliteServiceManager;
     private static boolean sOriginalIsSatelliteEnabled = false;
     private static boolean sOriginalIsSatelliteProvisioned = false;
+
     /** SatelliteCapabilities constant indicating that the radio technology is proprietary. */
     private static final Set<Integer> SUPPORTED_RADIO_TECHNOLOGIES;
     static {
@@ -83,7 +84,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 new AntennaPosition(new AntennaDirection(2,2,2),
                         SatelliteManager.DEVICE_HOLD_POSITION_LANDSCAPE_LEFT));
     }
-
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
@@ -300,11 +300,13 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
         }
 
+        assertTrue(sMockSatelliteServiceManager.connectSatelliteGatewayService());
         requestSatelliteEnabled(true);
 
         assertTrue(callback.waitUntilResult(1));
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
         assertTrue(isSatelliteEnabled());
+        assertTrue(sMockSatelliteServiceManager.waitForRemoteSatelliteGatewayServiceConnected(1));
 
         SatelliteStateCallbackTest
                 callback1 = new SatelliteStateCallbackTest();
@@ -345,6 +347,8 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(callback1.waitUntilResult(1));
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback1.modemState);
         assertFalse(isSatelliteEnabled());
+        assertTrue(
+                sMockSatelliteServiceManager.waitForRemoteSatelliteGatewayServiceDisconnected(1));
 
         if (originalEnabledState) {
             // Restore original modem enabled state.
@@ -356,6 +360,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         }
         sSatelliteManager.unregisterForSatelliteModemStateChanged(callback1);
         assertTrue(sMockSatelliteServiceManager.setSatelliteListeningTimeoutDuration(0));
+        assertTrue(sMockSatelliteServiceManager.restoreSatelliteGatewayServicePackageName());
 
         revokeSatellitePermission();
     }

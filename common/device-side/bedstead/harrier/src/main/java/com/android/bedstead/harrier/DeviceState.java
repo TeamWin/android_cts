@@ -2503,7 +2503,11 @@ public final class DeviceState extends HarrierRule {
     private Set<TestAppInstance> mUninstalledTestApps = new HashSet<>();
 
     private void teardownShareableState() {
-        mCreatedAccounts.forEach(AccountReference::remove);
+        if (!mCreatedAccounts.isEmpty()) {
+            mCreatedAccounts.forEach(AccountReference::remove);
+
+            TestApis.devicePolicy().calculateHasIncompatibleAccounts();
+        }
 
         if (mHasChangedDeviceOwner) {
             if (mOriginalDeviceOwner == null) {
@@ -2701,6 +2705,7 @@ public final class DeviceState extends HarrierRule {
             ensureCanGetPermission(INTERACT_ACROSS_USERS_FULL);
         }
 
+        ensureHasNoAccounts(UserType.ANY);
         ensureTestAppInstalled(RemoteDevicePolicyManagerRoleHolder.sTestApp, user);
         TestApis.devicePolicy().setDevicePolicyManagementRoleHolder(
                 RemoteDevicePolicyManagerRoleHolder.sTestApp.pkg(), user);
@@ -3829,6 +3834,7 @@ public final class DeviceState extends HarrierRule {
         if (account.isPresent()) {
             accounts(onUser).setFeatures(account.get(), Set.of(features));
             mAccounts.put(key, account.get());
+            TestApis.devicePolicy().calculateHasIncompatibleAccounts();
             return account.get();
         }
 
@@ -3837,6 +3843,7 @@ public final class DeviceState extends HarrierRule {
                 .add();
         mCreatedAccounts.add(createdAccount);
         mAccounts.put(key, createdAccount);
+        TestApis.devicePolicy().calculateHasIncompatibleAccounts();
         return createdAccount;
     }
 
@@ -3859,6 +3866,8 @@ public final class DeviceState extends HarrierRule {
 
     private void ensureHasNoAccounts(UserReference user) {
         if (REMOTE_ACCOUNT_AUTHENTICATOR_TEST_APP.pkg().installedOnUser(user)) {
+            user.start(); // The user has to be started to remove accounts
+
             RemoteAccountAuthenticator.install(user).allAccounts()
                     .forEach(AccountReference::remove);
         }
@@ -3867,6 +3876,8 @@ public final class DeviceState extends HarrierRule {
             throw new NeneException("Expected no accounts on user " + user
                     + " but there was some that could not be removed");
         }
+
+        TestApis.devicePolicy().calculateHasIncompatibleAccounts();
     }
 
     /**

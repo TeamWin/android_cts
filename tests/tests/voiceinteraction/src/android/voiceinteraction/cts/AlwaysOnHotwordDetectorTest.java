@@ -17,9 +17,12 @@
 package android.voiceinteraction.cts;
 
 import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
+import static android.Manifest.permission.DEVICE_POWER;
 import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
 import static android.Manifest.permission.MANAGE_SOUND_TRIGGER;
+import static android.Manifest.permission.POWER_SAVER;
 import static android.Manifest.permission.RECORD_AUDIO;
+import static android.Manifest.permission.SOUND_TRIGGER_RUN_IN_BATTERY_SAVER;
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static android.service.voice.SoundTriggerFailure.ERROR_CODE_MODULE_DIED;
 import static android.service.voice.SoundTriggerFailure.ERROR_CODE_RECOGNITION_RESUME_FAILED;
@@ -41,6 +44,8 @@ import android.media.soundtrigger.SoundTriggerInstrumentation;
 import android.media.soundtrigger.SoundTriggerInstrumentation.ModelSession;
 import android.media.soundtrigger.SoundTriggerInstrumentation.RecognitionSession;
 import android.media.soundtrigger.SoundTriggerManager;
+import android.os.BatterySaverPolicyConfig;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
@@ -118,7 +123,8 @@ public class AlwaysOnHotwordDetectorTest {
         getInstrumentation()
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(
-                        RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD, MANAGE_HOTWORD_DETECTION);
+                        RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD, MANAGE_HOTWORD_DETECTION,
+                        SOUND_TRIGGER_RUN_IN_BATTERY_SAVER);
     }
 
     private void createAndEnrollAlwaysOnHotwordDetector() throws InterruptedException {
@@ -325,10 +331,11 @@ public class AlwaysOnHotwordDetectorTest {
     }
 
     @Test
-    public void testStartRecognitionNoFlagInBatterySaver_recognitionPausedAndResumed()
+    public void testStartRecognitionNoFlagBatterySaverAllEnabled_noRecognitionPaused()
             throws Exception {
         BatteryUtils.assumeBatterySaverFeature();
 
+        final PowerManager powerManager = sContext.getSystemService(PowerManager.class);
         createAndEnrollAlwaysOnHotwordDetector();
         // Grab permissions for more than a single call since we get callbacks
         adoptSoundTriggerPermissions();
@@ -347,8 +354,47 @@ public class AlwaysOnHotwordDetectorTest {
 
             BatteryUtils.runDumpsysBatteryUnplug();
 
-            // enable battery saver, onRecognitionPaused called
+            // enable battery saver with SOUND_TRIGGER_MODE_ALL_ENABLED, no onRecognitionPaused
+            // called
             getService().initOnRecognitionPausedLatch();
+            setSoundTriggerPowerSaveMode(powerManager, PowerManager.SOUND_TRIGGER_MODE_ALL_ENABLED);
+            BatteryUtils.enableBatterySaver(/* isEnabled= */ true);
+            assertThat(getService().waitNoOnRecognitionPausedCalled()).isTrue();
+        } finally {
+            BatteryUtils.runDumpsysBatteryReset();
+            BatteryUtils.resetBatterySaver();
+        }
+    }
+
+    @Test
+    public void testStartRecognitionNoFlagBatterySaverCriticalOnly_recognitionPaused()
+            throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+
+        final PowerManager powerManager = sContext.getSystemService(PowerManager.class);
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+        try {
+            mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+            try {
+                // wait for soundTrigger injection is ready
+                mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ex) {
+                throw new AssertionError("SoundTrigger Injection timeout");
+            }
+
+            // We received model load, recog start
+            assertThat(mModelSession).isNotNull();
+            assertThat(mRecognitionSession).isNotNull();
+
+            BatteryUtils.runDumpsysBatteryUnplug();
+
+            // enable battery saver with SOUND_TRIGGER_MODE_CRITICAL_ONLY, onRecognitionPaused
+            // called
+            getService().initOnRecognitionPausedLatch();
+            setSoundTriggerPowerSaveMode(powerManager,
+                    PowerManager.SOUND_TRIGGER_MODE_CRITICAL_ONLY);
             BatteryUtils.enableBatterySaver(/* isEnabled= */ true);
             getService().waitOnRecognitionPausedCalled();
 
@@ -360,5 +406,180 @@ public class AlwaysOnHotwordDetectorTest {
             BatteryUtils.runDumpsysBatteryReset();
             BatteryUtils.resetBatterySaver();
         }
+    }
+
+    @Test
+    public void testStartRecognitionNoFlagBatterySaverAllDisabled_recognitionPaused()
+            throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+
+        final PowerManager powerManager = sContext.getSystemService(PowerManager.class);
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+
+        try {
+            mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+            try {
+                // wait for soundTrigger injection is ready
+                mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ex) {
+                throw new AssertionError("SoundTrigger Injection timeout");
+            }
+
+            // We received model load, recog start
+            assertThat(mModelSession).isNotNull();
+            assertThat(mRecognitionSession).isNotNull();
+
+            BatteryUtils.runDumpsysBatteryUnplug();
+
+            // enable battery saver with SOUND_TRIGGER_MODE_ALL_DISABLED, onRecognitionPaused
+            // called
+            getService().initOnRecognitionPausedLatch();
+            setSoundTriggerPowerSaveMode(powerManager,
+                    PowerManager.SOUND_TRIGGER_MODE_ALL_DISABLED);
+            BatteryUtils.enableBatterySaver(/* isEnabled= */ true);
+            getService().waitOnRecognitionPausedCalled();
+
+            // disable battery saver, onRecognitionResumed called
+            getService().initOnRecognitionResumedLatch();
+            BatteryUtils.enableBatterySaver(/* isEnabled= */ false);
+            getService().waitOnRecognitionResumedCalled();
+        } finally {
+            BatteryUtils.runDumpsysBatteryReset();
+            BatteryUtils.resetBatterySaver();
+        }
+    }
+
+    @Test
+    public void testStartRecognitionWithFlagBatterySaverAllEnabled_noRecognitionPaused()
+            throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+
+        final PowerManager powerManager = sContext.getSystemService(PowerManager.class);
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+        try {
+            mAlwaysOnHotwordDetector.startRecognition(
+                    AlwaysOnHotwordDetector.RECOGNITION_FLAG_RUN_IN_BATTERY_SAVER,
+                    new byte[]{1, 2, 3, 4, 5});
+            try {
+                // wait for soundTrigger injection is ready
+                mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ex) {
+                throw new AssertionError("SoundTrigger Injection timeout");
+            }
+
+            // We received model load, recog start
+            assertThat(mModelSession).isNotNull();
+            assertThat(mRecognitionSession).isNotNull();
+
+            BatteryUtils.runDumpsysBatteryUnplug();
+
+            // enable battery saver with SOUND_TRIGGER_MODE_ALL_ENABLED, no onRecognitionPaused
+            // called
+            getService().initOnRecognitionPausedLatch();
+            setSoundTriggerPowerSaveMode(powerManager, PowerManager.SOUND_TRIGGER_MODE_ALL_ENABLED);
+            BatteryUtils.enableBatterySaver(/* isEnabled= */ true);
+            assertThat(getService().waitNoOnRecognitionPausedCalled()).isTrue();
+        } finally {
+            BatteryUtils.runDumpsysBatteryReset();
+            BatteryUtils.resetBatterySaver();
+        }
+    }
+
+    @Test
+    public void testStartRecognitionWithFlagBatterySaverCriticalOnly_noRecognitionPaused()
+            throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+
+        final PowerManager powerManager = sContext.getSystemService(PowerManager.class);
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+        try {
+            mAlwaysOnHotwordDetector.startRecognition(
+                    AlwaysOnHotwordDetector.RECOGNITION_FLAG_RUN_IN_BATTERY_SAVER,
+                    new byte[]{1, 2, 3, 4, 5});
+            try {
+                // wait for soundTrigger injection is ready
+                mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ex) {
+                throw new AssertionError("SoundTrigger Injection timeout");
+            }
+
+            // We received model load, recog start
+            assertThat(mModelSession).isNotNull();
+            assertThat(mRecognitionSession).isNotNull();
+
+            BatteryUtils.runDumpsysBatteryUnplug();
+
+            // enable battery saver with SOUND_TRIGGER_MODE_CRITICAL_ONLY, no onRecognitionPaused
+            // called
+            getService().initOnRecognitionPausedLatch();
+            setSoundTriggerPowerSaveMode(powerManager,
+                    PowerManager.SOUND_TRIGGER_MODE_CRITICAL_ONLY);
+            BatteryUtils.enableBatterySaver(/* isEnabled= */ true);
+            assertThat(getService().waitNoOnRecognitionPausedCalled()).isTrue();
+        } finally {
+            BatteryUtils.runDumpsysBatteryReset();
+            BatteryUtils.resetBatterySaver();
+        }
+    }
+
+    @Test
+    public void testStartRecognitionWithFlagBatterySaverAllDisabled_recognitionPaused()
+            throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+
+        final PowerManager powerManager = sContext.getSystemService(PowerManager.class);
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+
+        try {
+            mAlwaysOnHotwordDetector.startRecognition(
+                    AlwaysOnHotwordDetector.RECOGNITION_FLAG_RUN_IN_BATTERY_SAVER,
+                    new byte[]{1, 2, 3, 4, 5});
+            try {
+                // wait for soundTrigger injection is ready
+                mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ex) {
+                throw new AssertionError("SoundTrigger Injection timeout");
+            }
+
+            // We received model load, recog start
+            assertThat(mModelSession).isNotNull();
+            assertThat(mRecognitionSession).isNotNull();
+
+            BatteryUtils.runDumpsysBatteryUnplug();
+
+            // enable battery saver with SOUND_TRIGGER_MODE_ALL_DISABLED, onRecognitionPaused
+            // called
+            getService().initOnRecognitionPausedLatch();
+            setSoundTriggerPowerSaveMode(powerManager,
+                    PowerManager.SOUND_TRIGGER_MODE_ALL_DISABLED);
+            BatteryUtils.enableBatterySaver(/* isEnabled= */ true);
+            getService().waitOnRecognitionPausedCalled();
+
+            // disable battery saver, onRecognitionResumed called
+            getService().initOnRecognitionResumedLatch();
+            BatteryUtils.enableBatterySaver(/* isEnabled= */ false);
+            getService().waitOnRecognitionResumedCalled();
+        } finally {
+            BatteryUtils.runDumpsysBatteryReset();
+            BatteryUtils.resetBatterySaver();
+        }
+    }
+
+    private static void setSoundTriggerPowerSaveMode(PowerManager powerManager, int mode) {
+        final BatterySaverPolicyConfig newFullPolicyConfig =
+                new BatterySaverPolicyConfig.Builder(powerManager.getFullPowerSavePolicy())
+                        .setSoundTriggerMode(mode)
+                        .build();
+        runWithShellPermissionIdentity(
+                () -> powerManager.setFullPowerSavePolicy(newFullPolicyConfig), DEVICE_POWER,
+                POWER_SAVER);
     }
 }
