@@ -41,6 +41,7 @@ android_test {
     srcs: [
         "src/**/*.java",
         "src/**/*.kt",
+        "app/src/android/app/stubs/RemoteActivity.java",
         "NotificationListener/src/com/android/test/notificationlistener/INotificationUriAccessService.aidl",
     ],
     // Tag this module as a cts test artifact

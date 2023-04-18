@@ -27,12 +27,14 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
 
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR"/>
 
     <!-- For FileIntegrityManager -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
@@ -219,6 +221,11 @@
         <activity android:name="android.security.cts.ActivityManagerTest$ActivityOptionsActivity" />
         <activity android:name="android.security.cts.ActivityManagerTest$BaseActivity" />
 
+        <activity android:name="android.security.cts.PackageInstallerTest$BackgroundLaunchActivity"
+            android:exported="true" />
+        <service android:name="android.security.cts.TestForegroundService"
+            android:exported="true" />
+
         <provider android:name="android.security.cts.CVE_2022_20358.PocContentProvider"
             android:authorities="android.security.cts.CVE_2022_20358.provider"
             android:enabled="true"
@@ -233,6 +240,9 @@
             <meta-data android:name="android.content.SyncAdapter"
                 android:resource="@xml/syncadapter" />
         </service>
+
+        <activity android:name="android.security.cts.CVE_2023_20953.PocActivity"
+            android:exported="true" />
 
         <activity android:name="android.security.cts.CVE_2021_0642.PocActivity"
             android:exported="true">

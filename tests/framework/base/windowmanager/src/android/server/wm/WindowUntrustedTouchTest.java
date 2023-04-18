@@ -307,40 +307,6 @@ public class WindowUntrustedTouchTest {
         setMaximumObscuringOpacityForTouch(1.5f);
     }
 
-    /** This is testing what happens if setting is overridden manually */
-    @Test
-    public void testAfterSettingThresholdGreaterThan1ViaSettings_previousThresholdIsUsed()
-            throws Throwable {
-        setMaximumObscuringOpacityForTouch(.8f);
-        assertEquals(.8f, mInputManager.getMaximumObscuringOpacityForTouch());
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            Settings.Global.putFloat(mContentResolver, SETTING_MAXIMUM_OBSCURING_OPACITY, 1.5f);
-        });
-        addSawOverlay(APP_A, WINDOW_1, 9.f);
-
-        mTouchHelper.tapOnViewCenter(mContainer);
-
-        // Blocks because it's using previous maximum of .8
-        assertTouchNotReceived();
-    }
-
-    /** This is testing what happens if setting is overridden manually */
-    @Test
-    public void testAfterSettingThresholdLessThan0ViaSettings_previousThresholdIsUsed()
-            throws Throwable {
-        setMaximumObscuringOpacityForTouch(.8f);
-        assertEquals(.8f, mInputManager.getMaximumObscuringOpacityForTouch());
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            Settings.Global.putFloat(mContentResolver, SETTING_MAXIMUM_OBSCURING_OPACITY, -.5f);
-        });
-        addSawOverlay(APP_A, WINDOW_1, .7f);
-
-        mTouchHelper.tapOnViewCenter(mContainer);
-
-        // Allows because it's using previous maximum of .8
-        assertTouchReceived();
-    }
-
     /** SAWs */
 
     @Test

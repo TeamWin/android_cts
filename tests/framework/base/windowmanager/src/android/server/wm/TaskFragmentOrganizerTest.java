@@ -218,17 +218,17 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#finishActivity"})
     public void testFinishActivity() {
-        // TODO(b/232476698) The TestApi is new. Remove the assume in the next release.
         assumeExtensionVersionAtLeast2();
+        final Activity activity = startNewActivity(
+                WindowMetricsActivityTests.MetricsActivity.class);
+        // Make sure mLaunchingActivity is mapping to the correct component that is started.
+        mWmState.waitAndAssertActivityState(mLaunchingActivity, STATE_RESUMED);
 
-        final Activity activity = startNewActivity();
         final WindowContainerTransaction wct = new WindowContainerTransaction()
                 .finishActivity(getActivityToken(activity));
         mTaskFragmentOrganizer.applyTransaction(wct);
 
-        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-
-        assertTrue(activity.isDestroyed());
+        mWmState.waitAndAssertActivityRemoved(mLaunchingActivity);
     }
 
     /**

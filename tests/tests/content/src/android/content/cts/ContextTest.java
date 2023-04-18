@@ -16,6 +16,7 @@
 
 package android.content.cts;
 
+import static android.Manifest.permission.READ_WALLPAPER_INTERNAL;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
@@ -151,7 +152,9 @@ public class ContextTest extends AndroidTestCase {
 
         mRegisteredReceiverList = new ArrayList<BroadcastReceiver>();
 
-        mOriginalWallpaper = (BitmapDrawable) mContext.getWallpaper();
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mOriginalWallpaper = (BitmapDrawable) mContext.getWallpaper(),
+                READ_WALLPAPER_INTERNAL);
     }
 
     @Override
