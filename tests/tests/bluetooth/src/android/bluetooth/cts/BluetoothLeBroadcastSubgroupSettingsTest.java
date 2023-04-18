@@ -33,6 +33,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,7 +49,6 @@ public class BluetoothLeBroadcastSubgroupSettingsTest {
             BluetoothLeBroadcastSubgroupSettings.QUALITY_STANDARD;
 
     private Context mContext;
-    private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
     private boolean mIsBroadcastSourceSupported;
     private boolean mIsBroadcastAssistantSupported;
@@ -56,10 +56,8 @@ public class BluetoothLeBroadcastSubgroupSettingsTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mHasBluetooth = TestUtils.hasBluetooth();
-        if (!mHasBluetooth) {
-            return;
-        }
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
+
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
         mAdapter = TestUtils.getBluetoothAdapterOrDie();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -81,21 +79,17 @@ public class BluetoothLeBroadcastSubgroupSettingsTest {
             assertTrue("Config must be true when profile is supported",
                     isBroadcastSourceEnabledInConfig);
         }
+
+        Assume.assumeTrue(mIsBroadcastAssistantSupported || mIsBroadcastSourceSupported);
     }
 
     @After
     public void tearDown() {
-        if (mHasBluetooth) {
-            mAdapter = null;
-            TestUtils.dropPermissionAsShellUid();
-        }
+        TestUtils.dropPermissionAsShellUid();
     }
 
     @Test
     public void testCreateBroadcastSubgroupSettingsFromBuilder() {
-        if (shouldSkipTest()) {
-            return;
-        }
         BluetoothLeAudioContentMetadata contentMetadata =
                 new BluetoothLeAudioContentMetadata.Builder()
                         .setProgramInfo(TEST_PROGRAM_INFO).setLanguage(TEST_LANGUAGE).build();
@@ -111,9 +105,6 @@ public class BluetoothLeBroadcastSubgroupSettingsTest {
 
     @Test
     public void testCreateBroadcastSubgroupFromCopy() {
-        if (shouldSkipTest()) {
-            return;
-        }
         BluetoothLeAudioContentMetadata contentMetadata =
                 new BluetoothLeAudioContentMetadata.Builder()
                         .setProgramInfo(TEST_PROGRAM_INFO).setLanguage(TEST_LANGUAGE).build();
@@ -126,9 +117,5 @@ public class BluetoothLeBroadcastSubgroupSettingsTest {
                 new BluetoothLeBroadcastSubgroupSettings.Builder(settings).build();
         assertEquals(TEST_QUALITY, settingsCopy.getPreferredQuality());
         assertEquals(contentMetadata, settingsCopy.getContentMetadata());
-    }
-
-    private boolean shouldSkipTest() {
-        return !mHasBluetooth || (!mIsBroadcastSourceSupported && !mIsBroadcastAssistantSupported);
     }
 }

@@ -25,9 +25,11 @@ import android.os.ParcelUuid;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.internal.util.ArrayUtils;
 
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,6 +45,9 @@ public class ScanRecordTest {
     @SmallTest
     @Test
     public void testParser() {
+        Assume.assumeTrue(TestUtils.isBleSupported(
+                InstrumentationRegistry.getInstrumentation().getContext()));
+
         byte[] partialScanRecord = new byte[] {
                 0x02, 0x01, 0x1a, // advertising flags
                 0x05, 0x02, 0x0b, 0x11, 0x0a, 0x11, // 16 bit service uuids

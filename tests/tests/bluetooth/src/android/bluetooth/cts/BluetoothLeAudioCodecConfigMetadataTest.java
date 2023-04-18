@@ -37,6 +37,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,7 +63,6 @@ public class BluetoothLeAudioCodecConfigMetadataTest {
     };
 
     private Context mContext;
-    private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
     private boolean mIsBroadcastSourceSupported;
     private boolean mIsBroadcastAssistantSupported;
@@ -70,13 +70,10 @@ public class BluetoothLeAudioCodecConfigMetadataTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
-            return;
-        }
-        mHasBluetooth = TestUtils.hasBluetooth();
-        if (!mHasBluetooth) {
-            return;
-        }
+
+        Assume.assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU));
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
+
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
         mAdapter = TestUtils.getBluetoothAdapterOrDie();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -98,21 +95,18 @@ public class BluetoothLeAudioCodecConfigMetadataTest {
             assertTrue("Config must be true when profile is supported",
                     isBroadcastSourceEnabledInConfig);
         }
+
+        Assume.assumeTrue(mIsBroadcastAssistantSupported || mIsBroadcastSourceSupported);
     }
 
     @After
     public void tearDown() {
-        if (mHasBluetooth) {
-            mAdapter = null;
-            TestUtils.dropPermissionAsShellUid();
-        }
+        mAdapter = null;
+        TestUtils.dropPermissionAsShellUid();
     }
 
     @Test
     public void testCreateCodecConfigMetadataFromBuilder() {
-        if (shouldSkipTest()) {
-            return;
-        }
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
                 new BluetoothLeAudioCodecConfigMetadata.Builder()
                         .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_LEFT)
@@ -130,9 +124,6 @@ public class BluetoothLeAudioCodecConfigMetadataTest {
 
     @Test
     public void testCreateCodecConfigMetadataFromCopy() {
-        if (shouldSkipTest()) {
-            return;
-        }
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
                 new BluetoothLeAudioCodecConfigMetadata.Builder()
                         .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_LEFT)
@@ -152,9 +143,6 @@ public class BluetoothLeAudioCodecConfigMetadataTest {
 
     @Test
     public void testCreateCodecConfigMetadataFromBytes() {
-        if (shouldSkipTest()) {
-            return;
-        }
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
                 BluetoothLeAudioCodecConfigMetadata.fromRawBytes(TEST_METADATA_BYTES);
         byte[] metadataBytes = codecMetadata.getRawMetadata();
@@ -164,9 +152,5 @@ public class BluetoothLeAudioCodecConfigMetadataTest {
         assertEquals(TEST_SAMPLE_RATE_44100, codecMetadata.getSampleRate());
         assertEquals(TEST_FRAME_DURATION_10000, codecMetadata.getFrameDuration());
         assertEquals(TEST_OCTETS_PER_FRAME, codecMetadata.getOctetsPerFrame());
-    }
-
-    private boolean shouldSkipTest() {
-        return !mHasBluetooth || (!mIsBroadcastSourceSupported && !mIsBroadcastAssistantSupported);
     }
 }

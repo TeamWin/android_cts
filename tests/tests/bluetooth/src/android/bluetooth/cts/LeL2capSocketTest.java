@@ -22,12 +22,16 @@ import static org.junit.Assert.fail;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
 import android.content.Context;
+import android.os.Build;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,9 +50,10 @@ public class LeL2capSocketTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        if (!TestUtils.isBleSupported(mContext)) {
-            return;
-        }
+
+        Assume.assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU));
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
+
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
             .adoptShellPermissionIdentity(android.Manifest.permission.BLUETOOTH_CONNECT);
         mAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -61,21 +66,14 @@ public class LeL2capSocketTest {
 
     @After
     public void tearDown() throws Exception {
-        if (!TestUtils.isBleSupported(mContext)) {
-            return;
-        }
         mAdapter = null;
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
             .dropShellPermissionIdentity();
     }
 
-
     @SmallTest
     @Test
     public void testOpenInsecureLeL2capServerSocketOnce() {
-        if (!TestUtils.isBleSupported(mContext)) {
-            return;
-        }
         assertTrue("Bluetooth is not enabled", mAdapter.isEnabled());
         try {
             final BluetoothServerSocket serverSocket = mAdapter.listenUsingInsecureL2capChannel();
@@ -89,9 +87,6 @@ public class LeL2capSocketTest {
     @SmallTest
     @Test
     public void testOpenInsecureLeL2capServerSocketRepeatedly() {
-        if (!TestUtils.isBleSupported(mContext)) {
-            return;
-        }
         assertTrue("Bluetooth is not enabled", mAdapter.isEnabled());
         try {
             for (int i = 0; i < NUM_ITERATIONS_FOR_REPEATED_TEST; i++) {
@@ -108,9 +103,6 @@ public class LeL2capSocketTest {
     @SmallTest
     @Test
     public void testOpenSecureLeL2capServerSocketOnce() {
-        if (!TestUtils.isBleSupported(mContext)) {
-            return;
-        }
         assertTrue("Bluetooth is not enabled", mAdapter.isEnabled());
         try {
             final BluetoothServerSocket serverSocket = mAdapter.listenUsingL2capChannel();
@@ -124,9 +116,6 @@ public class LeL2capSocketTest {
     @SmallTest
     @Test
     public void testOpenSecureLeL2capServerSocketRepeatedly() {
-        if (!TestUtils.isBleSupported(mContext)) {
-            return;
-        }
         assertTrue("Bluetooth is not enabled", mAdapter.isEnabled());
         try {
             for (int i = 0; i < NUM_ITERATIONS_FOR_REPEATED_TEST; i++) {

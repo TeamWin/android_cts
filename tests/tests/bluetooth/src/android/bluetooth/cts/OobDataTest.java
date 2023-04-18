@@ -30,6 +30,7 @@ import android.content.pm.PackageManager;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,13 +39,12 @@ import org.junit.runner.RunWith;
 public class OobDataTest {
 
     private Context mContext;
-    private boolean mHasBluetooth;
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mHasBluetooth = mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_BLUETOOTH);
+        Assume.assumeTrue(
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH));
     }
 
     @Test
@@ -120,6 +120,8 @@ public class OobDataTest {
 
     @Test
     public void testLEBuilder() {
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
+
         byte[] defaultRandomizerHash = new byte[OobData.RANDOMIZER_OCTETS];
         byte[] defaultClassOfDevice = new byte[OobData.CLASS_OF_DEVICE_OCTETS];
         byte[] defaultClassicLength = new byte[OobData.OOB_LENGTH_OCTETS];
@@ -194,6 +196,8 @@ public class OobDataTest {
 
     @Test
     public void testToString() {
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
+
         byte[] confirmationHash = new byte[]{0x52, 0x70, 0x49, 0x41, 0x1A, (byte) 0xB3, 0x3F, 0x5C,
                 (byte) 0xE0, (byte) 0x99, 0x37, 0x29, 0x21, 0x52, 0x65, 0x49};
         byte[] address = new byte[]{0x12, 0x34, 0x56, 0x78, (byte) 0x8A, (byte) 0xBC, 0x0};

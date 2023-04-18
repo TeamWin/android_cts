@@ -44,6 +44,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,7 +79,6 @@ public class BluetoothLeBroadcastMetadataTest {
     private static final String TEST_LANGUAGE = "deu";
 
     private Context mContext;
-    private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
     private boolean mIsBroadcastSourceSupported;
     private boolean mIsBroadcastAssistantSupported;
@@ -86,13 +86,10 @@ public class BluetoothLeBroadcastMetadataTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
-            return;
-        }
-        mHasBluetooth = TestUtils.hasBluetooth();
-        if (!mHasBluetooth) {
-            return;
-        }
+
+        Assume.assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU));
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
+
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
         mAdapter = TestUtils.getBluetoothAdapterOrDie();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -114,21 +111,17 @@ public class BluetoothLeBroadcastMetadataTest {
             assertTrue("Config must be true when profile is supported",
                     isBroadcastSourceEnabledInConfig);
         }
+
+        Assume.assumeTrue(mIsBroadcastAssistantSupported || mIsBroadcastSourceSupported);
     }
 
     @After
     public void tearDown() {
-        if (mHasBluetooth) {
-            mAdapter = null;
-            TestUtils.dropPermissionAsShellUid();
-        }
+        TestUtils.dropPermissionAsShellUid();
     }
 
     @Test
     public void testCreateMetadataFromBuilder() {
-        if (shouldSkipTest()) {
-            return;
-        }
         BluetoothDevice testDevice =
                 mAdapter.getRemoteLeDevice(TEST_MAC_ADDRESS, BluetoothDevice.ADDRESS_TYPE_RANDOM);
         BluetoothLeAudioContentMetadata publicBroadcastMetadata =
@@ -176,9 +169,6 @@ public class BluetoothLeBroadcastMetadataTest {
 
     @Test
     public void testCreateMetadataFromCopy() {
-        if (shouldSkipTest()) {
-            return;
-        }
         BluetoothDevice testDevice =
                 mAdapter.getRemoteLeDevice(TEST_MAC_ADDRESS, BluetoothDevice.ADDRESS_TYPE_RANDOM);
         BluetoothLeAudioContentMetadata publicBroadcastMetadata =
@@ -225,10 +215,6 @@ public class BluetoothLeBroadcastMetadataTest {
         builder.clearSubgroup();
         // builder expect at least one subgroup
         assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    private boolean shouldSkipTest() {
-        return !mHasBluetooth || (!mIsBroadcastSourceSupported && !mIsBroadcastAssistantSupported);
     }
 
     static BluetoothLeBroadcastSubgroup createBroadcastSubgroup() {

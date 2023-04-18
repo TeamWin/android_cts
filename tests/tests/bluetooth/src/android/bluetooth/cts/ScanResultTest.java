@@ -23,14 +23,13 @@ import static org.junit.Assert.assertTrue;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanResult;
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Parcel;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,11 +49,10 @@ public class ScanResultTest {
     private static final int RSSI = -10;
     private static final long TIMESTAMP_NANOS = 10000L;
 
-    private Context mContext;
-
     @Before
     public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        Assume.assumeTrue(TestUtils.isBleSupported(
+                InstrumentationRegistry.getInstrumentation().getContext()));
     }
 
     /**
@@ -63,10 +61,6 @@ public class ScanResultTest {
     @SmallTest
     @Test
     public void testScanResultParceling() {
-        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
-            return;
-        }
-
         BluetoothDevice device =
                 BluetoothAdapter.getDefaultAdapter().getRemoteDevice(DEVICE_ADDRESS);
         ScanResult result = new ScanResult(device, TestUtils.parseScanRecord(SCAN_RECORD), RSSI,
@@ -86,10 +80,6 @@ public class ScanResultTest {
     @SmallTest
     @Test
     public void testDescribeContents() {
-        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
-            return;
-        }
-
         BluetoothDevice device =
                 BluetoothAdapter.getDefaultAdapter().getRemoteDevice(DEVICE_ADDRESS);
         ScanResult result = new ScanResult(device, TestUtils.parseScanRecord(SCAN_RECORD), RSSI,
@@ -100,10 +90,6 @@ public class ScanResultTest {
     @SmallTest
     @Test
     public void testConstructor() {
-        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
-            return;
-        }
-
         BluetoothDevice device =
                 BluetoothAdapter.getDefaultAdapter().getRemoteDevice(DEVICE_ADDRESS);
         int eventType = 0xAAAA;

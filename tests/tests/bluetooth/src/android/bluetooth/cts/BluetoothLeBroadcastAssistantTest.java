@@ -51,6 +51,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -96,12 +97,10 @@ public class BluetoothLeBroadcastAssistantTest {
     private static final String TEST_LANGUAGE = "deu";
 
     private Context mContext;
-    private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
     Executor mExecutor;
 
     private BluetoothLeBroadcastAssistant mBluetoothLeBroadcastAssistant;
-    private boolean mIsBroadcastAssistantSupported;
     private boolean mIsProfileReady;
     private Condition mConditionProfileConnection;
     private ReentrantLock mProfileConnectionlock;
@@ -112,13 +111,10 @@ public class BluetoothLeBroadcastAssistantTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
-            return;
-        }
-        mHasBluetooth = TestUtils.hasBluetooth();
-        if (!mHasBluetooth) {
-            return;
-        }
+
+        Assume.assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU));
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
+
         MockitoAnnotations.initMocks(this);
         mExecutor = mContext.getMainExecutor();
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT,BLUETOOTH_PRIVILEGED,BLUETOOTH_SCAN);
@@ -130,14 +126,9 @@ public class BluetoothLeBroadcastAssistantTest {
         mIsProfileReady = false;
         mBluetoothLeBroadcastAssistant = null;
 
-        mIsBroadcastAssistantSupported =
-                mAdapter.isLeAudioBroadcastAssistantSupported() == FEATURE_SUPPORTED;
-        if (mIsBroadcastAssistantSupported) {
-            boolean isBroadcastAssistantEnabledInConfig =
-                    TestUtils.isProfileEnabled(BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT);
-            assertTrue("Config must be true when profile is supported",
-                    isBroadcastAssistantEnabledInConfig);
-        }
+        Assume.assumeTrue(mAdapter.isLeAudioBroadcastAssistantSupported() == FEATURE_SUPPORTED);
+        assertTrue("Config must be true when profile is supported",
+                TestUtils.isProfileEnabled(BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT));
 
         mAdapter.getProfileProxy(mContext, new ServiceListener(),
                 BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT);
@@ -145,24 +136,18 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @After
     public void tearDown() {
-        if (mHasBluetooth) {
-            if (mAdapter != null && mBluetoothLeBroadcastAssistant != null) {
-                mAdapter.closeProfileProxy(BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT,
-                        mBluetoothLeBroadcastAssistant);
-                mBluetoothLeBroadcastAssistant = null;
-                mIsProfileReady = false;
-            }
-            mAdapter = null;
-            TestUtils.dropPermissionAsShellUid();
+        if (mAdapter != null && mBluetoothLeBroadcastAssistant != null) {
+            mAdapter.closeProfileProxy(BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT,
+                    mBluetoothLeBroadcastAssistant);
+            mBluetoothLeBroadcastAssistant = null;
+            mIsProfileReady = false;
         }
+        mAdapter = null;
+        TestUtils.dropPermissionAsShellUid();
     }
 
     @Test
     public void testCloseProfileProxy() {
-        if (shouldSkipTest()) {
-            return;
-        }
-
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
         assertTrue(mIsProfileReady);
@@ -175,9 +160,6 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @Test
     public void testAddSource() {
-        if (shouldSkipTest()) {
-            return;
-        }
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -245,9 +227,6 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @Test
     public void testGetAllSources() {
-        if (shouldSkipTest()) {
-            return;
-        }
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -268,9 +247,6 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @Test
     public void testSetConnectionPolicy() {
-        if (shouldSkipTest()) {
-            return;
-        }
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -292,9 +268,6 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @Test
     public void testGetMaximumSourceCapacity() {
-        if (shouldSkipTest()) {
-            return;
-        }
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -311,9 +284,6 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @Test
     public void testIsSearchInProgress() {
-        if (shouldSkipTest()) {
-            return;
-        }
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -323,9 +293,6 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @Test
     public void testModifySource() {
-        if (shouldSkipTest()) {
-            return;
-        }
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -375,9 +342,6 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @Test
     public void testRegisterCallback() {
-        if (shouldSkipTest()) {
-            return;
-        }
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -443,9 +407,6 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @Test
     public void testStartSearchingForSources() {
-        if (shouldSkipTest()) {
-            return;
-        }
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -481,9 +442,6 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @Test
     public void testGetConnectedDevices() {
-        if (shouldSkipTest()) {
-            return;
-        }
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -503,9 +461,6 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @Test
     public void testGetDevicesMatchingConnectionStates() {
-        if (shouldSkipTest()) {
-            return;
-        }
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -531,10 +486,6 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @Test
     public void testGetConnectionState() {
-        if (shouldSkipTest()) {
-            return;
-        }
-
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -549,23 +500,6 @@ public class BluetoothLeBroadcastAssistantTest {
         // Verify returns false if bluetooth is not enabled
         assertEquals(BluetoothProfile.STATE_DISCONNECTED,
                 mBluetoothLeBroadcastAssistant.getConnectionState(testDevice));
-    }
-
-    @Test
-    public void testProfileSupportLogic() {
-        if (!mHasBluetooth) {
-            return;
-        }
-        if (mAdapter.isLeAudioBroadcastAssistantSupported()
-                == BluetoothStatusCodes.FEATURE_NOT_SUPPORTED) {
-            assertFalse(mIsBroadcastAssistantSupported);
-            return;
-        }
-        assertTrue(mIsBroadcastAssistantSupported);
-    }
-
-    private boolean shouldSkipTest() {
-        return !(mHasBluetooth && mIsBroadcastAssistantSupported);
     }
 
     private boolean waitForProfileConnect() {

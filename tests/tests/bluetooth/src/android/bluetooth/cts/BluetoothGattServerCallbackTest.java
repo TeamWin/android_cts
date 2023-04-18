@@ -31,12 +31,12 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
-import android.content.pm.PackageManager;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -103,7 +103,6 @@ public class BluetoothGattServerCallbackTest {
     private final UUID TEST_UUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
     private final byte[] mBytes = new byte[]{};
     private Context mContext;
-    private boolean mHasBluetooth;
     private BluetoothDevice mBluetoothDevice;
     private BluetoothAdapter mAdapter;
     private UiAutomation mUiAutomation;
@@ -114,10 +113,10 @@ public class BluetoothGattServerCallbackTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mHasBluetooth = mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_BLUETOOTH);
+
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
+
         BluetoothManager manager = mContext.getSystemService(BluetoothManager.class);
-        if (!mHasBluetooth) return;
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
         mAdapter = manager.getAdapter();
@@ -131,12 +130,12 @@ public class BluetoothGattServerCallbackTest {
 
     @After
     public void tearDown() throws Exception {
-        if (mHasBluetooth) {
-            mAdapter = null;
-            mBluetoothDevice = null;
-            mBluetoothGattService = null;
-            mBluetoothGattCharacteristic = null;
-            mBluetoothGattDescriptor = null;
+        mAdapter = null;
+        mBluetoothDevice = null;
+        mBluetoothGattService = null;
+        mBluetoothGattCharacteristic = null;
+        mBluetoothGattDescriptor = null;
+        if (mUiAutomation != null) {
             mUiAutomation.dropShellPermissionIdentity();
         }
     }

@@ -49,6 +49,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,7 +69,6 @@ public class SystemBluetoothTest {
     private static final String BLE_SCAN_ALWAYS_AVAILABLE = "ble_scan_always_enabled";
 
     private Context mContext;
-    private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
     private UiAutomation mUiAutomation;
 
@@ -79,9 +79,9 @@ public class SystemBluetoothTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mHasBluetooth = mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_BLUETOOTH);
-        if (!mHasBluetooth) return;
+
+        Assume.assumeTrue(mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_BLUETOOTH));
 
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
@@ -93,6 +93,9 @@ public class SystemBluetoothTest {
 
     @After
     public void tearDown() {
+        if (mUiAutomation != null) {
+            mUiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     /**
@@ -100,10 +103,6 @@ public class SystemBluetoothTest {
      */
     @Test
     public void testSilenceMode() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
         BluetoothDevice device = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
@@ -121,10 +120,6 @@ public class SystemBluetoothTest {
      */
     @Test
     public void testSetGetMetadata() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
         byte[] testByteData = "Test Data".getBytes();
@@ -151,10 +146,6 @@ public class SystemBluetoothTest {
 
     @Test
     public void testDiscoveryEndMillis() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
         mDiscoveryStartedLock = new ReentrantLock();
@@ -180,10 +171,6 @@ public class SystemBluetoothTest {
      */
     @Test
     public void testContainsAnyUuid() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
         ParcelUuid[] deviceAUuids = new ParcelUuid[]{BluetoothUuid.A2DP_SOURCE, BluetoothUuid.HFP,
@@ -208,10 +195,6 @@ public class SystemBluetoothTest {
 
     @Test
     public void testParseUuidFrom() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
         byte[] uuid16 = new byte[]{0x0B, 0x11};
         assertEquals(BluetoothUuid.A2DP_SINK, BluetoothUuid.parseUuidFrom(uuid16));
 
@@ -225,10 +208,6 @@ public class SystemBluetoothTest {
 
     @Test
     public void testCanBondWithoutDialog() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
         // Verify the method returns false on a device that doesn't meet the criteria
@@ -238,9 +217,7 @@ public class SystemBluetoothTest {
 
     @Test
     public void testBleOnlyMode() {
-        if (!mHasBluetooth) {
-            return;
-        }
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
 
         int originalScanAlwaysAvailableValue = 0;
 
@@ -267,9 +244,7 @@ public class SystemBluetoothTest {
 
     @Test
     public void testSetGetOwnAddressType() {
-        if (!mHasBluetooth) {
-            return;
-        }
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
 
         AdvertisingSetParameters.Builder paramsBuilder = new AdvertisingSetParameters.Builder();
 
@@ -316,10 +291,6 @@ public class SystemBluetoothTest {
 
     @Test
     public void testEnableNoAutoConnect() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
         // Assert that when Bluetooth is already enabled, the method immediately returns true
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
         assertTrue(mAdapter.enableNoAutoConnect());
@@ -333,10 +304,6 @@ public class SystemBluetoothTest {
 
     @Test
     public void testDisableBluetoothPersistFalse() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, /* persist= */ false, mContext));
         assertFalse(isBluetoothPersistedOff());
@@ -344,10 +311,6 @@ public class SystemBluetoothTest {
 
     @Test
     public void testDisableBluetoothPersistTrue() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, /* persist= */ true, mContext));
         assertTrue(isBluetoothPersistedOff());
@@ -355,9 +318,6 @@ public class SystemBluetoothTest {
 
     @Test
     public void testSetLowLatencyAudioAllowed() {
-        if (!mHasBluetooth) {
-            return;
-        }
         BluetoothDevice device = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
 
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
@@ -371,10 +331,6 @@ public class SystemBluetoothTest {
 
     @Test
     public void testGenerateLocalOobData() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
         Executor executor = new Executor() {
             @Override
             public void execute(Runnable command) {
@@ -410,10 +366,6 @@ public class SystemBluetoothTest {
 
     @Test
     public void testSetScanMode() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
         assertEquals(BluetoothStatusCodes.ERROR_BLUETOOTH_NOT_ENABLED,
                 mAdapter.setScanMode(BluetoothAdapter.SCAN_MODE_CONNECTABLE));
 
