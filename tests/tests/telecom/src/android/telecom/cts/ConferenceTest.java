@@ -78,6 +78,11 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
         }
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
+
     public void testConferenceCreate() {
         if (!mShouldTestTelecom) {
             return;

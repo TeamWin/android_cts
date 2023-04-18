@@ -16,8 +16,6 @@
 
 package android.telecom.cts;
 
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -26,12 +24,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.DropBoxManager;
 import android.provider.CallLog;
-import android.provider.DeviceConfig;
 import android.telecom.Call;
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccount;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -39,9 +35,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
     private static final String TAG = EmergencyCallTests.class.getSimpleName();
@@ -78,6 +71,10 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
         dropBoxIntentFilter.addAction(DropBoxManager.ACTION_DROPBOX_ENTRY_ADDED);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
 
     /**
      * Tests a scenario where an emergency call could fail due to the presence of

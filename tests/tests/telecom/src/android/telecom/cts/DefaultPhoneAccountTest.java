@@ -33,6 +33,11 @@ public class DefaultPhoneAccountTest extends BaseTelecomTestWithMockServices {
         mContext = getInstrumentation().getContext();
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
+
     /**
      * Verifies that {@link TelecomManager#getUserSelectedOutgoingPhoneAccount()} is able to
      * retrieve the user-selected outgoing phone account.
