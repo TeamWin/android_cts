@@ -212,6 +212,7 @@ public class DevicePolicyManagementRoleHolderTest {
             throws Exception {
         TestApis.devicePolicy().resetShouldAllowBypassingDevicePolicyManagementRoleQualificationState();
         try (UserReference user = TestApis.users().createUser()
+                .name("shouldAllowBypassingDevicePolicyManagementRoleQualification_withNonTestUsers_returnsFalse")
                 .forTesting(false)
                 .create()) {
             assertThat(
