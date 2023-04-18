@@ -86,6 +86,7 @@ import com.android.queryable.annotations.Query;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -315,6 +316,7 @@ public final class BluetoothTest {
     @CannotSetPolicyTest(policy = DisallowBluetoothSharingGlobally.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_BLUETOOTH_SHARING")
+    @Ignore("No global setters of this restriction")
     public void addUserRestrictionGlobally_disallowBluetoothSharing_cannotSet_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
@@ -350,6 +352,7 @@ public final class BluetoothTest {
     @PolicyAppliesTest(policy = DisallowBluetoothSharingGlobally.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_BLUETOOTH_SHARING")
+    @Ignore("No global setters of this restriction")
     public void addUserRestrictionGlobally_disallowBluetoothSharing_isSet() {
         sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
                 DISALLOW_BLUETOOTH_SHARING);
@@ -524,6 +527,7 @@ public final class BluetoothTest {
     @PolicyAppliesTest(policy = DisallowConfigBluetoothGlobally.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONFIG_BLUETOOTH")
+    @Ignore("No global setters of this restriction")
     public void addUserRestrictionGlobally_disallowConfigBluetooth_isSet() {
         sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
                 DISALLOW_CONFIG_BLUETOOTH);
@@ -595,6 +599,7 @@ public final class BluetoothTest {
     @PolicyAppliesTest(policy = DisallowBluetoothGlobally.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_BLUETOOTH")
+    @Ignore("No global setters of this restriction")
     public void addUserRestrictionGlobally_disallowBluetooth_isSet() {
         sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
                 DISALLOW_BLUETOOTH);
