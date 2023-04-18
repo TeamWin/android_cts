@@ -55,7 +55,7 @@ public class KnownNetworkTest {
     private static final NetworkProviderInfo NETWORK_PROVIDER_INFO =
             new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
                     .setDeviceType(DEVICE_TYPE_TABLET).setConnectionStrength(2)
-                    .setBatteryPercentage(50).build();
+                    .setBatteryPercentage(50).setBatteryCharging(false).build();
     private static final String BUNDLE_KEY = "INT-KEY";
     private static final int BUNDLE_VALUE = 1;
 
@@ -65,7 +65,7 @@ public class KnownNetworkTest {
     private static final NetworkProviderInfo NETWORK_PROVIDER_INFO1 =
             new NetworkProviderInfo.Builder("TEST_NAME_1", "TEST_MODEL_1")
                     .setDeviceType(DEVICE_TYPE_PHONE).setConnectionStrength(3)
-                    .setBatteryPercentage(33).build();
+                    .setBatteryPercentage(33).setBatteryCharging(true).build();
 
     @Test
     public void parcelOperation() {

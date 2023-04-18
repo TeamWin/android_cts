@@ -52,7 +52,7 @@ public class HotspotNetworkConnectionStatusTest {
     private static final NetworkProviderInfo NETWORK_PROVIDER_INFO =
             new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
                     .setDeviceType(DEVICE_TYPE_TABLET).setConnectionStrength(2)
-                    .setBatteryPercentage(50).build();
+                    .setBatteryPercentage(50).setBatteryCharging(false).build();
     private static final int NETWORK_TYPE = NETWORK_TYPE_CELLULAR;
     private static final String NETWORK_NAME = "TEST_NETWORK";
     private static final String HOTSPOT_SSID = "TEST_SSID";

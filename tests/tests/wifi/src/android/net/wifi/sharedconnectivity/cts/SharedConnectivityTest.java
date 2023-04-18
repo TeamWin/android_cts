@@ -77,6 +77,7 @@ public class SharedConnectivityTest {
             .setNetworkProviderInfo(new NetworkProviderInfo.Builder("Matt's Phone", "Pixel 6a")
                     .setDeviceType(NetworkProviderInfo.DEVICE_TYPE_PHONE)
                     .setBatteryPercentage(80)
+                    .setBatteryCharging(false)
                     .setConnectionStrength(3)
                     .build())
             .setHostNetworkType(HotspotNetwork.NETWORK_TYPE_CELLULAR)
@@ -91,6 +92,7 @@ public class SharedConnectivityTest {
             .setNetworkProviderInfo(new NetworkProviderInfo.Builder("Matt's Laptop", "Pixelbook Go")
                     .setDeviceType(NetworkProviderInfo.DEVICE_TYPE_LAPTOP)
                     .setBatteryPercentage(30)
+                    .setBatteryCharging(true)
                     .setConnectionStrength(2)
                     .build())
             .setHostNetworkType(HotspotNetwork.NETWORK_TYPE_WIFI)
@@ -104,6 +106,7 @@ public class SharedConnectivityTest {
             .setNetworkProviderInfo(new NetworkProviderInfo.Builder("Isaac's Phone", "Pixel 7")
                     .setDeviceType(NetworkProviderInfo.DEVICE_TYPE_PHONE)
                     .setBatteryPercentage(99)
+                    .setBatteryCharging(false)
                     .setConnectionStrength(3)
                     .build())
             .build();
@@ -116,6 +119,7 @@ public class SharedConnectivityTest {
                     "Pixel 7 Pro")
                     .setDeviceType(NetworkProviderInfo.DEVICE_TYPE_PHONE)
                     .setBatteryPercentage(15)
+                    .setBatteryCharging(true)
                     .setConnectionStrength(1)
                     .build())
             .build();

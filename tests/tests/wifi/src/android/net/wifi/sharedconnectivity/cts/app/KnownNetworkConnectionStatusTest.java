@@ -53,7 +53,7 @@ public class KnownNetworkConnectionStatusTest {
     private static final NetworkProviderInfo NETWORK_PROVIDER_INFO =
             new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
                     .setDeviceType(DEVICE_TYPE_TABLET).setConnectionStrength(2)
-                    .setBatteryPercentage(50).build();
+                    .setBatteryPercentage(50).setBatteryCharging(false).build();
     private static final String SSID_1 = "TEST_SSID1";
     private static final String BUNDLE_KEY = "INT-KEY";
     private static final int BUNDLE_VALUE = 1;

@@ -44,12 +44,14 @@ public class NetworkProviderInfoTest {
     private static final String DEVICE_NAME = "TEST_NAME";
     private static final String DEVICE_MODEL = "TEST_MODEL";
     private static final int BATTERY_PERCENTAGE = 50;
+    private static final boolean BATTERY_CHARGING = false;
     private static final int CONNECTION_STRENGTH = 2;
 
     private static final int DEVICE_TYPE_1 = DEVICE_TYPE_LAPTOP;
     private static final String DEVICE_NAME_1 = "TEST_NAME1";
     private static final String DEVICE_MODEL_1 = "TEST_MODEL1";
     private static final int BATTERY_PERCENTAGE_1 = 30;
+    private static final boolean BATTERY_CHARGING_1 = true;
     private static final int CONNECTION_STRENGTH_1 = 1;
 
     @Test
@@ -91,6 +93,10 @@ public class NetworkProviderInfoTest {
         assertThat(builder.build()).isNotEqualTo(info1);
 
         builder = buildNetworkProviderInfoBuilder()
+                .setBatteryCharging(BATTERY_CHARGING_1);
+        assertThat(builder.build()).isNotEqualTo(info1);
+
+        builder = buildNetworkProviderInfoBuilder()
                 .setConnectionStrength(CONNECTION_STRENGTH_1);
         assertThat(builder.build()).isNotEqualTo(info1);
     }
@@ -102,6 +108,7 @@ public class NetworkProviderInfoTest {
         assertThat(info.getDeviceName()).isEqualTo(DEVICE_NAME);
         assertThat(info.getModelName()).isEqualTo(DEVICE_MODEL);
         assertThat(info.getBatteryPercentage()).isEqualTo(BATTERY_PERCENTAGE);
+        assertThat(info.isBatteryCharging()).isEqualTo(BATTERY_CHARGING);
         assertThat(info.getConnectionStrength()).isEqualTo(CONNECTION_STRENGTH);
     }
 
@@ -170,7 +177,7 @@ public class NetworkProviderInfoTest {
 
     private NetworkProviderInfo.Builder buildNetworkProviderInfoBuilder() {
         return new NetworkProviderInfo.Builder(DEVICE_NAME, DEVICE_MODEL).setDeviceType(DEVICE_TYPE)
-                .setBatteryPercentage(BATTERY_PERCENTAGE)
+                .setBatteryPercentage(BATTERY_PERCENTAGE).setBatteryCharging(BATTERY_CHARGING)
                 .setConnectionStrength(CONNECTION_STRENGTH);
     }
 }
