@@ -176,7 +176,7 @@ public class CodecEncoderTestBase extends CodecTestBase {
     public static void validateEncodedPSNR(String inpMediaType, String inpFile,
             String outMediaType, String outFile, boolean allowInpResize, boolean allowInpLoopBack,
             double perFramePsnrThreshold) throws IOException, InterruptedException {
-        CompareStreams2 cs = new CompareStreams2(inpMediaType, inpFile, outMediaType, outFile,
+        CompareStreams cs = new CompareStreams(inpMediaType, inpFile, outMediaType, outFile,
                 allowInpResize, allowInpLoopBack);
         validateEncodedPSNR(cs.getFramesPSNR(), perFramePsnrThreshold);
         cs.cleanUp();
@@ -185,7 +185,7 @@ public class CodecEncoderTestBase extends CodecTestBase {
     public static void validateEncodedPSNR(RawResource inp, String outMediaType, String outFile,
             boolean allowInpResize, boolean allowInpLoopBack, double perFramePsnrThreshold)
             throws IOException, InterruptedException {
-        CompareStreams2 cs = new CompareStreams2(inp, outMediaType, outFile, allowInpResize,
+        CompareStreams cs = new CompareStreams(inp, outMediaType, outFile, allowInpResize,
                 allowInpLoopBack);
         validateEncodedPSNR(cs.getFramesPSNR(), perFramePsnrThreshold);
         cs.cleanUp();
