@@ -33,6 +33,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.stream.IntStream;
 import java.util.zip.CRC32;
 
 /**
@@ -195,13 +196,19 @@ public class OutputManager {
         } else if (width > 0 && height > 0 && stride > 0 && bytesPerSample > 0) {
             // Checksum only the Y plane
             int pos = buf.position();
-            int offset = pos;
             byte[] bb = new byte[width * height * bytesPerSample];
-            for (int i = 0; i < height; ++i) {
-                buf.position(offset);
-                buf.get(bb, i * width * bytesPerSample, width * bytesPerSample);
-                offset += stride;
-            }
+            // we parallelize these copies from non-array buffers because it yields 60% speedup on
+            // 4 core systems. On 4k images, this means 4k frame checksums go from 200 to 80
+            // milliseconds, and this allows some of our 4k video tests to run in 4 minutes,
+            // bringing it under the 10 minutes limit imposed by the test infrastructure.
+            IntStream.range(0, height).parallel().forEach(i -> {
+                int offset = pos + stride * i;
+                // Creating a duplicate as Bytebuffer.position() is not threadsafe and the
+                // duplication does not copy the content.
+                ByteBuffer dup = buf.asReadOnlyBuffer();
+                dup.position(offset);
+                dup.get(bb, i * width * bytesPerSample, width * bytesPerSample);
+            });
             mCrc32UsingBuffer.update(bb, 0, width * height * bytesPerSample);
             if (ENABLE_DUMP) {
                 dumpY(bb, 0, width * height * bytesPerSample);
@@ -237,7 +244,7 @@ public class OutputManager {
         Image.Plane[] planes = image.getPlanes();
         for (int i = 0; i < planes.length; ++i) {
             ByteBuffer buf = planes[i].getBuffer();
-            int width, height, rowStride, pixelStride, x, y, left, top;
+            int width, height, rowStride, pixelStride, left, top;
             rowStride = planes[i].getRowStride();
             pixelStride = planes[i].getPixelStride();
             if (i == 0) {
@@ -260,15 +267,15 @@ public class OutputManager {
                 byte[] b = buf.array();
                 int offs = buf.arrayOffset() + cropOffset;
                 if (pixelStride == bytesPerSample) {
-                    for (y = 0; y < height; ++y) {
+                    for (int y = 0; y < height; ++y) {
                         System.arraycopy(b, offs + y * rowStride, bb, y * width * bytesPerSample,
                                 width * bytesPerSample);
                     }
                 } else {
                     // do it pixel-by-pixel
-                    for (y = 0; y < height; ++y) {
+                    for (int y = 0; y < height; ++y) {
                         int lineOffset = offs + y * rowStride;
-                        for (x = 0; x < width; ++x) {
+                        for (int x = 0; x < width; ++x) {
                             for (int bytePos = 0; bytePos < bytesPerSample; ++bytePos) {
                                 bb[y * width * bytesPerSample + x * bytesPerSample + bytePos] =
                                         b[lineOffset + x * pixelStride + bytePos];
@@ -279,27 +286,35 @@ public class OutputManager {
             } else { // almost always ends up here due to direct buffers
                 int base = buf.position();
                 int pos = base + cropOffset;
+                // we parallelize these copies from non-array buffers because it yields 60% speedup on
+                // 4 core systems. On 4k images, this means 4k frame checksums go from 200 to 80
+                // milliseconds, and this allows some of our 4k video tests to run in 4 minutes,
+                // bringing it under the 10 minutes limit imposed by the test infrastructure.
                 if (pixelStride == bytesPerSample) {
-                    for (y = 0; y < height; ++y) {
-                        buf.position(pos + y * rowStride);
-                        buf.get(bb, y * width * bytesPerSample, width * bytesPerSample);
-                    }
+                    IntStream.range(0, height).parallel().forEach(y -> {
+                        // Creating a duplicate as Bytebuffer.position() is not threadsafe and the
+                        // duplication does not copy the content.
+                        ByteBuffer dup = buf.asReadOnlyBuffer();
+                        dup.position(pos + y * rowStride);
+                        dup.get(bb, y * width * bytesPerSample, width * bytesPerSample);
+                    });
                 } else {
-                    // local line buffer
-                    byte[] lb = new byte[rowStride];
-                    // do it pixel-by-pixel
-                    for (y = 0; y < height; ++y) {
-                        buf.position(pos + y * rowStride);
+                    IntStream.range(0, height).parallel().forEach(y -> {
+                        byte[] lb = new byte[rowStride];
+                        // Creating a duplicate as Bytebuffer.position() is not threadsafe and the
+                        // duplication does not copy the content.
+                        ByteBuffer dup = buf.asReadOnlyBuffer();
+                        dup.position(pos + y * rowStride);
                         // we're only guaranteed to have pixelStride * (width - 1) +
                         // bytesPerSample bytes
-                        buf.get(lb, 0, pixelStride * (width - 1) + bytesPerSample);
-                        for (x = 0; x < width; ++x) {
+                        dup.get(lb, 0, pixelStride * (width - 1) + bytesPerSample);
+                        for (int x = 0; x < width; ++x) {
                             for (int bytePos = 0; bytePos < bytesPerSample; ++bytePos) {
                                 bb[y * width * bytesPerSample + x * bytesPerSample + bytePos] =
                                         lb[x * pixelStride + bytePos];
                             }
                         }
-                    }
+                    });
                 }
                 buf.position(base);
             }
