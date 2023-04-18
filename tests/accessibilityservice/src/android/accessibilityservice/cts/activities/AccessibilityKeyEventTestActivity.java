@@ -16,16 +16,21 @@
 
 package android.accessibilityservice.cts.activities;
 
-import android.accessibilityservice.cts.R;
-import android.os.Bundle;
+import android.view.KeyEvent;
 
-/**
- * Activity launched on the default display that is used by AccessibilityProxyTest.
- */
-public class NonProxyActivity extends AccessibilityKeyEventTestActivity {
+public class AccessibilityKeyEventTestActivity extends AccessibilityTestActivity {
+    int mExpectedKeyCode;
+    public boolean mReceivedKeyCode;
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.non_proxy_activity);
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() == mExpectedKeyCode) {
+            mReceivedKeyCode = true;
+        }
+        return true;
+    }
+
+    public void setExpectedKeyCode(int keyEventCode) {
+        mExpectedKeyCode = keyEventCode;
     }
 }
