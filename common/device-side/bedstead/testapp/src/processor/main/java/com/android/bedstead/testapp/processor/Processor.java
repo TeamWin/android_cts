@@ -328,7 +328,7 @@ public final class Processor extends AbstractProcessor {
                 logicLambda.addStatement(
                         "mProfileClass.other().$L($L)",
                         method.getSimpleName(), String.join(", ", params));
-                logicLambda.addStatement("return new $T(mConnector, $L)",
+                logicLambda.addStatement("return new $T(mConnector, $L, mUser, mPackage)",
                         REMOTE_DEVICE_POLICY_MANAGER_PARENT_WRAPPER_CLASSNAME,
                         String.join(", ", params));
             } else if (method.getReturnType().toString().equals(
@@ -428,12 +428,24 @@ public final class Processor extends AbstractProcessor {
                 FieldSpec.builder(COMPONENT_NAME_CLASSNAME, "mProfileOwnerComponentName")
                         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                         .build());
+        classBuilder.addField(
+                FieldSpec.builder(USER_REFERENCE_CLASSNAME, "mUser")
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
+        classBuilder.addField(
+                FieldSpec.builder(PACKAGE_CLASSNAME, "mPackage")
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
 
         classBuilder.addMethod(MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(TEST_APP_CONNECTOR_CLASSNAME, "connector")
                 .addParameter(COMPONENT_NAME_CLASSNAME, "profileOwnerComponentName")
+                .addParameter(USER_REFERENCE_CLASSNAME, "user")
+                .addParameter(PACKAGE_CLASSNAME, "pkg")
                 .addStatement("mConnector = connector")
+                .addStatement("mUser = user")
+                .addStatement("mPackage = pkg")
                 .addStatement("mProfileOwnerComponentName = profileOwnerComponentName")
                 .addStatement("mProfileClass = $T.create(connector)", profileClassName)
                 .build());
@@ -504,7 +516,7 @@ public final class Processor extends AbstractProcessor {
                     "catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
                     .addStatement("throw ($T) e.getCause()", RuntimeException.class)
                     .nextControlFlow("catch ($T e)", Throwable.class)
-                    .addStatement("throw $T.dealWithConnectedAppsSdkException(null, null, e)",
+                    .addStatement("throw $T.dealWithConnectedAppsSdkException(mUser, mPackage, e)",
                             TESTAPP_UTILS_CLASSNAME)
                     .endControlFlow();
 
@@ -588,10 +600,22 @@ public final class Processor extends AbstractProcessor {
                 FieldSpec.builder(TEST_APP_CONNECTOR_CLASSNAME, "mConnector")
                         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                         .build());
+        classBuilder.addField(
+                FieldSpec.builder(USER_REFERENCE_CLASSNAME, "mUser")
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
+        classBuilder.addField(
+                FieldSpec.builder(PACKAGE_CLASSNAME, "mPackage")
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
 
         classBuilder.addMethod(MethodSpec.constructorBuilder()
                 .addParameter(TEST_APP_CONNECTOR_CLASSNAME, "connector")
+                .addParameter(USER_REFERENCE_CLASSNAME, "user")
+                .addParameter(PACKAGE_CLASSNAME, "pkg")
                 .addStatement("mConnector = connector")
+                .addStatement("mUser = user")
+                .addStatement("mPackage = pkg")
                 .addStatement(
                         "mProfileTargetedRemoteActivity = $T.create(connector)",
                         PROFILE_TARGETED_REMOTE_ACTIVITY_CLASSNAME)
@@ -673,7 +697,7 @@ public final class Processor extends AbstractProcessor {
 
             methodBuilder
                     .nextControlFlow("catch ($T e)", Throwable.class)
-                    .addStatement("throw $T.dealWithConnectedAppsSdkException(null, null, e)",
+                    .addStatement("throw $T.dealWithConnectedAppsSdkException(mUser, mPackage, e)",
                             TESTAPP_UTILS_CLASSNAME)
                     .endControlFlow();
 
@@ -703,7 +727,7 @@ public final class Processor extends AbstractProcessor {
                                 COMPONENT_REFERENCE_CLASSNAME, "component")
                         .addStatement("super(instance, component)")
                         .addStatement("mActivityClassName = component.className()")
-                        .addStatement("mTargetedRemoteActivity = new $T(mInstance.connector())",
+                        .addStatement("mTargetedRemoteActivity = new $T(mInstance.connector(), mInstance.user(), mInstance.testApp().pkg())",
                                 TARGETED_REMOTE_ACTIVITY_WRAPPER_CLASSNAME)
                         .build());
 
