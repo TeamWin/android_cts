@@ -1280,6 +1280,91 @@ public class HotwordDetectionServiceBasicTest {
         }
     }
 
+    @Test
+    public void testHotwordDetectionService_dspDetector_onDetectedTwice_clientOnlyOneOnDetected()
+            throws Throwable {
+        startWatchingNoted();
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
+        try {
+            runWithShellPermissionIdentity(() -> {
+                // Update state with test scenario unexpected onDetect callback
+                // HDS will call back onDetected() twice
+                PersistableBundle persistableBundle = new PersistableBundle();
+                persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                        Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_UNEXPECTED_CALLBACK);
+                alwaysOnHotwordDetector.updateState(
+                        persistableBundle,
+                        Helper.createFakeSharedMemoryData());
+            }, MANAGE_HOTWORD_DETECTION);
+
+            adoptShellPermissionIdentityForHotword();
+
+            verifyOnDetectFromDspWithSoundTriggerInjectionSuccess(alwaysOnHotwordDetector);
+
+            // Verify RECORD_AUDIO noted
+            verifyRecordAudioNote(/* shouldNote= */ true);
+
+            // Wait for a while to make sure no 2nd onDetected() will be called
+            Thread.sleep(500);
+            assertThat(mService.getDspOnDetectedCount()).isEqualTo(1);
+        } finally {
+            // Destroy detector
+            alwaysOnHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+            stopWatchingNoted();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void testHotwordDetectionService_dspDetector_onRejectedTwice_clientOnlyOneOnRejected()
+            throws Throwable {
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
+        try {
+            runWithShellPermissionIdentity(() -> {
+                // Update state with test scenario unexpected onRejected callback
+                // HDS will call back onRejected() twice
+                PersistableBundle persistableBundle = new PersistableBundle();
+                persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                        Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_UNEXPECTED_CALLBACK);
+                alwaysOnHotwordDetector.updateState(
+                        persistableBundle,
+                        Helper.createFakeSharedMemoryData());
+            }, MANAGE_HOTWORD_DETECTION);
+
+            mService.initDetectRejectLatch();
+            runWithShellPermissionIdentity(() -> {
+                // Pass null data parameter
+                alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
+                        /* status= */ 0, /* soundModelHandle= */ 100,
+                        /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
+                        /* captureSession= */ 101, /* captureDelayMs= */ 1000,
+                        /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
+                        Helper.createFakeAudioFormat(), null,
+                        Helper.createFakeKeyphraseRecognitionExtraList());
+            });
+            // Wait onRejected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            HotwordRejectedResult rejectedResult =
+                    mService.getHotwordServiceOnRejectedResult();
+
+            assertThat(rejectedResult).isEqualTo(Helper.REJECTED_RESULT);
+
+            // Wait for a while to make sure no 2nd onDetected() will be called
+            Thread.sleep(500);
+            assertThat(mService.getDspOnRejectedCount()).isEqualTo(1);
+        } finally {
+            // Destroy detector
+            alwaysOnHotwordDetector.destroy();
+        }
+    }
+
     /**
      * Before using this method, please call {@link #adoptShellPermissionIdentityForHotword()} to
      * grant permissions. And please use
