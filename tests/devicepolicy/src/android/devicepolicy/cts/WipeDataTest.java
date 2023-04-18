@@ -17,21 +17,18 @@
 package android.devicepolicy.cts;
 
 import static com.android.bedstead.harrier.UserType.INITIAL_USER;
-import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_ACROSS_USERS;
-import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_ACROSS_USERS_FULL;
-import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_WIPE_DATA;
+import static com.android.bedstead.nene.types.OptionalBoolean.ANY;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
 
-import android.app.admin.DevicePolicyManager;
+import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
-import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
@@ -41,8 +38,8 @@ import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.permissions.PermissionContext;
-import com.android.bedstead.testapp.TestAppInstance;
+import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
@@ -93,25 +90,26 @@ public final class WipeDataTest {
     @Postsubmit(reason = "new test")
     @Test
     @EnsureHasProfileOwner(onUser = INITIAL_USER, isPrimary = true)
-    // TODO(b/242189747) Verify that it behaves properly
     @RequireRunOnAdditionalUser
     @RequireHeadlessSystemUserMode(reason = "tests headless user behaviour")
-    @Ignore("b/242189747")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#wipeData")
+    @Ignore("Main user cannot be removed when it's a permanent admin user.")
     public void wipeData_additionalUsers_removeUser() {
+        // TODO: This should be cached inside of bedstead
+        UserReference initialUser = sDeviceState.initialUser();
+
         sDeviceState.dpc().devicePolicyManager().wipeData(/* flags= */ 0);
 
-        assertWithMessage(
-                "User should have been removed,"
-                        + " since there are other users on the device")
-                .that(sDeviceState.initialUser().exists()).isFalse();
+        Poll.forValue("initial user exists", initialUser::exists)
+                        .toBeEqualTo(false)
+                                .errorOnFail().await();
     }
 
     @Postsubmit(reason = "new test")
     @Test
     @EnsureHasDeviceOwner
     @EnsureHasAdditionalUser
-    @RequireRunOnSystemUser
+    @RequireRunOnSystemUser(switchedToUser = ANY)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#wipeData")
     public void wipeData_systemUser_throwsSecurityException() {
         assertThrows("System user should not be removed",

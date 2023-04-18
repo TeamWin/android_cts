@@ -65,8 +65,6 @@ import java.util.List;
  */
 @RunWith(BedsteadJUnit4.class)
 @Postsubmit(reason = "new test")
-// TODO(b/198584060): clean up the TestApp install API surface and remove the
-//  requirement to manually uninstall or use the 'try' block.
 @EnsureHasNoDelegate
 public final class DelegationScopesTest {
 
@@ -465,10 +463,6 @@ public final class DelegationScopesTest {
     @PolicyAppliesTest(policy = Delegation.class)
     public void setDelegatedScopes_delegatedPackageReceivesScopesFromBroadcast() {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
-            // TODO(b/198769413): we should not need to start (or query for) an activity, but the
-            //  event is not received for some reason without it.
-            testApp.activities().any().start();
-            // TODO(b/198588980): automatically register every test app for this broadcast.
             testApp.registerReceiver(
                     new IntentFilter(ACTION_APPLICATION_DELEGATION_SCOPES_CHANGED),
                     RECEIVER_EXPORTED);
@@ -479,8 +473,6 @@ public final class DelegationScopesTest {
                         testApp.packageName(),
                         Arrays.asList(TEST_SCOPE, TEST_SCOPE_2));
 
-                // TODO(b/198294382): support .stringListValue().contains(List<String>) to
-                //  avoid needing to explicitly list the strings again here.
                 EventLogsSubject.assertThat(testApp.events().broadcastReceived()
                         .whereIntent().action()
                         .isEqualTo(ACTION_APPLICATION_DELEGATION_SCOPES_CHANGED)

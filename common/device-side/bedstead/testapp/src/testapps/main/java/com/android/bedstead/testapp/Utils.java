@@ -27,6 +27,22 @@ import com.android.bedstead.nene.users.UserReference;
 public final class Utils {
 
     /**
+     * Show the most appropriate error when a "no existing activity" exception is thrown.
+     */
+    public static NeneException dealWithNoExistingActivityException(
+            String activityClassName, Throwable t) {
+        String reasons = "";
+        if (!TestApis.users().instrumented().canShowActivities()) {
+            reasons += ". Running on user which cannot show activities ("
+                    + TestApis.users().instrumented() + ") ";
+        }
+
+        return new NeneException("Error finding activity " + activityClassName + reasons
+                + ". Relevant logcat: "
+        + TestApis.logcat().dump(l -> l.contains(activityClassName)), t);
+    }
+
+    /**
      * Show the most appropriate error when an exception is thrown by the Connected Apps SDK.
      */
     public static NeneException dealWithConnectedAppsSdkException(
