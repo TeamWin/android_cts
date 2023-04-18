@@ -31,6 +31,9 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActi
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.supportsMultiDisplay;
+import static android.accessibilityservice.cts.utils.AsyncUtils.await;
+import static android.accessibilityservice.cts.utils.GestureUtils.click;
+import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGesture;
 import static android.accessibilityservice.cts.utils.MultiProcessUtils.SEPARATE_PROCESS_ACTIVITY_TITLE;
 import static android.accessibilityservice.cts.utils.MultiProcessUtils.TOUCH_EXPLORATION_CHANGE_EVENT_TEXT;
 import static android.accessibilityservice.cts.utils.WindowCreationUtils.TOP_WINDOW_TITLE;
@@ -60,7 +63,10 @@ import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibility.cts.common.ShellCommandBuilder;
+import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.GestureDescription;
+import android.accessibilityservice.cts.activities.AccessibilityKeyEventTestActivity;
 import android.accessibilityservice.cts.activities.NonProxyActivity;
 import android.accessibilityservice.cts.activities.ProxyDisplayActivity;
 import android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils;
@@ -70,23 +76,31 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.Instrumentation;
+import android.app.PendingIntent;
+import android.app.RemoteAction;
 import android.app.UiAutomation;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.drawable.Icon;
 import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.util.DisplayMetrics;
 import android.util.SparseArray;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.InputDevice;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -180,6 +194,9 @@ public class AccessibilityDisplayProxyTest {
     private static final String SEPARATE_PROCESS_PACKAGE_NAME = "foo.bar.proxy";
     private static final String SEPARATE_PROCESS_ACTIVITY = ".NonProxySeparateAppActivity";
 
+    private static final float MIN_SCREEN_WIDTH_MM = 40.0f;
+    private static final int TEST_SYSTEM_ACTION_ID = 1000;
+
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
     private static String sEnabledServices;
@@ -193,13 +210,13 @@ public class AccessibilityDisplayProxyTest {
     private MyA11yProxy mA11yProxy;
     private int mVirtualDisplayId;
     private VirtualDisplay mVirtualDisplay;
-    private Activity mProxiedVirtualDisplayActivity;
+    private AccessibilityKeyEventTestActivity mProxiedVirtualDisplayActivity;
     private CharSequence mProxiedVirtualDisplayActivityTitle;
 
     // Activity used for checking accessibility and input focus behavior. An activity in a separate
     // process is not required, since touch exploration is enabled for both the proxy and non-proxy
     // i.e. the AccessibilityManagers have the same state.
-    private Activity mNonProxiedConcurrentActivity;
+    private AccessibilityKeyEventTestActivity mNonProxiedConcurrentActivity;
 
     private Intent mSeparateProcessActivityIntent = new Intent(Intent.ACTION_MAIN)
                 .setClassName(SEPARATE_PROCESS_PACKAGE_NAME,
@@ -419,6 +436,99 @@ public class AccessibilityDisplayProxyTest {
 
         waitOn(mA11yProxy.mWaitObject, ()-> mA11yProxy.mReceivedEvent.get(), TIMEOUT_MS,
                 "Click event received");
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#onAccessibilityEvent"})
+    public void testPerformSystemAction_keyEventsDispatchedToLastNonProxyDisplay()
+            throws Exception {
+        final StubProxyConcurrentAccessibilityService service =
+                mNonProxyServiceRule.enableService();
+        try {
+            registerProxyAndWaitForConnection();
+            mProxiedVirtualDisplayActivity.setExpectedKeyCode(KeyEvent.KEYCODE_DPAD_UP);
+
+            // The proxy activity should not receive the key event.
+            sUiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_DPAD_UP);
+            assertThrows(AssertionError.class, () -> PollingCheck.waitFor(()
+                    -> mProxiedVirtualDisplayActivity.mReceivedKeyCode));
+
+            mNonProxiedConcurrentActivity = launchProxyConcurrentActivityOnDefaultDisplay(service);
+            mNonProxiedConcurrentActivity.setExpectedKeyCode(KeyEvent.KEYCODE_DPAD_UP);
+            // The non-proxy activity on the default display should receive the key event.
+            sUiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_DPAD_UP);
+            PollingCheck.waitFor(() -> mNonProxiedConcurrentActivity.mReceivedKeyCode);
+        } finally {
+            service.disableSelfAndRemove();
+        }
+    }
+
+    @Test
+    public void testPerformSystemAction_topFocusDisplayIsLastNonProxyDisplay()
+            throws TimeoutException {
+        registerProxyAndWaitForConnection();
+        // Make sure the virtual display is top-focused.
+        setTopFocusedDisplayIfNeeded(mVirtualDisplayId, mProxiedVirtualDisplayActivity,
+                mA11yProxy.getWindows());
+        // Create a new system action.
+        final Intent i = new Intent("test").setPackage(
+                sInstrumentation.getContext().getPackageName());
+        final PendingIntent p = PendingIntent.getBroadcast(sInstrumentation.getContext(), 0, i,
+                PendingIntent.FLAG_IMMUTABLE);
+        final RemoteAction testAction =
+                new RemoteAction(Icon.createWithContentUri("content://test"),
+                "test", "test", p);
+        mA11yManager.registerSystemAction(testAction, TEST_SYSTEM_ACTION_ID);
+
+        sUiAutomation.executeAndWaitForEvent(
+                () -> sUiAutomation.performGlobalAction(TEST_SYSTEM_ACTION_ID),
+                (event) -> displayFocused(event, 0), TIMEOUT_MS);
+
+        mA11yManager.unregisterSystemAction(TEST_SYSTEM_ACTION_ID);
+    }
+
+    @Test
+    public void testTriggerTouchExploration_topFocusDisplayIsLastNonProxyDisplay()
+            throws TimeoutException {
+        final PackageManager pm = sInstrumentation.getContext().getPackageManager();
+        assumeTrue(pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
+                        || pm.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH));
+
+        final StubProxyConcurrentAccessibilityService service =
+                mNonProxyServiceRule.enableService();
+        try {
+            registerProxyAndWaitForConnection();
+            // Make sure that the proxy display is the top-focused display.
+            setTopFocusedDisplayIfNeeded(mVirtualDisplayId, mProxiedVirtualDisplayActivity,
+                    mA11yProxy.getWindows());
+
+            final AccessibilityWindowInfo window = findWindowByTitleWithList(
+                    mProxiedVirtualDisplayActivityTitle, mA11yProxy.getWindows());
+            // Validity check: activity window exists.
+            assertThat(window).isNotNull();
+
+            final Rect areaOfActivityWindowOnDisplay = new Rect();
+            window.getBoundsInScreen(areaOfActivityWindowOnDisplay);
+            // Validity check: find window size, check that it is big enough for gestures.
+            final WindowManager windowManager = sInstrumentation.getContext().getSystemService(
+                    WindowManager.class);
+            final DisplayMetrics metrics = new DisplayMetrics();
+            windowManager.getDefaultDisplay().getRealMetrics(metrics);
+            assumeTrue(areaOfActivityWindowOnDisplay.width() > TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_MM, MIN_SCREEN_WIDTH_MM, metrics));
+            sUiAutomation.executeAndWaitForEvent(() -> {
+                final int xOnScreen =
+                        areaOfActivityWindowOnDisplay.centerX();
+                final int yOnScreen =
+                        areaOfActivityWindowOnDisplay.centerY();
+                final GestureDescription.Builder builder =
+                        new GestureDescription.Builder().addStroke(
+                                click(new PointF(xOnScreen, yOnScreen)));
+                await(dispatchGesture(service, builder.build()));
+            }, (event) -> displayFocused(event, Display.DEFAULT_DISPLAY), TIMEOUT_MS);
+        } finally {
+            service.disableSelfAndRemove();
+        }
     }
 
     @Test
@@ -1269,6 +1379,9 @@ public class AccessibilityDisplayProxyTest {
             }
         }
         if (!isTopFocusedDisplay) {
+            final AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
+            info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+            sUiAutomation.setServiceInfo(info);
             sUiAutomation.executeAndWaitForEvent(
                     () -> DisplayUtils.touchDisplay(sUiAutomation, displayId, activity.getTitle()),
                     filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_FOCUSED
@@ -1282,10 +1395,10 @@ public class AccessibilityDisplayProxyTest {
                 mProxiedVirtualDisplayActivityTitle, proxyWindows)).isNotNull();
     }
 
-    private NonProxyActivity launchProxyConcurrentActivityOnDefaultDisplay(
+    private AccessibilityKeyEventTestActivity launchProxyConcurrentActivityOnDefaultDisplay(
             InstrumentedAccessibilityService service)
             throws Exception {
-        final NonProxyActivity nonProxyActivity =
+        final AccessibilityKeyEventTestActivity nonProxyActivity =
                 launchActivityAndWaitForItToBeOnscreen(
                         sInstrumentation, sUiAutomation,
                         mNonProxyActivityRule);
@@ -1332,8 +1445,9 @@ public class AccessibilityDisplayProxyTest {
         return display;
     }
 
-    private Activity launchActivityOnVirtualDisplay(int virtualDisplayId) throws Exception {
-        final Activity activityOnVirtualDisplay =
+    private AccessibilityKeyEventTestActivity launchActivityOnVirtualDisplay(int virtualDisplayId)
+            throws Exception {
+        final AccessibilityKeyEventTestActivity activityOnVirtualDisplay =
                 launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(sInstrumentation,
                         sUiAutomation,
                         ProxyDisplayActivity.class,
@@ -1377,6 +1491,19 @@ public class AccessibilityDisplayProxyTest {
         for (CharSequence textSegment : text) {
             if (textSegment.equals(name)) {
                 return true;
+            }
+        }
+        return false;
+    }
+    private boolean displayFocused(AccessibilityEvent event, int i) {
+        if (event.getEventType() == TYPE_WINDOWS_CHANGED
+                && (event.getWindowChanges() & WINDOWS_CHANGE_FOCUSED) != 0) {
+            List<AccessibilityWindowInfo> windows =
+                    sUiAutomation.getWindowsOnAllDisplays().valueAt(i);
+            for (AccessibilityWindowInfo window : windows) {
+                if (window.isFocused()) {
+                    return true;
+                }
             }
         }
         return false;
