@@ -28,7 +28,9 @@ import android.os.ParcelUuid;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +51,8 @@ public class AdvertiseDataTest {
 
     @Before
     public void setUp() {
+        Assume.assumeTrue(TestUtils.isBleSupported(
+                InstrumentationRegistry.getInstrumentation().getTargetContext()));
         mAdvertiseDataBuilder = new AdvertiseData.Builder();
     }
 

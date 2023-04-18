@@ -25,7 +25,10 @@ import android.bluetooth.le.PeriodicAdvertisingParameters;
 import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -35,6 +38,12 @@ public class PeriodicAdvertisingParametersTest {
     // Values copied over from PeriodicAdvertisingParameters class.
     private static final int INTERVAL_MIN = 80;
     private static final int INTERVAL_MAX = 65519;
+
+    @Before
+    public void setUp() {
+        Assume.assumeTrue(TestUtils.isBleSupported(
+                InstrumentationRegistry.getInstrumentation().getContext()));
+    }
 
     @Test
     public void testCreateFromParcel() {

@@ -39,6 +39,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -84,9 +85,8 @@ public class BluetoothLeScanTest {
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
-        if (!TestUtils.isBleSupported(mContext)) {
-            return;
-        }
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
+
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(android.Manifest.permission.BLUETOOTH_CONNECT);
         BluetoothManager manager = (BluetoothManager) mContext.getSystemService(
@@ -106,11 +106,6 @@ public class BluetoothLeScanTest {
 
     @After
     public void tearDown() {
-        if (!TestUtils.isBleSupported(mContext)) {
-            // mBluetoothAdapter == null.
-            return;
-        }
-
         if (!mLocationOn) {
             TestUtils.disableLocation(mContext);
         }
@@ -124,9 +119,6 @@ public class BluetoothLeScanTest {
     @MediumTest
     @Test
     public void testBasicBleScan() {
-        if (!TestUtils.isBleSupported(mContext)) {
-            return;
-        }
         long scanStartMillis = SystemClock.elapsedRealtime();
         Collection<ScanResult> scanResults = scan();
         long scanEndMillis = SystemClock.elapsedRealtime();
@@ -142,11 +134,6 @@ public class BluetoothLeScanTest {
     @MediumTest
     @Test
     public void testScanFilter() {
-        if (!TestUtils.isBleSupported(mContext)) {
-            return;
-        }
-
-
         List<ScanFilter> filters = new ArrayList<ScanFilter>();
         ScanFilter filter = createScanFilter();
         if (filter == null) {
@@ -172,9 +159,6 @@ public class BluetoothLeScanTest {
     @MediumTest
     @Test
     public void testScanFromSourceWithoutFilters() {
-        if (!TestUtils.isBleSupported(mContext)) {
-            return;
-        }
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(
                         android.Manifest.permission.BLUETOOTH_CONNECT,
@@ -195,9 +179,6 @@ public class BluetoothLeScanTest {
     @MediumTest
     @Test
     public void testScanFromSourceWithFilters() {
-        if (!TestUtils.isBleSupported(mContext)) {
-            return;
-        }
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(
                         android.Manifest.permission.BLUETOOTH_CONNECT,
@@ -256,9 +237,6 @@ public class BluetoothLeScanTest {
 //     */
 //    @MediumTest
 //    public void testOpportunisticScan() {
-//        if (!TestUtils.isBleSupported(mContext)) {
-//            return;
-//        }
 //        ScanSettings opportunisticScanSettings = new ScanSettings.Builder()
 //                .setScanMode(ScanSettings.SCAN_MODE_OPPORTUNISTIC)
 //                .build();
@@ -307,10 +285,8 @@ public class BluetoothLeScanTest {
     @MediumTest
     @Test
     public void testBatchScan() {
-        if (!TestUtils.isBleSupported(mContext) || !isBleBatchScanSupported()) {
-            Log.d(TAG, "BLE or BLE batching not suppported");
-            return;
-        }
+        Assume.assumeTrue(isBleBatchScanSupported());
+
         ScanSettings batchScanSettings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .setReportDelay(BATCH_SCAN_REPORT_DELAY_MILLIS).build();
@@ -339,10 +315,8 @@ public class BluetoothLeScanTest {
     @MediumTest
     @Test
     public void testStartScanPendingIntent_nullnull() throws Exception {
-        if (!TestUtils.isBleSupported(mContext) || !isBleBatchScanSupported()) {
-            Log.d(TAG, "BLE or BLE batching not suppported");
-            return;
-        }
+        Assume.assumeTrue(isBleBatchScanSupported());
+
         Intent broadcastIntent = new Intent();
         broadcastIntent.setClass(mContext, BluetoothScanReceiver.class);
         PendingIntent pi = PendingIntent.getBroadcast(mContext, 1, broadcastIntent,
@@ -360,10 +334,8 @@ public class BluetoothLeScanTest {
     @MediumTest
     @Test
     public void testStartScanPendingIntent() throws Exception {
-        if (!TestUtils.isBleSupported(mContext) || !isBleBatchScanSupported()) {
-            Log.d(TAG, "BLE or BLE batching not suppported");
-            return;
-        }
+        Assume.assumeTrue(isBleBatchScanSupported());
+
         ScanSettings batchScanSettings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .setReportDelay(0).build();

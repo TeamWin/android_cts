@@ -21,7 +21,9 @@ import static org.junit.Assert.assertEquals;
 import android.bluetooth.BluetoothGattService;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,6 +38,9 @@ public class BluetoothGattServiceTest {
 
     @Before
     public void setUp() {
+        Assume.assumeTrue(TestUtils.isBleSupported(
+                InstrumentationRegistry.getInstrumentation().getTargetContext()));
+
         mBluetoothGattService = new BluetoothGattService(TEST_UUID,
                 BluetoothGattService.SERVICE_TYPE_PRIMARY);
     }
