@@ -29,6 +29,7 @@ import static android.scopedstorage.cts.lib.TestUtils.FILE_EXISTS_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXCEPTION;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_ARGS;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_CALLING_PKG;
+import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_CONTENT;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_PATH;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_URI;
 import static android.scopedstorage.cts.lib.TestUtils.IS_URI_REDACTED_VIA_FILEPATH;
@@ -62,8 +63,13 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.FileUtils;
+import android.os.IBinder;
+import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
+import android.os.RemoteException;
 import android.provider.MediaStore;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
@@ -72,6 +78,8 @@ import com.google.common.base.Strings;
 
 import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -357,7 +365,7 @@ public class ScopedStorageTestHelper extends Activity {
         }
     }
 
-    private Intent accessFile(String queryType) throws IOException {
+    private Intent accessFile(String queryType) throws IOException, RemoteException {
         if (getIntent().hasExtra(INTENT_EXTRA_PATH)) {
             final String packageName = getIntent().getStringExtra(INTENT_EXTRA_CALLING_PKG);
             final String filePath = getIntent().getStringExtra(INTENT_EXTRA_PATH);
@@ -375,7 +383,11 @@ public class ScopedStorageTestHelper extends Activity {
                     if (!file.getParentFile().exists()) {
                         file.getParentFile().mkdirs();
                     }
-                    intent.putExtra(queryType, file.createNewFile());
+                    boolean success = file.createNewFile();
+                    if (success && getIntent().hasExtra(INTENT_EXTRA_CONTENT)) {
+                        success = createFileContent(file);
+                    }
+                    intent.putExtra(queryType, success);
                     return intent;
                 case DELETE_FILE_QUERY:
                     intent.putExtra(queryType, file.delete());
@@ -411,6 +423,25 @@ public class ScopedStorageTestHelper extends Activity {
             }
         } else {
             throw new IllegalStateException(queryType + ": File path not set from launcher app");
+        }
+    }
+
+    private boolean createFileContent(File file) throws RemoteException {
+        final Bundle content = getIntent().getBundleExtra(
+                INTENT_EXTRA_CONTENT);
+        IBinder binder = content.getBinder(INTENT_EXTRA_CONTENT);
+        Parcel reply = Parcel.obtain();
+        binder.transact(IBinder.FIRST_CALL_TRANSACTION, Parcel.obtain(), reply, 0);
+        try (ParcelFileDescriptor inputPFD = reply.readFileDescriptor();
+             FileInputStream fileInputStream = new FileInputStream(
+                     inputPFD.getFileDescriptor());
+             FileOutputStream outputStream = new FileOutputStream(file)) {
+            long copied = FileUtils.copy(fileInputStream, outputStream);
+            outputStream.getFD().sync();
+            return copied > 0;
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage(), e);
+            return false;
         }
     }
 

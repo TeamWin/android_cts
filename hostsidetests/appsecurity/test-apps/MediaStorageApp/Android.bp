@@ -22,6 +22,7 @@ android_test_helper_app {
     min_sdk_version: "29",
     sdk_version: "test_current",
     static_libs: [
+        "cts-scopedstorage-lib",
         "compatibility-device-util-axt",
         "androidx.test.rules",
         "ub-uiautomator",
@@ -41,6 +42,7 @@ android_test_helper_app {
     min_sdk_version: "28",
     sdk_version: "test_current",
     static_libs: [
+        "cts-scopedstorage-lib",
         "compatibility-device-util-axt",
         "androidx.test.rules",
         "ub-uiautomator",
@@ -61,6 +63,7 @@ android_test_helper_app {
     min_sdk_version: "29",
     sdk_version: "test_current",
     static_libs: [
+        "cts-scopedstorage-lib",
         "compatibility-device-util-axt",
         "androidx.test.rules",
         "ub-uiautomator",
