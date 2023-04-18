@@ -2439,9 +2439,52 @@
     <string name="non_dismissable_notif_from_the_ls">Lock the screen and find the NotifDismissTest notification.\n
         Try to dismiss it. Verify that it is non-dismissible.\n
         Fail the test if it could be dismissed from the lock screen.</string>
+    <string name="fsi_test">Notification Full Screen Intent Test</string>
+    <string name="fsi_test_info">This test checks the behavior of Notifications
+        with Full Screen Intents.</string>
+    <string name="fsi_lockscreen_without_permission_instruction">Click the \"I\'m done\" button when you are ready.\n
+        After clicking, lock the screen and press the power button as quickly as possible to go to the lock screen.\n
+        Wait for a heads up notification to appear first in the list with a pill button.\n
+        Unlock screen to return to this page after seeing the notification or after 5 seconds.\n
+        Fail the test if the notification does not appear as described.
+    </string>
+    <string name="fsi_lockscreen_with_permission_instruction">Click the \"I\'m done\" button when you are ready.\n
+        After clicking, lock the screen and press the power button as quickly as possible to go to the lock screen.\n
+        Wait for a page to automatically launch and display the message \"This page is a full screen intent.\".\n
+        Unlock screen to return to this page after seeing the page or after 5 seconds.\n
+        Fail the test if the page does not launch as described.
+    </string>
+
+    <string name="fsi_screen_off_without_permission_instruction">Click the \"I\'m done\" button when you are ready.\n
+        After clicking, press the power button as quickly as possible to turn off the screen.\n
+        Wait for a notification to appear on the screen with a pill button.\n
+        Unlock screen to return to this page after seeing the notification or after 5 seconds.\n
+        Fail the test if the notification does not appear as described.
+    </string>
+    <string name="fsi_screen_off_with_permission_instruction">Click the \"I\'m done\" button when you are ready.\n
+        After clicking, press the power button as quickly as possible to turn off the screen.\n
+        Wait for a page to automatically launch and display the message \"This page is a full screen intent.\".\n
+        Unlock screen to return to this page after seeing the page or after 5 seconds.\n
+        Fail the test if the page does not launch as described.
+    </string>
+    <string name="fsi_turn_on_aod">Turn on Always on Display by toggling on \"Always show time and info\" in Lockscreen Settings.</string>
+    <string name="fsi_turn_off_aod">Turn off Always on Display by toggling off \"Always show time and info\" in Lockscreen Settings.</string>
+    <string name="fsi_notif_title">NotifFsiTest</string>
+    <string name="fsi_mock_call_desc">This page is a full screen intent (e.g. a call).\n
+        Pass the test if you see this page.\n
+        To return to the test, use the back button or gesture and unlock the screen.
+    </string>
+    <string name="fsi_notif_content">Fsi Notif Content Fsi Notif Content Fsi Notif Content \n
+        Fsi Notif Content Fsi Notif Content Fsi Notif Content</string>
+    <string name="fsi_grant_permission">Please toggle on the full screen intents permission for CTSVerifier.</string>
+    <string name="fsi_deny_permission">Please toggle off the full screen intents permission for CTSVerifier</string>
+    <string name="fsi_sticky_hun">There should be a Heads Up Notification on the screen.\n
+        It would show for 60s.\n
+        Fail the test if it doesn\'t show or disappears within 60s.</string>
     <string name="np_start_channel_settings">Launch Channel Settings</string>
     <string name="np_start_security_settings">Launch Security Settings</string>
     <string name="np_start_notif_settings">Launch Notification Settings</string>
+    <string name="np_start_lockscreen_settings">Launch Lock Screen Settings</string>
     <string name="np_when_locked_see_redacted">Lock the screen and find the NotifPrivacyTest notification.\n
         Pass the test if the notification content is REDACTED.</string>
     <string name="np_when_locked_see_private">Lock the screen and find the NotifPrivacyTest notification.\n

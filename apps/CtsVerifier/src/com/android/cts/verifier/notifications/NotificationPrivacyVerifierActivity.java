@@ -528,7 +528,8 @@ public class NotificationPrivacyVerifierActivity extends InteractiveVerifierActi
         @Override
         protected Intent getIntent() {
             return ShowWhenLockedActivity.makeActivityIntent(
-                    getApplicationContext(), getString(mInstructionRes));
+                    getApplicationContext(), getString(mInstructionRes),
+                    /* clearActivity = */ true);
         }
     }
 
