@@ -35,6 +35,16 @@
         <uses-library android:name="org.apache.http.legacy"
              android:required="false"/>
 
+        <provider
+             android:name="android.media.player.cts.MediaPlayerTest$TestFileProvider"
+             android:authorities="com.android.media.player.cts.provider"
+             android:exported="false"
+             android:grantUriPermissions="true">
+            <meta-data
+                 android:name="android.support.FILE_PROVIDER_PATHS"
+                 android:resource="@xml/media_player_test_content_path" />
+        </provider>
+
         <activity android:name="android.media.player.cts.MediaPlayerSurfaceStubActivity"
              android:label="MediaPlayerSurfaceStubActivity"
              android:exported="true">
