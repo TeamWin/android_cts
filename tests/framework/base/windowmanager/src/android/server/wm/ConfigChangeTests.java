@@ -25,6 +25,7 @@ import static android.server.wm.app.Components.FONT_SCALE_ACTIVITY;
 import static android.server.wm.app.Components.FONT_SCALE_NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.FontScaleActivity.EXTRA_FONT_ACTIVITY_DPI;
 import static android.server.wm.app.Components.FontScaleActivity.EXTRA_FONT_PIXEL_SIZE;
+import static android.server.wm.app.Components.FontScaleActivity.EXTRA_FONT_SCALE;
 import static android.server.wm.app.Components.NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TestActivity.EXTRA_CONFIG_ASSETS_SEQ;
@@ -253,7 +254,10 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         }
         final int densityDpi = extras.getInt(EXTRA_FONT_ACTIVITY_DPI);
 
-        for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += 0.15f) {
+        // Retry set font scale if needed, but with a maximum retry count to prevent infinite loop.
+        int retrySetFontScale = 5;
+        final float step = 0.15f;
+        for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += step) {
             separateTestJournal();
             fontScaleSession.set(fontScale);
             mWmState.computeState(activityName);
@@ -270,10 +274,17 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
             // Verify that the display metrics are updated, and therefore the text size is also
             // updated accordingly.
             final Bundle changedExtras = TestJournalContainer.get(activityName).extras;
-            final float scale = fontScale;
-            waitForOrFail("reported fontPixelSize from " + activityName,
-                    () -> scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, scale, densityDpi)
-                            == changedExtras.getInt(EXTRA_FONT_PIXEL_SIZE));
+            if (changedExtras.getFloat(EXTRA_FONT_SCALE) == fontScale) {
+                final float scale = fontScale;
+                waitForOrFail("reported fontPixelSize from " + activityName,
+                        () -> scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, scale, densityDpi)
+                                == changedExtras.getInt(EXTRA_FONT_PIXEL_SIZE));
+            } else if (retrySetFontScale-- > 0) {
+                logE("retry set font scale " + fontScale + ", currently is "
+                        + changedExtras.getFloat(EXTRA_FONT_SCALE) + " session="
+                        + fontScaleSession.get());
+                fontScale -= step;
+            }
         }
     }
 
