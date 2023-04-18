@@ -2872,6 +2872,9 @@ public final class DeviceState extends HarrierRule {
                 user)) {
             testAppInstance = testApp.instance(user);
         } else {
+            // TODO: Consider if we want to record that we've started it so we can stop it after if needed?
+            user.start();
+
             testAppInstance = testApp.install(user);
             mInstalledTestApps.add(testAppInstance);
         }
