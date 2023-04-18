@@ -36,11 +36,13 @@ import android.os.StrictMode;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.test.ActivityInstrumentationTestCase2;
+import android.util.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -152,6 +154,19 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         getMockAuthenticator(mContext);
 
         am = AccountManager.get(mContext);
+
+        // Authenticators must be installed at this point.
+        List<AuthenticatorDescription> authenticatorTypes =
+                Arrays.asList(am.getAuthenticatorTypes());
+        List<String> authenticatorNames = new ArrayList<>();
+        for (AuthenticatorDescription description : authenticatorTypes) {
+            Log.i("AccountManagerTest", "supported authenticatorType=" + description.type
+                    + ", packageName=" + description.packageName);
+            authenticatorNames.add(description.type);
+
+        }
+        assertTrue(authenticatorNames.contains("android.accounts.cts.account.type"));
+        assertTrue(authenticatorNames.contains("android.accounts.cts.custom.account.type"));
     }
 
     @Override
@@ -2022,9 +2037,6 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
      */
     public void testAddOnAccountsUpdatedListenerWithVisibility() throws IOException,
             AuthenticatorException, OperationCanceledException {
-
-        // Cleanup account in case it was left over from different test case.
-        assertTrue(removeAccountExplicitly(am, ACCOUNT));
 
         testAddOnAccountsUpdatedListenerWithVisibility(null /* handler */,
                 false /* updateImmediately */, new String[] {ACCOUNT_TYPE, ACCOUNT_TYPE_ABSENT});
