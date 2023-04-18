@@ -2075,7 +2075,17 @@ public class PackageManagerTest {
 
     @Test
     public void testInstall_withLongUsesPermissionName_fail() {
-        assertThat(installPackage(LONG_USES_PERMISSION_NAME_APK)).isFalse();
+        String expectedErrorCode = "INSTALL_PARSE_FAILED_MANIFEST_MALFORMED";
+        String expectedErrorMessage = "The name in the <uses-permission> is greater than 512";
+
+        String installResult = installPackageWithResult(LONG_USES_PERMISSION_NAME_APK);
+
+        assertThat(installResult.contains(expectedErrorCode)).isTrue();
+        assertThat(installResult.contains(expectedErrorMessage)).isTrue();
+    }
+
+    private String installPackageWithResult(String apkPath) {
+        return SystemUtil.runShellCommand("pm install -t " + apkPath);
     }
 
     private boolean installPackage(String apkPath) {
