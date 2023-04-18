@@ -346,6 +346,18 @@ public class PhoneNumberUtilsTest {
         assertFalse(PhoneNumberUtils.isVoiceMailNumber(getContext(),
                 SubscriptionManager.getDefaultSubscriptionId(), ""));
 
+        // Test isWpsCallNumber
+        // Test number without special symbols.
+        assertFalse(PhoneNumberUtils.isWpsCallNumber("12345678"));
+
+        // TTS number should not be recognized as wps.
+        assertFalse(PhoneNumberUtils.isWpsCallNumber("*23212345678"));
+        assertFalse(PhoneNumberUtils.isWpsCallNumber("*232#12345678"));
+
+        // Check WPS valid numbers
+        assertTrue(PhoneNumberUtils.isWpsCallNumber("*27212345678"));
+        assertTrue(PhoneNumberUtils.isWpsCallNumber("*31#*27212345678"));
+        assertTrue(PhoneNumberUtils.isWpsCallNumber("#31#*27212345678"));
     }
 
     @Test
