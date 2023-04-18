@@ -50,6 +50,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.util.SparseArray;
 import android.view.nano.DisplayInfoProto;
+import android.view.nano.InsetsSourceProto;
 import android.view.nano.ViewProtoEnums;
 
 import androidx.annotation.NonNull;
@@ -2144,6 +2145,7 @@ public class WindowManagerState {
         private int mRequestedHeight;
         private List<Rect> mKeepClearRects;
         private List<Rect> mUnrestrictedKeepClearRects;
+        private List<InsetsSource> mMergedLocalInsetsSources;
 
         WindowState(WindowStateProto proto) {
             super(proto.windowContainer);
@@ -2193,6 +2195,10 @@ public class WindowManagerState {
             mUnrestrictedKeepClearRects = new ArrayList();
             for (RectProto r : proto.unrestrictedKeepClearAreas) {
                 mUnrestrictedKeepClearRects.add(new Rect(r.left, r.top, r.right, r.bottom));
+            }
+            mMergedLocalInsetsSources = new ArrayList();
+            for (InsetsSourceProto insets : proto.mergedLocalInsetsSources) {
+                mMergedLocalInsetsSources.add(new InsetsSource(insets));
             }
         }
 
@@ -2272,6 +2278,10 @@ public class WindowManagerState {
             return mUnrestrictedKeepClearRects;
         }
 
+        List<InsetsSource> getMergedLocalInsetsSources() {
+            return mMergedLocalInsetsSources;
+        }
+
         private String getWindowTypeSuffix(int windowType) {
             switch (windowType) {
                 case WINDOW_TYPE_STARTING:
@@ -2337,5 +2347,75 @@ public class WindowManagerState {
     int defaultMinimalDisplaySizeForSplitScreen(int displayId) {
         return dpToPx(ActivityTaskManager.DEFAULT_MINIMAL_SPLIT_SCREEN_DISPLAY_SIZE_DP,
                 getDisplay(displayId).getDpi());
+    }
+
+    static class InsetsSource {
+        private String mType;
+        private Rect mFrame;
+        private Rect mVisibleFrame;
+        private boolean mVisible;
+
+        InsetsSource(InsetsSourceProto proto) {
+            mType = proto.type;
+            mFrame = new Rect(
+                    proto.frame.left, proto.frame.top, proto.frame.right, proto.frame.bottom);
+            if (proto.visibleFrame != null) {
+                mVisibleFrame = new Rect(proto.visibleFrame.left, proto.visibleFrame.top,
+                        proto.visibleFrame.right, proto.visibleFrame.bottom);
+            }
+            mVisible = proto.visible;
+        }
+
+        String getType() {
+            return mType;
+        }
+
+        Rect getFrame() {
+            return mFrame;
+        }
+
+        Rect getVisibleFrame() {
+            return mVisibleFrame;
+        }
+
+        boolean isVisible() {
+            return mVisible;
+        }
+
+        boolean isCaptionBar() {
+            return mType.contains("captionBar");
+        }
+
+        void insetGivenFrame(Rect inOutFrame) {
+            if (inOutFrame.left == mFrame.left && inOutFrame.right == mFrame.right) {
+                if (inOutFrame.top == mFrame.top) {
+                    inOutFrame.top = mFrame.bottom;
+                    return;
+                }
+                if (inOutFrame.bottom == mFrame.bottom) {
+                    inOutFrame.bottom = mFrame.top;
+                    return;
+                }
+            }
+            if (inOutFrame.top == mFrame.top && inOutFrame.bottom == mFrame.bottom) {
+                if (inOutFrame.left == mFrame.left) {
+                    inOutFrame.left = mFrame.right;
+                    return;
+                }
+                if (inOutFrame.right == mFrame.right) {
+                    inOutFrame.right = mFrame.left;
+                    return;
+                }
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "InsetsSource: {type=" + mType
+                    + " frame=" + mFrame
+                    + " visibleFrame=" + mVisibleFrame
+                    + " visible=" + mVisible
+                    + "}";
+        }
     }
 }
