@@ -212,13 +212,15 @@ public class VisualQueryDetectionServiceBasicTest {
         });
         try {
             adoptShellPermissionIdentityForVisualQueryDetection();
+            mService.initQueryFinishRejectLatch(1);
             visualQueryDetector.startRecognition();
-            SystemClock.sleep(TEST_WAIT_TIMEOUT_MS); // reduce flakiness
+            // wait onStartDetection() called and verify the result
+            mService.waitOnQueryFinishedRejectCalled();
             // verify results
             ArrayList<String> streamedQueries = mService.getStreamedQueriesResult();
+            assertThat(streamedQueries.size()).isEqualTo(1);
             assertThat(streamedQueries.get(0)).isEqualTo(
                     MainVisualQueryDetectionService.PERCEPTION_MODULE_SUCCESS);
-            assertThat(streamedQueries.size()).isEqualTo(1);
         } finally {
             // Drop identity adopted.
             visualQueryDetector.destroy();

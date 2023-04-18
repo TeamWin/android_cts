@@ -119,12 +119,12 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
                 lostAttention();
             }
         }
-        stopCameraBackgroundThread();
     }
 
     @Override
     public void onStopDetection() {
         super.onStopDetection();
+        stopCameraBackgroundThread();
         Log.d(TAG, "onStopDetection");
         synchronized (mLock) {
             mHandler.removeCallbacks(mDetectionJob);
