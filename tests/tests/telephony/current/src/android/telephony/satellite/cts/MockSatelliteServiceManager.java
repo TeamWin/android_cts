@@ -496,6 +496,24 @@ class MockSatelliteServiceManager {
         }
     }
 
+    void setWaitToSend(boolean wait) {
+        logd("setWaitToSend: wait= " + wait);
+        if (mSatelliteService == null) {
+            loge("setWaitToSend: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.setWaitToSend(wait);
+    }
+
+    boolean sendDatagramAfterDelay() {
+        logd("sendDatagramAfterDelay");
+        if (mSatelliteService == null) {
+            loge("sendDatagramAfterDelay: mSatelliteService is null");
+            return false;
+        }
+        return mSatelliteService.sendDatagramAfterDelay();
+    }
+
     private boolean setupLocalSatelliteService() {
         if (mSatelliteService != null) {
             logd("setupLocalSatelliteService: local service is already set up");

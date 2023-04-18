@@ -44,6 +44,7 @@ import com.android.telephony.Rlog;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MockSatelliteService extends SatelliteImplBase {
     private static final String TAG = "MockSatelliteService";
@@ -87,6 +88,12 @@ public class MockSatelliteService extends SatelliteImplBase {
     private boolean mIsProvisioned;
     private boolean mIsSupported;
     private int mModemState;
+    private final AtomicBoolean mWaitToSend = new AtomicBoolean(false);
+    private SatelliteDatagram mDatagramToBeSent;
+    private boolean mIsEmergencyDatagram;
+    private IIntegerConsumer mSendDatagramErrorCallback;
+    private Object mSendDatagramWithDelayLock = new Object();
+    private static final long TIMEOUT = 1000;
 
     /**
      * Create MockSatelliteService using the Executor specified for methods being called from
@@ -330,16 +337,28 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void sendSatelliteDatagram(@NonNull SatelliteDatagram datagram, boolean isEmergency,
             @NonNull IIntegerConsumer errorCallback) {
         logd("sendSatelliteDatagram: mErrorCode=" + mErrorCode);
-        if (mErrorCode != SatelliteError.ERROR_NONE) {
-            runWithExecutor(() -> errorCallback.accept(mErrorCode));
-        } else {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
-        }
 
-        if (mLocalListener != null) {
-            runWithExecutor(() -> mLocalListener.onSendSatelliteDatagram(datagram, isEmergency));
+        if (mWaitToSend.get()) {
+            // save the datagram
+            mDatagramToBeSent = datagram;
+            mIsEmergencyDatagram = isEmergency;
+            mSendDatagramErrorCallback = errorCallback;
+
+            synchronized (mSendDatagramWithDelayLock) {
+                mSendDatagramWithDelayLock.notify();
+            }
         } else {
-            loge("sendSatelliteDatagram: mLocalListener is null");
+            if (mErrorCode != SatelliteError.ERROR_NONE) {
+                runWithExecutor(() -> errorCallback.accept(mErrorCode));
+            } else {
+                runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+            }
+
+            if (mLocalListener != null) {
+                runWithExecutor(() -> mLocalListener.onSendSatelliteDatagram(datagram, isEmergency));
+            } else {
+                loge("sendSatelliteDatagram: mLocalListener is null");
+            }
         }
     }
 
@@ -412,6 +431,42 @@ public class MockSatelliteService extends SatelliteImplBase {
         logd("sendOnSatellitePositionChanged");
         mRemoteListeners.values().forEach(listener -> runWithExecutor(() ->
                 listener.onSatellitePositionChanged(pointingInfo)));
+    }
+
+    public void setWaitToSend(boolean wait) {
+        mWaitToSend.set(wait);
+    }
+
+    public boolean sendDatagramAfterDelay() {
+        logd("sendDatagramAfterDelay");
+        if (mSendDatagramErrorCallback == null) {
+            synchronized (mSendDatagramWithDelayLock) {
+                try {
+                    mSendDatagramWithDelayLock.wait(TIMEOUT);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        if (mSendDatagramErrorCallback == null) {
+            return false;
+        }
+
+        if (mErrorCode != SatelliteError.ERROR_NONE) {
+            runWithExecutor(() -> mSendDatagramErrorCallback.accept(mErrorCode));
+        } else {
+            runWithExecutor(() -> mSendDatagramErrorCallback.accept(SatelliteError.ERROR_NONE));
+        }
+
+        if (mLocalListener != null) {
+            runWithExecutor(() -> mLocalListener.onSendSatelliteDatagram(mDatagramToBeSent,
+                    mIsEmergencyDatagram));
+        } else {
+            loge("sendDatagramAfterDelay: mLocalListener is null");
+        }
+        mSendDatagramErrorCallback = null;
+        return true;
     }
 
     /**
