@@ -118,6 +118,14 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
         // TODO: Check the capture session (needs to be reflectively accessed).
         byte[] data = eventPayload.getData();
         if (data != null && data.length > 0) {
+            if (mIsTestUnexpectedCallback) {
+                Log.d(TAG, "callback onDetected twice");
+                callback.onDetected(DETECTED_RESULT);
+                callback.onDetected(DETECTED_RESULT);
+                mIsTestUnexpectedCallback = false;
+                return;
+            }
+
             // Create the unaccepted HotwordDetectedResult first to test the protection in the
             // onDetected callback function of HotwordDetectionService. When the bundle data of
             // HotwordDetectedResult is larger than max bundle size, it will throw the
@@ -151,6 +159,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             }
         } else {
             callback.onRejected(REJECTED_RESULT);
+            if (mIsTestUnexpectedCallback) {
+                Log.d(TAG, "callback onRejected again");
+                callback.onRejected(REJECTED_RESULT);
+                mIsTestUnexpectedCallback = false;
+            }
         }
     }
 
@@ -215,9 +228,10 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 mDetectionJob = () -> {
                     Log.d(TAG, "Sending detected result");
                     if (mIsTestUnexpectedCallback) {
-                        Log.d(TAG, "callback twice");
+                        Log.d(TAG, "callback onDetected twice");
                         callback.onDetected(DETECTED_RESULT);
                         callback.onDetected(DETECTED_RESULT);
+                        mIsTestUnexpectedCallback = false;
                         return;
                     }
                     if (canReadAudio()) {

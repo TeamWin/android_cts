@@ -58,8 +58,12 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
             "testHotwordDetectionService_onDetectFromDsp_rejection";
     private static final String TEST_METHOD_SOFTWARE_DETECTED_FOR_METRIC_COLLECT =
             "testHotwordDetectionService_onDetectFromMic_success";
+    private static final String TEST_METHOD_DSP_UNEXPECTED_DETECTED_FOR_METRIC_COLLECT =
+            "testHotwordDetectionService_dspDetector_onDetectedTwice_clientOnlyOneOnDetected";
     private static final String TEST_METHOD_SOFTWARE_UNEXPECTED_DETECTED_FOR_METRIC_COLLECT =
             "testHotwordDetectionService_onDetectedTwice_clientOnlyOneOnDetected";
+    private static final String TEST_METHOD_DSP_UNEXPECTED_REJECTED_FOR_METRIC_COLLECT =
+            "testHotwordDetectionService_dspDetector_onRejectedTwice_clientOnlyOneOnRejected";
     private static final String TEST_METHOD_DSP_DETECT_TIMEOUT_FOR_METRIC_COLLECT =
             "testHotwordDetectionService_onDetectFromDsp_timeout";
     private static final String TEST_METHOD_DSP_SERVICE_CRASH_FOR_METRIC_COLLECT =
@@ -149,6 +153,37 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Result.DETECTED);
     }
 
+    public void testLogHotwordDetectorKeyphraseTriggeredDspDetectorUnexpectedDetected()
+            throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_DSP_UNEXPECTED_DETECTED_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(4);
+
+        // Verify metric
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.KEYPHRASE_TRIGGER);
+
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.DETECTED);
+
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(2),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.DETECTED);
+
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(3),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.DETECT_UNEXPECTED_CALLBACK);
+    }
+
     public void testLogHotwordDetectorKeyphraseTriggeredSoftwareDetectorUnexpectedDetected()
             throws Exception {
         if (!isSupportedDevice(getDevice())) return;
@@ -176,6 +211,34 @@ public class HotwordDetectorKeyphraseTriggeredStatsTest extends DeviceTestCase i
         assertHotwordDetectorKeyphraseTriggered(filteredData.get(2),
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE,
                 Result.DETECT_UNEXPECTED_CALLBACK);
+    }
+
+    public void testLogHotwordDetectorKeyphraseTriggeredDspDetectorUnexpectedRejected()
+            throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_DSP_UNEXPECTED_REJECTED_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(3);
+
+        // Verify metric
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.REJECTED);
+
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.REJECTED);
+
+        assertHotwordDetectorKeyphraseTriggered(filteredData.get(2),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Result.REJECT_UNEXPECTED_CALLBACK);
     }
 
     public void testLogHotwordDetectorKeyphraseTriggeredDspRejected() throws Exception {
