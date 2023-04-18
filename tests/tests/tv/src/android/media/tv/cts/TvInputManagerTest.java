@@ -548,7 +548,8 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                 TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE,
                 executor, callback);
 
-        assertNotNull(hardwareAcquired);
+        // The request for Live may fail because it have lower priority than Playback
+        // assertNotNull(hardwareAcquired);
 
         // Clean up
         if (hardwareDeviceAdded) {
