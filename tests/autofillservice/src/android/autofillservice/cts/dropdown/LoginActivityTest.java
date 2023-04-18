@@ -1602,20 +1602,24 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
 
         // Then make sure it goes away when user doesn't want it..
+        String when;
         switch (dismissType) {
             case BACK_BUTTON:
+                when = "back button tapped";
                 mUiBot.pressBack();
                 break;
             case HOME_BUTTON:
+                when = "home button tapped";
                 mUiBot.pressHome();
                 break;
             case TOUCH_OUTSIDE:
+                when = "touched outside";
                 mUiBot.touchOutsideSaveDialog();
                 break;
             default:
                 throw new IllegalArgumentException("invalid dismiss type: " + dismissType);
         }
-        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD, when);
     }
 
     @Test
