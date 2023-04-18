@@ -50,6 +50,11 @@ public class VideoCallTest extends BaseTelecomTestWithMockServices {
         }
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
+
     /**
      * Tests ability to start a 2-way video call and retrieve its video state.
      */

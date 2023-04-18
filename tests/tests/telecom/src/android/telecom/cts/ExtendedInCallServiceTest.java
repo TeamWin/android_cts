@@ -59,6 +59,11 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
         }
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
+
     public void testAddNewOutgoingCallAndThenDisconnect() {
         if (!mShouldTestTelecom) {
             return;
