@@ -7382,7 +7382,7 @@
     <permission android:name="android.permission.TURN_SCREEN_ON"
                 android:label="@string/permlab_turnScreenOn"
                 android:description="@string/permdesc_turnScreenOn"
-                android:protectionLevel="signature|privileged|appop" />
+                android:protectionLevel="normal|appop" />
 
     <!-- Allows applications to use the user-initiated jobs API. For more details
          see {@link android.app.job.JobInfo.Builder#setUserInitiated}.
