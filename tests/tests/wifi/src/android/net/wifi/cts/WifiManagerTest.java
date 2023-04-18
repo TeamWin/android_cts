@@ -2951,9 +2951,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     public void testSoftApConfigurationGetPersistentRandomizedMacAddress() throws Exception {
         SoftApConfiguration currentConfig = ShellIdentityUtils.invokeWithShellPermissions(
                 mWifiManager::getSoftApConfiguration);
+        final String ssid = currentConfig.getSsid().length() <= 28
+                ? currentConfig.getSsid() + "test"
+                : "AndroidTest";
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setSoftApConfiguration(new SoftApConfiguration.Builder()
-                .setSsid(currentConfig.getSsid() + "test").build()));
+                .setSsid(ssid).build()));
         SoftApConfiguration changedSsidConfig = ShellIdentityUtils.invokeWithShellPermissions(
                 mWifiManager::getSoftApConfiguration);
         assertNotEquals(currentConfig.getPersistentRandomizedMacAddress(),
