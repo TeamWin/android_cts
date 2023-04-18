@@ -48,6 +48,7 @@ import android.companion.virtual.sensor.VirtualSensorConfig;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
 import android.platform.test.annotations.AppModeFull;
@@ -188,12 +189,26 @@ public class VirtualDeviceManagerBasicTest {
         VirtualDisplay display = mVirtualDevice.createVirtualDisplay(
                 new VirtualDisplayConfig.Builder("testDisplay", 100, 100, 100).build(),
                 getApplicationContext().getMainExecutor(),
-                new VirtualDisplay.Callback() {
-                    @Override
-                    public void onStopped() {
-                        latch.countDown();
-                    }
-                });
+                null);
+
+        DisplayManager displayManager = getApplicationContext().getSystemService(
+                DisplayManager.class);
+        displayManager.registerDisplayListener(new DisplayManager.DisplayListener() {
+            @Override
+            public void onDisplayAdded(int displayId) {
+            }
+
+            @Override
+            public void onDisplayRemoved(int displayId) {
+                if (displayId == display.getDisplay().getDisplayId()) {
+                    latch.countDown();
+                }
+            }
+
+            @Override
+            public void onDisplayChanged(int displayId) {
+            }
+        }, null);
         assertThat(display).isNotNull();
         assertThat(display.getDisplay().isValid()).isTrue();
 
