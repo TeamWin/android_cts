@@ -660,6 +660,10 @@ public final class Processor extends AbstractProcessor {
 
             methodBuilder.nextControlFlow(
                     "catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
+                    .beginControlFlow("if (e.getCause().getMessage().contains(\"No existing activity named\"))")
+                    .addStatement("throw $T.dealWithNoExistingActivityException(activityClassName, e)",
+                            TESTAPP_UTILS_CLASSNAME)
+                    .endControlFlow()
                     .addStatement("throw ($T) e.getCause()", RuntimeException.class);
 
             for (TypeMirror m : method.getThrownTypes()) {

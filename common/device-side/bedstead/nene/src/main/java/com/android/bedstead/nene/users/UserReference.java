@@ -913,6 +913,18 @@ public final class UserReference implements AutoCloseable {
         return getSwitchToUserError() == null;
     }
 
+    /**
+     * {@code true} if this user can show activities.
+     */
+    @Experimental
+    public boolean canShowActivities() {
+        if (!isForeground() && (!isProfile() || !parent().isForeground())) {
+            return false;
+        }
+
+        return true;
+    }
+
     private String getSwitchToUserError() {
         if (TestApis.users().isHeadlessSystemUserMode() && equals(TestApis.users().system())) {
             return "Cannot switch to system user on HSUM devices";
