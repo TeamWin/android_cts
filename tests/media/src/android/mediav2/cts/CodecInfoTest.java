@@ -192,7 +192,7 @@ public class CodecInfoTest {
             }
         } else {
             if (FIRST_SDK_IS_AT_LEAST_T && VNDK_IS_AT_LEAST_T && BOARD_SDK_IS_AT_LEAST_T
-                    && canDisplaySupportHDRContent()) {
+                    && canDisplaySupportHDRContent() && canHandleHdr) {
                 if (MediaUtils.isTv()) {
                     // Some TV devices support HDR10 display with VO instead of GPU. In this
                     // case, skip checking P010 on TV devices.
