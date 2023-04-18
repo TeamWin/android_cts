@@ -37,35 +37,29 @@ import android.media.MediaTranscodingManager.TranscodingRequest;
 import android.media.MediaTranscodingManager.TranscodingSession;
 import android.media.MediaTranscodingManager.VideoTranscodingRequest;
 import android.net.Uri;
-// import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
-import android.provider.MediaStore;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.MediaUtils;
-
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -74,12 +68,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 @RequiresDevice
 @AppModeFull(reason = "Instant apps cannot access the SD card")
@@ -820,6 +808,8 @@ public class MediaTranscodingManagerTest {
                         if (mPreviousProgress == 0) {
                             // Clear listener the first time this is called.
                             session.clearOnProgressUpdateListener();
+                            // Reset the progress update count in case calls are pending now.
+                            listenerExecutor.execute(() -> progressUpdateCount.set(1));
                         }
                         mPreviousProgress = newProgress;
                         progressUpdateCount.getAndIncrement();
