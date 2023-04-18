@@ -29,14 +29,12 @@ import android.os.StatFs;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.modules.utils.build.SdkLevel;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -238,7 +236,7 @@ public class SystemUtil {
      * and returning the result.
      */
     public static <T> T runWithShellPermissionIdentity(@NonNull ThrowingSupplier<T> supplier,
-            @Nullable String... permissions) {
+            String... permissions) {
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         AtomicReference<T> result = new AtomicReference<>();
         runWithShellPermissionIdentity(automan, () -> result.set(supplier.get()), permissions);
@@ -257,7 +255,7 @@ public class SystemUtil {
      * Runs a {@link ThrowingRunnable} adopting a subset of Shell's permissions.
      */
     public static void runWithShellPermissionIdentity(@NonNull ThrowingRunnable runnable,
-            @Nullable String... permissions) {
+            String... permissions) {
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         runWithShellPermissionIdentity(automan, runnable, permissions);
     }
@@ -280,24 +278,29 @@ public class SystemUtil {
      *                    available permissions.
      */
     public static void runWithShellPermissionIdentity(@NonNull UiAutomation automan,
-            @NonNull ThrowingRunnable runnable, @Nullable String... permissions) {
+            @NonNull ThrowingRunnable runnable, String... permissions) {
+        automan.adoptShellPermissionIdentity(permissions);
         try {
-            callWithShellPermissionIdentity(() -> {
-                runnable.run();
-                return null;
-            }, automan, permissions);
+            runnable.run();
         } catch (Exception e) {
             throw new RuntimeException("Caught exception", e);
+        } finally {
+            automan.dropShellPermissionIdentity();
         }
     }
-
 
     /**
      * Calls a {@link Callable} adopting Shell's permissions.
      */
     public static <T> T callWithShellPermissionIdentity(@NonNull Callable<T> callable)
             throws Exception {
-        return callWithShellPermissionIdentity(callable, null);
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        automan.adoptShellPermissionIdentity();
+        try {
+            return callable.call();
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
     }
 
     /**
@@ -307,43 +310,13 @@ public class SystemUtil {
      * @param permissions A subset of Shell's permissions. Passing {@code null} will use all
      *                    available permissions.     */
     public static <T> T callWithShellPermissionIdentity(@NonNull Callable<T> callable,
-            @Nullable String... permissions) throws Exception {
+            String... permissions) throws Exception {
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        return callWithShellPermissionIdentity(callable, automan, permissions);
-    }
-
-    /**
-     * Calls a {@link Callable} adopting the requested permissions.
-     *
-     * Calls are composable, which means permission nesting is supported. When calls are nested,
-     * the inner calls do not automatically adopt the permissions of the outer calls.
-     * The set of adopted permissions before and after this function is called should be the same.
-     */
-    static <T> T callWithShellPermissionIdentity(@NonNull Callable<T> callable,
-            UiAutomation automan, @Nullable String... permissions) throws Exception {
-        synchronized (SystemUtil.class) {
-            final Set<String> adoptedPermissions = automan.getAdoptedShellPermissions();
-
-            // Adopt new permissions
-            if (permissions == null) {
-                automan.adoptShellPermissionIdentity();
-            } else {
-                automan.adoptShellPermissionIdentity(permissions);
-            }
-
-            try {
-                return callable.call();
-            } finally {
-                // Restore old permissions
-                if (adoptedPermissions.isEmpty()) {
-                    automan.dropShellPermissionIdentity();
-                } else if (adoptedPermissions == UiAutomation.ALL_PERMISSIONS) {
-                    automan.adoptShellPermissionIdentity();
-                } else {
-                    final String[] perms = (String[]) adoptedPermissions.toArray();
-                    automan.adoptShellPermissionIdentity(perms);
-                }
-            }
+        automan.adoptShellPermissionIdentity(permissions);
+        try {
+            return callable.call();
+        } finally {
+            automan.dropShellPermissionIdentity();
         }
     }
 

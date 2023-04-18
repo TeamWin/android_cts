@@ -30,8 +30,7 @@ import org.junit.runners.model.Statement;
  * Custom JUnit4 rule that runs a test adopting Shell's permissions, revoking them at the end.
  *
  * <p>NOTE: should only be used in the cases where *every* test in a class requires the permission.
- * For a more fine-grained access, use
- * {@link SystemUtil#runWithShellPermissionIdentity(ThrowingRunnable)}
+ * For a more fine-grained access, use {@link SystemUtil#runWithShellPermissionIdentity(Runnable)}
  * or {@link SystemUtil#callWithShellPermissionIdentity(java.util.concurrent.Callable)} instead.
  */
 public class AdoptShellPermissionsRule implements TestRule {
@@ -60,14 +59,16 @@ public class AdoptShellPermissionsRule implements TestRule {
 
             @Override
             public void evaluate() throws Throwable {
-                SystemUtil.callWithShellPermissionIdentity(() -> {
-                    try {
-                        base.evaluate();
-                    } catch (Throwable e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                }, mUiAutomation, mPermissions);
+                if (mPermissions != null) {
+                    mUiAutomation.adoptShellPermissionIdentity(mPermissions);
+                } else {
+                    mUiAutomation.adoptShellPermissionIdentity();
+                }
+                try {
+                    base.evaluate();
+                } finally {
+                    mUiAutomation.dropShellPermissionIdentity();
+                }
             }
         };
     }
