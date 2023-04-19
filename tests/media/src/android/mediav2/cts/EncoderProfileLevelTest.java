@@ -129,6 +129,7 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
         final int param2 = (int) arg[3];
         final int fps = (int) arg[4];
         final int level = (int) arg[5];
+        boolean[] boolStates = {false, true};
         if (isVideo) {
             for (int maxBframe : maxBFrames) {
                 if (maxBframe != 0) {
@@ -137,14 +138,32 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
                         continue;
                     }
                 }
-                Object[] testArgs = new Object[3];
-                testArgs[0] = arg[0];
-                testArgs[1] = getVideoEncoderCfgParams(mediaType, br, param1, param2, fps,
-                        colorFormat, maxBframe, profiles, level);
-                testArgs[2] = String.format("%dkbps_%dx%d_%dfps_%s_%d_%d-bframes", br / 1000,
-                        param1, param2, fps, colorFormatToString(colorFormat, -1),
-                        level, maxBframe);
-                argsList.add(testArgs);
+                // test each resolution in both landscape and portrait orientation
+                for (boolean rotate : boolStates) {
+                    int width, height;
+                    if (rotate) {
+                        width = param2;
+                        height = param1;
+                    } else {
+                        width = param1;
+                        height = param2;
+                    }
+
+                    // H.263 doesn't support portait mode, so skip cases where width is smaller
+                    // than height.
+                    if (mediaType.equals(MediaFormat.MIMETYPE_VIDEO_H263) && width <= height) {
+                        continue;
+                    }
+
+                    Object[] testArgs = new Object[3];
+                    testArgs[0] = arg[0];
+                    testArgs[1] = getVideoEncoderCfgParams(mediaType, br, width, height, fps,
+                            colorFormat, maxBframe, profiles, level);
+                    testArgs[2] = String.format("%dkbps_%dx%d_%dfps_%s_%d_%d-bframes", br / 1000,
+                            width, height, fps, colorFormatToString(colorFormat, -1),
+                            level, maxBframe);
+                    argsList.add(testArgs);
+                }
             }
         } else {
             Object[] testArgs = new Object[3];
@@ -205,27 +224,84 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
                 // Audio - CodecMediaType, bit-rate, sample rate, channel count, level
                 {MediaFormat.MIMETYPE_AUDIO_AAC, 64000, 48000, 1, -1, -1},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, 128000, 48000, 2, -1, -1},
-                // Video - CodecMediaType, bit-rate, height, width, frame-rate, level
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 64000, 128, 96, 30, AVCLevel1},
+                // Video - CodecMediaType, bit-rate, width, height, frame-rate, level
+
+                // ITU-T H.264
+                // Table A-6 – Maximum frame rates (frames per second) for some example frame sizes
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 64000, 176, 144, 15, AVCLevel1},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, 128000, 176, 144, 15, AVCLevel1b},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 192000, 320, 240, 10, AVCLevel11},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 384000, 320, 240, 20, AVCLevel12},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 512000, 352, 240, 30, AVCLevel13},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 192000, 352, 288, 7, AVCLevel11},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 384000, 352, 288, 15, AVCLevel12},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 512000, 352, 288, 30, AVCLevel13},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, 832000, 352, 288, 30, AVCLevel2},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 1000000, 576, 352, 25, AVCLevel21},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 1500000, 640, 480, 15, AVCLevel22},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 2000000, 720, 480, 30, AVCLevel3},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 1000000, 352, 576, 25, AVCLevel21},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 1500000, 720, 576, 12, AVCLevel22},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 2000000, 720, 576, 25, AVCLevel3},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, 3000000, 1280, 720, 30, AVCLevel31},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, 6000000, 1280, 1024, 42, AVCLevel32},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 10000000, 1920, 1088, 30, AVCLevel4},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 10000000, 2048, 1024, 30, AVCLevel4},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, 25000000, 2048, 1024, 30, AVCLevel41},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, 50000000, 2048, 1088, 60, AVCLevel42},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 60000000, 2560, 1920, 30, AVCLevel5},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 80000000, 4096, 2048, 30, AVCLevel51},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, 120000000, 4096, 2160, 60, AVCLevel52},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 60000000, 3680, 1526, 26, AVCLevel5},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 80000000, 4096, 2304, 26, AVCLevel51},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 120000000, 4096, 2304, 56, AVCLevel52},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, 240000000, 8192, 4320, 30, AVCLevel6},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, 480000000, 8192, 4320, 60, AVCLevel61},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, 800000000, 8192, 4320, 120, AVCLevel62},
+
+                // The entries below have width being twice that of the widths and height being
+                // half of the heights in Table A-6
+                // Since AVC specification has level limits in terms MacroBlocks and not in terms
+                // of pixels, the height is floored to multiple of 16 to fit within the level being
+                // tested
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 64000, 352, 64, 15, AVCLevel1},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 128000, 352, 64, 15, AVCLevel1b},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 192000, 704, 144, 7, AVCLevel11},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 384000, 704, 144, 15, AVCLevel12},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 512000, 704, 144, 30, AVCLevel13},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 832000, 704, 144, 30, AVCLevel2},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 1000000, 704, 288, 25, AVCLevel21},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 1500000, 1440, 288, 12, AVCLevel22},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 2000000, 1440, 288, 25, AVCLevel3},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 3000000, 2560, 352, 30, AVCLevel31},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 6000000, 2560, 512, 42, AVCLevel32},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 10000000, 4096, 512, 30, AVCLevel4},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 25000000, 4096, 512, 30, AVCLevel41},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 50000000, 4096, 544, 60, AVCLevel42},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 60000000, 7360, 752, 26, AVCLevel5},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 80000000, 8192, 1152, 26, AVCLevel51},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 120000000, 8192, 1152, 56, AVCLevel52},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 240000000, 16384, 2160, 30, AVCLevel6},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 480000000, 16384, 2160, 60, AVCLevel61},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 800000000, 16384, 2160, 120, AVCLevel62},
+
+                // Resolutions listed in CDD Section 5.2
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 384000, 320, 240, 20, AVCLevel12},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 2000000, 720, 480, 30, AVCLevel3},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 4000000, 1280, 720, 30, AVCLevel31},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 10000000, 1920, 1088, 30, AVCLevel4},
+
+                // Clips at Maximum frame rates and bitrates
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 64000, 128, 96, 30, AVCLevel1},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 128000, 128, 96, 30, AVCLevel1b},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 192000, 128, 96, 62, AVCLevel11},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 384000, 128, 96, 125, AVCLevel12},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 768000, 128, 96, 172, AVCLevel13},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 2000000, 128, 96, 172, AVCLevel2},
+                // Following entry covers level 2.1 and 2.2
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 4000000, 176, 144, 172, AVCLevel21},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 10000000, 176, 144, 172, AVCLevel3},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 14000000, 352, 288, 172, AVCLevel31},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 20000000, 640, 480, 172, AVCLevel32},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 20000000, 720, 480, 172, AVCLevel4},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 50000000, 720, 480, 172, AVCLevel41},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 50000000, 800, 600, 172, AVCLevel42},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 135000000, 1024, 768, 172, AVCLevel5},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 240000000, 1408, 960, 172, AVCLevel51},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 240000000, 2048, 1088, 172, AVCLevel52},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 240000000, 2048, 1526, 300, AVCLevel6},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 480000000, 3680, 1536, 300, AVCLevel61},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 800000000, 4096, 2304, 300, AVCLevel62},
 
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2, 4000000, 352, 288, 30, MPEG2LevelLL},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2, 15000000, 720, 480, 30, MPEG2LevelML},
@@ -233,21 +309,50 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2, 80000000, 1920, 1088, 30, MPEG2LevelHL},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2, 80000000, 1920, 1088, 60, MPEG2LevelHP},
 
+                // Resolutions listed in https://www.webmproject.org/vp9/levels/
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 200000, 256, 144, 15, VP9Level1},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 512000, 384, 192, 30, VP9Level11},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 1000000, 480, 256, 30, VP9Level2},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 1500000, 640, 384, 30, VP9Level21},
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 1600000, 720, 480, 30, VP9Level3},
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 4000000, 1280, 720, 30, VP9Level31},
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 5000000, 1920, 1080, 30, VP9Level4},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 1600000, 1080, 512, 30, VP9Level3},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 4000000, 1280, 768, 30, VP9Level31},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 5000000, 2048, 1088, 30, VP9Level4},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 16000000, 2048, 1088, 60, VP9Level41},
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 20000000, 3840, 2160, 30, VP9Level5},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 20000000, 4096, 2176, 30, VP9Level5},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 80000000, 4096, 2176, 60, VP9Level51},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 160000000, 4096, 2176, 120, VP9Level52},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 180000000, 8192, 4352, 30, VP9Level6},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 240000000, 8192, 4352, 60, VP9Level61},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 480000000, 8192, 4352, 120, VP9Level62},
 
+                // The entries below have width being twice that of the widths and height being
+                // half of the heights in https://www.webmproject.org/vp9/levels/
+                // Some of the cases where max dimension is limited by specification, width is
+                // clipped.
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 200000, 512, 72, 15, VP9Level1},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 512000, 768, 96, 30, VP9Level11},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 1000000, 960, 128, 30, VP9Level2},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 1500000, 1280, 192, 30, VP9Level21},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 1600000, 2048, 256, 30, VP9Level3},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 4000000, 2560, 384, 30, VP9Level31},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 5000000, 4096, 544, 30, VP9Level4},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 16000000, 4096, 544, 60, VP9Level41},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 20000000, 8192, 1088, 30, VP9Level5},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 80000000, 8192, 1088, 60, VP9Level51},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 160000000, 8192, 1088, 120, VP9Level52},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 180000000, 16384, 2176, 30, VP9Level6},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 240000000, 16384, 2176, 60, VP9Level61},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 480000000, 16384, 2176, 120, VP9Level62},
+
+                // Resolutions listed in CDD Section 5.2
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 1600000, 720, 480, 30, VP9Level3},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 4000000, 1280, 720, 30, VP9Level31},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 5000000, 1920, 1080, 30, VP9Level4},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 20000000, 3840, 2160, 30, VP9Level5},
+
+                // ITU-T H.263
+                // Table X.2/H.263 − Levels of operation
+                // This also includes 176x144 which is the CDD
                 {MediaFormat.MIMETYPE_VIDEO_H263, 64000, 176, 144, 15, H263Level10},
                 {MediaFormat.MIMETYPE_VIDEO_H263, 128000, 176, 144, 15, H263Level45},
                 {MediaFormat.MIMETYPE_VIDEO_H263, 128000, 352, 288, 15, H263Level20},
@@ -257,29 +362,89 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_H263, 8192000, 720, 240, 60, H263Level60},
                 {MediaFormat.MIMETYPE_VIDEO_H263, 16384000, 720, 576, 50, H263Level70},
 
+                // From ITU-T H.265
+                // Table A.11 – Maximum picture rates (pictures per second) at level 1 to 4.1 for
+                // some example picture sizes when MinCbSizeY is equal to 64
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 128000, 176, 144, 15, HEVCMainTierLevel1},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 512000, 352, 288, 30, HEVCMainTierLevel2},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 1000000, 640, 360, 30, HEVCMainTierLevel21},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1600000, 960, 540, 30, HEVCMainTierLevel3},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 4000000, 1280, 720, 33, HEVCMainTierLevel31},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 6000000, 2048, 1080, 30, HEVCMainTierLevel4},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 16000000, 2048, 1080, 30, HEVCHighTierLevel4},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 20000000, 2048, 1080, 60, HEVCMainTierLevel41},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 30000000, 2048, 1080, 60, HEVCHighTierLevel41},
+
+                // From ITU-T H.265
+                // Table A.12 – Maximum picture rates (pictures per second) at level 5 to 6.2 for
+                // some example picture sizes when MinCbSizeY is equal to 64
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 20000000, 4096, 2160, 30, HEVCMainTierLevel5},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 4096, 2160, 30, HEVCHighTierLevel5},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 40000000, 4096, 2160, 60, HEVCMainTierLevel51},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 80000000, 4096, 2160, 60, HEVCHighTierLevel51},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 4096, 2160, 120, HEVCMainTierLevel52},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 100000000, 4096, 2160, 120, HEVCHighTierLevel52},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 8192, 4320, 30, HEVCMainTierLevel6},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 80000000, 8192, 4320, 30, HEVCHighTierLevel6},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 100000000, 8192, 4320, 60, HEVCMainTierLevel61},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 240000000, 8192, 4320, 60, HEVCHighTierLevel61},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 200000000, 8192, 4320, 120, HEVCMainTierLevel62},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 360000000, 8192, 4320, 120, HEVCHighTierLevel62},
+
+                // The entries below have width being twice that of the widths and height being
+                // half of the heights in Table A.11 and A.12
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 128000, 352, 72, 15, HEVCMainTierLevel1},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 512000, 704, 144, 30, HEVCMainTierLevel2},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1000000, 1280, 180, 30, HEVCMainTierLevel21},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1600000, 1920, 270, 30, HEVCMainTierLevel3},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 4000000, 2560, 360, 33, HEVCMainTierLevel31},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 6000000, 4096, 540, 30, HEVCMainTierLevel4},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 16000000, 4096, 540, 30, HEVCHighTierLevel4},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 20000000, 4096, 540, 60, HEVCMainTierLevel41},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 30000000, 4096, 540, 60, HEVCHighTierLevel41},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 20000000, 8192, 1080, 30, HEVCMainTierLevel5},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 8192, 1080, 30, HEVCHighTierLevel5},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 40000000, 8192, 1080, 60, HEVCMainTierLevel51},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 80000000, 8192, 1080, 60, HEVCHighTierLevel51},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 8192, 1080, 120, HEVCMainTierLevel52},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 100000000, 8192, 1080, 120, HEVCHighTierLevel52},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 16384, 2160, 30, HEVCMainTierLevel6},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 80000000, 16384, 2160, 30, HEVCHighTierLevel6},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 100000000, 16384, 2160, 60, HEVCMainTierLevel61},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 240000000, 16384, 2160, 60, HEVCHighTierLevel61},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 200000000, 16384, 2160, 120, HEVCMainTierLevel62},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 360000000, 16384, 2160, 120, HEVCHighTierLevel62},
+
+                // Resolutions listed in CDD Section 5.2
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 1000000, 512, 512, 30, HEVCMainTierLevel3},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 1600000, 720, 480, 30, HEVCMainTierLevel3},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 4000000, 1280, 720, 30, HEVCMainTierLevel31},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 5000000, 1920, 1080, 30, HEVCMainTierLevel4},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 16000000, 1920, 1080, 30, HEVCHighTierLevel4},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 20000000, 1920, 1080, 60, HEVCMainTierLevel41},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 30000000, 1920, 1080, 60, HEVCHighTierLevel41},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 20000000, 3840, 2160, 30, HEVCMainTierLevel5},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 3840, 2160, 30, HEVCHighTierLevel5},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 40000000, 3840, 2160, 60, HEVCMainTierLevel51},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 80000000, 3840, 2160, 60, HEVCHighTierLevel51},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 3840, 2160, 120, HEVCMainTierLevel52},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 100000000, 3840, 2160, 120, HEVCHighTierLevel52},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 7680, 4320, 30, HEVCMainTierLevel6},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 80000000, 7680, 4320, 30, HEVCHighTierLevel6},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 100000000, 7680, 4320, 60, HEVCMainTierLevel61},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 240000000, 7680, 4320, 60, HEVCHighTierLevel61},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 200000000, 7680, 4320, 120, HEVCMainTierLevel62},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 360000000, 7680, 4320, 120, HEVCHighTierLevel62},
 
+                // Clips at Maximum frame rates and bitrates
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 128000, 128, 96, 33, HEVCMainTierLevel1},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1500000, 128, 96, 225, HEVCMainTierLevel2},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 3000000, 128, 96, 300, HEVCMainTierLevel21},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 6000000, 176, 144, 300, HEVCMainTierLevel3},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 10000000, 352, 240, 300, HEVCMainTierLevel31},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 12000000, 352, 576, 300, HEVCMainTierLevel4},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 30000000, 352, 576, 300, HEVCHighTierLevel4},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 20000000, 720, 576, 300, HEVCMainTierLevel41},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 50000000, 720, 576, 300, HEVCHighTierLevel41},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 25000000, 1024, 768, 300, HEVCMainTierLevel5},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 100000000, 1024, 768, 300, HEVCHighTierLevel5},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 40000000, 1408, 1152, 300, HEVCMainTierLevel51},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 160000000, 1408, 1152, 300, HEVCHighTierLevel51},
+                // Following two entries cover Level 5.2 and Level 6.0
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 60000000, 2048, 1526, 300, HEVCMainTierLevel52},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 240000000, 2048, 1526, 300, HEVCHighTierLevel52},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 120000000, 3672, 1536, 300, HEVCMainTierLevel61},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 480000000, 3672, 1536, 300, HEVCHighTierLevel61},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 240000000, 4096, 3072, 300, HEVCMainTierLevel62},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 800000000, 4096, 3072, 300, HEVCHighTierLevel62},
+
+                // Resolutions listed in https://aomedia.org/av1/specification/annex-a/#levels
                 {MediaFormat.MIMETYPE_VIDEO_AV1, 1500000, 426, 240, 30, AV1Level2},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, 3000000, 640, 360, 30, AV1Level21},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, 6000000, 854, 480, 30, AV1Level3},
@@ -292,6 +457,27 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_AV1, 60000000, 7680, 4320, 30, AV1Level6},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, 100000000, 7680, 4320, 60, AV1Level61},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, 160000000, 7680, 4320, 120, AV1Level62},
+
+                // The entries below have width being twice that of the widths and height being
+                // half of the heights in https://aomedia.org/av1/specification/annex-a/#levels
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 1500000, 852, 120, 30, AV1Level2},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 3000000, 1280, 180, 30, AV1Level21},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 6000000, 1708, 240, 30, AV1Level3},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 10000000, 2560, 360, 30, AV1Level31},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 12000000, 3840, 540, 30, AV1Level4},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 20000000, 3840, 540, 60, AV1Level41},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 30000000, 7680, 1080, 30, AV1Level5},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 40000000, 7680, 1080, 60, AV1Level51},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 60000000, 7680, 1080, 120, AV1Level52},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 60000000, 15360, 2160, 30, AV1Level6},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 100000000, 15360, 2160, 60, AV1Level61},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 160000000, 15360, 2160, 120, AV1Level62},
+
+                // Resolutions listed in CDD Section 5.2
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 5000000, 720, 480, 30, AV1Level3},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 8000000, 1280, 720, 30, AV1Level31},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 16000000, 1920, 1080, 30, AV1Level4},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 50000000, 3840, 2160, 30, AV1Level5},
         };
         final List<Object[]> argsList = new ArrayList<>();
         for (Object[] arg : exhaustiveArgsList) {
@@ -425,8 +611,19 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
     public void testValidateProfileLevel() throws IOException, InterruptedException {
         int minLevel = getMinLevel(mMediaType, mEncCfgParams[0].mWidth, mEncCfgParams[0].mHeight,
                 mEncCfgParams[0].mFrameRate, mEncCfgParams[0].mBitRate, mEncCfgParams[0].mProfile);
-        assertEquals("Calculated minimum acceptable level does not match the entry in test table "
-                + mTestConfig, mEncCfgParams[0].mLevel, minLevel);
+        boolean validateMinLevel = true;
+        // MPEG4 and AV1 have independent checks on width and height and because of that,
+        // level limits that are passed to landscape resolution in the test table, do not
+        // match the minimum level computed later. For such cases, disable the minLevel check.
+        if ((mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)
+                || mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_AV1))
+                && (mEncCfgParams[0].mWidth < mEncCfgParams[0].mHeight)) {
+            validateMinLevel = false;
+        }
+        if (validateMinLevel) {
+            assertEquals("Calculated minimum acceptable level does not match the entry in test "
+                    + "table " + mTestConfig, mEncCfgParams[0].mLevel, minLevel);
+        }
 
         if (mIsVideo && mEncCfgParams[0].mInputBitDepth != 8) {
             Assume.assumeTrue(mCodecName + " doesn't support " + colorFormatToString(
