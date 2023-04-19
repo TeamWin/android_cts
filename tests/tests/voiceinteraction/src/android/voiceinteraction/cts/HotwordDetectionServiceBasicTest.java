@@ -215,8 +215,6 @@ public class HotwordDetectionServiceBasicTest {
     public void tearDown() {
         // Clean up any unexpected HAL state
         mInstrumentation.triggerRestart();
-        runWithShellPermissionIdentity(() -> mService.disableOverrideRegisterModel(),
-                MANAGE_VOICE_KEYPHRASES);
         mService.resetState();
         mService = null;
         mSoundTriggerInjectedLatch = null;
@@ -1147,7 +1145,8 @@ public class HotwordDetectionServiceBasicTest {
         try {
             adoptShellPermissionIdentityForHotword();
             // Test AlwaysOnHotwordDetector to be able to detect well
-            verifyOnDetectFromDspWithSoundTriggerInjectionSuccess(alwaysOnHotwordDetector);
+            verifyOnDetectFromDspWithSoundTriggerInjectionSuccess(
+                    alwaysOnHotwordDetector, /* shouldDisableTestModel= */ false);
 
             // Test SoftwareHotwordDetector to be able to detect well
             verifySoftwareDetectorDetectSuccess(softwareHotwordDetector);
@@ -1160,6 +1159,7 @@ public class HotwordDetectionServiceBasicTest {
 
             // Destroy the software detector
             softwareHotwordDetector.destroy();
+            disableTestModel();
         }
     }
 
@@ -1432,36 +1432,65 @@ public class HotwordDetectionServiceBasicTest {
      * Before using this method, please call {@link #adoptShellPermissionIdentityForHotword()} to
      * grant permissions. And please use
      * {@link #createAlwaysOnHotwordDetectorWithSoundTriggerInjection()} to create
-     * AlwaysOnHotwordDetector.
+     * AlwaysOnHotwordDetector. This method will disable test model after verifying the result.
+     * If you want to disable the test model manually, please use
+     * {@link #verifyOnDetectFromDspWithSoundTriggerInjectionSuccess(
+     * AlwaysOnHotwordDetector, boolean)}
      */
     private void verifyOnDetectFromDspWithSoundTriggerInjectionSuccess(
             AlwaysOnHotwordDetector alwaysOnHotwordDetector) throws Throwable {
-        // initial soundTrigger injection latch
-        mSoundTriggerInjectedLatch = new CountDownLatch(2);
+        verifyOnDetectFromDspWithSoundTriggerInjectionSuccess(
+                alwaysOnHotwordDetector, /* shouldDisableTestModel= */ true);
+    }
 
-        alwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
-
+    /**
+     * Before using this method, please call {@link #adoptShellPermissionIdentityForHotword()} to
+     * grant permissions. And please use
+     * {@link #createAlwaysOnHotwordDetectorWithSoundTriggerInjection()} to create
+     * AlwaysOnHotwordDetector. If {@code shouldDisableTestModel} is true, it will disable the test
+     * model. Otherwise, it doesn't disable the test model. Please call {@link #disableTestModel}
+     * manually.
+     */
+    private void verifyOnDetectFromDspWithSoundTriggerInjectionSuccess(
+            AlwaysOnHotwordDetector alwaysOnHotwordDetector,
+            boolean shouldDisableTestModel) throws Throwable {
         try {
-            // wait for soundTrigger injection is ready
-            mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ex) {
-            throw new AssertionError("SoundTrigger Injection timeout");
+            // initial soundTrigger injection latch
+            mSoundTriggerInjectedLatch = new CountDownLatch(2);
+
+            alwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+
+            try {
+                // wait for soundTrigger injection is ready
+                mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ex) {
+                throw new AssertionError("SoundTrigger Injection timeout");
+            }
+
+            // Verify we received model load, recognition start
+            assertThat(mModelSession).isNotNull();
+            assertThat(mRecognitionSession).isNotNull();
+
+            mService.initDetectRejectLatch();
+            mRecognitionSession.triggerRecognitionEvent(new byte[1024],
+                    createKeyphraseRecognitionExtraList());
+
+            // wait onDetected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+
+            Helper.verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
+        } finally {
+            if (shouldDisableTestModel) {
+                disableTestModel();
+            }
         }
+    }
 
-        // Verify we received model load, recognition start
-        assertThat(mModelSession).isNotNull();
-        assertThat(mRecognitionSession).isNotNull();
-
-        mService.initDetectRejectLatch();
-        mRecognitionSession.triggerRecognitionEvent(new byte[1024],
-                createKeyphraseRecognitionExtraList());
-
-        // wait onDetected() called and verify the result
-        mService.waitOnDetectOrRejectCalled();
-        AlwaysOnHotwordDetector.EventPayload detectResult =
-                mService.getHotwordServiceOnDetectedResult();
-
-        Helper.verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
+    private void disableTestModel() {
+        runWithShellPermissionIdentity(() -> mService.disableOverrideRegisterModel(),
+                MANAGE_VOICE_KEYPHRASES);
     }
 
     private void verifySoftwareDetectorDetectSuccess(HotwordDetector softwareHotwordDetector)
