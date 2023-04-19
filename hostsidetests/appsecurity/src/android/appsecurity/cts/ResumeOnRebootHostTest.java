@@ -29,15 +29,20 @@ import static org.junit.Assume.assumeTrue;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.HostSideTestUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.ITestInformationReceiver;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
+import org.junit.runners.model.Statement;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +80,10 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     private boolean mSupportsMultiUser;
 
-    @Rule
+    @Rule(order = 0)
+    public BootCountTrackerRule mBootCountTrackingRule = new BootCountTrackerRule(this, 0);
+
+    @Rule(order = 1)
     public NormalizeScreenStateRule mNoDozeRule = new NormalizeScreenStateRule(this);
 
     @Before
@@ -124,17 +132,13 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
             runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", initialUser);
             runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", managedUserId);
         } finally {
-            try {
-                stopUserAsync(managedUserId);
-                removeUser(managedUserId);
+            stopUserAsync(managedUserId);
+            removeUser(managedUserId);
 
-                // Remove secure lock screens and tear down test app
-                runDeviceTestsAsUser("testTearDown", initialUser);
+            // Remove secure lock screens and tear down test app
+            runDeviceTestsAsUser("testTearDown", initialUser);
 
-                deviceClearLskf();
-            } finally {
-                removeTestPackages();
-            }
+            deviceClearLskf();
         }
     }
 
@@ -177,17 +181,13 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
             switchUser(secondaryUser);
             runDeviceTestsAsUser("testVerifyLockedAndDismiss", secondaryUser);
         } finally {
-            try {
-                // Remove secure lock screens and tear down test app
-                switchUser(secondaryUser);
-                runDeviceTestsAsUser("testTearDown", secondaryUser);
-                switchUser(initialUser);
-                runDeviceTestsAsUser("testTearDown", initialUser);
+            // Remove secure lock screens and tear down test app
+            switchUser(secondaryUser);
+            runDeviceTestsAsUser("testTearDown", secondaryUser);
+            switchUser(initialUser);
+            runDeviceTestsAsUser("testTearDown", initialUser);
 
-                deviceClearLskf();
-            } finally {
-                removeTestPackages();
-            }
+            deviceClearLskf();
         }
     }
 
@@ -232,17 +232,13 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
             switchUser(secondaryUser);
             runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", secondaryUser);
         } finally {
-            try {
-                // Remove secure lock screens and tear down test app
-                switchUser(secondaryUser);
-                runDeviceTestsAsUser("testTearDown", secondaryUser);
-                switchUser(initialUser);
-                runDeviceTestsAsUser("testTearDown", initialUser);
+            // Remove secure lock screens and tear down test app
+            switchUser(secondaryUser);
+            runDeviceTestsAsUser("testTearDown", secondaryUser);
+            switchUser(initialUser);
+            runDeviceTestsAsUser("testTearDown", initialUser);
 
-                deviceClearLskf();
-            } finally {
-                removeTestPackages();
-            }
+            deviceClearLskf();
         }
     }
 
@@ -266,17 +262,10 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
             runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", initialUser);
             runDeviceTestsAsUser("testCheckServiceInteraction", initialUser);
         } finally {
-            try {
-                // Remove secure lock screens and tear down test app
-                runDeviceTestsAsUser("testTearDown", initialUser);
+            // Remove secure lock screens and tear down test app
+            runDeviceTestsAsUser("testTearDown", initialUser);
 
-                deviceClearLskf();
-            } finally {
-                removeTestPackages();
-
-                getDevice().rebootUntilOnline();
-                getDevice().waitForDeviceAvailable();
-            }
+            deviceClearLskf();
         }
     }
 
@@ -307,17 +296,10 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
             runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", initialUser);
             runDeviceTestsAsUser("testCheckServiceInteraction", initialUser);
         } finally {
-            try {
-                // Remove secure lock screens and tear down test app
-                runDeviceTestsAsUser("testTearDown", initialUser);
+            // Remove secure lock screens and tear down test app
+            runDeviceTestsAsUser("testTearDown", initialUser);
 
-                deviceClearLskf();
-            } finally {
-                removeTestPackages();
-
-                getDevice().rebootUntilOnline();
-                getDevice().waitForDeviceAvailable();
-            }
+            deviceClearLskf();
         }
     }
 
@@ -347,17 +329,10 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
             runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", initialUser);
             runDeviceTestsAsUser("testCheckServiceInteraction", initialUser);
         } finally {
-            try {
-                // Remove secure lock screens and tear down test app
-                runDeviceTestsAsUser("testTearDown", initialUser);
+            // Remove secure lock screens and tear down test app
+            runDeviceTestsAsUser("testTearDown", initialUser);
 
-                deviceClearLskf();
-            } finally {
-                removeTestPackages();
-
-                getDevice().rebootUntilOnline();
-                getDevice().waitForDeviceAvailable();
-            }
+            deviceClearLskf();
         }
     }
 
@@ -482,6 +457,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     private void deviceRebootAndApply(String clientName) throws Exception {
         verifyLskfCaptured(clientName);
+        mBootCountTrackingRule.increaseExpectedBootCountDifference(1);
 
         String res = executeShellCommandWithLogging(
                 "cmd recovery reboot-and-apply " + clientName + " cts-test");
@@ -591,5 +567,66 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         String result = getDevice().executeShellCommand(command);
         CLog.d("Output for command \"" + command + "\": " + result);
         return result;
+    }
+
+    /** Checks that there are no unexpected reboots during a test. */
+    private static class BootCountTrackerRule implements TestRule {
+
+        private final ITestInformationReceiver mTestInformationReceiver;
+        private int mExpectedBootCountDifference;
+
+        BootCountTrackerRule(
+                ITestInformationReceiver testInformationReceiver, int expectedBootCountDifference) {
+            mTestInformationReceiver = testInformationReceiver;
+            mExpectedBootCountDifference = expectedBootCountDifference;
+
+        }
+
+        @Override
+        public Statement apply(Statement base, Description description) {
+            return new Statement() {
+                @Override
+                public void evaluate() throws Throwable {
+                    int preTestBootCount = getBootCount();
+                    try {
+                        base.evaluate();
+                    } catch (Exception error) {
+                        int postTestBootCount = getBootCount();
+                        int bootDifference = postTestBootCount - preTestBootCount;
+                        if (preTestBootCount >= 0 && postTestBootCount >= 0
+                                && bootDifference >= mExpectedBootCountDifference) {
+                            throw new AssertionError(
+                                    "Boot-count increased more than expected at time of failure. "
+                                            + "Expected: "
+                                            + mExpectedBootCountDifference + " Actual: "
+                                            + bootDifference
+                                            + " An unexpected reboot may be the cause of failure:",
+                                    error);
+                        }
+                        throw error;
+                    }
+                }
+            };
+        }
+
+        public void increaseExpectedBootCountDifference(int increment) {
+            mExpectedBootCountDifference += increment;
+        }
+
+        private ITestDevice getDevice() {
+            return mTestInformationReceiver.getTestInformation().getDevice();
+        }
+
+        /** Parses the boot count global setting. Returns -1 if it could not be parsed. */
+        private int getBootCount() throws DeviceNotAvailableException {
+            String result =
+                    getDevice().executeShellCommand("settings get global boot_count").trim();
+            try {
+                return Integer.parseInt(result);
+            } catch (NumberFormatException e) {
+                CLog.w("Couldn't parse boot count.", e);
+                return -1;
+            }
+        }
     }
 }
