@@ -20,6 +20,8 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.location.LocationManager.FUSED_PROVIDER;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
+
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
@@ -60,9 +62,9 @@ public final class Locations {
      */
     public void setLocationEnabled(boolean enabled) {
         try (PermissionContext p = TestApis.permissions().withPermission(
-                WRITE_SECURE_SETTINGS)) {
+                WRITE_SECURE_SETTINGS, INTERACT_ACROSS_USERS)) {
             sLocationManager.setLocationEnabledForUser(enabled,
-                    TestApis.users().instrumented().userHandle());
+                    TestApis.users().system().userHandle());
         }
 
         // Location should return null after disabling location on the device. This can take a
