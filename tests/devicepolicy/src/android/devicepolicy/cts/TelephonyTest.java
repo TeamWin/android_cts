@@ -66,6 +66,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
+@CoexistenceFlagsOn
 public final class TelephonyTest {
 
     @ClassRule @Rule
