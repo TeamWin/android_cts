@@ -620,6 +620,11 @@ public class PerformanceClassEvaluator {
             this.setMeasuredValue(RequirementConstants.AVIF_DEC_REQ, avifDecoderReqSatisfied);
         }
 
+        public void setColorFormatSupportReq(boolean colorFormatSupported) {
+            this.setMeasuredValue(RequirementConstants.RGBA_1010102_COLOR_FORMAT_REQ,
+                    colorFormatSupported);
+        }
+
         /**
          * [2.2.7.1/5.1/H-1-15] Must have at least 1 HW video decoder supporting 4K60
          */
@@ -674,6 +679,21 @@ public class PerformanceClassEvaluator {
                     .build();
 
             return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_17, requirement);
+        }
+
+        /**
+         * [5.12/H-1-2] MUST support RGBA_1010102 color format for all hardware AV1 and HEVC
+         * encoders present on the device.
+         */
+        public static VideoCodecRequirement createColorFormatSupportReq() {
+            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
+                    .<Boolean>builder()
+                    .setId(RequirementConstants.RGBA_1010102_COLOR_FORMAT_REQ)
+                    .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                    .build();
+
+            return new VideoCodecRequirement(RequirementConstants.R5_12__H_1_2, requirement);
         }
     }
 
@@ -1729,6 +1749,10 @@ public class PerformanceClassEvaluator {
 
     public VideoCodecRequirement addRAVIFDecoderReq() {
         return this.addRequirement(VideoCodecRequirement.createRAVIFDecoderReq());
+    }
+
+    public VideoCodecRequirement addColorFormatSupportReq() {
+        return this.addRequirement(VideoCodecRequirement.createColorFormatSupportReq());
     }
 
     public SecureCodecRequirement addR5_1__H_1_11() {
