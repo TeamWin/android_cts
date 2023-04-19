@@ -2454,7 +2454,6 @@
         Unlock screen to return to this page after seeing the page or after 5 seconds.\n
         Fail the test if the page does not launch as described.
     </string>
-
     <string name="fsi_screen_off_without_permission_instruction">Click the \"I\'m done\" button when you are ready.\n
         After clicking, press the power button as quickly as possible to turn off the screen.\n
         Wait for a notification to appear on the screen with a pill button.\n
@@ -2466,6 +2465,18 @@
         Wait for a page to automatically launch and display the message \"This page is a full screen intent.\".\n
         Unlock screen to return to this page after seeing the page or after 5 seconds.\n
         Fail the test if the page does not launch as described.
+    </string>
+    <string name="fsi_aod_with_permission_instruction">Click the \"I\'m done\" button when you are ready.\n
+        After clicking, press the power button as quickly as possible to go to Always on Display.\n
+        Wait for a page to automatically launch and display the message \"This page is a full screen intent.\".\n
+        Unlock screen to return to this page after seeing the page or after 5 seconds.\n
+        Fail the test if the page does not launch as described.
+    </string>
+    <string name="fsi_aod_without_permission_instruction">Click the \"I\'m done\" button when you are ready.\n
+        After clicking, press the power button as quickly as possible to go to Always on Display.\n
+        Wait for a notification to appear on the screen with a pill button.\n
+        Unlock screen to return to this page after seeing the notification or after 5 seconds.\n
+        Fail the test if the notification does not show as described.
     </string>
     <string name="fsi_turn_on_aod">Turn on Always on Display by toggling on \"Always show time and info\" in Lockscreen Settings.</string>
     <string name="fsi_turn_off_aod">Turn off Always on Display by toggling off \"Always show time and info\" in Lockscreen Settings.</string>
