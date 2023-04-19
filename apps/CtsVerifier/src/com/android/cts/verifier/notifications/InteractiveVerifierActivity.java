@@ -120,6 +120,11 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
             return false;
         }
 
+        /** @return the test's status after autostart. */
+        int autoStartStatus() {
+            return READY;
+        }
+
         /** Set status to {@link #READY} to proceed, or {@link #SETUP} to try again. */
         protected void setUp() { status = READY; next(); };
 
@@ -222,7 +227,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         //To avoid NPE during onResume,before start to iterate next test order
         if (mCurrentTest != null && mCurrentTest.status != SETUP && mCurrentTest.autoStart()) {
             Log.i(TAG, "auto starting: " + mCurrentTest.getClass().getSimpleName());
-            mCurrentTest.status = READY;
+            mCurrentTest.status = mCurrentTest.autoStartStatus();
         }
         next();
     }

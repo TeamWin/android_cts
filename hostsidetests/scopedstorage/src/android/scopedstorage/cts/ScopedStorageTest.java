@@ -16,6 +16,13 @@
 
 package android.scopedstorage.cts;
 
+import static android.scopedstorage.cts.lib.FilePathAccessTestUtils.assertAccess;
+import static android.scopedstorage.cts.lib.FilePathAccessTestUtils.assertCanAccessMyAppFile;
+import static android.scopedstorage.cts.lib.FilePathAccessTestUtils.assertCannotReadOrWrite;
+import static android.scopedstorage.cts.lib.FilePathAccessTestUtils.assertDirectoryAccess;
+import static android.scopedstorage.cts.lib.FilePathAccessTestUtils.assertFileAccess_existsOnly;
+import static android.scopedstorage.cts.lib.FilePathAccessTestUtils.assertFileAccess_readOnly;
+import static android.scopedstorage.cts.lib.FilePathAccessTestUtils.assertFileAccess_readWrite;
 import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA1;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanAccessPrivateAppAndroidDataDir;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanAccessPrivateAppAndroidObbDir;
@@ -63,9 +70,6 @@ import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalPr
 import static android.scopedstorage.cts.lib.TestUtils.verifyUpdateToExternalDirsViaData_denied;
 import static android.scopedstorage.cts.lib.TestUtils.verifyUpdateToExternalMediaDirViaRelativePath_allowed;
 import static android.scopedstorage.cts.lib.TestUtils.verifyUpdateToExternalPrivateDirsViaRelativePath_denied;
-import static android.system.OsConstants.F_OK;
-import static android.system.OsConstants.R_OK;
-import static android.system.OsConstants.W_OK;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
@@ -76,7 +80,6 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
@@ -90,8 +93,6 @@ import android.os.storage.StorageManager;
 import android.platform.test.annotations.AppModeInstant;
 import android.provider.MediaStore;
 import android.scopedstorage.cts.lib.RedactionTestHelper;
-import android.system.ErrnoException;
-import android.system.Os;
 import android.util.Log;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -1240,85 +1241,6 @@ public class ScopedStorageTest {
             Log.w(TAG,
                     "Couldn't assertCanCreateFile(" + file + ") because file existed prior to "
                             + "running the test!");
-        }
-    }
-
-    private static void assertFileAccess_existsOnly(File file) throws Exception {
-        assertThat(file.isFile()).isTrue();
-        assertAccess(file, true, false, false);
-    }
-
-    private static void assertFileAccess_readOnly(File file) throws Exception {
-        assertThat(file.isFile()).isTrue();
-        assertAccess(file, true, true, false);
-    }
-
-    private static void assertFileAccess_readWrite(File file) throws Exception {
-        assertThat(file.isFile()).isTrue();
-        assertAccess(file, true, true, true);
-    }
-
-    private static void assertDirectoryAccess(File dir, boolean exists, boolean canWrite)
-            throws Exception {
-        // This util does not handle app data directories.
-        assumeFalse(dir.getAbsolutePath().startsWith(getAndroidDir().getAbsolutePath())
-                && !dir.equals(getAndroidDir()));
-        assertThat(dir.isDirectory()).isEqualTo(exists);
-        // For non-app data directories, exists => canRead().
-        assertAccess(dir, exists, exists, exists && canWrite);
-    }
-
-    private static void assertAccess(File file, boolean exists, boolean canRead, boolean canWrite)
-            throws Exception {
-        assertAccess(file, exists, canRead, canWrite, true /* checkExists */);
-    }
-
-    private static void assertCannotReadOrWrite(File file)
-            throws Exception {
-        // App data directories have different 'x' bits on upgrading vs new devices. Let's not
-        // check 'exists', by passing checkExists=false. But assert this app cannot read or write
-        // the other app's file.
-        assertAccess(file, false /* value is moot */, false /* canRead */,
-                false /* canWrite */, false /* checkExists */);
-    }
-
-    private static void assertCanAccessMyAppFile(File file)
-            throws Exception {
-        assertAccess(file, true, true /* canRead */,
-                true /*canWrite */, true /* checkExists */);
-    }
-
-    private static void assertAccess(File file, boolean exists, boolean canRead, boolean canWrite,
-            boolean checkExists) throws Exception {
-        if (checkExists) {
-            assertThat(file.exists()).isEqualTo(exists);
-        }
-        assertThat(file.canRead()).isEqualTo(canRead);
-        assertThat(file.canWrite()).isEqualTo(canWrite);
-        if (file.isDirectory()) {
-            if (checkExists) {
-                assertThat(file.canExecute()).isEqualTo(exists);
-            }
-        } else {
-            assertThat(file.canExecute()).isFalse(); // Filesytem is mounted with MS_NOEXEC
-        }
-
-        // Test some combinations of mask.
-        assertAccess(file, R_OK, canRead);
-        assertAccess(file, W_OK, canWrite);
-        assertAccess(file, R_OK | W_OK, canRead && canWrite);
-        assertAccess(file, W_OK | F_OK, canWrite);
-
-        if (checkExists) {
-            assertAccess(file, F_OK, exists);
-        }
-    }
-
-    private static void assertAccess(File file, int mask, boolean expected) throws Exception {
-        if (expected) {
-            assertThat(Os.access(file.getAbsolutePath(), mask)).isTrue();
-        } else {
-            assertThrows(ErrnoException.class, () -> { Os.access(file.getAbsolutePath(), mask); });
         }
     }
 

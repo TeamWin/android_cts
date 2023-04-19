@@ -66,6 +66,11 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
         }
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
+
     public void testAddExistingConnection() {
         if (!mShouldTestTelecom) {
             return;

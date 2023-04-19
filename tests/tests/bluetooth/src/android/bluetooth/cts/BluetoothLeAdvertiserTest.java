@@ -36,7 +36,6 @@ import android.bluetooth.le.AdvertisingSetCallback;
 import android.bluetooth.le.AdvertisingSetParameters;
 import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -44,6 +43,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,7 +66,6 @@ public class BluetoothLeAdvertiserTest {
                     .build();
 
     private Context mContext;
-    private boolean mHasBluetooth;
     private UiAutomation mUiAutomation;
     private BluetoothManager mManager;
     private BluetoothAdapter mAdapter;
@@ -78,9 +77,8 @@ public class BluetoothLeAdvertiserTest {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
-        mHasBluetooth = mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_BLUETOOTH);
-        if (!mHasBluetooth) return;
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
+
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_ADVERTISE);
 
@@ -93,13 +91,15 @@ public class BluetoothLeAdvertiserTest {
 
     @After
     public void tearDown() throws Exception {
-        if (mHasBluetooth) {
+        if (mAdvertiser != null) {
             mAdvertiser.stopAdvertisingSet(mCallback);
             assertTrue(mCallback.mAdvertisingSetStoppedLatch.await(TIMEOUT_MS,
                     TimeUnit.MILLISECONDS));
             mAdvertiser = null;
             mAdapter = null;
+        }
 
+        if (mUiAutomation != null) {
             mUiAutomation.dropShellPermissionIdentity();
         }
     }

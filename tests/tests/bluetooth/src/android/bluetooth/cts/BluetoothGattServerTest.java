@@ -31,12 +31,12 @@ import android.bluetooth.BluetoothGattServerCallback;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
-import android.content.pm.PackageManager;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,17 +53,15 @@ public class BluetoothGattServerTest {
     private BluetoothGattServer mBluetoothGattServer;
     private BluetoothManager mBluetoothManager;
     private UiAutomation mUIAutomation;
-    private boolean mHasBluetooth;
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        mHasBluetooth = mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_BLUETOOTH);
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
+
         mUIAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUIAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
-        if (!mHasBluetooth) return;
         mBluetoothAdapter = mContext.getSystemService(BluetoothManager.class).getAdapter();
         assertTrue(BTAdapterUtils.enableAdapter(mBluetoothAdapter, mContext));
         mBluetoothManager = mContext.getSystemService(BluetoothManager.class);
@@ -74,53 +72,52 @@ public class BluetoothGattServerTest {
 
     @After
     public void tearDown() throws Exception {
-        if (mHasBluetooth) {
+        if (mUIAutomation != null) {
             mUIAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
-            if (mBluetoothAdapter != null && mBluetoothGattServer != null) {
-                mBluetoothGattServer.close();
-                mBluetoothGattServer = null;
-            }
-            mBluetoothAdapter = null;
+        }
+
+        if (mBluetoothAdapter != null && mBluetoothGattServer != null) {
+            mBluetoothGattServer.close();
+            mBluetoothGattServer = null;
+        }
+
+        mBluetoothAdapter = null;
+
+        if (mUIAutomation != null) {
             mUIAutomation.dropShellPermissionIdentity();
         }
     }
 
     @Test
     public void testGetConnectedDevices() {
-        if (!mHasBluetooth) return;
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGattServer.getConnectedDevices());
     }
 
     @Test
     public void testGetConnectionState() {
-        if (!mHasBluetooth) return;
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGattServer.getConnectionState(null));
     }
 
     @Test
     public void testGetDevicesMatchingConnectionStates() {
-        if (!mHasBluetooth) return;
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGattServer.getDevicesMatchingConnectionStates(null));
     }
 
     @Test
     public void testGetService() {
-        if (!mHasBluetooth) return;
         assertNull(mBluetoothGattServer.getService(TEST_UUID));
     }
 
     @Test
     public void testGetServices() {
-        if (!mHasBluetooth) return;
         assertEquals(mBluetoothGattServer.getServices(), new ArrayList<BluetoothGattService>());
     }
 
     @Test
     public void testReadPhy() {
-        if (!mHasBluetooth) return;
         BluetoothDevice testDevice = mBluetoothAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
         mUIAutomation.dropShellPermissionIdentity();
         assertThrows(SecurityException.class, () -> mBluetoothGattServer.readPhy(testDevice));
@@ -128,7 +125,6 @@ public class BluetoothGattServerTest {
 
     @Test
     public void testSetPreferredPhy() {
-        if (!mHasBluetooth) return;
         BluetoothDevice testDevice = mBluetoothAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
         mUIAutomation.dropShellPermissionIdentity();
         assertThrows(SecurityException.class, () -> mBluetoothGattServer.setPreferredPhy(testDevice,

@@ -1008,7 +1008,7 @@
     <!-- @SystemApi @hide Allows an application to communicate over satellite.
          Only granted if the application is a system app.-->
     <permission android:name="android.permission.SATELLITE_COMMUNICATION"
-                android:protectionLevel="internal|role" />
+                android:protectionLevel="role|signature|privileged" />
 
     <!-- @SystemApi @hide Allows an application to bind with satellite service.
          Only granted if the application is a system app.-->

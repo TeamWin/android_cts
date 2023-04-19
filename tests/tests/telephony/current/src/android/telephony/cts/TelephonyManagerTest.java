@@ -3745,6 +3745,7 @@ public class TelephonyManagerTest {
             assertTrue("first activity info is" + activityInfo1, activityInfo1.isValid());
 
             // Wait a bit, then get another instance to make sure that some info has accumulated
+            waitForMs(5000);
             CompletableFuture<ModemActivityInfo> future2 = new CompletableFuture<>();
             mTelephonyManager.requestModemActivityInfo(getContext().getMainExecutor(),
                     future2::complete);

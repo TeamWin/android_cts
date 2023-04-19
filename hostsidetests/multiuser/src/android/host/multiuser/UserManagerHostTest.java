@@ -18,9 +18,12 @@ package android.host.multiuser;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.platform.test.annotations.LargeTest;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
@@ -38,6 +41,8 @@ public class UserManagerHostTest extends BaseMultiUserTest {
     @Test
     @ApiTest(apis = {"android.os.UserManager#getPreviousForegroundUser"})
     public void getPreviousForegroundUser_correctAfterReboot() throws Exception {
+        assumeNewUsersCanBeAdded(2);
+
         final int userId1 = getDevice().createUser("test_user_1");
         assertSwitchToNewUser(userId1);
 
@@ -63,6 +68,18 @@ public class UserManagerHostTest extends BaseMultiUserTest {
         installPackage(options);
         final boolean testResult = runDeviceTests(options);
         assertThat(testResult).isTrue();
+    }
+
+    private void assumeNewUsersCanBeAdded(int noOfUsers) throws DeviceNotAvailableException {
+        assumeTrue("Cannot allow adding " + noOfUsers + " new users.",
+                noOfUsers <= remainingUsersAllowedToBeCreated());
+    }
+
+    private int remainingUsersAllowedToBeCreated() throws DeviceNotAvailableException {
+        int nonGuestUsersCount =  (int) getDevice().getUserInfos().values().stream()
+                .filter(userInfo -> !userInfo.isGuest())
+                .count();
+        return getDevice().getMaxNumberOfUsersSupported() - nonGuestUsersCount;
     }
 
 }

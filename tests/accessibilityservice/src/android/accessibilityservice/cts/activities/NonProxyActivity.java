@@ -22,7 +22,7 @@ import android.os.Bundle;
 /**
  * Activity launched on the default display that is used by AccessibilityProxyTest.
  */
-public class NonProxyActivity extends AccessibilityTestActivity {
+public class NonProxyActivity extends AccessibilityKeyEventTestActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

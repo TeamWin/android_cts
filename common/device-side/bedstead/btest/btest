@@ -900,6 +900,10 @@ def is_for_testing(device_state, user):
     return device_state["sdk_version"] < 34 or "FOR_TESTING" in user["flags"]
 
 def is_secondary_user(device_state, user):
+    if ("HEADLESS" in device_state["users"][0]["type"]):
+        # The initial user is still useful for secondary user tests even if non-for-testing on
+        # headless as it's default
+        return user["type"] == "full.SECONDARY"
     return is_for_testing(device_state, user) and user["type"] == "full.SECONDARY"
 
 def is_clone_profile(device_state, user):

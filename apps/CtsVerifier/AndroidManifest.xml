@@ -115,6 +115,9 @@
     <!-- READ_LOGS User Consent Test from T -->
     <uses-permission android:name="android.permission.READ_LOGS" />
 
+    <!-- Needed for Notification Full Screen Intent tests -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+
     <application android:networkSecurityConfig="@xml/network_security_config"
                  android:label="@string/app_name"
                  android:icon="@drawable/icon"
@@ -3293,6 +3296,22 @@
             <meta-data android:name="CddTest" android:value="3.8.3/H-0-4" />
         </activity>
 
+        <activity android:name=".notifications.NotificationFullScreenIntentVerifierActivity"
+            android:exported="true"
+            android:label="@string/fsi_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
+            <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
+            <meta-data android:name="display_mode"
+                android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                android:value="android.app.Notification.Builder#setFullScreenIntent|
+                android.app.NotificationManager#notify" />
+        </activity>
+
         <activity android:name=".notifications.NotificationListenerVerifierActivity"
                   android:exported="true"
                 android:label="@string/nls_test">
@@ -3328,8 +3347,11 @@
 
         <activity android:name=".notifications.ShowWhenLockedActivity"
             android:exported="true"
-            android:showWhenLocked="true"
-            />
+            android:showWhenLocked="true">
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+            <meta-data android:name="NonApiTest"
+                android:value="Helper class. Test activities: NotificationPrivacyVerifierActivity, NotificationFullScreenIntentVerifierActivity" />
+        </activity>
 
         <receiver android:name=".notifications.BlockChangeReceiver"
             android:exported="true">

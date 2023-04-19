@@ -40,6 +40,11 @@ public class WiredHeadsetTest extends BaseTelecomTestWithMockServices {
         }
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
+
     public void testIncomingCallShortPress_acceptsCall() throws Exception {
         if (!mShouldTestTelecom || DISABLE_TESTS) {
             return;

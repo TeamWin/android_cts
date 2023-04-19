@@ -53,6 +53,7 @@ java_library {
     name: "cts_window_jetpack_utils",
     srcs: [
         "src/android/server/wm/jetpack/utils/**/*.java",
+        ":cts-wm-nested-shell-permission",
     ],
     static_libs: [
         "compatibility-device-util-axt",

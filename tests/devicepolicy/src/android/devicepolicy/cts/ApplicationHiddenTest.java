@@ -62,8 +62,6 @@ public class ApplicationHiddenTest {
             TestApis.packages().find("com.android.keychain");
     private static final Package NON_EXISTING_PACKAGE =
             TestApis.packages().find("non.existing.package");
-    private static final PackageManager sLocalPackageManager =
-            TestApis.context().instrumentedContext().getPackageManager();
 
     // TODO: All references to isApplicationHidden and setApplicationHidden which are not part of
     //  the "act" step of the test should run through a Nene API, once those APIs are permission

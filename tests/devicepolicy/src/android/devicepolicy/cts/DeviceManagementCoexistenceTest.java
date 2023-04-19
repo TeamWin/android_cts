@@ -1513,7 +1513,7 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDeviceOwner
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @EnsureHasDevicePolicyManagerRoleHolder
     @EnsureHasPermission(value = Manifest.permission.FORCE_STOP_PACKAGES)

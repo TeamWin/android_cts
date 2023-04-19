@@ -24,7 +24,10 @@ import android.bluetooth.BluetoothLeAudioCodecStatus;
 import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -66,6 +69,11 @@ public class BluetoothLeAudioCodecStatusTest {
                         INPUT_CAPABILITIES_CONFIG, OUTPUT_CAPABILITIES_CONFIG,
                         INPUT_SELECTABLE_CONFIG, OUTPUT_SELECTABLE_CONFIG);
 
+    @Before
+    public void setUp() {
+        Assume.assumeTrue(TestUtils.isBleSupported(
+                InstrumentationRegistry.getInstrumentation().getContext()));
+    }
 
     @Test
     public void testGetInputCodecConfig() {

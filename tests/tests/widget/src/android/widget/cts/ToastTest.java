@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -1231,7 +1232,7 @@ public class ToastTest {
 
     private static void showToast(Toast toast, boolean runWithPostNotificationPermission) {
         if (runWithPostNotificationPermission) {
-            SystemUtil.runWithShellPermissionIdentity(() -> toast.show());
+            SystemUtil.runWithShellPermissionIdentity(() -> toast.show(), POST_NOTIFICATIONS);
         } else {
             toast.show();
         }

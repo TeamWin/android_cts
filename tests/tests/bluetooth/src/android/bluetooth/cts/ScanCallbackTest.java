@@ -24,7 +24,10 @@ import android.bluetooth.le.ScanSettings;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -45,6 +48,12 @@ public class ScanCallbackTest {
 
     private MockScanner mMockScanner = new MockScanner();
     private BleScanCallback mMockScanCallback = new BleScanCallback();
+
+    @Before
+    public void setUp() {
+        Assume.assumeTrue(TestUtils.isBleSupported(
+                InstrumentationRegistry.getInstrumentation().getContext()));
+    }
 
     @SmallTest
     @Test

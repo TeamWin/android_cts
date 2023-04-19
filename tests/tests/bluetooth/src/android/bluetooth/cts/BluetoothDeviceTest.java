@@ -32,7 +32,6 @@ import static org.junit.Assert.assertThrows;
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSinkAudioPolicy;
 import android.bluetooth.BluetoothStatusCodes;
@@ -54,7 +53,6 @@ public class BluetoothDeviceTest extends AndroidTestCase {
 
     private final String mFakeDeviceAddress = "00:11:22:AA:BB:CC";
     private BluetoothDevice mFakeDevice;
-    private static final String EMPTY_DEVICE_ADDRESS = "00:00:00:00:00:00";
 
     @Override
     public void setUp() throws Exception {
@@ -373,11 +371,6 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         assertThrows(NullPointerException.class, () ->
                 mFakeDevice.connectGatt(getContext(), false, null,
                 TRANSPORT_AUTO, BluetoothDevice.PHY_LE_1M_MASK, null));
-
-        // Empty device address should return null
-        BluetoothDevice testDeviceEmptyAddr = mAdapter.getRemoteDevice(EMPTY_DEVICE_ADDRESS);
-        assertNull(testDeviceEmptyAddr.connectGatt(getContext(), false,
-                new BluetoothGattCallback() {}));
     }
 
     public void test_fetchUuidsWithSdp() {

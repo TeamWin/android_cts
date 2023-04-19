@@ -31,7 +31,6 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.EnsureVerifyApps;
-import com.android.bedstead.harrier.policies.HideApplication;
 import com.android.bedstead.harrier.policies.SuspendPackage;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.testapp.TestApp;
@@ -54,49 +53,6 @@ public final class PackagesTest {
     @AfterClass
     public static void teardownClass() {
         sTestAppInstance.uninstall();
-    }
-
-    @CanSetPolicyTest(policy = HideApplication.class)
-    @Postsubmit(reason = "new test")
-    public void isApplicationHidden_applicationIsHidden_returnsTrue() {
-        try {
-            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName(), true);
-
-            assertThat(sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName())).isTrue();
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName(), false);
-        }
-    }
-
-    @CanSetPolicyTest(policy = HideApplication.class)
-    @Postsubmit(reason = "new test")
-    public void isApplicationHidden_applicationIsNotHidden_returnsFalse() {
-        sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
-                sDeviceState.dpc().componentName(), sTestApp.packageName(), false);
-
-        assertThat(sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                sDeviceState.dpc().componentName(), sTestApp.packageName())).isFalse();
-    }
-
-    @CannotSetPolicyTest(policy = HideApplication.class)
-    @Postsubmit(reason = "new test")
-    public void isApplicationHidden_notAllowed_throwsException() {
-        assertThrows(SecurityException.class, () ->
-                sDeviceState.dpc().devicePolicyManager()
-                        .isApplicationHidden(
-                                sDeviceState.dpc().componentName(), sTestApp.packageName()));
-    }
-
-    @CannotSetPolicyTest(policy = HideApplication.class)
-    @Postsubmit(reason = "new test")
-    public void setApplicationHidden_notAllowed_throwsException() {
-        assertThrows(SecurityException.class, () ->
-                sDeviceState.dpc().devicePolicyManager()
-                        .setApplicationHidden(
-                                sDeviceState.dpc().componentName(), sTestApp.packageName(), true));
     }
 
     @CanSetPolicyTest(policy = SuspendPackage.class)

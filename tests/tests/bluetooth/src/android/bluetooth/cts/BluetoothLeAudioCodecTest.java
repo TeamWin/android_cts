@@ -23,7 +23,10 @@ import android.bluetooth.BluetoothLeAudioCodecConfig;
 import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -68,6 +71,12 @@ public class BluetoothLeAudioCodecTest {
         BluetoothLeAudioCodecConfig.FRAME_DURATION_7500,
         BluetoothLeAudioCodecConfig.FRAME_DURATION_10000
     };
+
+    @Before
+    public void setUp() {
+        Assume.assumeTrue(TestUtils.isBleSupported(
+                InstrumentationRegistry.getInstrumentation().getContext()));
+    }
 
     @Test
     public void testGetCodecNameAndType() {

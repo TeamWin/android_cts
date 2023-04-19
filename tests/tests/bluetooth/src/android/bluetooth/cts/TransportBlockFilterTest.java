@@ -35,6 +35,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,34 +52,28 @@ public class TransportBlockFilterTest {
     private static final byte[] TEST_VALID_WIFI_NAN_HASH =
             {0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8};
 
-    private boolean mHasBluetooth;
+    private Context mContext;
     private BluetoothAdapter mAdapter;
 
     @Before
     public void setUp() {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        mHasBluetooth = TestUtils.hasBluetooth();
-        if (!mHasBluetooth) {
-            return;
-        }
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+
+        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
+
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
         mAdapter = TestUtils.getBluetoothAdapterOrDie();
-        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, context));
+        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
     }
 
     @After
     public void tearDown() {
-        if (mHasBluetooth) {
-            mAdapter = null;
-            TestUtils.dropPermissionAsShellUid();
-        }
+        TestUtils.dropPermissionAsShellUid();
+        mAdapter = null;
     }
 
     @Test
     public void testEmptyTransportBlockFilterFromBuilder() {
-        if (shouldSkipTest()) {
-            return;
-        }
         TransportBlockFilter filter = new TransportBlockFilter.Builder(
                 OrganizationId.BLUETOOTH_SIG).build();
         assertEquals(OrganizationId.BLUETOOTH_SIG, filter.getOrgId());
@@ -91,9 +86,6 @@ public class TransportBlockFilterTest {
 
     @Test
     public void testCreateTransportBlockFilterFromBuilder() {
-        if (shouldSkipTest()) {
-            return;
-        }
         TransportBlockFilter filter = new TransportBlockFilter.Builder(
                 OrganizationId.WIFI_ALLIANCE_SERVICE_ADVERTISEMENT)
                 .setTdsFlags(TEST_TDS_FLAG, TEST_TDS_FLAG_MASK)
@@ -109,9 +101,6 @@ public class TransportBlockFilterTest {
 
     @Test
     public void testCreateWifiNanTransportBlockFilterFromBuilder() {
-        if (shouldSkipTest()) {
-            return;
-        }
         TransportBlockFilter filter = new TransportBlockFilter.Builder(
                 OrganizationId.WIFI_ALLIANCE_NEIGHBOR_AWARENESS_NETWORKING)
                 .setTdsFlags(TEST_TDS_FLAG, TEST_TDS_FLAG_MASK)
@@ -127,9 +116,6 @@ public class TransportBlockFilterTest {
 
     @Test
     public void testCannotSetWifiNanHashForWrongOrgId() {
-        if (shouldSkipTest()) {
-            return;
-        }
         TransportBlockFilter.Builder builder = new TransportBlockFilter.Builder(
                 OrganizationId.WIFI_ALLIANCE_SERVICE_ADVERTISEMENT)
                 .setTdsFlags(TEST_TDS_FLAG, TEST_TDS_FLAG_MASK);
@@ -139,9 +125,6 @@ public class TransportBlockFilterTest {
 
     @Test
     public void testSetTransportDataNonWifiNan() {
-        if (shouldSkipTest()) {
-            return;
-        }
         TransportBlockFilter.Builder builder = new TransportBlockFilter.Builder(
                 OrganizationId.WIFI_ALLIANCE_SERVICE_ADVERTISEMENT)
                 .setTdsFlags(TEST_TDS_FLAG, TEST_TDS_FLAG_MASK);
@@ -157,9 +140,6 @@ public class TransportBlockFilterTest {
 
     @Test
     public void testSetTransportDataWifiNan() {
-        if (shouldSkipTest()) {
-            return;
-        }
         TransportBlockFilter.Builder builder = new TransportBlockFilter.Builder(
                 OrganizationId.WIFI_ALLIANCE_NEIGHBOR_AWARENESS_NETWORKING)
                 .setTdsFlags(TEST_TDS_FLAG, TEST_TDS_FLAG_MASK);
@@ -172,9 +152,5 @@ public class TransportBlockFilterTest {
         assertThrows(IllegalArgumentException.class,
                 () -> builder.setTransportData(TEST_TRANSPORT_DATA_LONG,
                         TEST_TRANSPORT_DATA_MASK_LONG));
-    }
-
-    private boolean shouldSkipTest() {
-        return !mHasBluetooth;
     }
 }

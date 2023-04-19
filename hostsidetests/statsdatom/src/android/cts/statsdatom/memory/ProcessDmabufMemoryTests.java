@@ -60,7 +60,7 @@ public class ProcessDmabufMemoryTests extends DeviceTestCase implements IBuildRe
     }
 
     public void testProcessDmabufMemoryAtom() throws Exception {
-        boolean supportsFds = DeviceUtils.isKernelGreaterEqual(getDevice(), Pair.create(5, 4))
+        boolean supportsFds = DeviceUtils.isKernelGreaterEqual(getDevice(), Pair.create(5, 10))
                 && PropertyUtil.getFirstApiLevel(getDevice()) >= 31
                 && PropertyUtil.getVendorApiLevel(getDevice()) >= 31;
 

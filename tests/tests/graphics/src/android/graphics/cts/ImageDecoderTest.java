@@ -250,9 +250,10 @@ public class ImageDecoderTest {
     @RequiresDevice
     public void testDecode10BitHeif() {
         assumeTrue(
-            "Test needs Android T.", ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU));
+            "This test only applies to Android 13 (T) or newer. Skip the test.",
+            ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU));
         assumeTrue(
-            "Test needs VNDK at least T.",
+            "Test only applies to VNDK version 33 (T) or newer. Skip the test.",
             SystemProperties.getInt("ro.vndk.version", Build.VERSION_CODES.CUR_DEVELOPMENT)
                 >= Build.VERSION_CODES.TIRAMISU);
         assumeTrue("No 10-bit HEVC decoder, skip the test.", has10BitHEVCDecoder());
@@ -308,6 +309,13 @@ public class ImageDecoderTest {
     @Test
     @RequiresDevice
     public void testDecode10BitHeifWithLowRam() {
+        assumeTrue(
+            "This test only applies to Android 13 (T) or newer. Skip the test.",
+            ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU));
+        assumeTrue(
+            "Test only applies to VNDK version 33 (T) or newer. Skip the test.",
+            SystemProperties.getInt("ro.vndk.version", Build.VERSION_CODES.CUR_DEVELOPMENT)
+                >= Build.VERSION_CODES.TIRAMISU);
         assumeTrue("No 10-bit HEVC decoder, skip the test.", has10BitHEVCDecoder());
 
         ImageDecoder.Source src = ImageDecoder.createSource(getResources(), R.raw.heifimage_10bit);

@@ -17,23 +17,31 @@
 package com.android.bedstead.harrier.policies;
 
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DPM_ROLE_HOLDER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_IN_BACKGROUND;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
-import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_PACKAGE_ACCESS;
+import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_APP_RESTRICTIONS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_APP_RESTRICTIONS;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /**
- * Policy for hiding applications.
- * See {@code DevicePolicyManager#setApplicationHidden(ComponentName, String, boolean)} for more
- * detail.
+ * Policy for application restrictions.
+ *
+ * <p>This is used by methods such as
+ * {@code DevicePolicyManager#setApplicationRestrictions(ComponentName, String, Bundle)} and
+ * {@code DevicePolicyManager#getApplicationRestrictions(ComponentName, String)}.
  */
-@EnterprisePolicy(dpc = {
-        APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER
-                | APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | CAN_BE_DELEGATED
-                | CANNOT_BE_APPLIED_BY_ROLE_HOLDER},
-        delegatedScopes = DELEGATION_PACKAGE_ACCESS)
-public final class HideApplication {
+@EnterprisePolicy(
+        dpc = {
+            APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | APPLIES_IN_BACKGROUND
+                    | CAN_BE_DELEGATED | CANNOT_BE_APPLIED_BY_ROLE_HOLDER,
+            APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER
+                    | CAN_BE_DELEGATED},
+        delegatedScopes = DELEGATION_APP_RESTRICTIONS
+        )
+public final class DpcOnlyApplicationRestrictions {
 }

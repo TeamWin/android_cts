@@ -947,6 +947,23 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         }
     }
 
+    private void verifyExpectedPropertiesWhenPermissionsGranted(
+            ImmutableList<Integer> expectedProperties, String... requiredPermissions) {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                "%s",
+                                VehiclePropertyIds.toString(
+                                        carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(expectedProperties);
+                    }
+                },
+                requiredPermissions);
+    }
+
     // TODO(b/242350638): remove once all tests are annotated
     // Also, while fixing those, make sure the proper versions were set in the ApiRequirements
     // annotations added to @CddTests
@@ -6508,613 +6525,253 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     @Test
     public void testPermissionReadDriverMonitoringSettingsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_READ_DRIVER_MONITORING_SETTINGS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_DRIVER_MONITORING_SETTINGS_PROPERTIES,
                 Car.PERMISSION_READ_DRIVER_MONITORING_SETTINGS);
     }
 
     @Test
     public void testPermissionControlDriverMonitoringSettingsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS_PROPERTIES,
                 Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS);
     }
 
     @Test
     public void testPermissionReadDriverMonitoringStatesGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_READ_DRIVER_MONITORING_STATES_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_DRIVER_MONITORING_STATES_PROPERTIES,
                 Car.PERMISSION_READ_DRIVER_MONITORING_STATES);
     }
 
     @Test
     public void testPermissionCarEnergyGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CAR_ENERGY_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CAR_ENERGY_PROPERTIES,
                 Car.PERMISSION_ENERGY);
     }
 
     @Test
     public void testPermissionCarEnergyPortsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CAR_ENERGY_PORTS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CAR_ENERGY_PORTS_PROPERTIES,
                 Car.PERMISSION_ENERGY_PORTS);
     }
 
     @Test
     public void testPermissionCarExteriorEnvironmentGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CAR_EXTERIOR_ENVIRONMENT_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CAR_EXTERIOR_ENVIRONMENT_PROPERTIES,
                 Car.PERMISSION_EXTERIOR_ENVIRONMENT);
     }
 
     @Test
     public void testPermissionCarInfoGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CAR_INFO_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CAR_INFO_PROPERTIES,
                 Car.PERMISSION_CAR_INFO);
     }
 
     @Test
     public void testPermissionCarPowertrainGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CAR_POWERTRAIN_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CAR_POWERTRAIN_PROPERTIES,
                 Car.PERMISSION_POWERTRAIN);
     }
 
     @Test
     public void testPermissionControlCarPowertrainGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_CAR_POWERTRAIN_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_CAR_POWERTRAIN_PROPERTIES,
                 Car.PERMISSION_CONTROL_POWERTRAIN);
     }
 
     @Test
     public void testPermissionCarSpeedGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CAR_SPEED_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CAR_SPEED_PROPERTIES,
                 Car.PERMISSION_SPEED);
     }
 
     @Test
     public void testPermissionReadCarDisplayUnitsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_READ_CAR_DISPLAY_UNITS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_CAR_DISPLAY_UNITS_PROPERTIES,
                 Car.PERMISSION_READ_DISPLAY_UNITS);
     }
 
     @Test
     public void testPermissionControlSteeringWheelGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_CAR_STEERING_WHEEL_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_CAR_STEERING_WHEEL_PROPERTIES,
                 Car.PERMISSION_CONTROL_STEERING_WHEEL);
     }
 
     @Test
     public void testPermissionControlGloveBoxGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_GLOVE_BOX_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_GLOVE_BOX_PROPERTIES,
                 Car.PERMISSION_CONTROL_GLOVE_BOX);
     }
 
     @Test
     public void testPermissionControlCarAirbagsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_CAR_AIRBAGS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_CAR_AIRBAGS_PROPERTIES,
                 Car.PERMISSION_CONTROL_CAR_AIRBAGS);
     }
 
     @Test
     public void testPermissionControlCarSeatsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_CAR_SEATS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_CAR_SEATS_PROPERTIES,
                 Car.PERMISSION_CONTROL_CAR_SEATS);
     }
 
     @Test
     public void testPermissionIdentificationGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_IDENTIFICATION_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_IDENTIFICATION_PROPERTIES,
                 Car.PERMISSION_IDENTIFICATION);
     }
 
     @Test
     public void testPermissionMileageGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_MILEAGE_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_MILEAGE_PROPERTIES,
                 Car.PERMISSION_MILEAGE);
     }
 
     @Test
     public void testPermissionReadSteeringStateGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_READ_STEERING_STATE_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_STEERING_STATE_PROPERTIES,
                 Car.PERMISSION_READ_STEERING_STATE);
     }
 
     @Test
     public void testPermissionCarEngineDetailedGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CAR_ENGINE_DETAILED_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CAR_ENGINE_DETAILED_PROPERTIES,
                 Car.PERMISSION_CAR_ENGINE_DETAILED);
     }
 
     @Test
     public void testPermissionControlEnergyPortsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_ENERGY_PORTS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_ENERGY_PORTS_PROPERTIES,
                 Car.PERMISSION_CONTROL_ENERGY_PORTS);
     }
 
     @Test
     public void testPermissionAdjustRangeRemainingGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_ADJUST_RANGE_REMAINING_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_ADJUST_RANGE_REMAINING_PROPERTIES,
                 Car.PERMISSION_ADJUST_RANGE_REMAINING);
     }
 
     @Test
     public void testPermissionTiresGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_TIRES_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_TIRES_PROPERTIES,
                 Car.PERMISSION_TIRES);
     }
 
     @Test
     public void testPermissionExteriorLightsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_EXTERIOR_LIGHTS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_EXTERIOR_LIGHTS_PROPERTIES,
                 Car.PERMISSION_EXTERIOR_LIGHTS);
     }
 
     @Test
     public void testPermissionCarDynamicsStateGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CAR_DYNAMICS_STATE_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CAR_DYNAMICS_STATE_PROPERTIES,
                 Car.PERMISSION_CAR_DYNAMICS_STATE);
     }
 
     @Test
     public void testPermissionControlCarClimateGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_CAR_CLIMATE_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_CAR_CLIMATE_PROPERTIES,
                 Car.PERMISSION_CONTROL_CAR_CLIMATE);
     }
 
     @Test
     public void testPermissionControlCarDoorsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_CAR_DOORS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_CAR_DOORS_PROPERTIES,
                 Car.PERMISSION_CONTROL_CAR_DOORS);
     }
 
     @Test
     public void testPermissionControlCarMirrorsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_CAR_MIRRORS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_CAR_MIRRORS_PROPERTIES,
                 Car.PERMISSION_CONTROL_CAR_MIRRORS);
     }
 
     @Test
     public void testPermissionControlCarWindowsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_CAR_WINDOWS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_CAR_WINDOWS_PROPERTIES,
                 Car.PERMISSION_CONTROL_CAR_WINDOWS);
     }
 
     @Test
     public void testPermissionReadWindshieldWipersGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_READ_WINDSHIELD_WIPERS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_WINDSHIELD_WIPERS_PROPERTIES,
                 Car.PERMISSION_READ_WINDSHIELD_WIPERS);
     }
 
     @Test
     public void testPermissionControlWindshieldWipersGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_WINDSHIELD_WIPERS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_WINDSHIELD_WIPERS_PROPERTIES,
                 Car.PERMISSION_CONTROL_WINDSHIELD_WIPERS);
     }
 
     @Test
     public void testPermissionControlExteriorLightsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_EXTERIOR_LIGHTS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_EXTERIOR_LIGHTS_PROPERTIES,
                 Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS);
     }
 
     @Test
     public void testPermissionReadInteriorLightsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_READ_INTERIOR_LIGHTS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_INTERIOR_LIGHTS_PROPERTIES,
                 Car.PERMISSION_READ_INTERIOR_LIGHTS);
     }
 
     @Test
     public void testPermissionControlInteriorLightsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_INTERIOR_LIGHTS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_INTERIOR_LIGHTS_PROPERTIES,
                 Car.PERMISSION_CONTROL_INTERIOR_LIGHTS);
     }
 
     @Test
     public void testPermissionCarEpochTimeGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CAR_EPOCH_TIME_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CAR_EPOCH_TIME_PROPERTIES,
                 Car.PERMISSION_CAR_EPOCH_TIME);
     }
 
     @Test
     public void testPermissionControlCarEnergyGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_CAR_ENERGY_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_CAR_ENERGY_PROPERTIES,
                 Car.PERMISSION_CONTROL_CAR_ENERGY);
     }
 
     @Test
     public void testPermissionPrivilegedCarInfoGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_PRIVILEGED_CAR_INFO_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_PRIVILEGED_CAR_INFO_PROPERTIES,
                 Car.PERMISSION_PRIVILEGED_CAR_INFO);
     }
 
@@ -7177,86 +6834,36 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     @Test
     public void testPermissionReadAdasSettingsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_READ_ADAS_SETTINGS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_ADAS_SETTINGS_PROPERTIES,
                 Car.PERMISSION_READ_ADAS_SETTINGS);
     }
 
     @Test
     public void testPermissionControlAdasSettingsGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_ADAS_SETTINGS_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_ADAS_SETTINGS_PROPERTIES,
                 Car.PERMISSION_CONTROL_ADAS_SETTINGS);
     }
 
     @Test
     public void testPermissionReadAdasStatesGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_READ_ADAS_STATES_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_ADAS_STATES_PROPERTIES,
                 Car.PERMISSION_READ_ADAS_STATES);
     }
 
     @Test
     public void testPermissionControlAdasStatesGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                        "%s",
-                                        VehiclePropertyIds.toString(
-                                                carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_CONTROL_ADAS_STATES_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_ADAS_STATES_PROPERTIES,
                 Car.PERMISSION_CONTROL_ADAS_STATES);
     }
 
     @Test
     public void testPermissionAccessFineLocationGranted() {
-        runWithShellPermissionIdentity(
-                () -> {
-                    for (CarPropertyConfig<?> carPropertyConfig :
-                            mCarPropertyManager.getPropertyList()) {
-                        assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
-                                .that(carPropertyConfig.getPropertyId())
-                                .isIn(PERMISSION_ACCESS_FINE_LOCATION_PROPERTIES);
-                    }
-                },
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_ACCESS_FINE_LOCATION_PROPERTIES,
                 ACCESS_FINE_LOCATION);
     }
 
