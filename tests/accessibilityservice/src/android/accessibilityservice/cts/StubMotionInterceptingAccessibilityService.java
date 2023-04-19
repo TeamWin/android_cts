@@ -40,6 +40,7 @@ public class StubMotionInterceptingAccessibilityService extends InstrumentedAcce
 
     @Override
     public void onMotionEvent(@NonNull MotionEvent event) {
+        super.onMotionEvent(event);
         mMotionEventListener.accept(event);
     }
 }
