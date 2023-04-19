@@ -22,6 +22,7 @@ import android.app.UiAutomation
 import android.content.Context
 import android.content.Intent
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.rule.ScreenRecordRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import androidx.test.uiautomator.By
@@ -30,10 +31,10 @@ import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import com.android.compatibility.common.util.UiAutomatorUtils2.waitFindObjectOrNull
+import java.util.regex.Pattern
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -50,6 +51,9 @@ class ReviewAccessibilityServicesTest {
     companion object {
         private const val EXPECTED_TIMEOUT_MS = 500L
     }
+
+    @get:Rule
+    val screenRecordRule = ScreenRecordRule()
 
     @get:Rule
     val accessibilityServiceRule =
@@ -95,7 +99,7 @@ class ReviewAccessibilityServicesTest {
     }
 
     @Test
-    @Ignore
+    @ScreenRecordRule.ScreenRecord
     fun testClickingSettingsGoesToIndividualSettingsWhenOneServiceEnabled() {
         accessibilityServiceRule.enableService()
         startAccessibilityActivity()
@@ -105,11 +109,12 @@ class ReviewAccessibilityServicesTest {
     }
 
     @Test
-    @Ignore
+    @ScreenRecordRule.ScreenRecord
     fun testClickingSettingsGoesToGeneralSettingsWhenMultipleServicesEnabled() {
         accessibilityServiceRule.enableService()
         accessibilityServiceRule2.enableService()
         startAccessibilityActivity()
+        Thread.sleep(10000)
         clickSettings()
         findTestService(true)
         findTestService2(true)
@@ -156,10 +161,12 @@ class ReviewAccessibilityServicesTest {
     }
 
     private fun findObjectByTextWithoutRetry(shouldBePresent: Boolean, text: String): UiObject2? {
+        val containsWithoutCaseSelector =
+            By.text(Pattern.compile(".*$text.*", Pattern.CASE_INSENSITIVE))
         val view = if (shouldBePresent) {
-            waitFindObjectOrNull(By.textContains(text))
+            waitFindObjectOrNull(containsWithoutCaseSelector)
         } else {
-            waitFindObjectOrNull(By.textContains(text), EXPECTED_TIMEOUT_MS)
+            waitFindObjectOrNull(containsWithoutCaseSelector, EXPECTED_TIMEOUT_MS)
         }
 
         assertEquals("Expected to find view with text $text: $shouldBePresent",
