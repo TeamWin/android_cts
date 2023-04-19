@@ -16,7 +16,7 @@
 
 package com.google.android.interactive.steps.enterprise.launcher;
 
-import android.widget.TextView;
+import android.widget.Button;
 
 import androidx.test.uiautomator.UiSelector;
 
@@ -31,7 +31,7 @@ public class IsTurnOffWorkButtonTextReplacedWithUpdatedStringStepAutomation impl
     public Boolean automate() throws Exception {
         return TestApis.ui().device().findObject(
                 new UiSelector().resourceId(
-                                "com.google.android.apps.nexuslauncher:id/pause_text")
-                        .className(TextView.class)).getText().equals("UPDATED STRING");
+                        "com.google.android.apps.nexuslauncher:id/work_mode_toggle")
+                        .className(Button.class)).getText().equals("UPDATED STRING");
     }
 }
