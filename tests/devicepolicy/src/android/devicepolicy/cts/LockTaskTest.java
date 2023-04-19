@@ -18,6 +18,7 @@ package android.devicepolicy.cts;
 
 import static android.app.ActivityManager.LOCK_TASK_MODE_LOCKED;
 import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
@@ -89,6 +90,15 @@ public final class LockTaskTest {
     private static final String PACKAGE_NAME = "com.android.package.test";
     private static final DevicePolicyManager sLocalDevicePolicyManager =
             TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
+
+    /**
+     * Option to launch activities in fullscreen. This is needed to properly use lock task mode on
+     * freeform windowing devices. See b/273644378 for more context.
+     */
+    private static final ActivityOptions LAUNCH_FULLSCREEN_OPTIONS = ActivityOptions.makeBasic();
+    static {
+        LAUNCH_FULLSCREEN_OPTIONS.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+    }
 
     @IntTestParameter({
             LOCK_TASK_FEATURE_SYSTEM_INFO,
@@ -606,9 +616,11 @@ public final class LockTaskTest {
                         new String[]{sTestApp.packageName(), sSecondTestApp.packageName()});
         try (TestAppInstance testApp = sTestApp.install();
              TestAppInstance testApp2 = sSecondTestApp.install()) {
-            Activity<TestAppActivity> activity = testApp.activities().any().start();
+            Activity<TestAppActivity> activity =
+                    testApp.activities().any().start(LAUNCH_FULLSCREEN_OPTIONS.toBundle());
             activity.startLockTask();
-            Activity<TestAppActivity> activity2 = testApp2.activities().any().start();
+            Activity<TestAppActivity> activity2 =
+                    testApp2.activities().any().start(LAUNCH_FULLSCREEN_OPTIONS.toBundle());
             activity2.startLockTask();
 
             try {
