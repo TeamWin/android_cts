@@ -90,6 +90,8 @@ public class VirtualDeviceManagerBasicTest {
             new VirtualDeviceParams.Builder()
                     .setName(VIRTUAL_DEVICE_NAME)
                     .build();
+    private static final VirtualDisplayConfig DEFAULT_VIRTUAL_DISPLAY_CONFIG =
+            new VirtualDisplayConfig.Builder("testDisplay", 100, 100, 100).build();
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -177,6 +179,31 @@ public class VirtualDeviceManagerBasicTest {
     }
 
     @Test
+    public void createVirtualDevice_close_isClosed() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        mVirtualDevice.close();
+
+        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
+    }
+
+    @Test
+    public void createVirtualDevice_closeMultipleTimes_isSafe() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        mVirtualDevice.close();
+        mVirtualDevice.close();
+
+        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
+    }
+
+    @Test
     public void createVirtualDevice_removeAssociation_shouldCloseVirtualDevice()
             throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
@@ -187,7 +214,7 @@ public class VirtualDeviceManagerBasicTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         VirtualDisplay display = mVirtualDevice.createVirtualDisplay(
-                new VirtualDisplayConfig.Builder("testDisplay", 100, 100, 100).build(),
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG,
                 getApplicationContext().getMainExecutor(),
                 null);
 
@@ -221,8 +248,131 @@ public class VirtualDeviceManagerBasicTest {
 
         // Ensure the virtual device can no longer setup new functionality
         assertThrows(SecurityException.class, () -> mVirtualDevice.createVirtualDisplay(
-                new VirtualDisplayConfig.Builder("testDisplay", 100, 100, 100).build(), null,
-                null));
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, null,  null));
+    }
+
+    @Test
+    public void createVirtualDevice_removeAssociationAndCloseAfterwards_isSafe()
+            throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+
+        // Create device with a display and ensure it is all set up
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        VirtualDisplay display = mVirtualDevice.createVirtualDisplay(
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG,
+                getApplicationContext().getMainExecutor(),
+                null);
+
+        DisplayManager displayManager = getApplicationContext().getSystemService(
+                DisplayManager.class);
+        displayManager.registerDisplayListener(new DisplayManager.DisplayListener() {
+            @Override
+            public void onDisplayAdded(int displayId) {
+            }
+
+            @Override
+            public void onDisplayRemoved(int displayId) {
+                if (displayId == display.getDisplay().getDisplayId()) {
+                    latch.countDown();
+                }
+            }
+
+            @Override
+            public void onDisplayChanged(int displayId) {
+            }
+        }, null);
+
+        mFakeAssociationRule.disassociate();
+        latch.await(5, TimeUnit.SECONDS);
+
+        mVirtualDevice.close();
+
+        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
+    }
+
+    @Test
+    public void createVirtualDevice_closeAndRemoveAssociation_isSafe()
+            throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+
+        // Create device with a display and ensure it is all set up
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        VirtualDisplay display = mVirtualDevice.createVirtualDisplay(
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG,
+                getApplicationContext().getMainExecutor(),
+                null);
+
+        DisplayManager displayManager = getApplicationContext().getSystemService(
+                DisplayManager.class);
+        displayManager.registerDisplayListener(new DisplayManager.DisplayListener() {
+            @Override
+            public void onDisplayAdded(int displayId) {
+            }
+
+            @Override
+            public void onDisplayRemoved(int displayId) {
+                if (displayId == display.getDisplay().getDisplayId()) {
+                    latch.countDown();
+                }
+            }
+
+            @Override
+            public void onDisplayChanged(int displayId) {
+            }
+        }, null);
+
+        mVirtualDevice.close();
+        mFakeAssociationRule.disassociate();
+        latch.await(5, TimeUnit.SECONDS);
+
+        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
+    }
+
+    @Test
+    public void createVirtualDevice_removeAssociationAndClose_isSafe()
+            throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+
+        // Create device with a display and ensure it is all set up
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        VirtualDisplay display = mVirtualDevice.createVirtualDisplay(
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG,
+                getApplicationContext().getMainExecutor(),
+                null);
+
+        DisplayManager displayManager = getApplicationContext().getSystemService(
+                DisplayManager.class);
+        displayManager.registerDisplayListener(new DisplayManager.DisplayListener() {
+            @Override
+            public void onDisplayAdded(int displayId) {
+            }
+
+            @Override
+            public void onDisplayRemoved(int displayId) {
+                if (displayId == display.getDisplay().getDisplayId()) {
+                    latch.countDown();
+                }
+            }
+
+            @Override
+            public void onDisplayChanged(int displayId) {
+            }
+        }, null);
+
+        mFakeAssociationRule.disassociate();
+        mVirtualDevice.close();
+        latch.await(5, TimeUnit.SECONDS);
+
+        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
     }
 
     @Test
