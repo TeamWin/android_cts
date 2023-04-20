@@ -23,10 +23,5 @@ android_test_helper_app {
         "androidx.test.rules",
         "truth-prebuilt",],
     srcs: ["src/**/*.java"],
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
     sdk_version: "test_current",
 }

@@ -27,6 +27,9 @@ java_test_host {
         "platform-test-annotations-host",
         "compatibility-host-util",
     ],
+    data: [
+        ":CtsMultiuserApp",
+    ],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
