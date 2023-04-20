@@ -36,13 +36,17 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.Surface;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.MeasureSpec;
@@ -55,6 +59,7 @@ import android.widget.cts.util.NoReleaseEdgeEffect;
 import android.widget.cts.util.StretchEdgeUtil;
 import android.widget.cts.util.TestUtils;
 
+import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.LargeTest;
@@ -97,7 +102,9 @@ public class ScrollViewTest {
     private ScrollView mScrollViewRegular;
     private ScrollView mScrollViewCustom;
     private MyScrollView mScrollViewCustomEmpty;
-    private ScrollView mScrollViewStretch;
+    private MyScrollView mScrollViewStretch;
+
+    private SurfaceView mSurfaceView;
     private float mDurationScale = 1f;
 
     @Rule
@@ -114,7 +121,8 @@ public class ScrollViewTest {
         mScrollViewCustom = (ScrollView) mActivity.findViewById(R.id.scroll_view_custom);
         mScrollViewCustomEmpty = (MyScrollView) mActivity.findViewById(
                 R.id.scroll_view_custom_empty);
-        mScrollViewStretch = (ScrollView) mActivity.findViewById(R.id.scroll_view_stretch);
+        mScrollViewStretch = (MyScrollView) mActivity.findViewById(R.id.scroll_view_stretch);
+        mSurfaceView = mActivity.findViewById(R.id.surfaceview_stretch_target);
 
         // calculate pixel positions from dpi constants.
         mItemWidth = TestUtils.dpToPx(mActivity, ITEM_WIDTH_DPI);
@@ -977,13 +985,14 @@ public class ScrollViewTest {
             @Override
             public void run() {
                 SurfaceView surfaceView = mActivity.findViewById(R.id.surfaceview_stretch_target);
+                surfaceView.setBackgroundColor(Color.RED);
                 surfaceView.setVisibility(View.VISIBLE);
             }
         });
 
         mActivityRule.runOnUiThread(() -> {
             // Scroll all the way to the bottom
-            mScrollViewStretch.scrollTo(0, mScrollViewStretch.getMaxScrollAmount());
+            mScrollViewStretch.scrollToEnd();
         });
 
         NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
@@ -1005,7 +1014,105 @@ public class ScrollViewTest {
 
                     assertEquals(Color.RED, screenshot.getPixel(
                             coords[0] + mScrollViewStretch.getWidth() / 2 - 1,
-                            coords[1] + mScrollViewStretch.getHeight() - 1));
+                            coords[1] + mScrollViewStretch.getHeight() - 5));
+                }
+        );
+    }
+
+    @Test
+    public void testSurfaceViewStretchAtEndWithScale() throws Throwable {
+        showOnlyStretch();
+
+        float scaleY = 2.0f;
+
+        mActivityRule.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                SurfaceView surfaceView = mActivity.findViewById(R.id.surfaceview_stretch_target);
+                surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+                    @Override
+                    public void surfaceCreated(@NonNull SurfaceHolder holder) {
+                        // no-op
+                    }
+
+                    @Override
+                    public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width,
+                            int height) {
+                        surfaceView.setScaleY(scaleY);
+                        surfaceView.setPivotX(width / 2f);
+                        surfaceView.setPivotY(height);
+                        Surface surface = holder.getSurface();
+                        Paint paint = new Paint();
+                        Canvas canvas = surface.lockHardwareCanvas();
+                        paint.setColor(Color.RED);
+                        canvas.drawRect(0f, 0f, width / 2f, height / 2f, paint);
+                        paint.setColor(Color.YELLOW);
+                        canvas.drawRect(width / 2f, 0f, width, height / 2f, paint);
+                        paint.setColor(Color.BLUE);
+                        canvas.drawRect(0f, height / 2f, width / 2f, height, paint);
+                        paint.setColor(Color.BLACK);
+                        canvas.drawRect(width / 2f, height / 2f, width, height, paint);
+                        surface.unlockCanvasAndPost(canvas);
+                    }
+
+                    @Override
+                    public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+                        // no-op
+                    }
+                });
+                surfaceView.setVisibility(View.VISIBLE);
+
+            }
+        });
+
+        mActivityRule.runOnUiThread(() -> {
+            // Scroll all the way to the end
+            mScrollViewStretch.scrollToEnd();
+        });
+
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+
+        mScrollViewStretch.mEdgeGlowBottom = edgeEffect;
+
+        StretchEdgeUtil.dragAndHoldExecute(
+                mActivityRule,
+                mScrollViewStretch,
+                edgeEffect,
+                0,
+                -3000,
+                null,
+                () -> {
+                    int[] coords = new int[2];
+                    mScrollViewStretch.getLocationInWindow(coords);
+                    Bitmap screenshot = getInstrumentation().getUiAutomation().takeScreenshot(
+                            mActivityRule.getActivity().getWindow());
+
+                    int containerWidth = mScrollViewStretch.getWidth();
+                    int containerHeight = mScrollViewStretch.getHeight();
+
+                    int topLeftColor = screenshot.getPixel(
+                            coords[0] + containerWidth / 4,
+                            coords[1] + containerHeight / 4
+                    );
+
+                    int topRightColor = screenshot.getPixel(
+                            coords[0] + containerWidth / 2 + containerWidth / 4,
+                            coords[1] + containerHeight / 4
+                    );
+
+                    int bottomLeftColor = screenshot.getPixel(
+                            coords[0] + containerWidth / 4,
+                            coords[1] + containerHeight / 2 + containerHeight / 4
+                    );
+
+                    int bottomRightColor = screenshot.getPixel(
+                            coords[0] + containerWidth / 2 + containerWidth / 4,
+                            coords[1] + containerHeight / 2 + containerHeight / 4
+                    );
+                    assertEquals(Color.RED, topLeftColor);
+                    assertEquals(Color.YELLOW, topRightColor);
+                    assertEquals(Color.BLUE, bottomLeftColor);
+                    assertEquals(Color.BLACK, bottomRightColor);
                 }
         );
     }
@@ -1043,7 +1150,7 @@ public class ScrollViewTest {
 
         mActivityRule.runOnUiThread(() -> {
             // Scroll all the way to the bottom
-            mScrollViewStretch.scrollTo(0, 210);
+            mScrollViewStretch.scrollToEnd();
         });
 
         NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
@@ -1064,7 +1171,7 @@ public class ScrollViewTest {
 
         mActivityRule.runOnUiThread(() -> {
             // Scroll all the way to the bottom
-            mScrollViewStretch.scrollTo(0, 210);
+            mScrollViewStretch.scrollToEnd();
         });
 
         NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
@@ -1096,7 +1203,7 @@ public class ScrollViewTest {
 
         mActivityRule.runOnUiThread(() -> {
             // Scroll all the way to the bottom
-            mScrollViewStretch.scrollTo(0, 210);
+            mScrollViewStretch.scrollToEnd();
         });
 
         CaptureOnAbsorbEdgeEffect edgeEffect = new CaptureOnAbsorbEdgeEffect(mActivity);
@@ -1142,7 +1249,7 @@ public class ScrollViewTest {
 
         mActivityRule.runOnUiThread(() -> {
             // Scroll all the way to the bottom
-            mScrollViewStretch.scrollTo(0, 210);
+            mScrollViewStretch.scrollToEnd();
         });
 
         CaptureOnReleaseEdgeEffect edgeEffect = new CaptureOnReleaseEdgeEffect(mActivity);
@@ -1163,7 +1270,8 @@ public class ScrollViewTest {
 
         mActivityRule.runOnUiThread(() -> {
             // Scroll all the way to the bottom
-            mScrollViewStretch.scrollTo(0, 210);
+            mScrollViewStretch.scrollToEnd();
+            assertEquals(210, mScrollViewStretch.getScrollY());
         });
 
         CaptureOnReleaseEdgeEffect edgeEffect = new CaptureOnReleaseEdgeEffect(mActivity);
@@ -1212,7 +1320,7 @@ public class ScrollViewTest {
         showOnlyStretch();
         mActivityRule.runOnUiThread(() -> {
             // Scroll all the way to the bottom
-            mScrollViewStretch.scrollTo(0, 210);
+            mScrollViewStretch.scrollToEnd();
         });
 
         NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
@@ -1273,6 +1381,7 @@ public class ScrollViewTest {
             mScrollViewCustom.setVisibility(View.GONE);
             mScrollViewCustomEmpty.setVisibility(View.GONE);
             mScrollViewRegular.setVisibility(View.GONE);
+            mSurfaceView.setVisibility(View.GONE);
         });
     }
 
@@ -1393,6 +1502,10 @@ public class ScrollViewTest {
                 int widthUsed, int parentHeightMeasureSpec, int heightUsed) {
             super.measureChildWithMargins(child, parentWidthMeasureSpec, widthUsed,
                     parentHeightMeasureSpec, heightUsed);
+        }
+
+        public void scrollToEnd() {
+            scrollTo(0, computeVerticalScrollRange());
         }
     }
 
