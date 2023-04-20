@@ -62,7 +62,6 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
             "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
     })
     public void testMultiplePropertiesForCurrentUser() {
@@ -80,10 +79,6 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
         expectWithMessage("User %s isEnabledUser", currentUser).that(
                 UserManagerHelper.isEnabledUser(mUserManager, currentUser)).isTrue();
 
-        // Current user should not be preCreated
-        expectWithMessage("User %s isPreCreatedUser", currentUser).that(
-                UserManagerHelper.isPreCreatedUser(mUserManager, currentUser)).isFalse();
-
         // Current should be initialized, otherwise test would be running
         expectWithMessage("User %s isInitializedUser", currentUser).that(
                 UserManagerHelper.isInitializedUser(mUserManager, currentUser)).isTrue();
@@ -100,7 +95,6 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
             "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
     })
     public void testMultiplePropertiesForFullSystemUser() {
@@ -114,8 +108,6 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
                 UserManagerHelper.isGuestUser(mUserManager, systemUser)).isFalse();
         expectWithMessage("System user isEnabledUser").that(
                 UserManagerHelper.isEnabledUser(mUserManager, systemUser)).isTrue();
-        expectWithMessage("System user isPreCreatedUser").that(
-                UserManagerHelper.isPreCreatedUser(mUserManager, systemUser)).isFalse();
         expectWithMessage("System user isInitializedUser").that(
                 UserManagerHelper.isInitializedUser(mUserManager, systemUser)).isTrue();
         expectGetUserHandlesHasUser(systemUser);
@@ -129,7 +121,6 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
             "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
     })
     public void testMultiplePropertiesForHeadlessSystemUser() {
@@ -143,8 +134,6 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
                 UserManagerHelper.isGuestUser(mUserManager, systemUser)).isFalse();
         expectWithMessage("System user isEnabledUser").that(
                 UserManagerHelper.isEnabledUser(mUserManager, systemUser)).isTrue();
-        expectWithMessage("System user isPreCreatedUser").that(
-                UserManagerHelper.isPreCreatedUser(mUserManager, systemUser)).isFalse();
         expectWithMessage("System user isInitializedUser").that(
                 UserManagerHelper.isInitializedUser(mUserManager, systemUser)).isTrue();
         expectGetUserHandlesHasUser(systemUser);
