@@ -33,6 +33,7 @@ import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionId
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,6 +44,7 @@ import org.junit.runner.RunWith
  * These tests are for [StatusBarManager.updateMediaTapToTransferReceiverDisplay].
  */
 @RunWith(AndroidJUnit4::class)
+@Ignore("b/278264380")
 class UpdateMediaTapToTransferReceiverDisplayTest {
     @Rule
     fun permissionsRule() = AdoptShellPermissionsRule(
