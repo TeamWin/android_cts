@@ -121,6 +121,7 @@ class ReviewAccessibilityServicesTest {
     }
 
     @Test
+    @ScreenRecordRule.ScreenRecord
     fun testClickingIndividualGoesToIndividualSettingsWhenMultipleServicesEnabled() {
         accessibilityServiceRule.enableService()
         accessibilityServiceRule2.enableService()
