@@ -29,7 +29,8 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEV
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /**
- * Policy for application restrictions.
+ * setting application restrictions as a DPC. DPC vs non-DPC matters when fetching restrictions 
+ * using {@link android.os.UserManager#getApplicationRestrictions}.
  *
  * <p>This is used by methods such as
  * {@code DevicePolicyManager#setApplicationRestrictions(ComponentName, String, Bundle)} and
