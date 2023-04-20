@@ -19,7 +19,6 @@ package android.server.wm;
 import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.scvh.SyncValidatorSCVHTestCase;
 import android.view.cts.surfacevalidator.CapturedActivity;
 
 import androidx.test.rule.ActivityTestRule;
