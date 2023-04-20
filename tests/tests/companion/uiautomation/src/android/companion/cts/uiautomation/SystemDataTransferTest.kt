@@ -243,9 +243,11 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
      * Associate without checking the association data.
      */
     private fun associate(): AssociationInfo {
-        sendRequestAndLaunchConfirmation()
-        callback.assertInvokedByActions(3.seconds) {
-            confirmationUi.waitAndClickOnFirstFoundDevice()
+        sendRequestAndLaunchConfirmation(singleDevice = true)
+        confirmationUi.scrollToBottom()
+        callback.assertInvokedByActions {
+            // User "approves" the request.
+            confirmationUi.clickPositiveButton()
         }
         // Wait until the Confirmation UI goes away.
         confirmationUi.waitUntilGone()
