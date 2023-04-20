@@ -233,6 +233,7 @@ public class SatelliteManagerTestBase {
             synchronized (mSendDatagramStateChangesLock) {
                 logd("clearSendDatagramStateChanges");
                 mSendDatagramStateChanges.clear();
+                mSendSemaphore.drainPermits();
             }
         }
 
@@ -240,6 +241,7 @@ public class SatelliteManagerTestBase {
             synchronized (mReceiveDatagramStateChangesLock) {
                 logd("clearReceiveDatagramStateChanges");
                 mReceiveDatagramStateChanges.clear();
+                mReceiveSemaphore.drainPermits();
             }
         }
 
@@ -324,6 +326,7 @@ public class SatelliteManagerTestBase {
         public void clearProvisionedStates() {
             synchronized (mProvisionedStatesLock) {
                 mProvisionedStates.clear();
+                mSemaphore.drainPermits();
             }
         }
 
@@ -383,6 +386,7 @@ public class SatelliteManagerTestBase {
             synchronized (mModemStatesLock) {
                 Log.d(TAG, "onSatelliteModemStateChanged: clearModemStates");
                 mModemStates.clear();
+                mSemaphore.drainPermits();
             }
         }
 
