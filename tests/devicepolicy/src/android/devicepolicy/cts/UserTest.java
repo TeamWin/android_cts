@@ -17,6 +17,7 @@
 package android.devicepolicy.cts;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.CREATE_USERS;
+import static com.android.bedstead.nene.types.OptionalBoolean.ANY;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_REMOVE_USER;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -36,8 +37,11 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.policies.DisallowRemoveUser;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.types.OptionalBoolean;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.ApiTest;
 
@@ -98,11 +102,12 @@ public final class UserTest {
     }
 
     @EnsureHasAdditionalUser
-    @EnsureDoesNotHaveUserRestriction(value = DISALLOW_REMOVE_USER, onUser = UserType.ADDITIONAL_USER)
+    @EnsureDoesNotHaveUserRestriction(value = DISALLOW_REMOVE_USER, onUser = UserType.ADMIN_USER)
     @Test
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_REMOVE_USER")
     @EnsureHasPermission(CREATE_USERS)
+    @RequireRunOnSystemUser(switchedToUser = ANY)
     public void removeUser_disallowRemoveUserIsNotSet_isRemoved() throws Exception {
         UserReference additionalUser = sDeviceState.additionalUser();
 
@@ -118,6 +123,7 @@ public final class UserTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_REMOVE_USER")
     @EnsureHasPermission(CREATE_USERS)
+    @RequireRunOnSystemUser(switchedToUser = ANY)
     public void removeUser_disallowRemoveUserIsSetOnAdminUser_returnsFalse() {
         UserReference additionalUser = sDeviceState.additionalUser();
 
@@ -125,5 +131,17 @@ public final class UserTest {
 
         assertThat(result).isFalse();
         assertThat(additionalUser.exists()).isTrue();
+    }
+
+    @EnsureHasUserRestriction(value = DISALLOW_REMOVE_USER)
+    @Test
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_REMOVE_USER")
+    @EnsureHasPermission(CREATE_USERS)
+    @RequireRunOnAdditionalUser
+    public void removeUser_ownUser_disallowRemoveUserIsSet_returnsFalse() {
+        boolean result = sLocalUserManager.removeUser(TestApis.users().instrumented().userHandle());
+
+        assertThat(result).isFalse();
     }
 }

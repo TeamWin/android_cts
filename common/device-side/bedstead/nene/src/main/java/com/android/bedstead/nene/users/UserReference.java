@@ -355,7 +355,7 @@ public final class UserReference implements AutoCloseable {
 
                 if (!TestApis.users().current().equals(this)) {
                     throw new NeneException("Error switching user to " + this
-                            + " (state not changed). Relevant logcat: " + TestApis.logcat().dump(
+                            + " (current user is " + TestApis.users().current() + "). Relevant logcat: " + TestApis.logcat().dump(
                             (line) -> line.contains("ActivityManager")));
                 }
             } else {
