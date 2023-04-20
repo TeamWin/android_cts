@@ -71,12 +71,13 @@ public class BlurTests extends WindowManagerTestBase {
     private static final int BLUR_BEHIND_DYNAMIC_UPDATE_WAIT_TIME = 300;
     private static final int BACKGROUND_BLUR_DYNAMIC_UPDATE_WAIT_TIME = 100;
     private static final int DISABLE_BLUR_BROADCAST_WAIT_TIME = 100;
+
     private float mSavedAnimatorDurationScale;
     private boolean mSavedWindowBlurDisabledSetting;
     private Rect mSavedActivityBounds;
 
     @Rule
-    public final DumpOnFailure dumpOnFailure = new DumpOnFailure();
+    public final DumpOnFailure mDumpOnFailure = new DumpOnFailure();
 
     @Before
     public void setUp() {
@@ -358,6 +359,7 @@ public class BlurTests extends WindowManagerTestBase {
 
     private void verifyOnlyBackgroundImageVisible() {
         final Bitmap screenshot = takeScreenshotForBounds(mSavedActivityBounds);
+        mDumpOnFailure.dumpOnFailure("verifyOnlyBackgroundImageVisible", screenshot);
         final int height = screenshot.getHeight();
         final int width = screenshot.getWidth();
 
@@ -377,23 +379,27 @@ public class BlurTests extends WindowManagerTestBase {
     }
 
     private void assertBlurBehind(Bitmap screenshot, Rect windowFrame) {
+        mDumpOnFailure.dumpOnFailure("assertBlurBehind", screenshot);
         assertBlur(screenshot, BLUR_BEHIND_PX, 0, windowFrame.top);
         assertBlur(screenshot, BLUR_BEHIND_PX, windowFrame.bottom, screenshot.getHeight());
     }
 
     private void assertBackgroundBlur(Bitmap screenshot, Rect windowFrame) {
+        mDumpOnFailure.dumpOnFailure("assertBackgroundBlur", screenshot);
         assertBlur(screenshot, BACKGROUND_BLUR_PX, windowFrame.top, windowFrame.bottom);
     }
 
     private void assertBackgroundBlurOverBlurBehind(Bitmap screenshot, Rect windowFrame) {
+        mDumpOnFailure.dumpOnFailure("assertBackgroundBlurOverBlurBehind", screenshot);
         assertBlur(
                 screenshot,
-                (int) Math.sqrt(Math.pow(BACKGROUND_BLUR_PX, 2.f) + Math.pow(BLUR_BEHIND_PX, 2.f)),
+                (int) Math.hypot(BACKGROUND_BLUR_PX, BLUR_BEHIND_PX),
                 windowFrame.top,
                 windowFrame.bottom);
     }
 
     private void assertNoBlurBehind(Bitmap screenshot, Rect windowFrame) {
+        mDumpOnFailure.dumpOnFailure("assertNoBlurBehind", screenshot);
         for (int x = 0; x < screenshot.getWidth(); x++) {
             for (int y = 0; y < screenshot.getHeight(); y++) {
                 if (x < windowFrame.left) {
@@ -418,7 +424,8 @@ public class BlurTests extends WindowManagerTestBase {
         }
     }
 
-    private static void assertNoBackgroundBlur(Bitmap screenshot, Rect windowFrame) {
+    private void assertNoBackgroundBlur(Bitmap screenshot, Rect windowFrame) {
+        mDumpOnFailure.dumpOnFailure("assertNoBackgroundBlur", screenshot);
         for (int y = windowFrame.top; y < windowFrame.bottom; y++) {
             for (int x = windowFrame.left; x < windowFrame.right; x++) {
                 ColorUtils.verifyColor("failed for pixel (x, y) = (" + x + ", " + y + ")",
@@ -428,8 +435,7 @@ public class BlurTests extends WindowManagerTestBase {
     }
 
     private void assertBlur(Bitmap screenshot, int blurRadius, int startHeight,
-                                   int endHeight) {
-        dumpOnFailure.dumpOnFailure("assert-blur", screenshot);
+            int endHeight) {
         final int width = screenshot.getWidth();
 
         // Adjust the test to check a smaller part of the blurred area in order to accept various
