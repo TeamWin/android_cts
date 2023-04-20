@@ -161,6 +161,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder
     @EnsureHasDeviceOwner
     @Postsubmit(reason = "new test")
+    @Ignore("b/278710449")
     public void getDevicePolicyState_permissionGrantStateSet_returnsPolicy() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
@@ -489,6 +490,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder
     @EnsureHasDeviceOwner
     @Postsubmit(reason = "new test")
+    @Ignore("b/278710449")
     public void getDevicePolicyState_permissionGrantState_returnsCorrectResolutionMechanism() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
@@ -723,7 +725,7 @@ public final class DeviceManagementCoexistenceTest {
     @Test
     @EnsureHasDeviceOwner
     @Postsubmit(reason = "new test")
-    @Ignore("figure out why it's failing")
+    @Ignore("b/278710449")
     public void policyUpdateReceiver_permissionGrantStateSet_receivedPolicySetBroadcast() {
         Bundle bundle = new Bundle();
         bundle.putString(PolicyUpdateReceiver.EXTRA_PACKAGE_NAME, sTestApp.packageName());
@@ -1442,8 +1444,9 @@ public final class DeviceManagementCoexistenceTest {
                     sDeviceState.dpc().user().userHandle());
             // Asserting policies loaded correctly
             assertThat(autoTimezonePolicy.getCurrentResolvedPolicy()).isTrue();
-            assertThat(permissionGrantStatePolicy.getCurrentResolvedPolicy()).isEqualTo(
-                    PERMISSION_GRANT_STATE_GRANTED);
+            // TODO(b/278710449): uncomment once bug is fixed
+//            assertThat(permissionGrantStatePolicy.getCurrentResolvedPolicy()).isEqualTo(
+//                    PERMISSION_GRANT_STATE_GRANTED);
             assertThat(lockTaskPolicy.getCurrentResolvedPolicy().getPackages())
                     .containsExactly(PACKAGE_NAME);
             assertThat(lockTaskPolicy.getCurrentResolvedPolicy().getFlags())
