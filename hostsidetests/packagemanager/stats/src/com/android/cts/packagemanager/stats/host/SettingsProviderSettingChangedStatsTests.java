@@ -48,7 +48,13 @@ public class SettingsProviderSettingChangedStatsTests extends PackageManagerStat
         List<AtomsProto.SettingsProviderSettingChanged> reports = new ArrayList<>();
         for (StatsLog.EventMetricData data : ReportUtils.getEventMetricDataList(getDevice())) {
             if (data.getAtom().hasSettingsProviderSettingChanged()) {
-                reports.add(data.getAtom().getSettingsProviderSettingChanged());
+                AtomsProto.SettingsProviderSettingChanged setting =
+                        data.getAtom().getSettingsProviderSettingChanged();
+                String name = setting.getName();
+                if (name.equals("test_setting1") || name.equals("test_setting2")
+                        || name.equals("test_setting3")) {
+                    reports.add(setting);
+                }
             }
         }
         assertEquals(6, reports.size());
