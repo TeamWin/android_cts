@@ -283,7 +283,7 @@ public class BaseNotificationListenerCheckTest {
      */
     private static void resetPermissionController() throws Throwable {
         PermissionUtils.resetPermissionControllerJob(sUiAutomation, PERMISSION_CONTROLLER_PKG,
-                NOTIFICATION_LISTENER_CHECK_JOB_ID, UNEXPECTED_TIMEOUT_MILLIS,
+                NOTIFICATION_LISTENER_CHECK_JOB_ID, 45000,
                 ACTION_SET_UP_NOTIFICATION_LISTENER_CHECK, NotificationListenerOnBootReceiver);
     }
 
