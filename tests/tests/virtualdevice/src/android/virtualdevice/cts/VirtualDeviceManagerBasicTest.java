@@ -33,6 +33,7 @@ import static android.media.AudioManager.FX_KEY_CLICK;
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.util.concurrent.Uninterruptibles.tryAcquireUninterruptibly;
 
 import static org.junit.Assert.assertThrows;
@@ -375,13 +376,23 @@ public class VirtualDeviceManagerBasicTest {
         assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
     }
 
+    /**
+     * It is expected that there are zero VirtualDevices active on a new device. If this test fails
+     * some application may have created a VirtualDevice before this test was run. Clear all
+     * VirtualDevices (or disassociate the related CDM associations) before re-running this test.
+     */
     @Test
     public void getVirtualDevices_noVirtualDevices_returnsEmptyList() {
-        assertThat(mVirtualDeviceManager.getVirtualDevices()).isEmpty();
+        assertWithMessage(
+                "Expected no previous VirtualDevices. Please remove all VirtualDevices before "
+                        + "running this test.").that(
+                mVirtualDeviceManager.getVirtualDevices()).isEmpty();
     }
 
     @Test
     public void getVirtualDevices_returnsAllVirtualDevices() {
+        // Take into account pre-existing VirtualDevices
+        List<VirtualDevice> previousVirtualDevices = mVirtualDeviceManager.getVirtualDevices();
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
@@ -393,7 +404,10 @@ public class VirtualDeviceManagerBasicTest {
         assertThat(mAnotherVirtualDevice).isNotNull();
 
         List<VirtualDevice> virtualDevices = mVirtualDeviceManager.getVirtualDevices();
-        assertThat(virtualDevices).hasSize(2);
+        for (VirtualDevice previousVirtualDevice : previousVirtualDevices) {
+            virtualDevices.remove(previousVirtualDevice);
+        }
+        assertThat(virtualDevices.size()).isEqualTo(2);
 
         VirtualDevice device = virtualDevices.get(0);
         assertThat(device.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
