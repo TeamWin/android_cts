@@ -37,9 +37,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -65,11 +63,6 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
 
     private UserHandle mUserToRemove;
 
-    @Before
-    public void setup() {
-        removeAnyPreCreatedUser();
-    }
-
     @After
     public void cleanUp() throws Exception {
         try {
@@ -92,7 +85,6 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
             "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
     })
     public void testMultiplePropertiesForGuestUser() throws Exception {
@@ -102,7 +94,6 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
         assertThat(UserManagerHelper.isEphemeralUser(mUserManager, guestUser)).isTrue();
         assertThat(UserManagerHelper.isFullUser(mUserManager, guestUser)).isTrue();
         assertThat(UserManagerHelper.isEnabledUser(mUserManager, guestUser)).isTrue();
-        assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, guestUser)).isFalse();
 
         // User should be initialized, but to confirm, we should wait for some time as
         // Initialization flag is set later on. Any better option?
@@ -120,7 +111,6 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
             "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
     })
     public void testMultiplePropertiesForSecondaryFullUser() throws Exception {
@@ -130,7 +120,6 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
         assertThat(UserManagerHelper.isGuestUser(mUserManager, fullUser)).isFalse();
         assertThat(UserManagerHelper.isFullUser(mUserManager, fullUser)).isTrue();
         assertThat(UserManagerHelper.isEnabledUser(mUserManager, fullUser)).isTrue();
-        assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, fullUser)).isFalse();
 
         // User should be initialized, but to confirm, we should wait for some time as
         // Initialization flag is set later on. Any better option?
@@ -139,63 +128,6 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
 
         // User should be part of getUserHandles
         assertGetUserHandlesHasUser(fullUser);
-    }
-
-    @Test
-    @EnsureHasPermission(CREATE_USERS) // needed to query user properties
-    @ApiTest(apis = {
-            "android.car.builtin.os.UserManagerHelper#isEphemeralUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
-    })
-    public void testMultiplePropertiesForPreCreatedFullUser() throws Exception {
-        UserHandle preCreateUser = preCreateUserTest(UserManager.USER_TYPE_FULL_SECONDARY);
-
-        assertThat(UserManagerHelper.isEphemeralUser(mUserManager, preCreateUser)).isFalse();
-        assertThat(UserManagerHelper.isGuestUser(mUserManager, preCreateUser)).isFalse();
-        assertThat(UserManagerHelper.isFullUser(mUserManager, preCreateUser)).isTrue();
-        assertThat(UserManagerHelper.isEnabledUser(mUserManager, preCreateUser)).isTrue();
-        assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, preCreateUser)).isTrue();
-
-        // User should be initialized, wait for it.
-        waitForUserToInitialize(preCreateUser);
-        assertThat(UserManagerHelper.isInitializedUser(mUserManager, preCreateUser)).isTrue();
-
-        // User should be part of getUserHandles
-        assertGetUserHandlesHasUser(preCreateUser);
-    }
-
-    @Ignore("TODO(b/246876816): sometimes it crashes system server")
-    @Test
-    @EnsureHasPermission(CREATE_USERS) // needed to query user properties
-    @ApiTest(apis = {
-            "android.car.builtin.os.UserManagerHelper#isEphemeralUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
-            "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
-    })
-    public void testMultiplePropertiesForPreCreatedGuestUser() throws Exception {
-        UserHandle preCreateUser = preCreateUserTest(UserManager.USER_TYPE_FULL_GUEST);
-
-        // Should not be ephemeral, will be ephemeral after promoted
-        assertThat(UserManagerHelper.isEphemeralUser(mUserManager, preCreateUser)).isFalse();
-
-        assertThat(UserManagerHelper.isGuestUser(mUserManager, preCreateUser)).isTrue();
-        assertThat(UserManagerHelper.isFullUser(mUserManager, preCreateUser)).isTrue();
-        assertThat(UserManagerHelper.isEnabledUser(mUserManager, preCreateUser)).isTrue();
-        assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, preCreateUser)).isTrue();
-
-        // User should be initialized, wait for it.
-        waitForUserToInitialize(preCreateUser);
-        assertThat(UserManagerHelper.isInitializedUser(mUserManager, preCreateUser)).isTrue();
-
-        // User should be part of getUserHandles
-        assertGetUserHandlesHasUser(preCreateUser);
     }
 
     private void assertGetUserHandlesHasUser(UserHandle user) {
@@ -240,20 +172,6 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
         return null;
     }
 
-    private UserHandle createPreCreatedUser(String type) {
-        mUserToRemove = UserManagerHelper.preCreateUser(mUserManager, type);
-        if (mUserToRemove == null) {
-            fail("Could not create precreated User of type:" + type);
-        }
-        return mUserToRemove;
-    }
-
-    private UserHandle preCreateUserTest(String type) {
-        UserHandle user = createPreCreatedUser(type);
-        assertPrecreatedUserExists(user, type);
-        return user;
-    }
-
     private void assertPrecreatedUserExists(UserHandle user, String type) {
         String allUsers = SystemUtil.runShellCommand("cmd user list --all -v");
         String[] result = allUsers.split("\n");
@@ -270,21 +188,5 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
             }
         }
         fail("User not found. All users: " + allUsers + ". Expected user: " + user);
-    }
-
-    private void removeAnyPreCreatedUser() {
-        // Existing pre-created user can interfere with the test logic. Remove all existing
-        // pre-created Users.
-        List<UserHandle> allUsersHandles = UserManagerHelper.getUserHandles(mUserManager,
-                /* excludePartial= */ true, /* excludeDying= */ true,
-                /* excludePreCreated= */ false);
-        Log.v(TAG, "removeAnyPreCreatedUser(): allUsers=" + allUsersHandles);
-        for (UserHandle userHandle : allUsersHandles) {
-            if (UserManagerHelper.isPreCreatedUser(mUserManager, userHandle)) {
-                Log.v(TAG, "Removing pre-created user " + userHandle);
-                boolean result = mUserManager.removeUser(userHandle);
-                Log.v(TAG, "Pre-created user: " + userHandle + " Removed: " + result);
-            }
-        }
     }
 }
