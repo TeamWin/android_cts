@@ -53,6 +53,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
 import com.android.bedstead.harrier.annotations.EnsureHasPermission
+import com.android.bedstead.harrier.annotations.EnsureSecureSettingSet
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature
 import com.android.bedstead.harrier.annotations.RequireNotWatch
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser
@@ -87,6 +88,7 @@ import org.junit.runner.RunWith
 @RequireDoesNotHaveFeature(FEATURE_LEANBACK)
 @RequireNotWatch(reason = "Data sharing update page is unavailable on watch")
 @RunWith(BedsteadJUnit4::class)
+@EnsureSecureSettingSet(key = "user_setup_complete", value = "1")
 class AppDataSharingUpdatesTest {
 
     @get:Rule
@@ -257,8 +259,8 @@ class AppDataSharingUpdatesTest {
             apkName: String,
             appMetadata: PersistableBundle? = null
         ) {
+            val session = createPackageInstallerSession()
             runWithShellPermissionIdentity {
-                val session = createPackageInstallerSession()
                 writePackageInstallerSession(session, apkName)
                 if (appMetadata != null) {
                     setAppMetadata(session, appMetadata)
