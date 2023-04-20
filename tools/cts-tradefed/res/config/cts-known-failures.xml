@@ -275,11 +275,6 @@
     <!-- b/216546060 -->
     <option name="compatibility:exclude-filter" value="CtsFragmentTestCases android.fragment.cts.FragmentAnimatorTest#saveWhileAnimatingAway" />
 
-    <!-- b/222001170 -->
-    <option name="compatibility:exclude-filter" value="CtsMonkeyTestCases com.android.cts.monkey.CategoryTest#testDefaultCategories" />
-    <option name="compatibility:exclude-filter" value="CtsMonkeyTestCases com.android.cts.monkey.CategoryTest#testSingleCategory" />
-    <option name="compatibility:exclude-filter" value="CtsMonkeyTestCases com.android.cts.monkey.CategoryTest#testMultipleCategories" />
-
     <!-- b/208909067 -->
     <option name="compatibility:exclude-filter" value="CtsDisplayTestCases android.display.cts.DisplayTest#testActivityContextGetMetrics" />
 
