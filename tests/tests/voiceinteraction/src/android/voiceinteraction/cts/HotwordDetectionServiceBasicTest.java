@@ -1425,6 +1425,7 @@ public class HotwordDetectionServiceBasicTest {
             // Drop identity adopted.
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
+            disableTestModel();
         }
     }
 
@@ -1562,7 +1563,9 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     /**
-     * Create AlwaysOnHotwordDetector with SoundTrigger injection.
+     * Create AlwaysOnHotwordDetector with SoundTrigger injection. Please call
+     * {@link #verifyOnDetectFromDspWithSoundTriggerInjectionSuccess} or {@link #disableTestModel()}
+     * before finishing the test.
      */
     private AlwaysOnHotwordDetector createAlwaysOnHotwordDetectorWithSoundTriggerInjection()
             throws Throwable {
