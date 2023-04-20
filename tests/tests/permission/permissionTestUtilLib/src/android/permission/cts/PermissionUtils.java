@@ -366,6 +366,9 @@ public class PermissionUtils {
             jobStatus = runShellCommand(automation, cmd).trim();
             Log.v(LOG_TAG, "Job: " + jobId + ", job status " + jobStatus);
         }
+        if (!jobStatus.contains("waiting")) {
+            throw new IllegalStateException("The job didn't get scheduled in time.");
+        }
     }
 
     private static void simulateReboot(@NonNull String packageName, @NonNull String intentAction,
