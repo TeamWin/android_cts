@@ -37,6 +37,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.KeyguardDisableFace;
@@ -62,6 +63,7 @@ import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
 // TODO(b/273810424): Figure out expectations about applying to parent
+@CoexistenceFlagsOn
 public final class KeyguardTest {
 
     @ClassRule @Rule
