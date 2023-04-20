@@ -38,6 +38,7 @@ import android.server.wm.DeviceStateUtils;
 import android.server.wm.jetpack.utils.TestRearDisplayActivity;
 import android.server.wm.jetpack.utils.WindowExtensionTestRule;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
+import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
@@ -55,7 +56,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -75,6 +78,9 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
     private static final int TIMEOUT = 2000;
     private static final int INVALID_DEVICE_STATE = -1;
 
+    private static final int CALLBACK_TYPE_WINDOW_AREA_STATUS = 1;
+    private static final int CALLBACK_TYPE_WINDOW_AREA_SESSION_STATE = 2;
+
     private TestRearDisplayActivity mActivity;
     private WindowAreaComponent mWindowAreaComponent;
     private int mCurrentDeviceState;
@@ -92,10 +98,16 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
     private final DeviceStateManager mDeviceStateManager = mInstrumentationContext
             .getSystemService(DeviceStateManager.class);
 
-    private final Consumer<Integer> mStatusListener = (status) -> mWindowAreaStatus = status;
+    private final List<Pair<Integer, Integer>> mCallbackLogs = new ArrayList<>();
+
+    private final Consumer<Integer> mStatusListener = (status) -> {
+        mWindowAreaStatus = status;
+        mCallbackLogs.add(new Pair<>(CALLBACK_TYPE_WINDOW_AREA_STATUS, status));
+    };
 
     private final Consumer<Integer> mSessionStateListener = (sessionState) -> {
         mWindowAreaSessionState = sessionState;
+        mCallbackLogs.add(new Pair<>(CALLBACK_TYPE_WINDOW_AREA_SESSION_STATE, sessionState));
     };
 
     @Rule
@@ -120,6 +132,7 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
         unlockDeviceIfNeeded();
         mActivity = startActivityNewTask(TestRearDisplayActivity.class);
         waitAndAssert(() -> mWindowAreaStatus != null);
+        mCallbackLogs.clear();
     }
 
     @After
@@ -205,6 +218,7 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
                         && mWindowAreaSessionState == WindowAreaComponent.SESSION_STATE_ACTIVE);
         assertEquals(mCurrentDeviceState, mRearDisplayState);
         assertTrue(isActivityVisible(mActivity));
+        assertEquals(WindowAreaComponent.STATUS_ACTIVE, (int) mWindowAreaStatus);
 
         mActivity.mConfigurationChanged = false;
         mWindowAreaComponent.endRearDisplaySession();
@@ -216,6 +230,7 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
         assertEquals(mCurrentDeviceState, mCurrentDeviceBaseState);
         assertEquals(WindowAreaComponent.STATUS_AVAILABLE, (int) mWindowAreaStatus);
 
+        verifyCallbacks();
     }
 
     @Override
@@ -268,5 +283,28 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
 
     private void waitAndAssert(PollingCheck.PollingCheckCondition condition) {
         waitFor(TIMEOUT, condition);
+    }
+
+    /**
+     * Verifies the order of window area status callbacks and window area session state callbacks.
+     *
+     * Currently, only checks that the STATUS_ACTIVE window area status callback should never happen
+     * after SESSION_STATE_INACTIVE window area session callback.
+     */
+    private void verifyCallbacks() {
+        boolean sessionEnded = false;
+        for (Pair<Integer, Integer> callback : mCallbackLogs) {
+            if (callback.first == CALLBACK_TYPE_WINDOW_AREA_SESSION_STATE) {
+                if (callback.second == WindowAreaComponent.SESSION_STATE_INACTIVE) {
+                    sessionEnded = true;
+                }
+            }
+            if (callback.first == CALLBACK_TYPE_WINDOW_AREA_STATUS) {
+                if (sessionEnded && callback.second == WindowAreaComponent.STATUS_ACTIVE) {
+                    throw new IllegalStateException(
+                            "STATUS_ACTIVE should not happen after SESSION_STATE_INACTIVE");
+                }
+            }
+        }
     }
 }
