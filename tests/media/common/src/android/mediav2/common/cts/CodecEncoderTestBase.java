@@ -175,32 +175,32 @@ public class CodecEncoderTestBase extends CodecTestBase {
 
     public static void validateEncodedPSNR(String inpMediaType, String inpFile,
             String outMediaType, String outFile, boolean allowInpResize, boolean allowInpLoopBack,
-            double perFramePsnrThreshold)
-            throws IOException, InterruptedException {
-        CompareStreams cs = new CompareStreams(inpMediaType, inpFile, outMediaType, outFile,
+            double perFramePsnrThreshold) throws IOException, InterruptedException {
+        CompareStreams2 cs = new CompareStreams2(inpMediaType, inpFile, outMediaType, outFile,
                 allowInpResize, allowInpLoopBack);
-        validateEncodedPSNR(cs, perFramePsnrThreshold);
+        validateEncodedPSNR(cs.getFramesPSNR(), perFramePsnrThreshold);
         cs.cleanUp();
     }
 
     public static void validateEncodedPSNR(RawResource inp, String outMediaType, String outFile,
             boolean allowInpResize, boolean allowInpLoopBack, double perFramePsnrThreshold)
             throws IOException, InterruptedException {
-        CompareStreams cs = new CompareStreams(inp, outMediaType, outFile, allowInpResize,
+        CompareStreams2 cs = new CompareStreams2(inp, outMediaType, outFile, allowInpResize,
                 allowInpLoopBack);
-        validateEncodedPSNR(cs, perFramePsnrThreshold);
+        validateEncodedPSNR(cs.getFramesPSNR(), perFramePsnrThreshold);
         cs.cleanUp();
     }
 
-    public static void validateEncodedPSNR(@NonNull CompareStreams cs,
-            double perFramePsnrThreshold) throws IOException {
-        ArrayList<double[]> framesPSNR = cs.getFramesPSNR();
+    public static void validateEncodedPSNR(@NonNull ArrayList<double[]> framesPSNR,
+            double perFramePsnrThreshold) {
         StringBuilder msg = new StringBuilder();
         boolean isOk = true;
         for (int j = 0; j < framesPSNR.size(); j++) {
             double[] framePSNR = framesPSNR.get(j);
-            // https://www.itu.int/wftp3/av-arch/jctvc-site/2011_01_D_Daegu/JCTVC-D500.doc
+            // https://www.itu.int/dms_pub/itu-t/opb/tut/T-TUT-ASC-2020-HSTP1-PDF-E.pdf
             // weighted psnr (6 * psnrY + psnrU + psnrV) / 8;
+            // stronger weighting of luma PSNR is to compensate for the fact that most of the
+            // bits are used to describe luma information
             double weightPSNR = (6 * framePSNR[0] + framePSNR[1] + framePSNR[2]) / 8;
             if (weightPSNR < perFramePsnrThreshold) {
                 msg.append(String.format(
