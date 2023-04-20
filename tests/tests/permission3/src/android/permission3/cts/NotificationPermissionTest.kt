@@ -193,7 +193,11 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     fun notificationPromptShownForSubsequentStartsIfTaskStartWasLauncher() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
         launchApp(startSecondActivity = true)
-        waitFindObject(By.res(ALLOW_BUTTON))
+        if (isAutomotive) {
+            waitFindObject(By.text(getPermissionControllerString(ALLOW_BUTTON_TEXT)))
+        } else {
+            waitFindObject(By.res(ALLOW_BUTTON))
+        }
         pressBack()
         clickPermissionRequestAllowButton()
     }
