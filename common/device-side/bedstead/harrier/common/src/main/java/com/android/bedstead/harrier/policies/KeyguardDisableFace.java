@@ -25,6 +25,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_PARENT;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.INHERITABLE;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_KEYGUARD;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
@@ -35,9 +36,9 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 @EnterprisePolicy(dpc = { // APPLIED_BY_DPM_ROLE_HOLDER
         APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO | APPLIED_BY_FINANCED_DEVICE_OWNER | APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_PROFILE | CANNOT_BE_APPLIED_BY_ROLE_HOLDER | APPLIES_TO_OWN_USER,
         APPLIED_BY_PROFILE_OWNER_PROFILE | APPLIES_TO_PARENT | CANNOT_BE_APPLIED_BY_ROLE_HOLDER | INHERITABLE // only if there isn't a separate challenge
-})//, permissions = {
-//        @EnterprisePolicy.Permission(appliedWith = MANAGE_DEVICE_POLICY_KEYGUARD, appliesTo = APPLIES_TO_OWN_USER)
-//})
+}, permissions = {
+        @EnterprisePolicy.Permission(appliedWith = MANAGE_DEVICE_POLICY_KEYGUARD, appliesTo = APPLIES_TO_OWN_USER)
+})
 // TODO: Add USES_POLICY_DISABLE_KEYGUARD_FEATURES device admin
 public final class KeyguardDisableFace {
 }
