@@ -49,6 +49,7 @@
              android:label="MediaCodecResourceTestHighPriorityActivity"
              android:process=":MediaCodecResourceTestHighPriorityProcess">
         </activity>
+        <activity android:name="android.media.codec.cts.CodecDynamicTestActivity" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
