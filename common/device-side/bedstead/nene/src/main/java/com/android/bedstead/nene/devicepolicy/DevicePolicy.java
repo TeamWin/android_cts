@@ -818,6 +818,10 @@ public final class DevicePolicy {
      */
     @Experimental
     public void calculateHasIncompatibleAccounts() {
+        if (!Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
+            // Nothing to calculate pre-U
+            return;
+        }
         try (BlockingLogcatListener b =
                      TestApis.logcat().listen(
                              l -> l.contains("Finished calculating hasIncompatibleAccountsTask"))) {
