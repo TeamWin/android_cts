@@ -26,6 +26,7 @@ import android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID
 import android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION
 import android.content.pm.PackageInstaller.Session
 import android.content.pm.PackageInstaller.SessionParams
+import android.platform.test.annotations.AppModeFull
 import androidx.core.content.FileProvider
 import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiSelector
@@ -61,6 +62,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(BedsteadJUnit4::class)
+@AppModeFull(reason = "DEVICE_POLICY_SERVICE is null in instant mode")
 class UserRestrictionInstallTest : PackageInstallerTestBase() {
     private val TAG = "UserRestrictionInstallTest"
     private val APP_INSTALL_ACTION =
