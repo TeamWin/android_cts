@@ -16,13 +16,16 @@
 
 package foo.bar.proxy;
 
+import static android.accessibilityservice.cts.utils.MultiProcessUtils.ACCESSIBILITY_SERVICE_STATE;
+import static android.accessibilityservice.cts.utils.MultiProcessUtils.EXTRA_ENABLED;
+import static android.accessibilityservice.cts.utils.MultiProcessUtils.EXTRA_ENABLED_SERVICES;
 import static android.accessibilityservice.cts.utils.MultiProcessUtils.SEPARATE_PROCESS_ACTIVITY_TITLE;
-import static android.accessibilityservice.cts.utils.MultiProcessUtils.TOUCH_EXPLORATION_CHANGE_EVENT_TEXT;
+import static android.accessibilityservice.cts.utils.MultiProcessUtils.TOUCH_EXPLORATION_STATE;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 
 import java.util.List;
@@ -42,28 +45,24 @@ public class NonProxySeparateAppActivity extends Activity {
                     final List<AccessibilityServiceInfo> enabled =
                             manager.getEnabledAccessibilityServiceList(
                                     AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
-                    final StringBuilder eventText = new StringBuilder();
-
-                    for (AccessibilityServiceInfo info : enabled) {
-                        String name = info.getResolveInfo().serviceInfo.name;
-                        eventText.append(name);
+                    final CharSequence[] enabledServiceList = new CharSequence[enabled.size()];
+                    for (int i = 0; i < enabled.size(); i++) {
+                        enabledServiceList[i] = enabled.get(i).getResolveInfo().serviceInfo.name;
                     }
-                    final AccessibilityEvent textEvent = new AccessibilityEvent(
-                            AccessibilityEvent.TYPE_ANNOUNCEMENT);
-                    textEvent.getText().add(eventText.toString());
-                    a11yManager.sendAccessibilityEvent(textEvent);
+                    sendBroadcast(createIntentWithAction(ACCESSIBILITY_SERVICE_STATE)
+                            .putExtra(EXTRA_ENABLED_SERVICES, enabledServiceList.clone()));
                 };
-
 
         final AccessibilityManager.TouchExplorationStateChangeListener touchExplorationListener =
-                enabled -> {
-                    final AccessibilityEvent textEvent = new AccessibilityEvent(
-                            AccessibilityEvent.TYPE_ANNOUNCEMENT);
-                    textEvent.getText().add(TOUCH_EXPLORATION_CHANGE_EVENT_TEXT + enabled);
-                    a11yManager.sendAccessibilityEvent(textEvent);
-                };
+                enabled -> sendBroadcast(createIntentWithAction(TOUCH_EXPLORATION_STATE)
+                        .putExtra(EXTRA_ENABLED, enabled));
 
         a11yManager.addAccessibilityServicesStateChangeListener(servicesStateChangeListener);
         a11yManager.addTouchExplorationStateChangeListener(touchExplorationListener);
+    }
+
+    private Intent createIntentWithAction(String broadcastAction) {
+        return new Intent(broadcastAction)
+                .setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
     }
 }

@@ -20,10 +20,17 @@ package android.accessibilityservice.cts.utils;
  * Utility class for providing multiprocess support. Used in AccessibilityDisplayProxyTest.
  */
 public class MultiProcessUtils {
-    /** Constant used in event text to verify touch exploration is updated outside the
-     * instrumentation process.
-     */
-    public static final String TOUCH_EXPLORATION_CHANGE_EVENT_TEXT = "Touch exploration enabled: ";
+    /** Intent action for tracking ouchExplorationStateChangeListener calls. */
+    public static final String TOUCH_EXPLORATION_STATE = "TOUCH_EXPLORATION_STATE";
+
+    /** Intent action for tracking AccessibilityServiceStateChangeListener calls. */
+    public static final String ACCESSIBILITY_SERVICE_STATE = "ACCESSIBILITY_SERVICE_STATE";
+
+    /** Intent extra to track enabled states. */
+    public static final String EXTRA_ENABLED = "extra_enabled";
+
+    /** Intent extra to track enabled services. */
+    public static final String EXTRA_ENABLED_SERVICES = "extra_enabled_services";
 
     public static final String SEPARATE_PROCESS_ACTIVITY_TITLE = "Separate process activity title";
 }
