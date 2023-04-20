@@ -33,6 +33,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.annotations.enterprise.RequireHasPolicyExemptApps;
@@ -54,6 +55,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 @RunWith(BedsteadJUnit4.class)
+@CoexistenceFlagsOn
 public class ApplicationHiddenTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -84,9 +86,6 @@ public class ApplicationHiddenTest {
 
     @CanSetPolicyTest(policy = {ApplicationHidden.class, ApplicationHiddenSystemOnly.class})
     public void isApplicationHidden_systemApp_isHidden_returnsTrue() {
-        boolean originalValue = sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName());
-
         try {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
@@ -97,15 +96,12 @@ public class ApplicationHiddenTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
-                    originalValue);
+                    false);
         }
     }
 
     @CanSetPolicyTest(policy = {ApplicationHidden.class, ApplicationHiddenSystemOnly.class})
     public void isApplicationHidden_systemApp_isNotHidden_returnsFalse() {
-        boolean originalValue = sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName());
-
         try {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
@@ -116,7 +112,7 @@ public class ApplicationHiddenTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
-                    originalValue);
+                    false);
         }
     }
 
@@ -131,9 +127,6 @@ public class ApplicationHiddenTest {
     @CanSetPolicyTest(policy = ApplicationHidden.class)
     @EnsureTestAppInstalled
     public void isApplicationHidden_notSystemApp_isHidden_returnsTrue() {
-        boolean originalValue = sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName());
-
         try {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName(),
@@ -145,16 +138,13 @@ public class ApplicationHiddenTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName(),
-                    originalValue);
+                    false);
         }
     }
 
     @CanSetPolicyTest(policy = ApplicationHidden.class)
     @EnsureTestAppInstalled
     public void isApplicationHidden_notSystemApp_isNotHidden_returnsFalse() {
-        boolean originalValue = sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName());
-
         try {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName(),
@@ -166,15 +156,12 @@ public class ApplicationHiddenTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName(),
-                    originalValue);
+                    false);
         }
     }
 
     @PolicyAppliesTest(policy = {ApplicationHidden.class, ApplicationHiddenSystemOnly.class})
     public void setApplicationHidden_systemApp_true_hidesApplication() throws Exception {
-        boolean originalValue = sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName());
-
         try {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
@@ -197,15 +184,12 @@ public class ApplicationHiddenTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
-                    originalValue);
+                    false);
         }
     }
 
     @PolicyDoesNotApplyTest(policy = {ApplicationHidden.class, ApplicationHiddenSystemOnly.class})
     public void setApplicationHidden_systemApp_true_applicationIsNotHidden() throws Exception {
-        boolean originalValue = sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName());
-
         try {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
@@ -215,16 +199,13 @@ public class ApplicationHiddenTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
-                    originalValue);
+                    false);
         }
     }
 
     @PolicyAppliesTest(policy = ApplicationHidden.class)
     @EnsureTestAppInstalled
     public void setApplicationHidden_nonSystemApp_true_hidesApplication() throws Exception {
-        boolean originalValue = sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName());
-
         try {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName(),
@@ -248,14 +229,12 @@ public class ApplicationHiddenTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName(),
-                    originalValue);
+                    false);
         }
     }
 
     @PolicyAppliesTest(policy = {ApplicationHidden.class, ApplicationHiddenSystemOnly.class})
     public void setApplicationHidden_systemApp_false_unHidesApplication() throws Exception {
-        boolean originalValue = sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName());
         try {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
@@ -278,15 +257,13 @@ public class ApplicationHiddenTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
-                    originalValue);
+                    false);
         }
     }
 
     @PolicyAppliesTest(policy = ApplicationHidden.class)
     @EnsureTestAppInstalled
     public void setApplicationHidden_nonSystemApp_false_unHidesApplication() throws Exception {
-        boolean originalValue = sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName());
         try {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName(),
@@ -309,7 +286,7 @@ public class ApplicationHiddenTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
-                    originalValue);
+                    false);
         }
     }
 
@@ -336,9 +313,15 @@ public class ApplicationHiddenTest {
 
     @CanSetPolicyTest(policy = ApplicationHidden.class) // TODO: Remove
     public void setApplicationHidden_systemApp_doesNotThrowException() {
-        sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
-                sDeviceState.dpc().componentName(),
-                SYSTEM_PACKAGE.packageName(), true);
+        try {
+            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(),
+                    SYSTEM_PACKAGE.packageName(), true);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
+                    false);
+        }
     }
 
     @CannotSetPolicyTest(policy = ApplicationHidden.class, includeNonDeviceAdminStates = false)
@@ -359,11 +342,7 @@ public class ApplicationHiddenTest {
     }
 
     @CanSetPolicyTest(policy = {ApplicationHidden.class, ApplicationHiddenSystemOnly.class})
-    @Ignore
     public void setApplicationHidden_true_logsEvent() {
-        boolean originalValue = sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName());
-
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
@@ -380,16 +359,12 @@ public class ApplicationHiddenTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
-                    originalValue);
+                    false);
         }
     }
 
     @CanSetPolicyTest(policy = {ApplicationHidden.class, ApplicationHiddenSystemOnly.class})
-    @Ignore
     public void setApplicationHidden_false_logsEvent() {
-        boolean originalValue = sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
-                sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName());
-
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
@@ -406,17 +381,23 @@ public class ApplicationHiddenTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
-                    originalValue);
+                    false);
         }
     }
 
     @CanSetPolicyTest(policy = {ApplicationHidden.class})
     public void setApplicationHidden_notInstalledPackage_returnsFalse() {
-        boolean result = sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
-                sDeviceState.dpc().componentName(), NON_EXISTING_PACKAGE.packageName(),
-                true);
+        try {
+            boolean result = sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(), NON_EXISTING_PACKAGE.packageName(),
+                    true);
 
-        assertThat(result).isFalse();
+            assertThat(result).isFalse();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
+                    false);
+        }
     }
 
     @CanSetPolicyTest(policy = {ApplicationHidden.class})
