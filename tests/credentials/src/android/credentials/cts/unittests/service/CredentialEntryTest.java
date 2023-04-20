@@ -50,6 +50,23 @@ public class CredentialEntryTest {
             "some text", null, List.of(Slice.HINT_TITLE)).build();
 
     @Test
+    public void testConstructorWithTypeAndSlice_success() {
+        new CredentialEntry("type", sSlice);
+    }
+
+    @Test
+    public void testConstructorWithTypeAndSlice_nullType() {
+        assertThrows(NullPointerException.class,
+                () -> new CredentialEntry((String) null, sSlice));
+    }
+
+    @Test
+    public void testConstructorWithTypeAndSlice_nullSlice() {
+        assertThrows(NullPointerException.class,
+                () -> new CredentialEntry("type", null));
+    }
+
+    @Test
     public void testConstructorWithRawId_nullId() {
         assertThrows(IllegalArgumentException.class,
                 () -> new CredentialEntry(null, "type", sSlice));
