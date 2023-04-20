@@ -49,6 +49,8 @@ import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
+import androidx.test.uiautomator.UiScrollable
+import androidx.test.uiautomator.UiSelector
 import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.FreezeRotationRule
 import com.android.compatibility.common.util.FutureResultActivity
@@ -74,6 +76,8 @@ abstract class BasePermissionTest {
         private const val TAG = "BasePermissionTest"
 
         private const val INSTALL_ACTION_CALLBACK = "BasePermissionTest.install_callback"
+
+        private const val MAX_SWIPES = 5
 
         const val APK_DIRECTORY = "/data/local/tmp/cts/permission3"
 
@@ -342,6 +346,32 @@ abstract class BasePermissionTest {
 
     protected fun clickPermissionControllerUi(selector: BySelector, timeoutMillis: Long = 20_000) {
         click(selector.pkg(context.packageManager.permissionControllerPackageName), timeoutMillis)
+    }
+
+    /**
+     * Clicks Permission Controller UI with a swipe based timeout instead of a time based one
+     *
+     * Use this if finding some Permission Controller UI isn't time bound.
+     *
+     * @param text The text to search for
+     * @param maxSearchSwipes See {@link UiScrollable#setMaxSearchSwipes}
+     */
+    protected fun clickPermissionControllerUi(text: String, maxSearchSwipes: Int = 5) {
+        scrollToText(text, maxSearchSwipes).click()
+    }
+
+    private fun scrollToText(text: String, maxSearchSwipes: Int = MAX_SWIPES): UiObject2 {
+        val scrollable = UiScrollable(UiSelector().scrollable(true)).apply {
+            this.maxSearchSwipes = maxSearchSwipes
+        }
+
+        scrollable.scrollTextIntoView(text)
+
+        val foundObject = uiDevice.findObject(
+                By.text(text).pkg(context.packageManager.permissionControllerPackageName))
+        Assert.assertNotNull("View not found after scrolling", foundObject)
+
+        return foundObject
     }
 
     protected fun pressBack() {

@@ -816,6 +816,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             if (useLegacyNavigation) {
                 if (isWatch) {
                     click(By.text(permissionLabel), 40_000)
+                } else if (isAutomotive) {
+                    clickPermissionControllerUi(permissionLabel)
                 } else {
                     clickPermissionControllerUi(By.text(permissionLabel))
                 }
