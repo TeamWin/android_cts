@@ -474,13 +474,13 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
         // Ensure the privacy chip is present
         if (useCamera || useMic) {
             eventually {
-                val privacyChip = uiDevice.findObject(UiSelector().resourceId(PRIVACY_CHIP_ID))
-                assertTrue("view with id $PRIVACY_CHIP_ID not found", privacyChip.exists())
+                val privacyChip = UiAutomatorUtils2.waitFindObjectOrNull(By.res(PRIVACY_CHIP_ID))
+                assertNotNull("view with id $PRIVACY_CHIP_ID not found", privacyChip)
                 privacyChip.click()
             }
         } else {
-            val privacyChip = uiDevice.findObject(UiSelector().resourceId(PRIVACY_CHIP_ID))
-            assertFalse("Expected not to find view with id $PRIVACY_CHIP_ID", privacyChip.exists())
+            val privacyChip = UiAutomatorUtils2.waitFindObjectOrNull(By.res(PRIVACY_CHIP_ID))
+            assertNull("Expected not to find view with id $PRIVACY_CHIP_ID", privacyChip)
             return
         }
 
