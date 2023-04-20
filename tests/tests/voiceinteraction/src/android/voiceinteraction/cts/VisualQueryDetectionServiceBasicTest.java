@@ -24,6 +24,7 @@ import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -452,6 +453,22 @@ public class VisualQueryDetectionServiceBasicTest {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
         }
+    }
+
+    @Test
+    public void testVisualQueryDetectionService_onServiceRestarted() throws Throwable {
+        // Create VisualQueryDetector
+        VisualQueryDetector visualQueryDetector = createVisualQueryDetector();
+
+        mService.initOnVisualQueryDetectionServiceRestartedLatch();
+        // force re-start by shell command
+        runShellCommand("cmd voiceinteraction restart-detection");
+
+        // wait onHotwordDetectionServiceRestarted() called
+        mService.waitOnVisualQueryDetectionServiceRestartedCalled();
+
+        // Destroy the always on detector
+        visualQueryDetector.destroy();
     }
 
 
