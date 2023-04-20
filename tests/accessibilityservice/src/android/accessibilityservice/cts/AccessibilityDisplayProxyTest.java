@@ -34,11 +34,13 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.support
 import static android.accessibilityservice.cts.utils.AsyncUtils.await;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGesture;
+import static android.accessibilityservice.cts.utils.MultiProcessUtils.ACCESSIBILITY_SERVICE_STATE;
+import static android.accessibilityservice.cts.utils.MultiProcessUtils.EXTRA_ENABLED;
+import static android.accessibilityservice.cts.utils.MultiProcessUtils.EXTRA_ENABLED_SERVICES;
 import static android.accessibilityservice.cts.utils.MultiProcessUtils.SEPARATE_PROCESS_ACTIVITY_TITLE;
-import static android.accessibilityservice.cts.utils.MultiProcessUtils.TOUCH_EXPLORATION_CHANGE_EVENT_TEXT;
+import static android.accessibilityservice.cts.utils.MultiProcessUtils.TOUCH_EXPLORATION_STATE;
 import static android.accessibilityservice.cts.utils.WindowCreationUtils.TOP_WINDOW_TITLE;
 import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
-import static android.view.accessibility.AccessibilityEvent.TYPE_ANNOUNCEMENT;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED;
@@ -81,8 +83,10 @@ import android.app.RemoteAction;
 import android.app.UiAutomation;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -135,11 +139,12 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /** Ensure AccessibilityDisplayProxy APIs work.
  *
@@ -232,6 +237,9 @@ public class AccessibilityDisplayProxyTest {
             new VirtualDeviceParams.Builder().build();
     @Rule
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
+
+    private ListenerChangeBroadcastReceiver mReceiver =
+            new ListenerChangeBroadcastReceiver();
 
     private InstrumentedAccessibilityServiceTestRule<StubProxyConcurrentAccessibilityService>
             mNonProxyServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
@@ -1039,38 +1047,37 @@ public class AccessibilityDisplayProxyTest {
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
             + ".AccessibilityServicesStateChangeListener#onAccessibilityServicesStateChanged"})
     public void testOnA11yServicesStateChanged_enableService_notifiesNonProxiedApp()
-            throws TimeoutException {
+            throws TimeoutException, InterruptedException {
         // Verify that enabling a non-proxy service will update the non-proxy AccessibilityManager.
-        // On the service state change, the activity will emit a TYPE_ANNOUNCEMENT event with its
-        // enabled services. Use TYPE_ANNOUNCEMENT instead of window events since enableService()
-        // will indirectly disconnect the UI automation and reset its
-        // FLAG_RETRIEVE_INTERACTIVE_WINDOWS.
-        final AtomicReference<StubProxyConcurrentAccessibilityService> service =
-                new AtomicReference<>();
-        AtomicReference<CharSequence> serviceName = new AtomicReference<>();
+        // On the service state change, the activity will emit a broadcast with an intent of action
+        // ACCESSIBILITY_SERVICE_STATE.
+        String enabledServices = null;
         try {
+            registerBroadcastReceiverForAction(ACCESSIBILITY_SERVICE_STATE);
             startActivityInSeparateProcess();
-            sUiAutomation.executeAndWaitForEvent(() ->
-                            service.set(mNonProxyServiceRule.enableService()),
-                    (event -> {
-                        if (event.getEventType() == TYPE_ANNOUNCEMENT) {
-                            final CharSequence name = service.get()
-                                    .getServiceInfo().getResolveInfo().serviceInfo.name;
-                            serviceName.set(name);
-                            return eventTextHasText(event.getText(), name);
-                        }
-                        return false;
-                    }), TIMEOUT_MS);
-            assertThat(service.get()).isNotNull();
-            assertThat(serviceName.get()).isNotNull();
-            sUiAutomation.executeAndWaitForEvent(() -> service.get().disableSelfAndRemove(),
-                    (event -> event.getEventType() == TYPE_ANNOUNCEMENT
-                            && !eventTextHasText(event.getText(), serviceName.get())), TIMEOUT_MS);
+            final CountDownLatch serviceEnabled = new CountDownLatch(1);
+            mReceiver.setLatchAndExpectedServiceResult(serviceEnabled, ACCESSIBILITY_SERVICE_STATE,
+                    StubProxyConcurrentAccessibilityService.class.getSimpleName());
+            enabledServices =
+                    Settings.Secure.getString(
+                            sInstrumentation.getContext().getContentResolver(),
+                            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            mNonProxyServiceRule.enableServiceWithoutWait();
+
+            assertThat(serviceEnabled.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         } finally {
-            if (service.get() != null) {
-                service.get().disableSelfAndRemove();
+            sInstrumentation.getContext().unregisterReceiver(mReceiver);
+            if (mNonProxyServiceRule.getService() != null) {
+                mNonProxyServiceRule.getService().disableSelfAndRemove();
+            } else if (enabledServices != null) {
+                ShellCommandBuilder.create(sInstrumentation)
+                        .putSecureSetting(
+                                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                                enabledServices)
+                        .run();
             }
             stopSeparateProcess();
+
         }
     }
 
@@ -1078,39 +1085,44 @@ public class AccessibilityDisplayProxyTest {
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
             + ".TouchExplorationStateChangeListener#onTouchExplorationStateChanged"})
     public void testOnTouchExplorationStateChanged_updateServiceTouchState_notifiesNonProxiedApp()
-            throws TimeoutException {
+            throws TimeoutException, InterruptedException {
         // Verify that enabling and disabling touch exploration for a non-proxy a11y service will
         // update the non-proxy AccessibilityManager.
-        // On touch exploration state change, the activity will emit a TYPE_ANNOUNCEMENT event with
-        // its touch exploration state. Use TYPE_ANNOUNCEMENT instead of window events since
-        // enableService() will indirectly disconnect the UI automation and reset its
-        // FLAG_RETRIEVE_INTERACTIVE_WINDOWS.
-        final AtomicReference<StubProxyConcurrentAccessibilityService> service =
-                new AtomicReference<>();
+        // On touch exploration state change, the activity will emit a broadcast with
+        // an intent of action TOUCH_EXPLORATION_STATE.
         try {
+            registerBroadcastReceiverForAction(TOUCH_EXPLORATION_STATE);
             startActivityInSeparateProcess();
-            sUiAutomation.executeAndWaitForEvent(() ->
-                            service.set(mNonProxyServiceRule.enableService()),
-                    (event -> event.getEventType() == TYPE_ANNOUNCEMENT
-                            && eventTextHasText(event.getText(),
-                            TOUCH_EXPLORATION_CHANGE_EVENT_TEXT + true)) , TIMEOUT_MS);
-            sUiAutomation.executeAndWaitForEvent(
-                    () -> {
-                        InstrumentedAccessibilityService a11yService = service.get();
-                        final AccessibilityServiceInfo info = a11yService.getServiceInfo();
-                        info.flags &= ~AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
-                        a11yService.setServiceInfo(info);
-                    },
-                    (event -> event.getEventType() == TYPE_ANNOUNCEMENT
-                    && eventTextHasText(event.getText(),
-                    TOUCH_EXPLORATION_CHANGE_EVENT_TEXT + false)) , TIMEOUT_MS);
+
+            final CountDownLatch touchExplorationEnabled = new CountDownLatch(1);
+            mReceiver.setLatchAndExpectedEnabledResult(touchExplorationEnabled,
+                    TOUCH_EXPLORATION_STATE,
+                    true);
+
+            mNonProxyServiceRule.enableServiceWithoutWait();
+
+            assertThat(touchExplorationEnabled.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+
+            final InstrumentedAccessibilityService a11yService = mNonProxyServiceRule.getService();
+            final AccessibilityServiceInfo info = a11yService.getServiceInfo();
+            info.flags &= ~AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+            final CountDownLatch touchExplorationDisabled = new CountDownLatch(1);
+            mReceiver.setLatchAndExpectedEnabledResult(touchExplorationDisabled,
+                    TOUCH_EXPLORATION_STATE,
+                    false);
+
+            a11yService.setServiceInfo(info);
+
+            assertThat(touchExplorationDisabled.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         } finally {
-            if (service.get() != null) {
+            sInstrumentation.getContext().unregisterReceiver(mReceiver);
+            final InstrumentedAccessibilityService service = mNonProxyServiceRule.getService();
+            if (service != null) {
                 // Reset touch exploration for the non-proxy service.
-                final AccessibilityServiceInfo info = service.get().getServiceInfo();
+                final AccessibilityServiceInfo info = service.getServiceInfo();
                 info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
-                service.get().setServiceInfo(info);
-                service.get().disableSelfAndRemove();
+                service.setServiceInfo(info);
+                service.disableSelfAndRemove();
             }
             stopSeparateProcess();
         }
@@ -1119,25 +1131,21 @@ public class AccessibilityDisplayProxyTest {
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
             + ".AccessibilityServicesStateChangeListener#onAccessibilityServicesStateChanged"})
     public void testOnA11yServicesStateChanged_registerProxy_doesNotNotifyNonProxiedApp()
-            throws TimeoutException {
-        final StubProxyConcurrentAccessibilityService service =
-                mNonProxyServiceRule.enableService();
+            throws TimeoutException, InterruptedException {
         try {
+            registerBroadcastReceiverForAction(ACCESSIBILITY_SERVICE_STATE);
             startActivityInSeparateProcess();
-            assertThrows("A non-proxy-ed app was notified of a proxy change and sent out an"
-                            + " event.",
-                    TimeoutException.class,
-                    () -> sUiAutomation.executeAndWaitForEvent(
-                        () -> registerProxyAndWaitForConnection(),
-                        (event -> {
-                            final CharSequence name =
-                                    mA11yProxy.getInstalledAndEnabledServices().get(0)
-                                            .getResolveInfo().serviceInfo.name;
-                            return event.getEventType() == TYPE_ANNOUNCEMENT
-                                    && eventTextHasText(event.getText(), name);
-                        }), TIMEOUT_MS));
+
+            final CountDownLatch servicesChanged = new CountDownLatch(1);
+            mReceiver.setLatchAndExpectedAction(servicesChanged, ACCESSIBILITY_SERVICE_STATE);
+
+            runWithShellPermissionIdentity(sUiAutomation,
+                    () -> mA11yManager.registerDisplayProxy(mA11yProxy));
+
+            assertThat(servicesChanged.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isFalse();
+
         } finally {
-            service.disableSelfAndRemove();
+            sInstrumentation.getContext().unregisterReceiver(mReceiver);
             stopSeparateProcess();
         }
     }
@@ -1146,22 +1154,26 @@ public class AccessibilityDisplayProxyTest {
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
             + ".TouchExplorationStateChangeListener#onTouchExplorationStateChanged"})
     public void testOnTouchExplorationStateChanged_registerProxy_doesNotNotifyNonProxiedApp()
-            throws TimeoutException {
+            throws TimeoutException, InterruptedException {
         // A service has touch exploration enabled by default.
         final StubProxyConcurrentAccessibilityService service =
                 mNonProxyServiceRule.enableService();
         try {
+            registerBroadcastReceiverForAction(TOUCH_EXPLORATION_STATE);
             assertThat((service.getServiceInfo().flags
                     & AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE) != 0).isTrue();
             startActivityInSeparateProcess();
-            assertThrows("The non-proxy-ed app with touch exploration enabled was "
-                            + "notified of a proxy that does not have touch exploration enabled.",
-                    TimeoutException.class, () -> sUiAutomation.executeAndWaitForEvent(
-                            () -> registerProxyAndWaitForConnection(),
-                            (event -> event.getEventType() == TYPE_ANNOUNCEMENT
-                                    && eventTextHasText(event.getText(),
-                                    TOUCH_EXPLORATION_CHANGE_EVENT_TEXT + false)) , TIMEOUT_MS));
+
+            final CountDownLatch touchExplorationEnabled = new CountDownLatch(1);
+            mReceiver.setLatchAndExpectedEnabledResult(touchExplorationEnabled,
+                    TOUCH_EXPLORATION_STATE, true);
+
+            runWithShellPermissionIdentity(sUiAutomation,
+                    () -> mA11yManager.registerDisplayProxy(mA11yProxy));
+
+            assertThat(touchExplorationEnabled.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isFalse();
         } finally {
+            sInstrumentation.getContext().unregisterReceiver(mReceiver);
             service.disableSelfAndRemove();
             stopSeparateProcess();
         }
@@ -1484,17 +1496,6 @@ public class AccessibilityDisplayProxyTest {
         }
     }
 
-    private boolean eventTextHasText(List<CharSequence> text, CharSequence name) {
-        if (text == null) {
-            return false;
-        }
-        for (CharSequence textSegment : text) {
-            if (textSegment.equals(name)) {
-                return true;
-            }
-        }
-        return false;
-    }
     private boolean displayFocused(AccessibilityEvent event, int i) {
         if (event.getEventType() == TYPE_WINDOWS_CHANGED
                 && (event.getWindowChanges() & WINDOWS_CHANGE_FOCUSED) != 0) {
@@ -1527,6 +1528,13 @@ public class AccessibilityDisplayProxyTest {
         } finally {
             mProxyActivityA11yManager.removeTouchExplorationStateChangeListener(listener);
         }
+    }
+
+    private void registerBroadcastReceiverForAction(String action) {
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(action);
+        sInstrumentation.getContext().registerReceiver(mReceiver, intentFilter,
+                Context.RECEIVER_EXPORTED);
     }
 
     class MyAccessibilityServicesStateChangeListener
@@ -1623,6 +1631,71 @@ public class AccessibilityDisplayProxyTest {
         public void setEventFilter(@NonNull UiAutomation.AccessibilityEventFilter filter) {
             mReceivedEvent.set(false);
             mEventFilter = filter;
+        }
+    }
+
+    public class ListenerChangeBroadcastReceiver extends BroadcastReceiver {
+        private CountDownLatch mLatch;
+        private String mExpectedAction;
+        private boolean mExpectedEnabled;
+
+        private CharSequence mExpectedService;
+
+        public void setLatchAndExpectedAction(CountDownLatch latch, String expectedAction) {
+            mLatch = latch;
+            mExpectedAction = expectedAction;
+        }
+        public void setLatchAndExpectedEnabledResult(CountDownLatch latch, String expectedAction,
+                boolean expectedEnabled) {
+            setLatchAndExpectedAction(latch, expectedAction);
+            mExpectedEnabled = expectedEnabled;
+        }
+
+        public void setLatchAndExpectedServiceResult(CountDownLatch latch, String action,
+                CharSequence expectedService) {
+            setLatchAndExpectedAction(latch, action);
+            mExpectedService = expectedService;
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null) {
+                switch (intent.getAction()) {
+                    case ACCESSIBILITY_SERVICE_STATE:
+                        if (mExpectedAction == null || mLatch == null
+                                || !mExpectedAction.equals(ACCESSIBILITY_SERVICE_STATE)) {
+                            return;
+                        }
+
+                        if (mExpectedService == null) {
+                            mLatch.countDown();
+                            return;
+                        }
+
+                        if (intent.getExtras() != null) {
+                            CharSequence[] enabledServices =
+                                    intent.getExtras().getCharSequenceArray(EXTRA_ENABLED_SERVICES);
+                            for (CharSequence service : enabledServices) {
+                                if (((String) service).endsWith((String) mExpectedService)) {
+                                    mLatch.countDown();
+                                    return;
+                                }
+                            }
+                        }
+                        break;
+                    case TOUCH_EXPLORATION_STATE:
+                        if (mExpectedAction == null || mLatch == null
+                                || !mExpectedAction.equals(TOUCH_EXPLORATION_STATE)) {
+                            return;
+                        }
+                        if (intent.getExtras() != null) {
+                            if (mExpectedEnabled == intent.getExtras().getBoolean(EXTRA_ENABLED)) {
+                                mLatch.countDown();
+                            }
+                        }
+                        break;
+                }
+            }
         }
     }
 }
