@@ -60,7 +60,7 @@ public class SurfaceControlViewHostHelper {
 
     HandlerThread mHandlerThread;
 
-    SurfaceControlViewHostHelper(String tag, CountDownLatch countDownLatch, Context context,
+    public SurfaceControlViewHostHelper(String tag, CountDownLatch countDownLatch, Context context,
             long delayMs, Size initialSize) {
         mTag = tag;
         mContext = context;
@@ -76,7 +76,6 @@ public class SurfaceControlViewHostHelper {
         mSurfaceView = new SurfaceView(mContext);
         mSurfaceView.getHolder().addCallback(mCallback);
         parent.addView(mSurfaceView, layoutParams);
-
         return mSurfaceView;
     }
 
@@ -102,6 +101,7 @@ public class SurfaceControlViewHostHelper {
     final SurfaceHolder.Callback mCallback = new SurfaceHolder.Callback() {
         @Override
         public void surfaceCreated(@NonNull SurfaceHolder holder) {
+            Log.d(mTag, "surface created");
             synchronized (mLock) {
                 mSurfaceCreated = true;
             }

@@ -43,6 +43,7 @@ java_test_helper_library {
 
     srcs: [
         "src/**/*.java",
+        "src/**/*.aidl",
         ":cts-wm-components",
         ":cts-wm-components-base",
     ],
