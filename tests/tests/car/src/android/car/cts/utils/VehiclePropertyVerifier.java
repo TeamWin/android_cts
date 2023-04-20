@@ -505,10 +505,7 @@ public class VehiclePropertyVerifier<T> {
             return;
         }
 
-        SparseArray<Boolean> hvacPowerStateByAreaId = (SparseArray<Boolean>)
-                getInitialValuesByAreaId(hvacPowerOnCarPropertyConfig, mCarPropertyManager);
-        mPropertyToAreaIdValues.put(VehiclePropertyIds.HVAC_POWER_ON, hvacPowerStateByAreaId);
-
+        storeCurrentValuesForProperty(hvacPowerOnCarPropertyConfig);
         // Turn the power on for all supported HVAC area IDs.
         setBooleanPropertyInAllAreaIds(hvacPowerOnCarPropertyConfig, /* setValue: */ Boolean.TRUE);
     }
@@ -528,40 +525,47 @@ public class VehiclePropertyVerifier<T> {
         // Turn the power off for all supported HVAC area IDs.
         setBooleanPropertyInAllAreaIds(hvacPowerOnCarPropertyConfig, /* setValue: */ Boolean.FALSE);
         verifySetNotAvailable();
-
-        SparseArray<Boolean> hvacPowerStateByAreaId = (SparseArray<Boolean>)
-                mPropertyToAreaIdValues.get(VehiclePropertyIds.HVAC_POWER_ON);
-        restoreInitialValuesByAreaId(hvacPowerOnCarPropertyConfig, mCarPropertyManager,
-                hvacPowerStateByAreaId);
     }
 
     /**
      * Stores the property's current values for all areas so that they can be restored later.
      */
     public void storeCurrentValues() {
-        SparseArray<T> mAreaIdToInitialValue = getInitialValuesByAreaId(getCarPropertyConfig(),
-                mCarPropertyManager);
-        if (mAreaIdToInitialValue == null) {
+        storeCurrentValuesForProperty(getCarPropertyConfig());
+    }
+
+    private <U> void storeCurrentValuesForProperty(CarPropertyConfig<U> carPropertyConfig) {
+        SparseArray<U> areaIdToInitialValue =
+                getInitialValuesByAreaId(carPropertyConfig, mCarPropertyManager);
+        if (areaIdToInitialValue == null) {
             return;
         }
-        mPropertyToAreaIdValues.put(mPropertyId, mAreaIdToInitialValue);
+        mPropertyToAreaIdValues.put(carPropertyConfig.getPropertyId(), areaIdToInitialValue);
     }
 
     /**
-     * Restore the property's values to original values stored by previous
+     * Restore the property's and dependent properties values to original values stored by previous
      * {@link #storeCurrentValues}.
      *
      * Do nothing if no stored current values are available.
      */
-    public void restoreInitialValues() {
-        SparseArray<T> mAreaIdToInitialValue = (SparseArray<T>)
-                mPropertyToAreaIdValues.get(mPropertyId);
-        if (mAreaIdToInitialValue == null) {
-            Log.w(TAG, "No stored values to restore to, ignore");
-            return;
+    public <U> void restoreInitialValues() {
+        for (int i = 0; i < mPropertyToAreaIdValues.size(); i++) {
+            int propertyId = mPropertyToAreaIdValues.keyAt(i);
+            CarPropertyConfig<U> carPropertyConfig = (CarPropertyConfig<U>)
+                    mCarPropertyManager.getCarPropertyConfig(propertyId);
+            SparseArray<U> areaIdToInitialValue = (SparseArray<U>)
+                    mPropertyToAreaIdValues.get(propertyId);
+
+            if (areaIdToInitialValue == null || carPropertyConfig == null) {
+                Log.w(TAG, "No stored values for " + VehiclePropertyIds.toString(propertyId)
+                        + " to restore to, ignore");
+                return;
+            }
+
+            restoreInitialValuesByAreaId(carPropertyConfig, mCarPropertyManager,
+                    areaIdToInitialValue);
         }
-        restoreInitialValuesByAreaId(getCarPropertyConfig(), mCarPropertyManager,
-                mAreaIdToInitialValue);
     }
 
     // Get a map storing the property's area Ids to the initial values.

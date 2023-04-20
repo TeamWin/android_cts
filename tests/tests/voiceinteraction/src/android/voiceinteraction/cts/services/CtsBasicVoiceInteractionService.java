@@ -73,6 +73,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     private CountDownLatch mOnRecognitionResumedLatch;
     // The CountDownLatch waits for a service onHotwordDetectionServiceRestarted called
     private CountDownLatch mOnHotwordDetectionServiceRestartedLatch;
+    // The CountDownLatch waits for a service onVisualQueryDetectionServiceRestarted called
+    private CountDownLatch mOnVisualQueryDetectionServiceRestartedLatch;
 
     private AlwaysOnHotwordDetector.EventPayload mDetectedResult;
     private HotwordRejectedResult mRejectedResult;
@@ -726,6 +728,10 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 @Override
                 public void onVisualQueryDetectionServiceRestarted() {
                     Log.i(TAG, "onVisualQueryDetectionServiceRestarted");
+                    setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                    if (mOnVisualQueryDetectionServiceRestartedLatch != null) {
+                        mOnVisualQueryDetectionServiceRestartedLatch.countDown();
+                    }
                 }
 
                 @Override
@@ -749,6 +755,10 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public void initOnHotwordDetectionServiceRestartedLatch() {
         mOnHotwordDetectionServiceRestartedLatch = new CountDownLatch(1);
+    }
+
+    public void initOnVisualQueryDetectionServiceRestartedLatch() {
+        mOnVisualQueryDetectionServiceRestartedLatch = new CountDownLatch(1);
     }
 
     /**
@@ -848,6 +858,20 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         }
         mOnHotwordDetectionServiceRestartedLatch = null;
     }
+
+    public void waitOnVisualQueryDetectionServiceRestartedCalled() throws InterruptedException {
+        Log.d(TAG, "waitOnVisualQueryDetectionServiceRestartedCalled(), latch="
+                + mOnVisualQueryDetectionServiceRestartedLatch);
+        if (mOnVisualQueryDetectionServiceRestartedLatch == null
+                || !mOnVisualQueryDetectionServiceRestartedLatch.await(WAIT_TIMEOUT_IN_MS,
+                TimeUnit.MILLISECONDS)) {
+            mOnVisualQueryDetectionServiceRestartedLatch = null;
+            throw new AssertionError(
+                "VisualQueryDetectionService onVisualQueryDetectionServiceRestarted not called.");
+        }
+        mOnVisualQueryDetectionServiceRestartedLatch = null;
+    }
+
 
     /**
      * Returns the OnFailure() with HotwordDetectionServiceFailure result.

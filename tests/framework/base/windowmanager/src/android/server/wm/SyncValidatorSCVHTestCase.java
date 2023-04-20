@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.scvh;
+package android.server.wm;
 
 import static org.junit.Assert.assertTrue;
 
@@ -25,6 +25,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.RemoteException;
 import android.os.SystemProperties;
+import android.server.wm.scvh.IAttachEmbeddedWindow;
+import android.server.wm.scvh.SurfaceControlViewHostHelper;
 import android.util.Log;
 import android.util.Size;
 import android.view.Gravity;

@@ -289,7 +289,7 @@ public final class PackageManagerHelperTest {
             mActivityToFilter = activityToFilter;
             IntentFilter filter = new IntentFilter();
             filter.addAction(mActivityToFilter);
-            mContext.registerReceiver(this, filter);
+            mContext.registerReceiver(this, filter, Context.RECEIVER_EXPORTED);
         }
 
         // Turn off the filter.

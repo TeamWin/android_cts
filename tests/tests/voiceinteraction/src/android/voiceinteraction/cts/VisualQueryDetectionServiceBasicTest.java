@@ -24,6 +24,7 @@ import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -212,13 +213,15 @@ public class VisualQueryDetectionServiceBasicTest {
         });
         try {
             adoptShellPermissionIdentityForVisualQueryDetection();
+            mService.initQueryFinishRejectLatch(1);
             visualQueryDetector.startRecognition();
-            SystemClock.sleep(TEST_WAIT_TIMEOUT_MS); // reduce flakiness
+            // wait onStartDetection() called and verify the result
+            mService.waitOnQueryFinishedRejectCalled();
             // verify results
             ArrayList<String> streamedQueries = mService.getStreamedQueriesResult();
+            assertThat(streamedQueries.size()).isEqualTo(1);
             assertThat(streamedQueries.get(0)).isEqualTo(
                     MainVisualQueryDetectionService.PERCEPTION_MODULE_SUCCESS);
-            assertThat(streamedQueries.size()).isEqualTo(1);
         } finally {
             // Drop identity adopted.
             visualQueryDetector.destroy();
@@ -450,6 +453,22 @@ public class VisualQueryDetectionServiceBasicTest {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
         }
+    }
+
+    @Test
+    public void testVisualQueryDetectionService_onServiceRestarted() throws Throwable {
+        // Create VisualQueryDetector
+        VisualQueryDetector visualQueryDetector = createVisualQueryDetector();
+
+        mService.initOnVisualQueryDetectionServiceRestartedLatch();
+        // force re-start by shell command
+        runShellCommand("cmd voiceinteraction restart-detection");
+
+        // wait onHotwordDetectionServiceRestarted() called
+        mService.waitOnVisualQueryDetectionServiceRestartedCalled();
+
+        // Destroy the always on detector
+        visualQueryDetector.destroy();
     }
 
 

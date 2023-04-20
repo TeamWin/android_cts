@@ -235,6 +235,7 @@ class AccessibilityPrivacySourceTest {
     fun testNotificationClickOpenSafetyCenter() {
         mAccessibilityServiceRule.enableService()
         runJobAndWaitUntilCompleted()
+        assertNotificationExist(permissionControllerPackage, ACCESSIBILITY_NOTIFICATION_ID)
         val statusBarNotification =
             getNotification(permissionControllerPackage, ACCESSIBILITY_NOTIFICATION_ID)
         Assert.assertNotNull(statusBarNotification)
@@ -267,7 +268,7 @@ class AccessibilityPrivacySourceTest {
     @Throws(Throwable::class)
     private fun resetPermissionController() {
         PermissionUtils.resetPermissionControllerJob(getAutomation(), permissionControllerPackage,
-            ACCESSIBILITY_JOB_ID, TIMEOUT_MILLIS, ACTION_SET_UP_ACCESSIBILITY_CHECK,
+            ACCESSIBILITY_JOB_ID, 45000, ACTION_SET_UP_ACCESSIBILITY_CHECK,
             AccessibilityOnBootReceiver)
     }
 

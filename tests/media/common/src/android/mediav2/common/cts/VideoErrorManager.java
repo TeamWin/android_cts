@@ -84,12 +84,12 @@ public class VideoErrorManager {
         mFramesPSNR = new ArrayList<>();
     }
 
-    private double computeMSE(byte[] data0, byte[] data1) {
+    static double computeMSE(byte[] data0, byte[] data1, int bytesPerSample) {
         assertEquals(data0.length, data1.length);
-        int length = data0.length / mRefYuv.mBytesPerSample;
+        int length = data0.length / bytesPerSample;
         long squareError = 0;
 
-        if (mRefYuv.mBytesPerSample == 2) {
+        if (bytesPerSample == 2) {
             short[] dataA = new short[length];
             ByteBuffer.wrap(data0).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(dataA);
             short[] dataB = new short[length];
@@ -107,9 +107,9 @@ public class VideoErrorManager {
         return (double) squareError / length;
     }
 
-    private double computePSNR(double mse) {
+    static double computePSNR(double mse, int bytesPerSample) {
         if (mse == 0) return 100.0;
-        final int peakSignal = (1 << (8 * mRefYuv.mBytesPerSample)) - 1;
+        final int peakSignal = (1 << (8 * bytesPerSample)) - 1;
         return 10 * Math.log10((double) peakSignal * peakSignal / mse);
     }
 
@@ -135,7 +135,7 @@ public class VideoErrorManager {
                     refStream.seek(0);
                     refStream.read(yRef);
                 }
-                double curYMSE = computeMSE(yRef, yTest);
+                double curYMSE = computeMSE(yRef, yTest, mRefYuv.mBytesPerSample);
                 mGlobalMSE[0] += curYMSE;
                 mMinimumMSE[0] = Math.min(mMinimumMSE[0], curYMSE);
 
@@ -145,7 +145,7 @@ public class VideoErrorManager {
                 assertEquals("failed to read U Plane " + mTestYuv.mFileName
                                 + " contains insufficient bytes", uvSize,
                         testStream.read(uvTest));
-                double curUMSE = computeMSE(uvRef, uvTest);
+                double curUMSE = computeMSE(uvRef, uvTest, mRefYuv.mBytesPerSample);
                 mGlobalMSE[1] += curUMSE;
                 mMinimumMSE[1] = Math.min(mMinimumMSE[1], curUMSE);
 
@@ -155,13 +155,13 @@ public class VideoErrorManager {
                 assertEquals("failed to read V Plane " + mTestYuv.mFileName
                                 + " contains insufficient bytes", uvSize,
                         testStream.read(uvTest));
-                double curVMSE = computeMSE(uvRef, uvTest);
+                double curVMSE = computeMSE(uvRef, uvTest, mRefYuv.mBytesPerSample);
                 mGlobalMSE[2] += curVMSE;
                 mMinimumMSE[2] = Math.min(mMinimumMSE[2], curVMSE);
 
-                double yFramePSNR = computePSNR(curYMSE);
-                double uFramePSNR = computePSNR(curUMSE);
-                double vFramePSNR = computePSNR(curVMSE);
+                double yFramePSNR = computePSNR(curYMSE, mRefYuv.mBytesPerSample);
+                double uFramePSNR = computePSNR(curUMSE, mRefYuv.mBytesPerSample);
+                double vFramePSNR = computePSNR(curVMSE, mRefYuv.mBytesPerSample);
                 mAvgPSNR[0] += yFramePSNR;
                 mAvgPSNR[1] += uFramePSNR;
                 mAvgPSNR[2] += vFramePSNR;
@@ -179,8 +179,8 @@ public class VideoErrorManager {
             }
             for (int i = 0; i < mGlobalPSNR.length; i++) {
                 mGlobalMSE[i] /= frames;
-                mGlobalPSNR[i] = computePSNR(mGlobalMSE[i]);
-                mMinimumPSNR[i] = computePSNR(mMinimumMSE[i]);
+                mGlobalPSNR[i] = computePSNR(mGlobalMSE[i], mRefYuv.mBytesPerSample);
+                mMinimumPSNR[i] = computePSNR(mMinimumMSE[i], mRefYuv.mBytesPerSample);
                 mAvgPSNR[i] /= frames;
             }
             if (ENABLE_LOGS) {

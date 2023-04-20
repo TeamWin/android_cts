@@ -321,12 +321,20 @@ public class AlwaysOnHotwordDetectorTest {
         assertThat(mRecognitionSession).isNotNull();
 
         getService().initOnRecognitionPausedLatch();
+        // Prevent unexpected start recognition
+        // TODO (b/275079746) - after fix, ensure that we don't have
+        // an unexpected start recognition, or an onError following
+        // an abort recognition.
+        mInstrumentation.setResourceContention(true);
         // Induce a recognition pause
         mRecognitionSession.triggerAbortRecognition();
+        // Unexpected onError will be received here as well
         getService().waitOnRecognitionPausedCalled();
 
         getService().initOnRecognitionResumedLatch();
-        mInstrumentation.triggerOnResourcesAvailable();
+        // This will trigger resources available
+        mInstrumentation.setResourceContention(false);
+        // mInstrumentation.triggerOnResourcesAvailable();
         getService().waitOnRecognitionResumedCalled();
     }
 
