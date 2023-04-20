@@ -287,7 +287,7 @@ public final class ConfigUtils {
         device.executeShellCommand("rm " + remotePath);
 
         // Sleep for a bit so that statsd receives config before more work is done within the test.
-        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG * 5);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
     }
 
     /**
