@@ -22,6 +22,7 @@ import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.READ_CLIPBOARD_IN_BACKGROUND;
 import static android.Manifest.permission.WAKE_LOCK;
 import static android.app.PendingIntent.FLAG_IMMUTABLE;
+import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.virtualdevice.cts.util.VirtualDeviceTestUtils.createResultReceiver;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
@@ -90,8 +91,10 @@ public class StartActivitiesTest {
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
 
     private VirtualDeviceManager mVirtualDeviceManager;
-    @Nullable private VirtualDevice mVirtualDevice;
-    @Nullable private VirtualDisplay mVirtualDisplay;
+    @Nullable
+    private VirtualDevice mVirtualDevice;
+    @Nullable
+    private VirtualDisplay mVirtualDisplay;
     private Context mContext;
     @Mock
     private VirtualDisplay.Callback mVirtualDisplayCallback;
@@ -143,7 +146,8 @@ public class StartActivitiesTest {
 
         final Intent[] intents = TestAppHelper.createStartActivitiesIntents(mResultReceiver);
         mVirtualDevice.launchPendingIntent(displayId,
-                PendingIntent.getActivities(mContext, requestCode, intents, FLAG_IMMUTABLE),
+                PendingIntent.getActivities(mContext, requestCode, intents,
+                        FLAG_IMMUTABLE | FLAG_UPDATE_CURRENT),
                 Runnable::run, mLaunchCompleteListener);
 
         ArgumentCaptor<Bundle> bundleArgumentCaptor = ArgumentCaptor.forClass(Bundle.class);
@@ -175,13 +179,15 @@ public class StartActivitiesTest {
 
         assertThrows(NullPointerException.class,
                 () -> mVirtualDevice.launchPendingIntent(displayId,
-                        PendingIntent.getActivities(mContext, requestCode, intents, FLAG_IMMUTABLE),
+                        PendingIntent.getActivities(mContext, requestCode, intents,
+                                FLAG_IMMUTABLE | FLAG_UPDATE_CURRENT),
                         null,
                         mLaunchCompleteListener));
 
         assertThrows(NullPointerException.class,
                 () -> mVirtualDevice.launchPendingIntent(displayId,
-                        PendingIntent.getActivities(mContext, requestCode, intents, FLAG_IMMUTABLE),
+                        PendingIntent.getActivities(mContext, requestCode, intents,
+                                FLAG_IMMUTABLE | FLAG_UPDATE_CURRENT),
                         Runnable::run,
                         null));
     }

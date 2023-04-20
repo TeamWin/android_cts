@@ -75,7 +75,6 @@ open class PackageSchemeTestBase {
             super.onActivityResult(requestCode, resultCode, data)
             mResultCode = resultCode
             mLatch.countDown()
-            finish()
         }
     }
 

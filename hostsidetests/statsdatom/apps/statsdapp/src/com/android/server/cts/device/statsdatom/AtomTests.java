@@ -114,6 +114,7 @@ public class AtomTests {
     private static final String MY_PACKAGE_NAME = "com.android.server.cts.device.statsdatom";
 
     private static final Map<String, Integer> APP_OPS_ENUM_MAP = new ArrayMap<>();
+
     static {
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_COARSE_LOCATION, 0);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_FINE_LOCATION, 1);
@@ -293,7 +294,7 @@ public class AtomTests {
     public void testBleScanOpportunistic() {
         ScanSettings scanSettings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_OPPORTUNISTIC).build();
-        performBleScan(scanSettings, null,false);
+        performBleScan(scanSettings, null, false);
     }
 
     @Test
@@ -321,10 +322,12 @@ public class AtomTests {
                 public void onScanResult(int callbackType, ScanResult result) {
                     Log.v(TAG, "called onScanResult");
                 }
+
                 @Override
                 public void onScanFailed(int errorCode) {
                     Log.v(TAG, "called onScanFailed");
                 }
+
                 @Override
                 public void onBatchScanResults(List<ScanResult> results) {
                     Log.v(TAG, "called onBatchScanResults");
@@ -370,11 +373,11 @@ public class AtomTests {
     }
 
     private static void writeSliceByBleScanStateChangedAtom(int atomId, int firstUid,
-                                                            boolean field2, boolean field3,
-                                                            boolean field4) {
+            boolean field2, boolean field3,
+            boolean field4) {
         final StatsEvent.Builder builder = StatsEvent.newBuilder()
                 .setAtomId(atomId)
-                .writeAttributionChain(new int[] {firstUid}, new String[] {"tag1"})
+                .writeAttributionChain(new int[]{firstUid}, new String[]{"tag1"})
                 .writeBoolean(field2)
                 .writeBoolean(field3)
                 .writeBoolean(field4)
@@ -417,7 +420,8 @@ public class AtomTests {
     }
 
 
-    private static void performBleScan(ScanSettings scanSettings, List<ScanFilter> scanFilters, boolean waitForResult) {
+    private static void performBleScan(ScanSettings scanSettings, List<ScanFilter> scanFilters,
+            boolean waitForResult) {
         performBleAction((bluetoothAdapter, bleScanner) -> {
             CountDownLatch resultsLatch = new CountDownLatch(1);
             ScanCallback scanCallback = new ScanCallback() {
@@ -426,10 +430,12 @@ public class AtomTests {
                     Log.v(TAG, "called onScanResult");
                     resultsLatch.countDown();
                 }
+
                 @Override
                 public void onScanFailed(int errorCode) {
                     Log.v(TAG, "called onScanFailed");
                 }
+
                 @Override
                 public void onBatchScanResults(List<ScanResult> results) {
                     Log.v(TAG, "called onBatchScanResults");
@@ -465,15 +471,18 @@ public class AtomTests {
                 sleep(2_000);
                 cd.close();
             }
+
             @Override
             public void onClosed(CameraDevice cd) {
                 latch.countDown();
                 Log.i(TAG, "CameraDevice " + cd.getId() + " closed");
             }
+
             @Override
             public void onDisconnected(CameraDevice cd) {
                 Log.w(TAG, "CameraDevice  " + cd.getId() + " disconnected");
             }
+
             @Override
             public void onError(CameraDevice cd, int error) {
                 Log.e(TAG, "CameraDevice " + cd.getId() + "had error " + error);
@@ -497,7 +506,7 @@ public class AtomTests {
         boolean foundFlash = false;
         for (int i = 0; i < cameraIds.length; i++) {
             String id = cameraIds[i];
-            if(cam.getCameraCharacteristics(id).get(CameraCharacteristics.FLASH_INFO_AVAILABLE)) {
+            if (cam.getCameraCharacteristics(id).get(CameraCharacteristics.FLASH_INFO_AVAILABLE)) {
                 cam.setTorchMode(id, true);
                 sleep(500);
                 cam.setTorchMode(id, false);
@@ -505,7 +514,7 @@ public class AtomTests {
                 break;
             }
         }
-        if(!foundFlash) {
+        if (!foundFlash) {
             Log.e(TAG, "No flashlight found on device");
         }
     }
@@ -568,7 +577,8 @@ public class AtomTests {
             for (int j = 0; j < noteCount; j++) {
                 try {
                     noteAppOp(appOpsManager, opsList[i]);
-                } catch (SecurityException e) {}
+                } catch (SecurityException e) {
+                }
             }
         }
     }
@@ -606,12 +616,15 @@ public class AtomTests {
             public void onLocationChanged(Location location) {
                 Log.v(TAG, "onLocationChanged: location has been obtained");
             }
+
             public void onProviderDisabled(String provider) {
                 Log.w(TAG, "onProviderDisabled " + provider);
             }
+
             public void onProviderEnabled(String provider) {
                 Log.w(TAG, "onProviderEnabled " + provider);
             }
+
             public void onStatusChanged(String provider, int status, Bundle extras) {
                 Log.w(TAG, "onStatusChanged " + provider + " " + status);
             }
@@ -872,10 +885,10 @@ public class AtomTests {
     }
 
     private static void writeSliceByWakelockStateChangedAtom(int atomId, int firstUid,
-                                                            int field2, String field3) {
+            int field2, String field3) {
         final StatsEvent.Builder builder = StatsEvent.newBuilder()
                 .setAtomId(atomId)
-                .writeAttributionChain(new int[] {firstUid}, new String[] {"tag1"})
+                .writeAttributionChain(new int[]{firstUid}, new String[]{"tag1"})
                 .writeInt(field2)
                 .writeString(field3)
                 .usePooledBuffer();
@@ -964,7 +977,7 @@ public class AtomTests {
     @Test
     public void testSimpleCpu() {
         long timestamp = System.currentTimeMillis();
-        for (int i = 0; i < 10000; i ++) {
+        for (int i = 0; i < 10000; i++) {
             timestamp += i;
         }
         Log.i(TAG, "The answer is " + timestamp);
@@ -1014,6 +1027,61 @@ public class AtomTests {
         // Non chained all null
         StatsLogStatsdCts.write_non_chained(StatsLogStatsdCts.TEST_ATOM_REPORTED, appInfo.uid, null,
                 0, 0, 0f, null, true, StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__OFF, null, null,
+                null, null, null, null, null);
+    }
+
+    @Test
+    public void testWriteExtensionTestAtom() throws Exception {
+        Context context = InstrumentationRegistry.getTargetContext();
+        ApplicationInfo appInfo = context.getPackageManager()
+                .getApplicationInfo(context.getPackageName(), 0);
+        int[] uids = {1234, appInfo.uid};
+        String[] tags = {"tag1", "tag2"};
+        byte[] testAtomNestedMsg = {8, 1, 8, 2, 8, 3}; // Corresponds to 1, 2, 3.
+
+        int[] int32Array = {3, 6};
+        long[] int64Array = {1000L, 1002L};
+        float[] floatArray = {0.3f, 0.09f};
+        String[] stringArray = {"str1", "str2"};
+        boolean[] boolArray = {true, false};
+        int[] enumArray = {StatsLogStatsdCts.TEST_EXTENSION_ATOM_REPORTED__STATE__OFF,
+                StatsLogStatsdCts.TEST_EXTENSION_ATOM_REPORTED__STATE__ON};
+
+        StatsLogStatsdCts.write(StatsLogStatsdCts.TEST_EXTENSION_ATOM_REPORTED, uids, tags, 42,
+                Long.MAX_VALUE, 3.14f, "This is a basic test!", false,
+                StatsLogStatsdCts.TEST_EXTENSION_ATOM_REPORTED__STATE__ON, testAtomNestedMsg,
+                int32Array,
+                int64Array, floatArray, stringArray, boolArray, enumArray);
+
+        // All nulls. Should get dropped since cts app is not in the attribution chain.
+        StatsLogStatsdCts.write(StatsLogStatsdCts.TEST_EXTENSION_ATOM_REPORTED, null, null, 0, 0,
+                0f, null,
+                false, StatsLogStatsdCts.TEST_EXTENSION_ATOM_REPORTED__STATE__ON, null, null, null,
+                null,
+                null, null, null);
+
+        // Null tag in attribution chain.
+        int[] uids2 = {9999, appInfo.uid};
+        String[] tags2 = {"tag9999", null};
+        StatsLogStatsdCts.write(StatsLogStatsdCts.TEST_EXTENSION_ATOM_REPORTED, uids2, tags2, 100,
+                Long.MIN_VALUE, -2.5f, "Test null uid", true,
+                StatsLogStatsdCts.TEST_EXTENSION_ATOM_REPORTED__STATE__UNKNOWN, testAtomNestedMsg,
+                int32Array,
+                int64Array, floatArray, stringArray, boolArray, enumArray);
+
+        // Non chained non-null
+        StatsLogStatsdCts.write_non_chained(StatsLogStatsdCts.TEST_EXTENSION_ATOM_REPORTED,
+                appInfo.uid,
+                "tag1", -256, -1234567890L, 42.01f, "Test non chained", true,
+                StatsLogStatsdCts.TEST_EXTENSION_ATOM_REPORTED__STATE__OFF, testAtomNestedMsg,
+                new int[0],
+                new long[0], new float[0], new String[0], new boolean[0], new int[0]);
+
+        // Non chained all null
+        StatsLogStatsdCts.write_non_chained(StatsLogStatsdCts.TEST_EXTENSION_ATOM_REPORTED,
+                appInfo.uid, null,
+                0, 0, 0f, null, true, StatsLogStatsdCts.TEST_EXTENSION_ATOM_REPORTED__STATE__OFF,
+                null, null,
                 null, null, null, null, null);
     }
 

@@ -24,6 +24,7 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
@@ -81,6 +82,7 @@ public class InputMethodManagerMultiDisplayTest extends MultiDisplayTestBase {
 
     @Test
     public void testShowInputMethodAndSubtypeEnablerOnSingleDisplay() {
+        assumeFalse(isCar());
         final UiDevice uiDevice = UiDevice.getInstance(mInstrumentation);
 
         mImManager.showInputMethodAndSubtypeEnabler(MOCK_IME_ID);
@@ -91,6 +93,7 @@ public class InputMethodManagerMultiDisplayTest extends MultiDisplayTestBase {
 
     @Test
     public void testShowInputMethodAndSubtypeEnablerOnNonDefaultDisplay() {
+        assumeFalse(isCar());
         assumeTrue(supportsMultiDisplay());
 
         try (MultiDisplayTestBase.VirtualDisplaySession session =

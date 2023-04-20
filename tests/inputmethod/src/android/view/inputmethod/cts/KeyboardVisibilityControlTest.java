@@ -26,6 +26,7 @@ import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACK
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE;
 import static android.view.inputmethod.InputMethodManager.CLEAR_SHOW_FORCED_FLAG_WHEN_LEAVING;
@@ -1499,10 +1500,15 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             final AtomicReference<AlertDialog> dialogRef = new AtomicReference<>();
             final AtomicReference<EditText> editTextRef = new AtomicReference<>();
             try {
+                // Launch another activity with SOFT_INPUT_STATE_UNCHANGED flag to be on the split
+                // secondary task as well as on its dialog, so that the IME is not visible by
+                // default on large screens, when showing the dialog.
                 new TestActivity.Starter()
                         .asMultipleTask()
                         .withAdditionalFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT)
                         .startSync(splitPrimaryActivity, activity -> {
+                            activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_UNCHANGED);
+
                             final EditText editText = new EditText(activity);
                             editText.setHint("focused editText");
                             editText.setPrivateImeOptions(marker);
@@ -1510,6 +1516,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                             final AlertDialog dialog = new AlertDialog.Builder(activity)
                                     .setView(editText)
                                     .create();
+                            dialog.getWindow().setSoftInputMode(SOFT_INPUT_STATE_UNCHANGED);
                             dialog.show();
                             dialogRef.set(dialog);
                             editTextRef.set(editText);

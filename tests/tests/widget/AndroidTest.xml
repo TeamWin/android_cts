@@ -62,6 +62,7 @@
         -->
         <option name="run-command" value="sleep 1" />
         <option name="test-user-token" value="%TEST_USER%"/>
+        <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS com.android.cts.mockime"/>
         <option name="run-command" value="ime enable --user %TEST_USER% com.android.cts.testime/.TestIme" />
         <option name="run-command" value="ime set --user %TEST_USER% com.android.cts.testime/.TestIme" />
         <option name="teardown-command" value="ime reset --user %TEST_USER%" />

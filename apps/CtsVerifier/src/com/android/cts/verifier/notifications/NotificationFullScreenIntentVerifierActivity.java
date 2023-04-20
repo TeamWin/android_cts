@@ -137,6 +137,12 @@ public class NotificationFullScreenIntentVerifierActivity extends InteractiveVer
         }
         tests.add(new ScreenOffFsiWithPermissionTestStep());
 
+        // NOW TESTING: FSI HUN with FSI permission on AOD, should launch FSI
+        if (isAlwaysOnAvailable()) {
+            tests.add(new EnableAodStep());
+            tests.add(new AodFsiWithPermissionTestStep());
+        }
+
 
         // Deny permission for Full Screen Intent
         tests.add(new DenyFsiPermissionStep());
@@ -147,6 +153,13 @@ public class NotificationFullScreenIntentVerifierActivity extends InteractiveVer
         // NOW TESTING: lockscreen FSI HUN without FSI permission,
         // HUN shows up first in list, expanded with pill buttons
         tests.add(new LockScreenFsiWithoutPermissionTestStep());
+
+        // NOW TESTING: FSI HUN without FSI permission on AOD
+        // HUN pulses with pill buttons
+        if (isAlwaysOnAvailable()) {
+            tests.add(new EnableAodStep());
+            tests.add(new AodFsiWithoutPermissionTestStep());
+        }
 
         // Now testing: FSI HUN without FSI permission when screen is off,
         // HUN pulses with pill buttons
@@ -649,6 +662,18 @@ public class NotificationFullScreenIntentVerifierActivity extends InteractiveVer
     private class ScreenOffFsiWithoutPermissionTestStep extends LockscreenFsiTestBaseStep {
         private ScreenOffFsiWithoutPermissionTestStep() {
             super(R.string.fsi_screen_off_without_permission_instruction);
+        }
+    }
+
+    private class AodFsiWithPermissionTestStep extends LockscreenFsiTestBaseStep {
+        private AodFsiWithPermissionTestStep() {
+            super(R.string.fsi_aod_with_permission_instruction);
+        }
+    }
+
+    private class AodFsiWithoutPermissionTestStep extends LockscreenFsiTestBaseStep {
+        private AodFsiWithoutPermissionTestStep() {
+            super(R.string.fsi_aod_without_permission_instruction);
         }
     }
 
