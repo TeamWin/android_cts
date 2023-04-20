@@ -2409,8 +2409,10 @@ public final class DeviceState extends HarrierRule {
             case CLONE_PROFILE:
                 return cloneProfile();
             case ADMIN_USER:
-                return TestApis.users().all().stream().sorted(Comparator.comparing(u -> u.id()))
-                        .filter(u -> u.isAdmin()).findFirst().orElseThrow(
+                return TestApis.users().all().stream().sorted(
+                        Comparator.comparing(UserReference::id))
+                        .filter(UserReference::isAdmin)
+                        .findFirst().orElseThrow(
                                 () -> new IllegalStateException("No admin user on device"));
             case ANY:
                 throw new IllegalStateException("ANY UserType can not be used here");
