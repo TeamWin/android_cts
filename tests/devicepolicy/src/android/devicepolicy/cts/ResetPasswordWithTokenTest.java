@@ -47,7 +47,10 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
+import com.android.bedstead.harrier.policies.PasswordComplexity;
+import com.android.bedstead.harrier.policies.PasswordQuality;
 import com.android.bedstead.harrier.policies.ResetPasswordWithToken;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
@@ -59,6 +62,7 @@ import org.junit.runner.RunWith;
 // TODO(b/191640667): Parameterize the length limit tests with multiple limits
 @RunWith(BedsteadJUnit4.class)
 @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
+@CoexistenceFlagsOn
 public final class ResetPasswordWithTokenTest { // bunch of headless failures - check again after password fixes
 
     private static final String NOT_COMPLEX_PASSWORD = "1234";
@@ -151,7 +155,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void resetPasswordWithToken_passwordDoesNotSatisfyRestriction_failure() {
@@ -178,7 +182,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void resetPasswordWithToken_passwordSatisfiesRestriction_success() {
@@ -216,14 +220,14 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
             assertThat(metrics.query()
                     .whereType().isEqualTo(EventId.RESET_PASSWORD_WITH_TOKEN_VALUE)
                     .whereAdminPackageName().isEqualTo(
-                            sDeviceState.dpc().componentName().getPackageName())).wasLogged();
+                            sDeviceState.dpc().packageName())).wasLogged();
         } finally {
             removePasswordAndToken(TOKEN);
         }
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void isActivePasswordSufficient_passwordDoesNotSatisfyRestriction_false() {
@@ -252,7 +256,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void isActivePasswordSufficient_passwordSatisfiesRestriction_true() {
@@ -281,7 +285,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void isActivePasswordSufficient_passwordNoLongerSatisfiesRestriction_false() {
@@ -312,7 +316,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CanSetPolicyTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordQuality_success() {
@@ -329,7 +333,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordQuality_something_passwordWithAMinLengthOfFourRequired() {
@@ -350,7 +354,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordQuality_numeric_passwordWithAtLeastOneNumberOrLetterRequired() {
@@ -370,7 +374,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordQuality_alphabetic_passwordWithAtLeastOneLetterRequired() {
@@ -389,7 +393,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordQuality_alphanumeric_passwordWithBothALetterAndANumberRequired() {
@@ -408,7 +412,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordQuality_complex_passwordWithAMinLengthOfFourRequired() {
@@ -434,7 +438,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CanSetPolicyTest(policy = PasswordQuality.class)
     // setPasswordMinimumLength is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordMinimumLength_success() {
@@ -455,7 +459,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordMinimumLength_six_passwordWithAMinLengthOfSixRequired() {
@@ -483,7 +487,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     @Postsubmit(reason = "new test")
     // setPasswordMinimumUpperCase is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
-    @CanSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CanSetPolicyTest(policy = PasswordQuality.class)
     public void setPasswordMinimumUpperCase_success() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -502,7 +506,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordMinimumUpperCase_one_passwordWithAtLeastOneUpperCaseLetterRequired() {
@@ -530,7 +534,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     @Postsubmit(reason = "new test")
     // setPasswordMinimumLowerCase is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
-    @CanSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CanSetPolicyTest(policy = PasswordQuality.class)
     public void setPasswordMinimumLowerCase_success() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -548,7 +552,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordMinimumLowerCase_one_passwordWithAtLeaseOneLowerCaseLetterRequired() {
@@ -574,7 +578,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CanSetPolicyTest(policy = PasswordQuality.class)
     public void setPasswordMinimumLetters_success() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -593,7 +597,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordMinimumLetters_one_passwordWithAtLeastOneLetterRequired() {
@@ -619,7 +623,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CanSetPolicyTest(policy = PasswordQuality.class)
     public void setPasswordMinimumNumeric_success() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -638,7 +642,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordMinimumNumeric_one_passwordWithAtLeastOneNumberRequired() {
@@ -664,7 +668,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CanSetPolicyTest(policy = PasswordQuality.class)
     public void setPasswordMinimumSymbols_success() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -683,7 +687,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordMinimumSymbols_one_passwordWithAtLeastOneSymbolRequired() {
@@ -712,7 +716,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     @Postsubmit(reason = "new test")
     // setPasswordMinimumNonLetter is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
-    @CanSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CanSetPolicyTest(policy = PasswordQuality.class)
     public void setPasswordMinimumNonLetter_success() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -731,7 +735,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordMinimumNonLetter_one_passwordWithAtLeastOneNonLetterRequired() {
@@ -758,7 +762,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setRequiredPasswordComplexity_passwordQualityAlreadySet_clearsPasswordQuality() {
@@ -779,7 +783,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void setPasswordQuality_passwordComplexityAlreadySet_clearsPasswordComplexity() {
@@ -800,7 +804,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CanSetPolicyTest(policy = PasswordComplexity.class)
     public void setRequiredPasswordComplexity_success() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -815,7 +819,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordComplexity.class)
     public void setRequiredPasswordComplexity_low_passwordThatMeetsLowPasswordBandRequired() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -831,7 +835,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordComplexity.class)
     public void setRequiredPasswordComplexity_medium_passwordThatMeetsMediumPasswordBandRequired() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -848,7 +852,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordComplexity.class)
     public void setRequiredPasswordComplexity_high_passwordThatMeetsHighPasswordBandRequired() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -865,7 +869,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordComplexity.class)
     public void getPasswordComplexity_passwordThatMeetsLowPasswordBand_lowPasswordComplexity() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -880,7 +884,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordComplexity.class)
     public void getPasswordComplexity_passwordThatMeetsMediumPasswordBand_mediumPasswordComplexity() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -895,7 +899,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordComplexity.class)
     public void getPasswordComplexity_passwordThatMeetsHighPasswordBand_highPasswordComplexity() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
@@ -926,7 +930,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @RequireFeature(FEATURE_AUTOMOTIVE)
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     @Postsubmit(reason = "new test")
     public void passwordMinimumLength_featureUnsupported_ignored() {
         int valueBefore = sDeviceState.dpc().devicePolicyManager().getPasswordMinimumLength(
@@ -944,7 +948,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @RequireFeature(FEATURE_AUTOMOTIVE)
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     @Postsubmit(reason = "new test")
     public void passwordMinimumNumeric_ignored() {
         int valueBefore = sDeviceState.dpc().devicePolicyManager().getPasswordMinimumNumeric(
@@ -962,7 +966,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @RequireFeature(FEATURE_AUTOMOTIVE)
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     @Postsubmit(reason = "new test")
     public void passwordMinimumLowerCase_ignored() {
         int valueBefore = sDeviceState.dpc().devicePolicyManager().getPasswordMinimumLowerCase(
@@ -981,7 +985,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @RequireFeature(FEATURE_AUTOMOTIVE)
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     @Postsubmit(reason = "new test")
     public void passwordMinimumUpperCase_ignored() {
         int valueBefore = sDeviceState.dpc().devicePolicyManager().getPasswordMinimumUpperCase(
@@ -1000,7 +1004,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @RequireFeature(FEATURE_AUTOMOTIVE)
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     @Postsubmit(reason = "new test")
     public void passwordMinimumLetters_ignored() {
         int valueBefore = sDeviceState.dpc().devicePolicyManager().getPasswordMinimumLetters(
@@ -1018,7 +1022,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @RequireFeature(FEATURE_AUTOMOTIVE)
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     @Postsubmit(reason = "new test")
     public void passwordMinimumSymbols_ignored() {
         int valueBefore = sDeviceState.dpc().devicePolicyManager().getPasswordMinimumSymbols(
@@ -1036,7 +1040,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     @RequireFeature(FEATURE_AUTOMOTIVE)
-    @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
+    @PolicyAppliesTest(policy = PasswordQuality.class)
     @Postsubmit(reason = "new test")
     public void passwordMinimumNonLetter_ignored() {
         int valueBefore = sDeviceState.dpc().devicePolicyManager().getPasswordMinimumNonLetter(
