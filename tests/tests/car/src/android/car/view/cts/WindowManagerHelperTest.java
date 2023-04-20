@@ -19,16 +19,28 @@ package android.car.view.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.car.view.WindowManagerHelper;
-import android.view.WindowManager;
+import android.view.WindowManager.LayoutParams;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Test;
 
 public final class WindowManagerHelperTest {
     @Test
+    @ApiTest(apis = {"android.car.view.WindowManagerHelper#setTrustedOverlay(LayoutParams)"})
     public void testSetTrustedOverlay() {
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+        LayoutParams params = new LayoutParams();
         WindowManagerHelper.setTrustedOverlay(params);
 
         assertThat(params.toString()).contains("pfl=TRUSTED_OVERLAY");
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.view.WindowManagerHelper#testSetInputFeatureSpy(LayoutParams)"})
+    public void testSetInputFeatureSpy() {
+        LayoutParams params = new LayoutParams();
+        WindowManagerHelper.setInputFeatureSpy(params);
+
+        assertThat(params.toString()).contains("if=INPUT_FEATURE_SPY");
     }
 }
