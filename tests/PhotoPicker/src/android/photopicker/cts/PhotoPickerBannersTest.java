@@ -24,12 +24,17 @@ import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvi
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImage;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.TIMEOUT;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.clickAndWait;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findBannerActionButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findBannerDismissButton;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.findBannerPrimaryText;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.findSettingsOverflowMenuItem;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.getBannerPrimaryText;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.isPhotoPickerVisible;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsActivityIsVisible;
 import static android.provider.MediaStore.ACTION_PICK_IMAGES;
+import static android.provider.MediaStore.EXTRA_PICK_IMAGES_MAX;
+import static android.provider.MediaStore.getPickImagesMaxLimit;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -144,19 +149,32 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
         sDevice.pressBack();
     }
 
-    private void setCloudMediaInfoForChooseAppBanner() {
+    private void setCloudMediaInfoForChooseAppBanner() throws Exception {
         // 1. Set a non-null cloud provider and launch the photo picker.
         setCloudProvider(mContext, CloudProviderPrimary.AUTHORITY);
         launchPickerActivity();
-        // 2. Close the photo picker.
-        mActivity.finish();
-        // 3. Set the cloud provider as None and launch the photo picker.
+
+        // 2. Wait for the banner controller construction.
+        findBannerPrimaryText().waitForExists(TIMEOUT);
+
+        // 3. Set the cloud provider to None and reset the banner data in the same picker session.
+
+        // 3a. Launch the settings activity.
+        final UiObject settingsMenuItem = findSettingsOverflowMenuItem(sDevice);
+        clickAndWait(sDevice, settingsMenuItem);
+        verifySettingsActivityIsVisible();
+
+        // 3b. Set the cloud provider to None.
         setCloudProvider(mContext, /* authority */ null);
-        launchPickerActivity();
+
+        // 3c. Go back to the picker.
+        sDevice.pressBack();
+        assertThatPhotoPickerActivityIsVisible();
     }
 
     private void launchPickerActivity() {
         final Intent intent = new Intent(ACTION_PICK_IMAGES);
+        intent.putExtra(EXTRA_PICK_IMAGES_MAX, getPickImagesMaxLimit());
         mActivity.startActivity(intent);
         assertThatPhotoPickerActivityIsVisible();
     }

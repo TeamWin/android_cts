@@ -172,12 +172,16 @@ public class PhotoPickerUiUtils {
     }
 
     public static String getBannerPrimaryText() throws Exception {
-        final UiObject bannerPrimaryText = new UiObject(new UiSelector().resourceIdMatches(
-                REGEX_PACKAGE_NAME + ":id/banner_primary_text"));
+        final UiObject bannerPrimaryText = findBannerPrimaryText();
         assertWithMessage("Timed out waiting for the banner to appear")
                 .that(bannerPrimaryText.waitForExists(TIMEOUT))
                 .isTrue();
         return bannerPrimaryText.getText();
+    }
+
+    public static UiObject findBannerPrimaryText() {
+        return new UiObject(new UiSelector().resourceIdMatches(
+                REGEX_PACKAGE_NAME + ":id/banner_primary_text"));
     }
 
     public static UiObject findBannerDismissButton() {
