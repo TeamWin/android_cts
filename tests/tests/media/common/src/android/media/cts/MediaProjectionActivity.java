@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
@@ -29,6 +30,9 @@ import android.os.Messenger;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
+import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.util.Log;
 import android.view.WindowManager;
@@ -136,7 +140,25 @@ public class MediaProjectionActivity extends Activity {
 
     /** The permission dialog will be auto-opened by the activity - find it and accept */
     public void dismissPermissionDialog() {
-        UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        // Scroll down the dialog; on a device with a small screen the buttons may be below the
+        // warning text.
+        final boolean isWatch = getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+        if (isWatch) {
+            final UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
+            try {
+                if (!scrollable.scrollIntoView(new UiSelector().resourceId(ACCEPT_RESOURCE_ID))) {
+                    Log.e(TAG, "Didn't find the accept button when scrolling");
+                    return;
+                }
+                Log.d(TAG, "This is a watch; we finished scrolling down to the buttons");
+            } catch (UiObjectNotFoundException e) {
+                Log.d(TAG, "This is a watch, but there was no scrolling (the UI may not be "
+                        + "scrollable");
+            }
+        }
+
+        final UiDevice uiDevice = UiDevice.getInstance(
+                InstrumentationRegistry.getInstrumentation());
         UiObject2 acceptButton = uiDevice.wait(Until.findObject(By.res(ACCEPT_RESOURCE_ID)),
                 PERMISSION_DIALOG_WAIT_MS);
         if (acceptButton != null) {
