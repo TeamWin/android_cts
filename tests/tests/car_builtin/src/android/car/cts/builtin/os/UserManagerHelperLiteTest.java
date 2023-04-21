@@ -237,9 +237,8 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
     }
 
     private void expectGetUserHandlesHasUser(UserHandle user) {
-        List<UserHandle> allUsersHandles = UserManagerHelper.getUserHandles(mUserManager,
-                /* excludePartial= */ false, /* excludeDying= */ false,
-                /* excludePreCreated= */ false);
+        List<UserHandle> allUsersHandles =
+                UserManagerHelper.getUserHandles(mUserManager, /* excludeDying= */ false);
         expectWithMessage("allUsersHandles").that(allUsersHandles).contains(user);
     }
 }
