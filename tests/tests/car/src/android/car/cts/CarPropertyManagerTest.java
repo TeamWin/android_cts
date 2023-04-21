@@ -1250,6 +1250,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(possibleEnumValues)
+                .setDependentOnProperty(VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build();
     }
@@ -1295,6 +1299,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(possibleEnumValues)
                 .setAllPossibleUnwritableValues(CRUISE_CONTROL_TYPE_UNWRITABLE_STATES)
+                .setDependentOnProperty(VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .build();
@@ -1323,6 +1331,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(possibleEnumValues)
+                .setDependentOnProperty(VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build();
     }
@@ -1345,6 +1357,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(CRUISE_CONTROL_COMMANDS)
+                .setDependentOnProperty(VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .build();
     }
@@ -1372,6 +1387,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         .isAtLeast(0F);
                             }
                         })
+                .setDependentOnProperty(VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build();
     }
@@ -1411,6 +1429,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         .isLessThan(configArray.get(i + 1));
                             }
                         })
+                .setDependentOnProperty(VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .build();
@@ -1431,6 +1452,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class, mCarPropertyManager)
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
+                .setDependentOnProperty(VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build();
     }
@@ -1470,6 +1494,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(possibleEnumValues)
+                .setDependentOnProperty(VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_STATES)
                 .build();
     }
@@ -1497,6 +1525,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(possibleEnumValues)
+                .setDependentOnProperty(VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_STATES)
                 .build();
     }
@@ -5747,6 +5779,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(combinedCarPropertyValues)
+                .setDependentOnProperty(VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
                 .verify();
@@ -5785,6 +5821,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(combinedCarPropertyValues)
+                .setDependentOnProperty(VehiclePropertyIds.FORWARD_COLLISION_WARNING_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
                 .verify();
@@ -5823,6 +5863,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(combinedCarPropertyValues)
+                .setDependentOnProperty(VehiclePropertyIds.BLIND_SPOT_WARNING_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
                 .verify();
@@ -5861,6 +5905,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(combinedCarPropertyValues)
+                .setDependentOnProperty(VehiclePropertyIds.LANE_DEPARTURE_WARNING_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
                 .verify();
@@ -5899,6 +5947,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(combinedCarPropertyValues)
+                .setDependentOnProperty(VehiclePropertyIds.LANE_KEEP_ASSIST_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
                 .verify();
@@ -5932,6 +5984,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(LANE_CENTERING_ASSIST_COMMANDS)
+                .setDependentOnProperty(VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .build()
                 .verify();
@@ -5951,6 +6006,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(combinedCarPropertyValues)
+                .setDependentOnProperty(VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
                 .build()
                 .verify();
