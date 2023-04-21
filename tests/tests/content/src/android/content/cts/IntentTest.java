@@ -16,6 +16,8 @@
 
 package android.content.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertArrayEquals;
 
 import android.content.ComponentName;
@@ -1936,6 +1938,49 @@ public class IntentTest extends AndroidTestCase {
         p.setDataPosition(0);
         mIntent = p.readParcelable(getClass().getClassLoader(), Intent.class);
         mIntent.setExtrasClassLoader(getClass().getClassLoader());
+    }
+
+    public void testEncoding() throws URISyntaxException {
+        // This doesn't validate setPackage, as it's not possible to have both an explicit package
+        // and a selector but the inner selector Intent later on will cover setPackage
+        Intent intent = new Intent("action#base")
+                .setClassName("com.example.test.app", "com.example.test.app.IntendedActivity")
+                .addCategory("category#base")
+                .setType("type#base")
+                .setIdentifier("identifier#base")
+                .setComponent(ComponentName.createRelative("package.sub#base", ".Class#Base"))
+                .putExtra("extraKey#base", "extraValue#base");
+
+        // Insert malicious scheme to be encoded to avoid deserialization errors (b/261858325)
+        Uri badUri = Uri.fromParts(new Intent()
+                        .setClassName("com.example.malicious.app",
+                                "com.example.malicious.app.MaliciousActivity")
+                        .toUri(Intent.URI_INTENT_SCHEME),
+                "", null);
+        Intent selectorIntent = new Intent().setData(badUri)
+                .addCategory("category#selector")
+                .setType("type#selector")
+                .setIdentifier("identifier#selector")
+                .setPackage("package#selector")
+                .setComponent(
+                        ComponentName.createRelative("package.sub#selector", ".Class#Selector"))
+                .putExtra("extraKey#selector", "extraValue#selector");
+        intent.setSelector(selectorIntent);
+
+        String uriString = intent.toUri(Intent.URI_INTENT_SCHEME);
+        Intent deserialized = Intent.parseUri(uriString, Intent.URI_INTENT_SCHEME);
+
+        assertThat(uriString).isEqualTo(
+                "intent:#Intent;action=action%23base;category=category%23base;type=type%23base;"
+                        + "identifier=identifier%23base;component=package.sub%23base/"
+                        + ".Class%23Base;S.extraKey%23base=extraValue%23base;SEL;"
+                        + "category=category%23selector;type=type%23selector;"
+                        + "identifier=identifier%23selector;package=package%23selector;"
+                        + "component=package.sub%23selector/.Class%23Selector;S"
+                        + ".extraKey%23selector=extraValue%23selector;end");
+
+        assertThat(deserialized.toInsecureString())
+                .isEqualTo(intent.toInsecureString());
     }
 
     private static class TestSerializable implements Serializable {

@@ -25,6 +25,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Point
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
@@ -233,7 +234,12 @@ fun openUnusedAppsNotification() {
         waitFindObject(uiAutomation, By.text("Open")).click()
     } else {
         runShellCommandOrThrow(CMD_EXPAND_NOTIFICATIONS)
-        waitFindNotification(notifSelector, NOTIF_FIND_TIMEOUT).click()
+        val notification = waitFindNotification(notifSelector, NOTIF_FIND_TIMEOUT)
+        if (hasFeatureAutomotive()) {
+            notification.click(Point(0, 0))
+        } else {
+            notification.click()
+        }
     }
 }
 
@@ -247,6 +253,11 @@ fun hasFeatureTV(): Boolean {
             PackageManager.FEATURE_LEANBACK) ||
             InstrumentationRegistry.getTargetContext().packageManager.hasSystemFeature(
                     PackageManager.FEATURE_TELEVISION)
+}
+
+fun hasFeatureAutomotive(): Boolean {
+    return InstrumentationRegistry.getTargetContext().packageManager.hasSystemFeature(
+        PackageManager.FEATURE_AUTOMOTIVE)
 }
 
 private fun expandNotificationsWatch(uiDevice: UiDevice) {

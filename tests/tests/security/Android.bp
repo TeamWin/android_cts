@@ -104,6 +104,8 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsPermissionBackupAppCert1",
     min_sdk_version: "30",
+    resource_dirs: [],
+    asset_dirs: [],
     certificate: ":permission-test-cert-1",
     manifest: "testdata/permissionbackuptestapp/AndroidManifest.xml",
 }
@@ -111,6 +113,8 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsPermissionBackupAppCert1Dup",
     min_sdk_version: "30",
+    resource_dirs: [],
+    asset_dirs: [],
     certificate: ":permission-test-cert-1",
     manifest: "testdata/permissionbackuptestapp/AndroidManifest.xml",
 }
@@ -118,6 +122,8 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsPermissionBackupAppCert2",
     min_sdk_version: "30",
+    resource_dirs: [],
+    asset_dirs: [],
     certificate: ":permission-test-cert-2",
     manifest: "testdata/permissionbackuptestapp/AndroidManifest.xml",
 }
@@ -125,6 +131,8 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsPermissionBackupAppCert3",
     min_sdk_version: "30",
+    resource_dirs: [],
+    asset_dirs: [],
     certificate: ":permission-test-cert-3",
     manifest: "testdata/permissionbackuptestapp/AndroidManifest.xml",
 }
@@ -132,6 +140,8 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsPermissionBackupAppCert4",
     min_sdk_version: "30",
+    resource_dirs: [],
+    asset_dirs: [],
     certificate: ":permission-test-cert-4",
     manifest: "testdata/permissionbackuptestapp/AndroidManifest.xml",
 }
@@ -139,6 +149,8 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsPermissionBackupAppCert12",
     min_sdk_version: "30",
+    resource_dirs: [],
+    asset_dirs: [],
     certificate: ":permission-test-cert-1",
     additional_certificates: [
         ":permission-test-cert-2",
@@ -149,6 +161,8 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsPermissionBackupAppCert12Dup",
     min_sdk_version: "30",
+    resource_dirs: [],
+    asset_dirs: [],
     certificate: ":permission-test-cert-1",
     additional_certificates: [
         ":permission-test-cert-2",
@@ -159,6 +173,8 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsPermissionBackupAppCert34",
     min_sdk_version: "30",
+    resource_dirs: [],
+    asset_dirs: [],
     certificate: ":permission-test-cert-3",
     additional_certificates: [
         ":permission-test-cert-4",
@@ -169,6 +185,8 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsPermissionBackupAppCert123",
     min_sdk_version: "30",
+    resource_dirs: [],
+    asset_dirs: [],
     certificate: ":permission-test-cert-1",
     additional_certificates: [
         ":permission-test-cert-2",
@@ -180,6 +198,8 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsPermissionBackupAppCert4History124",
     min_sdk_version: "30",
+    resource_dirs: [],
+    asset_dirs: [],
     certificate: ":permission-test-cert-4",
     additional_certificates: [
         ":permission-test-cert-1",
@@ -197,6 +217,8 @@ android_app_certificate {
 
 android_test_helper_app {
     name: "RolePermissionOverrideTestApp",
+    resource_dirs: [],
+    asset_dirs: [],
     manifest: "testdata/rolepermissionoverridetestapp.xml",
 }
 

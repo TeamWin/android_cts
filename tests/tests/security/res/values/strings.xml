@@ -25,4 +25,11 @@
     VoicemailSettingsActivity</string>
     <string name="cve_2021_0642_msgResolveErrorPocAction">The intent with action
     CVE_2021_0642_ACTION should not be resolved to test package</string>
+
+     <!-- CVE-2023-20338 -->
+    <string name="cve_2022_20338_authority">google.com</string>
+    <string name="cve_2022_20338_failMsg">Device is vulnerable to b/171966843 !!</string>
+    <string name="cve_2022_20338_invalidURL">https://google.com@evil.com</string>
+    <string name="cve_2022_20338_path">@evil.com</string>
+    <string name="cve_2022_20338_scheme">https</string>
 </resources>

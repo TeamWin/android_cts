@@ -70,6 +70,7 @@ public class TestNotificationListener extends NotificationListenerService {
     @Override
     public void onListenerDisconnected() {
         isConnected = false;
+        sNotificationListenerInstance = null;
     }
 
     public static TestNotificationListener getInstance() {

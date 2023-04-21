@@ -230,9 +230,22 @@ public class AlarmStatsTests extends DeviceTestCase implements IBuildReceiver {
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data.size()).isAtLeast(1);
         boolean found = false;
+        final int expectedUid = getUid(ALARM_ATOM_TEST_PACKAGE);
         for (int i = 0; i < data.size(); i++) {
             AtomsProto.AlarmBatchDelivered abd = data.get(i).getAtom().getAlarmBatchDelivered();
-            found |= abd.getWakeups() >= 1 && abd.getNumAlarms() >= 1;
+            int expectedNumAlarms = 0;
+            int expectedWakeups = 0;
+            for (int j = 0; j < abd.getUidsCount(); j++) {
+                expectedNumAlarms += abd.getNumAlarmsPerUid(j);
+                expectedWakeups += abd.getNumWakeupsPerUid(j);
+                if (abd.getUids(j) == expectedUid) {
+                    assertThat(abd.getNumAlarmsPerUid(j)).isEqualTo(1);
+                    assertThat(abd.getNumWakeupsPerUid(j)).isEqualTo(1);
+                    found = true;
+                }
+            }
+            assertThat(abd.getNumAlarms()).isEqualTo(expectedNumAlarms);
+            assertThat(abd.getWakeups()).isEqualTo(expectedWakeups);
         }
         assertThat(found).isTrue();
     }

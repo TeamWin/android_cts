@@ -27,6 +27,10 @@ import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
+import com.android.tradefed.util.CommandResult;
+import com.android.tradefed.util.CommandStatus;
+
+import com.google.common.truth.Truth;
 
 import junit.framework.AssertionFailedError;
 
@@ -54,6 +58,10 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     private static final String CLASS = "com.android.cts.storageapp.StorageTest";
     private static final String CLASS_NO_APP_STORAGE =
             "com.android.cts.noappstorage.NoAppDataStorageTest";
+    private static final String EXTERNAL_STORAGE_PATH = "/storage/emulated/%d/";
+    private static final String ERROR_MESSAGE_TAG = "[ERROR]";
+
+    private static final int CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS = 20000;
 
     private int[] mUsers;
 
@@ -152,6 +160,12 @@ public class StorageHostTest extends BaseHostJUnit4Test {
         for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal", user, true);
         }
+    }
+
+    @Test
+    public void testVerifyStatsExternalForClonedUser() throws Exception {
+        int mCloneUserIdInt = createCloneUserAndInstallDeviceTestApk();
+        runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal", mCloneUserIdInt, true);
     }
 
     @Test
@@ -293,5 +307,61 @@ public class StorageHostTest extends BaseHostJUnit4Test {
         } catch (DeviceNotAvailableException e) {
             return false;
         }
+    }
+
+    private int createCloneUserAndInstallDeviceTestApk() throws Exception {
+        // Create clone user.
+        String output = getDevice().executeShellCommand(
+                "pm create-user --profileOf 0 --user-type android.os.usertype.profile.CLONE "
+                        + "testUser");
+        String sCloneUserId = output.substring(output.lastIndexOf(' ') + 1).replaceAll("[^0-9]",
+                "");
+        Truth.assertThat(sCloneUserId).isNotEmpty();
+        // Start clone user.
+        CommandResult out = getDevice().executeShellV2Command("am start-user -w " + sCloneUserId);
+        Truth.assertThat(isSuccessful(out)).isTrue();
+
+        Integer mCloneUserIdInt = Integer.parseInt(sCloneUserId);
+        String sCloneUserStoragePath = String.format(EXTERNAL_STORAGE_PATH,
+                Integer.parseInt(sCloneUserId));
+        // Check that the clone user directories have been created
+        eventually(() -> getDevice().doesFileExist(sCloneUserStoragePath, mCloneUserIdInt),
+                CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+        // Install the DeviceTest APK for Clone User.
+        installPackage(APK_STATS, "--user all");
+        return mCloneUserIdInt;
+    }
+
+    private void eventually(ThrowingRunnable r, long timeoutMillis) {
+        long start = System.currentTimeMillis();
+
+        while (true) {
+            try {
+                r.run();
+                return;
+            } catch (Throwable e) {
+                if (System.currentTimeMillis() - start < timeoutMillis) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ignored) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+
+    private boolean isSuccessful(CommandResult result) {
+        if (!CommandStatus.SUCCESS.equals(result.getStatus())) {
+            return false;
+        }
+        String stdout = result.getStdout();
+        if (stdout.contains(ERROR_MESSAGE_TAG)) {
+            return false;
+        }
+        String stderr = result.getStderr();
+        return (stderr == null || stderr.trim().isEmpty());
     }
 }

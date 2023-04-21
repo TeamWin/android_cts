@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import static org.junit.Assume.assumeNoException;
 
 import android.platform.test.annotations.AsbSecurityTest;
 
-import com.android.sts.common.tradefed.testtype.StsExtraBusinessLogicHostTestBase;
+import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -28,41 +28,39 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_0963 extends StsExtraBusinessLogicHostTestBase {
-    static final String TEST_PKG = "android.security.cts.CVE_2021_0963";
+public class CVE_2021_0963 extends NonRootSecurityTestCase {
 
-    /**
-     * b/199754277
-     * Vulnerable app    : KeyChain.apk
-     * Vulnerable module : com.android.keychain
-     * Is Play managed   : No
-     */
+    // b/199754277
+    // Vulnerable app    : KeyChain.apk
+    // Vulnerable module : com.android.keychain
+    // Is Play managed   : No
     @AsbSecurityTest(cveBugId = 199754277)
     @Test
     public void testPocCVE_2021_0963() {
+        int userId = 0;
+        String component = null;
+        ITestDevice device = null;
         try {
-            ITestDevice device = getDevice();
+            // Install the application
+            installPackage("CVE-2021-0963.apk", "-t");
 
-            /* Wake up the device */
-            AdbUtils.runCommandLine("input keyevent KEYCODE_WAKEUP", device);
-            AdbUtils.runCommandLine("input keyevent KEYCODE_MENU", device);
-            AdbUtils.runCommandLine("input keyevent KEYCODE_HOME", device);
+            // Set test-app as device owner.
+            final String testPkg = "android.security.cts.CVE_2021_0963";
+            component = testPkg + "/" + testPkg + ".PocDeviceAdminReceiver";
+            device = getDevice();
+            device.setDeviceOwner(component, userId);
 
-            /* Install the application */
-            installPackage("CVE-2021-0963.apk");
-
-            /*
-             * Set device as owner. After the test is completed, this change is reverted in the
-             * DeviceTest.java's tearDown() method by calling clearDeviceOwnerApp() on an instance
-             * of DevicePolicyManager.
-             */
-            AdbUtils.runCommandLine("dpm set-device-owner --user 0 '" + TEST_PKG + "/" + TEST_PKG
-                    + ".PocDeviceAdminReceiver" + "'", device);
-
-            /* Run the device test "testOverlayButtonPresence" */
-            runDeviceTests(TEST_PKG, TEST_PKG + "." + "DeviceTest", "testOverlayButtonPresence");
+            // Run the device test "testOverlayButtonPresence"
+            runDeviceTests(testPkg, testPkg + ".DeviceTest", "testOverlayButtonPresence");
         } catch (Exception e) {
             assumeNoException(e);
+        } finally {
+            try {
+                // Remove test-app as device owner.
+                device.removeAdmin(component, userId);
+            } catch (Exception e) {
+                // ignore
+            }
         }
     }
 }
