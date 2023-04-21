@@ -242,7 +242,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                         return;
                     }
                     if (canReadAudio()) {
-                        callback.onDetected(DETECTED_RESULT);
+                        if (mIsTestAudioEgress) {
+                            callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                        } else {
+                            callback.onDetected(DETECTED_RESULT);
+                        }
                     } else {
                         callback.onDetected(DETECTED_RESULT_FOR_MIC_FAILURE);
                     }
