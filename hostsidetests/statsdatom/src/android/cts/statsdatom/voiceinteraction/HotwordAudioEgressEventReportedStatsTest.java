@@ -58,6 +58,10 @@ public class HotwordAudioEgressEventReportedStatsTest extends DeviceTestCase imp
             "testHotwordDetectionService_softwareDetectorWithAudioEgress";
     private static final String TEST_METHOD_SOFTWARE_EMPTY_AUDIO_STREAM_LIST =
             "testHotwordDetectionService_onDetectFromMic_success";
+    private static final String TEST_METHOD_EXTERNAL_SOURCE_STARTED_AND_ENDED =
+            "testHotwordDetectionService_onDetectFromExternalSourceWithAudioEgress";
+    private static final String TEST_METHOD_EXTERNAL_SOURCE_EMPTY_AUDIO_STREAM_LIST =
+            "testHotwordDetectionService_onDetectFromExternalSource_success";
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
@@ -178,6 +182,50 @@ public class HotwordAudioEgressEventReportedStatsTest extends DeviceTestCase imp
         // Verify metric
         assertHotwordAudioEgressEventReported(filteredData.get(0),
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.EMPTY_AUDIO_STREAM_LIST);
+    }
+
+    public void testExternalSourceStartedAndEnded() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_EXTERNAL_SOURCE_STARTED_AND_ENDED);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(2);
+
+        // Verify metric
+        assertHotwordAudioEgressEventReported(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.STARTED);
+        assertHotwordAudioEgressEventReported(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.ENDED);
+    }
+
+    public void testExternalSourceEmptyAudiostreamList() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_EXTERNAL_SOURCE_EMPTY_AUDIO_STREAM_LIST);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(1);
+
+        // Verify metric
+        assertHotwordAudioEgressEventReported(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.EMPTY_AUDIO_STREAM_LIST);
     }
 
     private void assertHotwordAudioEgressEventReported(StatsLog.EventMetricData metric,

@@ -222,7 +222,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             if (isSame(buffer, FAKE_HOTWORD_AUDIO_DATA,
                     buffer.length)) {
                 Log.d(TAG, "call callback.onDetected");
-                callback.onDetected(DETECTED_RESULT);
+                if (mIsTestAudioEgress) {
+                    callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                } else {
+                    callback.onDetected(DETECTED_RESULT);
+                }
             }
         } catch (IOException e) {
             Log.w(TAG, "Failed to read data : ", e);
