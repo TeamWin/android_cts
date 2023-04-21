@@ -39,7 +39,7 @@ final class SafeWaitObject {
         synchronized (this) {
             while (!stopWaiting.getAsBoolean()) {
                 final long timeToWait = deadline - System.currentTimeMillis();
-                if (timeToWait < 0) {
+                if (timeToWait <= 0) {
                     return false;
                 }
                 this.wait(timeToWait);
