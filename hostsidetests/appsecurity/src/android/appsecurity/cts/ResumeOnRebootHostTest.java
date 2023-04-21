@@ -89,6 +89,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
         mSupportsMultiUser = getDevice().getMaxNumberOfUsersSupported() > 1;
 
+        setScreenStayOnValue(true);
         removeTestPackages();
         deviceDisableDeviceConfigSync();
         deviceSetupServerBasedParameter();
@@ -99,6 +100,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         removeTestPackages();
         deviceCleanupServerBasedParameter();
         deviceRestoreDeviceConfigSync();
+        setScreenStayOnValue(false);
     }
 
     @Test
@@ -566,5 +568,9 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         String result = getDevice().executeShellCommand(command);
         CLog.d("Output for command \"" + command + "\": " + result);
         return result;
+    }
+
+    private void setScreenStayOnValue(boolean value) throws DeviceNotAvailableException {
+        getDevice().executeShellCommand("svc power stayon " + value);
     }
 }
