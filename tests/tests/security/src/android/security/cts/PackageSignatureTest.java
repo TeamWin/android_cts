@@ -128,6 +128,7 @@ public class PackageSignatureTest extends AndroidTestCase {
             // Test utilities used by Tradefed harness
             "com.android.tradefed.utils.wifi",
             "android.tradefed.contentprovider",
+            "androidx.test.services",
 
             // Game used for CTS testing...
             "com.replica.replicaisland",
