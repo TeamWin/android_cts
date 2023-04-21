@@ -77,7 +77,7 @@ class TouchModeTest {
 
     @Rule
     fun permissionsRule() = AdoptShellPermissionsRule(
-        instrumentation.getUiAutomation(), ADD_TRUSTED_DISPLAY_PERMISSION
+            instrumentation.getUiAutomation(), ADD_TRUSTED_DISPLAY_PERMISSION
     )
 
     @Before
@@ -303,20 +303,21 @@ class TouchModeTest {
 
     private fun createVirtualDisplay(flags: Int) {
         val displayCreated = CountDownLatch(1)
-                displayManager.registerDisplayListener(object : DisplayManager.DisplayListener {
-                    override fun onDisplayAdded(displayId: Int) {}
-                    override fun onDisplayRemoved(displayId: Int) {}
-                    override fun onDisplayChanged(displayId: Int) {
-                        displayCreated.countDown()
-                        displayManager.unregisterDisplayListener(this)
-                    }
-                }, Handler(Looper.getMainLooper()))
+        displayManager.registerDisplayListener(object : DisplayManager.DisplayListener {
+            override fun onDisplayAdded(displayId: Int) {}
+            override fun onDisplayRemoved(displayId: Int) {}
+            override fun onDisplayChanged(displayId: Int) {
+                displayCreated.countDown()
+                displayManager.unregisterDisplayListener(this)
+            }
+        }, Handler(Looper.getMainLooper()))
         imageReader = ImageReader.newInstance(WIDTH, HEIGHT, PixelFormat.RGBA_8888, 2)
         val reader = imageReader
         virtualDisplay = displayManager.createVirtualDisplay(
                 VIRTUAL_DISPLAY_NAME, WIDTH, HEIGHT, DENSITY, reader!!.surface, flags)
 
         assertThat(displayCreated.await(5, TimeUnit.SECONDS)).isTrue()
+        assertThat(virtualDisplay).isNotNull()
         instrumentation.setInTouchMode(false)
     }
 
@@ -328,8 +329,10 @@ class TouchModeTest {
 
         /** See [DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_FOCUS].  */
         const val VIRTUAL_DISPLAY_FLAG_OWN_FOCUS = 1 shl 14
+
         /** See [DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED].  */
         const val VIRTUAL_DISPLAY_FLAG_TRUSTED = 1 shl 10
     }
 }
+
 private val ADD_TRUSTED_DISPLAY_PERMISSION: String = android.Manifest.permission.ADD_TRUSTED_DISPLAY
