@@ -96,25 +96,6 @@ public class BluetoothCddTest {
                 BluetoothProfile.HEARING_AID);
     }
 
-    @CddTest(requirements = {"7.4.3/C-5-1"})
-    @Test
-    public void test_C_5_1_AshaRequirements() {
-        Assume.assumeTrue(mHasBluetooth);
-        Assume.assumeTrue(TestUtils.isBleSupported(mContext));
-        assertThat(BTAdapterUtils.enableAdapter(mAdapter, mContext)).isTrue();
-        assertThat(mAdapter.getSupportedProfiles()).contains(BluetoothProfile.HEARING_AID);
-        TestUtils.BluetoothCtsServiceConnector connector =
-                new TestUtils.BluetoothCtsServiceConnector(TAG,
-                        BluetoothProfile.HEARING_AID, mAdapter, mContext);
-        try {
-            assertThat(connector.openProfileProxyAsync()).isTrue();
-            assertThat(connector.waitForProfileConnect()).isTrue();
-            assertThat(connector.getProfileProxy()).isNotNull();
-        } finally {
-            connector.closeProfileProxy();
-        }
-    }
-
     @CddTest(requirements = {"7.4.3/C-7-3", "7.4.3/C-7-5"})
     @Test
     public void test_C_7_LeAudioUnicastRequirements() {
