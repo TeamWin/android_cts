@@ -40,19 +40,20 @@ import static java.lang.Math.max;
 
 import android.app.ActivityManager;
 import android.car.CarOccupantZoneManager;
+import android.car.SyncResultCallback;
 import android.car.test.ApiCheckerRule;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.car.test.util.AndroidHelper;
 import android.car.test.util.UserTestingHelper;
 import android.car.testapi.BlockingUserLifecycleListener;
 import android.car.user.CarUserManager;
+import android.car.user.UserCreationRequest;
+import android.car.user.UserCreationResult;
 import android.car.user.UserRemovalRequest;
 import android.car.user.UserRemovalResult;
 import android.car.user.UserStartRequest;
 import android.car.user.UserStopRequest;
 import android.os.Bundle;
-import android.os.NewUserRequest;
-import android.os.NewUserResponse;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
@@ -69,12 +70,15 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public final class CarUserManagerTest extends AbstractCarTestCase {
-    private static final String TAG = AbstractCarTestCase.class.getSimpleName();
+    private static final String TAG = CarUserManagerTest.class.getSimpleName();
     private static final String NEW_USER_NAME_PREFIX = "CarCTSTest.";
     private static final int START_TIMEOUT_MS = 20_000;
     private static final int NO_EVENTS_TIMEOUT_MS = 5_000;
+    private static final int CREATE_USER_TIMEOUT_MS = 20_000;
 
     private final List<UserHandle> mUsersToRemove = new ArrayList<>();
     private CarUserManager mCarUserManager;
@@ -482,6 +486,27 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
         );
     }
 
+    @Test
+    @ApiTest(apis = {
+            "android.car.user.CarUserManager#createUser(UserCreationRequest, Executor, "
+                    + "ResultCallback)"})
+    @EnsureHasPermission({CREATE_USERS})
+    public void testCreateUser() throws Exception {
+        SyncResultCallback<UserCreationResult> userCreationResultCallback =
+                new SyncResultCallback<>();
+        mCarUserManager.createUser(new UserCreationRequest.Builder().build(), Runnable::run,
+                userCreationResultCallback);
+
+        UserCreationResult result = userCreationResultCallback.get(CREATE_USER_TIMEOUT_MS,
+                TimeUnit.MILLISECONDS);
+
+        assertWithMessage("createUser: ").that(result.getStatus()).isEqualTo(
+                UserCreationResult.STATUS_SUCCESSFUL);
+
+        // Clean up new user at end of test.
+        mUsersToRemove.add(result.getUser());
+    }
+
     @NonNull
     private UserHandle createUser(@Nullable String name, boolean isGuest) {
         name = getNewUserName(name);
@@ -490,14 +515,27 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
 
         assertCanAddUser();
 
-        // TODO(b/235994008): Update this to use CarUserManager.createUser when it is unhidden.
-        NewUserResponse result = mUserManager.createUser(new NewUserRequest.Builder().build());
+        SyncResultCallback<UserCreationResult> userCreationResultCallback =
+                new SyncResultCallback<>();
+        mCarUserManager.createUser(new UserCreationRequest.Builder().build(), Runnable::run,
+                userCreationResultCallback);
+        UserCreationResult result = new UserCreationResult(
+                UserCreationResult.STATUS_ANDROID_FAILURE);
 
-        Log.d(TAG, "result: " + result);
+        try {
+            result = userCreationResultCallback.get(CREATE_USER_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            Log.d(TAG, "result: " + result);
+        } catch (TimeoutException e) {
+            Log.e(TAG, "createUser: timed out waiting for result", e);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "createUser: interrupted waiting for result", e);
+            Thread.currentThread().interrupt();
+        }
+
         assertWithMessage("user creation result (waited for %sms)", DEFAULT_WAIT_TIMEOUT_MS)
                 .that(result).isNotNull();
-        assertWithMessage("user creation result (%s) success for user named %s", result, name)
-                .that(result.isSuccessful()).isTrue();
+        assertWithMessage("user creation result (%s) for user named %s", result, name)
+                .that(result.isSuccess()).isTrue();
         UserHandle user = result.getUser();
         assertWithMessage("user on result %s", result).that(user).isNotNull();
         mUsersToRemove.add(user);
