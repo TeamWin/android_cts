@@ -1137,7 +1137,14 @@ public class WebSettingsTest {
         new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
-                return !EMPTY_IMAGE_HEIGHT.equals(mOnUiThread.getTitle());
+                try {
+                    int value = Integer.parseInt(mOnUiThread.getTitle());
+                    return value > 0;
+                } catch (NumberFormatException e) {
+                    // Page title cannot be parsed as an integer. This probably means the page title
+                    // hasn't been updated yet, so keep polling.
+                    return false;
+                }
             }
         }.run();
     }
