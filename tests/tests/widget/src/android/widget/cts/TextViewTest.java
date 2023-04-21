@@ -5011,6 +5011,8 @@ public class TextViewTest {
     @UiThreadTest
     @Test
     public void testSetLineHeightInUnits() {
+        assertEquals(1f, mActivity.getResources().getConfiguration().fontScale, /* delta= */ 0.02f);
+
         mTextView = new TextView(mActivity);
         mTextView.setText("This is some random text");
 

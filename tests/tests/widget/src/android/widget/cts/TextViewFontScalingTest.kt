@@ -29,6 +29,7 @@ import androidx.test.filters.MediumTest
 import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.ShellIdentityUtils
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -43,26 +44,17 @@ import org.junit.runner.RunWith
 class TextViewFontScalingTest {
     lateinit var mInstrumentation: Instrumentation
 
-    private var mOriginalFontScale = Float.MIN_VALUE
-
     @get:Rule
     val scenarioRule = ActivityScenarioRule(TextViewFontScalingActivity::class.java)
 
     @Before
     fun setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation()
-        mOriginalFontScale = Settings.System.getFloat(
-                mInstrumentation.context.contentResolver,
-                Settings.System.FONT_SCALE,
-                Float.MIN_VALUE
-        )
     }
 
     @After
     fun teardown() {
-        if (mOriginalFontScale != Float.MIN_VALUE) {
-            setSystemFontScale(mOriginalFontScale)
-        }
+        restoreSystemFontScaleToDefault()
     }
 
     @Test
@@ -214,10 +206,32 @@ class TextViewFontScalingTest {
             )
         }
         PollingCheck.waitFor(/* timeout= */ 5000) {
-            mInstrumentation
+            val isActivityAtCorrectScale = AtomicBoolean(false)
+            scenarioRule.scenario.onActivity { it ->
+                isActivityAtCorrectScale.set(it.resources.configuration.fontScale == fontScale)
+            }
+            isActivityAtCorrectScale.get() && mInstrumentation
                     .context
                     .resources
                     .configuration.fontScale == fontScale
+        }
+    }
+
+    private fun restoreSystemFontScaleToDefault() {
+        ShellIdentityUtils.invokeWithShellPermissions {
+            // TODO(b/279083734): would use Settings.System.resetToDefaults() if it existed
+            Settings.System.putString(
+                mInstrumentation.context.contentResolver,
+                Settings.System.FONT_SCALE,
+                null,
+                /* overrideableByRestore= */ true
+            )
+        }
+        PollingCheck.waitFor(/* timeout= */ 5000) {
+            mInstrumentation
+                .context
+                .resources
+                .configuration.fontScale == 1f
         }
     }
 
