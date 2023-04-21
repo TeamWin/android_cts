@@ -61,7 +61,8 @@ class InstallInfoTest : PackageInstallerTestBase() {
 
         // The test APKs do not include native binaries or dex metadata. Thus, the total size of
         // the cluster package should be equal to sum of size of each APKs in the folder.
-        val expectedSize = apk.listFiles()!!.sumOf(File::length)
+        val expectedSize = apk.listFiles()!!
+            .filter { file -> file.isFile() && file.getPath().endsWith(".apk") }.sumOf(File::length)
 
         assertEquals(TEST_APK_PACKAGE_NAME, installInfo.packageName)
         assertEquals(PackageInfo.INSTALL_LOCATION_PREFER_EXTERNAL, installInfo.installLocation)
