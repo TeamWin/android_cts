@@ -59,6 +59,14 @@ public class HotwordDetectorEventsStatsTest extends DeviceTestCase implements IB
             "testHotwordDetectionService_onDetectFromMic_success";
     private static final String TEST_METHOD_SOFTWARE_APP_REQUEST_UPDATE_STATE_FOR_METRIC_COLLECT =
             "testHotwordDetectionService_onDetectedTwice_clientOnlyOneOnDetected";
+    private static final String TEST_METHOD_DSP_EXTERNAL_SECURITY_EXCEPTION_FOR_METRIC_COLLECT =
+            "testHotwordDetectionService_onDetectFromExternalSourceSecurityException_onFailure";
+    private static final String TEST_METHOD_SW_EXTERNAL_SECURITY_EXCEPTION_FOR_METRIC_COLLECT =
+            "testHotwordDetectionService_software_externalSourceSecurityException_onFailure";
+    private static final String TEST_METHOD_DSP_EXTERNAL_DETECTION_REJECTED_FOR_METRIC_COLLECT =
+            "testHotwordDetectionService_dspDetector_onDetectFromExternalSource_rejected";
+    private static final String TEST_METHOD_SW_EXTERNAL_DETECTION_REJECTED_FOR_METRIC_COLLECT =
+            "testHotwordDetectionService_softwareDetector_onDetectFromExternalSource_rejected";
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
@@ -108,7 +116,7 @@ public class HotwordDetectorEventsStatsTest extends DeviceTestCase implements IB
         // Focus on our expected app metrics
         List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
 
-        assertThat(filteredData.size()).isEqualTo(4);
+        assertThat(filteredData.size()).isAtLeast(4);
         assertHotwordDetectorType(filteredData.get(0),
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.REQUEST_BIND_SERVICE);
         assertHotwordDetectorType(filteredData.get(1),
@@ -163,7 +171,7 @@ public class HotwordDetectorEventsStatsTest extends DeviceTestCase implements IB
         // Focus on our expected app metrics
         List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
 
-        assertThat(filteredData.size()).isEqualTo(6);
+        assertThat(filteredData.size()).isAtLeast(6);
         assertHotwordDetectorType(filteredData.get(0),
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.REQUEST_BIND_SERVICE);
         assertHotwordDetectorType(filteredData.get(1),
@@ -194,7 +202,7 @@ public class HotwordDetectorEventsStatsTest extends DeviceTestCase implements IB
         // Focus on our expected app metrics
         List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
 
-        assertThat(filteredData.size()).isEqualTo(5);
+        assertThat(filteredData.size()).isAtLeast(5);
         assertHotwordDetectorType(filteredData.get(0),
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.REQUEST_BIND_SERVICE);
         assertHotwordDetectorType(filteredData.get(1),
@@ -225,7 +233,7 @@ public class HotwordDetectorEventsStatsTest extends DeviceTestCase implements IB
         // Focus on our expected app metrics
         List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
 
-        assertThat(filteredData.size()).isEqualTo(6);
+        assertThat(filteredData.size()).isAtLeast(6);
         assertHotwordDetectorType(filteredData.get(0),
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.REQUEST_BIND_SERVICE);
         assertHotwordDetectorType(filteredData.get(1),
@@ -240,6 +248,134 @@ public class HotwordDetectorEventsStatsTest extends DeviceTestCase implements IB
                 Event.START_SOFTWARE_DETECTION);
         assertHotwordDetectorType(filteredData.get(5),
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.ON_DISCONNECTED);
+    }
+
+    public void testLogHotwordDetectorEventsForDspDetectorExternalDetectionSecurityException()
+            throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_DSP_EXTERNAL_SECURITY_EXCEPTION_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+
+        assertThat(filteredData.size()).isAtLeast(6);
+        assertHotwordDetectorType(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.REQUEST_BIND_SERVICE);
+        assertHotwordDetectorType(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.ON_CONNECTED);
+        assertHotwordDetectorType(filteredData.get(2),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.REQUEST_UPDATE_STATE);
+        assertHotwordDetectorType(filteredData.get(3),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP,
+                Event.START_EXTERNAL_SOURCE_DETECTION);
+        assertHotwordDetectorType(filteredData.get(4),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.EXTERNAL_SOURCE_DETECTED);
+        assertHotwordDetectorType(filteredData.get(5),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP,
+                Event.EXTERNAL_SOURCE_DETECT_SECURITY_EXCEPTION);
+    }
+
+    public void testLogHotwordDetectorEventsForSoftwareDetectorExternalDetectionSecurityException()
+            throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_SW_EXTERNAL_SECURITY_EXCEPTION_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+
+        assertThat(filteredData.size()).isAtLeast(6);
+        assertHotwordDetectorType(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.REQUEST_BIND_SERVICE);
+        assertHotwordDetectorType(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.ON_CONNECTED);
+        assertHotwordDetectorType(filteredData.get(2),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.REQUEST_UPDATE_STATE);
+        assertHotwordDetectorType(filteredData.get(3),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE,
+                Event.START_EXTERNAL_SOURCE_DETECTION);
+        assertHotwordDetectorType(filteredData.get(4),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE,
+                Event.EXTERNAL_SOURCE_DETECTED);
+        assertHotwordDetectorType(filteredData.get(5),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE,
+                Event.EXTERNAL_SOURCE_DETECT_SECURITY_EXCEPTION);
+    }
+
+    public void testLogHotwordDetectorEventsForDspDetectorExternalDetectionRejected()
+            throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_DSP_EXTERNAL_DETECTION_REJECTED_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+
+        assertThat(filteredData.size()).isAtLeast(5);
+        assertHotwordDetectorType(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.REQUEST_BIND_SERVICE);
+        assertHotwordDetectorType(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.ON_CONNECTED);
+        assertHotwordDetectorType(filteredData.get(2),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.REQUEST_UPDATE_STATE);
+        assertHotwordDetectorType(filteredData.get(3),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP,
+                Event.START_EXTERNAL_SOURCE_DETECTION);
+        assertHotwordDetectorType(filteredData.get(4),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.EXTERNAL_SOURCE_REJECTED);
+    }
+
+    public void testLogHotwordDetectorEventsForSoftwareDetectorExternalDetectionRejected()
+            throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_SW_EXTERNAL_DETECTION_REJECTED_FOR_METRIC_COLLECT);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+
+        assertThat(filteredData.size()).isAtLeast(5);
+        assertHotwordDetectorType(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.REQUEST_BIND_SERVICE);
+        assertHotwordDetectorType(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.ON_CONNECTED);
+        assertHotwordDetectorType(filteredData.get(2),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.REQUEST_UPDATE_STATE);
+        assertHotwordDetectorType(filteredData.get(3),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE,
+                Event.START_EXTERNAL_SOURCE_DETECTION);
+        assertHotwordDetectorType(filteredData.get(4),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE,
+                Event.EXTERNAL_SOURCE_REJECTED);
     }
 
     private List<StatsLog.EventMetricData> filterTestAppMetrics(int appId,

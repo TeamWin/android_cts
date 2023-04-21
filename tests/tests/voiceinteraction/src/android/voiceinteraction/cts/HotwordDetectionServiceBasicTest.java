@@ -666,6 +666,31 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
+    public void testHotwordDetectionService_software_externalSourceSecurityException_onFailure()
+            throws Throwable {
+        // Create SoftwareHotwordDetector with onFailure callback
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                true);
+
+        try {
+            mService.initOnFailureLatch();
+
+            runWithShellPermissionIdentity(() -> {
+                softwareHotwordDetector.startRecognition(Helper.createFakeAudioStream(),
+                        Helper.createFakeAudioFormat(), Helper.createFakePersistableBundleData());
+            });
+
+            mService.waitOnFailureCalled();
+
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
+                    HotwordDetectionServiceFailure.ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
+        } finally {
+            // Destroy detector
+            softwareHotwordDetector.destroy();
+        }
+    }
+
+    @Test
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromMicSecurityException_onFailure()
             throws Throwable {
@@ -1037,6 +1062,68 @@ public class HotwordDetectionServiceBasicTest {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
             stopWatchingNoted();
+        }
+    }
+
+    @Test
+    public void testHotwordDetectionService_dspDetector_onDetectFromExternalSource_rejected()
+            throws Throwable {
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putBoolean(Utils.KEY_DETECTION_REJECTED, true);
+
+            mService.initDetectRejectLatch();
+            alwaysOnHotwordDetector.startRecognition(Helper.createFakeAudioStream(),
+                    Helper.createFakeAudioFormat(), options);
+
+            // Wait onRejected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            HotwordRejectedResult rejectedResult =
+                    mService.getHotwordServiceOnRejectedResult();
+
+            assertThat(rejectedResult).isEqualTo(Helper.REJECTED_RESULT);
+        } finally {
+            // Destroy detector
+            alwaysOnHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testHotwordDetectionService_softwareDetector_onDetectFromExternalSource_rejected()
+            throws Throwable {
+        // Create SoftwareHotwordDetector
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                false);
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putBoolean(Utils.KEY_DETECTION_REJECTED, true);
+
+            mService.initDetectRejectLatch();
+            softwareHotwordDetector.startRecognition(Helper.createFakeAudioStream(),
+                    Helper.createFakeAudioFormat(), options);
+
+            // Wait onRejected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            HotwordRejectedResult rejectedResult =
+                    mService.getHotwordServiceOnRejectedResult();
+
+            assertThat(rejectedResult).isEqualTo(Helper.REJECTED_RESULT);
+        } finally {
+            // Destroy detector
+            softwareHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
         }
     }
 

@@ -176,6 +176,7 @@ public class Utils {
     public static final String KEY_TEST_RESULT = "testResult";
     public static final String KEY_TEST_SCENARIO = "testScenario";
     public static final String KEY_DETECTION_DELAY_MS = "detectionDelayMs";
+    public static final String KEY_DETECTION_REJECTED = "detection_rejected";
     public static final String KEY_INITIALIZATION_STATUS = "initialization_status";
 
     public static final String VOICE_INTERACTION_KEY_CALLBACK = "callback";
