@@ -190,6 +190,13 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             Log.w(TAG, "audioStream is null");
             return;
         }
+        if (options != null) {
+            if (options.getBoolean(Utils.KEY_DETECTION_REJECTED, false)) {
+                Log.d(TAG, "Call onRejected for external source");
+                callback.onRejected(REJECTED_RESULT);
+                return;
+            }
+        }
 
         long startTime = System.currentTimeMillis();
         try (InputStream fis =
