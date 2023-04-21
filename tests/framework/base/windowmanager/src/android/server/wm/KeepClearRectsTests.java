@@ -45,8 +45,6 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
@@ -61,7 +59,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 @Presubmit
-@FlakyTest(detail = "Promote once confirmed non-flaky")
 public class KeepClearRectsTests extends WindowManagerTestBase {
     private static final long SAME_ELEMENT_ASSERTION_TIMEOUT = 3000;
     private static final List<Rect> TEST_KEEP_CLEAR_RECTS =
@@ -369,7 +366,6 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 272078811)
     public void testSetKeepClearRectsOnDisplaySingleWindow() throws Exception {
         mTestSession.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
         final TestActivity activity = mTestSession.getActivity();
