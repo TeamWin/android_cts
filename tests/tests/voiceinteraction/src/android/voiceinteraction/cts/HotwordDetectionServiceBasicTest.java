@@ -902,6 +902,49 @@ public class HotwordDetectionServiceBasicTest {
 
     @Test
     @RequiresDevice
+    @CddTest(requirements = {"9.8/H-1-15"})
+    public void testHotwordDetectionService_onDetectFromExternalSourceWithAudioEgress()
+            throws Throwable {
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
+
+        // Update HotwordDetectionService options to enable Audio egress
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle persistableBundle = new PersistableBundle();
+            persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                    Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS);
+            alwaysOnHotwordDetector.updateState(
+                    persistableBundle,
+                    Helper.createFakeSharedMemoryData());
+        }, MANAGE_HOTWORD_DETECTION);
+
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            ParcelFileDescriptor audioStream = Helper.createFakeAudioStream();
+            mService.initDetectRejectLatch();
+            alwaysOnHotwordDetector.startRecognition(audioStream,
+                    Helper.createFakeAudioFormat(),
+                    Helper.createFakePersistableBundleData());
+
+            // wait onDetected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+
+            Helper.verifyDetectedResult(detectResult, AUDIO_EGRESS_DETECTED_RESULT);
+        } finally {
+            // destroy detector
+            alwaysOnHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
     @CddTest(requirement = "9.8/H-1-2,H-1-8,H-1-14")
     public void testHotwordDetectionService_onDetectFromDsp_success() throws Throwable {
         startWatchingNoted();
