@@ -37,6 +37,7 @@ import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_REQUIRES_IMS_REGISTRATION_BOOL;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_REQUIRES_VOLTE_ENABLED_BOOL;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_EMERGENCY_SCAN_TIMER_SEC_INT;
+import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_MAXIMUM_CELLULAR_SEARCH_TIMER_SEC_INT;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_MAXIMUM_NUMBER_OF_EMERGENCY_TRIES_OVER_VOWIFI_INT;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_PREFER_IMS_EMERGENCY_WHEN_VOICE_CALLS_ON_CS_BOOL;
 import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_QUICK_CROSS_STACK_REDIAL_TIMER_SEC_INT;
@@ -996,6 +997,37 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
     }
 
     @Test
+    public void testDefaultWifiImsRegisteredCellularTimeoutSelectWifiImsPdn() throws Exception {
+        // Setup pre-condition
+        PersistableBundle bundle = getDefaultPersistableBundle();
+        bundle.putInt(KEY_EMERGENCY_SCAN_TIMER_SEC_INT, 0);
+        bundle.putInt(KEY_MAXIMUM_CELLULAR_SEARCH_TIMER_SEC_INT, 3);
+        bundle.putBoolean(KEY_EMERGENCY_CALL_OVER_EMERGENCY_PDN_BOOL, false);
+        overrideCarrierConfig(bundle);
+
+        MockEmergencyRegResult regResult = getEmergencyRegResult(EUTRAN, REGISTRATION_STATE_UNKNOWN,
+                0, false, false, 0, 0, "", "");
+        sMockModemManager.setEmergencyRegResult(sTestSlot, regResult);
+
+        bindImsService(ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN);
+
+        placeOutgoingCall(TEST_EMERGENCY_NUMBER);
+
+        assertTrue(waitForNetworkLatchCountdown(LATCH_TRIGGER_EMERGENCY_SCAN));
+        assertEquals(EMERGENCY_MODE_WWAN, sMockModemManager.getEmergencyMode(sTestSlot));
+        assertTrue(waitForNetworkLatchCountdown(LATCH_CANCEL_EMERGENCY_SCAN));
+
+        TimeUnit.MILLISECONDS.sleep(WAIT_REQUEST_TIMEOUT_MS);
+
+        assertEquals(EMERGENCY_MODE_WLAN, sMockModemManager.getEmergencyMode(sTestSlot));
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getImsCallsession();
+
+        assertNotNull(callSession);
+    }
+
+    @Test
     public void testDefaultCsThenPs() throws Exception {
         // Setup pre-condition
         unsolBarringInfoChanged(true);
@@ -1215,6 +1247,7 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
         boolean imsWhenVoiceOnCs = false;
         int maxRetriesOverWiFi = 1;
         int cellularScanTimerSec = 10;
+        int maxCellularTimerSec = 0;
         int scanType = SCAN_TYPE_NO_PREFERENCE;
         boolean useEmergencyPdn = true;
         boolean requiresImsRegistration = false;
@@ -1227,7 +1260,8 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
         return getPersistableBundle(imsRats, csRats, imsRoamRats, csRoamRats,
                 domainPreference, roamDomainPreference, imsWhenVoiceOnCs, maxRetriesOverWiFi,
-                useEmergencyPdn, cellularScanTimerSec, scanType, requiresImsRegistration,
+                useEmergencyPdn, cellularScanTimerSec, maxCellularTimerSec,
+                scanType, requiresImsRegistration,
                 requiresVoLteEnabled, ltePreferredAfterNrFailed, cdmaPreferredNumbers,
                 crossStackTimer, quickCrossStackTimer, quickTimerWhenInService);
     }
@@ -1237,7 +1271,8 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
             @Nullable int[] imsRoamRats, @Nullable int[] csRoamRats,
             @Nullable int[] domainPreference, @Nullable int[] roamDomainPreference,
             boolean imsWhenVoiceOnCs, int maxRetriesOverWiFi, boolean useEmergencyPdn,
-            int cellularScanTimerSec, int scanType, boolean requiresImsRegistration,
+            int cellularScanTimerSec, int maxCellularTimerSec,
+            int scanType, boolean requiresImsRegistration,
             boolean requiresVoLteEnabled, boolean ltePreferredAfterNrFailed,
             @Nullable String[] cdmaPreferredNumbers,
             int crossStackTimer, int quickCrossStackTimer, boolean quickTimerWhenInService) {
@@ -1272,6 +1307,7 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
         bundle.putInt(KEY_MAXIMUM_NUMBER_OF_EMERGENCY_TRIES_OVER_VOWIFI_INT, maxRetriesOverWiFi);
         bundle.putBoolean(KEY_EMERGENCY_CALL_OVER_EMERGENCY_PDN_BOOL, useEmergencyPdn);
         bundle.putInt(KEY_EMERGENCY_SCAN_TIMER_SEC_INT, cellularScanTimerSec);
+        bundle.putInt(KEY_MAXIMUM_CELLULAR_SEARCH_TIMER_SEC_INT, maxCellularTimerSec);
         bundle.putInt(KEY_EMERGENCY_NETWORK_SCAN_TYPE_INT, scanType);
         bundle.putBoolean(KEY_EMERGENCY_REQUIRES_IMS_REGISTRATION_BOOL, requiresImsRegistration);
         bundle.putBoolean(KEY_EMERGENCY_REQUIRES_VOLTE_ENABLED_BOOL, requiresVoLteEnabled);
