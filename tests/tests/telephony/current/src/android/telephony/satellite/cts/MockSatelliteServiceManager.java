@@ -462,6 +462,15 @@ class MockSatelliteServiceManager {
         mSatelliteService.setSatelliteSupport(supported);
     }
 
+    public void setShouldRespondTelephony(boolean shouldRespondTelephony) {
+        logd("setShouldRespondTelephony: shouldRespondTelephony=" + shouldRespondTelephony);
+        if (mSatelliteService == null) {
+            loge("setShouldRespondTelephony: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.setShouldRespondTelephony(shouldRespondTelephony);
+    }
+
     void sendOnSatelliteDatagramReceived(SatelliteDatagram datagram, int pendingCount) {
         logd("sendOnSatelliteDatagramReceived");
         if (mSatelliteService == null) {
