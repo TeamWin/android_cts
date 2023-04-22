@@ -217,6 +217,13 @@
             </intent-filter>
         </service>
 
+        <activity android:name="android.telephony.satellite.cts.MockPointingUiActivity"
+             android:exported="true">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="android.telephony.cts.StubDialerActvity"
              android:exported="true">
             <intent-filter>
