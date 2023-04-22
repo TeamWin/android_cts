@@ -113,6 +113,8 @@ public class AudioDeviceVolumeManagerTest extends CtsAndroidTestCase {
 
         // safe media can block the raising to volMid, disable it
         am.disableSafeMediaVolume();
+
+        // verify set volume is what get returns
         mADVmgr.setDeviceVolume(volMin, BT_DEV);
         final SleepAssertIntEquals checkVol = new SleepAssertIntEquals(
                 5000 /*maxWaitMs*/, 50 /*periodMs*/, getContext());
@@ -126,5 +128,16 @@ public class AudioDeviceVolumeManagerTest extends CtsAndroidTestCase {
                 volMid.getVolumeIndex() /*expected*/,
                 () -> mADVmgr.getDeviceVolume(volMid, BT_DEV).getVolumeIndex(),
                 "After setting mid volume:");
+
+        // verify the range is set, and is correct
+        final VolumeInfo currentVol = mADVmgr.getDeviceVolume(volMid, BT_DEV);
+        assertFalse("Returned min volume index is not set",
+                VolumeInfo.INDEX_NOT_SET == currentVol.getMinVolumeIndex());
+        assertFalse("Returned max volume index is not set",
+                VolumeInfo.INDEX_NOT_SET == currentVol.getMaxVolumeIndex());
+        assertEquals("Min possible volume index unexpected:", volMid.getMinVolumeIndex(),
+                currentVol.getMinVolumeIndex());
+        assertEquals("Max possible volume index unexpected:", volMid.getMaxVolumeIndex(),
+                currentVol.getMaxVolumeIndex());
     }
 }

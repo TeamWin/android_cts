@@ -131,9 +131,8 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
     }
 
     private void assertGetUserHandlesHasUser(UserHandle user) {
-        List<UserHandle> allUsersHandles = UserManagerHelper.getUserHandles(mUserManager,
-                /* excludePartial= */ false, /* excludeDying= */ false,
-                /* excludePreCreated= */ false);
+        List<UserHandle> allUsersHandles =
+                UserManagerHelper.getUserHandles(mUserManager, /* excludeDying= */ false);
         assertThat(allUsersHandles).contains(user);
     }
 

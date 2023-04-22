@@ -302,6 +302,7 @@ class MockSatelliteServiceManager {
         synchronized (mSendDatagramLock) {
             mSentSatelliteDatagrams.clear();
             mSentIsEmergencyList.clear();
+            mSendDatagramsSemaphore.drainPermits();
         }
     }
 
@@ -327,6 +328,7 @@ class MockSatelliteServiceManager {
     void clearListeningEnabledList() {
         synchronized (mListeningEnabledLock) {
             mListeningEnabledList.clear();
+            mListeningEnabledSemaphore.drainPermits();
         }
     }
 

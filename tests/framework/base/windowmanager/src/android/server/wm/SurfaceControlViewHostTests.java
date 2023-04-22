@@ -18,10 +18,10 @@ package android.server.wm;
 
 import static android.server.wm.CtsWindowInfoUtils.tapOnWindow;
 import static android.server.wm.CtsWindowInfoUtils.tapOnWindowCenter;
-import static android.server.wm.CtsWindowInfoUtils.waitForWindowVisible;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowFocus;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowInfo;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowInfos;
+import static android.server.wm.CtsWindowInfoUtils.waitForWindowVisible;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
 import static android.view.SurfaceControlViewHost.SurfacePackage;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
@@ -1172,23 +1172,31 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         return connection;
     }
 
-    @androidx.test.filters.FlakyTest(bugId = 270554470)
     @Test
     public void testHostInputTokenAllowsObscuredTouches() throws Throwable {
-        SurfaceControlViewHost.SurfacePackage p = null;
-
         mTestService = getService();
         assertTrue(mTestService != null);
 
         addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT, false);
+        assertTrue("Failed to wait for SV to get created",
+                mSvCreatedLatch.await(5, TimeUnit.SECONDS));
         mActivityRule.runOnUiThread(() -> {
             mSurfaceView.getRootSurfaceControl().setTouchableRegion(new Region());
         });
-        mInstrumentation.waitForIdleSync();
+        // TODO(b/279051608): Add touchable regions in WindowInfo test so we can make sure the
+        // touchable regions for the host have been set before proceeding.
+        waitForWindowVisible(mSurfaceView);
         mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
-        mInstrumentation.waitForIdleSync();
 
-        assertTrue(mTestService.getViewIsTouchedAndObscured());
+        int retryCount = 0;
+        boolean isViewTouchedAndObscured = mTestService.getViewIsTouchedAndObscured();
+        while (!isViewTouchedAndObscured && retryCount < 3) {
+            retryCount++;
+            Thread.sleep(100);
+            isViewTouchedAndObscured = mTestService.getViewIsTouchedAndObscured();
+        }
+
+        assertTrue(isViewTouchedAndObscured);
     }
 
     @Test
@@ -1198,12 +1206,15 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         assertTrue(mRemoteSurfacePackage != null);
 
         addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT, false);
+        assertTrue("Failed to wait for SV to get created",
+                mSvCreatedLatch.await(5, TimeUnit.SECONDS));
         mActivityRule.runOnUiThread(() -> {
             mSurfaceView.getRootSurfaceControl().setTouchableRegion(new Region());
         });
-        mInstrumentation.waitForIdleSync();
+        // TODO(b/279051608): Add touchable regions in WindowInfo test so we can make sure the
+        // touchable regions for the host have been set before proceeding.
+        waitForWindowVisible(mSurfaceView);
         mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
-        mInstrumentation.waitForIdleSync();
 
         assertFalse(mTestService.getViewIsTouched());
     }

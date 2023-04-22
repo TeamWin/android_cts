@@ -194,6 +194,7 @@ public class TelephonyManagerTest {
     private String mSelfPackageName;
     private String mSelfCertHash;
 
+    private static final int WAIT_FOR_CONDITION = 3000;
     private static final int TOLERANCE = 1000;
     private static final int TIMEOUT_FOR_NETWORK_OPS = TOLERANCE * 180;
     private PhoneStateListener mListener;
@@ -4146,6 +4147,39 @@ public class TelephonyManagerTest {
                         mTelephonyManager, getPolicyHelper));
     }
 
+    private interface Condition {
+        Object expected();
+        Object actual();
+    }
+
+    private void waitUntilConditionIsTrueOrTimeout(
+            Condition condition, long timeout, String description) {
+        final long start = System.currentTimeMillis();
+        while (!Objects.equals(condition.expected(), condition.actual())
+                && System.currentTimeMillis() - start < timeout) {
+            waitForMs(50);
+        }
+        assertEquals(description, condition.expected(), condition.actual());
+    }
+
+    private void waitForDataPolicySetting(ShellIdentityUtils.ShellPermissionMethodHelper<Boolean,
+            TelephonyManager> getPolicyHelper, boolean mmsAlwaysAllowed) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return mmsAlwaysAllowed;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        Log.d(TAG, "invokeMethodWithShellPermissions : " + mmsAlwaysAllowed);
+                        return ShellIdentityUtils.invokeMethodWithShellPermissions(
+                          mTelephonyManager, getPolicyHelper);
+                    }
+                }, WAIT_FOR_CONDITION, "Policy returned");
+    }
+
     @Test
     public void testAlwaysAllowMmsDataPolicy() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_DATA));
@@ -4162,7 +4196,7 @@ public class TelephonyManagerTest {
                         TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED,
                         !mmsAlwaysAllowed));
 
-        waitForMs(500);
+        waitForDataPolicySetting(getPolicyHelper, !mmsAlwaysAllowed);
         assertNotEquals(mmsAlwaysAllowed,
                 ShellIdentityUtils.invokeMethodWithShellPermissions(
                         mTelephonyManager, getPolicyHelper));
@@ -4172,7 +4206,7 @@ public class TelephonyManagerTest {
                         TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED,
                         mmsAlwaysAllowed));
 
-        waitForMs(500);
+        waitForDataPolicySetting(getPolicyHelper, mmsAlwaysAllowed);
         assertEquals(mmsAlwaysAllowed,
                 ShellIdentityUtils.invokeMethodWithShellPermissions(
                         mTelephonyManager, getPolicyHelper));

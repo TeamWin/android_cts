@@ -190,6 +190,13 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             Log.w(TAG, "audioStream is null");
             return;
         }
+        if (options != null) {
+            if (options.getBoolean(Utils.KEY_DETECTION_REJECTED, false)) {
+                Log.d(TAG, "Call onRejected for external source");
+                callback.onRejected(REJECTED_RESULT);
+                return;
+            }
+        }
 
         long startTime = System.currentTimeMillis();
         try (InputStream fis =
@@ -215,7 +222,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             if (isSame(buffer, FAKE_HOTWORD_AUDIO_DATA,
                     buffer.length)) {
                 Log.d(TAG, "call callback.onDetected");
-                callback.onDetected(DETECTED_RESULT);
+                if (mIsTestAudioEgress) {
+                    callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                } else {
+                    callback.onDetected(DETECTED_RESULT);
+                }
             }
         } catch (IOException e) {
             Log.w(TAG, "Failed to read data : ", e);
@@ -242,7 +253,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                         return;
                     }
                     if (canReadAudio()) {
-                        callback.onDetected(DETECTED_RESULT);
+                        if (mIsTestAudioEgress) {
+                            callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                        } else {
+                            callback.onDetected(DETECTED_RESULT);
+                        }
                     } else {
                         callback.onDetected(DETECTED_RESULT_FOR_MIC_FAILURE);
                     }

@@ -28,12 +28,12 @@ import android.util.TypedValue;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -44,7 +44,6 @@ public class ColorTest {
     private static final String LOG_TAG = ColorTest.class.getSimpleName();
 
     @Test
-    @Ignore("b/277796128")
     public void resourceColor() {
         int[][] colors = {
                 { 0xff000000, android.R.color.background_dark  },
@@ -299,19 +298,34 @@ public class ColorTest {
         // System-API colors are used to allow updateable platform components to use the same colors
         // as the system. The actual value of the color does not matter. Hence only enforce that
         // 'colors' contains all the public colors and ignore System-api colors.
+        ArrayList<String> missingColors = new ArrayList<>();
+        ArrayList<Integer> allKnownColors = new ArrayList<>();
+        allKnownColors.addAll(Arrays.stream(colors).map(pair -> pair[1]).toList());
+        allKnownColors.addAll(Arrays.stream(systemColors).boxed().toList());
+        allKnownColors.addAll(Arrays.stream(materialSystemColors).boxed().toList());
         int numPublicApiColors = 0;
         for (Field declaredColor : android.R.color.class.getDeclaredFields()) {
             if (Arrays.stream(declaredColor.getDeclaredAnnotations()).anyMatch(
                     (Annotation a) -> a.toString().contains("SystemApi"))) {
                 Log.i(LOG_TAG, declaredColor.getName() + " is SystemApi");
             } else {
+                Integer value = -1;
+                try {
+                    value = (Integer) declaredColor.get(null);
+                } catch (IllegalAccessException ignored) { }
+
+                if (!allKnownColors.remove(value)) {
+                    missingColors.add(declaredColor.getName());
+                }
                 numPublicApiColors++;
             }
         }
 
-        assertEquals("Test no longer in sync with colors in android.R.color",
-                colors.length + systemColors.length + materialSystemColors.length,
-                numPublicApiColors);
+        assertEquals("Test no longer in sync with colors in android.R.color. "
+                + "Declared in list, but not public API : " + allKnownColors
+                + ". Missing in declared colors: " + missingColors,
+                colors.length + systemColors.length
+                + materialSystemColors.length, numPublicApiColors);
     }
     @Test
     public void testAlpha() {

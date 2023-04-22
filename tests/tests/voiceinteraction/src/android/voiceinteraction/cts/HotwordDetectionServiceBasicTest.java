@@ -666,6 +666,31 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
+    public void testHotwordDetectionService_software_externalSourceSecurityException_onFailure()
+            throws Throwable {
+        // Create SoftwareHotwordDetector with onFailure callback
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                true);
+
+        try {
+            mService.initOnFailureLatch();
+
+            runWithShellPermissionIdentity(() -> {
+                softwareHotwordDetector.startRecognition(Helper.createFakeAudioStream(),
+                        Helper.createFakeAudioFormat(), Helper.createFakePersistableBundleData());
+            });
+
+            mService.waitOnFailureCalled();
+
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
+                    HotwordDetectionServiceFailure.ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
+        } finally {
+            // Destroy detector
+            softwareHotwordDetector.destroy();
+        }
+    }
+
+    @Test
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromMicSecurityException_onFailure()
             throws Throwable {
@@ -793,7 +818,7 @@ public class HotwordDetectionServiceBasicTest {
     @Test
     @RequiresDevice
     @CddTest(requirements = {"9.8/H-1-15"})
-    public void testHotwordDetectionServiceWithAudioEgress() throws Throwable {
+    public void testHotwordDetectionServiceDspWithAudioEgress() throws Throwable {
         // Create AlwaysOnHotwordDetector
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
                 createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
@@ -828,6 +853,87 @@ public class HotwordDetectionServiceBasicTest {
 
             Helper.verifyAudioEgressDetectedResult(detectResult, AUDIO_EGRESS_DETECTED_RESULT);
 
+        } finally {
+            // destroy detector
+            alwaysOnHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    @CddTest(requirements = {"9.8/H-1-15"})
+    public void testHotwordDetectionService_softwareDetectorWithAudioEgress() throws Throwable {
+        // Create SoftwareHotwordDetector
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                false);
+
+        // Update HotwordDetectionService options to enable Audio egress
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle persistableBundle = new PersistableBundle();
+            persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                    Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS);
+            softwareHotwordDetector.updateState(
+                    persistableBundle,
+                    Helper.createFakeSharedMemoryData());
+        }, MANAGE_HOTWORD_DETECTION);
+
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            mService.initDetectRejectLatch();
+            softwareHotwordDetector.startRecognition();
+
+            // wait onDetected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+
+            Helper.verifyDetectedResult(detectResult, AUDIO_EGRESS_DETECTED_RESULT);
+        } finally {
+            softwareHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    @CddTest(requirements = {"9.8/H-1-15"})
+    public void testHotwordDetectionService_onDetectFromExternalSourceWithAudioEgress()
+            throws Throwable {
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
+
+        // Update HotwordDetectionService options to enable Audio egress
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle persistableBundle = new PersistableBundle();
+            persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                    Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS);
+            alwaysOnHotwordDetector.updateState(
+                    persistableBundle,
+                    Helper.createFakeSharedMemoryData());
+        }, MANAGE_HOTWORD_DETECTION);
+
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            ParcelFileDescriptor audioStream = Helper.createFakeAudioStream();
+            mService.initDetectRejectLatch();
+            alwaysOnHotwordDetector.startRecognition(audioStream,
+                    Helper.createFakeAudioFormat(),
+                    Helper.createFakePersistableBundleData());
+
+            // wait onDetected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+
+            Helper.verifyDetectedResult(detectResult, AUDIO_EGRESS_DETECTED_RESULT);
         } finally {
             // destroy detector
             alwaysOnHotwordDetector.destroy();
@@ -999,6 +1105,68 @@ public class HotwordDetectionServiceBasicTest {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
             stopWatchingNoted();
+        }
+    }
+
+    @Test
+    public void testHotwordDetectionService_dspDetector_onDetectFromExternalSource_rejected()
+            throws Throwable {
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putBoolean(Utils.KEY_DETECTION_REJECTED, true);
+
+            mService.initDetectRejectLatch();
+            alwaysOnHotwordDetector.startRecognition(Helper.createFakeAudioStream(),
+                    Helper.createFakeAudioFormat(), options);
+
+            // Wait onRejected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            HotwordRejectedResult rejectedResult =
+                    mService.getHotwordServiceOnRejectedResult();
+
+            assertThat(rejectedResult).isEqualTo(Helper.REJECTED_RESULT);
+        } finally {
+            // Destroy detector
+            alwaysOnHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testHotwordDetectionService_softwareDetector_onDetectFromExternalSource_rejected()
+            throws Throwable {
+        // Create SoftwareHotwordDetector
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                false);
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putBoolean(Utils.KEY_DETECTION_REJECTED, true);
+
+            mService.initDetectRejectLatch();
+            softwareHotwordDetector.startRecognition(Helper.createFakeAudioStream(),
+                    Helper.createFakeAudioFormat(), options);
+
+            // Wait onRejected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            HotwordRejectedResult rejectedResult =
+                    mService.getHotwordServiceOnRejectedResult();
+
+            assertThat(rejectedResult).isEqualTo(Helper.REJECTED_RESULT);
+        } finally {
+            // Destroy detector
+            softwareHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
         }
     }
 

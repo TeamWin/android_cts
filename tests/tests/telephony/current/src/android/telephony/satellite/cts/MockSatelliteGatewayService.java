@@ -30,6 +30,7 @@ import com.android.internal.util.FunctionalUtils;
 import com.android.telephony.Rlog;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MockSatelliteGatewayService extends Service {
     private static final String TAG = "MockSatelliteGatewayService";
@@ -40,6 +41,7 @@ public class MockSatelliteGatewayService extends Service {
     private final Executor mExecutor;
 
     private final IBinder mRemoteBinder = new ISatelliteGateway.Stub() {};
+    private final AtomicBoolean mShouldNotifyRemoteServiceConnected = new AtomicBoolean(false);
 
     // For local access of this Service.
     class LocalBinder extends Binder {
@@ -100,16 +102,30 @@ public class MockSatelliteGatewayService extends Service {
     public void setLocalSatelliteListener(@NonNull ILocalSatelliteGatewayListener listener) {
         logd("setLocalSatelliteListener: listener=" + listener);
         mLocalListener = listener;
+        if (mShouldNotifyRemoteServiceConnected.get()) {
+            notifyRemoteServiceConnected();
+        }
     }
 
     private void notifyRemoteServiceConnected() {
         logd("notifyRemoteServiceConnected");
-        runWithExecutor(() -> mLocalListener.onRemoteServiceConnected());
+        if (mLocalListener != null) {
+            mShouldNotifyRemoteServiceConnected.set(false);
+            runWithExecutor(() -> mLocalListener.onRemoteServiceConnected());
+        } else {
+            mShouldNotifyRemoteServiceConnected.set(true);
+            logd("notifyRemoteServiceConnected: mLocalListener is null");
+        }
     }
 
     private void notifyRemoteServiceDisconnected() {
         logd("notifyRemoteServiceDisconnected");
-        runWithExecutor(() -> mLocalListener.onRemoteServiceDisconnected());
+        mShouldNotifyRemoteServiceConnected.set(false);
+        if (mLocalListener != null) {
+            runWithExecutor(() -> mLocalListener.onRemoteServiceDisconnected());
+        } else {
+            loge("notifyRemoteServiceDisconnected: mLocalListener is null");
+        }
     }
 
     /**

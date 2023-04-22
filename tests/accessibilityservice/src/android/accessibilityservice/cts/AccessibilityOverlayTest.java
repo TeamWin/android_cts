@@ -21,6 +21,7 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchA
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
@@ -34,6 +35,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
@@ -119,6 +121,9 @@ public class AccessibilityOverlayTest {
 
     @Test
     public void testA11yServiceShowsOverlayOnVirtualDisplay_shouldAppear() throws Exception {
+        assumeTrue("Device does not support activities on secondary displays",
+                sInstrumentation.getContext().getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         try (final DisplayUtils.VirtualDisplaySession displaySession =
                      new DisplayUtils.VirtualDisplaySession()) {
             final Display newDisplay = displaySession.createDisplayWithDefaultDisplayMetricsAndWait(

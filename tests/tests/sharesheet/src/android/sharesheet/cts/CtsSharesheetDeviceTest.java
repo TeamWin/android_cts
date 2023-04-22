@@ -30,6 +30,7 @@ import android.app.Instrumentation;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -41,6 +42,7 @@ import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.graphics.Point;
 import android.graphics.drawable.Icon;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.service.chooser.ChooserAction;
@@ -383,6 +385,109 @@ public class CtsSharesheetDeviceTest {
             mContext.unregisterReceiver(refinementReceiver);
             mContext.unregisterReceiver(chooserCallbackReceiver);
             closeSharesheet();
+            });
+    }
+
+    @Test
+    public void testRefinementCanOverwritePayloadFields() {
+        final CountDownLatch broadcastInvoked = new CountDownLatch(1);
+        final CountDownLatch appStarted = new CountDownLatch(1);
+        final AtomicReference<Intent> refinementRequest = new AtomicReference<>();
+        final AtomicReference<Intent> targetLaunchIntent = new AtomicReference<>();
+
+        final CharSequence originalTextPayload = "original text";
+        final CharSequence refinedTextPayload = "refined text";
+        final Uri originalMediaPayload = Uri.parse(
+                "android.resource://android.sharesheet.cts/" + R.drawable.pre_refinement_payload);
+        final Uri refinedMediaPayload = Uri.parse(
+                "android.resource://android.sharesheet.cts/" + R.drawable.post_refinement_payload);
+
+        BroadcastReceiver refinementReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                refinementRequest.set(intent);
+                Intent originalTargetIntent = intent.getParcelableExtra(
+                        Intent.EXTRA_INTENT, Intent.class);
+
+                // Replace the payload fields on the initial target.
+                Intent refinedTargetIntent = new Intent(originalTargetIntent);
+                refinedTargetIntent.putExtra(Intent.EXTRA_TEXT, refinedTextPayload);
+                refinedTargetIntent.putExtra(Intent.EXTRA_STREAM, refinedMediaPayload);
+                ClipData refinedClipData = new ClipData(
+                        null,
+                        new String[] { originalTargetIntent.getType() },
+                        new ClipData.Item(refinedTextPayload, null, null, refinedMediaPayload));
+                refinedTargetIntent.setClipData(refinedClipData);
+
+                // Call back the sharesheet to complete the share.
+                ResultReceiver resultReceiver = intent.getParcelableExtra(
+                        Intent.EXTRA_RESULT_RECEIVER, ResultReceiver.class);
+
+                Bundle bundle = new Bundle();
+                bundle.putParcelable(Intent.EXTRA_INTENT, refinedTargetIntent);
+
+                resultReceiver.send(Activity.RESULT_OK, bundle);
+                broadcastInvoked.countDown();
+            }
+        };
+
+        CtsSharesheetDeviceActivity.setOnIntentReceivedConsumer(intent -> {
+            targetLaunchIntent.set(intent);
+            appStarted.countDown();
+        });
+
+        mContext.registerReceiver(
+                refinementReceiver,
+                new IntentFilter(CHOOSER_REFINEMENT_BROADCAST_ACTION),
+                Context.RECEIVER_EXPORTED);
+
+        PendingIntent refinement = PendingIntent.getBroadcast(
+                mContext,
+                1,
+                new Intent(CHOOSER_REFINEMENT_BROADCAST_ACTION)
+                        .setPackage(mContext.getPackageName()),
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
+
+        runAndExecuteCleanupBeforeAnyThrow(() -> {
+            Intent sendIntent = createMatchingIntent();
+            sendIntent.putExtra(Intent.EXTRA_TEXT, originalTextPayload);
+            sendIntent.putExtra(Intent.EXTRA_STREAM, originalMediaPayload);
+
+            Intent wrappedShareIntent = Intent.createChooser(sendIntent, null, null);
+            wrappedShareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            wrappedShareIntent.putExtra(Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER,
+                    refinement.getIntentSender());
+            launchSharesheet(wrappedShareIntent);
+
+            findTextContains(mAppLabel).click();
+            assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
+            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
+
+            Intent originalTargetForRefinement =
+                    refinementRequest.get().getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
+            assertEquals(
+                    originalTextPayload,
+                    originalTargetForRefinement.getCharSequenceExtra(Intent.EXTRA_TEXT));
+            assertEquals(
+                    originalMediaPayload,
+                    originalTargetForRefinement.getParcelableExtra(Intent.EXTRA_STREAM, Uri.class));
+            ClipData.Item originalClipItem = originalTargetForRefinement.getClipData().getItemAt(0);
+            assertEquals(originalTextPayload, originalClipItem.getText());
+            assertEquals(originalMediaPayload, originalClipItem.getUri());
+
+            assertEquals(
+                    refinedTextPayload,
+                    targetLaunchIntent.get().getCharSequenceExtra(Intent.EXTRA_TEXT));
+            assertEquals(
+                    refinedMediaPayload,
+                    targetLaunchIntent.get().getParcelableExtra(Intent.EXTRA_STREAM, Uri.class));
+            assertEquals(1, targetLaunchIntent.get().getClipData().getItemCount());
+            ClipData.Item refinedClipItem = targetLaunchIntent.get().getClipData().getItemAt(0);
+            assertEquals(refinedTextPayload, refinedClipItem.getText());
+            assertEquals(refinedMediaPayload, refinedClipItem.getUri());
+        }, () -> {
+                mContext.unregisterReceiver(refinementReceiver);
+                closeSharesheet();
             });
     }
 
