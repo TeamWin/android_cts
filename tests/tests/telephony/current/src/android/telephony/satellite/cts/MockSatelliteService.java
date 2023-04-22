@@ -382,13 +382,18 @@ public class MockSatelliteService extends SatelliteImplBase {
         logd("sendSatelliteDatagram: mErrorCode=" + mErrorCode);
 
         if (mWaitToSend.get()) {
-            // save the datagram
-            mDatagramToBeSent = datagram;
-            mIsEmergencyDatagram = isEmergency;
-            mSendDatagramErrorCallback = errorCallback;
-
             synchronized (mSendDatagramWithDelayLock) {
-                mSendDatagramWithDelayLock.notify();
+                // Save the datagram
+                mDatagramToBeSent = datagram;
+                mIsEmergencyDatagram = isEmergency;
+                mSendDatagramErrorCallback = errorCallback;
+            }
+
+            if (mLocalListener != null) {
+                runWithExecutor(() -> mLocalListener.onSendSatelliteDatagram(
+                        datagram, isEmergency));
+            } else {
+                loge("sendSatelliteDatagram: mLocalListener is null");
             }
         } else {
             updateSatelliteModemState(
@@ -402,7 +407,8 @@ public class MockSatelliteService extends SatelliteImplBase {
             }
 
             if (mLocalListener != null) {
-                runWithExecutor(() -> mLocalListener.onSendSatelliteDatagram(datagram, isEmergency));
+                runWithExecutor(() -> mLocalListener.onSendSatelliteDatagram(
+                        datagram, isEmergency));
             } else {
                 loge("sendSatelliteDatagram: mLocalListener is null");
             }
@@ -498,38 +504,24 @@ public class MockSatelliteService extends SatelliteImplBase {
         mWaitToSend.set(wait);
     }
 
-    public boolean sendDatagramAfterDelay() {
-        logd("sendDatagramAfterDelay");
-        if (mSendDatagramErrorCallback == null) {
-            synchronized (mSendDatagramWithDelayLock) {
-                try {
-                    mSendDatagramWithDelayLock.wait(TIMEOUT);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+    public boolean sendSavedDatagram() {
+        synchronized (mSendDatagramWithDelayLock) {
+            logd("sendSavedDatagram");
+            if (mSendDatagramErrorCallback == null) {
+                return false;
+            }
+
+            if (mShouldRespondTelephony.get()) {
+                if (mErrorCode != SatelliteError.ERROR_NONE) {
+                    runWithExecutor(() -> mSendDatagramErrorCallback.accept(mErrorCode));
+                } else {
+                    runWithExecutor(
+                            () -> mSendDatagramErrorCallback.accept(SatelliteError.ERROR_NONE));
                 }
             }
+            mSendDatagramErrorCallback = null;
+            return true;
         }
-
-        if (mSendDatagramErrorCallback == null) {
-            return false;
-        }
-
-        if (mShouldRespondTelephony.get()) {
-            if (mErrorCode != SatelliteError.ERROR_NONE) {
-                runWithExecutor(() -> mSendDatagramErrorCallback.accept(mErrorCode));
-            } else {
-                runWithExecutor(() -> mSendDatagramErrorCallback.accept(SatelliteError.ERROR_NONE));
-            }
-        }
-
-        if (mLocalListener != null) {
-            runWithExecutor(() -> mLocalListener.onSendSatelliteDatagram(mDatagramToBeSent,
-                    mIsEmergencyDatagram));
-        } else {
-            loge("sendDatagramAfterDelay: mLocalListener is null");
-        }
-        mSendDatagramErrorCallback = null;
-        return true;
     }
 
     /**
