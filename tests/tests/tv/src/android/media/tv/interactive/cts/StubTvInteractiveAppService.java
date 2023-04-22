@@ -104,6 +104,9 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mSendTvRecordingInfoListCount;
         public int mCurrentVideoBoundsCount;
         public int mRecordingTunedCount;
+        public int mRecordingConnectionFailedCount;
+        public int mRecordingDisconnected;
+        public int mRecordingErrorCount;
 
         public Integer mKeyDownCode;
         public Integer mKeyUpCode;
@@ -132,6 +135,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public TvRecordingInfo mTvRecordingInfo;
         public List<TvRecordingInfo> mTvRecordingInfoList;
         public Rect mCurrentVideoBounds;
+        public Integer mRecordingError;
 
         StubSessionImpl(Context context) {
             super(context);
@@ -168,6 +172,9 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mSendTvRecordingInfoListCount = 0;
             mCurrentVideoBoundsCount = 0;
             mRecordingTunedCount = 0;
+            mRecordingConnectionFailedCount = 0;
+            mRecordingDisconnected = 0;
+            mRecordingErrorCount = 0;
 
             mKeyDownCode = null;
             mKeyUpCode = null;
@@ -196,6 +203,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mTvRecordingInfo = null;
             mTvRecordingInfoList = null;
             mCurrentVideoBounds = null;
+            mRecordingError = null;
         }
 
         @Override
@@ -613,6 +621,30 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mRecordingTunedCount++;
             mRecordingId = recordingId;
             mTunedUri = channelUri;
+        }
+
+        @Override
+        public void onRecordingConnectionFailed(String recordingId, String inputId) {
+            super.onRecordingConnectionFailed(recordingId, inputId);
+            mRecordingConnectionFailedCount++;
+            mRecordingId = recordingId;
+            mInputId = inputId;
+        }
+
+        @Override
+        public void onRecordingDisconnected(String recordingId, String inputId) {
+            super.onRecordingDisconnected(recordingId, inputId);
+            mRecordingDisconnected++;
+            mRecordingId = recordingId;
+            mInputId = inputId;
+        }
+
+        @Override
+        public void onRecordingError(String recordingId, int err) {
+            super.onRecordingError(recordingId, err);
+            mRecordingErrorCount++;
+            mRecordingId = recordingId;
+            mRecordingError = err;
         }
     }
 }
