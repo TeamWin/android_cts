@@ -19,9 +19,11 @@ package android.telephony.satellite.cts;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.Instrumentation;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.telephony.Rlog;
@@ -48,6 +50,8 @@ class MockSatelliteServiceManager {
             "cmd phone set-satellite-gateway-service-package-name -s ";
     private static final String SET_SATELLITE_LISTENING_TIMEOUT_DURATION_CMD =
             "cmd phone set-satellite-listening-timeout-duration -t ";
+    private static final String SET_SATELLITE_POINTING_UI_CLASS_NAME_CMD =
+            "cmd phone set-satellite-pointing-ui-class-name";
     private static final long TIMEOUT = 5000;
 
     private MockSatelliteService mSatelliteService;
@@ -68,6 +72,9 @@ class MockSatelliteServiceManager {
     private final Semaphore mListeningEnabledSemaphore = new Semaphore(0);
     private List<Boolean> mListeningEnabledList = new ArrayList<>();
     private final Object mListeningEnabledLock = new Object();
+    private final Semaphore mMockPointingUiActivitySemaphore = new Semaphore(0);
+    private final MockPointingUiActivityStatusReceiver mMockPointingUiActivityStatusReceiver =
+            new MockPointingUiActivityStatusReceiver(mMockPointingUiActivitySemaphore);
 
     @NonNull
     private final ILocalSatelliteListener mSatelliteListener =
@@ -284,6 +291,39 @@ class MockSatelliteServiceManager {
         return true;
     }
 
+    boolean overrideSatellitePointingUiClassName() {
+        logd("overrideSatellitePointingUiClassName");
+        try {
+            if (!setSatellitePointingUiClassName(
+                    PACKAGE, MockPointingUiActivity.class.getName())) {
+                loge("Failed to override satellite pointing UI package and class names");
+                return false;
+            }
+        } catch (Exception ex) {
+            loge("overrideSatellitePointingUiClassName: Got exception with "
+                    + "setSatellitePointingUiClassName ex=" + ex);
+            return false;
+        }
+        registerForMockPointingUiActivityStatus();
+        return true;
+    }
+
+    boolean restoreSatellitePointingUiClassName() {
+        logd("restoreSatellitePointingUiClassName");
+        try {
+            if (!setSatellitePointingUiClassName(null, null)) {
+                loge("Failed to restore satellite pointing UI package and class names");
+                return false;
+            }
+        } catch (Exception ex) {
+            loge("restoreSatellitePointingUiClassName: Got exception with "
+                    + "setSatellitePointingUiClassName ex=" + ex);
+            return false;
+        }
+        unregisterForMockPointingUiActivityStatus();
+        return true;
+    }
+
     Boolean getSentIsEmergency(int index) {
         synchronized (mSendDatagramLock) {
             if (index >= mSentIsEmergencyList.size()) return null;
@@ -330,6 +370,10 @@ class MockSatelliteServiceManager {
             mListeningEnabledList.clear();
             mListeningEnabledSemaphore.drainPermits();
         }
+    }
+
+    void clearMockPointingUiActivityStatusChanges() {
+        mMockPointingUiActivitySemaphore.drainPermits();
     }
 
     boolean waitForEventOnStartSendingSatellitePointingInfo(int expectedNumberOfEvents) {
@@ -444,6 +488,22 @@ class MockSatelliteServiceManager {
         return true;
     }
 
+    boolean waitForEventMockPointingUiActivityStarted(int expectedNumberOfEvents) {
+        for (int i = 0; i < expectedNumberOfEvents; i++) {
+            try {
+                if (!mMockPointingUiActivitySemaphore.tryAcquire(
+                        TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    loge("Timeout to receive MockPointingUiActivityStarted");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("MockPointingUiActivityStarted: Got exception=" + ex);
+                return false;
+            }
+        }
+        return true;
+    }
+
     void setErrorCode(@SatelliteError int errorCode) {
         logd("setErrorCode: errorCode=" + errorCode);
         if (mSatelliteService == null) {
@@ -460,6 +520,15 @@ class MockSatelliteServiceManager {
             return;
         }
         mSatelliteService.setSatelliteSupport(supported);
+    }
+
+    public void setShouldRespondTelephony(boolean shouldRespondTelephony) {
+        logd("setShouldRespondTelephony: shouldRespondTelephony=" + shouldRespondTelephony);
+        if (mSatelliteService == null) {
+            loge("setShouldRespondTelephony: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.setShouldRespondTelephony(shouldRespondTelephony);
     }
 
     void sendOnSatelliteDatagramReceived(SatelliteDatagram datagram, int pendingCount) {
@@ -507,13 +576,13 @@ class MockSatelliteServiceManager {
         mSatelliteService.setWaitToSend(wait);
     }
 
-    boolean sendDatagramAfterDelay() {
-        logd("sendDatagramAfterDelay");
+    boolean sendSavedDatagram() {
+        logd("sendSavedDatagram");
         if (mSatelliteService == null) {
-            loge("sendDatagramAfterDelay: mSatelliteService is null");
+            loge("sendSavedDatagram: mSatelliteService is null");
             return false;
         }
-        return mSatelliteService.sendDatagramAfterDelay();
+        return mSatelliteService.sendSavedDatagram();
     }
 
     private boolean setupLocalSatelliteService() {
@@ -568,11 +637,53 @@ class MockSatelliteServiceManager {
         return "true".equals(result);
     }
 
+    private boolean setSatellitePointingUiClassName(
+            @Nullable String packageName, @Nullable String className) throws Exception {
+        String result =
+                TelephonyUtils.executeShellCommand(mInstrumentation,
+                        SET_SATELLITE_POINTING_UI_CLASS_NAME_CMD + " -p " + packageName
+                                + " -c " + className);
+        logd("setSatellitePointingUiClassName: result = " + result);
+        return "true".equals(result);
+    }
+
+    private void registerForMockPointingUiActivityStatus() {
+        IntentFilter intentFilter = new IntentFilter(
+                MockPointingUiActivity.ACTION_MOCK_POINTING_UI_ACTIVITY_STARTED);
+        mInstrumentation.getContext().registerReceiver(
+                mMockPointingUiActivityStatusReceiver, intentFilter, Context.RECEIVER_EXPORTED);
+    }
+
+    private void unregisterForMockPointingUiActivityStatus() {
+        mInstrumentation.getContext().unregisterReceiver(mMockPointingUiActivityStatusReceiver);
+    }
+
     private static void logd(@NonNull String log) {
         Rlog.d(TAG, log);
     }
 
     private static void loge(@NonNull String log) {
         Rlog.e(TAG, log);
+    }
+
+    private static class MockPointingUiActivityStatusReceiver extends BroadcastReceiver {
+        private Semaphore mSemaphore;
+
+        MockPointingUiActivityStatusReceiver(Semaphore semaphore) {
+            mSemaphore = semaphore;
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (MockPointingUiActivity.ACTION_MOCK_POINTING_UI_ACTIVITY_STARTED.equals(
+                    intent.getAction())) {
+                logd("MockPointingUiActivityStatusReceiver: onReceive");
+                try {
+                    mSemaphore.release();
+                } catch (Exception ex) {
+                    loge("MockPointingUiActivityStatusReceiver: Got exception, ex=" + ex);
+                }
+            }
+        }
     }
 }
