@@ -579,6 +579,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         String mText = "This is a test datagram message from user";
         SatelliteDatagram datagram = new SatelliteDatagram(mText.getBytes());
         callback.clearSendDatagramStateChanges();
+        sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
 
         // Wait to process datagrams so that datagrams are added to pending list.
         sMockSatelliteServiceManager.setWaitToSend(true);
@@ -599,7 +600,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 resultListener3::offer);
 
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
-        sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
 
         // Send first datagram: SENDING to SENDING_SUCCESS
         assertTrue(sMockSatelliteServiceManager.sendSavedDatagram());
@@ -625,7 +625,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
 
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
-        sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
 
         // Send second datagram: SENDING to SENDING_SUCCESS
         // callback.clearSendDatagramStateChanges();
@@ -651,7 +650,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
 
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
-        sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
 
         // Send third datagram: SENDING - SENDING_SUCCESS - IDLE
         assertTrue(sMockSatelliteServiceManager.sendSavedDatagram());
@@ -680,6 +678,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
 
         callback.clearSendDatagramStateChanges();
+        sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
         sMockSatelliteServiceManager.setWaitToSend(false);
         sSatelliteManager.stopSatelliteTransmissionUpdates(callback, getContext().getMainExecutor(),
                 resultListener::offer);
@@ -713,6 +712,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         String mText = "This is a test datagram message from user";
         SatelliteDatagram datagram = new SatelliteDatagram(mText.getBytes());
         callback.clearSendDatagramStateChanges();
+        sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
 
         // Wait to process datagrams so that datagrams are added to pending list.
         sMockSatelliteServiceManager.setWaitToSend(true);
@@ -733,7 +733,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 resultListener3::offer);
 
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
-        sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
 
         // Set error and send first datagram: SENDING to SENDING_FAILED
         sMockSatelliteServiceManager.setErrorCode(SatelliteError.SATELLITE_ERROR);
@@ -784,6 +783,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_REQUEST_ABORTED);
 
         callback.clearSendDatagramStateChanges();
+        sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
         sMockSatelliteServiceManager.setWaitToSend(false);
         sSatelliteManager.stopSatelliteTransmissionUpdates(callback, getContext().getMainExecutor(),
                 resultListener::offer);
@@ -1286,6 +1286,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 1, SatelliteManager.SATELLITE_ERROR_NONE);
 
         sMockSatelliteServiceManager.setShouldRespondTelephony(true);
+        sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
         callback.clearSendDatagramStateChanges();
         sSatelliteManager.stopSatelliteTransmissionUpdates(callback, getContext().getMainExecutor(),
                 resultListener::offer);
