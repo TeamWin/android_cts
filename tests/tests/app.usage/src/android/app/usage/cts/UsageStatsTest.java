@@ -1079,7 +1079,7 @@ public class UsageStatsTest {
         assumeFalse("Test cannot run on an automotive - notification shade is not shown",
                 mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
 
-        final long promotedBucketHoldDurationMs = TimeUnit.MINUTES.toMillis(1);
+        final long promotedBucketHoldDurationMs = TimeUnit.SECONDS.toMillis(10);
         try (DeviceConfigStateHelper deviceConfigStateHelper =
                      new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
             deviceConfigStateHelper.set(KEY_NOTIFICATION_SEEN_PROMOTED_BUCKET,
