@@ -129,13 +129,14 @@ public class MultiWindowLoginActivityTest
         sReplier.getNextFillRequest();
         mUiBot.assertDatasets("The Dude");
 
-        mTaskOrganizer.putTaskInSplitPrimary(mActivity.getTaskId());
-        mUiBot.waitForIdleSync();
-
         amStartActivity(MultiWindowEmptyActivity.class);
         mUiBot.waitForIdleSync();
         MultiWindowEmptyActivity emptyActivity = MultiWindowEmptyActivity.getInstance();
+
+        mTaskOrganizer.putTaskInSplitPrimary(mActivity.getTaskId());
+        mUiBot.waitForIdleSync();
         mTaskOrganizer.putTaskInSplitSecondary(emptyActivity.getTaskId());
+        mUiBot.waitForIdleSync();
 
         // Make sure both activities are showing
         mUiBot.assertShownByRelativeId(Helper.ID_USERNAME);  // MultiWindowLoginActivity
