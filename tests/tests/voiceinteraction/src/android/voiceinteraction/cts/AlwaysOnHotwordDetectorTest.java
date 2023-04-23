@@ -38,6 +38,8 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.content.Context;
 import android.hardware.soundtrigger.SoundTrigger;
 import android.media.soundtrigger.SoundTriggerInstrumentation;
@@ -302,7 +304,8 @@ public class AlwaysOnHotwordDetectorTest {
     @ApiTest(apis = {"AlwaysOnHotwordDetector.Callback#onRecognitionPaused",
             "AlwaysOnHotwordDetector.Callback#onRecognitionResumed"})
     @Test
-    public void testOnRecognitionResumedAndOnRecognitionPaused() throws Exception {
+    public void testAbortRecognitionAndOnResourceAvailable_recognitionPausedAndResumed()
+            throws Exception {
         createAndEnrollAlwaysOnHotwordDetector();
         // Grab permissions for more than a single call since we get callbacks
         adoptSoundTriggerPermissions();
@@ -579,6 +582,27 @@ public class AlwaysOnHotwordDetectorTest {
             BatteryUtils.runDumpsysBatteryReset();
             BatteryUtils.resetBatterySaver();
         }
+    }
+
+    @Test
+    public void testAfterDestroy_detectorIsInvalid() throws Exception {
+        createAndEnrollAlwaysOnHotwordDetector();
+        adoptSoundTriggerPermissions();
+        mAlwaysOnHotwordDetector.destroy();
+
+        assertThrows(IllegalStateException.class, () ->
+                mAlwaysOnHotwordDetector.startRecognition());
+        assertThrows(IllegalStateException.class, () ->
+                mAlwaysOnHotwordDetector.stopRecognition());
+        assertThrows(IllegalStateException.class, () ->
+                mAlwaysOnHotwordDetector.getParameter(
+                        AlwaysOnHotwordDetector.MODEL_PARAM_THRESHOLD_FACTOR));
+        assertThrows(IllegalStateException.class, () ->
+                mAlwaysOnHotwordDetector.setParameter(
+                        AlwaysOnHotwordDetector.MODEL_PARAM_THRESHOLD_FACTOR, 10));
+        assertThrows(IllegalStateException.class, () ->
+                mAlwaysOnHotwordDetector.queryParameter(
+                        AlwaysOnHotwordDetector.MODEL_PARAM_THRESHOLD_FACTOR));
     }
 
     private static void setSoundTriggerPowerSaveMode(PowerManager powerManager, int mode) {
