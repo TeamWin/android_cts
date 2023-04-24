@@ -775,6 +775,19 @@ public class TvInputServiceTest {
     }
 
     @Test
+    public void verifyCommandTimeShiftSetMode() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetPassedValues();
+
+        onTvView(tvView -> tvView.timeShiftSetMode(TvInputManager.TIME_SHIFT_MODE_AUTO));
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT, () -> session.mTimeShiftSetModeCount > 0);
+
+        assertThat(session.mTimeShiftSetModeCount).isEqualTo(1);
+        assertThat(session.mTimeShiftMode).isEqualTo(TvInputManager.TIME_SHIFT_MODE_AUTO);
+    }
+
+    @Test
     public void verifyCommandSetTimeShiftPositionCallback() {
         tune(CHANNEL_0);
 
@@ -1368,6 +1381,7 @@ public class TvInputServiceTest {
             public volatile int mTimeShiftSeekToCount;
             public volatile int mTimeShiftSetPlaybackParamsCount;
             public volatile int mTimeShiftPlayCount;
+            public volatile int mTimeShiftSetModeCount;
             public volatile long mTimeShiftGetCurrentPositionCount;
             public volatile long mTimeShiftGetStartPositionCount;
             public volatile int mAppPrivateCommandCount;
@@ -1407,6 +1421,7 @@ public class TvInputServiceTest {
             public volatile Boolean mTvMessageEnabled;
             public volatile Integer mAudioPresentationId;
             public volatile Integer mAudioProgramId;
+            public volatile Integer mTimeShiftMode;
 
             CountingSession(Context context, @Nullable String sessionId) {
 
@@ -1435,6 +1450,7 @@ public class TvInputServiceTest {
                 mTimeShiftSeekToCount = 0;
                 mTimeShiftSetPlaybackParamsCount = 0;
                 mTimeShiftPlayCount = 0;
+                mTimeShiftSetModeCount = 0;
                 mTimeShiftGetCurrentPositionCount = 0;
                 mTimeShiftGetStartPositionCount = 0;
                 mAppPrivateCommandCount = 0;
@@ -1476,6 +1492,7 @@ public class TvInputServiceTest {
                 mTvMessageEnabled = null;
                 mAudioPresentationId = null;
                 mAudioProgramId = null;
+                mTimeShiftMode = null;
             }
 
             @Override
@@ -1617,6 +1634,13 @@ public class TvInputServiceTest {
             public void onTimeShiftPlay(Uri recordedProgramUri) {
                 mTimeShiftPlayCount++;
                 mRecordedProgramUri = recordedProgramUri;
+            }
+
+            @Override
+            public void onTimeShiftSetMode(int mode) {
+                super.onTimeShiftSetMode(mode);
+                mTimeShiftMode = mode;
+                mTimeShiftSetModeCount++;
             }
 
             @Override
