@@ -31,5 +31,13 @@ java_test_host {
         "compatibility-host-util",
         "cts-host-utils",
     ],
+    data: [
+        ":CtsExtractNativeLibsAppFalse32",
+        ":CtsExtractNativeLibsAppFalse64",
+        ":CtsExtractNativeLibsAppFalseBoth",
+        ":CtsExtractNativeLibsAppTrue32",
+        ":CtsExtractNativeLibsAppTrue64",
+        ":CtsExtractNativeLibsAppTrueBoth",
+    ],
     java_resource_dirs: ["res"],
 }
