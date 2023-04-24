@@ -33,6 +33,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.stats.devicepolicy.EventId;
+import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -162,8 +163,8 @@ public final class CrossProfileIntentFiltersTest {
                     sDeviceState.dpc().componentName(),
                     testIntentFilter, flag);
 
-            TestApis.context().instrumentedContext().startActivity(new Intent(ACTION).setFlags(
-                    FLAG_ACTIVITY_NEW_TASK));
+            TestApis.context().instrumentedContext().startActivity(
+                    new Intent(ACTION).setFlags(FLAG_ACTIVITY_NEW_TASK));
 
             assertThat(testApp.activities().query()
                             .whereActivity().intentFilters().contains(

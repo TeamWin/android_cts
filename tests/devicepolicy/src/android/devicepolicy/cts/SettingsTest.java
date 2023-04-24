@@ -18,6 +18,7 @@ package android.devicepolicy.cts;
 
 import static android.os.Build.VERSION_CODES.Q;
 import static android.os.Build.VERSION_CODES.R;
+import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 import static android.provider.Settings.Global.AIRPLANE_MODE_ON;
 import static android.provider.Settings.Global.AUTO_TIME;
 import static android.provider.Settings.Global.BLUETOOTH_ON;
@@ -27,6 +28,8 @@ import static android.provider.Settings.Secure.SKIP_FIRST_USE_HINTS;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
+
+import android.os.Build;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -41,6 +44,8 @@ import com.android.bedstead.harrier.policies.SetDeviceOwnerSecureSetting;
 import com.android.bedstead.harrier.policies.SetGlobalSetting;
 import com.android.bedstead.harrier.policies.SetSecureSetting;
 import com.android.bedstead.nene.TestApis;
+import com.android.queryable.annotations.IntegerQuery;
+import com.android.queryable.annotations.Query;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -142,9 +147,10 @@ public final class SettingsTest {
 
     @CanSetPolicyTest(policy = SetDeviceOwnerSecureSetting.class)
     @Postsubmit(reason = "new test")
-    @RequireTargetSdkVersion(max = Q)
-    @Ignore
-    //TODO(b/200282889) Un-Ignore this once targetSDK checks the dpc's targetSDK is Q or below.
+    @com.android.bedstead.harrier.annotations.enterprise.AdditionalQueryParameters(
+            forTestApp = "dpc",
+            query = @Query(targetSdkVersion = @IntegerQuery(isLessThan = Build.VERSION_CODES.R))
+    )
     public void setSecureSetting_deviceOwnerOnly_sets() {
         int originalValue = TestApis.settings().secure()
                 .getInt(DEPRECATED_DEVICE_OWNER_ONLY_SECURE_SETTING, /* defaultValue= */ 0);
@@ -181,9 +187,10 @@ public final class SettingsTest {
 
     @CanSetPolicyTest(policy = SetDeviceOwnerSecureSetting.class)
     @Postsubmit(reason = "new test")
-    @RequireTargetSdkVersion(min = R)
-    @Ignore
-    //TODO(b/200282889) Un-Ignore this once targetSDK checks the dpc's targetSDK is R or above.
+    @com.android.bedstead.harrier.annotations.enterprise.AdditionalQueryParameters(
+            forTestApp = "dpc",
+            query = @Query(targetSdkVersion = @IntegerQuery(isGreaterThanOrEqualTo = R))
+    )
     public void setSecureSetting_deviceOwnerOnly_settingIsDeprecated_throwsException() {
         int originalValue = TestApis.settings().secure()
                 .getInt(DEPRECATED_DEVICE_OWNER_ONLY_SECURE_SETTING, /* defaultValue= */ 0);

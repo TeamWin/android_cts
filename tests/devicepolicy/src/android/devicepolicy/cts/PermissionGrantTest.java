@@ -43,6 +43,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -636,6 +637,8 @@ public final class PermissionGrantTest {
     @EnsureScreenIsOn
     @EnsureUnlocked
     public void setPermissionPolicy_grant_automaticallyGrantsPermissions() {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
@@ -659,6 +662,8 @@ public final class PermissionGrantTest {
     @EnsureScreenIsOn
     @EnsureUnlocked
     public void setPermissionPolicy_deny_automaticallyDeniesPermissions() {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
@@ -730,6 +735,8 @@ public final class PermissionGrantTest {
     @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     public void setPermissionGrantStateDeny_autoGrantPermission_deniesPermissions(
             @DeniablePermissionTestParameter String permission) {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager()
@@ -759,6 +766,8 @@ public final class PermissionGrantTest {
     @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     public void setPermissionGrantStateDeny_autoDenyPermission_deniesPermissions(
             @DeniablePermissionTestParameter String permission) {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager()
@@ -789,6 +798,8 @@ public final class PermissionGrantTest {
     @EnsureScreenIsOn
     @EnsureUnlocked
     public void setPermissionGrantStateDeny_promptPermission_deniesPermissions() {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager()
@@ -816,6 +827,8 @@ public final class PermissionGrantTest {
 
     @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     public void setPermissionStateGranted_autoDenyPermission_grantsPermissions() {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager()
@@ -847,6 +860,8 @@ public final class PermissionGrantTest {
     @EnsureScreenIsOn
     @EnsureUnlocked
     public void setPermissionStateGranted_promptPermission_grantsPermissions() {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager()
@@ -881,6 +896,8 @@ public final class PermissionGrantTest {
             policy = SetSensorPermissionPolicyPromptForOrganizationOwnedWorkProfile.class)
     public void setSensorPermissionStateGranted_promptPermission_denyAsPermissionCantBeGrantedAutomatically(
             @SensorPermissionTestParameter String permission) {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager()

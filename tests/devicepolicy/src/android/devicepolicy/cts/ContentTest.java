@@ -103,7 +103,7 @@ public final class ContentTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONTENT_CAPTURE")
     @RequireSystemServiceAvailable(ContentCaptureManager.class)
-    @Ignore // TODO: Restore and confirm expected behaviour
+    @Ignore // TODO(278998574): Restore and confirm expected behaviour
     public void disallowContentCaptureIsNotSet_canGetContentCaptureManager() throws Exception {
         assertThat(sContext.getSystemService(ContentCaptureManager.class)).isNotNull();
     }
@@ -113,7 +113,7 @@ public final class ContentTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONTENT_CAPTURE")
     @RequireSystemServiceAvailable(ContentCaptureManager.class)
-    @Ignore // TODO: Restore and confirm expected behaviour
+    @Ignore // TODO(278998574): Restore and confirm expected behaviour
     public void disallowContentCaptureIsSet_cannotGetContentCaptureManager() throws Exception {
         assertThat(sContext.getSystemService(ContentCaptureManager.class)).isNull();
     }
@@ -165,7 +165,7 @@ public final class ContentTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONTENT_SUGGESTIONS")
     @RequireSystemServiceAvailable(ContentSuggestionsManager.class)
-    @Ignore // TODO: Restore and confirm expected behaviour
+    @Ignore // TODO(278998574): Restore and confirm expected behaviour
     public void disallowContentSuggestionsIsNotSet_canGetContentSuggestionsManager() throws Exception {
         assertThat(sContext.getSystemService(ContentSuggestionsManager.class)).isNotNull();
     }
@@ -175,11 +175,11 @@ public final class ContentTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONTENT_SUGGESTIONS")
     @RequireSystemServiceAvailable(ContentSuggestionsManager.class)
-    @Ignore // TODO: Restore and confirm expected behaviour
+    @Ignore // TODO(278998574): Restore and confirm expected behaviour
     public void disallowContentSuggestionsIsSet_cannotGetContentSuggestionsManager() throws Exception {
         assertThat(sContext.getSystemService(ContentSuggestionsManager.class)).isNull();
     }
 
-    // TODO: Restore these tests, test this on a device which has these services available, and
-    //  ensure that the user restriction doesn't cause the later tests to be skipped
+    // TODO(278998574): Restore these tests, test this on a device which has these services
+    //  available, and ensure that the user restriction doesn't cause the later tests to be skipped
 }

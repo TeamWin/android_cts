@@ -18,6 +18,8 @@ package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
 
+import com.android.bedstead.harrier.UserType;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
@@ -28,6 +30,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(EnsureSecureSettingSetGroup.class)
 public @interface EnsureSecureSettingSet {
+
+    UserType onUser() default UserType.INSTRUMENTED_USER;
+
     String key();
 
     String value();

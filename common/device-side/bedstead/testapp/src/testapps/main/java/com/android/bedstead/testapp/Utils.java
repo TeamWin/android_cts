@@ -39,7 +39,8 @@ public final class Utils {
 
         return new NeneException("Error finding activity " + activityClassName + reasons
                 + ". Relevant logcat: "
-        + TestApis.logcat().dump(l -> l.contains(activityClassName)), t);
+        + TestApis.logcat().dump(
+                l -> l.contains(activityClassName) || l.contains("ActivityTaskManager")), t);
     }
 
     /**

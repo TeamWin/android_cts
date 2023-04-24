@@ -74,22 +74,6 @@ public final class KeyguardTest {
     private static final PersistableBundle CONFIGURATION =
             PersistableBundle.forPair("key", "test.trust.agent");
 
-    @CanSetPolicyTest(policy = KeyguardDisableWidgetsAll.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    public void setKeyguardDisabledFeatures_DISABLE_WIDGETS_ALL_doesNotThrowException() {
-        int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
-                sDeviceState.dpc().componentName());
-
-        try {
-            sDeviceState.dpc()
-                    .devicePolicyManager().setKeyguardDisabledFeatures(
-                            sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_WIDGETS_ALL);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), originalFeatures);
-        }
-    }
-
     @CannotSetPolicyTest(policy = KeyguardDisableWidgetsAll.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {
@@ -148,22 +132,6 @@ public final class KeyguardTest {
 
             assertThat(TestApis.devicePolicy().getKeyguardDisabledFeatures()).isNotEqualTo(
                     KEYGUARD_DISABLE_WIDGETS_ALL);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), originalFeatures);
-        }
-    }
-
-    @CanSetPolicyTest(policy = KeyguardDisableSecureCamera.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    public void setKeyguardDisabledFeatures_DISABLE_SECURE_CAMERA_doesNotThrowException() {
-        int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
-                sDeviceState.dpc().componentName());
-
-        try {
-            sDeviceState.dpc()
-                    .devicePolicyManager().setKeyguardDisabledFeatures(
-                            sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_SECURE_CAMERA);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
                     sDeviceState.dpc().componentName(), originalFeatures);
@@ -234,22 +202,6 @@ public final class KeyguardTest {
         }
     }
 
-    @CanSetPolicyTest(policy = KeyguardDisableSecureNotifications.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    public void setKeyguardDisabledFeatures_DISABLE_SECURE_NOTIFICATIONS_doesNotThrowException() {
-        int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
-                sDeviceState.dpc().componentName());
-
-        try {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(),
-                    KEYGUARD_DISABLE_SECURE_NOTIFICATIONS);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), originalFeatures);
-        }
-    }
-
     @CannotSetPolicyTest(policy = KeyguardDisableSecureNotifications.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {
@@ -308,22 +260,6 @@ public final class KeyguardTest {
 
             assertThat(TestApis.devicePolicy().getKeyguardDisabledFeatures()).isNotEqualTo(
                     KEYGUARD_DISABLE_SECURE_NOTIFICATIONS);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), originalFeatures);
-        }
-    }
-
-    @CanSetPolicyTest(policy = KeyguardDisableTrustAgents.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    public void setKeyguardDisabledFeatures_DISABLE_TRUST_AGENTS_doesNotThrowException() {
-        int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
-                sDeviceState.dpc().componentName());
-
-        try {
-            sDeviceState.dpc()
-                    .devicePolicyManager().setKeyguardDisabledFeatures(
-                            sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_TRUST_AGENTS);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
                     sDeviceState.dpc().componentName(), originalFeatures);
@@ -394,21 +330,6 @@ public final class KeyguardTest {
         }
     }
 
-    @CanSetPolicyTest(policy = KeyguardDisableUnredactedNotifications.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    public void setKeyguardDisabledFeatures_DISABLE_UNREDACTED_NOTIFICATIONS_doesNotThrowException() {
-        int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
-                sDeviceState.dpc().componentName());
-
-        try {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), originalFeatures);
-        }
-    }
-
     @CannotSetPolicyTest(policy = KeyguardDisableUnredactedNotifications.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {
@@ -467,21 +388,6 @@ public final class KeyguardTest {
 
             assertThat(TestApis.devicePolicy().getKeyguardDisabledFeatures()).isNotEqualTo(
                     KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), originalFeatures);
-        }
-    }
-
-    @CanSetPolicyTest(policy = KeyguardDisableFingerprint.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    public void setKeyguardDisabledFeatures_DISABLE_FINGERPRINT_doesNotThrowException() {
-        int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
-                sDeviceState.dpc().componentName());
-
-        try {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_FINGERPRINT);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
                     sDeviceState.dpc().componentName(), originalFeatures);
@@ -552,21 +458,6 @@ public final class KeyguardTest {
         }
     }
 
-    @CanSetPolicyTest(policy = KeyguardDisableFace.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    public void setKeyguardDisabledFeatures_DISABLE_FACE_doesNotThrowException() {
-        int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
-                sDeviceState.dpc().componentName());
-
-        try {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_FACE);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), originalFeatures);
-        }
-    }
-
     @CannotSetPolicyTest(policy = KeyguardDisableFace.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {
@@ -625,21 +516,6 @@ public final class KeyguardTest {
 
             assertThat(TestApis.devicePolicy().getKeyguardDisabledFeatures()).isNotEqualTo(
                     KEYGUARD_DISABLE_FACE);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), originalFeatures);
-        }
-    }
-
-    @CanSetPolicyTest(policy = KeyguardDisableIris.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    public void setKeyguardDisabledFeatures_DISABLE_IRIS_doesNotThrowException() {
-        int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
-                sDeviceState.dpc().componentName());
-
-        try {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_IRIS);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
                     sDeviceState.dpc().componentName(), originalFeatures);
@@ -711,14 +587,6 @@ public final class KeyguardTest {
             sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
                     sDeviceState.dpc().componentName(), originalFeatures);
         }
-    }
-
-    @CanSetPolicyTest(policy = TrustAgentConfiguration.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    public void setTrustAgentConfiguration_doesNotThrowException() {
-        sDeviceState.dpc().devicePolicyManager()
-                .setTrustAgentConfiguration(
-                        sDeviceState.dpc().componentName(), TRUST_AGENT, CONFIGURATION);
     }
 
     @CannotSetPolicyTest(policy = TrustAgentConfiguration.class, includeNonDeviceAdminStates = false)

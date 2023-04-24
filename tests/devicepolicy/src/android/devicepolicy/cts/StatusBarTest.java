@@ -26,7 +26,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
+import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.policies.StatusBarDisabled;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivityReference;
@@ -120,7 +120,7 @@ public final class StatusBarTest {
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = StatusBarDisabled.class)
+    @CanSetPolicyTest(policy = StatusBarDisabled.class)
     public void setStatusBarDisabled_true_isStatusBarDisabledIsTrue() {
         try {
             sDeviceState.dpc().devicePolicyManager().setStatusBarDisabled(
@@ -134,7 +134,7 @@ public final class StatusBarTest {
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = StatusBarDisabled.class)
+    @CanSetPolicyTest(policy = StatusBarDisabled.class)
     public void setStatusBarDisabled_false_isStatusBarDisabledIsFalse() {
         sDeviceState.dpc().devicePolicyManager().setStatusBarDisabled(
                 sDeviceState.dpc().componentName(), /* disabled= */ false);
