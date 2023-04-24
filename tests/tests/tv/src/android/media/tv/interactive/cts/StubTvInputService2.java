@@ -150,6 +150,21 @@ public class StubTvInputService2 extends TvInputService {
         }
 
         @Override
+        public void notifyCueingMessageAvailability(boolean available) {
+            super.notifyCueingMessageAvailability(available);
+        }
+
+        @Override
+        public void notifyTimeShiftMode(int mode) {
+            super.notifyTimeShiftMode(mode);
+        }
+
+        @Override
+        public void notifyAvailableSpeeds(float[] speeds) {
+            super.notifyAvailableSpeeds(speeds);
+        }
+
+        @Override
         public void notifyTuned(Uri uri) {
             super.notifyTuned(uri);
         }
