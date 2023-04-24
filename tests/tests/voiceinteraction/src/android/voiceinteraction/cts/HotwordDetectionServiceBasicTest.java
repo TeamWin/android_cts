@@ -18,7 +18,6 @@ package android.voiceinteraction.cts;
 
 import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
 import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
-import static android.Manifest.permission.MANAGE_SOUND_TRIGGER;
 import static android.Manifest.permission.RECORD_AUDIO;
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static android.voiceinteraction.common.Utils.AUDIO_EGRESS_DETECTED_RESULT;
@@ -26,6 +25,7 @@ import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 import static android.voiceinteraction.cts.testcore.Helper.MANAGE_VOICE_KEYPHRASES;
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 import static android.voiceinteraction.cts.testcore.Helper.createKeyphraseRecognitionExtraList;
+import static android.voiceinteraction.cts.testcore.Helper.waitForFutureDoneAndAssertSuccessful;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -46,8 +46,7 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
-import android.media.soundtrigger.SoundTriggerInstrumentation;
-import android.media.soundtrigger.SoundTriggerManager;
+import android.media.soundtrigger.SoundTriggerInstrumentation.RecognitionSession;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.os.SystemClock;
@@ -63,6 +62,7 @@ import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.Helper;
+import android.voiceinteraction.cts.testcore.SoundTriggerInstrumentationObserver;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -73,6 +73,8 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DisableAnimationRule;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.SystemUtil;
+
+import com.google.common.util.concurrent.ListenableFuture;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -137,11 +139,8 @@ public class HotwordDetectionServiceBasicTest {
     public RequiredFeatureRule REQUIRES_MIC_RULE = new RequiredFeatureRule(FEATURE_MICROPHONE);
 
     private SoundTrigger.Keyphrase[] mKeyphraseArray;
-    private SoundTriggerInstrumentation mInstrumentation = null;
-    private SoundTriggerInstrumentation.ModelSession mModelSession = null;
-    private SoundTriggerInstrumentation.RecognitionSession mRecognitionSession = null;
-
-    private CountDownLatch mSoundTriggerInjectedLatch;
+    private final SoundTriggerInstrumentationObserver mInstrumentationObserver =
+            new SoundTriggerInstrumentationObserver();
 
     @BeforeClass
     public static void enableIndicators() {
@@ -191,20 +190,7 @@ public class HotwordDetectionServiceBasicTest {
         mKeyphraseArray = Helper.createKeyprhaseArray(mService);
 
         // Hook up SoundTriggerInjection to inject/observe STHAL operations.
-        runWithShellPermissionIdentity(() -> {
-            mInstrumentation = sInstrumentation.getTargetContext()
-                .getSystemService(SoundTriggerManager.class)
-                .attachInstrumentation((Runnable r) -> r.run(),
-                    (SoundTriggerInstrumentation.ModelSession modelSession) -> {
-                        mModelSession = modelSession;
-                        mSoundTriggerInjectedLatch.countDown();
-                        mModelSession.setModelCallback((Runnable r) -> r.run(),
-                                (SoundTriggerInstrumentation.RecognitionSession recogSession) -> {
-                                    mRecognitionSession = recogSession;
-                                    mSoundTriggerInjectedLatch.countDown();
-                                });
-                    });
-        }, MANAGE_SOUND_TRIGGER, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
+        mInstrumentationObserver.attachInstrumentation();
 
         // Wait the original HotwordDetectionService finish clean up to avoid flaky
         // This also waits for mic indicator disappear
@@ -214,10 +200,13 @@ public class HotwordDetectionServiceBasicTest {
     @After
     public void tearDown() {
         // Clean up any unexpected HAL state
-        mInstrumentation.triggerRestart();
+        try {
+            mInstrumentationObserver.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         mService.resetState();
         mService = null;
-        mSoundTriggerInjectedLatch = null;
     }
 
     public String getTestVoiceInteractionService() {
@@ -1553,23 +1542,15 @@ public class HotwordDetectionServiceBasicTest {
 
             adoptShellPermissionIdentityForHotword();
 
-            // Initial soundTrigger injection latch
-            mSoundTriggerInjectedLatch = new CountDownLatch(2);
-
+            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
+                    mInstrumentationObserver.listenOnRecognitionStarted();
             alwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
-
-            try {
-                // Wait for soundTrigger injection is ready
-                mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException ex) {
-                throw new AssertionError("SoundTrigger Injection timeout");
-            }
+            RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
+                    onRecognitionStartedFuture);
+            assertThat(recognitionSession).isNotNull();
 
             // Verify we received model load, recognition start
-            assertThat(mModelSession).isNotNull();
-            assertThat(mRecognitionSession).isNotNull();
-
-            mRecognitionSession.triggerRecognitionEvent(new byte[1024],
+            recognitionSession.triggerRecognitionEvent(new byte[1024],
                     createKeyphraseRecognitionExtraList());
 
             // Wait for a while to make sure onDetect() will be called in the
@@ -1624,24 +1605,15 @@ public class HotwordDetectionServiceBasicTest {
             AlwaysOnHotwordDetector alwaysOnHotwordDetector,
             boolean shouldDisableTestModel) throws Throwable {
         try {
-            // initial soundTrigger injection latch
-            mSoundTriggerInjectedLatch = new CountDownLatch(2);
-
+            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
+                    mInstrumentationObserver.listenOnRecognitionStarted();
             alwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
-
-            try {
-                // wait for soundTrigger injection is ready
-                mSoundTriggerInjectedLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException ex) {
-                throw new AssertionError("SoundTrigger Injection timeout");
-            }
-
-            // Verify we received model load, recognition start
-            assertThat(mModelSession).isNotNull();
-            assertThat(mRecognitionSession).isNotNull();
+            RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
+                    onRecognitionStartedFuture);
+            assertThat(recognitionSession).isNotNull();
 
             mService.initDetectRejectLatch();
-            mRecognitionSession.triggerRecognitionEvent(new byte[1024],
+            recognitionSession.triggerRecognitionEvent(new byte[1024],
                     createKeyphraseRecognitionExtraList());
 
             // wait onDetected() called and verify the result
