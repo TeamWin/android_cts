@@ -310,6 +310,11 @@ public class BasicApiTests {
         mAm.cancel(mSender);
     }
 
+    private static boolean isDeviceIdleEnabled() {
+        final String output = SystemUtil.runShellCommand("cmd deviceidle enabled deep").trim();
+        return Integer.parseInt(output) != 0;
+    }
+
     private void toggleIdleMode(boolean on) {
         SystemUtil.runShellCommand("cmd deviceidle " + (on ? "force-idle deep" : "unforce"));
         if (!on) {
@@ -328,6 +333,8 @@ public class BasicApiTests {
 
     @Test
     public void testSetPrioritized() throws InterruptedException {
+        assumeTrue("Doze not supported on this device", isDeviceIdleEnabled());
+
         mMockAlarmReceiver.reset();
         mMockAlarmReceiver2.reset();
 
