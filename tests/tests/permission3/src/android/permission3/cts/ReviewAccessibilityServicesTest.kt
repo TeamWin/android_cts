@@ -30,6 +30,7 @@ import androidx.test.uiautomator.Configurator
 import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
+import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.UiAutomatorUtils2.waitFindObjectOrNull
 import java.util.regex.Pattern
 import org.junit.After
@@ -75,9 +76,7 @@ class ReviewAccessibilityServicesTest {
 
     @After
     fun cleanUp() {
-        uiDevice.pressBack()
-        uiDevice.pressBack()
-        uiDevice.pressBack()
+        uiDevice.pressHome()
         InstrumentedAccessibilityService.disableAllServices()
     }
 
@@ -104,6 +103,7 @@ class ReviewAccessibilityServicesTest {
         accessibilityServiceRule.enableService()
         startAccessibilityActivity()
         clickSettings()
+        waitForSettingsButtonToDisappear()
         findTestService(true)
         findTestService2(false)
     }
@@ -114,8 +114,8 @@ class ReviewAccessibilityServicesTest {
         accessibilityServiceRule.enableService()
         accessibilityServiceRule2.enableService()
         startAccessibilityActivity()
-        Thread.sleep(10000)
         clickSettings()
+        waitForSettingsButtonToDisappear()
         findTestService(true)
         findTestService2(true)
     }
@@ -128,7 +128,7 @@ class ReviewAccessibilityServicesTest {
         startAccessibilityActivity()
         uiDevice.waitForIdle()
         findTestService2(true)!!.click()
-        uiDevice.waitForIdle()
+        waitForSettingsButtonToDisappear()
         findTestService2(true)
         findTestService(false)
     }
@@ -141,7 +141,7 @@ class ReviewAccessibilityServicesTest {
         try {
             context.startActivity(
                 Intent(Intent.ACTION_REVIEW_ACCESSIBILITY_SERVICES)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
         } catch (e: Exception) {
             throw RuntimeException("Caught exception", e)
         } finally {
@@ -161,7 +161,13 @@ class ReviewAccessibilityServicesTest {
         findObjectByText(true, "Settings")?.click()
     }
 
-    private fun findObjectByTextWithoutRetry(shouldBePresent: Boolean, text: String): UiObject2? {
+    private fun waitForSettingsButtonToDisappear() {
+        SystemUtil.eventually {
+            findObjectByText(false, "Settings")
+        }
+    }
+
+    private fun findObjectByTextWithoutRetry(shouldBePresent: Boolean, text: String, ): UiObject2? {
         val containsWithoutCaseSelector =
             By.text(Pattern.compile(".*$text.*", Pattern.CASE_INSENSITIVE))
         val view = if (shouldBePresent) {
