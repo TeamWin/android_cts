@@ -16,6 +16,8 @@
 
 package android.server.wm;
 
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -25,7 +27,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.RemoteException;
-import android.os.SystemProperties;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.scvh.IAttachEmbeddedWindow;
 import android.server.wm.scvh.SurfaceSyncGroupActivity;
@@ -50,9 +51,6 @@ import java.util.concurrent.TimeUnit;
 @Presubmit
 public class SurfaceSyncGroupTests {
     private static final String TAG = "SurfaceSyncGroupTests";
-
-    private static final int HW_TIMEOUT_MULTIPLIER = SystemProperties.getInt(
-            "ro.hw_timeout_multiplier", 1);
 
     @Rule
     public ActivityTestRule<SurfaceSyncGroupActivity> mActivityRule = new ActivityTestRule<>(
