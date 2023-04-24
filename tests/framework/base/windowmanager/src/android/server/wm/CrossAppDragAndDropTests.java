@@ -54,6 +54,7 @@ import java.util.Map;
  */
 @Presubmit
 @AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_TASKS")
+@android.server.wm.annotation.Group2
 public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
     private static final String TAG = "CrossAppDragAndDrop";
 
