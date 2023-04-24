@@ -111,7 +111,6 @@ public class CtsConfigLoadingTest {
                             "CtsClassLoaderFactoryPathClassLoaderTestCases.config",
                             "CtsSampleHostTestCases.config",
                             "CtsHardwareTestCases.config",
-                            "CtsMonkeyTestCases.config",
                             "CtsAndroidAppTestCases.config",
                             "CtsClassLoaderFactoryInMemoryDexClassLoaderTestCases.config",
                             "CtsAppComponentFactoryTestCases.config",
