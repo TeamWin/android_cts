@@ -378,16 +378,6 @@ public final class ManagedProfileTest extends BaseManagedProfileTest {
         }
     }
 
-    // TODO(b/149580605): Fix this flaky test.
-    @Test
-    @FlakyTest
-    @Ignore
-    public void testBasicCheck() throws Exception {
-        // Install SimpleApp in work profile only and check activity in it can be launched.
-        installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BasicTest", mProfileUserId);
-    }
-
     @Test
     public void testProfileOwnerOnPersonalDeviceCannotGetDeviceIdentifiers() throws Exception {
         // The Profile Owner should have access to all device identifiers.
