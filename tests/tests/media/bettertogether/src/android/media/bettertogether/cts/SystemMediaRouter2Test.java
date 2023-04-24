@@ -60,6 +60,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,8 @@ public class SystemMediaRouter2Test {
 
     private static final int TIMEOUT_MS = 5000;
     private static final int WAIT_MS = 2000;
+    private static final String EXTRA_ROUTE_ID = "EXTRA_ROUTE_ID";
+    private static final String EXTRA_ROUTE_NAME = "EXTRA_ROUTE_NAME";
 
     private RouteCallback mAppRouterPlaceHolderCallback = new RouteCallback() {};
 
@@ -102,6 +105,9 @@ public class SystemMediaRouter2Test {
 
         FEATURES_SPECIAL.add(FEATURE_SPECIAL);
     }
+
+    private static final MediaRoute2Info EXTRA_ROUTE = new MediaRoute2Info.Builder(EXTRA_ROUTE_ID,
+            EXTRA_ROUTE_NAME).addFeature(FEATURE_SAMPLE).build();
 
     @Before
     public void setUp() throws Exception {
@@ -239,17 +245,13 @@ public class SystemMediaRouter2Test {
         mAppRouter2.registerRouteCallback(mExecutor, mAppRouterPlaceHolderCallback,
                 new RouteDiscoveryPreference.Builder(FEATURES_ALL, true).build());
 
-        MediaRoute2Info routeToAdd = new MediaRoute2Info.Builder("testRouteId", "testRouteName")
-                .addFeature(FEATURE_SAMPLE)
-                .build();
-
         CountDownLatch addedLatch = new CountDownLatch(1);
         RouteCallback routeCallback = new RouteCallback() {
             @Override
             public void onRoutesAdded(List<MediaRoute2Info> routes) {
                 for (MediaRoute2Info route : routes) {
-                    if (route.getOriginalId().equals(routeToAdd.getOriginalId())
-                            && route.getName().equals(routeToAdd.getName())) {
+                    if (route.getOriginalId().equals(EXTRA_ROUTE.getOriginalId())
+                            && route.getName().equals(EXTRA_ROUTE.getName())) {
                         addedLatch.countDown();
                     }
                 }
@@ -259,7 +261,32 @@ public class SystemMediaRouter2Test {
         mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback,
                 RouteDiscoveryPreference.EMPTY);
 
-        mService.addRoute(routeToAdd);
+        mService.addRoute(EXTRA_ROUTE);
+        assertThat(addedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+    }
+
+    @Test
+    public void addRoute_callsOnRoutesUpdated() throws Exception {
+        mAppRouter2.registerRouteCallback(mExecutor, mAppRouterPlaceHolderCallback,
+                new RouteDiscoveryPreference.Builder(FEATURES_ALL, true).build());
+
+        CountDownLatch addedLatch = new CountDownLatch(1);
+        RouteCallback routeCallback = new RouteCallback() {
+            @Override
+            public void onRoutesUpdated(List<MediaRoute2Info> routes) {
+                for (MediaRoute2Info route : routes) {
+                    if (route.getOriginalId().equals(EXTRA_ROUTE.getOriginalId())
+                            && route.getName().equals(EXTRA_ROUTE.getName())) {
+                        addedLatch.countDown();
+                    }
+                }
+            }
+        };
+        mRouteCallbacks.add(routeCallback);
+        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback,
+                RouteDiscoveryPreference.EMPTY);
+
+        mService.addRoute(EXTRA_ROUTE);
         assertThat(addedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
     }
 
@@ -292,6 +319,33 @@ public class SystemMediaRouter2Test {
     }
 
     @Test
+    public void removeRoute_callsOnRoutesUpdated() throws Exception {
+        mAppRouter2.registerRouteCallback(mExecutor, mAppRouterPlaceHolderCallback,
+                new RouteDiscoveryPreference.Builder(Collections.singletonList(FEATURE_SAMPLE),
+                        true).build());
+
+        waitAndGetRoutes(FEATURE_SAMPLE);
+
+        CountDownLatch removedLatch = new CountDownLatch(1);
+        RouteCallback routeCallback = new RouteCallback() {
+            @Override
+            public void onRoutesUpdated(List<MediaRoute2Info> routes) {
+                boolean routeFound = routes.stream().anyMatch(
+                        route -> TextUtils.equals(route.getOriginalId(), ROUTE_ID2));
+                if (!routeFound) {
+                    removedLatch.countDown();
+                }
+            }
+        };
+        mRouteCallbacks.add(routeCallback);
+        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback,
+                RouteDiscoveryPreference.EMPTY);
+
+        mService.removeRoute(ROUTE_ID2);
+        assertThat(removedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+    }
+
+    @Test
     public void testRouteCallbackOnRoutesChanged() throws Exception {
         mAppRouter2.registerRouteCallback(mExecutor, mAppRouterPlaceHolderCallback,
                 new RouteDiscoveryPreference.Builder(FEATURES_ALL, true).build());
@@ -312,6 +366,44 @@ public class SystemMediaRouter2Test {
         RouteCallback routeCallback = new RouteCallback() {
             @Override
             public void onRoutesChanged(List<MediaRoute2Info> routes) {
+                for (MediaRoute2Info route : routes) {
+                    if (route.getOriginalId().equals(ROUTE_ID_VARIABLE_VOLUME)
+                            && route.getVolume() == targetVolume) {
+                        changedLatch.countDown();
+                        break;
+                    }
+                }
+            }
+        };
+        mRouteCallbacks.add(routeCallback);
+        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback,
+                RouteDiscoveryPreference.EMPTY);
+
+        mSystemRouter2ForCts.setRouteVolume(routeToChangeVolume, targetVolume);
+        assertThat(changedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+    }
+
+    @Test
+    public void volumeChange_callsOnRoutesUpdated() throws Exception {
+        mAppRouter2.registerRouteCallback(mExecutor, mAppRouterPlaceHolderCallback,
+                new RouteDiscoveryPreference.Builder(FEATURES_ALL, true).build());
+
+        waitAndGetRoutes(FEATURE_SAMPLE);
+
+        MediaRoute2Info routeToChangeVolume = null;
+        for (MediaRoute2Info route : mSystemRouter2ForCts.getAllRoutes()) {
+            if (TextUtils.equals(ROUTE_ID_VARIABLE_VOLUME, route.getOriginalId())) {
+                routeToChangeVolume = route;
+                break;
+            }
+        }
+        assertThat(routeToChangeVolume).isNotNull();
+
+        int targetVolume = routeToChangeVolume.getVolume() + 1;
+        CountDownLatch changedLatch = new CountDownLatch(1);
+        RouteCallback routeCallback = new RouteCallback() {
+            @Override
+            public void onRoutesUpdated(List<MediaRoute2Info> routes) {
                 for (MediaRoute2Info route : routes) {
                     if (route.getOriginalId().equals(ROUTE_ID_VARIABLE_VOLUME)
                             && route.getVolume() == targetVolume) {
