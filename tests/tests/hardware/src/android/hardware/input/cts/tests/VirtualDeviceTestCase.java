@@ -228,7 +228,7 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
                         Process.myUserHandle().getIdentifier(), packageName));
     }
 
-    private void tapActivityToFocus() {
+    protected void tapActivityToFocus() {
         final Point p = getViewCenterOnScreen(mTestActivity.getWindow().getDecorView());
         final int displayId = mTestActivity.getDisplayId();
 
