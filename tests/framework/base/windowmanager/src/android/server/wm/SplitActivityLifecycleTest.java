@@ -69,6 +69,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:SplitActivityLifecycleTest
  */
 @Presubmit
+@android.server.wm.annotation.Group2
 public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     /** The bounds should only be updated through {@link #updateSplitBounds(Rect)}. */
     private final Rect mPrimaryBounds = new Rect();
