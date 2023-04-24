@@ -54,6 +54,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:TaskFragmentTrustedModeTest
  */
 @Presubmit
+@android.server.wm.annotation.Group2
 public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
 
     private final ComponentName mTranslucentActivity = new ComponentName(mContext,

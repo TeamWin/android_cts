@@ -80,6 +80,7 @@ import java.util.List;
  */
 @RunWith(AndroidJUnit4.class)
 @Presubmit
+@android.server.wm.annotation.Group2
 public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
 
     private TaskOrganizer mTaskOrganizer;
