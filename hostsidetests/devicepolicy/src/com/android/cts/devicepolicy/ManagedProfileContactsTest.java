@@ -30,7 +30,7 @@ import org.junit.Test;
 
 import java.util.concurrent.Callable;
 
-public class ManagedProfileContactsTest extends BaseManagedProfileTest {
+public final class ManagedProfileContactsTest extends BaseManagedProfileTest {
     private static final String DIRECTORY_PROVIDER_APK = "CtsContactDirectoryProvider.apk";
     private static final String DIRECTORY_PROVIDER_PKG
             = "com.android.cts.contactdirectoryprovider";

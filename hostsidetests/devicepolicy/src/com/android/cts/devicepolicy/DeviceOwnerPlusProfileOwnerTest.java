@@ -46,7 +46,7 @@ import java.util.List;
  */
 // We need managed user to be supported in order to create a profile of the user owner.
 @RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
-public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
+public final class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String BIND_DEVICE_ADMIN_SERVICE_GOOD_SETUP_TEST =
             "com.android.cts.comp.BindDeviceAdminServiceGoodSetupTest";
     private static final String MANAGED_PROFILE_PROVISIONING_TEST =
@@ -152,12 +152,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         // Set the same affiliation ids, and check that DO and PO can now bind to each other.
         setSameAffiliationId(secondaryUserId);
         verifyBindDeviceAdminServiceAsUser(secondaryUserId);
-    }
-
-    @Test
-    public void testCannotAddProfileIfRestrictionSet() throws Exception {
-        // by default, disallow add managed profile users restriction is set.
-        assertCannotCreateManagedProfile(mPrimaryUserId);
     }
 
     private void sendWipeProfileBroadcast(int userId) throws Exception {

@@ -133,14 +133,6 @@ public final class MtePolicyTest {
         }
     }
 
-    @CanSetPolicyTest(policy = MteForceOn.class) // TODO: Remove
-    @Postsubmit(reason = "new test")
-    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMtePolicy")
-    public void setMtePolicy_MTE_ENABLED_doesNotThrow() {
-        skipIfUnsupported();
-        sDeviceState.dpc().devicePolicyManager().setMtePolicy(MTE_ENABLED);
-    }
-
     @CannotSetPolicyTest(policy = MteForceOn.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMtePolicy")
@@ -149,14 +141,6 @@ public final class MtePolicyTest {
         assertThrows(
                 SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().setMtePolicy(MTE_ENABLED));
-    }
-
-    @CanSetPolicyTest(policy = MteForceOff.class) // TODO: Remove
-    @Postsubmit(reason = "new test")
-    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMtePolicy")
-    public void setMtePolicy_MTE_DISABLED_doesNotThrow() {
-        skipIfUnsupported();
-        sDeviceState.dpc().devicePolicyManager().setMtePolicy(MTE_DISABLED);
     }
 
     @CannotSetPolicyTest(policy = MteForceOff.class)

@@ -23,7 +23,7 @@ import java.util.Collections;
 /**
  * Set of tests for the limit app icon hiding feature.
  */
-public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
+public final class LimitAppIconHidingTest extends BaseLauncherAppsTest {
 
     private static final String LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK =
             "CtsHasLauncherActivityApp.apk";

@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Set of tests for Managed Profile use cases.
  */
-public class ManagedProfileTest extends BaseManagedProfileTest {
+public final class ManagedProfileTest extends BaseManagedProfileTest {
 
     private static final String DEVICE_OWNER_PKG = "com.android.cts.deviceowner";
     private static final String DEVICE_OWNER_APK = "CtsDeviceOwnerApp.apk";
