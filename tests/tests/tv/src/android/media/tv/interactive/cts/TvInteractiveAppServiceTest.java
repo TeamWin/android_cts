@@ -405,6 +405,19 @@ public class TvInteractiveAppServiceTest {
         public void onSignalStrengthUpdated(String inputId, int strength) {
             super.onSignalStrengthUpdated(inputId, strength);
         }
+
+        public void onCueingMessageAvailability(String inputId, boolean available) {
+            super.onCueingMessageAvailability(inputId, available);
+        }
+
+        public void onTimeShiftMode(String inputId, int mode) {
+            super.onTimeShiftMode(inputId, mode);
+        }
+
+        public void onAvailableSpeeds(String inputId, float[] speeds) {
+            super.onAvailableSpeeds(inputId, speeds);
+        }
+
         public void onTuned(String inputId, Uri uri) {
             super.onTuned(inputId, uri);
         }
