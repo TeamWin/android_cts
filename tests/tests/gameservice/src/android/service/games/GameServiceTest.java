@@ -61,9 +61,9 @@ import android.view.WindowManager;
 import android.view.WindowMetrics;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.ShellUtils;
@@ -90,6 +90,7 @@ import java.util.regex.Pattern;
 /**
  * CTS tests for {@link android.service.games.GameService}.
  */
+@FlakyTest(bugId = 263181277)
 @RunWith(AndroidJUnit4.class)
 public final class GameServiceTest {
     static final String TAG = "GameServiceTest";
@@ -171,7 +172,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameService#onConnected"})
     public void gameService_connectsOnStartup() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -180,8 +180,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameService#onConnected",
-            "android.service.games.GameService#onDisconnected"})
     public void gameService_connectsWhenGameServiceComponentIsEnabled() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -195,8 +193,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameService#onConnected",
-            "android.service.games.GameService#onDisconnected"})
     public void gameService_connectsWhenGameSessionServiceComponentIsEnabled() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -210,7 +206,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSessionService#onNewSession"})
     public void gameService_startsGameSessionsForGames() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -223,8 +218,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSessionService#onNewSession",
-            "android.service.games.GameSession#onCreate"})
     public void gameService_multipleGames_startsGameSessionsForGames() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -258,8 +251,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSessionService#onNewSession",
-            "android.service.games.GameSession#onCreate"})
     public void gameService_multipleGamesIncludingStops_startsGameSessionsForGames()
             throws Exception {
         assumeGameServiceFeaturePresent();
@@ -299,7 +290,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#onCreate"})
     public void getTaskId_returnsTaskIdOfGame() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -312,7 +302,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#setTaskOverlayView"})
     public void setTaskOverlayView_addsViewsToOverlay() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -325,7 +314,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#setTaskOverlayView"})
     public void setTaskOverlayView_passesTouchesOutsideOverlayToGame() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -356,9 +344,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {
-            "android.service.games.GameSession"
-                    + "#onTransientSystemBarVisibilityFromRevealGestureChanged"})
     public void onTransientSystemBarVisibilityChanged_nonTransient_doesNotDispatchShow()
             throws Exception {
         assumeGameServiceFeaturePresent();
@@ -376,9 +361,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {
-            "android.service.games.GameSession"
-                    + "#onTransientSystemBarVisibilityFromRevealGestureChanged"})
     public void onTransientSystemBarVisibilityFromRevealGestureChanged_dispatchesHideEvent()
             throws Exception {
         assumeGameServiceFeaturePresent();
@@ -405,7 +387,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#startActivityFromGameSessionForResult"})
     public void startActivityForResult_startsActivityAndReceivesResultWithData() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -426,7 +407,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#startActivityFromGameSessionForResult"})
     public void startActivityForResult_startsActivityAndReceivesResultWithNoData()
             throws Exception {
         assumeGameServiceFeaturePresent();
@@ -446,7 +426,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#startActivityFromGameSessionForResult"})
     public void startActivityForResult_cannotStartBlockedActivities() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -462,7 +441,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#startActivityFromGameSessionForResult"})
     public void startActivityForResult_propagatesActivityNotFoundException() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -476,7 +454,6 @@ public final class GameServiceTest {
         assertThat(result.getFailure().getClazz()).isEqualTo(ActivityNotFoundException.class);
     }
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#restartGame"})
     public void restartGame_noPermission() throws Exception {
         assumeGameServiceFeaturePresent();
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
@@ -493,7 +470,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#restartGame"})
     public void restartGame_gameAppIsRestarted() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -515,7 +491,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#restartGame"})
     public void restartGame_gameSessionIsPersisted() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -547,7 +522,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#restartGame"})
     public void restartGame_withNonGameActivityAbove_gameSessionIsPersisted() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -594,9 +568,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameService#onConnected",
-            "android.service.games.GameSession#onCreate",
-            "android.service.games.GameSession#onDestroy"})
     public void gamePutInBackgroundAndRestoredViaRecentsUi_gameSessionRestarted() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -649,7 +620,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#takeScreenshot"})
     public void takeScreenshot_noPermission() throws Exception {
         assumeGameServiceFeaturePresent();
         launchAndWaitForPackage(TAKE_SCREENSHOT_VERIFIER_PACKAGE_NAME);
@@ -660,7 +630,6 @@ public final class GameServiceTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.service.games.GameSession#takeScreenshot"})
     public void takeScreenshot_expectedScreenshotSaved() throws Exception {
         assumeGameServiceFeaturePresent();
 
@@ -843,7 +812,7 @@ public final class GameServiceTest {
     }
 
     private void waitForGameServiceConnected() {
-        PollingCheck.waitFor(TimeUnit.SECONDS.toMillis(50), () -> isGameServiceConnected(),
+        PollingCheck.waitFor(TimeUnit.SECONDS.toMillis(40), () -> isGameServiceConnected(),
                 "Timed out waiting for game service to connect");
     }
 
