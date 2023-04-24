@@ -36,6 +36,7 @@ java_test_host {
     ],
     data: [
         ":CtsHostsideTestsFullBackupApp",
+        ":CtsBackupOtherSoundsSettingsApp",
     ],
     per_testcase_directory: true,
 }
