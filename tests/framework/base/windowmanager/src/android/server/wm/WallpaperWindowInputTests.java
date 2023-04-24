@@ -51,6 +51,7 @@ import org.junit.Test;
  * atest CtsWindowManagerDeviceTestCases:WallpaperWindowInputTests
  */
 @Presubmit
+@android.server.wm.annotation.Group2
 public class WallpaperWindowInputTests extends ActivityManagerTestBase {
     private static final String TAG = "WallpaperWindowInputTests";
 

@@ -33,12 +33,10 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Instrumentation;
 import android.app.Presentation;
 import android.app.UiAutomation;
 import android.app.UiModeManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
@@ -103,7 +101,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 @RunWith(AndroidJUnit4.class)
-public class DisplayTest {
+public class DisplayTest extends TestBase {
     private static final String TAG = "DisplayTest";
 
     // The CTS package brings up an overlay display on the target device (see AndroidTest.xml).
@@ -136,7 +134,6 @@ public class DisplayTest {
     // To test display mode switches.
     private TestPresentation mPresentation;
 
-    private Activity mScreenOnActivity;
     private UiAutomation mUiAutomation;
 
     private static class DisplayModeState {
@@ -217,7 +214,7 @@ public class DisplayTest {
     public void setUp() throws Exception {
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
-        mScreenOnActivity = launchScreenOnActivity();
+        launchScreenOnActivity();
         mContext = getInstrumentation().getTargetContext();
         assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(mContext)
                 || MediaUtils.onCuttlefish());
@@ -233,11 +230,8 @@ public class DisplayTest {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         restoreOriginalHdrSettings();
-        if (mScreenOnActivity != null) {
-            mScreenOnActivity.finish();
-        }
         mUiAutomation.executeShellCommand("settings delete global overlay_display_devices");
     }
 
@@ -1130,78 +1124,6 @@ public class DisplayTest {
             // between the test checking the mode of the display and the mode changing back to the
             // default because the requesting Presentation is no longer showing.
         }
-    }
-
-    private Activity launchScreenOnActivity() {
-        Class clazz = ScreenOnActivity.class;
-        String targetPackage =
-                InstrumentationRegistry.getInstrumentation().getContext().getPackageName();
-        Instrumentation.ActivityResult result =
-                new Instrumentation.ActivityResult(0, new Intent());
-        Instrumentation.ActivityMonitor monitor =
-                new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
-        InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
-        launchActivity(targetPackage, clazz, null);
-        return monitor.waitForActivity();
-    }
-
-    private <T extends Activity> T launchActivity(ActivityTestRule<T> activityRule) {
-        final T activity = activityRule.launchActivity(null);
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-        return activity;
-    }
-
-    /**
-     * Utility method for launching an activity. Copied from InstrumentationTestCase since
-     * InstrumentationRegistry does not provide these APIs anymore.
-     *
-     * <p>The {@link Intent} used to launch the Activity is:
-     *  action = {@link Intent#ACTION_MAIN}
-     *  extras = null, unless a custom bundle is provided here
-     * All other fields are null or empty.
-     *
-     * <p><b>NOTE:</b> The parameter <i>pkg</i> must refer to the package identifier of the
-     * package hosting the activity to be launched, which is specified in the AndroidManifest.xml
-     * file.  This is not necessarily the same as the java package name.
-     *
-     * @param pkg The package hosting the activity to be launched.
-     * @param activityCls The activity class to launch.
-     * @param extras Optional extra stuff to pass to the activity.
-     * @return The activity, or null if non launched.
-     */
-    private final <T extends Activity> T launchActivity(
-            String pkg,
-            Class<T> activityCls,
-            Bundle extras) {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        if (extras != null) {
-            intent.putExtras(extras);
-        }
-        return launchActivityWithIntent(pkg, activityCls, intent);
-    }
-
-    /**
-     * Utility method for launching an activity with a specific Intent.
-     *
-     * <p><b>NOTE:</b> The parameter <i>pkg</i> must refer to the package identifier of the
-     * package hosting the activity to be launched, which is specified in the AndroidManifest.xml
-     * file.  This is not necessarily the same as the java package name.
-     *
-     * @param pkg The package hosting the activity to be launched.
-     * @param activityCls The activity class to launch.
-     * @param intent The intent to launch with
-     * @return The activity, or null if non launched.
-     */
-    @SuppressWarnings("unchecked")
-    private final <T extends Activity> T launchActivityWithIntent(
-            String pkg,
-            Class<T> activityCls,
-            Intent intent) {
-        intent.setClassName(pkg, activityCls.getName());
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        T activity = (T) InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-        return activity;
     }
 
     /**

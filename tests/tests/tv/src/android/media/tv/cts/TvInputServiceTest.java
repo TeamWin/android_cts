@@ -235,18 +235,21 @@ public class TvInputServiceTest {
 
         @Override
         public void onTimeShiftMode(String inputId, int mode) {
+            super.onTimeShiftMode(inputId, mode);
             mTimeShiftModeCount++;
             mTimeShiftMode = mode;
         }
 
         @Override
         public void onAvailableSpeeds(String inputId, float[] speeds) {
+            super.onAvailableSpeeds(inputId, speeds);
             mTimeShiftSpeedsCount++;
             mTimeShiftSpeeds = speeds;
         }
 
         @Override
         public void onCueingMessageAvailability(String inputId, boolean available) {
+            super.onCueingMessageAvailability(inputId, available);
             mCueingMessageAvailabilityCount++;
             mCueingMessageAvailable = available;
         }
@@ -772,6 +775,19 @@ public class TvInputServiceTest {
 
         assertThat(session.mTimeShiftPlayCount).isEqualTo(1);
         assertThat(session.mRecordedProgramUri).isEqualTo(fakeRecordedProgramUri);
+    }
+
+    @Test
+    public void verifyCommandTimeShiftSetMode() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetPassedValues();
+
+        onTvView(tvView -> tvView.timeShiftSetMode(TvInputManager.TIME_SHIFT_MODE_AUTO));
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT, () -> session.mTimeShiftSetModeCount > 0);
+
+        assertThat(session.mTimeShiftSetModeCount).isEqualTo(1);
+        assertThat(session.mTimeShiftMode).isEqualTo(TvInputManager.TIME_SHIFT_MODE_AUTO);
     }
 
     @Test
@@ -1368,6 +1384,7 @@ public class TvInputServiceTest {
             public volatile int mTimeShiftSeekToCount;
             public volatile int mTimeShiftSetPlaybackParamsCount;
             public volatile int mTimeShiftPlayCount;
+            public volatile int mTimeShiftSetModeCount;
             public volatile long mTimeShiftGetCurrentPositionCount;
             public volatile long mTimeShiftGetStartPositionCount;
             public volatile int mAppPrivateCommandCount;
@@ -1407,6 +1424,7 @@ public class TvInputServiceTest {
             public volatile Boolean mTvMessageEnabled;
             public volatile Integer mAudioPresentationId;
             public volatile Integer mAudioProgramId;
+            public volatile Integer mTimeShiftMode;
 
             CountingSession(Context context, @Nullable String sessionId) {
 
@@ -1435,6 +1453,7 @@ public class TvInputServiceTest {
                 mTimeShiftSeekToCount = 0;
                 mTimeShiftSetPlaybackParamsCount = 0;
                 mTimeShiftPlayCount = 0;
+                mTimeShiftSetModeCount = 0;
                 mTimeShiftGetCurrentPositionCount = 0;
                 mTimeShiftGetStartPositionCount = 0;
                 mAppPrivateCommandCount = 0;
@@ -1476,6 +1495,7 @@ public class TvInputServiceTest {
                 mTvMessageEnabled = null;
                 mAudioPresentationId = null;
                 mAudioProgramId = null;
+                mTimeShiftMode = null;
             }
 
             @Override
@@ -1620,6 +1640,13 @@ public class TvInputServiceTest {
             }
 
             @Override
+            public void onTimeShiftSetMode(int mode) {
+                super.onTimeShiftSetMode(mode);
+                mTimeShiftMode = mode;
+                mTimeShiftSetModeCount++;
+            }
+
+            @Override
             public long onTimeShiftGetCurrentPosition() {
                 return ++mTimeShiftGetCurrentPositionCount;
             }
@@ -1682,6 +1709,21 @@ public class TvInputServiceTest {
             @Override
             public void notifyTvMessage(int type, Bundle data) {
                 super.notifyTvMessage(type, data);
+            }
+
+            @Override
+            public void notifyCueingMessageAvailability(boolean available) {
+                super.notifyCueingMessageAvailability(available);
+            }
+
+            @Override
+            public void notifyTimeShiftMode(int mode) {
+                super.notifyTimeShiftMode(mode);
+            }
+
+            @Override
+            public void notifyAvailableSpeeds(float[] speeds) {
+                super.notifyAvailableSpeeds(speeds);
             }
         }
 

@@ -356,6 +356,10 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testOverrideIgnoreRequestedOrientation_propertyIsFalse_overrideNotApplied()
             throws Exception  {
+        assumeTrue("Skipping test: "
+                    + "config_letterboxIsPolicyForIgnoringRequestedOrientationEnabled not enabled",
+                isPolicyForIgnoringRequestedOrientationEnabled());
+
         try (var compatChange = new CompatChangeCloseable(
                 ActivityInfo.OVERRIDE_ENABLE_COMPAT_IGNORE_REQUESTED_ORIENTATION,
                 OPT_OUT_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY.getPackageName())) {
@@ -371,8 +375,11 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testOverrideIgnoreRequestedOrientation_isDisabled_propertyIsTrue_overrideApplied()
             throws Exception  {
-        launchActivity(OPT_IN_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
+        assumeTrue("Skipping test: "
+                    + "config_letterboxIsPolicyForIgnoringRequestedOrientationEnabled not enabled",
+                isPolicyForIgnoringRequestedOrientationEnabled());
 
+        launchActivity(OPT_IN_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
         WindowManagerState.Activity activity =
                 mWmState.getActivity(OPT_IN_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
 
@@ -383,6 +390,10 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.OVERRIDE_ENABLE_COMPAT_IGNORE_REQUESTED_ORIENTATION})
     public void testOverrideIgnoreRequestedOrientation()
             throws Exception {
+        assumeTrue("Skipping test: "
+                    + "config_letterboxIsPolicyForIgnoringRequestedOrientationEnabled not enabled",
+                isPolicyForIgnoringRequestedOrientationEnabled());
+
         launchActivity(NO_PROPERTY_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
 
         WindowManagerState.Activity activity =
@@ -394,7 +405,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testOptOutPropertyCameraCompatForceRotation_rotationDisabled() throws Exception {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
-                getCameraCompatForceRotationTreatmentConfig());
+                isCameraCompatForceRotationTreatmentConfigEnabled());
 
         launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
 
@@ -416,7 +427,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.OVERRIDE_CAMERA_COMPAT_DISABLE_FORCE_ROTATION})
     public void testOverrideForCameraCompatForceRotation_rotationDisabled() throws Exception {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
-                getCameraCompatForceRotationTreatmentConfig());
+                isCameraCompatForceRotationTreatmentConfigEnabled());
 
         launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
 
@@ -429,7 +440,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testOptOutPropertyCameraCompatRefresh() throws Exception {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
-                getCameraCompatForceRotationTreatmentConfig());
+                isCameraCompatForceRotationTreatmentConfigEnabled());
 
         launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
 
@@ -451,7 +462,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.OVERRIDE_CAMERA_COMPAT_DISABLE_REFRESH})
     public void testOverrideForCameraCompatRefresh() throws Exception {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
-                getCameraCompatForceRotationTreatmentConfig());
+                isCameraCompatForceRotationTreatmentConfigEnabled());
 
         launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
 
@@ -464,7 +475,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testOptInPropertyCameraCompatRefreshViaPause() throws Exception {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
-                getCameraCompatForceRotationTreatmentConfig());
+                isCameraCompatForceRotationTreatmentConfigEnabled());
 
         launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
 
@@ -486,7 +497,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.OVERRIDE_CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE})
     public void testOverrideForCameraCompatRefreshViaPause() throws Exception {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
-                getCameraCompatForceRotationTreatmentConfig());
+                isCameraCompatForceRotationTreatmentConfigEnabled());
 
         launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
 
@@ -497,8 +508,10 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     }
 
     @Test
-    public void testOptOutPropertyCameraCompatRefreshViaPause()
-            throws Exception  {
+    public void testOptOutPropertyCameraCompatRefreshViaPause() throws Exception {
+        assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
+                isCameraCompatForceRotationTreatmentConfigEnabled());
+
         try (var compatChange = new CompatChangeCloseable(
                 ActivityInfo.OVERRIDE_CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE,
                 CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY.getPackageName())) {
@@ -511,11 +524,17 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         }
     }
 
-    boolean getCameraCompatForceRotationTreatmentConfig() {
+    private boolean isCameraCompatForceRotationTreatmentConfigEnabled() {
+        return getBooleanConfig("config_isWindowManagerCameraCompatTreatmentEnabled");
+    }
+
+    private boolean isPolicyForIgnoringRequestedOrientationEnabled() {
+        return getBooleanConfig("config_letterboxIsPolicyForIgnoringRequestedOrientationEnabled");
+    }
+
+    private boolean getBooleanConfig(String configName) {
         return mContext.getResources().getBoolean(
-                Resources.getSystem().getIdentifier(
-                        "config_isWindowManagerCameraCompatTreatmentEnabled",
-                        "bool", "android"));
+                Resources.getSystem().getIdentifier(configName, "bool", "android"));
     }
 
     /**
