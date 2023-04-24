@@ -16,6 +16,8 @@
 
 package android.server.wm;
 
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
+
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -24,7 +26,6 @@ import android.graphics.PixelFormat;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.RemoteException;
-import android.os.SystemProperties;
 import android.server.wm.scvh.IAttachEmbeddedWindow;
 import android.server.wm.scvh.SurfaceControlViewHostHelper;
 import android.util.Log;
@@ -45,9 +46,6 @@ import java.util.concurrent.TimeUnit;
 
 public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
     private static final String TAG = "SCVHSyncValidatorTestCase";
-
-    private static final int HW_TIMEOUT_MULTIPLIER =
-            SystemProperties.getInt("ro.hw_timeout_multiplier", 1);
 
     private final Size[] mSizes = new Size[]{new Size(500, 500), new Size(700, 400),
             new Size(300, 800), new Size(200, 200)};
@@ -155,7 +153,7 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
     public void waitForReady() {
         boolean ready = false;
         try {
-            ready = mReadyToStart.await(3 * HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS);
+            ready = mReadyToStart.await(3L * HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Log.e(TAG, "Failed to wait for SCVH to attach");
         }

@@ -21,16 +21,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import android.app.Instrumentation;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
 import android.graphics.Region;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.CtsWindowInfoUtils;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
@@ -38,7 +37,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WidgetTestUtils;
-import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -51,7 +49,6 @@ import java.util.concurrent.TimeUnit;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class SurfaceViewTest {
-    private Instrumentation mInstrumentation;
     private SurfaceViewCtsActivity mActivity;
     private SurfaceViewCtsActivity.MockSurfaceView mMockSurfaceView;
 
@@ -61,10 +58,9 @@ public class SurfaceViewTest {
 
     @Before
     public void setup() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
-        WindowUtil.waitForFocus(mActivity);
         mMockSurfaceView = mActivity.getSurfaceView();
+        CtsWindowInfoUtils.waitForWindowFocus(mMockSurfaceView, true);
     }
 
     @UiThreadTest
