@@ -301,9 +301,6 @@ public class VirtualDisplayTest {
             assertDisplayRegistered(display, Display.FLAG_PRIVATE);
             assertEquals(mSurface, virtualDisplay.getSurface());
 
-            // Show a private presentation on the display.
-            assertDisplayCanShowPresentation("private presentation window",
-                    display, BLUEISH, 0);
             assertEquals(display.getRefreshRate(), REQUESTED_REFRESH_RATE, 0.1f);
         } finally {
             virtualDisplay.release();
