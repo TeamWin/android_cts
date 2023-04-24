@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-package android.voiceinteraction.cts.testcore;
+package android.soundtrigger.cts.instrumentation;
 
-import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
 import static android.Manifest.permission.MANAGE_SOUND_TRIGGER;
-import static android.Manifest.permission.RECORD_AUDIO;
-
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -57,8 +53,7 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
     /**
      * Attaches to the SoundTrigger HAL instrumentation and registers listeners to HAL events
      *
-     * <p>This call temporarily grants the permissions necessary to call
-     * {@link SoundTriggerManager#attachInstrumentation},
+     * This call requires {@link MANAGE_SOUND_TRIGGER}.
      * and then the permissions are revoked prior to returning.
      */
     public void attachInstrumentation() {
@@ -238,11 +233,8 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
          */
         private void attach() {
             Log.d(TAG, "attach SoundTriggerInstrumentation");
-            mInstrumentation = runWithShellPermissionIdentity(
-                    () -> SoundTriggerManager.attachInstrumentation(Runnable::run, mGlobalCallback),
-                    MANAGE_SOUND_TRIGGER,
-                    RECORD_AUDIO,
-                    CAPTURE_AUDIO_HOTWORD);
+            mInstrumentation = SoundTriggerManager.attachInstrumentation(
+                    Runnable::run, mGlobalCallback);
         }
 
         /**
