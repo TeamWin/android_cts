@@ -1043,6 +1043,7 @@ public final class DeviceState extends HarrierRule {
                 EnsureSecureSettingSet ensureSecureSettingSetAnnotation =
                         (EnsureSecureSettingSet) annotation;
                 ensureSecureSettingSet(
+                        ensureSecureSettingSetAnnotation.onUser(),
                         ensureSecureSettingSetAnnotation.key(),
                         ensureSecureSettingSetAnnotation.value());
                 continue;
@@ -1711,7 +1712,7 @@ public final class DeviceState extends HarrierRule {
     private final Map<String, String> mOriginalGlobalSettings = new HashMap<>();
     private Map<String, Query> mAdditionalQueryParameters = new HashMap<>();
 
-    private final Map<String, String> mOriginalSecureSettings = new HashMap<>();
+    private final Map<UserReference, Map<String, String>> mOriginalSecureSettings = new HashMap<>();
     private boolean mAnnotationHasSwitchedUser = false;
     private final Set<AccountReference> mCreatedAccounts = new HashSet<>();
     private Map<String, AccountReference> mAccounts = new HashMap<>();
@@ -2654,8 +2655,10 @@ public final class DeviceState extends HarrierRule {
         }
         mOriginalGlobalSettings.clear();
 
-        for (Map.Entry<String, String> s : mOriginalSecureSettings.entrySet()) {
-            TestApis.settings().secure().putString(s.getKey(), s.getValue());
+        for (Map.Entry<UserReference, Map<String, String>> s : mOriginalSecureSettings.entrySet()) {
+            for (Map.Entry<String, String> s2 : s.getValue().entrySet()) {
+                TestApis.settings().secure().putString(s.getKey(), s2.getKey(), s2.getValue());
+            }
         }
         mOriginalSecureSettings.clear();
 
@@ -3129,6 +3132,8 @@ public final class DeviceState extends HarrierRule {
             if (!mChangedProfileOwners.containsKey(user)) {
                 mChangedProfileOwners.put(user, currentProfileOwner);
             }
+
+            ensureHasNoAccounts(user);
 
             if (resolvedDpcTestApp != null) {
                 mProfileOwners.put(user,
@@ -3705,12 +3710,20 @@ public final class DeviceState extends HarrierRule {
         TestApis.settings().global().putString(key, value);
     }
 
-    private void ensureSecureSettingSet(String key, String value) {
-        if (!mOriginalSecureSettings.containsKey(key)) {
-            mOriginalSecureSettings.put(key, TestApis.settings().secure().getString(value));
+    private void ensureSecureSettingSet(UserType user, String key, String value) {
+        ensureSecureSettingSet(resolveUserTypeToUser(user), key, value);
+    }
+
+    private void ensureSecureSettingSet(UserReference user, String key, String value) {
+        if (!mOriginalSecureSettings.containsKey(user)) {
+            mOriginalSecureSettings.put(user, new HashMap<>());
+        }
+        if (!mOriginalSecureSettings.get(user).containsKey(key)) {
+            mOriginalSecureSettings.get(user)
+                    .put(key, TestApis.settings().secure().getString(user, value));
         }
 
-        TestApis.settings().secure().putString(key, value);
+        TestApis.settings().secure().putString(user, key, value);
     }
 
     private void requireMultiUserSupport(FailureMode failureMode) {

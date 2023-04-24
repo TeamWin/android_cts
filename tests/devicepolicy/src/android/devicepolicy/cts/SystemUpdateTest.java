@@ -50,13 +50,6 @@ public final class SystemUpdateTest {
     private static final DevicePolicyManager sLocalDevicePolicyManager =
             TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
 
-    @CanSetPolicyTest(policy = SystemUpdate.class) // TODO: Remove
-    public void setSystemUpdatePolicy_doesNotThrowException() {
-        sDeviceState.dpc().devicePolicyManager()
-                .setSystemUpdatePolicy(
-                        sDeviceState.dpc().componentName(), SYSTEM_UPDATE_POLICY);
-    }
-
     @CannotSetPolicyTest(policy = SystemUpdate.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setSystemUpdatePolicy"})
