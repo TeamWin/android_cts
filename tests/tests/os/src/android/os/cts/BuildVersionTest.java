@@ -16,14 +16,25 @@
 
 package android.os.cts;
 
+import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.in;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.res.AssetManager;
 import android.os.Build;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
-import junit.framework.TestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,7 +44,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class BuildVersionTest extends TestCase {
+@RunWith(AndroidJUnit4.class)
+public class BuildVersionTest {
 
     private static final String LOG_TAG = "BuildVersionTest";
     private static final int EXPECTED_SDK = 33;
@@ -41,11 +53,12 @@ public class BuildVersionTest extends TestCase {
     private static final String EXPECTED_KEYS = "release-keys";
     private static final String PLATFORM_RELEASES_FILE = "platform_releases.txt";
 
+    @Test
     @SuppressWarnings("deprecation")
     @RestrictedBuildTest
     public void testReleaseVersion() {
         // Applications may rely on the exact release version
-        assertAnyOf("BUILD.VERSION.RELEASE", Build.VERSION.RELEASE, getExpectedReleases());
+        assertThat("BUILD.VERSION.RELEASE", Build.VERSION.RELEASE, in(getExpectedReleases()));
         if ("REL".equals(Build.VERSION.CODENAME)) {
             assertEquals("BUILD.VERSION.RELEASE_OR_CODENAME", Build.VERSION.RELEASE,
                     Build.VERSION.RELEASE_OR_CODENAME);
@@ -57,8 +70,9 @@ public class BuildVersionTest extends TestCase {
         assertEquals("Build.VERSION.SDK_INT", EXPECTED_SDK, Build.VERSION.SDK_INT);
     }
 
+    @Test
     public void testIncremental() {
-        assertNotEmpty(Build.VERSION.INCREMENTAL);
+        assertThat(Build.VERSION.INCREMENTAL, not(emptyOrNullString()));
     }
 
     /**
@@ -69,6 +83,7 @@ public class BuildVersionTest extends TestCase {
      * (BUILD_NUMBER):(BUILD_VARIANT)/(TAGS)
      * </code>
      */
+    @Test
     @RestrictedBuildTest
     public void testBuildFingerprint() {
         String fingerprint = Build.FINGERPRINT;
@@ -92,10 +107,10 @@ public class BuildVersionTest extends TestCase {
         assertEquals("Variant", EXPECTED_BUILD_VARIANT, buildVariant);
 
         List<String> buildTagsList = Arrays.asList(fingerprintSegs[5].split(","));
-        boolean containsReleaseKeys = buildTagsList.contains(EXPECTED_KEYS);
-        assertTrue("Keys", containsReleaseKeys);
+        assertThat("Keys", buildTagsList, hasItem(EXPECTED_KEYS));
     }
 
+    @Test
     public void testPartitions() {
         List<Build.Partition> partitions = Build.getFingerprintedPartitions();
         Set<String> seenPartitions = new HashSet<>();
@@ -120,19 +135,6 @@ public class BuildVersionTest extends TestCase {
         assertTrue(segments[4].contains(":"));
         String buildVariant = segments[4].split(":")[1];
         assertTrue(buildVariant.length() > 0);
-    }
-
-    private void assertNotEmpty(String value) {
-        assertNotNull(value);
-        assertFalse(value.isEmpty());
-    }
-
-    /** Assert that {@code actualValue} is equals to one of {@code permittedValues}. */
-    private void assertAnyOf(String label, String actualValue, Set<String> permittedValues) {
-        if (!permittedValues.contains(actualValue)) {
-             fail("For: " + label + ", the value: " + actualValue +
-                     ", should be one of: " + permittedValues);
-        }
     }
 
     private Set<String> getExpectedReleases() {
