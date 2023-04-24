@@ -235,18 +235,21 @@ public class TvInputServiceTest {
 
         @Override
         public void onTimeShiftMode(String inputId, int mode) {
+            super.onTimeShiftMode(inputId, mode);
             mTimeShiftModeCount++;
             mTimeShiftMode = mode;
         }
 
         @Override
         public void onAvailableSpeeds(String inputId, float[] speeds) {
+            super.onAvailableSpeeds(inputId, speeds);
             mTimeShiftSpeedsCount++;
             mTimeShiftSpeeds = speeds;
         }
 
         @Override
         public void onCueingMessageAvailability(String inputId, boolean available) {
+            super.onCueingMessageAvailability(inputId, available);
             mCueingMessageAvailabilityCount++;
             mCueingMessageAvailable = available;
         }
@@ -1706,6 +1709,21 @@ public class TvInputServiceTest {
             @Override
             public void notifyTvMessage(int type, Bundle data) {
                 super.notifyTvMessage(type, data);
+            }
+
+            @Override
+            public void notifyCueingMessageAvailability(boolean available) {
+                super.notifyCueingMessageAvailability(available);
+            }
+
+            @Override
+            public void notifyTimeShiftMode(int mode) {
+                super.notifyTimeShiftMode(mode);
+            }
+
+            @Override
+            public void notifyAvailableSpeeds(float[] speeds) {
+                super.notifyAvailableSpeeds(speeds);
             }
         }
 
