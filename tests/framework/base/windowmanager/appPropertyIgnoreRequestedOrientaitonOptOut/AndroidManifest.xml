@@ -24,6 +24,7 @@
                   android:value="false" />
 
         <activity android:name=".ChangeOrientationWhileRelaunchingActivity"
+                  android:screenOrientation="landscape"
                   android:exported="true" />
 
     </application>

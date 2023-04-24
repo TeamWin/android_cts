@@ -527,6 +527,7 @@
         </activity>
 
         <activity android:name="android.server.wm.CompatChangeTests$NoPropertyChangeOrientationWhileRelaunchingActivity"
+                  android:screenOrientation="landscape"
                   android:exported="true"/>
 
         <service android:name="android.server.wm.WindowContextTests$TestWindowService"
