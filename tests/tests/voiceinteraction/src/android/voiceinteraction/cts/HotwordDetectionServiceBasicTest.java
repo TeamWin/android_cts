@@ -57,12 +57,12 @@ import android.service.voice.HotwordDetectionServiceFailure;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
 import android.service.voice.SandboxedDetectionInitializer;
+import android.soundtrigger.cts.instrumentation.SoundTriggerInstrumentationObserver;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.Helper;
-import android.voiceinteraction.cts.testcore.SoundTriggerInstrumentationObserver;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -190,7 +190,9 @@ public class HotwordDetectionServiceBasicTest {
         mKeyphraseArray = Helper.createKeyprhaseArray(mService);
 
         // Hook up SoundTriggerInjection to inject/observe STHAL operations.
-        mInstrumentationObserver.attachInstrumentation();
+        // Requires MANAGE_SOUND_TRIGGER
+        runWithShellPermissionIdentity(() ->
+                mInstrumentationObserver.attachInstrumentation());
 
         // Wait the original HotwordDetectionService finish clean up to avoid flaky
         // This also waits for mic indicator disappear

@@ -49,10 +49,10 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
+import android.soundtrigger.cts.instrumentation.SoundTriggerInstrumentationObserver;
 import android.util.Log;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.Helper;
-import android.voiceinteraction.cts.testcore.SoundTriggerInstrumentationObserver;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedClassRule;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceOverrideEnrollmentRule;
 
@@ -167,7 +167,9 @@ public class AlwaysOnHotwordDetectorTest {
     @Before
     public void setup() {
         // Hook up SoundTriggerInstrumentation to inject/observe STHAL operations.
-        mInstrumentationObserver.attachInstrumentation();
+        // Requires MANAGE_SOUND_TRIGGER
+        runWithShellPermissionIdentity(() ->
+                mInstrumentationObserver.attachInstrumentation());
     }
 
     @After
