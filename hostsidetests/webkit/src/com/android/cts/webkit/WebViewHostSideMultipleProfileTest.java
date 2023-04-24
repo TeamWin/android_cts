@@ -125,7 +125,7 @@ public class WebViewHostSideMultipleProfileTest extends BaseHostJUnit4Test {
         String command = isManaged ?
                 "pm create-user --profileOf %d --managed %s" :
                 "pm create-user --profileOf %d %s";
-        command = String.format(command, mDevice.getPrimaryUserId(), profileName);
+        command = String.format(command, mDevice.getMainUserId(), profileName);
 
         CommandResult output = mDevice.executeShellV2Command(command);
         if (CommandStatus.SUCCESS.equals(output.getStatus())) {
