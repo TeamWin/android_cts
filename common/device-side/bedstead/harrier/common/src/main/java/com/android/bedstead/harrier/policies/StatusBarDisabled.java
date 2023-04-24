@@ -20,6 +20,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_STATUS_BAR;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
@@ -28,9 +29,12 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  *
  * <p>See {@link android.app.admin.DevicePolicyManager#setStatusBarDisabled}.
  */
-@EnterprisePolicy(dpc = {APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER
-        | CANNOT_BE_APPLIED_BY_ROLE_HOLDER,
+@EnterprisePolicy(dpc = {
+        APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | CANNOT_BE_APPLIED_BY_ROLE_HOLDER,
         APPLIED_BY_AFFILIATED_PROFILE_OWNER | APPLIES_TO_OWN_USER
-                | CANNOT_BE_APPLIED_BY_ROLE_HOLDER})
+                | CANNOT_BE_APPLIED_BY_ROLE_HOLDER
+        },
+        permissions = @EnterprisePolicy.Permission(
+                appliedWith = MANAGE_DEVICE_POLICY_STATUS_BAR, appliesTo = APPLIES_TO_OWN_USER))
 public final class StatusBarDisabled {
 }

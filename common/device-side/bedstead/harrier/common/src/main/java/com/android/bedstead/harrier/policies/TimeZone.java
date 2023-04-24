@@ -21,18 +21,21 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
+import static com.android.bedstead.nene.permissions.CommonPermissions.SET_TIME_ZONE;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /**
- * Policy for auto-time related tests.
+ * Policy for time related tests.
  *
- * <p>This is used by {@code DevicePolicyManager#setAutoTimeEnabled}
- * {@code DevicePolicyManager#setAutoTimeZoneEnabled}.
+ * <p>This is used by {@code DevicePolicyManager#setTime} and
+ * {@code DevicePolicyManager#setTimeZone}.
  */
 @EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER
         | APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE
         | APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO | APPLIES_GLOBALLY
-        | CANNOT_BE_APPLIED_BY_ROLE_HOLDER)
-public final class AutoTime {
+        | CANNOT_BE_APPLIED_BY_ROLE_HOLDER,
+        permissions = @EnterprisePolicy.Permission(
+                appliedWith = SET_TIME_ZONE, appliesTo = APPLIES_GLOBALLY))
+public final class TimeZone {
 }
