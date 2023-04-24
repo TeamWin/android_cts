@@ -62,6 +62,15 @@ public final class CarUserManagerHostTest extends CarHostJUnit4TestCase {
         executeCommand("emulate-driving-state park");
     }
 
+    @Test
+    public void testRemoveUser() throws Exception {
+        int newUserid = createFullUser("CarUserManagerHostTest_User");
+
+        String result = executeCommand("cmd car_service remove-user %d", newUserid);
+
+        assertWithMessage("removeUser(%s)", newUserid).that(result).contains(STATUS_SUCCESSFUL);
+    }
+
     /**
      * Switches the current user and checks that the expected result is emitted.
      */
