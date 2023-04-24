@@ -27,7 +27,7 @@ import org.junit.Test;
  * Host side tests for profile owner.  Run the CtsProfileOwnerApp device side test.
  */
 @RequiresProfileOwnerSupport
-public class ProfileOwnerTest extends BaseDevicePolicyTest {
+public final class ProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String PROFILE_OWNER_PKG = "com.android.cts.profileowner";
     private static final String PROFILE_OWNER_APK = "CtsProfileOwnerApp.apk";
 

@@ -364,6 +364,9 @@ public final class TimeTest {
         }
     }
 
+    // TODO: Add test of ACTION_TIME_CHANGED broadcast
+    // TODO: Add test of ACTION_TIMEZONE_CHANGED broadcast
+
     @Postsubmit(reason = "New test")
     @PolicyAppliesTest(policy = Time.class)
     @ApiTest(apis = "android.app.manager.DevicePolicyManager#setTime")

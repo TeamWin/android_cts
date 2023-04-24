@@ -50,16 +50,6 @@ public final class FactoryResetProtectionTest {
                     .setFactoryResetProtectionEnabled(true)
                     .setFactoryResetProtectionAccounts(List.of("test@account.com")).build();
 
-    @CanSetPolicyTest(policy = FactoryResetProtection.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setFactoryResetProtectionPolicy")
-    public void setFactoryResetProtectionPolicy_doesNotThrowException() {
-        sDeviceState.dpc().devicePolicyManager()
-                .setFactoryResetProtectionPolicy(
-                        sDeviceState.dpc().componentName(),
-                        FACTORY_RESET_PROTECTION_POLICY);
-    }
-
     @CannotSetPolicyTest(policy = FactoryResetProtection.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setFactoryResetProtectionPolicy")
@@ -69,15 +59,6 @@ public final class FactoryResetProtectionTest {
                         .setFactoryResetProtectionPolicy(
                                 sDeviceState.dpc().componentName(),
                                 FACTORY_RESET_PROTECTION_POLICY));
-    }
-
-    @CanSetPolicyTest(policy = FactoryResetProtection.class) // TODO: Remove
-    @Postsubmit(reason = "New test")
-    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getFactoryResetProtectionPolicy")
-    public void getFactoryResetProtectionPolicy_doesNotThrowException() {
-        sDeviceState.dpc().devicePolicyManager()
-                .getFactoryResetProtectionPolicy(
-                        sDeviceState.dpc().componentName());
     }
 
     @CannotSetPolicyTest(policy = FactoryResetProtection.class)

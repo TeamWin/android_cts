@@ -311,19 +311,6 @@ public class ApplicationHiddenTest {
         }
     }
 
-    @CanSetPolicyTest(policy = ApplicationHidden.class) // TODO: Remove
-    public void setApplicationHidden_systemApp_doesNotThrowException() {
-        try {
-            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
-                    sDeviceState.dpc().componentName(),
-                    SYSTEM_PACKAGE.packageName(), true);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
-                    sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
-                    false);
-        }
-    }
-
     @CannotSetPolicyTest(policy = ApplicationHidden.class, includeNonDeviceAdminStates = false)
     public void setApplicationHidden_systemApp_notAllowed_throwsException() {
         assertThrows(SecurityException.class,

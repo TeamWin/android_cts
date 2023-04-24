@@ -17,22 +17,17 @@
 package com.android.bedstead.harrier.policies;
 
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DPM_ROLE_HOLDER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
-import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_INSTALL_UNKNOWN_SOURCES;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_SYSTEM_DIALOGS;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /**
- * Policy related to setting {@code DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY}
+ * Policy related to setting {@code DISALLOW_SYSTEM_ERROR_DIALOGS}
  */
-@EnterprisePolicy(dpc = {
-        APPLIED_BY_DEVICE_OWNER  // | APPLIED_BY_DPM_ROLE_HOLDER
-        | APPLIED_BY_PROFILE_OWNER | APPLIES_GLOBALLY
-        }, permissions = @EnterprisePolicy.Permission(
-        appliedWith = MANAGE_DEVICE_POLICY_INSTALL_UNKNOWN_SOURCES,
-        appliesTo = APPLIES_GLOBALLY))
-public final class DisallowInstallUnknownSourcesGlobally {
+@EnterprisePolicy(permissions = @EnterprisePolicy.Permission(
+                appliedWith = MANAGE_DEVICE_POLICY_SYSTEM_DIALOGS, appliesTo = APPLIES_TO_OWN_USER))
+public final class DisallowSystemErrorDialogsPermissionBased {
 }

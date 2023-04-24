@@ -43,6 +43,7 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
@@ -172,6 +173,8 @@ public final class UserControlDisabledPackagesTest {
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setUserControlDisabledPackages_launchActivity_verifyPackageNotStopped()
             throws Exception {
+        Assume.assumeTrue("Needs to launch activity",
+                TestApis.users().instrumented().canShowActivities());
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
                         sDeviceState.dpc().componentName());
@@ -203,6 +206,8 @@ public final class UserControlDisabledPackagesTest {
     @Postsubmit(reason = "new test")
     public void setUserControlDisabledPackages_launchActivity_verifyPackageStopped()
             throws Exception {
+        Assume.assumeTrue("Needs to launch activity",
+                TestApis.users().instrumented().canShowActivities());
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
                         sDeviceState.dpc().componentName());

@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
+public final class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     private static final String NOTIFICATION_APK = "CtsNotificationSenderApp.apk";
     private static final String WIDGET_PROVIDER_APK = "CtsWidgetProviderApp.apk";
     private static final String WIDGET_PROVIDER_PKG = "com.android.cts.widgetprovider";
