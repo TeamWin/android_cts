@@ -64,6 +64,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 @Presubmit
+@FlakyTest(bugId = 263872611)
 public class BlurTests extends WindowManagerTestBase {
     private static final int BACKGROUND_BLUR_PX = 80;
     private static final int BLUR_BEHIND_PX = 40;
