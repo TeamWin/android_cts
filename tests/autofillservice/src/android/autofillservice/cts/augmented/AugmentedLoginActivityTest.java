@@ -95,10 +95,10 @@ public class AugmentedLoginActivityTest
     @Test
     public void testServiceLifecycle() throws Exception {
         enableService();
-        CtsAugmentedAutofillService augmentedService = enableAugmentedService();
+        enableAugmentedService();
 
         AugmentedHelper.resetAugmentedService();
-        augmentedService.waitUntilDisconnected();
+        waitUntilDisconnected();
     }
 
     @Test
