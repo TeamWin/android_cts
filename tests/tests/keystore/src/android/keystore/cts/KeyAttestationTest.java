@@ -31,6 +31,7 @@ import static android.keystore.cts.AuthorizationList.KM_PURPOSE_ENCRYPT;
 import static android.keystore.cts.AuthorizationList.KM_PURPOSE_SIGN;
 import static android.keystore.cts.AuthorizationList.KM_PURPOSE_VERIFY;
 import static android.keystore.cts.RootOfTrust.KM_VERIFIED_BOOT_VERIFIED;
+import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_AGREE_KEY;
 import static android.security.keystore.KeyProperties.DIGEST_NONE;
 import static android.security.keystore.KeyProperties.DIGEST_SHA256;
 import static android.security.keystore.KeyProperties.DIGEST_SHA512;
@@ -39,6 +40,7 @@ import static android.security.keystore.KeyProperties.ENCRYPTION_PADDING_RSA_OAE
 import static android.security.keystore.KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1;
 import static android.security.keystore.KeyProperties.KEY_ALGORITHM_EC;
 import static android.security.keystore.KeyProperties.KEY_ALGORITHM_RSA;
+import static android.security.keystore.KeyProperties.PURPOSE_AGREE_KEY;
 import static android.security.keystore.KeyProperties.PURPOSE_DECRYPT;
 import static android.security.keystore.KeyProperties.PURPOSE_ENCRYPT;
 import static android.security.keystore.KeyProperties.PURPOSE_SIGN;
@@ -133,6 +135,7 @@ public class KeyAttestationTest {
     private static final int KEY_USAGE_DIGITAL_SIGNATURE_BIT_OFFSET = 0;
     private static final int KEY_USAGE_KEY_ENCIPHERMENT_BIT_OFFSET = 2;
     private static final int KEY_USAGE_DATA_ENCIPHERMENT_BIT_OFFSET = 3;
+    private static final int KEY_USAGE_KEY_AGREE_BIT_OFFSET = 4;
 
     private static final int OS_MAJOR_VERSION_MATCH_GROUP_NAME = 1;
     private static final int OS_MINOR_VERSION_MATCH_GROUP_NAME = 2;
@@ -845,6 +848,74 @@ public class KeyAttestationTest {
         testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_MEID, "Unable to retrieve MEID");
     }
 
+    @RequiresDevice
+    @Test
+    public void testCurve25519Attestation() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
+        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC)) {
+            return;
+        }
+
+        byte[][] challenges = {
+                new byte[0], // empty challenge
+                "challenge".getBytes(), // short challenge
+                new byte[128] // long challenge
+        };
+        boolean[] devicePropertiesAttestationValues = {true, false};
+
+        for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
+            for (byte[] challenge : challenges) {
+                testCurve25519Attestations("ed25519", challenge, PURPOSE_SIGN | PURPOSE_VERIFY,
+                        devicePropertiesAttestation);
+                testCurve25519Attestations("x25519", challenge, PURPOSE_AGREE_KEY,
+                        devicePropertiesAttestation);
+            }
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void testCurve25519Attestations(String curve, byte[] challenge,
+                                         int purpose, boolean devicePropertiesAttestation)
+            throws Exception {
+        Log.i(TAG, curve + " curve key attestation with: "
+                + " / challenge " + Arrays.toString(challenge)
+                + " / purposes " + purpose
+                + " / devicePropertiesAttestation " + devicePropertiesAttestation);
+
+        String keystoreAlias = "test_key";
+        Date startTime = new Date();
+        KeyGenParameterSpec.Builder builder =
+                new KeyGenParameterSpec.Builder(keystoreAlias, purpose)
+                        .setAlgorithmParameterSpec(new ECGenParameterSpec(curve))
+                        .setDigests(KeyProperties.DIGEST_NONE)
+                        .setAttestationChallenge(challenge)
+                        .setDevicePropertiesAttestationIncluded(devicePropertiesAttestation);
+
+        generateKeyPair(KEY_ALGORITHM_EC, builder.build());
+
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+
+        try {
+            Certificate []certificates = keyStore.getCertificateChain(keystoreAlias);
+            verifyCertificateChain(certificates, false /* expectStrongBox */);
+
+            X509Certificate attestationCert = (X509Certificate) certificates[0];
+            Attestation attestation = Attestation.loadFromCertificate(attestationCert);
+
+            checkEcKeyDetails(attestation, "CURVE_25519", 256);
+            checkKeyUsage(attestationCert, purpose);
+            checkKeyIndependentAttestationInfo(challenge, purpose,
+                    ImmutableSet.of(KM_DIGEST_NONE), startTime, false,
+                    devicePropertiesAttestation, attestation);
+        } finally {
+            keyStore.deleteEntry(keystoreAlias);
+        }
+    }
+
     @SuppressWarnings("deprecation")
     private void testRsaAttestation(byte[] challenge, boolean includeValidityDates, int keySize,
             int purposes, String[] paddingModes, boolean devicePropertiesAttestation)
@@ -910,6 +981,9 @@ public class KeyAttestationTest {
         if (isEncryptionPurpose(purposes)) {
             expectedKeyUsage[KEY_USAGE_KEY_ENCIPHERMENT_BIT_OFFSET] = true;
             expectedKeyUsage[KEY_USAGE_DATA_ENCIPHERMENT_BIT_OFFSET] = true;
+        }
+        if (isAgreeKeyPurpose(purposes)) {
+            expectedKeyUsage[KEY_USAGE_KEY_AGREE_BIT_OFFSET] = true;
         }
         assertThat("Attested certificate has unexpected key usage.",
                 attestationCert.getKeyUsage(), is(expectedKeyUsage));
@@ -1037,9 +1111,20 @@ public class KeyAttestationTest {
         assertNull(attestation.getSoftwareEnforced().getSerialNumber());
     }
 
-    private void checkKeyIndependentAttestationInfo(byte[] challenge, int purposes, Date startTime,
-            boolean includesValidityDates, boolean devicePropertiesAttestation,
-            Attestation attestation) throws NoSuchAlgorithmException, NameNotFoundException {
+    private void checkKeyIndependentAttestationInfo(byte[] challenge, int purposes,
+            Date startTime, boolean includesValidityDates,
+            boolean devicePropertiesAttestation, Attestation attestation)
+            throws NoSuchAlgorithmException, NameNotFoundException {
+        checkKeyIndependentAttestationInfo(challenge, purposes,
+                ImmutableSet.of(KM_DIGEST_NONE, KM_DIGEST_SHA_2_256, KM_DIGEST_SHA_2_512),
+                startTime, includesValidityDates,
+                devicePropertiesAttestation, attestation);
+    }
+
+    private void checkKeyIndependentAttestationInfo(byte[] challenge, int purposes,
+            Set digests, Date startTime, boolean includesValidityDates,
+            boolean devicePropertiesAttestation, Attestation attestation)
+            throws NoSuchAlgorithmException, NameNotFoundException {
         checkUnexpectedOids(attestation);
         checkAttestationSecurityLevelDependentParams(attestation);
         assertNotNull("Attestation challenge must not be null.",
@@ -1052,8 +1137,7 @@ public class KeyAttestationTest {
                     0, attestation.getUniqueId().length);
         }
         checkPurposes(attestation, purposes);
-        checkDigests(attestation,
-                ImmutableSet.of(KM_DIGEST_NONE, KM_DIGEST_SHA_2_256, KM_DIGEST_SHA_2_512));
+        checkDigests(attestation, digests);
         checkValidityPeriod(attestation, startTime, includesValidityDates);
         checkFlags(attestation);
         checkOrigin(attestation);
@@ -1546,6 +1630,10 @@ public class KeyAttestationTest {
         return (purposes & PURPOSE_SIGN) != 0 || (purposes & PURPOSE_VERIFY) != 0;
     }
 
+    private boolean isAgreeKeyPurpose(int purposes) {
+        return (purposes & PURPOSE_AGREE_KEY) != 0;
+    }
+
     private ImmutableSet<Integer> buildPurposeSet(int purposes) {
         ImmutableSet.Builder<Integer> builder = ImmutableSet.builder();
         if ((purposes & PURPOSE_SIGN) != 0)
@@ -1556,6 +1644,9 @@ public class KeyAttestationTest {
             builder.add(KM_PURPOSE_ENCRYPT);
         if ((purposes & PURPOSE_DECRYPT) != 0)
             builder.add(KM_PURPOSE_DECRYPT);
+        if ((purposes & PURPOSE_AGREE_KEY) != 0) {
+            builder.add(KM_PURPOSE_AGREE_KEY);
+        }
         return builder.build();
     }
 
