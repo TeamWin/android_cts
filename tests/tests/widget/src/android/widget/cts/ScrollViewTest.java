@@ -977,6 +977,9 @@ public class ScrollViewTest {
         ));
     }
 
+    /**
+     * Verify that the SurfaceView is at the correct location during the overscroll stretch
+     */
     @Test
     public void testSurfaceViewStretchAtEnd() throws Throwable {
         showOnlyStretch();
@@ -1013,8 +1016,8 @@ public class ScrollViewTest {
                             mActivityRule.getActivity().getWindow());
 
                     assertEquals(Color.RED, screenshot.getPixel(
-                            coords[0] + mScrollViewStretch.getWidth() / 2 - 1,
-                            coords[1] + mScrollViewStretch.getHeight() - 5));
+                            coords[0] + mScrollViewStretch.getWidth() / 2,
+                            coords[1] + mScrollViewStretch.getHeight() / 2));
                 }
         );
     }
