@@ -194,6 +194,7 @@ abstract class CodecTestBase {
     static final long Q_DEQ_TIMEOUT_US = 5000; // block at most 5ms while looking for io buffers
     static final int RETRY_LIMIT = 100; // max poll counter before test aborts and returns error
     static final String mInpPrefix = WorkDir.getMediaDirString();
+    public static final MediaCodecList MCL_ALL = new MediaCodecList(MediaCodecList.ALL_CODECS);
 
     CodecAsyncHandler mAsyncHandle;
     boolean mIsCodecInAsyncMode;
@@ -429,6 +430,39 @@ abstract class CodecTestBase {
             }
         }
         return listOfMimes;
+    }
+
+    /**
+     * Returns MediaCodecInfo for the given codec name
+     */
+    public static MediaCodecInfo getCodecInfo(String codecName) {
+        for (MediaCodecInfo info : MCL_ALL.getCodecInfos()) {
+            if (info.getName().equals(codecName)) {
+                return info;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks if the codec supports all the given formats
+     */
+    public static boolean areFormatsSupported(String codecName, ArrayList<MediaFormat> formats) {
+        boolean isSupported = true;
+        MediaCodecInfo info = getCodecInfo(codecName);
+        if (info == null) {
+            return false;
+        }
+        for (MediaFormat format : formats) {
+            String mediaType = format.getString(MediaFormat.KEY_MIME);
+            MediaCodecInfo.CodecCapabilities codecCapabilities =
+                    info.getCapabilitiesForType(mediaType);
+            if (!codecCapabilities.isFormatSupported(format)) {
+                Log.d(LOG_TAG, "Codec: " + codecName + " doesn't support format: " + format);
+                return false;
+            }
+        }
+        return true;
     }
 }
 
