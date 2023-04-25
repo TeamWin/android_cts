@@ -1310,29 +1310,37 @@ public class SubscriptionManagerTest {
             BooleanSupplier condition, long maxWaitMillis) throws Throwable {
         final Object lock = new Object();
 
-        // TODO (b/278814050) In order to construct an OnSubscriptionChangedListener,
-        // there must be a looper even if the new Executor based registration is used.
-        // Looper can only be prepared once per thread or it will throw.
-        if (Looper.myLooper() == null) Looper.prepare();
+        TestThread t = new TestThread(() -> {
+            Looper.prepare();
 
-        SubscriptionManager.OnSubscriptionsChangedListener listener =
-                new SubscriptionManager.OnSubscriptionsChangedListener() {
-                    @Override
-                    public void onSubscriptionsChanged() {
-                        synchronized (lock) {
-                            if (condition.getAsBoolean()) lock.notifyAll();
+            SubscriptionManager.OnSubscriptionsChangedListener listener =
+                    new SubscriptionManager.OnSubscriptionsChangedListener() {
+                        @Override
+                        public void onSubscriptionsChanged() {
+                            synchronized (lock) {
+                                if (condition.getAsBoolean()) {
+                                    lock.notifyAll();
+                                    Looper.myLooper().quitSafely();
+                                }
+                            }
                         }
-                    }
-                };
-
-        synchronized (lock) {
-            mSm.addOnSubscriptionsChangedListener(Runnable::run, listener);
+                    };
+            mSm.addOnSubscriptionsChangedListener(listener);
             try {
-                if (!condition.getAsBoolean()) lock.wait(maxWaitMillis);
-                assertTrue(condition.getAsBoolean());
+                synchronized (lock) {
+                    if (condition.getAsBoolean()) lock.notifyAll();
+                }
+                if (!condition.getAsBoolean()) Looper.loop();
             } finally {
                 mSm.removeOnSubscriptionsChangedListener(listener);
             }
+        });
+
+        synchronized (lock) {
+            if (condition.getAsBoolean()) return;
+            t.start();
+            lock.wait(maxWaitMillis);
+            t.joinAndCheck(5000);
         }
     }
 
