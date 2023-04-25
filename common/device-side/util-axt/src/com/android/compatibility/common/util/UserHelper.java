@@ -147,6 +147,13 @@ public final class UserHelper {
     }
 
     /**
+     * Get the proper {@code cmd appops} with the user id set, including the trailing space.
+     */
+    public String getAppopsCmd(String command) {
+        return "cmd appops " + command + " --user " + getUserId() + " ";
+    }
+
+    /**
      * Get a {@code cmd input} for the given {@code source}, setting the proper display (if needed).
      */
     public String getInputCmd(String source) {
@@ -156,13 +163,6 @@ public final class UserHelper {
         }
 
         return cmd.toString();
-    }
-
-    /**
-     * Get the proper {@code cmd appops} with the user id set, including the trailing space.
-     */
-    public String getAppopsCmd(String command) {
-        return "cmd appops " + command + " --user " + getUserId() + " ";
     }
 
     /**
