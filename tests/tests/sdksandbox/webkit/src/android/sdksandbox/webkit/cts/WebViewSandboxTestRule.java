@@ -15,8 +15,6 @@
  */
 package android.sdksandbox.webkit.cts;
 
-import static android.app.sdksandbox.testutils.testscenario.SdkSandboxScenarioRule.ENABLE_LIFE_CYCLE_ANNOTATIONS;
-
 import android.app.sdksandbox.testutils.testscenario.SdkSandboxScenarioRule;
 import android.os.Bundle;
 import android.webkit.cts.SharedWebViewTest;
