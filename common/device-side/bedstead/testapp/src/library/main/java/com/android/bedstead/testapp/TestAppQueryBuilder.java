@@ -46,6 +46,7 @@ public final class TestAppQueryBuilder implements Queryable {
     SetQueryHelper<TestAppQueryBuilder, String> mPermissions =
             new SetQueryHelper<>(this);
     BooleanQueryHelper<TestAppQueryBuilder> mTestOnly = new BooleanQueryHelper<>(this);
+    BooleanQueryHelper<TestAppQueryBuilder> mCrossProfile = new BooleanQueryHelper<>(this);
     SetQueryHelper<TestAppQueryBuilder, ActivityInfo> mActivities =
             new SetQueryHelper<>(this);
     SetQueryHelper<TestAppQueryBuilder, ServiceInfo> mServices =
@@ -151,6 +152,13 @@ public final class TestAppQueryBuilder implements Queryable {
     }
 
     /**
+     * Query for a {@link TestApp} by the crossProfile attribute.
+     */
+    public BooleanQuery<TestAppQueryBuilder> whereCrossProfile() {
+        return mCrossProfile;
+    }
+
+    /**
      * Query for an app which is a device admin.
      */
     public BooleanQuery<TestAppQueryBuilder> whereIsDeviceAdmin() {
@@ -235,6 +243,7 @@ public final class TestAppQueryBuilder implements Queryable {
                 && Queryable.isEmptyQuery(mServices)
                 && Queryable.isEmptyQuery(mPermissions)
                 && Queryable.isEmptyQuery(mTestOnly)
+                && Queryable.isEmptyQuery(mCrossProfile)
                 && Queryable.isEmptyQuery(mIsDeviceAdmin)
                 && Queryable.isEmptyQuery(mSharedUserId);
     }
@@ -283,6 +292,10 @@ public final class TestAppQueryBuilder implements Queryable {
             return false;
         }
 
+        if (!BooleanQueryHelper.matches(mCrossProfile, details.mApp.getCrossProfile())) {
+            return false;
+        }
+
         // TODO(b/198419895): Actually query for the correct receiver + metadata
         boolean isDeviceAdmin = details.mApp.getPackageName().contains(
                 "DeviceAdminTestApp");
@@ -325,6 +338,7 @@ public final class TestAppQueryBuilder implements Queryable {
                 mPermissions.describeQuery("permissions"),
                 mSharedUserId.describeQuery("sharedUserId"),
                 mTestOnly.describeQuery("testOnly"),
+                mCrossProfile.describeQuery("crossProfile"),
                 mIsDeviceAdmin.describeQuery("isDeviceAdmin")
         ) + "}";
     }

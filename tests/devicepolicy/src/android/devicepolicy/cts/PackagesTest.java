@@ -22,6 +22,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.util.Log;
+
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AfterClass;
@@ -37,6 +39,7 @@ import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.compatibility.common.util.ApiTest;
 
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
@@ -48,11 +51,18 @@ public final class PackagesTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final TestApp sTestApp = sDeviceState.testApps().any();
-    private static final TestAppInstance sTestAppInstance = sTestApp.install();
+    private static TestAppInstance sTestAppInstance = sTestApp.install();
 
     @AfterClass
     public static void teardownClass() {
         sTestAppInstance.uninstall();
+    }
+
+    @Before
+    public void setup() {
+        // TODO(279404339): For some reason this is sometimes uninstalled
+        sTestAppInstance =
+                sTestApp.install(TestApis.users().instrumented());
     }
 
     @CanSetPolicyTest(policy = SuspendPackage.class)
@@ -93,11 +103,22 @@ public final class PackagesTest {
     @CannotSetPolicyTest(policy = SuspendPackage.class)
     @Postsubmit(reason = "new test")
     public void setPackageSuspended_notAllowed_throwsException() {
-        assertThrows(SecurityException.class, () ->
+        try {
+            assertThrows(SecurityException.class, () ->
+                    sDeviceState.dpc().devicePolicyManager()
+                            .setPackagesSuspended(
+                                    sDeviceState.dpc().componentName(),
+                                    new String[]{sTestApp.packageName()}, true));
+        } finally {
+            try {
                 sDeviceState.dpc().devicePolicyManager()
                         .setPackagesSuspended(
                                 sDeviceState.dpc().componentName(),
-                                new String[]{sTestApp.packageName()}, true));
+                                new String[]{sTestApp.packageName()}, false);
+            } catch (SecurityException ex) {
+                // Expected
+            }
+        }
     }
 
     @CannotSetPolicyTest(policy = EnsureVerifyApps.class)

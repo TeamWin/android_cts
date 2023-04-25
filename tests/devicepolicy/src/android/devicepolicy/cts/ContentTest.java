@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static android.Manifest.permission.MANAGE_CONTENT_SUGGESTIONS;
+
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_CONTENT_CAPTURE;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_CONTENT_SUGGESTIONS;
 
@@ -30,6 +32,8 @@ import android.view.contentcapture.ContentCaptureManager;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasTestContentSuggestionsService;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireSystemServiceAvailable;
@@ -54,6 +58,9 @@ public final class ContentTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final Context sContext = TestApis.context().instrumentedContext();
+
+    private static final ContentSuggestionsManager sContentSuggestionsManager
+            = sContext.getSystemService(ContentSuggestionsManager.class);
 
     @CannotSetPolicyTest(policy = DisallowContentCapture.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
@@ -154,7 +161,6 @@ public final class ContentTest {
             assertThat(TestApis.devicePolicy().userRestrictions().isSet(DISALLOW_CONTENT_SUGGESTIONS))
                     .isFalse();
         } finally {
-
             sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
                     sDeviceState.dpc().componentName(), DISALLOW_CONTENT_SUGGESTIONS);
         }
@@ -165,9 +171,10 @@ public final class ContentTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONTENT_SUGGESTIONS")
     @RequireSystemServiceAvailable(ContentSuggestionsManager.class)
-    @Ignore // TODO(278998574): Restore and confirm expected behaviour
-    public void disallowContentSuggestionsIsNotSet_canGetContentSuggestionsManager() throws Exception {
-        assertThat(sContext.getSystemService(ContentSuggestionsManager.class)).isNotNull();
+    @EnsureHasTestContentSuggestionsService
+    @EnsureHasPermission(MANAGE_CONTENT_SUGGESTIONS)
+    public void isEnabled_disallowContentSuggestionsIsNotSet_isTrue() throws Exception {
+        assertThat(sContentSuggestionsManager.isEnabled()).isTrue();
     }
 
     @EnsureHasUserRestriction(DISALLOW_CONTENT_SUGGESTIONS)
@@ -175,11 +182,9 @@ public final class ContentTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_CONTENT_SUGGESTIONS")
     @RequireSystemServiceAvailable(ContentSuggestionsManager.class)
-    @Ignore // TODO(278998574): Restore and confirm expected behaviour
-    public void disallowContentSuggestionsIsSet_cannotGetContentSuggestionsManager() throws Exception {
-        assertThat(sContext.getSystemService(ContentSuggestionsManager.class)).isNull();
+    @EnsureHasTestContentSuggestionsService
+    @EnsureHasPermission(MANAGE_CONTENT_SUGGESTIONS)
+    public void isEnabled_disallowContentSuggestionsIsSet_isFalse() throws Exception {
+        assertThat(sContentSuggestionsManager.isEnabled()).isFalse();
     }
-
-    // TODO(278998574): Restore these tests, test this on a device which has these services
-    //  available, and ensure that the user restriction doesn't cause the later tests to be skipped
 }

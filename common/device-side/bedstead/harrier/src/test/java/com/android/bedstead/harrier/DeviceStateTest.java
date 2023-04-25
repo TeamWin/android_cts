@@ -16,6 +16,8 @@
 
 package com.android.bedstead.harrier;
 
+import com.android.bedstead.harrier.annotations.EnsureDefaultContentSuggestionsServiceEnabled;
+import com.android.bedstead.harrier.annotations.EnsureDefaultContentSuggestionsServiceDisabled;
 import static android.Manifest.permission.INTERACT_ACROSS_PROFILES;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.AppOpsManager.OPSTR_FINE_LOCATION;
@@ -51,6 +53,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
 import android.app.admin.DevicePolicyManager;
+import android.app.contentsuggestions.ContentSuggestionsManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.UserManager;
@@ -1604,4 +1607,33 @@ public class DeviceStateTest {
         assertThat(sDeviceState.testApp(MostRestrictiveCoexistenceTest.DPC_2)
                 .testApp().pkg().hasPermission(MANAGE_DEVICE_POLICY_BLUETOOTH)).isTrue();
     }
+
+    @RequireSystemServiceAvailable(ContentSuggestionsManager.class)
+    @EnsureDefaultContentSuggestionsServiceDisabled
+    @Test
+    public void ensureDefaultContentSuggestionsServiceDisabledAnnotation_defaultContentSuggestionsServiceIsDisabled() {
+        assertThat(TestApis.content().suggestions().defaultServiceEnabled()).isFalse();
+    }
+
+    @RequireSystemServiceAvailable(ContentSuggestionsManager.class)
+    @EnsureDefaultContentSuggestionsServiceEnabled
+    @Test
+    public void ensureDefaultContentSuggestionsServiceEnabledAnnotation_defaultContentSuggestionsServiceIsEnabled() {
+        assertThat(TestApis.content().suggestions().defaultServiceEnabled()).isTrue();
+    }
+
+    @EnsureHasAdditionalUser
+    @EnsureDefaultContentSuggestionsServiceDisabled(onUser = ADDITIONAL_USER)
+    @Test
+    public void ensureDefaultContentSuggestionsServiceDisabledAnnotation_onDifferentUser_defaultContentSuggestionsServiceIsDisabled() {
+        assertThat(TestApis.content().suggestions().defaultServiceEnabled(sDeviceState.additionalUser())).isFalse();
+    }
+
+    @EnsureHasAdditionalUser
+    @EnsureDefaultContentSuggestionsServiceEnabled(onUser = ADDITIONAL_USER)
+    @Test
+    public void ensureDefaultContentSuggestionsServiceEnabledAnnotation_onDifferentUser_defaultContentSuggestionsServiceIsEnabled() {
+        assertThat(TestApis.content().suggestions().defaultServiceEnabled(sDeviceState.additionalUser())).isTrue();
+    }
+
 }

@@ -43,6 +43,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.policies.CheckFinance;
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
@@ -124,7 +125,8 @@ public class CheckFinancedTest {
     @Test
     public void getFinancedDeviceKioskRoleHolder_isFinanced_returnsRoleHolder()
             throws ExecutionException, InterruptedException {
-        try (TestAppInstance testApp = sTestApp.install()) {
+        try (TestAppInstance testApp = sTestApp.install();
+             TestAppInstance testAppSystem = sTestApp.install(TestApis.users().system())) {
             setUpFinancedDeviceKioskRole(testApp.packageName());
             try (PermissionContextImpl p =
                          permissions().withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
@@ -198,6 +200,14 @@ public class CheckFinancedTest {
                     packageName,
                     MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
                     UserHandle.SYSTEM,
+                    sContext.getMainExecutor(),
+                    newRoleSetFuture::complete
+            );
+            sRoleManager.addRoleHolderAsUser(
+                    ROLE_FINANCED_DEVICE_KIOSK,
+                    packageName,
+                    MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
+                    TestApis.users().instrumented().userHandle(),
                     sContext.getMainExecutor(),
                     newRoleSetFuture::complete
             );

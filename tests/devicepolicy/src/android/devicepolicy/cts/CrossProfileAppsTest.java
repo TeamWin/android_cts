@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static android.content.Context.RECEIVER_EXPORTED;
+import static android.content.pm.CrossProfileApps.ACTION_CAN_INTERACT_ACROSS_PROFILES_CHANGED;
 import static android.provider.Settings.ACTION_MANAGE_CROSS_PROFILE_ACCESS;
 
 import static com.android.bedstead.harrier.UserType.ADDITIONAL_USER;
@@ -41,9 +43,11 @@ import android.app.admin.RemoteDevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.CrossProfileApps;
 import android.os.UserHandle;
 import android.stats.devicepolicy.EventId;
+import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -69,6 +73,7 @@ import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.activities.ActivityEvents;
 
@@ -94,6 +99,8 @@ public final class CrossProfileAppsTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final TestApp sCrossProfileTestApp = sDeviceState.testApps().query()
+            .whereCrossProfile().isTrue()
+            // TODO: Add query for a receiver for ACTION_CAN_INTERACT_ACROSS_PROFILES_CHANGED
             .wherePermissions().contains("android.permission.INTERACT_ACROSS_PROFILES").get();
     private static final TestApp sNonCrossProfileTestApp = sDeviceState.testApps().query()
             .wherePermissions().doesNotContain("android.permission.INTERACT_ACROSS_PROFILES").get();
@@ -903,6 +910,31 @@ public final class CrossProfileAppsTest {
             assertThat(intent.getAction()).isEqualTo(ACTION_MANAGE_CROSS_PROFILE_ACCESS);
             assertThat(intent.getData().getSchemeSpecificPart())
                     .isEqualTo(sCrossProfileTestApp.packageName());
+        }
+    }
+
+    @Test
+    @RequireRunOnWorkProfile
+    public void setCrossProfilePackages_packageRemoved_packageReceivesBroadcast() {
+        try (TestAppInstance parentTestApp = sCrossProfileTestApp.install(TestApis.users().instrumented().parent());
+            TestAppInstance workTestApp = sCrossProfileTestApp.install()) {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setCrossProfilePackages(
+                            sDeviceState.dpc().componentName(), Set.of(sCrossProfileTestApp.packageName()));
+            parentTestApp.appOps().setPermission(INTERACT_ACROSS_PROFILES, AppOpsMode.ALLOWED);
+            workTestApp.appOps().setPermission(INTERACT_ACROSS_PROFILES, AppOpsMode.ALLOWED);
+            EventLogs.resetLogs(); // Ignore any broadcasts related to setting the appOps
+
+            sDeviceState.dpc().devicePolicyManager()
+                    .setCrossProfilePackages(
+                            sDeviceState.dpc().componentName(), Set.of());
+
+            assertThat(parentTestApp.events().broadcastReceived()
+                    .whereIntent().action().isEqualTo(ACTION_CAN_INTERACT_ACROSS_PROFILES_CHANGED))
+                    .eventOccurred();
+            assertThat(workTestApp.events().broadcastReceived()
+                    .whereIntent().action().isEqualTo(ACTION_CAN_INTERACT_ACROSS_PROFILES_CHANGED))
+                    .eventOccurred();
         }
     }
 }
