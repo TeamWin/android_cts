@@ -706,18 +706,14 @@ public class BleCocClientService extends Service {
                 switch (state) {
                     case BluetoothDevice.BOND_BONDED:
                         if (mBluetoothGatt == null) {
-                            if(mDevice != null && mDevice.equals(device)) {
-                                if (DEBUG) {
-                                    Log.d(TAG, "onReceive:BOND_BONDED: calling connectGatt. device="
-                                             + device + ", mSecure=" + mSecure);
-                                }
-                                mBluetoothGatt = connectGatt(device, BleCocClientService.this, false, mSecure,
-                                                         mGattCallbacks);
-                            } else {
-                                if (DEBUG) {
-                                    Log.d(TAG, "Another device bonded, device= " + device);
-                                }
+                            if (DEBUG) {
+                                Log.d(TAG, "onReceive:BOND_BONDED: calling connectGatt. device="
+                                             + device + ", mSecure=" + mSecure
+                                             + ", mDevice=" + mDevice);
                             }
+                            mDevice = device;
+                            mBluetoothGatt = connectGatt(mDevice, BleCocClientService.this, false,
+                                                         mSecure, mGattCallbacks);
                         }
                         break;
                     case BluetoothDevice.BOND_NONE:
