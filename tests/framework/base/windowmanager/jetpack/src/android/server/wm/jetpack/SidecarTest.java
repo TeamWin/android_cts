@@ -39,7 +39,6 @@ import android.server.wm.jetpack.utils.TestGetWindowLayoutInfoActivity;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.window.sidecar.SidecarDeviceState;
 import androidx.window.sidecar.SidecarDisplayFeature;
@@ -92,7 +91,6 @@ public class SidecarTest extends WindowManagerJetpackTestBase {
     /**
      * Test adding and removing a sidecar interface window layout change listener.
      */
-    @FlakyTest(bugId = 206697963)
     @Test
     public void testSidecarInterface_onWindowLayoutChangeListener() {
         // Set activity to portrait
