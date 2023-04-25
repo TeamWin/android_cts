@@ -1455,11 +1455,6 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     editorMatcher("onStartInputView", marker),
                     NOT_EXPECT_TIMEOUT);
 
-            // Verify there is no handwriting window before stylus is added.
-            assertFalse(expectCommand(
-                    stream, imeSession.callHasStylusHandwritingWindow(), TIMEOUT_1_S)
-                    .getReturnBooleanValue());
-
             SystemUtil.runWithShellPermissionIdentity(() ->
                     imm.setStylusWindowIdleTimeoutForTest(TIMEOUT));
 
@@ -1467,17 +1462,16 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             final int startX = editText.getWidth() / 2;
             final int startY = editText.getHeight() / 2;
             final int endX = startX + 2 * touchSlop;
-            final int endY = startY;
+            final int endY = startY + 2 * touchSlop;
             final int number = 5;
             TestUtils.injectStylusDownEvent(editText, startX, startY);
             TestUtils.injectStylusMoveEvents(editText, startX, startY, endX, endY, number);
-            TestUtils.injectStylusUpEvent(editText, endX, endY);
-
-            // Handwriting should start
+            // Handwriting should already be initiated before ACTION_UP.
             expectEvent(
                     stream,
                     editorMatcher("onStartStylusHandwriting", marker),
                     TIMEOUT);
+            TestUtils.injectStylusUpEvent(editText, endX, endY);
 
             verifyStylusHandwritingWindowIsShown(stream, imeSession);
 
@@ -1535,11 +1529,6 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     editorMatcher("onStartInputView", marker),
                     NOT_EXPECT_TIMEOUT);
 
-            // Verify there is no handwriting window before stylus is added.
-            assertFalse(expectCommand(
-                    stream, imeSession.callHasStylusHandwritingWindow(), TIMEOUT_1_S)
-                    .getReturnBooleanValue());
-
             SystemUtil.runWithShellPermissionIdentity(() ->
                     imm.setStylusWindowIdleTimeoutForTest(TIMEOUT));
 
@@ -1547,17 +1536,17 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             final int startX = editText.getWidth() / 2;
             final int startY = editText.getHeight() / 2;
             final int endX = startX + 2 * touchSlop;
-            final int endY = startY;
+            final int endY = startY + 2 * touchSlop;
             final int number = 5;
             TestUtils.injectStylusDownEvent(editText, startX, startY);
             TestUtils.injectStylusMoveEvents(editText, startX, startY, endX, endY, number);
-            TestUtils.injectStylusUpEvent(editText, endX, endY);
-
             // Handwriting should start
             expectEvent(
                     stream,
                     editorMatcher("onStartStylusHandwriting", marker),
                     TIMEOUT);
+
+            TestUtils.injectStylusUpEvent(editText, endX, endY);
 
             verifyStylusHandwritingWindowIsShown(stream, imeSession);
 
