@@ -41,7 +41,6 @@ import android.view.WindowMetrics;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 import androidx.window.extensions.embedding.ActivityEmbeddingComponent;
 import androidx.window.extensions.embedding.SplitPlaceholderRule;
 
@@ -218,7 +217,6 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
      * Tests that when the task width is increased to a width large enough to support a placeholder,
      * then a placeholder activity is launched.
      */
-    @FlakyTest(bugId = 271093500)
     @Test
     public void testPlaceholderLaunchedWhenTaskWidthIncreased() {
         try (RotationSession rotationSession = new RotationSession()) {
