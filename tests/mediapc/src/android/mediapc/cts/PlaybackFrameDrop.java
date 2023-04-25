@@ -140,6 +140,13 @@ public class PlaybackFrameDrop extends CodecDecoderTestBase {
 
     public int getFrameDropCount() throws Exception {
         ArrayList<MediaFormat> formats = setUpSourceFiles();
+
+        // If the decoder doesn't support the formats, then return Integer.MAX_VALUE to indicate
+        // that all frames were dropped
+        if (!areFormatsSupported(mDecoderName, formats)) {
+            return Integer.MAX_VALUE;
+        }
+
         mCodec = MediaCodec.createByCodecName(mDecoderName);
         configureCodec(formats.get(0), mIsAsync, false, false);
         mCodec.start();
