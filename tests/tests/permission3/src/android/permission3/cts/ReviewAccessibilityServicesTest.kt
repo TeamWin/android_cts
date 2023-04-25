@@ -34,7 +34,6 @@ import com.android.compatibility.common.util.UiAutomatorUtils2.waitFindObjectOrN
 import java.util.regex.Pattern
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -65,15 +64,9 @@ class ReviewAccessibilityServicesTest {
             UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES
     }
 
-    @Before
-    fun setup() {
-        InstrumentedAccessibilityService.disableAllServices()
-    }
-
     @After
     fun cleanUp() {
         uiDevice.pressHome()
-        InstrumentedAccessibilityService.disableAllServices()
     }
 
     @Test
