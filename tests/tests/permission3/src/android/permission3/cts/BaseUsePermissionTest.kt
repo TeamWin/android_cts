@@ -22,6 +22,7 @@ import android.app.Instrumentation
 import android.content.ComponentName
 import android.content.Intent
 import android.content.Intent.ACTION_REVIEW_APP_DATA_SHARING_UPDATES
+import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -776,6 +777,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                     putExtra(Intent.EXTRA_PERMISSION_NAME, permission)
                     putExtra(Intent.EXTRA_USER, Process.myUserHandle())
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 })
         }
     }
@@ -829,6 +831,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                             putExtra(Intent.EXTRA_PERMISSION_NAME, permission)
                             putExtra(Intent.EXTRA_USER, Process.myUserHandle())
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                         })
                 }
             }
