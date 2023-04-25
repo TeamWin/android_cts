@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.assertEquals;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -1337,9 +1338,17 @@ public class AtomTests {
     public void testMediaDrmAtoms() throws Exception {
         UUID clearKeyUuid = new UUID(0xe2719d58a985b3c9L, 0x781ab030af78d30eL);
         byte[] sid = null;
+        final int OEM_ERROR = 123;
+        final int ERROR_CONTEXT = 456;
+        final int ANDROID_U = 14;
         try (MediaDrm drm = new MediaDrm(clearKeyUuid)) {
-            drm.setPropertyString("drmErrorTest", "lostState");
+            if (getClearkeyVersionInt(drm) >= ANDROID_U) {
+                drm.setPropertyString("oemError", Integer.toString(OEM_ERROR));
+                drm.setPropertyString("errorContext", Integer.toString(ERROR_CONTEXT));
+            }
             for (int i = 0; i < 2; i++) {
+                // Mock error is set per-session
+                drm.setPropertyString("drmErrorTest", "lostState");
                 sid = drm.openSession();
                 Assert.assertNotNull("null session id", sid);
                 try {
@@ -1348,6 +1357,14 @@ public class AtomTests {
                     Log.d(TAG, "expected for lost state");
                 }
             }
+        }
+    }
+
+    private int getClearkeyVersionInt(MediaDrm drm) {
+        try {
+            return Integer.parseInt(drm.getPropertyString("version"));
+        } catch (Exception e) {
+            return Integer.MIN_VALUE;
         }
     }
 }
