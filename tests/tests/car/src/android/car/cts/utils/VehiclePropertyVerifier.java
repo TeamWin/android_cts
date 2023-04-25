@@ -32,6 +32,7 @@ import android.car.VehicleAreaWheel;
 import android.car.VehicleAreaWindow;
 import android.car.VehiclePropertyIds;
 import android.car.VehiclePropertyType;
+import android.car.hardware.CarHvacFanDirection;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.AreaIdConfig;
@@ -765,7 +766,9 @@ public class VehiclePropertyVerifier<T> {
             int[] availableHvacFanDirections = mCarPropertyManager.getIntArrayProperty(
                         VehiclePropertyIds.HVAC_FAN_DIRECTION_AVAILABLE, areaId);
             for (int i = 0; i < availableHvacFanDirections.length; i++) {
-                possibleValues.add(availableHvacFanDirections[i]);
+                if (availableHvacFanDirections[i] != CarHvacFanDirection.UNKNOWN) {
+                    possibleValues.add(availableHvacFanDirections[i]);
+                }
             }
             return possibleValues;
         }
