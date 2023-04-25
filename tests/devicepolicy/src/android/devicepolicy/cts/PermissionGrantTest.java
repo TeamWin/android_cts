@@ -46,6 +46,8 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
+import android.util.Log;
+
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AfterClass;
@@ -78,6 +80,7 @@ import com.android.bedstead.testapp.TestAppInstance;
 import com.android.queryable.annotations.IntegerQuery;
 import com.android.queryable.annotations.Query;
 
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -166,6 +169,13 @@ public final class PermissionGrantTest {
             .whereActivities().isNotEmpty().get();
     private static TestAppInstance sTestAppInstance =
             sTestApp.install(TestApis.users().instrumented());
+
+    @Before
+    public void setup() {
+        // TODO(279404339): For some reason this is sometimes uninstalled
+        sTestAppInstance =
+                sTestApp.install(TestApis.users().instrumented());
+    }
 
     @AfterClass
     public static void teardownClass() {

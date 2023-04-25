@@ -148,6 +148,16 @@ public final class TestAppAppComponentFactory extends AppComponentFactory {
                         classLoader,
                         TestAppAccountAuthenticatorService.class.getName(),
                         intent);
+            } else if (className.endsWith("ContentSuggestionsService")) {
+                Log.d(LOG_TAG, "Service class (" + className
+                        + ") not found, routing to BaseTestAppContentSuggestionsService");
+                BaseTestAppContentSuggestionsService service =
+                        (BaseTestAppContentSuggestionsService) super.instantiateService(
+                        classLoader,
+                        BaseTestAppContentSuggestionsService.class.getName(),
+                        intent);
+                service.setOverrideServiceClassName(className);
+                return service;
             }
 
             if (className.endsWith("CredentialProviderService")) {

@@ -51,6 +51,7 @@ import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -170,6 +171,9 @@ public final class CameraTest {
     @CanSetPolicyTest(policy = CameraPolicy.class)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
     public void openCamera_cameraEnabled_successful() throws Exception {
+        Assume.assumeTrue("Need to be foreground to access camera",
+                TestApis.users().instrumented().isForeground());
+
         sDeviceState.dpc().devicePolicyManager()
                 .setCameraDisabled(sDeviceState.dpc().componentName(), false);
 
@@ -187,6 +191,9 @@ public final class CameraTest {
     @CanSetPolicyTest(policy = CameraPolicy.class)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
     public void openCamera_cameraDisabled_unsuccessful() throws Exception {
+        Assume.assumeTrue("Need to be foreground to access camera",
+                TestApis.users().instrumented().isForeground());
+
         try {
             sDeviceState.dpc().devicePolicyManager()
                     .setCameraDisabled(sDeviceState.dpc().componentName(), true);
