@@ -16,13 +16,10 @@
 
 package android.sdksandbox.webkit.cts;
 
-import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -30,250 +27,250 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxWebSettingsTest {
     @ClassRule
-    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
-            new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
-
-    @Rule
-    public final WebViewSandboxTestRule sdkTester =
+    public static final WebViewSandboxTestRule sSdkTestSuiteSetup =
             new WebViewSandboxTestRule("android.webkit.cts.WebSettingsTest");
 
     @Test
-    public void testUserAgentString_default() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testUserAgentString_default");
+    public void testUserAgentString_default() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testUserAgentString_default");
     }
 
     @Test
-    public void testUserAgentStringTest() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testUserAgentStringTest");
+    public void testUserAgentStringTest() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testUserAgentStringTest");
     }
 
     @Test
-    public void testAccessUserAgentString() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessUserAgentString");
+    public void testAccessUserAgentString() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessUserAgentString");
     }
 
     @Test
-    public void testAccessCacheMode_defaultValue() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessCacheMode_defaultValue");
+    public void testAccessCacheMode_defaultValue() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessCacheMode_defaultValue");
     }
 
     @Test
-    public void testAccessCacheMode_cacheElseNetwork() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessCacheMode_cacheElseNetwork");
+    public void testAccessCacheMode_cacheElseNetwork() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessCacheMode_cacheElseNetwork");
     }
 
     @Test
-    public void testAccessCacheMode_noCache() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessCacheMode_noCache");
+    public void testAccessCacheMode_noCache() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessCacheMode_noCache");
     }
 
     @Test
-    public void testAccessCacheMode_cacheOnly() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessCacheMode_cacheOnly");
+    public void testAccessCacheMode_cacheOnly() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessCacheMode_cacheOnly");
     }
 
     @Test
-    public void testAccessCursiveFontFamily() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessCursiveFontFamily");
+    public void testAccessCursiveFontFamily() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessCursiveFontFamily");
     }
 
     @Test
-    public void testAccessFantasyFontFamily() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessFantasyFontFamily");
+    public void testAccessFantasyFontFamily() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessFantasyFontFamily");
     }
 
     @Test
-    public void testAccessFixedFontFamily() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessFixedFontFamily");
+    public void testAccessFixedFontFamily() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessFixedFontFamily");
     }
 
     @Test
-    public void testAccessSansSerifFontFamily() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessSansSerifFontFamily");
+    public void testAccessSansSerifFontFamily() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessSansSerifFontFamily");
     }
 
     @Test
-    public void testAccessSerifFontFamily() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessSerifFontFamily");
+    public void testAccessSerifFontFamily() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessSerifFontFamily");
     }
 
     @Test
-    public void testAccessStandardFontFamily() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessStandardFontFamily");
+    public void testAccessStandardFontFamily() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessStandardFontFamily");
     }
 
     @Test
-    public void testAccessDefaultFontSize() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessDefaultFontSize");
+    public void testAccessDefaultFontSize() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessDefaultFontSize");
     }
 
     @Test
-    public void testAccessDefaultFixedFontSize() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessDefaultFixedFontSize");
+    public void testAccessDefaultFixedFontSize() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessDefaultFixedFontSize");
     }
 
     @Test
-    public void testAccessDefaultTextEncodingName() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessDefaultTextEncodingName");
+    public void testAccessDefaultTextEncodingName() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessDefaultTextEncodingName");
     }
 
     @Test
-    public void testAccessJavaScriptCanOpenWindowsAutomatically() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessJavaScriptCanOpenWindowsAutomatically");
+    public void testAccessJavaScriptCanOpenWindowsAutomatically() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses(
+                "testAccessJavaScriptCanOpenWindowsAutomatically");
     }
 
     @Test
-    public void testAccessJavaScriptEnabled() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessJavaScriptEnabled");
+    public void testAccessJavaScriptEnabled() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessJavaScriptEnabled");
     }
 
     @Test
-    public void testAccessLayoutAlgorithm() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessLayoutAlgorithm");
+    public void testAccessLayoutAlgorithm() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessLayoutAlgorithm");
     }
 
     @Test
-    public void testAccessMinimumFontSize() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessMinimumFontSize");
+    public void testAccessMinimumFontSize() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessMinimumFontSize");
     }
 
     @Test
-    public void testAccessMinimumLogicalFontSize() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessMinimumLogicalFontSize");
+    public void testAccessMinimumLogicalFontSize() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessMinimumLogicalFontSize");
     }
 
     @Test
-    public void testAccessPluginsEnabled() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessPluginsEnabled");
+    public void testAccessPluginsEnabled() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessPluginsEnabled");
     }
 
     @Test
-    public void testOffscreenPreRaster() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOffscreenPreRaster");
+    public void testOffscreenPreRaster() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOffscreenPreRaster");
     }
 
     @Test
-    public void testAccessPluginsPath() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessPluginsPath");
+    public void testAccessPluginsPath() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessPluginsPath");
     }
 
     @Test
-    public void testAccessTextSize() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessTextSize");
+    public void testAccessTextSize() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessTextSize");
     }
 
     @Test
-    public void testAccessUseDoubleTree() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessUseDoubleTree");
+    public void testAccessUseDoubleTree() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessUseDoubleTree");
     }
 
     @Test
-    public void testAccessUseWideViewPort() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessUseWideViewPort");
+    public void testAccessUseWideViewPort() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessUseWideViewPort");
     }
 
     @Test
-    public void testSetNeedInitialFocus() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testSetNeedInitialFocus");
+    public void testSetNeedInitialFocus() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testSetNeedInitialFocus");
     }
 
     @Test
-    public void testSetRenderPriority() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testSetRenderPriority");
+    public void testSetRenderPriority() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testSetRenderPriority");
     }
 
     @Test
-    public void testAccessSupportMultipleWindows() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessSupportMultipleWindows");
+    public void testAccessSupportMultipleWindows() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessSupportMultipleWindows");
     }
 
     @Test
-    public void testAccessSupportZoom() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessSupportZoom");
+    public void testAccessSupportZoom() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessSupportZoom");
     }
 
     @Test
-    public void testAccessBuiltInZoomControls() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAccessBuiltInZoomControls");
+    public void testAccessBuiltInZoomControls() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAccessBuiltInZoomControls");
     }
 
     @Test
-    public void testAppCacheDisabled() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAppCacheDisabled");
+    public void testAppCacheDisabled() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAppCacheDisabled");
     }
 
     @Test
-    public void testAppCacheEnabled() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAppCacheEnabled");
+    public void testAppCacheEnabled() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAppCacheEnabled");
     }
 
     @Test
-    public void testDatabaseDisabled() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testDatabaseDisabled");
+    public void testDatabaseDisabled() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testDatabaseDisabled");
     }
 
     @Test
-    public void testDisabledActionModeMenuItems() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testDisabledActionModeMenuItems");
+    public void testDisabledActionModeMenuItems() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testDisabledActionModeMenuItems");
     }
 
     @Test
-    public void testLoadsImagesAutomatically_default() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testLoadsImagesAutomatically_default");
+    public void testLoadsImagesAutomatically_default() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testLoadsImagesAutomatically_default");
     }
 
     @Test
-    public void testLoadsImagesAutomatically_httpImagesLoaded() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testLoadsImagesAutomatically_httpImagesLoaded");
+    public void testLoadsImagesAutomatically_httpImagesLoaded() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testLoadsImagesAutomatically_httpImagesLoaded");
     }
 
     @Test
-    public void testLoadsImagesAutomatically_dataUriImagesLoaded() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testLoadsImagesAutomatically_dataUriImagesLoaded");
+    public void testLoadsImagesAutomatically_dataUriImagesLoaded() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses(
+                "testLoadsImagesAutomatically_dataUriImagesLoaded");
     }
 
     @Test
-    public void testLoadsImagesAutomatically_blockLoadingImages() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testLoadsImagesAutomatically_blockLoadingImages");
+    public void testLoadsImagesAutomatically_blockLoadingImages() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses(
+                "testLoadsImagesAutomatically_blockLoadingImages");
     }
 
     @Test
-    public void testLoadsImagesAutomatically_loadImagesWithoutReload() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testLoadsImagesAutomatically_loadImagesWithoutReload");
+    public void testLoadsImagesAutomatically_loadImagesWithoutReload() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses(
+                "testLoadsImagesAutomatically_loadImagesWithoutReload");
     }
 
     @Test
-    public void testBlockNetworkImage() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testBlockNetworkImage");
+    public void testBlockNetworkImage() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testBlockNetworkImage");
     }
 
     @Test
-    public void testBlockNetworkLoads() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testBlockNetworkLoads");
+    public void testBlockNetworkLoads() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testBlockNetworkLoads");
     }
 
     @Test
-    public void testIframesWhenAccessFromFileURLsDisabled() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testIframesWhenAccessFromFileURLsDisabled");
+    public void testIframesWhenAccessFromFileURLsDisabled() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIframesWhenAccessFromFileURLsDisabled");
     }
 
     @Test
-    public void testXHRWhenAccessFromFileURLsEnabled() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testXHRWhenAccessFromFileURLsEnabled");
+    public void testXHRWhenAccessFromFileURLsEnabled() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testXHRWhenAccessFromFileURLsEnabled");
     }
 
     @Test
-    public void testXHRWhenAccessFromFileURLsDisabled() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testXHRWhenAccessFromFileURLsDisabled");
+    public void testXHRWhenAccessFromFileURLsDisabled() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testXHRWhenAccessFromFileURLsDisabled");
     }
 
     @Test
-    public void testAllowMixedMode() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testAllowMixedMode");
+    public void testAllowMixedMode() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAllowMixedMode");
     }
 
     @Test
-    public void testEnableSafeBrowsing() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testEnableSafeBrowsing");
+    public void testEnableSafeBrowsing() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testEnableSafeBrowsing");
     }
 }
