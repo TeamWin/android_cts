@@ -59,7 +59,6 @@ import android.view.WindowManager;
 import android.view.WindowMetrics;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.window.extensions.layout.DisplayFeature;
 import androidx.window.extensions.layout.FoldingFeature;
@@ -405,7 +404,6 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
      * trigger rotations with a full screen activity on one Display Area, verify that
      * WindowLayoutInfo from both Activity and WindowContext are updated with callbacks.
      */
-    @FlakyTest(bugId = 254056760)
     @Test
     @ApiTest(apis = {
             "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener",
