@@ -16,14 +16,12 @@
 
 package android.sdksandbox.webkit.cts;
 
-import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -31,95 +29,93 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxWebViewSslTest {
     @ClassRule
-    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
-            new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
-
-    @Rule
-    public final WebViewSandboxTestRule sdkTester =
+    public static final WebViewSandboxTestRule sSdkTestSuiteSetup =
             new WebViewSandboxTestRule("android.webkit.cts.WebViewSslTest");
 
     @Test
     @MediumTest
-    public void testInsecureSiteClearsCertificate() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testInsecureSiteClearsCertificate");
+    public void testInsecureSiteClearsCertificate() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testInsecureSiteClearsCertificate");
     }
 
     @Test
     @MediumTest
-    public void testSecureSiteSetsCertificate() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testSecureSiteSetsCertificate");
+    public void testSecureSiteSetsCertificate() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testSecureSiteSetsCertificate");
     }
 
     @Test
     @MediumTest
-    public void testClearSslPreferences() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testClearSslPreferences");
+    public void testClearSslPreferences() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testClearSslPreferences");
     }
 
     @Test
     @MediumTest
-    public void testOnReceivedSslError() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnReceivedSslError");
+    public void testOnReceivedSslError() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnReceivedSslError");
     }
 
     @Test
     @MediumTest
-    public void testOnReceivedSslErrorProceed() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnReceivedSslErrorProceed");
+    public void testOnReceivedSslErrorProceed() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnReceivedSslErrorProceed");
     }
 
     @Test
     @MediumTest
-    public void testOnReceivedSslErrorCancel() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnReceivedSslErrorCancel");
+    public void testOnReceivedSslErrorCancel() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnReceivedSslErrorCancel");
     }
 
     @Test
     @MediumTest
-    public void testSslErrorProceedResponseReusedForSameHost() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testSslErrorProceedResponseReusedForSameHost");
+    public void testSslErrorProceedResponseReusedForSameHost() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testSslErrorProceedResponseReusedForSameHost");
     }
 
     @Test
     @MediumTest
-    public void testSslErrorProceedResponseNotReusedForDifferentHost() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testSslErrorProceedResponseNotReusedForDifferentHost");
+    public void testSslErrorProceedResponseNotReusedForDifferentHost() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses(
+                "testSslErrorProceedResponseNotReusedForDifferentHost");
     }
 
     @Test
     @MediumTest
-    public void testSecureServerRequestingClientCertDoesNotCancelRequest() throws Exception {
-        sdkTester.assertSdkTestRunPasses(
+    public void testSecureServerRequestingClientCertDoesNotCancelRequest() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses(
                 "testSecureServerRequestingClientCertDoesNotCancelRequest");
     }
 
     @Test
     @MediumTest
-    public void testSecureServerRequiringClientCertDoesCancelRequest() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testSecureServerRequiringClientCertDoesCancelRequest");
+    public void testSecureServerRequiringClientCertDoesCancelRequest() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses(
+                "testSecureServerRequiringClientCertDoesCancelRequest");
     }
 
     @Test
     @MediumTest
-    public void testProceedClientCertRequest() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testProceedClientCertRequest");
+    public void testProceedClientCertRequest() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testProceedClientCertRequest");
     }
 
     @Test
     @MediumTest
-    public void testIgnoreClientCertRequest() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testIgnoreClientCertRequest");
+    public void testIgnoreClientCertRequest() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIgnoreClientCertRequest");
     }
 
     @Test
     @MediumTest
-    public void testCancelClientCertRequest() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testCancelClientCertRequest");
+    public void testCancelClientCertRequest() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testCancelClientCertRequest");
     }
 
     @Test
     @MediumTest
-    public void testClientCertIssuersReceivedCorrectly() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testClientCertIssuersReceivedCorrectly");
+    public void testClientCertIssuersReceivedCorrectly() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testClientCertIssuersReceivedCorrectly");
     }
 }
