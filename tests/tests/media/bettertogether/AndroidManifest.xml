@@ -88,6 +88,12 @@
         <service android:name=".MediaSessionTestService"
              android:process=":mediaSessionTestService"/>
         <receiver android:name="android.media.bettertogether.cts.MediaButtonBroadcastReceiver"/>
+        <service android:name="android.media.bettertogether.cts.PlaceholderService"
+                 android:exported="false">
+            <intent-filter>
+                <action android:name="android.media.action.TRANSFER_MEDIA"/>
+            </intent-filter>
+        </service>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

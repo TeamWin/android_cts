@@ -38,6 +38,7 @@ import static org.junit.Assert.assertThrows;
 
 import android.Manifest;
 import android.annotation.NonNull;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -50,6 +51,7 @@ import android.media.MediaRouter2.RouteCallback;
 import android.media.MediaRouter2.RoutingController;
 import android.media.MediaRouter2.TransferCallback;
 import android.media.RouteDiscoveryPreference;
+import android.media.RouteListingPreference;
 import android.media.RoutingSessionInfo;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
@@ -67,6 +69,7 @@ import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -1123,6 +1126,43 @@ public class MediaRouter2Test {
                 new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
 
         assertThat(isDialogShown).isTrue();
+    }
+
+    @Test
+    public void setRouteListingPreference_withIllegalPackageName_throws() {
+        // Package name does not belong to caller.
+        Assert.assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        setRouteListingPreferenceWithComponentName(
+                                new ComponentName(
+                                        /* package= */ "android",
+                                        /* class= */ getClass().getCanonicalName())));
+    }
+
+    @Test
+    public void setRouteListingPreference_withInvalidClassName_throws() {
+        Assert.assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        setRouteListingPreferenceWithComponentName(
+                                new ComponentName(mContext.getPackageName(), "invalidClassName")));
+    }
+
+    @Test
+    public void setRouteListingPreference_withServiceComponentName_throws() {
+        Assert.assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        setRouteListingPreferenceWithComponentName(
+                                new ComponentName(mContext, PlaceholderService.class)));
+    }
+
+    private void setRouteListingPreferenceWithComponentName(ComponentName componentName) {
+        mRouter2.setRouteListingPreference(
+                new RouteListingPreference.Builder()
+                        .setLinkedItemComponentName(componentName)
+                        .build());
     }
 
     // Helper for getting routes easily. Uses original ID as a key
