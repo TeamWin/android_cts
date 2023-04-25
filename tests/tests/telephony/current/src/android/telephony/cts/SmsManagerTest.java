@@ -564,13 +564,6 @@ public class SmsManagerTest {
 
     @Test
     public void testSmsBlocking_userNotAllowed() throws Exception {
-        // Do not test if the feature is not enabled.
-        if (!ShellIdentityUtils.invokeStaticMethodWithShellPermissions(
-                () -> DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_TELEPHONY,
-                        "enable_work_profile_telephony", false))) {
-            return;
-        }
-
         assertFalse("[RERUN] SIM card does not provide phone number. "
                         + "Use a suitable SIM Card.", TextUtils.isEmpty(mDestAddr));
 
