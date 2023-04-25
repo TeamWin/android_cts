@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
- * Copyright (C) 2018 The Android Open Source Project
+/*
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
--->
+ */
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.devicepolicy.printingapp" >
+package com.android.bedstead.nene.content;
 
-    <application>
-        <activity android:name=".PrintActivity" android:exported="true" />
-    </application>
+/** Helper method for content suggestions, etc. */
+public final class Content {
+    public static final Content sInstance = new Content();
 
-</manifest>
+    private Content() {
+
+    }
+
+    /** Access Test APIs related to Content Suggestions. */
+    public Suggestions suggestions() {
+        return Suggestions.sInstance;
+    }
+
+}

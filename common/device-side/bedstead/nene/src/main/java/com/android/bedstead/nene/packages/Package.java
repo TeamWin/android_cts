@@ -305,7 +305,9 @@ public final class Package {
     @Experimental
     public Package disable(UserReference user) {
         try {
-            ShellCommand.builderForUser(user, "pm disable")
+            // TODO(279387509): "pm disable" is currently broken for packages - restore to normal
+            //  disable when fixed
+            ShellCommand.builderForUser(user, "pm disable-user")
                     .addOperand(mPackageName)
                     .validate(o -> o.contains("new state"))
                     .execute();

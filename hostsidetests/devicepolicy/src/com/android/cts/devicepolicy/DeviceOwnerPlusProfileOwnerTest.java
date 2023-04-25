@@ -194,7 +194,7 @@ public final class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest 
         runDeviceTestsAsUser(
                 COMP_DPC_PKG,
                 BIND_DEVICE_ADMIN_SERVICE_GOOD_SETUP_TEST,
-                mPrimaryUserId);
+                mDeviceOwnerUserId);
         // Testing profile owner -> device owner.
         runDeviceTestsAsUser(
                 COMP_DPC_PKG,

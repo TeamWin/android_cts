@@ -45,6 +45,12 @@ public final class AppOps {
         this.mUser = user;
     }
 
+    /** Set an AppOp for the given permission. */
+    @Experimental
+    public void setPermission(String permissionName, AppOpsMode mode) {
+        set(AppOpsManager.permissionToOp(permissionName), mode);
+    }
+
     /** Set an AppOp for the given package. */
     public void set(String appOpName, AppOpsMode mode) {
         try (PermissionContext p = TestApis.permissions().withPermission(MANAGE_APP_OPS_MODES)) {

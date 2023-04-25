@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.eventlib.events.activities.ActivityEvents;
@@ -58,6 +59,11 @@ public abstract class TestAppActivityReference {
      * Starts the activity.
      */
     public com.android.bedstead.nene.activities.Activity<TestAppActivity> start() {
+        if (!mInstance.user().canShowActivities()) {
+            throw new NeneException("Attempting to start activity " + this
+                    + " on user which cannot show activities " + mInstance.user());
+        }
+
         Intent intent = new Intent();
         intent.setComponent(mComponent.componentName());
         intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);

@@ -17,7 +17,6 @@
 package com.android.bedstead.harrier;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
-import static android.Manifest.permission.MANAGE_DEVICE_POLICY_TIME;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.os.Build.VERSION.SDK_INT;
 
@@ -61,6 +60,8 @@ import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
 import com.android.bedstead.harrier.annotations.EnsureCanAddUser;
 import com.android.bedstead.harrier.annotations.EnsureCanGetPermission;
+import com.android.bedstead.harrier.annotations.EnsureDefaultContentSuggestionsServiceDisabled;
+import com.android.bedstead.harrier.annotations.EnsureDefaultContentSuggestionsServiceEnabled;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
@@ -76,6 +77,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasTestContentSuggestionsService;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
@@ -149,6 +151,7 @@ import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.flags.Flags;
 import com.android.bedstead.nene.logcat.SystemServerException;
+import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
@@ -509,6 +512,39 @@ public final class DeviceState extends HarrierRule {
                 ensureHasUser(
                         ensureHasUserAnnotation.value(), installInstrumentedApp,
                         switchedToUser);
+                continue;
+            }
+
+            if (annotation instanceof EnsureDefaultContentSuggestionsServiceEnabled) {
+                EnsureDefaultContentSuggestionsServiceEnabled
+                        ensureDefaultContentSuggestionsServiceEnabledAnnotation =
+                        (EnsureDefaultContentSuggestionsServiceEnabled) annotation;
+
+                ensureDefaultContentSuggestionsServiceEnabled(
+                        ensureDefaultContentSuggestionsServiceEnabledAnnotation.onUser(),
+                        /* enabled= */ true
+                );
+                continue;
+            }
+
+            if (annotation instanceof EnsureDefaultContentSuggestionsServiceDisabled) {
+                EnsureDefaultContentSuggestionsServiceDisabled
+                        ensureDefaultContentSuggestionsServiceDisabledAnnotation =
+                        (EnsureDefaultContentSuggestionsServiceDisabled) annotation;
+
+                ensureDefaultContentSuggestionsServiceEnabled(
+                        ensureDefaultContentSuggestionsServiceDisabledAnnotation.onUser(),
+                        /* enabled= */ false
+                );
+                continue;
+            }
+
+            if (annotation instanceof EnsureHasTestContentSuggestionsService) {
+                EnsureHasTestContentSuggestionsService
+                        ensureHasTestContentSuggestionsServiceAnnotation =
+                        (EnsureHasTestContentSuggestionsService) annotation;
+                ensureHasTestContentSuggestionsService(
+                        ensureHasTestContentSuggestionsServiceAnnotation.onUser());
                 continue;
             }
 
@@ -1711,7 +1747,10 @@ public final class DeviceState extends HarrierRule {
     private Map<String, TestAppInstance> mTestApps = new HashMap<>();
     private final Map<String, String> mOriginalGlobalSettings = new HashMap<>();
     private Map<String, Query> mAdditionalQueryParameters = new HashMap<>();
-
+    private final Map<UserReference, Boolean> mOriginalDefaultContentSuggestionsServiceEnabled =
+            new HashMap<>();
+    private final Set<UserReference> mTemporaryContentSuggestionsServiceSet =
+            new HashSet<>();
     private final Map<UserReference, Map<String, String>> mOriginalSecureSettings = new HashMap<>();
     private boolean mAnnotationHasSwitchedUser = false;
     private final Set<AccountReference> mCreatedAccounts = new HashSet<>();
@@ -2649,6 +2688,17 @@ public final class DeviceState extends HarrierRule {
             TestApis.wifi().setEnabled(mOriginalWifiEnabled);
             mOriginalWifiEnabled = null;
         }
+
+        for (Map.Entry<UserReference, Boolean> s
+                : mOriginalDefaultContentSuggestionsServiceEnabled.entrySet()) {
+            TestApis.content().suggestions().setDefaultServiceEnabled(s.getKey(), s.getValue());
+        }
+        mOriginalDefaultContentSuggestionsServiceEnabled.clear();
+
+        for (UserReference u : mTemporaryContentSuggestionsServiceSet) {
+            TestApis.content().suggestions().clearTemporaryService(u);
+        }
+        mTemporaryContentSuggestionsServiceSet.clear();
 
         for (Map.Entry<String, String> s : mOriginalGlobalSettings.entrySet()) {
             TestApis.settings().global().putString(s.getKey(), s.getValue());
@@ -3724,6 +3774,47 @@ public final class DeviceState extends HarrierRule {
         }
 
         TestApis.settings().secure().putString(user, key, value);
+    }
+
+    private void ensureDefaultContentSuggestionsServiceEnabled(UserType user, boolean enabled) {
+        ensureDefaultContentSuggestionsServiceEnabled(resolveUserTypeToUser(user), enabled);
+    }
+
+    private void ensureDefaultContentSuggestionsServiceEnabled(UserReference user, boolean enabled) {
+        boolean currentValue = TestApis.content().suggestions().defaultServiceEnabled(user);
+
+        if (currentValue == enabled) {
+            return;
+        }
+
+        if (!mOriginalDefaultContentSuggestionsServiceEnabled.containsKey(user)) {
+            mOriginalDefaultContentSuggestionsServiceEnabled.put(user, currentValue);
+        }
+
+        TestApis.content().suggestions().setDefaultServiceEnabled(enabled);
+    }
+
+    private final TestApp mContentTestApp = testApps().query().wherePackageName()
+            .isEqualTo("com.android.ContentTestApp").get();
+    // TODO: Use queries
+    private final ComponentReference mContentSuggestionsService =
+            ComponentReference.unflattenFromString(
+                    "com.android.ContentTestApp/.ContentSuggestionsService");
+
+    private void ensureHasTestContentSuggestionsService(UserType user) {
+        ensureHasTestContentSuggestionsService(resolveUserTypeToUser(user));
+    }
+
+    private void ensureHasTestContentSuggestionsService(UserReference user) {
+        ensureDefaultContentSuggestionsServiceEnabled(user, /* enabled= */ false);
+        TestAppInstance contentTestApp =
+                ensureTestAppInstalled("content", mContentTestApp, user);
+
+        if (!mTemporaryContentSuggestionsServiceSet.contains(user)) {
+            mTemporaryContentSuggestionsServiceSet.add(user);
+        }
+
+        TestApis.content().suggestions().setTemporaryService(user, mContentSuggestionsService);
     }
 
     private void requireMultiUserSupport(FailureMode failureMode) {
