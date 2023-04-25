@@ -6119,11 +6119,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
             // Disable and re-enable Wifi to avoid reconnect to the secondary candidate
             mWifiManager.setWifiEnabled(false);
-            PollingCheck.check("Wifi not disabled", TEST_WAIT_DURATION_MS,
-                    () -> !mWifiManager.isWifiEnabled());
             mWifiManager.setWifiEnabled(true);
-            PollingCheck.check("Wifi not enabled", TEST_WAIT_DURATION_MS,
-                    () -> mWifiManager.isWifiEnabled());
+            waitForDisconnection();
             // Now trigger scan and ensure that the device does not connect to any networks.
             mWifiManager.startScan();
             ensureNotConnected();
