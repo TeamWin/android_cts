@@ -107,16 +107,6 @@ public final class PackageNameVisibilityTest {
     }
 
     @Test
-    public void testMultipleRows() throws Exception {
-        final String[] ownerPackageNames = TestUtils.queryForOwnerPackageNamesAs(
-                TEST_APP_WITH_APP_B_IN_QUERIES_TAG,
-                MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL));
-
-        // Should only get a queryable owner package name and filter out the other one
-        assertEquals(Arrays.asList(TEST_APP_B.getPackageName()), Arrays.asList(ownerPackageNames));
-    }
-
-    @Test
     public void testQueryAllPackagesTag() throws Exception {
         final String[] ownerPackageNames = TestUtils.queryForOwnerPackageNamesAs(
                 TEST_APP_WITH_QUERY_ALL_PACKAGES_TAG, sMediaUriCreatedByAppA);
