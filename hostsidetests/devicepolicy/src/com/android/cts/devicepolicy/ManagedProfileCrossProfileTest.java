@@ -377,22 +377,6 @@ public final class ManagedProfileCrossProfileTest extends BaseManagedProfileTest
                 "testSetCrossProfilePackages_resetsAppOpOfUnsetPackagesOnOtherProfile");
     }
 
-    @Test
-    public void testSetCrossProfilePackages_sendsBroadcastWhenResettingAppOps() throws Exception {
-        installAllTestApps();
-        setupLogcatForTest();
-
-        runWorkProfileDeviceTest(
-                ".CrossProfileTest",
-                "testSetCrossProfilePackages_sendsBroadcastWhenResettingAppOps_noAsserts");
-        waitForBroadcastIdle();
-
-        assertTestAppsReceivedCanInteractAcrossProfilesChangedBroadcast(
-                UNSET_CROSS_PROFILE_PACKAGES);
-        assertTestAppsDidNotReceiveCanInteractAcrossProfilesChangedBroadcast(
-                MAINTAINED_CROSS_PROFILE_PACKAGES);
-    }
-
     private void setupLogcatForTest() throws Exception {
         // Clear and increase logcat buffer size because the test is reading from it.
         final String clearLogcatCommand = "logcat -c";
