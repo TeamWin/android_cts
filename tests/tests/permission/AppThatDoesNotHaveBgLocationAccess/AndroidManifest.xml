@@ -20,6 +20,6 @@
     android:versionCode="2">
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
-    <application android:label="CtsLocationAccess" />
+    <application android:label="CtsLocationAccess" android:debuggable="true"/>
 </manifest>
 
