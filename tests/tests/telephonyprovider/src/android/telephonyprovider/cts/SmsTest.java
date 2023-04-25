@@ -128,7 +128,7 @@ public class SmsTest {
 
     @Test
     public void testInsertSmsFromSubid_verifySmsFromNotOtherSubId() {
-        int subId = 1;
+        int subId = -1;
 
         ContentValues values = new ContentValues();
         values.put(Telephony.Sms.BODY, TEST_SMS_BODY);
