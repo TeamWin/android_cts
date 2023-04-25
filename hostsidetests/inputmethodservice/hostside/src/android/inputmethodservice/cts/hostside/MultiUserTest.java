@@ -110,7 +110,7 @@ public class MultiUserTest extends BaseHostJUnit4Test {
             return;
         }
 
-        getDevice().switchUser(getDevice().getPrimaryUserId());
+        getDevice().switchUser(getDevice().getMainUserId());
         // We suspect that the optimization made for Bug 38143512 was a bit unstable.  Let's see
         // if adding a sleep improves the stability or not.
         RunUtil.getDefault().sleep(WAIT_AFTER_USER_SWITCH);
@@ -150,64 +150,64 @@ public class MultiUserTest extends BaseHostJUnit4Test {
     }
 
     private void testSecondaryUser(boolean instant) throws Exception {
-        final int primaryUserId = getDevice().getPrimaryUserId();
+        final int mainUserId = getDevice().getMainUserId();
         final int secondaryUserId = getDevice().createUser(
                 "InputMethodMultiUserTest_secondaryUser" + System.currentTimeMillis());
 
         getDevice().startUser(secondaryUserId, true /* waitFlag */);
 
-        installPossibleInstantPackage(DeviceTestConstants.APK, primaryUserId, instant);
+        installPossibleInstantPackage(DeviceTestConstants.APK, mainUserId, instant);
         installPossibleInstantPackage(DeviceTestConstants.APK, secondaryUserId, instant);
 
         // Work around b/31009094.
-        assertTestApkIsReadyAfterInstallation(primaryUserId);
+        assertTestApkIsReadyAfterInstallation(mainUserId);
 
         assertIme1NotExistInApiResult(secondaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(mainUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
 
         installPackageAsUser(Ime1Constants.APK, true, secondaryUserId, "-r");
 
-        assertIme1NotExistInApiResult(primaryUserId);
+        assertIme1NotExistInApiResult(mainUserId);
         assertIme1ExistsInApiResult(secondaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(mainUserId);
         assertIme1ImplicitlyEnabledSubtypeExists(secondaryUserId);
         // check getCurrentInputMethodInfoAsUser(userId)
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID, secondaryUserId));
         shell(ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID, secondaryUserId));
         assertIme1InCurrentInputMethodInfo(secondaryUserId);
-        assertIme1NotCurrentInputMethodInfo(primaryUserId);
-        assertIme2NotCurrentInputMethodInfo(primaryUserId);
+        assertIme1NotCurrentInputMethodInfo(mainUserId);
+        assertIme2NotCurrentInputMethodInfo(mainUserId);
         assertIme2NotCurrentInputMethodInfo(secondaryUserId);
 
         switchUser(secondaryUserId);
 
-        assertIme1NotExistInApiResult(primaryUserId);
+        assertIme1NotExistInApiResult(mainUserId);
         assertIme1ExistsInApiResult(secondaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(mainUserId);
         assertIme1ImplicitlyEnabledSubtypeExists(secondaryUserId);
         // check getCurrentInputMethodInfoAsUser(userId)
         assertIme1InCurrentInputMethodInfo(secondaryUserId);
-        assertIme1NotCurrentInputMethodInfo(primaryUserId);
-        assertIme2NotCurrentInputMethodInfo(primaryUserId);
+        assertIme1NotCurrentInputMethodInfo(mainUserId);
+        assertIme2NotCurrentInputMethodInfo(mainUserId);
         assertIme2NotCurrentInputMethodInfo(secondaryUserId);
 
-        switchUser(primaryUserId);
+        switchUser(mainUserId);
 
         // For devices that have config_multiuserDelayUserDataLocking set to true, the
-        // secondaryUserId will be stopped after switching to the primaryUserId. This means that
+        // secondaryUserId will be stopped after switching to the mainUserId. This means that
         // the InputMethodManager can no longer query for the Input Method Services since they have
         // all been stopped.
         getDevice().startUser(secondaryUserId, true /* waitFlag */);
 
-        assertIme1NotExistInApiResult(primaryUserId);
+        assertIme1NotExistInApiResult(mainUserId);
         assertIme1ExistsInApiResult(secondaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(mainUserId);
         assertIme1ImplicitlyEnabledSubtypeExists(secondaryUserId);
         // check getCurrentInputMethodInfoAsUser(userId)
         assertIme1InCurrentInputMethodInfo(secondaryUserId);
-        assertIme1NotCurrentInputMethodInfo(primaryUserId);
-        assertIme2NotCurrentInputMethodInfo(primaryUserId);
+        assertIme1NotCurrentInputMethodInfo(mainUserId);
+        assertIme2NotCurrentInputMethodInfo(mainUserId);
         assertIme2NotCurrentInputMethodInfo(secondaryUserId);
     }
 
@@ -234,29 +234,29 @@ public class MultiUserTest extends BaseHostJUnit4Test {
     private void testProfileUser(boolean instant) throws Exception {
         assumeTrue(getDevice().hasFeature("android.software.managed_users"));
 
-        final int primaryUserId = getDevice().getPrimaryUserId();
-        final int profileUserId = createProfile(primaryUserId);
+        final int mainUserId = getDevice().getMainUserId();
+        final int profileUserId = createProfile(mainUserId);
 
         getDevice().startUser(profileUserId, true /* waitFlag */);
 
-        installPossibleInstantPackage(DeviceTestConstants.APK, primaryUserId, instant);
+        installPossibleInstantPackage(DeviceTestConstants.APK, mainUserId, instant);
         installPossibleInstantPackage(DeviceTestConstants.APK, profileUserId, instant);
 
         // Work around b/31009094.
         assertTestApkIsReadyAfterInstallation(profileUserId);
 
-        assertIme1NotExistInApiResult(primaryUserId);
+        assertIme1NotExistInApiResult(mainUserId);
         assertIme1NotExistInApiResult(profileUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(mainUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
 
         shell(ShellCommandUtils.waitForBroadcastBarrier());
 
-        // Install IME1 then enable/set it as the current IME for the primary user.
-        installPackageAsUser(Ime1Constants.APK, true, primaryUserId, "-r");
-        waitUntilImeIsInShellCommandResult(Ime1Constants.IME_ID, primaryUserId);
-        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID, primaryUserId));
-        shell(ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID, primaryUserId));
+        // Install IME1 then enable/set it as the current IME for the main user.
+        installPackageAsUser(Ime1Constants.APK, true, mainUserId, "-r");
+        waitUntilImeIsInShellCommandResult(Ime1Constants.IME_ID, mainUserId);
+        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID, mainUserId));
+        shell(ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID, mainUserId));
 
         // Install IME2 then enable/set it as the current IME for the profile user.
         installPackageAsUser(Ime2Constants.APK, true, profileUserId, "-r");
@@ -264,15 +264,15 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID, profileUserId));
         shell(ShellCommandUtils.setCurrentImeSync(Ime2Constants.IME_ID, profileUserId));
 
-        // Primary User: IME1:enabled, IME2:N/A
-        assertIme1ExistsInApiResult(primaryUserId);
-        assertIme1EnabledInApiResult(primaryUserId);
-        assertIme2NotExistInApiResult(primaryUserId);
-        assertIme2NotEnabledInApiResult(primaryUserId);
-        assertIme1Selected(primaryUserId);
+        // Main User: IME1:enabled, IME2:N/A
+        assertIme1ExistsInApiResult(mainUserId);
+        assertIme1EnabledInApiResult(mainUserId);
+        assertIme2NotExistInApiResult(mainUserId);
+        assertIme2NotEnabledInApiResult(mainUserId);
+        assertIme1Selected(mainUserId);
         // check getCurrentInputMethodInfoAsUser(userId)
-        assertIme1InCurrentInputMethodInfo(primaryUserId);
-        assertIme2NotCurrentInputMethodInfo(primaryUserId);
+        assertIme1InCurrentInputMethodInfo(mainUserId);
+        assertIme2NotCurrentInputMethodInfo(mainUserId);
 
         // Profile User: IME1:N/A, IME2:enabled
         assertIme1NotExistInApiResult(profileUserId);
@@ -287,19 +287,19 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         assertIsStylusHandwritingAvailable(profileUserId);
 
         // Make sure that IME switches depending on the target user.
-        runTestAsUser(DeviceTestConstants.TEST_CONNECTING_TO_THE_SAME_USER_IME, primaryUserId);
+        runTestAsUser(DeviceTestConstants.TEST_CONNECTING_TO_THE_SAME_USER_IME, mainUserId);
         runTestAsUser(DeviceTestConstants.TEST_CONNECTING_TO_THE_SAME_USER_IME, profileUserId);
-        runTestAsUser(DeviceTestConstants.TEST_CONNECTING_TO_THE_SAME_USER_IME, primaryUserId);
+        runTestAsUser(DeviceTestConstants.TEST_CONNECTING_TO_THE_SAME_USER_IME, mainUserId);
 
-        assertIme1ImplicitlyEnabledSubtypeExists(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeExists(mainUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
 
-        assertIme1ExistsInApiResult(primaryUserId);
+        assertIme1ExistsInApiResult(mainUserId);
         assertIme1NotExistInApiResult(profileUserId);
-        assertIme1ImplicitlyEnabledSubtypeExists(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeExists(mainUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
         // check getCurrentInputMethodInfoAsUser(userId)
-        assertIme1InCurrentInputMethodInfo(primaryUserId);
+        assertIme1InCurrentInputMethodInfo(mainUserId);
         assertIme1NotCurrentInputMethodInfo(profileUserId);
     }
 
