@@ -17,6 +17,7 @@
 package android.mediav2.common.cts;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
@@ -173,10 +174,13 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         int[] numConfigs = new int[1];
         if (!EGL14.eglChooseConfig(mEGLDisplay, attribList, 0, configs, 0, configs.length,
                 numConfigs, 0) || numConfigs[0] == 0) {
-            throw new RuntimeException(String.format(
-                    "unable to find EGL config supporting renderable-type:ES2 "
-                    + "surface-type:pbuffer r:%d g:%d b:%d a:%d",
-                    eglColorSize, eglColorSize, eglColorSize, eglAlphaSize));
+            String message = "Unable to find EGL config supporting renderable-type:ES2 "
+                    + "surface-type:pbuffer r:" + eglColorSize + " g:" + eglColorSize
+                    + " b:" + eglColorSize + " a:" + eglAlphaSize + ".";
+            // When eglChooseConfig fails for RGBA10102, skip high bit depth testing as it is not
+            // mandatory for devices to support this configuration.
+            assumeFalse(message + " Skipping the test for high bit depth case", useHighBitDepth);
+            throw new RuntimeException(message);
         }
 
         // Configure context for OpenGL ES 3.0/2.0.
