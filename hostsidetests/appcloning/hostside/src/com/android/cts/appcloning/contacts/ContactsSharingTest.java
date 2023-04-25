@@ -91,7 +91,13 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
     public static void afterClass() throws Exception {
         switchAppCloningBuildingBlocksFlag(false);
         AppCloningBaseHostTest.baseHostTeardown();
-        cleanupTestContacts();
+        if (doesDeviceSupportContactSharing()) {
+            cleanupTestContacts();
+        }
+    }
+
+    private static boolean doesDeviceSupportContactSharing() throws Exception {
+        return isAppCloningSupportedOnDevice() && isAtLeastU(sDevice);
     }
 
     private static void setupTestContacts() throws Exception {
