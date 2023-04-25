@@ -109,11 +109,14 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
     }
 
     public static void baseHostTeardown() throws Exception {
-        if (!supportsMultipleUsers() || isHeadlessSystemUserMode() || !isAtLeastS()
-                || usesSdcardFs())
-            return;
+        if (!isAppCloningSupportedOnDevice()) return;
 
         removeCloneUser();
+    }
+
+    public static boolean isAppCloningSupportedOnDevice() throws Exception {
+        return supportsMultipleUsers() && !isHeadlessSystemUserMode() && isAtLeastS()
+                && !usesSdcardFs();
     }
 
     protected CommandResult runContentProviderCommand(String commandType, String userId,
