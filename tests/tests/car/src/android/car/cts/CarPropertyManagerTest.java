@@ -364,9 +364,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             LaneCenteringAssistCommand.ACTIVATE,
                             LaneCenteringAssistCommand.DEACTIVATE)
                     .build();
-    private static final ImmutableSet<Integer> SINGLE_HVAC_FAN_DIRECTIONS = ImmutableSet.of(
-            /*VehicleHvacFanDirection.FACE=*/0x1, /*VehicleHvacFanDirection.FLOOR=*/0x2,
-            /*VehicleHvacFanDirection.DEFROST=*/0x4);
+    private static final ImmutableSet<Integer> SINGLE_HVAC_FAN_DIRECTIONS =
+            ImmutableSet.of(
+                            CarHvacFanDirection.UNKNOWN,
+                            CarHvacFanDirection.FACE,
+                            CarHvacFanDirection.FLOOR,
+                            CarHvacFanDirection.DEFROST);
     private static final ImmutableSet<Integer> ALL_POSSIBLE_HVAC_FAN_DIRECTIONS =
             generateAllPossibleHvacFanDirections();
     private static final ImmutableSet<Integer> VEHICLE_SEAT_OCCUPANCY_STATES = ImmutableSet.of(
