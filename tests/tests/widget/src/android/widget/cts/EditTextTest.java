@@ -51,10 +51,12 @@ import android.util.TypedValue;
 import android.util.Xml;
 import android.view.KeyEvent;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.Editor;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 
@@ -832,6 +834,133 @@ public class EditTextTest {
 
         cursorBlinking = editor.isBlinking();
         assertTrue(cursorBlinking);
+    }
+
+    /*
+     * This test makes sure the cursor is blinking when an EditText view is dynamically added to
+     * the layout when it has focus.
+     */
+    @Test
+    public void testCursorBlinking_ViewDynamicallyAdded_WithFocus() {
+        Activity testActivity = mEmptyActivityRule.launchActivity(null);
+        EditText editText = new EditText(testActivity.getApplicationContext());
+        Editor editor = editText.getEditorForTesting();
+        LinearLayout layout = testActivity.findViewById(R.id.edit_text);
+
+        editText.setLayoutParams(layout.getLayoutParams());
+
+        mInstrumentation.runOnMainSync(() -> {
+            editText.requestFocus();
+            layout.addView(editText);
+        });
+
+        assertTrue(editor.isBlinking());
+    }
+
+    /*
+     * This test makes sure the cursor is not blinking when an EditText view is dynamically added
+     * to the layout.
+     */
+    @Test
+    public void testCursorNotBlinking_ViewDynamicallyAdded_NoFocus() {
+        Activity testActivity = mEmptyActivityRule.launchActivity(null);
+        EditText editText = new EditText(testActivity.getApplicationContext());
+        Editor editor = editText.getEditorForTesting();
+        LinearLayout layout = testActivity.findViewById(R.id.edit_text);
+
+        editText.setLayoutParams(layout.getLayoutParams());
+
+        mInstrumentation.runOnMainSync(() -> {
+            layout.addView(editText);
+        });
+
+        assertFalse(editor.isBlinking());
+    }
+
+    /*
+     * This test makes sure blink is suspended when the EditText view is dynamically removed from
+     * the layout.
+     */
+    @Test
+    public void testCursorSuspendBlinking_ViewDynamicallyRemoved() {
+        Activity testActivity = mEmptyActivityRule.launchActivity(null);
+        final EditText editText = testActivity.findViewById(R.id.edittext_simple1);
+        Editor editor = editText.getEditorForTesting();
+
+        mInstrumentation.runOnMainSync(() -> {
+            editText.requestFocus();
+        });
+
+        assertTrue(editor.isBlinking());
+
+        mInstrumentation.runOnMainSync(() -> {
+            ViewGroup viewGroup = (ViewGroup) editText.getParent();
+            viewGroup.removeView(editText);
+        });
+
+        assertFalse(editor.isBlinking());
+    }
+
+    /*
+     * This test checks that an EditText view that never had focus can be removed and added
+     * dynamically to the layout and when focus is requested the cursor blinks.
+     */
+    @Test
+    public void testCursorBlinking_ViewDynamically_RemovedAdded_NeverHadFocus() {
+        Activity testActivity = mEmptyActivityRule.launchActivity(null);
+        final EditText editText = testActivity.findViewById(R.id.edittext_simple1);
+        Editor editor = editText.getEditorForTesting();
+
+        mInstrumentation.runOnMainSync(() -> {
+            ViewGroup viewGroup = (ViewGroup) editText.getParent();
+            viewGroup.removeView(editText);
+        });
+
+        LinearLayout layout = testActivity.findViewById(R.id.edit_text);
+        layout.addView(editText);
+
+        mInstrumentation.runOnMainSync(() -> {
+            editText.requestFocus();
+        });
+
+        assertTrue(editor.isBlinking());
+    }
+
+    /*
+     * This test checks that a focused EditText view can be removed and added back to the layout
+     * dynamically and the cursor resumes blinking.
+     */
+    @Test
+    public void testCursorResumeBlinking_AfterFocusedView_DynamicallyRemovedAdded() {
+        Activity testActivity = mEmptyActivityRule.launchActivity(null);
+        final EditText editText = testActivity.findViewById(R.id.edittext_simple1);
+        LinearLayout layout = testActivity.findViewById(R.id.edit_text);
+        Editor editor = editText.getEditorForTesting();
+
+        mInstrumentation.runOnMainSync(() -> {
+            editText.requestFocus();
+        });
+
+        assertTrue(editor.isBlinking());
+
+        mInstrumentation.runOnMainSync(() -> {
+            ViewGroup viewGroup = (ViewGroup) editText.getParent();
+            viewGroup.removeView(editText);
+        });
+
+        assertFalse(editor.isBlinking());
+
+        mInstrumentation.runOnMainSync(() -> {
+            layout.addView(editText);
+        });
+
+        mInstrumentation.runOnMainSync(() -> {
+            editText.requestFocus();
+            editText.setText("This has been re-added");
+        });
+
+        assertTrue(editor.isBlinking());
+
     }
 
 }
