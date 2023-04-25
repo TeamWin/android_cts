@@ -110,7 +110,6 @@ public abstract class AugmentedAutofillManualActivityLaunchTestCase
         AugmentedHelper.setAugmentedService(CtsAugmentedAutofillService.SERVICE_NAME);
 
         CtsAugmentedAutofillService service = mServiceWatcher.waitOnConnected();
-        service.waitUntilConnected();
         return service;
     }
 }
