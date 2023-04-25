@@ -93,11 +93,13 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.LocationUtils;
 import com.android.compatibility.common.util.ScreenUtils;
 import com.android.compatibility.common.util.ScreenUtils.ScreenResetter;
+import com.android.compatibility.common.util.UserHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -131,6 +133,7 @@ public class LocationManagerFineTest {
     private static final String IGNORE_SETTINGS_ALLOWLIST = "ignore_settings_allowlist";
     private static final String ADAS_SETTINGS_ALLOWLIST = "adas_settings_allowlist";
 
+    private final UserHelper mUserHelper = new UserHelper();
     private Random mRandom;
     private Context mContext;
     private LocationManager mManager;
@@ -223,8 +226,12 @@ public class LocationManagerFineTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.Location.LocationManager#getLastKnownLocation"})
     public void testGetLastKnownLocation_AdasLocationSettings_ReturnsLocation() throws Exception {
         assumeTrue(mContext.getPackageManager().hasSystemFeature(FEATURE_AUTOMOTIVE));
+        // ADAS is not supported on passenger users
+        assumeFalse("not supported when running on visible background user",
+                mUserHelper.isVisibleBackgroundUser());
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext);
              DeviceConfigStateHelper locationDeviceConfigStateHelper =
@@ -274,8 +281,12 @@ public class LocationManagerFineTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.Location.LocationManager#getLastKnownLocation"})
     public void testGetLastKnownLocation_AdasLocationSettings_ReturnsNull() throws Exception {
         assumeTrue(mContext.getPackageManager().hasSystemFeature(FEATURE_AUTOMOTIVE));
+        // ADAS is not supported on passenger users
+        assumeFalse("not supported when running on visible background user",
+                mUserHelper.isVisibleBackgroundUser());
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext);
              DeviceConfigStateHelper locationDeviceConfigStateHelper =
@@ -945,8 +956,12 @@ public class LocationManagerFineTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.Location.LocationManager#requestLocationUpdates"})
     public void testRequestLocationUpdates_AdasGnssBypass() throws Exception {
         assumeTrue(mContext.getPackageManager().hasSystemFeature(FEATURE_AUTOMOTIVE));
+        // ADAS is not supported on passenger users
+        assumeFalse("not supported when running on visible background user",
+                mUserHelper.isVisibleBackgroundUser());
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext);
              DeviceConfigStateHelper locationDeviceConfigStateHelper =
