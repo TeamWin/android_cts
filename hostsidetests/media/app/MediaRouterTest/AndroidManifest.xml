@@ -24,6 +24,11 @@
 
     <application android:testOnly="true">
         <uses-library android:name="android.test.runner"/>
+        <activity android:name=".PlaceholderActivity" android:exported="false">
+            <intent-filter>
+                <action android:name="android.media.action.TRANSFER_MEDIA"/>
+            </intent-filter>
+        </activity>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
