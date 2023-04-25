@@ -101,17 +101,6 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
                 "setRouteListingPreference_propagatesToManager");
     }
 
-    @ApiTest(apis = {"android.media.RouteListingPreference, android.media.MediaRouter2"})
-    @AppModeFull
-    @RequiresDevice
-    @Test
-    public void testSetRouteListingPreference_withIllegalComponentName_throws() throws Exception {
-        runDeviceTests(
-                MEDIA_ROUTER_TEST_PACKAGE,
-                DEVICE_SIDE_TEST_CLASS,
-                "setRouteListingPreference_withIllegalComponentName_throws");
-    }
-
     @AppModeFull
     @RequiresDevice
     @Test
