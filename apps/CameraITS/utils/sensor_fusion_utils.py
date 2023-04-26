@@ -44,6 +44,7 @@ ARDUINO_SERVO_SPEED_MIN = 1
 ARDUINO_SPEED_START_BYTE = 253
 ARDUINO_START_BYTE = 255
 ARDUINO_START_NUM_TRYS = 5
+ARDUINO_START_TIMEOUT = 120  # seconds
 ARDUINO_TEST_CMD = (b'\x01', b'\x02', b'\x03')
 ARDUINO_VALID_CH = ('1', '2', '3', '4', '5', '6')
 ARDUINO_VIDS = (0x2341, 0x2a03)
@@ -235,8 +236,13 @@ def establish_serial_comm(port):
   trys = 1
   hex_test = convert_to_hex(ARDUINO_TEST_CMD)
   logging.debug(' test tx: %s %s %s', hex_test[0], hex_test[1], hex_test[2])
-  while trys <= ARDUINO_START_NUM_TRYS:
-    cmd_read = arduino_loopback_cmd(port, ARDUINO_TEST_CMD)
+  start = time.time()
+  while time.time() < start + ARDUINO_START_TIMEOUT:
+    try:
+      cmd_read = arduino_loopback_cmd(port, ARDUINO_TEST_CMD)
+    except serial.serialutil.SerialException as _:
+      logging.debug('Port in use, trying again...')
+      continue
     hex_read = convert_to_hex(cmd_read)
     logging.debug(' test rx: %s %s %s', hex_read[0], hex_read[1], hex_read[2])
     if cmd_read != list(ARDUINO_TEST_CMD):
@@ -245,7 +251,8 @@ def establish_serial_comm(port):
       logging.debug(' Arduino comm established after %d try(s)', trys)
       break
   else:
-    raise AssertionError(f'Arduino comm not established after {trys} tries')
+    raise AssertionError(f'Arduino comm not established after {trys} tries '
+                         f'and {ARDUINO_START_TIMEOUT} seconds')
 
 
 def convert_to_hex(cmd):
