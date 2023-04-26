@@ -291,6 +291,11 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
                 public void onOpened(CameraDevice camera) {
                     // This is called when the camera is open
                     Log.i(TAG, "onCameraOpened");
+                    // The camera data will be zero on virtual device, so it would be better to skip
+                    // to check the camera data.
+                    if (Utils.isVirtualDevice()) {
+                        sendCameraOpenSuccessSignals();
+                    }
                     createCameraPreview(camera);
                 }
 
