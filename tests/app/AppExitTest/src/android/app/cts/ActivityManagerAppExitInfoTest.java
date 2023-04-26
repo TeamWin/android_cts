@@ -28,6 +28,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ApplicationExitInfo;
@@ -45,6 +46,7 @@ import android.externalservice.common.RunningServiceInfo;
 import android.externalservice.common.ServiceMessages;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.DropBoxManager;
 import android.os.Handler;
@@ -70,6 +72,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AmMonitor;
+import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -89,10 +93,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
 public final class ActivityManagerAppExitInfoTest {
     private static final String TAG = ActivityManagerAppExitInfoTest.class.getSimpleName();
+
+    public static final boolean FIRST_SDK_IS_AT_LEAST_U =
+            ApiLevelUtil.isFirstApiAfter(Build.VERSION_CODES.TIRAMISU);
 
     private static final String STUB_PACKAGE_NAME =
             "com.android.cts.launcherapps.simpleapp";
@@ -119,6 +128,7 @@ public final class ActivityManagerAppExitInfoTest {
     private static final long HEARTBEAT_INTERVAL = 1000;
     private static final long HEARTBEAT_FREEZER_LONG = 30000;
     private static final long HEARTBEAT_FREEZER_SHORT = 5000;
+    private static final long FREEZER_TIMEOUT_FLOOR = 10000;
 
     private static final String EXIT_ACTION =
             "com.android.cts.launchertests.simpleapp.EXIT_ACTION";
@@ -1373,6 +1383,43 @@ public final class ActivityManagerAppExitInfoTest {
                 ApplicationExitInfo.REASON_EXIT_SELF, EXIT_CODE, null, now, now2, cookie1);
     }
 
+    /**
+     * By design, an app's process in cached state is subject to being killed due
+     * to system memory pressure. Any work in this state, e.g. an {@link Activity}
+     * trying to execute extra code after the {@link Activity#onStop()} method has
+     * been called and returned, is unreliable and strongly discouraged. For more
+     * details see <a
+     * href="https://developer.android.com/guide/components/activities/process-lifecycle">
+     * Processes and app lifecycle</a>.
+     * <p>
+     * Starting in {@link android.os.Build.VERSION_CODES#UPSIDE_DOWN_CAKE}, OS
+     * enforces cached-app resource usage. This test checks whether the Freezer
+     * has been correctly enabled to be consistent with the documented developer
+     * expectations.
+     */
+    @CddTest(requirements = {"3.5/C-0-2"})
+    @Test
+    public void testFreezerEnabled() throws Exception {
+        if (FIRST_SDK_IS_AT_LEAST_U) {
+            // We expect all devices that first shipped with U to support Freezer
+            assertTrue(ActivityManager.getService().isAppFreezerSupported());
+        } else {
+            // For old devices OTA'ed to U, check if Linux kernel and vendor partition is too old
+            assumeTrue(ActivityManager.getService().isAppFreezerSupported());
+        }
+
+        // Freezer must be enabled as long as it's supported
+        assertTrue(ActivityManager.getService().isAppFreezerEnabled());
+
+        // Check dumpsys to verify the Freezer configurations in use
+        final String output = executeShellCmd("dumpsys activity");
+        Pattern pattern = Pattern.compile("freeze_debounce_timeout=(\\d+)");
+        Matcher matcher = pattern.matcher(output);
+        assertTrue(matcher.find());
+        final long timeout = Long.parseLong(matcher.group(1));
+        assertTrue(timeout >= FREEZER_TIMEOUT_FLOOR);
+    }
+
     @Test
     public void testFreezerNormalExitCode() throws Exception {
         // The app should NOT be frozen with 30s freeze timeout configuration
@@ -1382,7 +1429,7 @@ public final class ActivityManagerAppExitInfoTest {
     @Test
     public void testFreezerKillExitCode() throws Exception {
         // The app should be frozen and killed with 5s freeze timeout configuration
-        assumeTrue(mActivityManager.getService().isAppFreezerEnabled());
+        assumeTrue(ActivityManager.getService().isAppFreezerEnabled());
         runFreezerTest(HEARTBEAT_FREEZER_SHORT, true, ApplicationExitInfo.REASON_FREEZER);
     }
 
