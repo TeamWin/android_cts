@@ -142,7 +142,7 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
         mimeCodecPairs.add(mEncoderPair);
         int maxInstances =
                 checkAndGetMaxSupportedInstancesForCodecCombinations(height, width, mimeCodecPairs,
-                        requiredMinInstances);
+                        false, requiredMinInstances);
         double achievedFrameRate = 0.0;
         if (maxInstances >= requiredMinInstances) {
             ExecutorService pool =
