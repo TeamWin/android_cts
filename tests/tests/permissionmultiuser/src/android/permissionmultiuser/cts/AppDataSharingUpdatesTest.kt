@@ -60,11 +60,11 @@ import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile
 import com.android.bedstead.harrier.annotations.RequireSdkVersion
 import com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS
+import com.android.compatibility.common.util.ApiTest
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.waitForBroadcasts
-import com.android.compatibility.common.util.ApiTest
 import com.android.compatibility.common.util.UiAutomatorUtils
 import com.google.common.truth.Truth.assertThat
 import java.io.File
@@ -257,9 +257,10 @@ class AppDataSharingUpdatesTest {
         /** Installs an app with the provided [appMetadata] */
         private fun installPackageViaSession(
             apkName: String,
-            appMetadata: PersistableBundle? = null
+            appMetadata: PersistableBundle? = null,
+            packageSource: Int? = null
         ) {
-            val session = createPackageInstallerSession()
+            val session = createPackageInstallerSession(packageSource)
             runWithShellPermissionIdentity {
                 writePackageInstallerSession(session, apkName)
                 if (appMetadata != null) {
@@ -275,9 +276,15 @@ class AppDataSharingUpdatesTest {
             }
         }
 
-        private fun createPackageInstallerSession(): PackageInstaller.Session {
-            val sessionId =
-                packageInstaller.createSession(SessionParams(SessionParams.MODE_FULL_INSTALL))
+        private fun createPackageInstallerSession(
+            packageSource: Int? = null
+        ): PackageInstaller.Session {
+            val sessionParam = SessionParams(SessionParams.MODE_FULL_INSTALL)
+            if (packageSource != null) {
+                sessionParam.setPackageSource(packageSource)
+            }
+
+            val sessionId = packageInstaller.createSession(sessionParam)
             return packageInstaller.openSession(sessionId)
         }
 

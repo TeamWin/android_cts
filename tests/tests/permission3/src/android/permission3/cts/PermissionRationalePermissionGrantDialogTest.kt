@@ -187,13 +187,57 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun requestCoarseLocationPerm_hasPermissionRationale() {
+    fun requestCoarseLocationPerm_hasPermissionRationale_packageSourceUnspecified() {
         installPackageWithInstallSourceAndMetadata(APP_APK_NAME_31)
 
         assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
 
         requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION) {
             assertPermissionRationaleContainerOnGrantDialogIsVisible(true)
+        }
+    }
+
+    @Test
+    fun requestCoarseLocationPerm_hasPermissionRationale_packageSourceStore() {
+        installPackageWithInstallSourceAndMetadataFromStore(APP_APK_NAME_31)
+
+        assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
+
+        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION) {
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(true)
+        }
+    }
+
+    @Test
+    fun requestCoarseLocationPerm_hasPermissionRationale_packageSourceLocalFile() {
+        installPackageWithInstallSourceAndMetadataFromLocalFile(APP_APK_NAME_31)
+
+        assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
+
+        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION) {
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
+        }
+    }
+
+    @Test
+    fun requestCoarseLocationPerm_hasPermissionRationale_packageSourceDownloadedFile() {
+        installPackageWithInstallSourceAndMetadataFromDownloadedFile(APP_APK_NAME_31)
+
+        assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
+
+        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION) {
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
+        }
+    }
+
+    @Test
+    fun requestCoarseLocationPerm_hasPermissionRationale_packageSourceOther() {
+        installPackageWithInstallSourceAndMetadataFromOther(APP_APK_NAME_31)
+
+        assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
+
+        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION) {
+            assertPermissionRationaleContainerOnGrantDialogIsVisible(false)
         }
     }
 
