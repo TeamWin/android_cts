@@ -256,5 +256,26 @@ public class SoundTriggerManagerTest {
             assertThat(mRealManager.getModuleProperties()).isNull();
         }
     }
+
+    @Test
+    public void testAttachThrows_whenMissingRecordPermission() {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(CAPTURE_AUDIO_HOTWORD, MANAGE_SOUND_TRIGGER);
+        assertThrows(
+                SecurityException.class,
+                () -> mRealManager.createManagerForTestModule());
+    }
+
+    @Test
+    public void testAttachThrows_whenMissingCaptureHotwordPermission() {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(RECORD_AUDIO, MANAGE_SOUND_TRIGGER);
+        assertThrows(
+                SecurityException.class,
+                () -> mRealManager.createManagerForTestModule());
+    }
+
     // TODO test behavior when RECORD_AUDIO is lost for recognition
 }
