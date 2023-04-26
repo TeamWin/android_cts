@@ -1,5 +1,5 @@
-# Bug template url: https://b.corp.google.com/issues/new?component=100560&template=63204 = per-file CA*.java, Ca*.java, KeyChainTest.java
-# Bug template url: https://b.corp.google.com/issues/new?component=100560&template=63204 = per-file LockConfirmBypassTest.java, SetNewPasswordComplexityTest.java
+# Bug template url: https://b.corp.google.com/issues/new?component=1337891&template=1814288 = per-file CA*.java, Ca*.java, KeyChainTest.java
+# Bug template url: https://b.corp.google.com/issues/new?component=1337891&template=1814288 = per-file LockConfirmBypassTest.java, SetNewPasswordComplexityTest.java
 # Bug template url: https://b.corp.google.com/issues/new?component=746324&template=1398789 = per-file: SecurityModeFeatureVerifierActivity.java
 # Bug component: 189335 = per-file FingerprintBoundKeysTest.java, ProtectedConfirmationTest.java, ScreenLockBoundKeysTest.java
 # Bug component: 1084909 = per-file IdentityCredential*.java
