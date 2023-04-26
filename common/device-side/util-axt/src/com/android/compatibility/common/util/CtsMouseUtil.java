@@ -28,10 +28,16 @@ import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
 
+import androidx.test.InstrumentationRegistry;
+
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
 
 public final class CtsMouseUtil {
+
+    // TODO(b/272376728): make it an instance object instead
+    private static final UserHelper sUserHelper = new UserHelper(
+            InstrumentationRegistry.getInstrumentation().getTargetContext());
 
     private CtsMouseUtil() {}
 
@@ -60,6 +66,7 @@ public final class CtsMouseUtil {
         final int x = screenPos[0] + offsetX;
         final int y = screenPos[1] + offsetY;
         MotionEvent event = MotionEvent.obtain(eventTime, eventTime, action, x, y, 0);
+        sUserHelper.injectDisplayIdIfNeeded(event);
         event.setSource(InputDevice.SOURCE_MOUSE);
         return event;
     }
@@ -87,6 +94,7 @@ public final class CtsMouseUtil {
             int xOnScreen, int yOnScreen) {
         MotionEvent event = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_HOVER_MOVE,
                 xOnScreen, yOnScreen, 0);
+        sUserHelper.injectDisplayIdIfNeeded(event);
         event.setSource(InputDevice.SOURCE_MOUSE);
         instrumentation.sendPointerSync(event);
         event.recycle();
