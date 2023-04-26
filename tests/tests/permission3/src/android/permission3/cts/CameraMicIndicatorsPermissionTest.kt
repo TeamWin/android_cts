@@ -23,6 +23,9 @@ import android.content.AttributionSource
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.SensorPrivacyManager
+import android.hardware.SensorPrivacyManager.Sensors
+import android.hardware.SensorPrivacyManager.TOGGLE_TYPE_SOFTWARE
 import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.os.Process
@@ -95,6 +98,8 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     private val packageManager: PackageManager = context.packageManager
     private val permissionManager: PermissionManager =
         context.getSystemService(PermissionManager::class.java)!!
+    private val sensorPrivacyManager: SensorPrivacyManager =
+        context.getSystemService(SensorPrivacyManager::class.java)!!
 
     private val isTv = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
     private val isCar = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
@@ -109,6 +114,10 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     private var screenTimeoutBeforeTest: Long = 0L
     private lateinit var carMicPrivacyChipId: String
     private lateinit var carCameraPrivacyChipId: String
+    private val supportsCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+    private val supportsMic = packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)
+    private var micPrivacyToggleEnabled: Boolean? = null
+    private var cameraPrivacyToggleEnabled: Boolean? = null
 
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()
@@ -138,12 +147,23 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     @Before
     fun setUp() {
         runWithShellPermissionIdentity {
+            assumeTrue(supportsMic || supportsCamera)
             screenTimeoutBeforeTest = Settings.System.getLong(
                 context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT
             )
             Settings.System.putLong(
                 context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT, 1800000L
             )
+            if (supportsMic) {
+                micPrivacyToggleEnabled = sensorPrivacyManager.isSensorPrivacyEnabled(
+                    TOGGLE_TYPE_SOFTWARE, Sensors.MICROPHONE)
+                sensorPrivacyManager.setSensorPrivacy(Sensors.MICROPHONE, false)
+            }
+            if (supportsCamera) {
+                cameraPrivacyToggleEnabled = sensorPrivacyManager.isSensorPrivacyEnabled(
+                    TOGGLE_TYPE_SOFTWARE, Sensors.CAMERA)
+                sensorPrivacyManager.setSensorPrivacy(Sensors.CAMERA, false)
+            }
         }
 
         if (!isScreenOn) {
@@ -159,6 +179,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
         assumeFalse("feature not present on this device", callWithShellPermissionIdentity {
             CompatChanges.isChangeEnabled(PERMISSION_INDICATORS_NOT_PRESENT, Process.SYSTEM_UID)
         })
+
         install()
     }
 
@@ -192,6 +213,16 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
             pressBack()
             pressBack()
         }
+        runWithShellPermissionIdentity {
+            if (micPrivacyToggleEnabled != null) {
+                sensorPrivacyManager.setSensorPrivacy(Sensors.MICROPHONE, micPrivacyToggleEnabled!!)
+            }
+            micPrivacyToggleEnabled = null
+            if (cameraPrivacyToggleEnabled != null) {
+                sensorPrivacyManager.setSensorPrivacy(Sensors.CAMERA, cameraPrivacyToggleEnabled!!)
+            }
+            cameraPrivacyToggleEnabled = null
+        }
         pressHome()
         pressHome()
         Thread.sleep(DELAY_MILLIS)
@@ -208,7 +239,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
             putExtra(USE_MICROPHONE, useMic)
             putExtra(USE_HOTWORD, useHotword)
             putExtra(FINISH_EARLY, finishEarly)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         })
     }
 
