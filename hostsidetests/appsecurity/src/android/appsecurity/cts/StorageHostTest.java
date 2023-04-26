@@ -37,6 +37,7 @@ import junit.framework.AssertionFailedError;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -163,7 +164,8 @@ public class StorageHostTest extends BaseHostJUnit4Test {
         }
     }
 
-    @Test
+    @Ignore("b/279718458")
+    // Equivalent test for clone profile added in AppCloningStorageHostTest
     public void testVerifyStatsExternalForClonedUser() throws Exception {
         int mCloneUserIdInt = createCloneUserAndInstallDeviceTestApk();
         runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal", mCloneUserIdInt, true);
