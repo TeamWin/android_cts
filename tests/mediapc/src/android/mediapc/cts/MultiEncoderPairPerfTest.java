@@ -127,7 +127,7 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
         mimeEncoderPairs.add(mFirstPair);
         mimeEncoderPairs.add(mSecondPair);
         int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
-                mimeEncoderPairs, requiredMinInstances);
+                mimeEncoderPairs, true, requiredMinInstances);
         double achievedFrameRate = 0.0;
         if (maxInstances >= requiredMinInstances) {
             int secondPairInstances = maxInstances / 2;
