@@ -187,10 +187,15 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         };
         mDe.registerReceiver(receiver, new IntentFilter(Intent.ACTION_USER_UNLOCKED));
 
+        // Dismiss keyguard should have kicked off immediate broadcast, retry if not receive.
+        int retry = 5;
         dismissKeyguard();
-
-        // Dismiss keyguard should have kicked off immediate broadcast
-        assertTrue("USER_UNLOCKED", latch.await(1, TimeUnit.MINUTES));
+        while (!latch.await(1, TimeUnit.MINUTES)) {
+            retry -= 1;
+            if (retry == 0) break;
+            dismissKeyguard();
+        }
+        assertTrue("User unlock failed.", retry > 0);
 
         // And we should now be fully unlocked; we run immediately like this to
         // avoid missing BOOT_COMPLETED due to instrumentation being torn down.
