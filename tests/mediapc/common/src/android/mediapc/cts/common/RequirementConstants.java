@@ -52,6 +52,8 @@ public class RequirementConstants {
     public static final String R7_5__H_1_3 = "r7_5__h_1_3"; // 7.5/H-1-3
     public static final String R7_5__H_1_4 = "r7_5__h_1_4"; // 7.5/H-1-4
 
+    public static final String R5_12__H_1_3 = "r5_12__h_1_3"; // 5.12/H-1-3
+
     // these includes "its" because the proto in google3 was originally implemented incorrectly
     public static final String R7_5__H_1_5 = "r7_5__h_1_5__its"; // 7.5/H-1-5
     public static final String R7_5__H_1_6 = "r7_5__h_1_6__its"; // 7.5/H-1-6
@@ -99,6 +101,8 @@ public class RequirementConstants {
     public static final String NUM_CRYPTO_HW_SECURE_ALL_SUPPORT =
         "number_crypto_hw_secure_all_support";
     public static final String FILESYSTEM_IO_RATE = "filesystem_io_rate_mbps";
+
+    public static final String EXT_YUV_EXTENSION = "EXT_YUV_target";
 
     public static final String PRIMARY_CAMERA_AVAILABLE = "primary_camera_available";
     public static final String PRIMARY_CAMERA_RESOLUTION = "primary_camera_resolution";
