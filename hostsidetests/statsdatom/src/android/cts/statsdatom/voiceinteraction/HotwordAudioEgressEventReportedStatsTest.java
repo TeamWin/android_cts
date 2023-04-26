@@ -54,14 +54,20 @@ public class HotwordAudioEgressEventReportedStatsTest extends DeviceTestCase imp
             "testHotwordDetectionServiceDspWithAudioEgress";
     private static final String TEST_METHOD_DSP_EMPTY_AUDIO_STREAM_LIST =
             "testHotwordDetectionService_onDetectFromDsp_success";
+    private static final String TEST_METHOD_DSP_ILLEGAL_COPY_BUFFER_SIZE =
+            "testHotwordDetectionServiceDspWithAudioEgressWrongCopyBufferSize";
     private static final String TEST_METHOD_SOFTWARE_STARTED_AND_ENDED =
             "testHotwordDetectionService_softwareDetectorWithAudioEgress";
     private static final String TEST_METHOD_SOFTWARE_EMPTY_AUDIO_STREAM_LIST =
             "testHotwordDetectionService_onDetectFromMic_success";
+    private static final String TEST_METHOD_SOFTWARE_ILLEGAL_COPY_BUFFER_SIZE =
+            "testHotwordDetectionService_softwareDetectorWithAudioEgressWrongCopyBufferSize";
     private static final String TEST_METHOD_EXTERNAL_SOURCE_STARTED_AND_ENDED =
             "testHotwordDetectionService_onDetectFromExternalSourceWithAudioEgress";
     private static final String TEST_METHOD_EXTERNAL_SOURCE_EMPTY_AUDIO_STREAM_LIST =
             "testHotwordDetectionService_onDetectFromExternalSource_success";
+    private static final String TEST_METHOD_EXTERNAL_SOURCE_ILLEGAL_COPY_BUFFER_SIZE =
+            "testHotwordDetectionService_externalSourceWithAudioEgressWrongCopyBufferSize";
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
@@ -140,6 +146,31 @@ public class HotwordAudioEgressEventReportedStatsTest extends DeviceTestCase imp
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.EMPTY_AUDIO_STREAM_LIST);
     }
 
+    public void testDspIllegalCopyBufferSize() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_DSP_ILLEGAL_COPY_BUFFER_SIZE);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(3);
+
+        // Verify metric
+        assertHotwordAudioEgressEventReported(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.ILLEGAL_COPY_BUFFER_SIZE);
+        assertHotwordAudioEgressEventReported(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.STARTED);
+        assertHotwordAudioEgressEventReported(filteredData.get(2),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.ENDED);
+    }
+
     public void testSoftwareDetectorStartedAndEnded() throws Exception {
         if (!isSupportedDevice(getDevice())) return;
 
@@ -184,6 +215,32 @@ public class HotwordAudioEgressEventReportedStatsTest extends DeviceTestCase imp
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.EMPTY_AUDIO_STREAM_LIST);
     }
 
+    public void testSoftwareDetectorIllegalCopyBufferSize() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_SOFTWARE_ILLEGAL_COPY_BUFFER_SIZE);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(3);
+
+        // Verify metric
+        assertHotwordAudioEgressEventReported(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE,
+                Event.ILLEGAL_COPY_BUFFER_SIZE);
+        assertHotwordAudioEgressEventReported(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.STARTED);
+        assertHotwordAudioEgressEventReported(filteredData.get(2),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_SOFTWARE, Event.ENDED);
+    }
+
     public void testExternalSourceStartedAndEnded() throws Exception {
         if (!isSupportedDevice(getDevice())) return;
 
@@ -226,6 +283,31 @@ public class HotwordAudioEgressEventReportedStatsTest extends DeviceTestCase imp
         // Verify metric
         assertHotwordAudioEgressEventReported(filteredData.get(0),
                 Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.EMPTY_AUDIO_STREAM_LIST);
+    }
+
+    public void testExternalSourceIllegalCopyBufferSize() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
+
+        // Run test in CTS package
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG, TEST_CLASS,
+                TEST_METHOD_EXTERNAL_SOURCE_ILLEGAL_COPY_BUFFER_SIZE);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotNull();
+
+        int appId = getTestAppUid(getDevice());
+        // After the voice CTS test executes completely, the test will switch to original VIS
+        // Focus on our expected app metrics
+        List<StatsLog.EventMetricData> filteredData = filterTestAppMetrics(appId, data);
+        assertThat(filteredData.size()).isEqualTo(3);
+
+        // Verify metric
+        assertHotwordAudioEgressEventReported(filteredData.get(0),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.ILLEGAL_COPY_BUFFER_SIZE);
+        assertHotwordAudioEgressEventReported(filteredData.get(1),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.STARTED);
+        assertHotwordAudioEgressEventReported(filteredData.get(2),
+                Enums.HotwordDetectorType.TRUSTED_DETECTOR_DSP, Event.ENDED);
     }
 
     private void assertHotwordAudioEgressEventReported(StatsLog.EventMetricData metric,

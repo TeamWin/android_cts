@@ -21,6 +21,7 @@ import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
 import static android.Manifest.permission.RECORD_AUDIO;
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static android.voiceinteraction.common.Utils.AUDIO_EGRESS_DETECTED_RESULT;
+import static android.voiceinteraction.common.Utils.AUDIO_EGRESS_DETECTED_RESULT_WRONG_COPY_BUFFER_SIZE;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 import static android.voiceinteraction.cts.testcore.Helper.MANAGE_VOICE_KEYPHRASES;
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
@@ -812,7 +813,7 @@ public class HotwordDetectionServiceBasicTest {
     public void testHotwordDetectionServiceDspWithAudioEgress() throws Throwable {
         // Create AlwaysOnHotwordDetector
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
-                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
+                createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
 
         // Update HotwordDetectionService options to enable Audio egress
         runWithShellPermissionIdentity(() -> {
@@ -829,13 +830,16 @@ public class HotwordDetectionServiceBasicTest {
 
             mService.initDetectRejectLatch();
 
-            alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
-                    /* status= */ 0, /* soundModelHandle= */ 100,
-                    /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
-                    /* captureSession= */ 101, /* captureDelayMs= */ 1000,
-                    /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
-                    Helper.createFakeAudioFormat(), new byte[1024],
-                    Helper.createFakeKeyphraseRecognitionExtraList());
+            // start recognition and trigger recognition event via recognition session
+            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
+                    mInstrumentationObserver.listenOnRecognitionStarted();
+            alwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+            RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
+                    onRecognitionStartedFuture);
+            assertThat(recognitionSession).isNotNull();
+
+            recognitionSession.triggerRecognitionEvent(new byte[1024],
+                    createKeyphraseRecognitionExtraList());
 
             // wait onDetected() called and verify the result
             mService.waitOnDetectOrRejectCalled();
@@ -850,6 +854,7 @@ public class HotwordDetectionServiceBasicTest {
             // Drop identity adopted.
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
+            disableTestModel();
         }
     }
 
@@ -925,6 +930,143 @@ public class HotwordDetectionServiceBasicTest {
                     mService.getHotwordServiceOnDetectedResult();
 
             Helper.verifyDetectedResult(detectResult, AUDIO_EGRESS_DETECTED_RESULT);
+        } finally {
+            // destroy detector
+            alwaysOnHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void testHotwordDetectionServiceDspWithAudioEgressWrongCopyBufferSize()
+            throws Throwable {
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
+
+        // Update HotwordDetectionService options to enable Audio egress
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle persistableBundle = new PersistableBundle();
+            persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                    Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS);
+            persistableBundle.putBoolean(Utils.KEY_AUDIO_EGRESS_USE_ILLEGAL_COPY_BUFFER_SIZE, true);
+            alwaysOnHotwordDetector.updateState(
+                    persistableBundle,
+                    Helper.createFakeSharedMemoryData());
+        }, MANAGE_HOTWORD_DETECTION);
+
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            mService.initDetectRejectLatch();
+
+            // start recognition and trigger recognition event via recognition session
+            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
+                    mInstrumentationObserver.listenOnRecognitionStarted();
+            alwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+            RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
+                    onRecognitionStartedFuture);
+            assertThat(recognitionSession).isNotNull();
+
+            recognitionSession.triggerRecognitionEvent(new byte[1024],
+                    createKeyphraseRecognitionExtraList());
+
+            // wait onDetected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+
+            Helper.verifyAudioEgressDetectedResult(detectResult,
+                    AUDIO_EGRESS_DETECTED_RESULT_WRONG_COPY_BUFFER_SIZE);
+
+        } finally {
+            // destroy detector
+            alwaysOnHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+            disableTestModel();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void testHotwordDetectionService_softwareDetectorWithAudioEgressWrongCopyBufferSize()
+            throws Throwable {
+        // Create SoftwareHotwordDetector
+        HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
+                false);
+
+        // Update HotwordDetectionService options to enable Audio egress
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle persistableBundle = new PersistableBundle();
+            persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                    Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS);
+            persistableBundle.putBoolean(Utils.KEY_AUDIO_EGRESS_USE_ILLEGAL_COPY_BUFFER_SIZE, true);
+            softwareHotwordDetector.updateState(
+                    persistableBundle,
+                    Helper.createFakeSharedMemoryData());
+        }, MANAGE_HOTWORD_DETECTION);
+
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            mService.initDetectRejectLatch();
+            softwareHotwordDetector.startRecognition();
+
+            // wait onDetected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+
+            Helper.verifyAudioEgressDetectedResult(detectResult,
+                    AUDIO_EGRESS_DETECTED_RESULT_WRONG_COPY_BUFFER_SIZE);
+        } finally {
+            softwareHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void testHotwordDetectionService_externalSourceWithAudioEgressWrongCopyBufferSize()
+            throws Throwable {
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ false);
+
+        // Update HotwordDetectionService options to enable Audio egress
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle persistableBundle = new PersistableBundle();
+            persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
+                    Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS);
+            persistableBundle.putBoolean(Utils.KEY_AUDIO_EGRESS_USE_ILLEGAL_COPY_BUFFER_SIZE, true);
+            alwaysOnHotwordDetector.updateState(
+                    persistableBundle,
+                    Helper.createFakeSharedMemoryData());
+        }, MANAGE_HOTWORD_DETECTION);
+
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            ParcelFileDescriptor audioStream = Helper.createFakeAudioStream();
+            mService.initDetectRejectLatch();
+            alwaysOnHotwordDetector.startRecognition(audioStream,
+                    Helper.createFakeAudioFormat(),
+                    Helper.createFakePersistableBundleData());
+
+            // wait onDetected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+
+            Helper.verifyAudioEgressDetectedResult(detectResult,
+                    AUDIO_EGRESS_DETECTED_RESULT_WRONG_COPY_BUFFER_SIZE);
         } finally {
             // destroy detector
             alwaysOnHotwordDetector.destroy();
