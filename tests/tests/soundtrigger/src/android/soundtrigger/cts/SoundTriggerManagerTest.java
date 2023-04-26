@@ -238,5 +238,23 @@ public class SoundTriggerManagerTest {
         assertThat(mDetectedLatch.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
         assertThat(ambientLatch.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
     }
+
+    @Test
+    public void testAttachInvalidSession_whenNoDspAvailable() {
+        getSoundTriggerPermissions();
+        if (mManager.listModuleProperties().size() == 1) {
+            assertThrows(
+                    IllegalStateException.class,
+                    () -> mRealManager.loadSoundModel(sModel.getSoundModel()));
+        }
+    }
+
+    @Test
+    public void testNullModuleProperties_whenNoDspAvailable() {
+        getSoundTriggerPermissions();
+        if (mManager.listModuleProperties().size() == 1) {
+            assertThat(mRealManager.getModuleProperties()).isNull();
+        }
+    }
     // TODO test behavior when RECORD_AUDIO is lost for recognition
 }
