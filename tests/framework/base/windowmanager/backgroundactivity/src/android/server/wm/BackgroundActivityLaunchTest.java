@@ -422,7 +422,6 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 270713916)
     public void testPendingIntentActivity_appAIsForeground_isNotBlocked() {
         // Start AppA foreground activity
         Intent intent = new Intent();
