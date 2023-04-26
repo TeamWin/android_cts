@@ -16,6 +16,7 @@
 
 package android.media.audio.cts;
 
+import android.util.Log;
 
 import java.util.function.BooleanSupplier;
 
@@ -26,6 +27,8 @@ final class SafeWaitObject {
     /**
      * Causes the current thread to wait until this object is notified and stopWaiting returns true,
      * or a specified amount of time has elapsed.
+     * Unlike Object.wait(), it will not throw an InterruptedException, and will instead retry
+     * waiting until the deadline expires.
      *
      * @see Object#wait()
      * @param timeoutMs The maximum time to wait in milliseconds.
@@ -33,8 +36,7 @@ final class SafeWaitObject {
      * @return false if the predicate stopWaiting still evaluates to false after the timeout expired
      *         , otherwise true.
      */
-    public boolean waitFor(long timeoutMs, BooleanSupplier stopWaiting)
-            throws InterruptedException {
+    public boolean waitFor(long timeoutMs, BooleanSupplier stopWaiting) {
         final long deadline = System.currentTimeMillis() + timeoutMs;
         synchronized (this) {
             while (!stopWaiting.getAsBoolean()) {
@@ -42,7 +44,11 @@ final class SafeWaitObject {
                 if (timeToWait <= 0) {
                     return false;
                 }
-                this.wait(timeToWait);
+                try {
+                    this.wait(timeToWait);
+                } catch (InterruptedException e) {
+                    Log.v("SafeWaitObject", "waiting interrupted, resuming");
+                }
             }
         }
         return true;

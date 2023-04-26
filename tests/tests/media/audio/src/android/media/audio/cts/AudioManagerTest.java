@@ -147,6 +147,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
             STREAM_SYSTEM, STREAM_RING, STREAM_MUSIC,
             STREAM_ALARM, STREAM_NOTIFICATION,
             STREAM_DTMF,  STREAM_ACCESSIBILITY };
+    private static final int VOLUME_CHANGED_INTENT_TIMEOUT_MS = 3000; // 3s
 
     private static final int INVALID_DIRECT_PLAYBACK_MODE = -1;
     private AudioManager mAudioManager;
@@ -340,6 +341,11 @@ public class AudioManagerTest extends InstrumentationTestCase {
         if (mAudioManager.isVolumeFixed()) {
             return;
         }
+        // safe media can block the raising the volume, disable it
+        getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.STATUS_BAR_SERVICE);
+        mAudioManager.disableSafeMediaVolume();
+
         try {
             mContext.registerReceiver(receiver,
                     new IntentFilter(AudioManager.ACTION_VOLUME_CHANGED));
@@ -353,7 +359,8 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     mediaVol == maxMediaVol ? --mediaVol : ++mediaVol,
                     0 /*flags*/);
             // verify a change was reported
-            final boolean intentFired = receiver.waitForExpectedAction(500/*ms*/);
+            final boolean intentFired = receiver.waitForExpectedAction(
+                    VOLUME_CHANGED_INTENT_TIMEOUT_MS);
             assertTrue("VOLUME_CHANGED_ACTION wasn't fired for change from "
                     + origVol + " to " + mediaVol, intentFired);
             // verify the new value is in the extras
@@ -366,17 +373,19 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     intent.getIntExtra(AudioManager.EXTRA_PREV_VOLUME_STREAM_VALUE, -1));
         } finally {
             mContext.unregisterReceiver(receiver);
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
     private static final class MyBlockingIntentReceiver extends BroadcastReceiver {
+        private static final String TAG = "BlockingIntentRcvr";
         private final SafeWaitObject mLock = new SafeWaitObject();
         // the action for the intent to check
         private final String mAction;
         private String mWaitForExtra;
         private int mWaitForExtraInt = Integer.MAX_VALUE;
         @GuardedBy("mLock")
-        private boolean mIntentReceived = false;
+        private volatile boolean mIntentReceived = false;
         @GuardedBy("mLock")
         private Intent mIntent;
 
@@ -404,23 +413,34 @@ public class AudioManagerTest extends InstrumentationTestCase {
                 // move along, this is not the action we're looking for
                 return;
             }
-            if ((mWaitForExtra != null)
-                    && (intent.getIntExtra(mWaitForExtra, Integer.MIN_VALUE) != mWaitForExtraInt)) {
-                return;
-            }
             synchronized (mLock) {
+                if (mWaitForExtra != null) {
+                    final int extraIntVal = intent.getIntExtra(mWaitForExtra, Integer.MIN_VALUE);
+                    if (extraIntVal != mWaitForExtraInt) {
+                        Log.i(TAG, "extra received: " + extraIntVal);
+                        return;
+                    } else {
+                        Log.i(TAG, "expected extra received: " + mWaitForExtraInt);
+                    }
+                }
                 mIntentReceived = true;
                 mIntent = intent;
                 mLock.notify();
             }
         }
 
+        /**
+         * Wait for the intent up to a given time
+         * @param timeOutMs the timeout in ms
+         * @return true if the intent fire, false if it didn't fire within the timeout
+         */
         public boolean waitForExpectedAction(long timeOutMs) {
             synchronized (mLock) {
-                try {
-                    mLock.waitFor(timeOutMs, () -> mIntentReceived);
-                } catch (InterruptedException e) { }
-                return mIntentReceived;
+                Log.i(TAG, "starting wait: expected extra:"
+                        + mWaitForExtra + " val:" + mWaitForExtraInt);
+                final boolean res = mLock.waitFor(timeOutMs, () -> mIntentReceived);
+                Log.i(TAG, "wait stopped, intent received:" + mIntentReceived);
+                return res;
             }
         }
 
@@ -445,10 +465,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
 
         public boolean waitForExpectedEvent(long timeOutMs) {
             synchronized (mLock) {
-                try {
-                    mLock.waitFor(timeOutMs, () -> mEventReceived);
-                } catch (InterruptedException e) { }
-                return mEventReceived;
+                return mLock.waitFor(timeOutMs, () -> mEventReceived);
             }
         }
     }
