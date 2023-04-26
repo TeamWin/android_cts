@@ -35,14 +35,11 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.app.Components;
 import android.view.Surface;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 @Presubmit
-@FlakyTest(detail = "Promote once confirmed non-flaky")
 public class DreamManagerServiceTests extends ActivityManagerTestBase {
 
     // Timeout after which the dream should have finished willingly
