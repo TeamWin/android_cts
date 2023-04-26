@@ -1610,6 +1610,33 @@ public class PerformanceClassEvaluator {
         }
     }
 
+    public static class ExtYuvTargetRequirement extends Requirement {
+        private static final String TAG = ExtYuvTargetRequirement.class.getSimpleName();
+
+        private ExtYuvTargetRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setExtYuvTargetSupport(boolean extensionSupported) {
+            this.setMeasuredValue(RequirementConstants.EXT_YUV_EXTENSION, extensionSupported);
+        }
+
+        /**
+         * [5.12/H-1-3] MUST checks for EXT_YUV_target extension support.
+         */
+        public static ExtYuvTargetRequirement createExtensionReq() {
+            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
+                    .<Boolean>builder()
+                    .setId(RequirementConstants.EXT_YUV_EXTENSION)
+                    .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                    .build();
+
+            return new ExtYuvTargetRequirement(RequirementConstants.R5_12__H_1_3, requirement);
+        }
+
+    }
+
     public <R extends Requirement> R addRequirement(R req) {
         if (!this.mRequirements.add(req)) {
             throw new IllegalStateException("Requirement " + req.id() + " already added");
@@ -1855,6 +1882,10 @@ public class PerformanceClassEvaluator {
 
     public AudioTap2ToneLatencyRequirement addR5_6__H_1_1() {
         return this.addRequirement(AudioTap2ToneLatencyRequirement.createR5_6__H_1_1());
+    }
+
+    public ExtYuvTargetRequirement addExtYUVSupportReq() {
+        return this.addRequirement(ExtYuvTargetRequirement.createExtensionReq());
     }
 
     private enum SubmitType {
