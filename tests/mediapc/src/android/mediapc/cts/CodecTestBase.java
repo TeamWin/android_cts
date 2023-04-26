@@ -185,6 +185,7 @@ abstract class CodecTestBase {
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();
     static final boolean ENABLE_LOGS = false;
     static final int PER_TEST_TIMEOUT_LARGE_TEST_MS = 300000;
+    static final int PER_TEST_TIMEOUT_SMALL_TEST_MS = 60000;
     static final int SELECT_ALL = 0; // Select all codecs
     static final int SELECT_HARDWARE = 1; // Select Hardware codecs only
     static final int SELECT_SOFTWARE = 2; // Select Software codecs only
