@@ -153,7 +153,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         boolean secureWithUnsecure = isFirstSecure ^ isSecondSecure;
         boolean bothSecure = isFirstSecure & isSecondSecure;
         int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
-                mimeDecoderPairs, requiredMinInstances);
+                mimeDecoderPairs, false, requiredMinInstances);
         double achievedFrameRate = 0.0;
         boolean meetsPreconditions = (isFirstSecure || isSecondSecure) ?
                 meetsSecureDecodePreconditions() : true;
@@ -196,10 +196,11 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         if (secureWithUnsecure) {
             PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_10 =
-                pce.addR5_1__H_1_10();
+                pce.addR5_1__H_1_10_1080p();
             r5_1__H_1_10.setConcurrentFps(achievedFrameRate);
         } else if (bothSecure) {
-            PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_9 = pce.addR5_1__H_1_9();
+            PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_9 =
+                pce.addR5_1__H_1_9_1080p();
             r5_1__H_1_9.setConcurrentFps(achievedFrameRate);
         } else {
             PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_1;
