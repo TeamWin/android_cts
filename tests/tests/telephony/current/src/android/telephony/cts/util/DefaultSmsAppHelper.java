@@ -110,6 +110,10 @@ public class DefaultSmsAppHelper {
         Assume.assumeTrue(hasTelephony());
     }
 
+    public static void assumeMessaging() {
+        Assume.assumeTrue(hasSms());
+    }
+
     public static boolean hasTelephony() {
         Context context = ApplicationProvider.getApplicationContext();
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
