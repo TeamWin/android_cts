@@ -15,7 +15,7 @@
  */
 package android.app.cts.broadcasts;
 
-import static android.app.cts.broadcasts.BaseBroadcastTest.TAG;
+import static com.android.app.cts.broadcasts.Common.TAG;
 
 import android.os.Environment;
 import android.os.FileUtils;

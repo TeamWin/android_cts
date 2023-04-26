@@ -20,7 +20,14 @@
 
     <application>
         <service android:name=".TestService"
-                 android:exported="true"/>
+                 android:exported="true" />
+
+        <receiver android:name=".TestReceiver"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.app.cts.broadcasts.helper.ORDERED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
