@@ -44,12 +44,14 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.UserHandle;
 import android.provider.MediaStore;
 import android.scopedstorage.cts.lib.TestUtils;
 
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.BeforeClass;
@@ -63,6 +65,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 public class StorageOtherFilesTest {
 
     protected static final String TAG = "MediaProviderOtherFilePermissionTest";
