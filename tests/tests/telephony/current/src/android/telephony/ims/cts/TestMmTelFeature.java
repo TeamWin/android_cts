@@ -178,6 +178,7 @@ public class TestMmTelFeature extends MmTelFeature {
 
     @Override
     public ImsCallSessionImplBase createCallSession(ImsCallProfile profile) {
+        Log.d(TAG, "createCallSession");
         ImsCallSessionImplBase s = new TestImsCallSessionImpl(profile);
         mCallSession = (TestImsCallSessionImpl) s;
         onCallCreate(mCallSession);
@@ -260,6 +261,7 @@ public class TestMmTelFeature extends MmTelFeature {
     }
 
     public TestImsCallSessionImpl getImsCallsession() {
+        Log.d(TAG, "getImsCallsession");
         return mCallSession;
     }
 
