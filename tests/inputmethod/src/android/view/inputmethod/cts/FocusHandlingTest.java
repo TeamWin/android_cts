@@ -1084,6 +1084,37 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
         assertTrue(getOnMainSync(() -> imm.get().isActive(secondEditorRef.get())));
     }
 
+    @AppModeFull(reason = "Instant apps cannot start TranslucentActivity from existing activity.")
+    @Test
+    public void testClearCurRootViewWhenDifferentProcessBecomesActive() throws Exception {
+        final var editorRef = new AtomicReference<EditText>();
+        final var imm = new AtomicReference<InputMethodManager>();
+
+        final var testActivity = TestActivity.startSync(activity -> {
+            final var layout = new LinearLayout(activity);
+            layout.setOrientation(LinearLayout.VERTICAL);
+
+            final var editText = new EditText(activity);
+            editText.requestFocus();
+            editorRef.set(editText);
+            layout.addView(editText);
+            imm.set(activity.getSystemService(InputMethodManager.class));
+            return layout;
+        });
+
+        waitOnMainUntil(() -> imm.get().isActive(editorRef.get()), TIMEOUT);
+
+        // launch activity in a different package.
+        final var intent = new Intent(Intent.ACTION_MAIN);
+        intent.setComponent(new ComponentName(
+                "android.view.inputmethod.ctstestapp",
+                "android.view.inputmethod.ctstestapp.TranslucentActivity"));
+        runOnMainSync(() -> testActivity.startActivity(intent));
+
+        waitOnMainUntil(() -> !imm.get().isCurrentRootView(editorRef.get()), TIMEOUT,
+                "Initial activity did not lose IME connection after second activity started.");
+    }
+
     /**
      * A regression test for Bug 260682160.
      *
