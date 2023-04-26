@@ -4979,6 +4979,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Float[].class, mCarPropertyManager)
+                .setCarPropertyConfigVerifier(
+                        carPropertyConfig -> {
+                            // HVAC_TEMPERATURE_VALUE_SUGGESTION's access must be read+write.
+                            assertThat(carPropertyConfig.getAccess()).isEqualTo(
+                                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE);
+                        })
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos,
                                 temperatureSuggestion) -> {
