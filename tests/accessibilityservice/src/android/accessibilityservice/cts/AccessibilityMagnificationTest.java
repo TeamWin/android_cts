@@ -530,8 +530,7 @@ public class AccessibilityMagnificationTest {
     }
 
     @Test
-    public void testServiceConnectionDisconnected_hasNoMagnificationOverlay()
-            throws TimeoutException {
+    public void testServiceConnectionDisconnected_hasNoMagnificationOverlay() throws Exception {
         Assume.assumeTrue(isWindowModeSupported(mInstrumentation.getContext()));
 
         final MagnificationController controller = mService.getMagnificationController();
@@ -541,17 +540,17 @@ public class AccessibilityMagnificationTest {
                 .build();
 
         try {
-            sUiAutomation.executeAndWaitForEvent(
-                    () -> controller.setMagnificationConfig(config, false),
-                    event -> sUiAutomation.getWindows().stream().anyMatch(
+            controller.setMagnificationConfig(config, false);
+            TestUtils.waitUntil("Magnification overlay window should be visible",
+                    () -> sUiAutomation.getWindows().stream().anyMatch(
                             accessibilityWindowInfo -> accessibilityWindowInfo.getType()
-                                    == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY), 5000);
+                                    == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY));
 
-            sUiAutomation.executeAndWaitForEvent(
-                    () -> mService.runOnServiceSync(() -> mService.disableSelfAndRemove()),
-                    event -> sUiAutomation.getWindows().stream().noneMatch(
+            mService.disableSelfAndRemove();
+            TestUtils.waitUntil("Magnification overlay window should be gone",
+                    () -> sUiAutomation.getWindows().stream().noneMatch(
                             accessibilityWindowInfo -> accessibilityWindowInfo.getType()
-                                    == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY), 5000);
+                                    == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY));
         } finally {
             controller.resetCurrentMagnification(false);
         }
