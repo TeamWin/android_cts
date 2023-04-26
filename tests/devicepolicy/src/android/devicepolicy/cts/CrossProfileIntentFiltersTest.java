@@ -21,6 +21,7 @@ import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAG
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 import static com.android.queryable.queries.ActivityQuery.activity;
 import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
@@ -35,10 +36,12 @@ import android.content.pm.ResolveInfo;
 import android.stats.devicepolicy.EventId;
 import android.util.Log;
 
+import com.android.activitycontext.ActivityContext;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.CrossUserTest;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.UserPair;
@@ -50,6 +53,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.interactive.Step;
 import com.android.interactive.annotations.Interactive;
 import com.android.interactive.steps.sysui.IsThereAScreenVisibleToSelectBetweenPersonalAndWorkApps;
+import com.android.internal.app.IntentForwarderActivity;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -151,8 +155,9 @@ public final class CrossProfileIntentFiltersTest {
             @UserPair(from = UserType.INITIAL_USER, to = UserType.WORK_PROFILE),
             @UserPair(from = UserType.WORK_PROFILE, to = UserType.INITIAL_USER)})
     @EnsureHasWorkProfile(dpcIsPrimary = true)
+    @EnsureHasPermission(INTERACT_ACROSS_USERS)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#addCrossProfileIntentFilter")
-    public void startActivity_intentFilterIsSet_startsAppInOtherUser() {
+    public void startActivity_intentFilterIsSet_startsAppInOtherUser() throws InterruptedException {
         sTestApp.uninstallFromAllUsers();
         try (TestAppInstance testApp = sTestApp.install(sDeviceState.otherUser())) {
             int flag = TestApis.users().instrumented().equals(sDeviceState.workProfile())
@@ -163,8 +168,11 @@ public final class CrossProfileIntentFiltersTest {
                     sDeviceState.dpc().componentName(),
                     testIntentFilter, flag);
 
-            TestApis.context().instrumentedContext().startActivity(
-                    new Intent(ACTION).setFlags(FLAG_ACTIVITY_NEW_TASK));
+            ActivityContext.runWithContext(activity -> {
+                Intent intent = new Intent(ACTION)
+                        .putExtra(IntentForwarderActivity.EXTRA_SKIP_USER_CONFIRMATION, true);
+                activity.startActivityForResult(intent, 123);
+            });
 
             assertThat(testApp.activities().query()
                             .whereActivity().intentFilters().contains(
