@@ -24,6 +24,7 @@ import static android.app.admin.DevicePolicyIdentifiers.KEYGUARD_DISABLED_FEATUR
 import static android.app.admin.DevicePolicyIdentifiers.LOCK_TASK_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.PACKAGE_UNINSTALL_BLOCKED_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.PERMISSION_GRANT_POLICY;
+import static android.app.admin.DevicePolicyIdentifiers.PERMITTED_INPUT_METHODS_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.PERSISTENT_PREFERRED_ACTIVITY_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.RESET_PASSWORD_TOKEN_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.USER_CONTROL_DISABLED_PACKAGES_POLICY;
@@ -54,6 +55,7 @@ import android.app.admin.EnforcingAdmin;
 import android.app.admin.FlagUnion;
 import android.app.admin.IntentFilterPolicyKey;
 import android.app.admin.LockTaskPolicy;
+import android.app.admin.MostRecent;
 import android.app.admin.MostRestrictive;
 import android.app.admin.NoArgsPolicyKey;
 import android.app.admin.PackagePermissionPolicyKey;
@@ -84,6 +86,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.inputmethods.InputMethod;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
@@ -97,9 +100,11 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RunWith(BedsteadJUnit4.class)
 @CoexistenceFlagsOn
@@ -126,6 +131,17 @@ public final class DeviceManagementCoexistenceTest {
     private static final int LOCK_TASK_FEATURES = LOCK_TASK_FEATURE_HOME;
 
     private static final int KEYGUARD_DISABLED_FEATURE = KEYGUARD_DISABLE_SECURE_CAMERA;
+
+    private static final List<String> NON_SYSTEM_INPUT_METHOD_PACKAGES =
+            TestApis.inputMethods().installedInputMethods().stream()
+                    .map(InputMethod::pkg)
+                    .filter(p -> !p.hasSystemFlag())
+                    .map(Package::packageName)
+                    .collect(Collectors.toList());
+    static {
+        NON_SYSTEM_INPUT_METHOD_PACKAGES.add("packageName");
+    }
+
     private static final TestApp sTestApp = sDeviceState.testApps().any();
 
     private static TestAppInstance sTestAppInstance = sTestApp.install();
@@ -466,6 +482,27 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder
     @EnsureHasDeviceOwner
     @Postsubmit(reason = "new test")
+    public void getDevicePolicyState_setPermittedInputMethods_returnsPolicy() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
+                    sDeviceState.dpc().componentName(), NON_SYSTEM_INPUT_METHOD_PACKAGES);
+
+            PolicyState<Set<String>> policyState = getStringSetPolicyState(
+                    new NoArgsPolicyKey(PERMITTED_INPUT_METHODS_POLICY),
+                    sDeviceState.dpc().user().userHandle());
+
+            assertThat(policyState.getCurrentResolvedPolicy()).isEqualTo(
+                    new HashSet<>(NON_SYSTEM_INPUT_METHOD_PACKAGES));
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
+                    sDeviceState.dpc().componentName(), /* packages= */ null);
+        }
+    }
+
+    @Test
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
     public void getDevicePolicyState_autoTimezone_returnsCorrectResolutionMechanism() {
         boolean originalValue = sDeviceState.dpc().devicePolicyManager()
                 .getAutoTimeZoneEnabled(sDeviceState.dpc().componentName());
@@ -700,6 +737,27 @@ public final class DeviceManagementCoexistenceTest {
             sDeviceState.dpc().devicePolicyManager().setAccountManagementDisabled(
                     sDeviceState.dpc().componentName(), sDeviceState.accounts().accountType(),
                     /* disabled= */ false);
+        }
+    }
+
+    @Test
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    public void getDevicePolicyState_setPermittedInputMethods_returnsCorrectResolutionMechanism() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
+                    sDeviceState.dpc().componentName(), NON_SYSTEM_INPUT_METHOD_PACKAGES);
+
+            PolicyState<Set<String>> policyState = getStringSetPolicyState(
+                    new NoArgsPolicyKey(PERMITTED_INPUT_METHODS_POLICY),
+                    sDeviceState.dpc().user().userHandle());
+
+            assertThat(getMostRecentStringSetMechanism(policyState))
+                    .isEqualTo(MostRecent.MOST_RECENT);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
+                    sDeviceState.dpc().componentName(), /* packages= */ null);
         }
     }
 
@@ -1333,6 +1391,32 @@ public final class DeviceManagementCoexistenceTest {
         }
     }
 
+    @Test
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDeviceOwner
+    @Postsubmit(reason = "new test")
+    @Ignore
+    public void setPermittedInputMethods_serialisation_loadsPolicy() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
+                    sDeviceState.dpc().componentName(), NON_SYSTEM_INPUT_METHOD_PACKAGES);
+
+            // TODO(b/277071699): Add test API to trigger reloading from disk. Currently I've tested
+            //  this locally by triggering the loading in DPM#getDevicePolicyState in my local
+            //  build.
+
+            PolicyState<Set<String>> policyState = getStringSetPolicyState(
+                    new NoArgsPolicyKey(PERMITTED_INPUT_METHODS_POLICY),
+                    sDeviceState.dpc().user().userHandle());
+
+            assertThat(policyState.getCurrentResolvedPolicy()).isEqualTo(
+                    new HashSet<>(NON_SYSTEM_INPUT_METHOD_PACKAGES));
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
+                    sDeviceState.dpc().componentName(), /* packages= */ null);
+        }
+    }
+
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
     @EnsureHasDevicePolicyManagerRoleHolder
@@ -1726,6 +1810,16 @@ public final class DeviceManagementCoexistenceTest {
             return (FlagUnion) policyState.getResolutionMechanism();
         } catch (ClassCastException e) {
             fail("Returned resolution mechanism is not of type FlagUnion: " + e);
+            return null;
+        }
+    }
+
+    private MostRecent<Set<String>> getMostRecentStringSetMechanism(
+            PolicyState<Set<String>> policyState) {
+        try {
+            return (MostRecent<Set<String>>) policyState.getResolutionMechanism();
+        } catch (ClassCastException e) {
+            fail("Returned resolution mechanism is not of type MostRecent<Set<String>>: " + e);
             return null;
         }
     }

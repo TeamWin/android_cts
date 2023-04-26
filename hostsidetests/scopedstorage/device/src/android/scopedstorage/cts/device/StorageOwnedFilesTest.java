@@ -39,12 +39,15 @@ import static com.google.common.truth.Truth.assertThat;
 import android.Manifest;
 import android.content.ContentResolver;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.scopedstorage.cts.lib.ResolverAccessTestUtils;
 import android.system.Os;
 import android.util.Log;
+
+import androidx.test.filters.SdkSuppress;
 
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -57,6 +60,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 public class StorageOwnedFilesTest {
 
     private static final String TAG = "StorageOwnedFilesTest";

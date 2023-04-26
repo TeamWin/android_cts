@@ -66,9 +66,7 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
 
         enableComponent(TEST_INSTALLER_ACTIVITY_COMPONENT_NAME)
 
-        installPackageViaSession(
-            apkName = APP_APK_NAME_31,
-            appMetadata = AppMetadata.createDefaultAppMetadata())
+        installPackageWithInstallSourceAndMetadata(APP_APK_NAME_31)
 
         assertAppHasPermission(Manifest.permission.ACCESS_FINE_LOCATION, false)
     }

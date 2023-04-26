@@ -71,6 +71,7 @@ public class SoundTriggerManagerTest {
     private static final UUID MODEL_UUID = new UUID(5, 7);
     private static Model sModel = Model.create(MODEL_UUID, new UUID(7, 5), new byte[0], 1);
 
+    private SoundTriggerManager mRealManager = null;
     private SoundTriggerManager mManager = null;
     private SoundTriggerInstrumentation mInstrumentation = null;
 
@@ -87,9 +88,9 @@ public class SoundTriggerManagerTest {
     @Before
     public void setup() {
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+        mRealManager = sContext.getSystemService(SoundTriggerManager.class);
         mInstrumentationObserver.attachInstrumentation();
-        mManager = sContext.getSystemService(
-                SoundTriggerManager.class).createManagerForTestModule();
+        mManager = mRealManager.createManagerForTestModule();
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
@@ -198,4 +199,83 @@ public class SoundTriggerManagerTest {
         recognitionSession.triggerRecognitionEvent(new byte[] {0x11}, null);
         assertThat(mDetectedLatch.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
     }
+
+    @Test
+    public void testRecognitionEvent_notesAppOps() throws Exception {
+        getSoundTriggerPermissions();
+        ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
+                mInstrumentationObserver.listenOnRecognitionStarted();
+
+        prepareForRecognition();
+        assertThat(startRecognitionForTest()).isTrue();
+        RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
+                onRecognitionStartedFuture);
+
+        assertThat(recognitionSession).isNotNull();
+
+        var ambientLatch = new CountDownLatch(1);
+        AppOpsManager appOpsManager =
+                sContext.getSystemService(AppOpsManager.class);
+        final String[] OPS_TO_WATCH =
+                new String[] {
+                    AppOpsManager.OPSTR_RECEIVE_AMBIENT_TRIGGER_AUDIO
+                };
+
+        runWithShellPermissionIdentity(() ->
+                appOpsManager.startWatchingNoted(
+                        OPS_TO_WATCH,
+                        (op, uid, pkgName, attributionTag, flags, result) -> {
+                            if (Objects.equals(
+                                    op, AppOpsManager.OPSTR_RECEIVE_AMBIENT_TRIGGER_AUDIO)) {
+                                ambientLatch.countDown();
+                            }
+                        }));
+
+        // Grab permissions again since we transitioned out of shell identity
+        getSoundTriggerPermissions();
+
+        recognitionSession.triggerRecognitionEvent(new byte[] {0x11}, null);
+        assertThat(mDetectedLatch.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
+        assertThat(ambientLatch.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
+    }
+
+    @Test
+    public void testAttachInvalidSession_whenNoDspAvailable() {
+        getSoundTriggerPermissions();
+        if (mManager.listModuleProperties().size() == 1) {
+            assertThrows(
+                    IllegalStateException.class,
+                    () -> mRealManager.loadSoundModel(sModel.getSoundModel()));
+        }
+    }
+
+    @Test
+    public void testNullModuleProperties_whenNoDspAvailable() {
+        getSoundTriggerPermissions();
+        if (mManager.listModuleProperties().size() == 1) {
+            assertThat(mRealManager.getModuleProperties()).isNull();
+        }
+    }
+
+    @Test
+    public void testAttachThrows_whenMissingRecordPermission() {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(CAPTURE_AUDIO_HOTWORD, MANAGE_SOUND_TRIGGER);
+        assertThrows(
+                SecurityException.class,
+                () -> mRealManager.createManagerForTestModule());
+    }
+
+    @Test
+    public void testAttachThrows_whenMissingCaptureHotwordPermission() {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(RECORD_AUDIO, MANAGE_SOUND_TRIGGER);
+        assertThrows(
+                SecurityException.class,
+                () -> mRealManager.createManagerForTestModule());
+    }
+
+    // TODO test behavior when RECORD_AUDIO is lost for recognition
 }

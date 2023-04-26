@@ -16,17 +16,21 @@
 
 package android.app.cts.broadcasts;
 
+import static com.android.app.cts.broadcasts.Common.TAG;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertNull;
 
 import android.app.ActivityManager;
+import android.app.AppGlobals;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Process;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -54,11 +58,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 abstract class BaseBroadcastTest {
-    public static final String TAG = "BroadcastTest";
-
     protected static final long TIMEOUT_BIND_SERVICE_SEC = 2;
 
     protected static final long SHORT_FREEZER_TIMEOUT_MS = 5000;
+    protected static final long BROADCAST_RECEIVE_TIMEOUT_MS = 5000;
 
     protected static final String HELPER_PKG1 = "com.android.app.cts.broadcasts.helper";
     protected static final String HELPER_PKG2 = "com.android.app.cts.broadcasts.helper2";
@@ -84,6 +87,17 @@ abstract class BaseBroadcastTest {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
         AmUtils.waitForBroadcastBarrier();
+    }
+
+    @Before
+    public void unsetPackageStoppedState() {
+        // Bring test apps out of the stopped state so that they can receive broadcasts
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            for (String pkg : new String[] {HELPER_PKG1, HELPER_PKG2}) {
+                AppGlobals.getPackageManager().setPackageStoppedState(pkg, false,
+                        Process.myUserHandle().getIdentifier());
+            }
+        });
     }
 
     @After

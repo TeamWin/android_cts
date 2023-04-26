@@ -254,7 +254,11 @@ public class HdmiControlManagerTest {
         int originalValue = mHdmiControlManager.getHdmiCecEnabled();
         if (!mHdmiControlManager.getUserCecSettings().contains(
                 HdmiControlManager.CEC_SETTING_NAME_HDMI_CEC_ENABLED)) {
-            return;
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_HDMI_CEC_ENABLED)) {
+                mHdmiControlManager.setHdmiCecEnabled(value);
+                assertThat(mHdmiControlManager.getHdmiCecEnabled()).isEqualTo(originalValue);
+            }
         }
         try {
             for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
@@ -358,7 +362,11 @@ public class HdmiControlManagerTest {
         int originalValue = mHdmiControlManager.getHdmiCecVersion();
         if (!mHdmiControlManager.getUserCecSettings().contains(
                 HdmiControlManager.CEC_SETTING_NAME_HDMI_CEC_VERSION)) {
-            return;
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_HDMI_CEC_VERSION)) {
+                mHdmiControlManager.setHdmiCecVersion(value);
+                assertThat(mHdmiControlManager.getHdmiCecVersion()).isEqualTo(originalValue);
+            }
         }
         try {
             for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
@@ -379,7 +387,11 @@ public class HdmiControlManagerTest {
         int originalValue = mHdmiControlManager.getRoutingControl();
         if (!mHdmiControlManager.getUserCecSettings().contains(
                 HdmiControlManager.CEC_SETTING_NAME_ROUTING_CONTROL)) {
-            return;
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_ROUTING_CONTROL)) {
+                mHdmiControlManager.setRoutingControl(value);
+                assertThat(mHdmiControlManager.getRoutingControl()).isEqualTo(originalValue);
+            }
         }
         try {
             for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
@@ -400,7 +412,11 @@ public class HdmiControlManagerTest {
         int originalValue = mHdmiControlManager.getSoundbarMode();
         if (!mHdmiControlManager.getUserCecSettings().contains(
                 HdmiControlManager.CEC_SETTING_NAME_SOUNDBAR_MODE)) {
-            return;
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_SOUNDBAR_MODE)) {
+                mHdmiControlManager.setSoundbarMode(value);
+                assertThat(mHdmiControlManager.getSoundbarMode()).isEqualTo(originalValue);
+            }
         }
         try {
             for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
@@ -421,7 +437,12 @@ public class HdmiControlManagerTest {
         int originalValue = mHdmiControlManager.getHdmiCecVolumeControlEnabled();
         if (!mHdmiControlManager.getUserCecSettings().contains(
                 HdmiControlManager.CEC_SETTING_NAME_VOLUME_CONTROL_MODE)) {
-            return;
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_VOLUME_CONTROL_MODE)) {
+                mHdmiControlManager.setHdmiCecVolumeControlEnabled(value);
+                assertThat(mHdmiControlManager.getHdmiCecVolumeControlEnabled()).isEqualTo(
+                        originalValue);
+            }
         }
         try {
             for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
@@ -443,7 +464,11 @@ public class HdmiControlManagerTest {
         String originalValue = mHdmiControlManager.getPowerControlMode();
         if (!mHdmiControlManager.getUserCecSettings().contains(
                 HdmiControlManager.CEC_SETTING_NAME_POWER_CONTROL_MODE)) {
-            return;
+            for (String value : mHdmiControlManager.getAllowedCecSettingStringValues(
+                    HdmiControlManager.CEC_SETTING_NAME_POWER_CONTROL_MODE)) {
+                mHdmiControlManager.setPowerControlMode(value);
+                assertThat(mHdmiControlManager.getPowerControlMode()).isEqualTo(originalValue);
+            }
         }
         try {
             for (String value : mHdmiControlManager.getAllowedCecSettingStringValues(
@@ -464,7 +489,12 @@ public class HdmiControlManagerTest {
         String originalValue = mHdmiControlManager.getPowerStateChangeOnActiveSourceLost();
         if (!mHdmiControlManager.getUserCecSettings().contains(
                 HdmiControlManager.CEC_SETTING_NAME_POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST)) {
-            return;
+            for (String value : mHdmiControlManager.getAllowedCecSettingStringValues(
+                    HdmiControlManager.CEC_SETTING_NAME_POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST)) {
+                mHdmiControlManager.setPowerStateChangeOnActiveSourceLost(value);
+                assertThat(mHdmiControlManager.getPowerStateChangeOnActiveSourceLost()).isEqualTo(
+                        originalValue);
+            }
         }
         try {
             for (String value : mHdmiControlManager.getAllowedCecSettingStringValues(
@@ -487,7 +517,11 @@ public class HdmiControlManagerTest {
         int originalValue = mHdmiControlManager.getSystemAudioControl();
         if (!mHdmiControlManager.getUserCecSettings().contains(
                 HdmiControlManager.CEC_SETTING_NAME_SYSTEM_AUDIO_CONTROL)) {
-            return;
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_SYSTEM_AUDIO_CONTROL)) {
+                mHdmiControlManager.setSystemAudioControl(value);
+                assertThat(mHdmiControlManager.getSystemAudioControl()).isEqualTo(originalValue);
+            }
         }
         try {
             for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
@@ -508,7 +542,11 @@ public class HdmiControlManagerTest {
         int originalValue = mHdmiControlManager.getSystemAudioModeMuting();
         if (!mHdmiControlManager.getUserCecSettings().contains(
                 HdmiControlManager.CEC_SETTING_NAME_SYSTEM_AUDIO_MODE_MUTING)) {
-            return;
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_SYSTEM_AUDIO_MODE_MUTING)) {
+                mHdmiControlManager.setSystemAudioModeMuting(value);
+                assertThat(mHdmiControlManager.getSystemAudioModeMuting()).isEqualTo(originalValue);
+            }
         }
         try {
             for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
@@ -529,7 +567,11 @@ public class HdmiControlManagerTest {
         int originalValue = mHdmiControlManager.getTvWakeOnOneTouchPlay();
         if (!mHdmiControlManager.getUserCecSettings().contains(
                 HdmiControlManager.CEC_SETTING_NAME_TV_WAKE_ON_ONE_TOUCH_PLAY)) {
-            return;
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_TV_WAKE_ON_ONE_TOUCH_PLAY)) {
+                mHdmiControlManager.setTvWakeOnOneTouchPlay(value);
+                assertThat(mHdmiControlManager.getTvWakeOnOneTouchPlay()).isEqualTo(originalValue);
+            }
         }
         try {
             for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
@@ -551,7 +593,11 @@ public class HdmiControlManagerTest {
         int originalValue = mHdmiControlManager.getTvSendStandbyOnSleep();
         if (!mHdmiControlManager.getUserCecSettings().contains(
                 HdmiControlManager.CEC_SETTING_NAME_TV_SEND_STANDBY_ON_SLEEP)) {
-            return;
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_TV_SEND_STANDBY_ON_SLEEP)) {
+                mHdmiControlManager.setTvSendStandbyOnSleep(value);
+                assertThat(mHdmiControlManager.getTvSendStandbyOnSleep()).isEqualTo(originalValue);
+            }
         }
         try {
             for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
@@ -628,7 +674,11 @@ public class HdmiControlManagerTest {
         int originalValue = mHdmiControlManager.getEarcEnabled();
         if (!mHdmiControlManager.getUserCecSettings().contains(
                 HdmiControlManager.SETTING_NAME_EARC_ENABLED)) {
-            return;
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.SETTING_NAME_EARC_ENABLED)) {
+                mHdmiControlManager.setEarcEnabled(value);
+                assertThat(mHdmiControlManager.getEarcEnabled()).isEqualTo(originalValue);
+            }
         }
         try {
             for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(

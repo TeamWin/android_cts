@@ -104,18 +104,45 @@ public class MultiEncoderPerfTest extends MultiCodecPerfTestBase {
         testCodec(1080, 1920, 10000000, REQUIRED_MIN_CONCURRENT_INSTANCES);
     }
 
+    /**
+     * This test validates that the encoder can support at least 6 concurrent encoder instances
+     * with 4 sessions at 1080p 30 fps and 2 sessions at 4k 30 fps. Also ensures that all the
+     * concurrent sessions succeed in encoding.
+     */
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirements = {"2.2.7.1/5.1/H-1-3", "2.2.7.1/5.1/H-1-4"})
+    public void test4k() throws Exception {
+        Assume.assumeTrue(Utils.isUPerfClass() || !Utils.isPerfClass());
+        testCodec(2160, 3840, 30000000, REQUIRED_MIN_CONCURRENT_INSTANCES);
+    }
+
     private void testCodec(int height, int width, int bitrate, int requiredMinInstances)
             throws Exception {
         ArrayList<Pair<String, String>> mimeEncoderPairs = new ArrayList<>();
         mimeEncoderPairs.add(Pair.create(mMime, mEncoderName));
         int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
-                mimeEncoderPairs, requiredMinInstances);
+                mimeEncoderPairs, true, requiredMinInstances);
         double achievedFrameRate = 0.0;
         if (maxInstances >= requiredMinInstances) {
             ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
             List<Encode> testList = new ArrayList<>();
-            for (int i = 0; i < maxInstances; i++) {
-                testList.add(new Encode(mMime, mEncoderName, mIsAsync, height, width, 30, bitrate));
+            if (height > 1080) {
+                int instances4k = maxInstances / 3;
+                int instances1080p = maxInstances - instances4k;
+                for (int i = 0; i < instances4k; i++) {
+                    testList.add(
+                            new Encode(mMime, mEncoderName, mIsAsync, height, width, 30, bitrate));
+                }
+                for (int i = 0; i < instances1080p; i++) {
+                    testList.add(
+                            new Encode(mMime, mEncoderName, mIsAsync, 1080, 1920, 30, 10000000));
+                }
+            } else {
+                for (int i = 0; i < maxInstances; i++) {
+                    testList.add(
+                            new Encode(mMime, mEncoderName, mIsAsync, height, width, 30, bitrate));
+                }
             }
             List<Future<Double>> resultList = pool.invokeAll(testList);
             for (Future<Double> result : resultList) {
@@ -126,7 +153,12 @@ public class MultiEncoderPerfTest extends MultiCodecPerfTestBase {
         PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_3;
         PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_4;
         // Achieved frame rate is not compared as this test runs in byte buffer mode.
-        if (height >= 1080) {
+        if (height > 1080) {
+            r5_1__H_1_3 = pce.addR5_1__H_1_3_4k();
+            r5_1__H_1_4 = pce.addR5_1__H_1_4_4k();
+            r5_1__H_1_3.setConcurrentInstances(maxInstances);
+            r5_1__H_1_4.setConcurrentFps(achievedFrameRate);
+        } else if (height == 1080) {
             r5_1__H_1_3 = pce.addR5_1__H_1_3_1080p();
             r5_1__H_1_4 = pce.addR5_1__H_1_4_1080p();
             r5_1__H_1_3.setConcurrentInstances(maxInstances);

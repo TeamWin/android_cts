@@ -47,10 +47,13 @@ public class RequirementConstants {
     public static final String R5_6__H_1_1 = "r5_6__h_1_1"; // 5.6/H-1-1
     public static final String R5_7__H_1_1 = "r5_7__h_1_1"; // 5.7/H-1-1
     public static final String R5_7__H_1_2 = "r5_7__h_1_2"; // 5.7/H-1-2
+    public static final String R5_12__H_1_2 = "r5_12__h_1_2"; // 5.12/H-1-2
     public static final String R7_5__H_1_1 = "r7_5__h_1_1"; // 7.5/H-1-1
     public static final String R7_5__H_1_2 = "r7_5__h_1_2"; // 7.5/H-1-2
     public static final String R7_5__H_1_3 = "r7_5__h_1_3"; // 7.5/H-1-3
     public static final String R7_5__H_1_4 = "r7_5__h_1_4"; // 7.5/H-1-4
+
+    public static final String R5_12__H_1_3 = "r5_12__h_1_3"; // 5.12/H-1-3
 
     // these includes "its" because the proto in google3 was originally implemented incorrectly
     public static final String R7_5__H_1_5 = "r7_5__h_1_5__its"; // 7.5/H-1-5
@@ -93,12 +96,15 @@ public class RequirementConstants {
     public static final String CODEC_INIT_LATENCY = "codec_initialization_latency_ms";
     public static final String AV1_DEC_REQ = "av1_decoder_requirement_boolean";
     public static final String AVIF_DEC_REQ = "AVIF_image_decoder";
+    public static final String RGBA_1010102_COLOR_FORMAT_REQ = "rgba_1010102_color_format";
     public static final String NUM_4k_HW_DEC = "number_4k_hw_decoders";
     public static final String NUM_4k_HW_ENC = "number_4k_hw_encoders";
     public static final String SECURE_REQ_SATISFIED = "secure_requirement_satisfied_boolean";
     public static final String NUM_CRYPTO_HW_SECURE_ALL_SUPPORT =
         "number_crypto_hw_secure_all_support";
     public static final String FILESYSTEM_IO_RATE = "filesystem_io_rate_mbps";
+
+    public static final String EXT_YUV_EXTENSION = "EXT_YUV_target";
 
     public static final String PRIMARY_CAMERA_AVAILABLE = "primary_camera_available";
     public static final String PRIMARY_CAMERA_RESOLUTION = "primary_camera_resolution";

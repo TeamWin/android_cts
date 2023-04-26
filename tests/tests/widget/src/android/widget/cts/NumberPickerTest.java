@@ -36,6 +36,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Instrumentation;
 import android.app.Service;
+import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -59,6 +60,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.UserHelper;
 
 import junit.framework.Assert;
 
@@ -82,6 +84,7 @@ public class NumberPickerTest {
     private static final String[] NUMBER_NAMES5 = {"One", "Two", "Three", "Four", "Five"};
 
     private Instrumentation mInstrumentation;
+    private UserHelper mUserHelper;
     private CtsTouchUtils mCtsTouchUtils;
     private CtsKeyEventUtil mCtsKeyEventUtil;
     private NumberPickerCtsActivity mActivity;
@@ -97,8 +100,10 @@ public class NumberPickerTest {
     public void setup() throws Throwable {
         MockitoAnnotations.initMocks(this);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
-        mCtsKeyEventUtil = new CtsKeyEventUtil(mInstrumentation.getTargetContext());
+        Context targetContext = mInstrumentation.getTargetContext();
+        mCtsTouchUtils = new CtsTouchUtils(targetContext);
+        mCtsKeyEventUtil = new CtsKeyEventUtil(targetContext);
+        mUserHelper = new UserHelper(targetContext);
         // Create a UiAutomation, which will enable accessibility and allow us to test ally events.
         mInstrumentation.getUiAutomation();
         mActivity = mActivityRule.getActivity();
@@ -557,6 +562,7 @@ public class NumberPickerTest {
         // Phase 1. Check enter key
         MotionEvent event = MotionEvent.obtain(System.currentTimeMillis(),
                 System.currentTimeMillis(), MotionEvent.ACTION_DOWN, x, y, 0);
+        mUserHelper.injectDisplayIdIfNeeded(event);
         mInstrumentation.sendPointerSync(event);
 
         // Send enter key to call removeAllCallbacks including longpressed
@@ -569,11 +575,13 @@ public class NumberPickerTest {
 
         event = MotionEvent.obtain(System.currentTimeMillis(), System.currentTimeMillis(),
                 MotionEvent.ACTION_UP, x, y, 0);
+        mUserHelper.injectDisplayIdIfNeeded(event);
         mInstrumentation.sendPointerSync(event);
 
         // Phase 2. Check numpad enter key
         event = MotionEvent.obtain(System.currentTimeMillis(), System.currentTimeMillis(),
                 MotionEvent.ACTION_DOWN, x, y, 0);
+        mUserHelper.injectDisplayIdIfNeeded(event);
         mInstrumentation.sendPointerSync(event);
 
         // Send numpad enter key. we expect it works like enter key.
@@ -587,6 +595,7 @@ public class NumberPickerTest {
 
         event = MotionEvent.obtain(System.currentTimeMillis(), System.currentTimeMillis(),
                 MotionEvent.ACTION_UP, x, y, 0);
+        mUserHelper.injectDisplayIdIfNeeded(event);
         mInstrumentation.sendPointerSync(event);
     }
 

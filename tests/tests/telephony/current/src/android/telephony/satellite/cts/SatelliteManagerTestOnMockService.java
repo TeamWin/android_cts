@@ -30,6 +30,9 @@ import android.os.Build;
 import android.os.CancellationSignal;
 import android.os.OutcomeReceiver;
 import android.os.SystemProperties;
+import android.telephony.ServiceState;
+import android.telephony.TelephonyCallback;
+import android.telephony.TelephonyManager;
 import android.telephony.satellite.AntennaDirection;
 import android.telephony.satellite.AntennaPosition;
 import android.telephony.satellite.PointingInfo;
@@ -39,6 +42,8 @@ import android.telephony.satellite.SatelliteManager;
 import android.telephony.satellite.stub.SatelliteError;
 
 import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -85,6 +90,8 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 new AntennaPosition(new AntennaDirection(2,2,2),
                         SatelliteManager.DEVICE_HOLD_POSITION_LANDSCAPE_LEFT));
     }
+
+    private TelephonyManager mTelephonyManager = null;
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
@@ -203,6 +210,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assumeTrue(sMockSatelliteServiceManager != null);
         sMockSatelliteServiceManager.setErrorCode(SatelliteError.ERROR_NONE);
         sMockSatelliteServiceManager.setWaitToSend(false);
+        mTelephonyManager = getContext().getSystemService(TelephonyManager.class);
     }
 
     @After
@@ -368,6 +376,123 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(sMockSatelliteServiceManager.setSatelliteListeningTimeoutDuration(0));
         assertTrue(sMockSatelliteServiceManager.restoreSatelliteGatewayServicePackageName());
 
+        revokeSatellitePermission();
+    }
+
+    private static class ServiceStateRadioStateListener extends TelephonyCallback
+            implements TelephonyCallback.ServiceStateListener,
+            TelephonyCallback.RadioPowerStateListener {
+        private final Object mLock = new Object();
+        ServiceState mServiceState;
+        int mRadioPowerState;
+
+        ServiceStateRadioStateListener(ServiceState serviceState, int radioPowerState) {
+            mServiceState = serviceState;
+            mRadioPowerState = radioPowerState;
+        }
+
+        @Override
+        public void onServiceStateChanged(ServiceState ss) {
+            mServiceState = ss;
+        }
+
+        @Override
+        public void onRadioPowerStateChanged(int radioState) {
+            synchronized (mLock) {
+                mRadioPowerState = radioState;
+                mLock.notify();
+            }
+        }
+
+        private void waitForRadioStateIntent(int desiredState) {
+            synchronized (mLock) {
+                if (mRadioPowerState != desiredState) {
+                    try {
+                        mLock.wait(TIMEOUT);
+                    } catch (Exception e) {
+                        fail(e.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testSatelliteEnableErrorHandling() {
+        if (!shouldTestSatellite()) return;
+
+        grantSatellitePermission();
+
+        assertTrue(isSatelliteProvisioned());
+
+        SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
+        boolean originalEnabledState = isSatelliteEnabled();
+        boolean registerCallback = false;
+        if (originalEnabledState) {
+            registerCallback = true;
+
+            long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
+                    getContext().getMainExecutor(), callback);
+            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertTrue(callback.waitUntilResult(1));
+
+            requestSatelliteEnabled(false);
+
+            assertTrue(callback.waitUntilResult(1));
+            assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+            assertFalse(isSatelliteEnabled());
+        }
+        if (!registerCallback) {
+            long registerResult = sSatelliteManager
+                    .registerForSatelliteModemStateChanged(getContext().getMainExecutor(),
+                            callback);
+            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertTrue(callback.waitUntilResult(1));
+            assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+        }
+
+        requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_ERROR_NONE);
+        assertTrue(callback.waitUntilResult(1));
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
+        assertTrue(isSatelliteEnabled());
+
+        requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_ERROR_NONE);
+        requestSatelliteEnabled(true, false, SatelliteManager.SATELLITE_INVALID_ARGUMENTS);
+
+        turnRadioOff();
+        grantSatellitePermission();
+        assertTrue(callback.waitUntilResult(1));
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+        assertFalse(isSatelliteEnabled());
+
+        requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_INVALID_MODEM_STATE);
+        requestSatelliteEnabled(false);
+
+        turnRadioOn();
+        grantSatellitePermission();
+        assertFalse(callback.waitUntilResult(1));
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+        assertFalse(isSatelliteEnabled());
+
+        requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_ERROR_NONE);
+        assertTrue(callback.waitUntilResult(1));
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
+        assertTrue(isSatelliteEnabled());
+
+        requestSatelliteEnabled(false);
+        assertTrue(callback.waitUntilResult(1));
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+        assertFalse(isSatelliteEnabled());
+
+        if (originalEnabledState) {
+            // Restore original modem enabled state.
+            requestSatelliteEnabled(true);
+
+            assertTrue(callback.waitUntilResult(1));
+            assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
+            assertTrue(isSatelliteEnabled());
+        }
+        sSatelliteManager.unregisterForSatelliteModemStateChanged(callback);
         revokeSatellitePermission();
     }
 
@@ -1482,5 +1607,23 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                     "!! Enable Mock Modem before running this test !! "
                             + "Developer options => Allow Mock Modem");
         }
+    }
+
+    private void turnRadioOff() {
+        ServiceStateRadioStateListener callback = new ServiceStateRadioStateListener(
+                mTelephonyManager.getServiceState(), mTelephonyManager.getRadioPowerState());
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.requestRadioPowerOffForReason(TelephonyManager.RADIO_POWER_REASON_USER),
+                android.Manifest.permission.MODIFY_PHONE_STATE);
+        callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_OFF);
+    }
+
+    private void turnRadioOn() {
+        ServiceStateRadioStateListener callback = new ServiceStateRadioStateListener(
+                mTelephonyManager.getServiceState(), mTelephonyManager.getRadioPowerState());
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.clearRadioPowerOffForReason(TelephonyManager.RADIO_POWER_REASON_USER),
+                android.Manifest.permission.MODIFY_PHONE_STATE);
+        callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_ON);
     }
 }

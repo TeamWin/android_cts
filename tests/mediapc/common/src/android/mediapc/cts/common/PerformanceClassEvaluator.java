@@ -620,6 +620,11 @@ public class PerformanceClassEvaluator {
             this.setMeasuredValue(RequirementConstants.AVIF_DEC_REQ, avifDecoderReqSatisfied);
         }
 
+        public void setColorFormatSupportReq(boolean colorFormatSupported) {
+            this.setMeasuredValue(RequirementConstants.RGBA_1010102_COLOR_FORMAT_REQ,
+                    colorFormatSupported);
+        }
+
         /**
          * [2.2.7.1/5.1/H-1-15] Must have at least 1 HW video decoder supporting 4K60
          */
@@ -674,6 +679,21 @@ public class PerformanceClassEvaluator {
                     .build();
 
             return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_17, requirement);
+        }
+
+        /**
+         * [5.12/H-1-2] MUST support RGBA_1010102 color format for all hardware AV1 and HEVC
+         * encoders present on the device.
+         */
+        public static VideoCodecRequirement createColorFormatSupportReq() {
+            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
+                    .<Boolean>builder()
+                    .setId(RequirementConstants.RGBA_1010102_COLOR_FORMAT_REQ)
+                    .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                    .build();
+
+            return new VideoCodecRequirement(RequirementConstants.R5_12__H_1_2, requirement);
         }
     }
 
@@ -787,6 +807,24 @@ public class PerformanceClassEvaluator {
         }
 
         /**
+         * Helper method used to create ConcurrentCodecRequirements, builds and fills out the
+         * a requirement for tests ran with a resolution of 4k
+         */
+        private static ConcurrentCodecRequirement create4k(String requirementId,
+                RequiredMeasurement<?> measure) {
+            RequiredMeasurement<Integer> testResolution = RequiredMeasurement.<Integer>builder()
+                    .setId(RequirementConstants.TEST_RESOLUTION)
+                    .setPredicate(RequirementConstants.INTEGER_EQ)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 2160)
+                    .build();
+
+            ConcurrentCodecRequirement req = new ConcurrentCodecRequirement(requirementId, measure,
+                    testResolution);
+            req.setMeasuredValue(RequirementConstants.TEST_RESOLUTION,  2160);
+            return req;
+        }
+
+        /**
          * [2.2.7.1/5.1/H-1-1] MUST advertise the maximum number of hardware video decoder
          * sessions that can be run concurrently in any codec combination via the
          * CodecCapabilities.getMaxSupportedInstances() and VideoCapabilities
@@ -825,6 +863,22 @@ public class PerformanceClassEvaluator {
         }
 
         /**
+         * [2.2.7.1/5.1/H-1-1] MUST advertise the maximum number of hardware video decoder
+         * sessions that can be run concurrently in any codec combination via the
+         * CodecCapabilities.getMaxSupportedInstances() and VideoCapabilities
+         * .getSupportedPerformancePoints() methods.
+         */
+        public static ConcurrentCodecRequirement createR5_1__H_1_1_4k() {
+            RequiredMeasurement<Integer> maxInstances = RequiredMeasurement.<Integer>builder()
+                    .setId(RequirementConstants.CONCURRENT_SESSIONS)
+                    .setPredicate(RequirementConstants.INTEGER_GTE)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 6)
+                    .build();
+
+            return create4k(RequirementConstants.R5_1__H_1_1, maxInstances);
+        }
+
+        /**
          * [2.2.7.1/5.1/H-1-2] MUST support 6 instances of hardware video decoder sessions (AVC,
          * HEVC, VP9* or later) in any codec combination running concurrently at 720p(R,S)
          * resolution@30 fps.
@@ -856,6 +910,21 @@ public class PerformanceClassEvaluator {
                 .build();
 
             return create1080p(RequirementConstants.R5_1__H_1_2, reqConcurrentFps);
+        }
+
+        /**
+         * [2.2.7.1/5.1/H-1-2] MUST support 6 instances of hardware video decoder sessions (AVC,
+         * HEVC, VP9, AV1 or later) in any codec combination running concurrently with 3 sessions
+         * at 1080p resolution@30 fps and 3 sessions at 4k(U) resolution@30fps.
+         */
+        public static ConcurrentCodecRequirement createR5_1__H_1_2_4k() {
+            RequiredMeasurement<Double> reqConcurrentFps = RequiredMeasurement.<Double>builder()
+                    .setId(RequirementConstants.CONCURRENT_FPS)
+                    .setPredicate(RequirementConstants.DOUBLE_GTE)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 6 * FPS_30_TOLERANCE)
+                    .build();
+
+            return create4k(RequirementConstants.R5_1__H_1_2, reqConcurrentFps);
         }
 
         /**
@@ -897,6 +966,22 @@ public class PerformanceClassEvaluator {
         }
 
         /**
+         * [2.2.7.1/5.1/H-1-3] MUST advertise the maximum number of hardware video encoder
+         * sessions that can be run concurrently in any codec combination via the
+         * CodecCapabilities.getMaxSupportedInstances() and VideoCapabilities
+         * .getSupportedPerformancePoints() methods.
+         */
+        public static ConcurrentCodecRequirement createR5_1__H_1_3_4K() {
+            RequiredMeasurement<Integer> maxInstances = RequiredMeasurement.<Integer>builder()
+                    .setId(RequirementConstants.CONCURRENT_SESSIONS)
+                    .setPredicate(RequirementConstants.INTEGER_GTE)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 6)
+                    .build();
+
+            return create4k(RequirementConstants.R5_1__H_1_3, maxInstances);
+        }
+
+        /**
          * [2.2.7.1/5.1/H-1-4] MUST support 6 instances of hardware video encoder sessions (AVC,
          * HEVC, VP9* or later) in any codec combination running concurrently at 720p(R,S)
          * resolution@30 fps.
@@ -927,6 +1012,22 @@ public class PerformanceClassEvaluator {
                 .build();
 
             return create1080p(RequirementConstants.R5_1__H_1_4, reqConcurrentFps);
+        }
+
+        /**
+         * [2.2.7.1/5.1/H-1-4] MUST support 6 instances of hardware video encoder sessions (AVC,
+         * HEVC, VP9* or later) in any codec combination running concurrently at 4k(U)
+         * resolution@30 fps.
+         */
+        public static ConcurrentCodecRequirement createR5_1__H_1_4_4k() {
+            RequiredMeasurement<Double> reqConcurrentFps = RequiredMeasurement.<Double>builder()
+                    .setId(RequirementConstants.CONCURRENT_FPS)
+                    .setPredicate(RequirementConstants.DOUBLE_GTE)
+                    // Requirement not asserted since encoder test runs in byte buffer mode
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 0.0)
+                    .build();
+
+            return create4k(RequirementConstants.R5_1__H_1_4, reqConcurrentFps);
         }
 
         /**
@@ -968,9 +1069,25 @@ public class PerformanceClassEvaluator {
         }
 
         /**
+         * [2.2.7.1/5.1/H-1-5] MUST advertise the maximum number of hardware video encoder and
+         * decoder sessions that can be run concurrently in any codec combination via the
+         * CodecCapabilities.getMaxSupportedInstances() and VideoCapabilities
+         * .getSupportedPerformancePoints() methods.
+         */
+        public static ConcurrentCodecRequirement createR5_1__H_1_5_4k() {
+            RequiredMeasurement<Integer> maxInstances = RequiredMeasurement.<Integer>builder()
+                .setId(RequirementConstants.CONCURRENT_SESSIONS)
+                .setPredicate(RequirementConstants.INTEGER_GTE)
+                .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 6)
+                .build();
+
+            return create4k(RequirementConstants.R5_1__H_1_5, maxInstances);
+        }
+
+        /**
          * [2.2.7.1/5.1/H-1-6] Support 6 instances of hardware video decoder and hardware video
          * encoder sessions (AVC, HEVC, VP9 or AV1) in any codec combination running concurrently
-         * at 720p(R,S) /1080p(T) @30fps resolution.
+         * at 720p(R,S) /1080p(T) /4k(U) @30fps resolution.
          */
         public static ConcurrentCodecRequirement createR5_1__H_1_6_720p(String mimeType1,
             String mimeType2, int resolution) {
@@ -992,7 +1109,7 @@ public class PerformanceClassEvaluator {
         /**
          * [2.2.7.1/5.1/H-1-6] Support 6 instances of hardware video decoder and hardware video
          * encoder sessions (AVC, HEVC, VP9 or AV1) in any codec combination running concurrently
-         * at 720p(R,S) /1080p(T) @30fps resolution.
+         * at 720p(R,S) /1080p(T) /4k(U) @30fps resolution.
          */
         public static ConcurrentCodecRequirement createR5_1__H_1_6_1080p() {
             RequiredMeasurement<Double> reqConcurrentFps = RequiredMeasurement.<Double>builder()
@@ -1006,11 +1123,28 @@ public class PerformanceClassEvaluator {
         }
 
         /**
+         * [2.2.7.1/5.1/H-1-6] Support 6 instances of hardware video decoder and hardware video
+         * encoder sessions (AVC, HEVC, VP9 or AV1) in any codec combination running concurrently
+         * at 720p(R,S) /1080p(T) /4k(U) @30fps resolution.
+         */
+        public static ConcurrentCodecRequirement createR5_1__H_1_6_4k() {
+            RequiredMeasurement<Double> reqConcurrentFps = RequiredMeasurement.<Double>builder()
+                .setId(RequirementConstants.CONCURRENT_FPS)
+                .setPredicate(RequirementConstants.DOUBLE_GTE)
+                // Test transcoding, fps calculated for encoder and decoder combined so req / 2
+                .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
+                        6 * FPS_30_TOLERANCE / 2)
+                .build();
+
+            return create4k(RequirementConstants.R5_1__H_1_6, reqConcurrentFps);
+        }
+
+        /**
          * [2.2.7.1/5.1/H-1-9] Support 2 instances of secure hardware video decoder sessions
          * (AVC, HEVC, VP9 or AV1) in any codec combination running concurrently at 1080p
          * resolution@30fps.
          */
-        public static ConcurrentCodecRequirement createR5_1__H_1_9() {
+        public static ConcurrentCodecRequirement createR5_1__H_1_9_1080p() {
             RequiredMeasurement<Double> reqConcurrentFps = RequiredMeasurement.<Double>builder()
                 .setId(RequirementConstants.CONCURRENT_FPS)
                 .setPredicate(RequirementConstants.DOUBLE_GTE)
@@ -1021,12 +1155,27 @@ public class PerformanceClassEvaluator {
         }
 
         /**
+         * [2.2.7.1/5.1/H-1-9] Support 2 instances of secure hardware video decoder sessions
+         * (AVC, HEVC, VP9, AV1 or later) in any codec combination running concurrently at 4k
+         * resolution@30 fps.
+         */
+        public static ConcurrentCodecRequirement createR5_1__H_1_9_4k() {
+            RequiredMeasurement<Double> reqConcurrentFps = RequiredMeasurement.<Double>builder()
+                    .setId(RequirementConstants.CONCURRENT_FPS)
+                    .setPredicate(RequirementConstants.DOUBLE_GTE)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 2 * FPS_30_TOLERANCE)
+                    .build();
+
+            return create4k(RequirementConstants.R5_1__H_1_9, reqConcurrentFps);
+        }
+
+        /**
          * [2.2.7.1/5.1/H-1-10] Support 3 instances of non-secure hardware video decoder sessions
          * together with 1 instance of secure hardware video decoder session (4 instances total)
          * (AVC, HEVC, VP9 or AV1) in any codec combination running concurrently at 1080p
          * resolution@30fps.
          */
-        public static ConcurrentCodecRequirement createR5_1__H_1_10() {
+        public static ConcurrentCodecRequirement createR5_1__H_1_10_1080p() {
             RequiredMeasurement<Double> reqConcurrentFps = RequiredMeasurement.<Double>builder()
                 .setId(RequirementConstants.CONCURRENT_FPS)
                 .setPredicate(RequirementConstants.DOUBLE_GTE)
@@ -1034,6 +1183,23 @@ public class PerformanceClassEvaluator {
                 .build();
 
             return create1080p(RequirementConstants.R5_1__H_1_10, reqConcurrentFps);
+        }
+
+        /**
+         * [2.2.7.1/5.1/H-1-10] Support 3 instances of non-secure hardware video decoder sessions
+         * together with 1 instance of secure hardware video decoder session (4 instances total)
+         * (AVC, HEVC, VP9, AV1 or later) in any codec combination running concurrently with 3
+         * sessions at 4K resolution@30 fps which includes one secure decoder session and 1
+         * session at 1080p resolution@30fps.
+         */
+        public static ConcurrentCodecRequirement createR5_1__H_1_10_4k() {
+            RequiredMeasurement<Double> reqConcurrentFps = RequiredMeasurement.<Double>builder()
+                    .setId(RequirementConstants.CONCURRENT_FPS)
+                    .setPredicate(RequirementConstants.DOUBLE_GTE)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 4 * FPS_30_TOLERANCE)
+                    .build();
+
+            return create4k(RequirementConstants.R5_1__H_1_10, reqConcurrentFps);
         }
     }
 
@@ -1610,6 +1776,33 @@ public class PerformanceClassEvaluator {
         }
     }
 
+    public static class ExtYuvTargetRequirement extends Requirement {
+        private static final String TAG = ExtYuvTargetRequirement.class.getSimpleName();
+
+        private ExtYuvTargetRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setExtYuvTargetSupport(boolean extensionSupported) {
+            this.setMeasuredValue(RequirementConstants.EXT_YUV_EXTENSION, extensionSupported);
+        }
+
+        /**
+         * [5.12/H-1-3] MUST checks for EXT_YUV_target extension support.
+         */
+        public static ExtYuvTargetRequirement createExtensionReq() {
+            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
+                    .<Boolean>builder()
+                    .setId(RequirementConstants.EXT_YUV_EXTENSION)
+                    .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                    .build();
+
+            return new ExtYuvTargetRequirement(RequirementConstants.R5_12__H_1_3, requirement);
+        }
+
+    }
+
     public <R extends Requirement> R addRequirement(R req) {
         if (!this.mRequirements.add(req)) {
             throw new IllegalStateException("Requirement " + req.id() + " already added");
@@ -1731,6 +1924,10 @@ public class PerformanceClassEvaluator {
         return this.addRequirement(VideoCodecRequirement.createRAVIFDecoderReq());
     }
 
+    public VideoCodecRequirement addColorFormatSupportReq() {
+        return this.addRequirement(VideoCodecRequirement.createColorFormatSupportReq());
+    }
+
     public SecureCodecRequirement addR5_1__H_1_11() {
         return this.addRequirement(SecureCodecRequirement.createR5_1__H_1_11());
     }
@@ -1749,6 +1946,10 @@ public class PerformanceClassEvaluator {
         return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_1_1080p());
     }
 
+    public ConcurrentCodecRequirement addR5_1__H_1_1_4k() {
+        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_1_4k());
+    }
+
     public ConcurrentCodecRequirement addR5_1__H_1_2_720p(String mimeType1, String mimeType2,
         int resolution) {
         return this.addRequirement(
@@ -1757,6 +1958,10 @@ public class PerformanceClassEvaluator {
 
     public ConcurrentCodecRequirement addR5_1__H_1_2_1080p() {
         return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_2_1080p());
+    }
+
+    public ConcurrentCodecRequirement addR5_1__H_1_2_4k() {
+        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_2_4k());
     }
 
     public ConcurrentCodecRequirement addR5_1__H_1_3_720p(String mimeType1, String mimeType2,
@@ -1769,12 +1974,20 @@ public class PerformanceClassEvaluator {
         return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_3_1080p());
     }
 
+    public ConcurrentCodecRequirement addR5_1__H_1_3_4k() {
+        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_3_4K());
+    }
+
     public ConcurrentCodecRequirement addR5_1__H_1_4_720p() {
         return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_4_720p());
     }
 
     public ConcurrentCodecRequirement addR5_1__H_1_4_1080p() {
         return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_4_1080p());
+    }
+
+    public ConcurrentCodecRequirement addR5_1__H_1_4_4k() {
+        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_4_4k());
     }
 
     public ConcurrentCodecRequirement addR5_1__H_1_5_720p(String mimeType1, String mimeType2,
@@ -1787,6 +2000,10 @@ public class PerformanceClassEvaluator {
         return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_5_1080p());
     }
 
+    public ConcurrentCodecRequirement addR5_1__H_1_5_4k() {
+        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_5_4k());
+    }
+
     public ConcurrentCodecRequirement addR5_1__H_1_6_720p(String mimeType1, String mimeType2,
         int resolution) {
         return this.addRequirement(
@@ -1797,12 +2014,24 @@ public class PerformanceClassEvaluator {
         return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_6_1080p());
     }
 
-    public ConcurrentCodecRequirement addR5_1__H_1_9() {
-        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_9());
+    public ConcurrentCodecRequirement addR5_1__H_1_6_4k() {
+        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_6_4k());
     }
 
-    public ConcurrentCodecRequirement addR5_1__H_1_10() {
-        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_10());
+    public ConcurrentCodecRequirement addR5_1__H_1_9_1080p() {
+        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_9_1080p());
+    }
+
+    public ConcurrentCodecRequirement addR5_1__H_1_9_4k() {
+        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_9_4k());
+    }
+
+    public ConcurrentCodecRequirement addR5_1__H_1_10_1080p() {
+        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_10_1080p());
+    }
+
+    public ConcurrentCodecRequirement addR5_1__H_1_10_4k() {
+        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_10_4k());
     }
 
     public PrimaryCameraRequirement addPrimaryRearCameraReq() {
@@ -1855,6 +2084,10 @@ public class PerformanceClassEvaluator {
 
     public AudioTap2ToneLatencyRequirement addR5_6__H_1_1() {
         return this.addRequirement(AudioTap2ToneLatencyRequirement.createR5_6__H_1_1());
+    }
+
+    public ExtYuvTargetRequirement addExtYUVSupportReq() {
+        return this.addRequirement(ExtYuvTargetRequirement.createExtensionReq());
     }
 
     private enum SubmitType {

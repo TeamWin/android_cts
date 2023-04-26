@@ -4228,10 +4228,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         TestExecutor executor = new TestExecutor();
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
-            uiAutomation.adoptShellPermissionIdentity();
-            turnOffWifiAndTetheredHotspotIfEnabled();
             // Run with scanning disable to make sure there is no active mode.
             runWithScanning(() -> {
+                uiAutomation.adoptShellPermissionIdentity();
+                turnOffWifiAndTetheredHotspotIfEnabled();
                 mWifiManager.registerActiveCountryCodeChangedCallback(
                         executor, testCountryCodeChangedCallback);
 
