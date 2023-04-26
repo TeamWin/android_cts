@@ -25,6 +25,7 @@ import static org.junit.Assert.assertThrows;
 
 import android.net.wifi.sharedconnectivity.app.NetworkProviderInfo;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Parcel;
 
 import androidx.test.filters.SdkSuppress;
@@ -45,6 +46,8 @@ public class NetworkProviderInfoTest {
     private static final String DEVICE_MODEL = "TEST_MODEL";
     private static final int BATTERY_PERCENTAGE = 50;
     private static final int CONNECTION_STRENGTH = 2;
+    private static final String BUNDLE_KEY = "INT-KEY";
+    private static final int BUNDLE_VALUE = 1;
 
     private static final int DEVICE_TYPE_1 = DEVICE_TYPE_LAPTOP;
     private static final String DEVICE_NAME_1 = "TEST_NAME1";
@@ -103,6 +106,7 @@ public class NetworkProviderInfoTest {
         assertThat(info.getModelName()).isEqualTo(DEVICE_MODEL);
         assertThat(info.getBatteryPercentage()).isEqualTo(BATTERY_PERCENTAGE);
         assertThat(info.getConnectionStrength()).isEqualTo(CONNECTION_STRENGTH);
+        assertThat(info.getExtras().getInt(BUNDLE_KEY)).isEqualTo(BUNDLE_VALUE);
     }
 
     @Test
@@ -171,6 +175,13 @@ public class NetworkProviderInfoTest {
     private NetworkProviderInfo.Builder buildNetworkProviderInfoBuilder() {
         return new NetworkProviderInfo.Builder(DEVICE_NAME, DEVICE_MODEL).setDeviceType(DEVICE_TYPE)
                 .setBatteryPercentage(BATTERY_PERCENTAGE)
-                .setConnectionStrength(CONNECTION_STRENGTH);
+                .setConnectionStrength(CONNECTION_STRENGTH)
+                .setExtras(buildBundle());
+    }
+
+    private Bundle buildBundle() {
+        Bundle bundle = new Bundle();
+        bundle.putInt(BUNDLE_KEY, BUNDLE_VALUE);
+        return bundle;
     }
 }
