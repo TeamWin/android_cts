@@ -41,5 +41,6 @@ java_test_host {
         ":CtsIntentRedirectionTestApp",
         ":CtsAppCloningNotLaunchableCloneProfileApp",
         ":CtsAppCloningLaunchableCloneProfileApp",
+        ":CtsAppCloningStorageStatsApp",
     ],
 }
