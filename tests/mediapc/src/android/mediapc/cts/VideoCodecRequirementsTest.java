@@ -16,12 +16,14 @@
 
 package android.mediapc.cts;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_Format32bitABGR2101010;
 import static android.media.MediaCodecInfo.CodecProfileLevel.AV1Level51;
 import static android.media.MediaCodecInfo.CodecProfileLevel.AV1ProfileMain10;
 import static android.media.MediaCodecInfo.CodecProfileLevel.AV1ProfileMain8;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_AV1;
 import static android.mediapc.cts.CodecTestBase.SELECT_HARDWARE;
 import static android.mediapc.cts.CodecTestBase.SELECT_VIDEO;
+import static android.mediapc.cts.CodecTestBase.getCodecInfo;
 import static android.mediapc.cts.CodecTestBase.getMimesOfAvailableCodecs;
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
 
@@ -38,6 +40,7 @@ import android.mediapc.cts.common.Utils;
 import android.util.Log;
 
 import androidx.test.filters.LargeTest;
+import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.CddTest;
 
@@ -52,6 +55,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 public class VideoCodecRequirementsTest {
     private static final String LOG_TAG = VideoCodecRequirementsTest.class.getSimpleName();
@@ -188,6 +192,39 @@ public class VideoCodecRequirementsTest {
         PerformanceClassEvaluator.VideoCodecRequirement rAVIFDecoderReq =
                 pce.addRAVIFDecoderReq();
         rAVIFDecoderReq.setAVIFDecoderReq(isDecoded);
+
+        pce.submitAndCheck();
+    }
+
+    /**
+     * MUST support RGBA_1010102 color format for all hardware AV1 and HEVC encoders present on
+     * the device.
+     */
+    @SmallTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_SMALL_TEST_MS)
+    @CddTest(requirement = "5.12/H-1-2")
+    public void testColorFormatSupport() throws IOException {
+        final String[] mediaTypes =
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, MediaFormat.MIMETYPE_VIDEO_AV1};
+
+        boolean isSupported = true;
+        outerloop:
+        for (String mediaType : mediaTypes) {
+            ArrayList<String> hwEncoders = selectHardwareCodecs(mediaType, null, null, true);
+            for (String encoder : hwEncoders) {
+                CodecCapabilities caps = getCodecInfo(encoder).getCapabilitiesForType(mediaType);
+                if (IntStream.of(caps.colorFormats)
+                        .noneMatch(x -> x == COLOR_Format32bitABGR2101010)) {
+                    isSupported = false;
+                    break outerloop;
+                }
+            }
+        }
+
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.VideoCodecRequirement colorFormatSupportReq =
+                pce.addColorFormatSupportReq();
+        colorFormatSupportReq.setColorFormatSupportReq(isSupported);
 
         pce.submitAndCheck();
     }
