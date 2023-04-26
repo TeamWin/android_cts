@@ -1057,15 +1057,14 @@ public class VehiclePropertyVerifier<T> {
 
         CarPropertyValueCallback carPropertyValueCallback = new CarPropertyValueCallback(
                 mPropertyName, carPropertyConfig.getAreaIds(), updatesPerAreaId, timeoutMillis);
-        SparseArray<List<CarPropertyValue<?>>> areaIdToCarPropertyValues;
-        try {
-            assertWithMessage("Failed to register callback for " + mPropertyName).that(
-                    mCarPropertyManager.registerCallback(carPropertyValueCallback, mPropertyId,
-                            carPropertyConfig.getMaxSampleRate())).isTrue();
-            areaIdToCarPropertyValues = carPropertyValueCallback.getAreaIdToCarPropertyValues();
-        } finally { // TODO(b/269891334): finally block can be removed once bug is fixed.
-            mCarPropertyManager.unregisterCallback(carPropertyValueCallback, mPropertyId);
-        }
+        assertWithMessage("Failed to register callback for " + mPropertyName)
+                .that(
+                        mCarPropertyManager.registerCallback(carPropertyValueCallback, mPropertyId,
+                                carPropertyConfig.getMaxSampleRate()))
+                .isTrue();
+        SparseArray<List<CarPropertyValue<?>>> areaIdToCarPropertyValues =
+                carPropertyValueCallback.getAreaIdToCarPropertyValues();
+        mCarPropertyManager.unregisterCallback(carPropertyValueCallback, mPropertyId);
 
         for (int areaId : carPropertyConfig.getAreaIds()) {
             List<CarPropertyValue<?>> carPropertyValues = areaIdToCarPropertyValues.get(areaId);
@@ -1610,25 +1609,26 @@ public class VehiclePropertyVerifier<T> {
         if (access == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
             return;
         }
+
         int updatesPerAreaId = getUpdatesPerAreaId(mChangeMode);
         long timeoutMillis = getRegisterCallbackTimeoutMillis(mChangeMode,
                 carPropertyConfig.getMinSampleRate());
-
         CarPropertyValueCallback carPropertyValueCallback = new CarPropertyValueCallback(
                 mPropertyName, carPropertyConfig.getAreaIds(), updatesPerAreaId, timeoutMillis);
-        try {
-            assertWithMessage(
-                    mPropertyName
+
+        // We expect a return value of false and not a SecurityException thrown.
+        // This is because registerCallback first tries to get the CarPropertyConfig for the
+        // property, but since no permissions have been granted it can't find the CarPropertyConfig,
+        // so it immediately returns false.
+        assertWithMessage(
+                        mPropertyName
                             + " - property ID: "
                             + mPropertyId
                             + " should not be able to be listened to without permissions.")
-                    .that(mCarPropertyManager.registerCallback(
-                            carPropertyValueCallback, mPropertyId,
-                            carPropertyConfig.getMaxSampleRate())).isFalse();
-        } finally {
-            // TODO(b/269891334): registerCallback needs to fix exception handling
-            mCarPropertyManager.unregisterCallback(carPropertyValueCallback, mPropertyId);
-        }
+                .that(
+                        mCarPropertyManager.registerCallback(carPropertyValueCallback, mPropertyId,
+                                carPropertyConfig.getMaxSampleRate()))
+                .isFalse();
     }
 
     private void verifyHvacTemperatureValueSuggestionResponse(Float[] temperatureSuggestion) {
