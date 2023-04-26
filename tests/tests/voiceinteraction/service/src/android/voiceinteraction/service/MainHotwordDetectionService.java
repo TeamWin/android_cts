@@ -98,6 +98,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
 
     private boolean mIsTestAudioEgress;
 
+    /**
+     * It only works when {@link #mIsTestAudioEgress} is true
+     */
+    private boolean mUseIllegalAudioEgressCopyBufferSize;
+
     private boolean mIsNoNeedActionDuringDetection;
 
     @Override
@@ -155,7 +160,12 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 mHandler.postDelayed(() -> {
                     try {
                         if (mIsTestAudioEgress) {
-                            callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                            if (mUseIllegalAudioEgressCopyBufferSize) {
+                                callback.onDetected(
+                                        Utils.AUDIO_EGRESS_DETECTED_RESULT_WRONG_COPY_BUFFER_SIZE);
+                            } else {
+                                callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                            }
                         } else {
                             callback.onDetected(hotwordDetectedResult);
                         }
@@ -223,7 +233,12 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                     buffer.length)) {
                 Log.d(TAG, "call callback.onDetected");
                 if (mIsTestAudioEgress) {
-                    callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                    if (mUseIllegalAudioEgressCopyBufferSize) {
+                        callback.onDetected(
+                                Utils.AUDIO_EGRESS_DETECTED_RESULT_WRONG_COPY_BUFFER_SIZE);
+                    } else {
+                        callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                    }
                 } else {
                     callback.onDetected(DETECTED_RESULT);
                 }
@@ -254,7 +269,12 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                     }
                     if (canReadAudio()) {
                         if (mIsTestAudioEgress) {
-                            callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                            if (mUseIllegalAudioEgressCopyBufferSize) {
+                                callback.onDetected(
+                                        Utils.AUDIO_EGRESS_DETECTED_RESULT_WRONG_COPY_BUFFER_SIZE);
+                            } else {
+                                callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                            }
                         } else {
                             callback.onDetected(DETECTED_RESULT);
                         }
@@ -355,7 +375,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             }
             if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
                     == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS) {
-                Log.d(TAG, "options : Test audio egress");
+                mUseIllegalAudioEgressCopyBufferSize = options.getBoolean(
+                        Utils.KEY_AUDIO_EGRESS_USE_ILLEGAL_COPY_BUFFER_SIZE,
+                        /* defaultValue= */ false);
+                Log.d(TAG, "options : Test audio egress use illegal copy buffer size = "
+                        + mUseIllegalAudioEgressCopyBufferSize);
                 mIsTestAudioEgress = true;
                 return;
             }
