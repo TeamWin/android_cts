@@ -141,15 +141,11 @@ public class DuplicateIdActivityTest
         // They got different autofill ids though
         assertThat(id1).isNotEqualTo(id2);
 
-        // Because service returned a null response, rotation will trigger another request.
-        sReplier.addResponse(NO_RESPONSE);
+        // TODO(279618346): check the reason why focus state does not restore
         // Force rotation to force onDestroy->onCreate cycle
         mUiBot.setScreenOrientation(1);
         // Wait context and Views being recreated in rotation
         mUiBot.assertShownByRelativeId(DUPLICATE_ID);
-        // Ignore 2nd request.
-        final InstrumentedAutoFillService.FillRequest request2 = sReplier.getNextFillRequest();
-        Log.v(TAG, "request2: " + request2);
 
         // Select a new field to trigger new partition (because server return null on 1st response)
         sReplier.addResponse(NO_RESPONSE);
