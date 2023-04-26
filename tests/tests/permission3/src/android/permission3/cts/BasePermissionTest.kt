@@ -260,9 +260,10 @@ abstract class BasePermissionTest {
 
     protected fun installPackageViaSession(
         apkName: String,
-        appMetadata: PersistableBundle? = null
+        appMetadata: PersistableBundle? = null,
+        packageSource: Int? = null
     ) {
-        val (sessionId, session) = createPackageInstallerSession()
+        val (sessionId, session) = createPackageInstallerSession(packageSource)
         runWithShellPermissionIdentity {
             writePackageInstallerSession(session, apkName)
             if (appMetadata != null) {
@@ -415,9 +416,14 @@ abstract class BasePermissionTest {
             PackageManager.DONT_KILL_APP)
     }
 
-    private fun createPackageInstallerSession(): Pair<Int, PackageInstaller.Session> {
+    private fun createPackageInstallerSession(
+        packageSource: Int? = null
+    ): Pair<Int, PackageInstaller.Session> {
         // Create session
         val sessionParam = SessionParams(SessionParams.MODE_FULL_INSTALL)
+        if (packageSource != null) {
+            sessionParam.setPackageSource(packageSource)
+        }
 
         val sessionId = packageInstaller.createSession(sessionParam)
         val session = packageInstaller.openSession(sessionId)!!
