@@ -97,7 +97,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     public static void beforeAllTests() throws Exception {
         logd("beforeAllTests");
 
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         beforeAllTestsBase();
         enforceMockModemDeveloperSetting();
@@ -150,7 +150,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     public static void afterAllTests() {
         logd("afterAllTests");
 
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         sMockSatelliteServiceManager.setErrorCode(SatelliteError.ERROR_NONE);
 
@@ -206,7 +206,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     public void setUp() throws Exception {
         logd("setUp");
 
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
         assumeTrue(sMockSatelliteServiceManager != null);
         sMockSatelliteServiceManager.setErrorCode(SatelliteError.ERROR_NONE);
         sMockSatelliteServiceManager.setWaitToSend(false);
@@ -220,7 +220,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testProvisionSatelliteService() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testProvisionSatelliteService: start");
         grantSatellitePermission();
@@ -278,7 +278,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSatelliteModemStateChanged() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         grantSatellitePermission();
 
@@ -419,7 +419,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSatelliteEnableErrorHandling() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         grantSatellitePermission();
 
@@ -498,7 +498,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSatelliteDatagramReceivedAck() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         grantSatellitePermission();
 
@@ -525,7 +525,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void  testRequestSatelliteCapabilities() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testRequestSatelliteCapabilities");
         grantSatellitePermission();
@@ -567,7 +567,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSendSatelliteDatagram_success() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testSendSatelliteDatagram_success");
         grantSatellitePermission();
@@ -609,7 +609,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSendSatelliteDatagram_failure() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testSendSatelliteDatagram_failure");
         grantSatellitePermission();
@@ -679,7 +679,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSendMultipleSatelliteDatagrams_success() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testSendMultipleSatelliteDatagrams_success");
         grantSatellitePermission();
@@ -812,7 +812,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSendMultipleSatelliteDatagrams_failure() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testSendMultipleSatelliteDatagrams_failure");
         grantSatellitePermission();
@@ -918,7 +918,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testReceiveSatelliteDatagram() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testReceiveSatelliteDatagram");
         grantSatellitePermission();
@@ -963,7 +963,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testReceiveMultipleSatelliteDatagrams() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testReceiveMultipleSatelliteDatagrams");
         grantSatellitePermission();
@@ -1065,7 +1065,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testReceiveSatellitePositionUpdate() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testReceiveSatellitePositionUpdate");
         grantSatellitePermission();
@@ -1106,7 +1106,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testReceiveMultipleSatellitePositionUpdates() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testReceiveMultipleSatellitePositionUpdates");
         grantSatellitePermission();
