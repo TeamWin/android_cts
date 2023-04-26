@@ -20,7 +20,6 @@ import static android.app.time.Capabilities.CAPABILITY_NOT_ALLOWED;
 import static android.app.time.Capabilities.CAPABILITY_NOT_APPLICABLE;
 import static android.app.time.Capabilities.CAPABILITY_POSSESSED;
 import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
-import static android.app.time.cts.shell.DeviceConfigKeys.TimeZoneDetector.KEY_TIME_ZONE_DETECTOR_AUTO_DETECTION_ENABLED_DEFAULT;
 import static android.app.time.cts.shell.DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT;
 
 import static org.junit.Assert.assertEquals;
@@ -56,7 +55,6 @@ import android.os.UserHandle;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
-import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -70,7 +68,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/** In-process tests for {@link TimeManager} and associated classes. */
+/**
+ * In-process tests for {@link TimeManager} and associated classes. This test covers SDK APIs and
+ * other behavior that partners really shouldn't break. Internal / non-critical behavior is tested
+ * outside of CTS in {@link android.app.time.TimeManagerTest}.
+ */
 public class TimeManagerTest {
 
     /**
@@ -201,106 +203,6 @@ public class TimeManagerTest {
             mTimeManager.removeTimeZoneDetectorListener(listener);
 
             executor.shutdown();
-        }
-    }
-
-    /**
-     * Tests a server flag that can be used to change the "automatic time zone enabled" value
-     * for devices where the user hasn't yet expressed a preference. The flag is only intended for
-     * use during internal testing.
-     */
-    @ApiTest(apis = {
-            "TimeManager#getTimeZoneCapabilitiesAndConfig",
-            "TimeManager#updateTimeZoneConfiguration" })
-    @Test
-    public void testTimeZoneEnabledDefaultFlagBehavior() throws Exception {
-        TimeZoneCapabilitiesAndConfig capabilitiesAndConfig =
-                mTimeManager.getTimeZoneCapabilitiesAndConfig();
-
-        TimeZoneCapabilities capabilities = capabilitiesAndConfig.getCapabilities();
-
-        // Skip this test if the current user is not allowed to alter time detection settings via
-        // the TimeManager APIs.
-        assumeTrue(capabilities.getConfigureAutoDetectionEnabledCapability()
-                == CAPABILITY_POSSESSED);
-
-        // Start with the auto_time_zone_explicit setting empty, but record the value if there is
-        // one so that it can be restored.
-        boolean isAutoDetectionEnabledExplicit =
-                mTimeZoneDetectorShellHelper.isAutoTimeZoneEnabledExplicitly();
-
-        mTimeZoneDetectorShellHelper.clearAutoTimeZoneEnabledExplicitly();
-        sleepForAsyncOperation();
-
-        // Record the current time zone and auto detection setting so that it can be restored by the
-        // test afterwards.
-        boolean initialAutoTzEnabled =
-                capabilitiesAndConfig.getConfiguration().isAutoDetectionEnabled();
-        TimeZoneState initialTimeZoneState = mTimeManager.getTimeZoneState();
-
-        try {
-            // The server flag should be used to control the device's behavior initially because
-            // auto_time_zone_explicit is not set.
-            boolean newAutoTzEnabled = !initialAutoTzEnabled;
-            mDeviceConfigShellHelper.put(NAMESPACE_SYSTEM_TIME,
-                    KEY_TIME_ZONE_DETECTOR_AUTO_DETECTION_ENABLED_DEFAULT,
-                    Boolean.toString(newAutoTzEnabled));
-            sleepForAsyncOperation();
-            assertEquals(newAutoTzEnabled, mTimeZoneDetectorShellHelper.isAutoDetectionEnabled());
-
-            mDeviceConfigShellHelper.put(NAMESPACE_SYSTEM_TIME,
-                    KEY_TIME_ZONE_DETECTOR_AUTO_DETECTION_ENABLED_DEFAULT,
-                    Boolean.toString(initialAutoTzEnabled));
-            sleepForAsyncOperation();
-            assertEquals(initialAutoTzEnabled,
-                    mTimeZoneDetectorShellHelper.isAutoDetectionEnabled());
-
-            // Now simulate the user toggling the auto tz setting twice, which should cause the
-            // system to recognize the user has expressed an explicit preference.
-            TimeZoneConfiguration config1 = new TimeZoneConfiguration.Builder()
-                    .setAutoDetectionEnabled(newAutoTzEnabled)
-                    .build();
-            mTimeManager.updateTimeZoneConfiguration(config1);
-            sleepForAsyncOperation();
-            assertEquals(newAutoTzEnabled,
-                    mTimeZoneDetectorShellHelper.isAutoDetectionEnabled());
-
-            TimeZoneConfiguration config2 = new TimeZoneConfiguration.Builder()
-                    .setAutoDetectionEnabled(initialAutoTzEnabled)
-                    .build();
-            mTimeManager.updateTimeZoneConfiguration(config2);
-            sleepForAsyncOperation();
-            assertEquals(initialAutoTzEnabled,
-                    mTimeZoneDetectorShellHelper.isAutoDetectionEnabled());
-
-            // Auto tz enabled is now back to initialAutoTzEnabled.
-
-            // Repeat the flag check: Now the server flag should have no effect because they have
-            // expressed a preference.
-            mDeviceConfigShellHelper.put(NAMESPACE_SYSTEM_TIME,
-                    KEY_TIME_ZONE_DETECTOR_AUTO_DETECTION_ENABLED_DEFAULT,
-                    Boolean.toString(newAutoTzEnabled));
-            sleepForAsyncOperation();
-            assertEquals(initialAutoTzEnabled,
-                    mTimeZoneDetectorShellHelper.isAutoDetectionEnabled());
-        } finally {
-            // Restore the device's state (as much as possible).
-            if (isAutoDetectionEnabledExplicit) {
-                mTimeZoneDetectorShellHelper.setAutoTimeZoneEnabledExplicitly();
-            } else {
-                mTimeZoneDetectorShellHelper.clearAutoTimeZoneEnabledExplicitly();
-            }
-
-            // Restore auto tz and the time zone (if the device started in manual).
-            mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(initialAutoTzEnabled);
-            if (!initialAutoTzEnabled) {
-                // If the device started in "manual" we can restore the time zone to its original
-                // state, maybe not confidence exactly.
-                mTimeZoneDetectorShellHelper.setTimeZoneState(
-                        initialTimeZoneState.getId(),
-                        initialTimeZoneState.getUserShouldConfirmId());
-            }
-            sleepForAsyncOperation();
         }
     }
 
