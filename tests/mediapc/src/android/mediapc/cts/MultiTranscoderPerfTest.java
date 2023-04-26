@@ -134,6 +134,21 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
         testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
     }
 
+    /**
+     * This test calculates the validates number of concurrent 4k Transcode sessions that
+     * it can support by the (mime, decoder - mime, encoder) pairs. Creates maxInstances / 2
+     * Transcode sessions. If maximum instances is odd, creates one additional decoder which decodes
+     * to surface and render. And ensures that all the supported sessions succeed in
+     * transcoding/decoding with meeting the expected frame rate.
+     */
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirements = {"2.2.7.1/5.1/H-1-5", "2.2.7.1/5.1/H-1-6"})
+    public void test4k() throws Exception {
+        Assume.assumeTrue(Utils.isUPerfClass() || !Utils.isPerfClass());
+        testCodec(m2160pTestFiles, 2160, 3840, REQUIRED_MIN_CONCURRENT_INSTANCES);
+    }
+
     private void testCodec(Map<String, String> testFiles, int height, int width,
             int requiredMinInstances) throws Exception {
         mTestFiles = testFiles;
@@ -148,10 +163,23 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
             ExecutorService pool =
                     Executors.newFixedThreadPool(maxInstances / 2 + maxInstances % 2);
             List<Transcode> transcodeList = new ArrayList<>();
-            for (int i = 0; i < maxInstances / 2; i++) {
+            if (height > 1080) {
+                String testFiles1080p = m1080pTestFiles.get(mDecoderPair.first);
+                for (int i = 0; i < (maxInstances / 2) - 1; i++) {
+                    transcodeList.add(
+                            new Transcode(mEncoderPair.first, testFiles1080p, mDecoderPair.second,
+                                    mEncoderPair.second, mIsAsync));
+                }
                 transcodeList
                         .add(new Transcode(mEncoderPair.first, mTestFiles.get(mDecoderPair.first),
                                 mDecoderPair.second, mEncoderPair.second, mIsAsync));
+            } else {
+                for (int i = 0; i < maxInstances / 2; i++) {
+                    transcodeList
+                            .add(new Transcode(mEncoderPair.first,
+                                    mTestFiles.get(mDecoderPair.first),
+                                    mDecoderPair.second, mEncoderPair.second, mIsAsync));
+                }
             }
             List<Future<Double>> decodeResultList = null;
             if (maxInstances % 2 == 1) {
@@ -180,7 +208,12 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_5;
         PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_6;
-        if (height >= 1080) {
+        if (height > 1080) {
+            r5_1__H_1_5 = pce.addR5_1__H_1_5_4k();
+            r5_1__H_1_6 = pce.addR5_1__H_1_6_4k();
+            r5_1__H_1_5.setConcurrentInstances(maxInstances);
+            r5_1__H_1_6.setConcurrentFps(achievedFrameRate);
+        } else if (height == 1080) {
             r5_1__H_1_5 = pce.addR5_1__H_1_5_1080p();
             r5_1__H_1_6 = pce.addR5_1__H_1_6_1080p();
             r5_1__H_1_5.setConcurrentInstances(maxInstances);
