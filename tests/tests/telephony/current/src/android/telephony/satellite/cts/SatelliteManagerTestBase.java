@@ -585,6 +585,22 @@ public class SatelliteManagerTestBase {
         assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, (long) errorCode);
     }
 
+    protected static void requestSatelliteEnabled(boolean enabled, boolean demoEnabled,
+            int expectedError) {
+        LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
+        sSatelliteManager.requestSatelliteEnabled(
+                enabled, demoEnabled, getContext().getMainExecutor(), error::offer);
+        Integer errorCode;
+        try {
+            errorCode = error.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            fail("requestSatelliteEnabled failed with ex=" + ex);
+            return;
+        }
+        assertNotNull(errorCode);
+        assertEquals(expectedError, (long) errorCode);
+    }
+
     protected static boolean isSatelliteSupported() {
         final AtomicReference<Boolean> supported = new AtomicReference<>();
         final AtomicReference<Integer> errorCode = new AtomicReference<>();
