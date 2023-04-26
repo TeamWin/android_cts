@@ -388,10 +388,14 @@ public class TextureViewTest {
         WidgetTestUtils.runOnMainAndDrawSync(
                 mSDRActivityRule, textureView, () -> textureView.getBitmap(textureViewScreenshot));
 
+        // If the caption bar is present, the surface top edge in the screenshot is shifted.
+        int extraSurfaceOffset = activity.getWindow().getDecorView().getRootWindowInsets()
+                .getInsets(captionBar()).top;
+
         // sample 5 pixels on the edge for bitmap comparison.
         // TextureView and SurfaceView use different shaders, so compare these two with tolerance.
         final int threshold = 2;
-        assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(width / 2, 0),
+        assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(width / 2, extraSurfaceOffset),
                 textureViewScreenshot.getPixel(width / 2, 0), threshold));
         assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(0, height / 2),
                 textureViewScreenshot.getPixel(0, height / 2), threshold));
