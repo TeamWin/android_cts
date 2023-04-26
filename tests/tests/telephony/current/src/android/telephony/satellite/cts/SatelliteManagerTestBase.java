@@ -81,6 +81,22 @@ public class SatelliteManagerTestBase {
         return true;
     }
 
+    protected static boolean shouldTestSatelliteWithMockService() {
+        if (!getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY)) {
+            logd("Skipping tests because FEATURE_TELEPHONY is not available");
+            return false;
+        }
+        try {
+            getContext().getSystemService(TelephonyManager.class)
+                    .getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
+        } catch (IllegalStateException e) {
+            logd("Skipping tests because Telephony service is null, exception=" + e);
+            return false;
+        }
+        return true;
+    }
+
     protected static Context getContext() {
         return InstrumentationRegistry.getContext();
     }
