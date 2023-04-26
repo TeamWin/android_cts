@@ -98,13 +98,17 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
     }
 
     private fun runSensorTest(sensor: Int) {
-        val blocked = isSensorPrivacyEnabled(sensor)
-        if (!blocked) {
-            setSensor(sensor, true)
-        }
-        navigateAndTest(sensor)
-        if (!blocked) {
-            setSensor(sensor, false)
+        var blocked = false
+        try {
+            blocked = isSensorPrivacyEnabled(sensor)
+            if (!blocked) {
+                setSensor(sensor, true)
+            }
+            navigateAndTest(sensor)
+        } finally {
+            if (!blocked) {
+                setSensor(sensor, false)
+            }
         }
     }
 
