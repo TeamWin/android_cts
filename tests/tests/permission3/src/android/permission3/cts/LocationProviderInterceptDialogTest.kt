@@ -29,6 +29,7 @@ import com.android.compatibility.common.util.AppOpsUtils
 import com.android.compatibility.common.util.SystemUtil
 import java.util.concurrent.TimeUnit
 import org.junit.Assert
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
 
@@ -44,6 +45,9 @@ private const val ACTION_MANAGE_APP_PERMISSIONS = "android.intent.action.MANAGE_
 class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
     @Before
     fun setup() {
+        assumeFalse(isAutomotive)
+        assumeFalse(isTv)
+        assumeFalse(isWatch)
         installPackage(MIC_LOCATION_PROVIDER_APP_APK_PATH, grantRuntimePermissions = true)
         AppOpsUtils.setOpMode(
             MIC_LOCATION_PROVIDER_APP_PACKAGE_NAME,
@@ -86,6 +90,7 @@ class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
             context.startActivity(
                 Intent(ACTION_MANAGE_APP_PERMISSIONS).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     putExtra(EXTRA_PACKAGE_NAME, MIC_LOCATION_PROVIDER_APP_PACKAGE_NAME)
                 }
             )
